@@ -1,0 +1,6 @@
+/* CSS entry. Order matters: fonts → Tailwind → tokens (vars) → theme bridge.
+   All @import statements must precede other rules (CSS spec). */
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap');
+@import 'tailwindcss';
+@import './tokens.css';
+@import './theme.css';

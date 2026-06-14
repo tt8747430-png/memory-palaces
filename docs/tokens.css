@@ -1,0 +1,286 @@
+/* =============================================================================
+   Mindscape — Design Tokens  ·  Phase 0 spec (seed for app/styles in Phase 1)
+   =============================================================================
+   TWO LAYERS:
+     1. PRIMITIVES   raw scale values. Never referenced by a component.
+     2. SEMANTIC     roles components consume (--bg, --text-primary, --primary…).
+   THE RULE: components reference ONLY semantic role tokens. Never a primitive,
+             never a raw hex. Re-theming (dark, Phase 12) remaps the semantic
+             layer to different primitives with zero component edits.
+
+   COLOR SPACE: authored in OKLCH (perceptually uniform; matches Tailwind v4's own
+   palette + shadcn). Every value here ROUND-TRIPS EXACTLY to its source brand hex
+   (verified), so identity is locked — the hex in each comment is the canonical
+   anchor for designer cross-reference. Verified WCAG 2.1 ratios live in
+   DESIGN_SYSTEM.md §Color.
+   ============================================================================= */
+
+:root {
+  /* ===========================================================================
+     PRIMITIVES — COLOR  (oklch(L% C H); hex = identity anchor)
+     =========================================================================== */
+
+  /* Brand blue — navy is the single identity anchor (The One Navy Rule) */
+  --p-navy-900: oklch(29.4% 0.160 266.1); /* #091A7A · identity anchor */
+  --p-blue-500: oklch(66.1% 0.180 261.1); /* #4F8EFF · action-blue (gradients, glow) */
+  --p-blue-450: oklch(64.7% 0.164 254.5); /* #3D8FEF · bright-blue (icon/large only; fails as small text on tint) */
+  --p-blue-300: oklch(83.2% 0.083 264.3); /* #ADC8FF · sky/light-blue (atmosphere, secondary) */
+  --p-sky-100:  oklch(95.7% 0.021 254.9); /* #E8F2FF · surface-sky (media gradient light end) */
+  --p-sky-50:   oklch(96.3% 0.018 250.6); /* #EAF4FF · chip-blue (info pill bg) */
+
+  /* Neutral ink ramp (warm-free; chroma ~0) */
+  --p-ink-900:  oklch(29.3% 0     0);     /* #2C2C2C · primary reading text (13.97:1 on white) */
+  --p-gray-600: oklch(44.6% 0.026 256.8); /* #4B5563 · secondary text (7.56:1 on white) */
+  --p-gray-500: oklch(55.1% 0.023 264.4); /* #6B7280 · muted text, AA body (4.83:1 on white) */
+  --p-gray-400: oklch(64.0% 0     0);     /* #8C8C8C · decorative/disabled only (3.36:1 — NOT body text) */
+  --p-gray-300: oklch(75.1% 0     0);     /* #AEAEAE · faint/decorative only (2.22:1 — never carries info) */
+  --p-gray-100: oklch(96.1% 0     0);     /* #F2F2F2 · hairline divider / empty track */
+  --p-white:    oklch(100%  0     0);     /* #FFFFFF */
+
+  /* Accents (non-status) */
+  --p-gold-400: oklch(85.6% 0.170 87.3);  /* #FFC71E · rating star fill (reinforced by shape) */
+  --p-gold-700: oklch(65.2% 0.132 81.6);  /* #B8860B · gold for outlines/small marks (3.25:1) */
+  --p-coral-400: oklch(67.2% 0.216 25.1); /* #FF4C4C · favorite heart fill (distinct from error) */
+
+  /* Status — success / warning / danger, each with an accessible text + tint shade */
+  --p-green-500: oklch(69.6% 0.149 162.5); /* #10B981 · base fill */
+  --p-green-700: oklch(50.8% 0.105 165.6); /* #047857 · text on white (5.48:1) */
+  --p-green-800: oklch(43.2% 0.087 166.9); /* #065F46 · text on green-50 tint (7.29:1) */
+  --p-green-50:  oklch(97.9% 0.021 166.1); /* #ECFDF5 · success surface tint */
+  --p-amber-500: oklch(76.9% 0.165 70.1);  /* #F59E0B · base fill — requires DARK text (ink on amber = 6.50:1) */
+  --p-amber-700: oklch(55.5% 0.146 49.0);  /* #B45309 · text on white / amber-50 (4.84:1) */
+  --p-amber-50:  oklch(98.7% 0.021 95.3);  /* #FFFBEB · warning surface tint */
+  --p-red-500:   oklch(63.7% 0.208 25.3);  /* #EF4444 · accent red (3.76:1 — large/icon only) */
+  --p-red-600:   oklch(57.7% 0.215 27.3);  /* #DC2626 · solid danger: white text passes (4.83:1) */
+  --p-red-700:   oklch(50.5% 0.190 27.5);  /* #B91C1C · text on red-50 tint (5.91:1) */
+  --p-red-50:    oklch(97.1% 0.013 17.4);  /* #FEF2F2 · danger surface tint */
+
+  /* Tint bases for glass / shadow — L C H components reused with inline alpha via
+     oklch(var(--x) / a). Navy-tinted, never neutral black (The Navy-Tint Rule). */
+  --p-tint-navy:  29.4% 0.160 266.1; /* #091A7A · shadow + glow */
+  --p-tint-steel: 29.0% 0.063 254.3; /* #132C4A · softer card-shadow tint (DESIGN.md) */
+  --p-tint-sky:   83.2% 0.083 264.3; /* #ADC8FF · glass tint */
+
+  /* ===========================================================================
+     PRIMITIVES — TYPOGRAPHY  (fixed px scale; product UI viewed at phone DPI)
+     =========================================================================== */
+  --p-font-sans: "Lexend", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  --p-text-headline: 20px; /* 600 / 1.4 — screen titles, ceiling */
+  --p-text-title:    16px; /* 600 / 1.4 — section headers */
+  --p-text-sub:      14px; /* 500 / 1.4 — card titles, emphasized labels */
+  --p-text-body:     14px; /* 400 / 1.5 — reading copy */
+  --p-text-label:    12px; /* 400 / 1.4 — form labels, chips, meta */
+  --p-text-tiny:     10px; /* 500 / 1.4 — nav labels, smallest meta (never required reading) */
+
+  --p-weight-regular: 400;
+  --p-weight-medium:  500;
+  --p-weight-semibold: 600;
+
+  --p-leading-tight: 1.4;
+  --p-leading-body:  1.5;
+
+  /* ===========================================================================
+     PRIMITIVES — SPACE · RADIUS · SHADOW · MOTION · Z
+     =========================================================================== */
+  --p-space-1: 4px;
+  --p-space-2: 8px;   /* sm */
+  --p-space-3: 12px;
+  --p-space-4: 16px;  /* md (card padding) */
+  --p-space-5: 20px;
+  --p-space-6: 24px;  /* lg */
+  --p-space-8: 32px;
+  --p-space-10: 40px; /* xl */
+  --p-space-12: 48px;
+
+  --p-radius-sm:   12px; /* buttons, inputs, chips */
+  --p-radius-md:   16px; /* standard card */
+  --p-radius-lg:   20px; /* token "standard" */
+  --p-radius-xl:   24px; /* featured card (band ceiling for content) */
+  --p-radius-nav:  40px; /* glass nav only */
+  --p-radius-pill: 9999px; /* tags / pills */
+
+  /* Elevation — soft, low, wide, ALWAYS navy-tinted (The Navy-Tint Rule) */
+  --p-shadow-rest:        0 6px 16px oklch(var(--p-tint-steel) / 0.06);
+  --p-shadow-featured:    0 10px 28px oklch(var(--p-tint-steel) / 0.08);
+  --p-shadow-interactive: 0 8px 25px oklch(var(--p-tint-navy) / 0.20);
+  --p-shadow-elevated:    0 20px 40px oklch(var(--p-tint-navy) / 0.25);
+
+  --p-blur-glass: 12px; /* sky glass */
+  --p-blur-card:  20px; /* card glass */
+
+  --p-dur-fast:   150ms;
+  --p-dur-base:   200ms;
+  --p-dur-slow:   250ms;
+  --p-ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --p-ease-out-expo:  cubic-bezier(0.16, 1, 0.3, 1);
+  --p-ease-standard:  cubic-bezier(0.4, 0, 0.2, 1);
+
+  --p-z-base: 0;
+  --p-z-sticky: 100;     /* collapsing headers, sticky bars */
+  --p-z-nav: 200;        /* liquid-glass bottom nav */
+  --p-z-overlay: 300;    /* full-screen flow overlays */
+  --p-z-backdrop: 400;   /* modal/sheet scrim */
+  --p-z-modal: 500;      /* dialog, sheet, drawer */
+  --p-z-toast: 600;      /* sonner */
+  --p-z-tooltip: 700;
+
+  /* Layout */
+  --p-container-app: 430px; /* phone column; centered on large screens */
+
+  /* ===========================================================================
+     SEMANTIC ROLES — LIGHT  (the only layer components touch)
+     =========================================================================== */
+
+  /* Surfaces */
+  --bg: linear-gradient(to bottom right,
+          oklch(83.2% 0.083 264.3) 0%,  /* light-blue */
+          oklch(95.7% 0.021 254.9) 50%, /* surface-sky */
+          oklch(100% 0 0) 100%);        /* white */
+  --bg-daylight:
+    radial-gradient(circle at 20% 30%, oklch(var(--p-tint-sky) / 0.20) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, oklch(var(--p-tint-sky) / 0.15) 0%, transparent 40%),
+    radial-gradient(ellipse at center, oklch(var(--p-tint-sky) / 0.10) 0%, transparent 60%),
+    var(--bg);
+  --surface: var(--p-white);                       /* cards, sheets, inputs */
+  --surface-sky: var(--p-sky-100);                 /* media zones (paired with --secondary) */
+  --surface-glass: oklch(100% 0 0 / 0.90);         /* .bg-card-glass */
+  --surface-glass-sky: oklch(var(--p-tint-sky) / 0.30); /* .bg-glass */
+
+  /* Text */
+  --text-primary: var(--p-ink-900);   /* body emphasis / card titles */
+  --text-heading: var(--p-navy-900);  /* headings of consequence */
+  --text-secondary: var(--p-gray-600);/* AA body everywhere (7.56:1) */
+  --text-muted: var(--p-gray-500);    /* AA body, lighter (4.83:1) — short secondary copy */
+  --text-faint: var(--p-gray-400);    /* decorative/disabled ONLY — never required reading */
+  --text-on-primary: var(--p-white);  /* on navy fills */
+  --text-on-accent: var(--p-navy-900);/* on light-blue / sky fills */
+
+  /* Brand & action */
+  --primary: var(--p-navy-900);
+  --primary-foreground: var(--p-white);
+  --secondary: var(--p-blue-300);
+  --secondary-foreground: var(--p-navy-900);
+  --accent: var(--p-blue-500);          /* action-blue: gradients, glow, large/icon accents */
+  --accent-foreground: var(--p-white);
+
+  /* Info / meta chips — text is NAVY (bright-blue on chip-blue fails at 2.96:1) */
+  --info-surface: var(--p-sky-50);
+  --info-foreground: var(--p-navy-900); /* 13.11:1 on chip-blue */
+
+  /* Status — fill + accessible text + tinted surface variants */
+  --success: var(--p-green-500);
+  --success-foreground: var(--p-green-700);  /* on white (5.48:1) */
+  --success-surface: var(--p-green-50);
+  --success-on-surface: var(--p-green-800);  /* on tint (7.29:1) */
+
+  --warning: var(--p-amber-500);
+  --warning-foreground: var(--p-amber-700);  /* on white (4.84:1) — amber FILL needs ink text */
+  --warning-surface: var(--p-amber-50);
+  --warning-on-fill: var(--p-ink-900);       /* ink on amber-500 (6.50:1) */
+
+  --danger: var(--p-red-600);                /* solid: white text passes (4.83:1) */
+  --danger-foreground: var(--p-white);
+  --danger-surface: var(--p-red-50);
+  --danger-on-surface: var(--p-red-700);     /* tinted destructive (DESIGN.md default) (5.91:1) */
+
+  /* Accents (non-status) */
+  --rating: var(--p-gold-400);   /* star fill; pair with shape, hairline if on white */
+  --rating-edge: var(--p-gold-700);
+  --favorite: var(--p-coral-400);/* heart fill */
+
+  /* Lines */
+  --border: oklch(var(--p-tint-navy) / 0.08); /* hairline on white */
+  --border-glass: oklch(100% 0 0 / 0.30);     /* edge on glass */
+  --divider: var(--p-gray-100);
+  --ring: var(--p-navy-900);                  /* focus ring (rendered at /50 with 3px) */
+  --input-bg: var(--p-white);
+
+  /* Elevation roles */
+  --shadow-rest: var(--p-shadow-rest);
+  --shadow-featured: var(--p-shadow-featured);
+  --shadow-interactive: var(--p-shadow-interactive);
+  --shadow-elevated: var(--p-shadow-elevated);
+
+  /* Radius roles */
+  --radius-control: var(--p-radius-sm);  /* buttons, inputs, chips */
+  --radius-card: var(--p-radius-md);     /* standard card */
+  --radius-card-featured: var(--p-radius-xl);
+  --radius-nav: var(--p-radius-nav);
+  --radius-pill: var(--p-radius-pill);
+
+  /* Glass / materials */
+  --glass-blur: var(--p-blur-glass);
+  --glass-blur-card: var(--p-blur-card);
+  --nav-glow: radial-gradient(ellipse at center,
+                oklch(66.1% 0.180 261.1 / 0.35) 0%, /* action-blue glow */
+                transparent 70%);
+}
+
+/* =============================================================================
+   SEMANTIC ROLES — DARK  ·  PHASE 12 PLACEHOLDER (provisional, NOT WCAG-verified)
+   Same role names; only values change. No component edits when this lands.
+   Strategy: navy becomes ground, near-white becomes ink, light-blue stays accent.
+   ============================================================================= */
+[data-theme="dark"] {
+  --bg: linear-gradient(to bottom right,
+          oklch(24.2% 0.113 267.7) 0%,   /* TODO #0A1654 */
+          oklch(19.9% 0.089 267.7) 100%);/* TODO #060F3D */
+  --bg-daylight: var(--bg);
+  --surface: oklch(27.3% 0.131 267.1);          /* TODO #0C1B66 */
+  --surface-sky: oklch(30.4% 0.128 267.2);      /* TODO #13256E */
+  --surface-glass: oklch(27.3% 0.131 267.1 / 0.72);  /* TODO */
+  --surface-glass-sky: oklch(var(--p-tint-navy) / 0.45); /* TODO */
+
+  --text-primary: oklch(97.9% 0.010 267.4);  /* TODO #F5F8FF — verify ≥4.5:1 */
+  --text-heading: oklch(100% 0 0);           /* TODO */
+  --text-secondary: oklch(86.7% 0.050 267.6);/* TODO #C5D3F5 */
+  --text-muted: oklch(76.5% 0.070 267.2);    /* TODO #9FB2E0 */
+  --text-faint: oklch(60.5% 0.076 269.0);    /* TODO #6F80B0 decorative */
+  --text-on-primary: var(--p-navy-900);      /* TODO (primary flips to light) */
+  --text-on-accent: var(--p-navy-900);       /* TODO */
+
+  --primary: var(--p-blue-300);              /* TODO (action flips to light-blue in dark) */
+  --primary-foreground: var(--p-navy-900);
+  --secondary: oklch(var(--p-tint-sky) / 0.16);
+  --secondary-foreground: oklch(97.9% 0.010 267.4);
+  --accent: var(--p-blue-500);
+  --accent-foreground: var(--p-white);
+
+  --info-surface: oklch(var(--p-tint-sky) / 0.14);
+  --info-foreground: oklch(89% 0.04 267);
+
+  --border: oklch(100% 0 0 / 0.10);
+  --border-glass: oklch(100% 0 0 / 0.12);
+  --divider: oklch(100% 0 0 / 0.10);
+  --ring: var(--p-blue-300);
+  --input-bg: oklch(100% 0 0 / 0.06);
+  /* status roles: re-tuned in Phase 12 against the dark ground */
+}
+
+/* =============================================================================
+   Tailwind v4 bridge (Phase 1): map semantic roles onto shadcn/Tailwind vars in
+   the app theme via @theme inline, e.g.
+     @theme inline {
+       --color-background: var(--bg);
+       --color-foreground: var(--text-primary);
+       --color-primary: var(--primary);
+       --color-primary-foreground: var(--primary-foreground);
+       --color-card: var(--surface);
+       --color-muted-foreground: var(--text-muted);
+       --color-ring: var(--ring);
+       --radius: var(--radius-card);
+       ...
+     }
+   Components then use Tailwind classes (bg-primary, text-muted-foreground) that
+   resolve through the semantic layer — no raw hex anywhere in component code.
+   ============================================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

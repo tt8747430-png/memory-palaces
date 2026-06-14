@@ -1,0 +1,148 @@
+/* Tailwind v4 bridge — maps the semantic role tokens (tokens.css) onto Tailwind's
+   color/font/radius namespaces, so utilities (bg-primary, text-foreground,
+   border-border, rounded-card…) resolve THROUGH the semantic layer. Components use
+   these utilities; no component ever references a primitive or a raw hex. */
+@theme inline {
+  --font-sans: var(--p-font-sans);
+
+  --color-background: var(--surface);
+  --color-foreground: var(--text-primary);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--text-primary);
+  --color-popover: var(--surface);
+  --color-popover-foreground: var(--text-primary);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-muted: var(--surface-sky);
+  --color-muted-foreground: var(--text-muted);
+
+  --color-destructive: var(--danger);
+  --color-destructive-foreground: var(--danger-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+
+  --color-border: var(--border);
+  --color-input: var(--input-bg);
+  --color-ring: var(--ring);
+
+  /* Direct-access roles for utilities */
+  --color-heading: var(--text-heading);
+  --color-surface-sky: var(--surface-sky);
+  --color-info-surface: var(--info-surface);
+  --color-info-foreground: var(--info-foreground);
+  --color-rating: var(--rating);
+  --color-favorite: var(--favorite);
+
+  /* Radius scale (keys reference primitives to avoid name collisions) */
+  --radius-control: var(--p-radius-sm);
+  --radius-card: var(--p-radius-md);
+  --radius-card-featured: var(--p-radius-xl);
+  --radius-nav: var(--p-radius-nav);
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    border-color: var(--border);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    font-family: var(--p-font-sans);
+    color: var(--text-primary);
+    /* The Daylight ground: one lit-room gradient shared by every screen. */
+    background: var(--bg-daylight);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    margin: 0;
+    color: var(--text-heading);
+    line-height: var(--p-leading-tight);
+  }
+  h1 {
+    font-size: var(--p-text-headline);
+    font-weight: var(--p-weight-semibold);
+  }
+  h2 {
+    font-size: var(--p-text-title);
+    font-weight: var(--p-weight-semibold);
+  }
+  h3 {
+    font-size: var(--p-text-sub);
+    font-weight: var(--p-weight-medium);
+  }
+  p {
+    margin: 0;
+    font-size: var(--p-text-body);
+    line-height: var(--p-leading-body);
+    color: var(--text-secondary);
+  }
+
+  /* One soft navy focus ring everywhere (never a harsh outline). */
+  :focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 50%, transparent);
+  }
+}
+
+@layer utilities {
+  .bg-daylight {
+    background: var(--bg-daylight);
+    background-repeat: no-repeat;
+  }
+  .bg-glass {
+    background: var(--surface-glass-sky);
+    backdrop-filter: blur(var(--glass-blur));
+  }
+  .bg-card-glass {
+    background: var(--surface-glass);
+    backdrop-filter: blur(var(--glass-blur-card));
+  }
+
+  .shadow-rest {
+    box-shadow: var(--shadow-rest);
+  }
+  .shadow-featured {
+    box-shadow: var(--shadow-featured);
+  }
+  .shadow-interactive {
+    box-shadow: var(--shadow-interactive);
+  }
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+
+  /* Safe-area (iOS notch / home indicator); resolve to 0 in the browser. */
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pl-safe {
+    padding-left: env(safe-area-inset-left);
+  }
+  .pr-safe {
+    padding-right: env(safe-area-inset-right);
+  }
+}
