@@ -3,7 +3,7 @@
 A phone-first, **offline-first PWA** for memory training with the method of loci.
 Rewrite of the original app into **Feature-Sliced Design × Clean/Hexagonal Architecture**.
 
-> Architecture plan: `../docs/ai_docs/NEW_ARCHITECHTURE.md` · Design system: `docs/DESIGN_SYSTEM.md` + `docs/tokens.css`
+> Architecture plan: `../memory-palaces-app-ui/docs/ai_docs/NEW_ARCHITECHTURE.md` · Design system: `docs/DESIGN_SYSTEM.md` + `docs/tokens.css`
 
 ## Stack
 
