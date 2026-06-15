@@ -5,8 +5,9 @@ export type {
   CardOrder,
   StudyMode,
   MakePalaceInput,
+  PalaceChanges,
 } from './model/types'
-export { makePalace, DEFAULT_PALACE_SETTINGS } from './model/types'
+export { makePalace, updatePalace, DEFAULT_PALACE_SETTINGS } from './model/types'
 export { createPalaceStore } from './model/store'
 export type { PalaceState, PalaceStatus, PalaceStore } from './model/store'
 export { PalaceStoreContext, usePalaceStore, usePalaceStoreApi } from './model/context'
