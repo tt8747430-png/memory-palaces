@@ -22,3 +22,9 @@ export function useProgressStore<T>(selector: (state: ProgressState) => T): T {
 export function useProgressStoreApi(): ProgressStore {
   return useProgressStoreContext()
 }
+
+/** Imperative handle, or null when no store is provided. Lets reward-on-completion
+ * degrade gracefully in contexts that don't track progress (e.g. focused tests). */
+export function useProgressStoreApiOptional(): ProgressStore | null {
+  return useContext(ProgressStoreContext)
+}

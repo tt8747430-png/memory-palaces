@@ -17,7 +17,9 @@ import {
 import { editLocus } from '@/features/locus'
 import { editPalace } from '@/features/palace'
 import { gradeCard } from '@/features/review'
+import { studyXp } from '@/features/progress'
 import { StudySession, type StudyCard, type StudyPrefs } from '@/widgets/study-session'
+import { useSessionReward } from '@/widgets/session-reward'
 import { AppScreen, ScreenHeader } from '@/shared/ui'
 
 export interface RoomTrainPageProps {
@@ -45,6 +47,7 @@ export function RoomTrainPage({ roomId, onBack }: RoomTrainPageProps) {
   const locusStore = useLocusStoreApi()
   const roomStore = useRoomStoreApi()
   const palaceStore = usePalaceStoreApi()
+  const reward = useSessionReward()
 
   useEffect(() => {
     locusStore.getState().start()
@@ -118,7 +121,10 @@ export function RoomTrainPage({ roomId, onBack }: RoomTrainPageProps) {
       onToggleFlag={handleToggleFlag}
       onEditCard={(id, changes) => void editLocus(locusStore, id, changes)}
       onBack={onBack ?? (() => {})}
-      onComplete={() => onBack?.()}
+      onComplete={(summary) => {
+        void reward({ xp: studyXp(summary.graded) })
+        onBack?.()
+      }}
     />
   )
 }

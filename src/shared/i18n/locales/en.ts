@@ -302,6 +302,11 @@ export const en = {
     showVerse: 'Show verse',
     hideVerse: 'Hide verse',
   },
+  reward: {
+    xp: '+{{amount}} XP',
+    levelUp: 'Level {{level}} reached',
+    streak: '{{count}}-day streak',
+  },
 } as const
 
 export type AppResources = typeof en

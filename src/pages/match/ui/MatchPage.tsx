@@ -11,6 +11,8 @@ import { useRoomStore, useRoomStoreApi } from '@/entities/room'
 import { usePalaceStore, usePalaceStoreApi } from '@/entities/palace'
 import { MatchBoard } from '@/widgets/match'
 import { type MatchLocus } from '@/features/match'
+import { XP_MATCH } from '@/features/progress'
+import { useSessionReward } from '@/widgets/session-reward'
 import { AppScreen, ScreenHeader } from '@/shared/ui'
 
 export interface MatchPageProps {
@@ -26,6 +28,7 @@ export function MatchPage({ roomId, onBack }: MatchPageProps) {
   const locusStore = useLocusStoreApi()
   const roomStore = useRoomStoreApi()
   const palaceStore = usePalaceStoreApi()
+  const reward = useSessionReward()
 
   useEffect(() => {
     locusStore.getState().start()
@@ -74,7 +77,10 @@ export function MatchPage({ roomId, onBack }: MatchPageProps) {
       loci={loci}
       subtitle={subtitle}
       onBack={onBack ?? (() => {})}
-      onComplete={() => onBack?.()}
+      onComplete={() => {
+        void reward({ xp: XP_MATCH })
+        onBack?.()
+      }}
     />
   )
 }

@@ -21,6 +21,8 @@ import {
 } from '@/entities/question'
 import { QuizSession, type QuizResult } from '@/widgets/quiz'
 import { type QuizQuestion } from '@/features/quiz'
+import { quizXp } from '@/features/progress'
+import { useSessionReward } from '@/widgets/session-reward'
 import { AppScreen, ScreenHeader } from '@/shared/ui'
 
 export interface QuizPageProps {
@@ -37,6 +39,7 @@ export function QuizPage({ palaceId, onBack }: QuizPageProps) {
   const palaceStore = usePalaceStoreApi()
   const roomStore = useRoomStoreApi()
   const questionStore = useQuestionStoreApi()
+  const reward = useSessionReward()
 
   useEffect(() => {
     palaceStore.getState().start()
@@ -91,8 +94,9 @@ export function QuizPage({ palaceId, onBack }: QuizPageProps) {
     )
   }
 
-  const handleComplete = (_result: QuizResult) => {
-    // Result persistence (XP / accuracy history) arrives with the progress entity in Phase 8.
+  const handleComplete = (result: QuizResult) => {
+    // A passing quiz (≥80%) counts as a training day; XP scales with correct answers.
+    void reward({ xp: quizXp(result.score), quizAccuracy: result.accuracy, recordDay: result.accuracy >= 80 })
     onBack?.()
   }
 

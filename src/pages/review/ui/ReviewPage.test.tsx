@@ -9,6 +9,7 @@ import { InMemoryRepository } from '@/shared/api'
 import { createPalaceStore, makePalace, PalaceStoreContext, type Palace } from '@/entities/palace'
 import { createRoomStore, makeRoom, RoomStoreContext, type Room } from '@/entities/room'
 import { createLocusStore, LocusStoreContext, makeLocus, type Locus } from '@/entities/locus'
+import { createProgressStore, ProgressStoreContext, type Progress } from '@/entities/progress'
 import { ReviewPage } from './ReviewPage'
 
 afterEach(cleanup)
@@ -34,20 +35,23 @@ function renderReview(loci: Locus[]) {
     makeRoom({ id: 'r1', createdAt: at(0), palaceId: 'p1', title: 'Atrium', order: 0 }),
   ])
   const lociRepo = new InMemoryRepository<Locus>(loci)
+  const progressRepo = new InMemoryRepository<Progress>()
   render(
     <I18nextProvider i18n={i18n}>
       <MotionConfig reducedMotion="always">
         <PalaceStoreContext value={createPalaceStore(palaceRepo)}>
           <RoomStoreContext value={createRoomStore(roomRepo)}>
             <LocusStoreContext value={createLocusStore(lociRepo)}>
-              <ReviewPage onBack={() => {}} />
+              <ProgressStoreContext value={createProgressStore(progressRepo)}>
+                <ReviewPage onBack={() => {}} />
+              </ProgressStoreContext>
             </LocusStoreContext>
           </RoomStoreContext>
         </PalaceStoreContext>
       </MotionConfig>
     </I18nextProvider>,
   )
-  return { lociRepo }
+  return { lociRepo, progressRepo }
 }
 
 describe('ReviewPage', () => {
@@ -66,6 +70,23 @@ describe('ReviewPage', () => {
     await waitFor(async () => {
       const loci = await lociRepo.getAll()
       expect(loci.find((locus) => locus.id === 'l1')?.srs).toBeDefined()
+    })
+  })
+
+  it('awards XP and records a training day on completion', async () => {
+    const user = userEvent.setup()
+    const { progressRepo } = renderReview([
+      makeLocus({ id: 'l1', createdAt: at(1), roomId: 'r1', front: 'Front 1', back: 'Back 1' }),
+    ])
+
+    await user.click(await screen.findByRole('button', { name: /show answer/i }))
+    await user.click(screen.getByRole('button', { name: /good/i }))
+    await user.click(await screen.findByRole('button', { name: /^done$/i }))
+
+    await waitFor(async () => {
+      const [progress] = await progressRepo.getAll()
+      expect(progress?.xp).toBeGreaterThan(0)
+      expect(progress?.streakCount).toBe(1)
     })
   })
 

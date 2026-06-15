@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Check } from 'lucide-react'
 import { getDueLoci } from '@/shared/lib'
@@ -16,7 +16,9 @@ import {
   usePalaceStoreApi,
 } from '@/entities/palace'
 import { gradeCard } from '@/features/review'
+import { studyXp } from '@/features/progress'
 import { StudySession, type StudyCard } from '@/widgets/study-session'
+import { useSessionReward } from '@/widgets/session-reward'
 import { AppScreen, Button } from '@/shared/ui'
 
 export interface ReviewPageProps {
@@ -32,6 +34,7 @@ export function ReviewPage({ onBack }: ReviewPageProps) {
   const locusStore = useLocusStoreApi()
   const roomStore = useRoomStoreApi()
   const palaceStore = usePalaceStoreApi()
+  const reward = useSessionReward()
   // Snapshot the clock so the due queue stays stable for the whole session.
   const [now] = useState(() => Date.now())
 
@@ -52,7 +55,7 @@ export function ReviewPage({ onBack }: ReviewPageProps) {
 
   const byId = useMemo(() => new Map(allLoci.map((locus) => [locus.id, locus])), [allLoci])
   const due = useMemo(() => getDueLoci(palaces, rooms, allLoci, now), [palaces, rooms, allLoci, now])
-  const cards = useMemo<StudyCard[]>(
+  const liveCards = useMemo<StudyCard[]>(
     () =>
       due.flatMap((card) => {
         const locus = byId.get(card.locus.id)
@@ -60,9 +63,18 @@ export function ReviewPage({ onBack }: ReviewPageProps) {
       }),
     [due, byId],
   )
-  const palaceCount = useMemo(() => new Set(due.map((card) => card.palaceId)).size, [due])
+  const livePalaceCount = useMemo(() => new Set(due.map((card) => card.palaceId)).size, [due])
 
-  if (!ready) {
+  // Freeze the due queue at the first ready render. Grading moves a card out of the
+  // live due set, which would otherwise shrink the deck mid-session and unmount the
+  // StudySession before it can celebrate completion (and award XP).
+  const snapshotRef = useRef<{ cards: StudyCard[]; palaceCount: number } | null>(null)
+  if (ready && snapshotRef.current === null) {
+    snapshotRef.current = { cards: liveCards, palaceCount: livePalaceCount }
+  }
+  const snapshot = snapshotRef.current
+
+  if (!ready || !snapshot) {
     return (
       <AppScreen className="items-center justify-center">
         <span className="size-8 animate-pulse rounded-full bg-secondary" aria-hidden />
@@ -70,7 +82,7 @@ export function ReviewPage({ onBack }: ReviewPageProps) {
     )
   }
 
-  if (cards.length === 0) {
+  if (snapshot.cards.length === 0) {
     return (
       <AppScreen className="items-center justify-center gap-5 text-center">
         <div className="grid size-16 place-items-center rounded-card-featured bg-card shadow-rest">
@@ -89,21 +101,24 @@ export function ReviewPage({ onBack }: ReviewPageProps) {
     )
   }
 
-  const subtitle = `${t('review.dueCount', { count: cards.length })} · ${t(
-    palaceCount === 1 ? 'review.palaceOne' : 'review.palaceOther',
-    { count: palaceCount },
+  const subtitle = `${t('review.dueCount', { count: snapshot.cards.length })} · ${t(
+    snapshot.palaceCount === 1 ? 'review.palaceOne' : 'review.palaceOther',
+    { count: snapshot.palaceCount },
   )}`
 
   return (
     <StudySession
-      cards={cards}
+      cards={snapshot.cards}
       title={t('review.title')}
       subtitle={subtitle}
       features={{ browse: false, scope: false, edit: false, swipe: true }}
       initialPrefs={{ mode: 'review', sortIntoPiles: false }}
       onGrade={(id, grade) => void gradeCard(locusStore, id, grade, now)}
       onBack={onBack ?? (() => {})}
-      onComplete={() => onBack?.()}
+      onComplete={(summary) => {
+        void reward({ xp: studyXp(summary.graded) })
+        onBack?.()
+      }}
       now={now}
     />
   )
