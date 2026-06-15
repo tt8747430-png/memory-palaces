@@ -5,6 +5,7 @@ import { PalaceDetailPage } from '@/pages/palace-detail'
 import { RoomContentPage } from '@/pages/room-content'
 import { RoomTrainPage } from '@/pages/room-train'
 import { ReviewPage } from '@/pages/review'
+import { QuizPage } from '@/pages/quiz'
 import { ProfilePage } from '@/pages/profile'
 import { ROUTES } from '@/shared/config/routes'
 import { RootLayout } from './RootLayout'
@@ -48,6 +49,7 @@ function PalaceDetailRoute() {
       onBack={() => navigate({ to: ROUTES.palaces })}
       onOpenRoom={(roomId) => navigate({ to: ROUTES.roomContent, params: { roomId } })}
       onTrainRoom={(roomId) => navigate({ to: ROUTES.roomTrain, params: { roomId } })}
+      onQuiz={() => navigate({ to: ROUTES.palaceQuiz, params: { palaceId } })}
     />
   )
 }
@@ -98,6 +100,23 @@ const reviewRoute = createRoute({
   component: ReviewRoute,
 })
 
+function QuizRoute() {
+  const { palaceId } = quizRoute.useParams()
+  const navigate = useNavigate()
+  return (
+    <QuizPage
+      palaceId={palaceId}
+      onBack={() => navigate({ to: ROUTES.palaceDetail, params: { palaceId } })}
+    />
+  )
+}
+
+const quizRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.palaceQuiz,
+  component: QuizRoute,
+})
+
 const profileRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.profile,
@@ -111,6 +130,7 @@ const routeTree = rootRoute.addChildren([
   roomContentRoute,
   roomTrainRoute,
   reviewRoute,
+  quizRoute,
   profileRoute,
 ])
 

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Plus } from 'lucide-react'
+import { Brain, Plus } from 'lucide-react'
 import { usePalaceStore, usePalaceStoreApi } from '@/entities/palace'
 import { roomsForPalace, selectRooms, useRoomStore, useRoomStoreApi } from '@/entities/room'
 import { createRoom, deleteRoom, editRoom, moveRoom } from '@/features/room'
@@ -15,6 +15,8 @@ export interface PalaceDetailPageProps {
   onOpenRoom?: (roomId: string) => void
   /** Start training a room; wired by the route wrapper. */
   onTrainRoom?: (roomId: string) => void
+  /** Quiz the whole palace; wired by the route wrapper. */
+  onQuiz?: () => void
 }
 
 /** Palace detail — the palace's ordered rooms with create/edit/delete/reorder, all
@@ -24,6 +26,7 @@ export function PalaceDetailPage({
   onBack,
   onOpenRoom,
   onTrainRoom,
+  onQuiz,
 }: PalaceDetailPageProps) {
   const { t } = useTranslation()
   const palaceStore = usePalaceStoreApi()
@@ -52,7 +55,22 @@ export function PalaceDetailPage({
         title={palace ? palace.name : t('palaceDetail.notFound')}
         onBack={onBack}
         backLabel={t('palaceDetail.back')}
-        action={palace && rooms.length > 0 ? <Chip>{rooms.length}</Chip> : undefined}
+        action={
+          palace ? (
+            <div className="flex items-center gap-2">
+              {rooms.length > 0 ? <Chip>{rooms.length}</Chip> : null}
+              {onQuiz ? (
+                <IconButton
+                  variant="tint"
+                  aria-label={t('palaceDetail.quizLabel', { name: palace.name })}
+                  onClick={onQuiz}
+                >
+                  <Brain className="size-5" aria-hidden />
+                </IconButton>
+              ) : null}
+            </div>
+          ) : undefined
+        }
       />
 
       {palace ? (

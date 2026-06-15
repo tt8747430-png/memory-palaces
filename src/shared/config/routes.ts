@@ -3,6 +3,7 @@ export const ROUTES = {
   home: '/',
   palaces: '/palaces',
   palaceDetail: '/palaces/$palaceId',
+  palaceQuiz: '/palaces/$palaceId/quiz',
   roomContent: '/rooms/$roomId',
   roomTrain: '/rooms/$roomId/train',
   review: '/review',
