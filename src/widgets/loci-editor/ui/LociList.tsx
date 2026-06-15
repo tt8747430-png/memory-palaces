@@ -4,7 +4,7 @@ import { motion } from 'motion/react'
 import { Pencil, Trash2 } from 'lucide-react'
 import type { Locus, LocusChanges } from '@/entities/locus'
 import { cn } from '@/shared/lib'
-import { Button, cardSurface, IconButton, TextField } from '@/shared/ui'
+import { Button, cardSurface, IconButton, SrsStatusChip, TextField } from '@/shared/ui'
 
 export interface LociListProps {
   loci: Locus[]
@@ -74,7 +74,10 @@ export function LociList({ loci, onEdit, onDelete }: LociListProps) {
           ) : (
             <div className="flex items-center gap-1">
               <div className="min-w-0 flex-1 px-1">
-                <h3 className="truncate">{locus.front}</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="truncate">{locus.front}</h3>
+                  <SrsStatusChip srs={locus.srs} />
+                </div>
                 <p className="truncate text-[length:var(--p-text-label)]">{locus.back}</p>
               </div>
               <div className="ml-auto flex shrink-0 items-center gap-0.5">

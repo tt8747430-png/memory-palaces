@@ -10,6 +10,18 @@ export const en = {
     palaces: 'Palaces',
     profile: 'Profile',
   },
+  grade: {
+    again: 'Again',
+    hard: 'Hard',
+    good: 'Good',
+    easy: 'Easy',
+  },
+  srs: {
+    new: 'New',
+    due: 'Due',
+    learning: 'Learning',
+    known: 'Known',
+  },
   profile: {
     guest: 'Exploring as a guest',
     progressTitle: 'Progress & streaks',
