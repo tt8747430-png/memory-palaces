@@ -2,12 +2,14 @@ import { createRxDatabase } from 'rxdb'
 import type { RxCollection, RxStorage } from 'rxdb'
 import type { Folder } from '@/entities/folder'
 import type { Palace } from '@/entities/palace'
+import type { Room } from '@/entities/room'
 import { STORAGE_PREFIX } from '@/shared/config/constants'
-import { folderSchema, palaceSchema } from './schemas'
+import { folderSchema, palaceSchema, roomSchema } from './schemas'
 
 export interface AppCollections {
   palaces: RxCollection<Palace>
   folders: RxCollection<Folder>
+  rooms: RxCollection<Room>
 }
 
 /**
@@ -22,6 +24,11 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
   const collections = await database.addCollections({
     palaces: { schema: palaceSchema },
     folders: { schema: folderSchema },
+    rooms: { schema: roomSchema },
   })
-  return { palaces: collections.palaces, folders: collections.folders }
+  return {
+    palaces: collections.palaces,
+    folders: collections.folders,
+    rooms: collections.rooms,
+  }
 }

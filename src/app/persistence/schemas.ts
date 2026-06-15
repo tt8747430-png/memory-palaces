@@ -1,6 +1,7 @@
 import type { RxJsonSchema } from 'rxdb'
 import type { Folder } from '@/entities/folder'
 import type { Palace } from '@/entities/palace'
+import type { Room } from '@/entities/room'
 
 /**
  * RxDB JSON schemas for the persisted entities. They live at the composition layer
@@ -81,4 +82,20 @@ export const folderSchema: RxJsonSchema<Folder> = {
     icon: { type: 'string' },
   },
   required: ['id', 'createdAt', 'updatedAt', 'name', 'color', 'icon'],
+}
+
+export const roomSchema: RxJsonSchema<Room> = {
+  version: 0,
+  primaryKey: 'id',
+  type: 'object',
+  properties: {
+    id: { type: 'string', maxLength: 100 },
+    createdAt: { type: 'string' },
+    updatedAt: { type: 'string' },
+    palaceId: { type: 'string', maxLength: 100 },
+    title: { type: 'string' },
+    description: { type: 'string' },
+    order: { type: 'number' },
+  },
+  required: ['id', 'createdAt', 'updatedAt', 'palaceId', 'title', 'description', 'order'],
 }

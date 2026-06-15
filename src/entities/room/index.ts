@@ -1,3 +1,7 @@
 export type { Room, MakeRoomInput } from './model/types'
 export { makeRoom } from './model/types'
+export { createRoomStore } from './model/store'
+export type { RoomState, RoomStatus, RoomStore } from './model/store'
+export { RoomStoreContext, useRoomStore, useRoomStoreApi } from './model/context'
+export { selectRooms, selectIsReady, roomsForPalace } from './model/selectors'
 export type { RoomRepository } from './api/room-repository'
