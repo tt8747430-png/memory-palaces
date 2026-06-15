@@ -1,7 +1,7 @@
 export { cn } from './cn'
 export { shuffle } from './shuffle'
 export { speak, cancelSpeech, speechAvailable } from './speech'
-export { tick, impact, success } from './haptics'
+export { tick, impact, success, setHapticsEnabled } from './haptics'
 export { EventBus, type EventHandler } from './event-bus'
 export { systemClock, fixedClock, type Clock } from './clock'
 export { cloneEntity, type Entity } from './entity'

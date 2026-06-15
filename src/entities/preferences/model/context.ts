@@ -22,3 +22,9 @@ export function usePreferencesStore<T>(selector: (state: PreferencesState) => T)
 export function usePreferencesStoreApi(): PreferencesStore {
   return usePreferencesStoreContext()
 }
+
+/** Imperative handle, or null when no store is provided — lets cross-cutting code
+ * (e.g. reward-toast gating) read preferences without forcing the context. */
+export function usePreferencesStoreApiOptional(): PreferencesStore | null {
+  return useContext(PreferencesStoreContext)
+}

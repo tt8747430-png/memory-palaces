@@ -6,6 +6,7 @@ export {
   PreferencesStoreContext,
   usePreferencesStore,
   usePreferencesStoreApi,
+  usePreferencesStoreApiOptional,
 } from './model/context'
 export { selectPreferences, selectIsReady, selectEffectivePreferences } from './model/selectors'
 export type { PreferencesRepository } from './api/preferences-repository'
