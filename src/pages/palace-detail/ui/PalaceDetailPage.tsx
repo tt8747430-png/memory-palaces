@@ -13,11 +13,18 @@ export interface PalaceDetailPageProps {
   onBack?: () => void
   /** Open a room's content; wired by the route wrapper. */
   onOpenRoom?: (roomId: string) => void
+  /** Start training a room; wired by the route wrapper. */
+  onTrainRoom?: (roomId: string) => void
 }
 
 /** Palace detail — the palace's ordered rooms with create/edit/delete/reorder, all
  * persisting offline through the injected room store. */
-export function PalaceDetailPage({ palaceId, onBack, onOpenRoom }: PalaceDetailPageProps) {
+export function PalaceDetailPage({
+  palaceId,
+  onBack,
+  onOpenRoom,
+  onTrainRoom,
+}: PalaceDetailPageProps) {
   const { t } = useTranslation()
   const palaceStore = usePalaceStoreApi()
   const roomStore = useRoomStoreApi()
@@ -72,6 +79,7 @@ export function PalaceDetailPage({ palaceId, onBack, onOpenRoom }: PalaceDetailP
             <RoomJourneyMap
               rooms={rooms}
               onOpen={onOpenRoom}
+              onTrain={onTrainRoom}
               onRename={(id, newTitle) => void editRoom(roomStore, id, { title: newTitle })}
               onDelete={(id) => void deleteRoom(roomStore, id)}
               onMoveUp={(id) => void moveRoom(roomStore, id, 'up')}

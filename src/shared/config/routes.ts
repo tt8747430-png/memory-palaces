@@ -4,6 +4,8 @@ export const ROUTES = {
   palaces: '/palaces',
   palaceDetail: '/palaces/$palaceId',
   roomContent: '/rooms/$roomId',
+  roomTrain: '/rooms/$roomId/train',
+  review: '/review',
   profile: '/profile',
 } as const
 

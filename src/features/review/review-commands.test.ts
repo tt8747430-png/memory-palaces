@@ -1,0 +1,52 @@
+import { describe, expect, it } from 'vitest'
+import { InMemoryRepository } from '@/shared/api'
+import { createLocusStore, makeLocus, type Locus } from '@/entities/locus'
+import { isDue, schedule } from '@/shared/lib'
+import { gradeCard } from './grade-card'
+
+const NOW = Date.UTC(2026, 0, 10)
+
+function newCard(id: string): Locus {
+  return makeLocus({ id, createdAt: new Date(0).toISOString(), roomId: 'r1', front: 'a', back: 'b' })
+}
+
+function storeWith(loci: Locus[]) {
+  const store = createLocusStore(new InMemoryRepository<Locus>(loci))
+  store.getState().start()
+  return store
+}
+
+describe('gradeCard', () => {
+  it('schedules a brand-new card forward and persists it (good)', async () => {
+    const store = storeWith([newCard('l1')])
+
+    const graded = await gradeCard(store, 'l1', 'good', NOW)
+
+    expect(graded.srs?.reps).toBe(1)
+    expect(isDue(graded.srs, NOW)).toBe(false)
+    expect(store.getState().loci[0]?.srs).toEqual(graded.srs)
+  })
+
+  it('matches the pure scheduler for the same input', async () => {
+    const store = storeWith([newCard('l1')])
+    const graded = await gradeCard(store, 'l1', 'easy', NOW)
+    expect(graded.srs).toEqual(schedule(undefined, 'easy', NOW))
+  })
+
+  it("keeps a card due now when graded 'again'", async () => {
+    const store = storeWith([newCard('l1')])
+    const graded = await gradeCard(store, 'l1', 'again', NOW)
+    expect(isDue(graded.srs, NOW)).toBe(true)
+  })
+
+  it('bumps updatedAt to the injected clock', async () => {
+    const store = storeWith([newCard('l1')])
+    const graded = await gradeCard(store, 'l1', 'good', NOW)
+    expect(graded.updatedAt).toBe(new Date(NOW).toISOString())
+  })
+
+  it('throws when the locus does not exist', async () => {
+    const store = storeWith([])
+    await expect(gradeCard(store, 'missing', 'good', NOW)).rejects.toThrow(/not found/i)
+  })
+})

@@ -2,7 +2,12 @@ import { useTranslation } from 'react-i18next'
 import { useSessionStore } from '@/entities/session'
 import { AppScreen, Button, GlassCard } from '@/shared/ui'
 
-export function HomePage() {
+export interface HomePageProps {
+  /** Start a daily review session; wired by the route wrapper. */
+  onStartReview?: () => void
+}
+
+export function HomePage({ onStartReview }: HomePageProps = {}) {
   const { t } = useTranslation()
   const session = useSessionStore((state) => state.session)
   const status = useSessionStore((state) => state.status)
@@ -23,7 +28,12 @@ export function HomePage() {
       </GlassCard>
 
       <div className="mt-auto pb-28 pt-10">
-        <Button size="lg" className="w-full" disabled={status !== 'ready'}>
+        <Button
+          size="lg"
+          className="w-full"
+          disabled={status !== 'ready'}
+          onClick={onStartReview}
+        >
           {t('home.primaryCta')}
         </Button>
       </div>

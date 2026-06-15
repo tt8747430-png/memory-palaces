@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'motion/react'
-import { ArrowDown, ArrowUp, Pencil, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, Pencil, Trash2, Zap } from 'lucide-react'
 import type { Room } from '@/entities/room'
 import { cn } from '@/shared/lib'
 import { Button, cardSurface, IconButton, TextField } from '@/shared/ui'
@@ -15,6 +15,8 @@ export interface RoomJourneyMapProps {
   onMoveDown: (id: string) => void
   /** Open the room's content. Omitted in contexts without navigation (e.g. tests). */
   onOpen?: (id: string) => void
+  /** Start a training session for the room. Omitted where navigation is absent. */
+  onTrain?: (id: string) => void
 }
 
 /** The ordered journey of a palace's rooms: a numbered path with inline rename,
@@ -26,6 +28,7 @@ export function RoomJourneyMap({
   onMoveUp,
   onMoveDown,
   onOpen,
+  onTrain,
 }: RoomJourneyMapProps) {
   const { t } = useTranslation()
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -86,6 +89,16 @@ export function RoomJourneyMap({
                 openLabel={t('rooms.openLabel', { title: room.title })}
               />
               <div className="ml-auto flex shrink-0 items-center gap-0.5">
+                {onTrain ? (
+                  <IconButton
+                    size="sm"
+                    variant="tint"
+                    aria-label={t('rooms.trainLabel', { title: room.title })}
+                    onClick={() => onTrain(room.id)}
+                  >
+                    <Zap className="size-4" aria-hidden />
+                  </IconButton>
+                ) : null}
                 <IconButton
                   size="sm"
                   aria-label={t('rooms.moveUpLabel', { title: room.title })}

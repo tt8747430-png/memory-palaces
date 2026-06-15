@@ -3,16 +3,23 @@ import { HomePage } from '@/pages/home'
 import { PalacesPage } from '@/pages/palaces'
 import { PalaceDetailPage } from '@/pages/palace-detail'
 import { RoomContentPage } from '@/pages/room-content'
+import { RoomTrainPage } from '@/pages/room-train'
+import { ReviewPage } from '@/pages/review'
 import { ProfilePage } from '@/pages/profile'
 import { ROUTES } from '@/shared/config/routes'
 import { RootLayout } from './RootLayout'
 
 const rootRoute = createRootRoute({ component: RootLayout })
 
+function HomeRoute() {
+  const navigate = useNavigate()
+  return <HomePage onStartReview={() => navigate({ to: ROUTES.review })} />
+}
+
 const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.home,
-  component: HomePage,
+  component: HomeRoute,
 })
 
 // Thin wrappers keep the pages router-free (and unit-testable): the route reads
@@ -40,6 +47,7 @@ function PalaceDetailRoute() {
       palaceId={palaceId}
       onBack={() => navigate({ to: ROUTES.palaces })}
       onOpenRoom={(roomId) => navigate({ to: ROUTES.roomContent, params: { roomId } })}
+      onTrainRoom={(roomId) => navigate({ to: ROUTES.roomTrain, params: { roomId } })}
     />
   )
 }
@@ -62,6 +70,34 @@ const roomContentRoute = createRoute({
   component: RoomContentRoute,
 })
 
+function RoomTrainRoute() {
+  const { roomId } = roomTrainRoute.useParams()
+  const navigate = useNavigate()
+  return (
+    <RoomTrainPage
+      roomId={roomId}
+      onBack={() => navigate({ to: ROUTES.roomContent, params: { roomId } })}
+    />
+  )
+}
+
+const roomTrainRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.roomTrain,
+  component: RoomTrainRoute,
+})
+
+function ReviewRoute() {
+  const navigate = useNavigate()
+  return <ReviewPage onBack={() => navigate({ to: ROUTES.home })} />
+}
+
+const reviewRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.review,
+  component: ReviewRoute,
+})
+
 const profileRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.profile,
@@ -73,6 +109,8 @@ const routeTree = rootRoute.addChildren([
   palacesRoute,
   palaceDetailRoute,
   roomContentRoute,
+  roomTrainRoute,
+  reviewRoute,
   profileRoute,
 ])
 

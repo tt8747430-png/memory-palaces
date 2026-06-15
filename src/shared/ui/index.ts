@@ -14,3 +14,5 @@ export type { IconButtonProps, IconButtonVariant, IconButtonSize } from './IconB
 export { GradeButtons } from './GradeButtons'
 export type { GradeButtonsProps } from './GradeButtons'
 export { SrsStatusChip } from './SrsStatusChip'
+export { Sheet } from './Sheet'
+export type { SheetProps } from './Sheet'
