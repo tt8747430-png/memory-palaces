@@ -3,13 +3,15 @@ import type { RxCollection, RxStorage } from 'rxdb'
 import type { Folder } from '@/entities/folder'
 import type { Palace } from '@/entities/palace'
 import type { Room } from '@/entities/room'
+import type { Locus } from '@/entities/locus'
 import { STORAGE_PREFIX } from '@/shared/config/constants'
-import { folderSchema, palaceSchema, roomSchema } from './schemas'
+import { folderSchema, locusSchema, palaceSchema, roomSchema } from './schemas'
 
 export interface AppCollections {
   palaces: RxCollection<Palace>
   folders: RxCollection<Folder>
   rooms: RxCollection<Room>
+  loci: RxCollection<Locus>
 }
 
 /**
@@ -25,10 +27,12 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
     palaces: { schema: palaceSchema },
     folders: { schema: folderSchema },
     rooms: { schema: roomSchema },
+    loci: { schema: locusSchema },
   })
   return {
     palaces: collections.palaces,
     folders: collections.folders,
     rooms: collections.rooms,
+    loci: collections.loci,
   }
 }

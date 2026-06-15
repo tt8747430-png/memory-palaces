@@ -50,3 +50,17 @@ export function makeLocus(input: MakeLocusInput): Locus {
     memorized: input.memorized ?? false,
   }
 }
+
+/** Editable fields of a locus — identity, timestamps, and room are owned elsewhere. */
+export type LocusChanges = Partial<Omit<Locus, 'id' | 'createdAt' | 'updatedAt' | 'roomId'>>
+
+/** Apply an edit, enforcing the same invariants as {@link makeLocus}. `updatedAt`
+ * is set by the caller (clock injected) so the function stays pure. */
+export function updateLocus(locus: Locus, changes: LocusChanges, updatedAt: string): Locus {
+  const next = { ...locus, ...changes, updatedAt }
+  const front = next.front.trim()
+  const back = next.back.trim()
+  if (!front) throw new Error('Locus front is required')
+  if (!back) throw new Error('Locus back is required')
+  return { ...next, front, back }
+}
