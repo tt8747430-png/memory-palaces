@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'motion/react'
+import { Pencil, Trash2 } from 'lucide-react'
 import type { Locus, LocusChanges } from '@/entities/locus'
-import { Button } from '@/shared/ui'
+import { cn } from '@/shared/lib'
+import { Button, cardSurface, IconButton, TextField } from '@/shared/ui'
 
 export interface LociListProps {
   loci: Locus[]
@@ -20,7 +22,7 @@ export function LociList({ loci, onEdit, onDelete }: LociListProps) {
 
   if (loci.length === 0) {
     return (
-      <p className="rounded-card bg-card-glass p-5 text-center shadow-rest">{t('loci.empty')}</p>
+      <p className="rounded-card bg-card-glass p-6 text-center shadow-rest">{t('loci.empty')}</p>
     )
   }
 
@@ -45,22 +47,20 @@ export function LociList({ loci, onEdit, onDelete }: LociListProps) {
           layout
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-card bg-card-glass p-4 shadow-rest"
+          className={cn(cardSurface, 'px-3 py-2.5')}
         >
           {editingId === locus.id ? (
             <div className="flex flex-col gap-2">
-              <input
+              <TextField
                 aria-label={t('loci.frontLabel')}
                 value={front}
                 onChange={(event) => setFront(event.target.value)}
                 autoFocus
-                className="h-11 rounded-control border border-border bg-card px-3 text-heading"
               />
-              <input
+              <TextField
                 aria-label={t('loci.backLabel')}
                 value={back}
                 onChange={(event) => setBack(event.target.value)}
-                className="h-11 rounded-control border border-border bg-card px-3 text-heading"
               />
               <div className="flex gap-2">
                 <Button size="sm" onClick={() => commitEdit(locus.id)}>
@@ -72,28 +72,27 @@ export function LociList({ loci, onEdit, onDelete }: LociListProps) {
               </div>
             </div>
           ) : (
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <h3 className="truncate text-heading">{locus.front}</h3>
-                <p className="truncate text-sm text-muted-foreground">{locus.back}</p>
+            <div className="flex items-center gap-1">
+              <div className="min-w-0 flex-1 px-1">
+                <h3 className="truncate">{locus.front}</h3>
+                <p className="truncate text-[length:var(--p-text-label)]">{locus.back}</p>
               </div>
-              <div className="flex shrink-0 gap-1">
-                <Button
+              <div className="ml-auto flex shrink-0 items-center gap-0.5">
+                <IconButton
                   size="sm"
-                  variant="ghost"
                   aria-label={t('loci.editLabel', { front: locus.front })}
                   onClick={() => startEdit(locus)}
                 >
-                  {t('loci.edit')}
-                </Button>
-                <Button
+                  <Pencil className="size-4" aria-hidden />
+                </IconButton>
+                <IconButton
                   size="sm"
-                  variant="destructive"
+                  variant="danger"
                   aria-label={t('loci.deleteLabel', { front: locus.front })}
                   onClick={() => onDelete(locus.id)}
                 >
-                  {t('loci.delete')}
-                </Button>
+                  <Trash2 className="size-4" aria-hidden />
+                </IconButton>
               </div>
             </div>
           )}

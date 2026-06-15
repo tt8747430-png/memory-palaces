@@ -11,7 +11,7 @@ import { useRoomStore, useRoomStoreApi } from '@/entities/room'
 import { createLocus, deleteLocus, editLocus } from '@/features/locus'
 import { createQuestion, deleteQuestion } from '@/features/question'
 import { LociList, QuestionList } from '@/widgets/loci-editor'
-import { Button } from '@/shared/ui'
+import { AppScreen, Button, ScreenHeader, TextField } from '@/shared/ui'
 
 export interface RoomContentPageProps {
   roomId: string
@@ -34,18 +34,14 @@ export function RoomContentPage({ roomId, onBack }: RoomContentPageProps) {
   }, [roomStore, locusStore, questionStore])
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col px-5 pt-safe pb-safe">
-      <header className="pt-12">
-        {onBack ? (
-          <Button variant="ghost" size="sm" className="mb-3 -ml-3" onClick={onBack}>
-            {t('roomContent.back')}
-          </Button>
-        ) : null}
-        <h1 className="text-balance">{room ? room.title : t('roomContent.notFound')}</h1>
-      </header>
-
+    <AppScreen>
+      <ScreenHeader
+        title={room ? room.title : t('roomContent.notFound')}
+        onBack={onBack}
+        backLabel={t('roomContent.back')}
+      />
       {room ? <RoomContentBody roomId={roomId} /> : null}
-    </main>
+    </AppScreen>
   )
 }
 
@@ -87,26 +83,22 @@ function RoomContentBody({ roomId }: { roomId: string }) {
     setCorrect(0)
   }
 
-  const inputClass = 'h-11 rounded-control border border-border bg-card px-3 text-heading'
-
   return (
     <>
-      <section className="mt-6">
+      <section className="mt-5">
         <h2>{t('roomContent.lociHeading')}</h2>
         <form onSubmit={handleCreateLocus} className="mt-3 flex flex-col gap-2">
-          <input
+          <TextField
             aria-label={t('loci.newFrontLabel')}
             placeholder={t('loci.frontPlaceholder')}
             value={front}
             onChange={(event) => setFront(event.target.value)}
-            className={inputClass}
           />
-          <input
+          <TextField
             aria-label={t('loci.newBackLabel')}
             placeholder={t('loci.backPlaceholder')}
             value={back}
             onChange={(event) => setBack(event.target.value)}
-            className={inputClass}
           />
           <Button type="submit" className="self-start">
             {t('loci.create')}
@@ -121,46 +113,45 @@ function RoomContentBody({ roomId }: { roomId: string }) {
         </div>
       </section>
 
-      <section className="mt-8 flex-1">
+      <section className="mt-8 flex-1 pb-8">
         <h2>{t('roomContent.questionsHeading')}</h2>
         <form onSubmit={handleCreateQuestion} className="mt-3 flex flex-col gap-2">
-          <input
+          <TextField
             aria-label={t('questions.promptLabel')}
             placeholder={t('questions.promptPlaceholder')}
             value={prompt}
             onChange={(event) => setPrompt(event.target.value)}
-            className={inputClass}
           />
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <input
               type="radio"
               name="correct"
               checked={correct === 0}
               onChange={() => setCorrect(0)}
               aria-label={t('questions.correctOptionLabel', { number: 1 })}
+              className="size-5 shrink-0 accent-[var(--primary)]"
             />
-            <input
+            <TextField
               aria-label={t('questions.optionLabel', { number: 1 })}
               placeholder={t('questions.optionPlaceholder', { number: 1 })}
               value={optionA}
               onChange={(event) => setOptionA(event.target.value)}
-              className={`${inputClass} flex-1`}
             />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <input
               type="radio"
               name="correct"
               checked={correct === 1}
               onChange={() => setCorrect(1)}
               aria-label={t('questions.correctOptionLabel', { number: 2 })}
+              className="size-5 shrink-0 accent-[var(--primary)]"
             />
-            <input
+            <TextField
               aria-label={t('questions.optionLabel', { number: 2 })}
               placeholder={t('questions.optionPlaceholder', { number: 2 })}
               value={optionB}
               onChange={(event) => setOptionB(event.target.value)}
-              className={`${inputClass} flex-1`}
             />
           </div>
           <Button type="submit" className="self-start">

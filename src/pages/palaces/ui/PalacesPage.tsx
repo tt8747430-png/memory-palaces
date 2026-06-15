@@ -1,9 +1,10 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Plus } from 'lucide-react'
 import { selectIsReady, selectPalaces, usePalaceStore, usePalaceStoreApi } from '@/entities/palace'
 import { createPalace, deletePalace, duplicatePalace, editPalace } from '@/features/palace'
 import { PalaceList } from '@/widgets/palace-list'
-import { Button } from '@/shared/ui'
+import { AppScreen, IconButton, TextField } from '@/shared/ui'
 
 export interface PalacesPageProps {
   /** Navigate to a palace's detail. Wired by the route (kept off the component for tests). */
@@ -33,26 +34,30 @@ export function PalacesPage({ onOpenPalace }: PalacesPageProps = {}) {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col px-5 pt-safe pb-safe">
-      <header className="pt-12">
+    <AppScreen className="pt-safe">
+      <header className="pt-12 pb-2">
         <h1 className="text-balance">{t('palaces.title')}</h1>
-        <p className="mt-2 text-muted-foreground">{t('palaces.subtitle')}</p>
+        <p className="mt-2">{t('palaces.subtitle')}</p>
       </header>
 
-      <form onSubmit={handleCreate} className="mt-6 flex gap-2">
-        <input
+      <form onSubmit={handleCreate} className="mt-5 flex items-center gap-2">
+        <TextField
           aria-label={t('palaces.createLabel')}
           placeholder={t('palaces.createPlaceholder')}
           value={name}
           onChange={(event) => setName(event.target.value)}
-          className="h-11 flex-1 rounded-control border border-border bg-card px-4 text-heading"
         />
-        <Button type="submit" disabled={!isReady}>
-          {t('palaces.create')}
-        </Button>
+        <IconButton
+          type="submit"
+          variant="solid"
+          aria-label={t('palaces.create')}
+          disabled={!isReady || name.trim() === ''}
+        >
+          <Plus className="size-5" aria-hidden />
+        </IconButton>
       </form>
 
-      <section className="mt-6 flex-1">
+      <section className="mt-6 flex-1 pb-8">
         <PalaceList
           palaces={palaces}
           onOpen={onOpenPalace}
@@ -61,6 +66,6 @@ export function PalacesPage({ onOpenPalace }: PalacesPageProps = {}) {
           onDuplicate={(id) => void duplicatePalace(store, id)}
         />
       </section>
-    </main>
+    </AppScreen>
   )
 }

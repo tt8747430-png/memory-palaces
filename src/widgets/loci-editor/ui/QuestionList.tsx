@@ -1,7 +1,9 @@
 import { useTranslation } from 'react-i18next'
 import { motion } from 'motion/react'
+import { Trash2 } from 'lucide-react'
 import type { Question } from '@/entities/question'
-import { Button } from '@/shared/ui'
+import { cn } from '@/shared/lib'
+import { cardSurface, Chip, IconButton } from '@/shared/ui'
 
 export interface QuestionListProps {
   questions: Question[]
@@ -15,7 +17,7 @@ export function QuestionList({ questions, onDelete }: QuestionListProps) {
 
   if (questions.length === 0) {
     return (
-      <p className="rounded-card bg-card-glass p-5 text-center shadow-rest">
+      <p className="rounded-card bg-card-glass p-6 text-center shadow-rest">
         {t('questions.empty')}
       </p>
     )
@@ -29,24 +31,24 @@ export function QuestionList({ questions, onDelete }: QuestionListProps) {
           layout
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-start justify-between gap-3 rounded-card bg-card-glass p-4 shadow-rest"
+          className={cn(cardSurface, 'flex items-center gap-3 px-3 py-2.5')}
         >
-          <div className="min-w-0">
-            <h3 className="truncate text-heading">{question.prompt}</h3>
-            <p className="truncate text-sm text-muted-foreground">
+          <div className="min-w-0 flex-1 px-1">
+            <h3 className="truncate">{question.prompt}</h3>
+            <Chip className="mt-1">
               {t('questions.correctBadge', {
                 answer: question.options[question.correctAnswer] ?? '',
               })}
-            </p>
+            </Chip>
           </div>
-          <Button
+          <IconButton
             size="sm"
-            variant="destructive"
+            variant="danger"
             aria-label={t('questions.deleteLabel', { prompt: question.prompt })}
             onClick={() => onDelete(question.id)}
           >
-            {t('questions.delete')}
-          </Button>
+            <Trash2 className="size-4" aria-hidden />
+          </IconButton>
         </motion.li>
       ))}
     </ul>

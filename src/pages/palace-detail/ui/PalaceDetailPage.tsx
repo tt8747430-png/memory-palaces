@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Plus } from 'lucide-react'
 import { usePalaceStore, usePalaceStoreApi } from '@/entities/palace'
 import { roomsForPalace, selectRooms, useRoomStore, useRoomStoreApi } from '@/entities/room'
 import { createRoom, deleteRoom, editRoom, moveRoom } from '@/features/room'
 import { RoomJourneyMap } from '@/widgets/room-journey-map'
-import { Button } from '@/shared/ui'
+import { AppScreen, Chip, IconButton, ScreenHeader, TextField } from '@/shared/ui'
 
 export interface PalaceDetailPageProps {
   palaceId: string
@@ -39,30 +40,34 @@ export function PalaceDetailPage({ palaceId, onBack, onOpenRoom }: PalaceDetailP
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col px-5 pt-safe pb-safe">
-      <header className="pt-12">
-        {onBack ? (
-          <Button variant="ghost" size="sm" className="mb-3 -ml-3" onClick={onBack}>
-            {t('palaceDetail.back')}
-          </Button>
-        ) : null}
-        <h1 className="text-balance">{palace ? palace.name : t('palaceDetail.notFound')}</h1>
-      </header>
+    <AppScreen>
+      <ScreenHeader
+        title={palace ? palace.name : t('palaceDetail.notFound')}
+        onBack={onBack}
+        backLabel={t('palaceDetail.back')}
+        action={palace && rooms.length > 0 ? <Chip>{rooms.length}</Chip> : undefined}
+      />
 
       {palace ? (
         <>
-          <form onSubmit={handleCreate} className="mt-6 flex gap-2">
-            <input
+          <form onSubmit={handleCreate} className="mt-4 flex items-center gap-2">
+            <TextField
               aria-label={t('rooms.createLabel')}
               placeholder={t('rooms.createPlaceholder')}
               value={title}
               onChange={(event) => setTitle(event.target.value)}
-              className="h-11 flex-1 rounded-control border border-border bg-card px-4 text-heading"
             />
-            <Button type="submit">{t('rooms.create')}</Button>
+            <IconButton
+              type="submit"
+              variant="solid"
+              aria-label={t('rooms.create')}
+              disabled={title.trim() === ''}
+            >
+              <Plus className="size-5" aria-hidden />
+            </IconButton>
           </form>
 
-          <section className="mt-6 flex-1">
+          <section className="mt-6 flex-1 pb-8">
             <h2 className="sr-only">{t('palaceDetail.roomsHeading')}</h2>
             <RoomJourneyMap
               rooms={rooms}
@@ -75,6 +80,6 @@ export function PalaceDetailPage({ palaceId, onBack, onOpenRoom }: PalaceDetailP
           </section>
         </>
       ) : null}
-    </main>
+    </AppScreen>
   )
 }
