@@ -14,8 +14,8 @@ into entities/features.
 
 ## Code style
 
-- **Comment only when it adds value.** Explain *why* — non-obvious intent, trade-offs,
-  gotchas — not *what* the code already states. Don't narrate obvious code, restate
+- **Comment only when it adds value.** Explain _why_ — non-obvious intent, trade-offs,
+  gotchas — not _what_ the code already states. Don't narrate obvious code, restate
   signatures, or leave TODO/placeholder noise. Prefer clear names and small functions
   over explanatory comments, and delete comments that no longer match the code. Keep
   the codebase clean — do not pollute it with redundant comments.
