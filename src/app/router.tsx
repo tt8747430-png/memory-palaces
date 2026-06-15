@@ -3,6 +3,7 @@ import { HomePage } from '@/pages/home'
 import { PalacesPage } from '@/pages/palaces'
 import { PalaceDetailPage } from '@/pages/palace-detail'
 import { RoomContentPage } from '@/pages/room-content'
+import { ProfilePage } from '@/pages/profile'
 import { ROUTES } from '@/shared/config/routes'
 import { RootLayout } from './RootLayout'
 
@@ -61,11 +62,18 @@ const roomContentRoute = createRoute({
   component: RoomContentRoute,
 })
 
+const profileRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.profile,
+  component: ProfilePage,
+})
+
 const routeTree = rootRoute.addChildren([
   homeRoute,
   palacesRoute,
   palaceDetailRoute,
   roomContentRoute,
+  profileRoute,
 ])
 
 export const router = createRouter({

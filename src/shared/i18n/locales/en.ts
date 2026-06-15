@@ -4,6 +4,20 @@ export const en = {
     appName: 'Mindscape',
     tagline: 'Your Memory Palace',
   },
+  nav: {
+    label: 'Primary',
+    home: 'Home',
+    palaces: 'Palaces',
+    profile: 'Profile',
+  },
+  profile: {
+    guest: 'Exploring as a guest',
+    progressTitle: 'Progress & streaks',
+    progressHint: 'Track your recall as it improves.',
+    settingsTitle: 'Settings',
+    settingsHint: 'Sound, haptics, reminders, and more.',
+    comingSoon: 'Coming soon',
+  },
   home: {
     greeting: 'Welcome back, {{name}}',
     greetingGuest: 'Welcome, {{name}}',

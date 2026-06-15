@@ -57,7 +57,7 @@ export function PalacesPage({ onOpenPalace }: PalacesPageProps = {}) {
         </IconButton>
       </form>
 
-      <section className="mt-6 flex-1 pb-8">
+      <section className="mt-6 flex-1 pb-28">
         <PalaceList
           palaces={palaces}
           onOpen={onOpenPalace}

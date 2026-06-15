@@ -22,7 +22,7 @@ export function HomePage() {
         <p className="text-foreground">{t('home.guestNote')}</p>
       </GlassCard>
 
-      <div className="mt-auto pb-8 pt-10">
+      <div className="mt-auto pb-28 pt-10">
         <Button size="lg" className="w-full" disabled={status !== 'ready'}>
           {t('home.primaryCta')}
         </Button>
