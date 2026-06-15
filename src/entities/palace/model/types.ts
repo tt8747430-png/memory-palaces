@@ -81,3 +81,15 @@ export function makePalace(input: MakePalaceInput): Palace {
     bibleMode: input.bibleMode ?? false,
   }
 }
+
+/** Mutable fields of a palace — identity and timestamps are owned by the entity. */
+export type PalaceChanges = Partial<Omit<Palace, 'id' | 'createdAt' | 'updatedAt'>>
+
+/** Apply an edit, enforcing the same invariants as {@link makePalace}. `updatedAt`
+ * is set by the caller (clock injected) so the function stays pure. */
+export function updatePalace(palace: Palace, changes: PalaceChanges, updatedAt: string): Palace {
+  const next = { ...palace, ...changes, updatedAt }
+  const name = next.name.trim()
+  if (!name) throw new Error('Palace name is required')
+  return { ...next, name }
+}
