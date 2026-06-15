@@ -3,6 +3,7 @@ import { SessionStoreContext } from '@/entities/session'
 import { PalaceStoreContext } from '@/entities/palace'
 import { RoomStoreContext } from '@/entities/room'
 import { LocusStoreContext } from '@/entities/locus'
+import { QuestionStoreContext } from '@/entities/question'
 import type { Services } from '../composition-root'
 
 /** Injects composition-root services into the React tree (entity store contexts). */
@@ -17,7 +18,9 @@ export function ServicesProvider({
     <SessionStoreContext value={services.sessionStore}>
       <PalaceStoreContext value={services.palaceStore}>
         <RoomStoreContext value={services.roomStore}>
-          <LocusStoreContext value={services.locusStore}>{children}</LocusStoreContext>
+          <LocusStoreContext value={services.locusStore}>
+            <QuestionStoreContext value={services.questionStore}>{children}</QuestionStoreContext>
+          </LocusStoreContext>
         </RoomStoreContext>
       </PalaceStoreContext>
     </SessionStoreContext>

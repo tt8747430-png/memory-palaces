@@ -3,6 +3,7 @@ import type { Folder } from '@/entities/folder'
 import type { Palace } from '@/entities/palace'
 import type { Room } from '@/entities/room'
 import type { Locus } from '@/entities/locus'
+import type { Question } from '@/entities/question'
 
 /**
  * RxDB JSON schemas for the persisted entities. They live at the composition layer
@@ -131,4 +132,21 @@ export const locusSchema: RxJsonSchema<Locus> = {
     memorized: { type: 'boolean' },
   },
   required: ['id', 'createdAt', 'updatedAt', 'roomId', 'front', 'back', 'flagged', 'memorized'],
+}
+
+export const questionSchema: RxJsonSchema<Question> = {
+  version: 0,
+  primaryKey: 'id',
+  type: 'object',
+  properties: {
+    id: { type: 'string', maxLength: 100 },
+    createdAt: { type: 'string' },
+    updatedAt: { type: 'string' },
+    roomId: { type: 'string', maxLength: 100 },
+    prompt: { type: 'string' },
+    options: { type: 'array', items: { type: 'string' } },
+    correctAnswer: { type: 'number' },
+    explanation: { type: 'string' },
+  },
+  required: ['id', 'createdAt', 'updatedAt', 'roomId', 'prompt', 'options', 'correctAnswer'],
 }

@@ -39,3 +39,23 @@ export function makeQuestion(input: MakeQuestionInput): Question {
     explanation: input.explanation,
   }
 }
+
+/** Editable fields of a question — identity, timestamps, and room are owned elsewhere. */
+export type QuestionChanges = Partial<Omit<Question, 'id' | 'createdAt' | 'updatedAt' | 'roomId'>>
+
+/** Apply an edit, enforcing the same invariants as {@link makeQuestion}. `updatedAt`
+ * is set by the caller (clock injected) so the function stays pure. */
+export function updateQuestion(
+  question: Question,
+  changes: QuestionChanges,
+  updatedAt: string,
+): Question {
+  const next = { ...question, ...changes, updatedAt }
+  const prompt = next.prompt.trim()
+  if (!prompt) throw new Error('Question prompt is required')
+  if (next.options.length < 2) throw new Error('Question needs at least two options')
+  if (next.correctAnswer < 0 || next.correctAnswer >= next.options.length) {
+    throw new Error('correctAnswer must index an option')
+  }
+  return { ...next, prompt, options: [...next.options] }
+}
