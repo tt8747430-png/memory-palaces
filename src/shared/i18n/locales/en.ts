@@ -321,6 +321,19 @@ export const en = {
     prevMonth: 'Previous month',
     nextMonth: 'Next month',
   },
+  settings: {
+    title: 'Settings',
+    back: 'Back',
+    openLabel: 'Open settings',
+    sound: 'Sound effects',
+    soundHint: 'Play short tones on answers and session completion.',
+    haptics: 'Haptics',
+    hapticsHint: 'Vibrate on swipe commits and milestones (supported devices).',
+    reducedMotion: 'Reduced motion',
+    reducedMotionHint: 'Minimize animations across the app.',
+    notifications: 'Notifications',
+    notificationsHint: 'Show milestone toasts — XP, level-ups, and streaks.',
+  },
 } as const
 
 export type AppResources = typeof en

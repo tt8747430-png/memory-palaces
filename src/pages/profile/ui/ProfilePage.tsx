@@ -1,15 +1,22 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ChevronRight } from 'lucide-react'
+import { cn } from '@/shared/lib'
 import { useSessionStore } from '@/entities/session'
 import { selectProgress, useProgressStore, useProgressStoreApi } from '@/entities/progress'
 import { StreakSummary } from '@/widgets/streak-summary'
 import { StreakCalendar } from '@/widgets/streak-calendar'
-import { AppScreen, Avatar, Card, Chip } from '@/shared/ui'
+import { AppScreen, Avatar, cardSurface } from '@/shared/ui'
+
+export interface ProfilePageProps {
+  /** Open the settings screen; wired by the route wrapper. */
+  onOpenSettings?: () => void
+}
 
 /** Profile tab. A guest identity today (account claim is Phase 9); progress is now
- * real — level, XP, streak, and the training calendar. Settings stays a "coming
- * soon" card until Phase 8's preferences slice. */
-export function ProfilePage() {
+ * real — level, XP, streak, and the training calendar — and settings opens a real
+ * screen. */
+export function ProfilePage({ onOpenSettings }: ProfilePageProps = {}) {
   const { t } = useTranslation()
   const session = useSessionStore((state) => state.session)
   const progressStore = useProgressStoreApi()
@@ -36,21 +43,26 @@ export function ProfilePage() {
           trainingDays={progress?.trainingDays ?? []}
         />
         <StreakCalendar trainingDays={progress?.trainingDays ?? []} />
-        <ComingSoonCard title={t('profile.settingsTitle')} hint={t('profile.settingsHint')} />
+        <button
+          type="button"
+          aria-label={t('settings.openLabel')}
+          onClick={onOpenSettings}
+          className={cn(
+            cardSurface,
+            'flex w-full items-center justify-between gap-3 p-4 text-left transition-transform active:scale-[0.99]',
+          )}
+        >
+          <span className="min-w-0">
+            <span className="block truncate font-medium text-heading">
+              {t('profile.settingsTitle')}
+            </span>
+            <span className="block truncate text-[length:var(--p-text-label)] text-muted-foreground">
+              {t('profile.settingsHint')}
+            </span>
+          </span>
+          <ChevronRight className="size-5 shrink-0 text-muted-foreground" aria-hidden />
+        </button>
       </section>
     </AppScreen>
-  )
-}
-
-function ComingSoonCard({ title, hint }: { title: string; hint: string }) {
-  const { t } = useTranslation()
-  return (
-    <Card className="flex items-center justify-between gap-3">
-      <div className="min-w-0">
-        <h3 className="truncate">{title}</h3>
-        <p className="truncate text-[length:var(--p-text-label)]">{hint}</p>
-      </div>
-      <Chip className="shrink-0">{t('profile.comingSoon')}</Chip>
-    </Card>
   )
 }

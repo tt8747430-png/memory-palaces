@@ -5,6 +5,7 @@ import type { Room } from '@/entities/room'
 import type { Locus } from '@/entities/locus'
 import type { Question } from '@/entities/question'
 import type { Progress } from '@/entities/progress'
+import type { Preferences } from '@/entities/preferences'
 
 /**
  * RxDB JSON schemas for the persisted entities. They live at the composition layer
@@ -179,5 +180,29 @@ export const progressSchema: RxJsonSchema<Progress> = {
     'streakFreezes',
     'bestQuizAccuracy',
     'trainingDays',
+  ],
+}
+
+export const preferencesSchema: RxJsonSchema<Preferences> = {
+  version: 0,
+  primaryKey: 'id',
+  type: 'object',
+  properties: {
+    id: { type: 'string', maxLength: 100 },
+    createdAt: { type: 'string' },
+    updatedAt: { type: 'string' },
+    soundEffects: { type: 'boolean' },
+    haptics: { type: 'boolean' },
+    reducedMotion: { type: 'boolean' },
+    notifications: { type: 'boolean' },
+  },
+  required: [
+    'id',
+    'createdAt',
+    'updatedAt',
+    'soundEffects',
+    'haptics',
+    'reducedMotion',
+    'notifications',
   ],
 }

@@ -10,6 +10,7 @@ export const ROUTES = {
   roomVerse: '/rooms/$roomId/verse',
   review: '/review',
   profile: '/profile',
+  settings: '/settings',
 } as const
 
 export type RoutePath = (typeof ROUTES)[keyof typeof ROUTES]

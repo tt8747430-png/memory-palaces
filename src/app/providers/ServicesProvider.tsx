@@ -5,6 +5,7 @@ import { RoomStoreContext } from '@/entities/room'
 import { LocusStoreContext } from '@/entities/locus'
 import { QuestionStoreContext } from '@/entities/question'
 import { ProgressStoreContext } from '@/entities/progress'
+import { PreferencesStoreContext } from '@/entities/preferences'
 import type { Services } from '../composition-root'
 
 /** Injects composition-root services into the React tree (entity store contexts). */
@@ -21,7 +22,11 @@ export function ServicesProvider({
         <RoomStoreContext value={services.roomStore}>
           <LocusStoreContext value={services.locusStore}>
             <QuestionStoreContext value={services.questionStore}>
-              <ProgressStoreContext value={services.progressStore}>{children}</ProgressStoreContext>
+              <ProgressStoreContext value={services.progressStore}>
+                <PreferencesStoreContext value={services.preferencesStore}>
+                  {children}
+                </PreferencesStoreContext>
+              </ProgressStoreContext>
             </QuestionStoreContext>
           </LocusStoreContext>
         </RoomStoreContext>

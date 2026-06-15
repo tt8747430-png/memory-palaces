@@ -6,11 +6,13 @@ import type { Room } from '@/entities/room'
 import type { Locus } from '@/entities/locus'
 import type { Question } from '@/entities/question'
 import type { Progress } from '@/entities/progress'
+import type { Preferences } from '@/entities/preferences'
 import { STORAGE_PREFIX } from '@/shared/config/constants'
 import {
   folderSchema,
   locusSchema,
   palaceSchema,
+  preferencesSchema,
   progressSchema,
   questionSchema,
   roomSchema,
@@ -23,6 +25,7 @@ export interface AppCollections {
   loci: RxCollection<Locus>
   questions: RxCollection<Question>
   progress: RxCollection<Progress>
+  preferences: RxCollection<Preferences>
 }
 
 /**
@@ -41,6 +44,7 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
     loci: { schema: locusSchema },
     questions: { schema: questionSchema },
     progress: { schema: progressSchema },
+    preferences: { schema: preferencesSchema },
   })
   return {
     palaces: collections.palaces,
@@ -49,5 +53,6 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
     loci: collections.loci,
     questions: collections.questions,
     progress: collections.progress,
+    preferences: collections.preferences,
   }
 }
