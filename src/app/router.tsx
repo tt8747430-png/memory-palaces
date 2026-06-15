@@ -4,6 +4,7 @@ import { PalacesPage } from '@/pages/palaces'
 import { PalaceDetailPage } from '@/pages/palace-detail'
 import { RoomContentPage } from '@/pages/room-content'
 import { RoomTrainPage } from '@/pages/room-train'
+import { MatchPage } from '@/pages/match'
 import { ReviewPage } from '@/pages/review'
 import { QuizPage } from '@/pages/quiz'
 import { ProfilePage } from '@/pages/profile'
@@ -63,7 +64,13 @@ const palaceDetailRoute = createRoute({
 function RoomContentRoute() {
   const { roomId } = roomContentRoute.useParams()
   const navigate = useNavigate()
-  return <RoomContentPage roomId={roomId} onBack={() => navigate({ to: ROUTES.home })} />
+  return (
+    <RoomContentPage
+      roomId={roomId}
+      onBack={() => navigate({ to: ROUTES.home })}
+      onMatch={() => navigate({ to: ROUTES.roomMatch, params: { roomId } })}
+    />
+  )
 }
 
 const roomContentRoute = createRoute({
@@ -87,6 +94,23 @@ const roomTrainRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.roomTrain,
   component: RoomTrainRoute,
+})
+
+function RoomMatchRoute() {
+  const { roomId } = roomMatchRoute.useParams()
+  const navigate = useNavigate()
+  return (
+    <MatchPage
+      roomId={roomId}
+      onBack={() => navigate({ to: ROUTES.roomContent, params: { roomId } })}
+    />
+  )
+}
+
+const roomMatchRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.roomMatch,
+  component: RoomMatchRoute,
 })
 
 function ReviewRoute() {
@@ -129,6 +153,7 @@ const routeTree = rootRoute.addChildren([
   palaceDetailRoute,
   roomContentRoute,
   roomTrainRoute,
+  roomMatchRoute,
   reviewRoute,
   quizRoute,
   profileRoute,

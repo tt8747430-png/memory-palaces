@@ -254,6 +254,23 @@ export const en = {
     retry: 'Retry',
     done: 'Done',
   },
+  match: {
+    title: 'Match',
+    open: 'Match game',
+    openLabel: 'Play Match in {{title}}',
+    goBack: 'Go back',
+    restart: 'Restart',
+    notEnough: 'Not enough cards',
+    notEnoughHint: 'Match needs at least two cards. Add a few more loci to this room first.',
+    back: 'Back',
+    instruction: 'Tap a term, then its match',
+    moves: '{{count}} moves',
+    pairsLeft: '{{count}} left',
+    complete: 'All matched',
+    summary: '{{moves}} moves',
+    playAgain: 'Play again',
+    done: 'Done',
+  },
 } as const
 
 export type AppResources = typeof en

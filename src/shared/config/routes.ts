@@ -6,6 +6,7 @@ export const ROUTES = {
   palaceQuiz: '/palaces/$palaceId/quiz',
   roomContent: '/rooms/$roomId',
   roomTrain: '/rooms/$roomId/train',
+  roomMatch: '/rooms/$roomId/match',
   review: '/review',
   profile: '/profile',
 } as const

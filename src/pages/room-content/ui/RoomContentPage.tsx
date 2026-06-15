@@ -10,17 +10,20 @@ import {
 import { useRoomStore, useRoomStoreApi } from '@/entities/room'
 import { createLocus, deleteLocus, editLocus } from '@/features/locus'
 import { createQuestion, deleteQuestion } from '@/features/question'
+import { Puzzle } from 'lucide-react'
 import { LociList, QuestionList } from '@/widgets/loci-editor'
-import { AppScreen, Button, ScreenHeader, TextField } from '@/shared/ui'
+import { AppScreen, Button, IconButton, ScreenHeader, TextField } from '@/shared/ui'
 
 export interface RoomContentPageProps {
   roomId: string
   onBack?: () => void
+  /** Play the Match game over this room; wired by the route wrapper. */
+  onMatch?: () => void
 }
 
 /** Room content — a room's loci and questions, both fully editable and persisting
  * offline through the injected stores. */
-export function RoomContentPage({ roomId, onBack }: RoomContentPageProps) {
+export function RoomContentPage({ roomId, onBack, onMatch }: RoomContentPageProps) {
   const { t } = useTranslation()
   const roomStore = useRoomStoreApi()
   const locusStore = useLocusStoreApi()
@@ -39,6 +42,17 @@ export function RoomContentPage({ roomId, onBack }: RoomContentPageProps) {
         title={room ? room.title : t('roomContent.notFound')}
         onBack={onBack}
         backLabel={t('roomContent.back')}
+        action={
+          room && onMatch ? (
+            <IconButton
+              variant="tint"
+              aria-label={t('match.openLabel', { title: room.title })}
+              onClick={onMatch}
+            >
+              <Puzzle className="size-5" aria-hidden />
+            </IconButton>
+          ) : undefined
+        }
       />
       {room ? <RoomContentBody roomId={roomId} /> : null}
     </AppScreen>
