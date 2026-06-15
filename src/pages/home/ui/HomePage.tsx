@@ -4,8 +4,8 @@ import { Button } from '@/shared/ui'
 
 export function HomePage() {
   const { t } = useTranslation()
-  const session = useSessionStore((s) => s.session)
-  const status = useSessionStore((s) => s.status)
+  const session = useSessionStore((state) => state.session)
+  const status = useSessionStore((state) => state.status)
 
   const name = session?.displayName ?? 'Guest'
   const greeting =

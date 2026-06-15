@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { createRootRoute, createRoute, createRouter, Outlet } from '@tanstack/react-router'
 import { HomePage } from '@/pages/home'
+import { ROUTES } from '@/shared/config/routes'
 
 // Dev-only router devtools, lazy so they never reach the production bundle.
 const Devtools = import.meta.env.DEV
@@ -24,7 +25,7 @@ const rootRoute = createRootRoute({
 
 const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/',
+  path: ROUTES.home,
   component: HomePage,
 })
 
