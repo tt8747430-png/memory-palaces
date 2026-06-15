@@ -11,6 +11,21 @@ export const en = {
     primaryCta: 'Start a session',
     guestNote: "You're exploring as a guest. Your progress is saved on this device.",
   },
+  palaces: {
+    title: 'Your palaces',
+    subtitle: 'Build and revisit your memory palaces.',
+    empty: 'No palaces yet. Name your first one above.',
+    createLabel: 'New palace name',
+    createPlaceholder: 'Name a new palace…',
+    create: 'Create',
+    rename: 'Rename',
+    renameLabel: 'Rename {{name}}',
+    save: 'Save',
+    duplicate: 'Duplicate',
+    duplicateLabel: 'Duplicate {{name}}',
+    delete: 'Delete',
+    deleteLabel: 'Delete {{name}}',
+  },
 } as const
 
 export type AppResources = typeof en
