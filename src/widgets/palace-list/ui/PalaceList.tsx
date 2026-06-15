@@ -9,11 +9,13 @@ export interface PalaceListProps {
   onRename: (id: string, name: string) => void
   onDelete: (id: string) => void
   onDuplicate: (id: string) => void
+  /** Open the palace's detail. Omitted in contexts without navigation (e.g. tests). */
+  onOpen?: (id: string) => void
 }
 
 /** Presentational list of palaces. Reads nothing from the store — the page passes
  * data and wires the commands — so it stays reusable and easy to test. */
-export function PalaceList({ palaces, onRename, onDelete, onDuplicate }: PalaceListProps) {
+export function PalaceList({ palaces, onRename, onDelete, onDuplicate, onOpen }: PalaceListProps) {
   const { t } = useTranslation()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
@@ -68,6 +70,16 @@ export function PalaceList({ palaces, onRename, onDelete, onDuplicate }: PalaceL
                 ) : null}
               </div>
               <div className="flex shrink-0 gap-1">
+                {onOpen ? (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    aria-label={t('palaces.openLabel', { name: palace.name })}
+                    onClick={() => onOpen(palace.id)}
+                  >
+                    {t('palaces.open')}
+                  </Button>
+                ) : null}
                 <Button
                   size="sm"
                   variant="ghost"

@@ -5,9 +5,14 @@ import { createPalace, deletePalace, duplicatePalace, editPalace } from '@/featu
 import { PalaceList } from '@/widgets/palace-list'
 import { Button } from '@/shared/ui'
 
+export interface PalacesPageProps {
+  /** Navigate to a palace's detail. Wired by the route (kept off the component for tests). */
+  onOpenPalace?: (id: string) => void
+}
+
 /** Palaces screen — the first fully-vertical slice: reactive list off RxDB plus
  * create/edit/delete/duplicate, all persisting offline through the injected store. */
-export function PalacesPage() {
+export function PalacesPage({ onOpenPalace }: PalacesPageProps = {}) {
   const { t } = useTranslation()
   const store = usePalaceStoreApi()
   const palaces = usePalaceStore(selectPalaces)
@@ -50,6 +55,7 @@ export function PalacesPage() {
       <section className="mt-6 flex-1">
         <PalaceList
           palaces={palaces}
+          onOpen={onOpenPalace}
           onRename={(id, newName) => void editPalace(store, id, { name: newName })}
           onDelete={(id) => void deletePalace(store, id)}
           onDuplicate={(id) => void duplicatePalace(store, id)}
