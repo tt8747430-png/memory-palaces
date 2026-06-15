@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { Identifiable, Repository } from '@/shared/api'
 
 /**
@@ -51,6 +51,27 @@ export function runRepositoryContract<T extends Identifiable>(
       const entity = makeEntity('a')
       await repo.save(entity)
       expect(await repo.getById('a')).not.toBe(entity)
+    })
+
+    it('observe emits the current entities immediately, then after every change', async () => {
+      const repo = createRepository()
+      const emissions: T[][] = []
+      const unsubscribe = repo.observe((entities) => emissions.push(entities))
+
+      // RxDB emits asynchronously; the in-memory adapter synchronously — wait either way.
+      await vi.waitFor(() => expect(emissions.at(-1)).toEqual([]))
+
+      await repo.save(makeEntity('a'))
+      await vi.waitFor(() => expect(emissions.at(-1)).toHaveLength(1))
+
+      await repo.remove('a')
+      await vi.waitFor(() => expect(emissions.at(-1)).toEqual([]))
+
+      const countBeforeUnsubscribe = emissions.length
+      unsubscribe()
+      await repo.save(makeEntity('b'))
+      await new Promise((resolve) => setTimeout(resolve, 20))
+      expect(emissions).toHaveLength(countBeforeUnsubscribe)
     })
   })
 }

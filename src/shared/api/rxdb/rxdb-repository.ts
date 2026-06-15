@@ -1,5 +1,5 @@
 import type { RxCollection } from 'rxdb'
-import type { Identifiable, Repository } from '../base-repository'
+import type { Identifiable, Repository, Unsubscribe } from '../base-repository'
 
 /**
  * RxDB adapter for the generic {@link Repository} port — the on-device source of
@@ -41,5 +41,21 @@ export class RxdbRepository<T extends Identifiable> implements Repository<T> {
     const collection = await this.collection
     const doc = await collection.findOne(id).exec()
     if (doc) await doc.remove()
+  }
+
+  observe(listener: (entities: T[]) => void): Unsubscribe {
+    let subscription: { unsubscribe: () => void } | undefined
+    let cancelled = false
+    void this.collection.then((collection) => {
+      if (cancelled) return
+      // `find().$` is a BehaviorSubject — it replays the current results on subscribe.
+      subscription = collection.find().$.subscribe((docs) => {
+        listener(docs.map((doc) => doc.toMutableJSON() as T))
+      })
+    })
+    return () => {
+      cancelled = true
+      subscription?.unsubscribe()
+    }
   }
 }

@@ -1,2 +1,2 @@
-export type { Identifiable, Repository } from './base-repository'
+export type { Identifiable, Repository, Unsubscribe } from './base-repository'
 export { InMemoryRepository } from './in-memory-repository'
