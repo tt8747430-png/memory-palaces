@@ -7,6 +7,7 @@ import { createPalaceStore, type Palace, type PalaceStore } from '@/entities/pal
 import { createRoomStore, type Room, type RoomStore } from '@/entities/room'
 import { createLocusStore, type Locus, type LocusStore } from '@/entities/locus'
 import { createQuestionStore, type Question, type QuestionStore } from '@/entities/question'
+import { createProgressStore, type Progress, type ProgressStore } from '@/entities/progress'
 import { createAppDatabase } from './persistence/database'
 
 /** Domain events broadcast on the bus (Observer). Grows with each slice.
@@ -22,6 +23,7 @@ export interface Services {
   roomStore: RoomStore
   locusStore: LocusStore
   questionStore: QuestionStore
+  progressStore: ProgressStore
   eventBus: EventBus<ProgressEvents>
 }
 
@@ -38,12 +40,14 @@ export function createServices(): Services {
   const roomRepo = new RxdbRepository<Room>(collections.then((c) => c.rooms))
   const locusRepo = new RxdbRepository<Locus>(collections.then((c) => c.loci))
   const questionRepo = new RxdbRepository<Question>(collections.then((c) => c.questions))
+  const progressRepo = new RxdbRepository<Progress>(collections.then((c) => c.progress))
   return {
     sessionStore: createSessionStore(sessionRepo),
     palaceStore: createPalaceStore(palaceRepo),
     roomStore: createRoomStore(roomRepo),
     locusStore: createLocusStore(locusRepo),
     questionStore: createQuestionStore(questionRepo),
+    progressStore: createProgressStore(progressRepo),
     eventBus: new EventBus<ProgressEvents>(),
   }
 }
