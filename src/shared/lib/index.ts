@@ -1,7 +1,7 @@
 export { cn } from './cn'
 export { EventBus, type EventHandler } from './event-bus'
 export { systemClock, fixedClock, type Clock } from './clock'
-export type { Entity } from './entity'
+export { cloneEntity, type Entity } from './entity'
 export {
   isDue,
   schedule,
