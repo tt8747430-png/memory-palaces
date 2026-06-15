@@ -4,6 +4,7 @@ import {
   normalizeWord,
   scramble,
   tokenizeWords,
+  typedVerseStatus,
   verseText,
   wordInitial,
 } from './verse'
@@ -58,5 +59,35 @@ describe('scramble', () => {
     expect([...out].sort((a, b) => a - b)).toEqual(input)
     expect(input).toEqual([1, 2, 3, 4, 5]) // input not mutated
     expect(scramble(input, rng)).toEqual(out) // deterministic
+  })
+})
+
+describe('typedVerseStatus', () => {
+  const verse = 'For God so loved the world'
+
+  it('marks every word pending before anything is typed', () => {
+    const result = typedVerseStatus(verse, '')
+    expect(result.statuses).toEqual(['pending', 'pending', 'pending', 'pending', 'pending', 'pending'])
+    expect(result.correct).toBe(0)
+    expect(result.total).toBe(6)
+    expect(result.complete).toBe(false)
+  })
+
+  it('greens each word that matches in order, ignoring case and punctuation', () => {
+    const result = typedVerseStatus(verse, 'for GOD, so')
+    expect(result.statuses.slice(0, 3)).toEqual(['correct', 'correct', 'correct'])
+    expect(result.statuses.slice(3)).toEqual(['pending', 'pending', 'pending'])
+    expect(result.correct).toBe(3)
+  })
+
+  it('flags a wrong word at its position', () => {
+    const result = typedVerseStatus(verse, 'for cat so')
+    expect(result.statuses.slice(0, 3)).toEqual(['correct', 'wrong', 'correct'])
+    expect(result.correct).toBe(2)
+  })
+
+  it('is complete only when the whole verse is reproduced', () => {
+    expect(typedVerseStatus(verse, 'For God so loved the world.').complete).toBe(true)
+    expect(typedVerseStatus(verse, 'For God so loved the').complete).toBe(false)
   })
 })

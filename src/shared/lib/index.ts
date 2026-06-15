@@ -38,8 +38,11 @@ export {
   wordInitial,
   normalizeWord,
   scramble,
+  typedVerseStatus,
   type VerseSource,
   type WordInitial,
+  type TypedWordStatus,
+  type VerseTypingResult,
 } from './verse'
 export {
   getDueLoci,

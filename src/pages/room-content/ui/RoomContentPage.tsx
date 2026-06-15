@@ -10,7 +10,7 @@ import {
 import { useRoomStore, useRoomStoreApi } from '@/entities/room'
 import { createLocus, deleteLocus, editLocus } from '@/features/locus'
 import { createQuestion, deleteQuestion } from '@/features/question'
-import { Puzzle } from 'lucide-react'
+import { BookText, Puzzle } from 'lucide-react'
 import { LociList, QuestionList } from '@/widgets/loci-editor'
 import { AppScreen, Button, IconButton, ScreenHeader, TextField } from '@/shared/ui'
 
@@ -19,11 +19,13 @@ export interface RoomContentPageProps {
   onBack?: () => void
   /** Play the Match game over this room; wired by the route wrapper. */
   onMatch?: () => void
+  /** Study this room's loci as verses; wired by the route wrapper. */
+  onVerse?: () => void
 }
 
 /** Room content — a room's loci and questions, both fully editable and persisting
  * offline through the injected stores. */
-export function RoomContentPage({ roomId, onBack, onMatch }: RoomContentPageProps) {
+export function RoomContentPage({ roomId, onBack, onMatch, onVerse }: RoomContentPageProps) {
   const { t } = useTranslation()
   const roomStore = useRoomStoreApi()
   const locusStore = useLocusStoreApi()
@@ -43,14 +45,27 @@ export function RoomContentPage({ roomId, onBack, onMatch }: RoomContentPageProp
         onBack={onBack}
         backLabel={t('roomContent.back')}
         action={
-          room && onMatch ? (
-            <IconButton
-              variant="tint"
-              aria-label={t('match.openLabel', { title: room.title })}
-              onClick={onMatch}
-            >
-              <Puzzle className="size-5" aria-hidden />
-            </IconButton>
+          room ? (
+            <div className="flex items-center gap-2">
+              {onVerse ? (
+                <IconButton
+                  variant="tint"
+                  aria-label={t('verse.openLabel', { title: room.title })}
+                  onClick={onVerse}
+                >
+                  <BookText className="size-5" aria-hidden />
+                </IconButton>
+              ) : null}
+              {onMatch ? (
+                <IconButton
+                  variant="tint"
+                  aria-label={t('match.openLabel', { title: room.title })}
+                  onClick={onMatch}
+                >
+                  <Puzzle className="size-5" aria-hidden />
+                </IconButton>
+              ) : null}
+            </div>
           ) : undefined
         }
       />

@@ -61,6 +61,33 @@ export function normalizeWord(word: string): string {
   return word.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '')
 }
 
+export type TypedWordStatus = 'correct' | 'wrong' | 'pending'
+
+export interface VerseTypingResult {
+  /** One status per EXPECTED word, in verse order. */
+  statuses: TypedWordStatus[]
+  /** The typed tokens, for rendering the attempt. */
+  typed: string[]
+  correct: number
+  total: number
+  complete: boolean
+}
+
+/** Compare a typed attempt to the verse, word by word (case/punctuation-insensitive
+ * via {@link normalizeWord}). Each expected word is `correct`, `wrong`, or still
+ * `pending`; `complete` once every word is reproduced in order. Drives the Type mode. */
+export function typedVerseStatus(verse: string, input: string): VerseTypingResult {
+  const expected = tokenizeWords(verse)
+  const typed = tokenizeWords(input)
+  const statuses: TypedWordStatus[] = expected.map((word, i) => {
+    if (i >= typed.length) return 'pending'
+    return normalizeWord(typed[i]!) === normalizeWord(word) ? 'correct' : 'wrong'
+  })
+  const correct = statuses.filter((status) => status === 'correct').length
+  const complete = typed.length >= expected.length && statuses.every((status) => status === 'correct')
+  return { statuses, typed, correct, total: expected.length, complete }
+}
+
 /** Fisher–Yates shuffle returning a new array. `rng` is injectable for tests. */
 export function scramble<T>(input: readonly T[], rng: () => number = Math.random): T[] {
   const result = [...input]
