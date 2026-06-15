@@ -19,8 +19,10 @@ export {
   dayKey,
   recordTrainingDay,
   totalTrainingDays,
+  buildDayCells,
   type StreakState,
   type StreakResult,
+  type DayCell,
 } from './streak'
 export {
   levelFromXp,

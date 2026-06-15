@@ -31,6 +31,7 @@ export interface StreakResult {
 const MAX_STREAK_FREEZES = 2
 const HISTORY_DAYS = 365
 const MILESTONE_INTERVAL = 7
+const DAY_MS = 86_400_000
 
 /** The `YYYY-MM-DD` UTC day key for an instant. */
 export function dayKey(now: number): string {
@@ -92,4 +93,47 @@ export function recordTrainingDay(state: StreakState, now: number): StreakResult
 /** Total distinct days trained. */
 export function totalTrainingDays(trainingDays: string[]): number {
   return new Set(trainingDays).size
+}
+
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
+
+export interface DayCell {
+  /** `YYYY-MM-DD` UTC key. */
+  key: string
+  weekdayShort: string
+  /** Single letter for a dense calendar header (S M T W T F S). */
+  weekdayInitial: string
+  isToday: boolean
+  trained: boolean
+  /** A day later than today; rendered as a faint placeholder, never "missed". */
+  future: boolean
+}
+
+function makeDayCell(ms: number, trained: Set<string>, todayKey: string): DayCell {
+  const key = dayKey(ms)
+  const weekday = WEEKDAYS[new Date(ms).getUTCDay()] ?? 'Sun'
+  return {
+    key,
+    weekdayShort: weekday,
+    weekdayInitial: weekday.charAt(0),
+    isToday: key === todayKey,
+    future: key > todayKey,
+    trained: trained.has(key) && key <= todayKey,
+  }
+}
+
+/** The last `count` UTC days ending today, oldest first — the week strip for the
+ * streak view. Pure: `now` (epoch ms) is injected. */
+export function buildDayCells(
+  trainingDays: readonly string[],
+  count: number,
+  now: number,
+): DayCell[] {
+  const trained = new Set(trainingDays)
+  const todayKey = dayKey(now)
+  const cells: DayCell[] = []
+  for (let i = count - 1; i >= 0; i--) {
+    cells.push(makeDayCell(now - i * DAY_MS, trained, todayKey))
+  }
+  return cells
 }

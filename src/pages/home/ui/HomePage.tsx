@@ -1,6 +1,9 @@
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSessionStore } from '@/entities/session'
-import { AppScreen, Button, GlassCard } from '@/shared/ui'
+import { selectProgress, useProgressStore, useProgressStoreApi } from '@/entities/progress'
+import { StreakSummary } from '@/widgets/streak-summary'
+import { AppScreen, Button } from '@/shared/ui'
 
 export interface HomePageProps {
   /** Start a daily review session; wired by the route wrapper. */
@@ -11,6 +14,12 @@ export function HomePage({ onStartReview }: HomePageProps = {}) {
   const { t } = useTranslation()
   const session = useSessionStore((state) => state.session)
   const status = useSessionStore((state) => state.status)
+  const progressStore = useProgressStoreApi()
+  const progress = useProgressStore(selectProgress)
+
+  useEffect(() => {
+    progressStore.getState().start()
+  }, [progressStore])
 
   const name = session?.displayName ?? 'Guest'
   const greeting =
@@ -23,9 +32,13 @@ export function HomePage({ onStartReview }: HomePageProps = {}) {
         <p className="mt-3 max-w-[60ch]">{t('home.subtitle')}</p>
       </header>
 
-      <GlassCard tone="sky" className="mt-8">
-        <p className="text-foreground">{t('home.guestNote')}</p>
-      </GlassCard>
+      <StreakSummary
+        className="mt-8"
+        xp={progress?.xp ?? 0}
+        streakCount={progress?.streakCount ?? 0}
+        longestStreak={progress?.longestStreak ?? 0}
+        trainingDays={progress?.trainingDays ?? []}
+      />
 
       <div className="mt-auto pb-28 pt-10">
         <Button

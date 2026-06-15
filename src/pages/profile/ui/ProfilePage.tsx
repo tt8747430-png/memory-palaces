@@ -1,13 +1,24 @@
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSessionStore } from '@/entities/session'
+import { selectProgress, useProgressStore, useProgressStoreApi } from '@/entities/progress'
+import { StreakSummary } from '@/widgets/streak-summary'
+import { StreakCalendar } from '@/widgets/streak-calendar'
 import { AppScreen, Avatar, Card, Chip } from '@/shared/ui'
 
-/** Profile tab. A guest identity today; account claim (Phase 9) and real
- * progress/settings land later, surfaced here as "coming soon" rather than absent. */
+/** Profile tab. A guest identity today (account claim is Phase 9); progress is now
+ * real — level, XP, streak, and the training calendar. Settings stays a "coming
+ * soon" card until Phase 8's preferences slice. */
 export function ProfilePage() {
   const { t } = useTranslation()
   const session = useSessionStore((state) => state.session)
+  const progressStore = useProgressStoreApi()
+  const progress = useProgressStore(selectProgress)
   const name = session?.displayName ?? 'Guest'
+
+  useEffect(() => {
+    progressStore.getState().start()
+  }, [progressStore])
 
   return (
     <AppScreen className="pt-safe">
@@ -18,7 +29,13 @@ export function ProfilePage() {
       </header>
 
       <section className="mt-8 flex flex-col gap-3 pb-28">
-        <ComingSoonCard title={t('profile.progressTitle')} hint={t('profile.progressHint')} />
+        <StreakSummary
+          xp={progress?.xp ?? 0}
+          streakCount={progress?.streakCount ?? 0}
+          longestStreak={progress?.longestStreak ?? 0}
+          trainingDays={progress?.trainingDays ?? []}
+        />
+        <StreakCalendar trainingDays={progress?.trainingDays ?? []} />
         <ComingSoonCard title={t('profile.settingsTitle')} hint={t('profile.settingsHint')} />
       </section>
     </AppScreen>

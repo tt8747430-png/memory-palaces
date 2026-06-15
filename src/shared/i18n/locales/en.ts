@@ -307,6 +307,20 @@ export const en = {
     levelUp: 'Level {{level}} reached',
     streak: '{{count}}-day streak',
   },
+  progress: {
+    heading: 'Progress',
+    streakHeading: 'Training streak',
+    level: 'Level {{level}}',
+    xpTotal: '{{xp}} XP',
+    xpToNext: '{{remaining}} XP to level {{level}}',
+    currentStreak: 'Current streak',
+    longestStreak: 'Longest streak',
+    daysTrained: '{{count}} days trained',
+    bestQuiz: 'Best quiz {{accuracy}}%',
+    calendar: 'Training calendar',
+    prevMonth: 'Previous month',
+    nextMonth: 'Next month',
+  },
 } as const
 
 export type AppResources = typeof en
