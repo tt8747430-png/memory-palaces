@@ -11,6 +11,8 @@ export interface RoomJourneyMapProps {
   onDelete: (id: string) => void
   onMoveUp: (id: string) => void
   onMoveDown: (id: string) => void
+  /** Open the room's content. Omitted in contexts without navigation (e.g. tests). */
+  onOpen?: (id: string) => void
 }
 
 /** The ordered journey of a palace's rooms. Presentational — the page passes the
@@ -22,6 +24,7 @@ export function RoomJourneyMap({
   onDelete,
   onMoveUp,
   onMoveDown,
+  onOpen,
 }: RoomJourneyMapProps) {
   const { t } = useTranslation()
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -85,6 +88,16 @@ export function RoomJourneyMap({
                   ) : null}
                 </div>
                 <div className="flex shrink-0 gap-1">
+                  {onOpen ? (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      aria-label={t('rooms.openLabel', { title: room.title })}
+                      onClick={() => onOpen(room.id)}
+                    >
+                      {t('rooms.open')}
+                    </Button>
+                  ) : null}
                   <Button
                     size="sm"
                     variant="ghost"

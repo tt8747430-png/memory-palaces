@@ -2,6 +2,7 @@ import { createRootRoute, createRoute, createRouter, useNavigate } from '@tansta
 import { HomePage } from '@/pages/home'
 import { PalacesPage } from '@/pages/palaces'
 import { PalaceDetailPage } from '@/pages/palace-detail'
+import { RoomContentPage } from '@/pages/room-content'
 import { ROUTES } from '@/shared/config/routes'
 import { RootLayout } from './RootLayout'
 
@@ -33,7 +34,13 @@ const palacesRoute = createRoute({
 function PalaceDetailRoute() {
   const { palaceId } = palaceDetailRoute.useParams()
   const navigate = useNavigate()
-  return <PalaceDetailPage palaceId={palaceId} onBack={() => navigate({ to: ROUTES.palaces })} />
+  return (
+    <PalaceDetailPage
+      palaceId={palaceId}
+      onBack={() => navigate({ to: ROUTES.palaces })}
+      onOpenRoom={(roomId) => navigate({ to: ROUTES.roomContent, params: { roomId } })}
+    />
+  )
 }
 
 const palaceDetailRoute = createRoute({
@@ -42,7 +49,24 @@ const palaceDetailRoute = createRoute({
   component: PalaceDetailRoute,
 })
 
-const routeTree = rootRoute.addChildren([homeRoute, palacesRoute, palaceDetailRoute])
+function RoomContentRoute() {
+  const { roomId } = roomContentRoute.useParams()
+  const navigate = useNavigate()
+  return <RoomContentPage roomId={roomId} onBack={() => navigate({ to: ROUTES.home })} />
+}
+
+const roomContentRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.roomContent,
+  component: RoomContentRoute,
+})
+
+const routeTree = rootRoute.addChildren([
+  homeRoute,
+  palacesRoute,
+  palaceDetailRoute,
+  roomContentRoute,
+])
 
 export const router = createRouter({
   routeTree,

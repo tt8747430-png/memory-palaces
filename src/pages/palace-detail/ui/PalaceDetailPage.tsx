@@ -10,11 +10,13 @@ export interface PalaceDetailPageProps {
   palaceId: string
   /** Provided by the route wrapper (kept out of the component so it stays router-free). */
   onBack?: () => void
+  /** Open a room's content; wired by the route wrapper. */
+  onOpenRoom?: (roomId: string) => void
 }
 
 /** Palace detail — the palace's ordered rooms with create/edit/delete/reorder, all
  * persisting offline through the injected room store. */
-export function PalaceDetailPage({ palaceId, onBack }: PalaceDetailPageProps) {
+export function PalaceDetailPage({ palaceId, onBack, onOpenRoom }: PalaceDetailPageProps) {
   const { t } = useTranslation()
   const palaceStore = usePalaceStoreApi()
   const roomStore = useRoomStoreApi()
@@ -64,6 +66,7 @@ export function PalaceDetailPage({ palaceId, onBack }: PalaceDetailPageProps) {
             <h2 className="sr-only">{t('palaceDetail.roomsHeading')}</h2>
             <RoomJourneyMap
               rooms={rooms}
+              onOpen={onOpenRoom}
               onRename={(id, newTitle) => void editRoom(roomStore, id, { title: newTitle })}
               onDelete={(id) => void deleteRoom(roomStore, id)}
               onMoveUp={(id) => void moveRoom(roomStore, id, 'up')}
