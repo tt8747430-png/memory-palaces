@@ -37,3 +37,16 @@ export function makeRoom(input: MakeRoomInput): Room {
     order: input.order,
   }
 }
+
+/** Mutable fields of a room — identity, timestamps, and palace are owned elsewhere. */
+export type RoomChanges = Partial<Omit<Room, 'id' | 'createdAt' | 'updatedAt' | 'palaceId'>>
+
+/** Apply an edit, enforcing the same invariants as {@link makeRoom}. `updatedAt`
+ * is set by the caller (clock injected) so the function stays pure. */
+export function updateRoom(room: Room, changes: RoomChanges, updatedAt: string): Room {
+  const next = { ...room, ...changes, updatedAt }
+  const title = next.title.trim()
+  if (!title) throw new Error('Room title is required')
+  if (next.order < 0) throw new Error('Room order must be >= 0')
+  return { ...next, title }
+}
