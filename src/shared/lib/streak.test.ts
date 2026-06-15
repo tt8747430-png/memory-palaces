@@ -1,0 +1,83 @@
+import { describe, expect, it } from 'vitest'
+import { dayKey, recordTrainingDay, totalTrainingDays, type StreakState } from './streak'
+
+const DAY_MS = 86_400_000
+const NOW = Date.UTC(2026, 0, 10) // 2026-01-10
+
+const empty: StreakState = {
+  streakCount: 0,
+  longestStreak: 0,
+  lastTrainingDate: null,
+  streakFreezes: 0,
+  trainingDays: [],
+}
+
+describe('dayKey', () => {
+  it('is the YYYY-MM-DD UTC day for an instant', () => {
+    expect(dayKey(NOW)).toBe('2026-01-10')
+  })
+})
+
+describe('recordTrainingDay', () => {
+  it('starts a streak at 1 on the first training day', () => {
+    const { state } = recordTrainingDay(empty, NOW)
+    expect(state.streakCount).toBe(1)
+    expect(state.longestStreak).toBe(1)
+    expect(state.lastTrainingDate).toBe('2026-01-10')
+    expect(state.trainingDays).toEqual(['2026-01-10'])
+  })
+
+  it('is idempotent when already trained today', () => {
+    const trained: StreakState = { ...empty, streakCount: 3, lastTrainingDate: '2026-01-10', trainingDays: ['2026-01-10'] }
+    const result = recordTrainingDay(trained, NOW)
+    expect(result.alreadyTrainedToday).toBe(true)
+    expect(result.state).toBe(trained)
+  })
+
+  it('increments on a consecutive day', () => {
+    const yesterday: StreakState = { ...empty, streakCount: 4, longestStreak: 4, lastTrainingDate: '2026-01-09', trainingDays: ['2026-01-09'] }
+    const { state, continued } = recordTrainingDay(yesterday, NOW)
+    expect(continued).toBe(true)
+    expect(state.streakCount).toBe(5)
+    expect(state.longestStreak).toBe(5)
+  })
+
+  it('spends a freeze to forgive exactly one missed day', () => {
+    const gapWithFreeze: StreakState = { ...empty, streakCount: 6, longestStreak: 6, lastTrainingDate: '2026-01-08', streakFreezes: 1, trainingDays: ['2026-01-08'] }
+    const { state, usedFreeze } = recordTrainingDay(gapWithFreeze, NOW)
+    expect(usedFreeze).toBe(true)
+    expect(state.streakCount).toBe(7)
+    // one freeze spent, but a 7-day milestone restocks one
+    expect(state.streakFreezes).toBe(1)
+  })
+
+  it('resets to 1 after a missed day with no freeze, preserving the longest', () => {
+    const gapNoFreeze: StreakState = { ...empty, streakCount: 9, longestStreak: 9, lastTrainingDate: '2026-01-08', streakFreezes: 0, trainingDays: ['2026-01-08'] }
+    const { state, continued } = recordTrainingDay(gapNoFreeze, NOW)
+    expect(continued).toBe(false)
+    expect(state.streakCount).toBe(1)
+    expect(state.longestStreak).toBe(9)
+  })
+
+  it('restocks a freeze at a 7-day milestone (capped at 2)', () => {
+    const day6: StreakState = { ...empty, streakCount: 6, longestStreak: 6, lastTrainingDate: '2026-01-09', streakFreezes: 0, trainingDays: ['2026-01-09'] }
+    const { state, isMilestone } = recordTrainingDay(day6, NOW)
+    expect(state.streakCount).toBe(7)
+    expect(isMilestone).toBe(true)
+    expect(state.streakFreezes).toBe(1)
+  })
+
+  it('caps training-day history at 365 entries', () => {
+    const history = Array.from({ length: 365 }, (_, i) => dayKey(NOW - (400 - i) * DAY_MS))
+    const long: StreakState = { ...empty, streakCount: 1, lastTrainingDate: history[history.length - 1]!, trainingDays: history }
+    const { state } = recordTrainingDay(long, NOW)
+    expect(state.trainingDays).toHaveLength(365)
+    expect(state.trainingDays[state.trainingDays.length - 1]).toBe('2026-01-10')
+  })
+})
+
+describe('totalTrainingDays', () => {
+  it('counts distinct days', () => {
+    expect(totalTrainingDays(['2026-01-01', '2026-01-01', '2026-01-02'])).toBe(2)
+  })
+})
