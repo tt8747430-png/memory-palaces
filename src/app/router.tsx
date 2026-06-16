@@ -10,7 +10,7 @@ import { ReviewPage } from '@/pages/review'
 import { QuizPage } from '@/pages/quiz'
 import { ProfilePage } from '@/pages/profile'
 import { StatsPage } from '@/pages/stats'
-import { SettingsPage } from '@/pages/settings'
+import { SettingsPage, useProgressTransfer } from '@/pages/settings'
 import { SettingsProfilePage } from '@/pages/settings-profile'
 import { SettingsPrivacyPage } from '@/pages/settings-privacy'
 import { SettingsClearDataPage } from '@/pages/settings-clear-data'
@@ -208,6 +208,7 @@ const statsRoute = createRoute({
 
 function SettingsRoute() {
   const navigate = useNavigate()
+  const transfer = useProgressTransfer()
   return (
     <SettingsPage
       onBack={() => navigate({ to: ROUTES.profile })}
@@ -216,6 +217,8 @@ function SettingsRoute() {
       onClearData={() => navigate({ to: ROUTES.settingsClearData })}
       onHelp={() => navigate({ to: ROUTES.settingsHelp })}
       onAbout={() => navigate({ to: ROUTES.settingsAbout })}
+      onExport={transfer.exportNow}
+      onImportFile={transfer.importFile}
     />
   )
 }
