@@ -334,6 +334,30 @@ export const en = {
     notifications: 'Notifications',
     notificationsHint: 'Show milestone toasts — XP, level-ups, and streaks.',
   },
+  notifications: {
+    title: 'Notifications',
+    back: 'Back',
+    openLabel: 'Notifications',
+    emptyTitle: 'No notifications yet',
+    emptyBody:
+      'Level up, keep your streak alive, or ace a quiz — your milestones will show up here.',
+    clearAll: 'Clear all',
+    clearAllLabel: 'Clear all notifications',
+    removeLabel: 'Remove notification',
+    today: 'Today',
+    yesterday: 'Yesterday',
+    earlier: 'Earlier',
+    levelUpTitle: 'Level {{level}} reached',
+    levelUpBody: 'New rooms are ready to explore.',
+    streakTitle: '{{count}}-day streak',
+    streakBody: 'Incredible focus — keep it going.',
+    quizTitle: 'New best quiz',
+    quizBody: '{{accuracy}}% accuracy — your best yet.',
+    justNow: 'Just now',
+    minutesAgo: '{{count}}m ago',
+    hoursAgo: '{{count}}h ago',
+    daysAgo: '{{count}}d ago',
+  },
 } as const
 
 export type AppResources = typeof en

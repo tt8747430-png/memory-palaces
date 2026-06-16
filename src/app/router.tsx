@@ -10,6 +10,7 @@ import { ReviewPage } from '@/pages/review'
 import { QuizPage } from '@/pages/quiz'
 import { ProfilePage } from '@/pages/profile'
 import { SettingsPage } from '@/pages/settings'
+import { NotificationsPage } from '@/pages/notifications'
 import { ROUTES } from '@/shared/config/routes'
 import { RootLayout } from './RootLayout'
 
@@ -17,7 +18,12 @@ const rootRoute = createRootRoute({ component: RootLayout })
 
 function HomeRoute() {
   const navigate = useNavigate()
-  return <HomePage onStartReview={() => navigate({ to: ROUTES.review })} />
+  return (
+    <HomePage
+      onStartReview={() => navigate({ to: ROUTES.review })}
+      onOpenNotifications={() => navigate({ to: ROUTES.notifications })}
+    />
+  )
 }
 
 const homeRoute = createRoute({
@@ -183,6 +189,17 @@ const settingsRoute = createRoute({
   component: SettingsRoute,
 })
 
+function NotificationsRoute() {
+  const navigate = useNavigate()
+  return <NotificationsPage onBack={() => navigate({ to: ROUTES.home })} />
+}
+
+const notificationsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.notifications,
+  component: NotificationsRoute,
+})
+
 const routeTree = rootRoute.addChildren([
   homeRoute,
   palacesRoute,
@@ -195,6 +212,7 @@ const routeTree = rootRoute.addChildren([
   quizRoute,
   profileRoute,
   settingsRoute,
+  notificationsRoute,
 ])
 
 export const router = createRouter({

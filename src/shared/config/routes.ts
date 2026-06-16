@@ -11,6 +11,7 @@ export const ROUTES = {
   review: '/review',
   profile: '/profile',
   settings: '/settings',
+  notifications: '/notifications',
 } as const
 
 export type RoutePath = (typeof ROUTES)[keyof typeof ROUTES]
