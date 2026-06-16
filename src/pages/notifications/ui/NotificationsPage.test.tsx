@@ -48,12 +48,13 @@ describe('NotificationsPage', () => {
     expect(selectUnreadCount(store.getState())).toBe(0)
   })
 
-  it('clears all notifications via the header action', async () => {
+  it('clears all notifications via the header overflow menu', async () => {
     const user = userEvent.setup()
     const store = startedStore([seeded()])
     renderPage(store)
 
-    await user.click(screen.getByRole('button', { name: /clear all notifications/i }))
+    await user.click(screen.getByRole('button', { name: /more options/i }))
+    await user.click(screen.getByRole('button', { name: /clear all/i }))
     await flush()
 
     expect(store.getState().notifications).toHaveLength(0)

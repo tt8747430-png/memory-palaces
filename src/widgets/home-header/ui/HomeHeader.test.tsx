@@ -8,7 +8,7 @@ import { HomeHeader } from './HomeHeader'
 afterEach(cleanup)
 
 function renderHeader(props: Partial<Parameters<typeof HomeHeader>[0]> = {}) {
-  const handlers = { onOpenProfile: vi.fn(), onOpenNotifications: vi.fn() }
+  const handlers = { onOpenProfile: vi.fn(), onOpenSettings: vi.fn(), onOpenNotifications: vi.fn() }
   render(
     <I18nextProvider i18n={i18n}>
       {/* 500 XP → level 3 (250 XP per level). */}

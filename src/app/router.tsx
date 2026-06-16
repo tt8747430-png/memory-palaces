@@ -23,6 +23,7 @@ function HomeRoute() {
       onStartReview={() => navigate({ to: ROUTES.review })}
       onOpenNotifications={() => navigate({ to: ROUTES.notifications })}
       onOpenProfile={() => navigate({ to: ROUTES.profile })}
+      onOpenSettings={() => navigate({ to: ROUTES.settings })}
       onTrainRoom={(roomId) => navigate({ to: ROUTES.roomTrain, params: { roomId } })}
       onOpenPalace={(palaceId) => navigate({ to: ROUTES.palaceDetail, params: { palaceId } })}
       onViewAllPalaces={() => navigate({ to: ROUTES.palaces })}

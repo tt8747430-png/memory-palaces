@@ -69,6 +69,9 @@
     background-repeat: no-repeat;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    /* Own the vertical overscroll so custom pull-to-refresh isn't pre-empted by the
+       browser's native pull-to-refresh / rubber-band at the top of the window. */
+    overscroll-behavior-y: contain;
   }
 
   h1,

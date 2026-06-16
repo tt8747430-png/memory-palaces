@@ -49,10 +49,53 @@ describe('PalacesOverview', () => {
     const user = userEvent.setup()
     const handlers = renderOverview([summary({ id: 'acro', name: 'Acropolis' })])
 
-    await user.click(screen.getByRole('button', { name: /acropolis/i }))
+    await user.click(screen.getByRole('button', { name: /^open acropolis$/i }))
     await user.click(screen.getByRole('button', { name: /view all/i }))
 
     expect(handlers.onOpenPalace).toHaveBeenCalledWith('acro')
     expect(handlers.onViewAll).toHaveBeenCalledTimes(1)
+  })
+
+  it('trains a palace from the kebab quick actions', async () => {
+    const user = userEvent.setup()
+    const onTrainPalace = vi.fn()
+    render(
+      <I18nextProvider i18n={i18n}>
+        <PalacesOverview
+          palaces={[summary({ id: 'acro', name: 'Acropolis' })]}
+          onOpenPalace={vi.fn()}
+          onViewAll={vi.fn()}
+          onTrainPalace={onTrainPalace}
+        />
+      </I18nextProvider>,
+    )
+
+    await user.click(screen.getByRole('button', { name: /more options for acropolis/i }))
+    await user.click(await screen.findByRole('button', { name: /train now/i }))
+
+    expect(onTrainPalace).toHaveBeenCalledWith('acro')
+  })
+
+  it('confirms before deleting a palace', async () => {
+    const user = userEvent.setup()
+    const onDeletePalace = vi.fn()
+    render(
+      <I18nextProvider i18n={i18n}>
+        <PalacesOverview
+          palaces={[summary({ id: 'acro', name: 'Acropolis' })]}
+          onOpenPalace={vi.fn()}
+          onViewAll={vi.fn()}
+          onDeletePalace={onDeletePalace}
+        />
+      </I18nextProvider>,
+    )
+
+    await user.click(screen.getByRole('button', { name: /more options for acropolis/i }))
+    await user.click(await screen.findByRole('button', { name: /^delete$/i }))
+    // The first tap only opens the confirm step; nothing is deleted yet.
+    expect(onDeletePalace).not.toHaveBeenCalled()
+
+    await user.click(await screen.findByRole('button', { name: /delete palace/i }))
+    expect(onDeletePalace).toHaveBeenCalledWith('acro')
   })
 })

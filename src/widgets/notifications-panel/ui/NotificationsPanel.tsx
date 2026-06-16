@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { BellOff, Flame, Star, Trophy, X, Zap, type LucideIcon } from 'lucide-react'
 import { cn } from '@/shared/lib'
-import { Chip, IconButton, cardSurface } from '@/shared/ui'
+import { Chip, IconButton, SwipeRow, cardSurface } from '@/shared/ui'
 import type { AppNotification, NotificationType } from '@/entities/notification'
 import { bucketOf, relativeTime, type DayBucket, type RelativeTime } from '../lib/group'
 
@@ -87,12 +87,17 @@ export function NotificationsPanel({
             <ul className="flex flex-col gap-2">
               <AnimatePresence initial={false}>
                 {items.map((notification) => (
-                  <NotificationRow
+                  <motion.li
                     key={notification.id}
-                    notification={notification}
-                    now={now}
-                    onRemove={onRemove}
-                  />
+                    layout
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, x: -24, transition: { duration: 0.18 } }}
+                  >
+                    <SwipeRow onDelete={() => onRemove(notification.id)}>
+                      <NotificationRow notification={notification} now={now} onRemove={onRemove} />
+                    </SwipeRow>
+                  </motion.li>
                 ))}
               </AnimatePresence>
             </ul>
@@ -117,11 +122,7 @@ function NotificationRow({
   const badgeStyle: CSSProperties = { color: fg, backgroundColor: tint }
 
   return (
-    <motion.li
-      layout
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, x: -24, transition: { duration: 0.18 } }}
+    <div
       className={cn(
         cardSurface,
         'relative flex items-start gap-3 p-3.5',
@@ -163,11 +164,12 @@ function NotificationRow({
         variant="ghost"
         size="sm"
         aria-label={t('notifications.removeLabel')}
+        onPointerDown={(event) => event.stopPropagation()}
         onClick={() => onRemove(notification.id)}
       >
         <X className="size-4" aria-hidden />
       </IconButton>
-    </motion.li>
+    </div>
   )
 }
 

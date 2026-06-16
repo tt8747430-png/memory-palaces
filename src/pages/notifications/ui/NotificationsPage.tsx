@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Trash2 } from 'lucide-react'
+import { CheckCheck, Trash2 } from 'lucide-react'
 import {
   selectNotifications,
   selectUnreadCount,
@@ -13,7 +13,7 @@ import {
   removeNotification,
 } from '@/features/notification'
 import { NotificationsPanel } from '@/widgets/notifications-panel'
-import { AppScreen, IconButton, ScreenHeader } from '@/shared/ui'
+import { AppScreen, OverflowMenuButton, ScreenHeader, type SheetAction } from '@/shared/ui'
 
 export interface NotificationsPageProps {
   /** Provided by the route wrapper so the page stays router-free. */
@@ -41,6 +41,22 @@ export function NotificationsPage({ onBack }: NotificationsPageProps = {}) {
   const handleRemove = (id: string) => void removeNotification(store, id)
   const handleClearAll = () => void clearNotifications(store)
 
+  const overflowActions: SheetAction[] = [
+    {
+      id: 'read',
+      label: t('notifications.markAllRead'),
+      icon: <CheckCheck className="size-5" aria-hidden />,
+      onSelect: () => void markAllNotificationsRead(store),
+    },
+    {
+      id: 'clear',
+      label: t('notifications.clearAll'),
+      icon: <Trash2 className="size-5" aria-hidden />,
+      destructive: true,
+      onSelect: handleClearAll,
+    },
+  ]
+
   return (
     <AppScreen className="pt-safe">
       <ScreenHeader
@@ -54,13 +70,13 @@ export function NotificationsPage({ onBack }: NotificationsPageProps = {}) {
         backLabel={t('notifications.back')}
         action={
           notifications.length > 0 ? (
-            <IconButton
-              variant="ghost"
-              aria-label={t('notifications.clearAllLabel')}
-              onClick={handleClearAll}
-            >
-              <Trash2 className="size-5" aria-hidden />
-            </IconButton>
+            <OverflowMenuButton
+              variant="glass"
+              label={t('common.moreOptions')}
+              title={t('common.options')}
+              actions={overflowActions}
+              cancelLabel={t('common.cancel')}
+            />
           ) : null
         }
       />

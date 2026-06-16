@@ -1,8 +1,8 @@
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-import { Bell, BellRing, Brain, Flame, Layers, Zap } from 'lucide-react'
+import { Bell, BellRing, Brain, Flame, Layers, Settings, User, Zap } from 'lucide-react'
 import { levelFromXp } from '@/shared/lib'
-import { Avatar, IconButton, type IconButtonVariant } from '@/shared/ui'
+import { Avatar, IconButton, type IconButtonVariant, OverflowMenuButton, type SheetAction } from '@/shared/ui'
 import { useCollapsibleHeader } from '../lib/use-collapsible-header'
 
 export interface HomeHeaderProps {
@@ -15,6 +15,7 @@ export interface HomeHeaderProps {
   /** Show the at-a-glance streak/due chips (hidden on first run). */
   showStats?: boolean
   onOpenProfile: () => void
+  onOpenSettings: () => void
   onOpenNotifications: () => void
 }
 
@@ -29,6 +30,7 @@ export function HomeHeader({
   dueCount = 0,
   showStats = false,
   onOpenProfile,
+  onOpenSettings,
   onOpenNotifications,
 }: HomeHeaderProps) {
   const { t } = useTranslation()
@@ -38,6 +40,20 @@ export function HomeHeader({
   const fill = Math.round((xpInLevel / xpForNextLevel) * 100)
   const xpToNext = t('home.xpToNext', { remaining: xpForNextLevel - xpInLevel, next: level + 1 })
   const showChips = showStats && (streakCount > 0 || dueCount > 0)
+  const overflowActions: SheetAction[] = [
+    {
+      id: 'profile',
+      label: t('nav.profile'),
+      icon: <User className="size-5" aria-hidden />,
+      onSelect: onOpenProfile,
+    },
+    {
+      id: 'settings',
+      label: t('settings.title'),
+      icon: <Settings className="size-5" aria-hidden />,
+      onSelect: onOpenSettings,
+    },
+  ]
 
   return (
     <>
@@ -156,12 +172,21 @@ export function HomeHeader({
               </span>
             </span>
           </button>
-          <NotificationButton
-            variant="glass"
-            unreadCount={unreadCount}
-            label={t('notifications.openLabel')}
-            onClick={onOpenNotifications}
-          />
+          <div className="flex shrink-0 items-center gap-1.5">
+            <NotificationButton
+              variant="glass"
+              unreadCount={unreadCount}
+              label={t('notifications.openLabel')}
+              onClick={onOpenNotifications}
+            />
+            <OverflowMenuButton
+              variant="glass"
+              label={t('common.moreOptions')}
+              title={t('common.options')}
+              actions={overflowActions}
+              cancelLabel={t('common.cancel')}
+            />
+          </div>
         </div>
 
         {showChips ? (
