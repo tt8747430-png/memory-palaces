@@ -14,6 +14,8 @@ import { SettingsPage } from '@/pages/settings'
 import { SettingsProfilePage } from '@/pages/settings-profile'
 import { SettingsPrivacyPage } from '@/pages/settings-privacy'
 import { SettingsClearDataPage } from '@/pages/settings-clear-data'
+import { SettingsHelpPage } from '@/pages/settings-help'
+import { SettingsAboutPage } from '@/pages/settings-about'
 import { NotificationsPage } from '@/pages/notifications'
 import { ROUTES } from '@/shared/config/routes'
 import { RootLayout } from './RootLayout'
@@ -212,6 +214,8 @@ function SettingsRoute() {
       onEditProfile={() => navigate({ to: ROUTES.settingsProfile })}
       onPrivacy={() => navigate({ to: ROUTES.settingsPrivacy })}
       onClearData={() => navigate({ to: ROUTES.settingsClearData })}
+      onHelp={() => navigate({ to: ROUTES.settingsHelp })}
+      onAbout={() => navigate({ to: ROUTES.settingsAbout })}
     />
   )
 }
@@ -255,6 +259,28 @@ const settingsClearDataRoute = createRoute({
   component: SettingsClearDataRoute,
 })
 
+function SettingsHelpRoute() {
+  const navigate = useNavigate()
+  return <SettingsHelpPage onBack={() => navigate({ to: ROUTES.settings })} />
+}
+
+const settingsHelpRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.settingsHelp,
+  component: SettingsHelpRoute,
+})
+
+function SettingsAboutRoute() {
+  const navigate = useNavigate()
+  return <SettingsAboutPage onBack={() => navigate({ to: ROUTES.settings })} />
+}
+
+const settingsAboutRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.settingsAbout,
+  component: SettingsAboutRoute,
+})
+
 function NotificationsRoute() {
   const navigate = useNavigate()
   return <NotificationsPage onBack={() => navigate({ to: ROUTES.home })} />
@@ -282,6 +308,8 @@ const routeTree = rootRoute.addChildren([
   settingsProfileRoute,
   settingsPrivacyRoute,
   settingsClearDataRoute,
+  settingsHelpRoute,
+  settingsAboutRoute,
   notificationsRoute,
 ])
 
