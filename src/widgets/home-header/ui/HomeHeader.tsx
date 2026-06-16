@@ -1,9 +1,8 @@
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Bell, BellRing, Brain, Flame, Layers, Settings, User, Zap } from 'lucide-react'
-import { levelFromXp } from '@/shared/lib'
+import { levelFromXp, useCollapsibleHeader } from '@/shared/lib'
 import { Avatar, IconButton, type IconButtonVariant, OverflowMenuButton, type SheetAction } from '@/shared/ui'
-import { useCollapsibleHeader } from '../lib/use-collapsible-header'
 
 export interface HomeHeaderProps {
   name: string

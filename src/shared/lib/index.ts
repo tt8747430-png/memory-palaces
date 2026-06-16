@@ -1,5 +1,9 @@
 export { cn } from './cn'
 export {
+  useCollapsibleHeader,
+  type CollapsibleHeader,
+} from './collapsible-header/use-collapsible-header'
+export {
   clampSwipeOffset,
   shouldCommitSwipe,
   pullDistance,
