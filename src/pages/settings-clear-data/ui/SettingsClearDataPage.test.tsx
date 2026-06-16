@@ -58,4 +58,10 @@ describe('SettingsClearDataPage', () => {
       expect(await palaceRepo.getAll()).toEqual([])
     })
   })
+
+  it('shows live counts on the rows', async () => {
+    renderPage()
+    expect(await screen.findByText('1 palace')).toBeInTheDocument()
+    expect(screen.getByText('0 notifications')).toBeInTheDocument()
+  })
 })

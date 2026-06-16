@@ -514,6 +514,12 @@ export const en = {
       confirm: 'Clear',
       cancel: 'Cancel',
       done: 'Data cleared.',
+      palacesCountOne: '{{count}} palace',
+      palacesCountOther: '{{count}} palaces',
+      notificationsCountOne: '{{count}} notification',
+      notificationsCountOther: '{{count}} notifications',
+      statsCountOne: '{{count}} day trained · {{xp}} XP',
+      statsCountOther: '{{count}} days trained · {{xp}} XP',
     },
     help: {
       title: 'Help center',
