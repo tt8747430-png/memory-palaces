@@ -10,6 +10,7 @@ export const ROUTES = {
   roomVerse: '/rooms/$roomId/verse',
   review: '/review',
   profile: '/profile',
+  stats: '/stats',
   settings: '/settings',
   notifications: '/notifications',
 } as const
