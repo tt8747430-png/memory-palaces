@@ -48,6 +48,10 @@ export const en = {
     dueChip: '{{count}} due',
     inProgress: 'In progress',
     notStarted: 'Not started',
+    palacesTitle: 'Your Memory Palaces',
+    viewAll: 'View all',
+    roomsCount: '{{completed}}/{{total}} rooms',
+    mastered: 'Mastered',
   },
   palaces: {
     title: 'Your palaces',

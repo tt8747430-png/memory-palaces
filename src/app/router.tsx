@@ -24,6 +24,8 @@ function HomeRoute() {
       onOpenNotifications={() => navigate({ to: ROUTES.notifications })}
       onOpenProfile={() => navigate({ to: ROUTES.profile })}
       onTrainRoom={(roomId) => navigate({ to: ROUTES.roomTrain, params: { roomId } })}
+      onOpenPalace={(palaceId) => navigate({ to: ROUTES.palaceDetail, params: { palaceId } })}
+      onViewAllPalaces={() => navigate({ to: ROUTES.palaces })}
     />
   )
 }
