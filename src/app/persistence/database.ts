@@ -1,4 +1,5 @@
-import { createRxDatabase } from 'rxdb'
+import { addRxPlugin, createRxDatabase } from 'rxdb'
+import { RxDBMigrationSchemaPlugin } from 'rxdb/plugins/migration-schema'
 import type { RxCollection, RxStorage } from 'rxdb'
 import type { Folder } from '@/entities/folder'
 import type { Palace } from '@/entities/palace'
@@ -7,6 +8,7 @@ import type { Locus } from '@/entities/locus'
 import type { Question } from '@/entities/question'
 import type { Progress } from '@/entities/progress'
 import type { Preferences } from '@/entities/preferences'
+import type { Profile } from '@/entities/profile'
 import type { AppNotification } from '@/entities/notification'
 import { STORAGE_PREFIX } from '@/shared/config/constants'
 import {
@@ -15,11 +17,17 @@ import {
   notificationSchema,
   palaceSchema,
   preferencesSchema,
+  profileSchema,
   progressSchema,
   questionSchema,
   roomSchema,
 } from './schemas'
 import { migratePreferencesV1 } from './migrations'
+
+// Required because the preferences collection is at schema version 1 (with a
+// migrationStrategy); without this RxDB throws "function must be overwritten by a
+// plugin" the moment the database is created.
+addRxPlugin(RxDBMigrationSchemaPlugin)
 
 export interface AppCollections {
   palaces: RxCollection<Palace>
@@ -29,6 +37,7 @@ export interface AppCollections {
   questions: RxCollection<Question>
   progress: RxCollection<Progress>
   preferences: RxCollection<Preferences>
+  profiles: RxCollection<Profile>
   notifications: RxCollection<AppNotification>
 }
 
@@ -52,6 +61,7 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
       schema: preferencesSchema,
       migrationStrategies: { 1: migratePreferencesV1 },
     },
+    profiles: { schema: profileSchema },
     notifications: { schema: notificationSchema },
   })
   return {
@@ -62,6 +72,7 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
     questions: collections.questions,
     progress: collections.progress,
     preferences: collections.preferences,
+    profiles: collections.profiles,
     notifications: collections.notifications,
   }
 }

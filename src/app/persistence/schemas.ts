@@ -6,6 +6,7 @@ import type { Locus } from '@/entities/locus'
 import type { Question } from '@/entities/question'
 import type { Progress } from '@/entities/progress'
 import type { Preferences } from '@/entities/preferences'
+import type { Profile } from '@/entities/profile'
 import type { AppNotification } from '@/entities/notification'
 
 /**
@@ -229,6 +230,22 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
     'language',
     'privacy',
   ],
+}
+
+export const profileSchema: RxJsonSchema<Profile> = {
+  version: 0,
+  primaryKey: 'id',
+  type: 'object',
+  properties: {
+    id: { type: 'string', maxLength: 100 },
+    createdAt: { type: 'string' },
+    updatedAt: { type: 'string' },
+    name: { type: 'string' },
+    email: { type: 'string' },
+    bio: { type: 'string' },
+    avatar: { type: ['string', 'null'] },
+  },
+  required: ['id', 'createdAt', 'updatedAt', 'name', 'email', 'bio', 'avatar'],
 }
 
 export const notificationSchema: RxJsonSchema<AppNotification> = {

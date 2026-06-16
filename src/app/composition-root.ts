@@ -13,6 +13,7 @@ import {
   type Preferences,
   type PreferencesStore,
 } from '@/entities/preferences'
+import { createProfileStore, type Profile, type ProfileStore } from '@/entities/profile'
 import {
   createNotificationStore,
   type AppNotification,
@@ -28,6 +29,7 @@ export interface Services {
   questionStore: QuestionStore
   progressStore: ProgressStore
   preferencesStore: PreferencesStore
+  profileStore: ProfileStore
   notificationStore: NotificationStore
   eventBus: EventBus<AppEvents>
 }
@@ -47,6 +49,7 @@ export function createServices(): Services {
   const questionRepo = new RxdbRepository<Question>(collections.then((c) => c.questions))
   const progressRepo = new RxdbRepository<Progress>(collections.then((c) => c.progress))
   const preferencesRepo = new RxdbRepository<Preferences>(collections.then((c) => c.preferences))
+  const profileRepo = new RxdbRepository<Profile>(collections.then((c) => c.profiles))
   const notificationRepo = new RxdbRepository<AppNotification>(
     collections.then((c) => c.notifications),
   )
@@ -58,6 +61,7 @@ export function createServices(): Services {
     questionStore: createQuestionStore(questionRepo),
     progressStore: createProgressStore(progressRepo),
     preferencesStore: createPreferencesStore(preferencesRepo),
+    profileStore: createProfileStore(profileRepo),
     notificationStore: createNotificationStore(notificationRepo),
     eventBus: new EventBus<AppEvents>(),
   }

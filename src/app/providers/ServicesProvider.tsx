@@ -6,6 +6,7 @@ import { LocusStoreContext } from '@/entities/locus'
 import { QuestionStoreContext } from '@/entities/question'
 import { ProgressStoreContext } from '@/entities/progress'
 import { PreferencesStoreContext } from '@/entities/preferences'
+import { ProfileStoreContext } from '@/entities/profile'
 import { NotificationStoreContext } from '@/entities/notification'
 import { EventBusContext } from '@/shared/lib'
 import type { Services } from '../composition-root'
@@ -26,9 +27,11 @@ export function ServicesProvider({
             <QuestionStoreContext value={services.questionStore}>
               <ProgressStoreContext value={services.progressStore}>
                 <PreferencesStoreContext value={services.preferencesStore}>
-                  <NotificationStoreContext value={services.notificationStore}>
-                    <EventBusContext value={services.eventBus}>{children}</EventBusContext>
-                  </NotificationStoreContext>
+                  <ProfileStoreContext value={services.profileStore}>
+                    <NotificationStoreContext value={services.notificationStore}>
+                      <EventBusContext value={services.eventBus}>{children}</EventBusContext>
+                    </NotificationStoreContext>
+                  </ProfileStoreContext>
                 </PreferencesStoreContext>
               </ProgressStoreContext>
             </QuestionStoreContext>
