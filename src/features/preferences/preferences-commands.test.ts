@@ -33,4 +33,25 @@ describe('setPreferences', () => {
     const prefs = await setPreferences(store, { soundEffects: false }, NOW)
     expect(prefs.updatedAt).toBe(new Date(NOW).toISOString())
   })
+
+  it('persists darkMode while keeping the other defaults', async () => {
+    const store = startedStore()
+    const prefs = await setPreferences(store, { darkMode: true }, NOW)
+    expect(prefs.darkMode).toBe(true)
+    expect(prefs.language).toBe('en')
+    expect(prefs.soundEffects).toBe(true)
+  })
+
+  it('merges a nested privacy change without dropping the other flags', async () => {
+    const store = startedStore()
+    const seeded = await setPreferences(store, {}, NOW)
+    const prefs = await setPreferences(
+      store,
+      { privacy: { ...seeded.privacy, activitySharing: true } },
+      NOW,
+    )
+    expect(prefs.privacy.activitySharing).toBe(true)
+    expect(prefs.privacy.profileVisibility).toBe(true)
+    expect(prefs.privacy.dataEncryption).toBe(true)
+  })
 })

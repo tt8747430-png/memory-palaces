@@ -185,7 +185,7 @@ export const progressSchema: RxJsonSchema<Progress> = {
 }
 
 export const preferencesSchema: RxJsonSchema<Preferences> = {
-  version: 0,
+  version: 1,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -196,6 +196,26 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
     haptics: { type: 'boolean' },
     reducedMotion: { type: 'boolean' },
     notifications: { type: 'boolean' },
+    darkMode: { type: 'boolean' },
+    language: { type: 'string' },
+    privacy: {
+      type: 'object',
+      properties: {
+        profileVisibility: { type: 'boolean' },
+        activitySharing: { type: 'boolean' },
+        locationAccess: { type: 'boolean' },
+        notificationTracking: { type: 'boolean' },
+        dataEncryption: { type: 'boolean' },
+      },
+      required: [
+        'profileVisibility',
+        'activitySharing',
+        'locationAccess',
+        'notificationTracking',
+        'dataEncryption',
+      ],
+      additionalProperties: false,
+    },
   },
   required: [
     'id',
@@ -205,6 +225,9 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
     'haptics',
     'reducedMotion',
     'notifications',
+    'darkMode',
+    'language',
+    'privacy',
   ],
 }
 

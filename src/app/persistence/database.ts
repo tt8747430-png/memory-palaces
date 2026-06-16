@@ -19,6 +19,7 @@ import {
   questionSchema,
   roomSchema,
 } from './schemas'
+import { migratePreferencesV1 } from './migrations'
 
 export interface AppCollections {
   palaces: RxCollection<Palace>
@@ -47,7 +48,10 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
     loci: { schema: locusSchema },
     questions: { schema: questionSchema },
     progress: { schema: progressSchema },
-    preferences: { schema: preferencesSchema },
+    preferences: {
+      schema: preferencesSchema,
+      migrationStrategies: { 1: migratePreferencesV1 },
+    },
     notifications: { schema: notificationSchema },
   })
   return {

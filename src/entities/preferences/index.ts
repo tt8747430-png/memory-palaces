@@ -1,5 +1,10 @@
-export type { Preferences, MakePreferencesInput, PreferencesChanges } from './model/types'
-export { makePreferences, updatePreferences, DEFAULT_PREFERENCES } from './model/types'
+export type {
+  Preferences,
+  PrivacySettings,
+  MakePreferencesInput,
+  PreferencesChanges,
+} from './model/types'
+export { makePreferences, updatePreferences, DEFAULT_PREFERENCES, DEFAULT_PRIVACY } from './model/types'
 export { createPreferencesStore } from './model/store'
 export type { PreferencesState, PreferencesStatus, PreferencesStore } from './model/store'
 export {
