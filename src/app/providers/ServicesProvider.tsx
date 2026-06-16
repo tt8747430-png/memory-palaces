@@ -6,6 +6,8 @@ import { LocusStoreContext } from '@/entities/locus'
 import { QuestionStoreContext } from '@/entities/question'
 import { ProgressStoreContext } from '@/entities/progress'
 import { PreferencesStoreContext } from '@/entities/preferences'
+import { NotificationStoreContext } from '@/entities/notification'
+import { EventBusContext } from '@/shared/lib'
 import type { Services } from '../composition-root'
 
 /** Injects composition-root services into the React tree (entity store contexts). */
@@ -24,7 +26,9 @@ export function ServicesProvider({
             <QuestionStoreContext value={services.questionStore}>
               <ProgressStoreContext value={services.progressStore}>
                 <PreferencesStoreContext value={services.preferencesStore}>
-                  {children}
+                  <NotificationStoreContext value={services.notificationStore}>
+                    <EventBusContext value={services.eventBus}>{children}</EventBusContext>
+                  </NotificationStoreContext>
                 </PreferencesStoreContext>
               </ProgressStoreContext>
             </QuestionStoreContext>

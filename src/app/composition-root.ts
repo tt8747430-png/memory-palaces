@@ -1,7 +1,7 @@
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie'
 import { InMemoryRepository } from '@/shared/api'
 import { RxdbRepository } from '@/shared/api/rxdb'
-import { EventBus } from '@/shared/lib'
+import { EventBus, type AppEvents } from '@/shared/lib'
 import { createSessionStore, type Session, type SessionStore } from '@/entities/session'
 import { createPalaceStore, type Palace, type PalaceStore } from '@/entities/palace'
 import { createRoomStore, type Room, type RoomStore } from '@/entities/room'
@@ -13,14 +13,12 @@ import {
   type Preferences,
   type PreferencesStore,
 } from '@/entities/preferences'
+import {
+  createNotificationStore,
+  type AppNotification,
+  type NotificationStore,
+} from '@/entities/notification'
 import { createAppDatabase } from './persistence/database'
-
-/** Domain events broadcast on the bus (Observer). Grows with each slice.
- * A `type` (not `interface`) so it satisfies the bus's `Record<string, unknown>`. */
-export type ProgressEvents = {
-  'xp-gain': { amount: number }
-  'level-up': { level: number }
-}
 
 export interface Services {
   sessionStore: SessionStore
@@ -30,7 +28,8 @@ export interface Services {
   questionStore: QuestionStore
   progressStore: ProgressStore
   preferencesStore: PreferencesStore
-  eventBus: EventBus<ProgressEvents>
+  notificationStore: NotificationStore
+  eventBus: EventBus<AppEvents>
 }
 
 /**
@@ -48,6 +47,9 @@ export function createServices(): Services {
   const questionRepo = new RxdbRepository<Question>(collections.then((c) => c.questions))
   const progressRepo = new RxdbRepository<Progress>(collections.then((c) => c.progress))
   const preferencesRepo = new RxdbRepository<Preferences>(collections.then((c) => c.preferences))
+  const notificationRepo = new RxdbRepository<AppNotification>(
+    collections.then((c) => c.notifications),
+  )
   return {
     sessionStore: createSessionStore(sessionRepo),
     palaceStore: createPalaceStore(palaceRepo),
@@ -56,7 +58,8 @@ export function createServices(): Services {
     questionStore: createQuestionStore(questionRepo),
     progressStore: createProgressStore(progressRepo),
     preferencesStore: createPreferencesStore(preferencesRepo),
-    eventBus: new EventBus<ProgressEvents>(),
+    notificationStore: createNotificationStore(notificationRepo),
+    eventBus: new EventBus<AppEvents>(),
   }
 }
 

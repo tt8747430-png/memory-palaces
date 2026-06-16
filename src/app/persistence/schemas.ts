@@ -6,6 +6,7 @@ import type { Locus } from '@/entities/locus'
 import type { Question } from '@/entities/question'
 import type { Progress } from '@/entities/progress'
 import type { Preferences } from '@/entities/preferences'
+import type { AppNotification } from '@/entities/notification'
 
 /**
  * RxDB JSON schemas for the persisted entities. They live at the composition layer
@@ -205,4 +206,22 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
     'reducedMotion',
     'notifications',
   ],
+}
+
+export const notificationSchema: RxJsonSchema<AppNotification> = {
+  version: 0,
+  primaryKey: 'id',
+  type: 'object',
+  properties: {
+    id: { type: 'string', maxLength: 100 },
+    createdAt: { type: 'string' },
+    updatedAt: { type: 'string' },
+    type: { type: 'string', enum: ['level-up', 'streak', 'quiz'] },
+    read: { type: 'boolean' },
+    xpGain: { type: 'number' },
+    level: { type: 'number' },
+    count: { type: 'number' },
+    accuracy: { type: 'number' },
+  },
+  required: ['id', 'createdAt', 'updatedAt', 'type', 'read'],
 }
