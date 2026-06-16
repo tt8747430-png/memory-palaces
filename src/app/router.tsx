@@ -22,6 +22,7 @@ function HomeRoute() {
     <HomePage
       onStartReview={() => navigate({ to: ROUTES.review })}
       onOpenNotifications={() => navigate({ to: ROUTES.notifications })}
+      onOpenProfile={() => navigate({ to: ROUTES.profile })}
     />
   )
 }

@@ -36,6 +36,9 @@ export const en = {
     subtitle: 'A calm place to train your memory.',
     primaryCta: 'Start a session',
     guestNote: "You're exploring as a guest. Your progress is saved on this device.",
+    hi: 'Hi {{name}}!',
+    levelShort: 'Lv. {{level}}',
+    openProfile: 'Open profile',
   },
   palaces: {
     title: 'Your palaces',

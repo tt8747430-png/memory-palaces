@@ -1,0 +1,44 @@
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { I18nextProvider } from 'react-i18next'
+import { i18n } from '@/shared/i18n'
+import { HomeHeader } from './HomeHeader'
+
+afterEach(cleanup)
+
+function renderHeader(props: Partial<Parameters<typeof HomeHeader>[0]> = {}) {
+  const handlers = { onOpenProfile: vi.fn(), onOpenNotifications: vi.fn() }
+  render(
+    <I18nextProvider i18n={i18n}>
+      <HomeHeader name="Sam" level={3} unreadCount={0} {...handlers} {...props} />
+    </I18nextProvider>,
+  )
+  return handlers
+}
+
+describe('HomeHeader', () => {
+  it('greets the user and shows the level pill', () => {
+    renderHeader()
+    expect(screen.getAllByText('Hi Sam!').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Lv. 3').length).toBeGreaterThan(0)
+  })
+
+  it('caps the unread badge at 9+', () => {
+    renderHeader({ unreadCount: 15 })
+    expect(screen.getAllByText('9+').length).toBeGreaterThan(0)
+  })
+
+  it('opens the profile and the notifications', async () => {
+    const user = userEvent.setup()
+    const handlers = renderHeader()
+
+    // The hero (rendered last) is interactive at the top; the compact bar is
+    // pointer-events:none until you scroll.
+    await user.click(screen.getAllByRole('button', { name: /open profile/i }).at(-1)!)
+    await user.click(screen.getAllByRole('button', { name: /notifications/i }).at(-1)!)
+
+    expect(handlers.onOpenProfile).toHaveBeenCalled()
+    expect(handlers.onOpenNotifications).toHaveBeenCalled()
+  })
+})
