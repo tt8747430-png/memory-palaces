@@ -13,6 +13,9 @@ export interface StreakSummaryProps {
   trainingDays: readonly string[]
   now?: number
   className?: string
+  /** Show the level + XP-to-next block. Off on Home, where the header owns XP, so the
+   * two surfaces don't repeat the same numbers; on by default (Profile). */
+  showProgress?: boolean
 }
 
 /** The progress glance: current level + XP-to-next bar, current vs longest streak,
@@ -25,6 +28,7 @@ export function StreakSummary({
   trainingDays,
   now = Date.now(),
   className,
+  showProgress = true,
 }: StreakSummaryProps) {
   const { t } = useTranslation()
   const level = levelFromXp(xp)
@@ -34,28 +38,32 @@ export function StreakSummary({
 
   return (
     <Card className={cn('p-5', className)}>
-      <div className="flex items-end justify-between gap-3">
-        <div>
-          <h3 className="text-[length:var(--p-text-headline)] font-bold text-heading">
-            {t('progress.level', { level: level.level })}
-          </h3>
-          <p className="mt-0.5 text-[length:var(--p-text-label)] text-muted-foreground">
-            {t('progress.xpToNext', { remaining, level: level.level + 1 })}
-          </p>
-        </div>
-        <span className="shrink-0 text-[length:var(--p-text-label)] font-semibold tabular-nums text-heading">
-          {t('progress.xpTotal', { xp })}
-        </span>
-      </div>
-      <div className="mt-2 h-2 overflow-hidden rounded-full bg-secondary/30">
-        <motion.div
-          className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
-          animate={{ width: `${fill}%` }}
-          transition={{ duration: 0.4 }}
-        />
-      </div>
+      {showProgress ? (
+        <>
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <h3 className="text-[length:var(--p-text-headline)] font-bold text-heading">
+                {t('progress.level', { level: level.level })}
+              </h3>
+              <p className="mt-0.5 text-[length:var(--p-text-label)] text-muted-foreground">
+                {t('progress.xpToNext', { remaining, level: level.level + 1 })}
+              </p>
+            </div>
+            <span className="shrink-0 text-[length:var(--p-text-label)] font-semibold tabular-nums text-heading">
+              {t('progress.xpTotal', { xp })}
+            </span>
+          </div>
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-secondary/30">
+            <motion.div
+              className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
+              animate={{ width: `${fill}%` }}
+              transition={{ duration: 0.4 }}
+            />
+          </div>
+        </>
+      ) : null}
 
-      <div className="mt-5 flex items-stretch gap-3">
+      <div className={cn('flex items-stretch gap-3', showProgress && 'mt-5')}>
         <StreakStat label={t('progress.currentStreak')} value={streakCount} accent />
         <div className="w-px bg-border" />
         <StreakStat label={t('progress.longestStreak')} value={longestStreak} />

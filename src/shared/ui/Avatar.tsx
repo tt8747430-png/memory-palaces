@@ -18,8 +18,7 @@ export function Avatar({ name, className }: { name: string; className?: string }
         className,
       )}
       style={{
-        background:
-          'linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 70%, var(--accent)))',
+        background: 'linear-gradient(135deg, var(--primary), var(--accent))',
       }}
     >
       {initials(name)}

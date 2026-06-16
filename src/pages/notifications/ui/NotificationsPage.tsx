@@ -28,6 +28,7 @@ export function NotificationsPage({ onBack }: NotificationsPageProps = {}) {
   const store = useNotificationStoreApi()
   const notifications = useNotificationStore(selectNotifications)
   const unreadCount = useNotificationStore(selectUnreadCount)
+  const count = notifications.length
 
   useEffect(() => {
     store.getState().start()
@@ -44,6 +45,11 @@ export function NotificationsPage({ onBack }: NotificationsPageProps = {}) {
     <AppScreen className="pt-safe">
       <ScreenHeader
         title={t('notifications.title')}
+        subtitle={
+          count > 0
+            ? t(count === 1 ? 'notifications.countOne' : 'notifications.countOther', { count })
+            : undefined
+        }
         onBack={onBack}
         backLabel={t('notifications.back')}
         action={

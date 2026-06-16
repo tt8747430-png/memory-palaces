@@ -1,7 +1,6 @@
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-import { ArrowRight, Plus, Sparkles } from 'lucide-react'
-import { cn } from '@/shared/lib'
+import { ArrowRight, Building2, Footprints, Plus } from 'lucide-react'
 import { Button, GlassCard } from '@/shared/ui'
 
 export interface TodayTrainingCardProps {
@@ -23,6 +22,7 @@ export function TodayTrainingCard({
   className,
 }: TodayTrainingCardProps) {
   const { t } = useTranslation()
+  const Emblem = hasPalaces ? Footprints : Building2
 
   return (
     <motion.div
@@ -31,38 +31,46 @@ export function TodayTrainingCard({
       transition={{ delay: 0.05, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
       className={className}
     >
-      <GlassCard tone="sky" className="relative overflow-hidden">
+      <GlassCard tone="card" className="relative overflow-hidden">
+        {/* Soft daylight glow — atmosphere on the white surface, keeps the hero distinct. */}
         <span
           aria-hidden
-          className="absolute -right-3 -top-3 grid size-16 place-items-center rounded-card bg-gradient-to-br from-primary to-accent text-primary-foreground shadow-interactive"
-        >
-          <Sparkles className="size-7" />
-        </span>
+          className="pointer-events-none absolute -right-12 -top-14 size-36 rounded-full bg-[var(--accent)]/15 blur-2xl"
+        />
 
-        <h2 className="pr-16 text-[length:var(--p-text-title)] font-bold text-heading">
-          {t(hasPalaces ? 'home.todayTitle' : 'home.buildTitle')}
-        </h2>
-        <p className="mt-1.5 pr-12 text-[length:var(--p-text-body)] text-[color:var(--text-on-accent)]/80">
-          {t(hasPalaces ? 'home.todaySubtitle' : 'home.buildSubtitle')}
-        </p>
+        <div className="relative">
+          <span
+            aria-hidden
+            className="grid size-12 place-items-center rounded-card bg-gradient-to-br from-primary to-accent text-primary-foreground shadow-interactive"
+          >
+            <Emblem className="size-6" />
+          </span>
 
-        <Button
-          size="lg"
-          className={cn('mt-5 w-full rounded-pill')}
-          onClick={hasPalaces ? onStartTraining : onCreatePalace}
-        >
-          {hasPalaces ? (
-            <>
-              {t('home.startTraining')}
-              <ArrowRight className="size-5" aria-hidden />
-            </>
-          ) : (
-            <>
-              <Plus className="size-5" aria-hidden />
-              {t('home.createPalace')}
-            </>
-          )}
-        </Button>
+          <h2 className="mt-4 text-pretty text-[length:var(--p-text-headline)] font-bold text-heading">
+            {t(hasPalaces ? 'home.todayTitle' : 'home.buildTitle')}
+          </h2>
+          <p className="mt-1.5 text-[length:var(--p-text-body)] text-[color:var(--text-secondary)]">
+            {t(hasPalaces ? 'home.todaySubtitle' : 'home.buildSubtitle')}
+          </p>
+
+          <Button
+            size="lg"
+            className="mt-5 w-full rounded-pill"
+            onClick={hasPalaces ? onStartTraining : onCreatePalace}
+          >
+            {hasPalaces ? (
+              <>
+                {t('home.startTraining')}
+                <ArrowRight className="size-5" aria-hidden />
+              </>
+            ) : (
+              <>
+                <Plus className="size-5" aria-hidden />
+                {t('home.createPalace')}
+              </>
+            )}
+          </Button>
+        </div>
       </GlassCard>
     </motion.div>
   )

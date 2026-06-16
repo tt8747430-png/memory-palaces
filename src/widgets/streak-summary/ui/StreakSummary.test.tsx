@@ -39,4 +39,12 @@ describe('StreakSummary', () => {
     expect(screen.getByText('5')).toBeInTheDocument()
     expect(screen.getByText('9')).toBeInTheDocument()
   })
+
+  it('hides the level/XP block when showProgress is off (Home, where the header owns XP)', () => {
+    renderSummary({ showProgress: false })
+    expect(screen.queryByText('Level 2')).not.toBeInTheDocument()
+    expect(screen.queryByText('300 XP')).not.toBeInTheDocument()
+    // Streak figures still render.
+    expect(screen.getByText('Current streak')).toBeInTheDocument()
+  })
 })

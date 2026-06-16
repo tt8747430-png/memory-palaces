@@ -11,17 +11,23 @@ function renderHeader(props: Partial<Parameters<typeof HomeHeader>[0]> = {}) {
   const handlers = { onOpenProfile: vi.fn(), onOpenNotifications: vi.fn() }
   render(
     <I18nextProvider i18n={i18n}>
-      <HomeHeader name="Sam" level={3} unreadCount={0} {...handlers} {...props} />
+      {/* 500 XP → level 3 (250 XP per level). */}
+      <HomeHeader name="Sam" xp={500} unreadCount={0} {...handlers} {...props} />
     </I18nextProvider>,
   )
   return handlers
 }
 
 describe('HomeHeader', () => {
-  it('greets the user and shows the level pill', () => {
+  it('greets the user and shows the level derived from XP', () => {
     renderHeader()
     expect(screen.getAllByText('Hi Sam!').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Lv. 3').length).toBeGreaterThan(0)
+  })
+
+  it('surfaces the XP-to-next progress', () => {
+    renderHeader({ xp: 600 }) // level 3, 100 into the level → 150 remaining
+    expect(screen.getAllByLabelText('150 XP to level 4').length).toBeGreaterThan(0)
   })
 
   it('caps the unread badge at 9+', () => {

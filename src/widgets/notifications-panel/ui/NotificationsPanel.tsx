@@ -10,14 +10,30 @@ import { bucketOf, relativeTime, type DayBucket, type RelativeTime } from '../li
 
 interface Visual {
   icon: LucideIcon
-  /** A semantic theme token (never raw hex); the badge tints with color-mix. */
-  tone: string
+  /** Accessible icon color + its surface tint — both semantic tokens, never a raw
+   * fill color (amber/green fills fail contrast as a foreground on their own tint). */
+  fg: string
+  tint: string
 }
 
 const VISUALS: Record<NotificationType, Visual> = {
-  'level-up': { icon: Trophy, tone: 'var(--primary)' },
-  streak: { icon: Flame, tone: 'var(--warning)' },
-  quiz: { icon: Star, tone: 'var(--success)' },
+  // Distinct, on-brand tiles (gold reward / amber streak / blue quiz), each with an
+  // accessible foreground — the fill colors themselves fail as a foreground on tint.
+  'level-up': {
+    icon: Trophy,
+    fg: 'var(--rating-edge)',
+    tint: 'color-mix(in oklch, var(--rating) 30%, var(--surface))',
+  },
+  streak: {
+    icon: Flame,
+    fg: 'var(--warning-foreground)',
+    tint: 'color-mix(in oklch, var(--warning) 22%, var(--surface))',
+  },
+  quiz: {
+    icon: Star,
+    fg: 'var(--info-foreground)',
+    tint: 'color-mix(in oklch, var(--secondary) 45%, var(--surface))',
+  },
 }
 
 const BUCKET_ORDER: DayBucket[] = ['today', 'yesterday', 'earlier']
@@ -42,16 +58,18 @@ export function NotificationsPanel({
 
   if (notifications.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-3 px-6 pt-24 text-center">
-        <span className="grid size-16 place-items-center rounded-full bg-info-surface text-info-foreground">
-          <BellOff className="size-7" aria-hidden />
+      <div className="flex flex-col items-center gap-4 px-6 pt-24 text-center">
+        <span className="grid size-20 place-items-center rounded-card-featured bg-info-surface text-info-foreground shadow-rest">
+          <BellOff className="size-9" aria-hidden />
         </span>
-        <h2 className="text-[length:var(--p-text-sub)] font-semibold text-heading">
-          {t('notifications.emptyTitle')}
-        </h2>
-        <p className="max-w-[40ch] text-[length:var(--p-text-label)] text-muted-foreground">
-          {t('notifications.emptyBody')}
-        </p>
+        <div className="flex flex-col gap-1.5">
+          <h2 className="text-[length:var(--p-text-headline)] font-bold text-heading">
+            {t('notifications.emptyTitle')}
+          </h2>
+          <p className="max-w-[34ch] text-pretty text-[length:var(--p-text-body)] text-muted-foreground">
+            {t('notifications.emptyBody')}
+          </p>
+        </div>
       </div>
     )
   }
@@ -95,11 +113,8 @@ function NotificationRow({
   onRemove: (id: string) => void
 }) {
   const { t } = useTranslation()
-  const { icon: Icon, tone } = VISUALS[notification.type]
-  const badgeStyle: CSSProperties = {
-    color: tone,
-    backgroundColor: `color-mix(in oklch, ${tone} 16%, transparent)`,
-  }
+  const { icon: Icon, fg, tint } = VISUALS[notification.type]
+  const badgeStyle: CSSProperties = { color: fg, backgroundColor: tint }
 
   return (
     <motion.li
@@ -107,7 +122,12 @@ function NotificationRow({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -24, transition: { duration: 0.18 } }}
-      className={cn(cardSurface, 'relative flex items-start gap-3 p-3.5')}
+      className={cn(
+        cardSurface,
+        'relative flex items-start gap-3 p-3.5',
+        // Unread rows lift with a soft sky ring (before the page marks them read).
+        !notification.read && 'ring-1 ring-[color-mix(in_oklch,var(--secondary)_55%,transparent)]',
+      )}
     >
       {!notification.read ? (
         <span

@@ -141,6 +141,12 @@
     box-shadow: var(--shadow-elevated);
   }
 
+  /* Navy-tinted drop-shadow for free-floating glyphs (the spatial palace icons),
+     so a transparent emoji lifts off the surface like the rest of the elevation. */
+  .drop-shadow-float {
+    filter: drop-shadow(0 6px 14px oklch(var(--p-tint-navy) / 0.28));
+  }
+
   /* Hide the scrollbar on overflow areas (card faces) while keeping them scrollable. */
   .scrollbar-hide {
     scrollbar-width: none;
@@ -158,6 +164,13 @@
 
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Tab screens sit above the floating bottom nav (64px tall + 12px inset); reserve
+     room so trailing content clears it. Declared after .pb-safe so it wins when both
+     land on one element — tailwind-merge can't dedupe the custom safe-area utility. */
+  .pb-nav {
+    padding-bottom: calc(7rem + env(safe-area-inset-bottom));
   }
 
   .pl-safe {

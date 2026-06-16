@@ -66,7 +66,7 @@ function StatusChip({ room }: { room: UpNextRoom }) {
   const { t } = useTranslation()
   if (room.bucket === 0) {
     return (
-      <Chip className="shrink-0 bg-[color-mix(in_oklch,var(--warning)_18%,transparent)] text-[var(--warning)]">
+      <Chip className="shrink-0 bg-[var(--warning-surface)] text-[var(--warning-foreground)]">
         {t('home.dueChip', { count: room.due })}
       </Chip>
     )

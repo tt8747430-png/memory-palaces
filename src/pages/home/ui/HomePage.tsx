@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { countDueLoci, isRoomCompleted, levelFromXp, palaceProgress } from '@/shared/lib'
+import { countDueLoci, isRoomCompleted, palaceProgress } from '@/shared/lib'
 import { useSessionStore } from '@/entities/session'
 import { selectProgress, useProgressStore, useProgressStoreApi } from '@/entities/progress'
 import { selectPalaces, usePalaceStore, usePalaceStoreApi } from '@/entities/palace'
@@ -67,7 +67,6 @@ export function HomePage({
   }, [progressStore, notificationStore, palaceStore, roomStore, locusStore])
 
   const name = session?.displayName ?? 'Guest'
-  const level = levelFromXp(progress?.xp ?? 0).level
   const dueCount = useMemo(
     () => countDueLoci(palaces, rooms, loci, now),
     [palaces, rooms, loci, now],
@@ -114,11 +113,14 @@ export function HomePage({
   }
 
   return (
-    <AppScreen className="pt-safe pb-28">
+    <AppScreen className="pb-nav">
       <HomeHeader
         name={name}
-        level={level}
+        xp={progress?.xp ?? 0}
         unreadCount={unreadCount}
+        streakCount={progress?.streakCount ?? 0}
+        dueCount={dueCount}
+        showStats={hasPalaces}
         onOpenProfile={() => onOpenProfile?.()}
         onOpenNotifications={() => onOpenNotifications?.()}
       />
@@ -138,6 +140,7 @@ export function HomePage({
 
           <StreakSummary
             className="mt-6"
+            showProgress={false}
             xp={progress?.xp ?? 0}
             streakCount={progress?.streakCount ?? 0}
             longestStreak={progress?.longestStreak ?? 0}

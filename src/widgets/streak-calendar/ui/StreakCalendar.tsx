@@ -102,13 +102,29 @@ export function StreakCalendar({ trainingDays, now = Date.now() }: StreakCalenda
               'grid aspect-square place-items-center rounded-control text-[length:var(--p-text-label)] font-semibold tabular-nums',
               !cell.inMonth && 'text-transparent',
               cell.inMonth && cell.trained && 'bg-[var(--warning)] text-[var(--warning-on-fill)]',
-              cell.inMonth && !cell.trained && cell.isToday && 'border-2 border-secondary text-heading',
-              cell.inMonth && !cell.trained && !cell.isToday && 'bg-info-surface text-muted-foreground',
+              cell.inMonth && !cell.trained && 'bg-info-surface text-muted-foreground',
+              // Today keeps a navy ring even when trained, so "where you are" never relies on fill alone.
+              cell.inMonth && cell.isToday && 'ring-2 ring-inset ring-[color:var(--primary)]',
+              cell.inMonth && cell.isToday && !cell.trained && 'text-heading',
             )}
           >
             {cell.date}
           </div>
         ))}
+      </div>
+
+      <div className="mt-4 flex items-center justify-center gap-5 text-[length:var(--p-text-tiny)] font-medium text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="size-3 rounded-[5px] bg-[var(--warning)]" aria-hidden />
+          {t('progress.legendTrained')}
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span
+            className="size-3 rounded-[5px] ring-2 ring-inset ring-[color:var(--primary)]"
+            aria-hidden
+          />
+          {t('progress.legendToday')}
+        </span>
       </div>
     </GlassCard>
   )
