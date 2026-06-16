@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { countDueLoci, isRoomCompleted, palaceProgress } from '@/shared/lib'
 import { deletePalace, duplicatePalace } from '@/features/palace'
 import { useSessionStore } from '@/entities/session'
+import { selectEffectiveProfile, useProfileStore, useProfileStoreApi } from '@/entities/profile'
 import { selectProgress, useProgressStore, useProgressStoreApi } from '@/entities/progress'
 import { selectPalaces, usePalaceStore, usePalaceStoreApi } from '@/entities/palace'
 import { roomsForPalace, selectRooms, useRoomStore, useRoomStoreApi } from '@/entities/room'
@@ -51,6 +52,8 @@ export function HomePage({
 }: HomePageProps = {}) {
   const { t } = useTranslation()
   const session = useSessionStore((state) => state.session)
+  const profileStore = useProfileStoreApi()
+  const profile = useProfileStore(selectEffectiveProfile)
   const progressStore = useProgressStoreApi()
   const progress = useProgressStore(selectProgress)
   const notificationStore = useNotificationStoreApi()
@@ -66,14 +69,15 @@ export function HomePage({
   const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
+    profileStore.getState().start()
     progressStore.getState().start()
     notificationStore.getState().start()
     palaceStore.getState().start()
     roomStore.getState().start()
     locusStore.getState().start()
-  }, [progressStore, notificationStore, palaceStore, roomStore, locusStore])
+  }, [profileStore, progressStore, notificationStore, palaceStore, roomStore, locusStore])
 
-  const name = session?.displayName ?? 'Guest'
+  const name = profile.name.trim() || session?.displayName || 'Guest'
   const dueCount = useMemo(
     () => countDueLoci(palaces, rooms, loci, now),
     [palaces, rooms, loci, now],
@@ -156,6 +160,7 @@ export function HomePage({
       <PullToRefresh onRefresh={handleRefresh} label={t('home.refreshing')}>
         <HomeHeader
           name={name}
+          avatar={profile.avatar}
           xp={progress?.xp ?? 0}
           unreadCount={unreadCount}
           streakCount={progress?.streakCount ?? 0}

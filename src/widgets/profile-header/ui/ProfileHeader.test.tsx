@@ -50,4 +50,20 @@ describe('ProfileHeader', () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'Open settings' })[0]!)
     expect(onOpenSettings).toHaveBeenCalledOnce()
   })
+
+  it('renders the photo when an avatar is provided', () => {
+    const { container } = render(
+      <I18nextProvider i18n={i18n}>
+        <ProfileHeader
+          name="Ada"
+          avatar="data:image/jpeg;base64,zzz"
+          xp={0}
+          palaceCount={0}
+          streakCount={0}
+          onOpenSettings={() => {}}
+        />
+      </I18nextProvider>,
+    )
+    expect(container.querySelector('img[src="data:image/jpeg;base64,zzz"]')).toBeTruthy()
+  })
 })

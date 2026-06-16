@@ -6,6 +6,8 @@ import { Avatar, IconButton, type IconButtonVariant, OverflowMenuButton, type Sh
 
 export interface HomeHeaderProps {
   name: string
+  /** The user's photo, or null/undefined to fall back to gradient initials. */
+  avatar?: string | null
   /** Raw XP — the header derives level and the to-next-level meter from it. */
   xp: number
   unreadCount: number
@@ -23,6 +25,7 @@ export interface HomeHeaderProps {
  * fades in keeping profile, level, and bell reachable. Mirrors the old ProgressHeader. */
 export function HomeHeader({
   name,
+  avatar,
   xp,
   unreadCount,
   streakCount = 0,
@@ -68,6 +71,7 @@ export function HomeHeader({
         >
           <Avatar
             name={name}
+            src={avatar}
             className="size-9 border border-[color:var(--border)] text-[length:var(--p-text-label)]"
           />
           <span className="min-w-0">
@@ -118,6 +122,7 @@ export function HomeHeader({
             <span className="relative shrink-0">
               <Avatar
                 name={name}
+                src={avatar}
                 className="size-14 border-2 border-[color:var(--surface)] text-[length:var(--p-text-headline)] shadow-rest"
               />
               {/* The "trained mind" mark — Mindscape's signature identity touch. The

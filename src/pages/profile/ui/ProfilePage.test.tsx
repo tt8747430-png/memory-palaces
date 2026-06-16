@@ -8,23 +8,32 @@ import { createPalaceStore, PalaceStoreContext, type Palace } from '@/entities/p
 import { createRoomStore, RoomStoreContext, type Room } from '@/entities/room'
 import { createLocusStore, LocusStoreContext, type Locus } from '@/entities/locus'
 import { createSessionStore, SessionStoreContext, type Session } from '@/entities/session'
+import {
+  createProfileStore,
+  makeProfile,
+  ProfileStoreContext,
+  type Profile,
+} from '@/entities/profile'
 import { ProfilePage, type ProfilePageProps } from './ProfilePage'
 
 afterEach(cleanup)
 
-function renderPage(props: ProfilePageProps = {}) {
+function renderPage(props: ProfilePageProps = {}, profileSeed?: Profile) {
+  const profileRepo = new InMemoryRepository<Profile>(profileSeed ? [profileSeed] : [])
   render(
     <I18nextProvider i18n={i18n}>
       <SessionStoreContext value={createSessionStore(new InMemoryRepository<Session>())}>
-        <ProgressStoreContext value={createProgressStore(new InMemoryRepository<Progress>())}>
-          <PalaceStoreContext value={createPalaceStore(new InMemoryRepository<Palace>())}>
-            <RoomStoreContext value={createRoomStore(new InMemoryRepository<Room>())}>
-              <LocusStoreContext value={createLocusStore(new InMemoryRepository<Locus>())}>
-                <ProfilePage {...props} />
-              </LocusStoreContext>
-            </RoomStoreContext>
-          </PalaceStoreContext>
-        </ProgressStoreContext>
+        <ProfileStoreContext value={createProfileStore(profileRepo)}>
+          <ProgressStoreContext value={createProgressStore(new InMemoryRepository<Progress>())}>
+            <PalaceStoreContext value={createPalaceStore(new InMemoryRepository<Palace>())}>
+              <RoomStoreContext value={createRoomStore(new InMemoryRepository<Room>())}>
+                <LocusStoreContext value={createLocusStore(new InMemoryRepository<Locus>())}>
+                  <ProfilePage {...props} />
+                </LocusStoreContext>
+              </RoomStoreContext>
+            </PalaceStoreContext>
+          </ProgressStoreContext>
+        </ProfileStoreContext>
       </SessionStoreContext>
     </I18nextProvider>,
   )
@@ -52,5 +61,13 @@ describe('ProfilePage', () => {
     renderPage({ onOpenStats })
     fireEvent.click(await screen.findByRole('button', { name: /view full stats/i }))
     expect(onOpenStats).toHaveBeenCalledOnce()
+  })
+
+  it('shows the edited profile name in the hero', async () => {
+    renderPage(
+      {},
+      makeProfile({ id: 'profile', createdAt: new Date(0).toISOString(), name: 'Grace Hopper' }),
+    )
+    expect(await screen.findByRole('heading', { name: 'Grace Hopper' })).toBeInTheDocument()
   })
 })

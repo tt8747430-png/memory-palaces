@@ -6,6 +6,8 @@ import { Avatar, IconButton } from '@/shared/ui'
 
 export interface ProfileHeaderProps {
   name: string
+  /** The user's photo, or null/undefined to fall back to gradient initials. */
+  avatar?: string | null
   /** Raw XP — the header derives level and the to-next-level meter from it. */
   xp: number
   palaceCount: number
@@ -19,6 +21,7 @@ export interface ProfileHeaderProps {
  * settings reachable. Parallax + reduced-motion handled by useCollapsibleHeader. */
 export function ProfileHeader({
   name,
+  avatar,
   xp,
   palaceCount,
   streakCount,
@@ -47,6 +50,7 @@ export function ProfileHeader({
         <div className="flex min-w-0 items-center gap-2.5">
           <Avatar
             name={name}
+            src={avatar}
             className="size-9 border border-[color:var(--border)] text-[length:var(--p-text-label)]"
           />
           <span className="min-w-0">
@@ -103,6 +107,7 @@ export function ProfileHeader({
             />
             <Avatar
               name={name}
+              src={avatar}
               className="relative size-[104px] rounded-card-featured border-[3px] border-[color:var(--surface)] text-[40px] shadow-featured"
             />
             <span className="absolute -bottom-2.5 -right-2.5 rounded-control border border-white/30 bg-gradient-to-r from-primary to-accent px-3 py-1 text-[length:var(--p-text-label)] font-bold tracking-wide text-primary-foreground shadow-interactive">

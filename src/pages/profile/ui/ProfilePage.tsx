@@ -4,6 +4,7 @@ import { motion } from 'motion/react'
 import { BarChart3, BookOpen, ChevronRight, Flame, Target, TrendingUp, Trophy, Zap } from 'lucide-react'
 import { cn, computeAchievements, computeTrainingTotals, isRoomCompleted } from '@/shared/lib'
 import { useSessionStore } from '@/entities/session'
+import { selectEffectiveProfile, useProfileStore, useProfileStoreApi } from '@/entities/profile'
 import { selectProgress, useProgressStore, useProgressStoreApi } from '@/entities/progress'
 import { selectPalaces, usePalaceStore, usePalaceStoreApi } from '@/entities/palace'
 import { roomsForPalace, selectRooms, useRoomStore, useRoomStoreApi } from '@/entities/room'
@@ -29,6 +30,8 @@ const TILE_ICON = 'size-[22px]'
 export function ProfilePage({ onOpenSettings, onOpenStats }: ProfilePageProps = {}) {
   const { t } = useTranslation()
   const session = useSessionStore((state) => state.session)
+  const profileStore = useProfileStoreApi()
+  const profile = useProfileStore(selectEffectiveProfile)
   const progressStore = useProgressStoreApi()
   const palaceStore = usePalaceStoreApi()
   const roomStore = useRoomStoreApi()
@@ -40,13 +43,14 @@ export function ProfilePage({ onOpenSettings, onOpenStats }: ProfilePageProps = 
   const [tab, setTab] = useState<ProfileTab>('statistics')
 
   useEffect(() => {
+    profileStore.getState().start()
     progressStore.getState().start()
     palaceStore.getState().start()
     roomStore.getState().start()
     locusStore.getState().start()
-  }, [progressStore, palaceStore, roomStore, locusStore])
+  }, [profileStore, progressStore, palaceStore, roomStore, locusStore])
 
-  const name = session?.displayName ?? 'Guest'
+  const name = profile.name.trim() || session?.displayName || 'Guest'
   const xp = progress?.xp ?? 0
   const streakCount = progress?.streakCount ?? 0
   const longestStreak = progress?.longestStreak ?? 0
@@ -90,6 +94,7 @@ export function ProfilePage({ onOpenSettings, onOpenStats }: ProfilePageProps = 
     <AppScreen className="pb-nav">
       <ProfileHeader
         name={name}
+        avatar={profile.avatar}
         xp={xp}
         palaceCount={palaces.length}
         streakCount={streakCount}

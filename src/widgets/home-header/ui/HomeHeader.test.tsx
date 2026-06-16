@@ -47,4 +47,21 @@ describe('HomeHeader', () => {
     expect(handlers.onOpenProfile).toHaveBeenCalled()
     expect(handlers.onOpenNotifications).toHaveBeenCalled()
   })
+
+  it('renders the photo when an avatar is provided', () => {
+    const { container } = render(
+      <I18nextProvider i18n={i18n}>
+        <HomeHeader
+          name="Sam"
+          avatar="data:image/jpeg;base64,zzz"
+          xp={0}
+          unreadCount={0}
+          onOpenProfile={() => {}}
+          onOpenSettings={() => {}}
+          onOpenNotifications={() => {}}
+        />
+      </I18nextProvider>,
+    )
+    expect(container.querySelector('img[src="data:image/jpeg;base64,zzz"]')).toBeTruthy()
+  })
 })
