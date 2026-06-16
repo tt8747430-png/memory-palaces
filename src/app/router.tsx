@@ -23,6 +23,7 @@ function HomeRoute() {
       onStartReview={() => navigate({ to: ROUTES.review })}
       onOpenNotifications={() => navigate({ to: ROUTES.notifications })}
       onOpenProfile={() => navigate({ to: ROUTES.profile })}
+      onTrainRoom={(roomId) => navigate({ to: ROUTES.roomTrain, params: { roomId } })}
     />
   )
 }

@@ -42,6 +42,12 @@ export const en = {
     dailyReviewTitle: 'Daily Review',
     dailyReviewDueOne: '{{count}} card due across your palaces',
     dailyReviewDueOther: '{{count}} cards due across your palaces',
+    upNext: 'Up next',
+    cardsOne: '{{count}} card',
+    cardsOther: '{{count}} cards',
+    dueChip: '{{count}} due',
+    inProgress: 'In progress',
+    notStarted: 'Not started',
   },
   palaces: {
     title: 'Your palaces',

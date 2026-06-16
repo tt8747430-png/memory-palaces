@@ -13,6 +13,7 @@ import {
 } from '@/entities/notification'
 import { HomeHeader } from '@/widgets/home-header'
 import { DailyReviewCard } from '@/widgets/daily-review-card'
+import { UpNextCard, pickUpNextRooms } from '@/widgets/up-next-card'
 import { StreakSummary } from '@/widgets/streak-summary'
 import { AppScreen, Button } from '@/shared/ui'
 
@@ -23,12 +24,15 @@ export interface HomePageProps {
   onOpenNotifications?: () => void
   /** Open the profile tab; wired by the route wrapper. */
   onOpenProfile?: () => void
+  /** Open a room straight into training; wired by the route wrapper. */
+  onTrainRoom?: (roomId: string) => void
 }
 
 export function HomePage({
   onStartReview,
   onOpenNotifications,
   onOpenProfile,
+  onTrainRoom,
 }: HomePageProps = {}) {
   const { t } = useTranslation()
   const session = useSessionStore((state) => state.session)
@@ -60,6 +64,10 @@ export function HomePage({
     () => countDueLoci(palaces, rooms, loci, now),
     [palaces, rooms, loci, now],
   )
+  const upNext = useMemo(
+    () => pickUpNextRooms(palaces, rooms, loci, now),
+    [palaces, rooms, loci, now],
+  )
 
   return (
     <AppScreen className="pt-safe">
@@ -76,6 +84,8 @@ export function HomePage({
         dueCount={dueCount}
         onOpen={() => onStartReview?.()}
       />
+
+      <UpNextCard className="mt-6" rooms={upNext} onOpenRoom={(id) => onTrainRoom?.(id)} />
 
       <StreakSummary
         className="mt-6"
