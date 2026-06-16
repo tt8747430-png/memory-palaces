@@ -39,6 +39,9 @@ export const en = {
     hi: 'Hi {{name}}!',
     levelShort: 'Lv. {{level}}',
     openProfile: 'Open profile',
+    dailyReviewTitle: 'Daily Review',
+    dailyReviewDueOne: '{{count}} card due across your palaces',
+    dailyReviewDueOther: '{{count}} cards due across your palaces',
   },
   palaces: {
     title: 'Your palaces',
