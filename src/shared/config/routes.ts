@@ -14,6 +14,7 @@ export const ROUTES = {
   settings: '/settings',
   settingsProfile: '/settings/profile',
   settingsPrivacy: '/settings/privacy',
+  settingsClearData: '/settings/clear-data',
   notifications: '/notifications',
 } as const
 
