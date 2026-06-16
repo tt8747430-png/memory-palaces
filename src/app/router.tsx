@@ -26,6 +26,7 @@ function HomeRoute() {
       onTrainRoom={(roomId) => navigate({ to: ROUTES.roomTrain, params: { roomId } })}
       onOpenPalace={(palaceId) => navigate({ to: ROUTES.palaceDetail, params: { palaceId } })}
       onViewAllPalaces={() => navigate({ to: ROUTES.palaces })}
+      onCreatePalace={() => navigate({ to: ROUTES.palaces })}
     />
   )
 }

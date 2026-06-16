@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { countDueLoci, isRoomCompleted, levelFromXp, palaceProgress } from '@/shared/lib'
 import { useSessionStore } from '@/entities/session'
 import { selectProgress, useProgressStore, useProgressStoreApi } from '@/entities/progress'
@@ -12,11 +11,12 @@ import {
   useNotificationStoreApi,
 } from '@/entities/notification'
 import { HomeHeader } from '@/widgets/home-header'
+import { TodayTrainingCard, FirstRunGuide } from '@/widgets/today-training-card'
 import { DailyReviewCard } from '@/widgets/daily-review-card'
 import { UpNextCard, pickUpNextRooms } from '@/widgets/up-next-card'
 import { PalacesOverview, type PalaceSummary } from '@/widgets/palaces-overview'
 import { StreakSummary } from '@/widgets/streak-summary'
-import { AppScreen, Button } from '@/shared/ui'
+import { AppScreen } from '@/shared/ui'
 
 export interface HomePageProps {
   /** Start a daily review session; wired by the route wrapper. */
@@ -31,6 +31,8 @@ export interface HomePageProps {
   onOpenPalace?: (palaceId: string) => void
   /** Jump to the Palaces tab; wired by the route wrapper. */
   onViewAllPalaces?: () => void
+  /** Jump to the Palaces tab to create the first palace; wired by the route wrapper. */
+  onCreatePalace?: () => void
 }
 
 export function HomePage({
@@ -40,10 +42,9 @@ export function HomePage({
   onTrainRoom,
   onOpenPalace,
   onViewAllPalaces,
+  onCreatePalace,
 }: HomePageProps = {}) {
-  const { t } = useTranslation()
   const session = useSessionStore((state) => state.session)
-  const status = useSessionStore((state) => state.status)
   const progressStore = useProgressStoreApi()
   const progress = useProgressStore(selectProgress)
   const notificationStore = useNotificationStoreApi()
@@ -95,8 +96,25 @@ export function HomePage({
     [palaces, rooms, loci],
   )
 
+  const hasPalaces = palaceSummaries.length > 0
+
+  // The primary card chooses the calmest next step: the top-suggested room if there
+  // is one, else the palaces list, else creating the first palace.
+  const handleStartTraining = () => {
+    const top = upNext[0]
+    if (top) {
+      onTrainRoom?.(top.roomId)
+      return
+    }
+    if (hasPalaces) {
+      onViewAllPalaces?.()
+      return
+    }
+    onCreatePalace?.()
+  }
+
   return (
-    <AppScreen className="pt-safe">
+    <AppScreen className="pt-safe pb-28">
       <HomeHeader
         name={name}
         level={level}
@@ -105,34 +123,37 @@ export function HomePage({
         onOpenNotifications={() => onOpenNotifications?.()}
       />
 
-      <DailyReviewCard
+      <TodayTrainingCard
         className="mt-6"
-        dueCount={dueCount}
-        onOpen={() => onStartReview?.()}
+        hasPalaces={hasPalaces}
+        onStartTraining={handleStartTraining}
+        onCreatePalace={() => onCreatePalace?.()}
       />
 
-      <UpNextCard className="mt-6" rooms={upNext} onOpenRoom={(id) => onTrainRoom?.(id)} />
+      <DailyReviewCard className="mt-6" dueCount={dueCount} onOpen={() => onStartReview?.()} />
 
-      <StreakSummary
-        className="mt-6"
-        xp={progress?.xp ?? 0}
-        streakCount={progress?.streakCount ?? 0}
-        longestStreak={progress?.longestStreak ?? 0}
-        trainingDays={progress?.trainingDays ?? []}
-      />
+      {hasPalaces ? (
+        <>
+          <UpNextCard className="mt-6" rooms={upNext} onOpenRoom={(id) => onTrainRoom?.(id)} />
 
-      <PalacesOverview
-        className="mt-6"
-        palaces={palaceSummaries}
-        onOpenPalace={(id) => onOpenPalace?.(id)}
-        onViewAll={() => onViewAllPalaces?.()}
-      />
+          <StreakSummary
+            className="mt-6"
+            xp={progress?.xp ?? 0}
+            streakCount={progress?.streakCount ?? 0}
+            longestStreak={progress?.longestStreak ?? 0}
+            trainingDays={progress?.trainingDays ?? []}
+          />
 
-      <div className="mt-auto pb-28 pt-10">
-        <Button size="lg" className="w-full" disabled={status !== 'ready'} onClick={onStartReview}>
-          {t('home.primaryCta')}
-        </Button>
-      </div>
+          <PalacesOverview
+            className="mt-6"
+            palaces={palaceSummaries}
+            onOpenPalace={(id) => onOpenPalace?.(id)}
+            onViewAll={() => onViewAllPalaces?.()}
+          />
+        </>
+      ) : (
+        <FirstRunGuide className="mt-6" />
+      )}
     </AppScreen>
   )
 }
