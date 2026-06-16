@@ -47,10 +47,18 @@ export {
   isLocusReviewed,
   roomProgress,
   isRoomCompleted,
+  computeTrainingTotals,
   palaceProgress,
   isRoomUnlocked,
   type LevelInfo,
+  type TrainingTotals,
 } from './stats'
+export {
+  computeAchievements,
+  type Achievement,
+  type AchievementId,
+  type AchievementInput,
+} from './achievements'
 export {
   verseText,
   tokenizeWords,

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  computeTrainingTotals,
   isLocusReviewed,
   isRoomCompleted,
   isRoomUnlocked,
@@ -64,5 +65,34 @@ describe('isRoomUnlocked', () => {
   it('unlocks a later room only when the previous one is complete', () => {
     expect(isRoomUnlocked(1, [true, false])).toBe(true)
     expect(isRoomUnlocked(1, [false, false])).toBe(false)
+  })
+})
+
+describe('computeTrainingTotals', () => {
+  const rooms = [{ id: 'r1' }, { id: 'r2' }, { id: 'r3' }]
+  // r1: every locus reviewed → complete. r2: one fresh → incomplete. r3: no loci → incomplete.
+  const loci = [
+    { roomId: 'r1', ...reviewed },
+    { roomId: 'r1', ...reviewed },
+    { roomId: 'r2', ...reviewed },
+    { roomId: 'r2', ...fresh },
+  ]
+
+  it('reports total rooms and total cards', () => {
+    const totals = computeTrainingTotals(rooms, loci)
+    expect(totals.totalRooms).toBe(3)
+    expect(totals.totalCards).toBe(4)
+  })
+
+  it('counts only rooms whose every locus is reviewed; empty rooms never count', () => {
+    expect(computeTrainingTotals(rooms, loci).roomsCompleted).toBe(1)
+  })
+
+  it('is all-zero with no rooms or loci', () => {
+    expect(computeTrainingTotals([], [])).toEqual({
+      roomsCompleted: 0,
+      totalRooms: 0,
+      totalCards: 0,
+    })
   })
 })

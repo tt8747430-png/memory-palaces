@@ -38,6 +38,36 @@ export function isRoomCompleted(loci: ReadonlyArray<Reviewable>): boolean {
   return loci.length > 0 && loci.every(isLocusReviewed)
 }
 
+export interface TrainingTotals {
+  roomsCompleted: number
+  totalRooms: number
+  totalCards: number
+}
+
+/**
+ * Roll up training progress across a whole library. Takes minimal structural shapes —
+ * rooms as `{ id }`, loci as `{ roomId, srs? }` — so it stays below the entity layer.
+ * A room counts as completed only when every one of its loci is reviewed; empty rooms
+ * never count (via `isRoomCompleted`).
+ */
+export function computeTrainingTotals(
+  rooms: ReadonlyArray<{ id: string }>,
+  loci: ReadonlyArray<Reviewable & { roomId: string }>,
+): TrainingTotals {
+  const lociByRoom = new Map<string, Reviewable[]>()
+  for (const locus of loci) {
+    const group = lociByRoom.get(locus.roomId)
+    if (group) group.push(locus)
+    else lociByRoom.set(locus.roomId, [locus])
+  }
+
+  const roomsCompleted = rooms.filter((room) =>
+    isRoomCompleted(lociByRoom.get(room.id) ?? []),
+  ).length
+
+  return { roomsCompleted, totalRooms: rooms.length, totalCards: loci.length }
+}
+
 export function palaceProgress(roomCompletions: ReadonlyArray<boolean>): number {
   if (roomCompletions.length === 0) return 0
   const done = roomCompletions.filter(Boolean).length
