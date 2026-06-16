@@ -7,9 +7,27 @@ function initials(name: string): string {
   return (words[0]![0]! + words[words.length - 1]![0]!).toUpperCase()
 }
 
-/** Navy-gradient circle with initials — the identity mark; an image avatar can
- * layer on later. */
-export function Avatar({ name, className }: { name: string; className?: string }) {
+/** Navy-gradient circle with initials, or the user's photo when `src` is set. The
+ * image is decorative (`alt=""`) — the name is always shown as adjacent text. */
+export function Avatar({
+  name,
+  src,
+  className,
+}: {
+  name: string
+  src?: string | null
+  className?: string
+}) {
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt=""
+        aria-hidden
+        className={cn('size-10 rounded-full object-cover', className)}
+      />
+    )
+  }
   return (
     <span
       aria-hidden
