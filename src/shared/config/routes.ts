@@ -13,6 +13,7 @@ export const ROUTES = {
   stats: '/stats',
   settings: '/settings',
   settingsProfile: '/settings/profile',
+  settingsPrivacy: '/settings/privacy',
   notifications: '/notifications',
 } as const
 

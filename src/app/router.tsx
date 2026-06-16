@@ -12,6 +12,7 @@ import { ProfilePage } from '@/pages/profile'
 import { StatsPage } from '@/pages/stats'
 import { SettingsPage } from '@/pages/settings'
 import { SettingsProfilePage } from '@/pages/settings-profile'
+import { SettingsPrivacyPage } from '@/pages/settings-privacy'
 import { NotificationsPage } from '@/pages/notifications'
 import { ROUTES } from '@/shared/config/routes'
 import { RootLayout } from './RootLayout'
@@ -208,6 +209,7 @@ function SettingsRoute() {
     <SettingsPage
       onBack={() => navigate({ to: ROUTES.profile })}
       onEditProfile={() => navigate({ to: ROUTES.settingsProfile })}
+      onPrivacy={() => navigate({ to: ROUTES.settingsPrivacy })}
     />
   )
 }
@@ -227,6 +229,17 @@ const settingsProfileRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.settingsProfile,
   component: SettingsProfileRoute,
+})
+
+function SettingsPrivacyRoute() {
+  const navigate = useNavigate()
+  return <SettingsPrivacyPage onBack={() => navigate({ to: ROUTES.settings })} />
+}
+
+const settingsPrivacyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.settingsPrivacy,
+  component: SettingsPrivacyRoute,
 })
 
 function NotificationsRoute() {
@@ -254,6 +267,7 @@ const routeTree = rootRoute.addChildren([
   statsRoute,
   settingsRoute,
   settingsProfileRoute,
+  settingsPrivacyRoute,
   notificationsRoute,
 ])
 

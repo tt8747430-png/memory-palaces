@@ -480,6 +480,22 @@ export const en = {
       emailInvalid: 'Enter a valid email address.',
       photoError: 'Could not use that image.',
     },
+    privacyScreen: {
+      title: 'Privacy & security',
+      bannerTitle: 'Your data stays on your device',
+      bannerBody:
+        'Mindscape keeps everything in local storage. These controls take effect as the features that use them ship.',
+      profileVisibility: 'Profile visibility',
+      profileVisibilityHint: 'Let others find and view your profile.',
+      activitySharing: 'Activity sharing',
+      activitySharingHint: 'Share training activity with friends.',
+      locationAccess: 'Location access',
+      locationAccessHint: 'Use location for nearby features.',
+      notificationTracking: 'Notification insights',
+      notificationTrackingHint: 'Measure which nudges help you learn.',
+      dataEncryption: 'Data encryption',
+      dataEncryptionHint: 'Encrypt your saved data at rest.',
+    },
   },
   notifications: {
     title: 'Notifications',
