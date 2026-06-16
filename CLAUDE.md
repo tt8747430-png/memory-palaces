@@ -5,6 +5,17 @@ Stack: React 19 + Vite + TanStack Router + Zustand + Tailwind v4 + RxDB (planned
 Supabase (planned), strict TS, PWA. See `README.md` and the roadmap at
 `../memory-palaces-app-ui/docs/ai_docs/NEW_ARCHITECHTURE.md`.
 
+## Product / platform
+
+This repo **is the Mindscape mobile app**: a mobile-first, phone-only PWA. Design every
+screen for touch on a phone (44px+ targets, `whileTap`/spring feedback, native-feeling
+gestures — swipe actions, kebab `⋮` overflow menus, pull-to-refresh, long-press quick
+actions). Do not design for desktop/tablet layouts.
+
+The sibling `../memory-palaces-app-ui` is the **previous SPA, kept only as the visual/
+design reference** ("The Lucid Atrium" look). Port its craft into `shared/ui` + the
+home/palace/notification widgets here; never ship product features back into it.
+
 ## Architecture rule
 
 FSD layers import only downward: `app → pages → widgets → features → entities → shared`
