@@ -54,6 +54,27 @@ describe('completeSession', () => {
     expect(store.getState().progress?.bestQuizAccuracy).toBe(75)
   })
 
+  it('reports a new best quiz accuracy', async () => {
+    const store = startedStore()
+    const reward = await completeSession(store, { xp: 40, quizAccuracy: 75 }, NOW)
+    expect(reward.isBestQuiz).toBe(true)
+    expect(reward.quizAccuracy).toBe(75)
+  })
+
+  it('does not report a best quiz when the score does not beat the record', async () => {
+    const store = startedStore()
+    await completeSession(store, { xp: 40, quizAccuracy: 80 }, NOW)
+    const reward = await completeSession(store, { xp: 40, quizAccuracy: 60 }, NOW)
+    expect(reward.isBestQuiz).toBe(false)
+  })
+
+  it('omits quiz fields when no quiz accuracy is supplied', async () => {
+    const store = startedStore()
+    const reward = await completeSession(store, { xp: 40 }, NOW)
+    expect(reward.isBestQuiz).toBe(false)
+    expect(reward.quizAccuracy).toBeUndefined()
+  })
+
   it('skips the streak when recordDay is false', async () => {
     const store = startedStore()
     const reward = await completeSession(store, { xp: 10, recordDay: false }, NOW)

@@ -18,6 +18,10 @@ export interface SessionReward {
   streakCount: number
   isMilestone: boolean
   alreadyTrainedToday: boolean
+  /** A quiz this session set a new personal-best accuracy. */
+  isBestQuiz: boolean
+  /** The session's quiz accuracy (rounded), when one was played. */
+  quizAccuracy?: number
 }
 
 /**
@@ -49,15 +53,24 @@ export async function completeSession(
     if (!result.alreadyTrainedToday) next = { ...next, ...result.state }
   }
 
-  if (options.quizAccuracy !== undefined) {
-    next = {
-      ...next,
-      bestQuizAccuracy: Math.max(next.bestQuizAccuracy, Math.round(options.quizAccuracy)),
-    }
+  const quizAccuracy =
+    options.quizAccuracy === undefined ? undefined : Math.round(options.quizAccuracy)
+  const isBestQuiz = quizAccuracy !== undefined && quizAccuracy > base.bestQuizAccuracy
+  if (quizAccuracy !== undefined) {
+    next = { ...next, bestQuizAccuracy: Math.max(next.bestQuizAccuracy, quizAccuracy) }
   }
 
   await store.getState().save(next)
 
   const level = levelFromXp(next.xp).level
-  return { xpGained: gained, leveledUp: level > beforeLevel, level, streakCount, isMilestone, alreadyTrainedToday }
+  return {
+    xpGained: gained,
+    leveledUp: level > beforeLevel,
+    level,
+    streakCount,
+    isMilestone,
+    alreadyTrainedToday,
+    isBestQuiz,
+    quizAccuracy,
+  }
 }

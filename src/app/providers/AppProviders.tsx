@@ -7,6 +7,7 @@ import { ServicesProvider } from './ServicesProvider'
 import { ThemeProvider } from './ThemeProvider'
 import { PreferencesProvider } from './PreferencesProvider'
 import { AuthProvider } from './AuthProvider'
+import { NotificationBridge } from './NotificationBridge'
 
 /** Single composition of every global provider, mounted once at the app root.
  * `PreferencesProvider` sits inside the store contexts so it can drive MotionConfig
@@ -19,6 +20,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
           <PreferencesProvider>
             <AuthProvider>{children}</AuthProvider>
           </PreferencesProvider>
+          <NotificationBridge />
           <Toaster position="top-center" richColors />
         </ServicesProvider>
       </ThemeProvider>
