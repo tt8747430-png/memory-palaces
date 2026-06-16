@@ -1,4 +1,5 @@
 export { cn } from './cn'
+export { coverSquare, fileToAvatar, type CropRect } from './avatar'
 export {
   useCollapsibleHeader,
   type CollapsibleHeader,

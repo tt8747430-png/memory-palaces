@@ -12,6 +12,7 @@ export const ROUTES = {
   profile: '/profile',
   stats: '/stats',
   settings: '/settings',
+  settingsProfile: '/settings/profile',
   notifications: '/notifications',
 } as const
 

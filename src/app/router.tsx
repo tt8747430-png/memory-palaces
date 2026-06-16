@@ -11,6 +11,7 @@ import { QuizPage } from '@/pages/quiz'
 import { ProfilePage } from '@/pages/profile'
 import { StatsPage } from '@/pages/stats'
 import { SettingsPage } from '@/pages/settings'
+import { SettingsProfilePage } from '@/pages/settings-profile'
 import { NotificationsPage } from '@/pages/notifications'
 import { ROUTES } from '@/shared/config/routes'
 import { RootLayout } from './RootLayout'
@@ -203,13 +204,29 @@ const statsRoute = createRoute({
 
 function SettingsRoute() {
   const navigate = useNavigate()
-  return <SettingsPage onBack={() => navigate({ to: ROUTES.profile })} />
+  return (
+    <SettingsPage
+      onBack={() => navigate({ to: ROUTES.profile })}
+      onEditProfile={() => navigate({ to: ROUTES.settingsProfile })}
+    />
+  )
 }
 
 const settingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.settings,
   component: SettingsRoute,
+})
+
+function SettingsProfileRoute() {
+  const navigate = useNavigate()
+  return <SettingsProfilePage onBack={() => navigate({ to: ROUTES.settings })} />
+}
+
+const settingsProfileRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.settingsProfile,
+  component: SettingsProfileRoute,
 })
 
 function NotificationsRoute() {
@@ -236,6 +253,7 @@ const routeTree = rootRoute.addChildren([
   profileRoute,
   statsRoute,
   settingsRoute,
+  settingsProfileRoute,
   notificationsRoute,
 ])
 
