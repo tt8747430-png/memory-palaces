@@ -24,7 +24,6 @@ import { SettingsPage, useProgressTransfer } from '@/pages/settings'
 import { SettingsProfilePage } from '@/pages/settings-profile'
 import { SettingsChangePasswordPage } from '@/pages/settings-change-password'
 import { SettingsPrivacyPage } from '@/pages/settings-privacy'
-import { SettingsClearDataPage } from '@/pages/settings-clear-data'
 import { SettingsHelpPage } from '@/pages/settings-help'
 import { SettingsAboutPage } from '@/pages/settings-about'
 import { NotificationsPage } from '@/pages/notifications'
@@ -356,17 +355,6 @@ const settingsPrivacyRoute = createRoute({
   component: SettingsPrivacyRoute,
 })
 
-function SettingsClearDataRoute() {
-  const navigate = useNavigate()
-  return <SettingsClearDataPage onBack={() => navigate({ to: ROUTES.settings })} />
-}
-
-const settingsClearDataRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: ROUTES.settingsClearData,
-  component: SettingsClearDataRoute,
-})
-
 function SettingsHelpRoute() {
   const navigate = useNavigate()
   return <SettingsHelpPage onBack={() => navigate({ to: ROUTES.settings })} />
@@ -420,7 +408,6 @@ const routeTree = rootRoute.addChildren([
   settingsProfileRoute,
   settingsChangePasswordRoute,
   settingsPrivacyRoute,
-  settingsClearDataRoute,
   settingsHelpRoute,
   settingsAboutRoute,
   notificationsRoute,

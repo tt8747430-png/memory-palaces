@@ -19,7 +19,6 @@ export const ROUTES = {
   settingsProfile: '/settings/profile',
   settingsChangePassword: '/settings/change-password',
   settingsPrivacy: '/settings/privacy',
-  settingsClearData: '/settings/clear-data',
   settingsHelp: '/settings/help',
   settingsAbout: '/settings/about',
   notifications: '/notifications',
