@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
@@ -72,18 +72,32 @@ describe('SettingsPage', () => {
     expect(onPrivacy).toHaveBeenCalledOnce()
   })
 
-  it('no longer shows account management or clear-data rows (moved to Profile)', () => {
-    renderSettings({ sessionKind: 'account' })
+  it('shows log out for a signed-in account, but not account-editing rows (those live on Profile)', () => {
+    renderSettings({ sessionKind: 'account', onLogout: vi.fn() })
+    expect(screen.getByRole('button', { name: /log out/i })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /change password/i })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /log out/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /clear data/i })).not.toBeInTheDocument()
   })
 
-  it('shows a sign-in CTA for guests', async () => {
+  it('logs out only after the confirmation is accepted', async () => {
+    const user = userEvent.setup()
+    const onLogout = vi.fn()
+    renderSettings({ sessionKind: 'account', onLogout })
+
+    await user.click(screen.getByRole('button', { name: /log out/i }))
+    expect(onLogout).not.toHaveBeenCalled()
+
+    const sheet = await screen.findByRole('dialog')
+    await user.click(within(sheet).getByRole('button', { name: /log out/i }))
+    expect(onLogout).toHaveBeenCalled()
+  })
+
+  it('shows a sign-in CTA for guests instead of log out', async () => {
     const user = userEvent.setup()
     const onSignIn = vi.fn()
     renderSettings({ sessionKind: 'guest', onSignIn })
 
+    expect(screen.queryByRole('button', { name: /log out/i })).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /sign in or create an account/i }))
     expect(onSignIn).toHaveBeenCalledOnce()
   })

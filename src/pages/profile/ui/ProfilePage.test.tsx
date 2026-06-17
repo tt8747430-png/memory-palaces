@@ -9,6 +9,11 @@ import { createRoomStore, RoomStoreContext, type Room } from '@/entities/room'
 import { createLocusStore, LocusStoreContext, type Locus } from '@/entities/locus'
 import { createSessionStore, SessionStoreContext, type Session } from '@/entities/session'
 import {
+  createNotificationStore,
+  NotificationStoreContext,
+  type AppNotification,
+} from '@/entities/notification'
+import {
   createProfileStore,
   makeProfile,
   ProfileStoreContext,
@@ -23,44 +28,49 @@ function renderPage(props: ProfilePageProps = {}, profileSeed?: Profile) {
   render(
     <I18nextProvider i18n={i18n}>
       <SessionStoreContext value={createSessionStore(new InMemoryRepository<Session>())}>
-        <ProfileStoreContext value={createProfileStore(profileRepo)}>
-          <ProgressStoreContext value={createProgressStore(new InMemoryRepository<Progress>())}>
-            <PalaceStoreContext value={createPalaceStore(new InMemoryRepository<Palace>())}>
-              <RoomStoreContext value={createRoomStore(new InMemoryRepository<Room>())}>
-                <LocusStoreContext value={createLocusStore(new InMemoryRepository<Locus>())}>
-                  <ProfilePage {...props} />
-                </LocusStoreContext>
-              </RoomStoreContext>
-            </PalaceStoreContext>
-          </ProgressStoreContext>
-        </ProfileStoreContext>
+        <NotificationStoreContext
+          value={createNotificationStore(new InMemoryRepository<AppNotification>())}
+        >
+          <ProfileStoreContext value={createProfileStore(profileRepo)}>
+            <ProgressStoreContext value={createProgressStore(new InMemoryRepository<Progress>())}>
+              <PalaceStoreContext value={createPalaceStore(new InMemoryRepository<Palace>())}>
+                <RoomStoreContext value={createRoomStore(new InMemoryRepository<Room>())}>
+                  <LocusStoreContext value={createLocusStore(new InMemoryRepository<Locus>())}>
+                    <ProfilePage {...props} />
+                  </LocusStoreContext>
+                </RoomStoreContext>
+              </PalaceStoreContext>
+            </ProgressStoreContext>
+          </ProfileStoreContext>
+        </NotificationStoreContext>
       </SessionStoreContext>
     </I18nextProvider>,
   )
 }
 
 describe('ProfilePage', () => {
-  it('shows the statistics tab by default with the journey heading and stat tiles', async () => {
+  it('shows the compact overview with key stats', async () => {
     renderPage()
-    expect(await screen.findByText('Your Journey')).toBeInTheDocument()
+    expect(await screen.findByText('Overview')).toBeInTheDocument()
     expect(screen.getByText('Total XP')).toBeInTheDocument()
     expect(screen.getByText('Best accuracy')).toBeInTheDocument()
   })
 
-  it('switches to the achievements tab when its segment is tapped', async () => {
-    renderPage()
-    await screen.findByText('Your Journey')
-    fireEvent.click(screen.getByRole('button', { name: 'Achievements' }))
-    expect(await screen.findByText('Badges & Awards')).toBeInTheDocument()
-    expect(screen.getByText('First Palace')).toBeInTheDocument()
-    expect(screen.getByText('0/6')).toBeInTheDocument()
+  it('opens the streak page from the streak overview stat', async () => {
+    const onOpenStreak = vi.fn()
+    renderPage({ onOpenStreak })
+    fireEvent.click(await screen.findByRole('button', { name: /day streak/i }))
+    expect(onOpenStreak).toHaveBeenCalledOnce()
   })
 
-  it('calls onOpenStats from the view-full-stats button', async () => {
-    const onOpenStats = vi.fn()
-    renderPage({ onOpenStats })
-    fireEvent.click(await screen.findByRole('button', { name: /view full stats/i }))
-    expect(onOpenStats).toHaveBeenCalledOnce()
+  it('opens the full badges and achievements pages from the see-all rows', async () => {
+    const onOpenBadges = vi.fn()
+    const onOpenAchievements = vi.fn()
+    renderPage({ onOpenBadges, onOpenAchievements })
+    fireEvent.click(await screen.findByRole('button', { name: 'See all badges' }))
+    fireEvent.click(screen.getByRole('button', { name: 'See all achievements' }))
+    expect(onOpenBadges).toHaveBeenCalledOnce()
+    expect(onOpenAchievements).toHaveBeenCalledOnce()
   })
 
   it('shows the edited profile name in the hero', async () => {

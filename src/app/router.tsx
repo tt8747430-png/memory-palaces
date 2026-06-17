@@ -19,7 +19,9 @@ import { VerseStudyPage } from '@/pages/verse'
 import { ReviewPage } from '@/pages/review'
 import { QuizPage } from '@/pages/quiz'
 import { ProfilePage } from '@/pages/profile'
-import { StatsPage } from '@/pages/stats'
+import { StreakPage } from '@/pages/streak'
+import { BadgesPage } from '@/pages/badges'
+import { AchievementsPage } from '@/pages/achievements'
 import { SettingsPage, useProgressTransfer } from '@/pages/settings'
 import { SettingsProfilePage } from '@/pages/settings-profile'
 import { SettingsChangePasswordPage } from '@/pages/settings-change-password'
@@ -108,7 +110,7 @@ function HomeRoute() {
       onStartReview={() => navigate({ to: ROUTES.review })}
       onOpenNotifications={() => navigate({ to: ROUTES.notifications })}
       onOpenProfile={() => navigate({ to: ROUTES.profile })}
-      onOpenSettings={() => navigate({ to: ROUTES.settings })}
+      onOpenStreak={() => navigate({ to: ROUTES.streak })}
       onTrainRoom={(roomId) => navigate({ to: ROUTES.roomTrain, params: { roomId } })}
       onOpenPalace={(palaceId) => navigate({ to: ROUTES.palaceDetail, params: { palaceId } })}
       onViewAllPalaces={() => navigate({ to: ROUTES.palaces })}
@@ -263,7 +265,11 @@ function ProfileRoute() {
   return (
     <ProfilePage
       onOpenSettings={() => navigate({ to: ROUTES.settings })}
-      onOpenStats={() => navigate({ to: ROUTES.stats })}
+      onOpenNotifications={() => navigate({ to: ROUTES.notifications })}
+      onEditProfile={() => navigate({ to: ROUTES.settingsProfile })}
+      onOpenStreak={() => navigate({ to: ROUTES.streak })}
+      onOpenBadges={() => navigate({ to: ROUTES.badges })}
+      onOpenAchievements={() => navigate({ to: ROUTES.achievements })}
     />
   )
 }
@@ -274,21 +280,48 @@ const profileRoute = createRoute({
   component: ProfileRoute,
 })
 
-function StatsRoute() {
+function StreakRoute() {
   const navigate = useNavigate()
-  return <StatsPage onBack={() => navigate({ to: ROUTES.profile })} />
+  return <StreakPage onBack={() => navigate({ to: ROUTES.profile })} />
 }
 
-const statsRoute = createRoute({
+const streakRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: ROUTES.stats,
-  component: StatsRoute,
+  path: ROUTES.streak,
+  component: StreakRoute,
+})
+
+function BadgesRoute() {
+  const navigate = useNavigate()
+  return <BadgesPage onBack={() => navigate({ to: ROUTES.profile })} />
+}
+
+const badgesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.badges,
+  component: BadgesRoute,
+})
+
+function AchievementsRoute() {
+  const navigate = useNavigate()
+  return <AchievementsPage onBack={() => navigate({ to: ROUTES.profile })} />
+}
+
+const achievementsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.achievements,
+  component: AchievementsRoute,
 })
 
 function SettingsRoute() {
   const navigate = useNavigate()
   const transfer = useProgressTransfer()
+  const { signOut } = useAuthActions()
   const sessionKind = useSessionStore((state) => state.session?.kind ?? 'guest')
+  const logout = async () => {
+    await signOut()
+    await navigate({ to: ROUTES.login })
+  }
   return (
     <SettingsPage
       onBack={() => navigate({ to: ROUTES.profile })}
@@ -299,6 +332,7 @@ function SettingsRoute() {
       onExport={transfer.exportNow}
       onImportFile={transfer.importFile}
       onSignIn={() => navigate({ to: ROUTES.login })}
+      onLogout={logout}
       sessionKind={sessionKind}
     />
   )
@@ -321,7 +355,6 @@ function SettingsProfileRoute() {
     <SettingsProfilePage
       onBack={() => navigate({ to: ROUTES.settings })}
       onChangePassword={() => navigate({ to: ROUTES.settingsChangePassword })}
-      onLogout={exitToLogin}
       onDeleteAccount={exitToLogin}
     />
   )
@@ -403,7 +436,9 @@ const routeTree = rootRoute.addChildren([
   reviewRoute,
   quizRoute,
   profileRoute,
-  statsRoute,
+  streakRoute,
+  badgesRoute,
+  achievementsRoute,
   settingsRoute,
   settingsProfileRoute,
   settingsChangePasswordRoute,

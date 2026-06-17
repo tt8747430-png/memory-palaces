@@ -1,10 +1,10 @@
 import { type FormEvent, useId, useState } from 'react'
-import { motion } from 'motion/react'
+import { motion, type Variants } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Mail, User } from 'lucide-react'
-import { authEntrance, isEmail } from '@/shared/lib'
+import { isEmail } from '@/shared/lib'
 import { AuthScreen, AuthField, Button, PasswordField, SocialButtons } from '@/shared/ui'
-import { PalaceThreshold } from '@/widgets/palace-threshold'
+import { AuthLogo } from '@/widgets/palace-threshold'
 import { useAuthActions } from '@/features/session'
 
 export interface SignupPageProps {
@@ -14,6 +14,19 @@ export interface SignupPageProps {
 }
 
 const MIN_PASSWORD = 8
+
+const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1]
+
+/** Entry flow choreography: groups settle in sequence, each a short rise + fade.
+ * Reduced motion is handled globally by MotionConfig, so no per-use fallback. */
+const stagger: Variants = {
+  initial: {},
+  animate: { transition: { staggerChildren: 0.07, delayChildren: 0.04 } },
+}
+const rise: Variants = {
+  initial: { opacity: 0, y: 10 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: EASE } },
+}
 
 /** Account creation. Mock auth (no verification): persists the identity, seeds the
  * profile (name/email), then hands off to the welcome moment. */
@@ -53,18 +66,23 @@ export function SignupPage({ onSuccess, onGuest, onLogin }: SignupPageProps) {
 
   return (
     <AuthScreen>
-      <motion.div {...authEntrance} className="flex flex-1 flex-col justify-center gap-7 py-10">
-        <header className="flex flex-col items-center gap-4 text-center">
-          <PalaceThreshold tone="light" animated={false} className="size-16" />
-          <div className="flex flex-col gap-1">
-            <h1 className="text-[length:var(--p-text-headline)] font-semibold text-heading">
+      <motion.div
+        variants={stagger}
+        initial="initial"
+        animate="animate"
+        className="flex flex-1 flex-col justify-center gap-7 py-10"
+      >
+        <motion.header variants={rise} className="flex flex-col items-center gap-4 text-center">
+          <AuthLogo className="size-16" />
+          <div className="flex flex-col gap-1.5">
+            <h1 className="text-balance text-[length:var(--p-text-headline)] font-bold tracking-tight text-heading">
               {t('auth.signup.title')}
             </h1>
-            <p className="text-muted-foreground">{t('auth.signup.subtitle')}</p>
+            <p className="text-pretty text-muted-foreground">{t('auth.signup.subtitle')}</p>
           </div>
-        </header>
+        </motion.header>
 
-        <form className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
+        <motion.form variants={rise} className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
           <AuthField
             id="name"
             label={t('auth.signup.nameLabel')}
@@ -125,20 +143,27 @@ export function SignupPage({ onSuccess, onGuest, onLogin }: SignupPageProps) {
           <Button type="submit" size="lg" className="w-full" disabled={busy}>
             {busy ? t('auth.signup.submitting') : t('auth.signup.submit')}
           </Button>
-        </form>
+        </motion.form>
 
-        <Button variant="ghost" size="lg" className="w-full" onClick={handleGuest}>
-          {t('auth.continueAsGuest')}
-        </Button>
+        <motion.div variants={rise}>
+          <Button variant="ghost" size="lg" className="w-full" onClick={handleGuest}>
+            {t('auth.continueAsGuest')}
+          </Button>
+        </motion.div>
 
-        <SocialButtons />
+        <motion.div variants={rise}>
+          <SocialButtons />
+        </motion.div>
 
-        <p className="text-center text-[length:var(--p-text-label)] text-muted-foreground">
+        <motion.p
+          variants={rise}
+          className="text-center text-[length:var(--p-text-label)] text-muted-foreground"
+        >
           {t('auth.signup.haveAccount')}{' '}
           <button type="button" onClick={onLogin} className="font-semibold text-heading">
             {t('auth.signup.signIn')}
           </button>
-        </p>
+        </motion.p>
       </motion.div>
     </AuthScreen>
   )

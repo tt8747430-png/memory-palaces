@@ -8,7 +8,7 @@ import { HomeHeader } from './HomeHeader'
 afterEach(cleanup)
 
 function renderHeader(props: Partial<Parameters<typeof HomeHeader>[0]> = {}) {
-  const handlers = { onOpenProfile: vi.fn(), onOpenSettings: vi.fn(), onOpenNotifications: vi.fn() }
+  const handlers = { onOpenProfile: vi.fn(), onOpenNotifications: vi.fn(), onOpenStreak: vi.fn() }
   render(
     <I18nextProvider i18n={i18n}>
       {/* 500 XP → level 3 (250 XP per level). */}
@@ -48,6 +48,13 @@ describe('HomeHeader', () => {
     expect(handlers.onOpenNotifications).toHaveBeenCalled()
   })
 
+  it('opens the streak screen from the streak chip', async () => {
+    const user = userEvent.setup()
+    const handlers = renderHeader({ showStats: true, streakCount: 5 })
+    await user.click(screen.getByRole('button', { name: /open streak/i }))
+    expect(handlers.onOpenStreak).toHaveBeenCalled()
+  })
+
   it('renders the photo when an avatar is provided', () => {
     const { container } = render(
       <I18nextProvider i18n={i18n}>
@@ -57,8 +64,8 @@ describe('HomeHeader', () => {
           xp={0}
           unreadCount={0}
           onOpenProfile={() => {}}
-          onOpenSettings={() => {}}
           onOpenNotifications={() => {}}
+          onOpenStreak={() => {}}
         />
       </I18nextProvider>,
     )

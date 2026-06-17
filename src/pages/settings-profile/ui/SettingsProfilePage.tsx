@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
+import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { Camera, KeyRound, LogOut, Trash2 } from 'lucide-react'
+import { Camera, ChevronRight, Lock, Trash2 } from 'lucide-react'
 import { fileToAvatar } from '@/shared/lib'
 import {
   selectEffectiveProfile,
@@ -44,25 +45,22 @@ interface Form {
 
 export interface SettingsProfilePageProps {
   onBack?: () => void
-  /** Navigate to the change-password screen. */
+  /** Navigate to the change-password screen (from the masked password field). */
   onChangePassword: () => void
-  /** Sign out and return to login (the route owns the auth + navigation). */
-  onLogout: () => void | Promise<void>
   /** Sign out and return to login, called after this screen has wiped local data. */
   onDeleteAccount: () => void | Promise<void>
 }
 
 /**
  * The consolidated Profile screen: edit identity (avatar, name, username, bio, email,
- * phone), jump to change-password, and the account exits — log out, and the
- * irreversible delete that wipes every local trace before signing out. Both exits go
- * through a confirmation sheet; delete additionally clears all content, progress, and
+ * phone), change the password from a masked field, and the irreversible delete that
+ * wipes every local trace before signing out (log out itself lives on the Settings
+ * hub). Delete goes through a confirmation sheet and clears all content, progress, and
  * the saved profile on this device.
  */
 export function SettingsProfilePage({
   onBack,
   onChangePassword,
-  onLogout,
   onDeleteAccount,
 }: SettingsProfilePageProps) {
   const { t } = useTranslation()
@@ -85,7 +83,8 @@ export function SettingsProfilePage({
     phone: localStorage.getItem(PHONE_KEY) ?? '',
     avatar: profile.avatar,
   }))
-  const [confirm, setConfirm] = useState<'logout' | 'delete' | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
 
   // Start the data stores so the delete-account wipe sees the on-device records.
   useEffect(() => {
@@ -131,7 +130,8 @@ export function SettingsProfilePage({
   }
 
   const handleSave = async () => {
-    if (!canSave) return
+    if (!canSave || isSaving) return
+    setIsSaving(true)
     await setProfile(store, {
       name: form.name.trim(),
       username: form.username.trim(),
@@ -141,6 +141,7 @@ export function SettingsProfilePage({
     })
     if (form.phone.trim()) localStorage.setItem(PHONE_KEY, form.phone.trim())
     else localStorage.removeItem(PHONE_KEY)
+    setIsSaving(false)
     toast.success(t('settings.profileEdit.saved'))
     onBack?.()
   }
@@ -167,21 +168,52 @@ export function SettingsProfilePage({
         backLabel={t('settings.back')}
       />
 
-      <div className="mt-4 flex flex-col gap-6 pb-28">
-        <div className="flex flex-col items-center gap-3">
-          <Avatar name={form.name} src={form.avatar} className="size-24 text-3xl shadow-rest" />
-          <div className="flex items-center gap-2">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+        className="mt-4 flex flex-col gap-6 pb-28"
+      >
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative">
+            <span
+              aria-hidden
+              className="absolute inset-0 translate-y-1.5 scale-90 rounded-full opacity-25 blur-xl"
+              style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))' }}
+            />
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              aria-label={t(
+                form.avatar ? 'settings.profileEdit.changePhoto' : 'settings.profileEdit.uploadPhoto',
+              )}
+              className="relative rounded-full transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            >
+              <Avatar
+                name={form.name}
+                src={form.avatar}
+                className="size-24 border-[3px] border-[color:var(--surface)] text-3xl shadow-featured"
+              />
+              <span
+                aria-hidden
+                className="absolute -bottom-1 -right-1 grid size-9 place-items-center rounded-full border-[3px] border-[color:var(--surface)] text-primary-foreground shadow-interactive"
+                style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))' }}
+              >
+                <Camera className="size-4" />
+              </span>
+            </button>
+          </div>
+          {form.avatar ? (
+            <Button variant="ghost" size="sm" onClick={() => set('avatar', null)}>
+              <Trash2 className="size-4" aria-hidden />
+              {t('settings.profileEdit.removePhoto')}
+            </Button>
+          ) : (
             <Button variant="secondary" size="sm" onClick={() => fileRef.current?.click()}>
               <Camera className="size-4" aria-hidden />
-              {t('settings.profileEdit.changePhoto')}
+              {t('settings.profileEdit.uploadPhoto')}
             </Button>
-            {form.avatar ? (
-              <Button variant="ghost" size="sm" onClick={() => set('avatar', null)}>
-                <Trash2 className="size-4" aria-hidden />
-                {t('settings.profileEdit.removePhoto')}
-              </Button>
-            ) : null}
-          </div>
+          )}
         </div>
 
         <div className="flex flex-col gap-4">
@@ -223,6 +255,12 @@ export function SettingsProfilePage({
               className="w-full resize-none rounded-control border border-border bg-card px-3.5 py-2.5 text-[length:var(--p-text-body)] text-foreground placeholder:text-muted-foreground"
             />
           </label>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <h2 className="px-1 text-[length:var(--p-text-title)] font-semibold text-heading">
+            {t('settings.accountSection')}
+          </h2>
 
           <label className="flex flex-col gap-1.5">
             <span className="px-1 text-[length:var(--p-text-label)] font-medium text-muted-foreground">
@@ -262,60 +300,64 @@ export function SettingsProfilePage({
               </span>
             ) : null}
           </label>
+
+          <div className="flex flex-col gap-1.5">
+            <span className="px-1 text-[length:var(--p-text-label)] font-medium text-muted-foreground">
+              {t('settings.profileEdit.password')}
+            </span>
+            <button
+              type="button"
+              onClick={onChangePassword}
+              aria-label={t('settings.changePassword')}
+              className="flex h-11 w-full items-center justify-between rounded-control border border-border bg-card px-3.5 text-left transition-colors active:bg-primary/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            >
+              <span className="flex items-center gap-2.5 text-foreground">
+                <Lock className="size-4 text-muted-foreground" aria-hidden />
+                <span aria-hidden className="text-[18px] leading-none tracking-[0.2em]">
+                  ••••••••
+                </span>
+              </span>
+              <span className="flex items-center gap-1 text-muted-foreground">
+                <span className="text-[length:var(--p-text-label)] font-medium">
+                  {t('settings.profileEdit.passwordAction')}
+                </span>
+                <ChevronRight className="size-4" aria-hidden />
+              </span>
+            </button>
+          </div>
         </div>
 
-        <Button size="lg" className="w-full" disabled={!canSave} onClick={handleSave}>
-          {t('settings.profileEdit.save')}
+        <Button size="lg" className="w-full" disabled={!canSave || isSaving} onClick={handleSave}>
+          {isSaving ? (
+            <>
+              <span
+                aria-hidden
+                className="size-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+              />
+              {t('settings.profileEdit.saving')}
+            </>
+          ) : (
+            t('settings.profileEdit.save')
+          )}
         </Button>
 
-        <SettingsSection title={t('settings.profileEdit.securitySection')}>
-          <SettingsRow
-            kind="nav"
-            icon={<KeyRound />}
-            label={t('settings.changePassword')}
-            onClick={onChangePassword}
-          />
-        </SettingsSection>
-
         <SettingsSection>
-          <SettingsRow
-            kind="nav"
-            icon={<LogOut />}
-            label={t('settings.profileEdit.logout')}
-            onClick={() => setConfirm('logout')}
-          />
           <SettingsRow
             kind="nav"
             tone="danger"
             icon={<Trash2 />}
             label={t('settings.profileEdit.deleteAccount')}
             description={t('settings.profileEdit.deleteAccountHint')}
-            onClick={() => setConfirm('delete')}
+            onClick={() => setConfirmDelete(true)}
           />
         </SettingsSection>
-      </div>
+      </motion.div>
 
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePhoto} />
 
       <ActionSheet
-        open={confirm === 'logout'}
-        onOpenChange={(open) => (open ? setConfirm('logout') : setConfirm(null))}
-        title={t('settings.profileEdit.logoutConfirmTitle')}
-        description={t('settings.profileEdit.logoutConfirmBody')}
-        actions={[
-          {
-            id: 'logout',
-            label: t('settings.profileEdit.logoutConfirmCta'),
-            icon: <LogOut className="size-[18px]" aria-hidden />,
-            onSelect: () => void onLogout(),
-          },
-        ]}
-        cancelLabel={t('common.cancel')}
-      />
-
-      <ActionSheet
-        open={confirm === 'delete'}
-        onOpenChange={(open) => (open ? setConfirm('delete') : setConfirm(null))}
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
         title={t('settings.profileEdit.deleteConfirmTitle')}
         description={t('settings.profileEdit.deleteConfirmBody')}
         actions={[

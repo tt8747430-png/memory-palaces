@@ -1,10 +1,10 @@
 import { type FormEvent, useState } from 'react'
-import { motion } from 'motion/react'
+import { motion, type Variants } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Mail } from 'lucide-react'
-import { authEntrance, isEmail } from '@/shared/lib'
+import { isEmail } from '@/shared/lib'
 import { AuthScreen, AuthField, Button, PasswordField, SocialButtons } from '@/shared/ui'
-import { PalaceThreshold } from '@/widgets/palace-threshold'
+import { AuthLogo } from '@/widgets/palace-threshold'
 import { useAuthActions } from '@/features/session'
 
 export interface LoginPageProps {
@@ -12,6 +12,19 @@ export interface LoginPageProps {
   onGuest: () => void
   onSignup: () => void
   onForgot: () => void
+}
+
+const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1]
+
+/** Entry flow choreography: groups settle in sequence, each a short rise + fade.
+ * Reduced motion is handled globally by MotionConfig, so no per-use fallback. */
+const stagger: Variants = {
+  initial: {},
+  animate: { transition: { staggerChildren: 0.07, delayChildren: 0.04 } },
+}
+const rise: Variants = {
+  initial: { opacity: 0, y: 10 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: EASE } },
 }
 
 /** Sign-in screen. Mock auth (no credential check); also offers a guest door and a
@@ -45,18 +58,23 @@ export function LoginPage({ onAuthed, onGuest, onSignup, onForgot }: LoginPagePr
 
   return (
     <AuthScreen>
-      <motion.div {...authEntrance} className="flex flex-1 flex-col justify-center gap-8 py-10">
-        <header className="flex flex-col items-center gap-4 text-center">
-          <PalaceThreshold tone="light" animated={false} className="size-16" />
-          <div className="flex flex-col gap-1">
-            <h1 className="text-[length:var(--p-text-headline)] font-semibold text-heading">
+      <motion.div
+        variants={stagger}
+        initial="initial"
+        animate="animate"
+        className="flex flex-1 flex-col justify-center gap-8 py-10"
+      >
+        <motion.header variants={rise} className="flex flex-col items-center gap-4 text-center">
+          <AuthLogo className="size-16" />
+          <div className="flex flex-col gap-1.5">
+            <h1 className="text-balance text-[length:var(--p-text-headline)] font-bold tracking-tight text-heading">
               {t('auth.login.title')}
             </h1>
-            <p className="text-muted-foreground">{t('auth.login.subtitle')}</p>
+            <p className="text-pretty text-muted-foreground">{t('auth.login.subtitle')}</p>
           </div>
-        </header>
+        </motion.header>
 
-        <form className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
+        <motion.form variants={rise} className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
           <AuthField
             id="email"
             label={t('auth.emailLabel')}
@@ -93,20 +111,27 @@ export function LoginPage({ onAuthed, onGuest, onSignup, onForgot }: LoginPagePr
           <Button type="submit" size="lg" className="w-full" disabled={busy}>
             {busy ? t('auth.login.submitting') : t('auth.login.submit')}
           </Button>
-        </form>
+        </motion.form>
 
-        <Button variant="ghost" size="lg" className="w-full" onClick={handleGuest}>
-          {t('auth.continueAsGuest')}
-        </Button>
+        <motion.div variants={rise}>
+          <Button variant="ghost" size="lg" className="w-full" onClick={handleGuest}>
+            {t('auth.continueAsGuest')}
+          </Button>
+        </motion.div>
 
-        <SocialButtons />
+        <motion.div variants={rise}>
+          <SocialButtons />
+        </motion.div>
 
-        <p className="text-center text-[length:var(--p-text-label)] text-muted-foreground">
+        <motion.p
+          variants={rise}
+          className="text-center text-[length:var(--p-text-label)] text-muted-foreground"
+        >
           {t('auth.login.noAccount')}{' '}
           <button type="button" onClick={onSignup} className="font-semibold text-heading">
             {t('auth.login.createAccount')}
           </button>
-        </p>
+        </motion.p>
       </motion.div>
     </AuthScreen>
   )

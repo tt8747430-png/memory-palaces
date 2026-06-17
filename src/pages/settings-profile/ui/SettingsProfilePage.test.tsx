@@ -34,7 +34,6 @@ function renderPage(opts: { profile?: Profile; palaces?: Palace[] } = {}) {
   const handlers = {
     onBack: vi.fn(),
     onChangePassword: vi.fn(),
-    onLogout: vi.fn(),
     onDeleteAccount: vi.fn(),
   }
   const wrap = (children: ReactNode) => (
@@ -93,21 +92,17 @@ describe('SettingsProfilePage', () => {
     expect(onBack).toHaveBeenCalled()
   })
 
-  it('routes to the change-password screen', async () => {
+  it('routes to the change-password screen from the masked password field', async () => {
     const user = userEvent.setup()
     const { onChangePassword } = renderPage({ profile: seeded })
     await user.click(await screen.findByRole('button', { name: /change password/i }))
     expect(onChangePassword).toHaveBeenCalled()
   })
 
-  it('logs out only after the confirmation is accepted', async () => {
-    const user = userEvent.setup()
-    const { onLogout } = renderPage({ profile: seeded })
-    await user.click(await screen.findByRole('button', { name: /log out/i }))
-    expect(onLogout).not.toHaveBeenCalled()
-    const sheet = await screen.findByRole('dialog')
-    await user.click(within(sheet).getByRole('button', { name: /log out/i }))
-    expect(onLogout).toHaveBeenCalled()
+  it('no longer offers log out here (moved to the Settings hub)', async () => {
+    renderPage({ profile: seeded })
+    await screen.findByDisplayValue('Ada')
+    expect(screen.queryByRole('button', { name: /log out/i })).not.toBeInTheDocument()
   })
 
   it('deletes the account only after confirming — wiping palaces and signing out', async () => {

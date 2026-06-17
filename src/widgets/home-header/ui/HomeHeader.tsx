@@ -1,8 +1,8 @@
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-import { Bell, BellRing, Brain, Flame, Layers, Settings, User, Zap } from 'lucide-react'
+import { Bell, BellRing, Brain, ChevronRight, Flame, Layers, Zap } from 'lucide-react'
 import { levelFromXp, useCollapsibleHeader } from '@/shared/lib'
-import { Avatar, IconButton, type IconButtonVariant, OverflowMenuButton, type SheetAction } from '@/shared/ui'
+import { Avatar, IconButton, type IconButtonVariant } from '@/shared/ui'
 
 export interface HomeHeaderProps {
   name: string
@@ -16,13 +16,15 @@ export interface HomeHeaderProps {
   /** Show the at-a-glance streak/due chips (hidden on first run). */
   showStats?: boolean
   onOpenProfile: () => void
-  onOpenSettings: () => void
   onOpenNotifications: () => void
+  /** Open the Streak screen from the streak chip. */
+  onOpenStreak: () => void
 }
 
-/** The home's chrome: a large hero (avatar → profile, greeting, level pill, XP, and
- * the at-a-glance streak/due chips) that recedes on scroll while a compact sticky bar
- * fades in keeping profile, level, and bell reachable. Mirrors the old ProgressHeader. */
+/** The home's chrome: a large hero (avatar → profile, greeting, level pill, XP, and the
+ * at-a-glance chips — a tappable streak that opens the Streak screen, plus due-today)
+ * that recedes on scroll while a compact sticky bar fades in keeping profile, level, and
+ * bell reachable. Mirrors the old ProgressHeader. */
 export function HomeHeader({
   name,
   avatar,
@@ -32,8 +34,8 @@ export function HomeHeader({
   dueCount = 0,
   showStats = false,
   onOpenProfile,
-  onOpenSettings,
   onOpenNotifications,
+  onOpenStreak,
 }: HomeHeaderProps) {
   const { t } = useTranslation()
   const header = useCollapsibleHeader()
@@ -41,21 +43,6 @@ export function HomeHeader({
   const levelLabel = t('home.levelShort', { level })
   const fill = Math.round((xpInLevel / xpForNextLevel) * 100)
   const xpToNext = t('home.xpToNext', { remaining: xpForNextLevel - xpInLevel, next: level + 1 })
-  const showChips = showStats && (streakCount > 0 || dueCount > 0)
-  const overflowActions: SheetAction[] = [
-    {
-      id: 'profile',
-      label: t('nav.profile'),
-      icon: <User className="size-5" aria-hidden />,
-      onSelect: onOpenProfile,
-    },
-    {
-      id: 'settings',
-      label: t('settings.title'),
-      icon: <Settings className="size-5" aria-hidden />,
-      onSelect: onOpenSettings,
-    },
-  ]
 
   return (
     <>
@@ -176,36 +163,31 @@ export function HomeHeader({
               </span>
             </span>
           </button>
-          <div className="flex shrink-0 items-center gap-1.5">
-            <NotificationButton
-              variant="glass"
-              unreadCount={unreadCount}
-              label={t('notifications.openLabel')}
-              onClick={onOpenNotifications}
-            />
-            <OverflowMenuButton
-              variant="glass"
-              label={t('common.moreOptions')}
-              title={t('common.options')}
-              actions={overflowActions}
-              cancelLabel={t('common.cancel')}
-            />
-          </div>
+          <NotificationButton
+            variant="glass"
+            unreadCount={unreadCount}
+            label={t('notifications.openLabel')}
+            onClick={onOpenNotifications}
+          />
         </div>
 
-        {showChips ? (
+        {showStats ? (
           <motion.div
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.35 }}
             className="mt-3 flex items-center gap-2"
           >
-            {streakCount > 0 ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--warning-surface)] px-3 py-1 text-[length:var(--p-text-label)] font-semibold text-[var(--warning-foreground)]">
-                <Flame className="size-3.5" fill="currentColor" aria-hidden />
-                {t('home.streakChip', { count: streakCount })}
-              </span>
-            ) : null}
+            <button
+              type="button"
+              onClick={onOpenStreak}
+              aria-label={t('home.openStreak')}
+              className="inline-flex items-center gap-1.5 rounded-full bg-[var(--warning-surface)] py-1 pl-3 pr-2 text-[length:var(--p-text-label)] font-semibold text-[var(--warning-foreground)] transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            >
+              <Flame className="size-3.5" fill="currentColor" aria-hidden />
+              {t('home.streakChip', { count: streakCount })}
+              <ChevronRight className="size-3.5 opacity-70" aria-hidden />
+            </button>
             {dueCount > 0 ? (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1 text-[length:var(--p-text-label)] font-semibold text-primary-foreground">
                 <Layers className="size-3.5" aria-hidden />

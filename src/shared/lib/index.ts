@@ -64,6 +64,7 @@ export {
   type AchievementId,
   type AchievementInput,
 } from './achievements'
+export { computeBadges, type Badge, type BadgeId, type BadgeInput } from './badges'
 export {
   verseText,
   tokenizeWords,

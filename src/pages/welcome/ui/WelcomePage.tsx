@@ -10,6 +10,14 @@ export interface WelcomePageProps {
 
 const AURA_BG = 'radial-gradient(circle at center, oklch(var(--p-tint-sky) / 0.45), transparent 60%)'
 
+/** Slow embers drifting up past the threshold — the locus igniting, carried into the
+ * room. Fixed positions so they don't re-randomize per render; dropped under reduced motion. */
+const EMBERS = [
+  { left: '32%', top: '62%', dx: 10, dy: -44, delay: 0.4, duration: 7 },
+  { left: '66%', top: '56%', dx: -14, dy: -56, delay: 1.6, duration: 8 },
+  { left: '50%', top: '70%', dx: 4, dy: -38, delay: 2.8, duration: 6.5 },
+] as const
+
 /** Post-signup arrival. The threshold settles "open" over a navy ground lit by one
  * soft aura, the new member is greeted by name a word at a time, then the CTA
  * choreographs in beneath. Reduced motion drops the delays to a plain crossfade. */
@@ -37,6 +45,25 @@ export function WelcomePage({ onContinue }: WelcomePageProps) {
         />
       )}
 
+      {reduce
+        ? null
+        : EMBERS.map((ember, index) => (
+            <motion.span
+              key={index}
+              aria-hidden
+              className="pointer-events-none absolute z-0 size-2 rounded-full bg-white/80 blur-[1px]"
+              style={{ left: ember.left, top: ember.top }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0, 0.8, 0], x: [0, ember.dx, 0], y: [0, ember.dy, 0] }}
+              transition={{
+                duration: ember.duration,
+                delay: ember.delay,
+                repeat: Infinity,
+                ease: 'easeInOut',
+              }}
+            />
+          ))}
+
       <PalaceThreshold className="relative z-10 size-48" />
 
       <div className="relative z-10 flex flex-col gap-2">
@@ -44,7 +71,7 @@ export function WelcomePage({ onContinue }: WelcomePageProps) {
           as="h1"
           text={t('auth.welcome.greeting', { name })}
           delay={reduce ? 0 : 0.6}
-          className="text-balance text-[length:var(--p-text-headline)] font-semibold text-white"
+          className="text-balance text-[length:var(--p-text-headline)] font-bold tracking-tight text-white"
         />
         <motion.p
           className="text-balance text-[length:var(--p-text-sub)] text-white/85"

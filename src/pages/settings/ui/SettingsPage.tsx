@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ChangeEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Bell,
@@ -8,6 +8,7 @@ import {
   HelpCircle,
   Info,
   LogIn,
+  LogOut,
   Moon,
   Shield,
   Sparkles,
@@ -29,7 +30,7 @@ import {
 } from '@/entities/profile'
 import type { SessionKind } from '@/entities/session'
 import { setPreferences } from '@/features/preferences'
-import { AppScreen, Avatar, ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui'
+import { ActionSheet, AppScreen, Avatar, ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui'
 
 export interface SettingsPageProps {
   /** All provided by the route wrapper so the page stays router-free. */
@@ -41,15 +42,17 @@ export interface SettingsPageProps {
   onExport?: () => void
   onImportFile?: (file: File) => void
   onSignIn?: () => void
-  /** A guest sees a sign-in CTA; account management lives on the Profile screen. */
+  /** Sign out and return to login (the route owns auth + navigation). Confirmed here. */
+  onLogout?: () => void
+  /** A guest sees a sign-in CTA; account editing lives on the Profile screen. */
   sessionKind?: SessionKind
 }
 
 /** Settings hub — a profile hero (which opens the consolidated Profile screen) over
- * grouped sections: preferences, privacy, data, and support. Preference toggles
- * persist immediately; navigation, export, and import are handled by the route
- * wrapper. Guests get a sign-in CTA; everything account-related (email, password,
- * phone, log out, delete) now lives on the Profile screen. */
+ * grouped sections: preferences, privacy, data, and support, then Log out at the
+ * bottom. Preference toggles persist immediately; navigation, export, and import are
+ * handled by the route wrapper. Guests get a sign-in CTA instead of logout; account
+ * editing (email, password, phone, delete) lives on the Profile screen. */
 export function SettingsPage({
   onBack,
   onEditProfile,
@@ -59,6 +62,7 @@ export function SettingsPage({
   onExport,
   onImportFile,
   onSignIn,
+  onLogout,
   sessionKind = 'account',
 }: SettingsPageProps) {
   const { t } = useTranslation()
@@ -67,6 +71,7 @@ export function SettingsPage({
   const profileStore = useProfileStoreApi()
   const profile = useProfileStore(selectEffectiveProfile)
   const importInputRef = useRef<HTMLInputElement>(null)
+  const [logoutOpen, setLogoutOpen] = useState(false)
 
   useEffect(() => {
     prefsStore.getState().start()
@@ -200,6 +205,18 @@ export function SettingsPage({
           />
           <SettingsRow kind="nav" icon={<Info />} label={t('settings.about')} onClick={() => onAbout?.()} />
         </SettingsSection>
+
+        {isGuest ? null : (
+          <SettingsSection>
+            <SettingsRow
+              kind="nav"
+              tone="danger"
+              icon={<LogOut />}
+              label={t('settings.signOut')}
+              onClick={() => setLogoutOpen(true)}
+            />
+          </SettingsSection>
+        )}
       </div>
 
       <input
@@ -208,6 +225,22 @@ export function SettingsPage({
         accept="application/json,.json"
         className="hidden"
         onChange={handleImport}
+      />
+
+      <ActionSheet
+        open={logoutOpen}
+        onOpenChange={setLogoutOpen}
+        title={t('settings.signOutConfirmTitle')}
+        description={t('settings.signOutConfirmBody')}
+        actions={[
+          {
+            id: 'logout',
+            label: t('settings.signOutConfirmCta'),
+            icon: <LogOut className="size-[18px]" aria-hidden />,
+            onSelect: () => onLogout?.(),
+          },
+        ]}
+        cancelLabel={t('common.cancel')}
       />
     </AppScreen>
   )

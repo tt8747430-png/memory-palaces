@@ -9,10 +9,13 @@ afterEach(cleanup)
 function renderHeader(props: Partial<ProfileHeaderProps> = {}) {
   const merged: ProfileHeaderProps = {
     name: 'Ada Lovelace',
+    username: 'ada',
     xp: 600, // levelFromXp(600) → level 3
-    palaceCount: 2,
-    streakCount: 5,
+    joinedYear: 2026,
+    unreadCount: 0,
     onOpenSettings: () => {},
+    onOpenNotifications: () => {},
+    onEditProfile: () => {},
     ...props,
   }
   render(
@@ -23,32 +26,37 @@ function renderHeader(props: Partial<ProfileHeaderProps> = {}) {
 }
 
 describe('ProfileHeader', () => {
-  it('renders the name as the page heading with a palaces · streak subtitle', () => {
+  it('renders the name as the page heading with a @handle · joined subtitle', () => {
     renderHeader()
     expect(screen.getByRole('heading', { name: 'Ada Lovelace' })).toBeInTheDocument()
-    expect(screen.getByText('2 palaces · 5-day streak')).toBeInTheDocument()
+    expect(screen.getByText('@ada · Joined 2026')).toBeInTheDocument()
   })
 
-  it('uses the singular subtitle for a single palace', () => {
-    renderHeader({ palaceCount: 1, streakCount: 3 })
-    expect(screen.getByText('1 palace · 3-day streak')).toBeInTheDocument()
-  })
-
-  it('shows the empty-state subtitle when there are no palaces', () => {
-    renderHeader({ palaceCount: 0, streakCount: 0 })
-    expect(screen.getByText('Build your first palace to begin')).toBeInTheDocument()
+  it('falls back to the handle-only subtitle when the joined year is unknown', () => {
+    renderHeader({ joinedYear: null })
+    expect(screen.getByText('@ada')).toBeInTheDocument()
   })
 
   it('shows the level badge derived from xp', () => {
     renderHeader()
-    expect(screen.getByText('Lv. 3')).toBeInTheDocument()
+    expect(screen.getAllByText('Level 3').length).toBeGreaterThan(0)
   })
 
-  it('calls onOpenSettings when a settings button is tapped', () => {
+  it('calls onOpenSettings and onOpenNotifications from the header actions', () => {
     const onOpenSettings = vi.fn()
-    renderHeader({ onOpenSettings })
+    const onOpenNotifications = vi.fn()
+    renderHeader({ onOpenSettings, onOpenNotifications })
     fireEvent.click(screen.getAllByRole('button', { name: 'Open settings' })[0]!)
+    fireEvent.click(screen.getAllByRole('button', { name: /notifications/i })[0]!)
     expect(onOpenSettings).toHaveBeenCalledOnce()
+    expect(onOpenNotifications).toHaveBeenCalledOnce()
+  })
+
+  it('edits the profile photo when the avatar is tapped', () => {
+    const onEditProfile = vi.fn()
+    renderHeader({ onEditProfile })
+    fireEvent.click(screen.getByRole('button', { name: /edit profile photo/i }))
+    expect(onEditProfile).toHaveBeenCalledOnce()
   })
 
   it('renders the photo when an avatar is provided', () => {
@@ -56,11 +64,14 @@ describe('ProfileHeader', () => {
       <I18nextProvider i18n={i18n}>
         <ProfileHeader
           name="Ada"
+          username="ada"
           avatar="data:image/jpeg;base64,zzz"
           xp={0}
-          palaceCount={0}
-          streakCount={0}
+          joinedYear={null}
+          unreadCount={0}
           onOpenSettings={() => {}}
+          onOpenNotifications={() => {}}
+          onEditProfile={() => {}}
         />
       </I18nextProvider>,
     )

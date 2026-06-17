@@ -1,33 +1,72 @@
-import { useEffect, useMemo, useState } from 'react'
+import { type ReactNode, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { motion } from 'motion/react'
-import { BarChart3, BookOpen, ChevronRight, Flame, Target, TrendingUp, Trophy, Zap } from 'lucide-react'
-import { cn, computeAchievements, computeTrainingTotals, isRoomCompleted } from '@/shared/lib'
+import {
+  Building2,
+  CalendarCheck,
+  ChevronRight,
+  Flame,
+  Target,
+  TrendingUp,
+  Zap,
+} from 'lucide-react'
+import {
+  cn,
+  computeAchievements,
+  computeBadges,
+  computeTrainingTotals,
+  isRoomCompleted,
+  totalTrainingDays,
+} from '@/shared/lib'
 import { useSessionStore } from '@/entities/session'
 import { selectEffectiveProfile, useProfileStore, useProfileStoreApi } from '@/entities/profile'
 import { selectProgress, useProgressStore, useProgressStoreApi } from '@/entities/progress'
 import { selectPalaces, usePalaceStore, usePalaceStoreApi } from '@/entities/palace'
 import { roomsForPalace, selectRooms, useRoomStore, useRoomStoreApi } from '@/entities/room'
 import { lociForRoom, selectLoci, useLocusStore, useLocusStoreApi } from '@/entities/locus'
+import {
+  selectUnreadCount,
+  useNotificationStore,
+  useNotificationStoreApi,
+} from '@/entities/notification'
 import { ProfileHeader } from '@/widgets/profile-header'
-import { AchievementList } from '@/widgets/achievement-list'
-import { AppScreen, SegmentedControl, StatTile, cardSurface } from '@/shared/ui'
+import { BadgesSection } from '@/widgets/badge-list'
+import { AchievementsSection } from '@/widgets/achievement-list'
+import { AppScreen, Card } from '@/shared/ui'
 
 export interface ProfilePageProps {
   /** Open the settings screen; wired by the route wrapper. */
   onOpenSettings?: () => void
-  /** Open the full Stats screen ("View full stats"); wired by the route wrapper. */
-  onOpenStats?: () => void
+  /** Open the notification history; wired by the route wrapper. */
+  onOpenNotifications?: () => void
+  /** Open the Streak screen (from the avatar-edit and the Streak overview stat). */
+  onEditProfile?: () => void
+  /** Open the Streak screen; wired by the route wrapper. */
+  onOpenStreak?: () => void
+  /** Open the full Badges page; wired by the route wrapper. */
+  onOpenBadges?: () => void
+  /** Open the full Achievements page; wired by the route wrapper. */
+  onOpenAchievements?: () => void
 }
 
-type ProfileTab = 'statistics' | 'achievements'
+const GLANCE_ICON = 'size-[18px]'
 
-const TILE_ICON = 'size-[22px]'
+function joinedYearOf(createdAt: string): number | null {
+  const year = new Date(createdAt).getUTCFullYear()
+  return Number.isFinite(year) ? year : null
+}
 
-/** Profile tab. A guest identity today (account claim is Phase 9); everything below the
- * hero is derived live from the progress/palace/room/locus stores — a stat glance and a
- * badge wall — with a deeper breakdown one tap away on the Stats screen. */
-export function ProfilePage({ onOpenSettings, onOpenStats }: ProfilePageProps = {}) {
+/** Profile tab. A guest identity today (account claim is Phase 9). Below the redesigned
+ * header: a compact six-stat Overview (the Streak stat opens the Streak page), then the
+ * Badges and Achievements preview rows, each opening its full grid. Everything derives
+ * live from the progress/palace/room/locus stores — a glance, never stored or faked. */
+export function ProfilePage({
+  onOpenSettings,
+  onOpenNotifications,
+  onEditProfile,
+  onOpenStreak,
+  onOpenBadges,
+  onOpenAchievements,
+}: ProfilePageProps = {}) {
   const { t } = useTranslation()
   const session = useSessionStore((state) => state.session)
   const profileStore = useProfileStoreApi()
@@ -36,11 +75,12 @@ export function ProfilePage({ onOpenSettings, onOpenStats }: ProfilePageProps = 
   const palaceStore = usePalaceStoreApi()
   const roomStore = useRoomStoreApi()
   const locusStore = useLocusStoreApi()
+  const notificationStore = useNotificationStoreApi()
   const progress = useProgressStore(selectProgress)
   const palaces = usePalaceStore(selectPalaces)
   const rooms = useRoomStore(selectRooms)
   const loci = useLocusStore(selectLoci)
-  const [tab, setTab] = useState<ProfileTab>('statistics')
+  const unreadCount = useNotificationStore(selectUnreadCount)
 
   useEffect(() => {
     profileStore.getState().start()
@@ -48,15 +88,18 @@ export function ProfilePage({ onOpenSettings, onOpenStats }: ProfilePageProps = 
     palaceStore.getState().start()
     roomStore.getState().start()
     locusStore.getState().start()
-  }, [profileStore, progressStore, palaceStore, roomStore, locusStore])
+    notificationStore.getState().start()
+  }, [profileStore, progressStore, palaceStore, roomStore, locusStore, notificationStore])
 
-  const name = profile.name.trim() || session?.displayName || 'Guest'
+  const name = profile.name.trim() || session?.displayName || t('profile.guest')
   const xp = progress?.xp ?? 0
   const streakCount = progress?.streakCount ?? 0
   const longestStreak = progress?.longestStreak ?? 0
   const bestQuizAccuracy = progress?.bestQuizAccuracy ?? 0
+  const trainingDays = useMemo(() => progress?.trainingDays ?? [], [progress])
 
   const totals = useMemo(() => computeTrainingTotals(rooms, loci), [rooms, loci])
+  const daysTrained = useMemo(() => totalTrainingDays(trainingDays), [trainingDays])
   const anyPalaceCompleted = useMemo(
     () =>
       palaces.some((palace) => {
@@ -67,6 +110,19 @@ export function ProfilePage({ onOpenSettings, onOpenStats }: ProfilePageProps = 
         )
       }),
     [palaces, rooms, loci],
+  )
+
+  const badges = useMemo(
+    () =>
+      computeBadges({
+        xp,
+        longestStreak,
+        roomsCompleted: totals.roomsCompleted,
+        palaceCount: palaces.length,
+        totalCards: totals.totalCards,
+        trainingDayCount: daysTrained,
+      }),
+    [xp, longestStreak, totals, palaces.length, daysTrained],
   )
   const achievements = useMemo(
     () =>
@@ -81,86 +137,96 @@ export function ProfilePage({ onOpenSettings, onOpenStats }: ProfilePageProps = 
     [palaces.length, streakCount, xp, bestQuizAccuracy, totals.roomsCompleted, anyPalaceCompleted],
   )
 
-  const tiles = [
-    { icon: <Zap className={TILE_ICON} />, value: xp.toLocaleString(), label: t('profile.tiles.totalXp') },
-    { icon: <Flame className={TILE_ICON} />, value: String(streakCount), label: t('profile.tiles.currentStreak') },
-    { icon: <Trophy className={TILE_ICON} />, value: String(longestStreak), label: t('profile.tiles.longestStreak') },
-    { icon: <BookOpen className={TILE_ICON} />, value: String(palaces.length), label: t('profile.tiles.palaces') },
-    { icon: <TrendingUp className={TILE_ICON} />, value: String(totals.roomsCompleted), label: t('profile.tiles.roomsDone') },
-    { icon: <Target className={TILE_ICON} />, value: `${bestQuizAccuracy}%`, label: t('profile.tiles.bestAccuracy') },
+  const glances = [
+    {
+      icon: <Flame className={GLANCE_ICON} fill="currentColor" />,
+      value: String(streakCount),
+      label: t('profile.tiles.currentStreak'),
+      onClick: () => onOpenStreak?.(),
+    },
+    { icon: <Zap className={GLANCE_ICON} />, value: xp.toLocaleString(), label: t('profile.tiles.totalXp') },
+    { icon: <Building2 className={GLANCE_ICON} />, value: String(palaces.length), label: t('profile.tiles.palaces') },
+    { icon: <TrendingUp className={GLANCE_ICON} />, value: String(totals.roomsCompleted), label: t('profile.tiles.roomsDone') },
+    { icon: <Target className={GLANCE_ICON} />, value: `${bestQuizAccuracy}%`, label: t('profile.tiles.bestAccuracy') },
+    { icon: <CalendarCheck className={GLANCE_ICON} />, value: String(daysTrained), label: t('profile.tiles.daysTrained') },
   ]
 
   return (
     <AppScreen className="pb-nav">
       <ProfileHeader
         name={name}
+        username={profile.username}
         avatar={profile.avatar}
         xp={xp}
-        palaceCount={palaces.length}
-        streakCount={streakCount}
+        joinedYear={session?.createdAt ? joinedYearOf(session.createdAt) : null}
+        unreadCount={unreadCount}
         onOpenSettings={() => onOpenSettings?.()}
+        onOpenNotifications={() => onOpenNotifications?.()}
+        onEditProfile={() => onEditProfile?.()}
       />
 
-      <SegmentedControl<ProfileTab>
-        className="mt-8"
-        aria-label={t('profile.statistics')}
-        value={tab}
-        onChange={setTab}
-        options={[
-          { value: 'statistics', label: t('profile.statistics') },
-          { value: 'achievements', label: t('profile.achievements') },
-        ]}
-      />
+      <div className="mt-8 flex flex-col gap-8">
+        <section>
+          <h2 className="mb-3 px-1 text-[length:var(--p-text-title)] font-bold text-heading">
+            {t('profile.overview')}
+          </h2>
+          <Card className="grid grid-cols-2 gap-px overflow-hidden bg-border p-0">
+            {glances.map((glance) => (
+              <StatGlance
+                key={glance.label}
+                icon={glance.icon}
+                value={glance.value}
+                label={glance.label}
+                onClick={glance.onClick}
+              />
+            ))}
+          </Card>
+        </section>
 
-      <motion.div
-        key={tab}
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-        className="mt-6"
-      >
-        {tab === 'statistics' ? (
-          <section>
-            <h2 className="mb-3 px-1 text-[length:var(--p-text-title)] font-bold text-heading">
-              {t('profile.journey')}
-            </h2>
-            <div className="grid grid-cols-2 gap-3.5">
-              {tiles.map((tile, index) => (
-                <StatTile
-                  key={tile.label}
-                  icon={tile.icon}
-                  value={tile.value}
-                  label={tile.label}
-                  delay={index * 0.04}
-                />
-              ))}
-            </div>
-
-            <button
-              type="button"
-              onClick={() => onOpenStats?.()}
-              className={cn(
-                cardSurface,
-                'mt-3.5 flex w-full items-center gap-3.5 p-4 text-left transition-transform active:scale-[0.99]',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
-              )}
-            >
-              <span className="grid size-11 shrink-0 place-items-center rounded-control bg-info-surface text-primary">
-                <BarChart3 className={TILE_ICON} aria-hidden />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block font-bold text-heading">{t('profile.viewFullStats')}</span>
-                <span className="block text-[length:var(--p-text-label)] font-medium text-muted-foreground">
-                  {t('profile.viewFullStatsHint')}
-                </span>
-              </span>
-              <ChevronRight className="size-5 shrink-0 text-muted-foreground" aria-hidden />
-            </button>
-          </section>
-        ) : (
-          <AchievementList achievements={achievements} />
-        )}
-      </motion.div>
+        <BadgesSection badges={badges} onSeeAll={() => onOpenBadges?.()} />
+        <AchievementsSection achievements={achievements} onSeeAll={() => onOpenAchievements?.()} />
+      </div>
     </AppScreen>
+  )
+}
+
+function StatGlance({
+  icon,
+  value,
+  label,
+  onClick,
+}: {
+  icon: ReactNode
+  value: string
+  label: string
+  onClick?: () => void
+}) {
+  const body = (
+    <>
+      <span className="grid size-9 shrink-0 place-items-center rounded-control bg-info-surface text-primary">
+        {icon}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[length:var(--p-text-sub)] font-bold leading-tight tabular-nums text-heading">
+          {value}
+        </span>
+        <span className="block truncate text-[length:var(--p-text-tiny)] font-medium text-muted-foreground">
+          {label}
+        </span>
+      </span>
+      {onClick ? <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden /> : null}
+    </>
+  )
+  const className = cn('flex items-center gap-2.5 bg-card p-3.5 text-left')
+  return onClick ? (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(className, 'transition-colors active:bg-primary/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40')}
+    >
+      {body}
+    </button>
+  ) : (
+    <div className={className}>{body}</div>
   )
 }

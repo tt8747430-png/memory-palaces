@@ -18,7 +18,6 @@ import { TodayTrainingCard, FirstRunGuide } from '@/widgets/today-training-card'
 import { DailyReviewCard } from '@/widgets/daily-review-card'
 import { UpNextCard, pickUpNextRooms } from '@/widgets/up-next-card'
 import { PalacesOverview, type PalaceSummary } from '@/widgets/palaces-overview'
-import { StreakSummary } from '@/widgets/streak-summary'
 import { AppScreen, PullToRefresh } from '@/shared/ui'
 
 export interface HomePageProps {
@@ -28,8 +27,8 @@ export interface HomePageProps {
   onOpenNotifications?: () => void
   /** Open the profile tab; wired by the route wrapper. */
   onOpenProfile?: () => void
-  /** Open settings (from the header overflow menu); wired by the route wrapper. */
-  onOpenSettings?: () => void
+  /** Open the Streak screen from the header streak chip; wired by the route wrapper. */
+  onOpenStreak?: () => void
   /** Open a room straight into training; wired by the route wrapper. */
   onTrainRoom?: (roomId: string) => void
   /** Open a palace's detail; wired by the route wrapper. */
@@ -44,7 +43,7 @@ export function HomePage({
   onStartReview,
   onOpenNotifications,
   onOpenProfile,
-  onOpenSettings,
+  onOpenStreak,
   onTrainRoom,
   onOpenPalace,
   onViewAllPalaces,
@@ -167,8 +166,8 @@ export function HomePage({
           dueCount={dueCount}
           showStats={hasPalaces}
           onOpenProfile={() => onOpenProfile?.()}
-          onOpenSettings={() => onOpenSettings?.()}
           onOpenNotifications={() => onOpenNotifications?.()}
+          onOpenStreak={() => onOpenStreak?.()}
         />
 
         <TodayTrainingCard
@@ -186,15 +185,6 @@ export function HomePage({
         {hasPalaces ? (
           <>
             <UpNextCard className="mt-6" rooms={upNext} onOpenRoom={(id) => onTrainRoom?.(id)} />
-
-            <StreakSummary
-              className="mt-6"
-              showProgress={false}
-              xp={progress?.xp ?? 0}
-              streakCount={progress?.streakCount ?? 0}
-              longestStreak={progress?.longestStreak ?? 0}
-              trainingDays={progress?.trainingDays ?? []}
-            />
 
             <PalacesOverview
               className="mt-6"
