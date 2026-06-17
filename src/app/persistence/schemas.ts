@@ -233,7 +233,7 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
 }
 
 export const profileSchema: RxJsonSchema<Profile> = {
-  version: 0,
+  version: 1,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -241,11 +241,12 @@ export const profileSchema: RxJsonSchema<Profile> = {
     createdAt: { type: 'string' },
     updatedAt: { type: 'string' },
     name: { type: 'string' },
+    username: { type: 'string' },
     email: { type: 'string' },
     bio: { type: 'string' },
     avatar: { type: ['string', 'null'] },
   },
-  required: ['id', 'createdAt', 'updatedAt', 'name', 'email', 'bio', 'avatar'],
+  required: ['id', 'createdAt', 'updatedAt', 'name', 'username', 'email', 'bio', 'avatar'],
 }
 
 export const notificationSchema: RxJsonSchema<AppNotification> = {

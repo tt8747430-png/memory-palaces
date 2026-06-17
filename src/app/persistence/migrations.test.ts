@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { DEFAULT_PRIVACY } from '@/entities/preferences'
-import { migratePreferencesV1, type PreferencesV0 } from './migrations'
+import {
+  migratePreferencesV1,
+  migrateProfileV1,
+  type PreferencesV0,
+  type ProfileV0,
+} from './migrations'
 
 const v0: PreferencesV0 = {
   id: 'preferences',
@@ -26,6 +31,26 @@ describe('migratePreferencesV1', () => {
     expect(v1.haptics).toBe(false)
     expect(v1.notifications).toBe(false)
     expect(v1.id).toBe('preferences')
+    expect(v1.updatedAt).toBe('2026-01-02T00:00:00.000Z')
+  })
+})
+
+describe('migrateProfileV1', () => {
+  const v0Profile: ProfileV0 = {
+    id: 'profile',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-02T00:00:00.000Z',
+    name: 'Ada',
+    email: 'ada@x.io',
+    bio: '',
+    avatar: null,
+  }
+
+  it('backfills an empty username and keeps the saved fields', () => {
+    const v1 = migrateProfileV1(v0Profile)
+    expect(v1.username).toBe('')
+    expect(v1.name).toBe('Ada')
+    expect(v1.email).toBe('ada@x.io')
     expect(v1.updatedAt).toBe('2026-01-02T00:00:00.000Z')
   })
 })

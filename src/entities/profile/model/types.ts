@@ -7,6 +7,8 @@ import type { Entity } from '@/shared/lib'
  */
 export interface Profile extends Entity {
   name: string
+  /** The learner's chosen @handle. Local-only, not unique (no backend to enforce it). */
+  username: string
   email: string
   bio: string
   /** Square JPEG data-URL (~256px), or null to fall back to initials. */
@@ -15,6 +17,7 @@ export interface Profile extends Entity {
 
 export const DEFAULT_PROFILE = {
   name: '',
+  username: '',
   email: '',
   bio: '',
   avatar: null as string | null,
@@ -24,6 +27,7 @@ export interface MakeProfileInput {
   id: string
   createdAt: string
   name?: string
+  username?: string
   email?: string
   bio?: string
   avatar?: string | null
@@ -35,6 +39,7 @@ export function makeProfile(input: MakeProfileInput): Profile {
     createdAt: input.createdAt,
     updatedAt: input.createdAt,
     name: input.name ?? DEFAULT_PROFILE.name,
+    username: input.username ?? DEFAULT_PROFILE.username,
     email: input.email ?? DEFAULT_PROFILE.email,
     bio: input.bio ?? DEFAULT_PROFILE.bio,
     avatar: input.avatar ?? DEFAULT_PROFILE.avatar,
@@ -42,7 +47,7 @@ export function makeProfile(input: MakeProfileInput): Profile {
 }
 
 /** The editable fields — identity and timestamps are owned elsewhere. */
-export type ProfileChanges = Partial<Pick<Profile, 'name' | 'email' | 'bio' | 'avatar'>>
+export type ProfileChanges = Partial<Pick<Profile, 'name' | 'username' | 'email' | 'bio' | 'avatar'>>
 
 /** Apply a change. `updatedAt` is set by the caller (clock injected) so it stays pure. */
 export function updateProfile(profile: Profile, changes: ProfileChanges, updatedAt: string): Profile {
@@ -59,8 +64,9 @@ export function profileInitials(profile: Pick<Profile, 'name' | 'email'>): strin
   return initials.toUpperCase()
 }
 
-/** A display handle from the email local part, else the slugified name. */
-export function profileHandle(profile: Pick<Profile, 'name' | 'email'>): string {
+/** A display handle: the chosen username, else the email local part, else the name. */
+export function profileHandle(profile: Pick<Profile, 'name' | 'username' | 'email'>): string {
   const local = profile.email.split('@')[0] ?? ''
-  return (local || profile.name).toLowerCase().replace(/[^a-z0-9]+/g, '')
+  const source = profile.username || local || profile.name
+  return source.toLowerCase().replace(/[^a-z0-9]+/g, '')
 }

@@ -20,6 +20,11 @@ describe('makeProfile', () => {
     expect(profile.name).toBe('Ada')
     expect(profile.email).toBe('ada@x.io')
   })
+
+  it('keeps a provided username and defaults it to empty', () => {
+    expect(makeProfile({ id: 'profile', createdAt: at(0) }).username).toBe('')
+    expect(makeProfile({ id: 'profile', createdAt: at(0), username: 'ada' }).username).toBe('ada')
+  })
 })
 
 describe('updateProfile', () => {
@@ -51,11 +56,19 @@ describe('profileInitials', () => {
 })
 
 describe('profileHandle', () => {
-  it('derives from the email local part', () => {
-    expect(profileHandle({ name: 'Ada Lovelace', email: 'ada.lovelace@x.io' })).toBe('adalovelace')
+  it('prefers the chosen username, slugified', () => {
+    expect(
+      profileHandle({ name: 'Ada Lovelace', email: 'ada.lovelace@x.io', username: 'Ada_Lovelace99' }),
+    ).toBe('adalovelace99')
+  })
+
+  it('derives from the email local part when there is no username', () => {
+    expect(profileHandle({ name: 'Ada Lovelace', email: 'ada.lovelace@x.io', username: '' })).toBe(
+      'adalovelace',
+    )
   })
 
   it('falls back to the slugified name', () => {
-    expect(profileHandle({ name: 'Grace Hopper', email: '' })).toBe('gracehopper')
+    expect(profileHandle({ name: 'Grace Hopper', email: '', username: '' })).toBe('gracehopper')
   })
 })
