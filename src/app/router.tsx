@@ -322,7 +322,19 @@ const settingsRoute = createRoute({
 
 function SettingsProfileRoute() {
   const navigate = useNavigate()
-  return <SettingsProfilePage onBack={() => navigate({ to: ROUTES.settings })} />
+  const { signOut } = useAuthActions()
+  const exitToLogin = async () => {
+    await signOut()
+    await navigate({ to: ROUTES.login })
+  }
+  return (
+    <SettingsProfilePage
+      onBack={() => navigate({ to: ROUTES.settings })}
+      onChangePassword={() => navigate({ to: ROUTES.settingsChangePassword })}
+      onLogout={exitToLogin}
+      onDeleteAccount={exitToLogin}
+    />
+  )
 }
 
 function SettingsChangePasswordRoute() {
