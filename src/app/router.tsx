@@ -23,7 +23,6 @@ import { StatsPage } from '@/pages/stats'
 import { SettingsPage, useProgressTransfer } from '@/pages/settings'
 import { SettingsProfilePage } from '@/pages/settings-profile'
 import { SettingsChangePasswordPage } from '@/pages/settings-change-password'
-import { SettingsPhonePage } from '@/pages/settings-phone'
 import { SettingsPrivacyPage } from '@/pages/settings-privacy'
 import { SettingsClearDataPage } from '@/pages/settings-clear-data'
 import { SettingsHelpPage } from '@/pages/settings-help'
@@ -340,17 +339,6 @@ const settingsChangePasswordRoute = createRoute({
   component: SettingsChangePasswordRoute,
 })
 
-function SettingsPhoneRoute() {
-  const navigate = useNavigate()
-  return <SettingsPhonePage onBack={() => navigate({ to: ROUTES.settings })} />
-}
-
-const settingsPhoneRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: ROUTES.settingsPhone,
-  component: SettingsPhoneRoute,
-})
-
 const settingsProfileRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.settingsProfile,
@@ -431,7 +419,6 @@ const routeTree = rootRoute.addChildren([
   settingsRoute,
   settingsProfileRoute,
   settingsChangePasswordRoute,
-  settingsPhoneRoute,
   settingsPrivacyRoute,
   settingsClearDataRoute,
   settingsHelpRoute,
