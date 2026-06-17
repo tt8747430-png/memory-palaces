@@ -16,15 +16,18 @@ export function SettingsChangePasswordPage({ onBack }: SettingsChangePasswordPag
   const [current, setCurrent] = useState('')
   const [next, setNext] = useState('')
   const [confirm, setConfirm] = useState('')
-  const [errors, setErrors] = useState<{ next?: string; confirm?: string }>({})
+
+  // Validate live so the eye-toggle fields guide as you type and Save only lights up
+  // once the change is actually valid.
+  const nextError =
+    next.length > 0 && next.length < MIN_PASSWORD ? t('settings.changePasswordScreen.short') : undefined
+  const confirmError =
+    confirm.length > 0 && confirm !== next ? t('settings.changePasswordScreen.mismatch') : undefined
+  const canSave = current.length > 0 && next.length >= MIN_PASSWORD && confirm === next
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault()
-    const found: typeof errors = {}
-    if (next.length < MIN_PASSWORD) found.next = t('settings.changePasswordScreen.short')
-    if (!found.next && confirm !== next) found.confirm = t('settings.changePasswordScreen.mismatch')
-    setErrors(found)
-    if (found.next || found.confirm) return
+    if (!canSave) return
 
     toast.success(t('settings.changePasswordScreen.saved'))
     setCurrent('')
@@ -56,7 +59,7 @@ export function SettingsChangePasswordPage({ onBack }: SettingsChangePasswordPag
           placeholder={t('settings.changePasswordScreen.nextPlaceholder')}
           value={next}
           onValueChange={setNext}
-          error={errors.next}
+          error={nextError}
         />
         <PasswordField
           id="confirm-password"
@@ -65,14 +68,14 @@ export function SettingsChangePasswordPage({ onBack }: SettingsChangePasswordPag
           placeholder={t('settings.changePasswordScreen.confirmPlaceholder')}
           value={confirm}
           onValueChange={setConfirm}
-          error={errors.confirm}
+          error={confirmError}
         />
 
         <p className="text-[length:var(--p-text-label)] text-muted-foreground">
           {t('settings.changePasswordScreen.note')}
         </p>
 
-        <Button type="submit" size="lg" className="w-full">
+        <Button type="submit" size="lg" className="w-full" disabled={!canSave}>
           {t('settings.changePasswordScreen.submit')}
         </Button>
       </form>

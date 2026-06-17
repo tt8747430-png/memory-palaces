@@ -17,24 +17,39 @@ function renderPage() {
 }
 
 describe('SettingsChangePasswordPage', () => {
-  it('rejects mismatched passwords', async () => {
+  it('keeps save disabled until every field is valid', async () => {
     const user = userEvent.setup()
-    const success = vi.spyOn(toast, 'success')
     renderPage()
+    const submit = screen.getByRole('button', { name: /update password/i })
+    expect(submit).toBeDisabled()
+
+    await user.type(screen.getByLabelText(/current password/i), 'oldsecret1')
+    await user.type(screen.getByLabelText(/^new password$/i), 'secret123')
+    await user.type(screen.getByLabelText(/confirm new password/i), 'secret123')
+
+    expect(submit).toBeEnabled()
+  })
+
+  it('shows a mismatch hint and blocks save', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await user.type(screen.getByLabelText(/current password/i), 'oldsecret1')
     await user.type(screen.getByLabelText(/^new password$/i), 'secret123')
     await user.type(screen.getByLabelText(/confirm new password/i), 'different1')
-    await user.click(screen.getByRole('button', { name: /update password/i }))
+
     expect(await screen.findByText(/do not match/i)).toBeInTheDocument()
-    expect(success).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: /update password/i })).toBeDisabled()
   })
 
   it('reports success on a valid (mock) change', async () => {
     const user = userEvent.setup()
     const success = vi.spyOn(toast, 'success')
     renderPage()
+    await user.type(screen.getByLabelText(/current password/i), 'oldsecret1')
     await user.type(screen.getByLabelText(/^new password$/i), 'secret123')
     await user.type(screen.getByLabelText(/confirm new password/i), 'secret123')
     await user.click(screen.getByRole('button', { name: /update password/i }))
+
     expect(success).toHaveBeenCalled()
   })
 })
