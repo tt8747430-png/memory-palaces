@@ -1,5 +1,5 @@
-export type { Session, SessionKind } from './model/types'
-export { makeGuestSession } from './model/types'
+export type { AccountIdentity, Session, SessionKind } from './model/types'
+export { makeAccountSession, makeGuestSession } from './model/types'
 export { createSessionStore } from './model/store'
 export type { SessionState, SessionStatus, SessionStore } from './model/store'
 export { SessionStoreContext, useSessionStore, useSessionStoreApi } from './model/context'

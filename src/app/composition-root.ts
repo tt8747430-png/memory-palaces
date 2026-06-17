@@ -1,5 +1,5 @@
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie'
-import { InMemoryRepository } from '@/shared/api'
+import { InMemoryRepository, type AuthGateway } from '@/shared/api'
 import { RxdbRepository } from '@/shared/api/rxdb'
 import { EventBus, type AppEvents } from '@/shared/lib'
 import { createSessionStore, type Session, type SessionStore } from '@/entities/session'
@@ -20,8 +20,10 @@ import {
   type NotificationStore,
 } from '@/entities/notification'
 import { createAppDatabase } from './persistence/database'
+import { LocalAuthGateway } from './persistence/local-auth-gateway'
 
 export interface Services {
+  authGateway: AuthGateway
   sessionStore: SessionStore
   palaceStore: PalaceStore
   roomStore: RoomStore
@@ -42,6 +44,7 @@ export interface Services {
  */
 export function createServices(): Services {
   const collections = createAppDatabase(getRxStorageDexie())
+  const authGateway = new LocalAuthGateway() // → SupabaseAuthGateway in Phase 9
   const sessionRepo = new InMemoryRepository<Session>() // → RxDB in a later slice
   const palaceRepo = new RxdbRepository<Palace>(collections.then((c) => c.palaces))
   const roomRepo = new RxdbRepository<Room>(collections.then((c) => c.rooms))
@@ -54,6 +57,7 @@ export function createServices(): Services {
     collections.then((c) => c.notifications),
   )
   return {
+    authGateway,
     sessionStore: createSessionStore(sessionRepo),
     palaceStore: createPalaceStore(palaceRepo),
     roomStore: createRoomStore(roomRepo),

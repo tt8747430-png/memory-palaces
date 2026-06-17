@@ -1,21 +1,24 @@
 import { type ReactNode, useEffect, useRef } from 'react'
+import { useAuthGateway } from '@/shared/lib'
 import { useSessionStoreApi } from '@/entities/session'
-import { createGuestSession } from '@/features/session'
+import { restoreSession } from '@/features/session'
 
 /**
- * Guest-first auth: on mount, ensure a guest session exists (fully usable offline,
- * no sign-up). Real Supabase accounts + guest-data claim arrive in Phase 9. The ref
- * guard keeps StrictMode's double-invoke from creating two guests.
+ * Boot the session. The store is in-memory, so on mount we rehydrate it from the
+ * gateway (the persisted source of truth). If nothing is persisted the session stays
+ * null and the route guard sends the user to login / "Continue as guest". The ref
+ * guard keeps StrictMode's double-invoke from racing two restores.
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const store = useSessionStoreApi()
+  const gateway = useAuthGateway()
+  const sessionStore = useSessionStoreApi()
   const started = useRef(false)
 
   useEffect(() => {
     if (started.current) return
     started.current = true
-    void createGuestSession(store)
-  }, [store])
+    void restoreSession({ gateway, sessionStore })
+  }, [gateway, sessionStore])
 
   return children
 }

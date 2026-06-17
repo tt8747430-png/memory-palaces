@@ -23,6 +23,7 @@ export { tick, impact, success, setHapticsEnabled } from './haptics'
 export { EventBus, type EventHandler } from './event-bus'
 export type { AppEvents } from './events'
 export { EventBusContext, useEventBus, useEventBusOptional } from './event-bus-context'
+export { AuthGatewayContext, useAuthGateway } from './auth-gateway-context'
 export { systemClock, fixedClock, type Clock } from './clock'
 export { cloneEntity, type Entity } from './entity'
 export {
