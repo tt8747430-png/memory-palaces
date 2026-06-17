@@ -1,4 +1,5 @@
 export { cn } from './cn'
+export { authEntrance } from './motion'
 export { coverSquare, fileToAvatar, type CropRect } from './avatar'
 export { downloadText } from './download'
 export {

@@ -2,7 +2,7 @@ import { type FormEvent, useState } from 'react'
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Mail } from 'lucide-react'
-import { isEmail } from '@/shared/lib'
+import { authEntrance, isEmail } from '@/shared/lib'
 import { AuthScreen, AuthField, Button, PasswordField, SocialButtons } from '@/shared/ui'
 import { PalaceThreshold } from '@/widgets/palace-threshold'
 import { useAuthActions } from '@/features/session'
@@ -45,12 +45,7 @@ export function LoginPage({ onAuthed, onGuest, onSignup, onForgot }: LoginPagePr
 
   return (
     <AuthScreen>
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        className="flex flex-1 flex-col justify-center gap-8 py-10"
-      >
+      <motion.div {...authEntrance} className="flex flex-1 flex-col justify-center gap-8 py-10">
         <header className="flex flex-col items-center gap-4 text-center">
           <PalaceThreshold tone="light" animated={false} className="size-16" />
           <div className="flex flex-col gap-1">
