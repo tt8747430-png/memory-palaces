@@ -290,25 +290,17 @@ const statsRoute = createRoute({
 function SettingsRoute() {
   const navigate = useNavigate()
   const transfer = useProgressTransfer()
-  const { signOut } = useAuthActions()
   const sessionKind = useSessionStore((state) => state.session?.kind ?? 'guest')
   return (
     <SettingsPage
       onBack={() => navigate({ to: ROUTES.profile })}
       onEditProfile={() => navigate({ to: ROUTES.settingsProfile })}
       onPrivacy={() => navigate({ to: ROUTES.settingsPrivacy })}
-      onClearData={() => navigate({ to: ROUTES.settingsClearData })}
       onHelp={() => navigate({ to: ROUTES.settingsHelp })}
       onAbout={() => navigate({ to: ROUTES.settingsAbout })}
       onExport={transfer.exportNow}
       onImportFile={transfer.importFile}
-      onChangePassword={() => navigate({ to: ROUTES.settingsChangePassword })}
-      onPhone={() => navigate({ to: ROUTES.settingsPhone })}
       onSignIn={() => navigate({ to: ROUTES.login })}
-      onLogout={async () => {
-        await signOut()
-        await navigate({ to: ROUTES.login })
-      }}
       sessionKind={sessionKind}
     />
   )

@@ -55,6 +55,14 @@ describe('SettingsPage', () => {
     })
   })
 
+  it('opens the Profile screen from the profile card', async () => {
+    const user = userEvent.setup()
+    const onEditProfile = vi.fn()
+    renderSettings({ onEditProfile })
+    await user.click(screen.getByRole('button', { name: /set up your profile/i }))
+    expect(onEditProfile).toHaveBeenCalledOnce()
+  })
+
   it('navigates to privacy when the privacy row is tapped', async () => {
     const user = userEvent.setup()
     const onPrivacy = vi.fn()
@@ -64,37 +72,19 @@ describe('SettingsPage', () => {
     expect(onPrivacy).toHaveBeenCalledOnce()
   })
 
-  it('navigates to change password and phone (account)', async () => {
-    const user = userEvent.setup()
-    const onChangePassword = vi.fn()
-    const onPhone = vi.fn()
-    renderSettings({ sessionKind: 'account', onChangePassword, onPhone })
-
-    await user.click(screen.getByRole('button', { name: /change password/i }))
-    await user.click(screen.getByRole('button', { name: /^phone$/i }))
-    expect(onChangePassword).toHaveBeenCalledOnce()
-    expect(onPhone).toHaveBeenCalledOnce()
+  it('no longer shows account management or clear-data rows (moved to Profile)', () => {
+    renderSettings({ sessionKind: 'account' })
+    expect(screen.queryByRole('button', { name: /change password/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /log out/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /clear data/i })).not.toBeInTheDocument()
   })
 
-  it('shows a sign-in CTA for guests instead of account rows', async () => {
+  it('shows a sign-in CTA for guests', async () => {
     const user = userEvent.setup()
     const onSignIn = vi.fn()
     renderSettings({ sessionKind: 'guest', onSignIn })
 
-    expect(screen.queryByRole('button', { name: /change password/i })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /log out/i })).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /sign in or create an account/i }))
     expect(onSignIn).toHaveBeenCalledOnce()
-  })
-
-  it('confirms before logging out (account)', async () => {
-    const user = userEvent.setup()
-    const onLogout = vi.fn()
-    renderSettings({ sessionKind: 'account', onLogout })
-
-    await user.click(screen.getByRole('button', { name: /log out/i }))
-    const confirms = await screen.findAllByRole('button', { name: /^log out$/i })
-    await user.click(confirms[confirms.length - 1]!)
-    expect(onLogout).toHaveBeenCalledOnce()
   })
 })

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ChangeEvent } from 'react'
+import { useEffect, useRef, type ChangeEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Bell,
@@ -8,14 +8,9 @@ import {
   HelpCircle,
   Info,
   LogIn,
-  LogOut,
-  Lock,
-  Mail,
   Moon,
   Shield,
-  Smartphone,
   Sparkles,
-  Trash2,
   Upload,
   Vibrate,
   Volume2,
@@ -34,44 +29,36 @@ import {
 } from '@/entities/profile'
 import type { SessionKind } from '@/entities/session'
 import { setPreferences } from '@/features/preferences'
-import { ActionSheet, AppScreen, Avatar, ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui'
+import { AppScreen, Avatar, ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui'
 
 export interface SettingsPageProps {
   /** All provided by the route wrapper so the page stays router-free. */
   onBack?: () => void
   onEditProfile?: () => void
   onPrivacy?: () => void
-  onClearData?: () => void
   onHelp?: () => void
   onAbout?: () => void
   onExport?: () => void
   onImportFile?: (file: File) => void
-  onChangePassword?: () => void
-  onPhone?: () => void
   onSignIn?: () => void
-  onLogout?: () => void
-  /** Drives the account section: a guest sees a sign-in CTA, an account sees its
-   * email + change-password/phone + log out. */
+  /** A guest sees a sign-in CTA; account management lives on the Profile screen. */
   sessionKind?: SessionKind
 }
 
-/** Settings hub — a profile hero over grouped sections (account, preferences, privacy,
- * data, support). Preference toggles persist immediately; navigation, export, import,
- * and auth are handled by the route wrapper. The account section adapts to guest vs
- * account, and account holders get a confirmed log out. */
+/** Settings hub — a profile hero (which opens the consolidated Profile screen) over
+ * grouped sections: preferences, privacy, data, and support. Preference toggles
+ * persist immediately; navigation, export, and import are handled by the route
+ * wrapper. Guests get a sign-in CTA; everything account-related (email, password,
+ * phone, log out, delete) now lives on the Profile screen. */
 export function SettingsPage({
   onBack,
   onEditProfile,
   onPrivacy,
-  onClearData,
   onHelp,
   onAbout,
   onExport,
   onImportFile,
-  onChangePassword,
-  onPhone,
   onSignIn,
-  onLogout,
   sessionKind = 'account',
 }: SettingsPageProps) {
   const { t } = useTranslation()
@@ -80,7 +67,6 @@ export function SettingsPage({
   const profileStore = useProfileStoreApi()
   const profile = useProfileStore(selectEffectiveProfile)
   const importInputRef = useRef<HTMLInputElement>(null)
-  const [confirmLogout, setConfirmLogout] = useState(false)
 
   useEffect(() => {
     prefsStore.getState().start()
@@ -121,8 +107,8 @@ export function SettingsPage({
           <ChevronRight className="size-5 shrink-0 text-muted-foreground" aria-hidden />
         </button>
 
-        <SettingsSection title={t('settings.accountSection')}>
-          {isGuest ? (
+        {isGuest ? (
+          <SettingsSection>
             <SettingsRow
               kind="nav"
               icon={<LogIn />}
@@ -130,36 +116,8 @@ export function SettingsPage({
               description={t('settings.guestCtaHint')}
               onClick={() => onSignIn?.()}
             />
-          ) : (
-            <>
-              <SettingsRow
-                kind="value"
-                icon={<Mail />}
-                label={t('settings.email')}
-                value={profile.email || t('settings.notSet')}
-              />
-              <SettingsRow
-                kind="nav"
-                icon={<Lock />}
-                label={t('settings.changePassword')}
-                onClick={() => onChangePassword?.()}
-              />
-              <SettingsRow
-                kind="nav"
-                icon={<Smartphone />}
-                label={t('settings.phone')}
-                onClick={() => onPhone?.()}
-              />
-              <SettingsRow
-                kind="nav"
-                tone="danger"
-                icon={<LogOut />}
-                label={t('settings.signOut')}
-                onClick={() => setConfirmLogout(true)}
-              />
-            </>
-          )}
-        </SettingsSection>
+          </SettingsSection>
+        ) : null}
 
         <SettingsSection title={t('settings.preferencesSection')}>
           <SettingsRow
@@ -216,14 +174,6 @@ export function SettingsPage({
             label={t('settings.privacy')}
             onClick={() => onPrivacy?.()}
           />
-          <SettingsRow
-            kind="nav"
-            tone="danger"
-            icon={<Trash2 />}
-            label={t('settings.clearData')}
-            description={t('settings.clearDataHint')}
-            onClick={() => onClearData?.()}
-          />
         </SettingsSection>
 
         <SettingsSection title={t('settings.dataSection')}>
@@ -258,23 +208,6 @@ export function SettingsPage({
         accept="application/json,.json"
         className="hidden"
         onChange={handleImport}
-      />
-
-      <ActionSheet
-        open={confirmLogout}
-        onOpenChange={setConfirmLogout}
-        title={t('settings.signOutConfirmTitle')}
-        description={t('settings.signOutConfirmBody')}
-        cancelLabel={t('common.cancel')}
-        actions={[
-          {
-            id: 'logout',
-            label: t('settings.signOutConfirmCta'),
-            icon: <LogOut className="size-5" aria-hidden />,
-            destructive: true,
-            onSelect: () => onLogout?.(),
-          },
-        ]}
       />
     </AppScreen>
   )
