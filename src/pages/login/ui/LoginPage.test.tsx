@@ -36,6 +36,11 @@ function renderLogin(props: Partial<Parameters<typeof LoginPage>[0]> = {}) {
 }
 
 describe('LoginPage', () => {
+  it('shows the unified Mindscape brand mark', () => {
+    renderLogin()
+    expect(screen.getByRole('img', { name: /mindscape/i })).toBeInTheDocument()
+  })
+
   it('validates before submitting and does not authenticate', async () => {
     const user = userEvent.setup()
     const { onAuthed } = renderLogin()

@@ -24,22 +24,42 @@ const stroke = {
   fill: 'none',
 }
 
+const GLOW = 'drop-shadow(0 0 12px oklch(83.2% 0.083 264.3 / 0.55))'
+
+export interface PalaceThresholdProps {
+  className?: string
+  /**
+   * `dark` — drenched-navy brand moments (light-blue lines, white locus, glow).
+   * `light` — in-task daylight surfaces (navy lines + locus, no glow).
+   */
+  tone?: 'dark' | 'light'
+  /**
+   * When false (or under reduced motion) the mark renders its final frame with no
+   * draw sequence — the form for in-task auth surfaces, which carry their own entrance.
+   */
+  animated?: boolean
+}
+
 /**
- * The brand's entry motif: blueprint light-lines draw a temple/threshold, then a
- * single locus ignites at its heart — "stepping into your memory palace". Pure SVG
- * pathLength + motion (60fps, no deps); reduced motion renders the final frame.
+ * The single Mindscape mark: blueprint lines draw a temple/threshold, then a lone
+ * locus ignites at its heart — "stepping into your memory palace". Pure SVG
+ * pathLength + motion (60fps, no deps). Drenched `tone="dark"` + `animated` for the
+ * splash/welcome brand moments; static `tone="light"` for login/signup/forgot.
+ * Reduced motion renders the final frame.
  */
-export function PalaceThreshold({ className }: { className?: string }) {
+export function PalaceThreshold({ className, tone = 'dark', animated = true }: PalaceThresholdProps) {
   const reduce = useReducedMotion()
+  const isStatic = !animated || !!reduce
+  const isLight = tone === 'light'
   return (
     <motion.svg
       viewBox="0 0 200 200"
-      className={cn('text-secondary', className)}
-      style={{ filter: 'drop-shadow(0 0 12px oklch(83.2% 0.083 264.3 / 0.55))' }}
+      className={cn(isLight ? 'text-primary' : 'text-secondary', className)}
+      style={isLight ? undefined : { filter: GLOW }}
       role="img"
       aria-label="Mindscape"
       variants={container}
-      initial={reduce ? 'show' : 'hidden'}
+      initial={isStatic ? 'show' : 'hidden'}
       animate="show"
     >
       {/* pediment / roof */}
@@ -55,7 +75,7 @@ export function PalaceThreshold({ className }: { className?: string }) {
       <motion.line variants={draw} x1="40" y1="166" x2="160" y2="166" {...stroke} />
       <motion.line variants={draw} x1="28" y1="178" x2="172" y2="178" {...stroke} />
       {/* the locus igniting in the doorway */}
-      <motion.circle variants={locus} cx="100" cy="138" r="7" fill="white" />
+      <motion.circle variants={locus} cx="100" cy="138" r="7" fill={isLight ? 'currentColor' : 'white'} />
     </motion.svg>
   )
 }

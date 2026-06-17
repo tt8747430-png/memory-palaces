@@ -35,6 +35,11 @@ function renderSignup(props: Partial<Parameters<typeof SignupPage>[0]> = {}) {
 }
 
 describe('SignupPage', () => {
+  it('shows the unified Mindscape brand mark', () => {
+    renderSignup()
+    expect(screen.getByRole('img', { name: /mindscape/i })).toBeInTheDocument()
+  })
+
   it('blocks submit until the form is valid', async () => {
     const user = userEvent.setup()
     const { onSuccess } = renderSignup()

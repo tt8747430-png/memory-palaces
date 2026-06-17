@@ -24,6 +24,11 @@ function renderForgot(props: Partial<Parameters<typeof ForgotPasswordPage>[0]> =
 }
 
 describe('ForgotPasswordPage', () => {
+  it('shows the unified Mindscape brand mark', () => {
+    renderForgot()
+    expect(screen.getByRole('img', { name: /mindscape/i })).toBeInTheDocument()
+  })
+
   it('validates the email before sending', async () => {
     const user = userEvent.setup()
     const { spy } = renderForgot()

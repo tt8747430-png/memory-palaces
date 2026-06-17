@@ -1,9 +1,10 @@
 import { type FormEvent, useEffect, useState } from 'react'
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft, Mail, MailCheck } from 'lucide-react'
+import { ArrowLeft, Mail } from 'lucide-react'
 import { isEmail, useAuthGateway } from '@/shared/lib'
 import { AuthScreen, AuthField, Button } from '@/shared/ui'
+import { PalaceThreshold } from '@/widgets/palace-threshold'
 import { requestPasswordReset } from '@/features/session'
 
 export interface ForgotPasswordPageProps {
@@ -76,9 +77,7 @@ export function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) {
         className="flex flex-1 flex-col justify-center gap-8 py-10"
       >
         <header className="flex flex-col items-center gap-4 text-center">
-          <span className="grid size-16 place-items-center rounded-[28%] bg-primary text-primary-foreground shadow-interactive">
-            {sent ? <MailCheck className="size-7" aria-hidden /> : <Mail className="size-7" aria-hidden />}
-          </span>
+          <PalaceThreshold tone="light" animated={false} className="size-16" />
           <div className="flex flex-col gap-1">
             <h1 className="text-[length:var(--p-text-headline)] font-semibold text-heading">
               {sent ? t('auth.forgot.sentTitle') : t('auth.forgot.title')}

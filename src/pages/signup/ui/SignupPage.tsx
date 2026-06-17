@@ -3,7 +3,8 @@ import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Mail, User } from 'lucide-react'
 import { isEmail } from '@/shared/lib'
-import { AuthScreen, AuthField, BrandMark, Button, PasswordField, SocialButtons } from '@/shared/ui'
+import { AuthScreen, AuthField, Button, PasswordField, SocialButtons } from '@/shared/ui'
+import { PalaceThreshold } from '@/widgets/palace-threshold'
 import { useAuthActions } from '@/features/session'
 
 export interface SignupPageProps {
@@ -59,7 +60,7 @@ export function SignupPage({ onSuccess, onGuest, onLogin }: SignupPageProps) {
         className="flex flex-1 flex-col justify-center gap-7 py-10"
       >
         <header className="flex flex-col items-center gap-4 text-center">
-          <BrandMark className="size-16" />
+          <PalaceThreshold tone="light" animated={false} className="size-16" />
           <div className="flex flex-col gap-1">
             <h1 className="text-[length:var(--p-text-headline)] font-semibold text-heading">
               {t('auth.signup.title')}
