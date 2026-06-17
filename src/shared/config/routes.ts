@@ -1,6 +1,10 @@
 /** Canonical route paths. The router (app/) and any navigation read from here. */
 export const ROUTES = {
   home: '/',
+  login: '/login',
+  signup: '/signup',
+  forgot: '/forgot',
+  welcome: '/welcome',
   palaces: '/palaces',
   palaceDetail: '/palaces/$palaceId',
   palaceQuiz: '/palaces/$palaceId/quiz',

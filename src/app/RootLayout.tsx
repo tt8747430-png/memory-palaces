@@ -1,6 +1,8 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { Outlet } from '@tanstack/react-router'
+import { AnimatePresence } from 'motion/react'
 import { AppNav } from '@/widgets/bottom-nav'
+import { SplashOverlay } from '@/widgets/splash'
 
 // Dev-only router devtools, lazy so they never reach the production bundle.
 const Devtools = import.meta.env.DEV
@@ -11,12 +13,17 @@ const Devtools = import.meta.env.DEV
     )
   : () => null
 
-/** Root route shell: the routed outlet plus dev-only devtools. */
+/** Root route shell: a once-per-cold-start splash over the routed outlet, plus the
+ * bottom nav (self-hiding on non-tab routes) and dev-only devtools. */
 export function RootLayout() {
+  const [showSplash, setShowSplash] = useState(true)
   return (
     <>
       <Outlet />
       <AppNav />
+      <AnimatePresence>
+        {showSplash ? <SplashOverlay onDone={() => setShowSplash(false)} /> : null}
+      </AnimatePresence>
       <Suspense>
         <Devtools />
       </Suspense>

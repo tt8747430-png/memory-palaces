@@ -1,4 +1,14 @@
-import { createRootRoute, createRoute, createRouter, useNavigate } from '@tanstack/react-router'
+import {
+  createRootRoute,
+  createRoute,
+  createRouter,
+  redirect,
+  useNavigate,
+} from '@tanstack/react-router'
+import { LoginPage } from '@/pages/login'
+import { SignupPage } from '@/pages/signup'
+import { ForgotPasswordPage } from '@/pages/forgot-password'
+import { WelcomePage } from '@/pages/welcome'
 import { HomePage } from '@/pages/home'
 import { PalacesPage } from '@/pages/palaces'
 import { PalaceDetailPage } from '@/pages/palace-detail'
@@ -19,8 +29,75 @@ import { SettingsAboutPage } from '@/pages/settings-about'
 import { NotificationsPage } from '@/pages/notifications'
 import { ROUTES } from '@/shared/config/routes'
 import { RootLayout } from './RootLayout'
+import { authRedirect } from './auth-guard'
+import { services } from './composition-root'
 
-const rootRoute = createRootRoute({ component: RootLayout })
+const rootRoute = createRootRoute({
+  component: RootLayout,
+  // Session gate: the gateway (localStorage) is the source of truth, read
+  // synchronously so the redirect resolves before any screen paints.
+  beforeLoad: ({ location }) => {
+    const target = authRedirect(location.pathname, services.authGateway.getPersisted() !== null)
+    if (target && target !== location.pathname) throw redirect({ to: target })
+  },
+})
+
+function LoginRoute() {
+  const navigate = useNavigate()
+  return (
+    <LoginPage
+      onAuthed={() => navigate({ to: ROUTES.home })}
+      onGuest={() => navigate({ to: ROUTES.home })}
+      onSignup={() => navigate({ to: ROUTES.signup })}
+      onForgot={() => navigate({ to: ROUTES.forgot })}
+    />
+  )
+}
+
+const loginRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.login,
+  component: LoginRoute,
+})
+
+function SignupRoute() {
+  const navigate = useNavigate()
+  return (
+    <SignupPage
+      onSuccess={() => navigate({ to: ROUTES.welcome })}
+      onGuest={() => navigate({ to: ROUTES.home })}
+      onLogin={() => navigate({ to: ROUTES.login })}
+    />
+  )
+}
+
+const signupRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.signup,
+  component: SignupRoute,
+})
+
+function ForgotRoute() {
+  const navigate = useNavigate()
+  return <ForgotPasswordPage onBack={() => navigate({ to: ROUTES.login })} />
+}
+
+const forgotRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.forgot,
+  component: ForgotRoute,
+})
+
+function WelcomeRoute() {
+  const navigate = useNavigate()
+  return <WelcomePage onContinue={() => navigate({ to: ROUTES.home })} />
+}
+
+const welcomeRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.welcome,
+  component: WelcomeRoute,
+})
 
 function HomeRoute() {
   const navigate = useNavigate()
@@ -296,6 +373,10 @@ const notificationsRoute = createRoute({
 })
 
 const routeTree = rootRoute.addChildren([
+  loginRoute,
+  signupRoute,
+  forgotRoute,
+  welcomeRoute,
   homeRoute,
   palacesRoute,
   palaceDetailRoute,
