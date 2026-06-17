@@ -2,7 +2,7 @@ import { type FormEvent, useEffect, useState } from 'react'
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft, Mail } from 'lucide-react'
-import { isEmail, useAuthGateway } from '@/shared/lib'
+import { authEntrance, isEmail, useAuthGateway } from '@/shared/lib'
 import { AuthScreen, AuthField, Button } from '@/shared/ui'
 import { PalaceThreshold } from '@/widgets/palace-threshold'
 import { requestPasswordReset } from '@/features/session'
@@ -71,9 +71,7 @@ export function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) {
 
       <motion.div
         key={sent ? 'sent' : 'email'}
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        {...authEntrance}
         className="flex flex-1 flex-col justify-center gap-8 py-10"
       >
         <header className="flex flex-col items-center gap-4 text-center">
