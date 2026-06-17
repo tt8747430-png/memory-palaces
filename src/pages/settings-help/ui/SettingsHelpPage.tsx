@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { BookOpen, ChevronDown, Mail } from 'lucide-react'
-import { AppScreen, ScreenHeader } from '@/shared/ui'
+import { AppScreen, ScreenHeader, SettingsSection } from '@/shared/ui'
 
 /** FAQ categories and how many Q&A each holds; the copy lives in i18n. */
 const CATEGORIES = [
@@ -27,27 +27,25 @@ export function SettingsHelpPage({ onBack }: { onBack?: () => void }) {
         </p>
 
         {CATEGORIES.map((category) => (
-          <section key={category.key} className="flex flex-col gap-2">
-            <h2 className="px-1 text-[length:var(--p-text-label)] font-semibold uppercase tracking-wide text-muted-foreground">
-              {t(`settings.help.categories.${category.key}.title`)}
-            </h2>
-            <div className="overflow-hidden rounded-card bg-card shadow-rest divide-y divide-border">
-              {category.items.map((item) => (
-                <details key={item} className="group px-4 py-3">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[length:var(--p-text-sub)] font-semibold text-heading">
-                    {t(`settings.help.categories.${category.key}.q${item}`)}
-                    <ChevronDown
-                      className="size-5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
-                      aria-hidden
-                    />
-                  </summary>
-                  <p className="mt-2 text-[length:var(--p-text-label)] leading-relaxed text-muted-foreground">
-                    {t(`settings.help.categories.${category.key}.a${item}`)}
-                  </p>
-                </details>
-              ))}
-            </div>
-          </section>
+          <SettingsSection
+            key={category.key}
+            title={t(`settings.help.categories.${category.key}.title`)}
+          >
+            {category.items.map((item) => (
+              <details key={item} className="group px-4 py-3">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[length:var(--p-text-sub)] font-semibold text-heading">
+                  {t(`settings.help.categories.${category.key}.q${item}`)}
+                  <ChevronDown
+                    className="size-5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
+                    aria-hidden
+                  />
+                </summary>
+                <p className="mt-2 text-[length:var(--p-text-label)] leading-relaxed text-muted-foreground">
+                  {t(`settings.help.categories.${category.key}.a${item}`)}
+                </p>
+              </details>
+            ))}
+          </SettingsSection>
         ))}
 
         <div className="rounded-card bg-info-surface p-4">
