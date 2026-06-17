@@ -17,6 +17,8 @@ export const ROUTES = {
   stats: '/stats',
   settings: '/settings',
   settingsProfile: '/settings/profile',
+  settingsChangePassword: '/settings/change-password',
+  settingsPhone: '/settings/phone',
   settingsPrivacy: '/settings/privacy',
   settingsClearData: '/settings/clear-data',
   settingsHelp: '/settings/help',

@@ -64,9 +64,37 @@ describe('SettingsPage', () => {
     expect(onPrivacy).toHaveBeenCalledOnce()
   })
 
-  it('renders auth-bound rows as inert "coming soon" controls', () => {
-    renderSettings()
-    expect(screen.getByRole('button', { name: /change password/i })).toBeDisabled()
-    expect(screen.getByRole('button', { name: /^phone$/i })).toBeDisabled()
+  it('navigates to change password and phone (account)', async () => {
+    const user = userEvent.setup()
+    const onChangePassword = vi.fn()
+    const onPhone = vi.fn()
+    renderSettings({ sessionKind: 'account', onChangePassword, onPhone })
+
+    await user.click(screen.getByRole('button', { name: /change password/i }))
+    await user.click(screen.getByRole('button', { name: /^phone$/i }))
+    expect(onChangePassword).toHaveBeenCalledOnce()
+    expect(onPhone).toHaveBeenCalledOnce()
+  })
+
+  it('shows a sign-in CTA for guests instead of account rows', async () => {
+    const user = userEvent.setup()
+    const onSignIn = vi.fn()
+    renderSettings({ sessionKind: 'guest', onSignIn })
+
+    expect(screen.queryByRole('button', { name: /change password/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /log out/i })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /sign in or create an account/i }))
+    expect(onSignIn).toHaveBeenCalledOnce()
+  })
+
+  it('confirms before logging out (account)', async () => {
+    const user = userEvent.setup()
+    const onLogout = vi.fn()
+    renderSettings({ sessionKind: 'account', onLogout })
+
+    await user.click(screen.getByRole('button', { name: /log out/i }))
+    const confirms = await screen.findAllByRole('button', { name: /^log out$/i })
+    await user.click(confirms[confirms.length - 1]!)
+    expect(onLogout).toHaveBeenCalledOnce()
   })
 })

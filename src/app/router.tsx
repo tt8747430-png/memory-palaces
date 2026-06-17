@@ -22,11 +22,15 @@ import { ProfilePage } from '@/pages/profile'
 import { StatsPage } from '@/pages/stats'
 import { SettingsPage, useProgressTransfer } from '@/pages/settings'
 import { SettingsProfilePage } from '@/pages/settings-profile'
+import { SettingsChangePasswordPage } from '@/pages/settings-change-password'
+import { SettingsPhonePage } from '@/pages/settings-phone'
 import { SettingsPrivacyPage } from '@/pages/settings-privacy'
 import { SettingsClearDataPage } from '@/pages/settings-clear-data'
 import { SettingsHelpPage } from '@/pages/settings-help'
 import { SettingsAboutPage } from '@/pages/settings-about'
 import { NotificationsPage } from '@/pages/notifications'
+import { useSessionStore } from '@/entities/session'
+import { useAuthActions } from '@/features/session'
 import { ROUTES } from '@/shared/config/routes'
 import { RootLayout } from './RootLayout'
 import { authRedirect } from './auth-guard'
@@ -37,7 +41,7 @@ const rootRoute = createRootRoute({
   // Session gate: the gateway (localStorage) is the source of truth, read
   // synchronously so the redirect resolves before any screen paints.
   beforeLoad: ({ location }) => {
-    const target = authRedirect(location.pathname, services.authGateway.getPersisted() !== null)
+    const target = authRedirect(location.pathname, services.authGateway.getPersisted()?.kind ?? null)
     if (target && target !== location.pathname) throw redirect({ to: target })
   },
 })
@@ -286,6 +290,8 @@ const statsRoute = createRoute({
 function SettingsRoute() {
   const navigate = useNavigate()
   const transfer = useProgressTransfer()
+  const { signOut } = useAuthActions()
+  const sessionKind = useSessionStore((state) => state.session?.kind ?? 'guest')
   return (
     <SettingsPage
       onBack={() => navigate({ to: ROUTES.profile })}
@@ -296,6 +302,14 @@ function SettingsRoute() {
       onAbout={() => navigate({ to: ROUTES.settingsAbout })}
       onExport={transfer.exportNow}
       onImportFile={transfer.importFile}
+      onChangePassword={() => navigate({ to: ROUTES.settingsChangePassword })}
+      onPhone={() => navigate({ to: ROUTES.settingsPhone })}
+      onSignIn={() => navigate({ to: ROUTES.login })}
+      onLogout={async () => {
+        await signOut()
+        await navigate({ to: ROUTES.login })
+      }}
+      sessionKind={sessionKind}
     />
   )
 }
@@ -310,6 +324,28 @@ function SettingsProfileRoute() {
   const navigate = useNavigate()
   return <SettingsProfilePage onBack={() => navigate({ to: ROUTES.settings })} />
 }
+
+function SettingsChangePasswordRoute() {
+  const navigate = useNavigate()
+  return <SettingsChangePasswordPage onBack={() => navigate({ to: ROUTES.settings })} />
+}
+
+const settingsChangePasswordRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.settingsChangePassword,
+  component: SettingsChangePasswordRoute,
+})
+
+function SettingsPhoneRoute() {
+  const navigate = useNavigate()
+  return <SettingsPhonePage onBack={() => navigate({ to: ROUTES.settings })} />
+}
+
+const settingsPhoneRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.settingsPhone,
+  component: SettingsPhoneRoute,
+})
 
 const settingsProfileRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -390,6 +426,8 @@ const routeTree = rootRoute.addChildren([
   statsRoute,
   settingsRoute,
   settingsProfileRoute,
+  settingsChangePasswordRoute,
+  settingsPhoneRoute,
   settingsPrivacyRoute,
   settingsClearDataRoute,
   settingsHelpRoute,

@@ -3,29 +3,35 @@ import { ROUTES } from '@/shared/config/routes'
 import { authRedirect } from './auth-guard'
 
 describe('authRedirect', () => {
-  it('sends an unauthenticated user from an app route to login', () => {
-    expect(authRedirect(ROUTES.home, false)).toBe(ROUTES.login)
-    expect(authRedirect(ROUTES.palaces, false)).toBe(ROUTES.login)
+  it('sends a sessionless user from an app route to login', () => {
+    expect(authRedirect(ROUTES.home, null)).toBe(ROUTES.login)
+    expect(authRedirect(ROUTES.palaces, null)).toBe(ROUTES.login)
   })
 
-  it('lets an unauthenticated user stay on auth routes', () => {
-    expect(authRedirect(ROUTES.login, false)).toBeNull()
-    expect(authRedirect(ROUTES.signup, false)).toBeNull()
-    expect(authRedirect(ROUTES.forgot, false)).toBeNull()
+  it('lets a sessionless user stay on auth routes', () => {
+    expect(authRedirect(ROUTES.login, null)).toBeNull()
+    expect(authRedirect(ROUTES.signup, null)).toBeNull()
+    expect(authRedirect(ROUTES.forgot, null)).toBeNull()
   })
 
-  it('bounces an authenticated user away from login/signup/forgot', () => {
-    expect(authRedirect(ROUTES.login, true)).toBe(ROUTES.home)
-    expect(authRedirect(ROUTES.signup, true)).toBe(ROUTES.home)
-    expect(authRedirect(ROUTES.forgot, true)).toBe(ROUTES.home)
+  it('bounces an account away from login/signup/forgot', () => {
+    expect(authRedirect(ROUTES.login, 'account')).toBe(ROUTES.home)
+    expect(authRedirect(ROUTES.signup, 'account')).toBe(ROUTES.home)
+    expect(authRedirect(ROUTES.forgot, 'account')).toBe(ROUTES.home)
   })
 
-  it('allows the welcome route post-signup (authenticated)', () => {
-    expect(authRedirect(ROUTES.welcome, true)).toBeNull()
+  it('allows the welcome route post-signup (account)', () => {
+    expect(authRedirect(ROUTES.welcome, 'account')).toBeNull()
   })
 
-  it('leaves an authenticated user on app routes', () => {
-    expect(authRedirect(ROUTES.home, true)).toBeNull()
-    expect(authRedirect(ROUTES.settings, true)).toBeNull()
+  it('leaves an account on app routes', () => {
+    expect(authRedirect(ROUTES.home, 'account')).toBeNull()
+    expect(authRedirect(ROUTES.settings, 'account')).toBeNull()
+  })
+
+  it('lets a guest reach the auth screens to upgrade, and use the app', () => {
+    expect(authRedirect(ROUTES.login, 'guest')).toBeNull()
+    expect(authRedirect(ROUTES.signup, 'guest')).toBeNull()
+    expect(authRedirect(ROUTES.home, 'guest')).toBeNull()
   })
 })
