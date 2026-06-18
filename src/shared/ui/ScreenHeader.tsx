@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { ChevronLeft } from 'lucide-react'
 import { cn } from '@/shared/lib'
 import { IconButton } from './IconButton'
@@ -17,7 +17,7 @@ export interface ScreenHeaderProps {
 
 /** Frosted top bar for sub-screens (no collapsible hero): safe-area aware, fixed to the
  * viewport so it stays put even while the content rubber-bands on overscroll. The blur
- * lets content scroll under it; an inert, invisible copy reserves its height in flow. */
+ * lets content scroll under it; a measured spacer reserves its height in flow. */
 export function ScreenHeader({
   title,
   subtitle,
@@ -26,22 +26,23 @@ export function ScreenHeader({
   action,
   className,
 }: ScreenHeaderProps) {
-  const bar = (
-    <div className="flex min-h-14 items-center gap-3 pt-3 pb-2">
-      {onBack ? (
-        <IconButton variant="glass" aria-label={backLabel} onClick={onBack}>
-          <ChevronLeft className="size-5" aria-hidden />
-        </IconButton>
-      ) : null}
-      <div className="min-w-0 flex-1">
-        <h1 className="truncate text-balance">{title}</h1>
-        {subtitle ? (
-          <p className="truncate text-[length:var(--p-text-label)]">{subtitle}</p>
-        ) : null}
-      </div>
-      {action}
-    </div>
-  )
+  const barRef = useRef<HTMLDivElement>(null)
+  const [barHeight, setBarHeight] = useState(0)
+
+  // The bar is fixed (out of flow), so a spacer must hold its place. Measure the bar
+  // itself rather than guess a height — back button, subtitle and trailing actions each
+  // change it. The page's own `pt-safe` covers the inset above, so we reserve only the
+  // bar's height here.
+  useLayoutEffect(() => {
+    const node = barRef.current
+    if (!node) return
+    const measure = () => setBarHeight(node.offsetHeight)
+    measure()
+    if (typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(measure)
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [])
 
   return (
     <>
@@ -51,14 +52,22 @@ export function ScreenHeader({
           className,
         )}
       >
-        {bar}
+        <div ref={barRef} className="flex min-h-14 items-center gap-3 pt-3 pb-2">
+          {onBack ? (
+            <IconButton variant="glass" aria-label={backLabel} onClick={onBack}>
+              <ChevronLeft className="size-5" aria-hidden />
+            </IconButton>
+          ) : null}
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-balance">{title}</h1>
+            {subtitle ? (
+              <p className="truncate text-[length:var(--p-text-label)]">{subtitle}</p>
+            ) : null}
+          </div>
+          {action}
+        </div>
       </header>
-      {/* Reserve the bar's exact height in flow so content starts below it. `inert` keeps
-          this duplicate out of the focus/accessibility tree; the page's own `pt-safe`
-          covers the safe-area inset above. */}
-      <div aria-hidden inert className="invisible">
-        {bar}
-      </div>
+      <div aria-hidden style={{ height: barHeight }} />
     </>
   )
 }
