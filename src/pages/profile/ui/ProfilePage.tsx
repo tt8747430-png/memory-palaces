@@ -168,7 +168,11 @@ export function ProfilePage({
         onEditProfile={() => onEditProfile?.()}
       />
 
-      <div className="mt-8 flex flex-col gap-8">
+      {/* Fill at least the area under the collapsed header (viewport minus the bottom
+          nav inset ~7rem and the compact bar ~5rem) so short profiles still scroll far
+          enough to recede the hero and tuck the Overview under the collapsed header,
+          instead of stranding it mid-screen. Taller content scrolls normally. */}
+      <div className="mt-6 flex min-h-[calc(100dvh-12rem)] flex-col gap-8">
         <section>
           <h2 className="mb-3 px-1 text-[length:var(--p-text-title)] font-bold text-heading">
             {t('profile.overview')}

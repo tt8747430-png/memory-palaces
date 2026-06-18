@@ -9,6 +9,11 @@ export const en = {
     seeAll: 'See all',
     back: 'Back',
   },
+  update: {
+    available: 'A new version is ready',
+    description: 'Reload to get the latest Mindscape.',
+    reload: 'Reload',
+  },
   nav: {
     label: 'Primary',
     home: 'Home',

@@ -11,7 +11,10 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // 'prompt' (not 'autoUpdate') so a waiting service worker surfaces an in-app
+      // "update available" prompt the user taps, instead of silently applying on some
+      // later cold start (PWAs rarely reload, so autoUpdate can lag for days).
+      registerType: 'prompt',
       injectRegister: 'auto',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
