@@ -142,50 +142,59 @@ export function HomePage({
   const handleDeletePalace = (palaceId: string) => void deletePalace(palaceStore, palaceId)
 
   return (
-    <AppScreen className="pb-nav" scrollRef={header.ref}>
-      <HomeHeader
-        header={header}
-        name={name}
-        avatar={profile.avatar}
-        xp={progress?.xp ?? 0}
-        unreadCount={unreadCount}
-        streakCount={progress?.streakCount ?? 0}
-        dueCount={dueCount}
-        showStats={hasPalaces}
-        onOpenProfile={() => onOpenProfile?.()}
-        onOpenNotifications={() => onOpenNotifications?.()}
-        onOpenStreak={() => onOpenStreak?.()}
-      />
+    <AppScreen
+      className="pb-nav"
+      scrollRef={header.ref}
+      header={
+        <HomeHeader
+          header={header}
+          name={name}
+          avatar={profile.avatar}
+          xp={progress?.xp ?? 0}
+          unreadCount={unreadCount}
+          streakCount={progress?.streakCount ?? 0}
+          dueCount={dueCount}
+          showStats={hasPalaces}
+          onOpenProfile={() => onOpenProfile?.()}
+          onOpenNotifications={() => onOpenNotifications?.()}
+          onOpenStreak={() => onOpenStreak?.()}
+        />
+      }
+    >
+      {/* Guarantee at least the collapse distance of scroll room so the pinned header can
+          always recede — otherwise a short page (e.g. a single row of palaces) can't
+          scroll and the header would never collapse. Taller content scrolls normally. */}
+      <div className="min-h-[calc(100%+8rem)]">
+        <TodayTrainingCard
+          className="mt-6"
+          hasPalaces={hasPalaces}
+          dueCount={dueCount}
+          xp={progress?.xp ?? 0}
+          streakCount={progress?.streakCount ?? 0}
+          onStartTraining={handleStartTraining}
+          onCreatePalace={() => onCreatePalace?.()}
+        />
 
-      <TodayTrainingCard
-        className="mt-6"
-        hasPalaces={hasPalaces}
-        dueCount={dueCount}
-        xp={progress?.xp ?? 0}
-        streakCount={progress?.streakCount ?? 0}
-        onStartTraining={handleStartTraining}
-        onCreatePalace={() => onCreatePalace?.()}
-      />
+        <DailyReviewCard className="mt-6" dueCount={dueCount} onOpen={() => onStartReview?.()} />
 
-      <DailyReviewCard className="mt-6" dueCount={dueCount} onOpen={() => onStartReview?.()} />
+        {hasPalaces ? (
+          <>
+            <UpNextCard className="mt-6" rooms={upNext} onOpenRoom={(id) => onTrainRoom?.(id)} />
 
-      {hasPalaces ? (
-        <>
-          <UpNextCard className="mt-6" rooms={upNext} onOpenRoom={(id) => onTrainRoom?.(id)} />
-
-          <PalacesOverview
-            className="mt-6"
-            palaces={palaceSummaries}
-            onOpenPalace={(id) => onOpenPalace?.(id)}
-            onViewAll={() => onViewAllPalaces?.()}
-            onTrainPalace={handleTrainPalace}
-            onDuplicatePalace={handleDuplicatePalace}
-            onDeletePalace={handleDeletePalace}
-          />
-        </>
-      ) : (
-        <FirstRunGuide className="mt-6" />
-      )}
+            <PalacesOverview
+              className="mt-6"
+              palaces={palaceSummaries}
+              onOpenPalace={(id) => onOpenPalace?.(id)}
+              onViewAll={() => onViewAllPalaces?.()}
+              onTrainPalace={handleTrainPalace}
+              onDuplicatePalace={handleDuplicatePalace}
+              onDeletePalace={handleDeletePalace}
+            />
+          </>
+        ) : (
+          <FirstRunGuide className="mt-6" />
+        )}
+      </div>
     </AppScreen>
   )
 }
