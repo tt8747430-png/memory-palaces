@@ -1,9 +1,9 @@
 # CLAUDE.md
 
 Guidance for working in the **Mindscape new-architecture rewrite** (FSD + Clean/Hexagonal).
-Stack: React 19 + Vite + TanStack Router + Zustand + Tailwind v4 + RxDB (planned) +
-Supabase (planned), strict TS, PWA. See `README.md` and the roadmap at
-`../memory-palaces-app-ui/docs/ai_docs/NEW_ARCHITECHTURE.md`.
+Stack: React 19 + Vite 8 + TanStack Router (code-based) + Zustand + Tailwind v4 + RxDB
+(live; IndexedDB via Dexie) + Supabase sync (planned), strict TS, PWA. See `README.md`
+and the roadmap at `docs/NEW_ARCHITECHTURE.md`.
 
 ## Product / platform
 
@@ -16,12 +16,20 @@ The sibling `../memory-palaces-app-ui` is the **previous SPA, kept only as the v
 design reference** ("The Lucid Atrium" look). Port its craft into `shared/ui` + the
 home/palace/notification widgets here; never ship product features back into it.
 
+Build on the `shared/ui` kit (`Sheet`, `ActionSheet`, `SwipeRow`, `PullToRefresh`, …)
+before adding components: animate with `motion`, icons from `lucide-react`, toasts via
+`sonner`, primitives from `@base-ui/react`, class merging via `cn` (`shared/lib`).
+
 ## Architecture rule
 
 FSD layers import only downward: `app → pages → widgets → features → entities → shared`
 (lint-enforced via eslint-plugin-boundaries). Persistence is behind the `Repository<T>`
 port in `shared/api`, wired at the composition root — never import a concrete adapter
-into entities/features.
+into entities/features. The composition root `src/app/composition-root.ts` is the one
+place adapters are chosen and injected: `RxdbRepository` (`shared/api/rxdb`) for persisted
+entities, `InMemoryRepository` for the ephemeral session, `LocalAuthGateway` (→ Supabase
+in Phase 9). Routing is code-based (TanStack Router in `src/app/router.tsx`); canonical
+paths live in `shared/config/routes.ts`.
 
 ## Code style
 
@@ -45,6 +53,8 @@ into entities/features.
   new state. Entity copies go through the `clone()` factories, not ad-hoc spreads.
 - **No magic values:** name constants in `shared/config`; route ids and storage keys
   are defined once there.
+- **i18n:** user-facing copy goes through i18next (`useTranslation`/`t`), never hardcoded;
+  translation keys live in `shared/i18n/locales`.
 - **Imports:** use the `@/` alias and respect FSD direction — never import upward or
   sideways across slices; cross-cutting code belongs in `shared`. Never import a
   concrete adapter into `entities`/`features` — depend on the port.
@@ -53,4 +63,11 @@ into entities/features.
 
 ## Commands
 
-`npm run dev` · `npm run build` · `npm run typecheck` · `npm run test` · `npm run lint`
+`npm run dev` · `npm run build` · `npm run typecheck` · `npm run test` · `npm run lint` · `npm run format`
+
+## Testing
+
+Vitest + React Testing Library (jsdom). `globals: false` — import `describe/it/expect` from
+`vitest` explicitly. Colocate tests as `*.test.ts(x)`; global setup is `src/shared/test/setup.ts`.
+Every `Repository<T>` adapter must pass the shared `runRepositoryContract`
+(`shared/test/repository-contract.ts`); RxDB tests run on `fake-indexeddb`.

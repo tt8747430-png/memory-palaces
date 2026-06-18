@@ -22,5 +22,8 @@ later" comments unless explicitly requested.
 📋 Task:
 
 
+
+
+<!-- 
 /impeccable craft create something like this in our app. this should be all capable ai tutor, i can ask it to create rooms to create palaces to edit or search settings to edit the profile and more and more. for this it will have an interface for how to interact with our app. it will be able to do anything in our app that i will ask it to do, but first before executing it should promt me for permission for this specific action to take. it also can generate locies and quizes and so on.
- /Users/kristianbraila/Downloads/AITutorScreen.tsx
+ /Users/kristianbraila/Downloads/AITutorScreen.tsx -->
