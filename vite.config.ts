@@ -22,7 +22,9 @@ export default defineConfig({
         short_name: 'Mindscape',
         description: 'Train your memory with the method of loci. Offline-first.',
         lang: 'en',
-        theme_color: '#091A7A',
+        // Light-blue (daylight ground top) so the installed shell's status bar blends
+        // with the app instead of a navy/white band; matches the index.html theme-color.
+        theme_color: '#ADC8FF',
         background_color: '#ADC8FF',
         display: 'standalone',
         orientation: 'portrait',

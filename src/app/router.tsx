@@ -3,7 +3,9 @@ import {
   createRoute,
   createRouter,
   redirect,
+  useCanGoBack,
   useNavigate,
+  useRouter,
 } from '@tanstack/react-router'
 import { LoginPage } from '@/pages/login'
 import { SignupPage } from '@/pages/signup'
@@ -35,6 +37,21 @@ import { ROUTES } from '@/shared/config/routes'
 import { RootLayout } from './RootLayout'
 import { authRedirect } from './auth-guard'
 import { services } from './composition-root'
+
+/**
+ * Back handler that returns to the actual previous screen via history when there is
+ * one, so a screen reached from different places goes back to wherever the user came
+ * from (e.g. the profile badge → edit-profile → back lands on Profile, not Settings).
+ * The `fallback` only runs on a fresh load / deep link with no in-app history.
+ */
+function useBack(fallback: () => void): () => void {
+  const router = useRouter()
+  const canGoBack = useCanGoBack()
+  return () => {
+    if (canGoBack) router.history.back()
+    else fallback()
+  }
+}
 
 const rootRoute = createRootRoute({
   component: RootLayout,
@@ -83,7 +100,8 @@ const signupRoute = createRoute({
 
 function ForgotRoute() {
   const navigate = useNavigate()
-  return <ForgotPasswordPage onBack={() => navigate({ to: ROUTES.login })} />
+  const back = useBack(() => navigate({ to: ROUTES.login }))
+  return <ForgotPasswordPage onBack={back} />
 }
 
 const forgotRoute = createRoute({
@@ -145,10 +163,11 @@ const palacesRoute = createRoute({
 function PalaceDetailRoute() {
   const { palaceId } = palaceDetailRoute.useParams()
   const navigate = useNavigate()
+  const back = useBack(() => navigate({ to: ROUTES.palaces }))
   return (
     <PalaceDetailPage
       palaceId={palaceId}
-      onBack={() => navigate({ to: ROUTES.palaces })}
+      onBack={back}
       onOpenRoom={(roomId) => navigate({ to: ROUTES.roomContent, params: { roomId } })}
       onTrainRoom={(roomId) => navigate({ to: ROUTES.roomTrain, params: { roomId } })}
       onQuiz={() => navigate({ to: ROUTES.palaceQuiz, params: { palaceId } })}
@@ -165,10 +184,11 @@ const palaceDetailRoute = createRoute({
 function RoomContentRoute() {
   const { roomId } = roomContentRoute.useParams()
   const navigate = useNavigate()
+  const back = useBack(() => navigate({ to: ROUTES.home }))
   return (
     <RoomContentPage
       roomId={roomId}
-      onBack={() => navigate({ to: ROUTES.home })}
+      onBack={back}
       onMatch={() => navigate({ to: ROUTES.roomMatch, params: { roomId } })}
       onVerse={() => navigate({ to: ROUTES.roomVerse, params: { roomId } })}
     />
@@ -184,10 +204,11 @@ const roomContentRoute = createRoute({
 function RoomTrainRoute() {
   const { roomId } = roomTrainRoute.useParams()
   const navigate = useNavigate()
+  const back = useBack(() => navigate({ to: ROUTES.roomContent, params: { roomId } }))
   return (
     <RoomTrainPage
       roomId={roomId}
-      onBack={() => navigate({ to: ROUTES.roomContent, params: { roomId } })}
+      onBack={back}
     />
   )
 }
@@ -201,10 +222,11 @@ const roomTrainRoute = createRoute({
 function RoomMatchRoute() {
   const { roomId } = roomMatchRoute.useParams()
   const navigate = useNavigate()
+  const back = useBack(() => navigate({ to: ROUTES.roomContent, params: { roomId } }))
   return (
     <MatchPage
       roomId={roomId}
-      onBack={() => navigate({ to: ROUTES.roomContent, params: { roomId } })}
+      onBack={back}
     />
   )
 }
@@ -218,10 +240,11 @@ const roomMatchRoute = createRoute({
 function RoomVerseRoute() {
   const { roomId } = roomVerseRoute.useParams()
   const navigate = useNavigate()
+  const back = useBack(() => navigate({ to: ROUTES.roomContent, params: { roomId } }))
   return (
     <VerseStudyPage
       roomId={roomId}
-      onBack={() => navigate({ to: ROUTES.roomContent, params: { roomId } })}
+      onBack={back}
     />
   )
 }
@@ -234,7 +257,8 @@ const roomVerseRoute = createRoute({
 
 function ReviewRoute() {
   const navigate = useNavigate()
-  return <ReviewPage onBack={() => navigate({ to: ROUTES.home })} />
+  const back = useBack(() => navigate({ to: ROUTES.home }))
+  return <ReviewPage onBack={back} />
 }
 
 const reviewRoute = createRoute({
@@ -246,10 +270,11 @@ const reviewRoute = createRoute({
 function QuizRoute() {
   const { palaceId } = quizRoute.useParams()
   const navigate = useNavigate()
+  const back = useBack(() => navigate({ to: ROUTES.palaceDetail, params: { palaceId } }))
   return (
     <QuizPage
       palaceId={palaceId}
-      onBack={() => navigate({ to: ROUTES.palaceDetail, params: { palaceId } })}
+      onBack={back}
     />
   )
 }
@@ -282,7 +307,8 @@ const profileRoute = createRoute({
 
 function StreakRoute() {
   const navigate = useNavigate()
-  return <StreakPage onBack={() => navigate({ to: ROUTES.profile })} />
+  const back = useBack(() => navigate({ to: ROUTES.profile }))
+  return <StreakPage onBack={back} />
 }
 
 const streakRoute = createRoute({
@@ -293,7 +319,8 @@ const streakRoute = createRoute({
 
 function BadgesRoute() {
   const navigate = useNavigate()
-  return <BadgesPage onBack={() => navigate({ to: ROUTES.profile })} />
+  const back = useBack(() => navigate({ to: ROUTES.profile }))
+  return <BadgesPage onBack={back} />
 }
 
 const badgesRoute = createRoute({
@@ -304,7 +331,8 @@ const badgesRoute = createRoute({
 
 function AchievementsRoute() {
   const navigate = useNavigate()
-  return <AchievementsPage onBack={() => navigate({ to: ROUTES.profile })} />
+  const back = useBack(() => navigate({ to: ROUTES.profile }))
+  return <AchievementsPage onBack={back} />
 }
 
 const achievementsRoute = createRoute({
@@ -318,13 +346,14 @@ function SettingsRoute() {
   const transfer = useProgressTransfer()
   const { signOut } = useAuthActions()
   const sessionKind = useSessionStore((state) => state.session?.kind ?? 'guest')
+  const back = useBack(() => navigate({ to: ROUTES.profile }))
   const logout = async () => {
     await signOut()
     await navigate({ to: ROUTES.login })
   }
   return (
     <SettingsPage
-      onBack={() => navigate({ to: ROUTES.profile })}
+      onBack={back}
       onEditProfile={() => navigate({ to: ROUTES.settingsProfile })}
       onPrivacy={() => navigate({ to: ROUTES.settingsPrivacy })}
       onHelp={() => navigate({ to: ROUTES.settingsHelp })}
@@ -347,13 +376,14 @@ const settingsRoute = createRoute({
 function SettingsProfileRoute() {
   const navigate = useNavigate()
   const { signOut } = useAuthActions()
+  const back = useBack(() => navigate({ to: ROUTES.settings }))
   const exitToLogin = async () => {
     await signOut()
     await navigate({ to: ROUTES.login })
   }
   return (
     <SettingsProfilePage
-      onBack={() => navigate({ to: ROUTES.settings })}
+      onBack={back}
       onChangePassword={() => navigate({ to: ROUTES.settingsChangePassword })}
       onDeleteAccount={exitToLogin}
     />
@@ -362,7 +392,8 @@ function SettingsProfileRoute() {
 
 function SettingsChangePasswordRoute() {
   const navigate = useNavigate()
-  return <SettingsChangePasswordPage onBack={() => navigate({ to: ROUTES.settings })} />
+  const back = useBack(() => navigate({ to: ROUTES.settings }))
+  return <SettingsChangePasswordPage onBack={back} />
 }
 
 const settingsChangePasswordRoute = createRoute({
@@ -379,7 +410,8 @@ const settingsProfileRoute = createRoute({
 
 function SettingsPrivacyRoute() {
   const navigate = useNavigate()
-  return <SettingsPrivacyPage onBack={() => navigate({ to: ROUTES.settings })} />
+  const back = useBack(() => navigate({ to: ROUTES.settings }))
+  return <SettingsPrivacyPage onBack={back} />
 }
 
 const settingsPrivacyRoute = createRoute({
@@ -390,7 +422,8 @@ const settingsPrivacyRoute = createRoute({
 
 function SettingsHelpRoute() {
   const navigate = useNavigate()
-  return <SettingsHelpPage onBack={() => navigate({ to: ROUTES.settings })} />
+  const back = useBack(() => navigate({ to: ROUTES.settings }))
+  return <SettingsHelpPage onBack={back} />
 }
 
 const settingsHelpRoute = createRoute({
@@ -401,7 +434,8 @@ const settingsHelpRoute = createRoute({
 
 function SettingsAboutRoute() {
   const navigate = useNavigate()
-  return <SettingsAboutPage onBack={() => navigate({ to: ROUTES.settings })} />
+  const back = useBack(() => navigate({ to: ROUTES.settings }))
+  return <SettingsAboutPage onBack={back} />
 }
 
 const settingsAboutRoute = createRoute({
@@ -412,7 +446,8 @@ const settingsAboutRoute = createRoute({
 
 function NotificationsRoute() {
   const navigate = useNavigate()
-  return <NotificationsPage onBack={() => navigate({ to: ROUTES.home })} />
+  const back = useBack(() => navigate({ to: ROUTES.home }))
+  return <NotificationsPage onBack={back} />
 }
 
 const notificationsRoute = createRoute({
