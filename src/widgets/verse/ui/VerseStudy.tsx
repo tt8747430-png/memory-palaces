@@ -219,7 +219,7 @@ function BlurMode({ text }: { text: string }) {
     <div className={PANEL}>
       <div className={SCROLL}>
         <div className="flex min-h-full items-center justify-center px-6 py-6">
-          <p className="flex w-full flex-wrap items-baseline justify-center gap-x-2 gap-y-2 text-[clamp(17px,4.6vw,22px)] font-semibold leading-relaxed text-heading">
+          <p className="allow-select flex w-full flex-wrap items-baseline justify-center gap-x-2 gap-y-2 text-[clamp(17px,4.6vw,22px)] font-semibold leading-relaxed text-heading">
             {tokens.map((token, i) => {
               if (isVerseMarker(token)) {
                 return (
@@ -387,7 +387,7 @@ function InitialsMode({ text }: { text: string }) {
       <div className={SCROLL}>
         <div className="flex min-h-full items-center justify-center px-6 py-6">
           {revealed ? (
-            <p className="text-balance text-center text-[clamp(16px,4.4vw,21px)] font-medium leading-relaxed text-heading">
+            <p className="allow-select text-balance text-center text-[clamp(16px,4.4vw,21px)] font-medium leading-relaxed text-heading">
               {text}
             </p>
           ) : (
@@ -463,7 +463,7 @@ function TypeMode({ text }: { text: string }) {
               {t('verse.wordPerfect')}
             </p>
           ) : revealed ? (
-            <p className="text-[length:var(--p-text-body)] font-medium leading-relaxed text-heading">
+            <p className="allow-select text-[length:var(--p-text-body)] font-medium leading-relaxed text-heading">
               {text}
             </p>
           ) : result.typed.length === 0 ? (
