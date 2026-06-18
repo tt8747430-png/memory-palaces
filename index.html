@@ -8,13 +8,15 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
       name="viewport"
     />
-    <!-- Match the daylight ground's top (#ADC8FF light-blue) so the iOS/Android status
-         bar blends into the header instead of showing an out-of-app white band. iOS
-         auto-picks dark status-bar text against this light color. -->
-    <meta content="#ADC8FF" name="theme-color" />
+    <!-- Navy so the launch screen and the Android status bar match the navy safe-area
+         band the app paints under the iOS status bar (white system text on navy). -->
+    <meta content="#091A7A" name="theme-color" />
     <meta content="yes" name="mobile-web-app-capable" />
     <meta content="yes" name="apple-mobile-web-app-capable" />
-    <meta content="default" name="apple-mobile-web-app-status-bar-style" />
+    <!-- black-translucent = the web view runs edge-to-edge UNDER the status bar, so iOS
+         never repaints its own opaque (white) bar over the app. A navy fill behind the
+         safe-area inset (RootLayout) keeps the strip on-brand with readable white text. -->
+    <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style" />
     <meta content="Mindscape" name="apple-mobile-web-app-title" />
     <meta
       content="Mindscape — Your Memory Palace. Train recall with the method of loci. Offline-first."

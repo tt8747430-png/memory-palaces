@@ -22,9 +22,9 @@ export default defineConfig({
         short_name: 'Mindscape',
         description: 'Train your memory with the method of loci. Offline-first.',
         lang: 'en',
-        // Light-blue (daylight ground top) so the installed shell's status bar blends
-        // with the app instead of a navy/white band; matches the index.html theme-color.
-        theme_color: '#ADC8FF',
+        // Navy: matches the index.html theme-color and the navy safe-area band painted
+        // under the status bar, so the launch screen and Android shell stay on-brand.
+        theme_color: '#091A7A',
         background_color: '#ADC8FF',
         display: 'standalone',
         orientation: 'portrait',
