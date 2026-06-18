@@ -1,9 +1,9 @@
 /**
- * Pure geometry for the touch gestures (swipe-to-delete, pull-to-refresh), kept free
- * of React/DOM so the thresholds are unit-testable without driving real pointer
- * events. `@use-gesture` reports `movement` as a signed offset and `velocity` as a
- * non-negative speed; these helpers take those raw numbers and answer "how far does
- * the element move?" and "did the user commit?".
+ * Pure geometry for the swipe-to-delete gesture, kept free of React/DOM so the
+ * thresholds are unit-testable without driving real pointer events. `@use-gesture`
+ * reports `movement` as a signed offset and `velocity` as a non-negative speed; these
+ * helpers take those raw numbers and answer "how far does the row move?" and "did the
+ * user commit?".
  */
 
 /** Travel (px) a row must clear, left, to commit a delete. */
@@ -30,21 +30,4 @@ export function shouldCommitSwipe(
 ): boolean {
   if (offsetX >= 0) return false
   return -offsetX >= threshold || speedX >= fling
-}
-
-/** Pull (px) the home feed must clear, down, to trigger a refresh. */
-export const PULL_REFRESH_THRESHOLD = 64
-/** Hard cap on the elastic pull distance. */
-export const PULL_REFRESH_MAX = 96
-
-/** Diminishing-returns resistance so the pull feels elastic, capped at `max`. Only a
- * downward pull (positive) produces distance. */
-export function pullDistance(dy: number, max: number = PULL_REFRESH_MAX): number {
-  if (dy <= 0) return 0
-  return Math.min(max, dy * 0.5)
-}
-
-/** True once the (already resisted) pull distance clears the trigger threshold. */
-export function shouldRefresh(distance: number, threshold: number = PULL_REFRESH_THRESHOLD): boolean {
-  return distance >= threshold
 }

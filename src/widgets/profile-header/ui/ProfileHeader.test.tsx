@@ -2,12 +2,14 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
+import { fakeCollapsibleHeader } from '@/shared/test/collapsible-header'
 import { ProfileHeader, type ProfileHeaderProps } from './ProfileHeader'
 
 afterEach(cleanup)
 
 function renderHeader(props: Partial<ProfileHeaderProps> = {}) {
   const merged: ProfileHeaderProps = {
+    header: fakeCollapsibleHeader(),
     name: 'Ada Lovelace',
     username: 'ada',
     xp: 600, // levelFromXp(600) → level 3
@@ -63,6 +65,7 @@ describe('ProfileHeader', () => {
     const { container } = render(
       <I18nextProvider i18n={i18n}>
         <ProfileHeader
+          header={fakeCollapsibleHeader()}
           name="Ada"
           username="ada"
           avatar="data:image/jpeg;base64,zzz"

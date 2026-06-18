@@ -3,6 +3,7 @@ import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
+import { fakeCollapsibleHeader } from '@/shared/test/collapsible-header'
 import { HomeHeader } from './HomeHeader'
 
 afterEach(cleanup)
@@ -12,7 +13,14 @@ function renderHeader(props: Partial<Parameters<typeof HomeHeader>[0]> = {}) {
   render(
     <I18nextProvider i18n={i18n}>
       {/* 500 XP → level 3 (250 XP per level). */}
-      <HomeHeader name="Sam" xp={500} unreadCount={0} {...handlers} {...props} />
+      <HomeHeader
+        header={fakeCollapsibleHeader()}
+        name="Sam"
+        xp={500}
+        unreadCount={0}
+        {...handlers}
+        {...props}
+      />
     </I18nextProvider>,
   )
   return handlers
@@ -59,6 +67,7 @@ describe('HomeHeader', () => {
     const { container } = render(
       <I18nextProvider i18n={i18n}>
         <HomeHeader
+          header={fakeCollapsibleHeader()}
           name="Sam"
           avatar="data:image/jpeg;base64,zzz"
           xp={0}

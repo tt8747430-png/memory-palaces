@@ -214,7 +214,6 @@ export const en = {
     notStarted: 'Not started',
     palacesTitle: 'Your Memory Palaces',
     viewAll: 'View all',
-    refreshing: 'Refreshing your palaces',
     roomsCount: '{{completed}}/{{total}} rooms',
     mastered: 'Mastered',
     todayTitle: "Today's training",
