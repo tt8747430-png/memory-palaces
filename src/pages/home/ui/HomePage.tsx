@@ -161,10 +161,12 @@ export function HomePage({
         />
       }
     >
-      {/* Guarantee at least the collapse distance of scroll room so the pinned header can
-          always recede — otherwise a short page (e.g. a single row of palaces) can't
-          scroll and the header would never collapse. Taller content scrolls normally. */}
-      <div className="min-h-[calc(100%+8rem)]">
+      {/* Guarantee scroll room so the pinned header can always recede, even with a single
+          row of palaces. Sized off the viewport (not the scroll container) so it stays
+          constant while the header collapses — a container-relative min-height would grow
+          as the header shrinks and make the collapse stutter. Taller content scrolls
+          normally. */}
+      <div className="min-h-[calc(100dvh+7.5rem)]">
         <TodayTrainingCard
           className="mt-6"
           hasPalaces={hasPalaces}

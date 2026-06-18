@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/shared/lib'
 
-// `overscroll-none` (not `contain`) so over-scrolling at the top doesn't rubber-band the
-// whole column and drag a sticky/hero header down with it — the header stays put, only
-// the content moves.
-const SCROLL = 'overflow-y-auto overscroll-none scrollbar-hide px-5 pb-safe'
+// `overscroll-contain` keeps the native iOS pull-and-bounce *inside* the content (and
+// stops it chaining to the locked body). With a pinned `header` the header is a separate
+// sibling of this scroller, so the bounce never moves it — only the content rubber-bands.
+const SCROLL = 'overflow-y-auto overscroll-contain scrollbar-hide px-5 pb-safe'
 
 /** The phone-first screen column: centered, capped at the app width, safe-area aware.
  * The shell itself is fixed-height and never scrolls, so the inner `<main>` is the

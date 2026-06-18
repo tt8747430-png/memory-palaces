@@ -57,11 +57,11 @@ export function HomeHeader({
   const [compactH, setCompactH] = useState(0)
 
   // Collapse progress 0 (hero) → 1 (compact): the hero's opacity already encodes it. The
-  // pinned header's height interpolates between the two measured layer heights, and the
-  // compact layer crossfades in as the hero fades out.
+  // pinned header's height interpolates between the two measured layer heights. The hero
+  // and compact layers crossfade on the hook's own curves (hero leads out, compact follows
+  // in) so the two avatar/bell sets never sit at half-opacity together.
   const progress = useTransform(header.heroOpacity, (o) => 1 - o)
   const height = useTransform(progress, (p) => headerHeight(p, heroH, compactH))
-  const compactPointerEvents = useTransform(progress, (p) => (p > 0.5 ? 'auto' : 'none'))
 
   // Measure both layers so the header can shrink between their real heights. They're
   // absolutely positioned (to crossfade in place), so the header owns no intrinsic height
@@ -85,7 +85,7 @@ export function HomeHeader({
       {/* Compact bar — crossfades in as the hero recedes. */}
       <motion.div
         ref={compactRef}
-        style={{ opacity: progress, pointerEvents: compactPointerEvents }}
+        style={{ opacity: header.compactOpacity, pointerEvents: header.compactPointerEvents }}
         className="absolute inset-x-0 top-0 flex items-center justify-between gap-3 border-b border-border bg-card-glass px-5 pb-2.5 pt-[calc(env(safe-area-inset-top)+0.625rem)] shadow-rest"
       >
         <button
@@ -132,8 +132,12 @@ export function HomeHeader({
           expanded. */}
       <motion.div
         ref={heroRef}
-        style={{ opacity: header.heroOpacity, pointerEvents: header.heroPointerEvents }}
-        className="absolute inset-x-0 top-0 px-5 pt-[calc(env(safe-area-inset-top)+1.75rem)]"
+        style={{
+          opacity: header.heroOpacity,
+          scale: header.heroScale,
+          pointerEvents: header.heroPointerEvents,
+        }}
+        className="absolute inset-x-0 top-0 origin-top px-5 pt-[calc(env(safe-area-inset-top)+1.75rem)]"
       >
         <div className="flex items-center justify-between gap-3">
           <button
