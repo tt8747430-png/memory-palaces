@@ -56,6 +56,8 @@
   html {
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
+    /* No grey/blue flash on tap (inherited); the app provides its own press feedback. */
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
@@ -72,6 +74,11 @@
     /* Own the vertical overscroll so custom pull-to-refresh isn't pre-empted by the
        browser's native pull-to-refresh / rubber-band at the top of the window. */
     overscroll-behavior-y: contain;
+    /* Native-app feel: app chrome isn't selectable and long-press doesn't pop the
+       browser callout. Form fields and `.allow-select` content opt back in below. */
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
   }
 
   h1,
@@ -109,6 +116,31 @@
   :focus-visible {
     outline: none;
     box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 50%, transparent);
+  }
+
+  /* Form fields stay selectable/editable despite the global chrome lock. */
+  input,
+  textarea,
+  [contenteditable] {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
+  }
+
+  /* Images don't ghost-drag or pop the long-press save sheet. */
+  img {
+    -webkit-user-drag: none;
+    -webkit-touch-callout: none;
+  }
+
+  /* Interactive controls skip the legacy double-tap delay. */
+  button,
+  a,
+  label,
+  summary,
+  [role='button'],
+  [role='tab'] {
+    touch-action: manipulation;
   }
 }
 
@@ -158,6 +190,15 @@
 
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Opt readable content (and its children) back into selection + copy after the
+     global native-app lock — e.g. verse text or a locus the user may want to copy. */
+  .allow-select,
+  .allow-select * {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
   }
 
   /* Safe-area (iOS notch / home indicator); resolve to 0 in the browser. */
