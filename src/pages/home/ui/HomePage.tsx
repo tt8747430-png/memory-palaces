@@ -142,33 +142,26 @@ export function HomePage({
   const handleDeletePalace = (palaceId: string) => void deletePalace(palaceStore, palaceId)
 
   return (
-    <AppScreen
-      className="pb-nav"
-      scrollRef={header.ref}
-      header={
-        <HomeHeader
-          header={header}
-          name={name}
-          avatar={profile.avatar}
-          xp={progress?.xp ?? 0}
-          unreadCount={unreadCount}
-          streakCount={progress?.streakCount ?? 0}
-          dueCount={dueCount}
-          showStats={hasPalaces}
-          onOpenProfile={() => onOpenProfile?.()}
-          onOpenNotifications={() => onOpenNotifications?.()}
-          onOpenStreak={() => onOpenStreak?.()}
-        />
-      }
-    >
-      {/* Guarantee scroll room so the pinned header can always recede, even with a single
-          row of palaces. Sized off the viewport (not the scroll container) so it stays
-          constant while the header collapses — a container-relative min-height would grow
-          as the header shrinks and make the collapse stutter. Taller content scrolls
-          normally. */}
-      <div className="min-h-[calc(100dvh+7.5rem)]">
+    <AppScreen className="pb-nav" scrollRef={header.ref}>
+      <HomeHeader
+        header={header}
+        name={name}
+        avatar={profile.avatar}
+        xp={progress?.xp ?? 0}
+        unreadCount={unreadCount}
+        streakCount={progress?.streakCount ?? 0}
+        dueCount={dueCount}
+        showStats={hasPalaces}
+        onOpenProfile={() => onOpenProfile?.()}
+        onOpenNotifications={() => onOpenNotifications?.()}
+        onOpenStreak={() => onOpenStreak?.()}
+      />
+
+      {/* Fill enough below the hero that a short page (e.g. a single row of palaces) still
+          scrolls far enough to recede the hero into the compact bar. Taller content scrolls
+          normally. Mirrors the profile screen's spacer. */}
+      <div className="mt-6 min-h-[calc(100dvh-13rem)]">
         <TodayTrainingCard
-          className="mt-6"
           hasPalaces={hasPalaces}
           dueCount={dueCount}
           xp={progress?.xp ?? 0}

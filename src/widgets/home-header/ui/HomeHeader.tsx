@@ -1,8 +1,7 @@
-import { useLayoutEffect, useRef, useState } from 'react'
-import { motion, useTransform } from 'motion/react'
+import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Bell, BellRing, Brain, ChevronRight, Flame, Layers, Zap } from 'lucide-react'
-import { headerHeight, levelFromXp, type CollapsibleHeader } from '@/shared/lib'
+import { levelFromXp, type CollapsibleHeader } from '@/shared/lib'
 import { Avatar, IconButton, type IconButtonVariant } from '@/shared/ui'
 
 export interface HomeHeaderProps {
@@ -24,14 +23,10 @@ export interface HomeHeaderProps {
   onOpenStreak: () => void
 }
 
-/** The home's chrome, pinned above the scroll container so the content scrolls below it
- * while the header itself stays put. A large hero (avatar → profile, greeting, level pill,
- * XP, and the at-a-glance chips — a tappable streak that opens the Streak screen, plus
- * due-today) collapses **in place** as you scroll: the pinned header's height shrinks from
- * the hero's measured height to the compact bar's, while the two crossfade. The layers are
- * absolutely positioned so they overlap during the fade; the header's height is driven
- * explicitly (interpolated px, not a CSS grid `fr` track, which doesn't shrink smoothly
- * when set per scroll frame). Mirrors the old ProgressHeader. */
+/** The home's chrome: a large hero (avatar → profile, greeting, level pill, XP, and the
+ * at-a-glance chips — a tappable streak that opens the Streak screen, plus due-today)
+ * that recedes on scroll while a compact sticky bar fades in keeping profile, level, and
+ * bell reachable. Mirrors the old ProgressHeader. */
 export function HomeHeader({
   header,
   name,
@@ -51,42 +46,13 @@ export function HomeHeader({
   const fill = Math.round((xpInLevel / xpForNextLevel) * 100)
   const xpToNext = t('home.xpToNext', { remaining: xpForNextLevel - xpInLevel, next: level + 1 })
 
-  const heroRef = useRef<HTMLDivElement>(null)
-  const compactRef = useRef<HTMLDivElement>(null)
-  const [heroH, setHeroH] = useState(0)
-  const [compactH, setCompactH] = useState(0)
-
-  // Collapse progress 0 (hero) → 1 (compact): the hero's opacity already encodes it. The
-  // pinned header's height interpolates between the two measured layer heights. The hero
-  // and compact layers crossfade on the hook's own curves (hero leads out, compact follows
-  // in) so the two avatar/bell sets never sit at half-opacity together.
-  const progress = useTransform(header.heroOpacity, (o) => 1 - o)
-  const height = useTransform(progress, (p) => headerHeight(p, heroH, compactH))
-
-  // Measure both layers so the header can shrink between their real heights. They're
-  // absolutely positioned (to crossfade in place), so the header owns no intrinsic height
-  // and must be driven explicitly. A ResizeObserver keeps the heights honest as content
-  // (stats row, name length, font scaling) changes.
-  useLayoutEffect(() => {
-    const measure = () => {
-      if (heroRef.current) setHeroH(heroRef.current.offsetHeight)
-      if (compactRef.current) setCompactH(compactRef.current.offsetHeight)
-    }
-    measure()
-    if (typeof ResizeObserver === 'undefined') return
-    const observer = new ResizeObserver(measure)
-    if (heroRef.current) observer.observe(heroRef.current)
-    if (compactRef.current) observer.observe(compactRef.current)
-    return () => observer.disconnect()
-  }, [])
-
   return (
-    <motion.header style={{ height }} className="relative shrink-0 overflow-hidden">
-      {/* Compact bar — crossfades in as the hero recedes. */}
+    <>
+      {/* Compact bar: fixed to the viewport, a sibling of the scroll container so it
+          stays pinned while the hero below scrolls away. */}
       <motion.div
-        ref={compactRef}
         style={{ opacity: header.compactOpacity, pointerEvents: header.compactPointerEvents }}
-        className="absolute inset-x-0 top-0 flex items-center justify-between gap-3 border-b border-border bg-card-glass px-5 pb-2.5 pt-[calc(env(safe-area-inset-top)+0.625rem)] shadow-rest"
+        className="fixed inset-x-0 top-0 z-[100] mx-auto flex max-w-[430px] items-center justify-between gap-3 border-b border-border bg-card-glass px-5 pb-2.5 pt-[calc(env(safe-area-inset-top)+0.625rem)] shadow-rest"
       >
         <button
           type="button"
@@ -128,16 +94,14 @@ export function HomeHeader({
         />
       </motion.div>
 
-      {/* Hero — crossfades out. Rendered last so it sits on top and stays interactive while
-          expanded. */}
-      <motion.div
-        ref={heroRef}
+      <motion.header
         style={{
           opacity: header.heroOpacity,
           scale: header.heroScale,
+          y: header.heroY,
           pointerEvents: header.heroPointerEvents,
         }}
-        className="absolute inset-x-0 top-0 origin-top px-5 pt-[calc(env(safe-area-inset-top)+1.75rem)]"
+        className="origin-top pt-[calc(env(safe-area-inset-top)+1.75rem)]"
       >
         <div className="flex items-center justify-between gap-3">
           <button
@@ -236,8 +200,8 @@ export function HomeHeader({
             ) : null}
           </motion.div>
         ) : null}
-      </motion.div>
-    </motion.header>
+      </motion.header>
+    </>
   )
 }
 

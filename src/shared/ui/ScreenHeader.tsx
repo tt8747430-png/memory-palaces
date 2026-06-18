@@ -15,8 +15,9 @@ export interface ScreenHeaderProps {
   className?: string
 }
 
-/** Frosted top bar: safe-area aware, sticky over the daylight ground, with an
- * optional back control and trailing action. The blur lets content scroll under it. */
+/** Frosted top bar for sub-screens (no collapsible hero): safe-area aware, fixed to the
+ * viewport so it stays put even while the content rubber-bands on overscroll. The blur
+ * lets content scroll under it; an inert, invisible copy reserves its height in flow. */
 export function ScreenHeader({
   title,
   subtitle,
@@ -25,22 +26,39 @@ export function ScreenHeader({
   action,
   className,
 }: ScreenHeaderProps) {
-  return (
-    <header className={cn('sticky top-0 z-[200] -mx-5 bg-glass px-5 pt-safe', className)}>
-      <div className="flex min-h-14 items-center gap-3 pt-3 pb-2">
-        {onBack ? (
-          <IconButton variant="glass" aria-label={backLabel} onClick={onBack}>
-            <ChevronLeft className="size-5" aria-hidden />
-          </IconButton>
+  const bar = (
+    <div className="flex min-h-14 items-center gap-3 pt-3 pb-2">
+      {onBack ? (
+        <IconButton variant="glass" aria-label={backLabel} onClick={onBack}>
+          <ChevronLeft className="size-5" aria-hidden />
+        </IconButton>
+      ) : null}
+      <div className="min-w-0 flex-1">
+        <h1 className="truncate text-balance">{title}</h1>
+        {subtitle ? (
+          <p className="truncate text-[length:var(--p-text-label)]">{subtitle}</p>
         ) : null}
-        <div className="min-w-0 flex-1">
-          <h1 className="truncate text-balance">{title}</h1>
-          {subtitle ? (
-            <p className="truncate text-[length:var(--p-text-label)]">{subtitle}</p>
-          ) : null}
-        </div>
-        {action}
       </div>
-    </header>
+      {action}
+    </div>
+  )
+
+  return (
+    <>
+      <header
+        className={cn(
+          'fixed inset-x-0 top-0 z-[200] mx-auto max-w-[430px] bg-glass px-5 pt-safe',
+          className,
+        )}
+      >
+        {bar}
+      </header>
+      {/* Reserve the bar's exact height in flow so content starts below it. `inert` keeps
+          this duplicate out of the focus/accessibility tree; the page's own `pt-safe`
+          covers the safe-area inset above. */}
+      <div aria-hidden inert className="invisible">
+        {bar}
+      </div>
+    </>
   )
 }
