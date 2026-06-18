@@ -60,7 +60,7 @@ export function MatchBoard({ loci, subtitle, onBack, onComplete }: MatchBoardPro
 
   if (loci.length < 2) {
     return (
-      <div className="relative mx-auto flex min-h-dvh w-full max-w-[430px] flex-col items-center justify-center gap-5 px-6 text-center">
+      <div className="relative mx-auto flex h-full w-full max-w-[430px] flex-col items-center justify-center gap-5 px-6 text-center">
         <div className="grid size-16 place-items-center rounded-card-featured bg-info-surface">
           <Puzzle className="size-8 text-accent" aria-hidden />
         </div>
@@ -80,7 +80,7 @@ export function MatchBoard({ loci, subtitle, onBack, onComplete }: MatchBoardPro
   const board = state.tiles.filter((tile) => !state.matched.includes(tile.id))
 
   return (
-    <div className="relative mx-auto flex min-h-dvh w-full max-w-[430px] flex-col">
+    <div className="relative mx-auto flex h-full w-full max-w-[430px] flex-col overflow-hidden">
       <div className="px-5 pt-safe">
         <div className="flex items-center justify-between gap-2 pt-3">
           <IconButton variant="glass" aria-label={t('match.goBack')} onClick={onBack}>

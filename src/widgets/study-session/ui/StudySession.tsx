@@ -282,7 +282,7 @@ export function StudySession({
   }
 
   return (
-    <div className="relative mx-auto flex min-h-dvh w-full max-w-[430px] flex-col">
+    <div className="relative mx-auto flex h-full w-full max-w-[430px] flex-col overflow-hidden">
       {/* Header */}
       <div className="px-5 pt-safe">
         <div className="mb-4 flex items-center justify-between pt-3">
@@ -497,7 +497,7 @@ function EmptyState({
   children?: ReactNode
 }) {
   return (
-    <div className="relative mx-auto flex min-h-dvh w-full max-w-[430px] flex-col items-center justify-center gap-5 px-6 text-center">
+    <div className="relative mx-auto flex h-full w-full max-w-[430px] flex-col items-center justify-center gap-5 px-6 text-center">
       <div className="grid size-16 place-items-center rounded-card-featured bg-info-surface">{icon}</div>
       <div>
         <h2 className="mb-1 text-[length:var(--p-text-headline)] font-bold text-heading">{heading}</h2>

@@ -27,7 +27,7 @@ export function WelcomePage({ onContinue }: WelcomePageProps) {
   const name = useSessionStore((state) => state.session?.displayName.trim() ?? '')
 
   return (
-    <main className="relative flex min-h-dvh flex-col items-center justify-center gap-8 overflow-hidden bg-gradient-to-b from-primary via-accent to-secondary px-6 pt-safe pb-safe text-center">
+    <main className="relative flex h-full flex-col items-center justify-center gap-8 overflow-hidden bg-gradient-to-b from-primary via-accent to-secondary px-6 pt-safe pb-safe text-center">
       {reduce ? (
         <div
           aria-hidden

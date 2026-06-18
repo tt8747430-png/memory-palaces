@@ -16,6 +16,7 @@ import {
   computeTrainingTotals,
   isRoomCompleted,
   totalTrainingDays,
+  useCollapsibleHeader,
 } from '@/shared/lib'
 import { useSessionStore } from '@/entities/session'
 import { selectEffectiveProfile, useProfileStore, useProfileStoreApi } from '@/entities/profile'
@@ -68,6 +69,7 @@ export function ProfilePage({
   onOpenAchievements,
 }: ProfilePageProps = {}) {
   const { t } = useTranslation()
+  const header = useCollapsibleHeader()
   const session = useSessionStore((state) => state.session)
   const profileStore = useProfileStoreApi()
   const profile = useProfileStore(selectEffectiveProfile)
@@ -152,8 +154,9 @@ export function ProfilePage({
   ]
 
   return (
-    <AppScreen className="pb-nav">
+    <AppScreen className="pb-nav" scrollRef={header.ref}>
       <ProfileHeader
+        header={header}
         name={name}
         username={profile.username}
         avatar={profile.avatar}

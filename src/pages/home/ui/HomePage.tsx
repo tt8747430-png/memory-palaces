@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { countDueLoci, isRoomCompleted, palaceProgress } from '@/shared/lib'
+import { countDueLoci, isRoomCompleted, palaceProgress, useCollapsibleHeader } from '@/shared/lib'
 import { deletePalace, duplicatePalace } from '@/features/palace'
 import { useSessionStore } from '@/entities/session'
 import { selectEffectiveProfile, useProfileStore, useProfileStoreApi } from '@/entities/profile'
@@ -18,7 +17,7 @@ import { TodayTrainingCard, FirstRunGuide } from '@/widgets/today-training-card'
 import { DailyReviewCard } from '@/widgets/daily-review-card'
 import { UpNextCard, pickUpNextRooms } from '@/widgets/up-next-card'
 import { PalacesOverview, type PalaceSummary } from '@/widgets/palaces-overview'
-import { AppScreen, PullToRefresh } from '@/shared/ui'
+import { AppScreen } from '@/shared/ui'
 
 export interface HomePageProps {
   /** Start a daily review session; wired by the route wrapper. */
@@ -49,7 +48,7 @@ export function HomePage({
   onViewAllPalaces,
   onCreatePalace,
 }: HomePageProps = {}) {
-  const { t } = useTranslation()
+  const header = useCollapsibleHeader()
   const session = useSessionStore((state) => state.session)
   const profileStore = useProfileStoreApi()
   const profile = useProfileStore(selectEffectiveProfile)
@@ -63,9 +62,9 @@ export function HomePage({
   const palaces = usePalaceStore(selectPalaces)
   const rooms = useRoomStore(selectRooms)
   const loci = useLocusStore(selectLoci)
-  // Snapshot the clock so every derivation agrees within one render pass; pull-to-
-  // refresh advances it so due/up-next recompute against the current time.
-  const [now, setNow] = useState(() => Date.now())
+  // Snapshot the clock so every derivation agrees within one render pass. Stores are
+  // live (RxDB-reactive), so due/up-next stay current without a manual refresh.
+  const [now] = useState(() => Date.now())
 
   useEffect(() => {
     profileStore.getState().start()
@@ -142,64 +141,51 @@ export function HomePage({
   const handleDuplicatePalace = (palaceId: string) => void duplicatePalace(palaceStore, palaceId)
   const handleDeletePalace = (palaceId: string) => void deletePalace(palaceStore, palaceId)
 
-  // Local-first "refresh": re-pull every store and advance the clock so due counts and
-  // up-next reflect the current moment. The brief hold makes the gesture feel answered.
-  const handleRefresh = async () => {
-    progressStore.getState().start()
-    notificationStore.getState().start()
-    palaceStore.getState().start()
-    roomStore.getState().start()
-    locusStore.getState().start()
-    setNow(Date.now())
-    await new Promise((resolve) => setTimeout(resolve, 600))
-  }
-
   return (
-    <AppScreen className="pb-nav">
-      <PullToRefresh onRefresh={handleRefresh} label={t('home.refreshing')}>
-        <HomeHeader
-          name={name}
-          avatar={profile.avatar}
-          xp={progress?.xp ?? 0}
-          unreadCount={unreadCount}
-          streakCount={progress?.streakCount ?? 0}
-          dueCount={dueCount}
-          showStats={hasPalaces}
-          onOpenProfile={() => onOpenProfile?.()}
-          onOpenNotifications={() => onOpenNotifications?.()}
-          onOpenStreak={() => onOpenStreak?.()}
-        />
+    <AppScreen className="pb-nav" scrollRef={header.ref}>
+      <HomeHeader
+        header={header}
+        name={name}
+        avatar={profile.avatar}
+        xp={progress?.xp ?? 0}
+        unreadCount={unreadCount}
+        streakCount={progress?.streakCount ?? 0}
+        dueCount={dueCount}
+        showStats={hasPalaces}
+        onOpenProfile={() => onOpenProfile?.()}
+        onOpenNotifications={() => onOpenNotifications?.()}
+        onOpenStreak={() => onOpenStreak?.()}
+      />
 
-        <TodayTrainingCard
-          className="mt-6"
-          hasPalaces={hasPalaces}
-          dueCount={dueCount}
-          xp={progress?.xp ?? 0}
-          streakCount={progress?.streakCount ?? 0}
-          onStartTraining={handleStartTraining}
-          onCreatePalace={() => onCreatePalace?.()}
-        />
+      <TodayTrainingCard
+        className="mt-6"
+        hasPalaces={hasPalaces}
+        dueCount={dueCount}
+        xp={progress?.xp ?? 0}
+        streakCount={progress?.streakCount ?? 0}
+        onStartTraining={handleStartTraining}
+        onCreatePalace={() => onCreatePalace?.()}
+      />
 
-        <DailyReviewCard className="mt-6" dueCount={dueCount} onOpen={() => onStartReview?.()} />
+      <DailyReviewCard className="mt-6" dueCount={dueCount} onOpen={() => onStartReview?.()} />
 
-        {hasPalaces ? (
-          <>
-            <UpNextCard className="mt-6" rooms={upNext} onOpenRoom={(id) => onTrainRoom?.(id)} />
+      {hasPalaces ? (
+        <>
+          <UpNextCard className="mt-6" rooms={upNext} onOpenRoom={(id) => onTrainRoom?.(id)} />
 
-            <PalacesOverview
-              className="mt-6"
-              palaces={palaceSummaries}
-              onOpenPalace={(id) => onOpenPalace?.(id)}
-              onViewAll={() => onViewAllPalaces?.()}
-              onTrainPalace={handleTrainPalace}
-              onDuplicatePalace={handleDuplicatePalace}
-              onDeletePalace={handleDeletePalace}
-            />
-          </>
-        ) : (
-          <FirstRunGuide className="mt-6" />
-        )}
-      </PullToRefresh>
+          <PalacesOverview
+            className="mt-6"
+            palaces={palaceSummaries}
+            onOpenPalace={(id) => onOpenPalace?.(id)}
+            onViewAll={() => onViewAllPalaces?.()}
+            onTrainPalace={handleTrainPalace}
+            onDuplicatePalace={handleDuplicatePalace}
+            onDeletePalace={handleDeletePalace}
+          />
+        </>
+      ) : (
+        <FirstRunGuide className="mt-6" />
+      )}
     </AppScreen>
   )
 }

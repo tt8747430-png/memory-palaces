@@ -1,10 +1,12 @@
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Bell, BellRing, Camera, Settings } from 'lucide-react'
-import { levelFromXp, useCollapsibleHeader } from '@/shared/lib'
+import { levelFromXp, type CollapsibleHeader } from '@/shared/lib'
 import { Avatar, IconButton, type IconButtonVariant } from '@/shared/ui'
 
 export interface ProfileHeaderProps {
+  /** Collapse state, owned by the page so its scroll container drives it. */
+  header: CollapsibleHeader
   name: string
   /** Handle shown under the name (no leading @). */
   username: string
@@ -26,6 +28,7 @@ export interface ProfileHeaderProps {
  * sticky bar fades in. The top-right carries the notifications bell and the settings
  * gear. Parallax + reduced-motion handled by useCollapsibleHeader. */
 export function ProfileHeader({
+  header,
   name,
   username,
   avatar,
@@ -37,7 +40,6 @@ export function ProfileHeader({
   onEditProfile,
 }: ProfileHeaderProps) {
   const { t } = useTranslation()
-  const header = useCollapsibleHeader()
   const { level, xpInLevel, xpForNextLevel } = levelFromXp(xp)
   const fill = Math.round((xpInLevel / xpForNextLevel) * 100)
   const levelLabel = t('progress.level', { level })

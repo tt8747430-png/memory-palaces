@@ -1,10 +1,12 @@
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Bell, BellRing, Brain, ChevronRight, Flame, Layers, Zap } from 'lucide-react'
-import { levelFromXp, useCollapsibleHeader } from '@/shared/lib'
+import { levelFromXp, type CollapsibleHeader } from '@/shared/lib'
 import { Avatar, IconButton, type IconButtonVariant } from '@/shared/ui'
 
 export interface HomeHeaderProps {
+  /** Collapse state, owned by the page so its scroll container drives it. */
+  header: CollapsibleHeader
   name: string
   /** The user's photo, or null/undefined to fall back to gradient initials. */
   avatar?: string | null
@@ -26,6 +28,7 @@ export interface HomeHeaderProps {
  * that recedes on scroll while a compact sticky bar fades in keeping profile, level, and
  * bell reachable. Mirrors the old ProgressHeader. */
 export function HomeHeader({
+  header,
   name,
   avatar,
   xp,
@@ -38,7 +41,6 @@ export function HomeHeader({
   onOpenStreak,
 }: HomeHeaderProps) {
   const { t } = useTranslation()
-  const header = useCollapsibleHeader()
   const { level, xpInLevel, xpForNextLevel } = levelFromXp(xp)
   const levelLabel = t('home.levelShort', { level })
   const fill = Math.round((xpInLevel / xpForNextLevel) * 100)
@@ -46,6 +48,8 @@ export function HomeHeader({
 
   return (
     <>
+      {/* Compact bar: fixed to the viewport, a sibling of the scroll container so it
+          stays pinned while the hero below scrolls away. */}
       <motion.div
         style={{ opacity: header.compactOpacity, pointerEvents: header.compactPointerEvents }}
         className="fixed inset-x-0 top-0 z-[100] mx-auto flex max-w-[430px] items-center justify-between gap-3 border-b border-border bg-card-glass px-5 pb-2.5 pt-[calc(env(safe-area-inset-top)+0.625rem)] shadow-rest"
