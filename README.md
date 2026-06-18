@@ -3,8 +3,8 @@
 A phone-first, **offline-first PWA** for memory training with the method of loci.
 Rewrite of the original app into **Feature-Sliced Design × Clean/Hexagonal Architecture**.
 
-> Architecture plan: `../memory-palaces-app-ui/docs/ai_docs/NEW_ARCHITECHTURE.md` · Design system:
-> `docs/DESIGN_SYSTEM.md` + `docs/tokens.css`
+> Architecture plan: `docs/NEW_ARCHITECHTURE.md` · Product strategy: `PRODUCT.md` ·
+> Design system: `DESIGN.md` + `src/styles/tokens.css`
 
 ## Stack
 
@@ -43,11 +43,15 @@ app  →  pages  →  widgets  →  features  →  entities  →  shared
 - **app** — the **composition root**: the one place concrete adapters are chosen and
   **injected** into ports (Dependency Inversion), plus providers, router, global styles.
 
-**Persistence** is behind ports: `InMemoryRepository` today → RxDB (Phase 3) → Supabase
-sync (Phase 9), with **no change to entity/feature code**.
+**Persistence** is behind ports: persisted entities run on **RxDB** (IndexedDB via Dexie)
+today, with **Supabase sync** (Phase 9) layered in behind the same ports — **no change to
+entity/feature code**. The ephemeral session uses the in-memory adapter.
 
 ## Status
 
-Phase 0 (design system) and Phase 1 (foundation / walking skeleton) complete: an
-installable PWA shell boots as a guest, reads session state through an injected repository,
-and is styled entirely via semantic tokens. Remaining phases per the architecture plan.
+Well past the walking skeleton. An installable PWA boots as a guest with full local-first
+CRUD for palaces, rooms, loci, and questions; spaced-repetition review, quizzes, and
+matching; streaks/XP and achievements; notifications; and a complete settings/profile area.
+Every persisted entity lives in RxDB (IndexedDB via Dexie) behind injected ports, and the
+whole UI is styled via semantic tokens. Remaining: Supabase sync (Phase 9) and the AI Tutor
+(final phase), per the architecture plan.
