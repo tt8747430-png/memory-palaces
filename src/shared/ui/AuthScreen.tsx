@@ -71,7 +71,7 @@ export function AuthScreen({ children, className }: { children: ReactNode; class
       <AuthAtmosphere />
       {/* Scroll layer over the fixed atmosphere; the column grows past the viewport
           (min-h-full) so tall forms scroll instead of clipping. */}
-      <div className="relative h-full overflow-y-auto overscroll-contain scrollbar-hide">
+      <div className="relative h-full overflow-y-auto overscroll-none scrollbar-hide">
         <div
           className={cn(
             'mx-auto flex min-h-full w-full max-w-[430px] flex-col px-6 pt-safe pb-safe',

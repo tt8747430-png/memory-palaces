@@ -18,7 +18,10 @@ export function AppScreen({
     <main
       ref={scrollRef}
       className={cn(
-        'mx-auto flex h-full w-full max-w-[430px] flex-col overflow-y-auto overscroll-contain scrollbar-hide px-5 pb-safe',
+        // `overscroll-none` (not `contain`) so over-scrolling at the top doesn't
+        // rubber-band the whole column and drag the sticky/hero header down with it —
+        // the header stays put, only the content moves.
+        'mx-auto flex h-full w-full max-w-[430px] flex-col overflow-y-auto overscroll-none scrollbar-hide px-5 pb-safe',
         className,
       )}
     >
