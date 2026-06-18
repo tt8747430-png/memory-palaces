@@ -11,7 +11,7 @@ import {
 import { useDrag } from '@use-gesture/react'
 import { Flag, Lightbulb, MapPin, Volume2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { impact, tick } from '@/shared/lib'
+import { cn, impact, tick } from '@/shared/lib'
 import { Chip, SrsStatusChip } from '@/shared/ui'
 import type { StudyCard, StudyDirection } from '../model/types'
 
@@ -177,10 +177,10 @@ export function StudyCardDeck({
 
       {swipeEnabled ? (
         <>
-          <SwipeBadge style={{ opacity: gotItOpacity }} className="left-5 -rotate-12 text-[var(--success-on-surface)]">
+          <SwipeBadge style={{ opacity: gotItOpacity }} className="left-5 top-5 -rotate-12 text-[var(--success-on-surface)]">
             {mode === 'review' ? t('study.swipeGotIt') : t('study.prev')}
           </SwipeBadge>
-          <SwipeBadge style={{ opacity: learningOpacity }} className="right-5 rotate-12 text-[var(--warning-foreground)]">
+          <SwipeBadge style={{ opacity: learningOpacity }} className="right-5 top-5 rotate-12 text-[var(--warning-foreground)]">
             {mode === 'review' ? t('study.swipeLearning') : t('study.next')}
           </SwipeBadge>
           <SwipeBadge
@@ -326,7 +326,10 @@ function SwipeBadge({
   return (
     <motion.div
       style={style}
-      className={`pointer-events-none absolute top-5 z-30 rounded-card border-2 border-current bg-card px-3 py-1.5 text-[length:var(--p-text-sub)] font-extrabold uppercase tracking-wide ${className}`}
+      className={cn(
+        'pointer-events-none absolute z-30 rounded-card border-2 border-current bg-card px-3 py-1.5 text-[length:var(--p-text-sub)] font-extrabold uppercase tracking-wide',
+        className,
+      )}
     >
       {children}
     </motion.div>

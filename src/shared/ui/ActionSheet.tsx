@@ -47,7 +47,10 @@ export function ActionSheet({
   }
 
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+    // `trap-focus` (not full modal): the shell never scrolls the body, so Base UI's
+    // body scroll lock is unnecessary and, if a sheet unmounts mid-navigation, can
+    // leave the page unscrollable. Focus trap + dismiss are kept.
+    <Dialog.Root open={open} onOpenChange={onOpenChange} modal="trap-focus">
       <Dialog.Portal>
         <Dialog.Backdrop
           className={cn(
