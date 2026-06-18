@@ -6,6 +6,7 @@ export {
   useCollapsibleHeader,
   type CollapsibleHeader,
 } from './collapsible-header/use-collapsible-header'
+export { headerHeight } from './collapsible-header/collapse'
 export {
   clampSwipeOffset,
   shouldCommitSwipe,
