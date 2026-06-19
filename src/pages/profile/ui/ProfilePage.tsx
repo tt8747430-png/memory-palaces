@@ -20,7 +20,7 @@ import {
   useNotificationStore,
   useNotificationStoreApi,
 } from '@/entities/notification'
-import { ProfileHeader } from '@/widgets/profile-header'
+import { ProfileBar, ProfileHero } from '@/widgets/profile-header'
 import { BadgesSection, NextMilestoneCard } from '@/widgets/badge-list'
 import { AchievementsSection } from '@/widgets/achievement-list'
 import { AppScreen } from '@/shared/ui'
@@ -131,9 +131,20 @@ export function ProfilePage({
   )
 
   return (
-    <AppScreen className="pb-nav" scrollRef={header.ref}>
-      <ProfileHeader
-        header={header}
+    <AppScreen
+      className="pb-nav"
+      scrollRef={header.ref}
+      header={
+        <ProfileBar
+          header={header}
+          name={name}
+          unreadCount={unreadCount}
+          onOpenNotifications={() => onOpenNotifications?.()}
+          onOpenSettings={() => onOpenSettings?.()}
+        />
+      }
+    >
+      <ProfileHero
         name={name}
         username={profile.username}
         avatar={profile.avatar}
@@ -141,16 +152,12 @@ export function ProfilePage({
         streakCount={streakCount}
         palaceCount={palaces.length}
         joinedYear={session?.createdAt ? joinedYearOf(session.createdAt) : null}
-        unreadCount={unreadCount}
-        onOpenSettings={() => onOpenSettings?.()}
-        onOpenNotifications={() => onOpenNotifications?.()}
         onEditProfile={() => onEditProfile?.()}
         onOpenStreak={() => onOpenStreak?.()}
       />
 
-      {/* Fill at least a screen so a short profile still scrolls far enough to bring the
-          bar's glass edge in (and to give the native pull-to-bounce something to
-          overflow). Taller content scrolls normally. */}
+      {/* Fill at least a screen so a short profile still scrolls (gives the native
+          pull-to-bounce something to overflow). Taller content scrolls normally. */}
       <div className="mt-8 flex min-h-[calc(100dvh-20rem)] flex-col gap-8">
         {milestone ? <NextMilestoneCard badge={milestone} onOpen={() => onOpenBadges?.()} /> : null}
         <BadgesSection badges={badges} onSeeAll={() => onOpenBadges?.()} />

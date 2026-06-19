@@ -1,2 +1,4 @@
-export { ProfileHeader } from './ui/ProfileHeader'
-export type { ProfileHeaderProps } from './ui/ProfileHeader'
+export { ProfileBar } from './ui/ProfileBar'
+export type { ProfileBarProps } from './ui/ProfileBar'
+export { ProfileHero } from './ui/ProfileHero'
+export type { ProfileHeroProps } from './ui/ProfileHero'

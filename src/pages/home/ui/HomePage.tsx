@@ -139,17 +139,21 @@ export function HomePage({
   const handleDeletePalace = (palaceId: string) => void deletePalace(palaceStore, palaceId)
 
   return (
-    <AppScreen className="pb-nav" scrollRef={header.ref}>
-      <HomeHeader
-        header={header}
-        name={name}
-        avatar={profile.avatar}
-        xp={progress?.xp ?? 0}
-        unreadCount={unreadCount}
-        onOpenProfile={() => onOpenProfile?.()}
-        onOpenNotifications={() => onOpenNotifications?.()}
-      />
-
+    <AppScreen
+      className="pb-nav"
+      scrollRef={header.ref}
+      header={
+        <HomeHeader
+          header={header}
+          name={name}
+          avatar={profile.avatar}
+          xp={progress?.xp ?? 0}
+          unreadCount={unreadCount}
+          onOpenProfile={() => onOpenProfile?.()}
+          onOpenNotifications={() => onOpenNotifications?.()}
+        />
+      }
+    >
       <TodayTrainingCard
         className="mt-6"
         hasPalaces={hasPalaces}
