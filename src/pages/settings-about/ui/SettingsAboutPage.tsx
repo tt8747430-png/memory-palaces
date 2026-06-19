@@ -14,12 +14,15 @@ export function SettingsAboutPage({ onBack }: { onBack?: () => void }) {
   const openLink = (url: string) => window.open(url, '_blank', 'noopener,noreferrer')
 
   return (
-    <AppScreen className="pt-safe">
-      <ScreenHeader
-        title={t('settings.aboutScreen.title')}
-        onBack={onBack}
-        backLabel={t('settings.back')}
-      />
+    <AppScreen
+      header={
+        <ScreenHeader
+          title={t('settings.aboutScreen.title')}
+          onBack={onBack}
+          backLabel={t('settings.back')}
+        />
+      }
+    >
 
       <div className="mt-4 flex flex-col gap-6 pb-28">
         <div className="flex flex-col items-center gap-3 pt-4 text-center">

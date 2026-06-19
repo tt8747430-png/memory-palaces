@@ -36,12 +36,15 @@ export function SettingsChangePasswordPage({ onBack }: SettingsChangePasswordPag
   }
 
   return (
-    <AppScreen className="pt-safe">
-      <ScreenHeader
-        title={t('settings.changePasswordScreen.title')}
-        onBack={onBack}
-        backLabel={t('settings.back')}
-      />
+    <AppScreen
+      header={
+        <ScreenHeader
+          title={t('settings.changePasswordScreen.title')}
+          onBack={onBack}
+          backLabel={t('settings.back')}
+        />
+      }
+    >
 
       <form className="mt-4 flex flex-col gap-4 pb-28" onSubmit={handleSubmit} noValidate>
         <PasswordField

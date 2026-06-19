@@ -58,28 +58,31 @@ export function NotificationsPage({ onBack }: NotificationsPageProps = {}) {
   ]
 
   return (
-    <AppScreen className="pt-safe">
-      <ScreenHeader
-        title={t('notifications.title')}
-        subtitle={
-          count > 0
-            ? t(count === 1 ? 'notifications.countOne' : 'notifications.countOther', { count })
-            : undefined
-        }
-        onBack={onBack}
-        backLabel={t('notifications.back')}
-        action={
-          notifications.length > 0 ? (
-            <OverflowMenuButton
-              variant="glass"
-              label={t('common.moreOptions')}
-              title={t('common.options')}
-              actions={overflowActions}
-              cancelLabel={t('common.cancel')}
-            />
-          ) : null
-        }
-      />
+    <AppScreen
+      header={
+        <ScreenHeader
+          title={t('notifications.title')}
+          subtitle={
+            count > 0
+              ? t(count === 1 ? 'notifications.countOne' : 'notifications.countOther', { count })
+              : undefined
+          }
+          onBack={onBack}
+          backLabel={t('notifications.back')}
+          action={
+            notifications.length > 0 ? (
+              <OverflowMenuButton
+                variant="glass"
+                label={t('common.moreOptions')}
+                title={t('common.options')}
+                actions={overflowActions}
+                cancelLabel={t('common.cancel')}
+              />
+            ) : null
+          }
+        />
+      }
+    >
       <div className="mt-2 pb-28">
         <NotificationsPanel
           notifications={notifications}

@@ -18,8 +18,15 @@ export function SettingsHelpPage({ onBack }: { onBack?: () => void }) {
   const { t } = useTranslation()
 
   return (
-    <AppScreen className="pt-safe">
-      <ScreenHeader title={t('settings.help.title')} onBack={onBack} backLabel={t('settings.back')} />
+    <AppScreen
+      header={
+        <ScreenHeader
+          title={t('settings.help.title')}
+          onBack={onBack}
+          backLabel={t('settings.back')}
+        />
+      }
+    >
 
       <div className="mt-4 flex flex-col gap-6 pb-28">
         <p className="px-1 text-[length:var(--p-text-sub)] text-muted-foreground">

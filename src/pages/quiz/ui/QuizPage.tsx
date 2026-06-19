@@ -47,7 +47,9 @@ export function QuizPage({ palaceId, onBack }: QuizPageProps) {
     questionStore.getState().start()
   }, [palaceStore, roomStore, questionStore])
 
-  const palace = usePalaceStore((state) => state.palaces.find((candidate) => candidate.id === palaceId))
+  const palace = usePalaceStore((state) =>
+    state.palaces.find((candidate) => candidate.id === palaceId),
+  )
   const allRooms = useRoomStore(selectRooms)
   const allQuestions = useQuestionStore(selectQuestions)
   // Each store hook runs unconditionally (Rules of Hooks); combine after.
@@ -88,15 +90,21 @@ export function QuizPage({ palaceId, onBack }: QuizPageProps) {
 
   if (!palace) {
     return (
-      <AppScreen>
-        <ScreenHeader title={t('quiz.notFound')} onBack={onBack} backLabel={t('quiz.back')} />
-      </AppScreen>
+      <AppScreen
+        header={
+          <ScreenHeader title={t('quiz.notFound')} onBack={onBack} backLabel={t('quiz.back')} />
+        }
+      />
     )
   }
 
   const handleComplete = (result: QuizResult) => {
     // A passing quiz (≥80%) counts as a training day; XP scales with correct answers.
-    void reward({ xp: quizXp(result.score), quizAccuracy: result.accuracy, recordDay: result.accuracy >= 80 })
+    void reward({
+      xp: quizXp(result.score),
+      quizAccuracy: result.accuracy,
+      recordDay: result.accuracy >= 80,
+    })
     onBack?.()
   }
 

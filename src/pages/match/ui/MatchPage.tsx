@@ -63,9 +63,11 @@ export function MatchPage({ roomId, onBack }: MatchPageProps) {
 
   if (!room) {
     return (
-      <AppScreen>
-        <ScreenHeader title={t('train.notFound')} onBack={onBack} backLabel={t('match.back')} />
-      </AppScreen>
+      <AppScreen
+        header={
+          <ScreenHeader title={t('train.notFound')} onBack={onBack} backLabel={t('match.back')} />
+        }
+      />
     )
   }
 

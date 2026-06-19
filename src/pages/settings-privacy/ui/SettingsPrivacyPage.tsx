@@ -62,12 +62,15 @@ export function SettingsPrivacyPage({ onBack }: SettingsPrivacyPageProps) {
   ]
 
   return (
-    <AppScreen className="pt-safe">
-      <ScreenHeader
-        title={t('settings.privacyScreen.title')}
-        onBack={onBack}
-        backLabel={t('settings.back')}
-      />
+    <AppScreen
+      header={
+        <ScreenHeader
+          title={t('settings.privacyScreen.title')}
+          onBack={onBack}
+          backLabel={t('settings.back')}
+        />
+      }
+    >
 
       <div className="mt-4 flex flex-col gap-5 pb-28">
         <div className="rounded-card bg-info-surface p-4">

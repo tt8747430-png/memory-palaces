@@ -50,29 +50,31 @@ export function PalaceDetailPage({
   }
 
   return (
-    <AppScreen>
-      <ScreenHeader
-        title={palace ? palace.name : t('palaceDetail.notFound')}
-        onBack={onBack}
-        backLabel={t('palaceDetail.back')}
-        action={
-          palace ? (
-            <div className="flex items-center gap-2">
-              {rooms.length > 0 ? <Chip>{rooms.length}</Chip> : null}
-              {onQuiz ? (
-                <IconButton
-                  variant="tint"
-                  aria-label={t('palaceDetail.quizLabel', { name: palace.name })}
-                  onClick={onQuiz}
-                >
-                  <Brain className="size-5" aria-hidden />
-                </IconButton>
-              ) : null}
-            </div>
-          ) : undefined
-        }
-      />
-
+    <AppScreen
+      header={
+        <ScreenHeader
+          title={palace ? palace.name : t('palaceDetail.notFound')}
+          onBack={onBack}
+          backLabel={t('palaceDetail.back')}
+          action={
+            palace ? (
+              <div className="flex items-center gap-2">
+                {rooms.length > 0 ? <Chip>{rooms.length}</Chip> : null}
+                {onQuiz ? (
+                  <IconButton
+                    variant="tint"
+                    aria-label={t('palaceDetail.quizLabel', { name: palace.name })}
+                    onClick={onQuiz}
+                  >
+                    <Brain className="size-5" aria-hidden />
+                  </IconButton>
+                ) : null}
+              </div>
+            ) : undefined
+          }
+        />
+      }
+    >
       {palace ? (
         <>
           <form onSubmit={handleCreate} className="mt-4 flex items-center gap-2">

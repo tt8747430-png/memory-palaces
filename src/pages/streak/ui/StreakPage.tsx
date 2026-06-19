@@ -37,9 +37,12 @@ export function StreakPage({ onBack }: StreakPageProps = {}) {
   }, [trainingDays, now])
 
   return (
-    <AppScreen className="pb-28">
-      <ScreenHeader title={t('streak.title')} onBack={onBack} backLabel={t('common.back')} />
-
+    <AppScreen
+      className="pb-28"
+      header={
+        <ScreenHeader title={t('streak.title')} onBack={onBack} backLabel={t('common.back')} />
+      }
+    >
       <div className="mt-2 flex flex-col gap-5">
         <section
           className="relative overflow-hidden rounded-card-featured p-6"

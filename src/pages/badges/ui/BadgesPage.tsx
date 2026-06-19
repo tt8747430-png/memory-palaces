@@ -48,8 +48,10 @@ export function BadgesPage({ onBack }: BadgesPageProps = {}) {
   const earned = badges.filter((badge) => badge.tier > 0).length
 
   return (
-    <AppScreen className="pb-28">
-      <ScreenHeader title={t('badges.title')} onBack={onBack} backLabel={t('common.back')} />
+    <AppScreen
+      className="pb-28"
+      header={<ScreenHeader title={t('badges.title')} onBack={onBack} backLabel={t('common.back')} />}
+    >
 
       <div className="mt-2 flex flex-col gap-5">
         <p className="px-1 text-[length:var(--p-text-label)] text-muted-foreground">

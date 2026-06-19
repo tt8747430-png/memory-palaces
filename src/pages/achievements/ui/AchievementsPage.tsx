@@ -93,8 +93,16 @@ export function AchievementsPage({ onBack }: AchievementsPageProps = {}) {
   ]
 
   return (
-    <AppScreen className="pb-28">
-      <ScreenHeader title={t('achievementsPage.title')} onBack={onBack} backLabel={t('common.back')} />
+    <AppScreen
+      className="pb-28"
+      header={
+        <ScreenHeader
+          title={t('achievementsPage.title')}
+          onBack={onBack}
+          backLabel={t('common.back')}
+        />
+      }
+    >
 
       <div className="mt-2 flex flex-col gap-6">
         <section>

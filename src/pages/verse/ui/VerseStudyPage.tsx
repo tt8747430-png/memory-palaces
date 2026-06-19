@@ -63,9 +63,11 @@ export function VerseStudyPage({ roomId, onBack }: VerseStudyPageProps) {
 
   if (!room) {
     return (
-      <AppScreen>
-        <ScreenHeader title={t('train.notFound')} onBack={onBack} backLabel={t('verse.back')} />
-      </AppScreen>
+      <AppScreen
+        header={
+          <ScreenHeader title={t('train.notFound')} onBack={onBack} backLabel={t('verse.back')} />
+        }
+      />
     )
   }
 

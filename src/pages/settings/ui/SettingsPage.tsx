@@ -91,9 +91,11 @@ export function SettingsPage({
   }
 
   return (
-    <AppScreen className="pt-safe">
-      <ScreenHeader title={t('settings.title')} onBack={onBack} backLabel={t('settings.back')} />
-
+    <AppScreen
+      header={
+        <ScreenHeader title={t('settings.title')} onBack={onBack} backLabel={t('settings.back')} />
+      }
+    >
       <div className="mt-4 flex flex-col gap-5 pb-28">
         <button
           type="button"

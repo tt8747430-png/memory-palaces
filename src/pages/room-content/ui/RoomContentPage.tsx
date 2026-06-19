@@ -39,36 +39,39 @@ export function RoomContentPage({ roomId, onBack, onMatch, onVerse }: RoomConten
   }, [roomStore, locusStore, questionStore])
 
   return (
-    <AppScreen>
-      <ScreenHeader
-        title={room ? room.title : t('roomContent.notFound')}
-        onBack={onBack}
-        backLabel={t('roomContent.back')}
-        action={
-          room ? (
-            <div className="flex items-center gap-2">
-              {onVerse ? (
-                <IconButton
-                  variant="tint"
-                  aria-label={t('verse.openLabel', { title: room.title })}
-                  onClick={onVerse}
-                >
-                  <BookText className="size-5" aria-hidden />
-                </IconButton>
-              ) : null}
-              {onMatch ? (
-                <IconButton
-                  variant="tint"
-                  aria-label={t('match.openLabel', { title: room.title })}
-                  onClick={onMatch}
-                >
-                  <Puzzle className="size-5" aria-hidden />
-                </IconButton>
-              ) : null}
-            </div>
-          ) : undefined
-        }
-      />
+    <AppScreen
+      header={
+        <ScreenHeader
+          title={room ? room.title : t('roomContent.notFound')}
+          onBack={onBack}
+          backLabel={t('roomContent.back')}
+          action={
+            room ? (
+              <div className="flex items-center gap-2">
+                {onVerse ? (
+                  <IconButton
+                    variant="tint"
+                    aria-label={t('verse.openLabel', { title: room.title })}
+                    onClick={onVerse}
+                  >
+                    <BookText className="size-5" aria-hidden />
+                  </IconButton>
+                ) : null}
+                {onMatch ? (
+                  <IconButton
+                    variant="tint"
+                    aria-label={t('match.openLabel', { title: room.title })}
+                    onClick={onMatch}
+                  >
+                    <Puzzle className="size-5" aria-hidden />
+                  </IconButton>
+                ) : null}
+              </div>
+            ) : undefined
+          }
+        />
+      }
+    >
       {room ? <RoomContentBody roomId={roomId} /> : null}
     </AppScreen>
   )

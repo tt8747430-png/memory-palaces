@@ -157,39 +157,39 @@ export function HomePage({
         onOpenStreak={() => onOpenStreak?.()}
       />
 
-      {/* Fill enough below the hero that a short page (e.g. a single row of palaces) still
-          scrolls far enough to recede the hero into the compact bar. Taller content scrolls
-          normally. Mirrors the profile screen's spacer. */}
-      <div className="mt-6 min-h-[calc(100dvh-13rem)]">
-        <TodayTrainingCard
-          hasPalaces={hasPalaces}
-          dueCount={dueCount}
-          xp={progress?.xp ?? 0}
-          streakCount={progress?.streakCount ?? 0}
-          onStartTraining={handleStartTraining}
-          onCreatePalace={() => onCreatePalace?.()}
-        />
+      <TodayTrainingCard
+        className="mt-6"
+        hasPalaces={hasPalaces}
+        dueCount={dueCount}
+        xp={progress?.xp ?? 0}
+        streakCount={progress?.streakCount ?? 0}
+        onStartTraining={handleStartTraining}
+        onCreatePalace={() => onCreatePalace?.()}
+      />
 
-        <DailyReviewCard className="mt-6" dueCount={dueCount} onOpen={() => onStartReview?.()} />
+      <DailyReviewCard className="mt-6" dueCount={dueCount} onOpen={() => onStartReview?.()} />
 
-        {hasPalaces ? (
-          <>
-            <UpNextCard className="mt-6" rooms={upNext} onOpenRoom={(id) => onTrainRoom?.(id)} />
+      {hasPalaces ? (
+        <>
+          <UpNextCard className="mt-6" rooms={upNext} onOpenRoom={(id) => onTrainRoom?.(id)} />
 
-            <PalacesOverview
-              className="mt-6"
-              palaces={palaceSummaries}
-              onOpenPalace={(id) => onOpenPalace?.(id)}
-              onViewAll={() => onViewAllPalaces?.()}
-              onTrainPalace={handleTrainPalace}
-              onDuplicatePalace={handleDuplicatePalace}
-              onDeletePalace={handleDeletePalace}
-            />
-          </>
-        ) : (
-          <FirstRunGuide className="mt-6" />
-        )}
-      </div>
+          {/* Last in flow, so scrolling to the bottom lands the palaces right above the
+              floating nav (the page's `pb-nav` clears it) instead of on empty space. */}
+          <PalacesOverview
+            className="mt-6"
+            palaces={palaceSummaries}
+            onOpenPalace={(id) => onOpenPalace?.(id)}
+            onViewAll={() => onViewAllPalaces?.()}
+            onTrainPalace={handleTrainPalace}
+            onDuplicatePalace={handleDuplicatePalace}
+            onDeletePalace={handleDeletePalace}
+          />
+        </>
+      ) : (
+        // Day-one empty state has no palaces to strand, so fill past the viewport to keep
+        // the page scrollable — the native pull-to-bounce needs something to overflow.
+        <FirstRunGuide className="mt-6 min-h-[calc(100dvh-24rem)]" />
+      )}
     </AppScreen>
   )
 }

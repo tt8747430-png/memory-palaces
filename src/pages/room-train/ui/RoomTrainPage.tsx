@@ -103,9 +103,11 @@ export function RoomTrainPage({ roomId, onBack }: RoomTrainPageProps) {
 
   if (!room) {
     return (
-      <AppScreen>
-        <ScreenHeader title={t('train.notFound')} onBack={onBack} backLabel={t('train.back')} />
-      </AppScreen>
+      <AppScreen
+        header={
+          <ScreenHeader title={t('train.notFound')} onBack={onBack} backLabel={t('train.back')} />
+        }
+      />
     )
   }
 

@@ -161,12 +161,15 @@ export function SettingsProfilePage({
   }
 
   return (
-    <AppScreen className="pt-safe">
-      <ScreenHeader
-        title={t('settings.profileEdit.title')}
-        onBack={onBack}
-        backLabel={t('settings.back')}
-      />
+    <AppScreen
+      header={
+        <ScreenHeader
+          title={t('settings.profileEdit.title')}
+          onBack={onBack}
+          backLabel={t('settings.back')}
+        />
+      }
+    >
 
       <motion.div
         initial={{ opacity: 0, y: 8 }}
