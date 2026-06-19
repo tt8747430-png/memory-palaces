@@ -19,12 +19,14 @@ export function UpNextCard({ rooms, onOpenRoom, className }: UpNextCardProps) {
 
   return (
     <section aria-labelledby="up-next-heading" className={className}>
-      <h2
-        id="up-next-heading"
-        className="mb-3 px-1 text-[length:var(--p-text-sub)] font-bold text-heading"
-      >
-        {t('home.upNext')}
-      </h2>
+      <div className="mb-3 px-1">
+        <h2 id="up-next-heading" className="text-[length:var(--p-text-sub)] font-bold text-heading">
+          {t('home.upNext')}
+        </h2>
+        <p className="mt-0.5 text-[length:var(--p-text-label)] text-muted-foreground">
+          {t('home.upNextCaption')}
+        </p>
+      </div>
       <ul className={cn(cardSurface, 'overflow-hidden')}>
         {rooms.map((room, index) => (
           <li key={room.roomId}>
@@ -72,7 +74,5 @@ function StatusChip({ room }: { room: UpNextRoom }) {
     )
   }
   if (room.bucket === 1) return <Chip className="shrink-0">{t('home.inProgress')}</Chip>
-  return (
-    <Chip className="shrink-0 bg-muted text-muted-foreground">{t('home.notStarted')}</Chip>
-  )
+  return <Chip className="shrink-0 bg-muted text-muted-foreground">{t('home.notStarted')}</Chip>
 }

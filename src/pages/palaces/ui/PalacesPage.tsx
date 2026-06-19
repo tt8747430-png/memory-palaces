@@ -9,11 +9,13 @@ import { AppScreen, IconButton, TextField } from '@/shared/ui'
 export interface PalacesPageProps {
   /** Navigate to a palace's detail. Wired by the route (kept off the component for tests). */
   onOpenPalace?: (id: string) => void
+  /** Arriving from the home's "Create palace" CTA: focus the create field on mount. */
+  autoFocusCreate?: boolean
 }
 
 /** Palaces screen — the first fully-vertical slice: reactive list off RxDB plus
  * create/edit/delete/duplicate, all persisting offline through the injected store. */
-export function PalacesPage({ onOpenPalace }: PalacesPageProps = {}) {
+export function PalacesPage({ onOpenPalace, autoFocusCreate }: PalacesPageProps = {}) {
   const { t } = useTranslation()
   const store = usePalaceStoreApi()
   const palaces = usePalaceStore(selectPalaces)
@@ -44,6 +46,7 @@ export function PalacesPage({ onOpenPalace }: PalacesPageProps = {}) {
         <TextField
           aria-label={t('palaces.createLabel')}
           placeholder={t('palaces.createPlaceholder')}
+          autoFocus={autoFocusCreate}
           value={name}
           onChange={(event) => setName(event.target.value)}
         />

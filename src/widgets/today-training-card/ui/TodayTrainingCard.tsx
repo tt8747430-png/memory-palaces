@@ -1,42 +1,47 @@
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { ArrowRight, Building2, Footprints, Plus } from 'lucide-react'
-import { cn, levelFromXp } from '@/shared/lib'
+import { cn } from '@/shared/lib'
 import { Button } from '@/shared/ui'
 
 export interface TodayTrainingCardProps {
   /** False on first run (no palaces yet): swap to the "create palace" path. */
   hasPalaces: boolean
+  /** Whether the picker has a room to drop into; gates the "Start training" path. */
+  hasTrainableRoom?: boolean
+  /** Cards due today — when > 0 the hero becomes the daily-review launcher. */
+  dueCount?: number
+  /** Live streak, for the caught-up coaching line. */
+  streakCount?: number
+  /** Launch the cross-palace daily review (used when cards are due). */
+  onStartReview?: () => void
+  /** Drop into the top suggested room (used when nothing is due). */
   onStartTraining: () => void
   onCreatePalace: () => void
-  /** Real "today" signals — drive the coaching line and the honest level meter. */
-  dueCount?: number
-  xp?: number
-  streakCount?: number
   className?: string
 }
 
 /**
  * The home's primary card: the one action the screen is built around. It carries the
- * old app's "Today's training" craft — a sky-glass hero, a floating emblem that lifts
- * off the surface, and an animated meter — but the meter is bound to real level/XP
- * progress (never a fabricated daily-goal %), and the coaching line adapts to what's
+ * old app's "Today's training" craft — a sky-glass hero with a floating emblem that
+ * lifts off the surface — and it owns the single next step for the day. When cards are
+ * due it *is* the daily review (its button launches the cross-palace session), so the
+ * home never competes with a second review CTA; otherwise it starts the top suggested
+ * room, and on first run it builds the first palace. The coaching line adapts to what is
  * actually true today (cards due, a live streak, or a quiet day).
  */
 export function TodayTrainingCard({
   hasPalaces,
+  hasTrainableRoom = true,
+  dueCount = 0,
+  streakCount = 0,
+  onStartReview,
   onStartTraining,
   onCreatePalace,
-  dueCount = 0,
-  xp = 0,
-  streakCount = 0,
   className,
 }: TodayTrainingCardProps) {
   const { t } = useTranslation()
   const Emblem = hasPalaces ? Footprints : Building2
-  const { level, xpInLevel, xpForNextLevel } = levelFromXp(xp)
-  const fill = Math.min(100, Math.round((xpInLevel / xpForNextLevel) * 100))
-  const remaining = xpForNextLevel - xpInLevel
 
   const subtitle = !hasPalaces
     ? t('home.buildSubtitle')
@@ -80,49 +85,62 @@ export function TodayTrainingCard({
             {subtitle}
           </p>
 
-          {hasPalaces ? (
-            <div className="mt-4">
-              <div className="mb-1.5 flex items-center justify-between text-[length:var(--p-text-label)] font-semibold text-[color:var(--text-heading)]/80">
-                <span>{t('home.levelShort', { level })}</span>
-                <span className="tabular-nums">{t('home.xpToNext', { remaining, next: level + 1 })}</span>
-              </div>
-              <div className="relative h-2 rounded-full bg-[color:var(--primary)]/12">
-                <motion.div
-                  className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-primary to-accent"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${fill}%` }}
-                  transition={{ delay: 0.25, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-                />
-                <motion.span
-                  aria-hidden
-                  className="absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-primary bg-card shadow-rest"
-                  initial={{ left: '0%', scale: 0 }}
-                  animate={{ left: `${fill}%`, scale: 1 }}
-                  transition={{ delay: 0.25, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-                />
-              </div>
-            </div>
-          ) : null}
-
-          <Button
-            size="lg"
-            className="mt-5 w-full rounded-pill"
-            onClick={hasPalaces ? onStartTraining : onCreatePalace}
-          >
-            {hasPalaces ? (
-              <>
-                {t('home.startTraining')}
-                <ArrowRight className="size-5" aria-hidden />
-              </>
-            ) : (
-              <>
-                <Plus className="size-5" aria-hidden />
-                {t('home.createPalace')}
-              </>
-            )}
-          </Button>
+          <HeroAction
+            hasPalaces={hasPalaces}
+            hasTrainableRoom={hasTrainableRoom}
+            dueCount={dueCount}
+            onStartReview={onStartReview}
+            onStartTraining={onStartTraining}
+            onCreatePalace={onCreatePalace}
+          />
         </div>
       </div>
     </motion.div>
+  )
+}
+
+/** Resolves the hero's single action so its label always matches what happens:
+ * create on first run, review when due, train when a room is queued, else open the
+ * palaces list (never a "Start training" button that lands on a list). */
+function HeroAction({
+  hasPalaces,
+  hasTrainableRoom,
+  dueCount,
+  onStartReview,
+  onStartTraining,
+  onCreatePalace,
+}: Required<
+  Pick<
+    TodayTrainingCardProps,
+    'hasPalaces' | 'hasTrainableRoom' | 'dueCount' | 'onStartTraining' | 'onCreatePalace'
+  >
+> &
+  Pick<TodayTrainingCardProps, 'onStartReview'>) {
+  const { t } = useTranslation()
+  const className = 'mt-5 w-full rounded-control'
+
+  if (!hasPalaces) {
+    return (
+      <Button size="lg" className={className} onClick={onCreatePalace}>
+        <Plus className="size-5" aria-hidden />
+        {t('home.createPalace')}
+      </Button>
+    )
+  }
+
+  if (dueCount > 0) {
+    return (
+      <Button size="lg" className={className} onClick={onStartReview ?? onStartTraining}>
+        {t(dueCount === 1 ? 'home.reviewDueOne' : 'home.reviewDueOther', { count: dueCount })}
+        <ArrowRight className="size-5" aria-hidden />
+      </Button>
+    )
+  }
+
+  return (
+    <Button size="lg" className={className} onClick={onStartTraining}>
+      {t(hasTrainableRoom ? 'home.startTraining' : 'home.viewPalaces')}
+      <ArrowRight className="size-5" aria-hidden />
+    </Button>
   )
 }

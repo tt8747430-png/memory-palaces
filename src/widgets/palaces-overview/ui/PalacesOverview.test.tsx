@@ -76,7 +76,7 @@ describe('PalacesOverview', () => {
     expect(onTrainPalace).toHaveBeenCalledWith('acro')
   })
 
-  it('confirms before deleting a palace', async () => {
+  it('deletes a palace directly from the kebab (the undo lives in the toast)', async () => {
     const user = userEvent.setup()
     const onDeletePalace = vi.fn()
     render(
@@ -92,10 +92,7 @@ describe('PalacesOverview', () => {
 
     await user.click(screen.getByRole('button', { name: /more options for acropolis/i }))
     await user.click(await screen.findByRole('button', { name: /^delete$/i }))
-    // The first tap only opens the confirm step; nothing is deleted yet.
-    expect(onDeletePalace).not.toHaveBeenCalled()
 
-    await user.click(await screen.findByRole('button', { name: /delete palace/i }))
     expect(onDeletePalace).toHaveBeenCalledWith('acro')
   })
 })

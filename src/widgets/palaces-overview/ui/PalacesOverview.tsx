@@ -45,7 +45,6 @@ export function PalacesOverview({
 }: PalacesOverviewProps) {
   const { t } = useTranslation()
   const [menuFor, setMenuFor] = useState<PalaceSummary | null>(null)
-  const [confirmFor, setConfirmFor] = useState<PalaceSummary | null>(null)
   if (palaces.length === 0) return null
 
   const hasQuickActions = Boolean(onTrainPalace || onDuplicatePalace || onDeletePalace)
@@ -81,7 +80,9 @@ export function PalacesOverview({
         label: t('palaces.delete'),
         icon: <Trash2 className="size-5" aria-hidden />,
         destructive: true,
-        onSelect: () => setConfirmFor(palace),
+        // No confirm step: the delete is undoable (the home shows an undo toast), so the
+        // forgiving path is to act immediately rather than gate behind a dialog.
+        onSelect: () => onDeletePalace(palace.id),
       })
     }
     return actions
@@ -99,7 +100,7 @@ export function PalacesOverview({
         <button
           type="button"
           onClick={onViewAll}
-          className="flex items-center gap-1 rounded-pill px-2 py-1 text-[length:var(--p-text-label)] font-semibold text-primary transition-transform active:scale-[0.98]"
+          className="relative flex items-center gap-1 rounded-pill px-2 py-1 text-[length:var(--p-text-label)] font-semibold text-primary transition-transform after:absolute after:-inset-2 after:content-[''] active:scale-[0.98]"
         >
           {t('home.viewAll')}
           <ChevronRight className="size-4" aria-hidden />
@@ -126,29 +127,6 @@ export function PalacesOverview({
         }}
         title={menuFor?.name ?? ''}
         actions={menuFor ? menuActions(menuFor) : []}
-        cancelLabel={t('common.cancel')}
-      />
-
-      <ActionSheet
-        open={confirmFor !== null}
-        onOpenChange={(open) => {
-          if (!open) setConfirmFor(null)
-        }}
-        title={t('palaces.deleteConfirmTitle')}
-        description={confirmFor ? t('palaces.deleteConfirmBody', { name: confirmFor.name }) : undefined}
-        actions={
-          confirmFor
-            ? [
-                {
-                  id: 'confirm',
-                  label: t('palaces.confirmDelete'),
-                  icon: <Trash2 className="size-5" aria-hidden />,
-                  destructive: true,
-                  onSelect: () => onDeletePalace?.(confirmFor.id),
-                },
-              ]
-            : []
-        }
         cancelLabel={t('common.cancel')}
       />
     </section>
@@ -234,7 +212,7 @@ function PalaceTile({
           type="button"
           onClick={onMenu}
           aria-label={t('palaces.moreLabel', { name: palace.name })}
-          className="absolute right-1.5 top-1.5 z-20 grid size-8 place-items-center rounded-full bg-card-glass text-heading shadow-rest transition-transform active:scale-90"
+          className="absolute right-1.5 top-1.5 z-20 grid size-8 place-items-center rounded-full bg-card-glass text-heading shadow-rest transition-transform after:absolute after:-inset-2 after:content-[''] active:scale-90"
         >
           <MoreVertical className="size-4" aria-hidden />
         </button>

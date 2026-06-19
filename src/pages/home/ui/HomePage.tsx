@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 import { countDueLoci, isRoomCompleted, palaceProgress, useStickyHeader } from '@/shared/lib'
 import { deletePalace, duplicatePalace } from '@/features/palace'
 import { useSessionStore } from '@/entities/session'
 import { selectEffectiveProfile, useProfileStore, useProfileStoreApi } from '@/entities/profile'
 import { selectProgress, useProgressStore, useProgressStoreApi } from '@/entities/progress'
-import { selectPalaces, usePalaceStore, usePalaceStoreApi } from '@/entities/palace'
+import { selectIsReady, selectPalaces, usePalaceStore, usePalaceStoreApi } from '@/entities/palace'
 import { roomsForPalace, selectRooms, useRoomStore, useRoomStoreApi } from '@/entities/room'
 import { lociForRoom, selectLoci, useLocusStore, useLocusStoreApi } from '@/entities/locus'
 import {
@@ -14,7 +16,6 @@ import {
 } from '@/entities/notification'
 import { HomeHeader } from '@/widgets/home-header'
 import { TodayTrainingCard, FirstRunGuide } from '@/widgets/today-training-card'
-import { DailyReviewCard } from '@/widgets/daily-review-card'
 import { UpNextCard, pickUpNextRooms } from '@/widgets/up-next-card'
 import { PalacesOverview, type PalaceSummary } from '@/widgets/palaces-overview'
 import { AppScreen } from '@/shared/ui'
@@ -45,6 +46,7 @@ export function HomePage({
   onViewAllPalaces,
   onCreatePalace,
 }: HomePageProps = {}) {
+  const { t } = useTranslation()
   const header = useStickyHeader()
   const session = useSessionStore((state) => state.session)
   const profileStore = useProfileStoreApi()
@@ -57,8 +59,14 @@ export function HomePage({
   const roomStore = useRoomStoreApi()
   const locusStore = useLocusStoreApi()
   const palaces = usePalaceStore(selectPalaces)
+  // Gate the empty-vs-content branch on the palace store being hydrated, so a returning
+  // user never flashes the first-run "Build your memory palace" state before RxDB resolves.
+  const palacesReady = usePalaceStore(selectIsReady)
   const rooms = useRoomStore(selectRooms)
   const loci = useLocusStore(selectLoci)
+  // Palaces awaiting an undoable delete: hidden from the home immediately, removed for
+  // real only once the undo toast closes.
+  const [pendingDelete, setPendingDelete] = useState<ReadonlySet<string>>(() => new Set())
   // Snapshot the clock so every derivation agrees within one render pass. Stores are
   // live (RxDB-reactive), so due/up-next stay current without a manual refresh.
   const [now] = useState(() => Date.now())
@@ -84,7 +92,7 @@ export function HomePage({
   const palaceSummaries = useMemo<PalaceSummary[]>(
     () =>
       palaces
-        .filter((palace) => !palace.archived)
+        .filter((palace) => !palace.archived && !pendingDelete.has(palace.id))
         .map((palace) => {
           const completions = roomsForPalace(rooms, palace.id).map((room) =>
             isRoomCompleted(lociForRoom(loci, room.id)),
@@ -98,10 +106,11 @@ export function HomePage({
             totalRooms: completions.length,
           }
         }),
-    [palaces, rooms, loci],
+    [palaces, rooms, loci, pendingDelete],
   )
 
   const hasPalaces = palaceSummaries.length > 0
+  const hasTrainableRoom = upNext.length > 0
 
   // The primary card chooses the calmest next step: the top-suggested room if there
   // is one, else the palaces list, else creating the first palace.
@@ -136,7 +145,32 @@ export function HomePage({
   }
 
   const handleDuplicatePalace = (palaceId: string) => void duplicatePalace(palaceStore, palaceId)
-  const handleDeletePalace = (palaceId: string) => void deletePalace(palaceStore, palaceId)
+
+  // Delete is forgiving: the palace vanishes immediately but the actual removal is
+  // deferred behind an undo toast, and only committed once that toast closes.
+  const handleDeletePalace = (palaceId: string) => {
+    const target = palaces.find((entry) => entry.id === palaceId)
+    setPendingDelete((prev) => new Set(prev).add(palaceId))
+    let undone = false
+    const commit = () => {
+      if (!undone) void deletePalace(palaceStore, palaceId)
+    }
+    toast(t('palaces.deleted', { name: target?.name ?? '' }), {
+      action: {
+        label: t('common.undo'),
+        onClick: () => {
+          undone = true
+          setPendingDelete((prev) => {
+            const next = new Set(prev)
+            next.delete(palaceId)
+            return next
+          })
+        },
+      },
+      onAutoClose: commit,
+      onDismiss: commit,
+    })
+  }
 
   return (
     <AppScreen
@@ -154,39 +188,63 @@ export function HomePage({
         />
       }
     >
-      <TodayTrainingCard
-        className="mt-6"
-        hasPalaces={hasPalaces}
-        dueCount={dueCount}
-        xp={progress?.xp ?? 0}
-        streakCount={progress?.streakCount ?? 0}
-        onStartTraining={handleStartTraining}
-        onCreatePalace={() => onCreatePalace?.()}
-      />
-
-      <DailyReviewCard className="mt-6" dueCount={dueCount} onOpen={() => onStartReview?.()} />
-
-      {hasPalaces ? (
-        <>
-          <UpNextCard className="mt-6" rooms={upNext} onOpenRoom={(id) => onTrainRoom?.(id)} />
-
-          {/* Last in flow, so scrolling to the bottom lands the palaces right above the
-              floating nav (the page's `pb-nav` clears it) instead of on empty space. */}
-          <PalacesOverview
-            className="mt-6"
-            palaces={palaceSummaries}
-            onOpenPalace={(id) => onOpenPalace?.(id)}
-            onViewAll={() => onViewAllPalaces?.()}
-            onTrainPalace={handleTrainPalace}
-            onDuplicatePalace={handleDuplicatePalace}
-            onDeletePalace={handleDeletePalace}
-          />
-        </>
+      {!palacesReady ? (
+        <HomeSkeleton />
       ) : (
-        // Day-one empty state has no palaces to strand, so fill past the viewport to keep
-        // the page scrollable — the native pull-to-bounce needs something to overflow.
-        <FirstRunGuide className="mt-6 min-h-[calc(100dvh-24rem)]" />
+        <>
+          <TodayTrainingCard
+            className="mt-6"
+            hasPalaces={hasPalaces}
+            hasTrainableRoom={hasTrainableRoom}
+            dueCount={dueCount}
+            streakCount={progress?.streakCount ?? 0}
+            onStartReview={() => onStartReview?.()}
+            onStartTraining={handleStartTraining}
+            onCreatePalace={() => onCreatePalace?.()}
+          />
+
+          {hasPalaces ? (
+            <>
+              <UpNextCard className="mt-6" rooms={upNext} onOpenRoom={(id) => onTrainRoom?.(id)} />
+
+              {/* Last in flow, so scrolling to the bottom lands the palaces right above the
+                  floating nav (the page's `pb-nav` clears it) instead of on empty space. */}
+              <PalacesOverview
+                className="mt-6"
+                palaces={palaceSummaries}
+                onOpenPalace={(id) => onOpenPalace?.(id)}
+                onViewAll={() => onViewAllPalaces?.()}
+                onTrainPalace={handleTrainPalace}
+                onDuplicatePalace={handleDuplicatePalace}
+                onDeletePalace={handleDeletePalace}
+              />
+
+              {/* Nothing queued (all caught up, or palaces still need rooms): resurface the
+                  method primer so a returning user always has a door back to "how it works". */}
+              {hasTrainableRoom ? null : <FirstRunGuide className="mt-6" />}
+            </>
+          ) : (
+            // Day-one empty state has no palaces to strand, so fill past the viewport to keep
+            // the page scrollable — the native pull-to-bounce needs something to overflow.
+            <FirstRunGuide className="mt-6 min-h-[calc(100dvh-24rem)]" />
+          )}
+        </>
       )}
     </AppScreen>
+  )
+}
+
+/** Calm load placeholder shown until the palace store hydrates — keeps the daylight
+ * ground steady and prevents a flash of the first-run state for returning users. */
+function HomeSkeleton() {
+  return (
+    <div aria-hidden className="mt-6 space-y-6">
+      <div className="h-44 animate-pulse rounded-card-featured bg-secondary/40" />
+      <div className="h-20 animate-pulse rounded-card bg-secondary/30" />
+      <div className="grid grid-cols-2 gap-3">
+        <div className="h-36 animate-pulse rounded-card-featured bg-secondary/30" />
+        <div className="h-36 animate-pulse rounded-card-featured bg-secondary/30" />
+      </div>
+    </div>
   )
 }

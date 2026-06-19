@@ -8,7 +8,11 @@ import { TodayTrainingCard } from './TodayTrainingCard'
 afterEach(cleanup)
 
 function renderCard(props: Partial<Parameters<typeof TodayTrainingCard>[0]> = {}) {
-  const handlers = { onStartTraining: vi.fn(), onCreatePalace: vi.fn() }
+  const handlers = {
+    onStartReview: vi.fn(),
+    onStartTraining: vi.fn(),
+    onCreatePalace: vi.fn(),
+  }
   const result = render(
     <I18nextProvider i18n={i18n}>
       <TodayTrainingCard hasPalaces {...handlers} {...props} />
@@ -18,15 +22,38 @@ function renderCard(props: Partial<Parameters<typeof TodayTrainingCard>[0]> = {}
 }
 
 describe('TodayTrainingCard', () => {
-  it('prompts the daily session when the user has palaces', async () => {
+  it('starts the top suggested room when palaces exist and nothing is due', async () => {
     const user = userEvent.setup()
-    const { onStartTraining, onCreatePalace } = renderCard({ hasPalaces: true })
+    const { onStartTraining, onStartReview } = renderCard({ hasPalaces: true, dueCount: 0 })
 
     expect(screen.getByText("Today's training")).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /start training/i }))
 
     expect(onStartTraining).toHaveBeenCalledTimes(1)
-    expect(onCreatePalace).not.toHaveBeenCalled()
+    expect(onStartReview).not.toHaveBeenCalled()
+  })
+
+  it('launches the daily review when cards are due', async () => {
+    const user = userEvent.setup()
+    const { onStartReview, onStartTraining } = renderCard({ hasPalaces: true, dueCount: 3 })
+
+    await user.click(screen.getByRole('button', { name: /review 3 cards/i }))
+
+    expect(onStartReview).toHaveBeenCalledTimes(1)
+    expect(onStartTraining).not.toHaveBeenCalled()
+  })
+
+  it('falls back to the palaces list when there is no trainable room', async () => {
+    const user = userEvent.setup()
+    const { onStartTraining } = renderCard({
+      hasPalaces: true,
+      dueCount: 0,
+      hasTrainableRoom: false,
+    })
+
+    await user.click(screen.getByRole('button', { name: /view palaces/i }))
+
+    expect(onStartTraining).toHaveBeenCalledTimes(1)
   })
 
   it('prompts building the first palace when there are none', async () => {

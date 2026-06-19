@@ -58,7 +58,10 @@ const rootRoute = createRootRoute({
   // Session gate: the gateway (localStorage) is the source of truth, read
   // synchronously so the redirect resolves before any screen paints.
   beforeLoad: ({ location }) => {
-    const target = authRedirect(location.pathname, services.authGateway.getPersisted()?.kind ?? null)
+    const target = authRedirect(
+      location.pathname,
+      services.authGateway.getPersisted()?.kind ?? null,
+    )
     if (target && target !== location.pathname) throw redirect({ to: target })
   },
 })
@@ -131,7 +134,7 @@ function HomeRoute() {
       onTrainRoom={(roomId) => navigate({ to: ROUTES.roomTrain, params: { roomId } })}
       onOpenPalace={(palaceId) => navigate({ to: ROUTES.palaceDetail, params: { palaceId } })}
       onViewAllPalaces={() => navigate({ to: ROUTES.palaces })}
-      onCreatePalace={() => navigate({ to: ROUTES.palaces })}
+      onCreatePalace={() => navigate({ to: ROUTES.palaces, search: { create: true } })}
     />
   )
 }
@@ -146,8 +149,10 @@ const homeRoute = createRoute({
 // params + supplies navigation callbacks; the page just renders.
 function PalacesRoute() {
   const navigate = useNavigate()
+  const { create } = palacesRoute.useSearch()
   return (
     <PalacesPage
+      autoFocusCreate={create}
       onOpenPalace={(palaceId) => navigate({ to: ROUTES.palaceDetail, params: { palaceId } })}
     />
   )
@@ -156,6 +161,11 @@ function PalacesRoute() {
 const palacesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.palaces,
+  // `?create` arrives from the home's "Create palace" CTA; it lands on the create field
+  // focused and ready to type instead of dropping the user on a static list.
+  validateSearch: (search: Record<string, unknown>): { create?: boolean } => ({
+    create: search.create === true || search.create === 'true' ? true : undefined,
+  }),
   component: PalacesRoute,
 })
 
@@ -204,12 +214,7 @@ function RoomTrainRoute() {
   const { roomId } = roomTrainRoute.useParams()
   const navigate = useNavigate()
   const back = useBack(() => navigate({ to: ROUTES.roomContent, params: { roomId } }))
-  return (
-    <RoomTrainPage
-      roomId={roomId}
-      onBack={back}
-    />
-  )
+  return <RoomTrainPage roomId={roomId} onBack={back} />
 }
 
 const roomTrainRoute = createRoute({
@@ -222,12 +227,7 @@ function RoomMatchRoute() {
   const { roomId } = roomMatchRoute.useParams()
   const navigate = useNavigate()
   const back = useBack(() => navigate({ to: ROUTES.roomContent, params: { roomId } }))
-  return (
-    <MatchPage
-      roomId={roomId}
-      onBack={back}
-    />
-  )
+  return <MatchPage roomId={roomId} onBack={back} />
 }
 
 const roomMatchRoute = createRoute({
@@ -240,12 +240,7 @@ function RoomVerseRoute() {
   const { roomId } = roomVerseRoute.useParams()
   const navigate = useNavigate()
   const back = useBack(() => navigate({ to: ROUTES.roomContent, params: { roomId } }))
-  return (
-    <VerseStudyPage
-      roomId={roomId}
-      onBack={back}
-    />
-  )
+  return <VerseStudyPage roomId={roomId} onBack={back} />
 }
 
 const roomVerseRoute = createRoute({
@@ -270,12 +265,7 @@ function QuizRoute() {
   const { palaceId } = quizRoute.useParams()
   const navigate = useNavigate()
   const back = useBack(() => navigate({ to: ROUTES.palaceDetail, params: { palaceId } }))
-  return (
-    <QuizPage
-      palaceId={palaceId}
-      onBack={back}
-    />
-  )
+  return <QuizPage palaceId={palaceId} onBack={back} />
 }
 
 const quizRoute = createRoute({
