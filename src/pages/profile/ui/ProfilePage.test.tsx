@@ -49,17 +49,16 @@ function renderPage(props: ProfilePageProps = {}, profileSeed?: Profile) {
 }
 
 describe('ProfilePage', () => {
-  it('shows the compact overview with key stats', async () => {
+  it('shows the headline stats in the hero', async () => {
     renderPage()
-    expect(await screen.findByText('Overview')).toBeInTheDocument()
+    expect(await screen.findByText('Day streak')).toBeInTheDocument()
     expect(screen.getByText('Total XP')).toBeInTheDocument()
-    expect(screen.getByText('Best accuracy')).toBeInTheDocument()
   })
 
-  it('opens the streak page from the streak overview stat', async () => {
+  it('opens the streak page from the streak headline stat', async () => {
     const onOpenStreak = vi.fn()
     renderPage({ onOpenStreak })
-    fireEvent.click(await screen.findByRole('button', { name: /day streak/i }))
+    fireEvent.click(await screen.findByRole('button', { name: /open streak/i }))
     expect(onOpenStreak).toHaveBeenCalledOnce()
   })
 

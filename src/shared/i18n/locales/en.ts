@@ -59,6 +59,11 @@ export const en = {
     handle: '@{{handle}}',
     handleJoined: '@{{handle}} · Joined {{year}}',
     editPhoto: 'Edit profile photo',
+    openStreak: 'Open streak',
+    milestone: {
+      title: 'Almost there',
+      detail: '{{remaining}} more to your next {{label}} badge',
+    },
     tiles: {
       totalXp: 'Total XP',
       currentStreak: 'Day streak',
@@ -184,6 +189,8 @@ export const en = {
       streak: 'Longest streak',
       xp: 'Total XP',
       accuracy: 'Best accuracy',
+      rooms: 'Rooms done',
+      days: 'Days trained',
     },
   },
   streak: {

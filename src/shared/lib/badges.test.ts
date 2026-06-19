@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { computeBadges, type BadgeInput } from './badges'
+import { computeBadges, milestoneProgress, nextMilestone, type BadgeInput } from './badges'
 
 const ZERO: BadgeInput = {
   xp: 0,
@@ -32,5 +32,42 @@ describe('computeBadges', () => {
     expect(streak.tier).toBe(streak.tiers.length)
     expect(streak.current).toBe(365)
     expect(streak.next).toBeNull()
+  })
+})
+
+describe('milestoneProgress', () => {
+  it('measures the fraction from the last reached tier to the next', () => {
+    const xp = computeBadges({ ...ZERO, xp: 500 })[0]! // 0 → 1000, halfway
+    expect(milestoneProgress(xp)).toBeCloseTo(0.5)
+  })
+
+  it('reports a maxed badge as complete', () => {
+    const streak = computeBadges({ ...ZERO, longestStreak: 1000 }).find((b) => b.id === 'streak')!
+    expect(milestoneProgress(streak)).toBe(1)
+  })
+})
+
+describe('nextMilestone', () => {
+  it('picks the badge with the most progress toward its next tier', () => {
+    // streak 6/7 (0.857) beats xp 500/1000 (0.5).
+    const badges = computeBadges({ ...ZERO, xp: 500, longestStreak: 6 })
+    expect(nextMilestone(badges)?.id).toBe('streak')
+  })
+
+  it('ignores maxed badges', () => {
+    const badges = computeBadges({ ...ZERO, longestStreak: 1000, xp: 10 })
+    expect(nextMilestone(badges)?.id).not.toBe('streak')
+  })
+
+  it('returns null only when every badge is maxed', () => {
+    const maxed = computeBadges({
+      xp: 1_000_000,
+      longestStreak: 1000,
+      roomsCompleted: 1000,
+      palaceCount: 1000,
+      totalCards: 10000,
+      trainingDayCount: 1000,
+    })
+    expect(nextMilestone(maxed)).toBeNull()
   })
 })

@@ -78,3 +78,32 @@ export function computeBadges(input: BadgeInput): Badge[] {
     }
   })
 }
+
+/** Fraction (0–1) of the way from a badge's last reached tier to its next one. */
+export function milestoneProgress(badge: Badge): number {
+  if (badge.next === null) return 1
+  const floor = badge.current ?? 0
+  const span = badge.next - floor
+  if (span <= 0) return 0
+  return Math.min(1, Math.max(0, (badge.value - floor) / span))
+}
+
+/**
+ * The badge the user is closest to leveling up — the one with the most progress toward
+ * its next tier, so the profile can nudge "almost there" at the most reachable target.
+ * Ignores maxed badges (no next tier) and, on a tie, keeps canonical order. Returns
+ * null only when every badge is maxed.
+ */
+export function nextMilestone(badges: readonly Badge[]): Badge | null {
+  let best: Badge | null = null
+  let bestProgress = -1
+  for (const badge of badges) {
+    if (badge.next === null) continue
+    const progress = milestoneProgress(badge)
+    if (progress > bestProgress) {
+      best = badge
+      bestProgress = progress
+    }
+  }
+  return best
+}

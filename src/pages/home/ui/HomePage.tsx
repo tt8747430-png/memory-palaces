@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { countDueLoci, isRoomCompleted, palaceProgress, useCollapsibleHeader } from '@/shared/lib'
+import { countDueLoci, isRoomCompleted, palaceProgress, useStickyHeader } from '@/shared/lib'
 import { deletePalace, duplicatePalace } from '@/features/palace'
 import { useSessionStore } from '@/entities/session'
 import { selectEffectiveProfile, useProfileStore, useProfileStoreApi } from '@/entities/profile'
@@ -26,8 +26,6 @@ export interface HomePageProps {
   onOpenNotifications?: () => void
   /** Open the profile tab; wired by the route wrapper. */
   onOpenProfile?: () => void
-  /** Open the Streak screen from the header streak chip; wired by the route wrapper. */
-  onOpenStreak?: () => void
   /** Open a room straight into training; wired by the route wrapper. */
   onTrainRoom?: (roomId: string) => void
   /** Open a palace's detail; wired by the route wrapper. */
@@ -42,13 +40,12 @@ export function HomePage({
   onStartReview,
   onOpenNotifications,
   onOpenProfile,
-  onOpenStreak,
   onTrainRoom,
   onOpenPalace,
   onViewAllPalaces,
   onCreatePalace,
 }: HomePageProps = {}) {
-  const header = useCollapsibleHeader()
+  const header = useStickyHeader()
   const session = useSessionStore((state) => state.session)
   const profileStore = useProfileStoreApi()
   const profile = useProfileStore(selectEffectiveProfile)
@@ -149,12 +146,8 @@ export function HomePage({
         avatar={profile.avatar}
         xp={progress?.xp ?? 0}
         unreadCount={unreadCount}
-        streakCount={progress?.streakCount ?? 0}
-        dueCount={dueCount}
-        showStats={hasPalaces}
         onOpenProfile={() => onOpenProfile?.()}
         onOpenNotifications={() => onOpenNotifications?.()}
-        onOpenStreak={() => onOpenStreak?.()}
       />
 
       <TodayTrainingCard

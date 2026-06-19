@@ -1,44 +1,37 @@
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-import { Bell, BellRing, Brain, ChevronRight, Flame, Layers, Zap } from 'lucide-react'
-import { levelFromXp, type CollapsibleHeader } from '@/shared/lib'
-import { Avatar, IconButton, type IconButtonVariant } from '@/shared/ui'
+import { Bell, BellRing, Zap } from 'lucide-react'
+import { levelFromXp, type StickyHeader } from '@/shared/lib'
+import { Avatar, IconButton, StickyBar } from '@/shared/ui'
 
 export interface HomeHeaderProps {
-  /** Collapse state, owned by the page so its scroll container drives it. */
-  header: CollapsibleHeader
+  /** Elevation state, owned by the page so its scroll container drives it. */
+  header: StickyHeader
   name: string
   /** The user's photo, or null/undefined to fall back to gradient initials. */
   avatar?: string | null
-  /** Raw XP — the header derives level and the to-next-level meter from it. */
+  /** Raw XP — the bar derives the level pill from it. */
   xp: number
   unreadCount: number
-  streakCount?: number
-  dueCount?: number
-  /** Show the at-a-glance streak/due chips (hidden on first run). */
-  showStats?: boolean
   onOpenProfile: () => void
   onOpenNotifications: () => void
-  /** Open the Streak screen from the streak chip. */
-  onOpenStreak: () => void
 }
 
-/** The home's chrome: a large hero (avatar → profile, greeting, level pill, XP, and the
- * at-a-glance chips — a tappable streak that opens the Streak screen, plus due-today)
- * that recedes on scroll while a compact sticky bar fades in keeping profile, level, and
- * bell reachable. Mirrors the old ProgressHeader. */
+const EASE_OUT = [0.22, 1, 0.36, 1] as const
+
+/** The home's chrome: one slim, persistent bar that greets by name. The avatar and
+ * greeting tap through to the profile; a level pill carries progress at a glance and the
+ * bell opens notifications. The bar is transparent at the top (merging into the daylight
+ * ground) and gains a glass edge as the page scrolls under it. The day's stats live in
+ * the cards below, so the bar stays calm. */
 export function HomeHeader({
   header,
   name,
   avatar,
   xp,
   unreadCount,
-  streakCount = 0,
-  dueCount = 0,
-  showStats = false,
   onOpenProfile,
   onOpenNotifications,
-  onOpenStreak,
 }: HomeHeaderProps) {
   const { t } = useTranslation()
   const { level, xpInLevel, xpForNextLevel } = levelFromXp(xp)
@@ -47,161 +40,64 @@ export function HomeHeader({
   const xpToNext = t('home.xpToNext', { remaining: xpForNextLevel - xpInLevel, next: level + 1 })
 
   return (
-    <>
-      {/* Compact bar: fixed to the viewport, a sibling of the scroll container so it
-          stays pinned while the hero below scrolls away. */}
-      <motion.div
-        style={{ opacity: header.compactOpacity, pointerEvents: header.compactPointerEvents }}
-        className="fixed inset-x-0 top-0 z-[100] mx-auto flex max-w-[430px] items-center justify-between gap-3 border-b border-border bg-card-glass px-5 pb-2.5 pt-[calc(env(safe-area-inset-top)+0.625rem)] shadow-rest"
+    <StickyBar elevation={header.elevation}>
+      <button
+        type="button"
+        onClick={onOpenProfile}
+        aria-label={t('home.openProfile')}
+        className="flex min-w-0 items-center gap-2.5 text-left transition-transform active:scale-[0.98]"
       >
-        <button
-          type="button"
-          onClick={onOpenProfile}
-          aria-label={t('home.openProfile')}
-          className="flex min-w-0 items-center gap-2.5 text-left transition-transform active:scale-[0.98]"
-        >
-          <Avatar
-            name={name}
-            src={avatar}
-            className="size-9 border border-[color:var(--border)] text-[length:var(--p-text-label)]"
-          />
-          <span className="min-w-0">
-            <span className="block truncate text-[length:var(--p-text-label)] font-semibold leading-tight text-heading">
-              {name}
+        <Avatar
+          name={name}
+          src={avatar}
+          className="size-10 border border-[color:var(--border)] text-[length:var(--p-text-sub)]"
+        />
+        <span className="flex min-w-0 flex-col gap-1">
+          <span className="flex min-w-0 items-center gap-2">
+            <motion.h1
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, ease: EASE_OUT }}
+              className="truncate text-[length:var(--p-text-title)] font-bold leading-tight text-heading"
+            >
+              {t('home.hi', { name })}
+            </motion.h1>
+            <motion.span
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.12, duration: 0.3, ease: EASE_OUT }}
+              className="shrink-0 rounded-full bg-gradient-to-r from-primary to-accent px-2.5 py-0.5 text-[length:var(--p-text-tiny)] font-semibold text-primary-foreground"
+            >
+              {levelLabel}
+            </motion.span>
+          </span>
+          <span className="flex items-center gap-2">
+            <span className="inline-flex shrink-0 items-center gap-1 text-[length:var(--p-text-label)] font-semibold text-heading">
+              <Zap className="size-3.5 text-[var(--warning)]" fill="currentColor" aria-hidden />
+              {t('home.xpTotal', { xp })}
             </span>
-            <span className="mt-1 flex items-center gap-1.5">
-              <span className="text-[length:var(--p-text-tiny)] font-semibold leading-none text-primary">
-                {levelLabel}
-              </span>
-              <span
-                className="h-1 w-12 overflow-hidden rounded-full bg-secondary/40"
-                role="img"
-                aria-label={xpToNext}
-              >
-                <span
-                  className="block h-full rounded-full bg-gradient-to-r from-primary to-accent"
-                  style={{ width: `${fill}%` }}
-                />
-              </span>
+            <span
+              className="h-1.5 w-16 overflow-hidden rounded-full bg-secondary/40"
+              role="img"
+              aria-label={xpToNext}
+            >
+              <motion.span
+                className="block h-full rounded-full bg-gradient-to-r from-primary to-accent"
+                initial={{ width: 0 }}
+                animate={{ width: `${fill}%` }}
+                transition={{ delay: 0.15, duration: 0.6, ease: EASE_OUT }}
+              />
             </span>
           </span>
-        </button>
-        <NotificationButton
-          variant="tint"
-          unreadCount={unreadCount}
-          label={t('notifications.openLabel')}
-          onClick={onOpenNotifications}
-        />
-      </motion.div>
+        </span>
+      </button>
 
-      <motion.header
-        style={{
-          opacity: header.heroOpacity,
-          scale: header.heroScale,
-          y: header.heroY,
-          pointerEvents: header.heroPointerEvents,
-        }}
-        className="origin-top pt-[calc(env(safe-area-inset-top)+1.75rem)]"
-      >
-        <div className="flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={onOpenProfile}
-            aria-label={t('home.openProfile')}
-            className="flex min-w-0 items-center gap-3 text-left transition-transform active:scale-[0.99]"
-          >
-            <span className="relative shrink-0">
-              <Avatar
-                name={name}
-                src={avatar}
-                className="size-14 border-2 border-[color:var(--surface)] text-[length:var(--p-text-headline)] shadow-rest"
-              />
-              {/* The "trained mind" mark — Mindscape's signature identity touch. The
-                  surface-colored disc gives the white ring (and themes: white in light,
-                  dark surface in dark); accent-foreground keeps the icon white in both. */}
-              <span
-                aria-hidden
-                className="absolute -bottom-1 -right-1 grid place-items-center rounded-full bg-[var(--surface)] p-[2.5px] shadow-rest"
-              >
-                <span className="grid size-[18px] place-items-center rounded-full bg-gradient-to-br from-success to-[color:var(--success-foreground)] text-accent-foreground">
-                  <Brain className="size-3" strokeWidth={2.5} />
-                </span>
-              </span>
-            </span>
-            <span className="flex min-w-0 flex-col gap-1">
-              <span className="flex min-w-0 items-center gap-2">
-                <motion.h1
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                  className="truncate"
-                >
-                  {t('home.hi', { name })}
-                </motion.h1>
-                <motion.span
-                  initial={{ opacity: 0, scale: 0.85 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.15, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                  className="shrink-0 rounded-full bg-gradient-to-r from-primary to-accent px-2.5 py-0.5 text-[length:var(--p-text-tiny)] font-semibold text-primary-foreground"
-                >
-                  {levelLabel}
-                </motion.span>
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="inline-flex shrink-0 items-center gap-1 text-[length:var(--p-text-label)] font-semibold text-heading">
-                  <Zap className="size-3.5 text-[var(--warning)]" fill="currentColor" aria-hidden />
-                  {t('home.xpTotal', { xp })}
-                </span>
-                <span
-                  className="h-1.5 w-16 overflow-hidden rounded-full bg-secondary/40"
-                  role="img"
-                  aria-label={xpToNext}
-                >
-                  <motion.span
-                    className="block h-full rounded-full bg-gradient-to-r from-primary to-accent"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${fill}%` }}
-                    transition={{ delay: 0.2, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                  />
-                </span>
-              </span>
-            </span>
-          </button>
-          <NotificationButton
-            variant="glass"
-            unreadCount={unreadCount}
-            label={t('notifications.openLabel')}
-            onClick={onOpenNotifications}
-          />
-        </div>
-
-        {showStats ? (
-          <motion.div
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.35 }}
-            className="mt-3 flex items-center gap-2"
-          >
-            <button
-              type="button"
-              onClick={onOpenStreak}
-              aria-label={t('home.openStreak')}
-              className="inline-flex items-center gap-1.5 rounded-full bg-[var(--warning-surface)] py-1 pl-3 pr-2 text-[length:var(--p-text-label)] font-semibold text-[var(--warning-foreground)] transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-            >
-              <Flame className="size-3.5" fill="currentColor" aria-hidden />
-              {t('home.streakChip', { count: streakCount })}
-              <ChevronRight className="size-3.5 opacity-70" aria-hidden />
-            </button>
-            {dueCount > 0 ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1 text-[length:var(--p-text-label)] font-semibold text-primary-foreground">
-                <Layers className="size-3.5" aria-hidden />
-                {t('home.dueToday', { count: dueCount })}
-              </span>
-            ) : null}
-          </motion.div>
-        ) : null}
-      </motion.header>
-    </>
+      <NotificationButton
+        unreadCount={unreadCount}
+        label={t('notifications.openLabel')}
+        onClick={onOpenNotifications}
+      />
+    </StickyBar>
   )
 }
 
@@ -209,17 +105,15 @@ function NotificationButton({
   unreadCount,
   label,
   onClick,
-  variant,
 }: {
   unreadCount: number
   label: string
   onClick: () => void
-  variant: IconButtonVariant
 }) {
   const Icon = unreadCount > 0 ? BellRing : Bell
   return (
     <div className="relative shrink-0">
-      <IconButton variant={variant} aria-label={label} onClick={onClick}>
+      <IconButton variant="ghost" aria-label={label} onClick={onClick}>
         <Icon className="size-5" aria-hidden />
       </IconButton>
       {unreadCount > 0 ? (

@@ -1,11 +1,12 @@
 import { type ReactNode, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Flame, Gauge, Sparkles, Zap } from 'lucide-react'
+import { CalendarCheck, DoorOpen, Flame, Gauge, Sparkles, Zap } from 'lucide-react'
 import {
   computeAchievements,
   computeTrainingTotals,
   isRoomCompleted,
   levelFromXp,
+  totalTrainingDays,
 } from '@/shared/lib'
 import { selectProgress, useProgressStore, useProgressStoreApi } from '@/entities/progress'
 import { selectPalaces, usePalaceStore, usePalaceStoreApi } from '@/entities/palace'
@@ -41,6 +42,10 @@ export function AchievementsPage({ onBack }: AchievementsPageProps = {}) {
 
   const xp = progress?.xp ?? 0
   const totals = useMemo(() => computeTrainingTotals(rooms, loci), [rooms, loci])
+  const daysTrained = useMemo(
+    () => totalTrainingDays(progress?.trainingDays ?? []),
+    [progress?.trainingDays],
+  )
   const anyPalaceCompleted = useMemo(
     () =>
       palaces.some((palace) => {
@@ -89,6 +94,18 @@ export function AchievementsPage({ onBack }: AchievementsPageProps = {}) {
       icon: <Gauge className="size-5" aria-hidden />,
       value: `${progress?.bestQuizAccuracy ?? 0}%`,
       label: t('achievementsPage.records.accuracy'),
+    },
+    {
+      id: 'rooms',
+      icon: <DoorOpen className="size-5" aria-hidden />,
+      value: String(totals.roomsCompleted),
+      label: t('achievementsPage.records.rooms'),
+    },
+    {
+      id: 'days',
+      icon: <CalendarCheck className="size-5" aria-hidden />,
+      value: String(daysTrained),
+      label: t('achievementsPage.records.days'),
     },
   ]
 

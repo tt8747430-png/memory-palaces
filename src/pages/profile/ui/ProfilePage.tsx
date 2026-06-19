@@ -1,22 +1,13 @@
-import { type ReactNode, useEffect, useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  Building2,
-  CalendarCheck,
-  ChevronRight,
-  Flame,
-  Target,
-  TrendingUp,
-  Zap,
-} from 'lucide-react'
-import {
-  cn,
   computeAchievements,
   computeBadges,
   computeTrainingTotals,
   isRoomCompleted,
+  nextMilestone,
   totalTrainingDays,
-  useCollapsibleHeader,
+  useStickyHeader,
 } from '@/shared/lib'
 import { useSessionStore } from '@/entities/session'
 import { selectEffectiveProfile, useProfileStore, useProfileStoreApi } from '@/entities/profile'
@@ -30,18 +21,18 @@ import {
   useNotificationStoreApi,
 } from '@/entities/notification'
 import { ProfileHeader } from '@/widgets/profile-header'
-import { BadgesSection } from '@/widgets/badge-list'
+import { BadgesSection, NextMilestoneCard } from '@/widgets/badge-list'
 import { AchievementsSection } from '@/widgets/achievement-list'
-import { AppScreen, Card } from '@/shared/ui'
+import { AppScreen } from '@/shared/ui'
 
 export interface ProfilePageProps {
   /** Open the settings screen; wired by the route wrapper. */
   onOpenSettings?: () => void
   /** Open the notification history; wired by the route wrapper. */
   onOpenNotifications?: () => void
-  /** Open the Streak screen (from the avatar-edit and the Streak overview stat). */
+  /** Edit the profile photo (avatar tap); wired by the route wrapper. */
   onEditProfile?: () => void
-  /** Open the Streak screen; wired by the route wrapper. */
+  /** Open the Streak screen (from the avatar-edit and the Streak overview stat). */
   onOpenStreak?: () => void
   /** Open the full Badges page; wired by the route wrapper. */
   onOpenBadges?: () => void
@@ -49,17 +40,16 @@ export interface ProfilePageProps {
   onOpenAchievements?: () => void
 }
 
-const GLANCE_ICON = 'size-[18px]'
-
 function joinedYearOf(createdAt: string): number | null {
   const year = new Date(createdAt).getUTCFullYear()
   return Number.isFinite(year) ? year : null
 }
 
-/** Profile tab. A guest identity today (account claim is Phase 9). Below the redesigned
- * header: a compact six-stat Overview (the Streak stat opens the Streak page), then the
- * Badges and Achievements preview rows, each opening its full grid. Everything derives
- * live from the progress/palace/room/locus stores — a glance, never stored or faked. */
+/** Profile tab. A guest identity today (account claim is Phase 9). One persistent bar
+ * (name + notifications + settings) over a centered hero — circular avatar, @handle ·
+ * joined, and a streak/XP/palaces headline. Below: the closest-milestone nudge, then the
+ * Badges and Achievements preview rows. Everything derives live from the
+ * progress/palace/room/locus stores — a glance, never stored or faked. */
 export function ProfilePage({
   onOpenSettings,
   onOpenNotifications,
@@ -68,8 +58,7 @@ export function ProfilePage({
   onOpenBadges,
   onOpenAchievements,
 }: ProfilePageProps = {}) {
-  const { t } = useTranslation()
-  const header = useCollapsibleHeader()
+  const header = useStickyHeader()
   const session = useSessionStore((state) => state.session)
   const profileStore = useProfileStoreApi()
   const profile = useProfileStore(selectEffectiveProfile)
@@ -93,6 +82,7 @@ export function ProfilePage({
     notificationStore.getState().start()
   }, [profileStore, progressStore, palaceStore, roomStore, locusStore, notificationStore])
 
+  const { t } = useTranslation()
   const name = profile.name.trim() || session?.displayName || t('profile.guest')
   const xp = progress?.xp ?? 0
   const streakCount = progress?.streakCount ?? 0
@@ -126,6 +116,7 @@ export function ProfilePage({
       }),
     [xp, longestStreak, totals, palaces.length, daysTrained],
   )
+  const milestone = useMemo(() => nextMilestone(badges), [badges])
   const achievements = useMemo(
     () =>
       computeAchievements({
@@ -139,20 +130,6 @@ export function ProfilePage({
     [palaces.length, streakCount, xp, bestQuizAccuracy, totals.roomsCompleted, anyPalaceCompleted],
   )
 
-  const glances = [
-    {
-      icon: <Flame className={GLANCE_ICON} fill="currentColor" />,
-      value: String(streakCount),
-      label: t('profile.tiles.currentStreak'),
-      onClick: () => onOpenStreak?.(),
-    },
-    { icon: <Zap className={GLANCE_ICON} />, value: xp.toLocaleString(), label: t('profile.tiles.totalXp') },
-    { icon: <Building2 className={GLANCE_ICON} />, value: String(palaces.length), label: t('profile.tiles.palaces') },
-    { icon: <TrendingUp className={GLANCE_ICON} />, value: String(totals.roomsCompleted), label: t('profile.tiles.roomsDone') },
-    { icon: <Target className={GLANCE_ICON} />, value: `${bestQuizAccuracy}%`, label: t('profile.tiles.bestAccuracy') },
-    { icon: <CalendarCheck className={GLANCE_ICON} />, value: String(daysTrained), label: t('profile.tiles.daysTrained') },
-  ]
-
   return (
     <AppScreen className="pb-nav" scrollRef={header.ref}>
       <ProfileHeader
@@ -161,79 +138,24 @@ export function ProfilePage({
         username={profile.username}
         avatar={profile.avatar}
         xp={xp}
+        streakCount={streakCount}
+        palaceCount={palaces.length}
         joinedYear={session?.createdAt ? joinedYearOf(session.createdAt) : null}
         unreadCount={unreadCount}
         onOpenSettings={() => onOpenSettings?.()}
         onOpenNotifications={() => onOpenNotifications?.()}
         onEditProfile={() => onEditProfile?.()}
+        onOpenStreak={() => onOpenStreak?.()}
       />
 
-      {/* Fill at least the area under the collapsed header (viewport minus the bottom
-          nav inset ~7rem and the compact bar ~5rem) so short profiles still scroll far
-          enough to recede the hero and tuck the Overview under the collapsed header,
-          instead of stranding it mid-screen. Taller content scrolls normally. */}
-      <div className="mt-6 flex min-h-[calc(100dvh-12rem)] flex-col gap-8">
-        <section>
-          <h2 className="mb-3 px-1 text-[length:var(--p-text-title)] font-bold text-heading">
-            {t('profile.overview')}
-          </h2>
-          <Card className="grid grid-cols-2 gap-px overflow-hidden bg-border p-0">
-            {glances.map((glance) => (
-              <StatGlance
-                key={glance.label}
-                icon={glance.icon}
-                value={glance.value}
-                label={glance.label}
-                onClick={glance.onClick}
-              />
-            ))}
-          </Card>
-        </section>
-
+      {/* Fill at least a screen so a short profile still scrolls far enough to bring the
+          bar's glass edge in (and to give the native pull-to-bounce something to
+          overflow). Taller content scrolls normally. */}
+      <div className="mt-8 flex min-h-[calc(100dvh-20rem)] flex-col gap-8">
+        {milestone ? <NextMilestoneCard badge={milestone} onOpen={() => onOpenBadges?.()} /> : null}
         <BadgesSection badges={badges} onSeeAll={() => onOpenBadges?.()} />
         <AchievementsSection achievements={achievements} onSeeAll={() => onOpenAchievements?.()} />
       </div>
     </AppScreen>
-  )
-}
-
-function StatGlance({
-  icon,
-  value,
-  label,
-  onClick,
-}: {
-  icon: ReactNode
-  value: string
-  label: string
-  onClick?: () => void
-}) {
-  const body = (
-    <>
-      <span className="grid size-9 shrink-0 place-items-center rounded-control bg-info-surface text-primary">
-        {icon}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-[length:var(--p-text-sub)] font-bold leading-tight tabular-nums text-heading">
-          {value}
-        </span>
-        <span className="block truncate text-[length:var(--p-text-tiny)] font-medium text-muted-foreground">
-          {label}
-        </span>
-      </span>
-      {onClick ? <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden /> : null}
-    </>
-  )
-  const className = cn('flex items-center gap-2.5 bg-card p-3.5 text-left')
-  return onClick ? (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(className, 'transition-colors active:bg-primary/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40')}
-    >
-      {body}
-    </button>
-  ) : (
-    <div className={className}>{body}</div>
   )
 }

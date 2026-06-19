@@ -1,4 +1,6 @@
 export { BadgesSection } from './ui/BadgesSection'
 export type { BadgesSectionProps } from './ui/BadgesSection'
+export { NextMilestoneCard } from './ui/NextMilestoneCard'
+export type { NextMilestoneCardProps } from './ui/NextMilestoneCard'
 export { BadgeGrid } from './ui/BadgeGrid'
 export type { BadgeGridProps } from './ui/BadgeGrid'

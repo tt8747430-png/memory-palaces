@@ -3,9 +3,9 @@ export { authEntrance } from './motion'
 export { coverSquare, fileToAvatar, type CropRect } from './avatar'
 export { downloadText } from './download'
 export {
-  useCollapsibleHeader,
-  type CollapsibleHeader,
-} from './collapsible-header/use-collapsible-header'
+  useStickyHeader,
+  type StickyHeader,
+} from './sticky-header/use-sticky-header'
 export {
   clampSwipeOffset,
   shouldCommitSwipe,
@@ -60,7 +60,14 @@ export {
   type AchievementId,
   type AchievementInput,
 } from './achievements'
-export { computeBadges, type Badge, type BadgeId, type BadgeInput } from './badges'
+export {
+  computeBadges,
+  milestoneProgress,
+  nextMilestone,
+  type Badge,
+  type BadgeId,
+  type BadgeInput,
+} from './badges'
 export {
   verseText,
   tokenizeWords,
