@@ -174,12 +174,66 @@ export const en = {
     title: 'Badges',
     subtitle: '{{earned}} of {{total}} badges started',
     tierProgress: '{{tier}} of {{total}}',
-    xp: { title: 'XP' },
-    streak: { title: 'Streak' },
-    rooms: { title: 'Rooms' },
-    palaces: { title: 'Palaces' },
-    cards: { title: 'Cards' },
-    days: { title: 'Days' },
+    xp: {
+      title: 'XP Collector',
+      blurb: 'Earn XP every time you train cards, finish a review, or complete a room.',
+    },
+    streak: {
+      title: 'Streak Keeper',
+      blurb: 'Train at least once a day to grow your longest streak.',
+    },
+    rooms: {
+      title: 'Room Walker',
+      blurb: 'Master a room by recalling every locus in it, then walk the next one.',
+    },
+    palaces: {
+      title: 'Palace Builder',
+      blurb: 'Build memory palaces, each a place you walk to recall what you put there.',
+    },
+    cards: {
+      title: 'Card Keeper',
+      blurb: 'Add loci to your rooms. Every card you place counts toward this badge.',
+    },
+    days: {
+      title: 'Daily Devotion',
+      blurb: 'Show up to train. Each separate day you practice adds to the count.',
+    },
+  },
+  badgeDetail: {
+    tierOf: 'Tier {{tier}} of {{total}}',
+    locked: 'Not started',
+    howToTitle: 'How to earn it',
+    ladderTitle: 'Tiers',
+    tierLabel: 'Tier {{n}}',
+    reached: 'Reached',
+    inProgress: '{{remaining}} to go',
+    upcoming: 'Locked',
+    maxed: 'Every tier earned. Nicely done.',
+    nowValue: 'You: {{value}}',
+  },
+  achievementDetail: {
+    earned: 'Earned',
+    locked: 'Not earned yet',
+    howToTitle: 'How to earn it',
+    earnedNote: 'You’ve earned this one. It stays yours.',
+    'first-palace': {
+      howTo: 'Open the Palaces tab, create a palace, and add your first room.',
+    },
+    'week-warrior': {
+      howTo: 'Train on seven days in a row. A few minutes a day keeps the streak alive.',
+    },
+    'palace-master': {
+      howTo: 'Finish every room in one palace by recalling all of its loci.',
+    },
+    'xp-champion': {
+      howTo: 'Keep training and reviewing. XP adds up across every session you do.',
+    },
+    perfectionist: {
+      howTo: 'Score 100% on a palace quiz. Review the room first, then take the quiz.',
+    },
+    'dedicated-learner': {
+      howTo: 'Complete ten rooms across your palaces by mastering every locus in each.',
+    },
   },
   achievementsPage: {
     title: 'Achievements',

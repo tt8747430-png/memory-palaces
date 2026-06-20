@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react'
 import { Lock } from 'lucide-react'
+import { motion } from 'motion/react'
 import { cn } from '@/shared/lib'
 
 /**
@@ -25,6 +26,9 @@ export interface BadgeMedallionProps {
   tier?: number
   /** Show a small lock glyph on a locked medallion (used on full grids, not previews). */
   showLock?: boolean
+  /** Hero treatment: a slow specular highlight sweeps across the disc. Earned only;
+   * reserved for the detail-screen hero, never the dense grids. */
+  shine?: boolean
   /** Size the disc here (default `size-20`); the icon and number scale with it. */
   className?: string
 }
@@ -41,6 +45,7 @@ export function BadgeMedallion({
   locked = false,
   tier = 3,
   showLock = false,
+  shine = false,
   className,
 }: BadgeMedallionProps) {
   const background = locked ? undefined : TIER_BG[Math.min(Math.max(tier, 1), 5)]
@@ -58,6 +63,20 @@ export function BadgeMedallion({
       {locked ? null : (
         <span className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-full bg-gradient-to-b from-white/35 to-transparent" />
       )}
+      {/* Specular sweep for the hero, clipped to the disc so it never overruns the lock
+          badge. MotionConfig holds the transform still under reduced motion, leaving the
+          static gloss above. */}
+      {shine && !locked ? (
+        <span className="pointer-events-none absolute inset-0 overflow-hidden rounded-full">
+          <motion.span
+            aria-hidden
+            className="absolute inset-y-0 -left-1/3 w-1/3 skew-x-[-18deg] bg-gradient-to-r from-transparent via-white/55 to-transparent"
+            initial={{ x: '-60%' }}
+            animate={{ x: '460%' }}
+            transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1], repeat: Infinity, repeatDelay: 2.8 }}
+          />
+        </span>
+      ) : null}
       <span className="relative flex flex-col items-center gap-0.5">
         <Icon
           className={cn('size-7', locked ? 'text-primary/30' : 'text-white')}
