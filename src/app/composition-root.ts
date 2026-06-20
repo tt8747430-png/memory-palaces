@@ -4,6 +4,7 @@ import { RxdbRepository } from '@/shared/api/rxdb'
 import { EventBus, type AppEvents } from '@/shared/lib'
 import { createSessionStore, type Session, type SessionStore } from '@/entities/session'
 import { createPalaceStore, type Palace, type PalaceStore } from '@/entities/palace'
+import { createFolderStore, type Folder, type FolderStore } from '@/entities/folder'
 import { createRoomStore, type Room, type RoomStore } from '@/entities/room'
 import { createLocusStore, type Locus, type LocusStore } from '@/entities/locus'
 import { createQuestionStore, type Question, type QuestionStore } from '@/entities/question'
@@ -26,6 +27,7 @@ export interface Services {
   authGateway: AuthGateway
   sessionStore: SessionStore
   palaceStore: PalaceStore
+  folderStore: FolderStore
   roomStore: RoomStore
   locusStore: LocusStore
   questionStore: QuestionStore
@@ -47,6 +49,7 @@ export function createServices(): Services {
   const authGateway = new LocalAuthGateway() // → SupabaseAuthGateway in Phase 9
   const sessionRepo = new InMemoryRepository<Session>() // → RxDB in a later slice
   const palaceRepo = new RxdbRepository<Palace>(collections.then((c) => c.palaces))
+  const folderRepo = new RxdbRepository<Folder>(collections.then((c) => c.folders))
   const roomRepo = new RxdbRepository<Room>(collections.then((c) => c.rooms))
   const locusRepo = new RxdbRepository<Locus>(collections.then((c) => c.loci))
   const questionRepo = new RxdbRepository<Question>(collections.then((c) => c.questions))
@@ -60,6 +63,7 @@ export function createServices(): Services {
     authGateway,
     sessionStore: createSessionStore(sessionRepo),
     palaceStore: createPalaceStore(palaceRepo),
+    folderStore: createFolderStore(folderRepo),
     roomStore: createRoomStore(roomRepo),
     locusStore: createLocusStore(locusRepo),
     questionStore: createQuestionStore(questionRepo),

@@ -1,6 +1,8 @@
 export type {
   Preferences,
   PrivacySettings,
+  PalacesView,
+  PalacesSort,
   MakePreferencesInput,
   PreferencesChanges,
 } from './model/types'

@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
+  type AchievementId,
   type BadgeId,
   computeAchievements,
   computeBadges,
@@ -12,10 +13,32 @@ import {
 } from '@/shared/lib'
 import { useSessionStore } from '@/entities/session'
 import { selectEffectiveProfile, useProfileStore, useProfileStoreApi } from '@/entities/profile'
-import { selectProgress, useProgressStore, useProgressStoreApi } from '@/entities/progress'
-import { selectPalaces, usePalaceStore, usePalaceStoreApi } from '@/entities/palace'
-import { roomsForPalace, selectRooms, useRoomStore, useRoomStoreApi } from '@/entities/room'
-import { lociForRoom, selectLoci, useLocusStore, useLocusStoreApi } from '@/entities/locus'
+import {
+  selectIsReady as selectProgressReady,
+  selectProgress,
+  useProgressStore,
+  useProgressStoreApi,
+} from '@/entities/progress'
+import {
+  selectIsReady as selectPalacesReady,
+  selectPalaces,
+  usePalaceStore,
+  usePalaceStoreApi,
+} from '@/entities/palace'
+import {
+  roomsForPalace,
+  selectIsReady as selectRoomsReady,
+  selectRooms,
+  useRoomStore,
+  useRoomStoreApi,
+} from '@/entities/room'
+import {
+  lociForRoom,
+  selectIsReady as selectLociReady,
+  selectLoci,
+  useLocusStore,
+  useLocusStoreApi,
+} from '@/entities/locus'
 import {
   selectUnreadCount,
   useNotificationStore,
@@ -37,10 +60,12 @@ export interface ProfilePageProps {
   onOpenStreak?: () => void
   /** Open the full Badges page; wired by the route wrapper. */
   onOpenBadges?: () => void
-  /** Open a single badge's detail (from the "Almost there" milestone nudge). */
+  /** Open a single badge's detail (milestone nudge + preview medallions). */
   onOpenBadge?: (id: BadgeId) => void
   /** Open the full Achievements page; wired by the route wrapper. */
   onOpenAchievements?: () => void
+  /** Open a single milestone's detail (preview medallions). */
+  onOpenAchievement?: (id: AchievementId) => void
 }
 
 function joinedYearOf(createdAt: string): number | null {
@@ -61,6 +86,7 @@ export function ProfilePage({
   onOpenBadges,
   onOpenBadge,
   onOpenAchievements,
+  onOpenAchievement,
 }: ProfilePageProps = {}) {
   const header = useStickyHeader()
   const session = useSessionStore((state) => state.session)
@@ -76,6 +102,13 @@ export function ProfilePage({
   const rooms = useRoomStore(selectRooms)
   const loci = useLocusStore(selectLoci)
   const unreadCount = useNotificationStore(selectUnreadCount)
+  // Gate the progress-derived hero/badges/achievements on hydration so a returning user
+  // never sees a flash of zeros and locked medallions before RxDB resolves.
+  const progressReady = useProgressStore(selectProgressReady)
+  const palacesReady = usePalaceStore(selectPalacesReady)
+  const roomsReady = useRoomStore(selectRoomsReady)
+  const lociReady = useLocusStore(selectLociReady)
+  const dataReady = progressReady && palacesReady && roomsReady && lociReady
 
   useEffect(() => {
     profileStore.getState().start()
@@ -148,27 +181,58 @@ export function ProfilePage({
         />
       }
     >
-      <ProfileHero
-        name={name}
-        username={profile.username}
-        avatar={profile.avatar}
-        xp={xp}
-        streakCount={streakCount}
-        palaceCount={palaces.length}
-        joinedYear={session?.createdAt ? joinedYearOf(session.createdAt) : null}
-        onEditProfile={() => onEditProfile?.()}
-        onOpenStreak={() => onOpenStreak?.()}
-      />
+      {!dataReady ? (
+        <ProfileSkeleton />
+      ) : (
+        <>
+          <ProfileHero
+            name={name}
+            username={profile.username}
+            avatar={profile.avatar}
+            xp={xp}
+            streakCount={streakCount}
+            palaceCount={palaces.length}
+            joinedYear={session?.createdAt ? joinedYearOf(session.createdAt) : null}
+            onEditProfile={() => onEditProfile?.()}
+            onOpenStreak={() => onOpenStreak?.()}
+          />
 
-      {/* Fill at least a screen so a short profile still scrolls (gives the native
-          pull-to-bounce something to overflow). Taller content scrolls normally. */}
-      <div className="mt-8 flex min-h-[calc(100dvh-20rem)] flex-col gap-8">
-        {milestone ? (
-          <NextMilestoneCard badge={milestone} onOpen={() => onOpenBadge?.(milestone.id)} />
-        ) : null}
-        <BadgesSection badges={badges} onSeeAll={() => onOpenBadges?.()} />
-        <AchievementsSection achievements={achievements} onSeeAll={() => onOpenAchievements?.()} />
-      </div>
+          {/* Fill at least a screen so a short profile still scrolls (gives the native
+              pull-to-bounce something to overflow). Taller content scrolls normally. */}
+          <div className="mt-8 flex min-h-[calc(100dvh-20rem)] flex-col gap-8">
+            {milestone ? (
+              <NextMilestoneCard badge={milestone} onOpen={() => onOpenBadge?.(milestone.id)} />
+            ) : null}
+            <BadgesSection
+              badges={badges}
+              onSeeAll={() => onOpenBadges?.()}
+              onOpenBadge={(id) => onOpenBadge?.(id)}
+            />
+            <AchievementsSection
+              achievements={achievements}
+              onSeeAll={() => onOpenAchievements?.()}
+              onOpenAchievement={(id) => onOpenAchievement?.(id)}
+            />
+          </div>
+        </>
+      )}
     </AppScreen>
+  )
+}
+
+/** Calm placeholder shown until the progress stores hydrate, so the hero stats and the
+ * badge/achievement rows never flash zeros or a wall of locks for a returning user. */
+function ProfileSkeleton() {
+  return (
+    <div aria-hidden className="flex flex-col items-center pt-5">
+      <div className="size-[104px] animate-pulse rounded-full bg-secondary/40" />
+      <div className="mt-4 h-3 w-32 animate-pulse rounded-full bg-secondary/30" />
+      <div className="mt-5 h-12 w-full max-w-[300px] animate-pulse rounded-card bg-secondary/30" />
+      <div className="mt-8 w-full space-y-8">
+        <div className="h-20 animate-pulse rounded-card bg-secondary/30" />
+        <div className="h-24 animate-pulse rounded-card bg-secondary/20" />
+        <div className="h-24 animate-pulse rounded-card bg-secondary/20" />
+      </div>
+    </div>
   )
 }

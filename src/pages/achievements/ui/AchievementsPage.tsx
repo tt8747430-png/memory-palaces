@@ -10,10 +10,32 @@ import {
   levelFromXp,
   totalTrainingDays,
 } from '@/shared/lib'
-import { selectProgress, useProgressStore, useProgressStoreApi } from '@/entities/progress'
-import { selectPalaces, usePalaceStore, usePalaceStoreApi } from '@/entities/palace'
-import { roomsForPalace, selectRooms, useRoomStore, useRoomStoreApi } from '@/entities/room'
-import { lociForRoom, selectLoci, useLocusStore, useLocusStoreApi } from '@/entities/locus'
+import {
+  selectIsReady as selectProgressReady,
+  selectProgress,
+  useProgressStore,
+  useProgressStoreApi,
+} from '@/entities/progress'
+import {
+  selectIsReady as selectPalacesReady,
+  selectPalaces,
+  usePalaceStore,
+  usePalaceStoreApi,
+} from '@/entities/palace'
+import {
+  roomsForPalace,
+  selectIsReady as selectRoomsReady,
+  selectRooms,
+  useRoomStore,
+  useRoomStoreApi,
+} from '@/entities/room'
+import {
+  lociForRoom,
+  selectIsReady as selectLociReady,
+  selectLoci,
+  useLocusStore,
+  useLocusStoreApi,
+} from '@/entities/locus'
 import { AchievementGrid } from '@/widgets/achievement-list'
 import { AppScreen, ScreenHeader, cardSurface } from '@/shared/ui'
 
@@ -36,6 +58,12 @@ export function AchievementsPage({ onBack, onOpenAchievement }: AchievementsPage
   const palaces = usePalaceStore(selectPalaces)
   const rooms = useRoomStore(selectRooms)
   const loci = useLocusStore(selectLoci)
+  // Each store hook must run unconditionally (Rules of Hooks); combine after.
+  const progressReady = useProgressStore(selectProgressReady)
+  const palacesReady = usePalaceStore(selectPalacesReady)
+  const roomsReady = useRoomStore(selectRoomsReady)
+  const lociReady = useLocusStore(selectLociReady)
+  const dataReady = progressReady && palacesReady && roomsReady && lociReady
 
   useEffect(() => {
     progressStore.getState().start()
@@ -109,6 +137,7 @@ export function AchievementsPage({ onBack, onOpenAchievement }: AchievementsPage
 
   return (
     <AppScreen
+      fill
       className="pb-28"
       header={
         <ScreenHeader
@@ -118,47 +147,70 @@ export function AchievementsPage({ onBack, onOpenAchievement }: AchievementsPage
         />
       }
     >
+      {!dataReady ? (
+        <AchievementsSkeleton />
+      ) : (
+        <div className="mt-2 flex flex-col gap-6">
+          <section>
+            <h2 className="mb-3 px-1 text-[length:var(--p-text-title)] font-bold text-heading">
+              {t('achievementsPage.recordsTitle')}
+            </h2>
+            <motion.dl
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, ease: EASE_OUT }}
+              className={cn(cardSurface, 'grid grid-cols-3 overflow-hidden')}
+            >
+              {records.map((record, index) => (
+                <div
+                  key={record.id}
+                  className={cn(
+                    'flex flex-col-reverse items-center gap-1 px-2 py-5 text-center',
+                    index % 3 !== 0 && 'border-l border-border',
+                    index >= 3 && 'border-t border-border',
+                  )}
+                >
+                  <dt className="text-[length:var(--p-text-label)] font-medium leading-tight text-muted-foreground">
+                    {record.label}
+                  </dt>
+                  <dd className="text-[length:var(--p-text-headline)] font-bold leading-none tabular-nums text-heading">
+                    {record.value}
+                  </dd>
+                </div>
+              ))}
+            </motion.dl>
+          </section>
 
-      <div className="mt-2 flex flex-col gap-6">
-        <section>
-          <h2 className="mb-3 px-1 text-[length:var(--p-text-title)] font-bold text-heading">
-            {t('achievementsPage.recordsTitle')}
-          </h2>
-          <motion.dl
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: EASE_OUT }}
-            className={cn(cardSurface, 'grid grid-cols-3 overflow-hidden')}
-          >
-            {records.map((record, index) => (
-              <div
-                key={record.id}
-                className={cn(
-                  'flex flex-col-reverse items-center gap-1 px-2 py-5 text-center',
-                  index % 3 !== 0 && 'border-l border-border',
-                  index >= 3 && 'border-t border-border',
-                )}
-              >
-                <dt className="text-[length:var(--p-text-label)] font-medium leading-tight text-muted-foreground">
-                  {record.label}
-                </dt>
-                <dd className="text-[length:var(--p-text-headline)] font-bold leading-none tabular-nums text-heading">
-                  {record.value}
-                </dd>
-              </div>
-            ))}
-          </motion.dl>
-        </section>
-
-        <section>
-          <h2 className="mb-4 px-1 text-[length:var(--p-text-title)] font-bold text-heading">
-            {t('achievementsPage.milestonesTitle')}
-          </h2>
-          <AchievementGrid achievements={achievements} onOpenAchievement={onOpenAchievement} />
-        </section>
-      </div>
+          <section>
+            <h2 className="px-1 text-[length:var(--p-text-title)] font-bold text-heading">
+              {t('achievementsPage.milestonesTitle')}
+            </h2>
+            <p className="mb-4 mt-0.5 px-1 text-[length:var(--p-text-label)] text-muted-foreground">
+              {t('achievementsPage.milestonesSubtitle')}
+            </p>
+            <AchievementGrid achievements={achievements} onOpenAchievement={onOpenAchievement} />
+          </section>
+        </div>
+      )}
     </AppScreen>
   )
 }
 
 const EASE_OUT = [0.22, 1, 0.36, 1] as const
+
+function AchievementsSkeleton() {
+  return (
+    <div aria-hidden className="mt-2 flex flex-col gap-6">
+      <div className="h-3 w-36 animate-pulse rounded-full bg-secondary/30" />
+      <div className="h-24 animate-pulse rounded-card bg-secondary/30" />
+      <div className="grid grid-cols-3 gap-x-3 gap-y-7">
+        {Array.from({ length: 6 }, (_, index) => (
+          <div key={index} className="flex flex-col items-center gap-2">
+            <div className="size-20 animate-pulse rounded-full bg-secondary/30" />
+            <div className="h-2.5 w-12 animate-pulse rounded-full bg-secondary/20" />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}

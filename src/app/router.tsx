@@ -154,7 +154,7 @@ function PalacesRoute() {
   const { create } = palacesRoute.useSearch()
   return (
     <PalacesPage
-      autoFocusCreate={create}
+      openCreate={create}
       onOpenPalace={(palaceId) => navigate({ to: ROUTES.palaceDetail, params: { palaceId } })}
     />
   )
@@ -163,8 +163,8 @@ function PalacesRoute() {
 const palacesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.palaces,
-  // `?create` arrives from the home's "Create palace" CTA; it lands on the create field
-  // focused and ready to type instead of dropping the user on a static list.
+  // `?create` arrives from the home's "Create palace" CTA; it opens the create sheet on
+  // arrival instead of dropping the user on a static list.
   validateSearch: (search: Record<string, unknown>): { create?: boolean } => ({
     create: search.create === true || search.create === 'true' ? true : undefined,
   }),
@@ -287,6 +287,9 @@ function ProfileRoute() {
       onOpenBadges={() => navigate({ to: ROUTES.badges })}
       onOpenBadge={(badgeId) => navigate({ to: ROUTES.badgeDetail, params: { badgeId } })}
       onOpenAchievements={() => navigate({ to: ROUTES.achievements })}
+      onOpenAchievement={(achievementId) =>
+        navigate({ to: ROUTES.achievementDetail, params: { achievementId } })
+      }
     />
   )
 }

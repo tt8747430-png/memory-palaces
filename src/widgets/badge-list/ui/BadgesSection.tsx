@@ -1,18 +1,21 @@
 import { useTranslation } from 'react-i18next'
-import type { Badge } from '@/shared/lib'
-import { BadgeMedallion, CollectionPreview } from '@/shared/ui'
+import type { Badge, BadgeId } from '@/shared/lib'
+import { BadgeMedallion, CollectionPreview, TierPips } from '@/shared/ui'
 import { BADGE_META, compactNumber } from './meta'
 
 export interface BadgesSectionProps {
   badges: ReadonlyArray<Badge>
   onSeeAll: () => void
+  /** Open a single badge's detail; medallions are tappable, matching the full wall. */
+  onOpenBadge: (id: BadgeId) => void
 }
 
 const PREVIEW_COUNT = 4
 
 /** Profile preview: the "Badges / See all" row with the first four tiered medallions,
- * each showing its highest reached threshold (or the first target while locked). */
-export function BadgesSection({ badges, onSeeAll }: BadgesSectionProps) {
+ * each showing its highest reached threshold and a pip row for its tiers. Pips are the
+ * signal that these *level up*, the visible difference from one-shot achievements. */
+export function BadgesSection({ badges, onSeeAll, onOpenBadge }: BadgesSectionProps) {
   const { t } = useTranslation()
   return (
     <CollectionPreview
@@ -25,7 +28,13 @@ export function BadgesSection({ badges, onSeeAll }: BadgesSectionProps) {
         const meta = BADGE_META[badge.id]
         const face = badge.current ?? badge.next
         return (
-          <span key={badge.id} className="flex w-0 flex-1 flex-col items-center gap-1.5">
+          <button
+            key={badge.id}
+            type="button"
+            onClick={() => onOpenBadge(badge.id)}
+            aria-label={t(meta.titleKey)}
+            className="flex w-0 flex-1 flex-col items-center gap-1.5 rounded-card py-1 transition-transform duration-200 ease-out active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+          >
             <BadgeMedallion
               icon={meta.icon}
               tier={badge.tier}
@@ -36,7 +45,8 @@ export function BadgesSection({ badges, onSeeAll }: BadgesSectionProps) {
             <span className="w-full truncate text-center text-[length:var(--p-text-tiny)] font-semibold text-muted-foreground">
               {t(meta.titleKey)}
             </span>
-          </span>
+            <TierPips total={badge.tiers.length} filled={badge.tier} />
+          </button>
         )
       })}
     </CollectionPreview>

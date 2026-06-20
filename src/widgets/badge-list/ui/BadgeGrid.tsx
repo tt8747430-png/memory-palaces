@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import type { Badge, BadgeId } from '@/shared/lib'
-import { BadgeMedallion } from '@/shared/ui'
+import { BadgeMedallion, TierPips } from '@/shared/ui'
 import { BADGE_META, compactNumber } from './meta'
 
 const EASE_OUT = [0.22, 1, 0.36, 1] as const
@@ -24,12 +24,11 @@ export function BadgeGrid({ badges, onOpenBadge }: BadgeGridProps) {
         const meta = BADGE_META[badge.id]
         const face = badge.current ?? badge.next
         const locked = badge.tier === 0
-        const prev = badge.tier > 1 ? (badge.tiers[badge.tier - 2] ?? 0) : 0
-        const fill = badge.next
-          ? Math.min(100, Math.round(((badge.value - prev) / (badge.next - prev)) * 100))
-          : 100
         const title = t(meta.titleKey)
-        const tierProgress = t('badges.tierProgress', { tier: badge.tier, total: badge.tiers.length })
+        const tierProgress = t('badges.tierProgress', {
+          tier: badge.tier,
+          total: badge.tiers.length,
+        })
         return (
           <motion.li
             key={badge.id}
@@ -49,19 +48,13 @@ export function BadgeGrid({ badges, onOpenBadge }: BadgeGridProps) {
                 value={face != null ? compactNumber(face) : undefined}
               />
               <div className="flex w-full flex-col items-center gap-1.5">
-                <p className="text-[length:var(--p-text-label)] font-bold leading-tight text-heading">
+                <p className="text-[length:var(--p-text-label)] font-bold leading-tight text-balance text-heading">
                   {title}
                 </p>
                 <p className="text-[length:var(--p-text-tiny)] font-semibold text-muted-foreground">
                   {tierProgress}
                 </p>
-                <span className="h-1 w-12 overflow-hidden rounded-full bg-primary/[0.08]">
-                  <span
-                    className="block h-full rounded-full bg-gradient-to-r from-primary to-accent"
-                    style={{ width: `${fill}%` }}
-                    aria-hidden
-                  />
-                </span>
+                <TierPips total={badge.tiers.length} filled={badge.tier} className="mt-0.5" />
               </div>
             </BadgeTile>
           </motion.li>

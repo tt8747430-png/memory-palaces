@@ -1,3 +1,7 @@
 export type { Folder, MakeFolderInput } from './model/types'
 export { makeFolder } from './model/types'
+export { createFolderStore } from './model/store'
+export type { FolderState, FolderStatus, FolderStore } from './model/store'
+export { FolderStoreContext, useFolderStore, useFolderStoreApi } from './model/context'
+export { selectFolders, selectFolderCount, selectIsReady } from './model/selectors'
 export type { FolderRepository } from './api/folder-repository'

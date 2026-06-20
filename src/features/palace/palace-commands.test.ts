@@ -5,6 +5,9 @@ import { createPalace } from './create-palace'
 import { editPalace } from './edit-palace'
 import { deletePalace } from './delete-palace'
 import { duplicatePalace } from './duplicate-palace'
+import { togglePalaceFavorite } from './toggle-favorite'
+import { setPalaceArchived } from './set-archived'
+import { setPalaceFolder } from './set-folder'
 
 function startedStore() {
   const store = createPalaceStore(new InMemoryRepository<Palace>())
@@ -78,5 +81,39 @@ describe('duplicatePalace', () => {
     expect(copy.category).toBe('history')
     expect(copy.bibleMode).toBe(true)
     expect(store.getState().palaces).toHaveLength(2)
+  })
+})
+
+describe('togglePalaceFavorite', () => {
+  it('flips the favorite flag on each call', async () => {
+    const store = startedStore()
+    const created = await createPalace(store, { name: 'Forum' })
+    expect(created.favorite).toBe(false)
+
+    const favorited = await togglePalaceFavorite(store, created.id)
+    expect(favorited.favorite).toBe(true)
+
+    const unfavorited = await togglePalaceFavorite(store, created.id)
+    expect(unfavorited.favorite).toBe(false)
+  })
+})
+
+describe('setPalaceArchived', () => {
+  it('archives and restores a palace', async () => {
+    const store = startedStore()
+    const created = await createPalace(store, { name: 'Forum' })
+
+    expect((await setPalaceArchived(store, created.id, true)).archived).toBe(true)
+    expect((await setPalaceArchived(store, created.id, false)).archived).toBe(false)
+  })
+})
+
+describe('setPalaceFolder', () => {
+  it('files a palace into a folder and unfiles it with null', async () => {
+    const store = startedStore()
+    const created = await createPalace(store, { name: 'Forum' })
+
+    expect((await setPalaceFolder(store, created.id, 'folder-1')).folderId).toBe('folder-1')
+    expect((await setPalaceFolder(store, created.id, null)).folderId).toBeNull()
   })
 })

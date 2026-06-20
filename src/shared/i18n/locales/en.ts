@@ -173,6 +173,7 @@ export const en = {
   badges: {
     title: 'Badges',
     subtitle: '{{earned}} of {{total}} badges started',
+    explainer: 'Level these up as you train.',
     tierProgress: '{{tier}} of {{total}}',
     xp: {
       title: 'XP Collector',
@@ -184,7 +185,7 @@ export const en = {
     },
     rooms: {
       title: 'Room Walker',
-      blurb: 'Master a room by recalling every locus in it, then walk the next one.',
+      blurb: 'Master a room by recalling everything you placed in it, then walk the next one.',
     },
     palaces: {
       title: 'Palace Builder',
@@ -239,6 +240,7 @@ export const en = {
     title: 'Achievements',
     recordsTitle: 'Personal records',
     milestonesTitle: 'Milestones',
+    milestonesSubtitle: 'Earn these once.',
     records: {
       level: 'Level',
       streak: 'Longest streak',
@@ -324,9 +326,100 @@ export const en = {
     deleteLabel: 'Delete {{name}}',
     deleted: 'Deleted {{name}}',
     moreLabel: 'More options for {{name}}',
-    deleteConfirmTitle: 'Delete this palace?',
-    deleteConfirmBody: 'This permanently removes {{name}} and cannot be undone.',
+    deleteConfirmTitle: 'Delete “{{name}}”?',
+    deleteConfirmBody:
+      'This removes the palace and every room, locus, and bit of training progress inside it. It can’t be undone.',
     confirmDelete: 'Delete palace',
+
+    // Header + search
+    searchLabel: 'Search palaces',
+    searchPlaceholder: 'Search palaces…',
+    closeSearch: 'Close search',
+
+    // View + sort
+    viewLabel: 'Layout',
+    viewGrid: 'Grid',
+    viewList: 'List',
+    sortLabel: 'Sort palaces',
+    sortBy: 'Sort by',
+    sortRecent: 'Recent',
+    sortProgress: 'Progress',
+    sortName: 'Name',
+    sortCategory: 'Category',
+    sortedBy: 'Sorted by {{sort}}',
+
+    // Result count
+    countOne: '{{count}} palace',
+    countOther: '{{count}} palaces',
+    roomCountOne: '{{count}} room',
+    roomCountOther: '{{count}} rooms',
+    roomsProgress: '{{completed}} of {{total}} rooms',
+    progressLabel: '{{progress}}% complete',
+    favoriteMarker: 'Favorite',
+    bibleMarker: 'Scripture palace',
+
+    // Collections rail
+    collectionsLabel: 'Collections',
+    collectionAll: 'All',
+    collectionFavorites: 'Favorites',
+    collectionBible: 'Bible',
+    collectionUnfiled: 'Unfiled',
+    collectionArchived: 'Archived',
+    showArchived: 'Archived',
+    backToAll: 'All palaces',
+    newFolderChip: 'Folder',
+
+    // Per-palace actions
+    favorite: 'Add to favorites',
+    unfavorite: 'Remove from favorites',
+    moveToFolder: 'Move to folder',
+    addToFolder: 'Add to folder',
+    archive: 'Archive',
+    restore: 'Restore',
+
+    // Move-to-folder sheet
+    moveTitle: 'Move to folder',
+    moveNone: 'None (Unfiled)',
+    moveNewFolder: 'New folder',
+
+    // New folder sheet
+    newFolderTitle: 'New folder',
+    folderNameLabel: 'Folder name',
+    folderNamePlaceholder: 'e.g. Languages',
+    folderNameHint: 'Group related palaces, like “Languages” or “Med school”.',
+    createFolder: 'Create folder',
+
+    // Delete folder
+    deleteFolderTitle: 'Delete “{{name}}”?',
+    deleteFolderBody: 'The folder is removed. Its palaces stay safe and move back to Unfiled.',
+    confirmDeleteFolder: 'Delete folder',
+    deleteFolderLabel: 'Delete folder {{name}}',
+
+    // Create sheet
+    createTitle: 'New palace',
+    createCta: 'Create palace',
+    createName: 'Name',
+    createNamePlaceholder: 'e.g. Ancient Rome',
+    bibleMode: 'Bible mode',
+    bibleModeHint: 'Each locus is a verse. Unlocks Blur, Words, Initials & Type.',
+    iconLabel: 'Icon',
+    colorLabel: 'Colour',
+    customColor: 'Custom colour',
+    createHint: 'Add a description, category, and cover later in palace settings.',
+
+    // Empty states
+    emptyTitle: 'Build your first palace',
+    emptyBody:
+      'A memory palace is a place you know by heart, filled with what you want to remember. Create one to start training.',
+    emptyFilteredTitle: 'No palaces here',
+    emptyFilteredBody:
+      'This collection is empty. Move a palace into it from its menu, or pick another collection.',
+    emptyFilteredAction: 'Show all palaces',
+    emptySearchTitle: 'No matches',
+    emptySearchBody: 'No palaces match “{{query}}”. Try a different search.',
+    emptyArchivedTitle: 'Nothing archived',
+    emptyArchivedBody:
+      'Archived palaces land here so your main list stays focused. Archive one from its menu to tuck it away.',
   },
   palaceDetail: {
     back: 'Back to palaces',

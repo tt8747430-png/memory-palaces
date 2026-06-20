@@ -186,7 +186,7 @@ export const progressSchema: RxJsonSchema<Progress> = {
 }
 
 export const preferencesSchema: RxJsonSchema<Preferences> = {
-  version: 1,
+  version: 2,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -199,6 +199,8 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
     notifications: { type: 'boolean' },
     darkMode: { type: 'boolean' },
     language: { type: 'string' },
+    palacesView: { type: 'string', enum: ['grid', 'list'] },
+    palacesSort: { type: 'string', enum: ['recent', 'progress', 'name', 'category'] },
     privacy: {
       type: 'object',
       properties: {
@@ -228,6 +230,8 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
     'notifications',
     'darkMode',
     'language',
+    'palacesView',
+    'palacesSort',
     'privacy',
   ],
 }

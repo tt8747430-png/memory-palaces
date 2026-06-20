@@ -1,59 +1,101 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
-import { makePalace, type Palace } from '@/entities/palace'
-import { PalaceList } from './PalaceList'
+import { PalaceList, type PalaceListItem } from './PalaceList'
 
 afterEach(cleanup)
 
-const palace = (id: string, name: string): Palace =>
-  makePalace({ id, createdAt: new Date(0).toISOString(), name })
+const item = (over: Partial<PalaceListItem> = {}): PalaceListItem => ({
+  id: 'a',
+  name: 'Alpha',
+  icon: '🏛️',
+  color: 'from-sky-500 to-blue-600',
+  category: 'General',
+  favorite: false,
+  bibleMode: false,
+  archived: false,
+  folderId: null,
+  updatedAt: new Date(0).toISOString(),
+  progress: 40,
+  roomsCompleted: 2,
+  totalRooms: 5,
+  ...over,
+})
 
 function renderList(props: Partial<Parameters<typeof PalaceList>[0]> = {}) {
-  const handlers = { onRename: vi.fn(), onDelete: vi.fn(), onDuplicate: vi.fn() }
+  const handlers = {
+    onOpen: vi.fn(),
+    onToggleFavorite: vi.fn(),
+    onMove: vi.fn(),
+    onArchive: vi.fn(),
+    onDelete: vi.fn(),
+  }
   render(
     <I18nextProvider i18n={i18n}>
-      <PalaceList palaces={[]} {...handlers} {...props} />
+      <PalaceList
+        items={[item()]}
+        view="grid"
+        emptyState={<p>No palaces yet</p>}
+        {...handlers}
+        {...props}
+      />
     </I18nextProvider>,
   )
   return handlers
 }
 
 describe('PalaceList', () => {
-  it('shows an empty state when there are no palaces', () => {
-    renderList({ palaces: [] })
-    expect(screen.getByText(/no palaces/i)).toBeInTheDocument()
+  it('renders the provided empty state when there are no items', () => {
+    renderList({ items: [] })
+    expect(screen.getByText('No palaces yet')).toBeInTheDocument()
   })
 
-  it('renders each palace by name', () => {
-    renderList({ palaces: [palace('a', 'Alpha'), palace('b', 'Beta')] })
+  it('renders palaces by name in both grid and list views', () => {
+    renderList({ items: [item({ id: 'a', name: 'Alpha' }), item({ id: 'b', name: 'Beta' })] })
     expect(screen.getByText('Alpha')).toBeInTheDocument()
     expect(screen.getByText('Beta')).toBeInTheDocument()
+    cleanup()
+    renderList({ view: 'list', items: [item({ name: 'Gamma' })] })
+    expect(screen.getByText('Gamma')).toBeInTheDocument()
   })
 
-  it('invokes onDelete and onDuplicate for the targeted palace', async () => {
+  it('shows the loading skeleton instead of items', () => {
+    renderList({ loading: true })
+    expect(screen.queryByText('Alpha')).not.toBeInTheDocument()
+  })
+
+  it('marks favorites and scripture palaces for assistive tech', () => {
+    renderList({ items: [item({ favorite: true, bibleMode: true })] })
+    expect(screen.getByLabelText('Favorite')).toBeInTheDocument()
+    expect(screen.getByLabelText('Scripture palace')).toBeInTheDocument()
+  })
+
+  it('opens the action menu and routes delete + favorite to the right palace', async () => {
     const user = userEvent.setup()
-    const handlers = renderList({ palaces: [palace('a', 'Alpha')] })
+    const handlers = renderList({ items: [item({ id: 'a', name: 'Alpha' })] })
 
-    await user.click(screen.getByRole('button', { name: /delete alpha/i }))
-    await user.click(screen.getByRole('button', { name: /duplicate alpha/i }))
+    await user.click(screen.getByRole('button', { name: /more options for alpha/i }))
+    const sheet = await screen.findByRole('dialog')
 
+    await user.click(within(sheet).getByRole('button', { name: /add to favorites/i }))
+    expect(handlers.onToggleFavorite).toHaveBeenCalledWith('a')
+
+    await user.click(screen.getByRole('button', { name: /more options for alpha/i }))
+    const reopened = await screen.findByRole('dialog')
+    await user.click(within(reopened).getByRole('button', { name: /^delete$/i }))
     expect(handlers.onDelete).toHaveBeenCalledWith('a')
-    expect(handlers.onDuplicate).toHaveBeenCalledWith('a')
   })
 
-  it('renames inline, passing the trimmed new name', async () => {
+  it('offers restore (not archive) for an archived palace', async () => {
     const user = userEvent.setup()
-    const handlers = renderList({ palaces: [palace('a', 'Alpha')] })
+    const handlers = renderList({ items: [item({ id: 'a', name: 'Alpha', archived: true })] })
 
-    await user.click(screen.getByRole('button', { name: /rename alpha/i }))
-    const input = screen.getByRole('textbox')
-    await user.clear(input)
-    await user.type(input, '  Acropolis  ')
-    await user.click(screen.getByRole('button', { name: /save/i }))
+    await user.click(screen.getByRole('button', { name: /more options for alpha/i }))
+    const sheet = await screen.findByRole('dialog')
+    await user.click(within(sheet).getByRole('button', { name: /restore/i }))
 
-    expect(handlers.onRename).toHaveBeenCalledWith('a', 'Acropolis')
+    expect(handlers.onArchive).toHaveBeenCalledWith('a')
   })
 })

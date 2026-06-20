@@ -39,13 +39,14 @@ export function AchievementGrid({ achievements, onOpenAchievement }: Achievement
                 icon={meta.icon}
                 locked={!achievement.earned}
                 showLock={!achievement.earned}
+                showCheck={achievement.earned}
               />
               <div className="flex flex-col gap-0.5">
                 <p
                   className={
                     achievement.earned
-                      ? 'text-[length:var(--p-text-label)] font-bold leading-tight text-heading'
-                      : 'text-[length:var(--p-text-label)] font-bold leading-tight text-primary/50'
+                      ? 'text-[length:var(--p-text-label)] font-bold leading-tight text-balance text-heading'
+                      : 'text-[length:var(--p-text-label)] font-bold leading-tight text-balance text-muted-foreground'
                   }
                 >
                   {title}

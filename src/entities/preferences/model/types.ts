@@ -1,5 +1,11 @@
 import type { Entity } from '@/shared/lib'
 
+/** How the Palaces screen lays out its list. Persisted so the choice survives sessions. */
+export type PalacesView = 'grid' | 'list'
+
+/** How the Palaces screen orders its list. Persisted so the choice survives sessions. */
+export type PalacesSort = 'recent' | 'progress' | 'name' | 'category'
+
 /** Privacy & security switches. Cosmetic placeholders for now (no feature reads them
  * yet) but persisted so the choices survive once the features that honour them land. */
 export interface PrivacySettings {
@@ -38,6 +44,10 @@ export interface Preferences extends Entity {
   darkMode: boolean
   /** BCP-47 language tag; only 'en' is shipped today. */
   language: string
+  /** Palaces screen: grid or list layout. */
+  palacesView: PalacesView
+  /** Palaces screen: list ordering. */
+  palacesSort: PalacesSort
   privacy: PrivacySettings
 }
 
@@ -48,8 +58,10 @@ export const DEFAULT_PREFERENCES = {
   notifications: true,
   darkMode: false,
   language: 'en',
+  palacesView: 'grid',
+  palacesSort: 'recent',
   privacy: DEFAULT_PRIVACY,
-} as const
+} as const satisfies Omit<Preferences, keyof Entity>
 
 export interface MakePreferencesInput {
   id: string
@@ -60,6 +72,8 @@ export interface MakePreferencesInput {
   notifications?: boolean
   darkMode?: boolean
   language?: string
+  palacesView?: PalacesView
+  palacesSort?: PalacesSort
   privacy?: PrivacySettings
 }
 
@@ -74,6 +88,8 @@ export function makePreferences(input: MakePreferencesInput): Preferences {
     notifications: input.notifications ?? DEFAULT_PREFERENCES.notifications,
     darkMode: input.darkMode ?? DEFAULT_PREFERENCES.darkMode,
     language: input.language ?? DEFAULT_PREFERENCES.language,
+    palacesView: input.palacesView ?? DEFAULT_PREFERENCES.palacesView,
+    palacesSort: input.palacesSort ?? DEFAULT_PREFERENCES.palacesSort,
     privacy: input.privacy ?? { ...DEFAULT_PRIVACY },
   }
 }
@@ -88,6 +104,8 @@ export type PreferencesChanges = Partial<
     | 'notifications'
     | 'darkMode'
     | 'language'
+    | 'palacesView'
+    | 'palacesSort'
     | 'privacy'
   >
 >

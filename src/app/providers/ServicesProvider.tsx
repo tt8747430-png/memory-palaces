@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { SessionStoreContext } from '@/entities/session'
 import { PalaceStoreContext } from '@/entities/palace'
+import { FolderStoreContext } from '@/entities/folder'
 import { RoomStoreContext } from '@/entities/room'
 import { LocusStoreContext } from '@/entities/locus'
 import { QuestionStoreContext } from '@/entities/question'
@@ -23,7 +24,8 @@ export function ServicesProvider({
     <AuthGatewayContext value={services.authGateway}>
       <SessionStoreContext value={services.sessionStore}>
         <PalaceStoreContext value={services.palaceStore}>
-          <RoomStoreContext value={services.roomStore}>
+          <FolderStoreContext value={services.folderStore}>
+            <RoomStoreContext value={services.roomStore}>
             <LocusStoreContext value={services.locusStore}>
               <QuestionStoreContext value={services.questionStore}>
                 <ProgressStoreContext value={services.progressStore}>
@@ -37,7 +39,8 @@ export function ServicesProvider({
                 </ProgressStoreContext>
               </QuestionStoreContext>
             </LocusStoreContext>
-          </RoomStoreContext>
+            </RoomStoreContext>
+          </FolderStoreContext>
         </PalaceStoreContext>
       </SessionStoreContext>
     </AuthGatewayContext>

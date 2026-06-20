@@ -1,11 +1,37 @@
 import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { type BadgeId, computeBadges, computeTrainingTotals, totalTrainingDays } from '@/shared/lib'
-import { selectProgress, useProgressStore, useProgressStoreApi } from '@/entities/progress'
-import { selectPalaces, usePalaceStore, usePalaceStoreApi } from '@/entities/palace'
-import { selectRooms, useRoomStore, useRoomStoreApi } from '@/entities/room'
-import { selectLoci, useLocusStore, useLocusStoreApi } from '@/entities/locus'
-import { BadgeGrid } from '@/widgets/badge-list'
+import {
+  type BadgeId,
+  computeBadges,
+  computeTrainingTotals,
+  nextMilestone,
+  totalTrainingDays,
+} from '@/shared/lib'
+import {
+  selectIsReady as selectProgressReady,
+  selectProgress,
+  useProgressStore,
+  useProgressStoreApi,
+} from '@/entities/progress'
+import {
+  selectIsReady as selectPalacesReady,
+  selectPalaces,
+  usePalaceStore,
+  usePalaceStoreApi,
+} from '@/entities/palace'
+import {
+  selectIsReady as selectRoomsReady,
+  selectRooms,
+  useRoomStore,
+  useRoomStoreApi,
+} from '@/entities/room'
+import {
+  selectIsReady as selectLociReady,
+  selectLoci,
+  useLocusStore,
+  useLocusStoreApi,
+} from '@/entities/locus'
+import { BadgeGrid, NextMilestoneCard } from '@/widgets/badge-list'
 import { AppScreen, ScreenHeader } from '@/shared/ui'
 
 export interface BadgesPageProps {
@@ -15,8 +41,9 @@ export interface BadgesPageProps {
 }
 
 /** The full badge wall: every tiered badge resolved against live progress, earned tiers
- * in their color and locked ones greyscale. Each medallion taps through to its detail.
- * Reached from the Profile "Badges / See all". */
+ * in their color and not-yet-started ones dim. Leads with the nearest reachable target
+ * so a new user sees a goal to chase, not a count of zeros. Each medallion taps through
+ * to its detail. Reached from the Profile "Badges / See all". */
 export function BadgesPage({ onBack, onOpenBadge }: BadgesPageProps = {}) {
   const { t } = useTranslation()
   const progressStore = useProgressStoreApi()
@@ -27,6 +54,12 @@ export function BadgesPage({ onBack, onOpenBadge }: BadgesPageProps = {}) {
   const palaces = usePalaceStore(selectPalaces)
   const rooms = useRoomStore(selectRooms)
   const loci = useLocusStore(selectLoci)
+  // Each store hook must run unconditionally (Rules of Hooks); combine after.
+  const progressReady = useProgressStore(selectProgressReady)
+  const palacesReady = usePalaceStore(selectPalacesReady)
+  const roomsReady = useRoomStore(selectRoomsReady)
+  const lociReady = useLocusStore(selectLociReady)
+  const dataReady = progressReady && palacesReady && roomsReady && lociReady
 
   useEffect(() => {
     progressStore.getState().start()
@@ -48,20 +81,46 @@ export function BadgesPage({ onBack, onOpenBadge }: BadgesPageProps = {}) {
       }),
     [progress, totals, palaces.length],
   )
-  const earned = badges.filter((badge) => badge.tier > 0).length
+  const milestone = useMemo(() => nextMilestone(badges), [badges])
 
   return (
     <AppScreen
+      fill
       className="pb-28"
-      header={<ScreenHeader title={t('badges.title')} onBack={onBack} backLabel={t('common.back')} />}
+      header={
+        <ScreenHeader title={t('badges.title')} onBack={onBack} backLabel={t('common.back')} />
+      }
     >
-
-      <div className="mt-2 flex flex-col gap-5">
-        <p className="px-1 text-[length:var(--p-text-label)] text-muted-foreground">
-          {t('badges.subtitle', { earned, total: badges.length })}
-        </p>
-        <BadgeGrid badges={badges} onOpenBadge={onOpenBadge} />
-      </div>
+      {!dataReady ? (
+        <BadgesSkeleton />
+      ) : (
+        <div className="mt-2 flex flex-col gap-5">
+          <p className="px-1 text-[length:var(--p-text-label)] text-muted-foreground">
+            {t('badges.explainer')}
+          </p>
+          {milestone ? (
+            <NextMilestoneCard badge={milestone} onOpen={() => onOpenBadge?.(milestone.id)} />
+          ) : null}
+          <BadgeGrid badges={badges} onOpenBadge={onOpenBadge} />
+        </div>
+      )}
     </AppScreen>
+  )
+}
+
+function BadgesSkeleton() {
+  return (
+    <div aria-hidden className="mt-2 flex flex-col gap-5">
+      <div className="h-3 w-44 animate-pulse rounded-full bg-secondary/30" />
+      <div className="h-20 animate-pulse rounded-card bg-secondary/30" />
+      <div className="grid grid-cols-3 gap-x-3 gap-y-7">
+        {Array.from({ length: 6 }, (_, index) => (
+          <div key={index} className="flex flex-col items-center gap-2">
+            <div className="size-20 animate-pulse rounded-full bg-secondary/30" />
+            <div className="h-2.5 w-12 animate-pulse rounded-full bg-secondary/20" />
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }

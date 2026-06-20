@@ -22,11 +22,11 @@ import {
   questionSchema,
   roomSchema,
 } from './schemas'
-import { migratePreferencesV1, migrateProfileV1 } from './migrations'
+import { migratePreferencesV1, migratePreferencesV2, migrateProfileV1 } from './migrations'
 
-// Required because the preferences and profiles collections are at schema version 1
-// (with migrationStrategies); without this RxDB throws "function must be overwritten
-// by a plugin" the moment the database is created.
+// Required because the preferences (v2) and profiles (v1) collections carry
+// migrationStrategies; without this RxDB throws "function must be overwritten by a
+// plugin" the moment the database is created.
 addRxPlugin(RxDBMigrationSchemaPlugin)
 
 export interface AppCollections {
@@ -59,7 +59,7 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
     progress: { schema: progressSchema },
     preferences: {
       schema: preferencesSchema,
-      migrationStrategies: { 1: migratePreferencesV1 },
+      migrationStrategies: { 1: migratePreferencesV1, 2: migratePreferencesV2 },
     },
     profiles: {
       schema: profileSchema,
