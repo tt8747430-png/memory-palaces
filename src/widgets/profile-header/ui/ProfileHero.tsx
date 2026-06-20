@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react'
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-import { Building2, Camera, Flame, Zap } from 'lucide-react'
+import { Building2, Flame, Zap } from 'lucide-react'
 import { levelFromXp } from '@/shared/lib'
 import { Avatar } from '@/shared/ui'
 
@@ -58,26 +58,32 @@ export function ProfileHero({
         type="button"
         onClick={onEditProfile}
         aria-label={t('profile.editPhoto')}
-        whileTap={{ scale: 0.97 }}
+        whileTap={{ scale: 0.96 }}
+        transition={{ type: 'spring', stiffness: 380, damping: 26 }}
         className="relative rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
       >
+        {/* Ambient navy/action-blue glow — the avatar lifts off the daylight ground. */}
         <span
           aria-hidden
-          className="absolute inset-0 translate-y-2 scale-90 rounded-full opacity-25 blur-xl"
+          className="absolute inset-0 -z-10 translate-y-2.5 scale-95 rounded-full opacity-30 blur-2xl"
           style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))' }}
+        />
+        {/* Frosted glass halo framing the avatar (a signature surface, not decoration:
+            it's the one hero on the Profile tab). */}
+        <span
+          aria-hidden
+          className="absolute -inset-[7px] rounded-full bg-card-glass shadow-featured ring-1 ring-[var(--border-glass)]"
+        />
+        {/* Daylit specular sheen across the glass rim. */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -inset-[7px] rounded-full bg-gradient-to-br from-white/55 via-white/10 to-transparent"
         />
         <Avatar
           name={name}
           src={avatar}
-          className="relative size-[104px] rounded-full border-[3px] border-[color:var(--surface)] text-[40px] shadow-featured"
+          className="relative size-[104px] rounded-full border-[3px] border-white/70 text-[40px] shadow-featured"
         />
-        <span
-          aria-hidden
-          className="absolute bottom-1 right-1 grid size-8 place-items-center rounded-full border-[3px] border-[color:var(--surface)] text-primary-foreground shadow-interactive"
-          style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))' }}
-        >
-          <Camera className="size-4" aria-hidden />
-        </span>
       </motion.button>
 
       <motion.p

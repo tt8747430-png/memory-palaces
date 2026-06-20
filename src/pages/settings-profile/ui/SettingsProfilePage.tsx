@@ -19,10 +19,10 @@ import { useNotificationStoreApi } from '@/entities/notification'
 import { setProfile } from '@/features/profile'
 import { resetEverything } from '@/features/data'
 import {
-  ActionSheet,
   AppScreen,
   Avatar,
   Button,
+  ConfirmDialog,
   ScreenHeader,
   SettingsRow,
   SettingsSection,
@@ -178,33 +178,32 @@ export function SettingsProfilePage({
         className="mt-4 flex flex-col gap-6 pb-28"
       >
         <div className="flex flex-col items-center gap-4">
+          {/* The avatar itself is just a portrait — only the camera badge changes the
+              photo, so a stray tap on the picture never opens the file picker. */}
           <div className="relative">
             <span
               aria-hidden
               className="absolute inset-0 translate-y-1.5 scale-90 rounded-full opacity-25 blur-xl"
               style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))' }}
             />
-            <button
+            <Avatar
+              name={form.name}
+              src={form.avatar}
+              className="relative size-24 border-[3px] border-[color:var(--surface)] text-3xl shadow-featured"
+            />
+            <motion.button
               type="button"
               onClick={() => fileRef.current?.click()}
               aria-label={t(
                 form.avatar ? 'settings.profileEdit.changePhoto' : 'settings.profileEdit.uploadPhoto',
               )}
-              className="relative rounded-full transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              whileTap={{ scale: 0.9 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 24 }}
+              className="absolute -bottom-1 -right-1 grid size-10 place-items-center rounded-full border-[3px] border-[color:var(--surface)] text-primary-foreground shadow-interactive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))' }}
             >
-              <Avatar
-                name={form.name}
-                src={form.avatar}
-                className="size-24 border-[3px] border-[color:var(--surface)] text-3xl shadow-featured"
-              />
-              <span
-                aria-hidden
-                className="absolute -bottom-1 -right-1 grid size-9 place-items-center rounded-full border-[3px] border-[color:var(--surface)] text-primary-foreground shadow-interactive"
-                style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))' }}
-              >
-                <Camera className="size-4" />
-              </span>
-            </button>
+              <Camera className="size-4" aria-hidden />
+            </motion.button>
           </div>
           {form.avatar ? (
             <Button variant="ghost" size="sm" onClick={() => set('avatar', null)}>
@@ -358,21 +357,16 @@ export function SettingsProfilePage({
 
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePhoto} />
 
-      <ActionSheet
+      <ConfirmDialog
         open={confirmDelete}
         onOpenChange={setConfirmDelete}
+        destructive
+        icon={<Trash2 className="size-6" aria-hidden />}
         title={t('settings.profileEdit.deleteConfirmTitle')}
         description={t('settings.profileEdit.deleteConfirmBody')}
-        actions={[
-          {
-            id: 'delete',
-            label: t('settings.profileEdit.deleteConfirmCta'),
-            destructive: true,
-            icon: <Trash2 className="size-[18px]" aria-hidden />,
-            onSelect: () => void handleDelete(),
-          },
-        ]}
+        confirmLabel={t('settings.profileEdit.deleteConfirmCta')}
         cancelLabel={t('common.cancel')}
+        onConfirm={() => void handleDelete()}
       />
     </AppScreen>
   )

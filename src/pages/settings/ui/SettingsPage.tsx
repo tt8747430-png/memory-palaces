@@ -30,7 +30,7 @@ import {
 } from '@/entities/profile'
 import type { SessionKind } from '@/entities/session'
 import { setPreferences } from '@/features/preferences'
-import { ActionSheet, AppScreen, Avatar, ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui'
+import { AppScreen, Avatar, ConfirmDialog, ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui'
 
 export interface SettingsPageProps {
   /** All provided by the route wrapper so the page stays router-free. */
@@ -100,9 +100,13 @@ export function SettingsPage({
         <button
           type="button"
           onClick={() => onEditProfile?.()}
-          className="flex w-full items-center gap-4 rounded-card bg-card p-4 text-left shadow-rest transition-colors active:bg-primary/[0.04]"
+          className="group flex w-full items-center gap-4 rounded-card bg-card p-4 text-left shadow-rest transition-[transform,background-color] duration-200 ease-out active:scale-[0.99] active:bg-primary/[0.04]"
         >
-          <Avatar name={name} src={profile.avatar} className="size-16 text-xl shadow-rest" />
+          <Avatar
+            name={name}
+            src={profile.avatar}
+            className="size-16 text-xl shadow-rest transition-transform duration-200 ease-out group-active:scale-[0.96]"
+          />
           <span className="min-w-0 flex-1">
             <span className="block truncate text-[length:var(--p-text-title)] font-semibold text-heading">
               {name}
@@ -111,7 +115,10 @@ export function SettingsPage({
               {handle ? `@${handle}` : t('settings.profileHint')}
             </span>
           </span>
-          <ChevronRight className="size-5 shrink-0 text-muted-foreground" aria-hidden />
+          <ChevronRight
+            className="size-5 shrink-0 text-muted-foreground transition-transform duration-200 ease-out group-active:translate-x-0.5"
+            aria-hidden
+          />
         </button>
 
         {isGuest ? (
@@ -229,20 +236,15 @@ export function SettingsPage({
         onChange={handleImport}
       />
 
-      <ActionSheet
+      <ConfirmDialog
         open={logoutOpen}
         onOpenChange={setLogoutOpen}
+        icon={<LogOut className="size-6" aria-hidden />}
         title={t('settings.signOutConfirmTitle')}
         description={t('settings.signOutConfirmBody')}
-        actions={[
-          {
-            id: 'logout',
-            label: t('settings.signOutConfirmCta'),
-            icon: <LogOut className="size-[18px]" aria-hidden />,
-            onSelect: () => onLogout?.(),
-          },
-        ]}
+        confirmLabel={t('settings.signOutConfirmCta')}
         cancelLabel={t('common.cancel')}
+        onConfirm={() => onLogout?.()}
       />
     </AppScreen>
   )

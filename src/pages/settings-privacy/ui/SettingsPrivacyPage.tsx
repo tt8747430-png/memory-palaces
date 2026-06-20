@@ -63,6 +63,7 @@ export function SettingsPrivacyPage({ onBack }: SettingsPrivacyPageProps) {
 
   return (
     <AppScreen
+      fill
       header={
         <ScreenHeader
           title={t('settings.privacyScreen.title')}

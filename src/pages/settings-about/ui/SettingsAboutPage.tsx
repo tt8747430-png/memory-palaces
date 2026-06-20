@@ -1,3 +1,4 @@
+import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Brain, FileText, Info, Scale, ScrollText, ShieldCheck, Wrench } from 'lucide-react'
 import { AppScreen, ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui'
@@ -26,12 +27,15 @@ export function SettingsAboutPage({ onBack }: { onBack?: () => void }) {
 
       <div className="mt-4 flex flex-col gap-6 pb-28">
         <div className="flex flex-col items-center gap-3 pt-4 text-center">
-          <span
+          <motion.span
+            initial={{ opacity: 0, scale: 0.8, y: 6 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 18 }}
             className="grid size-16 place-items-center rounded-card-featured text-primary-foreground shadow-featured"
             style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))' }}
           >
             <Brain className="size-8" aria-hidden />
-          </span>
+          </motion.span>
           <div>
             <p className="text-[length:var(--p-text-headline)] font-semibold text-heading">
               Mindscape

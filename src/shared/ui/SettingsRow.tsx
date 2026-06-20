@@ -31,6 +31,7 @@ function RowBody({ icon, label, description, tone = 'default' }: BaseProps) {
         aria-hidden
         className={cn(
           'grid size-9 shrink-0 place-items-center rounded-control [&_svg]:size-[18px]',
+          'transition-transform duration-200 ease-out group-active:scale-[0.92]',
           danger
             ? 'bg-[var(--danger-surface)] text-[var(--danger-on-surface)]'
             : 'bg-info-surface text-info-foreground',
@@ -76,7 +77,7 @@ export function SettingsRow(props: SettingsRowProps) {
         aria-checked={props.checked}
         aria-label={label}
         onClick={() => props.onCheckedChange(!props.checked)}
-        className={cn(ROW, 'active:bg-primary/[0.04]')}
+        className={cn(ROW, 'group active:bg-primary/[0.04]')}
       >
         {body}
         <SwitchTrack checked={props.checked} />
@@ -90,11 +91,14 @@ export function SettingsRow(props: SettingsRowProps) {
         type="button"
         aria-label={label}
         onClick={props.onClick}
-        className={cn(ROW, 'active:bg-primary/[0.04]')}
+        className={cn(ROW, 'group active:bg-primary/[0.04]')}
       >
         {body}
         {props.value ? trailingValue(props.value) : null}
-        <ChevronRight className="size-5 shrink-0 text-muted-foreground" aria-hidden />
+        <ChevronRight
+          className="size-5 shrink-0 text-muted-foreground transition-transform duration-200 ease-out group-active:translate-x-0.5"
+          aria-hidden
+        />
       </button>
     )
   }
