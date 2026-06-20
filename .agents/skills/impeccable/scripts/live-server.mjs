@@ -21,7 +21,13 @@ import path from 'node:path';
 import net from 'node:net';
 import { fileURLToPath } from 'node:url';
 import { parseDesignMd } from './lib/design-parser.mjs';
-import { resolveContextDir } from './context.mjs';
+import { loadContext } from './context.mjs';
+import {
+  assembleLiveBrowserScript,
+  assertLiveBrowserScriptParts,
+  readLiveBrowserScriptParts,
+  resolveLiveBrowserScriptParts,
+} from './live/browser-script-parts.mjs';
 import { createLiveSessionStore } from './live/session-store.mjs';
 import { validateEvent } from './live/event-validation.mjs';
 import { createManualEditRoutes } from './live/manual-edit-routes.mjs';
@@ -49,7 +55,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // PRODUCT.md / DESIGN.md live wherever context.mjs resolves. The generated
 // DESIGN sidecar is project-local at .impeccable/design.json, with legacy
 // DESIGN.json fallback for existing projects.
-const CONTEXT_DIR = resolveContextDir(process.cwd());
+const PROJECT_CONTEXT = loadContext(process.cwd());
+const CONTEXT_DIR = PROJECT_CONTEXT.contextDir;
+const DESIGN_MD_PATH = PROJECT_CONTEXT.designPath
+  ? path.resolve(process.cwd(), PROJECT_CONTEXT.designPath)
+  : null;
 const DEFAULT_POLL_TIMEOUT = 600_000;   // 10 min — agent re-polls on timeout anyway
 const SSE_HEARTBEAT_INTERVAL = 30_000;  // keepalive ping every 30s
 
@@ -347,29 +357,25 @@ function loadBrowserScripts() {
     try { detectScript = fs.readFileSync(p, 'utf-8'); break; } catch { /* try next */ }
   }
 
-  // live-browser.js: DO NOT cache. Return the path so the /live.js handler
-  // can re-read on every request. Editing the browser script during iteration
-  // should land on the next tab reload, not require a server restart.
-  const sessionPath = path.join(__dirname, 'live-browser-session.js');
-  const livePath = path.join(__dirname, 'live-browser.js');
-  for (const p of [sessionPath, livePath]) {
-    if (!fs.existsSync(p)) {
-      process.stderr.write('Error: live browser script not found at ' + p + '\n');
-      process.exit(1);
-    }
+  // Browser script parts: DO NOT cache. Return paths so the /live.js handler
+  // can re-read every part on each request. Editing browser code during
+  // iteration should land on the next tab reload, not require a server restart.
+  const liveScriptParts = resolveLiveBrowserScriptParts(__dirname);
+  try {
+    assertLiveBrowserScriptParts(liveScriptParts);
+  } catch (err) {
+    process.stderr.write('Error: ' + err.message + '\n');
+    process.exit(1);
   }
 
-  return { detectScript, sessionPath, livePath };
+  return { detectScript, liveScriptParts };
 }
 
 function hasProjectContext() {
   // PRODUCT.md carries brand voice / anti-references — that's what determines
   // whether variants are brand-aware. DESIGN.md (visual tokens) is a separate
   // concern, surfaced by the design panel's own empty state.
-  try {
-    fs.accessSync(path.join(CONTEXT_DIR, 'PRODUCT.md'), fs.constants.R_OK);
-    return true;
-  } catch { return false; }
+  return !!PROJECT_CONTEXT.hasProduct;
 }
 
 function statOrNull(filePath) {
@@ -379,7 +385,7 @@ function statOrNull(filePath) {
 // HTTP request handler
 // ---------------------------------------------------------------------------
 
-function createRequestHandler({ detectScript, sessionPath, livePath }) {
+function createRequestHandler({ detectScript, liveScriptParts }) {
   return (req, res) => {
     const url = new URL(req.url, `http://localhost:${state.port}`);
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -395,24 +401,20 @@ function createRequestHandler({ detectScript, sessionPath, livePath }) {
       // the next tab reload. No-store headers prevent browser caching across
       // sessions — during iteration, a cached old script silently breaks
       // every subsequent session.
-      let sessionScript;
-      let liveScript;
+      let parts;
       try {
-        sessionScript = fs.readFileSync(sessionPath, 'utf-8');
-        liveScript = fs.readFileSync(livePath, 'utf-8');
+        parts = readLiveBrowserScriptParts(liveScriptParts);
       } catch (err) {
         res.writeHead(500, { 'Content-Type': 'text/plain' });
         res.end('Error reading live browser scripts: ' + err.message);
         return;
       }
-      const body =
-        `window.__IMPECCABLE_TOKEN__ = '${state.token}';\n` +
-        `window.__IMPECCABLE_PORT__ = ${state.port};\n` +
-        // Canonical command vocabulary (values + labels + icons). live-browser.js
-        // builds its action picker from this instead of an inline copy.
-        `window.__IMPECCABLE_VOCAB__ = ${JSON.stringify(LIVE_COMMANDS)};\n` +
-        sessionScript + '\n' +
-        liveScript;
+      const body = assembleLiveBrowserScript({
+        token: state.token,
+        port: state.port,
+        vocabulary: LIVE_COMMANDS,
+        parts,
+      });
       res.writeHead(200, {
         'Content-Type': 'application/javascript',
         'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
@@ -548,8 +550,8 @@ function createRequestHandler({ detectScript, sessionPath, livePath }) {
       const token = url.searchParams.get('token');
       if (token !== state.token) { res.writeHead(401); res.end('Unauthorized'); return; }
 
-      const mdPath = path.join(CONTEXT_DIR, 'DESIGN.md');
-      const jsonPath = resolveDesignSidecarPath(process.cwd(), CONTEXT_DIR) || getDesignSidecarPath(process.cwd());
+      const mdPath = DESIGN_MD_PATH;
+      const jsonPath = resolveDesignSidecarPath(process.cwd(), PROJECT_CONTEXT.designContextDir || CONTEXT_DIR) || getDesignSidecarPath(process.cwd());
       const mdStat = statOrNull(mdPath);
       const jsonStat = statOrNull(jsonPath);
 
@@ -1116,8 +1118,8 @@ const annotRoot = getLiveAnnotationsDir(process.cwd());
 fs.mkdirSync(annotRoot, { recursive: true });
 state.sessionDir = fs.mkdtempSync(path.join(annotRoot, 'session-'));
 
-const { detectScript, sessionPath, livePath } = loadBrowserScripts();
-httpServer = http.createServer(createRequestHandler({ detectScript, sessionPath, livePath }));
+const { detectScript, liveScriptParts } = loadBrowserScripts();
+httpServer = http.createServer(createRequestHandler({ detectScript, liveScriptParts }));
 
 httpServer.listen(state.port, '127.0.0.1', () => {
   writeLiveServerInfo(process.cwd(), { pid: process.pid, port: state.port, token: state.token });
