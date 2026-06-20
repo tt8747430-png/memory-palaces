@@ -83,7 +83,7 @@ export function CreatePalaceSheet({ open, onOpenChange, onCreated }: CreatePalac
         </Button>
       }
     >
-      <div className="flex flex-col gap-5 px-5 pb-5">
+      <div className="flex flex-col gap-5 pb-2">
         {/* Live preview + name */}
         <div className="flex items-center gap-3.5">
           <PalaceCover

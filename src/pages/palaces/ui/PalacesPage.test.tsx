@@ -65,14 +65,17 @@ describe('PalacesPage', () => {
 
   it('creates a palace through the sheet, persists it, and opens it', async () => {
     const user = userEvent.setup()
-    const { palaceRepo, onOpenPalace } = setup()
+    // Seed one palace so the first-run empty-state CTA (also named "Create palace") is
+    // gone, leaving only the header + button to disambiguate the open.
+    const { palaceRepo, onOpenPalace } = setup([palace('seed', 'Seeded')])
+    await screen.findByText('Seeded')
 
     await user.click(screen.getByRole('button', { name: /create palace/i }))
     const sheet = await screen.findByRole('dialog')
     await user.type(within(sheet).getByRole('textbox', { name: /name/i }), 'Memory Lane')
     await user.click(within(sheet).getByRole('button', { name: /create palace/i }))
 
-    await waitFor(async () => expect(await palaceRepo.getAll()).toHaveLength(1))
+    await waitFor(async () => expect(await palaceRepo.getAll()).toHaveLength(2))
     expect(onOpenPalace).toHaveBeenCalledTimes(1)
     expect(await screen.findByText('Memory Lane')).toBeInTheDocument()
   })

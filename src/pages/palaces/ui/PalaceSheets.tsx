@@ -40,7 +40,7 @@ export function MoveToFolderSheet({
         </Button>
       }
     >
-      <div className="flex flex-col gap-1.5 px-5 pb-5">
+      <div className="flex flex-col gap-1.5 pb-2">
         <FolderOption
           label={t('palaces.moveNone')}
           icon={<Sparkles className="size-4" aria-hidden />}
@@ -126,7 +126,7 @@ export function NewFolderSheet({ open, onOpenChange, onCreate }: NewFolderSheetP
         </Button>
       }
     >
-      <form onSubmit={submit} className="flex flex-col gap-2 px-5 pb-5">
+      <form onSubmit={submit} className="flex flex-col gap-2 pb-2">
         <p className="text-[length:var(--p-text-label)]">{t('palaces.folderNameHint')}</p>
         <TextField
           aria-label={t('palaces.folderNameLabel')}
