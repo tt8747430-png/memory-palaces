@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
+  type BadgeId,
   computeAchievements,
   computeBadges,
   computeTrainingTotals,
@@ -36,6 +37,8 @@ export interface ProfilePageProps {
   onOpenStreak?: () => void
   /** Open the full Badges page; wired by the route wrapper. */
   onOpenBadges?: () => void
+  /** Open a single badge's detail (from the "Almost there" milestone nudge). */
+  onOpenBadge?: (id: BadgeId) => void
   /** Open the full Achievements page; wired by the route wrapper. */
   onOpenAchievements?: () => void
 }
@@ -56,6 +59,7 @@ export function ProfilePage({
   onEditProfile,
   onOpenStreak,
   onOpenBadges,
+  onOpenBadge,
   onOpenAchievements,
 }: ProfilePageProps = {}) {
   const header = useStickyHeader()
@@ -159,7 +163,9 @@ export function ProfilePage({
       {/* Fill at least a screen so a short profile still scrolls (gives the native
           pull-to-bounce something to overflow). Taller content scrolls normally. */}
       <div className="mt-8 flex min-h-[calc(100dvh-20rem)] flex-col gap-8">
-        {milestone ? <NextMilestoneCard badge={milestone} onOpen={() => onOpenBadges?.()} /> : null}
+        {milestone ? (
+          <NextMilestoneCard badge={milestone} onOpen={() => onOpenBadge?.(milestone.id)} />
+        ) : null}
         <BadgesSection badges={badges} onSeeAll={() => onOpenBadges?.()} />
         <AchievementsSection achievements={achievements} onSeeAll={() => onOpenAchievements?.()} />
       </div>

@@ -23,7 +23,9 @@ import { QuizPage } from '@/pages/quiz'
 import { ProfilePage } from '@/pages/profile'
 import { StreakPage } from '@/pages/streak'
 import { BadgesPage } from '@/pages/badges'
+import { BadgeDetailPage } from '@/pages/badge-detail'
 import { AchievementsPage } from '@/pages/achievements'
+import { AchievementDetailPage } from '@/pages/achievement-detail'
 import { SettingsPage, useProgressTransfer } from '@/pages/settings'
 import { SettingsProfilePage } from '@/pages/settings-profile'
 import { SettingsChangePasswordPage } from '@/pages/settings-change-password'
@@ -283,6 +285,7 @@ function ProfileRoute() {
       onEditProfile={() => navigate({ to: ROUTES.settingsProfile })}
       onOpenStreak={() => navigate({ to: ROUTES.streak })}
       onOpenBadges={() => navigate({ to: ROUTES.badges })}
+      onOpenBadge={(badgeId) => navigate({ to: ROUTES.badgeDetail, params: { badgeId } })}
       onOpenAchievements={() => navigate({ to: ROUTES.achievements })}
     />
   )
@@ -309,7 +312,12 @@ const streakRoute = createRoute({
 function BadgesRoute() {
   const navigate = useNavigate()
   const back = useBack(() => navigate({ to: ROUTES.profile }))
-  return <BadgesPage onBack={back} />
+  return (
+    <BadgesPage
+      onBack={back}
+      onOpenBadge={(badgeId) => navigate({ to: ROUTES.badgeDetail, params: { badgeId } })}
+    />
+  )
 }
 
 const badgesRoute = createRoute({
@@ -318,16 +326,49 @@ const badgesRoute = createRoute({
   component: BadgesRoute,
 })
 
+function BadgeDetailRoute() {
+  const { badgeId } = badgeDetailRoute.useParams()
+  const navigate = useNavigate()
+  const back = useBack(() => navigate({ to: ROUTES.badges }))
+  return <BadgeDetailPage badgeId={badgeId} onBack={back} />
+}
+
+const badgeDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.badgeDetail,
+  component: BadgeDetailRoute,
+})
+
 function AchievementsRoute() {
   const navigate = useNavigate()
   const back = useBack(() => navigate({ to: ROUTES.profile }))
-  return <AchievementsPage onBack={back} />
+  return (
+    <AchievementsPage
+      onBack={back}
+      onOpenAchievement={(achievementId) =>
+        navigate({ to: ROUTES.achievementDetail, params: { achievementId } })
+      }
+    />
+  )
 }
 
 const achievementsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.achievements,
   component: AchievementsRoute,
+})
+
+function AchievementDetailRoute() {
+  const { achievementId } = achievementDetailRoute.useParams()
+  const navigate = useNavigate()
+  const back = useBack(() => navigate({ to: ROUTES.achievements }))
+  return <AchievementDetailPage achievementId={achievementId} onBack={back} />
+}
+
+const achievementDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.achievementDetail,
+  component: AchievementDetailRoute,
 })
 
 function SettingsRoute() {
@@ -462,7 +503,9 @@ const routeTree = rootRoute.addChildren([
   profileRoute,
   streakRoute,
   badgesRoute,
+  badgeDetailRoute,
   achievementsRoute,
+  achievementDetailRoute,
   settingsRoute,
   settingsProfileRoute,
   settingsChangePasswordRoute,

@@ -215,7 +215,7 @@ export const en = {
     earned: 'Earned',
     locked: 'Not earned yet',
     howToTitle: 'How to earn it',
-    earnedNote: 'You’ve earned this one. It stays yours.',
+    earnedNote: "You've earned this one. It stays yours.",
     'first-palace': {
       howTo: 'Open the Palaces tab, create a palace, and add your first room.',
     },

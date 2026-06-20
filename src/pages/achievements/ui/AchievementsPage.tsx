@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react'
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import {
+  type AchievementId,
   cn,
   computeAchievements,
   computeTrainingTotals,
@@ -18,12 +19,14 @@ import { AppScreen, ScreenHeader, cardSurface } from '@/shared/ui'
 
 export interface AchievementsPageProps {
   onBack?: () => void
+  /** Open a milestone's "how to earn it" detail; wired by the route wrapper. */
+  onOpenAchievement?: (id: AchievementId) => void
 }
 
 /** The Achievements screen: a compact grid of personal records (best-ever figures) over
- * the full milestone wall. Records and earned states derive live from the stores.
- * Reached from the Profile "Achievements / See all". */
-export function AchievementsPage({ onBack }: AchievementsPageProps = {}) {
+ * the full milestone wall. Records and earned states derive live from the stores. Each
+ * milestone taps through to its detail. Reached from the Profile "Achievements / See all". */
+export function AchievementsPage({ onBack, onOpenAchievement }: AchievementsPageProps = {}) {
   const { t } = useTranslation()
   const progressStore = useProgressStoreApi()
   const palaceStore = usePalaceStoreApi()
@@ -151,7 +154,7 @@ export function AchievementsPage({ onBack }: AchievementsPageProps = {}) {
           <h2 className="mb-4 px-1 text-[length:var(--p-text-title)] font-bold text-heading">
             {t('achievementsPage.milestonesTitle')}
           </h2>
-          <AchievementGrid achievements={achievements} />
+          <AchievementGrid achievements={achievements} onOpenAchievement={onOpenAchievement} />
         </section>
       </div>
     </AppScreen>

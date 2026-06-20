@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { computeBadges, computeTrainingTotals, totalTrainingDays } from '@/shared/lib'
+import { type BadgeId, computeBadges, computeTrainingTotals, totalTrainingDays } from '@/shared/lib'
 import { selectProgress, useProgressStore, useProgressStoreApi } from '@/entities/progress'
 import { selectPalaces, usePalaceStore, usePalaceStoreApi } from '@/entities/palace'
 import { selectRooms, useRoomStore, useRoomStoreApi } from '@/entities/room'
@@ -10,11 +10,14 @@ import { AppScreen, ScreenHeader } from '@/shared/ui'
 
 export interface BadgesPageProps {
   onBack?: () => void
+  /** Open a badge's "how to earn it" detail; wired by the route wrapper. */
+  onOpenBadge?: (id: BadgeId) => void
 }
 
 /** The full badge wall: every tiered badge resolved against live progress, earned tiers
- * in their color and locked ones greyscale. Reached from the Profile "Badges / See all". */
-export function BadgesPage({ onBack }: BadgesPageProps = {}) {
+ * in their color and locked ones greyscale. Each medallion taps through to its detail.
+ * Reached from the Profile "Badges / See all". */
+export function BadgesPage({ onBack, onOpenBadge }: BadgesPageProps = {}) {
   const { t } = useTranslation()
   const progressStore = useProgressStoreApi()
   const palaceStore = usePalaceStoreApi()
@@ -57,7 +60,7 @@ export function BadgesPage({ onBack }: BadgesPageProps = {}) {
         <p className="px-1 text-[length:var(--p-text-label)] text-muted-foreground">
           {t('badges.subtitle', { earned, total: badges.length })}
         </p>
-        <BadgeGrid badges={badges} />
+        <BadgeGrid badges={badges} onOpenBadge={onOpenBadge} />
       </div>
     </AppScreen>
   )
