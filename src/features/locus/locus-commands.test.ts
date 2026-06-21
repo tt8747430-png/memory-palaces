@@ -1,9 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@/shared/api'
-import { createLocusStore, type Locus } from '@/entities/locus'
+import { srsStatus } from '@/shared/lib'
+import { createLocusStore, lociForRoom, selectLoci, type Locus } from '@/entities/locus'
 import { createLocus } from './create-locus'
 import { editLocus } from './edit-locus'
 import { deleteLocus } from './delete-locus'
+import { markRoomKnown } from './mark-room-known'
+import { resetRoomSrs } from './reset-room-srs'
+import { moveLocus } from './move-locus'
+import { duplicateLocus } from './duplicate-locus'
+import { toggleLocusFlag } from './toggle-locus-flag'
 
 function startedStore() {
   const store = createLocusStore(new InMemoryRepository<Locus>())
@@ -63,5 +69,98 @@ describe('deleteLocus', () => {
     const locus = await createLocus(store, 'r1', { front: 'a', back: 'b' })
     await deleteLocus(store, locus.id)
     expect(store.getState().loci).toEqual([])
+  })
+})
+
+describe('markRoomKnown', () => {
+  it('marks every locus in the room as known, leaving other rooms untouched', async () => {
+    const store = startedStore()
+    await createLocus(store, 'r1', { front: 'a', back: 'A' })
+    await createLocus(store, 'r1', { front: 'b', back: 'B' })
+    const other = await createLocus(store, 'r2', { front: 'c', back: 'C' })
+
+    await markRoomKnown(store, 'r1')
+
+    const now = Date.now()
+    const inRoom = lociForRoom(selectLoci(store.getState()), 'r1')
+    expect(inRoom.every((locus) => srsStatus(locus.srs, now) === 'known')).toBe(true)
+    const untouched = store.getState().loci.find((locus) => locus.id === other.id)
+    expect(untouched?.srs).toBeUndefined()
+  })
+})
+
+describe('resetRoomSrs', () => {
+  it('clears the schedule of every locus in the room back to new', async () => {
+    const store = startedStore()
+    await createLocus(store, 'r1', { front: 'a', back: 'A' })
+    await createLocus(store, 'r1', { front: 'b', back: 'B' })
+    await markRoomKnown(store, 'r1')
+
+    await resetRoomSrs(store, 'r1')
+
+    const now = Date.now()
+    const inRoom = lociForRoom(selectLoci(store.getState()), 'r1')
+    expect(inRoom.every((locus) => locus.srs === undefined)).toBe(true)
+    expect(inRoom.every((locus) => srsStatus(locus.srs, now) === 'new')).toBe(true)
+  })
+})
+
+const frontsForRoom = (store: ReturnType<typeof startedStore>) =>
+  lociForRoom(selectLoci(store.getState()), 'r1').map((locus) => locus.front)
+
+describe('createLocus order', () => {
+  it('appends each new card after the last', async () => {
+    const store = startedStore()
+    await createLocus(store, 'r1', { front: 'a', back: 'A' })
+    await createLocus(store, 'r1', { front: 'b', back: 'B' })
+    await createLocus(store, 'r1', { front: 'c', back: 'C' })
+    expect(frontsForRoom(store)).toEqual(['a', 'b', 'c'])
+  })
+})
+
+describe('moveLocus', () => {
+  it('reorders a card one step and renumbers the room', async () => {
+    const store = startedStore()
+    const a = await createLocus(store, 'r1', { front: 'a', back: 'A' })
+    const b = await createLocus(store, 'r1', { front: 'b', back: 'B' })
+    await createLocus(store, 'r1', { front: 'c', back: 'C' })
+
+    await moveLocus(store, b.id, 'up')
+    expect(frontsForRoom(store)).toEqual(['b', 'a', 'c'])
+
+    await moveLocus(store, a.id, 'up') // a is now at index 1
+    expect(frontsForRoom(store)).toEqual(['a', 'b', 'c'])
+  })
+
+  it('is a no-op at the edges', async () => {
+    const store = startedStore()
+    const a = await createLocus(store, 'r1', { front: 'a', back: 'A' })
+    await createLocus(store, 'r1', { front: 'b', back: 'B' })
+    await moveLocus(store, a.id, 'up')
+    expect(frontsForRoom(store)).toEqual(['a', 'b'])
+  })
+})
+
+describe('duplicateLocus', () => {
+  it('copies the content into a fresh card appended to the room', async () => {
+    const store = startedStore()
+    const a = await createLocus(store, 'r1', { front: 'a', back: 'A', hint: 'picture' })
+    const copy = await duplicateLocus(store, a.id)
+
+    expect(copy.id).not.toBe(a.id)
+    expect(copy.front).toBe('a')
+    expect(copy.hint).toBe('picture')
+    expect(copy.srs).toBeUndefined()
+    expect(frontsForRoom(store)).toEqual(['a', 'a'])
+  })
+})
+
+describe('toggleLocusFlag', () => {
+  it('flips the flagged mark', async () => {
+    const store = startedStore()
+    const a = await createLocus(store, 'r1', { front: 'a', back: 'A' })
+    expect(a.flagged).toBe(false)
+    expect((await toggleLocusFlag(store, a.id)).flagged).toBe(true)
+    expect((await toggleLocusFlag(store, a.id)).flagged).toBe(false)
   })
 })

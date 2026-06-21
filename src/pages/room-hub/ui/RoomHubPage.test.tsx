@@ -1,0 +1,86 @@
+import { afterEach, describe, expect, it } from 'vitest'
+import { cleanup, render, screen } from '@testing-library/react'
+import { MotionConfig } from 'motion/react'
+import { I18nextProvider } from 'react-i18next'
+import { i18n } from '@/shared/i18n'
+import { InMemoryRepository } from '@/shared/api'
+import { createPalaceStore, makePalace, PalaceStoreContext, type Palace } from '@/entities/palace'
+import { createRoomStore, makeRoom, RoomStoreContext, type Room } from '@/entities/room'
+import { createLocusStore, LocusStoreContext, makeLocus, type Locus } from '@/entities/locus'
+import { createQuestionStore, QuestionStoreContext, type Question } from '@/entities/question'
+import { RoomHubPage } from './RoomHubPage'
+
+afterEach(cleanup)
+
+const at = (ms: number) => new Date(ms).toISOString()
+
+function renderHub({ loci = [] as Locus[] }: { loci?: Locus[] } = {}) {
+  const palaceRepo = new InMemoryRepository<Palace>([
+    makePalace({ id: 'p1', createdAt: at(0), name: 'Forum' }),
+  ])
+  const roomRepo = new InMemoryRepository<Room>([
+    makeRoom({ id: 'r1', createdAt: at(0), palaceId: 'p1', title: 'Garden Room', order: 0 }),
+  ])
+  const locusRepo = new InMemoryRepository<Locus>(loci)
+  const questionRepo = new InMemoryRepository<Question>()
+  render(
+    <I18nextProvider i18n={i18n}>
+      <MotionConfig reducedMotion="always">
+        <PalaceStoreContext value={createPalaceStore(palaceRepo)}>
+          <RoomStoreContext value={createRoomStore(roomRepo)}>
+            <LocusStoreContext value={createLocusStore(locusRepo)}>
+              <QuestionStoreContext value={createQuestionStore(questionRepo)}>
+                <RoomHubPage
+                  roomId="r1"
+                  onBack={() => {}}
+                  onStudy={() => {}}
+                  onMatch={() => {}}
+                  onTest={() => {}}
+                />
+              </QuestionStoreContext>
+            </LocusStoreContext>
+          </RoomStoreContext>
+        </PalaceStoreContext>
+      </MotionConfig>
+    </I18nextProvider>,
+  )
+}
+
+const card = (id: string, front: string, back: string, order: number) =>
+  makeLocus({ id, createdAt: at(order + 1), roomId: 'r1', front, back, order })
+
+describe('RoomHubPage', () => {
+  it('leads with the room title, card count, preview, and study modes', async () => {
+    renderHub({ loci: [card('l1', 'mihi', 'to me', 0), card('l2', 'tibi', 'to you', 1)] })
+
+    expect(await screen.findByRole('heading', { name: 'Garden Room' })).toBeInTheDocument()
+    expect(screen.getByText('2 cards')).toBeInTheDocument()
+    // The preview carousel renders for a non-empty room.
+    expect(screen.getByRole('button', { name: /study flashcards/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^match/i })).toBeInTheDocument()
+  })
+
+  it('disables Test until the room has questions', async () => {
+    renderHub({ loci: [card('l1', 'a', 'A', 0)] })
+    await screen.findByRole('heading', { name: 'Garden Room' })
+    expect(screen.getByRole('button', { name: /^test/i })).toBeDisabled()
+  })
+
+  it('shows the cards-and-questions editor inline (one scroll)', async () => {
+    renderHub({ loci: [card('l1', 'a', 'A', 0)] })
+    await screen.findByRole('heading', { name: 'Garden Room' })
+
+    expect(screen.getByRole('heading', { name: /cards & questions/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /cards · 1/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /questions · 0/i })).toBeInTheDocument()
+  })
+
+  it('teaches the empty room instead of showing a blank deck', async () => {
+    renderHub()
+    await screen.findByRole('heading', { name: 'Garden Room' })
+    expect(screen.getByText(/add a few cards to start/i)).toBeInTheDocument()
+    expect(screen.getByText('0 cards')).toBeInTheDocument()
+    // No preview carousel when the room is empty; the editor's empty state guides instead.
+    expect(screen.queryByRole('button', { name: /study flashcards/i })).not.toBeInTheDocument()
+  })
+})

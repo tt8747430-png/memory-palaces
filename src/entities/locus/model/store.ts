@@ -18,8 +18,10 @@ export interface LocusState {
 
 export type LocusStore = StoreApi<LocusState>
 
-// Loci have no explicit order field; they read in creation order.
-const byOldestFirst = (a: Locus, b: Locus): number => a.createdAt.localeCompare(b.createdAt)
+// Cards read in their explicit `order`; equal orders (legacy/migrated data) tiebreak by
+// creation time so they keep their original sequence until reordered.
+const byOrder = (a: Locus, b: Locus): number =>
+  a.order - b.order || a.createdAt.localeCompare(b.createdAt)
 
 /** Store FACTORY (repository INJECTED), reactive like the palace/room stores. */
 export function createLocusStore(repo: LocusRepository): LocusStore {
@@ -32,7 +34,7 @@ export function createLocusStore(repo: LocusRepository): LocusStore {
       if (unsubscribe) return
       set({ status: 'loading' })
       unsubscribe = repo.observe((loci) => {
-        set({ loci: [...loci].sort(byOldestFirst), status: 'ready' })
+        set({ loci: [...loci].sort(byOrder), status: 'ready' })
       })
     },
 

@@ -18,7 +18,10 @@ export interface QuestionState {
 
 export type QuestionStore = StoreApi<QuestionState>
 
-const byOldestFirst = (a: Question, b: Question): number => a.createdAt.localeCompare(b.createdAt)
+// Questions read in their explicit `order`; equal orders (legacy/migrated data) tiebreak
+// by creation time so they keep their original sequence until reordered.
+const byOrder = (a: Question, b: Question): number =>
+  a.order - b.order || a.createdAt.localeCompare(b.createdAt)
 
 /** Store FACTORY (repository INJECTED), reactive like the other entity stores. */
 export function createQuestionStore(repo: QuestionRepository): QuestionStore {
@@ -31,7 +34,7 @@ export function createQuestionStore(repo: QuestionRepository): QuestionStore {
       if (unsubscribe) return
       set({ status: 'loading' })
       unsubscribe = repo.observe((questions) => {
-        set({ questions: [...questions].sort(byOldestFirst), status: 'ready' })
+        set({ questions: [...questions].sort(byOrder), status: 'ready' })
       })
     },
 

@@ -8,6 +8,8 @@ export interface Question extends Entity {
   /** Index into `options` of the correct choice. */
   correctAnswer: number
   explanation?: string
+  /** Position within the room; questions read and reorder in this order. */
+  order: number
 }
 
 export interface MakeQuestionInput {
@@ -18,6 +20,9 @@ export interface MakeQuestionInput {
   options: string[]
   correctAnswer: number
   explanation?: string
+  /** Defaults to 0 — legacy and test data sort by `createdAt` as the tiebreak; the
+   * createQuestion command assigns the real next position. */
+  order?: number
 }
 
 export function makeQuestion(input: MakeQuestionInput): Question {
@@ -28,6 +33,8 @@ export function makeQuestion(input: MakeQuestionInput): Question {
   if (input.correctAnswer < 0 || input.correctAnswer >= input.options.length) {
     throw new Error('correctAnswer must index an option')
   }
+  const order = input.order ?? 0
+  if (order < 0) throw new Error('Question order must be >= 0')
   return {
     id: input.id,
     createdAt: input.createdAt,
@@ -37,6 +44,7 @@ export function makeQuestion(input: MakeQuestionInput): Question {
     options: [...input.options],
     correctAnswer: input.correctAnswer,
     explanation: input.explanation,
+    order,
   }
 }
 
@@ -57,5 +65,6 @@ export function updateQuestion(
   if (next.correctAnswer < 0 || next.correctAnswer >= next.options.length) {
     throw new Error('correctAnswer must index an option')
   }
+  if (next.order < 0) throw new Error('Question order must be >= 0')
   return { ...next, prompt, options: [...next.options] }
 }

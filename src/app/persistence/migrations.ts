@@ -1,5 +1,18 @@
 import { DEFAULT_PREFERENCES, type Preferences } from '@/entities/preferences'
 import { DEFAULT_PROFILE, type Profile } from '@/entities/profile'
+import type { Locus } from '@/entities/locus'
+import type { Question } from '@/entities/question'
+
+/** v0 → v1: cards/questions gained an explicit `order` field. Existing docs backfill to
+ * 0; the stores tiebreak equal orders by `createdAt`, so legacy items keep their original
+ * (creation) order until the learner reorders them. */
+export function migrateLocusV1(oldDoc: Omit<Locus, 'order'>): Locus {
+  return { ...oldDoc, order: 0 }
+}
+
+export function migrateQuestionV1(oldDoc: Omit<Question, 'order'>): Question {
+  return { ...oldDoc, order: 0 }
+}
 
 /** The v0 preferences shape — before darkMode/language/privacy (and, later,
  * palacesView/palacesSort) were added. */

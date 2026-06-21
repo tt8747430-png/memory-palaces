@@ -15,6 +15,25 @@ export {
 } from './gestures'
 export { useLongPress, type LongPressHandlers, type LongPressOptions } from './use-long-press'
 export { shuffle } from './shuffle'
+export { nextOrder, resequence } from './order'
+export {
+  ContentImportError,
+  contentSlug,
+  roomContentToJson,
+  lociToCsv,
+  questionsToCsv,
+  lociToAnkiTsv,
+  parsePastedLoci,
+  parseAnkiText,
+  parseVerses,
+  parseVerseChapters,
+  parseRoomContent,
+  stripHtml,
+  type ParsedLocus,
+  type ParsedQuestion,
+  type RoomContentData,
+  type VerseChapter,
+} from './content-transfer'
 export { speak, cancelSpeech, speechAvailable } from './speech'
 export { tick, impact, success, setHapticsEnabled } from './haptics'
 export { EventBus, type EventHandler } from './event-bus'

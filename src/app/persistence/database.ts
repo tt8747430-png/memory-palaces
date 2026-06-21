@@ -22,7 +22,13 @@ import {
   questionSchema,
   roomSchema,
 } from './schemas'
-import { migratePreferencesV1, migratePreferencesV2, migrateProfileV1 } from './migrations'
+import {
+  migrateLocusV1,
+  migratePreferencesV1,
+  migratePreferencesV2,
+  migrateProfileV1,
+  migrateQuestionV1,
+} from './migrations'
 
 // Required because the preferences (v2) and profiles (v1) collections carry
 // migrationStrategies; without this RxDB throws "function must be overwritten by a
@@ -54,8 +60,8 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
     palaces: { schema: palaceSchema },
     folders: { schema: folderSchema },
     rooms: { schema: roomSchema },
-    loci: { schema: locusSchema },
-    questions: { schema: questionSchema },
+    loci: { schema: locusSchema, migrationStrategies: { 1: migrateLocusV1 } },
+    questions: { schema: questionSchema, migrationStrategies: { 1: migrateQuestionV1 } },
     progress: { schema: progressSchema },
     preferences: {
       schema: preferencesSchema,

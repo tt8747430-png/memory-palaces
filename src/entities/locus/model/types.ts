@@ -15,6 +15,8 @@ export interface Locus extends Entity {
   srs?: SrsState
   flagged: boolean
   memorized: boolean
+  /** Position within the room; cards read and reorder in this order. */
+  order: number
 }
 
 export interface MakeLocusInput {
@@ -28,6 +30,9 @@ export interface MakeLocusInput {
   srs?: SrsState
   flagged?: boolean
   memorized?: boolean
+  /** Defaults to 0 — legacy and test data sort by `createdAt` as the tiebreak; the
+   * createLocus command assigns the real next position. */
+  order?: number
 }
 
 export function makeLocus(input: MakeLocusInput): Locus {
@@ -36,6 +41,8 @@ export function makeLocus(input: MakeLocusInput): Locus {
   if (!input.roomId) throw new Error('Locus must belong to a room')
   if (!front) throw new Error('Locus front is required')
   if (!back) throw new Error('Locus back is required')
+  const order = input.order ?? 0
+  if (order < 0) throw new Error('Locus order must be >= 0')
   return {
     id: input.id,
     createdAt: input.createdAt,
@@ -48,6 +55,7 @@ export function makeLocus(input: MakeLocusInput): Locus {
     srs: input.srs,
     flagged: input.flagged ?? false,
     memorized: input.memorized ?? false,
+    order,
   }
 }
 
@@ -62,5 +70,6 @@ export function updateLocus(locus: Locus, changes: LocusChanges, updatedAt: stri
   const back = next.back.trim()
   if (!front) throw new Error('Locus front is required')
   if (!back) throw new Error('Locus back is required')
+  if (next.order < 0) throw new Error('Locus order must be >= 0')
   return { ...next, front, back }
 }

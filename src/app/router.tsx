@@ -14,10 +14,11 @@ import { WelcomePage } from '@/pages/welcome'
 import { HomePage } from '@/pages/home'
 import { PalacesPage } from '@/pages/palaces'
 import { PalaceDetailPage } from '@/pages/palace-detail'
-import { RoomContentPage } from '@/pages/room-content'
+import { RoomHubPage } from '@/pages/room-hub'
 import { RoomTrainPage } from '@/pages/room-train'
 import { MatchPage } from '@/pages/match'
 import { VerseStudyPage } from '@/pages/verse'
+import { RoomQuizPage } from '@/pages/room-quiz'
 import { ReviewPage } from '@/pages/review'
 import { QuizPage } from '@/pages/quiz'
 import { ProfilePage } from '@/pages/profile'
@@ -179,7 +180,7 @@ function PalaceDetailRoute() {
     <PalaceDetailPage
       palaceId={palaceId}
       onBack={back}
-      onOpenRoom={(roomId) => navigate({ to: ROUTES.roomContent, params: { roomId } })}
+      onOpenRoom={(roomId) => navigate({ to: ROUTES.roomHub, params: { roomId } })}
       onTrainRoom={(roomId) => navigate({ to: ROUTES.roomTrain, params: { roomId } })}
       onQuiz={() => navigate({ to: ROUTES.palaceQuiz, params: { palaceId } })}
     />
@@ -192,30 +193,33 @@ const palaceDetailRoute = createRoute({
   component: PalaceDetailRoute,
 })
 
-function RoomContentRoute() {
-  const { roomId } = roomContentRoute.useParams()
+function RoomHubRoute() {
+  const { roomId } = roomHubRoute.useParams()
   const navigate = useNavigate()
   const back = useBack(() => navigate({ to: ROUTES.home }))
   return (
-    <RoomContentPage
+    <RoomHubPage
       roomId={roomId}
       onBack={back}
+      onStudy={() => navigate({ to: ROUTES.roomTrain, params: { roomId } })}
       onMatch={() => navigate({ to: ROUTES.roomMatch, params: { roomId } })}
+      onTest={() => navigate({ to: ROUTES.roomQuiz, params: { roomId } })}
       onVerse={() => navigate({ to: ROUTES.roomVerse, params: { roomId } })}
+      onDeleted={back}
     />
   )
 }
 
-const roomContentRoute = createRoute({
+const roomHubRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: ROUTES.roomContent,
-  component: RoomContentRoute,
+  path: ROUTES.roomHub,
+  component: RoomHubRoute,
 })
 
 function RoomTrainRoute() {
   const { roomId } = roomTrainRoute.useParams()
   const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.roomContent, params: { roomId } }))
+  const back = useBack(() => navigate({ to: ROUTES.roomHub, params: { roomId } }))
   return <RoomTrainPage roomId={roomId} onBack={back} />
 }
 
@@ -228,7 +232,7 @@ const roomTrainRoute = createRoute({
 function RoomMatchRoute() {
   const { roomId } = roomMatchRoute.useParams()
   const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.roomContent, params: { roomId } }))
+  const back = useBack(() => navigate({ to: ROUTES.roomHub, params: { roomId } }))
   return <MatchPage roomId={roomId} onBack={back} />
 }
 
@@ -241,7 +245,7 @@ const roomMatchRoute = createRoute({
 function RoomVerseRoute() {
   const { roomId } = roomVerseRoute.useParams()
   const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.roomContent, params: { roomId } }))
+  const back = useBack(() => navigate({ to: ROUTES.roomHub, params: { roomId } }))
   return <VerseStudyPage roomId={roomId} onBack={back} />
 }
 
@@ -249,6 +253,19 @@ const roomVerseRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.roomVerse,
   component: RoomVerseRoute,
+})
+
+function RoomQuizRoute() {
+  const { roomId } = roomQuizRoute.useParams()
+  const navigate = useNavigate()
+  const back = useBack(() => navigate({ to: ROUTES.roomHub, params: { roomId } }))
+  return <RoomQuizPage roomId={roomId} onBack={back} />
+}
+
+const roomQuizRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.roomQuiz,
+  component: RoomQuizRoute,
 })
 
 function ReviewRoute() {
@@ -497,10 +514,11 @@ const routeTree = rootRoute.addChildren([
   homeRoute,
   palacesRoute,
   palaceDetailRoute,
-  roomContentRoute,
+  roomHubRoute,
   roomTrainRoute,
   roomMatchRoute,
   roomVerseRoute,
+  roomQuizRoute,
   reviewRoute,
   quizRoute,
   profileRoute,

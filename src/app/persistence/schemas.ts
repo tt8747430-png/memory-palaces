@@ -107,7 +107,7 @@ export const roomSchema: RxJsonSchema<Room> = {
 }
 
 export const locusSchema: RxJsonSchema<Locus> = {
-  version: 0,
+  version: 1,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -134,12 +134,23 @@ export const locusSchema: RxJsonSchema<Locus> = {
     },
     flagged: { type: 'boolean' },
     memorized: { type: 'boolean' },
+    order: { type: 'number' },
   },
-  required: ['id', 'createdAt', 'updatedAt', 'roomId', 'front', 'back', 'flagged', 'memorized'],
+  required: [
+    'id',
+    'createdAt',
+    'updatedAt',
+    'roomId',
+    'front',
+    'back',
+    'flagged',
+    'memorized',
+    'order',
+  ],
 }
 
 export const questionSchema: RxJsonSchema<Question> = {
-  version: 0,
+  version: 1,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -151,8 +162,18 @@ export const questionSchema: RxJsonSchema<Question> = {
     options: { type: 'array', items: { type: 'string' } },
     correctAnswer: { type: 'number' },
     explanation: { type: 'string' },
+    order: { type: 'number' },
   },
-  required: ['id', 'createdAt', 'updatedAt', 'roomId', 'prompt', 'options', 'correctAnswer'],
+  required: [
+    'id',
+    'createdAt',
+    'updatedAt',
+    'roomId',
+    'prompt',
+    'options',
+    'correctAnswer',
+    'order',
+  ],
 }
 
 export const progressSchema: RxJsonSchema<Progress> = {

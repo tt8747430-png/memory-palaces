@@ -1,15 +1,24 @@
 import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@/shared/api'
 import { createQuestionStore, type Question } from '@/entities/question'
+import { questionsForRoom, selectQuestions } from '@/entities/question'
 import { createQuestion } from './create-question'
 import { editQuestion } from './edit-question'
 import { deleteQuestion } from './delete-question'
+import { moveQuestion } from './move-question'
+import { duplicateQuestion } from './duplicate-question'
 
 function startedStore() {
   const store = createQuestionStore(new InMemoryRepository<Question>())
   store.getState().start()
   return store
 }
+
+const makeQ = (store: ReturnType<typeof startedStore>, prompt: string) =>
+  createQuestion(store, 'r1', { prompt, options: ['a', 'b'], correctAnswer: 0 })
+
+const promptsForRoom = (store: ReturnType<typeof startedStore>) =>
+  questionsForRoom(selectQuestions(store.getState()), 'r1').map((q) => q.prompt)
 
 describe('createQuestion', () => {
   it('creates a question under a room', async () => {
@@ -88,5 +97,28 @@ describe('deleteQuestion', () => {
     })
     await deleteQuestion(store, question.id)
     expect(store.getState().questions).toEqual([])
+  })
+})
+
+describe('moveQuestion', () => {
+  it('reorders a question one step and renumbers the room', async () => {
+    const store = startedStore()
+    await makeQ(store, 'a')
+    const b = await makeQ(store, 'b')
+    await makeQ(store, 'c')
+
+    await moveQuestion(store, b.id, 'up')
+    expect(promptsForRoom(store)).toEqual(['b', 'a', 'c'])
+  })
+})
+
+describe('duplicateQuestion', () => {
+  it('copies a question into a fresh one appended to the room', async () => {
+    const store = startedStore()
+    const a = await makeQ(store, 'a')
+    const copy = await duplicateQuestion(store, a.id)
+    expect(copy.id).not.toBe(a.id)
+    expect(copy.prompt).toBe('a')
+    expect(promptsForRoom(store)).toEqual(['a', 'a'])
   })
 })
