@@ -7,6 +7,7 @@ export const ROUTES = {
   welcome: '/welcome',
   palaces: '/palaces',
   palaceDetail: '/palaces/$palaceId',
+  palaceSettings: '/palaces/$palaceId/settings',
   palaceQuiz: '/palaces/$palaceId/quiz',
   roomHub: '/rooms/$roomId',
   roomTrain: '/rooms/$roomId/train',

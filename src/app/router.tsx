@@ -14,6 +14,7 @@ import { WelcomePage } from '@/pages/welcome'
 import { HomePage } from '@/pages/home'
 import { PalacesPage } from '@/pages/palaces'
 import { PalaceDetailPage } from '@/pages/palace-detail'
+import { PalaceSettingsPage } from '@/pages/palace-settings'
 import { RoomHubPage } from '@/pages/room-hub'
 import { RoomTrainPage } from '@/pages/room-train'
 import { MatchPage } from '@/pages/match'
@@ -181,8 +182,8 @@ function PalaceDetailRoute() {
       palaceId={palaceId}
       onBack={back}
       onOpenRoom={(roomId) => navigate({ to: ROUTES.roomHub, params: { roomId } })}
-      onTrainRoom={(roomId) => navigate({ to: ROUTES.roomTrain, params: { roomId } })}
       onQuiz={() => navigate({ to: ROUTES.palaceQuiz, params: { palaceId } })}
+      onOpenSettings={() => navigate({ to: ROUTES.palaceSettings, params: { palaceId } })}
     />
   )
 }
@@ -191,6 +192,25 @@ const palaceDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.palaceDetail,
   component: PalaceDetailRoute,
+})
+
+function PalaceSettingsRoute() {
+  const { palaceId } = palaceSettingsRoute.useParams()
+  const navigate = useNavigate()
+  const back = useBack(() => navigate({ to: ROUTES.palaceDetail, params: { palaceId } }))
+  return (
+    <PalaceSettingsPage
+      palaceId={palaceId}
+      onBack={back}
+      onExit={() => navigate({ to: ROUTES.palaces })}
+    />
+  )
+}
+
+const palaceSettingsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.palaceSettings,
+  component: PalaceSettingsRoute,
 })
 
 function RoomHubRoute() {
@@ -514,6 +534,7 @@ const routeTree = rootRoute.addChildren([
   homeRoute,
   palacesRoute,
   palaceDetailRoute,
+  palaceSettingsRoute,
   roomHubRoute,
   roomTrainRoute,
   roomMatchRoute,

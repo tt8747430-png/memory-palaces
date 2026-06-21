@@ -396,3 +396,117 @@ export function parseRoomContent(text: string, fileName: string): RoomContentDat
   }
   return content
 }
+
+// --- Palace-level transfer --------------------------------------------------
+
+const PALACE_JSON_TYPE = 'mindscape.palace'
+const PALACE_JSON_VERSION = 1
+
+/** One room's importable content: a title/description plus its cards and questions. */
+export interface ImportedRoom {
+  title: string
+  description?: string
+  loci: ParsedLocus[]
+  questions: ParsedQuestion[]
+}
+
+/** A palace's identity as it travels in an export — no ids, timestamps, or schedule. */
+export interface PalaceMeta {
+  name: string
+  description?: string
+  icon?: string
+  color?: string
+  category?: string
+  bibleMode?: boolean
+}
+
+export interface PalaceContentData {
+  palace: PalaceMeta
+  rooms: ImportedRoom[]
+}
+
+/**
+ * Serialize a whole palace — identity plus every room's content — as a Mindscape palace
+ * file. Structural inputs (no entity dependency); the mirror of {@link parsePalaceContent},
+ * so export and import can never drift out of one format.
+ */
+export function palaceContentToJson(
+  palace: PalaceMeta & { settings?: unknown },
+  rooms: ReadonlyArray<{
+    title: string
+    description?: string
+    loci: ReadonlyArray<LocusLike & { tip?: string }>
+    questions: ReadonlyArray<QuestionLike>
+  }>,
+): string {
+  return JSON.stringify(
+    {
+      type: PALACE_JSON_TYPE,
+      version: PALACE_JSON_VERSION,
+      exportedAt: new Date().toISOString(),
+      palace,
+      rooms: rooms.map((room) => ({
+        title: room.title,
+        description: room.description,
+        loci: room.loci.map((l) => ({ front: l.front, back: l.back, hint: l.hint, tip: l.tip })),
+        questions: room.questions.map((q) => ({
+          prompt: q.prompt,
+          options: q.options,
+          correctAnswer: q.correctAnswer,
+          explanation: q.explanation,
+        })),
+      })),
+    },
+    null,
+    2,
+  )
+}
+
+/**
+ * Parse a Mindscape palace file into its identity and rooms, tolerating missing fields.
+ * Throws {@link ContentImportError} with a user-facing message on a bad file.
+ */
+export function parsePalaceContent(text: string, fileName?: string): PalaceContentData {
+  let data: unknown
+  try {
+    data = JSON.parse(text)
+  } catch {
+    throw new ContentImportError('That file isn’t a valid Mindscape palace file.')
+  }
+  if (!data || typeof data !== 'object' || (data as Record<string, unknown>).type !== PALACE_JSON_TYPE) {
+    throw new ContentImportError('That file isn’t a Mindscape palace export.')
+  }
+  const root = data as Record<string, unknown>
+  const meta = (root.palace ?? {}) as Record<string, unknown>
+  const fallback = fileName ? fileName.replace(/\.[^.]+$/, '').trim() : ''
+  const name = (String(meta.name ?? '').trim() || fallback || 'Imported palace').slice(0, 60)
+  const roomsRaw = Array.isArray(root.rooms) ? root.rooms : []
+  const rooms = roomsRaw.flatMap((entry): ImportedRoom[] => {
+    if (!entry || typeof entry !== 'object') return []
+    const room = entry as Record<string, unknown>
+    const title = String(room.title ?? '').trim()
+    if (!title) return []
+    return [
+      {
+        title,
+        description: room.description ? String(room.description).trim() : undefined,
+        loci: coerceLoci(room.loci),
+        questions: coerceQuestions(room.questions),
+      },
+    ]
+  })
+  if (rooms.length === 0) {
+    throw new ContentImportError('No rooms found in that palace file.')
+  }
+  return {
+    palace: {
+      name,
+      description: meta.description ? String(meta.description).trim() : undefined,
+      icon: meta.icon ? String(meta.icon) : undefined,
+      color: meta.color ? String(meta.color) : undefined,
+      category: meta.category ? String(meta.category).trim() : undefined,
+      bibleMode: typeof meta.bibleMode === 'boolean' ? meta.bibleMode : undefined,
+    },
+    rooms,
+  }
+}

@@ -1,4 +1,11 @@
-import { ContentImportError, parseAnkiText, parseRoomContent, type RoomContentData } from '@/shared/lib'
+import {
+  ContentImportError,
+  parseAnkiText,
+  parsePalaceContent,
+  parseRoomContent,
+  type PalaceContentData,
+  type RoomContentData,
+} from '@/shared/lib'
 
 /** Read a `.json` / `.csv` Mindscape export into room content (the file-IO boundary). */
 export function readContentFile(file: File): Promise<RoomContentData> {
@@ -20,6 +27,11 @@ export async function readAnkiFile(file: File): Promise<RoomContentData> {
   const loci = parseAnkiText(await file.text())
   if (loci.length === 0) throw new ContentImportError('No cards found in that Anki file.')
   return { loci, questions: [] }
+}
+
+/** Read a Mindscape palace export (`.json`) into its identity and rooms. */
+export function readPalaceFile(file: File): Promise<PalaceContentData> {
+  return readText(file).then((text) => parsePalaceContent(text, file.name))
 }
 
 function readText(file: File): Promise<string> {

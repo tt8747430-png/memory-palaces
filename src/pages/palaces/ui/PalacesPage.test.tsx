@@ -13,6 +13,7 @@ import {
 import { createFolderStore, FolderStoreContext, type Folder } from '@/entities/folder'
 import { createRoomStore, RoomStoreContext, type Room } from '@/entities/room'
 import { createLocusStore, LocusStoreContext, type Locus } from '@/entities/locus'
+import { createQuestionStore, QuestionStoreContext, type Question } from '@/entities/question'
 import {
   createPreferencesStore,
   PreferencesStoreContext,
@@ -31,6 +32,7 @@ function setup(seed: Palace[] = []) {
   const folderStore = createFolderStore(new InMemoryRepository<Folder>())
   const roomStore = createRoomStore(new InMemoryRepository<Room>())
   const locusStore = createLocusStore(new InMemoryRepository<Locus>())
+  const questionStore = createQuestionStore(new InMemoryRepository<Question>())
   const prefStore = createPreferencesStore(new InMemoryRepository<Preferences>())
   const onOpenPalace = vi.fn()
   render(
@@ -39,9 +41,11 @@ function setup(seed: Palace[] = []) {
         <FolderStoreContext value={folderStore}>
           <RoomStoreContext value={roomStore}>
             <LocusStoreContext value={locusStore}>
-              <PreferencesStoreContext value={prefStore}>
-                <PalacesPage onOpenPalace={onOpenPalace} />
-              </PreferencesStoreContext>
+              <QuestionStoreContext value={questionStore}>
+                <PreferencesStoreContext value={prefStore}>
+                  <PalacesPage onOpenPalace={onOpenPalace} />
+                </PreferencesStoreContext>
+              </QuestionStoreContext>
             </LocusStoreContext>
           </RoomStoreContext>
         </FolderStoreContext>

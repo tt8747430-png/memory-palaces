@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 import {
   ArrowDownAZ,
   Archive,
@@ -10,9 +11,10 @@ import {
   SlidersHorizontal,
   Tag,
   TrendingUp,
+  Upload,
   X,
 } from 'lucide-react'
-import { isRoomCompleted, palaceProgress, useStickyHeader } from '@/shared/lib'
+import { ContentImportError, isRoomCompleted, palaceProgress, useStickyHeader } from '@/shared/lib'
 import {
   PALACE_COLOR_OPTIONS,
   selectIsReady,
@@ -23,6 +25,7 @@ import {
 import { selectFolders, useFolderStore, useFolderStoreApi } from '@/entities/folder'
 import { lociForRoom, selectLoci, useLocusStore, useLocusStoreApi } from '@/entities/locus'
 import { roomsForPalace, selectRooms, useRoomStore, useRoomStoreApi } from '@/entities/room'
+import { useQuestionStoreApi } from '@/entities/question'
 import {
   selectEffectivePreferences,
   usePreferencesStore,
@@ -32,11 +35,13 @@ import {
 } from '@/entities/preferences'
 import {
   deletePalace,
+  importPalace,
   setPalaceArchived,
   setPalaceFolder,
   togglePalaceFavorite,
   CreatePalaceSheet,
 } from '@/features/palace'
+import { readPalaceFile } from '@/features/content'
 import { createFolder, deleteFolder } from '@/features/folder'
 import { setPreferences } from '@/features/preferences'
 import { PalaceList, type PalaceListItem } from '@/widgets/palace-list'
@@ -88,7 +93,9 @@ export function PalacesPage({ onOpenPalace, openCreate = false }: PalacesPagePro
   const folderStore = useFolderStoreApi()
   const roomStore = useRoomStoreApi()
   const locusStore = useLocusStoreApi()
+  const questionStore = useQuestionStoreApi()
   const prefStore = usePreferencesStoreApi()
+  const importRef = useRef<HTMLInputElement>(null)
 
   const palaces = usePalaceStore(selectPalaces)
   const palacesReady = usePalaceStore(selectIsReady)
@@ -102,8 +109,23 @@ export function PalacesPage({ onOpenPalace, openCreate = false }: PalacesPagePro
     folderStore.getState().start()
     roomStore.getState().start()
     locusStore.getState().start()
+    questionStore.getState().start()
     prefStore.getState().start()
-  }, [palaceStore, folderStore, roomStore, locusStore, prefStore])
+  }, [palaceStore, folderStore, roomStore, locusStore, questionStore, prefStore])
+
+  const handleImportPalace = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    try {
+      const data = await readPalaceFile(file)
+      const { palace } = await importPalace(palaceStore, roomStore, locusStore, questionStore, data)
+      toast.success(t('palaces.importToast', { name: palace.name }))
+      onOpenPalace?.(palace.id)
+    } catch (error) {
+      toast.error(error instanceof ContentImportError ? error.message : t('palaces.importError'))
+    }
+  }
 
   const view = prefs.palacesView
   const sort = prefs.palacesSort
@@ -378,6 +400,13 @@ export function PalacesPage({ onOpenPalace, openCreate = false }: PalacesPagePro
                   <Search className="size-5" aria-hidden />
                 </IconButton>
                 <IconButton
+                  variant="ghost"
+                  aria-label={t('palaces.import')}
+                  onClick={() => importRef.current?.click()}
+                >
+                  <Upload className="size-5" aria-hidden />
+                </IconButton>
+                <IconButton
                   variant="solid"
                   aria-label={t('palaces.createCta')}
                   onClick={() => setCreateOpen(true)}
@@ -465,6 +494,14 @@ export function PalacesPage({ onOpenPalace, openCreate = false }: PalacesPagePro
         title={t('palaces.sortBy')}
         actions={sortActions}
         cancelLabel={t('common.cancel')}
+      />
+
+      <input
+        ref={importRef}
+        type="file"
+        accept=".json"
+        className="hidden"
+        onChange={handleImportPalace}
       />
 
       <CreatePalaceSheet

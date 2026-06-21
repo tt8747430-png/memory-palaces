@@ -28,10 +28,15 @@ export {
   parseVerses,
   parseVerseChapters,
   parseRoomContent,
+  palaceContentToJson,
+  parsePalaceContent,
   stripHtml,
   type ParsedLocus,
   type ParsedQuestion,
   type RoomContentData,
+  type ImportedRoom,
+  type PalaceMeta,
+  type PalaceContentData,
   type VerseChapter,
 } from './content-transfer'
 export { speak, cancelSpeech, speechAvailable } from './speech'

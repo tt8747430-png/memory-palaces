@@ -10,6 +10,13 @@ A place a learner builds to remember things, made of ordered rooms. A palace may
 _Bible-mode_ palace, in which every locus is a verse and the verse-study modes unlock.
 _Avoid_: deck, set, collection (a Folder is the grouping above a Palace, not a Palace).
 
+**Palace detail**:
+The single screen for one palace (route `/palaces/:palaceId`): the palace's overview —
+identity, derived progress, and the palace-level quiz — sitting above its ordered rooms,
+which it is the place to create, rename, reorder, and delete. Room-level study (cards,
+modes, schedule) lives in the room hub, not here; opening a room leaves this screen.
+_Avoid_: palace page, palace screen, palace home.
+
 **Room**:
 An ordered place inside a palace that holds its own loci. Rooms unlock sequentially.
 _Avoid_: level, stage, chapter.
