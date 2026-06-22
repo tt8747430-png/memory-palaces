@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'motion/react'
 import { toast } from 'sonner'
-import { Brain, ChevronRight, Pencil, Plus, RotateCcw, Settings2, Trash2, Upload } from 'lucide-react'
+import { ChevronRight, Pencil, Plus, RotateCcw, Settings2, Trash2, Upload } from 'lucide-react'
 import {
   selectIsReady as selectPalacesReady,
   usePalaceStore,
@@ -52,8 +52,6 @@ export interface PalaceDetailPageProps {
   onBack?: () => void
   /** Open a room's hub; wired by the route wrapper. */
   onOpenRoom?: (roomId: string) => void
-  /** Quiz the whole palace; wired by the route wrapper. */
-  onQuiz?: () => void
   /** Open this palace's settings; wired by the route wrapper. */
   onOpenSettings?: () => void
 }
@@ -66,7 +64,6 @@ export function PalaceDetailPage({
   palaceId,
   onBack,
   onOpenRoom,
-  onQuiz,
   onOpenSettings,
 }: PalaceDetailPageProps) {
   const { t } = useTranslation()
@@ -196,8 +193,6 @@ export function PalaceDetailPage({
           onEditIdentity={onOpenSettings}
           onContinue={nextRoom ? () => onOpenRoom?.(nextRoom.id) : undefined}
         />
-
-        {summary.totalRooms > 0 && onQuiz ? <QuizCta onQuiz={onQuiz} /> : null}
 
         <section aria-labelledby="rooms-heading">
           <div className="mb-3 flex items-center justify-between gap-3 px-0.5">
@@ -428,29 +423,6 @@ function CoverButton({ palace, onEditIdentity }: { palace: Palace; onEditIdentit
       <span className="absolute -bottom-1 -right-1 grid size-6 place-items-center rounded-full bg-primary text-primary-foreground shadow-rest ring-2 ring-card">
         <Pencil className="size-3" aria-hidden />
       </span>
-    </motion.button>
-  )
-}
-
-function QuizCta({ onQuiz }: { onQuiz: () => void }) {
-  const { t } = useTranslation()
-  return (
-    <motion.button
-      type="button"
-      whileTap={{ scale: 0.98 }}
-      onClick={onQuiz}
-      className="flex w-full items-center gap-4 rounded-card-featured bg-linear-to-r from-primary to-accent p-4 text-left text-primary-foreground shadow-interactive"
-    >
-      <span className="grid size-12 shrink-0 place-items-center rounded-control bg-white/15">
-        <Brain className="size-6" aria-hidden />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-[length:var(--p-text-sub)] font-semibold">{t('palaceDetail.quizTitle')}</span>
-        <span className="block text-[length:var(--p-text-label)] text-primary-foreground/85">
-          {t('palaceDetail.quizBody')}
-        </span>
-      </span>
-      <ChevronRight className="size-5 shrink-0 text-primary-foreground/80" aria-hidden />
     </motion.button>
   )
 }

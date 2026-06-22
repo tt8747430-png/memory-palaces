@@ -21,6 +21,7 @@ const item = (over: Partial<PalaceListItem> = {}): PalaceListItem => ({
   progress: 40,
   roomsCompleted: 2,
   totalRooms: 5,
+  dueCount: 0,
   ...over,
 })
 
@@ -70,6 +71,14 @@ describe('PalaceList', () => {
     renderList({ items: [item({ favorite: true, bibleMode: true })] })
     expect(screen.getByLabelText('Favorite')).toBeInTheDocument()
     expect(screen.getByLabelText('Scripture palace')).toBeInTheDocument()
+  })
+
+  it('surfaces a due count when cards are waiting, and hides it at zero', () => {
+    renderList({ view: 'list', items: [item({ name: 'Roman Forum', dueCount: 3 })] })
+    expect(screen.getByText('3 due')).toBeInTheDocument()
+    cleanup()
+    renderList({ view: 'list', items: [item({ name: 'Roman Forum', dueCount: 0 })] })
+    expect(screen.queryByText(/\d+ due/)).not.toBeInTheDocument()
   })
 
   it('opens the action menu and routes delete + favorite to the right palace', async () => {

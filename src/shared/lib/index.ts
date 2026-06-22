@@ -108,6 +108,7 @@ export {
 export {
   getDueLoci,
   countDueLoci,
+  countDuePerPalace,
   type DueCard,
   type DuePalace,
   type DueRoom,

@@ -1,7 +1,8 @@
 import { type FormEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Check, Folder as FolderIcon, FolderPlus, Sparkles } from 'lucide-react'
+import { Check, Folder as FolderIcon, FolderPlus, Sparkles, Trash2 } from 'lucide-react'
 import type { Folder } from '@/entities/folder'
+import { ColorPicker } from '@/features/palace'
 import { cn } from '@/shared/lib'
 import { Button, Sheet, TextField } from '@/shared/ui'
 
@@ -136,6 +137,77 @@ export function NewFolderSheet({ open, onOpenChange, onCreate }: NewFolderSheetP
           autoFocus
           enterKeyHint="done"
           maxLength={40}
+        />
+      </form>
+    </Sheet>
+  )
+}
+
+export interface EditFolderSheetProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  /** The folder being edited; the fields seed from it whenever the sheet opens. */
+  folder: Folder | null
+  onSave: (changes: { name: string; color: string }) => void
+  /** Hands off to the page's delete-folder confirm — the forgiving exit. */
+  onDelete: () => void
+}
+
+/** Bottom sheet to rename and recolour a folder, with a clearly-separated delete. Folders
+ * are lightweight, so editing is a name field plus the shared colour picker; deletion is
+ * gated by the page's confirm dialog (palaces inside stay safe). */
+export function EditFolderSheet({ open, onOpenChange, folder, onSave, onDelete }: EditFolderSheetProps) {
+  const { t } = useTranslation()
+  const [name, setName] = useState('')
+  const [color, setColor] = useState('')
+
+  useEffect(() => {
+    if (open && folder) {
+      setName(folder.name)
+      setColor(folder.color)
+    }
+  }, [open, folder])
+
+  const valid = name.trim().length > 0
+  const submit = (event?: FormEvent) => {
+    event?.preventDefault()
+    if (!valid) return
+    onSave({ name: name.trim(), color })
+  }
+
+  return (
+    <Sheet
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t('palaces.editFolderTitle')}
+      footer={
+        <div className="flex flex-col gap-2">
+          <Button size="lg" className="w-full" disabled={!valid} onClick={() => submit()}>
+            <Check className="size-[18px]" aria-hidden />
+            {t('palaces.saveFolder')}
+          </Button>
+          <Button variant="destructive" size="lg" className="w-full" onClick={onDelete}>
+            <Trash2 className="size-[18px]" aria-hidden />
+            {t('palaces.confirmDeleteFolder')}
+          </Button>
+        </div>
+      }
+    >
+      <form onSubmit={submit} className="flex flex-col gap-4 pb-2">
+        <TextField
+          aria-label={t('palaces.folderNameLabel')}
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          placeholder={t('palaces.folderNamePlaceholder')}
+          autoFocus
+          enterKeyHint="done"
+          maxLength={40}
+        />
+        <ColorPicker
+          value={color}
+          onChange={setColor}
+          label={t('palaces.folderColorLabel')}
+          customLabel={t('palaces.customColor')}
         />
       </form>
     </Sheet>

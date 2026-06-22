@@ -10,6 +10,27 @@ export interface Collection {
   label: string
   count: number
   kind: CollectionKind
+  /** Folders only: their gradient class pair (or custom hex), shown as a swatch so the
+   * rail becomes the user's own visual taxonomy instead of a row of identical chips. */
+  color?: string
+}
+
+/** A folder's colour rendered as a small swatch. Folder colours are gradient class pairs
+ * (`from-… to-…`) like a palace cover, or a free hex; both are handled here. Shared by the
+ * rail chips and the page's folder header so the swatch never drifts. */
+export function FolderSwatch({ color }: { color: string }) {
+  const gradient = color.startsWith('from-')
+  return (
+    <span
+      aria-hidden
+      className={cn('size-3.5 shrink-0 rounded-full ring-1 ring-black/10', gradient && 'bg-linear-to-br', gradient && color)}
+      style={
+        gradient
+          ? undefined
+          : { backgroundImage: `linear-gradient(135deg, ${color}, color-mix(in oklab, ${color}, black 22%))` }
+      }
+    />
+  )
 }
 
 export interface CollectionRailProps {
@@ -40,7 +61,9 @@ export function CollectionRail({ collections, activeId, onSelect, onNewFolder }:
     >
       {collections.map((collection) => {
         const active = collection.id === activeId
-        const Icon = KIND_ICON[collection.kind]
+        // A folder leads with its own colour swatch; built-ins keep their semantic icon.
+        const showSwatch = collection.kind === 'folder' && !!collection.color
+        const Icon = showSwatch ? undefined : KIND_ICON[collection.kind]
         return (
           <motion.button
             key={collection.id}
@@ -57,6 +80,7 @@ export function CollectionRail({ collections, activeId, onSelect, onNewFolder }:
                 : 'border border-border bg-card text-heading shadow-rest',
             )}
           >
+            {showSwatch && collection.color ? <FolderSwatch color={collection.color} /> : null}
             {Icon ? (
               <Icon
                 className={cn(

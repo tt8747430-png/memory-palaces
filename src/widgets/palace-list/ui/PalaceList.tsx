@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 import type { PalacesView } from '@/entities/preferences'
 import { cn, impact, useLongPress } from '@/shared/lib'
-import { ActionSheet, type SheetAction, IconButton, PalaceCover } from '@/shared/ui'
+import { ActionSheet, type SheetAction, IconButton, PalaceCover, SwipeRow } from '@/shared/ui'
 
 /** A palace plus the progress derived from its rooms/loci — everything the list renders. */
 export interface PalaceListItem {
@@ -33,6 +33,8 @@ export interface PalaceListItem {
   progress: number
   roomsCompleted: number
   totalRooms: number
+  /** Cards due for review right now — the pull back into practice. */
+  dueCount: number
 }
 
 export interface PalaceListHandlers {
@@ -215,6 +217,27 @@ function ProgressMeter({ progress, label }: { progress: number; label: string })
   )
 }
 
+/** Inline "N due" tag for the list row — the same warning pill the room list uses, so a
+ * due count reads identically wherever it surfaces. */
+function DueTag({ text }: { text: string }) {
+  return (
+    <span className="inline-flex shrink-0 items-center rounded-pill bg-[var(--warning-surface)] px-2 py-0.5 text-[length:var(--p-text-tiny)] font-bold text-[var(--warning-foreground)]">
+      {text}
+    </span>
+  )
+}
+
+/** "N due" as a glass chip floated on the grid card's cover — gentle, legible over any
+ * cover colour, and a quiet nudge that this palace owes the user a review today. */
+function DueCoverPill({ text }: { text: string }) {
+  return (
+    <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-pill bg-card-glass px-2 py-0.5 shadow-rest">
+      <span aria-hidden className="size-1.5 rounded-full bg-[var(--warning-foreground)]" />
+      <span className="text-[length:var(--p-text-tiny)] font-bold text-heading">{text}</span>
+    </span>
+  )
+}
+
 function PalaceCard({
   item,
   index,
@@ -265,6 +288,7 @@ function PalaceCard({
             aria-hidden
             className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/10 to-transparent"
           />
+          {item.dueCount > 0 ? <DueCoverPill text={t('palaces.dueCount', { count: item.dueCount })} /> : null}
         </div>
         <div className="p-3">
           <h3 className="truncate text-[length:var(--p-text-sub)] font-semibold text-heading">
@@ -326,52 +350,66 @@ function PalaceRow({
       initial={reduce ? false : { opacity: 0, x: -12 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.03, duration: 0.35, ease: EASE_OUT }}
-      className={cn(
-        'relative flex items-center gap-3 rounded-card bg-card p-3 shadow-rest',
-        item.archived && 'opacity-75',
-      )}
+      className={cn('relative isolate', item.archived && 'opacity-75')}
     >
-      <motion.button
-        type="button"
-        whileTap={{ scale: 0.99 }}
-        aria-label={t('palaces.openLabel', { name: item.name })}
-        className="flex min-w-0 flex-1 items-center gap-3 text-left"
-        {...longPress}
+      {/* Swipe-left tucks a live palace away (archive) — reversible, so a warning tone, not
+          the destructive red. Archived rows disable it; their menu offers Restore. */}
+      {/* Swipe-left tucks a live palace away (archive) — reversible, so a warning tone, not
+          the destructive red. Archived rows disable it; their menu offers Restore. The menu
+          lives inside the swiped content so it travels with the card, not pinned behind it. */}
+      <SwipeRow
+        onSwipe={() => handlers.onArchive(item.id)}
+        revealIcon={<Archive className="size-5" aria-hidden />}
+        tone="warning"
+        disabled={item.archived}
       >
-        <PalaceCover
-          icon={item.icon}
-          color={item.color}
-          image={item.image}
-          variant={item.color?.startsWith('from-') || item.color?.startsWith('#') ? 'identity' : 'brand'}
-          className="size-16 shrink-0 rounded-card"
-          iconClassName="text-3xl"
-        />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            {item.favorite ? (
-              <Heart className="size-4 shrink-0 fill-favorite text-favorite" aria-hidden />
-            ) : null}
-            {item.bibleMode ? <BookOpen className="size-4 shrink-0 text-primary" aria-hidden /> : null}
-            <h3 className="truncate text-[length:var(--p-text-sub)] font-semibold text-heading">
-              {item.name}
-            </h3>
-          </div>
-          <p className="mt-0.5 truncate text-[length:var(--p-text-label)]">
-            {t(item.totalRooms === 1 ? 'palaces.roomCountOne' : 'palaces.roomCountOther', {
-              count: item.totalRooms,
-            })}
-            {item.category && item.category !== 'General' ? ` · ${item.category}` : ''}
-          </p>
-          <div className="mt-2">
-            <ProgressMeter
-              progress={item.progress}
-              label={t('palaces.progressLabel', { progress: Math.round(item.progress) })}
+        <div className="relative">
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.99 }}
+            aria-label={t('palaces.openLabel', { name: item.name })}
+            className="flex w-full items-center gap-3 rounded-card bg-card p-3 pr-12 text-left shadow-rest"
+            {...longPress}
+          >
+            <PalaceCover
+              icon={item.icon}
+              color={item.color}
+              image={item.image}
+              variant={item.color?.startsWith('from-') || item.color?.startsWith('#') ? 'identity' : 'brand'}
+              className="size-16 shrink-0 rounded-card"
+              iconClassName="text-3xl"
             />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                {item.favorite ? (
+                  <Heart className="size-4 shrink-0 fill-favorite text-favorite" aria-hidden />
+                ) : null}
+                {item.bibleMode ? <BookOpen className="size-4 shrink-0 text-primary" aria-hidden /> : null}
+                <h3 className="truncate text-[length:var(--p-text-sub)] font-semibold text-heading">
+                  {item.name}
+                </h3>
+                {item.dueCount > 0 ? <DueTag text={t('palaces.dueCount', { count: item.dueCount })} /> : null}
+              </div>
+              <p className="mt-0.5 truncate text-[length:var(--p-text-label)]">
+                {t(item.totalRooms === 1 ? 'palaces.roomCountOne' : 'palaces.roomCountOther', {
+                  count: item.totalRooms,
+                })}
+                {item.category && item.category !== 'General' ? ` · ${item.category}` : ''}
+              </p>
+              <div className="mt-2">
+                <ProgressMeter
+                  progress={item.progress}
+                  label={t('palaces.progressLabel', { progress: Math.round(item.progress) })}
+                />
+              </div>
+            </div>
+          </motion.button>
+
+          <div className="absolute right-2 top-1/2 -translate-y-1/2">
+            <MenuButton onOpen={() => setMenuOpen(true)} label={t('palaces.moreLabel', { name: item.name })} />
           </div>
         </div>
-      </motion.button>
-
-      <MenuButton onOpen={() => setMenuOpen(true)} label={t('palaces.moreLabel', { name: item.name })} />
+      </SwipeRow>
 
       <ActionSheet
         open={menuOpen}

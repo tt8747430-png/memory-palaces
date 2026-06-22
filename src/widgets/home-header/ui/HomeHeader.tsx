@@ -1,8 +1,21 @@
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-import { Bell, BellRing, Zap } from 'lucide-react'
+import { Bell, BellRing, Search, X, Zap } from 'lucide-react'
 import { levelFromXp, type StickyHeader } from '@/shared/lib'
-import { Avatar, IconButton, StickyBar } from '@/shared/ui'
+import { Avatar, IconButton, StickyBar, TextField } from '@/shared/ui'
+
+/** Inline search wiring for the landing header. When `open`, the header swaps its identity
+ * row for a full-width search field. */
+export interface HomeHeaderSearch {
+  open: boolean
+  query: string
+  onOpen: () => void
+  onClose: () => void
+  onQueryChange: (value: string) => void
+  label: string
+  placeholder: string
+  closeLabel: string
+}
 
 export interface HomeHeaderProps {
   /** Elevation state, owned by the page so its scroll container drives it. */
@@ -15,6 +28,9 @@ export interface HomeHeaderProps {
   unreadCount: number
   onOpenProfile: () => void
   onOpenNotifications: () => void
+  /** Optional inline search; when provided, a search button joins the bell and can take
+   * over the whole bar. Omit it for surfaces that don't search. */
+  search?: HomeHeaderSearch
 }
 
 const EASE_OUT = [0.22, 1, 0.36, 1] as const
@@ -32,12 +48,40 @@ export function HomeHeader({
   unreadCount,
   onOpenProfile,
   onOpenNotifications,
+  search,
 }: HomeHeaderProps) {
   const { t } = useTranslation()
   const { level, xpInLevel, xpForNextLevel } = levelFromXp(xp)
   const levelLabel = t('home.levelShort', { level })
   const fill = Math.round((xpInLevel / xpForNextLevel) * 100)
   const xpToNext = t('home.xpToNext', { remaining: xpForNextLevel - xpInLevel, next: level + 1 })
+
+  if (search?.open) {
+    return (
+      <StickyBar elevation={header.elevation}>
+        <div className="flex w-full items-center gap-2">
+          <div className="relative flex-1">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden
+            />
+            <TextField
+              aria-label={search.label}
+              placeholder={search.placeholder}
+              value={search.query}
+              onChange={(event) => search.onQueryChange(event.target.value)}
+              autoFocus
+              enterKeyHint="search"
+              className="pl-9"
+            />
+          </div>
+          <IconButton variant="ghost" aria-label={search.closeLabel} onClick={search.onClose}>
+            <X className="size-5" aria-hidden />
+          </IconButton>
+        </div>
+      </StickyBar>
+    )
+  }
 
   return (
     <StickyBar elevation={header.elevation}>
@@ -92,11 +136,18 @@ export function HomeHeader({
         </span>
       </button>
 
-      <NotificationButton
-        unreadCount={unreadCount}
-        label={t('notifications.openLabel')}
-        onClick={onOpenNotifications}
-      />
+      <div className="flex shrink-0 items-center gap-1">
+        {search ? (
+          <IconButton variant="ghost" aria-label={search.label} onClick={search.onOpen}>
+            <Search className="size-5" aria-hidden />
+          </IconButton>
+        ) : null}
+        <NotificationButton
+          unreadCount={unreadCount}
+          label={t('notifications.openLabel')}
+          onClick={onOpenNotifications}
+        />
+      </div>
     </StickyBar>
   )
 }

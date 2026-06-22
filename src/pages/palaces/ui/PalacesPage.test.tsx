@@ -19,6 +19,14 @@ import {
   PreferencesStoreContext,
   type Preferences,
 } from '@/entities/preferences'
+import { createSessionStore, SessionStoreContext, type Session } from '@/entities/session'
+import { createProfileStore, ProfileStoreContext, type Profile } from '@/entities/profile'
+import { createProgressStore, ProgressStoreContext, type Progress } from '@/entities/progress'
+import {
+  createNotificationStore,
+  NotificationStoreContext,
+  type AppNotification,
+} from '@/entities/notification'
 import { PalacesPage } from './PalacesPage'
 
 afterEach(cleanup)
@@ -34,6 +42,10 @@ function setup(seed: Palace[] = []) {
   const locusStore = createLocusStore(new InMemoryRepository<Locus>())
   const questionStore = createQuestionStore(new InMemoryRepository<Question>())
   const prefStore = createPreferencesStore(new InMemoryRepository<Preferences>())
+  const sessionStore = createSessionStore(new InMemoryRepository<Session>())
+  const profileStore = createProfileStore(new InMemoryRepository<Profile>())
+  const progressStore = createProgressStore(new InMemoryRepository<Progress>())
+  const notificationStore = createNotificationStore(new InMemoryRepository<AppNotification>())
   const onOpenPalace = vi.fn()
   render(
     <I18nextProvider i18n={i18n}>
@@ -43,7 +55,15 @@ function setup(seed: Palace[] = []) {
             <LocusStoreContext value={locusStore}>
               <QuestionStoreContext value={questionStore}>
                 <PreferencesStoreContext value={prefStore}>
-                  <PalacesPage onOpenPalace={onOpenPalace} />
+                  <SessionStoreContext value={sessionStore}>
+                    <ProfileStoreContext value={profileStore}>
+                      <ProgressStoreContext value={progressStore}>
+                        <NotificationStoreContext value={notificationStore}>
+                          <PalacesPage onOpenPalace={onOpenPalace} />
+                        </NotificationStoreContext>
+                      </ProgressStoreContext>
+                    </ProfileStoreContext>
+                  </SessionStoreContext>
                 </PreferencesStoreContext>
               </QuestionStoreContext>
             </LocusStoreContext>
@@ -74,7 +94,9 @@ describe('PalacesPage', () => {
     const { palaceRepo, onOpenPalace } = setup([palace('seed', 'Seeded')])
     await screen.findByText('Seeded')
 
-    await user.click(screen.getByRole('button', { name: /create palace/i }))
+    // Create now lives in the bottom-right speed-dial: open it, then pick "Create palace".
+    await user.click(screen.getByRole('button', { name: /quick actions/i }))
+    await user.click(await screen.findByRole('button', { name: /create palace/i }))
     const sheet = await screen.findByRole('dialog')
     await user.type(within(sheet).getByRole('textbox', { name: /name/i }), 'Memory Lane')
     await user.click(within(sheet).getByRole('button', { name: /create palace/i }))

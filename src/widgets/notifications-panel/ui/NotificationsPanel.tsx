@@ -94,7 +94,7 @@ export function NotificationsPanel({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, x: -24, transition: { duration: 0.18 } }}
                   >
-                    <SwipeRow onDelete={() => onRemove(notification.id)}>
+                    <SwipeRow onSwipe={() => onRemove(notification.id)}>
                       <NotificationRow notification={notification} now={now} onRemove={onRemove} />
                     </SwipeRow>
                   </motion.li>

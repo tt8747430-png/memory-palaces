@@ -3,10 +3,23 @@ import { animate, motion, useMotionValue, useReducedMotion, useTransform } from 
 import { Trash2 } from 'lucide-react'
 import { clampSwipeOffset, cn, impact, shouldCommitSwipe, SWIPE_DELETE_MAX } from '@/shared/lib'
 
+/** Visual register of the revealed action — `danger` for a destructive remove (the
+ * default), `warning` for a reversible "tuck away" like archive. */
+export type SwipeTone = 'danger' | 'warning'
+
+const TONE_SURFACE: Record<SwipeTone, string> = {
+  danger: 'bg-[var(--danger-surface)] text-[var(--danger-on-surface)]',
+  warning: 'bg-[var(--warning-surface)] text-[var(--warning-foreground)]',
+}
+
 export interface SwipeRowProps {
   children: ReactNode
   /** Committed when the row is swiped left past the threshold. */
-  onDelete: () => void
+  onSwipe: () => void
+  /** The glyph revealed behind the row; defaults to a trash can (destructive remove). */
+  revealIcon?: ReactNode
+  /** Tints the revealed panel; defaults to `danger`. */
+  tone?: SwipeTone
   /** Disable the gesture (children still render and stay tappable). */
   disabled?: boolean
   className?: string
@@ -16,14 +29,22 @@ export interface SwipeRowProps {
 const AXIS_LOCK = 8
 
 /**
- * Wraps a list row so a left-swipe slides it aside to reveal a destructive panel and
- * commits `onDelete` once it clears the threshold, with a haptic and a spring. Built on
- * plain pointer events (not a gesture lib) so a tap never gets swallowed: tracking only
- * locks to the horizontal axis after real movement, and vertical drags fall through to
- * native scroll (`touch-action: pan-y`). The gesture is additive — the row should keep a
- * visible remove button as the keyboard/assistive path.
+ * Wraps a list row so a left-swipe slides it aside to reveal an action panel and commits
+ * `onSwipe` once it clears the threshold, with a haptic and a spring. The revealed panel
+ * defaults to a destructive trash (danger), but `revealIcon` + `tone` adapt it to a
+ * reversible action like archive. Built on plain pointer events (not a gesture lib) so a
+ * tap never gets swallowed: tracking only locks to the horizontal axis after real
+ * movement, and vertical drags fall through to native scroll (`touch-action: pan-y`). The
+ * gesture is additive — the row should keep a visible button as the keyboard/assistive path.
  */
-export function SwipeRow({ children, onDelete, disabled = false, className }: SwipeRowProps) {
+export function SwipeRow({
+  children,
+  onSwipe,
+  revealIcon = <Trash2 className="size-5" />,
+  tone = 'danger',
+  disabled = false,
+  className,
+}: SwipeRowProps) {
   const reduce = useReducedMotion()
   const x = useMotionValue(0)
   const revealOpacity = useTransform(x, [-SWIPE_DELETE_MAX, -28, 0], [1, 0.35, 0])
@@ -68,11 +89,11 @@ export function SwipeRow({ children, onDelete, disabled = false, className }: Sw
       setCommitting(true)
       impact()
       if (reduce) {
-        onDelete()
+        onSwipe()
         return
       }
       void animate(x, -SWIPE_DELETE_MAX * 3, { duration: 0.2, ease: [0.4, 0, 1, 1] }).finished.then(
-        onDelete,
+        onSwipe,
       )
       return
     }
@@ -84,11 +105,12 @@ export function SwipeRow({ children, onDelete, disabled = false, className }: Sw
       <motion.div
         aria-hidden
         style={{ opacity: revealOpacity }}
-        className="absolute inset-0 -z-10 flex items-center justify-end rounded-card bg-[var(--danger-surface)] pr-6 text-[var(--danger-on-surface)]"
+        className={cn(
+          'absolute inset-0 -z-10 flex items-center justify-end rounded-card pr-6',
+          TONE_SURFACE[tone],
+        )}
       >
-        <motion.span style={{ scale: revealScale }}>
-          <Trash2 className="size-5" />
-        </motion.span>
+        <motion.span style={{ scale: revealScale }}>{revealIcon}</motion.span>
       </motion.div>
       <motion.div
         style={{ x, touchAction: 'pan-y' }}

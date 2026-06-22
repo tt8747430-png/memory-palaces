@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { countDueLoci, getDueLoci, type DueLocus, type DuePalace, type DueRoom } from './dueCards'
+import {
+  countDueLoci,
+  countDuePerPalace,
+  getDueLoci,
+  type DueLocus,
+  type DuePalace,
+  type DueRoom,
+} from './dueCards'
 import { schedule } from './srs'
 
 const DAY_MS = 86_400_000
@@ -46,5 +53,18 @@ describe('countDueLoci', () => {
       { id: 'l2', roomId: 'r2' }, // archived → excluded
     ]
     expect(countDueLoci(palaces, rooms, loci, NOW)).toBe(1)
+  })
+})
+
+describe('countDuePerPalace', () => {
+  it('tallies due cards per palace and omits palaces with nothing due', () => {
+    const loci: DueLocus[] = [
+      { id: 'l1', roomId: 'r1' },
+      { id: 'l1b', roomId: 'r1' },
+      { id: 'l2', roomId: 'r2' }, // archived palace → excluded
+    ]
+    const counts = countDuePerPalace(palaces, rooms, loci, NOW)
+    expect(counts.get('p1')).toBe(2)
+    expect(counts.has('p2')).toBe(false)
   })
 })

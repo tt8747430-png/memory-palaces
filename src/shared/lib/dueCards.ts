@@ -72,3 +72,22 @@ export function countDueLoci(
 ): number {
   return getDueLoci(palaces, rooms, loci, now).length
 }
+
+/**
+ * Cards due now, tallied per palace, so the Palaces browser can surface what each
+ * palace owes the user today — turning a static "mastery" list into a pull back into
+ * practice. Archived palaces and orphaned loci are skipped (via {@link getDueLoci}), so
+ * an absent id simply means nothing is due.
+ */
+export function countDuePerPalace(
+  palaces: readonly DuePalace[],
+  rooms: readonly DueRoom[],
+  loci: readonly DueLocus[],
+  now: number,
+): Map<string, number> {
+  const counts = new Map<string, number>()
+  for (const card of getDueLoci(palaces, rooms, loci, now)) {
+    counts.set(card.palaceId, (counts.get(card.palaceId) ?? 0) + 1)
+  }
+  return counts
+}

@@ -2,19 +2,19 @@ import type { ComponentType } from 'react'
 import { useNavigate, useRouterState } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'motion/react'
-import { Building2, House, User } from 'lucide-react'
+import { House, User } from 'lucide-react'
 import { ROUTES, type RoutePath } from '@/shared/config/routes'
 import { cn } from '@/shared/lib'
 
 interface Tab {
   to: RoutePath
   Icon: ComponentType<{ className?: string }>
-  labelKey: 'nav.home' | 'nav.palaces' | 'nav.profile'
+  labelKey: 'nav.home' | 'nav.profile'
 }
 
+// Home is the palaces library now, so the nav is two destinations: the library and you.
 const TABS: Tab[] = [
   { to: ROUTES.home, Icon: House, labelKey: 'nav.home' },
-  { to: ROUTES.palaces, Icon: Building2, labelKey: 'nav.palaces' },
   { to: ROUTES.profile, Icon: User, labelKey: 'nav.profile' },
 ]
 
@@ -50,7 +50,7 @@ export function AppNav() {
         }}
       />
 
-      <div className="relative flex h-16 w-80 items-center justify-between overflow-hidden rounded-nav px-4 shadow-elevated">
+      <div className="relative flex h-16 w-64 items-center justify-around overflow-hidden rounded-nav px-4 shadow-elevated">
         <div
           aria-hidden
           className="absolute inset-0 backdrop-blur-2xl"

@@ -11,7 +11,6 @@ import { LoginPage } from '@/pages/login'
 import { SignupPage } from '@/pages/signup'
 import { ForgotPasswordPage } from '@/pages/forgot-password'
 import { WelcomePage } from '@/pages/welcome'
-import { HomePage } from '@/pages/home'
 import { PalacesPage } from '@/pages/palaces'
 import { PalaceDetailPage } from '@/pages/palace-detail'
 import { PalaceSettingsPage } from '@/pages/palace-settings'
@@ -128,17 +127,19 @@ const welcomeRoute = createRoute({
   component: WelcomeRoute,
 })
 
+// The palaces browser is the home now: it carries the day's review hero plus the library,
+// so `/` renders it directly. The thin wrapper keeps the page router-free and testable.
 function HomeRoute() {
   const navigate = useNavigate()
+  const { create } = homeRoute.useSearch()
   return (
-    <HomePage
-      onStartReview={() => navigate({ to: ROUTES.review })}
-      onOpenNotifications={() => navigate({ to: ROUTES.notifications })}
-      onOpenProfile={() => navigate({ to: ROUTES.profile })}
-      onTrainRoom={(roomId) => navigate({ to: ROUTES.roomTrain, params: { roomId } })}
+    <PalacesPage
+      openCreate={create}
       onOpenPalace={(palaceId) => navigate({ to: ROUTES.palaceDetail, params: { palaceId } })}
-      onViewAllPalaces={() => navigate({ to: ROUTES.palaces })}
-      onCreatePalace={() => navigate({ to: ROUTES.palaces, search: { create: true } })}
+      onStartReview={() => navigate({ to: ROUTES.review })}
+      onOpenProfile={() => navigate({ to: ROUTES.profile })}
+      onOpenNotifications={() => navigate({ to: ROUTES.notifications })}
+      onTrainRoom={(roomId) => navigate({ to: ROUTES.roomTrain, params: { roomId } })}
     />
   )
 }
@@ -146,43 +147,31 @@ function HomeRoute() {
 const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.home,
-  component: HomeRoute,
-})
-
-// Thin wrappers keep the pages router-free (and unit-testable): the route reads
-// params + supplies navigation callbacks; the page just renders.
-function PalacesRoute() {
-  const navigate = useNavigate()
-  const { create } = palacesRoute.useSearch()
-  return (
-    <PalacesPage
-      openCreate={create}
-      onOpenPalace={(palaceId) => navigate({ to: ROUTES.palaceDetail, params: { palaceId } })}
-    />
-  )
-}
-
-const palacesRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: ROUTES.palaces,
-  // `?create` arrives from the home's "Create palace" CTA; it opens the create sheet on
-  // arrival instead of dropping the user on a static list.
+  // `?create` opens the create sheet on arrival (e.g. a deep link) instead of a static list.
   validateSearch: (search: Record<string, unknown>): { create?: boolean } => ({
     create: search.create === true || search.create === 'true' ? true : undefined,
   }),
-  component: PalacesRoute,
+  component: HomeRoute,
+})
+
+// `/palaces` folds into the home; keep the path alive for old links by redirecting it there.
+const palacesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.palaces,
+  beforeLoad: () => {
+    throw redirect({ to: ROUTES.home })
+  },
 })
 
 function PalaceDetailRoute() {
   const { palaceId } = palaceDetailRoute.useParams()
   const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.palaces }))
+  const back = useBack(() => navigate({ to: ROUTES.home }))
   return (
     <PalaceDetailPage
       palaceId={palaceId}
       onBack={back}
       onOpenRoom={(roomId) => navigate({ to: ROUTES.roomHub, params: { roomId } })}
-      onQuiz={() => navigate({ to: ROUTES.palaceQuiz, params: { palaceId } })}
       onOpenSettings={() => navigate({ to: ROUTES.palaceSettings, params: { palaceId } })}
     />
   )
@@ -202,7 +191,7 @@ function PalaceSettingsRoute() {
     <PalaceSettingsPage
       palaceId={palaceId}
       onBack={back}
-      onExit={() => navigate({ to: ROUTES.palaces })}
+      onExit={() => navigate({ to: ROUTES.home })}
     />
   )
 }

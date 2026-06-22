@@ -183,8 +183,10 @@ function RoomCard({
     : t('rooms.card.progress', { percent: pct })
 
   return (
-    <div className="relative isolate">
-      <SwipeRow onDelete={onSwipeDelete}>
+    // The menu lives inside the swiped content (as a sibling of the card button, not nested
+    // in it) so it travels with the card on swipe instead of staying pinned behind it.
+    <SwipeRow onSwipe={onSwipeDelete}>
+      <div className="relative">
         <motion.button
           type="button"
           whileTap={{ scale: 0.99 }}
@@ -222,18 +224,18 @@ function RoomCard({
 
           <RoomStats room={room} />
         </motion.button>
-      </SwipeRow>
 
-      <div className="absolute right-2 top-2.5">
-        <OverflowMenuButton
-          variant="glass"
-          label={t('rooms.menu.label', { title: room.title })}
-          title={room.title}
-          actions={actions}
-          cancelLabel={t('common.cancel')}
-        />
+        <div className="absolute right-2 top-2.5">
+          <OverflowMenuButton
+            variant="glass"
+            label={t('rooms.menu.label', { title: room.title })}
+            title={room.title}
+            actions={actions}
+            cancelLabel={t('common.cancel')}
+          />
+        </div>
       </div>
-    </div>
+    </SwipeRow>
   )
 }
 

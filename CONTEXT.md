@@ -13,8 +13,10 @@ _Avoid_: deck, set, collection (a Folder is the grouping above a Palace, not a P
 **Palace detail**:
 The single screen for one palace (route `/palaces/:palaceId`): the palace's overview —
 identity, derived progress, and the palace-level quiz — sitting above its ordered rooms,
-which it is the place to create, rename, reorder, and delete. Room-level study (cards,
-modes, schedule) lives in the room hub, not here; opening a room leaves this screen.
+which it is the place to create, rename, reorder, and delete. It leads with a **study
+overview** scoped to the whole palace (cards for today aggregated across all its rooms,
+with a palace-wide Study action). Per-card editing and the card carousel stay room-scoped;
+opening a room leaves this screen.
 _Avoid_: palace page, palace screen, palace home.
 
 **Room**:
@@ -65,5 +67,43 @@ shown per-card and in the hub's status breakdown — it is NOT the headline prog
 and must never be labelled as the room's overall progress.
 _Avoid_: using "mastered" for the headline reviewed-% (that conflates two different metrics).
 
-**SRS status**:
-The coarse bucket of a single card's schedule: `new`, `due`, `learning`, or `known`.
+**SRS status** (maturity):
+The maturity bucket of a single card — exactly one, ordered **New → Learning → Known**:
+`new` (never successfully reviewed), `learning` (reviewed, interval still short), `known`
+(interval matured, ≥ 21 days). Maturity is independent of whether the card is due.
+_Avoid_: treating `due` as a maturity bucket (it is the queue below, not a status).
+
+**Cards for today** (the **due** queue):
+Every card whose schedule has come up (`due ≤ now`), plus brand-new cards — a temporal
+queue, NOT a maturity bucket. A Known card can still be "for today". It is the headline
+count of the study overview and exactly what the Study action drills.
+_Avoid_: "deck" for a room's card set (say "cards in this room"); calling due a status.
+
+## Practice & streak
+
+**Study overview**:
+The per-surface daily-study panel: a headline _cards for today_ count, a New/Learning/Known
+breakdown of that queue, and the **Study action**. On the room hub it is scoped to one room
+and drills that room's due cards; on palace detail it aggregates every room and drills the
+whole palace's due queue. When nothing is due the action becomes _Study ahead_ (practice the
+full set early). It sits apart from the card carousel, which stays a visual preview.
+_Avoid_: "today's training", "review hero", "up next" — the old home cards, removed.
+
+**Practice**:
+The umbrella for every study activity that exercises memory: flashcard review/train, the
+Match game, the Test/Quiz, and verse memorization. Each completed item is one unit of
+practice.
+_Avoid_: "training" as the streak verb (see _Active day_).
+
+**Daily goal**:
+The number of practiced items a learner must reach in a day to keep their streak — a user
+preference (default 5). Surfaced on the study overview as a progress ring (items today /
+goal).
+
+**Active day** (the streak unit):
+A UTC day on which the learner reached their daily goal. Every graded card, answered
+quiz/test question, solved match pair, and memorized verse counts one toward the day's
+tally; reaching the goal makes the day _active_ and advances the streak. Practice **below**
+the goal does not count — a day can lapse even after some practice (one streak-freeze still
+forgives a single missed day).
+_Avoid_: "training day" — the old rule (any finished session counted) is gone.

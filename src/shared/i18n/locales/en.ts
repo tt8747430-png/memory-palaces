@@ -5,6 +5,7 @@ export const en = {
     tagline: 'Your Memory Palace',
     cancel: 'Cancel',
     undo: 'Undo',
+    guest: 'Guest',
     options: 'Options',
     moreOptions: 'More options',
     seeAll: 'See all',
@@ -338,6 +339,7 @@ export const en = {
     searchLabel: 'Search palaces',
     searchPlaceholder: 'Search palaces…',
     closeSearch: 'Close search',
+    quickActions: 'Quick actions',
 
     // View + sort
     viewLabel: 'Layout',
@@ -358,6 +360,7 @@ export const en = {
     roomCountOther: '{{count}} rooms',
     roomsProgress: '{{completed}} of {{total}} rooms',
     progressLabel: '{{progress}}% complete',
+    dueCount: '{{count}} due',
     favoriteMarker: 'Favorite',
     bibleMarker: 'Scripture palace',
 
@@ -379,6 +382,10 @@ export const en = {
     addToFolder: 'Add to folder',
     archive: 'Archive',
     restore: 'Restore',
+    archivedToast: 'Archived “{{name}}”',
+    restoredToast: 'Restored “{{name}}”',
+    movedToast: 'Moved to {{folder}}',
+    unfiledToast: 'Removed from folder',
 
     // Move-to-folder sheet
     moveTitle: 'Move to folder',
@@ -391,6 +398,12 @@ export const en = {
     folderNamePlaceholder: 'e.g. Languages',
     folderNameHint: 'Group related palaces, like “Languages” or “Med school”.',
     createFolder: 'Create folder',
+
+    // Edit folder sheet
+    editFolderTitle: 'Edit folder',
+    editFolderLabel: 'Edit folder {{name}}',
+    folderColorLabel: 'Folder colour',
+    saveFolder: 'Save folder',
 
     // Delete folder
     deleteFolderTitle: 'Delete “{{name}}”?',
@@ -444,8 +457,6 @@ export const en = {
       questions: 'Questions',
       mastered: 'Mastered',
     },
-    quizTitle: 'Test your knowledge',
-    quizBody: 'Quiz this palace and earn bonus XP',
     roomsHeading: 'Rooms',
     addRoom: 'Add room',
     emptyTitle: 'No rooms yet',

@@ -4,17 +4,25 @@ import { toast } from 'sonner'
 import {
   ArrowDownAZ,
   Archive,
+  Building2,
   Check,
   Clock,
+  FolderPlus,
+  Pencil,
   Plus,
-  Search,
   SlidersHorizontal,
   Tag,
   TrendingUp,
   Upload,
-  X,
 } from 'lucide-react'
-import { ContentImportError, isRoomCompleted, palaceProgress, useStickyHeader } from '@/shared/lib'
+import {
+  ContentImportError,
+  countDueLoci,
+  countDuePerPalace,
+  isRoomCompleted,
+  palaceProgress,
+  useStickyHeader,
+} from '@/shared/lib'
 import {
   PALACE_COLOR_OPTIONS,
   selectIsReady,
@@ -26,6 +34,14 @@ import { selectFolders, useFolderStore, useFolderStoreApi } from '@/entities/fol
 import { lociForRoom, selectLoci, useLocusStore, useLocusStoreApi } from '@/entities/locus'
 import { roomsForPalace, selectRooms, useRoomStore, useRoomStoreApi } from '@/entities/room'
 import { useQuestionStoreApi } from '@/entities/question'
+import { selectProgress, useProgressStore, useProgressStoreApi } from '@/entities/progress'
+import { selectEffectiveProfile, useProfileStore, useProfileStoreApi } from '@/entities/profile'
+import { useSessionStore } from '@/entities/session'
+import {
+  selectUnreadCount,
+  useNotificationStore,
+  useNotificationStoreApi,
+} from '@/entities/notification'
 import {
   selectEffectivePreferences,
   usePreferencesStore,
@@ -42,9 +58,12 @@ import {
   CreatePalaceSheet,
 } from '@/features/palace'
 import { readPalaceFile } from '@/features/content'
-import { createFolder, deleteFolder } from '@/features/folder'
+import { createFolder, deleteFolder, editFolder } from '@/features/folder'
 import { setPreferences } from '@/features/preferences'
 import { PalaceList, type PalaceListItem } from '@/widgets/palace-list'
+import { HomeHeader } from '@/widgets/home-header'
+import { TodayTrainingCard } from '@/widgets/today-training-card'
+import { UpNextCard, pickUpNextRooms } from '@/widgets/up-next-card'
 import {
   ActionSheet,
   AppScreen,
@@ -53,17 +72,24 @@ import {
   EmptyState,
   IconButton,
   SegmentedControl,
-  StickyBar,
-  TextField,
+  SpeedDial,
 } from '@/shared/ui'
-import { CollectionRail, type Collection } from './CollectionRail'
-import { MoveToFolderSheet, NewFolderSheet } from './PalaceSheets'
+import { CollectionRail, FolderSwatch, type Collection } from './CollectionRail'
+import { EditFolderSheet, MoveToFolderSheet, NewFolderSheet } from './PalaceSheets'
 
 export interface PalacesPageProps {
   /** Open a palace's detail; wired by the route wrapper. */
   onOpenPalace?: (id: string) => void
-  /** Open the create sheet on mount (the home's "Create palace" CTA arrives via ?create). */
+  /** Open the create sheet on mount (a `?create` deep link still opens it). */
   openCreate?: boolean
+  /** Launch the cross-palace daily review; wired by the route wrapper. */
+  onStartReview?: () => void
+  /** Open the profile screen; wired by the route wrapper. */
+  onOpenProfile?: () => void
+  /** Open notification history; wired by the route wrapper. */
+  onOpenNotifications?: () => void
+  /** Drop straight into a room's training; wired by the route wrapper. */
+  onTrainRoom?: (roomId: string) => void
 }
 
 // Built-in collection ids. Folder ids are UUIDs, so they never collide with these.
@@ -85,7 +111,14 @@ const SORT_LABEL_KEY = {
 /** Palaces screen — browse, search, sort, and organise palaces into folders. Reactive
  * off RxDB; every action persists offline through the injected stores. Progress is
  * derived from each palace's rooms/loci, the same way the home overview derives it. */
-export function PalacesPage({ onOpenPalace, openCreate = false }: PalacesPageProps = {}) {
+export function PalacesPage({
+  onOpenPalace,
+  openCreate = false,
+  onStartReview,
+  onOpenProfile,
+  onOpenNotifications,
+  onTrainRoom,
+}: PalacesPageProps = {}) {
   const { t } = useTranslation()
   const header = useStickyHeader()
 
@@ -95,6 +128,9 @@ export function PalacesPage({ onOpenPalace, openCreate = false }: PalacesPagePro
   const locusStore = useLocusStoreApi()
   const questionStore = useQuestionStoreApi()
   const prefStore = usePreferencesStoreApi()
+  const profileStore = useProfileStoreApi()
+  const progressStore = useProgressStoreApi()
+  const notificationStore = useNotificationStoreApi()
   const importRef = useRef<HTMLInputElement>(null)
 
   const palaces = usePalaceStore(selectPalaces)
@@ -103,6 +139,14 @@ export function PalacesPage({ onOpenPalace, openCreate = false }: PalacesPagePro
   const rooms = useRoomStore(selectRooms)
   const loci = useLocusStore(selectLoci)
   const prefs = usePreferencesStore(selectEffectivePreferences)
+  const profile = useProfileStore(selectEffectiveProfile)
+  const progress = useProgressStore(selectProgress)
+  const unreadCount = useNotificationStore(selectUnreadCount)
+  const session = useSessionStore((state) => state.session)
+
+  // Snapshot the clock once so the review hero, up-next picker, and per-palace due badges
+  // all agree within a render pass; the RxDB stores keep the data itself live.
+  const [now] = useState(() => Date.now())
 
   useEffect(() => {
     palaceStore.getState().start()
@@ -111,7 +155,20 @@ export function PalacesPage({ onOpenPalace, openCreate = false }: PalacesPagePro
     locusStore.getState().start()
     questionStore.getState().start()
     prefStore.getState().start()
-  }, [palaceStore, folderStore, roomStore, locusStore, questionStore, prefStore])
+    profileStore.getState().start()
+    progressStore.getState().start()
+    notificationStore.getState().start()
+  }, [
+    palaceStore,
+    folderStore,
+    roomStore,
+    locusStore,
+    questionStore,
+    prefStore,
+    profileStore,
+    progressStore,
+    notificationStore,
+  ])
 
   const handleImportPalace = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -139,8 +196,30 @@ export function PalacesPage({ onOpenPalace, openCreate = false }: PalacesPagePro
   const [createOpen, setCreateOpen] = useState(openCreate)
   const [moveTarget, setMoveTarget] = useState<string | null>(null)
   const [newFolderOpen, setNewFolderOpen] = useState(false)
+  const [editFolderOpen, setEditFolderOpen] = useState(false)
   const [deletePalaceTarget, setDeletePalaceTarget] = useState<string | null>(null)
   const [deleteFolderTarget, setDeleteFolderTarget] = useState<string | null>(null)
+
+  // Cards due now, per palace — recomputed when the library changes. The clock is read once
+  // at the UI edge (`now`); the pure tally lives in shared/lib and takes it as an argument.
+  const dueCounts = useMemo(
+    () => countDuePerPalace(palaces, rooms, loci, now),
+    [palaces, rooms, loci, now],
+  )
+
+  // The cross-palace review queue and the next rooms to drill — the daily loop the home
+  // used to own, now living on the one landing screen.
+  const dueCount = useMemo(() => countDueLoci(palaces, rooms, loci, now), [palaces, rooms, loci, now])
+  const upNext = useMemo(() => pickUpNextRooms(palaces, rooms, loci, now), [palaces, rooms, loci, now])
+  const reviewerName = profile.name.trim() || session?.displayName || t('common.guest')
+
+  // The training hero drops into the top suggested room, or opens the create sheet when
+  // there's nothing to drill yet.
+  const handleStartTraining = () => {
+    const top = upNext[0]
+    if (top) onTrainRoom?.(top.roomId)
+    else setCreateOpen(true)
+  }
 
   // Map each palace to its list item, deriving progress from its rooms/loci.
   const items = useMemo<PalaceListItem[]>(
@@ -164,9 +243,10 @@ export function PalacesPage({ onOpenPalace, openCreate = false }: PalacesPagePro
           progress: palaceProgress(completions),
           roomsCompleted: completions.filter(Boolean).length,
           totalRooms: completions.length,
+          dueCount: dueCounts.get(palace.id) ?? 0,
         }
       }),
-    [palaces, rooms, loci],
+    [palaces, rooms, loci, dueCounts],
   )
 
   const active = useMemo(() => items.filter((item) => !item.archived), [items])
@@ -196,6 +276,7 @@ export function PalacesPage({ onOpenPalace, openCreate = false }: PalacesPagePro
         label: folder.name,
         count: active.filter((item) => item.folderId === folder.id).length,
         kind: 'folder',
+        color: folder.color,
       })
     })
     if (folders.length > 0 && unfiledCount > 0) {
@@ -257,15 +338,29 @@ export function PalacesPage({ onOpenPalace, openCreate = false }: PalacesPagePro
     ? folders.find((folder) => folder.id === deleteFolderTarget)
     : undefined
   const movingPalace = moveTarget ? palaceById(moveTarget) : undefined
+  const activeFolder = folders.find((folder) => folder.id === activeFilter)
 
   const closeSearch = () => {
     setSearchOpen(false)
     setQuery('')
   }
 
+  // Archive (and move, below) are reversible, so they confirm with an undoable toast
+  // rather than a blocking dialog — the action lands instantly and stays forgiving.
   const handleArchive = (id: string) => {
     const palace = palaceById(id)
-    if (palace) void setPalaceArchived(palaceStore, id, !palace.archived)
+    if (!palace) return
+    const archiving = !palace.archived
+    void setPalaceArchived(palaceStore, id, archiving)
+    toast.success(
+      t(archiving ? 'palaces.archivedToast' : 'palaces.restoredToast', { name: palace.name }),
+      {
+        action: {
+          label: t('common.undo'),
+          onClick: () => void setPalaceArchived(palaceStore, id, !archiving),
+        },
+      },
+    )
   }
 
   const handleCreateFolder = (name: string) => {
@@ -275,12 +370,35 @@ export function PalacesPage({ onOpenPalace, openCreate = false }: PalacesPagePro
   }
 
   const handlePickFolder = (folderId: string | null) => {
-    if (moveTarget) void setPalaceFolder(palaceStore, moveTarget, folderId)
+    const palace = movingPalace
+    const previous = palace?.folderId ?? null
+    if (palace && folderId !== previous) {
+      void setPalaceFolder(palaceStore, palace.id, folderId)
+      const folderName = folderId ? folders.find((folder) => folder.id === folderId)?.name : undefined
+      toast.success(
+        folderName ? t('palaces.movedToast', { folder: folderName }) : t('palaces.unfiledToast'),
+        {
+          action: {
+            label: t('common.undo'),
+            onClick: () => void setPalaceFolder(palaceStore, palace.id, previous),
+          },
+        },
+      )
+    }
     setMoveTarget(null)
   }
 
+  const handleSaveFolder = (changes: { name: string; color: string }) => {
+    if (activeFolder) void editFolder(folderStore, activeFolder, changes)
+    setEditFolderOpen(false)
+  }
+
   const confirmDeletePalace = () => {
-    if (deletePalaceTarget) void deletePalace(palaceStore, deletePalaceTarget)
+    if (deletePalaceTarget) {
+      const name = deletingPalace?.name ?? ''
+      void deletePalace(palaceStore, deletePalaceTarget)
+      toast.success(t('palaces.deleted', { name }))
+    }
     setDeletePalaceTarget(null)
   }
 
@@ -364,62 +482,46 @@ export function PalacesPage({ onOpenPalace, openCreate = false }: PalacesPagePro
       className="pb-nav"
       scrollRef={header.ref}
       header={
-        <StickyBar elevation={header.elevation}>
-          {searchOpen ? (
-            <div className="flex w-full items-center gap-2">
-              <div className="relative flex-1">
-                <Search
-                  className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-                  aria-hidden
-                />
-                <TextField
-                  aria-label={t('palaces.searchLabel')}
-                  placeholder={t('palaces.searchPlaceholder')}
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  autoFocus
-                  enterKeyHint="search"
-                  className="pl-9"
-                />
-              </div>
-              <IconButton variant="ghost" aria-label={t('palaces.closeSearch')} onClick={closeSearch}>
-                <X className="size-5" aria-hidden />
-              </IconButton>
-            </div>
-          ) : (
-            <>
-              <h1 className="text-[length:var(--p-text-headline)] font-bold text-heading">
-                {t('nav.palaces')}
-              </h1>
-              <div className="flex items-center gap-1">
-                <IconButton
-                  variant="ghost"
-                  aria-label={t('palaces.searchLabel')}
-                  onClick={() => setSearchOpen(true)}
-                >
-                  <Search className="size-5" aria-hidden />
-                </IconButton>
-                <IconButton
-                  variant="ghost"
-                  aria-label={t('palaces.import')}
-                  onClick={() => importRef.current?.click()}
-                >
-                  <Upload className="size-5" aria-hidden />
-                </IconButton>
-                <IconButton
-                  variant="solid"
-                  aria-label={t('palaces.createCta')}
-                  onClick={() => setCreateOpen(true)}
-                >
-                  <Plus className="size-5" aria-hidden />
-                </IconButton>
-              </div>
-            </>
-          )}
-        </StickyBar>
+        <HomeHeader
+          header={header}
+          name={reviewerName}
+          avatar={profile.avatar}
+          xp={progress?.xp ?? 0}
+          unreadCount={unreadCount}
+          onOpenProfile={() => onOpenProfile?.()}
+          onOpenNotifications={() => onOpenNotifications?.()}
+          search={{
+            open: searchOpen,
+            query,
+            onOpen: () => setSearchOpen(true),
+            onClose: closeSearch,
+            onQueryChange: setQuery,
+            label: t('palaces.searchLabel'),
+            placeholder: t('palaces.searchPlaceholder'),
+            closeLabel: t('palaces.closeSearch'),
+          }}
+        />
       }
     >
-      <div className="mt-4">
+      {active.length > 0 ? (
+        <>
+          <TodayTrainingCard
+            className="mt-6"
+            hasPalaces
+            hasTrainableRoom={upNext.length > 0}
+            dueCount={dueCount}
+            streakCount={progress?.streakCount ?? 0}
+            onStartReview={() => onStartReview?.()}
+            onStartTraining={handleStartTraining}
+            onCreatePalace={() => setCreateOpen(true)}
+          />
+          {upNext.length > 0 ? (
+            <UpNextCard className="mt-5" rooms={upNext} onOpenRoom={(id) => onTrainRoom?.(id)} />
+          ) : null}
+        </>
+      ) : null}
+
+      <div className="mt-6">
         <CollectionRail
           collections={collections}
           activeId={activeFilter}
@@ -428,51 +530,55 @@ export function PalacesPage({ onOpenPalace, openCreate = false }: PalacesPagePro
         />
       </div>
 
-      <div className="mt-4 flex items-center gap-3">
-        <SegmentedControl
-          aria-label={t('palaces.viewLabel')}
-          className="w-[148px]"
-          value={view}
-          onChange={(value) => setView(value)}
-          options={[
-            { value: 'grid', label: t('palaces.viewGrid') },
-            { value: 'list', label: t('palaces.viewList') },
-          ]}
-        />
-        <IconButton
-          variant="ghost"
-          className="ml-auto"
-          aria-label={t('palaces.sortLabel')}
-          aria-haspopup="dialog"
-          onClick={() => setSortOpen(true)}
-        >
-          <SlidersHorizontal className="size-5" aria-hidden />
-        </IconButton>
-      </div>
+      {/* One calm meta+controls row: the left adapts to context — a plain result count, or,
+          inside a folder, a tappable header that owns rename / recolour / delete — while the
+          view toggle and sort stay anchored right. */}
+      <div className="mb-3 mt-5 flex items-center gap-3">
+        {activeFolder ? (
+          <button
+            type="button"
+            onClick={() => setEditFolderOpen(true)}
+            aria-label={t('palaces.editFolderLabel', { name: activeFolder.name })}
+            className="flex min-w-0 items-center gap-2 rounded-control text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+          >
+            <FolderSwatch color={activeFolder.color} />
+            <span className="truncate text-[length:var(--p-text-body)] font-semibold text-heading">
+              {activeFolder.name}
+            </span>
+            <span className="shrink-0 text-[length:var(--p-text-label)] tabular-nums text-muted-foreground">
+              {visible.length}
+            </span>
+            <Pencil className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+          </button>
+        ) : (
+          <p className="min-w-0 truncate text-[length:var(--p-text-body)] font-semibold text-heading">
+            {isArchivedView
+              ? t('palaces.collectionArchived')
+              : t(visible.length === 1 ? 'palaces.countOne' : 'palaces.countOther', {
+                  count: visible.length,
+                })}
+          </p>
+        )}
 
-      <div className="mb-3 mt-3 flex items-center justify-between px-0.5">
-        <p className="text-[length:var(--p-text-body)] font-semibold text-heading">
-          {isArchivedView
-            ? t('palaces.collectionArchived')
-            : t(visible.length === 1 ? 'palaces.countOne' : 'palaces.countOther', {
-                count: visible.length,
-              })}
-        </p>
-        <div className="flex items-center gap-3">
-          {sort !== 'recent' ? (
-            <p className="text-[length:var(--p-text-label)]">
-              {t('palaces.sortedBy', { sort: t(SORT_LABEL_KEY[sort]) })}
-            </p>
-          ) : null}
-          {folders.some((folder) => folder.id === activeFilter) ? (
-            <button
-              type="button"
-              onClick={() => setDeleteFolderTarget(activeFilter)}
-              className="text-[length:var(--p-text-label)] font-semibold text-[var(--danger-on-surface)]"
-            >
-              {t('palaces.confirmDeleteFolder')}
-            </button>
-          ) : null}
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          <SegmentedControl
+            aria-label={t('palaces.viewLabel')}
+            className="w-[148px]"
+            value={view}
+            onChange={(value) => setView(value)}
+            options={[
+              { value: 'grid', label: t('palaces.viewGrid') },
+              { value: 'list', label: t('palaces.viewList') },
+            ]}
+          />
+          <IconButton
+            variant="ghost"
+            aria-label={t('palaces.sortLabel')}
+            aria-haspopup="dialog"
+            onClick={() => setSortOpen(true)}
+          >
+            <SlidersHorizontal className="size-5" aria-hidden />
+          </IconButton>
         </div>
       </div>
 
@@ -486,6 +592,30 @@ export function PalacesPage({ onOpenPalace, openCreate = false }: PalacesPagePro
         onMove={(id) => setMoveTarget(id)}
         onArchive={handleArchive}
         onDelete={(id) => setDeletePalaceTarget(id)}
+      />
+
+      <SpeedDial
+        label={t('palaces.quickActions')}
+        actions={[
+          {
+            id: 'create',
+            label: t('palaces.createCta'),
+            icon: <Building2 className="size-5" aria-hidden />,
+            onSelect: () => setCreateOpen(true),
+          },
+          {
+            id: 'import',
+            label: t('palaces.import'),
+            icon: <Upload className="size-5" aria-hidden />,
+            onSelect: () => importRef.current?.click(),
+          },
+          {
+            id: 'folder',
+            label: t('palaces.newFolderTitle'),
+            icon: <FolderPlus className="size-5" aria-hidden />,
+            onSelect: () => setNewFolderOpen(true),
+          },
+        ]}
       />
 
       <ActionSheet
@@ -526,6 +656,17 @@ export function PalacesPage({ onOpenPalace, openCreate = false }: PalacesPagePro
       />
 
       <NewFolderSheet open={newFolderOpen} onOpenChange={setNewFolderOpen} onCreate={handleCreateFolder} />
+
+      <EditFolderSheet
+        open={editFolderOpen}
+        onOpenChange={setEditFolderOpen}
+        folder={activeFolder ?? null}
+        onSave={handleSaveFolder}
+        onDelete={() => {
+          setEditFolderOpen(false)
+          setDeleteFolderTarget(activeFilter)
+        }}
+      />
 
       <ConfirmDialog
         open={deletePalaceTarget !== null}
