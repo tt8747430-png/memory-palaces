@@ -1,4 +1,5 @@
 import type { Entity } from '@/shared/lib'
+import { DEFAULT_DAILY_GOAL } from '@/shared/config/constants'
 
 /** How the Palaces screen lays out its list. Persisted so the choice survives sessions. */
 export type PalacesView = 'grid' | 'list'
@@ -44,6 +45,8 @@ export interface Preferences extends Entity {
   darkMode: boolean
   /** BCP-47 language tag; only 'en' is shipped today. */
   language: string
+  /** Items to practise per day to keep the streak (the daily goal). */
+  dailyGoal: number
   /** Palaces screen: grid or list layout. */
   palacesView: PalacesView
   /** Palaces screen: list ordering. */
@@ -58,6 +61,7 @@ export const DEFAULT_PREFERENCES = {
   notifications: true,
   darkMode: false,
   language: 'en',
+  dailyGoal: DEFAULT_DAILY_GOAL,
   palacesView: 'grid',
   palacesSort: 'recent',
   privacy: DEFAULT_PRIVACY,
@@ -72,6 +76,7 @@ export interface MakePreferencesInput {
   notifications?: boolean
   darkMode?: boolean
   language?: string
+  dailyGoal?: number
   palacesView?: PalacesView
   palacesSort?: PalacesSort
   privacy?: PrivacySettings
@@ -88,6 +93,7 @@ export function makePreferences(input: MakePreferencesInput): Preferences {
     notifications: input.notifications ?? DEFAULT_PREFERENCES.notifications,
     darkMode: input.darkMode ?? DEFAULT_PREFERENCES.darkMode,
     language: input.language ?? DEFAULT_PREFERENCES.language,
+    dailyGoal: input.dailyGoal ?? DEFAULT_PREFERENCES.dailyGoal,
     palacesView: input.palacesView ?? DEFAULT_PREFERENCES.palacesView,
     palacesSort: input.palacesSort ?? DEFAULT_PREFERENCES.palacesSort,
     privacy: input.privacy ?? { ...DEFAULT_PRIVACY },
@@ -104,6 +110,7 @@ export type PreferencesChanges = Partial<
     | 'notifications'
     | 'darkMode'
     | 'language'
+    | 'dailyGoal'
     | 'palacesView'
     | 'palacesSort'
     | 'privacy'

@@ -15,6 +15,10 @@ export interface Progress extends Entity {
   /** Highest quiz accuracy ever achieved (0–100). */
   bestQuizAccuracy: number
   trainingDays: string[]
+  /** UTC day key the running practice tally belongs to; null before any practice. */
+  activeDayKey: string | null
+  /** Items practised during `activeDayKey` (resets when the day rolls over). */
+  activeDayCount: number
 }
 
 export interface MakeProgressInput {
@@ -27,6 +31,8 @@ export interface MakeProgressInput {
   streakFreezes?: number
   bestQuizAccuracy?: number
   trainingDays?: string[]
+  activeDayKey?: string | null
+  activeDayCount?: number
 }
 
 export function makeProgress(input: MakeProgressInput): Progress {
@@ -43,5 +49,7 @@ export function makeProgress(input: MakeProgressInput): Progress {
     streakFreezes: input.streakFreezes ?? 0,
     bestQuizAccuracy: input.bestQuizAccuracy ?? 0,
     trainingDays: input.trainingDays ? [...input.trainingDays] : [],
+    activeDayKey: input.activeDayKey ?? null,
+    activeDayCount: input.activeDayCount ?? 0,
   }
 }

@@ -17,6 +17,10 @@ describe('makePreferences — extended defaults', () => {
     expect(prefs.notifications).toBe(true)
   })
 
+  it('defaults the daily goal to 5', () => {
+    expect(makePreferences({ id: 'preferences', createdAt: at(0) }).dailyGoal).toBe(5)
+  })
+
   it('gives each record its own privacy object (no shared mutation)', () => {
     const a = makePreferences({ id: 'a', createdAt: at(0) })
     const b = makePreferences({ id: 'b', createdAt: at(0) })

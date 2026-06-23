@@ -17,6 +17,8 @@ describe('makeProgress', () => {
       streakFreezes: 0,
       bestQuizAccuracy: 0,
       trainingDays: [],
+      activeDayKey: null,
+      activeDayCount: 0,
     })
   })
 
