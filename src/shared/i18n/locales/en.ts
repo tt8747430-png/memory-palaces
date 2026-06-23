@@ -461,6 +461,7 @@ export const en = {
     },
     roomsHeading: 'Rooms',
     addRoom: 'Add room',
+    quickActions: 'Quick actions',
     emptyTitle: 'No rooms yet',
     emptyBody:
       'Rooms are the stops along your palace’s route. Add one, then fill it with cards to remember.',

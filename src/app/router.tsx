@@ -172,6 +172,7 @@ function PalaceDetailRoute() {
       onBack={back}
       onOpenRoom={(roomId) => navigate({ to: ROUTES.roomHub, params: { roomId } })}
       onOpenSettings={() => navigate({ to: ROUTES.palaceSettings, params: { palaceId } })}
+      onStudyPalace={() => navigate({ to: ROUTES.palaceReview, params: { palaceId } })}
     />
   )
 }

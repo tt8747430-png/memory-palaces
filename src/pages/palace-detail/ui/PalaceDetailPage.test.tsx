@@ -58,6 +58,7 @@ describe('PalaceDetailPage', () => {
     const { roomRepo } = renderDetail()
     await screen.findByRole('heading', { name: 'Roman Forum' })
 
+    await user.click(screen.getByRole('button', { name: /quick actions/i }))
     await user.click(screen.getByRole('button', { name: 'Add room' }))
     const sheet = await screen.findByRole('dialog')
     await user.type(within(sheet).getByRole('textbox', { name: /room name/i }), 'Kitchen')

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'motion/react'
 import { toast } from 'sonner'
-import { ChevronRight, Pencil, Plus, RotateCcw, Settings2, Trash2, Upload } from 'lucide-react'
+import { Pencil, Plus, RotateCcw, Settings2, Trash2, Upload } from 'lucide-react'
 import {
   selectIsReady as selectPalacesReady,
   usePalaceStore,
@@ -33,7 +33,15 @@ import {
 import { deleteRoom, duplicateRoom, moveRoom, RoomEditorSheet, type RoomEditorTarget } from '@/features/room'
 import { resetRoomSrs } from '@/features/locus'
 import { ImportRoomsSheet } from '@/features/content'
-import { isDue, isLocusReviewed, isRoomCompleted, palaceProgress, roomProgress, srsStatus } from '@/shared/lib'
+import {
+  cardMaturityCounts,
+  isDue,
+  isLocusReviewed,
+  isRoomCompleted,
+  palaceProgress,
+  roomProgress,
+  srsStatus,
+} from '@/shared/lib'
 import { RoomList, type RoomListItem } from '@/widgets/room-list'
 import {
   AppScreen,
@@ -44,6 +52,8 @@ import {
   IconButton,
   PalaceCover,
   ScreenHeader,
+  SpeedDial,
+  StudyOverviewCard,
 } from '@/shared/ui'
 
 export interface PalaceDetailPageProps {
@@ -54,6 +64,8 @@ export interface PalaceDetailPageProps {
   onOpenRoom?: (roomId: string) => void
   /** Open this palace's settings; wired by the route wrapper. */
   onOpenSettings?: () => void
+  /** Drill the whole palace's due-today queue (palace-scoped review). */
+  onStudyPalace?: () => void
 }
 
 /** Palace detail — the palace's overview (identity, derived progress, palace quiz) above
@@ -65,6 +77,7 @@ export function PalaceDetailPage({
   onBack,
   onOpenRoom,
   onOpenSettings,
+  onStudyPalace,
 }: PalaceDetailPageProps) {
   const { t } = useTranslation()
   const palaceStore = usePalaceStoreApi()
@@ -134,6 +147,14 @@ export function PalaceDetailPage({
 
   const nextRoom = useMemo(() => items.find((item) => !item.completed) ?? items[0], [items])
 
+  const dueAcrossPalace = useMemo(() => {
+    const now = Date.now()
+    const roomIds = new Set(rooms.map((room) => room.id))
+    const palaceLoci = allLoci.filter((locus) => roomIds.has(locus.roomId))
+    const due = palaceLoci.filter((locus) => isDue(locus.srs, now))
+    return { dueCount: due.length, breakdown: cardMaturityCounts(due) }
+  }, [rooms, allLoci])
+
   const [editorTarget, setEditorTarget] = useState<RoomEditorTarget | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [resetTarget, setResetTarget] = useState<string | null>(null)
@@ -184,34 +205,26 @@ export function PalaceDetailPage({
         />
       }
     >
-      <div className="mt-4 space-y-5 pb-10">
-        <PalaceHero
-          palace={palace}
-          summary={summary}
-          nextRoom={nextRoom}
-          onEditIdentity={onOpenSettings}
-          onContinue={nextRoom ? () => onOpenRoom?.(nextRoom.id) : undefined}
-        />
+      <div className="mt-4 space-y-5 pb-24">
+        <PalaceHero palace={palace} progress={summary.progress} onEditIdentity={onOpenSettings} />
+
+        {items.length > 0 ? (
+          <StudyOverviewCard
+            count={dueAcrossPalace.dueCount}
+            breakdown={dueAcrossPalace.breakdown}
+            onStudy={() => onStudyPalace?.()}
+            onStudyAhead={nextRoom ? () => onOpenRoom?.(nextRoom.id) : undefined}
+            scope="palace"
+          />
+        ) : null}
 
         <section aria-labelledby="rooms-heading">
-          <div className="mb-3 flex items-center justify-between gap-3 px-0.5">
-            <h2 id="rooms-heading" className="text-[length:var(--p-text-title)] font-semibold text-heading">
-              {t('palaceDetail.roomsHeading')}
-            </h2>
-            <div className="flex items-center gap-1.5">
-              <IconButton
-                variant="ghost"
-                aria-label={t('importRooms.open')}
-                onClick={() => setImportOpen(true)}
-              >
-                <Upload className="size-5" aria-hidden />
-              </IconButton>
-              <Button size="sm" variant="secondary" onClick={() => setEditorTarget({ mode: 'add', palaceId })}>
-                <Plus className="size-[18px]" aria-hidden />
-                {t('palaceDetail.addRoom')}
-              </Button>
-            </div>
-          </div>
+          <h2
+            id="rooms-heading"
+            className="mb-3 px-0.5 text-[length:var(--p-text-title)] font-semibold text-heading"
+          >
+            {t('palaceDetail.roomsHeading')}
+          </h2>
 
           {items.length === 0 ? (
             <EmptyState
@@ -305,40 +318,39 @@ export function PalaceDetailPage({
           }
         }}
       />
+
+      <SpeedDial
+        label={t('palaceDetail.quickActions')}
+        className="bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+0.75rem)]"
+        actions={[
+          {
+            id: 'room',
+            label: t('palaceDetail.addRoom'),
+            icon: <Plus className="size-5" aria-hidden />,
+            onSelect: () => setEditorTarget({ mode: 'add', palaceId }),
+          },
+          {
+            id: 'import',
+            label: t('importRooms.open'),
+            icon: <Upload className="size-5" aria-hidden />,
+            onSelect: () => setImportOpen(true),
+          },
+        ]}
+      />
     </AppScreen>
   )
 }
 
-interface PalaceSummary {
-  totalRooms: number
-  roomsCompleted: number
-  totalLoci: number
-  totalQuestions: number
-  totalKnown: number
-  progress: number
-}
-
 function PalaceHero({
   palace,
-  summary,
-  nextRoom,
+  progress,
   onEditIdentity,
-  onContinue,
 }: {
   palace: Palace
-  summary: PalaceSummary
-  nextRoom: RoomListItem | undefined
+  progress: number
   onEditIdentity?: () => void
-  onContinue?: () => void
 }) {
   const { t } = useTranslation()
-  const stats = [
-    { key: 'rooms', value: `${summary.roomsCompleted}/${summary.totalRooms}`, label: t('palaceDetail.stats.rooms') },
-    { key: 'cards', value: String(summary.totalLoci), label: t('palaceDetail.stats.cards') },
-    { key: 'questions', value: String(summary.totalQuestions), label: t('palaceDetail.stats.questions') },
-    { key: 'mastered', value: String(summary.totalKnown), label: t('palaceDetail.stats.mastered') },
-  ]
-
   return (
     <GlassCard className="space-y-4">
       <div className="flex items-start gap-3.5">
@@ -360,38 +372,18 @@ function PalaceHero({
             {t('palaceDetail.overallProgress')}
           </span>
           <span className="text-[length:var(--p-text-sub)] font-bold tabular-nums text-heading">
-            {summary.progress}%
+            {progress}%
           </span>
         </div>
         <span className="block h-2.5 overflow-hidden rounded-full bg-secondary/40">
           <motion.span
             initial={{ width: 0 }}
-            animate={{ width: `${summary.progress}%` }}
+            animate={{ width: `${progress}%` }}
             transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
             className="block h-full rounded-full bg-linear-to-r from-primary to-accent"
           />
         </span>
       </div>
-
-      <dl className="grid grid-cols-4 gap-2">
-        {stats.map((stat) => (
-          <div key={stat.key} className="rounded-control bg-info-surface px-2 py-2.5 text-center">
-            <dd className="text-[length:var(--p-text-sub)] font-bold leading-none tabular-nums text-heading">
-              {stat.value}
-            </dd>
-            <dt className="mt-1 text-[length:var(--p-text-tiny)] font-medium text-secondary">
-              {stat.label}
-            </dt>
-          </div>
-        ))}
-      </dl>
-
-      {nextRoom && onContinue ? (
-        <Button className="w-full" onClick={onContinue}>
-          {t(nextRoom.completed ? 'palaceDetail.review' : 'palaceDetail.continue', { title: nextRoom.title })}
-          <ChevronRight className="size-[18px]" aria-hidden />
-        </Button>
-      ) : null}
     </GlassCard>
   )
 }
