@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest'
 import {
   buildDayCells,
   dayKey,
+  recordPractice,
   recordTrainingDay,
   totalTrainingDays,
+  type DailyTally,
   type StreakState,
 } from './streak'
 
@@ -79,6 +81,46 @@ describe('recordTrainingDay', () => {
     const { state } = recordTrainingDay(long, NOW)
     expect(state.trainingDays).toHaveLength(365)
     expect(state.trainingDays[state.trainingDays.length - 1]).toBe('2026-01-10')
+  })
+})
+
+describe('recordPractice', () => {
+  const base: StreakState & DailyTally = { ...empty, activeDayKey: null, activeDayCount: 0 }
+
+  it('accumulates below the goal without advancing the streak', () => {
+    const out = recordPractice(base, 3, 5, NOW)
+    expect(out.dayCount).toBe(3)
+    expect(out.becameActive).toBe(false)
+    expect(out.streak.streakCount).toBe(0)
+    expect(out.streak.trainingDays).toEqual([])
+    expect(out.tally).toEqual({ activeDayKey: '2026-01-10', activeDayCount: 3 })
+  })
+
+  it('marks the day active and advances the streak when the goal is reached', () => {
+    const partial: StreakState & DailyTally = { ...base, activeDayKey: '2026-01-10', activeDayCount: 4 }
+    const out = recordPractice(partial, 1, 5, NOW)
+    expect(out.dayCount).toBe(5)
+    expect(out.becameActive).toBe(true)
+    expect(out.streak.streakCount).toBe(1)
+    expect(out.streak.trainingDays).toEqual(['2026-01-10'])
+  })
+
+  it('resets the tally when the day rolls over', () => {
+    const yesterday: StreakState & DailyTally = { ...base, activeDayKey: '2026-01-09', activeDayCount: 9 }
+    const out = recordPractice(yesterday, 2, 5, NOW)
+    expect(out.dayCount).toBe(2)
+    expect(out.becameActive).toBe(false)
+  })
+
+  it('only advances once per day (further practice just bumps the tally)', () => {
+    const active: StreakState & DailyTally = {
+      ...base, streakCount: 1, lastTrainingDate: '2026-01-10',
+      trainingDays: ['2026-01-10'], activeDayKey: '2026-01-10', activeDayCount: 5,
+    }
+    const out = recordPractice(active, 3, 5, NOW)
+    expect(out.dayCount).toBe(8)
+    expect(out.becameActive).toBe(false)
+    expect(out.streak.streakCount).toBe(1)
   })
 })
 

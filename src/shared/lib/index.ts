@@ -61,10 +61,13 @@ export {
 export {
   dayKey,
   recordTrainingDay,
+  recordPractice,
   totalTrainingDays,
   buildDayCells,
   type StreakState,
   type StreakResult,
+  type DailyTally,
+  type PracticeOutcome,
   type DayCell,
 } from './streak'
 export {

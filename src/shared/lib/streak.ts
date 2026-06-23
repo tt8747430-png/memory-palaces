@@ -90,6 +90,66 @@ export function recordTrainingDay(state: StreakState, now: number): StreakResult
   }
 }
 
+/** The per-day practice tally that rides alongside the streak fields. */
+export interface DailyTally {
+  /** UTC day key the running count belongs to; null before any practice. */
+  activeDayKey: string | null
+  /** Items practised during `activeDayKey`. */
+  activeDayCount: number
+}
+
+export interface PracticeOutcome {
+  /** Streak fields after this practice (advanced only when the goal is first met today). */
+  streak: StreakState
+  /** The tally after this practice. */
+  tally: DailyTally
+  /** Items practised today after adding this batch. */
+  dayCount: number
+  /** The goal in force. */
+  dailyGoal: number
+  /** True only on the batch that pushed today from inactive to active. */
+  becameActive: boolean
+  /** Streak flags from the advance, when the day became active; else null. */
+  result: StreakResult | null
+}
+
+/** Add practised items to today's tally and, the moment the tally reaches the daily
+ * goal, mark the day active and advance the streak. Items below the goal accumulate
+ * but never advance the streak. Pure: `now` injected. */
+export function recordPractice(
+  state: StreakState & DailyTally,
+  itemsPracticed: number,
+  dailyGoal: number,
+  now: number,
+): PracticeOutcome {
+  const today = dayKey(now)
+  const carried = state.activeDayKey === today ? state.activeDayCount : 0
+  const dayCount = carried + Math.max(0, Math.round(itemsPracticed))
+  const tally: DailyTally = { activeDayKey: today, activeDayCount: dayCount }
+  const goal = Math.max(1, Math.round(dailyGoal))
+
+  const alreadyActive = state.trainingDays.includes(today)
+  if (dayCount >= goal && !alreadyActive) {
+    const result = recordTrainingDay(state, now)
+    return { streak: result.state, tally, dayCount, dailyGoal: goal, becameActive: true, result }
+  }
+
+  return {
+    streak: {
+      streakCount: state.streakCount,
+      longestStreak: state.longestStreak,
+      lastTrainingDate: state.lastTrainingDate,
+      streakFreezes: state.streakFreezes,
+      trainingDays: state.trainingDays,
+    },
+    tally,
+    dayCount,
+    dailyGoal: goal,
+    becameActive: false,
+    result: null,
+  }
+}
+
 /** Total distinct days trained. */
 export function totalTrainingDays(trainingDays: string[]): number {
   return new Set(trainingDays).size
