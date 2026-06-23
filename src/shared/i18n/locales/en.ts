@@ -976,6 +976,7 @@ export const en = {
     xp: '+{{amount}} XP',
     levelUp: 'Level {{level}} reached',
     streak: '{{count}}-day streak',
+    dayComplete: "Day complete — {{count}} done! You're active today 🔥",
   },
   progress: {
     heading: 'Progress',

@@ -116,7 +116,7 @@ export function ReviewPage({ onBack }: ReviewPageProps) {
       onGrade={(id, grade) => void gradeCard(locusStore, id, grade, now)}
       onBack={onBack ?? (() => {})}
       onComplete={(summary) => {
-        void reward({ xp: studyXp(summary.graded) })
+        void reward({ xp: studyXp(summary.graded), itemsPracticed: summary.graded })
         onBack?.()
       }}
       now={now}

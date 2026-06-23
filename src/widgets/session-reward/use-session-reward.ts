@@ -5,6 +5,7 @@ import { useEventBusOptional } from '@/shared/lib'
 import { useProgressStoreApiOptional } from '@/entities/progress'
 import { usePreferencesStoreApiOptional } from '@/entities/preferences'
 import { completeSession, type CompleteSessionOptions } from '@/features/progress'
+import { DEFAULT_DAILY_GOAL } from '@/shared/config/constants'
 
 /**
  * Returns `reward(options)` — applies a finished session's XP / streak / quiz-accuracy
@@ -14,15 +15,18 @@ import { completeSession, type CompleteSessionOptions } from '@/features/progres
  * preference. No-ops where no progress store is mounted (focused tests), so callers
  * can fire it unconditionally.
  */
-export function useSessionReward(): (options: CompleteSessionOptions) => Promise<void> {
+export function useSessionReward(): (
+  options: Omit<CompleteSessionOptions, 'dailyGoal'>,
+) => Promise<void> {
   const store = useProgressStoreApiOptional()
   const preferencesStore = usePreferencesStoreApiOptional()
   const eventBus = useEventBusOptional()
   const { t } = useTranslation()
   return useCallback(
-    async (options: CompleteSessionOptions) => {
+    async (options: Omit<CompleteSessionOptions, 'dailyGoal'>) => {
       if (!store) return
-      const reward = await completeSession(store, options)
+      const dailyGoal = preferencesStore?.getState().preferences?.dailyGoal ?? DEFAULT_DAILY_GOAL
+      const reward = await completeSession(store, { ...options, dailyGoal })
 
       if (reward.leveledUp) eventBus?.emit('level-up', { level: reward.level })
       if (reward.isMilestone) eventBus?.emit('streak', { count: reward.streakCount })
@@ -35,6 +39,7 @@ export function useSessionReward(): (options: CompleteSessionOptions) => Promise
       if (reward.xpGained > 0) toast.success(t('reward.xp', { amount: reward.xpGained }))
       if (reward.leveledUp) toast(t('reward.levelUp', { level: reward.level }))
       if (reward.isMilestone) toast(t('reward.streak', { count: reward.streakCount }))
+      if (reward.dayBecameActive) toast.success(t('reward.dayComplete', { count: reward.dailyGoal }))
     },
     [store, preferencesStore, eventBus, t],
   )

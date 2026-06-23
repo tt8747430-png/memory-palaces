@@ -124,7 +124,7 @@ export function RoomTrainPage({ roomId, onBack }: RoomTrainPageProps) {
       onEditCard={(id, changes) => void editLocus(locusStore, id, changes)}
       onBack={onBack ?? (() => {})}
       onComplete={(summary) => {
-        void reward({ xp: studyXp(summary.graded) })
+        void reward({ xp: studyXp(summary.graded), itemsPracticed: summary.graded })
         onBack?.()
       }}
     />

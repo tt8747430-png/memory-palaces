@@ -80,7 +80,7 @@ export function MatchPage({ roomId, onBack }: MatchPageProps) {
       subtitle={subtitle}
       onBack={onBack ?? (() => {})}
       onComplete={() => {
-        void reward({ xp: XP_MATCH })
+        void reward({ xp: XP_MATCH, itemsPracticed: loci.length })
         onBack?.()
       }}
     />

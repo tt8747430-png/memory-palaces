@@ -99,11 +99,11 @@ export function QuizPage({ palaceId, onBack }: QuizPageProps) {
   }
 
   const handleComplete = (result: QuizResult) => {
-    // A passing quiz (≥80%) counts as a training day; XP scales with correct answers.
+    // Every answered question counts toward the daily goal; XP scales with correct answers.
     void reward({
       xp: quizXp(result.score),
       quizAccuracy: result.accuracy,
-      recordDay: result.accuracy >= 80,
+      itemsPracticed: result.total,
     })
     onBack?.()
   }

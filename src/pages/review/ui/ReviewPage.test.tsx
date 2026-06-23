@@ -73,7 +73,7 @@ describe('ReviewPage', () => {
     })
   })
 
-  it('awards XP and records a training day on completion', async () => {
+  it('awards XP and accumulates the day tally on completion', async () => {
     const user = userEvent.setup()
     const { progressRepo } = renderReview([
       makeLocus({ id: 'l1', createdAt: at(1), roomId: 'r1', front: 'Front 1', back: 'Back 1' }),
@@ -86,7 +86,9 @@ describe('ReviewPage', () => {
     await waitFor(async () => {
       const [progress] = await progressRepo.getAll()
       expect(progress?.xp).toBeGreaterThan(0)
-      expect(progress?.streakCount).toBe(1)
+      // One card practised is below the default goal (5), so the day is not yet active.
+      expect(progress?.activeDayCount).toBe(1)
+      expect(progress?.streakCount).toBe(0)
     })
   })
 

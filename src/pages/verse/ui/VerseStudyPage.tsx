@@ -11,7 +11,9 @@ import {
 import { useRoomStore, useRoomStoreApi } from '@/entities/room'
 import { usePalaceStore, usePalaceStoreApi } from '@/entities/palace'
 import { editLocus } from '@/features/locus'
+import { XP_VERSE } from '@/features/progress'
 import { VerseStudy, type VerseCard } from '@/widgets/verse'
+import { useSessionReward } from '@/widgets/session-reward'
 import { AppScreen, ScreenHeader } from '@/shared/ui'
 
 export interface VerseStudyPageProps {
@@ -28,6 +30,7 @@ export function VerseStudyPage({ roomId, onBack }: VerseStudyPageProps) {
   const locusStore = useLocusStoreApi()
   const roomStore = useRoomStoreApi()
   const palaceStore = usePalaceStoreApi()
+  const reward = useSessionReward()
 
   useEffect(() => {
     locusStore.getState().start()
@@ -73,7 +76,10 @@ export function VerseStudyPage({ roomId, onBack }: VerseStudyPageProps) {
 
   const handleToggleMemorized = (id: string) => {
     const locus = locusStore.getState().loci.find((candidate) => candidate.id === id)
-    if (locus) void editLocus(locusStore, id, { memorized: !locus.memorized })
+    if (!locus) return
+    const nowMemorized = !locus.memorized
+    void editLocus(locusStore, id, { memorized: nowMemorized })
+    if (nowMemorized) void reward({ xp: XP_VERSE, itemsPracticed: 1 })
   }
 
   return (
