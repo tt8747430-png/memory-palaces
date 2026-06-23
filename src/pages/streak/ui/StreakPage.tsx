@@ -1,24 +1,22 @@
 import { type ReactNode, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion, useReducedMotion } from 'motion/react'
-import { ArrowRight, CalendarCheck, Flame } from 'lucide-react'
+import { CalendarCheck, Flame } from 'lucide-react'
 import { dayKey } from '@/shared/lib'
 import { selectProgress, useProgressStore, useProgressStoreApi } from '@/entities/progress'
 import { StreakCalendar } from '@/widgets/streak-calendar'
-import { AppScreen, Button, Card, ScreenHeader } from '@/shared/ui'
+import { AppScreen, Card, ScreenHeader } from '@/shared/ui'
 
 export interface StreakPageProps {
   /** Return to where you came from (Home or Profile); wired by the route wrapper. */
   onBack?: () => void
-  /** Launch the cross-library due review; wired by the route wrapper. */
-  onReview?: () => void
 }
 
 /** The Streak screen: a warm streak hero (gold is Mindscape's earned-reward color) over
  * two honest figures — days practiced this month and the longest streak — and the full
  * month calendar. Every number derives live from the progress store; no freezes or
  * society to fake. Reached from the Home streak chip and the Profile overview. */
-export function StreakPage({ onBack, onReview }: StreakPageProps = {}) {
+export function StreakPage({ onBack }: StreakPageProps = {}) {
   const { t } = useTranslation()
   const reduce = useReducedMotion()
   const progressStore = useProgressStoreApi()
@@ -87,13 +85,6 @@ export function StreakPage({ onBack, onReview }: StreakPageProps = {}) {
             tone="navy"
           />
         </div>
-
-        {onReview ? (
-          <Button className="w-full" onClick={onReview}>
-            {t('streak.reviewDue')}
-            <ArrowRight className="size-[18px]" aria-hidden />
-          </Button>
-        ) : null}
 
         <StreakCalendar trainingDays={trainingDays} now={now} />
       </div>

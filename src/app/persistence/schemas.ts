@@ -211,7 +211,7 @@ export const progressSchema: RxJsonSchema<Progress> = {
 }
 
 export const preferencesSchema: RxJsonSchema<Preferences> = {
-  version: 3,
+  version: 4,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -227,6 +227,9 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
     dailyGoal: { type: 'number' },
     palacesView: { type: 'string', enum: ['grid', 'list'] },
     palacesSort: { type: 'string', enum: ['recent', 'progress', 'name', 'category'] },
+    verseMode: { type: 'string', enum: ['blur', 'words', 'initials', 'type'] },
+    verseShuffle: { type: 'boolean' },
+    verseWordSpaces: { type: 'boolean' },
     privacy: {
       type: 'object',
       properties: {
@@ -259,6 +262,9 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
     'dailyGoal',
     'palacesView',
     'palacesSort',
+    'verseMode',
+    'verseShuffle',
+    'verseWordSpaces',
     'privacy',
   ],
 }

@@ -16,7 +16,7 @@ interface BaseProps {
 export type SettingsRowProps = BaseProps &
   (
     | { kind: 'toggle'; checked: boolean; onCheckedChange: (value: boolean) => void }
-    | { kind: 'nav'; onClick: () => void; value?: string }
+    | { kind: 'nav'; onClick: () => void; value?: string; disabled?: boolean }
     | { kind: 'value'; value: string }
     | { kind: 'soon'; badge: string }
   )
@@ -91,7 +91,12 @@ export function SettingsRow(props: SettingsRowProps) {
         type="button"
         aria-label={label}
         onClick={props.onClick}
-        className={cn(ROW, 'group active:bg-primary/[0.04]')}
+        disabled={props.disabled}
+        className={cn(
+          ROW,
+          'group active:bg-primary/[0.04]',
+          'disabled:pointer-events-none disabled:opacity-45',
+        )}
       >
         {body}
         {props.value ? trailingValue(props.value) : null}

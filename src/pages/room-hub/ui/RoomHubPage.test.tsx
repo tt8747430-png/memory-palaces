@@ -56,8 +56,8 @@ describe('RoomHubPage', () => {
     expect(await screen.findByRole('heading', { name: 'Garden Room' })).toBeInTheDocument()
     // Both fresh cards are due today; the study overview leads with the count.
     expect(screen.getByText(/2 cards for today/i)).toBeInTheDocument()
-    // The preview carousel renders for a non-empty room.
-    expect(screen.getByRole('button', { name: /study flashcards/i })).toBeInTheDocument()
+    // The study overview owns the single Study action (the carousel is preview-only).
+    expect(screen.getByRole('button', { name: /study cards/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^match/i })).toBeInTheDocument()
   })
 
@@ -81,6 +81,6 @@ describe('RoomHubPage', () => {
     await screen.findByRole('heading', { name: 'Garden Room' })
     // The study overview/carousel hide for an empty room; the editor's empty state guides.
     expect(screen.getByText(/no cards yet/i)).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /study flashcards/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /study cards/i })).not.toBeInTheDocument()
   })
 })

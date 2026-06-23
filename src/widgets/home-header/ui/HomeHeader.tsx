@@ -107,7 +107,7 @@ export function HomeHeader({
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35, ease: EASE_OUT }}
-              className="truncate text-[length:var(--p-text-title)] font-bold leading-tight text-heading"
+              className="truncate text-[length:var(--p-text-title)] font-bold leading-tight tracking-tight text-heading"
             >
               {t('home.hi', { name })}
             </motion.h1>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { shuffle } from '@/shared/lib'
 import {
@@ -19,7 +19,8 @@ import {
   useQuestionStore,
   useQuestionStoreApi,
 } from '@/entities/question'
-import { QuizSession, type QuizResult } from '@/widgets/quiz'
+import { editPalace } from '@/features/palace'
+import { QuizOptionsSheet, QuizSession, type QuizResult } from '@/widgets/quiz'
 import { type QuizQuestion } from '@/features/quiz'
 import { quizXp } from '@/features/progress'
 import { useSessionReward } from '@/widgets/session-reward'
@@ -40,6 +41,7 @@ export function QuizPage({ palaceId, onBack }: QuizPageProps) {
   const roomStore = useRoomStoreApi()
   const questionStore = useQuestionStoreApi()
   const reward = useSessionReward()
+  const [optionsOpen, setOptionsOpen] = useState(false)
 
   useEffect(() => {
     palaceStore.getState().start()
@@ -80,6 +82,17 @@ export function QuizPage({ palaceId, onBack }: QuizPageProps) {
     return shuffleQuestions ? shuffle(built) : built
   }, [allQuestions, allRooms, palaceId, shuffleQuestions])
 
+  // Freeze the question set for the active run so toggling shuffle from the options sheet
+  // re-orders the next quiz, not the one in progress.
+  const frozenRef = useRef<QuizQuestion[] | null>(null)
+  if (ready && frozenRef.current === null) frozenRef.current = questions
+  const runQuestions = frozenRef.current ?? questions
+
+  const setSetting = (changes: Partial<{ quizTimer: boolean; shuffleQuestions: boolean }>) => {
+    if (palace)
+      void editPalace(palaceStore, palace.id, { settings: { ...palace.settings, ...changes } })
+  }
+
   if (!ready) {
     return (
       <AppScreen className="items-center justify-center">
@@ -109,12 +122,24 @@ export function QuizPage({ palaceId, onBack }: QuizPageProps) {
   }
 
   return (
-    <QuizSession
-      key={palaceId}
-      questions={questions}
-      title={t('quiz.title', { palace: palace.name })}
-      onBack={onBack ?? (() => {})}
-      onComplete={handleComplete}
-    />
+    <>
+      <QuizSession
+        key={palaceId}
+        questions={runQuestions}
+        title={t('quiz.title', { palace: palace.name })}
+        autoAdvance={palace.settings.quizTimer}
+        onOpenOptions={() => setOptionsOpen(true)}
+        onBack={onBack ?? (() => {})}
+        onComplete={handleComplete}
+      />
+      <QuizOptionsSheet
+        open={optionsOpen}
+        onClose={() => setOptionsOpen(false)}
+        quizTimer={palace.settings.quizTimer}
+        shuffleQuestions={palace.settings.shuffleQuestions}
+        onQuizTimer={(value) => setSetting({ quizTimer: value })}
+        onShuffleQuestions={(value) => setSetting({ shuffleQuestions: value })}
+      />
+    </>
   )
 }

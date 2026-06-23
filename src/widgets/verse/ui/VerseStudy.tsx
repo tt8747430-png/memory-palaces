@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { type ReactNode, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -9,19 +9,27 @@ import {
   Eye,
   EyeOff,
   Lightbulb,
+  Pencil,
   RotateCcw,
+  Settings2,
+  Shuffle,
   Sparkles,
   Type as TypeIcon,
+  Volume2,
 } from 'lucide-react'
+import type { VerseMode } from '@/entities/preferences'
 import {
+  cancelSpeech,
   cn,
   isVerseMarker,
   scramble,
+  speak,
+  speechAvailable,
   tokenizeWords,
   typedVerseStatus,
   wordInitial,
 } from '@/shared/lib'
-import { Button, Chip, IconButton } from '@/shared/ui'
+import { Button, Chip, IconButton, Sheet, Switch, TextField, Textarea } from '@/shared/ui'
 
 export interface VerseCard {
   id: string
@@ -30,15 +38,22 @@ export interface VerseCard {
   memorized: boolean
 }
 
+export interface VerseStudyPrefs {
+  mode: VerseMode
+  shuffle: boolean
+  wordSpaces: boolean
+}
+
 export interface VerseStudyProps {
   verses: VerseCard[]
   title: string
   subtitle?: string
+  prefs: VerseStudyPrefs
+  onPrefsChange: (changes: Partial<VerseStudyPrefs>) => void
   onBack: () => void
   onToggleMemorized: (id: string) => void
+  onEditVerse: (id: string, data: { front: string; back: string }) => void
 }
-
-type VerseMode = 'blur' | 'words' | 'initials' | 'type'
 
 const MODES: { value: VerseMode; key: 'modeBlur' | 'modeWords' | 'modeInitials' | 'modeType' }[] = [
   { value: 'blur', key: 'modeBlur' },
@@ -47,15 +62,42 @@ const MODES: { value: VerseMode; key: 'modeBlur' | 'modeWords' | 'modeInitials' 
   { value: 'type', key: 'modeType' },
 ]
 
-/** Verse memorization: four recall modes (Blur / Words / Initials / Type) over a
- * room's verses, with prev/next navigation and a memorized marker. Each mode owns
- * its own attempt state, reset when the verse or mode changes (via the panel key). */
-export function VerseStudy({ verses, title, subtitle, onBack, onToggleMemorized }: VerseStudyProps) {
+/** Verse memorization: four recall modes (Blur / Words / Initials / Type) over a scope's
+ * verses, with prev/next navigation, a memorized marker, read-aloud, inline editing, and a
+ * settings sheet (shuffle order, word spaces). Each mode owns its own attempt state, reset
+ * when the verse or mode changes (via the panel key). Prefs are owned by the host. */
+export function VerseStudy({
+  verses,
+  title,
+  subtitle,
+  prefs,
+  onPrefsChange,
+  onBack,
+  onToggleMemorized,
+  onEditVerse,
+}: VerseStudyProps) {
   const { t } = useTranslation()
-  const [mode, setMode] = useState<VerseMode>('blur')
   const [index, setIndex] = useState(0)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [editing, setEditing] = useState(false)
 
-  const current = verses[Math.min(index, Math.max(0, verses.length - 1))]
+  const byId = useMemo(() => new Map(verses.map((verse) => [verse.id, verse])), [verses])
+
+  // Display order of verse ids; reshuffled when the deck changes or shuffle toggles.
+  const [order, setOrder] = useState<string[]>(() => verses.map((verse) => verse.id))
+  useEffect(() => {
+    const ids = verses.map((verse) => verse.id)
+    setOrder(prefs.shuffle ? scramble(ids) : ids)
+    setIndex((i) => Math.min(i, Math.max(0, ids.length - 1)))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [verses.length, prefs.shuffle])
+
+  const currentId = order[Math.min(index, Math.max(0, order.length - 1))]
+  const current = currentId ? byId.get(currentId) : undefined
+  const canSpeak = speechAvailable()
+
+  useEffect(() => () => cancelSpeech(), [])
+  useEffect(() => cancelSpeech(), [currentId, prefs.mode])
 
   if (verses.length === 0 || !current) {
     return (
@@ -91,18 +133,24 @@ export function VerseStudy({ verses, title, subtitle, onBack, onToggleMemorized 
               <p className="truncate text-[length:var(--p-text-label)]">{subtitle}</p>
             ) : null}
           </div>
-          <span className="w-11" />
+          <IconButton
+            variant="glass"
+            aria-label={t('verse.settings')}
+            onClick={() => setSettingsOpen(true)}
+          >
+            <Settings2 className="size-5" aria-hidden />
+          </IconButton>
         </div>
 
         <div className="relative mt-4 flex items-center gap-1 rounded-card bg-info-surface p-1">
           {MODES.map(({ value, key }) => {
-            const active = value === mode
+            const active = value === prefs.mode
             return (
               <button
                 key={value}
                 type="button"
                 aria-pressed={active}
-                onClick={() => setMode(value)}
+                onClick={() => onPrefsChange({ mode: value })}
                 className="relative flex-1 rounded-control px-2 py-2.5 text-[length:var(--p-text-label)] font-semibold"
               >
                 {active ? (
@@ -112,7 +160,9 @@ export function VerseStudy({ verses, title, subtitle, onBack, onToggleMemorized 
                     transition={{ type: 'spring', stiffness: 420, damping: 34 }}
                   />
                 ) : null}
-                <span className={cn('relative z-10', active ? 'text-heading' : 'text-muted-foreground')}>
+                <span
+                  className={cn('relative z-10', active ? 'text-heading' : 'text-muted-foreground')}
+                >
                   {t(`verse.${key}`)}
                 </span>
               </button>
@@ -137,41 +187,50 @@ export function VerseStudy({ verses, title, subtitle, onBack, onToggleMemorized 
 
           <AnimatePresence mode="wait">
             <motion.div
-              key={`${mode}-${current.id}`}
+              key={`${prefs.mode}-${current.id}`}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
               className="flex min-h-0 flex-1 flex-col"
             >
-              {mode === 'blur' ? <BlurMode text={current.text} /> : null}
-              {mode === 'words' ? <WordsMode text={current.text} /> : null}
-              {mode === 'initials' ? <InitialsMode text={current.text} /> : null}
-              {mode === 'type' ? <TypeMode text={current.text} /> : null}
+              {prefs.mode === 'blur' ? <BlurMode text={current.text} /> : null}
+              {prefs.mode === 'words' ? <WordsMode text={current.text} /> : null}
+              {prefs.mode === 'initials' ? (
+                <InitialsMode text={current.text} wordSpaces={prefs.wordSpaces} />
+              ) : null}
+              {prefs.mode === 'type' ? <TypeMode text={current.text} /> : null}
             </motion.div>
           </AnimatePresence>
         </div>
       </div>
 
       <div className="space-y-3 px-5 pb-7 pt-1">
-        <div className="flex items-center justify-center">
-          <button
-            type="button"
+        <div className="flex items-center justify-center gap-2">
+          <ToolPill
             onClick={() => onToggleMemorized(current.id)}
-            className={cn(
-              'inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-[length:var(--p-text-label)] font-semibold transition-transform active:scale-[0.96]',
-              current.memorized
-                ? 'border-[var(--success)] bg-[var(--success-surface)] text-[var(--success-on-surface)]'
-                : 'border-border bg-card-glass text-heading',
-            )}
-          >
-            {current.memorized ? (
-              <CheckCircle2 className="size-4" aria-hidden />
-            ) : (
-              <Check className="size-4" aria-hidden />
-            )}
-            {current.memorized ? t('verse.memorized') : t('verse.markMemorized')}
-          </button>
+            active={current.memorized}
+            icon={
+              current.memorized ? (
+                <CheckCircle2 className="size-4" aria-hidden />
+              ) : (
+                <Check className="size-4" aria-hidden />
+              )
+            }
+            label={current.memorized ? t('verse.memorized') : t('verse.markMemorized')}
+          />
+          {canSpeak ? (
+            <ToolPill
+              onClick={() => speak(current.text)}
+              icon={<Volume2 className="size-4" aria-hidden />}
+              label={t('verse.listen')}
+            />
+          ) : null}
+          <ToolPill
+            onClick={() => setEditing(true)}
+            icon={<Pencil className="size-4" aria-hidden />}
+            label={t('verse.edit')}
+          />
         </div>
 
         <div className="flex items-center justify-center gap-4">
@@ -184,18 +243,39 @@ export function VerseStudy({ verses, title, subtitle, onBack, onToggleMemorized 
             <ChevronLeft className="size-6" aria-hidden />
           </IconButton>
           <span className="min-w-[64px] text-center text-[length:var(--p-text-sub)] font-semibold tabular-nums text-heading">
-            {index + 1} / {verses.length}
+            {index + 1} / {order.length}
           </span>
           <IconButton
             variant="glass"
             aria-label={t('verse.nextVerse')}
-            disabled={index >= verses.length - 1}
-            onClick={() => setIndex((i) => Math.min(verses.length - 1, i + 1))}
+            disabled={index >= order.length - 1}
+            onClick={() => setIndex((i) => Math.min(order.length - 1, i + 1))}
           >
             <ChevronRight className="size-6" aria-hidden />
           </IconButton>
         </div>
       </div>
+
+      <VerseSettingsSheet
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        prefs={prefs}
+        onPrefsChange={onPrefsChange}
+        onEditVerse={() => {
+          setSettingsOpen(false)
+          setEditing(true)
+        }}
+      />
+
+      <VerseEditorSheet
+        open={editing}
+        verse={current}
+        onClose={() => setEditing(false)}
+        onSave={(data) => {
+          onEditVerse(current.id, data)
+          setEditing(false)
+        }}
+      />
     </div>
   )
 }
@@ -377,7 +457,7 @@ function WordsMode({ text }: { text: string }) {
   )
 }
 
-function InitialsMode({ text }: { text: string }) {
+function InitialsMode({ text, wordSpaces }: { text: string; wordSpaces: boolean }) {
   const { t } = useTranslation()
   const tokens = useMemo(() => tokenizeWords(text), [text])
   const [revealed, setRevealed] = useState(false)
@@ -391,7 +471,12 @@ function InitialsMode({ text }: { text: string }) {
               {text}
             </p>
           ) : (
-            <p className="flex w-full flex-wrap items-baseline justify-center gap-x-3 gap-y-2.5 text-[clamp(17px,4.6vw,22px)] font-semibold text-heading">
+            <p
+              className={cn(
+                'flex w-full flex-wrap items-baseline justify-center gap-y-2.5 text-[clamp(17px,4.6vw,22px)] font-semibold text-heading',
+                wordSpaces ? 'gap-x-3' : 'gap-x-2',
+              )}
+            >
               {tokens.map((token, i) => {
                 if (isVerseMarker(token)) {
                   return (
@@ -405,7 +490,7 @@ function InitialsMode({ text }: { text: string }) {
                   <span key={i} className="whitespace-nowrap">
                     {lead}
                     <span className="font-bold">{initial}</span>
-                    {hidden > 0 ? (
+                    {wordSpaces && hidden > 0 ? (
                       <span
                         aria-hidden
                         className="ml-0.5 inline-block border-b-2 border-[color-mix(in_oklch,var(--primary)_40%,transparent)] align-baseline"
@@ -422,7 +507,11 @@ function InitialsMode({ text }: { text: string }) {
       </div>
       <div className="px-5 pb-5">
         <Button size="lg" className="w-full" onClick={() => setRevealed((r) => !r)}>
-          {revealed ? <EyeOff className="size-5" aria-hidden /> : <Eye className="size-5" aria-hidden />}
+          {revealed ? (
+            <EyeOff className="size-5" aria-hidden />
+          ) : (
+            <Eye className="size-5" aria-hidden />
+          )}
           {revealed ? t('verse.hideText') : t('verse.showText')}
         </Button>
       </div>
@@ -467,7 +556,9 @@ function TypeMode({ text }: { text: string }) {
               {text}
             </p>
           ) : result.typed.length === 0 ? (
-            <p className="text-[length:var(--p-text-label)] text-muted-foreground">{t('verse.typeHint')}</p>
+            <p className="text-[length:var(--p-text-label)] text-muted-foreground">
+              {t('verse.typeHint')}
+            </p>
           ) : (
             <p className="flex flex-wrap gap-x-1.5 gap-y-1 text-[length:var(--p-text-body)] font-medium leading-relaxed">
               {result.typed.map((word, i) => (
@@ -501,10 +592,198 @@ function TypeMode({ text }: { text: string }) {
           {t('verse.startOver')}
         </Button>
         <Button variant="ghost" size="lg" className="flex-1" onClick={() => setRevealed((r) => !r)}>
-          {revealed ? <EyeOff className="size-[17px]" aria-hidden /> : <Eye className="size-[17px]" aria-hidden />}
+          {revealed ? (
+            <EyeOff className="size-[17px]" aria-hidden />
+          ) : (
+            <Eye className="size-[17px]" aria-hidden />
+          )}
           {revealed ? t('verse.hideVerse') : t('verse.showVerse')}
         </Button>
       </div>
     </div>
+  )
+}
+
+function ToolPill({
+  icon,
+  label,
+  onClick,
+  active,
+}: {
+  icon: ReactNode
+  label: string
+  onClick: () => void
+  active?: boolean
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-[length:var(--p-text-label)] font-semibold transition-transform active:scale-[0.96]',
+        active
+          ? 'border-[var(--success)] bg-[var(--success-surface)] text-[var(--success-on-surface)]'
+          : 'border-border bg-card-glass text-heading',
+      )}
+    >
+      {icon}
+      {label}
+    </button>
+  )
+}
+
+function VerseSettingsSheet({
+  open,
+  onClose,
+  prefs,
+  onPrefsChange,
+  onEditVerse,
+}: {
+  open: boolean
+  onClose: () => void
+  prefs: VerseStudyPrefs
+  onPrefsChange: (changes: Partial<VerseStudyPrefs>) => void
+  onEditVerse: () => void
+}) {
+  const { t } = useTranslation()
+  return (
+    <Sheet open={open} onOpenChange={(next) => !next && onClose()} title={t('verse.settings')}>
+      <div className="flex flex-col gap-2.5 pb-2">
+        <SettingToggle
+          icon={<Shuffle className="size-[18px]" aria-hidden />}
+          label={t('verse.shuffleLabel')}
+          description={t('verse.shuffleHint')}
+          checked={prefs.shuffle}
+          onChange={(value) => onPrefsChange({ shuffle: value })}
+        />
+        <SettingToggle
+          icon={<TypeIcon className="size-[18px]" aria-hidden />}
+          label={t('verse.wordSpacesLabel')}
+          description={t('verse.wordSpacesHint')}
+          checked={prefs.wordSpaces}
+          onChange={(value) => onPrefsChange({ wordSpaces: value })}
+        />
+        <button
+          type="button"
+          onClick={onEditVerse}
+          className="flex w-full items-center gap-3.5 rounded-card bg-info-surface px-4 py-3.5 text-left transition-transform active:scale-[0.99]"
+        >
+          <span className="text-primary">
+            <Pencil className="size-[18px]" aria-hidden />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[length:var(--p-text-sub)] font-semibold text-heading">
+              {t('verse.editVerse')}
+            </span>
+            <span className="mt-0.5 block text-[length:var(--p-text-label)] leading-snug text-muted-foreground">
+              {t('verse.editVerseHint')}
+            </span>
+          </span>
+          <ChevronRight className="size-5 shrink-0 text-faint" aria-hidden />
+        </button>
+      </div>
+    </Sheet>
+  )
+}
+
+function SettingToggle({
+  icon,
+  label,
+  description,
+  checked,
+  onChange,
+}: {
+  icon: ReactNode
+  label: string
+  description: string
+  checked: boolean
+  onChange: (value: boolean) => void
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-card bg-info-surface px-4 py-3">
+      <span className="flex min-w-0 items-center gap-3">
+        <span className="text-primary">{icon}</span>
+        <span className="min-w-0">
+          <span className="block text-[length:var(--p-text-sub)] font-semibold text-heading">
+            {label}
+          </span>
+          <span className="mt-0.5 block text-[length:var(--p-text-label)] leading-snug text-muted-foreground">
+            {description}
+          </span>
+        </span>
+      </span>
+      <Switch checked={checked} onCheckedChange={onChange} label={label} />
+    </div>
+  )
+}
+
+function VerseEditorSheet({
+  open,
+  verse,
+  onClose,
+  onSave,
+}: {
+  open: boolean
+  verse: VerseCard
+  onClose: () => void
+  onSave: (data: { front: string; back: string }) => void
+}) {
+  const { t } = useTranslation()
+  const [front, setFront] = useState('')
+  const [back, setBack] = useState('')
+
+  useEffect(() => {
+    if (open) {
+      setFront(verse.reference)
+      setBack(verse.text)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, verse.id])
+
+  const valid = front.trim().length > 0 && back.trim().length > 0
+
+  return (
+    <Sheet
+      open={open}
+      onOpenChange={(next) => !next && onClose()}
+      title={t('verse.editVerse')}
+      footer={
+        <Button
+          size="lg"
+          className="w-full"
+          disabled={!valid}
+          onClick={() => valid && onSave({ front: front.trim(), back: back.trim() })}
+        >
+          <Check className="size-[18px]" aria-hidden />
+          {t('verse.saveVerse')}
+        </Button>
+      }
+    >
+      <div className="flex flex-col gap-4 pb-2">
+        <label className="block">
+          <span className="mb-1.5 block text-[length:var(--p-text-label)] font-semibold text-heading">
+            {t('verse.referenceLabel')}
+          </span>
+          <TextField
+            value={front}
+            onChange={(event) => setFront(event.target.value)}
+            placeholder={t('verse.referencePlaceholder')}
+            enterKeyHint="next"
+            maxLength={80}
+          />
+        </label>
+        <label className="block">
+          <span className="mb-1.5 block text-[length:var(--p-text-label)] font-semibold text-heading">
+            {t('verse.textLabel')}
+          </span>
+          <Textarea
+            value={back}
+            onChange={(event) => setBack(event.target.value)}
+            placeholder={t('verse.textPlaceholder')}
+            rows={5}
+          />
+        </label>
+      </div>
+    </Sheet>
   )
 }

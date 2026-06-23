@@ -3,22 +3,26 @@ import { Check, Plus } from 'lucide-react'
 import { PALACE_COLOR_OPTIONS, PALACE_ICON_OPTIONS } from '@/entities/palace'
 import { cn } from '@/shared/lib'
 
-/** The palace emoji picker — shared by the create sheet and palace settings so both
- * render identical options and never drift. */
+/** The emoji picker — shared by the palace create sheet, palace settings, and the folder
+ * editor so every surface renders identical tiles and never drifts. The option set is
+ * injectable (`options`) so palaces and folders can wear different metaphors while sharing
+ * one control. */
 export function IconPicker({
   value,
   onChange,
   label,
+  options = PALACE_ICON_OPTIONS,
 }: {
   value: string
   onChange: (icon: string) => void
   label: string
+  options?: readonly string[]
 }) {
   return (
     <div>
       <p className="mb-2 text-[length:var(--p-text-label)] font-semibold text-heading">{label}</p>
       <div className="grid grid-cols-6 gap-2.5" role="radiogroup" aria-label={label}>
-        {PALACE_ICON_OPTIONS.map((option) => {
+        {options.map((option) => {
           const active = value === option
           return (
             <motion.button

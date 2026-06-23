@@ -1,29 +1,15 @@
-import { type ReactNode, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { motion } from 'motion/react'
 import { toast } from 'sonner'
-import {
-  BookOpen,
-  Brain,
-  ChevronRight,
-  GraduationCap,
-  Puzzle,
-  RotateCcw,
-  Trash2,
-} from 'lucide-react'
+import { GraduationCap, RotateCcw, Trash2 } from 'lucide-react'
 import {
   selectIsReady as selectPalacesReady,
   usePalaceStore,
   usePalaceStoreApi,
 } from '@/entities/palace'
-import {
-  selectIsReady as selectRoomsReady,
-  useRoomStore,
-  useRoomStoreApi,
-} from '@/entities/room'
+import { selectIsReady as selectRoomsReady, useRoomStore, useRoomStoreApi } from '@/entities/room'
 import {
   lociForRoom,
-  type Locus,
   selectIsReady as selectLociReady,
   selectLoci,
   useLocusStore,
@@ -38,9 +24,10 @@ import {
 } from '@/entities/question'
 import { markRoomKnown, resetRoomSrs } from '@/features/locus'
 import { deleteRoom } from '@/features/room'
-import { cardMaturityCounts, cn, isDue } from '@/shared/lib'
+import { cardMaturityCounts, isDue } from '@/shared/lib'
 import { LociPreviewCarousel } from '@/widgets/loci-preview'
 import { RoomContentEditor } from '@/widgets/loci-editor'
+import { PracticeModes } from '@/widgets/practice-modes'
 import {
   AppScreen,
   CardMaturityOverview,
@@ -54,10 +41,8 @@ import {
 export interface RoomHubPageProps {
   roomId: string
   onBack?: () => void
-  /** Launch the whole-room study session (room-train); used as "Study ahead". */
+  /** Open the room's Study-cards session (the one flashcard surface). */
   onStudy?: () => void
-  /** Drill this room's due-today queue (room-scoped review). */
-  onStudyDue?: () => void
   /** Launch the Match mini-game. */
   onMatch?: () => void
   /** Launch the room-scoped quiz (Test). */
@@ -68,14 +53,13 @@ export interface RoomHubPageProps {
   onDeleted?: () => void
 }
 
-/** The room hub — one screen per room: a pinned header + progress hero, then the card
- * preview and practice modes, then the room's cards-and-questions editor inline below
- * (one scroll, study on top, manage beneath). */
+/** The room hub — one screen per room: a card preview, then the study overview, then the
+ * practice modes, then the room's cards-and-questions editor inline below (one scroll,
+ * study on top, manage beneath). */
 export function RoomHubPage({
   roomId,
   onBack,
   onStudy,
-  onStudyDue,
   onMatch,
   onTest,
   onVerse,
@@ -186,30 +170,35 @@ export function RoomHubPage({
         />
       }
     >
-      <div className="mt-2 space-y-5 pb-24">
+      <div className="mt-2 space-y-4 pb-24">
+        {hasLoci ? (
+          <LociPreviewCarousel
+            loci={loci}
+            direction={palace?.settings.studyDirection ?? 'front'}
+            speakable={palace?.settings.textToSpeech ?? false}
+          />
+        ) : null}
+
         {hasLoci ? (
           <StudyOverviewCard
             count={dueLoci.length}
             breakdown={dueBreakdown}
-            onStudy={() => onStudyDue?.()}
+            onStudy={() => onStudy?.()}
             onStudyAhead={onStudy}
             scope="room"
           />
         ) : null}
 
-        <StudyView
-          loci={loci}
-          questionCount={questions.length}
-          speakable={palace?.settings.textToSpeech ?? false}
-          direction={palace?.settings.studyDirection ?? 'front'}
+        <PracticeModes
           bibleMode={palace?.bibleMode ?? false}
-          onStudy={onStudy}
+          cardCount={loci.length}
+          questionCount={questions.length}
+          onVerse={onVerse}
           onMatch={onMatch}
           onTest={onTest}
-          onVerse={onVerse}
         />
 
-        <section aria-label={t('roomHub.manageHeading')} className="space-y-3">
+        <section aria-label={t('roomHub.manageHeading')} className="space-y-3 pt-1">
           <h2 className="text-[length:var(--p-text-title)] font-semibold text-heading">
             {t('roomHub.manageHeading')}
           </h2>
@@ -254,130 +243,5 @@ export function RoomHubPage({
         }}
       />
     </AppScreen>
-  )
-}
-
-function StudyView({
-  loci,
-  questionCount,
-  speakable,
-  direction,
-  bibleMode,
-  onStudy,
-  onMatch,
-  onTest,
-  onVerse,
-}: {
-  loci: Locus[]
-  questionCount: number
-  speakable: boolean
-  direction: 'front' | 'back'
-  bibleMode: boolean
-  onStudy?: () => void
-  onMatch?: () => void
-  onTest?: () => void
-  onVerse?: () => void
-}) {
-  const { t } = useTranslation()
-  const hasLoci = loci.length > 0
-
-  return (
-    <div className="space-y-5">
-      {hasLoci ? (
-        <LociPreviewCarousel
-          loci={loci}
-          direction={direction}
-          speakable={speakable}
-          onOpen={onStudy}
-          openLabel={t('roomHub.modes.flashcards')}
-        />
-      ) : null}
-
-      <div className="space-y-2.5">
-        {bibleMode && onVerse ? (
-          <ModeTile
-            icon={<BookOpen className="size-5" aria-hidden />}
-            tint="bg-gradient-to-br from-primary to-accent"
-            label={t('roomHub.modes.verses')}
-            sublabel={t('roomHub.modes.versesSub')}
-            onClick={onVerse}
-            disabled={!hasLoci}
-          />
-        ) : null}
-        <ModeTile
-          icon={<Puzzle className="size-5" aria-hidden />}
-          tint="bg-accent"
-          label={t('roomHub.modes.match')}
-          sublabel={t('roomHub.modes.matchSub')}
-          onClick={onMatch}
-          disabled={loci.length < 2}
-        />
-        <ModeTile
-          icon={<Brain className="size-5" aria-hidden />}
-          tint="bg-primary"
-          label={t('roomHub.modes.test')}
-          sublabel={
-            questionCount > 0
-              ? t(
-                  questionCount === 1
-                    ? 'roomHub.modes.testSubOne'
-                    : 'roomHub.modes.testSubOther',
-                  { count: questionCount },
-                )
-              : t('roomHub.modes.testEmpty')
-          }
-          onClick={onTest}
-          disabled={questionCount === 0}
-        />
-      </div>
-    </div>
-  )
-}
-
-function ModeTile({
-  icon,
-  tint,
-  label,
-  sublabel,
-  onClick,
-  disabled,
-}: {
-  icon: ReactNode
-  tint: string
-  label: string
-  sublabel: string
-  onClick?: () => void
-  disabled?: boolean
-}) {
-  return (
-    <motion.button
-      type="button"
-      whileTap={disabled ? undefined : { scale: 0.98 }}
-      onClick={onClick}
-      disabled={disabled || !onClick}
-      className={cn(
-        'flex w-full items-center gap-3.5 rounded-card border border-border bg-card p-3.5 text-left shadow-rest',
-        'transition-opacity disabled:opacity-45',
-      )}
-    >
-      <span
-        className={cn(
-          'grid size-11 shrink-0 place-items-center rounded-control text-primary-foreground',
-          tint,
-        )}
-        aria-hidden
-      >
-        {icon}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-[length:var(--p-text-sub)] font-semibold text-heading">
-          {label}
-        </span>
-        <span className="block truncate text-[length:var(--p-text-label)] text-muted-foreground">
-          {sublabel}
-        </span>
-      </span>
-      <ChevronRight className="size-5 shrink-0 text-faint" aria-hidden />
-    </motion.button>
   )
 }

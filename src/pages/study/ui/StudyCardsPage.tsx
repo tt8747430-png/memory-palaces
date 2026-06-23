@@ -2,13 +2,20 @@ import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   lociForRoom,
-  selectIsReady,
+  selectIsReady as selectLociReady,
   selectLoci,
   useLocusStore,
   useLocusStoreApi,
 } from '@/entities/locus'
-import { useRoomStore, useRoomStoreApi } from '@/entities/room'
 import {
+  roomsForPalace,
+  selectIsReady as selectRoomsReady,
+  selectRooms,
+  useRoomStore,
+  useRoomStoreApi,
+} from '@/entities/room'
+import {
+  selectIsReady as selectPalacesReady,
   usePalaceStore,
   usePalaceStoreApi,
   type Palace,
@@ -22,8 +29,11 @@ import { StudySession, type StudyCard, type StudyPrefs } from '@/widgets/study-s
 import { useSessionReward } from '@/widgets/session-reward'
 import { AppScreen, ScreenHeader } from '@/shared/ui'
 
-export interface RoomTrainPageProps {
-  roomId: string
+/** Study a single room's cards, or a whole palace's cards aggregated across its rooms. */
+export type StudyScope = { kind: 'room'; roomId: string } | { kind: 'palace'; palaceId: string }
+
+export interface StudyCardsPageProps {
+  scope: StudyScope
   /** Provided by the route wrapper so the page stays router-free. */
   onBack?: () => void
 }
@@ -39,10 +49,11 @@ function prefsFromSettings(settings: PalaceSettings): Partial<StudyPrefs> {
   }
 }
 
-/** Room training — a single room's loci as a spaced-review/browse session. Study
- * preferences seed from the palace and persist back to it; grading runs through the
- * `gradeCard` command so SRS schedules survive offline. */
-export function RoomTrainPage({ roomId, onBack }: RoomTrainPageProps) {
+/** The one flashcard study surface (ADR-0005). A full-featured spaced-review/browse session
+ * over a scope's cards — one room or the whole palace. Opens in review mode (due cards lead);
+ * every option lives in the in-session sheet. Study preferences seed from the palace and
+ * persist back to it; grading runs through `gradeCard` so SRS schedules survive offline. */
+export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
   const { t } = useTranslation()
   const locusStore = useLocusStoreApi()
   const roomStore = useRoomStoreApi()
@@ -55,22 +66,46 @@ export function RoomTrainPage({ roomId, onBack }: RoomTrainPageProps) {
     palaceStore.getState().start()
   }, [locusStore, roomStore, palaceStore])
 
-  const room = useRoomStore((state) => state.rooms.find((candidate) => candidate.id === roomId))
-  const palace = usePalaceStore((state) =>
-    room ? state.palaces.find((candidate) => candidate.id === room.palaceId) : undefined,
-  )
   const allLoci = useLocusStore(selectLoci)
-  const ready = useLocusStore(selectIsReady)
+  const allRooms = useRoomStore(selectRooms)
+  const palaces = usePalaceStore((state) => state.palaces)
+  const lociReady = useLocusStore(selectLociReady)
+  const roomsReady = useRoomStore(selectRoomsReady)
+  const palacesReady = usePalaceStore(selectPalacesReady)
+  const ready = lociReady && roomsReady && palacesReady
 
-  const cards = useMemo<StudyCard[]>(
+  const room = useMemo(
     () =>
-      lociForRoom(allLoci, roomId).map((locus) => ({
-        locus,
-        palaceName: palace?.name ?? '',
-        roomTitle: room?.title ?? '',
-      })),
-    [allLoci, roomId, palace?.name, room?.title],
+      scope.kind === 'room'
+        ? allRooms.find((candidate) => candidate.id === scope.roomId)
+        : undefined,
+    [allRooms, scope],
   )
+  const palaceId = scope.kind === 'palace' ? scope.palaceId : room?.palaceId
+  const palace = useMemo(
+    () => palaces.find((candidate) => candidate.id === palaceId),
+    [palaces, palaceId],
+  )
+
+  const cards = useMemo<StudyCard[]>(() => {
+    if (!palace) return []
+    if (scope.kind === 'room') {
+      const roomTitle = room?.title ?? ''
+      return lociForRoom(allLoci, scope.roomId).map((locus) => ({
+        locus,
+        palaceName: palace.name,
+        roomTitle,
+      }))
+    }
+    const rooms = roomsForPalace(allRooms, scope.palaceId)
+    return rooms.flatMap((each) =>
+      lociForRoom(allLoci, each.id).map((locus) => ({
+        locus,
+        palaceName: palace.name,
+        roomTitle: each.title,
+      })),
+    )
+  }, [palace, room, allRooms, allLoci, scope])
 
   const handleGrade = (id: string, grade: Parameters<typeof gradeCard>[2]) => {
     void gradeCard(locusStore, id, grade)
@@ -101,24 +136,28 @@ export function RoomTrainPage({ roomId, onBack }: RoomTrainPageProps) {
     )
   }
 
-  if (!room) {
+  const missing = scope.kind === 'room' ? !room : !palace
+  if (missing || !palace) {
     return (
       <AppScreen
         header={
-          <ScreenHeader title={t('train.notFound')} onBack={onBack} backLabel={t('train.back')} />
+          <ScreenHeader title={t('study.notFound')} onBack={onBack} backLabel={t('study.back')} />
         }
       />
     )
   }
 
+  const title = scope.kind === 'room' ? (room?.title ?? palace.name) : palace.name
+  const subtitle = scope.kind === 'room' ? palace.name : t('study.palaceScope')
+
   return (
     <StudySession
-      key={roomId}
+      key={scope.kind === 'room' ? scope.roomId : scope.palaceId}
       cards={cards}
-      title={room.title}
-      subtitle={palace?.name}
-      initialPrefs={palace ? prefsFromSettings(palace.settings) : undefined}
-      onPrefsChange={palace ? persistPrefs(palace) : undefined}
+      title={title}
+      subtitle={subtitle}
+      initialPrefs={prefsFromSettings(palace.settings)}
+      onPrefsChange={persistPrefs(palace)}
       onGrade={handleGrade}
       onToggleFlag={handleToggleFlag}
       onEditCard={(id, changes) => void editLocus(locusStore, id, changes)}

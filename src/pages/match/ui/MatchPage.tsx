@@ -7,7 +7,7 @@ import {
   useLocusStore,
   useLocusStoreApi,
 } from '@/entities/locus'
-import { useRoomStore, useRoomStoreApi } from '@/entities/room'
+import { roomsForPalace, selectRooms, useRoomStore, useRoomStoreApi } from '@/entities/room'
 import { usePalaceStore, usePalaceStoreApi } from '@/entities/palace'
 import { MatchBoard } from '@/widgets/match'
 import { type MatchLocus } from '@/features/match'
@@ -15,15 +15,18 @@ import { XP_MATCH } from '@/features/progress'
 import { useSessionReward } from '@/widgets/session-reward'
 import { AppScreen, ScreenHeader } from '@/shared/ui'
 
+/** Match a single room's cards, or a whole palace's cards aggregated across its rooms. */
+export type MatchScope = { kind: 'room'; roomId: string } | { kind: 'palace'; palaceId: string }
+
 export interface MatchPageProps {
-  roomId: string
+  scope: MatchScope
   /** Provided by the route wrapper so the page stays router-free. */
   onBack?: () => void
 }
 
-/** Match game over a single room's loci — tap term/definition pairs to clear the
- * board. Read-only: it never grades or schedules, so no command is needed. */
-export function MatchPage({ roomId, onBack }: MatchPageProps) {
+/** Match game over a scope's loci — tap term/definition pairs to clear the board.
+ * Read-only: it never grades or schedules, so no command is needed. */
+export function MatchPage({ scope, onBack }: MatchPageProps) {
   const { t } = useTranslation()
   const locusStore = useLocusStoreApi()
   const roomStore = useRoomStoreApi()
@@ -36,22 +39,31 @@ export function MatchPage({ roomId, onBack }: MatchPageProps) {
     palaceStore.getState().start()
   }, [locusStore, roomStore, palaceStore])
 
-  const room = useRoomStore((state) => state.rooms.find((candidate) => candidate.id === roomId))
+  const allRooms = useRoomStore(selectRooms)
+  const room = useMemo(
+    () =>
+      scope.kind === 'room'
+        ? allRooms.find((candidate) => candidate.id === scope.roomId)
+        : undefined,
+    [allRooms, scope],
+  )
+  const palaceId = scope.kind === 'palace' ? scope.palaceId : room?.palaceId
   const palace = usePalaceStore((state) =>
-    room ? state.palaces.find((candidate) => candidate.id === room.palaceId) : undefined,
+    state.palaces.find((candidate) => candidate.id === palaceId),
   )
   const allLoci = useLocusStore(selectLoci)
   const ready = useLocusStore(selectIsReady)
 
-  const loci = useMemo<MatchLocus[]>(
-    () =>
-      lociForRoom(allLoci, roomId).map((locus) => ({
+  const loci = useMemo<MatchLocus[]>(() => {
+    const toMatch = (id: string) =>
+      lociForRoom(allLoci, id).map((locus) => ({
         id: locus.id,
         front: locus.front,
         back: locus.back,
-      })),
-    [allLoci, roomId],
-  )
+      }))
+    if (scope.kind === 'room') return toMatch(scope.roomId)
+    return roomsForPalace(allRooms, scope.palaceId).flatMap((each) => toMatch(each.id))
+  }, [allLoci, allRooms, scope])
 
   if (!ready) {
     return (
@@ -61,7 +73,8 @@ export function MatchPage({ roomId, onBack }: MatchPageProps) {
     )
   }
 
-  if (!room) {
+  const missing = scope.kind === 'room' ? !room : !palace
+  if (missing) {
     return (
       <AppScreen
         header={
@@ -71,11 +84,16 @@ export function MatchPage({ roomId, onBack }: MatchPageProps) {
     )
   }
 
-  const subtitle = palace ? `${room.title} · ${palace.name}` : room.title
+  const subtitle =
+    scope.kind === 'room'
+      ? palace
+        ? `${room?.title} · ${palace.name}`
+        : (room?.title ?? '')
+      : (palace?.name ?? '')
 
   return (
     <MatchBoard
-      key={roomId}
+      key={scope.kind === 'room' ? scope.roomId : scope.palaceId}
       loci={loci}
       subtitle={subtitle}
       onBack={onBack ?? (() => {})}

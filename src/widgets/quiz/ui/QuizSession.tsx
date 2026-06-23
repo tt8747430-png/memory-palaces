@@ -1,7 +1,18 @@
 import { useEffect, useReducer } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-import { Brain, Check, CheckCircle2, Flame, RotateCcw, SkipForward, X, XCircle, Zap } from 'lucide-react'
+import {
+  Brain,
+  Check,
+  CheckCircle2,
+  Flame,
+  RotateCcw,
+  SkipForward,
+  SlidersHorizontal,
+  X,
+  XCircle,
+  Zap,
+} from 'lucide-react'
 import { cn } from '@/shared/lib'
 import { Button, Card, Chip, IconButton } from '@/shared/ui'
 import { initQuiz, quizAccuracy, quizReducer, type QuizQuestion } from '@/features/quiz'
@@ -17,6 +28,10 @@ export interface QuizSessionProps {
   title: string
   onBack: () => void
   onComplete: (result: QuizResult) => void
+  /** Auto-advance to the next question after the reveal; off waits for Continue. */
+  autoAdvance?: boolean
+  /** Open the quiz options sheet; renders the options button when provided. */
+  onOpenOptions?: () => void
 }
 
 /** Auto-advance delay after the answer is revealed; a Continue tap skips the wait. */
@@ -25,24 +40,37 @@ const FEEDBACK_MS = 2200
 /** Multiple-choice quiz session: one question at a time, select → submit → reveal →
  * continue, driven by the pure `quizReducer`. The widget owns the questions and tells
  * the machine only whether each choice was correct. */
-export function QuizSession({ questions, title, onBack, onComplete }: QuizSessionProps) {
+export function QuizSession({
+  questions,
+  title,
+  onBack,
+  onComplete,
+  autoAdvance = true,
+  onOpenOptions,
+}: QuizSessionProps) {
   const { t } = useTranslation()
   const [state, dispatch] = useReducer(quizReducer, questions.length, initQuiz)
 
   // After the reveal, drift to the next question; a Continue tap pre-empts the timer.
+  // With auto-advance off, the reveal waits for the learner to tap Continue.
   const answered = state.status === 'answering' && state.answered
   useEffect(() => {
-    if (!answered) return
+    if (!answered || !autoAdvance) return
     const handle = window.setTimeout(() => dispatch({ type: 'next' }), FEEDBACK_MS)
     return () => window.clearTimeout(handle)
-  }, [answered, state.status === 'answering' ? state.index : -1])
+  }, [answered, autoAdvance, state.status === 'answering' ? state.index : -1])
 
   // Hand back the result once the run completes.
   const done = state.status === 'complete'
   useEffect(() => {
     if (!done) return
     const handle = window.setTimeout(
-      () => onComplete({ score: state.score, total: state.total, accuracy: quizAccuracy(state.score, state.total) }),
+      () =>
+        onComplete({
+          score: state.score,
+          total: state.total,
+          accuracy: quizAccuracy(state.score, state.total),
+        }),
       FEEDBACK_MS,
     )
     return () => window.clearTimeout(handle)
@@ -59,7 +87,9 @@ export function QuizSession({ questions, title, onBack, onComplete }: QuizSessio
           <h2 className="mb-1 text-[length:var(--p-text-headline)] font-bold text-heading">
             {t('quiz.empty')}
           </h2>
-          <p className="mx-auto max-w-[34ch] text-[length:var(--p-text-body)]">{t('quiz.emptyHint')}</p>
+          <p className="mx-auto max-w-[34ch] text-[length:var(--p-text-body)]">
+            {t('quiz.emptyHint')}
+          </p>
         </div>
         <Button onClick={onBack}>{t('quiz.back')}</Button>
       </div>
@@ -86,14 +116,25 @@ export function QuizSession({ questions, title, onBack, onComplete }: QuizSessio
           <h1 className="min-w-0 flex-1 truncate text-center text-[length:var(--p-text-title)] font-semibold text-heading">
             {title}
           </h1>
-          <IconButton
-            variant="glass"
-            aria-label={t('quiz.skip')}
-            disabled={!question}
-            onClick={() => dispatch({ type: 'skip' })}
-          >
-            <SkipForward className="size-5" aria-hidden />
-          </IconButton>
+          <div className="flex items-center gap-2">
+            {onOpenOptions ? (
+              <IconButton
+                variant="glass"
+                aria-label={t('quiz.options.title')}
+                onClick={onOpenOptions}
+              >
+                <SlidersHorizontal className="size-5" aria-hidden />
+              </IconButton>
+            ) : null}
+            <IconButton
+              variant="glass"
+              aria-label={t('quiz.skip')}
+              disabled={!question}
+              onClick={() => dispatch({ type: 'skip' })}
+            >
+              <SkipForward className="size-5" aria-hidden />
+            </IconButton>
+          </div>
         </div>
 
         <div className="mt-3 flex items-center gap-3">
@@ -117,7 +158,11 @@ export function QuizSession({ questions, title, onBack, onComplete }: QuizSessio
 
       {question && state.status === 'answering' ? (
         <div className="flex-1 space-y-4 overflow-y-auto px-5 py-5 scrollbar-hide">
-          <motion.div key={state.index} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+          <motion.div
+            key={state.index}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
             <Card className="p-6">
               <div className="mb-5 flex items-start gap-3">
                 <div className="grid size-10 shrink-0 place-items-center rounded-control bg-info-surface">
@@ -137,7 +182,12 @@ export function QuizSession({ questions, title, onBack, onComplete }: QuizSessio
                     key={index}
                     letter={String.fromCharCode(65 + index)}
                     option={option}
-                    state={optionState(index, state.selected, state.answered, question.correctAnswer)}
+                    state={optionState(
+                      index,
+                      state.selected,
+                      state.answered,
+                      question.correctAnswer,
+                    )}
                     disabled={state.answered}
                     onClick={() => dispatch({ type: 'select', option: index })}
                   />
@@ -168,7 +218,12 @@ export function QuizSession({ questions, title, onBack, onComplete }: QuizSessio
               {state.index >= state.total - 1 ? t('quiz.seeResults') : t('quiz.continue')}
             </Button>
           ) : (
-            <Button size="lg" className="w-full" disabled={state.selected === null} onClick={submit}>
+            <Button
+              size="lg"
+              className="w-full"
+              disabled={state.selected === null}
+              onClick={submit}
+            >
               {state.selected === null ? t('quiz.selectAnswer') : t('quiz.submit')}
             </Button>
           )}
@@ -269,7 +324,10 @@ function Feedback({
     >
       <div className="flex items-start gap-2.5">
         {correct ? (
-          <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-[var(--success-on-surface)]" aria-hidden />
+          <CheckCircle2
+            className="mt-0.5 size-5 shrink-0 text-[var(--success-on-surface)]"
+            aria-hidden
+          />
         ) : (
           <XCircle className="mt-0.5 size-5 shrink-0 text-[var(--danger-on-surface)]" aria-hidden />
         )}
@@ -333,7 +391,9 @@ function QuizComplete({
           aria-hidden
         />
       </div>
-      <h2 className="text-[length:var(--p-text-headline)] font-bold text-heading">{t('quiz.complete')}</h2>
+      <h2 className="text-[length:var(--p-text-headline)] font-bold text-heading">
+        {t('quiz.complete')}
+      </h2>
       <p className="text-[length:var(--p-text-sub)] font-semibold text-heading">
         {t('quiz.scoreLine', { score: result.score, total: result.total })}
       </p>

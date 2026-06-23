@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Bell,
+  Check,
   ChevronRight,
   Download,
   Globe,
@@ -12,6 +13,7 @@ import {
   Moon,
   Shield,
   Sparkles,
+  Trash2,
   Upload,
   Vibrate,
   Volume2,
@@ -30,8 +32,9 @@ import {
 } from '@/entities/profile'
 import type { SessionKind } from '@/entities/session'
 import { setPreferences } from '@/features/preferences'
-import { DAILY_GOAL_OPTIONS } from '@/shared/config/constants'
+import { AVAILABLE_LANGUAGES, DAILY_GOAL_OPTIONS } from '@/shared/config/constants'
 import {
+  ActionSheet,
   AppScreen,
   Avatar,
   ConfirmDialog,
@@ -46,6 +49,8 @@ export interface SettingsPageProps {
   onBack?: () => void
   onEditProfile?: () => void
   onPrivacy?: () => void
+  /** Open the destructive Clear data screen. */
+  onClearData?: () => void
   onHelp?: () => void
   onAbout?: () => void
   onExport?: () => void
@@ -66,6 +71,7 @@ export function SettingsPage({
   onBack,
   onEditProfile,
   onPrivacy,
+  onClearData,
   onHelp,
   onAbout,
   onExport,
@@ -74,13 +80,14 @@ export function SettingsPage({
   onLogout,
   sessionKind = 'account',
 }: SettingsPageProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const prefsStore = usePreferencesStoreApi()
   const prefs = usePreferencesStore(selectEffectivePreferences)
   const profileStore = useProfileStoreApi()
   const profile = useProfileStore(selectEffectiveProfile)
   const importInputRef = useRef<HTMLInputElement>(null)
   const [logoutOpen, setLogoutOpen] = useState(false)
+  const [languageOpen, setLanguageOpen] = useState(false)
 
   useEffect(() => {
     prefsStore.getState().start()
@@ -92,6 +99,25 @@ export function SettingsPage({
   const handle = profileHandle(profile)
   const comingSoon = t('settings.comingSoon')
   const isGuest = sessionKind === 'guest'
+
+  const currentLanguage =
+    AVAILABLE_LANGUAGES.find((language) => language.code === prefs.language) ?? AVAILABLE_LANGUAGES[0]!
+  const selectLanguage = (code: string) => {
+    void i18n.changeLanguage(code)
+    update({ language: code })
+    setLanguageOpen(false)
+  }
+  const languageActions = AVAILABLE_LANGUAGES.map((language) => ({
+    id: language.code,
+    label: language.label,
+    icon:
+      language.code === currentLanguage.code ? (
+        <Check className="size-5 text-primary" aria-hidden />
+      ) : (
+        <Globe className="size-5 text-accent" aria-hidden />
+      ),
+    onSelect: () => selectLanguage(language.code),
+  }))
 
   const handleImport = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -197,10 +223,11 @@ export function SettingsPage({
             badge={comingSoon}
           />
           <SettingsRow
-            kind="value"
+            kind="nav"
             icon={<Globe />}
             label={t('settings.language')}
-            value={t('settings.languageValue')}
+            value={currentLanguage.label}
+            onClick={() => setLanguageOpen(true)}
           />
         </SettingsSection>
 
@@ -218,13 +245,23 @@ export function SettingsPage({
             kind="nav"
             icon={<Download />}
             label={t('settings.exportProgress')}
+            description={t('settings.exportProgressHint')}
             onClick={() => onExport?.()}
           />
           <SettingsRow
             kind="nav"
             icon={<Upload />}
             label={t('settings.importProgress')}
+            description={t('settings.importProgressHint')}
             onClick={() => importInputRef.current?.click()}
+          />
+          <SettingsRow
+            kind="nav"
+            tone="danger"
+            icon={<Trash2 />}
+            label={t('settings.clearData')}
+            description={t('settings.clearDataHint')}
+            onClick={() => onClearData?.()}
           />
         </SettingsSection>
 
@@ -257,6 +294,14 @@ export function SettingsPage({
         accept="application/json,.json"
         className="hidden"
         onChange={handleImport}
+      />
+
+      <ActionSheet
+        open={languageOpen}
+        onOpenChange={setLanguageOpen}
+        title={t('settings.language')}
+        actions={languageActions}
+        cancelLabel={t('common.cancel')}
       />
 
       <ConfirmDialog

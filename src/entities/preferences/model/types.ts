@@ -7,6 +7,9 @@ export type PalacesView = 'grid' | 'list'
 /** How the Palaces screen orders its list. Persisted so the choice survives sessions. */
 export type PalacesSort = 'recent' | 'progress' | 'name' | 'category'
 
+/** The active recall mode in verse study. Persisted so it's remembered everywhere. */
+export type VerseMode = 'blur' | 'words' | 'initials' | 'type'
+
 /** Privacy & security switches. Cosmetic placeholders for now (no feature reads them
  * yet) but persisted so the choices survive once the features that honour them land. */
 export interface PrivacySettings {
@@ -51,6 +54,12 @@ export interface Preferences extends Entity {
   palacesView: PalacesView
   /** Palaces screen: list ordering. */
   palacesSort: PalacesSort
+  /** Verse study: the last-used recall mode. */
+  verseMode: VerseMode
+  /** Verse study: practise verses in a random order. */
+  verseShuffle: boolean
+  /** Verse study: mark a blank for each hidden word so length is felt (Initials mode). */
+  verseWordSpaces: boolean
   privacy: PrivacySettings
 }
 
@@ -64,6 +73,9 @@ export const DEFAULT_PREFERENCES = {
   dailyGoal: DEFAULT_DAILY_GOAL,
   palacesView: 'grid',
   palacesSort: 'recent',
+  verseMode: 'blur',
+  verseShuffle: false,
+  verseWordSpaces: true,
   privacy: DEFAULT_PRIVACY,
 } as const satisfies Omit<Preferences, keyof Entity>
 
@@ -79,6 +91,9 @@ export interface MakePreferencesInput {
   dailyGoal?: number
   palacesView?: PalacesView
   palacesSort?: PalacesSort
+  verseMode?: VerseMode
+  verseShuffle?: boolean
+  verseWordSpaces?: boolean
   privacy?: PrivacySettings
 }
 
@@ -96,6 +111,9 @@ export function makePreferences(input: MakePreferencesInput): Preferences {
     dailyGoal: input.dailyGoal ?? DEFAULT_PREFERENCES.dailyGoal,
     palacesView: input.palacesView ?? DEFAULT_PREFERENCES.palacesView,
     palacesSort: input.palacesSort ?? DEFAULT_PREFERENCES.palacesSort,
+    verseMode: input.verseMode ?? DEFAULT_PREFERENCES.verseMode,
+    verseShuffle: input.verseShuffle ?? DEFAULT_PREFERENCES.verseShuffle,
+    verseWordSpaces: input.verseWordSpaces ?? DEFAULT_PREFERENCES.verseWordSpaces,
     privacy: input.privacy ?? { ...DEFAULT_PRIVACY },
   }
 }
@@ -113,6 +131,9 @@ export type PreferencesChanges = Partial<
     | 'dailyGoal'
     | 'palacesView'
     | 'palacesSort'
+    | 'verseMode'
+    | 'verseShuffle'
+    | 'verseWordSpaces'
     | 'privacy'
   >
 >

@@ -15,11 +15,10 @@ import { PalacesPage } from '@/pages/palaces'
 import { PalaceDetailPage } from '@/pages/palace-detail'
 import { PalaceSettingsPage } from '@/pages/palace-settings'
 import { RoomHubPage } from '@/pages/room-hub'
-import { RoomTrainPage } from '@/pages/room-train'
+import { StudyCardsPage } from '@/pages/study'
 import { MatchPage } from '@/pages/match'
 import { VerseStudyPage } from '@/pages/verse'
 import { RoomQuizPage } from '@/pages/room-quiz'
-import { ReviewPage } from '@/pages/review'
 import { QuizPage } from '@/pages/quiz'
 import { ProfilePage } from '@/pages/profile'
 import { StreakPage } from '@/pages/streak'
@@ -31,6 +30,7 @@ import { SettingsPage, useProgressTransfer } from '@/pages/settings'
 import { SettingsProfilePage } from '@/pages/settings-profile'
 import { SettingsChangePasswordPage } from '@/pages/settings-change-password'
 import { SettingsPrivacyPage } from '@/pages/settings-privacy'
+import { SettingsClearPage } from '@/pages/settings-clear'
 import { SettingsHelpPage } from '@/pages/settings-help'
 import { SettingsAboutPage } from '@/pages/settings-about'
 import { NotificationsPage } from '@/pages/notifications'
@@ -127,8 +127,9 @@ const welcomeRoute = createRoute({
   component: WelcomeRoute,
 })
 
-// The palaces browser is the home now: it carries the day's review hero plus the library,
-// so `/` renders it directly. The thin wrapper keeps the page router-free and testable.
+// The palaces library is the home: `/` renders it directly. Due-card counts surface
+// per-palace in the grid rather than as a separate hero. The thin wrapper keeps the page
+// router-free and testable.
 function HomeRoute() {
   const navigate = useNavigate()
   const { create } = homeRoute.useSearch()
@@ -136,6 +137,9 @@ function HomeRoute() {
     <PalacesPage
       openCreate={create}
       onOpenPalace={(palaceId) => navigate({ to: ROUTES.palaceDetail, params: { palaceId } })}
+      onOpenPalaceSettings={(palaceId) =>
+        navigate({ to: ROUTES.palaceSettings, params: { palaceId } })
+      }
       onOpenProfile={() => navigate({ to: ROUTES.profile })}
       onOpenNotifications={() => navigate({ to: ROUTES.notifications })}
       onOpenStreak={() => navigate({ to: ROUTES.streak })}
@@ -172,7 +176,10 @@ function PalaceDetailRoute() {
       onBack={back}
       onOpenRoom={(roomId) => navigate({ to: ROUTES.roomHub, params: { roomId } })}
       onOpenSettings={() => navigate({ to: ROUTES.palaceSettings, params: { palaceId } })}
-      onStudyPalace={() => navigate({ to: ROUTES.palaceReview, params: { palaceId } })}
+      onStudyPalace={() => navigate({ to: ROUTES.palaceStudy, params: { palaceId } })}
+      onMatch={() => navigate({ to: ROUTES.palaceMatch, params: { palaceId } })}
+      onTest={() => navigate({ to: ROUTES.palaceQuiz, params: { palaceId } })}
+      onVerse={() => navigate({ to: ROUTES.palaceVerse, params: { palaceId } })}
     />
   )
 }
@@ -210,8 +217,7 @@ function RoomHubRoute() {
     <RoomHubPage
       roomId={roomId}
       onBack={back}
-      onStudy={() => navigate({ to: ROUTES.roomTrain, params: { roomId } })}
-      onStudyDue={() => navigate({ to: ROUTES.roomReview, params: { roomId } })}
+      onStudy={() => navigate({ to: ROUTES.roomStudy, params: { roomId } })}
       onMatch={() => navigate({ to: ROUTES.roomMatch, params: { roomId } })}
       onTest={() => navigate({ to: ROUTES.roomQuiz, params: { roomId } })}
       onVerse={() => navigate({ to: ROUTES.roomVerse, params: { roomId } })}
@@ -226,24 +232,37 @@ const roomHubRoute = createRoute({
   component: RoomHubRoute,
 })
 
-function RoomTrainRoute() {
-  const { roomId } = roomTrainRoute.useParams()
+function RoomStudyRoute() {
+  const { roomId } = roomStudyRoute.useParams()
   const navigate = useNavigate()
   const back = useBack(() => navigate({ to: ROUTES.roomHub, params: { roomId } }))
-  return <RoomTrainPage roomId={roomId} onBack={back} />
+  return <StudyCardsPage scope={{ kind: 'room', roomId }} onBack={back} />
 }
 
-const roomTrainRoute = createRoute({
+const roomStudyRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: ROUTES.roomTrain,
-  component: RoomTrainRoute,
+  path: ROUTES.roomStudy,
+  component: RoomStudyRoute,
+})
+
+function PalaceStudyRoute() {
+  const { palaceId } = palaceStudyRoute.useParams()
+  const navigate = useNavigate()
+  const back = useBack(() => navigate({ to: ROUTES.palaceDetail, params: { palaceId } }))
+  return <StudyCardsPage scope={{ kind: 'palace', palaceId }} onBack={back} />
+}
+
+const palaceStudyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.palaceStudy,
+  component: PalaceStudyRoute,
 })
 
 function RoomMatchRoute() {
   const { roomId } = roomMatchRoute.useParams()
   const navigate = useNavigate()
   const back = useBack(() => navigate({ to: ROUTES.roomHub, params: { roomId } }))
-  return <MatchPage roomId={roomId} onBack={back} />
+  return <MatchPage scope={{ kind: 'room', roomId }} onBack={back} />
 }
 
 const roomMatchRoute = createRoute({
@@ -252,17 +271,43 @@ const roomMatchRoute = createRoute({
   component: RoomMatchRoute,
 })
 
+function PalaceMatchRoute() {
+  const { palaceId } = palaceMatchRoute.useParams()
+  const navigate = useNavigate()
+  const back = useBack(() => navigate({ to: ROUTES.palaceDetail, params: { palaceId } }))
+  return <MatchPage scope={{ kind: 'palace', palaceId }} onBack={back} />
+}
+
+const palaceMatchRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.palaceMatch,
+  component: PalaceMatchRoute,
+})
+
 function RoomVerseRoute() {
   const { roomId } = roomVerseRoute.useParams()
   const navigate = useNavigate()
   const back = useBack(() => navigate({ to: ROUTES.roomHub, params: { roomId } }))
-  return <VerseStudyPage roomId={roomId} onBack={back} />
+  return <VerseStudyPage scope={{ kind: 'room', roomId }} onBack={back} />
 }
 
 const roomVerseRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.roomVerse,
   component: RoomVerseRoute,
+})
+
+function PalaceVerseRoute() {
+  const { palaceId } = palaceVerseRoute.useParams()
+  const navigate = useNavigate()
+  const back = useBack(() => navigate({ to: ROUTES.palaceDetail, params: { palaceId } }))
+  return <VerseStudyPage scope={{ kind: 'palace', palaceId }} onBack={back} />
+}
+
+const palaceVerseRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.palaceVerse,
+  component: PalaceVerseRoute,
 })
 
 function RoomQuizRoute() {
@@ -276,44 +321,6 @@ const roomQuizRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.roomQuiz,
   component: RoomQuizRoute,
-})
-
-function ReviewRoute() {
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.home }))
-  return <ReviewPage onBack={back} />
-}
-
-const reviewRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: ROUTES.review,
-  component: ReviewRoute,
-})
-
-function RoomReviewRoute() {
-  const { roomId } = roomReviewRoute.useParams()
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.roomHub, params: { roomId } }))
-  return <ReviewPage scope={{ kind: 'room', roomId }} onBack={back} />
-}
-
-const roomReviewRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: ROUTES.roomReview,
-  component: RoomReviewRoute,
-})
-
-function PalaceReviewRoute() {
-  const { palaceId } = palaceReviewRoute.useParams()
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.palaceDetail, params: { palaceId } }))
-  return <ReviewPage scope={{ kind: 'palace', palaceId }} onBack={back} />
-}
-
-const palaceReviewRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: ROUTES.palaceReview,
-  component: PalaceReviewRoute,
 })
 
 function QuizRoute() {
@@ -356,7 +363,7 @@ const profileRoute = createRoute({
 function StreakRoute() {
   const navigate = useNavigate()
   const back = useBack(() => navigate({ to: ROUTES.profile }))
-  return <StreakPage onBack={back} onReview={() => navigate({ to: ROUTES.review })} />
+  return <StreakPage onBack={back} />
 }
 
 const streakRoute = createRoute({
@@ -442,6 +449,7 @@ function SettingsRoute() {
       onBack={back}
       onEditProfile={() => navigate({ to: ROUTES.settingsProfile })}
       onPrivacy={() => navigate({ to: ROUTES.settingsPrivacy })}
+      onClearData={() => navigate({ to: ROUTES.settingsClear })}
       onHelp={() => navigate({ to: ROUTES.settingsHelp })}
       onAbout={() => navigate({ to: ROUTES.settingsAbout })}
       onExport={transfer.exportNow}
@@ -506,6 +514,18 @@ const settingsPrivacyRoute = createRoute({
   component: SettingsPrivacyRoute,
 })
 
+function SettingsClearRoute() {
+  const navigate = useNavigate()
+  const back = useBack(() => navigate({ to: ROUTES.settings }))
+  return <SettingsClearPage onBack={back} />
+}
+
+const settingsClearRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.settingsClear,
+  component: SettingsClearRoute,
+})
+
 function SettingsHelpRoute() {
   const navigate = useNavigate()
   const back = useBack(() => navigate({ to: ROUTES.settings }))
@@ -552,13 +572,13 @@ const routeTree = rootRoute.addChildren([
   palaceDetailRoute,
   palaceSettingsRoute,
   roomHubRoute,
-  roomTrainRoute,
+  roomStudyRoute,
+  palaceStudyRoute,
   roomMatchRoute,
+  palaceMatchRoute,
   roomVerseRoute,
+  palaceVerseRoute,
   roomQuizRoute,
-  roomReviewRoute,
-  palaceReviewRoute,
-  reviewRoute,
   quizRoute,
   profileRoute,
   streakRoute,
@@ -570,6 +590,7 @@ const routeTree = rootRoute.addChildren([
   settingsProfileRoute,
   settingsChangePasswordRoute,
   settingsPrivacyRoute,
+  settingsClearRoute,
   settingsHelpRoute,
   settingsAboutRoute,
   notificationsRoute,

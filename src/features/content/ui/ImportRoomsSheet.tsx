@@ -1,12 +1,12 @@
-import { type ChangeEvent, type ReactNode, useRef, useState } from 'react'
+import { type ChangeEvent, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { BookOpen, ChevronLeft, ChevronRight, FileText, Landmark } from 'lucide-react'
+import { BookOpen, ChevronLeft, FileText, Landmark } from 'lucide-react'
 import { toast } from 'sonner'
 import type { RoomStore } from '@/entities/room'
 import type { LocusStore } from '@/entities/locus'
 import type { QuestionStore } from '@/entities/question'
 import { ContentImportError, parseVerseChapters, type ImportedRoom } from '@/shared/lib'
-import { Button, Sheet, Textarea } from '@/shared/ui'
+import { Button, ImportRow, Sheet, Textarea } from '@/shared/ui'
 import { readAnkiFile, readContentFile, readPalaceFile } from '../import-content'
 import { importRooms, type ImportRoomsResult } from '../import-rooms'
 
@@ -25,7 +25,12 @@ export interface ImportRoomsSheetProps {
 
 /** Tidy a file name into a room title: drop the extension, soften separators. */
 function roomTitleFromFile(name: string): string {
-  return name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').trim() || 'Imported'
+  return (
+    name
+      .replace(/\.[^.]+$/, '')
+      .replace(/[_-]+/g, ' ')
+      .trim() || 'Imported'
+  )
 }
 
 /**
@@ -83,7 +88,9 @@ export function ImportRoomsSheet({
       onImported?.(result)
       close()
     } catch (error) {
-      toast.error(error instanceof ContentImportError ? error.message : t('importRooms.toast.error'))
+      toast.error(
+        error instanceof ContentImportError ? error.message : t('importRooms.toast.error'),
+      )
       setBusy(false)
     }
   }
@@ -113,12 +120,16 @@ export function ImportRoomsSheet({
         await run([{ title: roomTitleFromFile(file.name), ...content }])
       }
     } catch (error) {
-      toast.error(error instanceof ContentImportError ? error.message : t('importRooms.toast.error'))
+      toast.error(
+        error instanceof ContentImportError ? error.message : t('importRooms.toast.error'),
+      )
     }
   }
 
   const createVerseRooms = () =>
-    void run(chapters.map((chapter) => ({ title: chapter.title, loci: chapter.loci, questions: [] })))
+    void run(
+      chapters.map((chapter) => ({ title: chapter.title, loci: chapter.loci, questions: [] })),
+    )
 
   return (
     <>
@@ -139,7 +150,9 @@ export function ImportRoomsSheet({
               <BookOpen className="size-[18px]" aria-hidden />
               {verseCount > 0
                 ? t(
-                    chapters.length === 1 ? 'importRooms.versesCtaOne' : 'importRooms.versesCtaOther',
+                    chapters.length === 1
+                      ? 'importRooms.versesCtaOne'
+                      : 'importRooms.versesCtaOther',
                     { count: chapters.length, verses: verseCount },
                   )
                 : t('importRooms.versesEmptyCta')}
@@ -190,36 +203,5 @@ export function ImportRoomsSheet({
         )}
       </Sheet>
     </>
-  )
-}
-
-function ImportRow({
-  icon,
-  title,
-  subtitle,
-  onClick,
-}: {
-  icon: ReactNode
-  title: string
-  subtitle: string
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex w-full items-center gap-3.5 rounded-card bg-info-surface px-4 py-3 text-left transition-transform active:scale-[0.99]"
-    >
-      <span className="grid size-10 shrink-0 place-items-center rounded-control bg-card text-primary">
-        {icon}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-[length:var(--p-text-sub)] font-semibold text-heading">{title}</span>
-        <span className="mt-0.5 block text-[length:var(--p-text-label)] leading-snug text-muted-foreground">
-          {subtitle}
-        </span>
-      </span>
-      <ChevronRight className="size-5 shrink-0 text-faint" aria-hidden />
-    </button>
   )
 }

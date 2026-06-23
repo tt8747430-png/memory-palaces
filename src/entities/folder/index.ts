@@ -1,5 +1,6 @@
 export type { Folder, MakeFolderInput, FolderChanges } from './model/types'
 export { makeFolder, updateFolder } from './model/types'
+export { FOLDER_ICON_OPTIONS, DEFAULT_FOLDER_ICON } from './model/appearance'
 export { createFolderStore } from './model/store'
 export type { FolderState, FolderStatus, FolderStore } from './model/store'
 export { FolderStoreContext, useFolderStore, useFolderStoreApi } from './model/context'

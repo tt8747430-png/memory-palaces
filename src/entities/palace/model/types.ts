@@ -37,12 +37,12 @@ export interface Palace extends Entity {
   image?: string
   category: string
   settings: PalaceSettings
-  /** The collection this palace belongs to, or null for none. */
+  /** The folder this palace is filed in, or null for the library root. */
   folderId: string | null
+  /** Manual sort position within its container (folder or root). */
+  order: number
   favorite: boolean
   archived: boolean
-  /** Scripture palace: each locus is a verse; unlocks the verse-study modes. */
-  bibleMode: boolean
 }
 
 export interface MakePalaceInput {

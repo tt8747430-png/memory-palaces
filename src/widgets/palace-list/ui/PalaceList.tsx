@@ -9,6 +9,7 @@ import {
   FolderInput,
   Heart,
   MoreVertical,
+  Settings2,
   Trash2,
 } from 'lucide-react'
 import type { PalacesView } from '@/entities/preferences'
@@ -39,6 +40,8 @@ export interface PalaceListItem {
 
 export interface PalaceListHandlers {
   onOpen: (id: string) => void
+  /** Open the palace's settings directly from its overflow menu. */
+  onOpenSettings: (id: string) => void
   onToggleFavorite: (id: string) => void
   onMove: (id: string) => void
   /** Archive a live palace, or restore an archived one. */
@@ -66,6 +69,7 @@ export function PalaceList({
   loading = false,
   emptyState,
   onOpen,
+  onOpenSettings,
   onToggleFavorite,
   onMove,
   onArchive,
@@ -78,7 +82,14 @@ export function PalaceList({
     return <>{emptyState}</>
   }
 
-  const handlers: PalaceListHandlers = { onOpen, onToggleFavorite, onMove, onArchive, onDelete }
+  const handlers: PalaceListHandlers = {
+    onOpen,
+    onOpenSettings,
+    onToggleFavorite,
+    onMove,
+    onArchive,
+    onDelete,
+  }
 
   if (view === 'grid') {
     return (
@@ -113,6 +124,12 @@ function useActions(item: PalaceListItem, handlers: PalaceListHandlers): SheetAc
     icon: <ArrowUpRight className="size-5" aria-hidden />,
     onSelect: () => handlers.onOpen(item.id),
   }
+  const settings: SheetAction = {
+    id: 'settings',
+    label: t('palaces.settings'),
+    icon: <Settings2 className="size-5" aria-hidden />,
+    onSelect: () => handlers.onOpenSettings(item.id),
+  }
   const archive: SheetAction = {
     id: 'archive',
     label: item.archived ? t('palaces.restore') : t('palaces.archive'),
@@ -131,10 +148,11 @@ function useActions(item: PalaceListItem, handlers: PalaceListHandlers): SheetAc
     onSelect: () => handlers.onDelete(item.id),
   }
   if (item.archived) {
-    return [open, archive, remove]
+    return [open, settings, archive, remove]
   }
   return [
     open,
+    settings,
     {
       id: 'favorite',
       label: item.favorite ? t('palaces.unfavorite') : t('palaces.favorite'),
@@ -251,10 +269,9 @@ function PalaceCard({
   const reduce = useReducedMotion()
   const [menuOpen, setMenuOpen] = useState(false)
   const actions = useActions(item, handlers)
-  const roomsLabel = t(
-    item.totalRooms === 1 ? 'palaces.roomCountOne' : 'palaces.roomCountOther',
-    { count: item.totalRooms },
-  )
+  const roomsLabel = t(item.totalRooms === 1 ? 'palaces.roomCountOne' : 'palaces.roomCountOther', {
+    count: item.totalRooms,
+  })
   const longPress = useLongPress({
     onTap: () => handlers.onOpen(item.id),
     onLongPress: () => {
@@ -275,27 +292,33 @@ function PalaceCard({
         className="block w-full overflow-hidden rounded-card bg-card text-left shadow-rest"
         {...longPress}
       >
-        <div className="relative h-24">
+        <div className="relative h-28">
           <PalaceCover
             icon={item.icon}
             color={item.color}
             image={item.image}
-            variant={item.color?.startsWith('from-') || item.color?.startsWith('#') ? 'identity' : 'brand'}
+            variant={
+              item.color?.startsWith('from-') || item.color?.startsWith('#') ? 'identity' : 'brand'
+            }
             className="absolute inset-0"
             iconClassName="text-5xl"
           />
           <span
             aria-hidden
-            className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/10 to-transparent"
+            className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/15 to-transparent"
           />
-          {item.dueCount > 0 ? <DueCoverPill text={t('palaces.dueCount', { count: item.dueCount })} /> : null}
+          {item.dueCount > 0 ? (
+            <DueCoverPill text={t('palaces.dueCount', { count: item.dueCount })} />
+          ) : null}
         </div>
-        <div className="p-3">
-          <h3 className="truncate text-[length:var(--p-text-sub)] font-semibold text-heading">
+        <div className="p-3.5">
+          <h3 className="truncate text-[length:var(--p-text-title)] font-bold tracking-tight text-heading">
             {item.name}
           </h3>
-          <p className="mt-0.5 truncate text-[length:var(--p-text-label)]">{roomsLabel}</p>
-          <div className="mt-2.5">
+          <p className="mt-0.5 truncate text-[length:var(--p-text-label)] text-muted-foreground">
+            {roomsLabel}
+          </p>
+          <div className="mt-3">
             <ProgressMeter
               progress={item.progress}
               label={t('palaces.progressLabel', { progress: Math.round(item.progress) })}
@@ -310,7 +333,10 @@ function PalaceCard({
       </div>
 
       <div className="absolute right-2 top-2">
-        <MenuButton onOpen={() => setMenuOpen(true)} label={t('palaces.moreLabel', { name: item.name })} />
+        <MenuButton
+          onOpen={() => setMenuOpen(true)}
+          label={t('palaces.moreLabel', { name: item.name })}
+        />
       </div>
 
       <ActionSheet
@@ -375,7 +401,11 @@ function PalaceRow({
               icon={item.icon}
               color={item.color}
               image={item.image}
-              variant={item.color?.startsWith('from-') || item.color?.startsWith('#') ? 'identity' : 'brand'}
+              variant={
+                item.color?.startsWith('from-') || item.color?.startsWith('#')
+                  ? 'identity'
+                  : 'brand'
+              }
               className="size-16 shrink-0 rounded-card"
               iconClassName="text-3xl"
             />
@@ -384,11 +414,15 @@ function PalaceRow({
                 {item.favorite ? (
                   <Heart className="size-4 shrink-0 fill-favorite text-favorite" aria-hidden />
                 ) : null}
-                {item.bibleMode ? <BookOpen className="size-4 shrink-0 text-primary" aria-hidden /> : null}
-                <h3 className="truncate text-[length:var(--p-text-sub)] font-semibold text-heading">
+                {item.bibleMode ? (
+                  <BookOpen className="size-4 shrink-0 text-primary" aria-hidden />
+                ) : null}
+                <h3 className="truncate text-[length:var(--p-text-sub)] font-bold tracking-tight text-heading">
                   {item.name}
                 </h3>
-                {item.dueCount > 0 ? <DueTag text={t('palaces.dueCount', { count: item.dueCount })} /> : null}
+                {item.dueCount > 0 ? (
+                  <DueTag text={t('palaces.dueCount', { count: item.dueCount })} />
+                ) : null}
               </div>
               <p className="mt-0.5 truncate text-[length:var(--p-text-label)]">
                 {t(item.totalRooms === 1 ? 'palaces.roomCountOne' : 'palaces.roomCountOther', {
@@ -406,7 +440,10 @@ function PalaceRow({
           </motion.button>
 
           <div className="absolute right-2 top-1/2 -translate-y-1/2">
-            <MenuButton onOpen={() => setMenuOpen(true)} label={t('palaces.moreLabel', { name: item.name })} />
+            <MenuButton
+              onOpen={() => setMenuOpen(true)}
+              label={t('palaces.moreLabel', { name: item.name })}
+            />
           </div>
         </div>
       </SwipeRow>
@@ -427,7 +464,7 @@ function GridSkeleton() {
     <ul className="grid grid-cols-2 gap-3" aria-hidden>
       {Array.from({ length: 4 }).map((_, index) => (
         <li key={index} className="overflow-hidden rounded-card bg-card shadow-rest">
-          <div className="h-24 animate-pulse bg-secondary/30" />
+          <div className="h-28 animate-pulse bg-secondary/30" />
           <div className="space-y-2 p-3">
             <div className="h-3.5 w-3/4 animate-pulse rounded-full bg-secondary/30" />
             <div className="h-3 w-1/2 animate-pulse rounded-full bg-secondary/20" />

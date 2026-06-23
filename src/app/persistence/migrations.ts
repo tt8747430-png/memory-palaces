@@ -15,12 +15,21 @@ export function migrateQuestionV1(oldDoc: Omit<Question, 'order'>): Question {
   return { ...oldDoc, order: 0 }
 }
 
+/** Fields added after v0; never present on an old persisted doc. */
+type PostV0 =
+  | 'darkMode'
+  | 'language'
+  | 'privacy'
+  | 'palacesView'
+  | 'palacesSort'
+  | 'dailyGoal'
+  | 'verseMode'
+  | 'verseShuffle'
+  | 'verseWordSpaces'
+
 /** The v0 preferences shape — before darkMode/language/privacy (and, later,
- * palacesView/palacesSort) were added. */
-export type PreferencesV0 = Omit<
-  Preferences,
-  'darkMode' | 'language' | 'privacy' | 'palacesView' | 'palacesSort' | 'dailyGoal'
->
+ * palacesView/palacesSort, the daily goal, and verse prefs) were added. */
+export type PreferencesV0 = Omit<Preferences, PostV0>
 
 /** v0 → v1: backfill the new fields with defaults. Saved values always win, so the
  * spread order puts the stored doc last. RxDB serializes the result, so sharing the
@@ -30,7 +39,10 @@ export function migratePreferencesV1(oldDoc: PreferencesV0): Preferences {
 }
 
 /** The v1 preferences shape — before the Palaces screen's view/sort were persisted. */
-export type PreferencesV1 = Omit<Preferences, 'palacesView' | 'palacesSort' | 'dailyGoal'>
+export type PreferencesV1 = Omit<
+  Preferences,
+  'palacesView' | 'palacesSort' | 'dailyGoal' | 'verseMode' | 'verseShuffle' | 'verseWordSpaces'
+>
 
 /** v1 → v2: backfill the Palaces view/sort with defaults; stored fields win. */
 export function migratePreferencesV2(oldDoc: PreferencesV1): Preferences {
@@ -54,9 +66,20 @@ export function migrateProgressV1(oldDoc: ProgressV0): Progress {
 }
 
 /** The v2 preferences shape — before the daily goal was added. */
-export type PreferencesV2 = Omit<Preferences, 'dailyGoal'>
+export type PreferencesV2 = Omit<
+  Preferences,
+  'dailyGoal' | 'verseMode' | 'verseShuffle' | 'verseWordSpaces'
+>
 
 /** v2 → v3: backfill the default daily goal; stored fields win. */
 export function migratePreferencesV3(oldDoc: PreferencesV2): Preferences {
+  return { ...DEFAULT_PREFERENCES, ...oldDoc }
+}
+
+/** The v3 preferences shape — before verse-study prefs were persisted. */
+export type PreferencesV3 = Omit<Preferences, 'verseMode' | 'verseShuffle' | 'verseWordSpaces'>
+
+/** v3 → v4: backfill the verse-study prefs with defaults; stored fields win. */
+export function migratePreferencesV4(oldDoc: PreferencesV3): Preferences {
   return { ...DEFAULT_PREFERENCES, ...oldDoc }
 }

@@ -3,6 +3,10 @@ import { useTranslation } from 'react-i18next'
 import { AnimatePresence, motion } from 'motion/react'
 import { toast } from 'sonner'
 import {
+  BookOpen,
+  ClipboardPaste,
+  Download,
+  FileText,
   GraduationCap,
   HelpCircle,
   ListChecks,
@@ -56,16 +60,21 @@ import {
 } from '@/features/content'
 import { ContentImportError, cn, parsePastedLoci, parseVerses } from '@/shared/lib'
 import {
-  ActionSheet,
   Button,
   ConfirmDialog,
+  ImportRow,
   SegmentedControl,
+  Sheet,
   SpeedDial,
   TextField,
-  type SheetAction,
 } from '@/shared/ui'
 import { CardRow, QuestionRow } from './ContentRows'
-import { CardEditorSheet, QuestionEditorSheet, type CardData, type QuestionData } from './EditorSheets'
+import {
+  CardEditorSheet,
+  QuestionEditorSheet,
+  type CardData,
+  type QuestionData,
+} from './EditorSheets'
 import { PasteSheet } from './PasteSheet'
 
 export interface RoomContentEditorProps {
@@ -192,7 +201,9 @@ export function RoomContentEditor({ roomId, roomName, bibleMode = false }: RoomC
       const data =
         importKind.current === 'anki' ? await readAnkiFile(file) : await readContentFile(file)
       const applied = await applyRoomContent(locusStore, questionStore, roomId, data)
-      toast.success(t('loci.transfer.imported', { loci: applied.loci, questions: applied.questions }))
+      toast.success(
+        t('loci.transfer.imported', { loci: applied.loci, questions: applied.questions }),
+      )
     } catch (error) {
       toast.error(
         error instanceof ContentImportError ? error.message : t('loci.transfer.importFailed'),
@@ -224,70 +235,10 @@ export function RoomContentEditor({ roomId, roomName, bibleMode = false }: RoomC
     )
   }
 
-  const transferActions: SheetAction[] = [
-    {
-      id: 'import-file',
-      label: t('loci.transfer.importFile'),
-      icon: <Upload className="size-5" aria-hidden />,
-      onSelect: () => pickFile('.json,.csv', 'content'),
-    },
-    {
-      id: 'import-anki',
-      label: t('loci.transfer.importAnki'),
-      icon: <Upload className="size-5" aria-hidden />,
-      onSelect: () => pickFile('.txt,.tsv', 'anki'),
-    },
-    {
-      id: 'paste',
-      label: t('loci.transfer.pasteList'),
-      icon: <Plus className="size-5" aria-hidden />,
-      onSelect: () => {
-        setTransferOpen(false)
-        setPasteOpen(true)
-      },
-    },
-    ...(bibleMode
-      ? [
-          {
-            id: 'verses',
-            label: t('loci.transfer.pasteVerses'),
-            icon: <Plus className="size-5" aria-hidden />,
-            onSelect: () => {
-              setTransferOpen(false)
-              setVerseOpen(true)
-            },
-          },
-        ]
-      : []),
-    {
-      id: 'export-json',
-      label: t('loci.transfer.exportJson'),
-      icon: <Upload className="size-5 rotate-180" aria-hidden />,
-      disabled: !hasContent,
-      onSelect: () => exportRoomJson(roomName, loci, questions),
-    },
-    {
-      id: 'export-cards',
-      label: t('loci.transfer.exportCards'),
-      icon: <Upload className="size-5 rotate-180" aria-hidden />,
-      disabled: loci.length === 0,
-      onSelect: () => exportLociCsv(roomName, loci),
-    },
-    {
-      id: 'export-questions',
-      label: t('loci.transfer.exportQuestions'),
-      icon: <Upload className="size-5 rotate-180" aria-hidden />,
-      disabled: questions.length === 0,
-      onSelect: () => exportQuestionsCsv(roomName, questions),
-    },
-    {
-      id: 'export-anki',
-      label: t('loci.transfer.exportAnki'),
-      icon: <Upload className="size-5 rotate-180" aria-hidden />,
-      disabled: loci.length === 0,
-      onSelect: () => exportLociAnki(roomName, loci),
-    },
-  ]
+  const closeTransfer = (run: () => void) => {
+    setTransferOpen(false)
+    run()
+  }
 
   const confirmSingleDelete = () => {
     if (!pendingDelete) return
@@ -306,7 +257,14 @@ export function RoomContentEditor({ roomId, roomName, bibleMode = false }: RoomC
 
   return (
     <div>
-      <input ref={fileRef} type="file" className="hidden" onChange={onFile} aria-hidden tabIndex={-1} />
+      <input
+        ref={fileRef}
+        type="file"
+        className="hidden"
+        onChange={onFile}
+        aria-hidden
+        tabIndex={-1}
+      />
 
       {/* Toolbar: tabs + import/export */}
       <div className="mb-3 flex items-center gap-2">
@@ -539,14 +497,74 @@ export function RoomContentEditor({ roomId, roomName, bibleMode = false }: RoomC
       />
 
       {/* Transfer + paste sheets */}
-      <ActionSheet
+      <Sheet
         open={transferOpen}
         onOpenChange={setTransferOpen}
         title={t('loci.transfer.title')}
         description={t('loci.transfer.subtitle')}
-        actions={transferActions}
-        cancelLabel={t('common.cancel')}
-      />
+      >
+        <div className="flex flex-col gap-5 pb-2">
+          <TransferGroup label={t('loci.transfer.importGroup')}>
+            <ImportRow
+              icon={<Upload className="size-5" aria-hidden />}
+              title={t('loci.transfer.importFile')}
+              subtitle={t('loci.transfer.importFileSub')}
+              onClick={() => pickFile('.json,.csv', 'content')}
+            />
+            <ImportRow
+              icon={<FileText className="size-5" aria-hidden />}
+              title={t('loci.transfer.importAnki')}
+              subtitle={t('loci.transfer.importAnkiSub')}
+              onClick={() => pickFile('.txt,.tsv', 'anki')}
+            />
+            <ImportRow
+              icon={<ClipboardPaste className="size-5" aria-hidden />}
+              title={t('loci.transfer.pasteList')}
+              subtitle={t('loci.transfer.pasteListSub')}
+              onClick={() => closeTransfer(() => setPasteOpen(true))}
+            />
+            {bibleMode ? (
+              <ImportRow
+                icon={<BookOpen className="size-5" aria-hidden />}
+                title={t('loci.transfer.pasteVerses')}
+                subtitle={t('loci.transfer.pasteVersesSub')}
+                onClick={() => closeTransfer(() => setVerseOpen(true))}
+              />
+            ) : null}
+          </TransferGroup>
+
+          <TransferGroup label={t('loci.transfer.exportGroup')}>
+            <ImportRow
+              icon={<Download className="size-5" aria-hidden />}
+              title={t('loci.transfer.exportJson')}
+              subtitle={t('loci.transfer.exportJsonSub')}
+              disabled={!hasContent}
+              onClick={() => closeTransfer(() => exportRoomJson(roomName, loci, questions))}
+            />
+            <ImportRow
+              icon={<Download className="size-5" aria-hidden />}
+              title={t('loci.transfer.exportCards')}
+              subtitle={t('loci.transfer.exportCardsSub')}
+              disabled={loci.length === 0}
+              onClick={() => closeTransfer(() => exportLociCsv(roomName, loci))}
+            />
+            <ImportRow
+              icon={<Download className="size-5" aria-hidden />}
+              title={t('loci.transfer.exportQuestions')}
+              subtitle={t('loci.transfer.exportQuestionsSub')}
+              disabled={questions.length === 0}
+              onClick={() => closeTransfer(() => exportQuestionsCsv(roomName, questions))}
+            />
+            <ImportRow
+              icon={<Download className="size-5" aria-hidden />}
+              title={t('loci.transfer.exportAnki')}
+              subtitle={t('loci.transfer.exportAnkiSub')}
+              disabled={loci.length === 0}
+              onClick={() => closeTransfer(() => exportLociAnki(roomName, loci))}
+            />
+          </TransferGroup>
+        </div>
+      </Sheet>
       <PasteSheet
         open={pasteOpen}
         onOpenChange={setPasteOpen}
@@ -666,7 +684,9 @@ function NoResults({ onClear }: { onClear: () => void }) {
   const { t } = useTranslation()
   return (
     <div className="rounded-card bg-card-glass p-6 text-center shadow-rest">
-      <p className="text-[length:var(--p-text-body)] text-muted-foreground">{t('loci.noResults')}</p>
+      <p className="text-[length:var(--p-text-body)] text-muted-foreground">
+        {t('loci.noResults')}
+      </p>
       <button
         type="button"
         onClick={onClear}
@@ -674,6 +694,17 @@ function NoResults({ onClear }: { onClear: () => void }) {
       >
         {t('loci.clearSearch')}
       </button>
+    </div>
+  )
+}
+
+function TransferGroup({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="space-y-2">
+      <p className="px-1 text-[length:var(--p-text-label)] font-bold uppercase tracking-wide text-muted-foreground">
+        {label}
+      </p>
+      <div className="flex flex-col gap-2">{children}</div>
     </div>
   )
 }

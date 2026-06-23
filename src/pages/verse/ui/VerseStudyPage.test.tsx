@@ -8,6 +8,11 @@ import { InMemoryRepository } from '@/shared/api'
 import { createPalaceStore, makePalace, PalaceStoreContext, type Palace } from '@/entities/palace'
 import { createRoomStore, makeRoom, RoomStoreContext, type Room } from '@/entities/room'
 import { createLocusStore, LocusStoreContext, makeLocus, type Locus } from '@/entities/locus'
+import {
+  createPreferencesStore,
+  PreferencesStoreContext,
+  type Preferences,
+} from '@/entities/preferences'
 import { VerseStudyPage } from './VerseStudyPage'
 
 afterEach(cleanup)
@@ -22,18 +27,27 @@ function renderVerse(roomId = 'r1') {
     makeRoom({ id: 'r1', createdAt: at(0), palaceId: 'p1', title: 'Psalms', order: 0 }),
   ])
   const lociRepo = new InMemoryRepository<Locus>([
-    makeLocus({ id: 'l1', createdAt: at(1), roomId: 'r1', front: 'Psalm 23:1', back: 'The Lord is my shepherd' }),
+    makeLocus({
+      id: 'l1',
+      createdAt: at(1),
+      roomId: 'r1',
+      front: 'Psalm 23:1',
+      back: 'The Lord is my shepherd',
+    }),
   ])
+  const prefsRepo = new InMemoryRepository<Preferences>([])
   render(
     <I18nextProvider i18n={i18n}>
       <MotionConfig reducedMotion="always">
-        <PalaceStoreContext value={createPalaceStore(palaceRepo)}>
-          <RoomStoreContext value={createRoomStore(roomRepo)}>
-            <LocusStoreContext value={createLocusStore(lociRepo)}>
-              <VerseStudyPage roomId={roomId} onBack={() => {}} />
-            </LocusStoreContext>
-          </RoomStoreContext>
-        </PalaceStoreContext>
+        <PreferencesStoreContext value={createPreferencesStore(prefsRepo)}>
+          <PalaceStoreContext value={createPalaceStore(palaceRepo)}>
+            <RoomStoreContext value={createRoomStore(roomRepo)}>
+              <LocusStoreContext value={createLocusStore(lociRepo)}>
+                <VerseStudyPage scope={{ kind: 'room', roomId }} onBack={() => {}} />
+              </LocusStoreContext>
+            </RoomStoreContext>
+          </PalaceStoreContext>
+        </PreferencesStoreContext>
       </MotionConfig>
     </I18nextProvider>,
   )

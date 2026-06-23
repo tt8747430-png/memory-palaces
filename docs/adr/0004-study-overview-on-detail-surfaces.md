@@ -1,5 +1,11 @@
 # The daily-study overview lives on palace/room detail, not the home
 
+> **Partially superseded by [ADR-0005](0005-one-scoped-study-session-no-global-review.md):**
+> the global "review everything due" is now removed entirely (not parked on the Streak page),
+> and the palace-detail identity/progress hero is dropped. The detail study overviews below
+> still stand.
+
+
 The home (palaces) screen owned the daily loop via a `TodayTrainingCard` (cross-palace review
 launcher) and an `UpNextCard`. We removed both. The daily-study overview now lives where the
 content does: **palace detail** shows an aggregate "cards for today" across all its rooms with a

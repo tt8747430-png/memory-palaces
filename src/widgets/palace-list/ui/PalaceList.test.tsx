@@ -28,6 +28,7 @@ const item = (over: Partial<PalaceListItem> = {}): PalaceListItem => ({
 function renderList(props: Partial<Parameters<typeof PalaceList>[0]> = {}) {
   const handlers = {
     onOpen: vi.fn(),
+    onOpenSettings: vi.fn(),
     onToggleFavorite: vi.fn(),
     onMove: vi.fn(),
     onArchive: vi.fn(),

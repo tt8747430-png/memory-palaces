@@ -1,7 +1,8 @@
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-import { Archive, BookOpen, Folder, FolderPlus, Heart } from 'lucide-react'
+import { Archive, BookOpen, FolderPlus, Heart, LayoutGrid } from 'lucide-react'
 import { cn } from '@/shared/lib'
+import { PalaceCover } from '@/shared/ui'
 
 export type CollectionKind = 'all' | 'favorites' | 'bible' | 'folder' | 'unfiled' | 'archived'
 
@@ -10,25 +11,35 @@ export interface Collection {
   label: string
   count: number
   kind: CollectionKind
-  /** Folders only: their gradient class pair (or custom hex), shown as a swatch so the
-   * rail becomes the user's own visual taxonomy instead of a row of identical chips. */
+  /** Folders only: the colour their glyph is painted in (a `from-… to-…` gradient pair
+   * or a free hex), paired with {@link icon} so the rail becomes the user's own visual
+   * taxonomy instead of a row of identical chips. */
   color?: string
+  /** Folders only: the emoji shown on the glyph. */
+  icon?: string
 }
 
-/** A folder's colour rendered as a small swatch. Folder colours are gradient class pairs
- * (`from-… to-…`) like a palace cover, or a free hex; both are handled here. Shared by the
- * rail chips and the page's folder header so the swatch never drifts. */
-export function FolderSwatch({ color }: { color: string }) {
-  const gradient = color.startsWith('from-')
+/** A folder's identity rendered as a small emoji-on-colour tile — the same cover language
+ * palaces use, so a folder reads as "a place my palaces live". One renderer, shared by the
+ * rail, the move sheet, and the folder header, so the glyph never drifts. */
+export function FolderGlyph({
+  color,
+  icon,
+  className,
+  iconClassName,
+}: {
+  color: string
+  icon: string
+  className?: string
+  iconClassName?: string
+}) {
   return (
-    <span
-      aria-hidden
-      className={cn('size-3.5 shrink-0 rounded-full ring-1 ring-black/10', gradient && 'bg-linear-to-br', gradient && color)}
-      style={
-        gradient
-          ? undefined
-          : { backgroundImage: `linear-gradient(135deg, ${color}, color-mix(in oklab, ${color}, black 22%))` }
-      }
+    <PalaceCover
+      icon={icon}
+      color={color}
+      variant="identity"
+      className={cn('shrink-0 rounded-[7px] ring-1 ring-black/10', className)}
+      iconClassName={iconClassName}
     />
   )
 }
@@ -41,16 +52,17 @@ export interface CollectionRailProps {
 }
 
 const KIND_ICON: Partial<Record<CollectionKind, typeof Heart>> = {
+  all: LayoutGrid,
   favorites: Heart,
   bible: BookOpen,
-  folder: Folder,
   archived: Archive,
 }
 
-/** Horizontally scrollable collection filter for the Palaces screen: the built-in
- * collections (All, Favorites, Bible, Archived), the user's folders, and Unfiled, plus
- * a "+ Folder" affordance. The active chip carries the navy gradient; the rest are calm
- * white chips over the daylight ground. */
+/** Horizontally scrollable collection filter for the home library: the built-in
+ * collections (All, Favorites, Bible, Archived), the user's folders, and Unfiled, plus a
+ * trailing "+ Folder" affordance. Built-ins lead with a semantic line icon; folders lead
+ * with their own colour-and-emoji glyph. The active chip carries the navy→action gradient;
+ * the rest stay calm white chips over the daylight ground. */
 export function CollectionRail({ collections, activeId, onSelect, onNewFolder }: CollectionRailProps) {
   const { t } = useTranslation()
   return (
@@ -61,9 +73,8 @@ export function CollectionRail({ collections, activeId, onSelect, onNewFolder }:
     >
       {collections.map((collection) => {
         const active = collection.id === activeId
-        // A folder leads with its own colour swatch; built-ins keep their semantic icon.
-        const showSwatch = collection.kind === 'folder' && !!collection.color
-        const Icon = showSwatch ? undefined : KIND_ICON[collection.kind]
+        const isFolder = collection.kind === 'folder' && !!collection.color
+        const Icon = KIND_ICON[collection.kind]
         return (
           <motion.button
             key={collection.id}
@@ -73,18 +84,25 @@ export function CollectionRail({ collections, activeId, onSelect, onNewFolder }:
             whileTap={{ scale: 0.96 }}
             onClick={() => onSelect(collection.id)}
             className={cn(
-              'flex shrink-0 items-center gap-1.5 rounded-pill px-3.5 py-2 transition-colors',
+              'flex h-9 shrink-0 items-center gap-1.5 rounded-pill pr-3 transition-colors',
+              isFolder ? 'pl-1.5' : 'pl-3',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
               active
                 ? 'bg-linear-to-r from-primary to-accent text-primary-foreground shadow-interactive'
                 : 'border border-border bg-card text-heading shadow-rest',
             )}
           >
-            {showSwatch && collection.color ? <FolderSwatch color={collection.color} /> : null}
-            {Icon ? (
+            {isFolder && collection.color ? (
+              <FolderGlyph
+                color={collection.color}
+                icon={collection.icon ?? '🗂️'}
+                className="size-6 rounded-full"
+                iconClassName="text-[11px] leading-none"
+              />
+            ) : Icon ? (
               <Icon
                 className={cn(
-                  'size-3.5 shrink-0',
+                  'size-4 shrink-0',
                   collection.kind === 'favorites' && !active && 'fill-favorite text-favorite',
                   collection.kind === 'favorites' && active && 'fill-current',
                   active && collection.kind !== 'favorites' && 'text-current',
@@ -113,7 +131,7 @@ export function CollectionRail({ collections, activeId, onSelect, onNewFolder }:
         whileTap={{ scale: 0.96 }}
         onClick={onNewFolder}
         className={cn(
-          'flex shrink-0 items-center gap-1.5 rounded-pill bg-info-surface px-3.5 py-2 text-info-foreground',
+          'flex h-9 shrink-0 items-center gap-1.5 rounded-pill border border-dashed border-accent/40 bg-info-surface px-3.5 text-info-foreground',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
         )}
       >

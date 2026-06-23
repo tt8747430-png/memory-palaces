@@ -30,7 +30,7 @@ function renderMatch(roomId = 'r1') {
         <PalaceStoreContext value={createPalaceStore(palaceRepo)}>
           <RoomStoreContext value={createRoomStore(roomRepo)}>
             <LocusStoreContext value={createLocusStore(lociRepo)}>
-              <MatchPage roomId={roomId} onBack={() => {}} />
+              <MatchPage scope={{ kind: 'room', roomId }} onBack={() => {}} />
             </LocusStoreContext>
           </RoomStoreContext>
         </PalaceStoreContext>

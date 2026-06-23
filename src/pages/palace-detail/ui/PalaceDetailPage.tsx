@@ -1,13 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { motion } from 'motion/react'
 import { toast } from 'sonner'
-import { Pencil, Plus, RotateCcw, Settings2, Trash2, Upload } from 'lucide-react'
+import { Plus, RotateCcw, Settings2, Trash2, Upload } from 'lucide-react'
 import {
   selectIsReady as selectPalacesReady,
   usePalaceStore,
   usePalaceStoreApi,
-  type Palace,
 } from '@/entities/palace'
 import {
   roomsForPalace,
@@ -30,7 +28,13 @@ import {
   useQuestionStore,
   useQuestionStoreApi,
 } from '@/entities/question'
-import { deleteRoom, duplicateRoom, moveRoom, RoomEditorSheet, type RoomEditorTarget } from '@/features/room'
+import {
+  deleteRoom,
+  duplicateRoom,
+  moveRoom,
+  RoomEditorSheet,
+  type RoomEditorTarget,
+} from '@/features/room'
 import { resetRoomSrs } from '@/features/locus'
 import { ImportRoomsSheet } from '@/features/content'
 import {
@@ -38,19 +42,17 @@ import {
   isDue,
   isLocusReviewed,
   isRoomCompleted,
-  palaceProgress,
   roomProgress,
   srsStatus,
 } from '@/shared/lib'
 import { RoomList, type RoomListItem } from '@/widgets/room-list'
+import { PracticeModes } from '@/widgets/practice-modes'
 import {
   AppScreen,
   Button,
   ConfirmDialog,
   EmptyState,
-  GlassCard,
   IconButton,
-  PalaceCover,
   ScreenHeader,
   SpeedDial,
   StudyOverviewCard,
@@ -64,20 +66,29 @@ export interface PalaceDetailPageProps {
   onOpenRoom?: (roomId: string) => void
   /** Open this palace's settings; wired by the route wrapper. */
   onOpenSettings?: () => void
-  /** Drill the whole palace's due-today queue (palace-scoped review). */
+  /** Open the palace-wide Study-cards session. */
   onStudyPalace?: () => void
+  /** Launch the palace-wide Match game. */
+  onMatch?: () => void
+  /** Launch the palace-wide quiz (Test). */
+  onTest?: () => void
+  /** Launch palace-wide verse study (Bible-mode palaces only). */
+  onVerse?: () => void
 }
 
-/** Palace detail — the palace's overview (identity, derived progress, palace quiz) above
- * its ordered rooms, the place to create, edit, reorder, and delete them. Room-level
- * study lives in the room hub; opening a room leaves this screen. Reactive off RxDB;
- * every action persists offline through the injected stores. */
+/** Palace detail — the palace-scoped study overview and practice modes above its ordered
+ * rooms, the place to create, edit, reorder, and delete them. Identity lives in the header
+ * and palace settings. Reactive off RxDB; every action persists offline through the
+ * injected stores. */
 export function PalaceDetailPage({
   palaceId,
   onBack,
   onOpenRoom,
   onOpenSettings,
   onStudyPalace,
+  onMatch,
+  onTest,
+  onVerse,
 }: PalaceDetailPageProps) {
   const { t } = useTranslation()
   const palaceStore = usePalaceStoreApi()
@@ -92,7 +103,9 @@ export function PalaceDetailPage({
     questionStore.getState().start()
   }, [palaceStore, roomStore, locusStore, questionStore])
 
-  const palace = usePalaceStore((state) => state.palaces.find((candidate) => candidate.id === palaceId))
+  const palace = usePalaceStore((state) =>
+    state.palaces.find((candidate) => candidate.id === palaceId),
+  )
   const allRooms = useRoomStore(selectRooms)
   const allLoci = useLocusStore(selectLoci)
   const allQuestions = useQuestionStore(selectQuestions)
@@ -134,18 +147,12 @@ export function PalaceDetailPage({
   }, [rooms, allLoci, allQuestions])
 
   const summary = useMemo(() => {
-    const completions = items.map((item) => item.completed)
     return {
       totalRooms: items.length,
-      roomsCompleted: completions.filter(Boolean).length,
       totalLoci: items.reduce((sum, item) => sum + item.lociCount, 0),
       totalQuestions: items.reduce((sum, item) => sum + item.questionCount, 0),
-      totalKnown: items.reduce((sum, item) => sum + item.knownCount, 0),
-      progress: palaceProgress(completions),
     }
   }, [items])
-
-  const nextRoom = useMemo(() => items.find((item) => !item.completed) ?? items[0], [items])
 
   const dueAcrossPalace = useMemo(() => {
     const now = Date.now()
@@ -180,7 +187,13 @@ export function PalaceDetailPage({
   if (!palace) {
     return (
       <AppScreen
-        header={<ScreenHeader title={t('palaceDetail.notFound')} onBack={onBack} backLabel={t('palaceDetail.back')} />}
+        header={
+          <ScreenHeader
+            title={t('palaceDetail.notFound')}
+            onBack={onBack}
+            backLabel={t('palaceDetail.back')}
+          />
+        }
       />
     )
   }
@@ -190,14 +203,23 @@ export function PalaceDetailPage({
       header={
         <ScreenHeader
           title={palace.name}
-          subtitle={t(summary.totalRooms === 1 ? 'palaceDetail.roomSummaryOne' : 'palaceDetail.roomSummaryOther', {
-            count: summary.totalRooms,
-          })}
+          subtitle={t(
+            summary.totalRooms === 1
+              ? 'palaceDetail.roomSummaryOne'
+              : 'palaceDetail.roomSummaryOther',
+            {
+              count: summary.totalRooms,
+            },
+          )}
           onBack={onBack}
           backLabel={t('palaceDetail.back')}
           action={
             onOpenSettings ? (
-              <IconButton variant="glass" aria-label={t('palaceDetail.settingsLabel')} onClick={onOpenSettings}>
+              <IconButton
+                variant="glass"
+                aria-label={t('palaceDetail.settingsLabel')}
+                onClick={onOpenSettings}
+              >
                 <Settings2 className="size-5" aria-hidden />
               </IconButton>
             ) : undefined
@@ -205,16 +227,25 @@ export function PalaceDetailPage({
         />
       }
     >
-      <div className="mt-4 space-y-5 pb-24">
-        <PalaceHero palace={palace} progress={summary.progress} onEditIdentity={onOpenSettings} />
-
-        {items.length > 0 ? (
+      <div className="mt-2 space-y-4 pb-24">
+        {summary.totalLoci > 0 ? (
           <StudyOverviewCard
             count={dueAcrossPalace.dueCount}
             breakdown={dueAcrossPalace.breakdown}
             onStudy={() => onStudyPalace?.()}
-            onStudyAhead={nextRoom ? () => onOpenRoom?.(nextRoom.id) : undefined}
+            onStudyAhead={onStudyPalace}
             scope="palace"
+          />
+        ) : null}
+
+        {items.length > 0 ? (
+          <PracticeModes
+            bibleMode={palace.bibleMode}
+            cardCount={summary.totalLoci}
+            questionCount={summary.totalQuestions}
+            onVerse={onVerse}
+            onMatch={onMatch}
+            onTest={onTest}
           />
         ) : null}
 
@@ -278,7 +309,11 @@ export function PalaceDetailPage({
           if (!open) setEditorTarget(null)
         }}
         onSaved={(room) =>
-          toast.success(editorTarget?.mode === 'edit' ? t('rooms.toast.updated') : t('rooms.toast.added', { title: room.title }))
+          toast.success(
+            editorTarget?.mode === 'edit'
+              ? t('rooms.toast.updated')
+              : t('rooms.toast.added', { title: room.title }),
+          )
         }
       />
 
@@ -338,82 +373,5 @@ export function PalaceDetailPage({
         ]}
       />
     </AppScreen>
-  )
-}
-
-function PalaceHero({
-  palace,
-  progress,
-  onEditIdentity,
-}: {
-  palace: Palace
-  progress: number
-  onEditIdentity?: () => void
-}) {
-  const { t } = useTranslation()
-  return (
-    <GlassCard className="space-y-4">
-      <div className="flex items-start gap-3.5">
-        <CoverButton palace={palace} onEditIdentity={onEditIdentity} />
-        <div className="min-w-0 flex-1">
-          {palace.description ? (
-            <p className="line-clamp-3 text-[length:var(--p-text-body)] text-secondary">{palace.description}</p>
-          ) : (
-            <p className="text-[length:var(--p-text-body)] text-muted-foreground">
-              {t('palaceDetail.noDescription')}
-            </p>
-          )}
-        </div>
-      </div>
-
-      <div>
-        <div className="mb-1.5 flex items-center justify-between">
-          <span className="text-[length:var(--p-text-label)] font-semibold text-heading">
-            {t('palaceDetail.overallProgress')}
-          </span>
-          <span className="text-[length:var(--p-text-sub)] font-bold tabular-nums text-heading">
-            {progress}%
-          </span>
-        </div>
-        <span className="block h-2.5 overflow-hidden rounded-full bg-secondary/40">
-          <motion.span
-            initial={{ width: 0 }}
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-            className="block h-full rounded-full bg-linear-to-r from-primary to-accent"
-          />
-        </span>
-      </div>
-    </GlassCard>
-  )
-}
-
-function CoverButton({ palace, onEditIdentity }: { palace: Palace; onEditIdentity?: () => void }) {
-  const { t } = useTranslation()
-  const cover = (
-    <PalaceCover
-      icon={palace.icon}
-      color={palace.color}
-      image={palace.image}
-      className="size-16 rounded-card shadow-rest"
-      iconClassName="text-3xl"
-    />
-  )
-  if (!onEditIdentity) {
-    return <div className="shrink-0">{cover}</div>
-  }
-  return (
-    <motion.button
-      type="button"
-      whileTap={{ scale: 0.96 }}
-      onClick={onEditIdentity}
-      aria-label={t('palaceDetail.editIdentity')}
-      className="relative shrink-0 rounded-card"
-    >
-      {cover}
-      <span className="absolute -bottom-1 -right-1 grid size-6 place-items-center rounded-full bg-primary text-primary-foreground shadow-rest ring-2 ring-card">
-        <Pencil className="size-3" aria-hidden />
-      </span>
-    </motion.button>
   )
 }

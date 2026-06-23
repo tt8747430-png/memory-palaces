@@ -6,11 +6,13 @@ import {
   Archive,
   Building2,
   Check,
+  ChevronDown,
   Clock,
   FolderPlus,
+  LayoutGrid,
   Pencil,
   Plus,
-  SlidersHorizontal,
+  Rows3,
   Tag,
   TrendingUp,
   Upload,
@@ -29,7 +31,7 @@ import {
   usePalaceStore,
   usePalaceStoreApi,
 } from '@/entities/palace'
-import { selectFolders, useFolderStore, useFolderStoreApi } from '@/entities/folder'
+import { type Folder, selectFolders, useFolderStore, useFolderStoreApi } from '@/entities/folder'
 import { lociForRoom, selectLoci, useLocusStore, useLocusStoreApi } from '@/entities/locus'
 import { roomsForPalace, selectRooms, useRoomStore, useRoomStoreApi } from '@/entities/room'
 import { useQuestionStoreApi } from '@/entities/question'
@@ -67,16 +69,17 @@ import {
   Button,
   ConfirmDialog,
   EmptyState,
-  IconButton,
   SegmentedControl,
   SpeedDial,
 } from '@/shared/ui'
-import { CollectionRail, FolderSwatch, type Collection } from './CollectionRail'
-import { EditFolderSheet, MoveToFolderSheet, NewFolderSheet } from './PalaceSheets'
+import { CollectionRail, FolderGlyph, type Collection } from './CollectionRail'
+import { FolderSheet, MoveToFolderSheet } from './PalaceSheets'
 
 export interface PalacesPageProps {
   /** Open a palace's detail; wired by the route wrapper. */
   onOpenPalace?: (id: string) => void
+  /** Open a palace's settings directly from its overflow menu; wired by the route wrapper. */
+  onOpenPalaceSettings?: (id: string) => void
   /** Open the create sheet on mount (a `?create` deep link still opens it). */
   openCreate?: boolean
   /** Open the profile screen; wired by the route wrapper. */
@@ -94,8 +97,6 @@ const BIBLE = 'bible'
 const UNFILED = 'unfiled'
 const ARCHIVED = 'archived'
 
-const NEW_FOLDER_ICON = '📁'
-
 const SORT_LABEL_KEY = {
   recent: 'palaces.sortRecent',
   progress: 'palaces.sortProgress',
@@ -108,6 +109,7 @@ const SORT_LABEL_KEY = {
  * derived from each palace's rooms/loci, the same way the home overview derives it. */
 export function PalacesPage({
   onOpenPalace,
+  onOpenPalaceSettings,
   openCreate = false,
   onOpenProfile,
   onOpenNotifications,
@@ -189,10 +191,21 @@ export function PalacesPage({
   const [sortOpen, setSortOpen] = useState(false)
   const [createOpen, setCreateOpen] = useState(openCreate)
   const [moveTarget, setMoveTarget] = useState<string | null>(null)
-  const [newFolderOpen, setNewFolderOpen] = useState(false)
-  const [editFolderOpen, setEditFolderOpen] = useState(false)
+  // One sheet drives the whole folder lifecycle: `open` with a `null` target is create,
+  // with a folder is edit.
+  const [folderSheetOpen, setFolderSheetOpen] = useState(false)
+  const [folderSheetTarget, setFolderSheetTarget] = useState<Folder | null>(null)
   const [deletePalaceTarget, setDeletePalaceTarget] = useState<string | null>(null)
   const [deleteFolderTarget, setDeleteFolderTarget] = useState<string | null>(null)
+
+  const openCreateFolder = () => {
+    setFolderSheetTarget(null)
+    setFolderSheetOpen(true)
+  }
+  const openEditFolder = (folder: Folder) => {
+    setFolderSheetTarget(folder)
+    setFolderSheetOpen(true)
+  }
 
   // Cards due now, per palace — recomputed when the library changes. The clock is read once
   // at the UI edge (`now`); the pure tally lives in shared/lib and takes it as an argument.
@@ -250,7 +263,12 @@ export function PalacesPage({
       })
     }
     if (bibleCount > 0) {
-      base.push({ id: BIBLE, label: t('palaces.collectionBible'), count: bibleCount, kind: 'bible' })
+      base.push({
+        id: BIBLE,
+        label: t('palaces.collectionBible'),
+        count: bibleCount,
+        kind: 'bible',
+      })
     }
     folders.forEach((folder) => {
       base.push({
@@ -259,6 +277,7 @@ export function PalacesPage({
         count: active.filter((item) => item.folderId === folder.id).length,
         kind: 'folder',
         color: folder.color,
+        icon: folder.icon,
       })
     })
     if (folders.length > 0 && unfiledCount > 0) {
@@ -293,8 +312,7 @@ export function PalacesPage({
     const q = query.trim().toLowerCase()
     if (q) {
       list = list.filter(
-        (item) =>
-          item.name.toLowerCase().includes(q) || item.category.toLowerCase().includes(q),
+        (item) => item.name.toLowerCase().includes(q) || item.category.toLowerCase().includes(q),
       )
     }
 
@@ -345,10 +363,13 @@ export function PalacesPage({
     )
   }
 
-  const handleCreateFolder = (name: string) => {
-    const color = PALACE_COLOR_OPTIONS[folders.length % PALACE_COLOR_OPTIONS.length]!.value
-    void createFolder(folderStore, { name, color, icon: NEW_FOLDER_ICON })
-    setNewFolderOpen(false)
+  // Cycle the shared palette so each new folder lands on a fresh colour by default.
+  const nextFolderColor = PALACE_COLOR_OPTIONS[folders.length % PALACE_COLOR_OPTIONS.length]!.value
+
+  const handleSubmitFolder = (changes: { name: string; color: string; icon: string }) => {
+    if (folderSheetTarget) void editFolder(folderStore, folderSheetTarget, changes)
+    else void createFolder(folderStore, changes)
+    setFolderSheetOpen(false)
   }
 
   const handlePickFolder = (folderId: string | null) => {
@@ -356,7 +377,9 @@ export function PalacesPage({
     const previous = palace?.folderId ?? null
     if (palace && folderId !== previous) {
       void setPalaceFolder(palaceStore, palace.id, folderId)
-      const folderName = folderId ? folders.find((folder) => folder.id === folderId)?.name : undefined
+      const folderName = folderId
+        ? folders.find((folder) => folder.id === folderId)?.name
+        : undefined
       toast.success(
         folderName ? t('palaces.movedToast', { folder: folderName }) : t('palaces.unfiledToast'),
         {
@@ -368,11 +391,6 @@ export function PalacesPage({
       )
     }
     setMoveTarget(null)
-  }
-
-  const handleSaveFolder = (changes: { name: string; color: string }) => {
-    if (activeFolder) void editFolder(folderStore, activeFolder, changes)
-    setEditFolderOpen(false)
   }
 
   const confirmDeletePalace = () => {
@@ -496,59 +514,80 @@ export function PalacesPage({
           collections={collections}
           activeId={activeFilter}
           onSelect={setActiveFilter}
-          onNewFolder={() => setNewFolderOpen(true)}
+          onNewFolder={openCreateFolder}
         />
       </div>
 
-      {/* One calm meta+controls row: the left adapts to context — a plain result count, or,
-          inside a folder, a tappable header that owns rename / recolour / delete — while the
-          view toggle and sort stay anchored right. */}
-      <div className="mb-3 mt-5 flex items-center gap-3">
+      {/* Two-tier overview: a context line names what you're looking at (a result count, or
+          inside a folder a tappable header that owns rename / recolour / delete), then a
+          control bar makes the sort visible — no longer hidden behind a mystery icon — next
+          to the grid/list toggle. */}
+      <div className="mb-3 mt-5 flex flex-col gap-3">
         {activeFolder ? (
           <button
             type="button"
-            onClick={() => setEditFolderOpen(true)}
+            onClick={() => openEditFolder(activeFolder)}
             aria-label={t('palaces.editFolderLabel', { name: activeFolder.name })}
-            className="flex min-w-0 items-center gap-2 rounded-control text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            className="flex min-w-0 items-center gap-2.5 rounded-control text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
           >
-            <FolderSwatch color={activeFolder.color} />
-            <span className="truncate text-[length:var(--p-text-body)] font-semibold text-heading">
+            <FolderGlyph
+              color={activeFolder.color}
+              icon={activeFolder.icon}
+              className="size-7"
+              iconClassName="text-sm leading-none"
+            />
+            <span className="truncate text-[length:var(--p-text-headline)] font-bold tracking-tight text-heading">
               {activeFolder.name}
             </span>
-            <span className="shrink-0 text-[length:var(--p-text-label)] tabular-nums text-muted-foreground">
+            <span className="shrink-0 rounded-full bg-info-surface px-2 py-0.5 text-[length:var(--p-text-label)] font-bold tabular-nums text-info-foreground">
               {visible.length}
             </span>
-            <Pencil className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+            <Pencil className="size-4 shrink-0 text-muted-foreground" aria-hidden />
           </button>
         ) : (
-          <p className="min-w-0 truncate text-[length:var(--p-text-body)] font-semibold text-heading">
+          <h2 className="min-w-0 truncate text-[length:var(--p-text-headline)] font-bold tracking-tight text-heading">
             {isArchivedView
               ? t('palaces.collectionArchived')
               : t(visible.length === 1 ? 'palaces.countOne' : 'palaces.countOther', {
                   count: visible.length,
                 })}
-          </p>
+          </h2>
         )}
 
-        <div className="ml-auto flex shrink-0 items-center gap-2">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            aria-haspopup="dialog"
+            aria-label={t('palaces.sortLabel')}
+            onClick={() => setSortOpen(true)}
+            className="flex h-9 min-w-0 items-center gap-1.5 rounded-control border border-border bg-card pl-2.5 pr-2 shadow-rest transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+          >
+            <SortGlyph option={sort} className="size-4 text-accent" />
+            <span className="truncate text-[length:var(--p-text-label)] font-semibold text-heading">
+              {t(SORT_LABEL_KEY[sort])}
+            </span>
+            <ChevronDown className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+          </button>
+
           <SegmentedControl
             aria-label={t('palaces.viewLabel')}
-            className="w-[148px]"
+            size="sm"
+            className="ml-auto w-[88px]"
             value={view}
             onChange={(value) => setView(value)}
             options={[
-              { value: 'grid', label: t('palaces.viewGrid') },
-              { value: 'list', label: t('palaces.viewList') },
+              {
+                value: 'grid',
+                label: <LayoutGrid className="size-[18px]" aria-hidden />,
+                ariaLabel: t('palaces.viewGrid'),
+              },
+              {
+                value: 'list',
+                label: <Rows3 className="size-[18px]" aria-hidden />,
+                ariaLabel: t('palaces.viewList'),
+              },
             ]}
           />
-          <IconButton
-            variant="ghost"
-            aria-label={t('palaces.sortLabel')}
-            aria-haspopup="dialog"
-            onClick={() => setSortOpen(true)}
-          >
-            <SlidersHorizontal className="size-5" aria-hidden />
-          </IconButton>
         </div>
       </div>
 
@@ -558,6 +597,7 @@ export function PalacesPage({
         loading={!palacesReady}
         emptyState={emptyState}
         onOpen={(id) => onOpenPalace?.(id)}
+        onOpenSettings={(id) => onOpenPalaceSettings?.(id)}
         onToggleFavorite={(id) => void togglePalaceFavorite(palaceStore, id)}
         onMove={(id) => setMoveTarget(id)}
         onArchive={handleArchive}
@@ -583,7 +623,7 @@ export function PalacesPage({
             id: 'folder',
             label: t('palaces.newFolderTitle'),
             icon: <FolderPlus className="size-5" aria-hidden />,
-            onSelect: () => setNewFolderOpen(true),
+            onSelect: openCreateFolder,
           },
         ]}
       />
@@ -621,21 +661,25 @@ export function PalacesPage({
         onPick={handlePickFolder}
         onNewFolder={() => {
           setMoveTarget(null)
-          setNewFolderOpen(true)
+          openCreateFolder()
         }}
       />
 
-      <NewFolderSheet open={newFolderOpen} onOpenChange={setNewFolderOpen} onCreate={handleCreateFolder} />
-
-      <EditFolderSheet
-        open={editFolderOpen}
-        onOpenChange={setEditFolderOpen}
-        folder={activeFolder ?? null}
-        onSave={handleSaveFolder}
-        onDelete={() => {
-          setEditFolderOpen(false)
-          setDeleteFolderTarget(activeFilter)
-        }}
+      <FolderSheet
+        open={folderSheetOpen}
+        onOpenChange={setFolderSheetOpen}
+        folder={folderSheetTarget}
+        defaultColor={nextFolderColor}
+        onSubmit={handleSubmitFolder}
+        onDelete={
+          folderSheetTarget
+            ? () => {
+                const id = folderSheetTarget.id
+                setFolderSheetOpen(false)
+                setDeleteFolderTarget(id)
+              }
+            : undefined
+        }
       />
 
       <ConfirmDialog
@@ -668,8 +712,13 @@ export function PalacesPage({
   )
 }
 
-function SortGlyph({ option }: { option: PalacesSort }) {
-  const className = 'size-5 text-heading'
+function SortGlyph({
+  option,
+  className = 'size-5 text-heading',
+}: {
+  option: PalacesSort
+  className?: string
+}) {
   if (option === 'progress') return <TrendingUp className={className} aria-hidden />
   if (option === 'name') return <ArrowDownAZ className={className} aria-hidden />
   if (option === 'category') return <Tag className={className} aria-hidden />

@@ -76,7 +76,29 @@ describe('SettingsPage', () => {
     renderSettings({ sessionKind: 'account', onLogout: vi.fn() })
     expect(screen.getByRole('button', { name: /log out/i })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /change password/i })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /clear data/i })).not.toBeInTheDocument()
+  })
+
+  it('opens the Clear data screen from the data section', async () => {
+    const user = userEvent.setup()
+    const onClearData = vi.fn()
+    renderSettings({ onClearData })
+
+    await user.click(screen.getByRole('button', { name: /clear data/i }))
+    expect(onClearData).toHaveBeenCalledOnce()
+  })
+
+  it('persists the chosen language from the picker', async () => {
+    const user = userEvent.setup()
+    const { prefsRepo } = renderSettings()
+
+    await user.click(screen.getByRole('button', { name: /language/i }))
+    const sheet = await screen.findByRole('dialog')
+    await user.click(within(sheet).getByRole('button', { name: /english/i }))
+
+    await waitFor(async () => {
+      const [prefs] = await prefsRepo.getAll()
+      expect(prefs?.language).toBe('en')
+    })
   })
 
   it('logs out only after the confirmation is accepted', async () => {
