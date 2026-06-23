@@ -678,6 +678,7 @@ export const en = {
       questions: 'Questions',
     },
     addCard: 'Add card',
+    quickActions: 'Add to room',
     quickFront: 'Front — what to recall',
     quickBack: 'Back — what it means',
     searchCards: 'Search cards',

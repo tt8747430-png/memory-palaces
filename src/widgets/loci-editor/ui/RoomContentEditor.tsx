@@ -1,4 +1,4 @@
-import { type ChangeEvent, type ReactNode, type Ref, useEffect, useMemo, useRef, useState } from 'react'
+import { type ChangeEvent, type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AnimatePresence, motion } from 'motion/react'
 import { toast } from 'sonner'
@@ -59,8 +59,8 @@ import {
   ActionSheet,
   Button,
   ConfirmDialog,
-  IconButton,
   SegmentedControl,
+  SpeedDial,
   TextField,
   type SheetAction,
 } from '@/shared/ui'
@@ -107,8 +107,6 @@ export function RoomContentEditor({ roomId, roomName, bibleMode = false }: RoomC
   const [query, setQuery] = useState('')
   const [selectMode, setSelectMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [quickFront, setQuickFront] = useState('')
-  const [quickBack, setQuickBack] = useState('')
   const [editor, setEditor] = useState<EditorTarget>(null)
   const [pendingDelete, setPendingDelete] = useState<{ kind: Tab; id: string } | null>(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
@@ -118,7 +116,6 @@ export function RoomContentEditor({ roomId, roomName, bibleMode = false }: RoomC
 
   const fileRef = useRef<HTMLInputElement>(null)
   const importKind = useRef<'content' | 'anki'>('content')
-  const quickFrontRef = useRef<HTMLInputElement>(null)
 
   const needle = query.trim().toLowerCase()
   const visibleLoci = useMemo(
@@ -176,14 +173,6 @@ export function RoomContentEditor({ roomId, roomName, bibleMode = false }: RoomC
   const exitSelect = () => {
     setSelectMode(false)
     setSelectedIds(new Set())
-  }
-
-  const quickAdd = () => {
-    if (!quickFront.trim() || !quickBack.trim()) return
-    void createLocus(locusStore, roomId, { front: quickFront.trim(), back: quickBack.trim() })
-    setQuickFront('')
-    setQuickBack('')
-    quickFrontRef.current?.focus()
   }
 
   const pickFile = (accept: string, kind: 'content' | 'anki') => {
@@ -331,13 +320,6 @@ export function RoomContentEditor({ roomId, roomName, bibleMode = false }: RoomC
             { value: 'questions', label: `${t('loci.tabs.questions')} · ${questions.length}` },
           ]}
         />
-        <IconButton
-          variant="tint"
-          aria-label={t('loci.transfer.label')}
-          onClick={() => setTransferOpen(true)}
-        >
-          <Upload className="size-5" aria-hidden />
-        </IconButton>
       </div>
 
       {/* Search + selection controls */}
@@ -411,17 +393,6 @@ export function RoomContentEditor({ roomId, roomName, bibleMode = false }: RoomC
           transition={{ duration: 0.2 }}
           className="flex flex-col gap-3"
         >
-          {isLoci && hasItems && !selectMode ? (
-            <QuickAdd
-              front={quickFront}
-              back={quickBack}
-              onFront={setQuickFront}
-              onBack={setQuickBack}
-              onAdd={quickAdd}
-              frontRef={quickFrontRef}
-            />
-          ) : null}
-
           {isLoci ? (
             total === 0 ? (
               <EmptyContent
@@ -528,17 +499,6 @@ export function RoomContentEditor({ roomId, roomName, bibleMode = false }: RoomC
             onClick={() => setBulkDeleteOpen(true)}
           />
         </div>
-      ) : hasItems ? (
-        <Button
-          size="lg"
-          className="mt-3 w-full"
-          onClick={() =>
-            setEditor(isLoci ? { kind: 'locus', locus: null } : { kind: 'question', question: null })
-          }
-        >
-          <Plus className="size-5" aria-hidden />
-          {isLoci ? t('loci.addCard') : t('questions.addQuestion')}
-        </Button>
       ) : null}
 
       {/* Editor sheets */}
@@ -633,74 +593,31 @@ export function RoomContentEditor({ roomId, roomName, bibleMode = false }: RoomC
         cancelLabel={t('common.cancel')}
         onConfirm={confirmBulkDelete}
       />
-    </div>
-  )
-}
 
-function QuickAdd({
-  front,
-  back,
-  onFront,
-  onBack,
-  onAdd,
-  frontRef,
-}: {
-  front: string
-  back: string
-  onFront: (v: string) => void
-  onBack: (v: string) => void
-  onAdd: () => void
-  frontRef: Ref<HTMLInputElement>
-}) {
-  const { t } = useTranslation()
-  const backRef = useRef<HTMLInputElement>(null)
-  const valid = front.trim().length > 0 && back.trim().length > 0
-  return (
-    <div className="rounded-card border border-dashed border-accent/50 bg-card p-3 shadow-rest">
-      <div className="flex items-start gap-2.5">
-        <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full bg-info-surface text-accent">
-          <Plus className="size-[15px]" aria-hidden />
-        </span>
-        <div className="min-w-0 flex-1 space-y-2">
-          <TextField
-            ref={frontRef}
-            value={front}
-            onChange={(e) => onFront(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault()
-                backRef.current?.focus()
-              }
-            }}
-            placeholder={t('loci.quickFront')}
-            aria-label={t('loci.quickFront')}
-            enterKeyHint="next"
-          />
-          <TextField
-            ref={backRef}
-            value={back}
-            onChange={(e) => onBack(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault()
-                onAdd()
-              }
-            }}
-            placeholder={t('loci.quickBack')}
-            aria-label={t('loci.quickBack')}
-            enterKeyHint="done"
-          />
-        </div>
-        <IconButton
-          variant="solid"
-          aria-label={t('loci.addCard')}
-          disabled={!valid}
-          onClick={onAdd}
-          className="mt-0.5"
-        >
-          <Plus className="size-5" aria-hidden />
-        </IconButton>
-      </div>
+      <SpeedDial
+        label={t('loci.quickActions')}
+        className="bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+0.75rem)]"
+        actions={[
+          {
+            id: 'card',
+            label: t('loci.addCard'),
+            icon: <Plus className="size-5" aria-hidden />,
+            onSelect: () => setEditor({ kind: 'locus', locus: null }),
+          },
+          {
+            id: 'question',
+            label: t('questions.addQuestion'),
+            icon: <HelpCircle className="size-5" aria-hidden />,
+            onSelect: () => setEditor({ kind: 'question', question: null }),
+          },
+          {
+            id: 'import',
+            label: t('loci.transfer.importShort'),
+            icon: <Upload className="size-5" aria-hidden />,
+            onSelect: () => setTransferOpen(true),
+          },
+        ]}
+      />
     </div>
   )
 }

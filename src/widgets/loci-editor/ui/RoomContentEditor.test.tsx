@@ -31,25 +31,28 @@ function renderEditor({
 }
 
 describe('RoomContentEditor', () => {
-  it('lists a room’s cards with a quick-add row', async () => {
+  it('lists a room’s cards and offers the add dial', async () => {
     renderEditor({
       loci: [makeLocus({ id: 'l1', createdAt: at(1), roomId: 'r1', front: 'mihi', back: 'to me', order: 0 })],
     })
 
     expect(await screen.findByText('mihi')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /cards · 1/i })).toBeInTheDocument()
-    expect(screen.getByLabelText(/front — what to recall/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /add to room/i })).toBeInTheDocument()
   })
 
-  it('adds a card through the quick-add row', async () => {
+  it('adds a card through the dial and editor sheet', async () => {
     const user = userEvent.setup()
     renderEditor({
       loci: [makeLocus({ id: 'l1', createdAt: at(1), roomId: 'r1', front: 'seed', back: 'root', order: 0 })],
     })
     await screen.findByText('seed')
 
-    await user.type(screen.getByLabelText(/front — what to recall/i), 'novum')
-    await user.type(screen.getByLabelText(/back — what it means/i), 'new{Enter}')
+    await user.click(screen.getByRole('button', { name: /add to room/i }))
+    await user.click(screen.getByRole('button', { name: /add card/i }))
+    await user.type(screen.getByPlaceholderText('e.g. Zeus'), 'novum')
+    await user.type(screen.getByPlaceholderText(/king of the gods/i), 'new')
+    await user.click(screen.getByRole('button', { name: /save card/i }))
 
     expect(await screen.findByText('novum')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /cards · 2/i })).toBeInTheDocument()
