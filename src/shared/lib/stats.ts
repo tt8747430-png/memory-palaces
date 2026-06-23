@@ -1,4 +1,4 @@
-import type { SrsState } from './srs'
+import { srsStatus, type SrsState } from './srs'
 
 /**
  * Derived progress numbers. None of these are stored on entities — they are
@@ -81,4 +81,13 @@ export function palaceProgress(roomCompletions: ReadonlyArray<boolean>): number 
 export function isRoomUnlocked(index: number, roomCompletions: ReadonlyArray<boolean>): boolean {
   if (index <= 0) return true
   return roomCompletions[index - 1] === true
+}
+
+/** Tally a card set by maturity bucket (independent of due-ness). */
+export function cardMaturityCounts(
+  loci: ReadonlyArray<{ srs?: SrsState }>,
+): { new: number; learning: number; known: number } {
+  const counts = { new: 0, learning: 0, known: 0 }
+  for (const locus of loci) counts[srsStatus(locus.srs)] += 1
+  return counts
 }

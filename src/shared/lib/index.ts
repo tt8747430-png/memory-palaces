@@ -78,6 +78,7 @@ export {
   computeTrainingTotals,
   palaceProgress,
   isRoomUnlocked,
+  cardMaturityCounts,
   type LevelInfo,
   type TrainingTotals,
 } from './stats'

@@ -1006,6 +1006,8 @@ export const en = {
     hapticsHint: 'Vibrate on swipe commits and milestones (supported devices).',
     reducedMotion: 'Reduced motion',
     reducedMotionHint: 'Minimize animations across the app.',
+    dailyGoal: 'Daily goal',
+    dailyGoalHint: 'Cards, questions, matches or verses to practise each day to keep your streak.',
     notifications: 'Notifications',
     notificationsHint: 'Show milestone toasts — XP, level-ups, and streaks.',
     comingSoon: 'Soon',

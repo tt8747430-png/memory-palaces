@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  cardMaturityCounts,
   computeTrainingTotals,
   isLocusReviewed,
   isRoomCompleted,
@@ -14,6 +15,18 @@ const reviewed: { srs?: SrsState } = {
   srs: { due: '', interval: 1, ease: 2.5, reps: 2, lapses: 0, lastReviewed: '' },
 }
 const fresh: { srs?: SrsState } = {}
+
+describe('cardMaturityCounts', () => {
+  it('tallies new / learning / known', () => {
+    const loci = [
+      { srs: undefined },
+      { srs: { due: '', interval: 3, ease: 2.5, reps: 2, lapses: 0, lastReviewed: '' } },
+      { srs: { due: '', interval: 40, ease: 2.5, reps: 5, lapses: 0, lastReviewed: '' } },
+      { srs: { due: '', interval: 40, ease: 2.5, reps: 5, lapses: 0, lastReviewed: '' } },
+    ]
+    expect(cardMaturityCounts(loci)).toEqual({ new: 1, learning: 1, known: 2 })
+  })
+})
 
 describe('levelFromXp', () => {
   it('maps xp onto 250-xp levels', () => {

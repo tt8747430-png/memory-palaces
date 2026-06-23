@@ -30,7 +30,16 @@ import {
 } from '@/entities/profile'
 import type { SessionKind } from '@/entities/session'
 import { setPreferences } from '@/features/preferences'
-import { AppScreen, Avatar, ConfirmDialog, ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui'
+import { DAILY_GOAL_OPTIONS } from '@/shared/config/constants'
+import {
+  AppScreen,
+  Avatar,
+  ConfirmDialog,
+  ScreenHeader,
+  SegmentedControl,
+  SettingsRow,
+  SettingsSection,
+} from '@/shared/ui'
 
 export interface SettingsPageProps {
   /** All provided by the route wrapper so the page stays router-free. */
@@ -166,6 +175,20 @@ export function SettingsPage({
             checked={prefs.reducedMotion}
             onCheckedChange={(value) => update({ reducedMotion: value })}
           />
+          <div className="px-4 py-3">
+            <p className="text-[length:var(--p-text-body)] font-semibold text-heading">
+              {t('settings.dailyGoal')}
+            </p>
+            <p className="mb-2.5 text-[length:var(--p-text-label)] text-muted-foreground">
+              {t('settings.dailyGoalHint')}
+            </p>
+            <SegmentedControl
+              aria-label={t('settings.dailyGoal')}
+              value={String(prefs.dailyGoal)}
+              onChange={(value) => update({ dailyGoal: Number(value) })}
+              options={DAILY_GOAL_OPTIONS.map((n) => ({ value: String(n), label: String(n) }))}
+            />
+          </div>
           <SettingsRow
             kind="soon"
             icon={<Moon />}
