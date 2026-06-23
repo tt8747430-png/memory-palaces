@@ -3,10 +3,14 @@ import { DEFAULT_PRIVACY } from '@/entities/preferences'
 import {
   migratePreferencesV1,
   migratePreferencesV2,
+  migratePreferencesV3,
   migrateProfileV1,
+  migrateProgressV1,
   type PreferencesV0,
   type PreferencesV1,
+  type PreferencesV2,
   type ProfileV0,
+  type ProgressV0,
 } from './migrations'
 
 const v0: PreferencesV0 = {
@@ -90,5 +94,52 @@ describe('migrateProfileV1', () => {
     expect(v1.name).toBe('Ada')
     expect(v1.email).toBe('ada@x.io')
     expect(v1.updatedAt).toBe('2026-01-02T00:00:00.000Z')
+  })
+})
+
+describe('migrateProgressV1', () => {
+  const v0Progress: ProgressV0 = {
+    id: 'progress',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-02T00:00:00.000Z',
+    xp: 10,
+    streakCount: 3,
+    longestStreak: 3,
+    lastTrainingDate: '2026-01-09',
+    streakFreezes: 0,
+    bestQuizAccuracy: 0,
+    trainingDays: ['2026-01-09'],
+  }
+
+  it('backfills an empty day tally and keeps the streak history', () => {
+    const v1 = migrateProgressV1(v0Progress)
+    expect(v1.activeDayKey).toBeNull()
+    expect(v1.activeDayCount).toBe(0)
+    expect(v1.streakCount).toBe(3)
+    expect(v1.trainingDays).toEqual(['2026-01-09'])
+  })
+})
+
+describe('migratePreferencesV3', () => {
+  const v2: PreferencesV2 = {
+    id: 'preferences',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-04T00:00:00.000Z',
+    soundEffects: true,
+    haptics: true,
+    reducedMotion: false,
+    notifications: true,
+    darkMode: false,
+    language: 'en',
+    palacesView: 'grid',
+    palacesSort: 'recent',
+    privacy: DEFAULT_PRIVACY,
+  }
+
+  it('backfills the default daily goal and keeps saved fields', () => {
+    const v3 = migratePreferencesV3(v2)
+    expect(v3.dailyGoal).toBe(5)
+    expect(v3.palacesView).toBe('grid')
+    expect(v3.updatedAt).toBe('2026-01-04T00:00:00.000Z')
   })
 })

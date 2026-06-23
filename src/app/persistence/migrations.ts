@@ -2,6 +2,7 @@ import { DEFAULT_PREFERENCES, type Preferences } from '@/entities/preferences'
 import { DEFAULT_PROFILE, type Profile } from '@/entities/profile'
 import type { Locus } from '@/entities/locus'
 import type { Question } from '@/entities/question'
+import type { Progress } from '@/entities/progress'
 
 /** v0 → v1: cards/questions gained an explicit `order` field. Existing docs backfill to
  * 0; the stores tiebreak equal orders by `createdAt`, so legacy items keep their original
@@ -18,7 +19,7 @@ export function migrateQuestionV1(oldDoc: Omit<Question, 'order'>): Question {
  * palacesView/palacesSort) were added. */
 export type PreferencesV0 = Omit<
   Preferences,
-  'darkMode' | 'language' | 'privacy' | 'palacesView' | 'palacesSort'
+  'darkMode' | 'language' | 'privacy' | 'palacesView' | 'palacesSort' | 'dailyGoal'
 >
 
 /** v0 → v1: backfill the new fields with defaults. Saved values always win, so the
@@ -29,7 +30,7 @@ export function migratePreferencesV1(oldDoc: PreferencesV0): Preferences {
 }
 
 /** The v1 preferences shape — before the Palaces screen's view/sort were persisted. */
-export type PreferencesV1 = Omit<Preferences, 'palacesView' | 'palacesSort'>
+export type PreferencesV1 = Omit<Preferences, 'palacesView' | 'palacesSort' | 'dailyGoal'>
 
 /** v1 → v2: backfill the Palaces view/sort with defaults; stored fields win. */
 export function migratePreferencesV2(oldDoc: PreferencesV1): Preferences {
@@ -42,4 +43,20 @@ export type ProfileV0 = Omit<Profile, 'username'>
 /** v0 → v1: backfill an empty username; saved fields win (stored doc spread last). */
 export function migrateProfileV1(oldDoc: ProfileV0): Profile {
   return { username: DEFAULT_PROFILE.username, ...oldDoc }
+}
+
+/** The v0 progress shape — before the per-day practice tally was added. */
+export type ProgressV0 = Omit<Progress, 'activeDayKey' | 'activeDayCount'>
+
+/** v0 → v1: backfill an empty tally; existing streak history is untouched. */
+export function migrateProgressV1(oldDoc: ProgressV0): Progress {
+  return { ...oldDoc, activeDayKey: null, activeDayCount: 0 }
+}
+
+/** The v2 preferences shape — before the daily goal was added. */
+export type PreferencesV2 = Omit<Preferences, 'dailyGoal'>
+
+/** v2 → v3: backfill the default daily goal; stored fields win. */
+export function migratePreferencesV3(oldDoc: PreferencesV2): Preferences {
+  return { ...DEFAULT_PREFERENCES, ...oldDoc }
 }

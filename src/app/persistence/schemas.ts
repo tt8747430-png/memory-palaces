@@ -177,7 +177,7 @@ export const questionSchema: RxJsonSchema<Question> = {
 }
 
 export const progressSchema: RxJsonSchema<Progress> = {
-  version: 0,
+  version: 1,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -191,6 +191,8 @@ export const progressSchema: RxJsonSchema<Progress> = {
     streakFreezes: { type: 'number' },
     bestQuizAccuracy: { type: 'number' },
     trainingDays: { type: 'array', items: { type: 'string' } },
+    activeDayKey: { type: ['string', 'null'] },
+    activeDayCount: { type: 'number' },
   },
   required: [
     'id',
@@ -203,11 +205,13 @@ export const progressSchema: RxJsonSchema<Progress> = {
     'streakFreezes',
     'bestQuizAccuracy',
     'trainingDays',
+    'activeDayKey',
+    'activeDayCount',
   ],
 }
 
 export const preferencesSchema: RxJsonSchema<Preferences> = {
-  version: 2,
+  version: 3,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -220,6 +224,7 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
     notifications: { type: 'boolean' },
     darkMode: { type: 'boolean' },
     language: { type: 'string' },
+    dailyGoal: { type: 'number' },
     palacesView: { type: 'string', enum: ['grid', 'list'] },
     palacesSort: { type: 'string', enum: ['recent', 'progress', 'name', 'category'] },
     privacy: {
@@ -251,6 +256,7 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
     'notifications',
     'darkMode',
     'language',
+    'dailyGoal',
     'palacesView',
     'palacesSort',
     'privacy',

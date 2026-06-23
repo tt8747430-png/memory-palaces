@@ -26,7 +26,9 @@ import {
   migrateLocusV1,
   migratePreferencesV1,
   migratePreferencesV2,
+  migratePreferencesV3,
   migrateProfileV1,
+  migrateProgressV1,
   migrateQuestionV1,
 } from './migrations'
 
@@ -62,10 +64,14 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
     rooms: { schema: roomSchema },
     loci: { schema: locusSchema, migrationStrategies: { 1: migrateLocusV1 } },
     questions: { schema: questionSchema, migrationStrategies: { 1: migrateQuestionV1 } },
-    progress: { schema: progressSchema },
+    progress: { schema: progressSchema, migrationStrategies: { 1: migrateProgressV1 } },
     preferences: {
       schema: preferencesSchema,
-      migrationStrategies: { 1: migratePreferencesV1, 2: migratePreferencesV2 },
+      migrationStrategies: {
+        1: migratePreferencesV1,
+        2: migratePreferencesV2,
+        3: migratePreferencesV3,
+      },
     },
     profiles: {
       schema: profileSchema,
