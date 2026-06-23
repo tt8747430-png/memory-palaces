@@ -288,6 +288,32 @@ const reviewRoute = createRoute({
   component: ReviewRoute,
 })
 
+function RoomReviewRoute() {
+  const { roomId } = roomReviewRoute.useParams()
+  const navigate = useNavigate()
+  const back = useBack(() => navigate({ to: ROUTES.roomHub, params: { roomId } }))
+  return <ReviewPage scope={{ kind: 'room', roomId }} onBack={back} />
+}
+
+const roomReviewRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.roomReview,
+  component: RoomReviewRoute,
+})
+
+function PalaceReviewRoute() {
+  const { palaceId } = palaceReviewRoute.useParams()
+  const navigate = useNavigate()
+  const back = useBack(() => navigate({ to: ROUTES.palaceDetail, params: { palaceId } }))
+  return <ReviewPage scope={{ kind: 'palace', palaceId }} onBack={back} />
+}
+
+const palaceReviewRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.palaceReview,
+  component: PalaceReviewRoute,
+})
+
 function QuizRoute() {
   const { palaceId } = quizRoute.useParams()
   const navigate = useNavigate()
@@ -528,6 +554,8 @@ const routeTree = rootRoute.addChildren([
   roomMatchRoute,
   roomVerseRoute,
   roomQuizRoute,
+  roomReviewRoute,
+  palaceReviewRoute,
   reviewRoute,
   quizRoute,
   profileRoute,

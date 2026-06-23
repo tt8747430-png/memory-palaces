@@ -14,6 +14,8 @@ export const ROUTES = {
   roomMatch: '/rooms/$roomId/match',
   roomVerse: '/rooms/$roomId/verse',
   roomQuiz: '/rooms/$roomId/quiz',
+  roomReview: '/rooms/$roomId/review',
+  palaceReview: '/palaces/$palaceId/review',
   review: '/review',
   profile: '/profile',
   streak: '/streak',

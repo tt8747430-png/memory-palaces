@@ -24,12 +24,14 @@ import { AppScreen, Button } from '@/shared/ui'
 export interface ReviewPageProps {
   /** Provided by the route wrapper so the page stays router-free. */
   onBack?: () => void
+  /** Restrict the due queue to a single room or palace; absent reviews the whole library. */
+  scope?: { kind: 'room'; roomId: string } | { kind: 'palace'; palaceId: string }
 }
 
 /** Daily Review — the cross-library queue of every card due now, regardless of
  * palace. A fixed review session (no browse/scope/edit): the whole point is the
  * spaced-repetition catch-up. */
-export function ReviewPage({ onBack }: ReviewPageProps) {
+export function ReviewPage({ onBack, scope }: ReviewPageProps) {
   const { t } = useTranslation()
   const locusStore = useLocusStoreApi()
   const roomStore = useRoomStoreApi()
@@ -55,15 +57,23 @@ export function ReviewPage({ onBack }: ReviewPageProps) {
 
   const byId = useMemo(() => new Map(allLoci.map((locus) => [locus.id, locus])), [allLoci])
   const due = useMemo(() => getDueLoci(palaces, rooms, allLoci, now), [palaces, rooms, allLoci, now])
+  const scopedDue = useMemo(() => {
+    if (!scope) return due
+    if (scope.kind === 'room') return due.filter((card) => card.roomId === scope.roomId)
+    return due.filter((card) => card.palaceId === scope.palaceId)
+  }, [due, scope])
   const liveCards = useMemo<StudyCard[]>(
     () =>
-      due.flatMap((card) => {
+      scopedDue.flatMap((card) => {
         const locus = byId.get(card.locus.id)
         return locus ? [{ locus, palaceName: card.palaceName, roomTitle: card.roomTitle }] : []
       }),
-    [due, byId],
+    [scopedDue, byId],
   )
-  const livePalaceCount = useMemo(() => new Set(due.map((card) => card.palaceId)).size, [due])
+  const livePalaceCount = useMemo(
+    () => new Set(scopedDue.map((card) => card.palaceId)).size,
+    [scopedDue],
+  )
 
   // Freeze the due queue at the first ready render. Grading moves a card out of the
   // live due set, which would otherwise shrink the deck mid-session and unmount the
