@@ -17,7 +17,6 @@ import {
 } from 'lucide-react'
 import {
   ContentImportError,
-  countDueLoci,
   countDuePerPalace,
   isRoomCompleted,
   palaceProgress,
@@ -62,8 +61,6 @@ import { createFolder, deleteFolder, editFolder } from '@/features/folder'
 import { setPreferences } from '@/features/preferences'
 import { PalaceList, type PalaceListItem } from '@/widgets/palace-list'
 import { HomeHeader } from '@/widgets/home-header'
-import { TodayTrainingCard } from '@/widgets/today-training-card'
-import { UpNextCard, pickUpNextRooms } from '@/widgets/up-next-card'
 import {
   ActionSheet,
   AppScreen,
@@ -82,14 +79,12 @@ export interface PalacesPageProps {
   onOpenPalace?: (id: string) => void
   /** Open the create sheet on mount (a `?create` deep link still opens it). */
   openCreate?: boolean
-  /** Launch the cross-palace daily review; wired by the route wrapper. */
-  onStartReview?: () => void
   /** Open the profile screen; wired by the route wrapper. */
   onOpenProfile?: () => void
   /** Open notification history; wired by the route wrapper. */
   onOpenNotifications?: () => void
-  /** Drop straight into a room's training; wired by the route wrapper. */
-  onTrainRoom?: (roomId: string) => void
+  /** Open the streak screen from the header ring; wired by the route wrapper. */
+  onOpenStreak?: () => void
 }
 
 // Built-in collection ids. Folder ids are UUIDs, so they never collide with these.
@@ -114,10 +109,9 @@ const SORT_LABEL_KEY = {
 export function PalacesPage({
   onOpenPalace,
   openCreate = false,
-  onStartReview,
   onOpenProfile,
   onOpenNotifications,
-  onTrainRoom,
+  onOpenStreak,
 }: PalacesPageProps = {}) {
   const { t } = useTranslation()
   const header = useStickyHeader()
@@ -207,19 +201,7 @@ export function PalacesPage({
     [palaces, rooms, loci, now],
   )
 
-  // The cross-palace review queue and the next rooms to drill — the daily loop the home
-  // used to own, now living on the one landing screen.
-  const dueCount = useMemo(() => countDueLoci(palaces, rooms, loci, now), [palaces, rooms, loci, now])
-  const upNext = useMemo(() => pickUpNextRooms(palaces, rooms, loci, now), [palaces, rooms, loci, now])
   const reviewerName = profile.name.trim() || session?.displayName || t('common.guest')
-
-  // The training hero drops into the top suggested room, or opens the create sheet when
-  // there's nothing to drill yet.
-  const handleStartTraining = () => {
-    const top = upNext[0]
-    if (top) onTrainRoom?.(top.roomId)
-    else setCreateOpen(true)
-  }
 
   // Map each palace to its list item, deriving progress from its rooms/loci.
   const items = useMemo<PalaceListItem[]>(
@@ -488,6 +470,12 @@ export function PalacesPage({
           avatar={profile.avatar}
           xp={progress?.xp ?? 0}
           unreadCount={unreadCount}
+          streak={{
+            count: progress?.streakCount ?? 0,
+            dayCount: progress?.activeDayCount ?? 0,
+            dailyGoal: prefs.dailyGoal,
+          }}
+          onOpenStreak={() => onOpenStreak?.()}
           onOpenProfile={() => onOpenProfile?.()}
           onOpenNotifications={() => onOpenNotifications?.()}
           search={{
@@ -503,24 +491,6 @@ export function PalacesPage({
         />
       }
     >
-      {active.length > 0 ? (
-        <>
-          <TodayTrainingCard
-            className="mt-6"
-            hasPalaces
-            hasTrainableRoom={upNext.length > 0}
-            dueCount={dueCount}
-            streakCount={progress?.streakCount ?? 0}
-            onStartReview={() => onStartReview?.()}
-            onStartTraining={handleStartTraining}
-            onCreatePalace={() => setCreateOpen(true)}
-          />
-          {upNext.length > 0 ? (
-            <UpNextCard className="mt-5" rooms={upNext} onOpenRoom={(id) => onTrainRoom?.(id)} />
-          ) : null}
-        </>
-      ) : null}
-
       <div className="mt-6">
         <CollectionRail
           collections={collections}

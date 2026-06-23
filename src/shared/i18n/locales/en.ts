@@ -263,6 +263,7 @@ export const en = {
     longest: 'Longest streak',
   },
   home: {
+    streakAria: '{{count}}-day streak — {{done}} of {{goal}} practised today. Open streak.',
     greeting: 'Welcome back, {{name}}',
     greetingGuest: 'Welcome, {{name}}',
     subtitle: 'A calm place to train your memory.',

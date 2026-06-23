@@ -1,7 +1,7 @@
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-import { Bell, BellRing, Search, X, Zap } from 'lucide-react'
-import { levelFromXp, type StickyHeader } from '@/shared/lib'
+import { Bell, BellRing, Flame, Search, X, Zap } from 'lucide-react'
+import { cn, levelFromXp, type StickyHeader } from '@/shared/lib'
 import { Avatar, IconButton, StickyBar, TextField } from '@/shared/ui'
 
 /** Inline search wiring for the landing header. When `open`, the header swaps its identity
@@ -31,6 +31,9 @@ export interface HomeHeaderProps {
   /** Optional inline search; when provided, a search button joins the bell and can take
    * over the whole bar. Omit it for surfaces that don't search. */
   search?: HomeHeaderSearch
+  /** Live streak count + today's progress toward the goal; omit to hide the ring. */
+  streak?: { count: number; dayCount: number; dailyGoal: number }
+  onOpenStreak?: () => void
 }
 
 const EASE_OUT = [0.22, 1, 0.36, 1] as const
@@ -49,6 +52,8 @@ export function HomeHeader({
   onOpenProfile,
   onOpenNotifications,
   search,
+  streak,
+  onOpenStreak,
 }: HomeHeaderProps) {
   const { t } = useTranslation()
   const { level, xpInLevel, xpForNextLevel } = levelFromXp(xp)
@@ -137,6 +142,33 @@ export function HomeHeader({
       </button>
 
       <div className="flex shrink-0 items-center gap-1">
+        {streak && onOpenStreak ? (
+          <button
+            type="button"
+            onClick={onOpenStreak}
+            aria-label={t('home.streakAria', {
+              count: streak.count,
+              done: streak.dayCount,
+              goal: streak.dailyGoal,
+            })}
+            className="inline-flex shrink-0 items-center gap-1 rounded-full bg-card px-2.5 py-1 text-[length:var(--p-text-label)] font-semibold text-heading shadow-rest transition-transform active:scale-95"
+          >
+            <Flame
+              className={cn(
+                'size-4',
+                streak.dayCount >= streak.dailyGoal
+                  ? 'text-[var(--warning)]'
+                  : 'text-muted-foreground',
+              )}
+              fill={streak.dayCount >= streak.dailyGoal ? 'currentColor' : 'none'}
+              aria-hidden
+            />
+            <span className="tabular-nums">{streak.count}</span>
+            <span className="text-[length:var(--p-text-tiny)] tabular-nums text-muted-foreground">
+              {streak.dayCount}/{streak.dailyGoal}
+            </span>
+          </button>
+        ) : null}
         {search ? (
           <IconButton variant="ghost" aria-label={search.label} onClick={search.onOpen}>
             <Search className="size-5" aria-hidden />
