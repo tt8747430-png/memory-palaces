@@ -51,8 +51,8 @@ describe('applyScope', () => {
     expect(applyScope(deck, { kind: 'new' }, NOW).map((c) => c.id)).toEqual(['new'])
   })
 
-  it('learning → reviewed but not yet mature, not due', () => {
-    expect(applyScope(deck, { kind: 'learning' }, NOW).map((c) => c.id)).toEqual(['learning'])
+  it('learning → reviewed but not yet mature, due or not', () => {
+    expect(applyScope(deck, { kind: 'learning' }, NOW).map((c) => c.id)).toEqual(['due', 'learning'])
   })
 
   it('flagged → only flagged cards', () => {
@@ -69,7 +69,7 @@ describe('applyScope', () => {
 
 describe('scopeCounts', () => {
   it('counts each filter live', () => {
-    expect(scopeCounts(deck, NOW)).toEqual({ all: 5, due: 2, new: 1, learning: 1, flagged: 1 })
+    expect(scopeCounts(deck, NOW)).toEqual({ all: 5, due: 2, new: 1, learning: 2, flagged: 1 })
   })
 })
 

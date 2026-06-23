@@ -37,9 +37,9 @@ export function applyScope(loci: Locus[], scope: Scope, now: number): Locus[] {
     case 'due':
       return loci.filter((locus) => isDue(locus.srs, now))
     case 'new':
-      return loci.filter((locus) => srsStatus(locus.srs, now) === 'new')
+      return loci.filter((locus) => srsStatus(locus.srs) === 'new')
     case 'learning':
-      return loci.filter((locus) => srsStatus(locus.srs, now) === 'learning')
+      return loci.filter((locus) => srsStatus(locus.srs) === 'learning')
     case 'flagged':
       return loci.filter((locus) => locus.flagged)
     case 'range':
@@ -62,8 +62,8 @@ export function scopeCounts(loci: Locus[], now: number): ScopeCounts {
   return {
     all: loci.length,
     due: loci.filter((locus) => isDue(locus.srs, now)).length,
-    new: loci.filter((locus) => srsStatus(locus.srs, now) === 'new').length,
-    learning: loci.filter((locus) => srsStatus(locus.srs, now) === 'learning').length,
+    new: loci.filter((locus) => srsStatus(locus.srs) === 'new').length,
+    learning: loci.filter((locus) => srsStatus(locus.srs) === 'learning').length,
     flagged: loci.filter((locus) => locus.flagged).length,
   }
 }
