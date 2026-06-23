@@ -256,6 +256,7 @@ export const en = {
   },
   streak: {
     title: 'Streak',
+    reviewDue: 'Review all cards due',
     dayStreak: 'day streak',
     keepItUp: 'Keep the flame alive: train today to extend your streak.',
     startToday: 'Train today to light your streak.',

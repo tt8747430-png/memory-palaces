@@ -136,10 +136,9 @@ function HomeRoute() {
     <PalacesPage
       openCreate={create}
       onOpenPalace={(palaceId) => navigate({ to: ROUTES.palaceDetail, params: { palaceId } })}
-      onStartReview={() => navigate({ to: ROUTES.review })}
       onOpenProfile={() => navigate({ to: ROUTES.profile })}
       onOpenNotifications={() => navigate({ to: ROUTES.notifications })}
-      onTrainRoom={(roomId) => navigate({ to: ROUTES.roomTrain, params: { roomId } })}
+      onOpenStreak={() => navigate({ to: ROUTES.streak })}
     />
   )
 }
@@ -329,7 +328,7 @@ const profileRoute = createRoute({
 function StreakRoute() {
   const navigate = useNavigate()
   const back = useBack(() => navigate({ to: ROUTES.profile }))
-  return <StreakPage onBack={back} />
+  return <StreakPage onBack={back} onReview={() => navigate({ to: ROUTES.review })} />
 }
 
 const streakRoute = createRoute({
