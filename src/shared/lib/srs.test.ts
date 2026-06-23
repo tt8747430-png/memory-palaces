@@ -73,21 +73,23 @@ describe('schedule', () => {
   })
 })
 
-describe('srsStatus', () => {
+describe('srsStatus (maturity)', () => {
   it('is "new" with no reps', () => {
-    expect(srsStatus(undefined, NOW)).toBe('new')
+    expect(srsStatus(undefined)).toBe('new')
   })
 
-  it('is "due" when past the due date', () => {
-    const srs = schedule(undefined, 'good', NOW)
-    expect(srsStatus(srs, NOW + 2 * DAY_MS)).toBe('due')
+  it('reports maturity regardless of due date', () => {
+    const card = schedule(undefined, 'good', NOW) // reps 1, interval 1
+    expect(srsStatus(card)).toBe('learning')
+    const pastDue: SrsState = { ...card, due: new Date(NOW - DAY_MS).toISOString() }
+    expect(srsStatus(pastDue)).toBe('learning')
   })
 
   it('is "learning" below the mature interval and "known" at/above it', () => {
     const learning = schedule(undefined, 'good', NOW)
-    expect(srsStatus(learning, NOW)).toBe('learning')
+    expect(srsStatus(learning)).toBe('learning')
     const known: SrsState = { ...learning, interval: 21 }
-    expect(srsStatus(known, NOW)).toBe('known')
+    expect(srsStatus(known)).toBe('known')
   })
 })
 
@@ -96,7 +98,7 @@ describe('markKnown', () => {
     const known = markKnown(undefined, NOW)
     expect(known.interval).toBe(180)
     expect(known.reps).toBeGreaterThanOrEqual(4)
-    expect(srsStatus(known, NOW)).toBe('known')
+    expect(srsStatus(known)).toBe('known')
   })
 })
 

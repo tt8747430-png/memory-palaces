@@ -21,7 +21,7 @@ export interface SrsState {
   lastReviewed: string
 }
 
-export type SrsStatus = 'new' | 'due' | 'learning' | 'known'
+export type SrsStatus = 'new' | 'learning' | 'known'
 
 const DAY_MS = 86_400_000
 const MIN_EASE = 1.3
@@ -74,12 +74,12 @@ export function schedule(prev: SrsState | undefined, grade: Grade, now: number):
   }
 }
 
-/** Bucket a card's schedule into a coarse status for list badges. */
-export function srsStatus(srs: SrsState | undefined, now: number): SrsStatus {
+/** A card's maturity bucket, independent of whether it is due: New (never
+ * successfully reviewed) → Learning (reviewed, interval still short) → Known
+ * (interval matured). Due-ness is a separate, temporal concern — see `isDue`. */
+export function srsStatus(srs: SrsState | undefined): SrsStatus {
   if (!srs || srs.reps === 0) return 'new'
-  if (isDue(srs, now)) return 'due'
-  if (srs.interval >= MATURE_INTERVAL) return 'known'
-  return 'learning'
+  return srs.interval >= MATURE_INTERVAL ? 'known' : 'learning'
 }
 
 /** Force a card into a long-interval "known" schedule (manual mastery). */
