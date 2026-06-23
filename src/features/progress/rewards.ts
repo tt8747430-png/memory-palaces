@@ -6,6 +6,8 @@ const STUDY_XP_MAX = 150
 
 export const XP_PER_CORRECT = 20
 export const XP_MATCH = 60
+/** XP for memorising a single verse (bible mode). */
+export const XP_VERSE = 20
 
 const clamp = (value: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, value))
 

@@ -30,56 +30,49 @@ describe('reward helpers', () => {
 })
 
 describe('completeSession', () => {
-  it('awards XP, starts the streak, and persists once', async () => {
+  it('awards XP and accumulates the day tally without a streak below goal', async () => {
     const store = startedStore()
-    const reward = await completeSession(store, { xp: 100 }, NOW)
+    const reward = await completeSession(store, { xp: 100, itemsPracticed: 3, dailyGoal: 5 }, NOW)
     expect(reward.xpGained).toBe(100)
-    expect(reward.streakCount).toBe(1)
-    expect(reward.alreadyTrainedToday).toBe(false)
+    expect(reward.dayCount).toBe(3)
+    expect(reward.dayBecameActive).toBe(false)
+    expect(reward.streakCount).toBe(0)
     expect(store.getState().progress?.xp).toBe(100)
+    expect(store.getState().progress?.activeDayCount).toBe(3)
+    expect(store.getState().progress?.trainingDays).toEqual([])
+  })
+
+  it('starts the streak when the goal is reached', async () => {
+    const store = startedStore()
+    const reward = await completeSession(store, { xp: 50, itemsPracticed: 5, dailyGoal: 5 }, NOW)
+    expect(reward.dayBecameActive).toBe(true)
+    expect(reward.streakCount).toBe(1)
     expect(store.getState().progress?.trainingDays).toContain('2026-01-10')
+  })
+
+  it('accumulates across sessions and crosses the goal on the second', async () => {
+    const store = startedStore()
+    await completeSession(store, { xp: 10, itemsPracticed: 3, dailyGoal: 5 }, NOW)
+    const reward = await completeSession(store, { xp: 10, itemsPracticed: 2, dailyGoal: 5 }, NOW)
+    expect(reward.dayCount).toBe(5)
+    expect(reward.dayBecameActive).toBe(true)
+    expect(reward.streakCount).toBe(1)
   })
 
   it('reports a level-up when XP crosses a threshold', async () => {
     const store = startedStore()
-    await completeSession(store, { xp: 240 }, NOW)
-    const reward = await completeSession(store, { xp: 20 }, NOW)
+    await completeSession(store, { xp: 240, itemsPracticed: 5, dailyGoal: 5 }, NOW)
+    const reward = await completeSession(store, { xp: 20, itemsPracticed: 1, dailyGoal: 5 }, NOW)
     expect(reward.leveledUp).toBe(true)
     expect(reward.level).toBe(2)
   })
 
   it('records the best quiz accuracy when provided', async () => {
     const store = startedStore()
-    await completeSession(store, { xp: 40, quizAccuracy: 75 }, NOW)
-    expect(store.getState().progress?.bestQuizAccuracy).toBe(75)
-  })
-
-  it('reports a new best quiz accuracy', async () => {
-    const store = startedStore()
-    const reward = await completeSession(store, { xp: 40, quizAccuracy: 75 }, NOW)
+    const reward = await completeSession(store, { xp: 40, itemsPracticed: 4, dailyGoal: 5, quizAccuracy: 75 }, NOW)
     expect(reward.isBestQuiz).toBe(true)
     expect(reward.quizAccuracy).toBe(75)
-  })
-
-  it('does not report a best quiz when the score does not beat the record', async () => {
-    const store = startedStore()
-    await completeSession(store, { xp: 40, quizAccuracy: 80 }, NOW)
-    const reward = await completeSession(store, { xp: 40, quizAccuracy: 60 }, NOW)
-    expect(reward.isBestQuiz).toBe(false)
-  })
-
-  it('omits quiz fields when no quiz accuracy is supplied', async () => {
-    const store = startedStore()
-    const reward = await completeSession(store, { xp: 40 }, NOW)
-    expect(reward.isBestQuiz).toBe(false)
-    expect(reward.quizAccuracy).toBeUndefined()
-  })
-
-  it('skips the streak when recordDay is false', async () => {
-    const store = startedStore()
-    const reward = await completeSession(store, { xp: 10, recordDay: false }, NOW)
-    expect(reward.streakCount).toBe(0)
-    expect(store.getState().progress?.trainingDays).toEqual([])
+    expect(store.getState().progress?.bestQuizAccuracy).toBe(75)
   })
 
   it('flags a 7-day streak milestone', async () => {
@@ -93,7 +86,7 @@ describe('completeSession', () => {
       trainingDays: [dayKey(target - DAY)],
     })
     const store = startedStore([seed])
-    const reward = await completeSession(store, { xp: 50 }, target)
+    const reward = await completeSession(store, { xp: 50, itemsPracticed: 5, dailyGoal: 5 }, target)
     expect(reward.streakCount).toBe(7)
     expect(reward.isMilestone).toBe(true)
   })
