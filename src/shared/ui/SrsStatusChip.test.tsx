@@ -24,7 +24,7 @@ const srs = (over: Partial<SrsState>): SrsState => ({
 function renderChip(state?: SrsState) {
   render(
     <I18nextProvider i18n={i18n}>
-      <SrsStatusChip srs={state} now={NOW} />
+      <SrsStatusChip srs={state} />
     </I18nextProvider>,
   )
 }
@@ -35,9 +35,9 @@ describe('SrsStatusChip', () => {
     expect(screen.getByText('New')).toBeInTheDocument()
   })
 
-  it('labels a past-due reviewed card as Due', () => {
+  it('labels a past-due reviewed card by its maturity, not due', () => {
     renderChip(srs({ due: iso(NOW - DAY), reps: 2 }))
-    expect(screen.getByText('Due')).toBeInTheDocument()
+    expect(screen.getByText('Learning')).toBeInTheDocument()
   })
 
   it('labels a long-interval, not-due card as Known', () => {

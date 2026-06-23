@@ -56,7 +56,7 @@ export function pickUpNextRooms(
     if (roomLoci.length === 0) continue
 
     const due = roomLoci.filter((locus) => locus.srs && isDue(locus.srs, now)).length
-    const known = roomLoci.filter((locus) => srsStatus(locus.srs, now) === 'known').length
+    const known = roomLoci.filter((locus) => srsStatus(locus.srs) === 'known').length
     const started = roomLoci.some((locus) => locus.srs)
     if (due === 0 && known === roomLoci.length) continue // mastered, nothing to do
 

@@ -237,17 +237,15 @@ export function RoomHubPage({
   )
 }
 
-const STATUS_ORDER: SrsStatus[] = ['known', 'learning', 'due', 'new']
+const STATUS_ORDER: SrsStatus[] = ['known', 'learning', 'new']
 const STATUS_FILL: Record<SrsStatus, string> = {
   known: 'bg-success',
   learning: 'bg-secondary',
-  due: 'bg-warning',
   new: 'bg-[var(--divider)]',
 }
 const STATUS_DOT: Record<SrsStatus, string> = {
   known: 'bg-success',
   learning: 'bg-secondary',
-  due: 'bg-warning',
   new: 'bg-[var(--text-faint)]',
 }
 
@@ -258,9 +256,8 @@ function RoomProgress({ loci, questionCount }: { loci: Locus[]; questionCount: n
   const total = loci.length
 
   const counts = useMemo(() => {
-    const now = Date.now()
-    const tally: Record<SrsStatus, number> = { new: 0, due: 0, learning: 0, known: 0 }
-    for (const locus of loci) tally[srsStatus(locus.srs, now)] += 1
+    const tally: Record<SrsStatus, number> = { new: 0, learning: 0, known: 0 }
+    for (const locus of loci) tally[srsStatus(locus.srs)] += 1
     return tally
   }, [loci])
 

@@ -32,15 +32,14 @@ describe('resetPalaceSrs', () => {
 
     await resetPalaceSrs(roomStore, locusStore, 'p1')
 
-    const now = Date.now()
     const p1Loci = [
       ...lociForRoom(selectLoci(locusStore.getState()), roomA.id),
       ...lociForRoom(selectLoci(locusStore.getState()), roomB.id),
     ]
-    expect(p1Loci.every((locus) => srsStatus(locus.srs, now) === 'new')).toBe(true)
+    expect(p1Loci.every((locus) => srsStatus(locus.srs) === 'new')).toBe(true)
 
     const untouched = selectLoci(locusStore.getState()).find((locus) => locus.id === kept.id)
-    expect(srsStatus(untouched?.srs, now)).toBe('known')
+    expect(srsStatus(untouched?.srs)).toBe('known')
   })
 
   it('is a no-op for a palace with no rooms', async () => {

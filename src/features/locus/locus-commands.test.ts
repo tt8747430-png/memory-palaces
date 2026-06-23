@@ -81,9 +81,8 @@ describe('markRoomKnown', () => {
 
     await markRoomKnown(store, 'r1')
 
-    const now = Date.now()
     const inRoom = lociForRoom(selectLoci(store.getState()), 'r1')
-    expect(inRoom.every((locus) => srsStatus(locus.srs, now) === 'known')).toBe(true)
+    expect(inRoom.every((locus) => srsStatus(locus.srs) === 'known')).toBe(true)
     const untouched = store.getState().loci.find((locus) => locus.id === other.id)
     expect(untouched?.srs).toBeUndefined()
   })
@@ -98,10 +97,9 @@ describe('resetRoomSrs', () => {
 
     await resetRoomSrs(store, 'r1')
 
-    const now = Date.now()
     const inRoom = lociForRoom(selectLoci(store.getState()), 'r1')
     expect(inRoom.every((locus) => locus.srs === undefined)).toBe(true)
-    expect(inRoom.every((locus) => srsStatus(locus.srs, now) === 'new')).toBe(true)
+    expect(inRoom.every((locus) => srsStatus(locus.srs) === 'new')).toBe(true)
   })
 })
 

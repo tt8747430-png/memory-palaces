@@ -33,7 +33,7 @@ import {
 import { deleteRoom, duplicateRoom, moveRoom, RoomEditorSheet, type RoomEditorTarget } from '@/features/room'
 import { resetRoomSrs } from '@/features/locus'
 import { ImportRoomsSheet } from '@/features/content'
-import { isLocusReviewed, isRoomCompleted, palaceProgress, roomProgress, srsStatus } from '@/shared/lib'
+import { isDue, isLocusReviewed, isRoomCompleted, palaceProgress, roomProgress, srsStatus } from '@/shared/lib'
 import { RoomList, type RoomListItem } from '@/widgets/room-list'
 import {
   AppScreen,
@@ -101,9 +101,8 @@ export function PalaceDetailPage({
       let due = 0
       for (const locus of loci) {
         if (isLocusReviewed(locus)) reviewed += 1
-        const status = srsStatus(locus.srs, now)
-        if (status === 'known') known += 1
-        if (status === 'due') due += 1
+        if (srsStatus(locus.srs) === 'known') known += 1
+        if (isDue(locus.srs, now)) due += 1
       }
       return {
         id: room.id,
