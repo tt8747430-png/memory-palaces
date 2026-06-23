@@ -54,7 +54,8 @@ describe('RoomHubPage', () => {
     renderHub({ loci: [card('l1', 'mihi', 'to me', 0), card('l2', 'tibi', 'to you', 1)] })
 
     expect(await screen.findByRole('heading', { name: 'Garden Room' })).toBeInTheDocument()
-    expect(screen.getByText('2 cards')).toBeInTheDocument()
+    // Both fresh cards are due today; the study overview leads with the count.
+    expect(screen.getByText(/2 cards for today/i)).toBeInTheDocument()
     // The preview carousel renders for a non-empty room.
     expect(screen.getByRole('button', { name: /study flashcards/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^match/i })).toBeInTheDocument()
@@ -78,9 +79,8 @@ describe('RoomHubPage', () => {
   it('teaches the empty room instead of showing a blank deck', async () => {
     renderHub()
     await screen.findByRole('heading', { name: 'Garden Room' })
-    expect(screen.getByText(/add a few cards to start/i)).toBeInTheDocument()
-    expect(screen.getByText('0 cards')).toBeInTheDocument()
-    // No preview carousel when the room is empty; the editor's empty state guides instead.
+    // The study overview/carousel hide for an empty room; the editor's empty state guides.
+    expect(screen.getByText(/no cards yet/i)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /study flashcards/i })).not.toBeInTheDocument()
   })
 })

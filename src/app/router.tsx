@@ -210,6 +210,7 @@ function RoomHubRoute() {
       roomId={roomId}
       onBack={back}
       onStudy={() => navigate({ to: ROUTES.roomTrain, params: { roomId } })}
+      onStudyDue={() => navigate({ to: ROUTES.roomReview, params: { roomId } })}
       onMatch={() => navigate({ to: ROUTES.roomMatch, params: { roomId } })}
       onTest={() => navigate({ to: ROUTES.roomQuiz, params: { roomId } })}
       onVerse={() => navigate({ to: ROUTES.roomVerse, params: { roomId } })}

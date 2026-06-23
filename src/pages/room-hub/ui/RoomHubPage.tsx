@@ -38,23 +38,26 @@ import {
 } from '@/entities/question'
 import { markRoomKnown, resetRoomSrs } from '@/features/locus'
 import { deleteRoom } from '@/features/room'
-import { cn, roomProgress, srsStatus, type SrsStatus } from '@/shared/lib'
+import { cardMaturityCounts, cn, isDue } from '@/shared/lib'
 import { LociPreviewCarousel } from '@/widgets/loci-preview'
 import { RoomContentEditor } from '@/widgets/loci-editor'
 import {
   AppScreen,
+  CardMaturityOverview,
   ConfirmDialog,
-  GlassCard,
   OverflowMenuButton,
   ScreenHeader,
+  StudyOverviewCard,
   type SheetAction,
 } from '@/shared/ui'
 
 export interface RoomHubPageProps {
   roomId: string
   onBack?: () => void
-  /** Launch the flashcard session (room-train). */
+  /** Launch the whole-room study session (room-train); used as "Study ahead". */
   onStudy?: () => void
+  /** Drill this room's due-today queue (room-scoped review). */
+  onStudyDue?: () => void
   /** Launch the Match mini-game. */
   onMatch?: () => void
   /** Launch the room-scoped quiz (Test). */
@@ -72,6 +75,7 @@ export function RoomHubPage({
   roomId,
   onBack,
   onStudy,
+  onStudyDue,
   onMatch,
   onTest,
   onVerse,
@@ -104,6 +108,11 @@ export function RoomHubPage({
 
   const loci = useMemo(() => lociForRoom(allLoci, roomId), [allLoci, roomId])
   const questions = useMemo(() => questionsForRoom(allQuestions, roomId), [allQuestions, roomId])
+
+  const [now] = useState(() => Date.now())
+  const dueLoci = useMemo(() => loci.filter((locus) => isDue(locus.srs, now)), [loci, now])
+  const dueBreakdown = useMemo(() => cardMaturityCounts(dueLoci), [dueLoci])
+  const maturity = useMemo(() => cardMaturityCounts(loci), [loci])
 
   const [resetOpen, setResetOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -177,8 +186,16 @@ export function RoomHubPage({
         />
       }
     >
-      <div className="mt-2 space-y-5 pb-8">
-        <RoomProgress loci={loci} questionCount={questions.length} />
+      <div className="mt-2 space-y-5 pb-24">
+        {hasLoci ? (
+          <StudyOverviewCard
+            count={dueLoci.length}
+            breakdown={dueBreakdown}
+            onStudy={() => onStudyDue?.()}
+            onStudyAhead={onStudy}
+            scope="room"
+          />
+        ) : null}
 
         <StudyView
           loci={loci}
@@ -192,10 +209,13 @@ export function RoomHubPage({
           onVerse={onVerse}
         />
 
-        <section aria-label={t('roomHub.manageHeading')}>
-          <h2 className="mb-3 text-[length:var(--p-text-title)] font-semibold text-heading">
+        <section aria-label={t('roomHub.manageHeading')} className="space-y-3">
+          <h2 className="text-[length:var(--p-text-title)] font-semibold text-heading">
             {t('roomHub.manageHeading')}
           </h2>
+          {hasLoci ? (
+            <CardMaturityOverview total={loci.length} counts={maturity} scope="room" />
+          ) : null}
           <RoomContentEditor
             roomId={roomId}
             roomName={room.title}
@@ -234,96 +254,6 @@ export function RoomHubPage({
         }}
       />
     </AppScreen>
-  )
-}
-
-const STATUS_ORDER: SrsStatus[] = ['known', 'learning', 'new']
-const STATUS_FILL: Record<SrsStatus, string> = {
-  known: 'bg-success',
-  learning: 'bg-secondary',
-  new: 'bg-[var(--divider)]',
-}
-const STATUS_DOT: Record<SrsStatus, string> = {
-  known: 'bg-success',
-  learning: 'bg-secondary',
-  new: 'bg-[var(--text-faint)]',
-}
-
-/** Hero progress: the reviewed headline (consistent with room completion / unlocking)
- * over a card count, plus a thin status bar + legend for SRS texture. */
-function RoomProgress({ loci, questionCount }: { loci: Locus[]; questionCount: number }) {
-  const { t } = useTranslation()
-  const total = loci.length
-
-  const counts = useMemo(() => {
-    const tally: Record<SrsStatus, number> = { new: 0, learning: 0, known: 0 }
-    for (const locus of loci) tally[srsStatus(locus.srs)] += 1
-    return tally
-  }, [loci])
-
-  const reviewed = total - counts.new
-  const progressPct = roomProgress(loci)
-
-  const cardsText = t(total === 1 ? 'roomHub.cardCountOne' : 'roomHub.cardCountOther', {
-    count: total,
-  })
-  const questionsText = t(
-    questionCount === 1 ? 'roomHub.questionCountOne' : 'roomHub.questionCountOther',
-    { count: questionCount },
-  )
-  const countLine = questionCount > 0 ? `${cardsText} · ${questionsText}` : cardsText
-
-  if (total === 0) {
-    return (
-      <GlassCard className="p-4">
-        <p className="text-[length:var(--p-text-label)] font-medium text-muted-foreground">
-          {countLine}
-        </p>
-        <p className="mt-1 text-[length:var(--p-text-sub)] font-semibold text-heading">
-          {t('roomHub.emptyHint')}
-        </p>
-      </GlassCard>
-    )
-  }
-
-  return (
-    <GlassCard className="p-4">
-      <p className="text-[length:var(--p-text-label)] font-medium text-muted-foreground">
-        {countLine}
-      </p>
-      <div className="mt-2 flex items-center justify-between">
-        <span className="inline-flex items-center gap-1.5 text-[length:var(--p-text-sub)] font-semibold text-heading">
-          <GraduationCap className="size-4 text-accent" aria-hidden />
-          {t('roomHub.progressLabel', { reviewed, total })}
-        </span>
-        <span className="text-[length:var(--p-text-sub)] font-bold text-heading">
-          {progressPct}%
-        </span>
-      </div>
-
-      <div className="mt-2.5 flex h-2 overflow-hidden rounded-full bg-[var(--divider)]" aria-hidden>
-        {STATUS_ORDER.filter((status) => status !== 'new' && counts[status] > 0).map((status) => (
-          <span
-            key={status}
-            className={cn('h-full transition-[width] duration-500 ease-out', STATUS_FILL[status])}
-            style={{ width: `${(counts[status] / total) * 100}%` }}
-          />
-        ))}
-      </div>
-
-      <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
-        {STATUS_ORDER.map((status) => (
-          <li
-            key={status}
-            className="inline-flex items-center gap-1.5 text-[length:var(--p-text-label)] text-muted-foreground"
-          >
-            <span className={cn('size-2 rounded-full', STATUS_DOT[status])} aria-hidden />
-            {t(`srs.${status}`)}
-            <span className="font-semibold text-heading">{counts[status]}</span>
-          </li>
-        ))}
-      </ul>
-    </GlassCard>
   )
 }
 
