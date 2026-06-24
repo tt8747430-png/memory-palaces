@@ -362,8 +362,15 @@ export function PalacesPage({
   const nextFolderColor = PALACE_COLOR_OPTIONS[folders.length % PALACE_COLOR_OPTIONS.length]!.value
 
   const handleSubmitFolder = (changes: { name: string; color: string; icon: string }) => {
-    if (folderSheetTarget) void editFolder(folderStore, folderSheetTarget, changes)
-    else void createFolder(folderStore, changes)
+    if (folderSheetTarget) {
+      void editFolder(folderStore, folderSheetTarget, changes)
+    } else {
+      void createFolder(folderStore, changes)
+      // Folders live at the library root (they don't nest), so a folder created while
+      // inside another folder/archived view would be invisible — return to the root to
+      // reveal it.
+      if (!atRoot) onCloseFolder?.()
+    }
     setFolderSheetOpen(false)
   }
 
@@ -438,6 +445,10 @@ export function PalacesPage({
       if (sort !== 'manual') setSort('manual')
     },
     onFilePalace: (palaceId, targetFolderId) => filePalaceInto(palaceId, targetFolderId),
+    onRequestSelect: (id) => {
+      setSelectMode(true)
+      setSelectedIds((prev) => new Set(prev).add(id))
+    },
   }
 
   const toggleSelect = (id: string) =>
@@ -708,15 +719,16 @@ export function PalacesPage({
         {...dndHandlers}
       />
 
-      {/* Bulk-action bar — appears in select mode with at least one item picked. */}
+      {/* Bulk-action bar — appears in select mode with at least one item picked. It floats
+          just above the bottom nav (which sits at ~0.75rem + h-16), never behind it. */}
       {selectMode && selectedIds.size > 0 ? (
-        <div className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-[430px] px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
+        <div className="fixed inset-x-0 bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+4.75rem)] z-[180] mx-auto max-w-[430px] px-4">
           <div className="flex items-center gap-2 rounded-card-featured bg-card/95 p-2.5 shadow-elevated backdrop-blur-xl">
             {onlyPalaces ? (
               <>
                 <BulkButton
                   icon={<FolderPlus className="size-[17px]" aria-hidden />}
-                  label={t('palaces.moveToFolder')}
+                  label={t('palaces.bulkMove')}
                   onClick={() => setBulkMoveOpen(true)}
                 />
                 <BulkButton
@@ -736,29 +748,31 @@ export function PalacesPage({
         </div>
       ) : null}
 
-      <SpeedDial
-        label={t('palaces.quickActions')}
-        actions={[
-          {
-            id: 'create',
-            label: t('palaces.createCta'),
-            icon: <Building2 className="size-5" aria-hidden />,
-            onSelect: () => setCreateOpen(true),
-          },
-          {
-            id: 'import',
-            label: t('palaces.import'),
-            icon: <Upload className="size-5" aria-hidden />,
-            onSelect: () => importRef.current?.click(),
-          },
-          {
-            id: 'folder',
-            label: t('palaces.newFolderTitle'),
-            icon: <FolderPlus className="size-5" aria-hidden />,
-            onSelect: openCreateFolder,
-          },
-        ]}
-      />
+      {!selectMode ? (
+        <SpeedDial
+          label={t('palaces.quickActions')}
+          actions={[
+            {
+              id: 'create',
+              label: t('palaces.createCta'),
+              icon: <Building2 className="size-5" aria-hidden />,
+              onSelect: () => setCreateOpen(true),
+            },
+            {
+              id: 'import',
+              label: t('palaces.import'),
+              icon: <Upload className="size-5" aria-hidden />,
+              onSelect: () => importRef.current?.click(),
+            },
+            {
+              id: 'folder',
+              label: t('palaces.newFolderTitle'),
+              icon: <FolderPlus className="size-5" aria-hidden />,
+              onSelect: openCreateFolder,
+            },
+          ]}
+        />
+      ) : null}
 
       <ActionSheet
         open={sortOpen}
@@ -915,7 +929,7 @@ function BulkButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'flex h-11 flex-1 items-center justify-center gap-1.5 rounded-control text-[length:var(--p-text-label)] font-semibold transition-transform active:scale-[0.97]',
+        'flex h-11 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-control text-[length:var(--p-text-label)] font-semibold transition-transform active:scale-[0.97]',
         tone === 'danger'
           ? 'bg-[var(--danger-surface)] text-[var(--danger-on-surface)]'
           : 'bg-info-surface text-heading',

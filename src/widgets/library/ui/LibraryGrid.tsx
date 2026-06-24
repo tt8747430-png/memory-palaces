@@ -22,7 +22,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Archive, Check, ChevronRight, Heart, MoreVertical } from 'lucide-react'
-import { cn } from '@/shared/lib'
+import { cn, useLongPress } from '@/shared/lib'
 import { ActionSheet, FolderGlyph, IconButton, PalaceCover, type SheetAction } from '@/shared/ui'
 
 export interface LibraryFolderItem {
@@ -65,6 +65,8 @@ export interface LibraryHandlers {
   onReorderPalaces: (orderedIds: string[]) => void
   /** File a palace into a folder by dragging it onto the folder card. */
   onFilePalace: (palaceId: string, folderId: string) => void
+  /** Long-press a card to enter select mode with that item picked. */
+  onRequestSelect: (id: string) => void
 }
 
 export interface LibraryGridProps extends LibraryHandlers {
@@ -294,6 +296,10 @@ function FolderCard({
   ]
 
   const handleClick = () => (selectMode ? onToggleSelect?.() : handlers.onOpenFolder(folder.id))
+  const longPress = useLongPress({
+    onLongPress: () => handlers.onRequestSelect(folder.id),
+    onTap: handleClick,
+  })
 
   const ring = selected
     ? 'ring-2 ring-primary'
@@ -306,7 +312,7 @@ function FolderCard({
       <div className={cn('relative', dragging && 'shadow-elevated')}>
         <button
           type="button"
-          onClick={handleClick}
+          {...longPress}
           aria-label={t('palaces.openFolderLabel', { name: folder.name })}
           className={cn(
             'flex w-full items-center gap-3 rounded-card bg-card p-3 pr-12 text-left shadow-rest transition-shadow',
@@ -419,6 +425,10 @@ function PalaceCard({
     count: item.totalRooms,
   })
   const handleClick = () => (selectMode ? onToggleSelect?.() : handlers.onOpenPalace(item.id))
+  const longPress = useLongPress({
+    onLongPress: () => handlers.onRequestSelect(item.id),
+    onTap: handleClick,
+  })
   const ring = selected ? 'ring-2 ring-primary' : ''
   const coverVariant =
     item.color?.startsWith('from-') || item.color?.startsWith('#') ? 'identity' : 'brand'
@@ -434,7 +444,7 @@ function PalaceCard({
       >
         <button
           type="button"
-          onClick={handleClick}
+          {...longPress}
           aria-label={t('palaces.openLabel', { name: item.name })}
           className={cn(
             'flex w-full items-center gap-3 rounded-card bg-card p-3 pr-12 text-left shadow-rest',

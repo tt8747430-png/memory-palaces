@@ -169,6 +169,12 @@ export function RoomContentEditor({ roomId, roomName }: RoomContentEditorProps) 
       return next
     })
 
+  // Long-press enters select mode with the pressed item already picked.
+  const requestSelect = (id: string) => {
+    setSelectMode(true)
+    setSelectedIds((prev) => new Set(prev).add(id))
+  }
+
   const toggleSelectAll = () =>
     setSelectedIds((prev) => {
       const next = new Set(prev)
@@ -369,6 +375,7 @@ export function RoomContentEditor({ roomId, roomName }: RoomContentEditorProps) 
                   canMoveUp={loci.indexOf(locus) > 0}
                   canMoveDown={loci.indexOf(locus) < loci.length - 1}
                   onToggleSelect={() => toggleSelect(locus.id)}
+                  onRequestSelect={() => requestSelect(locus.id)}
                   onEdit={() => setEditor({ kind: 'locus', locus })}
                   onDuplicate={() => {
                     void duplicateLocus(locusStore, locus.id)
@@ -407,6 +414,7 @@ export function RoomContentEditor({ roomId, roomName }: RoomContentEditorProps) 
                 canMoveUp={questions.indexOf(question) > 0}
                 canMoveDown={questions.indexOf(question) < questions.length - 1}
                 onToggleSelect={() => toggleSelect(question.id)}
+                onRequestSelect={() => requestSelect(question.id)}
                 onEdit={() => setEditor({ kind: 'question', question })}
                 onDuplicate={() => {
                   void duplicateQuestion(questionStore, question.id)

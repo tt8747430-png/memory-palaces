@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 import type { Locus } from '@/entities/locus'
 import type { Question } from '@/entities/question'
-import { cn } from '@/shared/lib'
+import { cn, useLongPress } from '@/shared/lib'
 import { OverflowMenuButton, SrsStatusChip, type SheetAction } from '@/shared/ui'
 
 export interface CardRowProps {
@@ -26,6 +26,8 @@ export interface CardRowProps {
   canMoveUp: boolean
   canMoveDown: boolean
   onToggleSelect: () => void
+  /** Long-press the row to enter select mode with this card picked. */
+  onRequestSelect: () => void
   onEdit: () => void
   onDuplicate: () => void
   onMove: (direction: 'up' | 'down') => void
@@ -62,6 +64,7 @@ export function CardRow({
   canMoveUp,
   canMoveDown,
   onToggleSelect,
+  onRequestSelect,
   onEdit,
   onDuplicate,
   onMove,
@@ -71,6 +74,10 @@ export function CardRow({
   onResetSrs,
 }: CardRowProps) {
   const { t } = useTranslation()
+  const longPress = useLongPress({
+    onLongPress: onRequestSelect,
+    onTap: selectMode ? onToggleSelect : undefined,
+  })
 
   const actions: SheetAction[] = [
     { id: 'edit', label: t('common.edit'), icon: <Pencil className="size-5" aria-hidden />, onSelect: onEdit },
@@ -133,7 +140,7 @@ export function CardRow({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.97 }}
-      onClick={selectMode ? onToggleSelect : undefined}
+      {...longPress}
       className={cn(
         rowSurface,
         selected ? 'border-accent ring-2 ring-accent/25' : 'border-border',
@@ -199,6 +206,8 @@ export interface QuestionRowProps {
   canMoveUp: boolean
   canMoveDown: boolean
   onToggleSelect: () => void
+  /** Long-press the row to enter select mode with this question picked. */
+  onRequestSelect: () => void
   onEdit: () => void
   onDuplicate: () => void
   onMove: (direction: 'up' | 'down') => void
@@ -213,12 +222,17 @@ export function QuestionRow({
   canMoveUp,
   canMoveDown,
   onToggleSelect,
+  onRequestSelect,
   onEdit,
   onDuplicate,
   onMove,
   onDelete,
 }: QuestionRowProps) {
   const { t } = useTranslation()
+  const longPress = useLongPress({
+    onLongPress: onRequestSelect,
+    onTap: selectMode ? onToggleSelect : undefined,
+  })
 
   const actions: SheetAction[] = [
     { id: 'edit', label: t('common.edit'), icon: <Pencil className="size-5" aria-hidden />, onSelect: onEdit },
@@ -263,7 +277,7 @@ export function QuestionRow({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.97 }}
-      onClick={selectMode ? onToggleSelect : undefined}
+      {...longPress}
       className={cn(
         rowSurface,
         selected ? 'border-accent ring-2 ring-accent/25' : 'border-border',

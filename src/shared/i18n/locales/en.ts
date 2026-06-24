@@ -394,6 +394,7 @@ export const en = {
 
     // Bulk selection
     bulkSelected: '{{count}} selected',
+    bulkMove: 'Move',
     bulkMovedToast: 'Moved selected palaces',
     bulkArchivedToast: 'Archived selected palaces',
     bulkDeletedToast: 'Deleted {{count}} items',
