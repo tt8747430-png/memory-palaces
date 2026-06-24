@@ -4,7 +4,6 @@ import { toast } from 'sonner'
 import {
   Archive,
   ArchiveRestore,
-  BookOpen,
   Copy,
   Download,
   FileText,
@@ -267,18 +266,8 @@ function PalaceSettingsForm({ palace, onExit }: { palace: Palace; onExit?: () =>
         </div>
       </SettingsSection>
 
-      {/* Type */}
+      {/* Category */}
       <SettingsSection title={t('palaceSettings.type')}>
-        <SettingsRow
-          kind="toggle"
-          icon={<BookOpen />}
-          label={t('palaceSettings.bibleMode')}
-          description={t('palaceSettings.bibleModeHint')}
-          checked={palace.bibleMode}
-          onCheckedChange={(value) =>
-            patch({ bibleMode: value, category: value ? 'Scripture' : palace.category })
-          }
-        />
         <label className="flex items-center gap-3 p-4">
           <span className="grid size-9 shrink-0 place-items-center rounded-control bg-info-surface text-info-foreground">
             <Tag className="size-[18px]" aria-hidden />

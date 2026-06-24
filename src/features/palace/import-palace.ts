@@ -36,7 +36,6 @@ export async function importPalace(
     icon: data.palace.icon ?? DEFAULT_PALACE_ICON,
     color: data.palace.color ?? DEFAULT_PALACE_COLOR,
     category: data.palace.category,
-    bibleMode: data.palace.bibleMode,
   })
   const result = await importRooms(roomStore, locusStore, questionStore, palace.id, data.rooms)
   return { palace, ...result }

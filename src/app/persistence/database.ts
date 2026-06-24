@@ -23,11 +23,14 @@ import {
   roomSchema,
 } from './schemas'
 import {
+  migrateFolderV1,
   migrateLocusV1,
+  migratePalaceV1,
   migratePreferencesV1,
   migratePreferencesV2,
   migratePreferencesV3,
   migratePreferencesV4,
+  migratePreferencesV5,
   migrateProfileV1,
   migrateProgressV1,
   migrateQuestionV1,
@@ -60,8 +63,8 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
 ): Promise<AppCollections> {
   const database = await createRxDatabase({ name: STORAGE_PREFIX, storage })
   const collections = await database.addCollections({
-    palaces: { schema: palaceSchema },
-    folders: { schema: folderSchema },
+    palaces: { schema: palaceSchema, migrationStrategies: { 1: migratePalaceV1 } },
+    folders: { schema: folderSchema, migrationStrategies: { 1: migrateFolderV1 } },
     rooms: { schema: roomSchema },
     loci: { schema: locusSchema, migrationStrategies: { 1: migrateLocusV1 } },
     questions: { schema: questionSchema, migrationStrategies: { 1: migrateQuestionV1 } },
@@ -73,6 +76,7 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
         2: migratePreferencesV2,
         3: migratePreferencesV3,
         4: migratePreferencesV4,
+        5: migratePreferencesV5,
       },
     },
     profiles: {

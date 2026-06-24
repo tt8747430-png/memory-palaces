@@ -42,4 +42,4 @@ unfiles their palaces; mixed: the common action only).
 - Drag-and-drop is provided by `@dnd-kit` (core + sortable). Hand-rolling nested
   sortable/droppable touch DnD was judged larger and more fragile than the dependency.
 - Folders still never cascade-delete palaces (unchanged safety rule).
-</content>
+  </content>

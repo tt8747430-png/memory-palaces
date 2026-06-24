@@ -4,8 +4,9 @@ import { DEFAULT_DAILY_GOAL } from '@/shared/config/constants'
 /** How the Palaces screen lays out its list. Persisted so the choice survives sessions. */
 export type PalacesView = 'grid' | 'list'
 
-/** How the Palaces screen orders its list. Persisted so the choice survives sessions. */
-export type PalacesSort = 'recent' | 'progress' | 'name' | 'category'
+/** How the library orders its items. `manual` is a hand-dragged order; the rest are
+ * automatic rules. Persisted so the choice survives sessions. */
+export type PalacesSort = 'manual' | 'recent' | 'progress' | 'name' | 'category'
 
 /** The active recall mode in verse study. Persisted so it's remembered everywhere. */
 export type VerseMode = 'blur' | 'words' | 'initials' | 'type'

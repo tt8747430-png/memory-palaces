@@ -16,7 +16,7 @@ import type { AppNotification } from '@/entities/notification'
  * type-checks each schema against its entity, so drift is a compile error.
  */
 export const palaceSchema: RxJsonSchema<Palace> = {
-  version: 0,
+  version: 1,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -54,9 +54,9 @@ export const palaceSchema: RxJsonSchema<Palace> = {
       additionalProperties: false,
     },
     folderId: { type: ['string', 'null'] },
+    order: { type: 'number' },
     favorite: { type: 'boolean' },
     archived: { type: 'boolean' },
-    bibleMode: { type: 'boolean' },
   },
   required: [
     'id',
@@ -69,14 +69,14 @@ export const palaceSchema: RxJsonSchema<Palace> = {
     'category',
     'settings',
     'folderId',
+    'order',
     'favorite',
     'archived',
-    'bibleMode',
   ],
 }
 
 export const folderSchema: RxJsonSchema<Folder> = {
-  version: 0,
+  version: 1,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -86,8 +86,9 @@ export const folderSchema: RxJsonSchema<Folder> = {
     name: { type: 'string' },
     color: { type: 'string' },
     icon: { type: 'string' },
+    order: { type: 'number' },
   },
-  required: ['id', 'createdAt', 'updatedAt', 'name', 'color', 'icon'],
+  required: ['id', 'createdAt', 'updatedAt', 'name', 'color', 'icon', 'order'],
 }
 
 export const roomSchema: RxJsonSchema<Room> = {
@@ -211,7 +212,7 @@ export const progressSchema: RxJsonSchema<Progress> = {
 }
 
 export const preferencesSchema: RxJsonSchema<Preferences> = {
-  version: 4,
+  version: 5,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -226,7 +227,7 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
     language: { type: 'string' },
     dailyGoal: { type: 'number' },
     palacesView: { type: 'string', enum: ['grid', 'list'] },
-    palacesSort: { type: 'string', enum: ['recent', 'progress', 'name', 'category'] },
+    palacesSort: { type: 'string', enum: ['manual', 'recent', 'progress', 'name', 'category'] },
     verseMode: { type: 'string', enum: ['blur', 'words', 'initials', 'type'] },
     verseShuffle: { type: 'boolean' },
     verseWordSpaces: { type: 'boolean' },

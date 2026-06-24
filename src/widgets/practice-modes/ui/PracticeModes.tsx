@@ -5,9 +5,7 @@ import { BookOpen, Brain, ChevronRight, Puzzle } from 'lucide-react'
 import { cn } from '@/shared/lib'
 
 export interface PracticeModesProps {
-  /** Bible-mode scopes unlock the Verses mode. */
-  bibleMode: boolean
-  /** Cards in scope — Match needs at least two. */
+  /** Cards in scope — Match needs at least two; Verses needs at least one. */
   cardCount: number
   /** Authored questions in scope — Test needs at least one. */
   questionCount: number
@@ -18,9 +16,9 @@ export interface PracticeModesProps {
 
 /** The practice-mode tiles (Verses / Match / Test) shared by the room hub and palace
  * detail. The Study-cards session is the headline above; these are the alternate ways to
- * exercise the same set, scoped to whichever surface renders them. */
+ * exercise the same set, scoped to whichever surface renders them. Every mode is available
+ * on every palace and room. */
 export function PracticeModes({
-  bibleMode,
   cardCount,
   questionCount,
   onVerse,
@@ -30,7 +28,7 @@ export function PracticeModes({
   const { t } = useTranslation()
   return (
     <div className="space-y-2.5">
-      {bibleMode && onVerse ? (
+      {onVerse ? (
         <ModeTile
           icon={<BookOpen className="size-5" aria-hidden />}
           tint="bg-gradient-to-br from-primary to-accent"

@@ -1,15 +1,10 @@
 import { type FormEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Check, FolderPlus, Sparkles, Trash2 } from 'lucide-react'
-import {
-  DEFAULT_FOLDER_ICON,
-  FOLDER_ICON_OPTIONS,
-  type Folder,
-} from '@/entities/folder'
+import { DEFAULT_FOLDER_ICON, FOLDER_ICON_OPTIONS, type Folder } from '@/entities/folder'
 import { ColorPicker, IconPicker } from '@/features/palace'
 import { cn } from '@/shared/lib'
-import { Button, Sheet, TextField } from '@/shared/ui'
-import { FolderGlyph } from './CollectionRail'
+import { Button, FolderGlyph, Sheet, TextField } from '@/shared/ui'
 
 export interface MoveToFolderSheetProps {
   open: boolean
@@ -21,9 +16,9 @@ export interface MoveToFolderSheetProps {
   onNewFolder: () => void
 }
 
-/** Bottom sheet for filing a palace into a folder (or unfiling it). Each folder shows its
- * own colour-and-emoji glyph, so the choice you make here matches what you see in the rail.
- * The footer jumps to creating a new folder. */
+/** Bottom sheet for filing a palace into a folder (or moving it back to the library root).
+ * Each folder shows its own colour-and-emoji glyph, so the choice matches its card in the
+ * library. The footer jumps to creating a new folder. */
 export function MoveToFolderSheet({
   open,
   onOpenChange,
@@ -97,7 +92,9 @@ function FolderOption({
       aria-pressed={selected}
       className={cn(
         'flex w-full items-center gap-3 rounded-card px-3 py-2.5 text-left transition-colors',
-        selected ? 'bg-primary text-primary-foreground' : 'bg-info-surface text-heading active:bg-secondary/30',
+        selected
+          ? 'bg-primary text-primary-foreground'
+          : 'bg-info-surface text-heading active:bg-secondary/30',
       )}
     >
       {glyph}
@@ -164,7 +161,11 @@ export function FolderSheet({
       footer={
         <div className="flex flex-col gap-2">
           <Button size="lg" className="w-full" disabled={!valid} onClick={() => submit()}>
-            {isEdit ? <Check className="size-[18px]" aria-hidden /> : <FolderPlus className="size-[18px]" aria-hidden />}
+            {isEdit ? (
+              <Check className="size-[18px]" aria-hidden />
+            ) : (
+              <FolderPlus className="size-[18px]" aria-hidden />
+            )}
             {isEdit ? t('palaces.saveFolder') : t('palaces.createFolder')}
           </Button>
           {isEdit && onDelete ? (
@@ -178,7 +179,12 @@ export function FolderSheet({
     >
       <form onSubmit={submit} className="flex flex-col gap-5 pb-2">
         <div className="flex items-center gap-3 rounded-card bg-info-surface p-3">
-          <FolderGlyph color={color} icon={icon} className="size-12" iconClassName="text-2xl leading-none" />
+          <FolderGlyph
+            color={color}
+            icon={icon}
+            className="size-12"
+            iconClassName="text-2xl leading-none"
+          />
           <div className="min-w-0">
             <p className="truncate text-[length:var(--p-text-sub)] font-semibold text-heading">
               {name.trim() || t('palaces.folderNamePlaceholder')}

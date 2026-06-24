@@ -1,8 +1,30 @@
 import { DEFAULT_PREFERENCES, type Preferences } from '@/entities/preferences'
 import { DEFAULT_PROFILE, type Profile } from '@/entities/profile'
+import type { Palace } from '@/entities/palace'
+import type { Folder } from '@/entities/folder'
 import type { Locus } from '@/entities/locus'
 import type { Question } from '@/entities/question'
 import type { Progress } from '@/entities/progress'
+
+/** The v0 palace shape — before the manual `order` field, and while a Scripture palace
+ * still carried a `bibleMode` flag. */
+export type PalaceV0 = Omit<Palace, 'order'> & { bibleMode?: boolean }
+
+/** v0 → v1: drop the removed `bibleMode` flag and backfill a flat `order` (the library
+ * tiebreaks equal orders by `createdAt`, so existing palaces keep their order until the
+ * learner hand-sorts). */
+export function migratePalaceV1(oldDoc: PalaceV0): Palace {
+  const { bibleMode: _removed, ...rest } = oldDoc
+  return { ...rest, order: 0 }
+}
+
+/** The v0 folder shape — before the manual `order` field. */
+export type FolderV0 = Omit<Folder, 'order'>
+
+/** v0 → v1: backfill a flat `order`; equal orders tiebreak by `createdAt`. */
+export function migrateFolderV1(oldDoc: FolderV0): Folder {
+  return { ...oldDoc, order: 0 }
+}
 
 /** v0 → v1: cards/questions gained an explicit `order` field. Existing docs backfill to
  * 0; the stores tiebreak equal orders by `createdAt`, so legacy items keep their original
@@ -82,4 +104,10 @@ export type PreferencesV3 = Omit<Preferences, 'verseMode' | 'verseShuffle' | 've
 /** v3 → v4: backfill the verse-study prefs with defaults; stored fields win. */
 export function migratePreferencesV4(oldDoc: PreferencesV3): Preferences {
   return { ...DEFAULT_PREFERENCES, ...oldDoc }
+}
+
+/** v4 → v5: the library gained a `manual` sort option. No field change — every stored
+ * `palacesSort` is still valid — so the doc passes through unchanged. */
+export function migratePreferencesV5(oldDoc: Preferences): Preferences {
+  return oldDoc
 }

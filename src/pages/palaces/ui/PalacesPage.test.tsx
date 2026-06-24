@@ -4,12 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
 import { InMemoryRepository } from '@/shared/api'
-import {
-  createPalaceStore,
-  makePalace,
-  PalaceStoreContext,
-  type Palace,
-} from '@/entities/palace'
+import { createPalaceStore, makePalace, PalaceStoreContext, type Palace } from '@/entities/palace'
 import { createFolderStore, FolderStoreContext, type Folder } from '@/entities/folder'
 import { createRoomStore, RoomStoreContext, type Room } from '@/entities/room'
 import { createLocusStore, LocusStoreContext, type Locus } from '@/entities/locus'
@@ -31,13 +26,26 @@ import { PalacesPage } from './PalacesPage'
 
 afterEach(cleanup)
 
-const palace = (id: string, name: string, over: Partial<Parameters<typeof makePalace>[0]> = {}): Palace =>
-  makePalace({ id, createdAt: new Date(0).toISOString(), name, ...over })
+const palace = (
+  id: string,
+  name: string,
+  over: Partial<Parameters<typeof makePalace>[0]> = {},
+): Palace => makePalace({ id, createdAt: new Date(0).toISOString(), name, ...over })
 
-function setup(seed: Palace[] = []) {
+const folder = (id: string, name: string): Folder => ({
+  id,
+  createdAt: new Date(0).toISOString(),
+  updatedAt: new Date(0).toISOString(),
+  name,
+  color: 'blue',
+  icon: '📁',
+  order: 0,
+})
+
+function setup(seed: Palace[] = [], folders: Folder[] = [], folderId: string | null = null) {
   const palaceRepo = new InMemoryRepository<Palace>(seed)
   const palaceStore = createPalaceStore(palaceRepo)
-  const folderStore = createFolderStore(new InMemoryRepository<Folder>())
+  const folderStore = createFolderStore(new InMemoryRepository<Folder>(folders))
   const roomStore = createRoomStore(new InMemoryRepository<Room>())
   const locusStore = createLocusStore(new InMemoryRepository<Locus>())
   const questionStore = createQuestionStore(new InMemoryRepository<Question>())
@@ -47,6 +55,7 @@ function setup(seed: Palace[] = []) {
   const progressStore = createProgressStore(new InMemoryRepository<Progress>())
   const notificationStore = createNotificationStore(new InMemoryRepository<AppNotification>())
   const onOpenPalace = vi.fn()
+  const onOpenFolder = vi.fn()
   render(
     <I18nextProvider i18n={i18n}>
       <PalaceStoreContext value={palaceStore}>
@@ -59,7 +68,11 @@ function setup(seed: Palace[] = []) {
                     <ProfileStoreContext value={profileStore}>
                       <ProgressStoreContext value={progressStore}>
                         <NotificationStoreContext value={notificationStore}>
-                          <PalacesPage onOpenPalace={onOpenPalace} />
+                          <PalacesPage
+                            onOpenPalace={onOpenPalace}
+                            onOpenFolder={onOpenFolder}
+                            folderId={folderId}
+                          />
                         </NotificationStoreContext>
                       </ProgressStoreContext>
                     </ProfileStoreContext>
@@ -72,7 +85,7 @@ function setup(seed: Palace[] = []) {
       </PalaceStoreContext>
     </I18nextProvider>,
   )
-  return { palaceRepo, onOpenPalace }
+  return { palaceRepo, onOpenPalace, onOpenFolder }
 }
 
 describe('PalacesPage', () => {
@@ -106,14 +119,32 @@ describe('PalacesPage', () => {
     expect(await screen.findByText('Memory Lane')).toBeInTheDocument()
   })
 
-  it('filters to favorites via the collection rail', async () => {
+  it('shows folders and unfiled palaces at the root, hiding filed palaces', async () => {
     const user = userEvent.setup()
-    setup([palace('a', 'Loved', { favorite: true }), palace('b', 'Plain')])
+    const { onOpenFolder } = setup(
+      [palace('a', 'Filed Away', { folderId: 'f1' }), palace('b', 'At Root')],
+      [folder('f1', 'Languages')],
+    )
 
-    await screen.findByText('Loved')
-    await user.click(screen.getByRole('tab', { name: /favorites/i }))
+    // Root shows the folder card and the unfiled palace, but not the filed one.
+    expect(await screen.findByText('Languages')).toBeInTheDocument()
+    expect(screen.getByText('At Root')).toBeInTheDocument()
+    expect(screen.queryByText('Filed Away')).not.toBeInTheDocument()
 
-    expect(screen.getByText('Loved')).toBeInTheDocument()
-    expect(screen.queryByText('Plain')).not.toBeInTheDocument()
+    // Tapping the folder drills into it.
+    await user.click(screen.getByRole('button', { name: /open folder languages/i }))
+    expect(onOpenFolder).toHaveBeenCalledWith('f1')
+  })
+
+  it('shows a folder’s palaces when opened into that folder', async () => {
+    setup(
+      [palace('a', 'Filed Away', { folderId: 'f1' }), palace('b', 'At Root')],
+      [folder('f1', 'Languages')],
+      'f1',
+    )
+
+    // Inside the folder: its palace shows, the root palace and folder card do not.
+    expect(await screen.findByText('Filed Away')).toBeInTheDocument()
+    expect(screen.queryByText('At Root')).not.toBeInTheDocument()
   })
 })

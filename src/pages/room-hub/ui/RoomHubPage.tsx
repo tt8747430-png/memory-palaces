@@ -47,7 +47,7 @@ export interface RoomHubPageProps {
   onMatch?: () => void
   /** Launch the room-scoped quiz (Test). */
   onTest?: () => void
-  /** Launch verse-study (Bible-mode palaces only). */
+  /** Launch verse-study. */
   onVerse?: () => void
   /** Navigate away after the room is deleted. */
   onDeleted?: () => void
@@ -190,7 +190,6 @@ export function RoomHubPage({
         ) : null}
 
         <PracticeModes
-          bibleMode={palace?.bibleMode ?? false}
           cardCount={loci.length}
           questionCount={questions.length}
           onVerse={onVerse}
@@ -205,11 +204,7 @@ export function RoomHubPage({
           {hasLoci ? (
             <CardMaturityOverview total={loci.length} counts={maturity} scope="room" />
           ) : null}
-          <RoomContentEditor
-            roomId={roomId}
-            roomName={room.title}
-            bibleMode={palace?.bibleMode ?? false}
-          />
+          <RoomContentEditor roomId={roomId} roomName={room.title} />
         </section>
       </div>
 

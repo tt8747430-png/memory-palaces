@@ -12,8 +12,12 @@ export interface CreateFolderInput {
  * enforces the invariants.
  */
 export async function createFolder(store: FolderStore, input: CreateFolderInput): Promise<Folder> {
+  // Append the new folder after the existing ones.
+  const existing = store.getState().folders
+  const order = existing.length ? Math.max(...existing.map((f) => f.order)) + 1 : 0
   const folder = makeFolder({
     ...input,
+    order,
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
   })

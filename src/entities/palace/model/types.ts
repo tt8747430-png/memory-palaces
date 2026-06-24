@@ -56,9 +56,9 @@ export interface MakePalaceInput {
   category?: string
   settings?: Partial<PalaceSettings>
   folderId?: string | null
+  order?: number
   favorite?: boolean
   archived?: boolean
-  bibleMode?: boolean
 }
 
 export function makePalace(input: MakePalaceInput): Palace {
@@ -76,9 +76,9 @@ export function makePalace(input: MakePalaceInput): Palace {
     category: input.category ?? '',
     settings: { ...DEFAULT_PALACE_SETTINGS, ...input.settings },
     folderId: input.folderId ?? null,
+    order: input.order ?? 0,
     favorite: input.favorite ?? false,
     archived: input.archived ?? false,
-    bibleMode: input.bibleMode ?? false,
   }
 }
 

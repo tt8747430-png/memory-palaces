@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { BookOpen, Sparkles } from 'lucide-react'
+import { Sparkles } from 'lucide-react'
 import { DEFAULT_PALACE_COLOR, DEFAULT_PALACE_ICON, usePalaceStoreApi } from '@/entities/palace'
-import { cn } from '@/shared/lib'
-import { Button, PalaceCover, Sheet, SwitchTrack, TextField } from '@/shared/ui'
+import { Button, PalaceCover, Sheet, TextField } from '@/shared/ui'
 import { createPalace } from '../create-palace'
 import { ColorPicker, IconPicker } from './appearance-pickers'
 
@@ -12,22 +11,28 @@ export interface CreatePalaceSheetProps {
   onOpenChange: (open: boolean) => void
   /** The new palace's id, so the caller can navigate straight into it. */
   onCreated: (palaceId: string) => void
+  /** File the new palace into this folder; null/undefined creates it at the library root. */
+  folderId?: string | null
 }
 
 /**
- * Minimal create — a name, a quick icon and colour, and the Bible-mode choice, with a
- * live cover preview. Everything else (description, category, cover photo) is set later
- * in palace settings, so making a palace is a couple of taps. A keyboard-aware bottom
- * sheet, never a full-screen drawer (this is a phone-first app). The create command is
- * the shared write-path, so the AI Tutor can open the same flow.
+ * Minimal create — a name, a quick icon and colour, with a live cover preview. Everything
+ * else (description, category, cover photo) is set later in palace settings, so making a
+ * palace is a couple of taps. A keyboard-aware bottom sheet, never a full-screen drawer
+ * (this is a phone-first app). The create command is the shared write-path, so the AI Tutor
+ * can open the same flow.
  */
-export function CreatePalaceSheet({ open, onOpenChange, onCreated }: CreatePalaceSheetProps) {
+export function CreatePalaceSheet({
+  open,
+  onOpenChange,
+  onCreated,
+  folderId,
+}: CreatePalaceSheetProps) {
   const { t } = useTranslation()
   const store = usePalaceStoreApi()
   const [name, setName] = useState('')
   const [icon, setIcon] = useState(DEFAULT_PALACE_ICON)
   const [color, setColor] = useState(DEFAULT_PALACE_COLOR)
-  const [bibleMode, setBibleMode] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   // Fresh state every time the sheet opens.
@@ -36,7 +41,6 @@ export function CreatePalaceSheet({ open, onOpenChange, onCreated }: CreatePalac
     setName('')
     setIcon(DEFAULT_PALACE_ICON)
     setColor(DEFAULT_PALACE_COLOR)
-    setBibleMode(false)
     setSubmitting(false)
   }, [open])
 
@@ -50,8 +54,8 @@ export function CreatePalaceSheet({ open, onOpenChange, onCreated }: CreatePalac
         name: name.trim(),
         icon,
         color,
-        bibleMode,
-        category: bibleMode ? 'Scripture' : 'General',
+        category: 'General',
+        folderId: folderId ?? null,
       })
       onOpenChange(false)
       onCreated(palace.id)
@@ -103,34 +107,6 @@ export function CreatePalaceSheet({ open, onOpenChange, onCreated }: CreatePalac
             />
           </label>
         </div>
-
-        {/* Bible mode */}
-        <button
-          type="button"
-          role="switch"
-          aria-checked={bibleMode}
-          aria-label={t('palaces.bibleMode')}
-          onClick={() => setBibleMode((value) => !value)}
-          className="flex w-full items-center gap-3.5 rounded-card bg-info-surface px-4 py-3 text-left transition-transform active:scale-[0.99]"
-        >
-          <span
-            className={cn(
-              'grid size-10 shrink-0 place-items-center rounded-control transition-colors',
-              bibleMode ? 'bg-primary text-primary-foreground' : 'bg-card text-primary',
-            )}
-          >
-            <BookOpen className="size-5" aria-hidden />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-[length:var(--p-text-sub)] font-semibold text-heading">
-              {t('palaces.bibleMode')}
-            </span>
-            <span className="mt-0.5 block text-[length:var(--p-text-label)] leading-snug">
-              {t('palaces.bibleModeHint')}
-            </span>
-          </span>
-          <SwitchTrack checked={bibleMode} />
-        </button>
 
         <IconPicker value={icon} onChange={setIcon} label={t('palaces.iconLabel')} />
         <ColorPicker

@@ -13,15 +13,20 @@ describe('makePalace', () => {
       name: 'Memory',
       description: '',
       folderId: null,
+      order: 0,
       favorite: false,
       archived: false,
-      bibleMode: false,
     })
     expect(palace.settings).toEqual(DEFAULT_PALACE_SETTINGS)
   })
 
   it('merges partial settings over the defaults', () => {
-    const palace = makePalace({ id: 'p1', createdAt: T0, name: 'M', settings: { studyDirection: 'back' } })
+    const palace = makePalace({
+      id: 'p1',
+      createdAt: T0,
+      name: 'M',
+      settings: { studyDirection: 'back' },
+    })
     expect(palace.settings.studyDirection).toBe('back')
     expect(palace.settings.quizTimer).toBe(DEFAULT_PALACE_SETTINGS.quizTimer)
   })

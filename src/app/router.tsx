@@ -132,10 +132,13 @@ const welcomeRoute = createRoute({
 // router-free and testable.
 function HomeRoute() {
   const navigate = useNavigate()
-  const { create } = homeRoute.useSearch()
+  const { create, folder } = homeRoute.useSearch()
   return (
     <PalacesPage
       openCreate={create}
+      folderId={folder ?? null}
+      onOpenFolder={(id) => navigate({ to: ROUTES.home, search: { folder: id } })}
+      onCloseFolder={() => navigate({ to: ROUTES.home, search: {} })}
       onOpenPalace={(palaceId) => navigate({ to: ROUTES.palaceDetail, params: { palaceId } })}
       onOpenPalaceSettings={(palaceId) =>
         navigate({ to: ROUTES.palaceSettings, params: { palaceId } })
@@ -150,9 +153,11 @@ function HomeRoute() {
 const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.home,
-  // `?create` opens the create sheet on arrival (e.g. a deep link) instead of a static list.
-  validateSearch: (search: Record<string, unknown>): { create?: boolean } => ({
+  // `?create` opens the create sheet on arrival; `?folder=<id>` drills into a folder (or the
+  // archived view) so the Back button and deep links walk the library tree.
+  validateSearch: (search: Record<string, unknown>): { create?: boolean; folder?: string } => ({
     create: search.create === true || search.create === 'true' ? true : undefined,
+    folder: typeof search.folder === 'string' && search.folder ? search.folder : undefined,
   }),
   component: HomeRoute,
 })

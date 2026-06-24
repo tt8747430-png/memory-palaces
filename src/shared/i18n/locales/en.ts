@@ -348,35 +348,37 @@ export const en = {
     viewLabel: 'Layout',
     viewGrid: 'Grid',
     viewList: 'List',
-    sortLabel: 'Sort palaces',
+    sortLabel: 'Sort',
     sortBy: 'Sort by',
+    sortManual: 'Manual',
     sortRecent: 'Recent',
     sortProgress: 'Progress',
     sortName: 'Name',
     sortCategory: 'Category',
     sortedBy: 'Sorted by {{sort}}',
+    selectLabel: 'Select',
 
-    // Result count
+    // Counts + markers
     countOne: '{{count}} palace',
     countOther: '{{count}} palaces',
+    palaceCountOne: '{{count}} palace',
+    palaceCountOther: '{{count}} palaces',
     roomCountOne: '{{count}} room',
     roomCountOther: '{{count}} rooms',
     roomsProgress: '{{completed}} of {{total}} rooms',
     progressLabel: '{{progress}}% complete',
     dueCount: '{{count}} due',
     favoriteMarker: 'Favorite',
-    bibleMarker: 'Scripture palace',
 
-    // Collections rail
-    collectionsLabel: 'Collections',
-    collectionAll: 'All',
-    collectionFavorites: 'Favorites',
-    collectionBible: 'Bible',
-    collectionUnfiled: 'Unfiled',
+    // Library + folders
+    libraryTitle: 'Library',
+    backToLibrary: 'Library',
     collectionArchived: 'Archived',
-    showArchived: 'Archived',
-    backToAll: 'All palaces',
-    newFolderChip: 'Folder',
+    viewArchived: 'Archived',
+    openFolderLabel: 'Open folder {{name}}',
+    folderActions: 'Folder actions for {{name}}',
+    editFolder: 'Rename & recolour',
+    deleteFolderAction: 'Delete folder',
 
     // Per-palace actions
     favorite: 'Add to favorites',
@@ -390,9 +392,18 @@ export const en = {
     movedToast: 'Moved to {{folder}}',
     unfiledToast: 'Removed from folder',
 
+    // Bulk selection
+    bulkSelected: '{{count}} selected',
+    bulkMovedToast: 'Moved selected palaces',
+    bulkArchivedToast: 'Archived selected palaces',
+    bulkDeletedToast: 'Deleted {{count}} items',
+    bulkDeleteTitle: 'Delete {{count}} items?',
+    bulkDeleteBody:
+      'Selected palaces are removed for good. Selected folders are removed too — the palaces inside them move back to the library.',
+
     // Move-to-folder sheet
     moveTitle: 'Move to folder',
-    moveNone: 'None (Unfiled)',
+    moveNone: 'Library root (no folder)',
     moveNewFolder: 'New folder',
 
     // New folder sheet
@@ -411,7 +422,7 @@ export const en = {
 
     // Delete folder
     deleteFolderTitle: 'Delete “{{name}}”?',
-    deleteFolderBody: 'The folder is removed. Its palaces stay safe and move back to Unfiled.',
+    deleteFolderBody: 'The folder is removed. Its palaces stay safe and move back to the library.',
     confirmDeleteFolder: 'Delete folder',
     deleteFolderLabel: 'Delete folder {{name}}',
 
@@ -423,8 +434,6 @@ export const en = {
     importError: 'Couldn’t import that palace file.',
     createName: 'Name',
     createNamePlaceholder: 'e.g. Ancient Rome',
-    bibleMode: 'Bible mode',
-    bibleModeHint: 'Each locus is a verse. Unlocks Blur, Words, Initials & Type.',
     iconLabel: 'Icon',
     colorLabel: 'Colour',
     customColor: 'Custom colour',
@@ -438,6 +447,9 @@ export const en = {
     emptyFilteredBody:
       'This collection is empty. Move a palace into it from its menu, or pick another collection.',
     emptyFilteredAction: 'Show all palaces',
+    emptyFolderTitle: 'This folder is empty',
+    emptyFolderBody:
+      'Drag a palace onto this folder from the library, or create one here to file it inside.',
     emptySearchTitle: 'No matches',
     emptySearchBody: 'No palaces match “{{query}}”. Try a different search.',
     emptyArchivedTitle: 'Nothing archived',

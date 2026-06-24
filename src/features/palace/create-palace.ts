@@ -9,8 +9,13 @@ export type CreatePalaceInput = Omit<MakePalaceInput, 'id' | 'createdAt'>
  * factory enforces the invariants.
  */
 export async function createPalace(store: PalaceStore, input: CreatePalaceInput): Promise<Palace> {
+  const folderId = input.folderId ?? null
+  // Append to the end of its container (folder or root) unless an order is given.
+  const siblings = store.getState().palaces.filter((palace) => palace.folderId === folderId)
+  const order = input.order ?? (siblings.length ? Math.max(...siblings.map((p) => p.order)) + 1 : 0)
   const palace = makePalace({
     ...input,
+    order,
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
   })

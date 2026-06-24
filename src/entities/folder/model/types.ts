@@ -1,10 +1,12 @@
 import type { Entity } from '@/shared/lib'
 
-/** A user-defined collection that groups palaces. */
+/** A flat, hand-orderable grouping that holds palaces (folders do not nest). */
 export interface Folder extends Entity {
   name: string
   color: string
   icon: string
+  /** Manual sort position among the library's folders. */
+  order: number
 }
 
 export interface MakeFolderInput {
@@ -13,6 +15,7 @@ export interface MakeFolderInput {
   name: string
   color: string
   icon: string
+  order?: number
 }
 
 export function makeFolder(input: MakeFolderInput): Folder {
@@ -25,6 +28,7 @@ export function makeFolder(input: MakeFolderInput): Folder {
     name,
     color: input.color,
     icon: input.icon,
+    order: input.order ?? 0,
   }
 }
 
@@ -33,6 +37,7 @@ export interface FolderChanges {
   name?: string
   color?: string
   icon?: string
+  order?: number
 }
 
 /** Apply edits to a folder, re-validating the name and stamping `updatedAt`. Pure — the
@@ -46,5 +51,6 @@ export function updateFolder(folder: Folder, changes: FolderChanges, now: string
   }
   if (changes.color !== undefined) next.color = changes.color
   if (changes.icon !== undefined) next.icon = changes.icon
+  if (changes.order !== undefined) next.order = changes.order
   return next
 }

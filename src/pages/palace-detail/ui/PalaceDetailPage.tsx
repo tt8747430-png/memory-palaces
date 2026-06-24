@@ -240,7 +240,6 @@ export function PalaceDetailPage({
 
         {items.length > 0 ? (
           <PracticeModes
-            bibleMode={palace.bibleMode}
             cardCount={summary.totalLoci}
             questionCount={summary.totalQuestions}
             onVerse={onVerse}

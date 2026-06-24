@@ -31,7 +31,6 @@ export function exportPalaceJson(
       icon: palace.icon,
       color: palace.color,
       category: palace.category,
-      bibleMode: palace.bibleMode,
       settings: palace.settings,
     },
     ordered.map((room) => ({

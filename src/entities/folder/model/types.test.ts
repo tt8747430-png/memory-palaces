@@ -6,7 +6,13 @@ const T1 = '2026-02-02T00:00:00.000Z'
 
 describe('makeFolder', () => {
   it('creates a folder, mirroring createdAt into updatedAt', () => {
-    const folder = makeFolder({ id: 'f1', createdAt: T0, name: 'Spanish', color: 'blue', icon: 'book' })
+    const folder = makeFolder({
+      id: 'f1',
+      createdAt: T0,
+      name: 'Spanish',
+      color: 'blue',
+      icon: 'book',
+    })
     expect(folder).toEqual({
       id: 'f1',
       createdAt: T0,
@@ -14,12 +20,17 @@ describe('makeFolder', () => {
       name: 'Spanish',
       color: 'blue',
       icon: 'book',
+      order: 0,
     })
   })
 
   it('trims the name and rejects an empty one', () => {
-    expect(makeFolder({ id: 'f1', createdAt: T0, name: '  Spanish  ', color: 'b', icon: 'i' }).name).toBe('Spanish')
-    expect(() => makeFolder({ id: 'f1', createdAt: T0, name: '   ', color: 'b', icon: 'i' })).toThrow()
+    expect(
+      makeFolder({ id: 'f1', createdAt: T0, name: '  Spanish  ', color: 'b', icon: 'i' }).name,
+    ).toBe('Spanish')
+    expect(() =>
+      makeFolder({ id: 'f1', createdAt: T0, name: '   ', color: 'b', icon: 'i' }),
+    ).toThrow()
   })
 })
 

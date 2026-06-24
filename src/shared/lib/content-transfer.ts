@@ -28,7 +28,12 @@ export interface RoomContentData {
 
 /** Minimal shapes the serializers read — structural, so no entity dependency. */
 type LocusLike = { front: string; back: string; hint?: string }
-type QuestionLike = { prompt: string; options: string[]; correctAnswer: number; explanation?: string }
+type QuestionLike = {
+  prompt: string
+  options: string[]
+  correctAnswer: number
+  explanation?: string
+}
 
 const JSON_TYPE = 'mindscape-room-content'
 const JSON_VERSION = 2
@@ -211,7 +216,9 @@ function contentFromCsv(rows: string[][]): RoomContentData {
   if (isQuestions) {
     const promptIdx = cols.findIndex((h) => h === 'prompt' || h === 'question')
     const optionIdxs = cols.map((h, i) => (h.startsWith('option') ? i : -1)).filter((i) => i >= 0)
-    const answerIdx = cols.findIndex((h) => h === 'answer' || h === 'correctanswer' || h === 'correct')
+    const answerIdx = cols.findIndex(
+      (h) => h === 'answer' || h === 'correctanswer' || h === 'correct',
+    )
     const explIdx = cols.findIndex((h) => h === 'explanation' || h === 'explain')
     const questions = body.flatMap((cells) => {
       const prompt = (cells[promptIdx] ?? '').trim()
@@ -417,7 +424,6 @@ export interface PalaceMeta {
   icon?: string
   color?: string
   category?: string
-  bibleMode?: boolean
 }
 
 export interface PalaceContentData {
@@ -473,7 +479,11 @@ export function parsePalaceContent(text: string, fileName?: string): PalaceConte
   } catch {
     throw new ContentImportError('That file isn’t a valid Mindscape palace file.')
   }
-  if (!data || typeof data !== 'object' || (data as Record<string, unknown>).type !== PALACE_JSON_TYPE) {
+  if (
+    !data ||
+    typeof data !== 'object' ||
+    (data as Record<string, unknown>).type !== PALACE_JSON_TYPE
+  ) {
     throw new ContentImportError('That file isn’t a Mindscape palace export.')
   }
   const root = data as Record<string, unknown>
@@ -505,7 +515,6 @@ export function parsePalaceContent(text: string, fileName?: string): PalaceConte
       icon: meta.icon ? String(meta.icon) : undefined,
       color: meta.color ? String(meta.color) : undefined,
       category: meta.category ? String(meta.category).trim() : undefined,
-      bibleMode: typeof meta.bibleMode === 'boolean' ? meta.bibleMode : undefined,
     },
     rooms,
   }

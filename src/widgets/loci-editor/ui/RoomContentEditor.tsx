@@ -81,8 +81,6 @@ export interface RoomContentEditorProps {
   roomId: string
   /** Used for export filenames. */
   roomName: string
-  /** Bible-mode palaces unlock the "paste verses" importer. */
-  bibleMode?: boolean
 }
 
 type Tab = 'loci' | 'questions'
@@ -97,7 +95,7 @@ type EditorTarget =
  * inline inside the room hub so studying and editing a room live on one page. Reads its
  * stores and drives the create/edit/move/duplicate commands directly.
  */
-export function RoomContentEditor({ roomId, roomName, bibleMode = false }: RoomContentEditorProps) {
+export function RoomContentEditor({ roomId, roomName }: RoomContentEditorProps) {
   const { t } = useTranslation()
   const locusStore = useLocusStoreApi()
   const questionStore = useQuestionStoreApi()
@@ -523,14 +521,12 @@ export function RoomContentEditor({ roomId, roomName, bibleMode = false }: RoomC
               subtitle={t('loci.transfer.pasteListSub')}
               onClick={() => closeTransfer(() => setPasteOpen(true))}
             />
-            {bibleMode ? (
-              <ImportRow
-                icon={<BookOpen className="size-5" aria-hidden />}
-                title={t('loci.transfer.pasteVerses')}
-                subtitle={t('loci.transfer.pasteVersesSub')}
-                onClick={() => closeTransfer(() => setVerseOpen(true))}
-              />
-            ) : null}
+            <ImportRow
+              icon={<BookOpen className="size-5" aria-hidden />}
+              title={t('loci.transfer.pasteVerses')}
+              subtitle={t('loci.transfer.pasteVersesSub')}
+              onClick={() => closeTransfer(() => setVerseOpen(true))}
+            />
           </TransferGroup>
 
           <TransferGroup label={t('loci.transfer.exportGroup')}>

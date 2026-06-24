@@ -71,7 +71,6 @@ describe('duplicatePalace', () => {
     const original = await createPalace(store, {
       name: 'Original',
       category: 'history',
-      bibleMode: true,
     })
 
     const copy = await duplicatePalace(store, original.id)
@@ -79,7 +78,6 @@ describe('duplicatePalace', () => {
     expect(copy.id).not.toBe(original.id)
     expect(copy.name).toBe('Original (copy)')
     expect(copy.category).toBe('history')
-    expect(copy.bibleMode).toBe(true)
     expect(store.getState().palaces).toHaveLength(2)
   })
 })

@@ -7,18 +7,23 @@ import {
   Building2,
   Check,
   ChevronDown,
+  ChevronLeft,
   Clock,
   FolderPlus,
+  GripVertical,
   LayoutGrid,
+  ListChecks,
   Pencil,
   Plus,
   Rows3,
   Tag,
+  Trash2,
   TrendingUp,
   Upload,
 } from 'lucide-react'
 import {
   ContentImportError,
+  cn,
   countDuePerPalace,
   isRoomCompleted,
   palaceProgress,
@@ -53,15 +58,21 @@ import {
 import {
   deletePalace,
   importPalace,
+  reorderPalaces,
   setPalaceArchived,
   setPalaceFolder,
   togglePalaceFavorite,
   CreatePalaceSheet,
 } from '@/features/palace'
 import { readPalaceFile } from '@/features/content'
-import { createFolder, deleteFolder, editFolder } from '@/features/folder'
+import { createFolder, deleteFolder, editFolder, reorderFolders } from '@/features/folder'
 import { setPreferences } from '@/features/preferences'
-import { PalaceList, type PalaceListItem } from '@/widgets/palace-list'
+import {
+  LibraryGrid,
+  type LibraryFolderItem,
+  type LibraryHandlers,
+  type LibraryPalaceItem,
+} from '@/widgets/library'
 import { HomeHeader } from '@/widgets/home-header'
 import {
   ActionSheet,
@@ -69,47 +80,52 @@ import {
   Button,
   ConfirmDialog,
   EmptyState,
+  FolderGlyph,
+  IconButton,
   SegmentedControl,
   SpeedDial,
 } from '@/shared/ui'
-import { CollectionRail, FolderGlyph, type Collection } from './CollectionRail'
 import { FolderSheet, MoveToFolderSheet } from './PalaceSheets'
+
+/** The archived view is a reserved "folder" id, so it rides the same `?folder=` navigation. */
+export const ARCHIVED_VIEW = '__archived__'
 
 export interface PalacesPageProps {
   /** Open a palace's detail; wired by the route wrapper. */
   onOpenPalace?: (id: string) => void
-  /** Open a palace's settings directly from its overflow menu; wired by the route wrapper. */
+  /** Open a palace's settings directly from its menu; wired by the route wrapper. */
   onOpenPalaceSettings?: (id: string) => void
+  /** The folder currently being browsed (`null`/undefined = root), from `?folder=`. */
+  folderId?: string | null
+  /** Enter a folder (push `?folder=<id>`); the archived view uses {@link ARCHIVED_VIEW}. */
+  onOpenFolder?: (id: string) => void
+  /** Return to the library root (clear `?folder`). */
+  onCloseFolder?: () => void
   /** Open the create sheet on mount (a `?create` deep link still opens it). */
   openCreate?: boolean
-  /** Open the profile screen; wired by the route wrapper. */
   onOpenProfile?: () => void
-  /** Open notification history; wired by the route wrapper. */
   onOpenNotifications?: () => void
-  /** Open the streak screen from the header ring; wired by the route wrapper. */
   onOpenStreak?: () => void
 }
 
-// Built-in collection ids. Folder ids are UUIDs, so they never collide with these.
-const ALL = 'all'
-const FAVORITES = 'favorites'
-const BIBLE = 'bible'
-const UNFILED = 'unfiled'
-const ARCHIVED = 'archived'
-
 const SORT_LABEL_KEY = {
+  manual: 'palaces.sortManual',
   recent: 'palaces.sortRecent',
   progress: 'palaces.sortProgress',
   name: 'palaces.sortName',
   category: 'palaces.sortCategory',
 } as const satisfies Record<PalacesSort, string>
 
-/** Palaces screen — browse, search, sort, and organise palaces into folders. Reactive
- * off RxDB; every action persists offline through the injected stores. Progress is
- * derived from each palace's rooms/loci, the same way the home overview derives it. */
+/** The library — a Windows-Explorer-style browse of folders and palaces. Reorder by drag
+ * (manual sort) or an automatic rule, file palaces into folders, multi-select for bulk
+ * actions, and drill into a folder to see the palaces inside. Reactive off RxDB; every
+ * action persists offline through the injected stores. */
 export function PalacesPage({
   onOpenPalace,
   onOpenPalaceSettings,
+  folderId = null,
+  onOpenFolder,
+  onCloseFolder,
   openCreate = false,
   onOpenProfile,
   onOpenNotifications,
@@ -140,8 +156,6 @@ export function PalacesPage({
   const unreadCount = useNotificationStore(selectUnreadCount)
   const session = useSessionStore((state) => state.session)
 
-  // Snapshot the clock once so the review hero, up-next picker, and per-palace due badges
-  // all agree within a render pass; the RxDB stores keep the data itself live.
   const [now] = useState(() => Date.now())
 
   useEffect(() => {
@@ -166,6 +180,155 @@ export function PalacesPage({
     notificationStore,
   ])
 
+  const view = prefs.palacesView
+  const sort = prefs.palacesSort
+  const setView = (value: PalacesView) => void setPreferences(prefStore, { palacesView: value })
+  const setSort = (value: PalacesSort) => void setPreferences(prefStore, { palacesSort: value })
+
+  const inArchived = folderId === ARCHIVED_VIEW
+  const currentFolder = folders.find((folder) => folder.id === folderId)
+  // A `?folder=` that points at a deleted folder falls back to the root.
+  const atRoot = folderId === null || (folderId !== ARCHIVED_VIEW && !currentFolder)
+
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const [sortOpen, setSortOpen] = useState(false)
+  const [overflowOpen, setOverflowOpen] = useState(false)
+  const [createOpen, setCreateOpen] = useState(openCreate)
+  const [moveTarget, setMoveTarget] = useState<string | null>(null)
+  const [bulkMoveOpen, setBulkMoveOpen] = useState(false)
+  const [folderSheetOpen, setFolderSheetOpen] = useState(false)
+  const [folderSheetTarget, setFolderSheetTarget] = useState<Folder | null>(null)
+  const [deletePalaceTarget, setDeletePalaceTarget] = useState<string | null>(null)
+  const [deleteFolderTarget, setDeleteFolderTarget] = useState<string | null>(null)
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
+
+  const openCreateFolder = () => {
+    setFolderSheetTarget(null)
+    setFolderSheetOpen(true)
+  }
+  const openEditFolder = (folder: Folder) => {
+    setFolderSheetTarget(folder)
+    setFolderSheetOpen(true)
+  }
+
+  const exitSelect = () => {
+    setSelectMode(false)
+    setSelectedIds(new Set())
+  }
+
+  const dueCounts = useMemo(
+    () => countDuePerPalace(palaces, rooms, loci, now),
+    [palaces, rooms, loci, now],
+  )
+
+  const reviewerName = profile.name.trim() || session?.displayName || t('common.guest')
+
+  // Enrich each palace with derived progress + sort keys, once.
+  type Enriched = LibraryPalaceItem & { order: number; updatedAt: string }
+  const enriched = useMemo<Enriched[]>(
+    () =>
+      palaces.map((palace) => {
+        const completions = roomsForPalace(rooms, palace.id).map((room) =>
+          isRoomCompleted(lociForRoom(loci, room.id)),
+        )
+        return {
+          id: palace.id,
+          name: palace.name,
+          icon: palace.icon,
+          color: palace.color,
+          image: palace.image,
+          category: palace.category,
+          favorite: palace.favorite,
+          archived: palace.archived,
+          folderId: palace.folderId,
+          order: palace.order,
+          updatedAt: palace.updatedAt,
+          progress: palaceProgress(completions),
+          totalRooms: completions.length,
+          dueCount: dueCounts.get(palace.id) ?? 0,
+        }
+      }),
+    [palaces, rooms, loci, dueCounts],
+  )
+
+  const q = query.trim().toLowerCase()
+  const matchesQuery = (name: string, category = '') =>
+    !q || name.toLowerCase().includes(q) || category.toLowerCase().includes(q)
+
+  const sortPalaces = (list: Enriched[]): Enriched[] =>
+    [...list].sort((a, b) => {
+      switch (sort) {
+        case 'manual':
+          return a.order - b.order || a.updatedAt.localeCompare(b.updatedAt)
+        case 'progress':
+          return b.progress - a.progress
+        case 'name':
+          return a.name.localeCompare(b.name)
+        case 'category':
+          return a.category.localeCompare(b.category) || a.name.localeCompare(b.name)
+        default:
+          if (a.favorite !== b.favorite) return a.favorite ? -1 : 1
+          return b.updatedAt.localeCompare(a.updatedAt)
+      }
+    })
+
+  const visiblePalaces = useMemo(() => {
+    const pool = enriched.filter((item) => {
+      if (inArchived) return item.archived
+      if (item.archived) return false
+      return (item.folderId ?? null) === (atRoot ? null : folderId)
+    })
+    return sortPalaces(pool.filter((item) => matchesQuery(item.name, item.category)))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enriched, inArchived, atRoot, folderId, q, sort])
+
+  const visibleFolders = useMemo<LibraryFolderItem[]>(() => {
+    if (!atRoot || inArchived) return []
+    const countByFolder = new Map<string, number>()
+    for (const item of enriched) {
+      if (item.archived || !item.folderId) continue
+      countByFolder.set(item.folderId, (countByFolder.get(item.folderId) ?? 0) + 1)
+    }
+    const items = folders
+      .filter((folder) => matchesQuery(folder.name))
+      .map((folder) => ({
+        id: folder.id,
+        name: folder.name,
+        color: folder.color,
+        icon: folder.icon,
+        count: countByFolder.get(folder.id) ?? 0,
+        order: folder.order,
+        updatedAt: folder.updatedAt,
+      }))
+    items.sort((a, b) => {
+      switch (sort) {
+        case 'name':
+          return a.name.localeCompare(b.name)
+        case 'recent':
+          return b.updatedAt.localeCompare(a.updatedAt)
+        default:
+          return a.order - b.order || a.name.localeCompare(b.name)
+      }
+    })
+    return items.map(({ id, name, color, icon, count }) => ({ id, name, color, icon, count }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [folders, enriched, atRoot, inArchived, q, sort])
+
+  const palaceById = (id: string) => palaces.find((palace) => palace.id === id)
+  const deletingPalace = deletePalaceTarget ? palaceById(deletePalaceTarget) : undefined
+  const deletingFolder = deleteFolderTarget
+    ? folders.find((folder) => folder.id === deleteFolderTarget)
+    : undefined
+  const movingPalace = moveTarget ? palaceById(moveTarget) : undefined
+
+  const closeSearch = () => {
+    setSearchOpen(false)
+    setQuery('')
+  }
+
   const handleImportPalace = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     event.target.value = ''
@@ -180,173 +343,6 @@ export function PalacesPage({
     }
   }
 
-  const view = prefs.palacesView
-  const sort = prefs.palacesSort
-  const setView = (value: PalacesView) => void setPreferences(prefStore, { palacesView: value })
-  const setSort = (value: PalacesSort) => void setPreferences(prefStore, { palacesSort: value })
-
-  const [activeFilter, setActiveFilter] = useState<string>(ALL)
-  const [searchOpen, setSearchOpen] = useState(false)
-  const [query, setQuery] = useState('')
-  const [sortOpen, setSortOpen] = useState(false)
-  const [createOpen, setCreateOpen] = useState(openCreate)
-  const [moveTarget, setMoveTarget] = useState<string | null>(null)
-  // One sheet drives the whole folder lifecycle: `open` with a `null` target is create,
-  // with a folder is edit.
-  const [folderSheetOpen, setFolderSheetOpen] = useState(false)
-  const [folderSheetTarget, setFolderSheetTarget] = useState<Folder | null>(null)
-  const [deletePalaceTarget, setDeletePalaceTarget] = useState<string | null>(null)
-  const [deleteFolderTarget, setDeleteFolderTarget] = useState<string | null>(null)
-
-  const openCreateFolder = () => {
-    setFolderSheetTarget(null)
-    setFolderSheetOpen(true)
-  }
-  const openEditFolder = (folder: Folder) => {
-    setFolderSheetTarget(folder)
-    setFolderSheetOpen(true)
-  }
-
-  // Cards due now, per palace — recomputed when the library changes. The clock is read once
-  // at the UI edge (`now`); the pure tally lives in shared/lib and takes it as an argument.
-  const dueCounts = useMemo(
-    () => countDuePerPalace(palaces, rooms, loci, now),
-    [palaces, rooms, loci, now],
-  )
-
-  const reviewerName = profile.name.trim() || session?.displayName || t('common.guest')
-
-  // Map each palace to its list item, deriving progress from its rooms/loci.
-  const items = useMemo<PalaceListItem[]>(
-    () =>
-      palaces.map((palace) => {
-        const completions = roomsForPalace(rooms, palace.id).map((room) =>
-          isRoomCompleted(lociForRoom(loci, room.id)),
-        )
-        return {
-          id: palace.id,
-          name: palace.name,
-          icon: palace.icon,
-          color: palace.color,
-          image: palace.image,
-          category: palace.category,
-          favorite: palace.favorite,
-          bibleMode: palace.bibleMode,
-          archived: palace.archived,
-          folderId: palace.folderId,
-          updatedAt: palace.updatedAt,
-          progress: palaceProgress(completions),
-          roomsCompleted: completions.filter(Boolean).length,
-          totalRooms: completions.length,
-          dueCount: dueCounts.get(palace.id) ?? 0,
-        }
-      }),
-    [palaces, rooms, loci, dueCounts],
-  )
-
-  const active = useMemo(() => items.filter((item) => !item.archived), [items])
-  const favoriteCount = active.filter((item) => item.favorite).length
-  const bibleCount = active.filter((item) => item.bibleMode).length
-  const unfiledCount = active.filter((item) => !item.folderId).length
-  const archivedCount = items.length - active.length
-
-  const collections = useMemo<Collection[]>(() => {
-    const base: Collection[] = [
-      { id: ALL, label: t('palaces.collectionAll'), count: active.length, kind: 'all' },
-    ]
-    if (favoriteCount > 0) {
-      base.push({
-        id: FAVORITES,
-        label: t('palaces.collectionFavorites'),
-        count: favoriteCount,
-        kind: 'favorites',
-      })
-    }
-    if (bibleCount > 0) {
-      base.push({
-        id: BIBLE,
-        label: t('palaces.collectionBible'),
-        count: bibleCount,
-        kind: 'bible',
-      })
-    }
-    folders.forEach((folder) => {
-      base.push({
-        id: folder.id,
-        label: folder.name,
-        count: active.filter((item) => item.folderId === folder.id).length,
-        kind: 'folder',
-        color: folder.color,
-        icon: folder.icon,
-      })
-    })
-    if (folders.length > 0 && unfiledCount > 0) {
-      base.push({
-        id: UNFILED,
-        label: t('palaces.collectionUnfiled'),
-        count: unfiledCount,
-        kind: 'unfiled',
-      })
-    }
-    if (archivedCount > 0) {
-      base.push({
-        id: ARCHIVED,
-        label: t('palaces.collectionArchived'),
-        count: archivedCount,
-        kind: 'archived',
-      })
-    }
-    return base
-  }, [t, active, favoriteCount, bibleCount, folders, unfiledCount, archivedCount])
-
-  const isArchivedView = activeFilter === ARCHIVED
-
-  const visible = useMemo(() => {
-    let list = isArchivedView ? items.filter((item) => item.archived) : active
-    if (activeFilter === FAVORITES) list = list.filter((item) => item.favorite)
-    else if (activeFilter === BIBLE) list = list.filter((item) => item.bibleMode)
-    else if (activeFilter === UNFILED) list = list.filter((item) => !item.folderId)
-    else if (activeFilter !== ALL && !isArchivedView)
-      list = list.filter((item) => item.folderId === activeFilter)
-
-    const q = query.trim().toLowerCase()
-    if (q) {
-      list = list.filter(
-        (item) => item.name.toLowerCase().includes(q) || item.category.toLowerCase().includes(q),
-      )
-    }
-
-    return [...list].sort((a, b) => {
-      switch (sort) {
-        case 'progress':
-          return b.progress - a.progress
-        case 'name':
-          return a.name.localeCompare(b.name)
-        case 'category':
-          return a.category.localeCompare(b.category) || a.name.localeCompare(b.name)
-        default:
-          // Recent: favorites float to the top, then newest-updated first.
-          if (a.favorite !== b.favorite) return a.favorite ? -1 : 1
-          return b.updatedAt.localeCompare(a.updatedAt)
-      }
-    })
-  }, [items, active, activeFilter, isArchivedView, query, sort])
-
-  const palaceById = (id: string) => palaces.find((palace) => palace.id === id)
-  const deletingPalace = deletePalaceTarget ? palaceById(deletePalaceTarget) : undefined
-  const deletingFolder = deleteFolderTarget
-    ? folders.find((folder) => folder.id === deleteFolderTarget)
-    : undefined
-  const movingPalace = moveTarget ? palaceById(moveTarget) : undefined
-  const activeFolder = folders.find((folder) => folder.id === activeFilter)
-
-  const closeSearch = () => {
-    setSearchOpen(false)
-    setQuery('')
-  }
-
-  // Archive (and move, below) are reversible, so they confirm with an undoable toast
-  // rather than a blocking dialog — the action lands instantly and stays forgiving.
   const handleArchive = (id: string) => {
     const palace = palaceById(id)
     if (!palace) return
@@ -363,7 +359,6 @@ export function PalacesPage({
     )
   }
 
-  // Cycle the shared palette so each new folder lands on a fresh colour by default.
   const nextFolderColor = PALACE_COLOR_OPTIONS[folders.length % PALACE_COLOR_OPTIONS.length]!.value
 
   const handleSubmitFolder = (changes: { name: string; color: string; icon: string }) => {
@@ -372,25 +367,36 @@ export function PalacesPage({
     setFolderSheetOpen(false)
   }
 
-  const handlePickFolder = (folderId: string | null) => {
-    const palace = movingPalace
+  const filePalaceInto = (palaceId: string, targetFolderId: string | null, silent = false) => {
+    const palace = palaceById(palaceId)
     const previous = palace?.folderId ?? null
-    if (palace && folderId !== previous) {
-      void setPalaceFolder(palaceStore, palace.id, folderId)
-      const folderName = folderId
-        ? folders.find((folder) => folder.id === folderId)?.name
-        : undefined
-      toast.success(
-        folderName ? t('palaces.movedToast', { folder: folderName }) : t('palaces.unfiledToast'),
-        {
-          action: {
-            label: t('common.undo'),
-            onClick: () => void setPalaceFolder(palaceStore, palace.id, previous),
-          },
+    if (!palace || targetFolderId === previous) return
+    void setPalaceFolder(palaceStore, palaceId, targetFolderId)
+    if (silent) return
+    const folderName = targetFolderId
+      ? folders.find((folder) => folder.id === targetFolderId)?.name
+      : undefined
+    toast.success(
+      folderName ? t('palaces.movedToast', { folder: folderName }) : t('palaces.unfiledToast'),
+      {
+        action: {
+          label: t('common.undo'),
+          onClick: () => void setPalaceFolder(palaceStore, palaceId, previous),
         },
-      )
-    }
+      },
+    )
+  }
+
+  const handlePickFolder = (targetFolderId: string | null) => {
+    if (movingPalace) filePalaceInto(movingPalace.id, targetFolderId)
     setMoveTarget(null)
+  }
+
+  const handleBulkPickFolder = (targetFolderId: string | null) => {
+    for (const id of selectedIds) if (palaceById(id)) filePalaceInto(id, targetFolderId, true)
+    toast.success(t('palaces.bulkMovedToast'))
+    setBulkMoveOpen(false)
+    exitSelect()
   }
 
   const confirmDeletePalace = () => {
@@ -405,22 +411,81 @@ export function PalacesPage({
   const confirmDeleteFolder = () => {
     if (deleteFolderTarget) {
       void deleteFolder(folderStore, palaceStore, deleteFolderTarget)
-      if (activeFilter === deleteFolderTarget) setActiveFilter(ALL)
+      if (folderId === deleteFolderTarget) onCloseFolder?.()
     }
     setDeleteFolderTarget(null)
   }
 
-  const sortActions = (['recent', 'progress', 'name', 'category'] as const).map((option) => ({
-    id: option,
-    label: t(SORT_LABEL_KEY[option]),
-    icon:
-      sort === option ? (
-        <Check className="size-5 text-primary" aria-hidden />
-      ) : (
-        <SortGlyph option={option} />
-      ),
-    onSelect: () => setSort(option),
-  }))
+  const dndHandlers: LibraryHandlers = {
+    onOpenPalace: (id) => onOpenPalace?.(id),
+    onOpenPalaceSettings: (id) => onOpenPalaceSettings?.(id),
+    onToggleFavorite: (id) => void togglePalaceFavorite(palaceStore, id),
+    onMovePalace: (id) => setMoveTarget(id),
+    onArchivePalace: handleArchive,
+    onDeletePalace: (id) => setDeletePalaceTarget(id),
+    onOpenFolder: (id) => onOpenFolder?.(id),
+    onEditFolder: (id) => {
+      const folder = folders.find((f) => f.id === id)
+      if (folder) openEditFolder(folder)
+    },
+    onDeleteFolder: (id) => setDeleteFolderTarget(id),
+    onReorderFolders: (ids) => {
+      void reorderFolders(folderStore, ids)
+      if (sort !== 'manual') setSort('manual')
+    },
+    onReorderPalaces: (ids) => {
+      void reorderPalaces(palaceStore, ids)
+      if (sort !== 'manual') setSort('manual')
+    },
+    onFilePalace: (palaceId, targetFolderId) => filePalaceInto(palaceId, targetFolderId),
+  }
+
+  const toggleSelect = (id: string) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+
+  const allVisibleIds = [...visibleFolders.map((f) => f.id), ...visiblePalaces.map((p) => p.id)]
+  const allSelected = allVisibleIds.length > 0 && allVisibleIds.every((id) => selectedIds.has(id))
+  const toggleSelectAll = () => setSelectedIds(allSelected ? new Set() : new Set(allVisibleIds))
+
+  const selectedFolderIds = [...selectedIds].filter((id) => folders.some((f) => f.id === id))
+  const selectedPalaceIds = [...selectedIds].filter((id) => palaces.some((p) => p.id === id))
+  const onlyPalaces = selectedFolderIds.length === 0 && selectedPalaceIds.length > 0
+
+  const confirmBulkDelete = () => {
+    for (const id of selectedPalaceIds) void deletePalace(palaceStore, id)
+    for (const id of selectedFolderIds) void deleteFolder(folderStore, palaceStore, id)
+    toast.success(t('palaces.bulkDeletedToast', { count: selectedIds.size }))
+    setBulkDeleteOpen(false)
+    exitSelect()
+  }
+
+  const bulkArchive = () => {
+    for (const id of selectedPalaceIds) {
+      const palace = palaceById(id)
+      if (palace && !palace.archived) void setPalaceArchived(palaceStore, id, true)
+    }
+    toast.success(t('palaces.bulkArchivedToast'))
+    exitSelect()
+  }
+
+  const sortActions = (['manual', 'recent', 'progress', 'name', 'category'] as const).map(
+    (option) => ({
+      id: option,
+      label: t(SORT_LABEL_KEY[option]),
+      icon:
+        sort === option ? (
+          <Check className="size-5 text-primary" aria-hidden />
+        ) : (
+          <SortGlyph option={option} />
+        ),
+      onSelect: () => setSort(option),
+    }),
+  )
 
   const emptyState = renderEmptyState()
 
@@ -439,7 +504,7 @@ export function PalacesPage({
         />
       )
     }
-    if (isArchivedView) {
+    if (inArchived) {
       return (
         <EmptyState
           icon={<Archive className="size-7" aria-hidden />}
@@ -448,12 +513,12 @@ export function PalacesPage({
         />
       )
     }
-    if (active.length === 0) {
+    if (!atRoot) {
       return (
         <EmptyState
-          emoji="🏛️"
-          title={t('palaces.emptyTitle')}
-          description={t('palaces.emptyBody')}
+          emoji="📂"
+          title={t('palaces.emptyFolderTitle')}
+          description={t('palaces.emptyFolderBody')}
           action={
             <Button onClick={() => setCreateOpen(true)}>
               <Plus className="size-[18px]" aria-hidden />
@@ -465,12 +530,13 @@ export function PalacesPage({
     }
     return (
       <EmptyState
-        emoji="🗂️"
-        title={t('palaces.emptyFilteredTitle')}
-        description={t('palaces.emptyFilteredBody')}
+        emoji="🏛️"
+        title={t('palaces.emptyTitle')}
+        description={t('palaces.emptyBody')}
         action={
-          <Button variant="secondary" onClick={() => setActiveFilter(ALL)}>
-            {t('palaces.emptyFilteredAction')}
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className="size-[18px]" aria-hidden />
+            {t('palaces.createCta')}
           </Button>
         }
       />
@@ -509,100 +575,166 @@ export function PalacesPage({
         />
       }
     >
-      <div className="mt-6">
-        <CollectionRail
-          collections={collections}
-          activeId={activeFilter}
-          onSelect={setActiveFilter}
-          onNewFolder={openCreateFolder}
-        />
-      </div>
+      {/* Breadcrumb: a back affordance when inside a folder or the archived view. */}
+      {!atRoot ? (
+        <button
+          type="button"
+          onClick={() => onCloseFolder?.()}
+          className="mt-4 inline-flex items-center gap-1 text-[length:var(--p-text-label)] font-semibold text-primary"
+        >
+          <ChevronLeft className="size-4" aria-hidden />
+          {t('palaces.backToLibrary')}
+        </button>
+      ) : null}
 
-      {/* Two-tier overview: a context line names what you're looking at (a result count, or
-          inside a folder a tappable header that owns rename / recolour / delete), then a
-          control bar makes the sort visible — no longer hidden behind a mystery icon — next
-          to the grid/list toggle. */}
-      <div className="mb-3 mt-5 flex flex-col gap-3">
-        {activeFolder ? (
-          <button
-            type="button"
-            onClick={() => openEditFolder(activeFolder)}
-            aria-label={t('palaces.editFolderLabel', { name: activeFolder.name })}
-            className="flex min-w-0 items-center gap-2.5 rounded-control text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-          >
-            <FolderGlyph
-              color={activeFolder.color}
-              icon={activeFolder.icon}
-              className="size-7"
-              iconClassName="text-sm leading-none"
-            />
-            <span className="truncate text-[length:var(--p-text-headline)] font-bold tracking-tight text-heading">
-              {activeFolder.name}
+      {/* Compact toolbar: context name + sort / view / select. */}
+      <div className="mb-3 mt-3 flex items-center gap-2">
+        {selectMode ? (
+          <>
+            <button
+              type="button"
+              onClick={toggleSelectAll}
+              className="text-[length:var(--p-text-label)] font-semibold text-heading"
+            >
+              {allSelected ? t('loci.select.clearAll') : t('loci.select.selectAll')}
+            </button>
+            <span className="text-[length:var(--p-text-label)] font-semibold text-muted-foreground">
+              {t('loci.select.count', { count: selectedIds.size })}
             </span>
-            <span className="shrink-0 rounded-full bg-info-surface px-2 py-0.5 text-[length:var(--p-text-label)] font-bold tabular-nums text-info-foreground">
-              {visible.length}
-            </span>
-            <Pencil className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-          </button>
+            <button
+              type="button"
+              onClick={exitSelect}
+              className="ml-auto text-[length:var(--p-text-label)] font-semibold text-accent"
+            >
+              {t('loci.select.done')}
+            </button>
+          </>
         ) : (
-          <h2 className="min-w-0 truncate text-[length:var(--p-text-headline)] font-bold tracking-tight text-heading">
-            {isArchivedView
-              ? t('palaces.collectionArchived')
-              : t(visible.length === 1 ? 'palaces.countOne' : 'palaces.countOther', {
-                  count: visible.length,
-                })}
-          </h2>
+          <>
+            {inArchived ? (
+              <h2 className="min-w-0 truncate text-[length:var(--p-text-title)] font-bold tracking-tight text-heading">
+                {t('palaces.collectionArchived')}
+              </h2>
+            ) : currentFolder ? (
+              <button
+                type="button"
+                onClick={() => openEditFolder(currentFolder)}
+                aria-label={t('palaces.editFolderLabel', { name: currentFolder.name })}
+                className="flex min-w-0 items-center gap-2 rounded-control text-left"
+              >
+                <FolderGlyph
+                  color={currentFolder.color}
+                  icon={currentFolder.icon}
+                  className="size-7"
+                  iconClassName="text-sm leading-none"
+                />
+                <span className="truncate text-[length:var(--p-text-title)] font-bold tracking-tight text-heading">
+                  {currentFolder.name}
+                </span>
+                <Pencil className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+              </button>
+            ) : null}
+
+            <button
+              type="button"
+              aria-haspopup="dialog"
+              aria-label={t('palaces.sortLabel')}
+              onClick={() => setSortOpen(true)}
+              className={cn(
+                'flex h-9 min-w-0 items-center gap-1.5 rounded-control border border-border bg-card pl-2.5 pr-2 shadow-rest transition-transform active:scale-[0.97]',
+                currentFolder || inArchived ? 'ml-auto' : '',
+              )}
+            >
+              <SortGlyph option={sort} className="size-4 text-accent" />
+              <span className="truncate text-[length:var(--p-text-label)] font-semibold text-heading">
+                {t(SORT_LABEL_KEY[sort])}
+              </span>
+              <ChevronDown className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+            </button>
+
+            <IconButton
+              variant="ghost"
+              size="sm"
+              aria-label={t('palaces.selectLabel')}
+              className={currentFolder || inArchived ? '' : 'ml-auto'}
+              onClick={() => setSelectMode(true)}
+            >
+              <ListChecks className="size-[18px]" aria-hidden />
+            </IconButton>
+
+            <SegmentedControl
+              aria-label={t('palaces.viewLabel')}
+              size="sm"
+              className="w-[80px]"
+              value={view}
+              onChange={(value) => setView(value)}
+              options={[
+                {
+                  value: 'grid',
+                  label: <LayoutGrid className="size-[18px]" aria-hidden />,
+                  ariaLabel: t('palaces.viewGrid'),
+                },
+                {
+                  value: 'list',
+                  label: <Rows3 className="size-[18px]" aria-hidden />,
+                  ariaLabel: t('palaces.viewList'),
+                },
+              ]}
+            />
+
+            {atRoot ? (
+              <IconButton
+                variant="ghost"
+                size="sm"
+                aria-label={t('palaces.viewArchived')}
+                onClick={() => setOverflowOpen(true)}
+              >
+                <Archive className="size-[18px]" aria-hidden />
+              </IconButton>
+            ) : null}
+          </>
         )}
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            aria-haspopup="dialog"
-            aria-label={t('palaces.sortLabel')}
-            onClick={() => setSortOpen(true)}
-            className="flex h-9 min-w-0 items-center gap-1.5 rounded-control border border-border bg-card pl-2.5 pr-2 shadow-rest transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-          >
-            <SortGlyph option={sort} className="size-4 text-accent" />
-            <span className="truncate text-[length:var(--p-text-label)] font-semibold text-heading">
-              {t(SORT_LABEL_KEY[sort])}
-            </span>
-            <ChevronDown className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-          </button>
-
-          <SegmentedControl
-            aria-label={t('palaces.viewLabel')}
-            size="sm"
-            className="ml-auto w-[88px]"
-            value={view}
-            onChange={(value) => setView(value)}
-            options={[
-              {
-                value: 'grid',
-                label: <LayoutGrid className="size-[18px]" aria-hidden />,
-                ariaLabel: t('palaces.viewGrid'),
-              },
-              {
-                value: 'list',
-                label: <Rows3 className="size-[18px]" aria-hidden />,
-                ariaLabel: t('palaces.viewList'),
-              },
-            ]}
-          />
-        </div>
       </div>
 
-      <PalaceList
-        items={visible}
+      <LibraryGrid
+        folders={visibleFolders}
+        palaces={visiblePalaces}
         view={view}
         loading={!palacesReady}
         emptyState={emptyState}
-        onOpen={(id) => onOpenPalace?.(id)}
-        onOpenSettings={(id) => onOpenPalaceSettings?.(id)}
-        onToggleFavorite={(id) => void togglePalaceFavorite(palaceStore, id)}
-        onMove={(id) => setMoveTarget(id)}
-        onArchive={handleArchive}
-        onDelete={(id) => setDeletePalaceTarget(id)}
+        selectMode={selectMode}
+        selectedIds={selectedIds}
+        onToggleSelect={toggleSelect}
+        {...dndHandlers}
       />
+
+      {/* Bulk-action bar — appears in select mode with at least one item picked. */}
+      {selectMode && selectedIds.size > 0 ? (
+        <div className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-[430px] px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
+          <div className="flex items-center gap-2 rounded-card-featured bg-card/95 p-2.5 shadow-elevated backdrop-blur-xl">
+            {onlyPalaces ? (
+              <>
+                <BulkButton
+                  icon={<FolderPlus className="size-[17px]" aria-hidden />}
+                  label={t('palaces.moveToFolder')}
+                  onClick={() => setBulkMoveOpen(true)}
+                />
+                <BulkButton
+                  icon={<Archive className="size-[17px]" aria-hidden />}
+                  label={t('palaces.archive')}
+                  onClick={bulkArchive}
+                />
+              </>
+            ) : null}
+            <BulkButton
+              tone="danger"
+              icon={<Trash2 className="size-[17px]" aria-hidden />}
+              label={t('common.delete')}
+              onClick={() => setBulkDeleteOpen(true)}
+            />
+          </div>
+        </div>
+      ) : null}
 
       <SpeedDial
         label={t('palaces.quickActions')}
@@ -636,6 +768,21 @@ export function PalacesPage({
         cancelLabel={t('common.cancel')}
       />
 
+      <ActionSheet
+        open={overflowOpen}
+        onOpenChange={setOverflowOpen}
+        title={t('palaces.libraryTitle')}
+        actions={[
+          {
+            id: 'archived',
+            label: t('palaces.viewArchived'),
+            icon: <Archive className="size-5" aria-hidden />,
+            onSelect: () => onOpenFolder?.(ARCHIVED_VIEW),
+          },
+        ]}
+        cancelLabel={t('common.cancel')}
+      />
+
       <input
         ref={importRef}
         type="file"
@@ -648,6 +795,7 @@ export function PalacesPage({
         open={createOpen}
         onOpenChange={setCreateOpen}
         onCreated={(id) => onOpenPalace?.(id)}
+        folderId={atRoot || inArchived ? null : folderId}
       />
 
       <MoveToFolderSheet
@@ -661,6 +809,19 @@ export function PalacesPage({
         onPick={handlePickFolder}
         onNewFolder={() => {
           setMoveTarget(null)
+          openCreateFolder()
+        }}
+      />
+
+      <MoveToFolderSheet
+        open={bulkMoveOpen}
+        onOpenChange={setBulkMoveOpen}
+        palaceName={t('palaces.bulkSelected', { count: selectedPalaceIds.length })}
+        currentFolderId={atRoot ? null : folderId}
+        folders={folders}
+        onPick={handleBulkPickFolder}
+        onNewFolder={() => {
+          setBulkMoveOpen(false)
           openCreateFolder()
         }}
       />
@@ -687,7 +848,7 @@ export function PalacesPage({
         onOpenChange={(open) => {
           if (!open) setDeletePalaceTarget(null)
         }}
-        icon={<Archive className="size-7" aria-hidden />}
+        icon={<Trash2 className="size-7" aria-hidden />}
         title={t('palaces.deleteConfirmTitle', { name: deletingPalace?.name ?? '' })}
         description={t('palaces.deleteConfirmBody')}
         confirmLabel={t('palaces.confirmDelete')}
@@ -708,6 +869,18 @@ export function PalacesPage({
         destructive
         onConfirm={confirmDeleteFolder}
       />
+
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        onOpenChange={setBulkDeleteOpen}
+        icon={<Trash2 className="size-7" aria-hidden />}
+        title={t('palaces.bulkDeleteTitle', { count: selectedIds.size })}
+        description={t('palaces.bulkDeleteBody')}
+        confirmLabel={t('common.delete')}
+        cancelLabel={t('common.cancel')}
+        destructive
+        onConfirm={confirmBulkDelete}
+      />
     </AppScreen>
   )
 }
@@ -719,8 +892,37 @@ function SortGlyph({
   option: PalacesSort
   className?: string
 }) {
+  if (option === 'manual') return <GripVertical className={className} aria-hidden />
   if (option === 'progress') return <TrendingUp className={className} aria-hidden />
   if (option === 'name') return <ArrowDownAZ className={className} aria-hidden />
   if (option === 'category') return <Tag className={className} aria-hidden />
   return <Clock className={className} aria-hidden />
+}
+
+function BulkButton({
+  icon,
+  label,
+  onClick,
+  tone = 'default',
+}: {
+  icon: React.ReactNode
+  label: string
+  onClick: () => void
+  tone?: 'default' | 'danger'
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'flex h-11 flex-1 items-center justify-center gap-1.5 rounded-control text-[length:var(--p-text-label)] font-semibold transition-transform active:scale-[0.97]',
+        tone === 'danger'
+          ? 'bg-[var(--danger-surface)] text-[var(--danger-on-surface)]'
+          : 'bg-info-surface text-heading',
+      )}
+    >
+      {icon}
+      {label}
+    </button>
+  )
 }
