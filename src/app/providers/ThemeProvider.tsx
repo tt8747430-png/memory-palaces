@@ -1,26 +1,36 @@
 import { type ReactNode, useEffect } from 'react'
+import type { Theme } from '@/entities/preferences'
 
-export type Theme = 'light' | 'dark' | 'system'
+const DARK_QUERY = '(prefers-color-scheme: dark)'
+
+function resolve(theme: Theme): 'light' | 'dark' {
+  if (theme !== 'system') return theme
+  return window.matchMedia(DARK_QUERY).matches ? 'dark' : 'light'
+}
 
 /**
- * Sets `[data-theme]` on <html>; the semantic token layer re-maps off it. Light
- * only for now — the dark map lands in Phase 12 with no component edits.
+ * Applies the appearance preference to `[data-theme]` on <html>; the semantic token
+ * layer re-maps off it (light/dark with zero component edits). For `system`, it
+ * resolves the OS setting and keeps following it live — flipping the OS theme updates
+ * the app without a reload.
  */
 export function ThemeProvider({
-  theme = 'light',
+  theme = 'system',
   children,
 }: {
   theme?: Theme
   children: ReactNode
 }) {
   useEffect(() => {
-    const resolved =
-      theme === 'system'
-        ? window.matchMedia('(prefers-color-scheme: dark)').matches
-          ? 'dark'
-          : 'light'
-        : theme
-    document.documentElement.dataset.theme = resolved
+    document.documentElement.dataset.theme = resolve(theme)
+    if (theme !== 'system') return
+
+    const media = window.matchMedia(DARK_QUERY)
+    const onChange = () => {
+      document.documentElement.dataset.theme = media.matches ? 'dark' : 'light'
+    }
+    media.addEventListener('change', onChange)
+    return () => media.removeEventListener('change', onChange)
   }, [theme])
 
   return children

@@ -212,7 +212,7 @@ export const progressSchema: RxJsonSchema<Progress> = {
 }
 
 export const preferencesSchema: RxJsonSchema<Preferences> = {
-  version: 5,
+  version: 6,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -223,7 +223,7 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
     haptics: { type: 'boolean' },
     reducedMotion: { type: 'boolean' },
     notifications: { type: 'boolean' },
-    darkMode: { type: 'boolean' },
+    theme: { type: 'string', enum: ['light', 'dark', 'system'] },
     language: { type: 'string' },
     dailyGoal: { type: 'number' },
     palacesView: { type: 'string', enum: ['grid', 'list'] },
@@ -258,7 +258,7 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
     'haptics',
     'reducedMotion',
     'notifications',
-    'darkMode',
+    'theme',
     'language',
     'dailyGoal',
     'palacesView',

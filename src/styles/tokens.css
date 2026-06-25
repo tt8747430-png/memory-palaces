@@ -228,31 +228,31 @@
 }
 
 /* =============================================================================
-   SEMANTIC ROLES — DARK  ·  PHASE 12 PLACEHOLDER (provisional, NOT WCAG-verified)
-   Same role names; only values change. No component edits when this lands.
-   Strategy: navy becomes ground, near-white becomes ink, light-blue stays accent.
+   SEMANTIC ROLES — DARK
+   Same role names as light; only values change — no component edits. Navy becomes
+   the ground, near-white becomes ink, light-blue carries the action accent. Tuned
+   for coherence on the dark ground; worth a final contrast pass before a major
+   release (the navy ground sits ~20–27% L, so ink and tints are sized to it).
    ============================================================================= */
 [data-theme='dark'] {
-  --bg: linear-gradient(
-    to bottom right,
-    oklch(24.2% 0.113 267.7) 0%,
-    /* TODO #0A1654 */ oklch(19.9% 0.089 267.7) 100%
-  ); /* TODO #060F3D */
+  color-scheme: dark;
+
+  --bg: linear-gradient(to bottom right, oklch(24.2% 0.113 267.7) 0%, oklch(19.9% 0.089 267.7) 100%);
   --bg-daylight: var(--bg);
-  --surface: oklch(27.3% 0.131 267.1); /* TODO #0C1B66 */
-  --surface-sky: oklch(30.4% 0.128 267.2); /* TODO #13256E */
-  --surface-glass: oklch(27.3% 0.131 267.1 / 0.72); /* TODO */
-  --surface-glass-sky: oklch(var(--p-tint-navy) / 0.45); /* TODO */
+  --surface: oklch(27.3% 0.131 267.1);
+  --surface-sky: oklch(30.4% 0.128 267.2);
+  --surface-glass: oklch(27.3% 0.131 267.1 / 0.72);
+  --surface-glass-sky: oklch(var(--p-tint-navy) / 0.45);
 
-  --text-primary: oklch(97.9% 0.01 267.4); /* TODO #F5F8FF — verify ≥4.5:1 */
-  --text-heading: oklch(100% 0 0); /* TODO */
-  --text-secondary: oklch(86.7% 0.05 267.6); /* TODO #C5D3F5 */
-  --text-muted: oklch(76.5% 0.07 267.2); /* TODO #9FB2E0 */
-  --text-faint: oklch(60.5% 0.076 269); /* TODO #6F80B0 decorative */
-  --text-on-primary: var(--p-navy-900); /* TODO (primary flips to light) */
-  --text-on-accent: var(--p-navy-900); /* TODO */
+  --text-primary: oklch(97.9% 0.01 267.4);
+  --text-heading: oklch(100% 0 0);
+  --text-secondary: oklch(86.7% 0.05 267.6);
+  --text-muted: oklch(76.5% 0.07 267.2);
+  --text-faint: oklch(60.5% 0.076 269);
+  --text-on-primary: var(--p-navy-900);
+  --text-on-accent: var(--p-navy-900);
 
-  --primary: var(--p-blue-300); /* TODO (action flips to light-blue in dark) */
+  --primary: var(--p-blue-300);
   --primary-foreground: var(--p-navy-900);
   --secondary: oklch(var(--p-tint-sky) / 0.16);
   --secondary-foreground: oklch(97.9% 0.01 267.4);
@@ -262,12 +262,31 @@
   --info-surface: oklch(var(--p-tint-sky) / 0.14);
   --info-foreground: oklch(89% 0.04 267);
 
+  /* Status — translucent tint surfaces with light ink, tuned for the dark ground so
+     chips read as a soft glow rather than the bright light-mode tints. */
+  --success: var(--p-green-500);
+  --success-foreground: oklch(84% 0.13 165);
+  --success-surface: oklch(69.6% 0.149 162.5 / 0.16);
+  --success-on-surface: oklch(86% 0.11 165);
+
+  --warning: var(--p-amber-500);
+  --warning-foreground: oklch(86% 0.13 80);
+  --warning-surface: oklch(76.9% 0.165 70.1 / 0.16);
+  --warning-on-fill: var(--p-ink-900);
+
+  --danger: var(--p-red-500);
+  --danger-foreground: var(--p-white);
+  --danger-surface: oklch(63.7% 0.208 25.3 / 0.18);
+  --danger-on-surface: oklch(82% 0.12 22);
+
+  --rating: var(--p-gold-400);
+  --rating-edge: var(--p-gold-400);
+
   --border: oklch(100% 0 0 / 0.1);
   --border-glass: oklch(100% 0 0 / 0.12);
   --divider: oklch(100% 0 0 / 0.1);
   --ring: var(--p-blue-300);
   --input-bg: oklch(100% 0 0 / 0.06);
-  /* status roles: re-tuned in Phase 12 against the dark ground */
 }
 
 /* =============================================================================

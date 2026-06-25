@@ -4,11 +4,13 @@ import {
   migratePreferencesV1,
   migratePreferencesV2,
   migratePreferencesV3,
+  migratePreferencesV6,
   migrateProfileV1,
   migrateProgressV1,
   type PreferencesV0,
   type PreferencesV1,
   type PreferencesV2,
+  type PreferencesV5,
   type ProfileV0,
   type ProgressV0,
 } from './migrations'
@@ -141,5 +143,38 @@ describe('migratePreferencesV3', () => {
     expect(v3.dailyGoal).toBe(5)
     expect(v3.palacesView).toBe('grid')
     expect(v3.updatedAt).toBe('2026-01-04T00:00:00.000Z')
+  })
+})
+
+describe('migratePreferencesV6', () => {
+  const v5: PreferencesV5 = {
+    id: 'preferences',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-05T00:00:00.000Z',
+    soundEffects: true,
+    haptics: true,
+    reducedMotion: false,
+    notifications: true,
+    darkMode: true,
+    language: 'en',
+    dailyGoal: 5,
+    palacesView: 'grid',
+    palacesSort: 'recent',
+    verseMode: 'blur',
+    verseShuffle: false,
+    verseWordSpaces: true,
+    privacy: DEFAULT_PRIVACY,
+  }
+
+  it('renames darkMode:true to theme:dark and drops the old boolean', () => {
+    const v6 = migratePreferencesV6(v5)
+    expect(v6.theme).toBe('dark')
+    expect('darkMode' in v6).toBe(false)
+    expect(v6.updatedAt).toBe('2026-01-05T00:00:00.000Z')
+  })
+
+  it('maps darkMode:false to theme:light', () => {
+    const v6 = migratePreferencesV6({ ...v5, darkMode: false })
+    expect(v6.theme).toBe('light')
   })
 })

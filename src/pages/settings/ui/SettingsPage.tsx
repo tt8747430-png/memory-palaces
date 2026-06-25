@@ -10,9 +10,11 @@ import {
   Info,
   LogIn,
   LogOut,
+  Monitor,
   Moon,
   Shield,
   Sparkles,
+  Sun,
   Trash2,
   Upload,
   Vibrate,
@@ -97,8 +99,13 @@ export function SettingsPage({
   const update = (changes: PreferencesChanges) => void setPreferences(prefsStore, changes)
   const name = profile.name.trim() || t('settings.namePlaceholder')
   const handle = profileHandle(profile)
-  const comingSoon = t('settings.comingSoon')
   const isGuest = sessionKind === 'guest'
+
+  const themeOptions = [
+    { value: 'light', icon: <Sun className="size-4" aria-hidden />, label: t('settings.themeLight') },
+    { value: 'dark', icon: <Moon className="size-4" aria-hidden />, label: t('settings.themeDark') },
+    { value: 'system', icon: <Monitor className="size-4" aria-hidden />, label: t('settings.themeSystem') },
+  ] as const
 
   const currentLanguage =
     AVAILABLE_LANGUAGES.find((language) => language.code === prefs.language) ?? AVAILABLE_LANGUAGES[0]!
@@ -215,13 +222,29 @@ export function SettingsPage({
               options={DAILY_GOAL_OPTIONS.map((n) => ({ value: String(n), label: String(n) }))}
             />
           </div>
-          <SettingsRow
-            kind="soon"
-            icon={<Moon />}
-            label={t('settings.darkMode')}
-            description={t('settings.darkModeHint')}
-            badge={comingSoon}
-          />
+          <div className="px-4 py-3">
+            <p className="text-[length:var(--p-text-body)] font-semibold text-heading">
+              {t('settings.theme')}
+            </p>
+            <p className="mb-2.5 text-[length:var(--p-text-label)] text-muted-foreground">
+              {t('settings.themeHint')}
+            </p>
+            <SegmentedControl
+              aria-label={t('settings.theme')}
+              value={prefs.theme}
+              onChange={(value) => update({ theme: value })}
+              options={themeOptions.map((option) => ({
+                value: option.value,
+                ariaLabel: option.label,
+                label: (
+                  <span className="inline-flex items-center gap-1.5">
+                    {option.icon}
+                    {option.label}
+                  </span>
+                ),
+              }))}
+            />
+          </div>
           <SettingsRow
             kind="nav"
             icon={<Globe />}

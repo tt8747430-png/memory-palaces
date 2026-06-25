@@ -11,6 +11,9 @@ export type PalacesSort = 'manual' | 'recent' | 'progress' | 'name' | 'category'
 /** The active recall mode in verse study. Persisted so it's remembered everywhere. */
 export type VerseMode = 'blur' | 'words' | 'initials' | 'type'
 
+/** App appearance: an explicit light/dark choice, or `system` to follow the OS. */
+export type Theme = 'light' | 'dark' | 'system'
+
 /** Privacy & security switches. Cosmetic placeholders for now (no feature reads them
  * yet) but persisted so the choices survive once the features that honour them land. */
 export interface PrivacySettings {
@@ -32,9 +35,8 @@ export const DEFAULT_PRIVACY: PrivacySettings = {
 /**
  * App-wide user preferences — one singleton record. Behaviour-driving switches
  * (haptics, reduced-motion, sound, in-app notifications) the user can turn off.
- * Applying them to the running app (motion config, haptics flag, toast gating) is
- * wired separately; this is the persisted source of truth. `darkMode`/`language`
- * are persisted but not yet applied (surfaced as "coming soon" in Settings).
+ * Applying them to the running app (motion config, haptics flag, toast gating,
+ * theme) is wired at the composition root; this is the persisted source of truth.
  */
 export interface Preferences extends Entity {
   /** Play short confirmation tones on answers and session completion. */
@@ -45,8 +47,8 @@ export interface Preferences extends Entity {
   reducedMotion: boolean
   /** Show in-app milestone toasts (level-ups, streaks, completions). */
   notifications: boolean
-  /** Persisted opt-in for the night theme; not applied until the theme ships. */
-  darkMode: boolean
+  /** Appearance: light, dark, or follow the OS. Applied via the `[data-theme]` root. */
+  theme: Theme
   /** BCP-47 language tag; only 'en' is shipped today. */
   language: string
   /** Items to practise per day to keep the streak (the daily goal). */
@@ -69,7 +71,7 @@ export const DEFAULT_PREFERENCES = {
   haptics: true,
   reducedMotion: false,
   notifications: true,
-  darkMode: false,
+  theme: 'system',
   language: 'en',
   dailyGoal: DEFAULT_DAILY_GOAL,
   palacesView: 'grid',
@@ -87,7 +89,7 @@ export interface MakePreferencesInput {
   haptics?: boolean
   reducedMotion?: boolean
   notifications?: boolean
-  darkMode?: boolean
+  theme?: Theme
   language?: string
   dailyGoal?: number
   palacesView?: PalacesView
@@ -107,7 +109,7 @@ export function makePreferences(input: MakePreferencesInput): Preferences {
     haptics: input.haptics ?? DEFAULT_PREFERENCES.haptics,
     reducedMotion: input.reducedMotion ?? DEFAULT_PREFERENCES.reducedMotion,
     notifications: input.notifications ?? DEFAULT_PREFERENCES.notifications,
-    darkMode: input.darkMode ?? DEFAULT_PREFERENCES.darkMode,
+    theme: input.theme ?? DEFAULT_PREFERENCES.theme,
     language: input.language ?? DEFAULT_PREFERENCES.language,
     dailyGoal: input.dailyGoal ?? DEFAULT_PREFERENCES.dailyGoal,
     palacesView: input.palacesView ?? DEFAULT_PREFERENCES.palacesView,
@@ -127,7 +129,7 @@ export type PreferencesChanges = Partial<
     | 'haptics'
     | 'reducedMotion'
     | 'notifications'
-    | 'darkMode'
+    | 'theme'
     | 'language'
     | 'dailyGoal'
     | 'palacesView'

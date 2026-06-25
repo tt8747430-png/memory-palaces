@@ -4,6 +4,7 @@ export type {
   PalacesView,
   PalacesSort,
   VerseMode,
+  Theme,
   MakePreferencesInput,
   PreferencesChanges,
 } from './model/types'

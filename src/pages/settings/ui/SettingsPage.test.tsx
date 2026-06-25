@@ -39,6 +39,18 @@ describe('SettingsPage', () => {
     expect(screen.getByRole('switch', { name: /reduced motion/i })).toBeInTheDocument()
   })
 
+  it('persists the appearance theme chosen from the segmented control', async () => {
+    const user = userEvent.setup()
+    const { prefsRepo } = renderSettings()
+
+    await user.click(screen.getByRole('button', { name: 'Dark' }))
+
+    await waitFor(async () => {
+      const [prefs] = await prefsRepo.getAll()
+      expect(prefs?.theme).toBe('dark')
+    })
+  })
+
   it('toggles a preference and persists it', async () => {
     const user = userEvent.setup()
     const { prefsRepo } = renderSettings()

@@ -37,6 +37,17 @@ export function migrateQuestionV1(oldDoc: Omit<Question, 'order'>): Question {
   return { ...oldDoc, order: 0 }
 }
 
+/**
+ * The persisted preferences shape BEFORE v6 renamed the boolean `darkMode` → the
+ * three-way `theme`. The whole v0→v5 chain produces this legacy shape;
+ * {@link migratePreferencesV6} converts it to the current {@link Preferences}.
+ */
+type LegacyPreferences = Omit<Preferences, 'theme'> & { darkMode: boolean }
+
+/** Legacy defaults: today's defaults with `theme` swapped back for `darkMode`. */
+const { theme: _legacyTheme, ...DEFAULTS_SANS_THEME } = DEFAULT_PREFERENCES
+const DEFAULT_LEGACY = { ...DEFAULTS_SANS_THEME, darkMode: false }
+
 /** Fields added after v0; never present on an old persisted doc. */
 type PostV0 =
   | 'darkMode'
@@ -51,24 +62,24 @@ type PostV0 =
 
 /** The v0 preferences shape — before darkMode/language/privacy (and, later,
  * palacesView/palacesSort, the daily goal, and verse prefs) were added. */
-export type PreferencesV0 = Omit<Preferences, PostV0>
+export type PreferencesV0 = Omit<LegacyPreferences, PostV0>
 
 /** v0 → v1: backfill the new fields with defaults. Saved values always win, so the
  * spread order puts the stored doc last. RxDB serializes the result, so sharing the
  * default privacy reference here is safe. */
-export function migratePreferencesV1(oldDoc: PreferencesV0): Preferences {
-  return { ...DEFAULT_PREFERENCES, ...oldDoc }
+export function migratePreferencesV1(oldDoc: PreferencesV0): LegacyPreferences {
+  return { ...DEFAULT_LEGACY, ...oldDoc }
 }
 
 /** The v1 preferences shape — before the Palaces screen's view/sort were persisted. */
 export type PreferencesV1 = Omit<
-  Preferences,
+  LegacyPreferences,
   'palacesView' | 'palacesSort' | 'dailyGoal' | 'verseMode' | 'verseShuffle' | 'verseWordSpaces'
 >
 
 /** v1 → v2: backfill the Palaces view/sort with defaults; stored fields win. */
-export function migratePreferencesV2(oldDoc: PreferencesV1): Preferences {
-  return { ...DEFAULT_PREFERENCES, ...oldDoc }
+export function migratePreferencesV2(oldDoc: PreferencesV1): LegacyPreferences {
+  return { ...DEFAULT_LEGACY, ...oldDoc }
 }
 
 /** The v0 profile shape — before the chosen username was added. */
@@ -89,25 +100,36 @@ export function migrateProgressV1(oldDoc: ProgressV0): Progress {
 
 /** The v2 preferences shape — before the daily goal was added. */
 export type PreferencesV2 = Omit<
-  Preferences,
+  LegacyPreferences,
   'dailyGoal' | 'verseMode' | 'verseShuffle' | 'verseWordSpaces'
 >
 
 /** v2 → v3: backfill the default daily goal; stored fields win. */
-export function migratePreferencesV3(oldDoc: PreferencesV2): Preferences {
-  return { ...DEFAULT_PREFERENCES, ...oldDoc }
+export function migratePreferencesV3(oldDoc: PreferencesV2): LegacyPreferences {
+  return { ...DEFAULT_LEGACY, ...oldDoc }
 }
 
 /** The v3 preferences shape — before verse-study prefs were persisted. */
-export type PreferencesV3 = Omit<Preferences, 'verseMode' | 'verseShuffle' | 'verseWordSpaces'>
+export type PreferencesV3 = Omit<LegacyPreferences, 'verseMode' | 'verseShuffle' | 'verseWordSpaces'>
 
 /** v3 → v4: backfill the verse-study prefs with defaults; stored fields win. */
-export function migratePreferencesV4(oldDoc: PreferencesV3): Preferences {
-  return { ...DEFAULT_PREFERENCES, ...oldDoc }
+export function migratePreferencesV4(oldDoc: PreferencesV3): LegacyPreferences {
+  return { ...DEFAULT_LEGACY, ...oldDoc }
 }
 
 /** v4 → v5: the library gained a `manual` sort option. No field change — every stored
  * `palacesSort` is still valid — so the doc passes through unchanged. */
-export function migratePreferencesV5(oldDoc: Preferences): Preferences {
+export function migratePreferencesV5(oldDoc: LegacyPreferences): LegacyPreferences {
   return oldDoc
+}
+
+/** The v5 preferences shape — the last one carrying the boolean `darkMode`. */
+export type PreferencesV5 = LegacyPreferences
+
+/** v5 → v6: rename the boolean `darkMode` to the three-way `theme` — `true` → `dark`,
+ * `false` → `light`. New installs (created at v6) default to `system`; this conversion
+ * preserves the explicit light/dark choice an upgrading user already had. */
+export function migratePreferencesV6(oldDoc: PreferencesV5): Preferences {
+  const { darkMode, ...rest } = oldDoc
+  return { ...rest, theme: darkMode ? 'dark' : 'light' }
 }

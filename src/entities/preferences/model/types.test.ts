@@ -4,9 +4,9 @@ import { DEFAULT_PRIVACY, makePreferences, updatePreferences } from './types'
 const at = (ms: number) => new Date(ms).toISOString()
 
 describe('makePreferences — extended defaults', () => {
-  it('defaults darkMode off, language to en, and privacy to DEFAULT_PRIVACY', () => {
+  it('defaults theme to system, language to en, and privacy to DEFAULT_PRIVACY', () => {
     const prefs = makePreferences({ id: 'preferences', createdAt: at(0) })
-    expect(prefs.darkMode).toBe(false)
+    expect(prefs.theme).toBe('system')
     expect(prefs.language).toBe('en')
     expect(prefs.privacy).toEqual(DEFAULT_PRIVACY)
   })

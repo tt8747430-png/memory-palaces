@@ -34,10 +34,10 @@ describe('setPreferences', () => {
     expect(prefs.updatedAt).toBe(new Date(NOW).toISOString())
   })
 
-  it('persists darkMode while keeping the other defaults', async () => {
+  it('persists the chosen theme while keeping the other defaults', async () => {
     const store = startedStore()
-    const prefs = await setPreferences(store, { darkMode: true }, NOW)
-    expect(prefs.darkMode).toBe(true)
+    const prefs = await setPreferences(store, { theme: 'dark' }, NOW)
+    expect(prefs.theme).toBe('dark')
     expect(prefs.language).toBe('en')
     expect(prefs.soundEffects).toBe(true)
   })
