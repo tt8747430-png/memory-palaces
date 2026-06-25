@@ -4,29 +4,27 @@ import { useTranslation } from 'react-i18next'
 import { useEventBusOptional } from '@/shared/lib'
 import { useProgressStoreApiOptional } from '@/entities/progress'
 import { usePreferencesStoreApiOptional } from '@/entities/preferences'
-import { completeSession, type CompleteSessionOptions } from '@/features/progress'
+import { completeSession, outcomeToReward, type SessionOutcome } from '@/features/progress'
 import { DEFAULT_DAILY_GOAL } from '@/shared/config/constants'
 
 /**
- * Returns `reward(options)` — applies a finished session's XP / streak / quiz-accuracy
- * through `completeSession`, then both publishes the milestones on the EventBus (the
- * bridge turns them into persistent notification history) and celebrates them with
- * toasts. History is always recorded; the *toasts* honour the `notifications`
- * preference. No-ops where no progress store is mounted (focused tests), so callers
- * can fire it unconditionally.
+ * Returns `reward(outcome)` — takes a finished session's raw outcome (by mode), maps it
+ * to XP / items / quiz-accuracy via `outcomeToReward`, applies it through `completeSession`,
+ * then publishes the milestones on the EventBus (the bridge turns them into persistent
+ * notification history) and celebrates them with toasts. History is always recorded; the
+ * *toasts* honour the `notifications` preference. No-ops where no progress store is mounted
+ * (focused tests), so callers can fire it unconditionally.
  */
-export function useSessionReward(): (
-  options: Omit<CompleteSessionOptions, 'dailyGoal'>,
-) => Promise<void> {
+export function useSessionReward(): (outcome: SessionOutcome) => Promise<void> {
   const store = useProgressStoreApiOptional()
   const preferencesStore = usePreferencesStoreApiOptional()
   const eventBus = useEventBusOptional()
   const { t } = useTranslation()
   return useCallback(
-    async (options: Omit<CompleteSessionOptions, 'dailyGoal'>) => {
+    async (outcome: SessionOutcome) => {
       if (!store) return
       const dailyGoal = preferencesStore?.getState().preferences?.dailyGoal ?? DEFAULT_DAILY_GOAL
-      const reward = await completeSession(store, { ...options, dailyGoal })
+      const reward = await completeSession(store, { ...outcomeToReward(outcome), dailyGoal })
 
       if (reward.leveledUp) eventBus?.emit('level-up', { level: reward.level })
       if (reward.isMilestone) eventBus?.emit('streak', { count: reward.streakCount })

@@ -1,3 +1,5 @@
+import type { CompleteSessionOptions } from './complete-session'
+
 /** XP reward tuning, in one place. Study/review scale with effort (clamped so a
  * session can't be farmed); quiz pays per correct answer; match is a flat win. */
 const STUDY_XP_PER_CARD = 6
@@ -19,4 +21,36 @@ export function studyXp(graded: number): number {
 /** XP for a finished quiz, by correct answers. */
 export function quizXp(score: number): number {
   return Math.max(0, score) * XP_PER_CORRECT
+}
+
+/**
+ * What a finished practice session yields, by mode — the single input the reward seam
+ * takes. Each surface reports only its own raw result; the xp/items/accuracy math lives
+ * in {@link outcomeToReward}, never in the pages.
+ */
+export type SessionOutcome =
+  | { kind: 'study'; graded: number }
+  | { kind: 'quiz'; correct: number; total: number; accuracy: number }
+  | { kind: 'match'; pairs: number }
+  | { kind: 'verse'; memorized: number }
+
+/** Pure map from a finished session to the XP / items / accuracy a reward applies.
+ * Exhaustive over `SessionOutcome.kind` — a new mode won't compile until it's handled. */
+export function outcomeToReward(
+  outcome: SessionOutcome,
+): Omit<CompleteSessionOptions, 'dailyGoal'> {
+  switch (outcome.kind) {
+    case 'study':
+      return { xp: studyXp(outcome.graded), itemsPracticed: outcome.graded }
+    case 'quiz':
+      return {
+        xp: quizXp(outcome.correct),
+        itemsPracticed: outcome.total,
+        quizAccuracy: outcome.accuracy,
+      }
+    case 'match':
+      return { xp: XP_MATCH, itemsPracticed: outcome.pairs }
+    case 'verse':
+      return { xp: XP_VERSE * outcome.memorized, itemsPracticed: outcome.memorized }
+  }
 }

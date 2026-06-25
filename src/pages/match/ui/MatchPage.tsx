@@ -11,7 +11,6 @@ import { roomsForPalace, selectRooms, useRoomStore, useRoomStoreApi } from '@/en
 import { usePalaceStore, usePalaceStoreApi } from '@/entities/palace'
 import { MatchBoard } from '@/widgets/match'
 import { type MatchLocus } from '@/features/match'
-import { XP_MATCH } from '@/features/progress'
 import { useSessionReward } from '@/widgets/session-reward'
 import { AppScreen, ScreenHeader } from '@/shared/ui'
 
@@ -98,7 +97,7 @@ export function MatchPage({ scope, onBack }: MatchPageProps) {
       subtitle={subtitle}
       onBack={onBack ?? (() => {})}
       onComplete={() => {
-        void reward({ xp: XP_MATCH, itemsPracticed: loci.length })
+        void reward({ kind: 'match', pairs: loci.length })
         onBack?.()
       }}
     />

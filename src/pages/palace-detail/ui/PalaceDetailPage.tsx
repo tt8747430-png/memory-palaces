@@ -38,12 +38,12 @@ import {
 import { resetRoomSrs } from '@/features/locus'
 import { ImportRoomsSheet } from '@/features/content'
 import {
-  cardMaturityCounts,
   isDue,
   isLocusReviewed,
   isRoomCompleted,
   roomProgress,
   srsStatus,
+  studyOverview,
 } from '@/shared/lib'
 import { RoomList, type RoomListItem } from '@/widgets/room-list'
 import { PracticeModes } from '@/widgets/practice-modes'
@@ -158,8 +158,7 @@ export function PalaceDetailPage({
     const now = Date.now()
     const roomIds = new Set(rooms.map((room) => room.id))
     const palaceLoci = allLoci.filter((locus) => roomIds.has(locus.roomId))
-    const due = palaceLoci.filter((locus) => isDue(locus.srs, now))
-    return { dueCount: due.length, breakdown: cardMaturityCounts(due) }
+    return studyOverview(palaceLoci, now)
   }, [rooms, allLoci])
 
   const [editorTarget, setEditorTarget] = useState<RoomEditorTarget | null>(null)
@@ -230,7 +229,7 @@ export function PalaceDetailPage({
       <div className="mt-2 space-y-4 pb-24">
         {summary.totalLoci > 0 ? (
           <StudyOverviewCard
-            count={dueAcrossPalace.dueCount}
+            count={dueAcrossPalace.count}
             breakdown={dueAcrossPalace.breakdown}
             onStudy={() => onStudyPalace?.()}
             onStudyAhead={onStudyPalace}

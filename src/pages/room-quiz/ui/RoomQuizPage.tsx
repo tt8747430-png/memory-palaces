@@ -17,7 +17,6 @@ import {
 import { editPalace } from '@/features/palace'
 import { QuizOptionsSheet, QuizSession, type QuizResult } from '@/widgets/quiz'
 import { type QuizQuestion } from '@/features/quiz'
-import { quizXp } from '@/features/progress'
 import { useSessionReward } from '@/widgets/session-reward'
 import { AppScreen, ScreenHeader } from '@/shared/ui'
 
@@ -100,11 +99,7 @@ export function RoomQuizPage({ roomId, onBack }: RoomQuizPageProps) {
 
   const handleComplete = (result: QuizResult) => {
     // Every answered question counts toward the daily goal; XP scales with correct answers.
-    void reward({
-      xp: quizXp(result.score),
-      quizAccuracy: result.accuracy,
-      itemsPracticed: result.total,
-    })
+    void reward({ kind: 'quiz', correct: result.score, total: result.total, accuracy: result.accuracy })
     onBack?.()
   }
 

@@ -118,3 +118,4 @@ export {
   type DueRoom,
   type DueLocus,
 } from './dueCards'
+export { studyOverview, type StudyOverview } from './study-overview'

@@ -7,4 +7,12 @@ export {
   type CompleteSessionOptions,
   type SessionReward,
 } from './complete-session'
-export { studyXp, quizXp, XP_MATCH, XP_PER_CORRECT, XP_VERSE } from './rewards'
+export {
+  studyXp,
+  quizXp,
+  XP_MATCH,
+  XP_PER_CORRECT,
+  XP_VERSE,
+  outcomeToReward,
+  type SessionOutcome,
+} from './rewards'

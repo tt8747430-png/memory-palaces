@@ -122,6 +122,13 @@ describe('recordPractice', () => {
     expect(out.becameActive).toBe(false)
     expect(out.streak.streakCount).toBe(1)
   })
+
+  it('merges streak + tally into one applyable state', () => {
+    const out = recordPractice(base, 5, 5, NOW)
+    expect(out.state).toEqual({ ...out.streak, ...out.tally })
+    expect(out.state.streakCount).toBe(out.streak.streakCount)
+    expect(out.state.activeDayCount).toBe(out.tally.activeDayCount)
+  })
 })
 
 describe('totalTrainingDays', () => {

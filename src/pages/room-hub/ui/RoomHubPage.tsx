@@ -24,7 +24,7 @@ import {
 } from '@/entities/question'
 import { markRoomKnown, resetRoomSrs } from '@/features/locus'
 import { deleteRoom } from '@/features/room'
-import { cardMaturityCounts, isDue } from '@/shared/lib'
+import { cardMaturityCounts, studyOverview } from '@/shared/lib'
 import { LociPreviewCarousel } from '@/widgets/loci-preview'
 import { RoomContentEditor } from '@/widgets/loci-editor'
 import { PracticeModes } from '@/widgets/practice-modes'
@@ -94,8 +94,7 @@ export function RoomHubPage({
   const questions = useMemo(() => questionsForRoom(allQuestions, roomId), [allQuestions, roomId])
 
   const [now] = useState(() => Date.now())
-  const dueLoci = useMemo(() => loci.filter((locus) => isDue(locus.srs, now)), [loci, now])
-  const dueBreakdown = useMemo(() => cardMaturityCounts(dueLoci), [dueLoci])
+  const overview = useMemo(() => studyOverview(loci, now), [loci, now])
   const maturity = useMemo(() => cardMaturityCounts(loci), [loci])
 
   const [resetOpen, setResetOpen] = useState(false)
@@ -181,8 +180,8 @@ export function RoomHubPage({
 
         {hasLoci ? (
           <StudyOverviewCard
-            count={dueLoci.length}
-            breakdown={dueBreakdown}
+            count={overview.count}
+            breakdown={overview.breakdown}
             onStudy={() => onStudy?.()}
             onStudyAhead={onStudy}
             scope="room"

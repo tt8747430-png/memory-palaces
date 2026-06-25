@@ -103,6 +103,9 @@ export interface PracticeOutcome {
   streak: StreakState
   /** The tally after this practice. */
   tally: DailyTally
+  /** Streak + tally merged into the exact fields a Progress record carries, so a caller
+   * applies a finished practice with one spread and never re-lists the field shape. */
+  state: StreakState & DailyTally
   /** Items practised today after adding this batch. */
   dayCount: number
   /** The goal in force. */
@@ -129,24 +132,26 @@ export function recordPractice(
   const goal = Math.max(1, Math.round(dailyGoal))
 
   const alreadyActive = state.trainingDays.includes(today)
-  if (dayCount >= goal && !alreadyActive) {
-    const result = recordTrainingDay(state, now)
-    return { streak: result.state, tally, dayCount, dailyGoal: goal, becameActive: true, result }
-  }
+  const advancing = dayCount >= goal && !alreadyActive
+  const result = advancing ? recordTrainingDay(state, now) : null
+  const streak: StreakState = result
+    ? result.state
+    : {
+        streakCount: state.streakCount,
+        longestStreak: state.longestStreak,
+        lastTrainingDate: state.lastTrainingDate,
+        streakFreezes: state.streakFreezes,
+        trainingDays: state.trainingDays,
+      }
 
   return {
-    streak: {
-      streakCount: state.streakCount,
-      longestStreak: state.longestStreak,
-      lastTrainingDate: state.lastTrainingDate,
-      streakFreezes: state.streakFreezes,
-      trainingDays: state.trainingDays,
-    },
+    streak,
     tally,
+    state: { ...streak, ...tally },
     dayCount,
     dailyGoal: goal,
-    becameActive: false,
-    result: null,
+    becameActive: advancing,
+    result,
   }
 }
 

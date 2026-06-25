@@ -51,9 +51,7 @@ export async function completeSession(
 
   let next: Progress = {
     ...base,
-    ...practice.streak,
-    activeDayKey: practice.tally.activeDayKey,
-    activeDayCount: practice.tally.activeDayCount,
+    ...practice.state,
     xp: base.xp + gained,
     updatedAt: new Date(now).toISOString(),
   }

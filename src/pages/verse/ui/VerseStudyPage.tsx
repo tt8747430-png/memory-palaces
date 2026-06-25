@@ -17,7 +17,6 @@ import {
 } from '@/entities/preferences'
 import { editLocus } from '@/features/locus'
 import { setPreferences } from '@/features/preferences'
-import { XP_VERSE } from '@/features/progress'
 import { VerseStudy, type VerseCard, type VerseStudyPrefs } from '@/widgets/verse'
 import { useSessionReward } from '@/widgets/session-reward'
 import { AppScreen, ScreenHeader } from '@/shared/ui'
@@ -101,7 +100,7 @@ export function VerseStudyPage({ scope, onBack }: VerseStudyPageProps) {
     if (!locus) return
     const nowMemorized = !locus.memorized
     void editLocus(locusStore, id, { memorized: nowMemorized })
-    if (nowMemorized) void reward({ xp: XP_VERSE, itemsPracticed: 1 })
+    if (nowMemorized) void reward({ kind: 'verse', memorized: 1 })
   }
 
   const handleEdit = (id: string, changes: { front: string; back: string }) => {

@@ -24,7 +24,6 @@ import {
 import { editLocus } from '@/features/locus'
 import { editPalace } from '@/features/palace'
 import { gradeCard } from '@/features/review'
-import { studyXp } from '@/features/progress'
 import { StudySession, type StudyCard, type StudyPrefs } from '@/widgets/study-session'
 import { useSessionReward } from '@/widgets/session-reward'
 import { AppScreen, ScreenHeader } from '@/shared/ui'
@@ -163,7 +162,7 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
       onEditCard={(id, changes) => void editLocus(locusStore, id, changes)}
       onBack={onBack ?? (() => {})}
       onComplete={(summary) => {
-        void reward({ xp: studyXp(summary.graded), itemsPracticed: summary.graded })
+        void reward({ kind: 'study', graded: summary.graded })
         onBack?.()
       }}
     />
