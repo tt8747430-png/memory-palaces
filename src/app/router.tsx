@@ -14,6 +14,7 @@ import { WelcomePage } from '@/pages/welcome'
 import { PalacesPage } from '@/pages/palaces'
 import { PalaceDetailPage } from '@/pages/palace-detail'
 import { PalaceSettingsPage } from '@/pages/palace-settings'
+import { PalaceAppearancePage } from '@/pages/palace-appearance'
 import { RoomHubPage } from '@/pages/room-hub'
 import { StudyCardsPage } from '@/pages/study'
 import { MatchPage } from '@/pages/match'
@@ -203,6 +204,7 @@ function PalaceSettingsRoute() {
     <PalaceSettingsPage
       palaceId={palaceId}
       onBack={back}
+      onOpenAppearance={() => navigate({ to: ROUTES.palaceAppearance, params: { palaceId } })}
       onExit={() => navigate({ to: ROUTES.home })}
     />
   )
@@ -212,6 +214,19 @@ const palaceSettingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.palaceSettings,
   component: PalaceSettingsRoute,
+})
+
+function PalaceAppearanceRoute() {
+  const { palaceId } = palaceAppearanceRoute.useParams()
+  const navigate = useNavigate()
+  const back = useBack(() => navigate({ to: ROUTES.palaceSettings, params: { palaceId } }))
+  return <PalaceAppearancePage palaceId={palaceId} onBack={back} />
+}
+
+const palaceAppearanceRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.palaceAppearance,
+  component: PalaceAppearanceRoute,
 })
 
 function RoomHubRoute() {
@@ -576,6 +591,7 @@ const routeTree = rootRoute.addChildren([
   palacesRoute,
   palaceDetailRoute,
   palaceSettingsRoute,
+  palaceAppearanceRoute,
   roomHubRoute,
   roomStudyRoute,
   palaceStudyRoute,

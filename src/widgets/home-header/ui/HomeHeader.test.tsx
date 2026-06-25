@@ -27,15 +27,24 @@ function renderHeader(props: Partial<Parameters<typeof HomeHeader>[0]> = {}) {
 }
 
 describe('HomeHeader', () => {
-  it('greets the user and shows the level derived from XP', () => {
+  it('shows the name and the level derived from XP, without a greeting', () => {
     renderHeader()
-    expect(screen.getByText('Hi Sam!')).toBeTruthy()
-    expect(screen.getByText('Lv. 3')).toBeTruthy()
+    expect(screen.getByText('Sam')).toBeTruthy()
+    expect(screen.getByText('Level 3')).toBeTruthy()
+    expect(screen.queryByText('Hi Sam!')).toBeNull()
   })
 
-  it('surfaces the XP-to-next progress', () => {
+  it('surfaces the XP-to-next progress on the profile control', () => {
     renderHeader({ xp: 600 }) // level 3, 100 into the level → 150 remaining
-    expect(screen.getByLabelText('150 XP to level 4')).toBeTruthy()
+    expect(screen.getByRole('button', { name: /150 XP to level 4/ })).toBeTruthy()
+  })
+
+  it('opens the archive when the control is wired', async () => {
+    const user = userEvent.setup()
+    const onOpenArchived = vi.fn()
+    renderHeader({ onOpenArchived })
+    await user.click(screen.getByRole('button', { name: /archived palaces/i }))
+    expect(onOpenArchived).toHaveBeenCalled()
   })
 
   it('caps the unread badge at 9+', () => {

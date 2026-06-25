@@ -88,19 +88,22 @@ export function SpeedDial({ label, actions, className }: SpeedDialProps) {
                     duration: 0.22,
                     ease: EASE_OUT,
                   }}
-                  className="flex items-center gap-2.5"
+                  className="flex items-center"
                 >
-                  <span className="rounded-full bg-card px-3 py-1 text-[length:var(--p-text-label)] font-semibold text-heading shadow-rest">
-                    {action.label}
-                  </span>
+                  {/* The whole pill is one target — label text and icon both fire the action. */}
                   <button
                     ref={index === 0 ? firstActionRef : undefined}
                     type="button"
                     aria-label={action.label}
                     onClick={() => fire(action)}
-                    className="grid size-12 place-items-center rounded-full bg-card text-primary shadow-rest transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                    className="group flex items-center gap-2.5 rounded-full transition-transform active:scale-[0.97] focus-visible:outline-none"
                   >
-                    {action.icon}
+                    <span className="rounded-full bg-card px-3 py-1 text-[length:var(--p-text-label)] font-semibold text-heading shadow-rest transition-colors group-hover:bg-info-surface">
+                      {action.label}
+                    </span>
+                    <span className="grid size-12 place-items-center rounded-full bg-card text-primary shadow-rest transition-colors group-hover:bg-info-surface group-focus-visible:ring-2 group-focus-visible:ring-primary/50">
+                      {action.icon}
+                    </span>
                   </button>
                 </motion.li>
               ))}

@@ -8,6 +8,7 @@ export const ROUTES = {
   palaces: '/palaces',
   palaceDetail: '/palaces/$palaceId',
   palaceSettings: '/palaces/$palaceId/settings',
+  palaceAppearance: '/palaces/$palaceId/settings/appearance',
   palaceStudy: '/palaces/$palaceId/study',
   palaceMatch: '/palaces/$palaceId/match',
   palaceVerse: '/palaces/$palaceId/verse',

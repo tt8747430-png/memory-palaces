@@ -84,6 +84,7 @@ import {
   IconButton,
   SegmentedControl,
   SpeedDial,
+  StickyBar,
 } from '@/shared/ui'
 import { FolderSheet, MoveToFolderSheet } from './PalaceSheets'
 
@@ -116,10 +117,11 @@ const SORT_LABEL_KEY = {
   category: 'palaces.sortCategory',
 } as const satisfies Record<PalacesSort, string>
 
-/** The library — a Windows-Explorer-style browse of folders and palaces. Reorder by drag
- * (manual sort) or an automatic rule, file palaces into folders, multi-select for bulk
- * actions, and drill into a folder to see the palaces inside. Reactive off RxDB; every
- * action persists offline through the injected stores. */
+/** The library — a Windows-Explorer-style browse of folders and palaces. The root is the
+ * app's home (greeting header); drilling into a folder or the archived view swaps in a
+ * named page header that carries the sort/select/view controls. Reorder by drag (manual
+ * sort) or an automatic rule, file palaces into folders, multi-select for bulk actions.
+ * Reactive off RxDB; every action persists offline through the injected stores. */
 export function PalacesPage({
   onOpenPalace,
   onOpenPalaceSettings,
@@ -193,7 +195,6 @@ export function PalacesPage({
   const [searchOpen, setSearchOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [sortOpen, setSortOpen] = useState(false)
-  const [overflowOpen, setOverflowOpen] = useState(false)
   const [createOpen, setCreateOpen] = useState(openCreate)
   const [moveTarget, setMoveTarget] = useState<string | null>(null)
   const [bulkMoveOpen, setBulkMoveOpen] = useState(false)
@@ -218,6 +219,22 @@ export function PalacesPage({
     setSelectMode(false)
     setSelectedIds(new Set())
   }
+
+  const closeSearch = () => {
+    setSearchOpen(false)
+    setQuery('')
+  }
+
+  // Search and select live only at the home root; leaving it (into a folder/archived view)
+  // resets both so a stray query/selection can't filter or linger where there's no UI to clear it.
+  useEffect(() => {
+    if (!atRoot) {
+      setSearchOpen(false)
+      setQuery('')
+      exitSelect()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [folderId])
 
   const dueCounts = useMemo(
     () => countDuePerPalace(palaces, rooms, loci, now),
@@ -317,17 +334,16 @@ export function PalacesPage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [folders, enriched, atRoot, inArchived, q, sort])
 
+  // Once data has loaded, whether the current view has anything to show. Drives the
+  // controls + speed-dial: empty views drop them, leaning on the empty state's own CTAs.
+  const hasItems = palacesReady && (visibleFolders.length > 0 || visiblePalaces.length > 0)
+
   const palaceById = (id: string) => palaces.find((palace) => palace.id === id)
   const deletingPalace = deletePalaceTarget ? palaceById(deletePalaceTarget) : undefined
   const deletingFolder = deleteFolderTarget
     ? folders.find((folder) => folder.id === deleteFolderTarget)
     : undefined
   const movingPalace = moveTarget ? palaceById(moveTarget) : undefined
-
-  const closeSearch = () => {
-    setSearchOpen(false)
-    setQuery('')
-  }
 
   const handleImportPalace = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -498,7 +514,87 @@ export function PalacesPage({
     }),
   )
 
+  // Sort / select / view, shared by the root toolbar and the sub-view header. Sorting leads
+  // (left); selection + layout group together. `compactSort` drops the sort label where bar
+  // space is tight (the in-header variant).
+  const sortControl = (compactSort: boolean) => (
+    <button
+      type="button"
+      aria-haspopup="dialog"
+      aria-label={t('palaces.sortLabel')}
+      onClick={() => setSortOpen(true)}
+      className={cn(
+        'flex h-9 min-w-0 items-center gap-1.5 rounded-control border border-border bg-card shadow-rest transition-transform active:scale-[0.97]',
+        compactSort ? 'px-2' : 'pl-2.5 pr-2',
+      )}
+    >
+      <SortGlyph option={sort} className="size-4 text-accent" />
+      {compactSort ? null : (
+        <span className="truncate text-[length:var(--p-text-label)] font-semibold text-heading">
+          {t(SORT_LABEL_KEY[sort])}
+        </span>
+      )}
+      <ChevronDown className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+    </button>
+  )
+
+  const selectControl = (
+    <IconButton
+      variant="ghost"
+      size="sm"
+      aria-label={t('palaces.selectLabel')}
+      onClick={() => setSelectMode(true)}
+    >
+      <ListChecks className="size-[18px]" aria-hidden />
+    </IconButton>
+  )
+
+  const viewControl = (
+    <SegmentedControl
+      aria-label={t('palaces.viewLabel')}
+      size="sm"
+      className="w-[76px]"
+      value={view}
+      onChange={(value) => setView(value)}
+      options={[
+        {
+          value: 'grid',
+          label: <LayoutGrid className="size-[18px]" aria-hidden />,
+          ariaLabel: t('palaces.viewGrid'),
+        },
+        {
+          value: 'list',
+          label: <Rows3 className="size-[18px]" aria-hidden />,
+          ariaLabel: t('palaces.viewList'),
+        },
+      ]}
+    />
+  )
+
   const emptyState = renderEmptyState()
+
+  function emptyActions(includeFolder: boolean) {
+    return (
+      <div className="flex flex-col items-stretch gap-2.5">
+        <Button onClick={() => setCreateOpen(true)}>
+          <Plus className="size-[18px]" aria-hidden />
+          {t('palaces.createCta')}
+        </Button>
+        <div className="flex justify-center gap-2">
+          <Button variant="ghost" onClick={() => importRef.current?.click()}>
+            <Upload className="size-[18px]" aria-hidden />
+            {t('palaces.import')}
+          </Button>
+          {includeFolder ? (
+            <Button variant="ghost" onClick={openCreateFolder}>
+              <FolderPlus className="size-[18px]" aria-hidden />
+              {t('palaces.newFolderTitle')}
+            </Button>
+          ) : null}
+        </div>
+      </div>
+    )
+  }
 
   function renderEmptyState() {
     if (query.trim()) {
@@ -530,12 +626,7 @@ export function PalacesPage({
           emoji="📂"
           title={t('palaces.emptyFolderTitle')}
           description={t('palaces.emptyFolderBody')}
-          action={
-            <Button onClick={() => setCreateOpen(true)}>
-              <Plus className="size-[18px]" aria-hidden />
-              {t('palaces.createCta')}
-            </Button>
-          }
+          action={emptyActions(false)}
         />
       )
     }
@@ -544,12 +635,7 @@ export function PalacesPage({
         emoji="🏛️"
         title={t('palaces.emptyTitle')}
         description={t('palaces.emptyBody')}
-        action={
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="size-[18px]" aria-hidden />
-            {t('palaces.createCta')}
-          </Button>
-        }
+        action={emptyActions(true)}
       />
     )
   }
@@ -559,153 +645,124 @@ export function PalacesPage({
       className="pb-nav"
       scrollRef={header.ref}
       header={
-        <HomeHeader
-          header={header}
-          name={reviewerName}
-          avatar={profile.avatar}
-          xp={progress?.xp ?? 0}
-          unreadCount={unreadCount}
-          streak={{
-            count: progress?.streakCount ?? 0,
-            dayCount: progress?.activeDayCount ?? 0,
-            dailyGoal: prefs.dailyGoal,
-          }}
-          onOpenStreak={() => onOpenStreak?.()}
-          onOpenProfile={() => onOpenProfile?.()}
-          onOpenNotifications={() => onOpenNotifications?.()}
-          search={{
-            open: searchOpen,
-            query,
-            onOpen: () => setSearchOpen(true),
-            onClose: closeSearch,
-            onQueryChange: setQuery,
-            label: t('palaces.searchLabel'),
-            placeholder: t('palaces.searchPlaceholder'),
-            closeLabel: t('palaces.closeSearch'),
-          }}
-        />
+        atRoot ? (
+          <HomeHeader
+            header={header}
+            name={reviewerName}
+            avatar={profile.avatar}
+            xp={progress?.xp ?? 0}
+            unreadCount={unreadCount}
+            streak={{
+              count: progress?.streakCount ?? 0,
+              dayCount: progress?.activeDayCount ?? 0,
+              dailyGoal: prefs.dailyGoal,
+            }}
+            onOpenStreak={() => onOpenStreak?.()}
+            onOpenProfile={() => onOpenProfile?.()}
+            onOpenNotifications={() => onOpenNotifications?.()}
+            onOpenArchived={() => onOpenFolder?.(ARCHIVED_VIEW)}
+            search={{
+              open: searchOpen,
+              query,
+              onOpen: () => setSearchOpen(true),
+              onClose: closeSearch,
+              onQueryChange: setQuery,
+              label: t('palaces.searchLabel'),
+              placeholder: t('palaces.searchPlaceholder'),
+              closeLabel: t('palaces.closeSearch'),
+            }}
+          />
+        ) : (
+          <StickyBar elevation={header.elevation}>
+            <div className="flex w-full items-center gap-2">
+              <IconButton
+                variant="glass"
+                size="sm"
+                aria-label={t('palaces.backToLibrary')}
+                onClick={() => onCloseFolder?.()}
+              >
+                <ChevronLeft className="size-5" aria-hidden />
+              </IconButton>
+
+              {inArchived ? (
+                <span className="flex min-w-0 flex-1 items-center gap-2">
+                  <span className="grid size-8 shrink-0 place-items-center rounded-control bg-info-surface text-info-foreground">
+                    <Archive className="size-[18px]" aria-hidden />
+                  </span>
+                  <h1 className="truncate text-[length:var(--p-text-title)] font-bold tracking-tight text-heading">
+                    {t('palaces.collectionArchived')}
+                  </h1>
+                </span>
+              ) : currentFolder ? (
+                <button
+                  type="button"
+                  onClick={() => openEditFolder(currentFolder)}
+                  aria-label={t('palaces.editFolderLabel', { name: currentFolder.name })}
+                  className="flex min-w-0 flex-1 items-center gap-2 rounded-control text-left"
+                >
+                  <FolderGlyph
+                    color={currentFolder.color}
+                    icon={currentFolder.icon}
+                    className="size-8 shrink-0"
+                    iconClassName="text-base leading-none"
+                  />
+                  <h1 className="truncate text-[length:var(--p-text-title)] font-bold tracking-tight text-heading">
+                    {currentFolder.name}
+                  </h1>
+                  <Pencil className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                </button>
+              ) : (
+                <span className="flex-1" />
+              )}
+
+              {hasItems && !selectMode ? (
+                <div className="flex shrink-0 items-center gap-1.5">
+                  {sortControl(true)}
+                  {selectControl}
+                  {viewControl}
+                </div>
+              ) : null}
+            </div>
+          </StickyBar>
+        )
       }
     >
-      {/* Breadcrumb: a back affordance when inside a folder or the archived view. */}
-      {!atRoot ? (
-        <button
-          type="button"
-          onClick={() => onCloseFolder?.()}
-          className="mt-4 inline-flex items-center gap-1 text-[length:var(--p-text-label)] font-semibold text-primary"
-        >
-          <ChevronLeft className="size-4" aria-hidden />
-          {t('palaces.backToLibrary')}
-        </button>
+      {/* The home root's heading lives in the avatar identity, not visible chrome, so the
+          document still has a top-level heading for assistive tech. */}
+      {atRoot ? <h1 className="sr-only">{t('palaces.libraryTitle')}</h1> : null}
+
+      {/* Select-mode bar — replaces whatever controls a view normally shows. */}
+      {selectMode ? (
+        <div className="mb-3 mt-3 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={toggleSelectAll}
+            className="text-[length:var(--p-text-label)] font-semibold text-heading"
+          >
+            {allSelected ? t('loci.select.clearAll') : t('loci.select.selectAll')}
+          </button>
+          <span className="text-[length:var(--p-text-label)] font-semibold text-muted-foreground">
+            {t('loci.select.count', { count: selectedIds.size })}
+          </span>
+          <button
+            type="button"
+            onClick={exitSelect}
+            className="ml-auto text-[length:var(--p-text-label)] font-semibold text-accent"
+          >
+            {t('loci.select.done')}
+          </button>
+        </div>
+      ) : atRoot && hasItems ? (
+        // Root toolbar: sorting leads on the left; selection + layout sit on the right.
+        // (Archive now lives in the home header; the sub-view header carries its own controls.)
+        <div className="mb-3 mt-3 flex items-center gap-2">
+          {sortControl(false)}
+          <div className="ml-auto flex items-center gap-1.5">
+            {selectControl}
+            {viewControl}
+          </div>
+        </div>
       ) : null}
-
-      {/* Compact toolbar: context name + sort / view / select. */}
-      <div className="mb-3 mt-3 flex items-center gap-2">
-        {selectMode ? (
-          <>
-            <button
-              type="button"
-              onClick={toggleSelectAll}
-              className="text-[length:var(--p-text-label)] font-semibold text-heading"
-            >
-              {allSelected ? t('loci.select.clearAll') : t('loci.select.selectAll')}
-            </button>
-            <span className="text-[length:var(--p-text-label)] font-semibold text-muted-foreground">
-              {t('loci.select.count', { count: selectedIds.size })}
-            </span>
-            <button
-              type="button"
-              onClick={exitSelect}
-              className="ml-auto text-[length:var(--p-text-label)] font-semibold text-accent"
-            >
-              {t('loci.select.done')}
-            </button>
-          </>
-        ) : (
-          <>
-            {inArchived ? (
-              <h2 className="min-w-0 truncate text-[length:var(--p-text-title)] font-bold tracking-tight text-heading">
-                {t('palaces.collectionArchived')}
-              </h2>
-            ) : currentFolder ? (
-              <button
-                type="button"
-                onClick={() => openEditFolder(currentFolder)}
-                aria-label={t('palaces.editFolderLabel', { name: currentFolder.name })}
-                className="flex min-w-0 items-center gap-2 rounded-control text-left"
-              >
-                <FolderGlyph
-                  color={currentFolder.color}
-                  icon={currentFolder.icon}
-                  className="size-7"
-                  iconClassName="text-sm leading-none"
-                />
-                <span className="truncate text-[length:var(--p-text-title)] font-bold tracking-tight text-heading">
-                  {currentFolder.name}
-                </span>
-                <Pencil className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-              </button>
-            ) : null}
-
-            <button
-              type="button"
-              aria-haspopup="dialog"
-              aria-label={t('palaces.sortLabel')}
-              onClick={() => setSortOpen(true)}
-              className={cn(
-                'flex h-9 min-w-0 items-center gap-1.5 rounded-control border border-border bg-card pl-2.5 pr-2 shadow-rest transition-transform active:scale-[0.97]',
-                currentFolder || inArchived ? 'ml-auto' : '',
-              )}
-            >
-              <SortGlyph option={sort} className="size-4 text-accent" />
-              <span className="truncate text-[length:var(--p-text-label)] font-semibold text-heading">
-                {t(SORT_LABEL_KEY[sort])}
-              </span>
-              <ChevronDown className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-            </button>
-
-            <IconButton
-              variant="ghost"
-              size="sm"
-              aria-label={t('palaces.selectLabel')}
-              className={currentFolder || inArchived ? '' : 'ml-auto'}
-              onClick={() => setSelectMode(true)}
-            >
-              <ListChecks className="size-[18px]" aria-hidden />
-            </IconButton>
-
-            <SegmentedControl
-              aria-label={t('palaces.viewLabel')}
-              size="sm"
-              className="w-[80px]"
-              value={view}
-              onChange={(value) => setView(value)}
-              options={[
-                {
-                  value: 'grid',
-                  label: <LayoutGrid className="size-[18px]" aria-hidden />,
-                  ariaLabel: t('palaces.viewGrid'),
-                },
-                {
-                  value: 'list',
-                  label: <Rows3 className="size-[18px]" aria-hidden />,
-                  ariaLabel: t('palaces.viewList'),
-                },
-              ]}
-            />
-
-            {atRoot ? (
-              <IconButton
-                variant="ghost"
-                size="sm"
-                aria-label={t('palaces.viewArchived')}
-                onClick={() => setOverflowOpen(true)}
-              >
-                <Archive className="size-[18px]" aria-hidden />
-              </IconButton>
-            ) : null}
-          </>
-        )}
-      </div>
 
       <LibraryGrid
         folders={visibleFolders}
@@ -748,7 +805,9 @@ export function PalacesPage({
         </div>
       ) : null}
 
-      {!selectMode ? (
+      {/* The speed-dial is the in-view shortcut to the same actions the empty state spells
+          out, so it only joins a view that already has content. */}
+      {!selectMode && hasItems ? (
         <SpeedDial
           label={t('palaces.quickActions')}
           actions={[
@@ -782,21 +841,6 @@ export function PalacesPage({
         cancelLabel={t('common.cancel')}
       />
 
-      <ActionSheet
-        open={overflowOpen}
-        onOpenChange={setOverflowOpen}
-        title={t('palaces.libraryTitle')}
-        actions={[
-          {
-            id: 'archived',
-            label: t('palaces.viewArchived'),
-            icon: <Archive className="size-5" aria-hidden />,
-            onSelect: () => onOpenFolder?.(ARCHIVED_VIEW),
-          },
-        ]}
-        cancelLabel={t('common.cancel')}
-      />
-
       <input
         ref={importRef}
         type="file"
@@ -808,7 +852,7 @@ export function PalacesPage({
       <CreatePalaceSheet
         open={createOpen}
         onOpenChange={setCreateOpen}
-        onCreated={(id) => onOpenPalace?.(id)}
+        onCreated={(_id, name) => toast.success(t('palaces.createdToast', { name }))}
         folderId={atRoot || inArchived ? null : folderId}
       />
 

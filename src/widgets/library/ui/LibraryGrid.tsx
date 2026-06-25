@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion, useReducedMotion } from 'motion/react'
 import {
@@ -21,7 +21,17 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Archive, Check, ChevronRight, Heart, MoreVertical } from 'lucide-react'
+import {
+  Archive,
+  Check,
+  DoorOpen,
+  FolderInput,
+  FolderOpen,
+  Heart,
+  MoreVertical,
+  Settings2,
+  Trash2,
+} from 'lucide-react'
 import { cn, useLongPress } from '@/shared/lib'
 import { ActionSheet, FolderGlyph, IconButton, PalaceCover, type SheetAction } from '@/shared/ui'
 
@@ -92,7 +102,9 @@ const parseId = (raw: string): { kind: 'f' | 'p'; id: string } => ({
 
 /** The library explorer: folder cards and palace cards together, reorderable by drag (manual
  * sort) and droppable — drag a palace onto a folder to file it. Presentational: the page owns
- * the data and commands and reacts to the drag/select callbacks. */
+ * the data and commands and reacts to the drag/select callbacks. Reorders apply to a local
+ * copy of the list the instant they happen, so the cards settle straight into place instead
+ * of snapping back while the new order persists to the store. */
 export function LibraryGrid({
   folders,
   palaces,
@@ -105,6 +117,14 @@ export function LibraryGrid({
   ...handlers
 }: LibraryGridProps) {
   const [activeId, setActiveId] = useState<string | null>(null)
+  // Optimistic order: seeded from props, reordered in place on drop, and reconciled
+  // whenever the persisted order flows back. This is what kills the reorder flicker — the
+  // grid never renders the stale order between the drop and the async store update.
+  const [folderItems, setFolderItems] = useState(folders)
+  const [palaceItems, setPalaceItems] = useState(palaces)
+  useEffect(() => setFolderItems(folders), [folders])
+  useEffect(() => setPalaceItems(palaces), [palaces])
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -129,34 +149,31 @@ export function LibraryGrid({
       return
     }
     if (a.kind === 'p' && o.kind === 'p') {
-      const ids = palaces.map((p) => p.id)
-      const from = ids.indexOf(a.id)
-      const to = ids.indexOf(o.id)
+      const from = palaceItems.findIndex((p) => p.id === a.id)
+      const to = palaceItems.findIndex((p) => p.id === o.id)
       if (from < 0 || to < 0) return
-      handlers.onReorderPalaces(arrayMove(ids, from, to))
+      const next = arrayMove(palaceItems, from, to)
+      setPalaceItems(next)
+      handlers.onReorderPalaces(next.map((p) => p.id))
       return
     }
     if (a.kind === 'f' && o.kind === 'f') {
-      const ids = folders.map((f) => f.id)
-      const from = ids.indexOf(a.id)
-      const to = ids.indexOf(o.id)
+      const from = folderItems.findIndex((f) => f.id === a.id)
+      const to = folderItems.findIndex((f) => f.id === o.id)
       if (from < 0 || to < 0) return
-      handlers.onReorderFolders(arrayMove(ids, from, to))
+      const next = arrayMove(folderItems, from, to)
+      setFolderItems(next)
+      handlers.onReorderFolders(next.map((f) => f.id))
     }
   }
 
   const onDragStart = (event: DragStartEvent) => setActiveId(String(event.active.id))
   const active = activeId ? parseId(activeId) : null
-  const activeFolder = active?.kind === 'f' ? folders.find((f) => f.id === active.id) : undefined
-  const activePalace = active?.kind === 'p' ? palaces.find((p) => p.id === active.id) : undefined
+  const activeFolder = active?.kind === 'f' ? folderItems.find((f) => f.id === active.id) : undefined
+  const activePalace = active?.kind === 'p' ? palaceItems.find((p) => p.id === active.id) : undefined
 
   const strategy = view === 'grid' ? rectSortingStrategy : verticalListSortingStrategy
-  const Container = ({ children }: { children: ReactNode }) =>
-    view === 'grid' ? (
-      <div className="grid grid-cols-2 gap-3">{children}</div>
-    ) : (
-      <div className="flex flex-col gap-2.5">{children}</div>
-    )
+  const containerClass = view === 'grid' ? 'grid grid-cols-2 gap-3' : 'flex flex-col gap-2.5'
 
   return (
     <DndContext
@@ -166,9 +183,9 @@ export function LibraryGrid({
       onDragEnd={handleDragEnd}
       onDragCancel={() => setActiveId(null)}
     >
-      <Container>
-        <SortableContext items={folders.map((f) => fid(f.id))} strategy={strategy}>
-          {folders.map((folder) => (
+      <div className={containerClass}>
+        <SortableContext items={folderItems.map((f) => fid(f.id))} strategy={strategy}>
+          {folderItems.map((folder) => (
             <SortableItem key={folder.id} dndId={fid(folder.id)} disabled={selectMode}>
               {(drag) => (
                 <FolderCard
@@ -185,8 +202,8 @@ export function LibraryGrid({
           ))}
         </SortableContext>
 
-        <SortableContext items={palaces.map((p) => pid(p.id))} strategy={strategy}>
-          {palaces.map((palace) => (
+        <SortableContext items={palaceItems.map((p) => pid(p.id))} strategy={strategy}>
+          {palaceItems.map((palace) => (
             <SortableItem key={palace.id} dndId={pid(palace.id)} disabled={selectMode}>
               {() => (
                 <PalaceCard
@@ -201,7 +218,7 @@ export function LibraryGrid({
             </SortableItem>
           ))}
         </SortableContext>
-      </Container>
+      </div>
 
       <DragOverlay>
         {activeFolder ? (
@@ -231,7 +248,9 @@ function SortableItem({
       style={{
         transform: CSS.Transform.toString(transform),
         transition,
-        opacity: isDragging ? 0.4 : 1,
+        // The source slot holds its place (a faint ghost) while the DragOverlay clone is
+        // dragged, so the surrounding cards don't lurch to fill the gap.
+        opacity: isDragging ? 0.35 : 1,
       }}
       className={cn('touch-manipulation', isDragging && 'z-50')}
       {...attributes}
@@ -270,7 +289,7 @@ function FolderCard({
     {
       id: 'open',
       label: t('palaces.open'),
-      icon: <ChevronRight className="size-5" aria-hidden />,
+      icon: <FolderOpen className="size-5" aria-hidden />,
       onSelect: () => handlers.onOpenFolder(folder.id),
     },
     {
@@ -289,7 +308,7 @@ function FolderCard({
     {
       id: 'delete',
       label: t('palaces.deleteFolderAction'),
-      icon: <Archive className="size-5" aria-hidden />,
+      icon: <Trash2 className="size-5" aria-hidden />,
       destructive: true,
       onSelect: () => handlers.onDeleteFolder(folder.id),
     },
@@ -356,7 +375,7 @@ function FolderCard({
     <div className={cn('relative', dragging && 'shadow-elevated')}>
       <button
         type="button"
-        onClick={handleClick}
+        {...longPress}
         aria-label={t('palaces.openFolderLabel', { name: folder.name })}
         className={cn(
           'flex h-full w-full flex-col gap-3 rounded-card bg-card p-3.5 text-left shadow-rest transition-shadow',
@@ -382,12 +401,10 @@ function FolderCard({
         </div>
       </button>
       {!selectMode && !dragging ? (
-        <div className="absolute right-2 top-2">
-          <MenuButton
-            onOpen={() => setMenuOpen(true)}
-            label={t('palaces.folderActions', { name: folder.name })}
-          />
-        </div>
+        <MenuButton
+          onOpen={() => setMenuOpen(true)}
+          label={t('palaces.folderActions', { name: folder.name })}
+        />
       ) : null}
       <ActionSheet
         open={menuOpen}
@@ -505,7 +522,7 @@ function PalaceCard({
       <motion.button
         type="button"
         whileTap={reduce ? undefined : { scale: 0.98 }}
-        onClick={handleClick}
+        {...longPress}
         aria-label={t('palaces.openLabel', { name: item.name })}
         className={cn(
           'block w-full overflow-hidden rounded-card bg-card text-left shadow-rest',
@@ -554,12 +571,10 @@ function PalaceCard({
           <SelectDot selected={selected} />
         </div>
       ) : !dragging ? (
-        <div className="absolute right-2 top-2">
-          <MenuButton
-            onOpen={() => setMenuOpen(true)}
-            label={t('palaces.moreLabel', { name: item.name })}
-          />
-        </div>
+        <MenuButton
+          onOpen={() => setMenuOpen(true)}
+          label={t('palaces.moreLabel', { name: item.name })}
+        />
       ) : null}
 
       <ActionSheet
@@ -577,9 +592,15 @@ function usePalaceActions(item: LibraryPalaceItem, handlers: LibraryHandlers): S
   const { t } = useTranslation()
   return [
     {
+      id: 'open',
+      label: t('palaces.open'),
+      icon: <DoorOpen className="size-5" aria-hidden />,
+      onSelect: () => handlers.onOpenPalace(item.id),
+    },
+    {
       id: 'settings',
       label: t('palaces.settings'),
-      icon: <ChevronRight className="size-5" aria-hidden />,
+      icon: <Settings2 className="size-5" aria-hidden />,
       onSelect: () => handlers.onOpenPalaceSettings(item.id),
     },
     {
@@ -596,7 +617,7 @@ function usePalaceActions(item: LibraryPalaceItem, handlers: LibraryHandlers): S
     {
       id: 'move',
       label: item.folderId ? t('palaces.moveToFolder') : t('palaces.addToFolder'),
-      icon: <ChevronRight className="size-5" aria-hidden />,
+      icon: <FolderInput className="size-5" aria-hidden />,
       onSelect: () => handlers.onMovePalace(item.id),
     },
     {
@@ -608,7 +629,7 @@ function usePalaceActions(item: LibraryPalaceItem, handlers: LibraryHandlers): S
     {
       id: 'delete',
       label: t('palaces.delete'),
-      icon: <Archive className="size-5" aria-hidden />,
+      icon: <Trash2 className="size-5" aria-hidden />,
       destructive: true,
       onSelect: () => handlers.onDeletePalace(item.id),
     },

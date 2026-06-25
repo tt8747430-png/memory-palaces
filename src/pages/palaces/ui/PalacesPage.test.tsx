@@ -100,14 +100,14 @@ describe('PalacesPage', () => {
     expect(screen.getByText('Solar System')).toBeInTheDocument()
   })
 
-  it('creates a palace through the sheet, persists it, and opens it', async () => {
+  it('creates a palace through the sheet, persists it, and stays in the library', async () => {
     const user = userEvent.setup()
     // Seed one palace so the first-run empty-state CTA (also named "Create palace") is
-    // gone, leaving only the header + button to disambiguate the open.
+    // gone, leaving only the speed-dial action to disambiguate the open.
     const { palaceRepo, onOpenPalace } = setup([palace('seed', 'Seeded')])
     await screen.findByText('Seeded')
 
-    // Create now lives in the bottom-right speed-dial: open it, then pick "Create palace".
+    // Create lives in the bottom-right speed-dial: open it, then pick "Create palace".
     await user.click(screen.getByRole('button', { name: /quick actions/i }))
     await user.click(await screen.findByRole('button', { name: /create palace/i }))
     const sheet = await screen.findByRole('dialog')
@@ -115,8 +115,9 @@ describe('PalacesPage', () => {
     await user.click(within(sheet).getByRole('button', { name: /create palace/i }))
 
     await waitFor(async () => expect(await palaceRepo.getAll()).toHaveLength(2))
-    expect(onOpenPalace).toHaveBeenCalledTimes(1)
+    // Creating keeps you where you are — the new palace appears in the grid, no navigation.
     expect(await screen.findByText('Memory Lane')).toBeInTheDocument()
+    expect(onOpenPalace).not.toHaveBeenCalled()
   })
 
   it('shows folders and unfiled palaces at the root, hiding filed palaces', async () => {

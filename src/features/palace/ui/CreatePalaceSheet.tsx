@@ -9,8 +9,8 @@ import { ColorPicker, IconPicker } from './appearance-pickers'
 export interface CreatePalaceSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  /** The new palace's id, so the caller can navigate straight into it. */
-  onCreated: (palaceId: string) => void
+  /** The new palace's id + name, so the caller can confirm it (toast) or navigate into it. */
+  onCreated: (palaceId: string, name: string) => void
   /** File the new palace into this folder; null/undefined creates it at the library root. */
   folderId?: string | null
 }
@@ -58,7 +58,7 @@ export function CreatePalaceSheet({
         folderId: folderId ?? null,
       })
       onOpenChange(false)
-      onCreated(palace.id)
+      onCreated(palace.id, palace.name)
     } catch {
       setSubmitting(false)
     }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import {
@@ -7,14 +7,11 @@ import {
   Copy,
   Download,
   FileText,
-  ImagePlus,
+  Palette,
   RotateCcw,
-  Tag,
   Trash2,
 } from 'lucide-react'
 import {
-  ColorPicker,
-  IconPicker,
   deletePalace,
   duplicatePalace,
   editPalace,
@@ -47,10 +44,10 @@ import {
   useQuestionStore,
   useQuestionStoreApi,
 } from '@/entities/question'
-import { downloadText, fileToAvatar } from '@/shared/lib'
+import { downloadText } from '@/shared/lib'
 import {
+  ActionSheet,
   AppScreen,
-  Button,
   ConfirmDialog,
   PalaceCover,
   ScreenHeader,
@@ -63,14 +60,22 @@ import {
 export interface PalaceSettingsPageProps {
   palaceId: string
   onBack?: () => void
+  /** Open the appearance & category sub-page. */
+  onOpenAppearance?: () => void
   /** Navigate away once the palace is deleted. */
   onExit?: () => void
 }
 
-/** Per-palace settings — identity, appearance, type, study behaviour, manage (duplicate /
- * export / reset / archive), and delete. Every change persists through the palace command
- * layer; study toggles read straight off the reactive palace, so they can't drift. */
-export function PalaceSettingsPage({ palaceId, onBack, onExit }: PalaceSettingsPageProps) {
+/** Per-palace settings — identity, appearance & category (its own sub-page), study
+ * behaviour, manage (duplicate / export / reset / archive), and delete. Every change
+ * persists through the palace command layer; study toggles read straight off the reactive
+ * palace, so they can't drift. */
+export function PalaceSettingsPage({
+  palaceId,
+  onBack,
+  onOpenAppearance,
+  onExit,
+}: PalaceSettingsPageProps) {
   const { t } = useTranslation()
   const palaceStore = usePalaceStoreApi()
   const roomStore = useRoomStoreApi()
@@ -127,12 +132,20 @@ export function PalaceSettingsPage({ palaceId, onBack, onExit }: PalaceSettingsP
         />
       }
     >
-      <PalaceSettingsForm palace={palace} onExit={onExit} />
+      <PalaceSettingsForm palace={palace} onOpenAppearance={onOpenAppearance} onExit={onExit} />
     </AppScreen>
   )
 }
 
-function PalaceSettingsForm({ palace, onExit }: { palace: Palace; onExit?: () => void }) {
+function PalaceSettingsForm({
+  palace,
+  onOpenAppearance,
+  onExit,
+}: {
+  palace: Palace
+  onOpenAppearance?: () => void
+  onExit?: () => void
+}) {
   const { t } = useTranslation()
   const palaceStore = usePalaceStoreApi()
   const roomStore = useRoomStoreApi()
@@ -143,17 +156,15 @@ function PalaceSettingsForm({ palace, onExit }: { palace: Palace; onExit?: () =>
 
   const [name, setName] = useState(palace.name)
   const [description, setDescription] = useState(palace.description)
-  const [category, setCategory] = useState(palace.category)
   const [resetOpen, setResetOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
-  const fileRef = useRef<HTMLInputElement>(null)
+  const [exportOpen, setExportOpen] = useState(false)
 
   // Reseed the local text fields if the underlying palace identity changes.
   useEffect(() => {
     setName(palace.name)
     setDescription(palace.description)
-    setCategory(palace.category)
-  }, [palace.id, palace.name, palace.description, palace.category])
+  }, [palace.id, palace.name, palace.description])
 
   const patch = (changes: Parameters<typeof editPalace>[2]) =>
     void editPalace(palaceStore, palace.id, changes)
@@ -165,12 +176,6 @@ function PalaceSettingsForm({ palace, onExit }: { palace: Palace; onExit?: () =>
       return
     }
     if (trimmed !== palace.name) patch({ name: trimmed })
-  }
-
-  const handlePhoto = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) patch({ image: await fileToAvatar(file) })
-    event.target.value = ''
   }
 
   const download = (file: { filename: string; text: string; type: string }, message: string) => {
@@ -221,73 +226,16 @@ function PalaceSettingsForm({ palace, onExit }: { palace: Palace; onExit?: () =>
         </label>
       </SettingsSection>
 
-      {/* Appearance */}
-      <SettingsSection title={t('palaceSettings.appearance')}>
-        <div className="space-y-4 p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-[length:var(--p-text-sub)] font-semibold text-heading">
-                {t('palaceSettings.coverPhoto')}
-              </p>
-              <p className="text-[length:var(--p-text-label)] text-muted-foreground">
-                {t('palaceSettings.coverPhotoHint')}
-              </p>
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
-              {palace.image ? (
-                <Button size="sm" variant="ghost" onClick={() => patch({ image: undefined })}>
-                  {t('palaceSettings.removePhoto')}
-                </Button>
-              ) : null}
-              <Button size="sm" variant="secondary" onClick={() => fileRef.current?.click()}>
-                <ImagePlus className="size-[18px]" aria-hidden />
-                {palace.image ? t('palaceSettings.replacePhoto') : t('palaceSettings.addPhoto')}
-              </Button>
-            </div>
-          </div>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handlePhoto}
-          />
-          <IconPicker
-            value={palace.icon}
-            onChange={(icon) => patch({ icon })}
-            label={t('palaceSettings.iconLabel')}
-          />
-          <ColorPicker
-            value={palace.color}
-            onChange={(color) => patch({ color })}
-            label={t('palaceSettings.colorLabel')}
-            customLabel={t('palaceSettings.customColor')}
-          />
-        </div>
-      </SettingsSection>
-
-      {/* Category */}
-      <SettingsSection title={t('palaceSettings.type')}>
-        <label className="flex items-center gap-3 p-4">
-          <span className="grid size-9 shrink-0 place-items-center rounded-control bg-info-surface text-info-foreground">
-            <Tag className="size-[18px]" aria-hidden />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-[length:var(--p-text-sub)] font-semibold text-heading">
-              {t('palaceSettings.category')}
-            </span>
-            <TextField
-              className="mt-1.5"
-              value={category}
-              onChange={(event) => setCategory(event.target.value)}
-              onBlur={() =>
-                category.trim() !== palace.category && patch({ category: category.trim() })
-              }
-              placeholder={t('palaceSettings.categoryPlaceholder')}
-              maxLength={40}
-            />
-          </span>
-        </label>
+      {/* Appearance & category — its own sub-page so the main list stays scannable. */}
+      <SettingsSection>
+        <SettingsRow
+          kind="nav"
+          icon={<Palette />}
+          label={t('palaceSettings.appearanceCategory')}
+          description={t('palaceSettings.appearanceCategoryHint')}
+          value={palace.category || undefined}
+          onClick={() => onOpenAppearance?.()}
+        />
       </SettingsSection>
 
       {/* Manage */}
@@ -307,21 +255,7 @@ function PalaceSettingsForm({ palace, onExit }: { palace: Palace; onExit?: () =>
           icon={<Download />}
           label={t('palaceSettings.export')}
           description={t('palaceSettings.exportHint')}
-          onClick={() =>
-            download(
-              exportPalaceJson(palace, rooms, loci, questions),
-              'palaceSettings.toast.exported',
-            )
-          }
-        />
-        <SettingsRow
-          kind="nav"
-          icon={<FileText />}
-          label={t('palaceSettings.exportAnki')}
-          description={t('palaceSettings.exportAnkiHint')}
-          onClick={() =>
-            download(exportPalaceAnki(palace, rooms, loci), 'palaceSettings.toast.exported')
-          }
+          onClick={() => setExportOpen(true)}
         />
         <SettingsRow
           kind="nav"
@@ -357,6 +291,33 @@ function PalaceSettingsForm({ palace, onExit }: { palace: Palace; onExit?: () =>
           onClick={() => setDeleteOpen(true)}
         />
       </SettingsSection>
+
+      <ActionSheet
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        title={t('palaceSettings.exportSheetTitle')}
+        description={t('palaceSettings.exportSheetDescription')}
+        actions={[
+          {
+            id: 'json',
+            label: t('palaceSettings.exportJson'),
+            icon: <Download className="size-5" aria-hidden />,
+            onSelect: () =>
+              download(
+                exportPalaceJson(palace, rooms, loci, questions),
+                t('palaceSettings.toast.exported'),
+              ),
+          },
+          {
+            id: 'anki',
+            label: t('palaceSettings.exportAnki'),
+            icon: <FileText className="size-5" aria-hidden />,
+            onSelect: () =>
+              download(exportPalaceAnki(palace, rooms, loci), t('palaceSettings.toast.exported')),
+          },
+        ]}
+        cancelLabel={t('common.cancel')}
+      />
 
       <ConfirmDialog
         open={resetOpen}

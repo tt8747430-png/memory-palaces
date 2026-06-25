@@ -352,24 +352,28 @@ export function PalaceDetailPage({
         }}
       />
 
-      <SpeedDial
-        label={t('palaceDetail.quickActions')}
-        className="bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+0.75rem)]"
-        actions={[
-          {
-            id: 'room',
-            label: t('palaceDetail.addRoom'),
-            icon: <Plus className="size-5" aria-hidden />,
-            onSelect: () => setEditorTarget({ mode: 'add', palaceId }),
-          },
-          {
-            id: 'import',
-            label: t('importRooms.open'),
-            icon: <Upload className="size-5" aria-hidden />,
-            onSelect: () => setImportOpen(true),
-          },
-        ]}
-      />
+      {/* The empty state spells out the same Add room / Import actions, so the speed-dial
+          only joins a palace that already has rooms. */}
+      {items.length > 0 ? (
+        <SpeedDial
+          label={t('palaceDetail.quickActions')}
+          className="bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+0.75rem)]"
+          actions={[
+            {
+              id: 'room',
+              label: t('palaceDetail.addRoom'),
+              icon: <Plus className="size-5" aria-hidden />,
+              onSelect: () => setEditorTarget({ mode: 'add', palaceId }),
+            },
+            {
+              id: 'import',
+              label: t('importRooms.open'),
+              icon: <Upload className="size-5" aria-hidden />,
+              onSelect: () => setImportOpen(true),
+            },
+          ]}
+        />
+      ) : null}
     </AppScreen>
   )
 }

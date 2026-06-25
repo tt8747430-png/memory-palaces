@@ -58,8 +58,8 @@ describe('PalaceDetailPage', () => {
     const { roomRepo } = renderDetail()
     await screen.findByRole('heading', { name: 'Roman Forum' })
 
-    await user.click(screen.getByRole('button', { name: /quick actions/i }))
-    await user.click(screen.getByRole('button', { name: 'Add room' }))
+    // With no rooms yet, the speed-dial is hidden — the empty state owns the add action.
+    await user.click(screen.getByRole('button', { name: /add the first room/i }))
     const sheet = await screen.findByRole('dialog')
     await user.type(within(sheet).getByRole('textbox', { name: /room name/i }), 'Kitchen')
     await user.click(within(sheet).getByRole('button', { name: /add room/i }))
