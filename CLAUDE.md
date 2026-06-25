@@ -71,3 +71,17 @@ Vitest + React Testing Library (jsdom). `globals: false` — import `describe/it
 `vitest` explicitly. Colocate tests as `*.test.ts(x)`; global setup is `src/shared/test/setup.ts`.
 Every `Repository<T>` adapter must pass the shared `runRepositoryContract`
 (`shared/test/repository-contract.ts`); RxDB tests run on `fake-indexeddb`.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and PRDs are tracked as local markdown files under `.scratch/<feature>/`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Triage state uses the default role strings (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
