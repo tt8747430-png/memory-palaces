@@ -28,12 +28,11 @@ import {
   FolderInput,
   FolderOpen,
   Heart,
-  MoreVertical,
   Settings2,
   Trash2,
 } from 'lucide-react'
 import { cn, useLongPress } from '@/shared/lib'
-import { ActionSheet, FolderGlyph, IconButton, PalaceCover, type SheetAction } from '@/shared/ui'
+import { FlyoutMenu, FolderGlyph, PalaceCover, type SheetAction } from '@/shared/ui'
 
 export interface LibraryFolderItem {
   id: string
@@ -281,7 +280,6 @@ function FolderCard({
   handlers: LibraryHandlers
 }) {
   const { t } = useTranslation()
-  const [menuOpen, setMenuOpen] = useState(false)
   const countLabel = t(folder.count === 1 ? 'palaces.palaceCountOne' : 'palaces.palaceCountOther', {
     count: folder.count,
   })
@@ -328,13 +326,14 @@ function FolderCard({
 
   if (view === 'list') {
     return (
-      <div className={cn('relative', dragging && 'shadow-elevated')}>
+      <div className={cn('relative', dragging && 'rounded-card shadow-elevated')}>
         <button
           type="button"
           {...longPress}
           aria-label={t('palaces.openFolderLabel', { name: folder.name })}
           className={cn(
-            'flex w-full items-center gap-3 rounded-card bg-card p-3 pr-12 text-left shadow-rest transition-shadow',
+            'flex w-full items-center gap-3 rounded-card bg-card p-3 text-left shadow-rest transition-shadow',
+            !selectMode && 'pr-12',
             ring,
           )}
         >
@@ -342,7 +341,7 @@ function FolderCard({
           <FolderGlyph
             color={folder.color}
             icon={folder.icon}
-            className="size-14 rounded-card"
+            className="size-14 shrink-0 rounded-card"
             iconClassName="text-2xl"
           />
           <div className="min-w-0 flex-1">
@@ -355,24 +354,14 @@ function FolderCard({
           </div>
         </button>
         {!selectMode && !dragging ? (
-          <MenuButton
-            onOpen={() => setMenuOpen(true)}
-            label={t('palaces.folderActions', { name: folder.name })}
-          />
+          <CardMenu label={t('palaces.folderActions', { name: folder.name })} actions={actions} />
         ) : null}
-        <ActionSheet
-          open={menuOpen}
-          onOpenChange={setMenuOpen}
-          title={folder.name}
-          actions={actions}
-          cancelLabel={t('common.cancel')}
-        />
       </div>
     )
   }
 
   return (
-    <div className={cn('relative', dragging && 'shadow-elevated')}>
+    <div className={cn('relative', dragging && 'rounded-card shadow-elevated')}>
       <button
         type="button"
         {...longPress}
@@ -386,7 +375,7 @@ function FolderCard({
           <FolderGlyph
             color={folder.color}
             icon={folder.icon}
-            className="size-12 rounded-card"
+            className="size-12 shrink-0 rounded-card"
             iconClassName="text-2xl"
           />
           {selectMode ? <SelectDot selected={selected} /> : null}
@@ -401,18 +390,8 @@ function FolderCard({
         </div>
       </button>
       {!selectMode && !dragging ? (
-        <MenuButton
-          onOpen={() => setMenuOpen(true)}
-          label={t('palaces.folderActions', { name: folder.name })}
-        />
+        <CardMenu label={t('palaces.folderActions', { name: folder.name })} actions={actions} />
       ) : null}
-      <ActionSheet
-        open={menuOpen}
-        onOpenChange={setMenuOpen}
-        title={folder.name}
-        actions={actions}
-        cancelLabel={t('common.cancel')}
-      />
     </div>
   )
 }
@@ -436,7 +415,6 @@ function PalaceCard({
 }) {
   const { t } = useTranslation()
   const reduce = useReducedMotion()
-  const [menuOpen, setMenuOpen] = useState(false)
   const actions = usePalaceActions(item, handlers)
   const roomsLabel = t(item.totalRooms === 1 ? 'palaces.roomCountOne' : 'palaces.roomCountOther', {
     count: item.totalRooms,
@@ -456,7 +434,7 @@ function PalaceCard({
         className={cn(
           'relative isolate',
           item.archived && 'opacity-75',
-          dragging && 'shadow-elevated',
+          dragging && 'rounded-card shadow-elevated',
         )}
       >
         <button
@@ -464,7 +442,8 @@ function PalaceCard({
           {...longPress}
           aria-label={t('palaces.openLabel', { name: item.name })}
           className={cn(
-            'flex w-full items-center gap-3 rounded-card bg-card p-3 pr-12 text-left shadow-rest',
+            'flex w-full items-center gap-3 rounded-card bg-card p-3 text-left shadow-rest',
+            !selectMode && 'pr-12',
             ring,
           )}
         >
@@ -501,24 +480,20 @@ function PalaceCard({
           </div>
         </button>
         {!selectMode && !dragging ? (
-          <MenuButton
-            onOpen={() => setMenuOpen(true)}
-            label={t('palaces.moreLabel', { name: item.name })}
-          />
+          <CardMenu label={t('palaces.moreLabel', { name: item.name })} actions={actions} />
         ) : null}
-        <ActionSheet
-          open={menuOpen}
-          onOpenChange={setMenuOpen}
-          title={item.name}
-          actions={actions}
-          cancelLabel={t('common.cancel')}
-        />
       </div>
     )
   }
 
   return (
-    <div className={cn('relative', item.archived && 'opacity-75', dragging && 'shadow-elevated')}>
+    <div
+      className={cn(
+        'relative',
+        item.archived && 'opacity-75',
+        dragging && 'rounded-card shadow-elevated',
+      )}
+    >
       <motion.button
         type="button"
         whileTap={reduce ? undefined : { scale: 0.98 }}
@@ -571,19 +546,8 @@ function PalaceCard({
           <SelectDot selected={selected} />
         </div>
       ) : !dragging ? (
-        <MenuButton
-          onOpen={() => setMenuOpen(true)}
-          label={t('palaces.moreLabel', { name: item.name })}
-        />
+        <CardMenu label={t('palaces.moreLabel', { name: item.name })} actions={actions} />
       ) : null}
-
-      <ActionSheet
-        open={menuOpen}
-        onOpenChange={setMenuOpen}
-        title={item.name}
-        actions={actions}
-        cancelLabel={t('common.cancel')}
-      />
     </div>
   )
 }
@@ -652,21 +616,12 @@ function SelectDot({ selected }: { selected: boolean }) {
   )
 }
 
-function MenuButton({ onOpen, label }: { onOpen: () => void; label: string }) {
+/** The card's ⋮ overflow as an anchored flyout (not a bottom drawer), pinned to the card's
+ * top-right. Opens beside the thumb and dismisses on outside press. */
+function CardMenu({ label, actions }: { label: string; actions: SheetAction[] }) {
   return (
     <div className="absolute right-2 top-2">
-      <IconButton
-        variant="glass"
-        size="sm"
-        aria-label={label}
-        aria-haspopup="dialog"
-        onClick={(event) => {
-          event.stopPropagation()
-          onOpen()
-        }}
-      >
-        <MoreVertical className="size-4" aria-hidden />
-      </IconButton>
+      <FlyoutMenu label={label} actions={actions} variant="glass" size="sm" side="bottom" align="end" />
     </div>
   )
 }

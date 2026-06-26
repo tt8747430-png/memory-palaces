@@ -1,10 +1,10 @@
 import { type FormEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Check, FolderPlus, Sparkles, Trash2 } from 'lucide-react'
-import { DEFAULT_FOLDER_ICON, FOLDER_ICON_OPTIONS, type Folder } from '@/entities/folder'
-import { ColorPicker, IconPicker } from '@/features/palace'
+import { Check, FolderPlus, Sparkles } from 'lucide-react'
+import { DEFAULT_FOLDER_ICON, type Folder } from '@/entities/folder'
+import { FolderForm } from '@/widgets/folder-form'
 import { cn } from '@/shared/lib'
-import { Button, FolderGlyph, Sheet, TextField } from '@/shared/ui'
+import { Button, FolderGlyph, Sheet } from '@/shared/ui'
 
 export interface MoveToFolderSheetProps {
   open: boolean
@@ -109,42 +109,28 @@ function FolderOption({
 export interface FolderSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  /** The folder being edited; `null` puts the sheet in create mode. */
-  folder: Folder | null
   /** Seed colour for a brand-new folder (the page cycles the palette so folders differ). */
   defaultColor: string
   onSubmit: (changes: { name: string; color: string; icon: string }) => void
-  /** Edit mode only — hands off to the page's delete-folder confirm (palaces stay safe). */
-  onDelete?: () => void
 }
 
-/** One sheet for the whole folder lifecycle — create and edit. A live glyph preview sits
- * above an emoji picker, a name field, and the shared colour picker, so a folder gets a
- * real identity (the dead icon field is now first-class). Naming alone is still enough: the
- * emoji and colour come pre-chosen, so the lightweight "just type a name" path survives.
- * Editing adds a clearly-separated destructive delete. */
-export function FolderSheet({
-  open,
-  onOpenChange,
-  folder,
-  defaultColor,
-  onSubmit,
-  onDelete,
-}: FolderSheetProps) {
+/** The quick "create a folder" bottom sheet: a live glyph preview, name, emoji, and colour,
+ * so a folder gets a real identity in one pass. Naming alone is still enough — the emoji and
+ * colour come pre-chosen, so the lightweight "just type a name" path survives. Editing an
+ * existing folder is a dedicated page, not this sheet. */
+export function FolderSheet({ open, onOpenChange, defaultColor, onSubmit }: FolderSheetProps) {
   const { t } = useTranslation()
-  const isEdit = folder !== null
   const [name, setName] = useState('')
   const [color, setColor] = useState(defaultColor)
   const [icon, setIcon] = useState(DEFAULT_FOLDER_ICON)
 
-  // Seed the fields whenever the sheet opens: from the folder when editing, or from the
-  // defaults (with a freshly-cycled colour) when creating.
+  // Reset to fresh defaults (with a freshly-cycled colour) each time the create sheet opens.
   useEffect(() => {
     if (!open) return
-    setName(folder?.name ?? '')
-    setColor(folder?.color ?? defaultColor)
-    setIcon(folder?.icon ?? DEFAULT_FOLDER_ICON)
-  }, [open, folder, defaultColor])
+    setName('')
+    setColor(defaultColor)
+    setIcon(DEFAULT_FOLDER_ICON)
+  }, [open, defaultColor])
 
   const valid = name.trim().length > 0
   const submit = (event?: FormEvent) => {
@@ -157,66 +143,23 @@ export function FolderSheet({
     <Sheet
       open={open}
       onOpenChange={onOpenChange}
-      title={isEdit ? t('palaces.editFolderTitle') : t('palaces.newFolderTitle')}
+      title={t('palaces.newFolderTitle')}
       footer={
-        <div className="flex flex-col gap-2">
-          <Button size="lg" className="w-full" disabled={!valid} onClick={() => submit()}>
-            {isEdit ? (
-              <Check className="size-[18px]" aria-hidden />
-            ) : (
-              <FolderPlus className="size-[18px]" aria-hidden />
-            )}
-            {isEdit ? t('palaces.saveFolder') : t('palaces.createFolder')}
-          </Button>
-          {isEdit && onDelete ? (
-            <Button variant="destructive" size="lg" className="w-full" onClick={onDelete}>
-              <Trash2 className="size-[18px]" aria-hidden />
-              {t('palaces.confirmDeleteFolder')}
-            </Button>
-          ) : null}
-        </div>
+        <Button size="lg" className="w-full" disabled={!valid} onClick={() => submit()}>
+          <FolderPlus className="size-[18px]" aria-hidden />
+          {t('palaces.createFolder')}
+        </Button>
       }
     >
-      <form onSubmit={submit} className="flex flex-col gap-5 pb-2">
-        <div className="flex items-center gap-3 rounded-card bg-info-surface p-3">
-          <FolderGlyph
-            color={color}
-            icon={icon}
-            className="size-12"
-            iconClassName="text-2xl leading-none"
-          />
-          <div className="min-w-0">
-            <p className="truncate text-[length:var(--p-text-sub)] font-semibold text-heading">
-              {name.trim() || t('palaces.folderNamePlaceholder')}
-            </p>
-            <p className="text-[length:var(--p-text-label)] text-muted-foreground">
-              {t('palaces.folderNameHint')}
-            </p>
-          </div>
-        </div>
-
-        <TextField
-          aria-label={t('palaces.folderNameLabel')}
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          placeholder={t('palaces.folderNamePlaceholder')}
-          autoFocus={!isEdit}
-          enterKeyHint="done"
-          maxLength={40}
-        />
-
-        <IconPicker
-          value={icon}
-          onChange={setIcon}
-          label={t('palaces.folderIconLabel')}
-          options={FOLDER_ICON_OPTIONS}
-        />
-
-        <ColorPicker
-          value={color}
-          onChange={setColor}
-          label={t('palaces.folderColorLabel')}
-          customLabel={t('palaces.customColor')}
+      <form onSubmit={submit} className="pb-2">
+        <FolderForm
+          name={name}
+          color={color}
+          icon={icon}
+          onNameChange={setName}
+          onColorChange={setColor}
+          onIconChange={setIcon}
+          autoFocusName
         />
       </form>
     </Sheet>

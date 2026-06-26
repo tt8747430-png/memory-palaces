@@ -27,11 +27,14 @@ function renderHeader(props: Partial<Parameters<typeof HomeHeader>[0]> = {}) {
 }
 
 describe('HomeHeader', () => {
-  it('shows the name and the level derived from XP, without a greeting', () => {
+  it('leads with a time-of-day greeting and the level, keeping the name in the accessible label', () => {
     renderHeader()
-    expect(screen.getByText('Sam')).toBeTruthy()
+    expect(screen.getByText(/good (morning|afternoon|evening)/i)).toBeTruthy()
     expect(screen.getByText('Level 3')).toBeTruthy()
-    expect(screen.queryByText('Hi Sam!')).toBeNull()
+    // The name no longer renders as a visible label (it used to elide); it lives in the
+    // avatar/profile control's accessible name instead.
+    expect(screen.queryByText('Sam')).toBeNull()
+    expect(screen.getByRole('button', { name: /sam/i })).toBeTruthy()
   })
 
   it('surfaces the XP-to-next progress on the profile control', () => {

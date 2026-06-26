@@ -14,7 +14,6 @@ import {
   LayoutGrid,
   ListChecks,
   Pencil,
-  Plus,
   Rows3,
   Tag,
   Trash2,
@@ -36,7 +35,7 @@ import {
   usePalaceStore,
   usePalaceStoreApi,
 } from '@/entities/palace'
-import { type Folder, selectFolders, useFolderStore, useFolderStoreApi } from '@/entities/folder'
+import { selectFolders, useFolderStore, useFolderStoreApi } from '@/entities/folder'
 import { lociForRoom, selectLoci, useLocusStore, useLocusStoreApi } from '@/entities/locus'
 import { roomsForPalace, selectRooms, useRoomStore, useRoomStoreApi } from '@/entities/room'
 import { useQuestionStoreApi } from '@/entities/question'
@@ -65,7 +64,7 @@ import {
   CreatePalaceSheet,
 } from '@/features/palace'
 import { readPalaceFile } from '@/features/content'
-import { createFolder, deleteFolder, editFolder, reorderFolders } from '@/features/folder'
+import { createFolder, deleteFolder, reorderFolders } from '@/features/folder'
 import { setPreferences } from '@/features/preferences'
 import {
   LibraryGrid,
@@ -102,6 +101,8 @@ export interface PalacesPageProps {
   onOpenFolder?: (id: string) => void
   /** Return to the library root (clear `?folder`). */
   onCloseFolder?: () => void
+  /** Open the dedicated edit-folder page for a folder (rename, recolour, re-icon, delete). */
+  onEditFolder?: (id: string) => void
   /** Open the create sheet on mount (a `?create` deep link still opens it). */
   openCreate?: boolean
   onOpenProfile?: () => void
@@ -128,6 +129,7 @@ export function PalacesPage({
   folderId = null,
   onOpenFolder,
   onCloseFolder,
+  onEditFolder,
   openCreate = false,
   onOpenProfile,
   onOpenNotifications,
@@ -199,21 +201,13 @@ export function PalacesPage({
   const [moveTarget, setMoveTarget] = useState<string | null>(null)
   const [bulkMoveOpen, setBulkMoveOpen] = useState(false)
   const [folderSheetOpen, setFolderSheetOpen] = useState(false)
-  const [folderSheetTarget, setFolderSheetTarget] = useState<Folder | null>(null)
   const [deletePalaceTarget, setDeletePalaceTarget] = useState<string | null>(null)
   const [deleteFolderTarget, setDeleteFolderTarget] = useState<string | null>(null)
   const [selectMode, setSelectMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
 
-  const openCreateFolder = () => {
-    setFolderSheetTarget(null)
-    setFolderSheetOpen(true)
-  }
-  const openEditFolder = (folder: Folder) => {
-    setFolderSheetTarget(folder)
-    setFolderSheetOpen(true)
-  }
+  const openCreateFolder = () => setFolderSheetOpen(true)
 
   const exitSelect = () => {
     setSelectMode(false)
@@ -377,16 +371,11 @@ export function PalacesPage({
 
   const nextFolderColor = PALACE_COLOR_OPTIONS[folders.length % PALACE_COLOR_OPTIONS.length]!.value
 
-  const handleSubmitFolder = (changes: { name: string; color: string; icon: string }) => {
-    if (folderSheetTarget) {
-      void editFolder(folderStore, folderSheetTarget, changes)
-    } else {
-      void createFolder(folderStore, changes)
-      // Folders live at the library root (they don't nest), so a folder created while
-      // inside another folder/archived view would be invisible — return to the root to
-      // reveal it.
-      if (!atRoot) onCloseFolder?.()
-    }
+  const handleCreateFolder = (changes: { name: string; color: string; icon: string }) => {
+    void createFolder(folderStore, changes)
+    // Folders live at the library root (they don't nest), so a folder created while inside
+    // another folder/archived view would be invisible — return to the root to reveal it.
+    if (!atRoot) onCloseFolder?.()
     setFolderSheetOpen(false)
   }
 
@@ -447,10 +436,7 @@ export function PalacesPage({
     onArchivePalace: handleArchive,
     onDeletePalace: (id) => setDeletePalaceTarget(id),
     onOpenFolder: (id) => onOpenFolder?.(id),
-    onEditFolder: (id) => {
-      const folder = folders.find((f) => f.id === id)
-      if (folder) openEditFolder(folder)
-    },
+    onEditFolder: (id) => onEditFolder?.(id),
     onDeleteFolder: (id) => setDeleteFolderTarget(id),
     onReorderFolders: (ids) => {
       void reorderFolders(folderStore, ids)
@@ -514,26 +500,21 @@ export function PalacesPage({
     }),
   )
 
-  // Sort / select / view, shared by the root toolbar and the sub-view header. Sorting leads
-  // (left); selection + layout group together. `compactSort` drops the sort label where bar
-  // space is tight (the in-header variant).
-  const sortControl = (compactSort: boolean) => (
+  // Sort / select / view, shown in one toolbar row under the header at every level (root,
+  // folder, archived) so the library reads the same everywhere. Sorting leads on the left;
+  // selection + layout group on the right.
+  const sortControl = (
     <button
       type="button"
       aria-haspopup="dialog"
       aria-label={t('palaces.sortLabel')}
       onClick={() => setSortOpen(true)}
-      className={cn(
-        'flex h-9 min-w-0 items-center gap-1.5 rounded-control border border-border bg-card shadow-rest transition-transform active:scale-[0.97]',
-        compactSort ? 'px-2' : 'pl-2.5 pr-2',
-      )}
+      className="flex h-9 min-w-0 items-center gap-1.5 rounded-control border border-border bg-card pl-2.5 pr-2 shadow-rest transition-transform active:scale-[0.97]"
     >
       <SortGlyph option={sort} className="size-4 text-accent" />
-      {compactSort ? null : (
-        <span className="truncate text-[length:var(--p-text-label)] font-semibold text-heading">
-          {t(SORT_LABEL_KEY[sort])}
-        </span>
-      )}
+      <span className="truncate text-[length:var(--p-text-label)] font-semibold text-heading">
+        {t(SORT_LABEL_KEY[sort])}
+      </span>
       <ChevronDown className="size-4 shrink-0 text-muted-foreground" aria-hidden />
     </button>
   )
@@ -543,6 +524,7 @@ export function PalacesPage({
       variant="ghost"
       size="sm"
       aria-label={t('palaces.selectLabel')}
+      disabled={!hasItems}
       onClick={() => setSelectMode(true)}
     >
       <ListChecks className="size-[18px]" aria-hidden />
@@ -573,29 +555,8 @@ export function PalacesPage({
 
   const emptyState = renderEmptyState()
 
-  function emptyActions(includeFolder: boolean) {
-    return (
-      <div className="flex flex-col items-stretch gap-2.5">
-        <Button onClick={() => setCreateOpen(true)}>
-          <Plus className="size-[18px]" aria-hidden />
-          {t('palaces.createCta')}
-        </Button>
-        <div className="flex justify-center gap-2">
-          <Button variant="ghost" onClick={() => importRef.current?.click()}>
-            <Upload className="size-[18px]" aria-hidden />
-            {t('palaces.import')}
-          </Button>
-          {includeFolder ? (
-            <Button variant="ghost" onClick={openCreateFolder}>
-              <FolderPlus className="size-[18px]" aria-hidden />
-              {t('palaces.newFolderTitle')}
-            </Button>
-          ) : null}
-        </div>
-      </div>
-    )
-  }
-
+  // Empty views teach, they don't carry their own add buttons — the always-present toolbar
+  // and the speed-dial own creating, so the affordance lives in one place across the library.
   function renderEmptyState() {
     if (query.trim()) {
       return (
@@ -625,8 +586,7 @@ export function PalacesPage({
         <EmptyState
           emoji="📂"
           title={t('palaces.emptyFolderTitle')}
-          description={t('palaces.emptyFolderBody')}
-          action={emptyActions(false)}
+          description={t('palaces.emptyFolderHint')}
         />
       )
     }
@@ -634,8 +594,7 @@ export function PalacesPage({
       <EmptyState
         emoji="🏛️"
         title={t('palaces.emptyTitle')}
-        description={t('palaces.emptyBody')}
-        action={emptyActions(true)}
+        description={t('palaces.emptyHint')}
       />
     )
   }
@@ -673,11 +632,14 @@ export function PalacesPage({
             }}
           />
         ) : (
-          <StickyBar elevation={header.elevation}>
-            <div className="flex w-full items-center gap-2">
+          // A fixed-height nav bar: back pinned left, the title centred both ways, and (for a
+          // real folder) an edit control pinned right that opens the dedicated edit page.
+          <StickyBar elevation={header.elevation} className="min-h-12">
+            <div className="relative flex min-h-12 w-full items-center justify-center">
               <IconButton
                 variant="glass"
                 size="sm"
+                className="absolute left-0"
                 aria-label={t('palaces.backToLibrary')}
                 onClick={() => onCloseFolder?.()}
               >
@@ -685,42 +647,38 @@ export function PalacesPage({
               </IconButton>
 
               {inArchived ? (
-                <span className="flex min-w-0 flex-1 items-center gap-2">
-                  <span className="grid size-8 shrink-0 place-items-center rounded-control bg-info-surface text-info-foreground">
-                    <Archive className="size-[18px]" aria-hidden />
+                <span className="flex max-w-[68%] items-center gap-2">
+                  <span className="grid size-7 shrink-0 place-items-center rounded-control bg-info-surface text-info-foreground">
+                    <Archive className="size-4" aria-hidden />
                   </span>
                   <h1 className="truncate text-[length:var(--p-text-title)] font-bold tracking-tight text-heading">
                     {t('palaces.collectionArchived')}
                   </h1>
                 </span>
               ) : currentFolder ? (
-                <button
-                  type="button"
-                  onClick={() => openEditFolder(currentFolder)}
-                  aria-label={t('palaces.editFolderLabel', { name: currentFolder.name })}
-                  className="flex min-w-0 flex-1 items-center gap-2 rounded-control text-left"
-                >
+                <span className="flex max-w-[68%] items-center gap-2">
                   <FolderGlyph
                     color={currentFolder.color}
                     icon={currentFolder.icon}
-                    className="size-8 shrink-0"
-                    iconClassName="text-base leading-none"
+                    className="size-7 shrink-0"
+                    iconClassName="text-sm leading-none"
                   />
                   <h1 className="truncate text-[length:var(--p-text-title)] font-bold tracking-tight text-heading">
                     {currentFolder.name}
                   </h1>
-                  <Pencil className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
-                </button>
-              ) : (
-                <span className="flex-1" />
-              )}
+                </span>
+              ) : null}
 
-              {hasItems && !selectMode ? (
-                <div className="flex shrink-0 items-center gap-1.5">
-                  {sortControl(true)}
-                  {selectControl}
-                  {viewControl}
-                </div>
+              {currentFolder ? (
+                <IconButton
+                  variant="glass"
+                  size="sm"
+                  className="absolute right-0"
+                  aria-label={t('palaces.editFolderLabel', { name: currentFolder.name })}
+                  onClick={() => onEditFolder?.(currentFolder.id)}
+                >
+                  <Pencil className="size-[18px]" aria-hidden />
+                </IconButton>
               ) : null}
             </div>
           </StickyBar>
@@ -752,17 +710,19 @@ export function PalacesPage({
             {t('loci.select.done')}
           </button>
         </div>
-      ) : atRoot && hasItems ? (
-        // Root toolbar: sorting leads on the left; selection + layout sit on the right.
-        // (Archive now lives in the home header; the sub-view header carries its own controls.)
+      ) : (
+        // The library toolbar — always present (so the chrome never jumps), identical at the
+        // root and inside a folder/archived view: sorting leads on the left; selection +
+        // layout sit on the right. Select is disabled while a view has nothing to select.
+        // (Archive lives in the home header.)
         <div className="mb-3 mt-3 flex items-center gap-2">
-          {sortControl(false)}
+          {sortControl}
           <div className="ml-auto flex items-center gap-1.5">
             {selectControl}
             {viewControl}
           </div>
         </div>
-      ) : null}
+      )}
 
       <LibraryGrid
         folders={visibleFolders}
@@ -805,9 +765,10 @@ export function PalacesPage({
         </div>
       ) : null}
 
-      {/* The speed-dial is the in-view shortcut to the same actions the empty state spells
-          out, so it only joins a view that already has content. */}
-      {!selectMode && hasItems ? (
+      {/* The always-present add affordance (the inline empty-state buttons are gone). "New
+          folder" is dropped inside a folder/archived view, where folders don't nest and the
+          action would be misleading. */}
+      {!selectMode ? (
         <SpeedDial
           label={t('palaces.quickActions')}
           actions={[
@@ -823,12 +784,16 @@ export function PalacesPage({
               icon: <Upload className="size-5" aria-hidden />,
               onSelect: () => importRef.current?.click(),
             },
-            {
-              id: 'folder',
-              label: t('palaces.newFolderTitle'),
-              icon: <FolderPlus className="size-5" aria-hidden />,
-              onSelect: openCreateFolder,
-            },
+            ...(atRoot
+              ? [
+                  {
+                    id: 'folder',
+                    label: t('palaces.newFolderTitle'),
+                    icon: <FolderPlus className="size-5" aria-hidden />,
+                    onSelect: openCreateFolder,
+                  },
+                ]
+              : []),
           ]}
         />
       ) : null}
@@ -884,21 +849,13 @@ export function PalacesPage({
         }}
       />
 
+      {/* Creating a folder is a quick bottom sheet; editing one is its own page (opened via
+          onEditFolder), so this sheet is always in create mode. */}
       <FolderSheet
         open={folderSheetOpen}
         onOpenChange={setFolderSheetOpen}
-        folder={folderSheetTarget}
         defaultColor={nextFolderColor}
-        onSubmit={handleSubmitFolder}
-        onDelete={
-          folderSheetTarget
-            ? () => {
-                const id = folderSheetTarget.id
-                setFolderSheetOpen(false)
-                setDeleteFolderTarget(id)
-              }
-            : undefined
-        }
+        onSubmit={handleCreateFolder}
       />
 
       <ConfirmDialog

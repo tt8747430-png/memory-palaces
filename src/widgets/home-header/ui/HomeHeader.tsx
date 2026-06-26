@@ -40,11 +40,19 @@ export interface HomeHeaderProps {
 
 const EASE_OUT = [0.22, 1, 0.36, 1] as const
 
-/** The home's chrome: one slim, calm bar. The user's name sits over a `Level N` line and a
- * thin XP-to-next progress bar; the glassy framed avatar taps through to the profile. The
- * right cluster carries the day's quick chrome — streak, archive, search, notifications.
- * The bar is transparent at the top (merging into the daylight ground) and gains a glass
- * edge as the page scrolls under it. */
+/** Time-of-day greeting key. Short, fixed strings that never elide — the home bar leads with
+ * this instead of the user's (arbitrarily long) name, which the avatar + aria-label still carry. */
+function greetingKey(hour: number): 'greetingMorning' | 'greetingAfternoon' | 'greetingEvening' {
+  if (hour >= 5 && hour < 12) return 'greetingMorning'
+  if (hour >= 12 && hour < 18) return 'greetingAfternoon'
+  return 'greetingEvening'
+}
+
+/** The home's chrome: one slim, calm bar of a fixed height. A time-of-day greeting sits over a
+ * `Level N` line and a thin XP-to-next progress bar; the glassy framed avatar taps through to
+ * the profile. The right cluster carries the day's quick chrome — streak, archive, search,
+ * notifications. The bar is transparent at the top (merging into the daylight ground) and gains
+ * a glass edge as the page scrolls under it. */
 export function HomeHeader({
   header,
   name,
@@ -66,7 +74,7 @@ export function HomeHeader({
 
   if (search?.open) {
     return (
-      <StickyBar elevation={header.elevation}>
+      <StickyBar elevation={header.elevation} className="min-h-12">
         <div className="flex w-full items-center gap-2">
           <div className="relative flex-1">
             <Search
@@ -92,7 +100,7 @@ export function HomeHeader({
   }
 
   return (
-    <StickyBar elevation={header.elevation}>
+    <StickyBar elevation={header.elevation} className="min-h-12">
       <button
         type="button"
         onClick={onOpenProfile}
@@ -100,11 +108,11 @@ export function HomeHeader({
         className="flex min-w-0 flex-1 items-center gap-3 text-left transition-transform active:scale-[0.98]"
       >
         <span className="grid size-12 shrink-0 place-items-center rounded-full border border-[color:var(--border-glass)] bg-card-glass shadow-rest">
-          <Avatar name={name} src={avatar} className="size-9 text-[length:var(--p-text-sub)]" />
+          <Avatar name={name} src={avatar} className="size-11 text-[length:var(--p-text-sub)]" />
         </span>
         <span className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="truncate text-[length:var(--p-text-sub)] font-bold leading-tight tracking-tight text-heading">
-            {name}
+            {t(`home.${greetingKey(new Date().getHours())}`)}
           </span>
           <span className="flex items-center gap-2">
             <span className="shrink-0 text-[length:var(--p-text-label)] font-semibold text-primary">

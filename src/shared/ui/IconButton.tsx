@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes } from 'react'
+import type { ButtonHTMLAttributes, Ref } from 'react'
 import { cn } from '@/shared/lib'
 
 export type IconButtonVariant = 'ghost' | 'tint' | 'solid' | 'glass' | 'danger'
@@ -28,6 +28,8 @@ export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>
   size?: IconButtonSize
   /** Required: the button shows only an icon, so it needs an accessible name. */
   'aria-label': string
+  /** Forwarded to the underlying button — lets popover/menu triggers anchor to it. */
+  ref?: Ref<HTMLButtonElement>
 }
 
 export function IconButton({
@@ -35,10 +37,12 @@ export function IconButton({
   size = 'md',
   className,
   type,
+  ref,
   ...props
 }: IconButtonProps) {
   return (
     <button
+      ref={ref}
       type={type ?? 'button'}
       className={cn(base, variantStyles[variant], sizeStyles[size], className)}
       {...props}

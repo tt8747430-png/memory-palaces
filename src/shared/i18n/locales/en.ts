@@ -267,6 +267,9 @@ export const en = {
     streakAria: '{{count}}-day streak — {{done}} of {{goal}} practised today. Open streak.',
     greeting: 'Welcome back, {{name}}',
     greetingGuest: 'Welcome, {{name}}',
+    greetingMorning: 'Good morning',
+    greetingAfternoon: 'Good afternoon',
+    greetingEvening: 'Good evening',
     subtitle: 'A calm place to train your memory.',
     primaryCta: 'Start a session',
     guestNote: "You're exploring as a guest. Your progress is saved on this device.",
@@ -447,6 +450,8 @@ export const en = {
     emptyTitle: 'Build your first palace',
     emptyBody:
       'A memory palace is a place you know by heart, filled with what you want to remember. Create one to start training.',
+    emptyHint:
+      'A memory palace is a place you know by heart, filled with what you want to remember. Tap the ＋ to create your first one.',
     emptyFilteredTitle: 'No palaces here',
     emptyFilteredBody:
       'This collection is empty. Move a palace into it from its menu, or pick another collection.',
@@ -454,6 +459,8 @@ export const en = {
     emptyFolderTitle: 'This folder is empty',
     emptyFolderBody:
       'Drag a palace onto this folder from the library, or create one here to file it inside.',
+    emptyFolderHint: 'Drag a palace onto this folder from the library, or tap the ＋ to add one here.',
+    folderNotFound: 'That folder could not be found.',
     emptySearchTitle: 'No matches',
     emptySearchBody: 'No palaces match “{{query}}”. Try a different search.',
     emptyArchivedTitle: 'Nothing archived',

@@ -6,6 +6,7 @@ export const ROUTES = {
   forgot: '/forgot',
   welcome: '/welcome',
   palaces: '/palaces',
+  folderEdit: '/folders/$folderId/edit',
   palaceDetail: '/palaces/$palaceId',
   palaceSettings: '/palaces/$palaceId/settings',
   palaceAppearance: '/palaces/$palaceId/settings/appearance',

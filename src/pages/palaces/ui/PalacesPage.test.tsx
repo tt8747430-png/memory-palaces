@@ -102,8 +102,6 @@ describe('PalacesPage', () => {
 
   it('creates a palace through the sheet, persists it, and stays in the library', async () => {
     const user = userEvent.setup()
-    // Seed one palace so the first-run empty-state CTA (also named "Create palace") is
-    // gone, leaving only the speed-dial action to disambiguate the open.
     const { palaceRepo, onOpenPalace } = setup([palace('seed', 'Seeded')])
     await screen.findByText('Seeded')
 
