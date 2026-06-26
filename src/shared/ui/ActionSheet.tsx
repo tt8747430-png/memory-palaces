@@ -9,6 +9,8 @@ export interface SheetAction {
   /** Tints the row as destructive (delete, clear all). */
   destructive?: boolean
   disabled?: boolean
+  /** Marks the current choice in a single-select menu (e.g. the active sort): trailing check + accent. */
+  selected?: boolean
   onSelect: () => void
 }
 

@@ -187,10 +187,9 @@ export function CardRow({
         {selectMode ? null : (
           <OverflowMenuButton
             variant="tint"
+            size="sm"
             label={t('loci.row.menuLabel')}
-            title={locus.front}
             actions={actions}
-            cancelLabel={t('common.cancel')}
           />
         )}
       </div>
@@ -326,10 +325,9 @@ export function QuestionRow({
         {selectMode ? null : (
           <OverflowMenuButton
             variant="tint"
+            size="sm"
             label={t('loci.row.menuLabel')}
-            title={question.prompt}
             actions={actions}
-            cancelLabel={t('common.cancel')}
           />
         )}
       </div>

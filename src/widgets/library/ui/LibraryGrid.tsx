@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useState } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion, useReducedMotion } from 'motion/react'
 import {
@@ -91,6 +91,10 @@ export interface LibraryGridProps extends LibraryHandlers {
   onToggleSelect: (id: string) => void
 }
 
+// Exponential ease-out + a calm spring, shared by the drop-target and receive animations.
+const EASE_OUT = [0.22, 1, 0.36, 1] as const
+const DROP_SPRING = { type: 'spring', stiffness: 420, damping: 26 } as const
+
 // dnd ids are namespaced so a drag's source/target type is unambiguous: `f:` folder, `p:` palace.
 const fid = (id: string) => `f:${id}`
 const pid = (id: string) => `p:${id}`
@@ -115,7 +119,12 @@ export function LibraryGrid({
   onToggleSelect,
   ...handlers
 }: LibraryGridProps) {
+  const reduce = useReducedMotion()
   const [activeId, setActiveId] = useState<string | null>(null)
+  // The folder that just received a palace — drives a short "absorb" pop. Cleared on a timer.
+  const [receivingId, setReceivingId] = useState<string | null>(null)
+  const receiveTimer = useRef<number | undefined>(undefined)
+  useEffect(() => () => window.clearTimeout(receiveTimer.current), [])
   // Optimistic order: seeded from props, reordered in place on drop, and reconciled
   // whenever the persisted order flows back. This is what kills the reorder flicker — the
   // grid never renders the stale order between the drop and the async store update.
@@ -128,6 +137,12 @@ export function LibraryGrid({
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
+
+  const flashReceive = (folderId: string) => {
+    setReceivingId(folderId)
+    window.clearTimeout(receiveTimer.current)
+    receiveTimer.current = window.setTimeout(() => setReceivingId(null), 600)
+  }
 
   if (loading) {
     return <GridSkeleton view={view} />
@@ -145,6 +160,7 @@ export function LibraryGrid({
 
     if (a.kind === 'p' && o.kind === 'f') {
       handlers.onFilePalace(a.id, o.id)
+      flashReceive(o.id)
       return
     }
     if (a.kind === 'p' && o.kind === 'p') {
@@ -192,7 +208,12 @@ export function LibraryGrid({
                   view={view}
                   selectMode={selectMode}
                   selected={selectedIds.has(folder.id)}
+                  // A palace in hand turns every folder into a visible drop zone; the one
+                  // under the cursor becomes the active "open" target.
+                  dropReady={activePalace !== undefined}
                   isOver={drag.isOver && activePalace !== undefined}
+                  receiving={receivingId === folder.id}
+                  reduce={reduce}
                   onToggleSelect={() => onToggleSelect(folder.id)}
                   handlers={handlers}
                 />
@@ -219,15 +240,26 @@ export function LibraryGrid({
         </SortableContext>
       </div>
 
-      <DragOverlay>
+      <DragOverlay dropAnimation={{ duration: 220, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }}>
         {activeFolder ? (
-          <FolderCard folder={activeFolder} view={view} dragging handlers={handlers} />
+          <DragLift reduce={reduce}>
+            <FolderCard folder={activeFolder} view={view} dragging reduce={reduce} handlers={handlers} />
+          </DragLift>
         ) : activePalace ? (
-          <PalaceCard item={activePalace} view={view} dragging handlers={handlers} />
+          <DragLift reduce={reduce}>
+            <PalaceCard item={activePalace} view={view} dragging handlers={handlers} />
+          </DragLift>
         ) : null}
       </DragOverlay>
     </DndContext>
   )
+}
+
+/** Lifts the dragged clone off the surface — a small scale + tilt that reads as "in hand".
+ * Static (no entrance) so it composes cleanly with dnd-kit's drop animation; the card itself
+ * carries the elevated shadow. Calm under reduced motion (shadow only, no transform). */
+function DragLift({ children, reduce }: { children: ReactNode; reduce: boolean | null }) {
+  return <div className={cn('origin-center', !reduce && '-rotate-2 scale-[1.03]')}>{children}</div>
 }
 
 function SortableItem({
@@ -266,7 +298,10 @@ function FolderCard({
   selectMode = false,
   selected = false,
   isOver = false,
+  dropReady = false,
+  receiving = false,
   dragging = false,
+  reduce = false,
   onToggleSelect,
   handlers,
 }: {
@@ -274,8 +309,14 @@ function FolderCard({
   view: 'grid' | 'list'
   selectMode?: boolean
   selected?: boolean
+  /** This folder is the active file target (a palace is hovering it). */
   isOver?: boolean
+  /** A palace is being dragged anywhere — mark every folder as a droppable zone. */
+  dropReady?: boolean
+  /** Just received a palace — play the absorb pop. */
+  receiving?: boolean
   dragging?: boolean
+  reduce?: boolean | null
   onToggleSelect?: () => void
   handlers: LibraryHandlers
 }) {
@@ -318,57 +359,112 @@ function FolderCard({
     onTap: handleClick,
   })
 
-  const ring = selected
-    ? 'ring-2 ring-primary'
-    : isOver
-      ? 'ring-2 ring-accent'
-      : 'ring-1 ring-border'
+  const selectRing = selected ? 'ring-2 ring-primary' : 'ring-1 ring-border'
+  const popTransition = receiving ? { duration: 0.5, ease: EASE_OUT } : DROP_SPRING
+
+  // While hovered, the count line becomes a "drop to file" prompt so the gesture's outcome
+  // is unmistakable.
+  const subtitle = isOver ? (
+    <span className="inline-flex items-center gap-1 font-semibold text-accent">
+      <FolderOpen className="size-3.5" aria-hidden />
+      {t('palaces.dropToFile')}
+    </span>
+  ) : (
+    countLabel
+  )
 
   if (view === 'list') {
+    const animate = dragging
+      ? undefined
+      : reduce
+        ? undefined
+        : receiving
+          ? { scale: [1, 1.03, 1] }
+          : { scale: 1 }
     return (
-      <div className={cn('relative', dragging && 'rounded-card shadow-elevated')}>
+      <motion.div
+        className={cn('relative', dragging && 'rounded-card shadow-elevated')}
+        animate={animate}
+        transition={popTransition}
+      >
         <button
           type="button"
           {...longPress}
           aria-label={t('palaces.openFolderLabel', { name: folder.name })}
           className={cn(
-            'flex w-full items-center gap-3 rounded-card bg-card p-3 text-left shadow-rest transition-shadow',
+            'relative flex w-full items-center gap-3 rounded-card bg-card p-3 text-left shadow-rest',
             !selectMode && 'pr-12',
-            ring,
+            selectRing,
           )}
         >
           {selectMode ? <SelectDot selected={selected} /> : null}
-          <FolderGlyph
-            color={folder.color}
-            icon={folder.icon}
-            className="size-14 shrink-0 rounded-card"
-            iconClassName="text-2xl"
-          />
+          <span className="relative shrink-0">
+            {!dragging ? (
+              <span
+                aria-hidden
+                className="pointer-events-none absolute inset-x-1.5 -bottom-1 h-4 rounded-[7px] bg-secondary/60"
+              />
+            ) : null}
+            <FolderGlyph
+              color={folder.color}
+              icon={folder.icon}
+              className="relative size-14 rounded-card"
+              iconClassName="text-2xl"
+            />
+          </span>
           <div className="min-w-0 flex-1">
             <h3 className="truncate text-[length:var(--p-text-sub)] font-bold tracking-tight text-heading">
               {folder.name}
             </h3>
             <p className="mt-0.5 truncate text-[length:var(--p-text-label)] text-muted-foreground">
-              {countLabel}
+              {subtitle}
             </p>
           </div>
         </button>
+        <DropTargetRing ready={dropReady} active={isOver} reduce={reduce} />
         {!selectMode && !dragging ? (
           <CardMenu label={t('palaces.folderActions', { name: folder.name })} actions={actions} />
         ) : null}
-      </div>
+      </motion.div>
     )
   }
 
+  const animate = dragging
+    ? undefined
+    : reduce
+      ? undefined
+      : receiving
+        ? { scale: [1, 1.1, 1] }
+        : { scale: isOver ? 1.05 : 1 }
+
   return (
-    <div className={cn('relative', dragging && 'rounded-card shadow-elevated')}>
+    <motion.div
+      className={cn('relative h-full', dragging && 'rounded-card shadow-elevated')}
+      animate={animate}
+      transition={popTransition}
+    >
+      {/* Stacked sheets behind the card read it as a container of palaces — the at-rest cue
+          that tells a folder from a palace at a glance. Hidden on the lifted drag clone. */}
+      {!dragging ? (
+        <>
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-x-3 -bottom-1.5 h-6 rounded-card bg-secondary/45"
+          />
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-x-2 -bottom-0.5 h-6 rounded-card bg-secondary/70"
+          />
+        </>
+      ) : null}
+
       <button
         type="button"
         {...longPress}
         aria-label={t('palaces.openFolderLabel', { name: folder.name })}
         className={cn(
-          'flex h-full w-full flex-col gap-3 rounded-card bg-card p-3.5 text-left shadow-rest transition-shadow',
-          ring,
+          'relative flex h-full w-full flex-col gap-3 rounded-card bg-card p-3.5 text-left shadow-rest',
+          selectRing,
         )}
       >
         <div className="flex items-center justify-between">
@@ -385,14 +481,43 @@ function FolderCard({
             {folder.name}
           </h3>
           <p className="mt-0.5 truncate text-[length:var(--p-text-label)] text-muted-foreground">
-            {countLabel}
+            {subtitle}
           </p>
         </div>
       </button>
+      <DropTargetRing ready={dropReady} active={isOver} reduce={reduce} />
       {!selectMode && !dragging ? (
         <CardMenu label={t('palaces.folderActions', { name: folder.name })} actions={actions} />
       ) : null}
-    </div>
+    </motion.div>
+  )
+}
+
+/** The drop-zone affordance laid over a folder while a palace is dragged: a dashed accent
+ * outline marks every droppable folder; the one under the cursor fills to a solid accent
+ * ring with a soft accent glow. Fades with opacity so toggling stays smooth. */
+function DropTargetRing({
+  ready,
+  active,
+  reduce,
+}: {
+  ready: boolean
+  active: boolean
+  reduce: boolean | null
+}) {
+  return (
+    <motion.span
+      aria-hidden
+      initial={false}
+      animate={{ opacity: ready ? 1 : 0 }}
+      transition={{ duration: reduce ? 0 : 0.16, ease: 'easeOut' }}
+      className={cn(
+        'pointer-events-none absolute inset-0 rounded-card',
+        active
+          ? 'shadow-[0_10px_30px_oklch(66%_0.18_261_/_0.40)] ring-2 ring-accent'
+          : 'outline-2 outline-offset-2 outline-dashed outline-accent/50',
+      )}
+    />
   )
 }
 

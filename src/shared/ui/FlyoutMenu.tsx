@@ -1,16 +1,16 @@
-import { type ReactNode } from 'react'
+import { type ReactElement } from 'react'
 import { Menu } from '@base-ui/react/menu'
-import { MoreVertical } from 'lucide-react'
+import { Check, MoreVertical } from 'lucide-react'
 import { cn } from '@/shared/lib'
 import { IconButton, type IconButtonSize, type IconButtonVariant } from './IconButton'
 import type { SheetAction } from './ActionSheet'
 
 export interface FlyoutMenuProps {
-  /** Accessible name for the ⋮ trigger (e.g. "More options"). */
+  /** Accessible name for the default ⋮ trigger (ignored when a custom `trigger` is given). */
   label: string
   actions: SheetAction[]
-  /** Custom trigger glyph; defaults to the kebab (⋮). */
-  trigger?: ReactNode
+  /** A fully custom trigger element (must accept a ref). Defaults to a kebab IconButton. */
+  trigger?: ReactElement
   variant?: IconButtonVariant
   size?: IconButtonSize
   /** Which side of the trigger the panel opens on. */
@@ -21,14 +21,14 @@ export interface FlyoutMenuProps {
 }
 
 /**
- * A kebab (⋮) button that opens an anchored flyout of overflow actions — the in-place,
- * popover-style alternative to a bottom {@link ActionSheet} drawer. Built on Base UI's
- * Menu (floating-anchored, focus-managed, dismiss on outside press / Escape) so the panel
- * springs from the control under the thumb instead of sliding the whole sheet up. Same
- * {@link SheetAction} shape as the action sheet, so call sites can swap between them.
+ * An anchored flyout of actions — the in-place, popover-style alternative to a bottom
+ * {@link ActionSheet} drawer. Built on Base UI's Menu (floating-anchored, focus-managed,
+ * dismiss on outside press / Escape) so the panel springs from the control under the thumb
+ * instead of sliding the whole sheet up. Same {@link SheetAction} shape as the action sheet.
  *
- * Non-modal: it never locks body scroll (the shell owns scrolling), and the menu repositions
- * itself as the page scrolls beneath it.
+ * Defaults to a kebab (⋮) trigger; pass `trigger` for a custom control (e.g. a labelled
+ * sort pill). Non-modal: it never locks body scroll, and repositions as the page scrolls.
+ * A `selected` action renders a trailing check + accent, for single-select menus like sort.
  */
 export function FlyoutMenu({
   label,
@@ -40,23 +40,22 @@ export function FlyoutMenu({
   align = 'end',
   className,
 }: FlyoutMenuProps) {
+  const triggerElement = trigger ?? (
+    <IconButton
+      variant={variant}
+      size={size}
+      aria-label={label}
+      className={className}
+      // Shield the trigger from any drag/long-press ancestor so opening never starts a drag.
+      onPointerDown={(event) => event.stopPropagation()}
+    >
+      <MoreVertical className={size === 'md' ? 'size-5' : 'size-4'} aria-hidden />
+    </IconButton>
+  )
+
   return (
     <Menu.Root modal={false}>
-      <Menu.Trigger
-        render={
-          <IconButton
-            variant={variant}
-            size={size}
-            aria-label={label}
-            className={className}
-            // Shield the trigger from any drag/long-press ancestor so opening the menu
-            // never starts a card drag.
-            onPointerDown={(event) => event.stopPropagation()}
-          >
-            {trigger ?? <MoreVertical className="size-4" aria-hidden />}
-          </IconButton>
-        }
-      />
+      <Menu.Trigger render={triggerElement} />
       <Menu.Portal>
         <Menu.Positioner
           side={side}
@@ -86,7 +85,9 @@ export function FlyoutMenu({
                   'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
                   action.destructive
                     ? 'text-[var(--danger-on-surface)] data-[highlighted]:bg-[var(--danger-surface)]'
-                    : 'text-heading data-[highlighted]:bg-info-surface',
+                    : action.selected
+                      ? 'text-accent data-[highlighted]:bg-info-surface'
+                      : 'text-heading data-[highlighted]:bg-info-surface',
                 )}
               >
                 {action.icon ? (
@@ -94,7 +95,10 @@ export function FlyoutMenu({
                     {action.icon}
                   </span>
                 ) : null}
-                {action.label}
+                <span className="min-w-0 flex-1 truncate">{action.label}</span>
+                {action.selected ? (
+                  <Check className="size-[18px] shrink-0 text-accent" aria-hidden />
+                ) : null}
               </Menu.Item>
             ))}
           </Menu.Popup>

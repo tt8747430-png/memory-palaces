@@ -228,10 +228,9 @@ function RoomCard({
         <div className="absolute right-2 top-2.5">
           <OverflowMenuButton
             variant="glass"
+            size="sm"
             label={t('rooms.menu.label', { title: room.title })}
-            title={room.title}
             actions={actions}
-            cancelLabel={t('common.cancel')}
           />
         </div>
       </div>

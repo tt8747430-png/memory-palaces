@@ -74,9 +74,7 @@ export function NotificationsPage({ onBack }: NotificationsPageProps = {}) {
               <OverflowMenuButton
                 variant="glass"
                 label={t('common.moreOptions')}
-                title={t('common.options')}
                 actions={overflowActions}
-                cancelLabel={t('common.cancel')}
               />
             ) : null
           }

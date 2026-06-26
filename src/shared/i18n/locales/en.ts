@@ -382,6 +382,7 @@ export const en = {
     viewArchived: 'Archived',
     openFolderLabel: 'Open folder {{name}}',
     folderActions: 'Folder actions for {{name}}',
+    dropToFile: 'Drop to file',
     editFolder: 'Rename & recolour',
     deleteFolderAction: 'Delete folder',
 

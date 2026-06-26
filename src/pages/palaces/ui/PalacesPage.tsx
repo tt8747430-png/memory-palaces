@@ -5,7 +5,6 @@ import {
   ArrowDownAZ,
   Archive,
   Building2,
-  Check,
   ChevronDown,
   ChevronLeft,
   Clock,
@@ -74,14 +73,15 @@ import {
 } from '@/widgets/library'
 import { HomeHeader } from '@/widgets/home-header'
 import {
-  ActionSheet,
   AppScreen,
   Button,
   ConfirmDialog,
   EmptyState,
+  FlyoutMenu,
   FolderGlyph,
   IconButton,
   SegmentedControl,
+  type SheetAction,
   SpeedDial,
   StickyBar,
 } from '@/shared/ui'
@@ -196,7 +196,6 @@ export function PalacesPage({
 
   const [searchOpen, setSearchOpen] = useState(false)
   const [query, setQuery] = useState('')
-  const [sortOpen, setSortOpen] = useState(false)
   const [createOpen, setCreateOpen] = useState(openCreate)
   const [moveTarget, setMoveTarget] = useState<string | null>(null)
   const [bulkMoveOpen, setBulkMoveOpen] = useState(false)
@@ -486,37 +485,43 @@ export function PalacesPage({
     exitSelect()
   }
 
-  const sortActions = (['manual', 'recent', 'progress', 'name', 'category'] as const).map(
-    (option) => ({
-      id: option,
-      label: t(SORT_LABEL_KEY[option]),
-      icon:
-        sort === option ? (
-          <Check className="size-5 text-primary" aria-hidden />
-        ) : (
-          <SortGlyph option={option} />
-        ),
-      onSelect: () => setSort(option),
-    }),
-  )
+  const sortActions: SheetAction[] = (
+    ['manual', 'recent', 'progress', 'name', 'category'] as const
+  ).map((option) => ({
+    id: option,
+    label: t(SORT_LABEL_KEY[option]),
+    icon: <SortGlyph option={option} />,
+    selected: sort === option,
+    onSelect: () => setSort(option),
+  }))
 
   // Sort / select / view, shown in one toolbar row under the header at every level (root,
-  // folder, archived) so the library reads the same everywhere. Sorting leads on the left;
-  // selection + layout group on the right.
+  // folder, archived) so the library reads the same everywhere. Sorting leads on the left
+  // as an anchored menu (the active option carries a check); selection + layout group on
+  // the right.
   const sortControl = (
-    <button
-      type="button"
-      aria-haspopup="dialog"
-      aria-label={t('palaces.sortLabel')}
-      onClick={() => setSortOpen(true)}
-      className="flex h-9 min-w-0 items-center gap-1.5 rounded-control border border-border bg-card pl-2.5 pr-2 shadow-rest transition-transform active:scale-[0.97]"
-    >
-      <SortGlyph option={sort} className="size-4 text-accent" />
-      <span className="truncate text-[length:var(--p-text-label)] font-semibold text-heading">
-        {t(SORT_LABEL_KEY[sort])}
-      </span>
-      <ChevronDown className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-    </button>
+    <FlyoutMenu
+      label={t('palaces.sortLabel')}
+      actions={sortActions}
+      side="bottom"
+      align="start"
+      trigger={
+        <button
+          type="button"
+          aria-label={t('palaces.sortLabel')}
+          className="group flex h-9 min-w-0 items-center gap-1.5 rounded-control bg-card pl-2.5 pr-2 shadow-rest transition-transform active:scale-[0.97]"
+        >
+          <SortGlyph option={sort} className="size-4 text-accent" />
+          <span className="truncate text-[length:var(--p-text-label)] font-semibold text-heading">
+            {t(SORT_LABEL_KEY[sort])}
+          </span>
+          <ChevronDown
+            className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[popup-open]:rotate-180"
+            aria-hidden
+          />
+        </button>
+      }
+    />
   )
 
   const selectControl = (
@@ -797,14 +802,6 @@ export function PalacesPage({
           ]}
         />
       ) : null}
-
-      <ActionSheet
-        open={sortOpen}
-        onOpenChange={setSortOpen}
-        title={t('palaces.sortBy')}
-        actions={sortActions}
-        cancelLabel={t('common.cancel')}
-      />
 
       <input
         ref={importRef}

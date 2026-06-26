@@ -75,8 +75,7 @@ describe('PalaceDetailPage', () => {
     expect(roomTitles()).toEqual(['Kitchen', 'Hallway'])
 
     await user.click(screen.getByRole('button', { name: /hallway actions/i }))
-    const menu = await screen.findByRole('dialog')
-    await user.click(within(menu).getByRole('button', { name: /move up/i }))
+    await user.click(await screen.findByRole('menuitem', { name: /move up/i }))
 
     await waitFor(() => expect(roomTitles()).toEqual(['Hallway', 'Kitchen']))
   })
@@ -87,8 +86,7 @@ describe('PalaceDetailPage', () => {
     await screen.findByRole('heading', { name: 'Kitchen' })
 
     await user.click(screen.getByRole('button', { name: /kitchen actions/i }))
-    const menu = await screen.findByRole('dialog')
-    await user.click(within(menu).getByRole('button', { name: /delete room/i }))
+    await user.click(await screen.findByRole('menuitem', { name: /delete room/i }))
 
     // The confirm dialog carries the room name in its title; click its confirm button.
     const confirmTitle = await screen.findByText(/delete .kitchen.\?/i)

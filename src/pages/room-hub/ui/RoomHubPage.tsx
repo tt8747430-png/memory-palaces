@@ -159,12 +159,7 @@ export function RoomHubPage({
           onBack={onBack}
           backLabel={t('roomHub.back')}
           action={
-            <OverflowMenuButton
-              label={t('roomHub.menu.label')}
-              title={room.title}
-              actions={menuActions}
-              cancelLabel={t('common.cancel')}
-            />
+            <OverflowMenuButton label={t('roomHub.menu.label')} actions={menuActions} />
           }
         />
       }

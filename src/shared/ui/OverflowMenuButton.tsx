@@ -1,53 +1,41 @@
-import { type ReactNode, useState } from 'react'
-import { MoreVertical } from 'lucide-react'
-import { IconButton, type IconButtonVariant } from './IconButton'
-import { ActionSheet, type SheetAction } from './ActionSheet'
+import { FlyoutMenu } from './FlyoutMenu'
+import type { IconButtonSize, IconButtonVariant } from './IconButton'
+import type { SheetAction } from './ActionSheet'
 
 export interface OverflowMenuButtonProps {
   /** Accessible name for the ⋮ trigger (e.g. "More options"). */
   label: string
-  /** Title shown at the top of the action sheet. */
-  title: ReactNode
-  description?: ReactNode
   actions: SheetAction[]
-  cancelLabel: string
   variant?: IconButtonVariant
+  size?: IconButtonSize
+  /** Which side of the trigger the panel opens on. */
+  side?: 'top' | 'bottom' | 'left' | 'right'
+  /** How the panel aligns to the trigger along that side. */
+  align?: 'start' | 'center' | 'end'
   className?: string
 }
 
-/** A kebab (⋮) button that opens an {@link ActionSheet} of overflow actions — the
- * top-right "more" affordance on screen headers and cards. Keeps the chrome to one
- * primary control and tucks the rest into a thumb-reachable sheet. */
+/** A kebab (⋮) button that opens an anchored {@link FlyoutMenu} of overflow actions — the
+ * top-right "more" affordance on screen headers and list rows. The menu springs from the
+ * control under the thumb rather than sliding a bottom sheet up, so it stays in context. */
 export function OverflowMenuButton({
   label,
-  title,
-  description,
   actions,
-  cancelLabel,
   variant = 'ghost',
+  size = 'md',
+  side = 'bottom',
+  align = 'end',
   className,
 }: OverflowMenuButtonProps) {
-  const [open, setOpen] = useState(false)
   return (
-    <>
-      <IconButton
-        variant={variant}
-        aria-label={label}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        onClick={() => setOpen(true)}
-        className={className}
-      >
-        <MoreVertical className="size-5" aria-hidden />
-      </IconButton>
-      <ActionSheet
-        open={open}
-        onOpenChange={setOpen}
-        title={title}
-        description={description}
-        actions={actions}
-        cancelLabel={cancelLabel}
-      />
-    </>
+    <FlyoutMenu
+      label={label}
+      actions={actions}
+      variant={variant}
+      size={size}
+      side={side}
+      align={align}
+      className={className}
+    />
   )
 }

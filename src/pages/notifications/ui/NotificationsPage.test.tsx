@@ -54,7 +54,7 @@ describe('NotificationsPage', () => {
     renderPage(store)
 
     await user.click(screen.getByRole('button', { name: /more options/i }))
-    await user.click(screen.getByRole('button', { name: /clear all/i }))
+    await user.click(await screen.findByRole('menuitem', { name: /clear all/i }))
     await flush()
 
     expect(store.getState().notifications).toHaveLength(0)
