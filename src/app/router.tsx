@@ -12,10 +12,8 @@ import { SignupPage } from '@/pages/signup'
 import { ForgotPasswordPage } from '@/pages/forgot-password'
 import { WelcomePage } from '@/pages/welcome'
 import { PalacesPage } from '@/pages/palaces'
-import { FolderEditPage } from '@/pages/folder-edit'
 import { PalaceDetailPage } from '@/pages/palace-detail'
 import { PalaceSettingsPage } from '@/pages/palace-settings'
-import { PalaceAppearancePage } from '@/pages/palace-appearance'
 import { RoomHubPage } from '@/pages/room-hub'
 import { StudyCardsPage } from '@/pages/study'
 import { MatchPage } from '@/pages/match'
@@ -141,7 +139,6 @@ function HomeRoute() {
       folderId={folder ?? null}
       onOpenFolder={(id) => navigate({ to: ROUTES.home, search: { folder: id } })}
       onCloseFolder={() => navigate({ to: ROUTES.home, search: {} })}
-      onEditFolder={(folderId) => navigate({ to: ROUTES.folderEdit, params: { folderId } })}
       onOpenPalace={(palaceId) => navigate({ to: ROUTES.palaceDetail, params: { palaceId } })}
       onOpenPalaceSettings={(palaceId) =>
         navigate({ to: ROUTES.palaceSettings, params: { palaceId } })
@@ -172,25 +169,6 @@ const palacesRoute = createRoute({
   beforeLoad: () => {
     throw redirect({ to: ROUTES.home })
   },
-})
-
-function FolderEditRoute() {
-  const { folderId } = folderEditRoute.useParams()
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.home, search: {} }))
-  return (
-    <FolderEditPage
-      folderId={folderId}
-      onBack={back}
-      onDeleted={() => navigate({ to: ROUTES.home, search: {} })}
-    />
-  )
-}
-
-const folderEditRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: ROUTES.folderEdit,
-  component: FolderEditRoute,
 })
 
 function PalaceDetailRoute() {
@@ -225,7 +203,6 @@ function PalaceSettingsRoute() {
     <PalaceSettingsPage
       palaceId={palaceId}
       onBack={back}
-      onOpenAppearance={() => navigate({ to: ROUTES.palaceAppearance, params: { palaceId } })}
       onExit={() => navigate({ to: ROUTES.home })}
     />
   )
@@ -235,19 +212,6 @@ const palaceSettingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.palaceSettings,
   component: PalaceSettingsRoute,
-})
-
-function PalaceAppearanceRoute() {
-  const { palaceId } = palaceAppearanceRoute.useParams()
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.palaceSettings, params: { palaceId } }))
-  return <PalaceAppearancePage palaceId={palaceId} onBack={back} />
-}
-
-const palaceAppearanceRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: ROUTES.palaceAppearance,
-  component: PalaceAppearanceRoute,
 })
 
 function RoomHubRoute() {
@@ -610,10 +574,8 @@ const routeTree = rootRoute.addChildren([
   welcomeRoute,
   homeRoute,
   palacesRoute,
-  folderEditRoute,
   palaceDetailRoute,
   palaceSettingsRoute,
-  palaceAppearanceRoute,
   roomHubRoute,
   roomStudyRoute,
   palaceStudyRoute,

@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next'
-import { FOLDER_ICON_OPTIONS } from '@/entities/folder'
-import { ColorPicker, IconPicker } from '@/features/palace'
-import { FolderGlyph, TextField } from '@/shared/ui'
+import { IconColorRow } from '@/features/palace'
+import { TextField } from '@/shared/ui'
 
 export interface FolderFormProps {
   name: string
@@ -14,9 +13,9 @@ export interface FolderFormProps {
   autoFocusName?: boolean
 }
 
-/** The folder identity fields — a live glyph preview over a name field, emoji picker, and
- * the shared colour picker. Stateless: the caller owns the values and persistence, so the
- * quick "create" sheet and the full "edit" page share one form without duplicating it. */
+/** A folder's identity fields — name plus the shared icon-and-colour row. Stateless: the
+ * caller owns the values and persistence, so the create sheet and the edit drawer share one
+ * form. The icon comes from the device keyboard, the colour from a small brand palette. */
 export function FolderForm({
   name,
   color,
@@ -29,18 +28,6 @@ export function FolderForm({
   const { t } = useTranslation()
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-center gap-3 rounded-card bg-info-surface p-3">
-        <FolderGlyph color={color} icon={icon} className="size-12 shrink-0" iconClassName="text-2xl leading-none" />
-        <div className="min-w-0">
-          <p className="truncate text-[length:var(--p-text-sub)] font-semibold text-heading">
-            {name.trim() || t('palaces.folderNamePlaceholder')}
-          </p>
-          <p className="text-[length:var(--p-text-label)] text-muted-foreground">
-            {t('palaces.folderNameHint')}
-          </p>
-        </div>
-      </div>
-
       <TextField
         aria-label={t('palaces.folderNameLabel')}
         value={name}
@@ -50,19 +37,13 @@ export function FolderForm({
         enterKeyHint="done"
         maxLength={40}
       />
-
-      <IconPicker
-        value={icon}
-        onChange={onIconChange}
-        label={t('palaces.folderIconLabel')}
-        options={FOLDER_ICON_OPTIONS}
-      />
-
-      <ColorPicker
-        value={color}
-        onChange={onColorChange}
-        label={t('palaces.folderColorLabel')}
-        customLabel={t('palaces.customColor')}
+      <IconColorRow
+        icon={icon}
+        color={color}
+        onIconChange={onIconChange}
+        onColorChange={onColorChange}
+        label={t('palaces.iconColorLabel')}
+        iconLabel={t('palaces.folderIconLabel')}
       />
     </div>
   )

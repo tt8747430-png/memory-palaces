@@ -60,7 +60,6 @@ import {
 } from '@/features/content'
 import { ContentImportError, cn, parsePastedLoci, parseVerses } from '@/shared/lib'
 import {
-  Button,
   ConfirmDialog,
   ImportRow,
   SegmentedControl,
@@ -284,66 +283,66 @@ export function RoomContentEditor({ roomId, roomName }: RoomContentEditorProps) 
         />
       </div>
 
-      {/* Search + selection controls */}
-      {hasItems ? (
-        <div className="pb-2">
-          {selectMode ? (
-            <div className="flex items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={toggleSelectAll}
-                className="text-[length:var(--p-text-label)] font-semibold text-heading"
-              >
-                {allVisibleSelected ? t('loci.select.clearAll') : t('loci.select.selectAll')}
-              </button>
-              <span className="text-[length:var(--p-text-label)] font-semibold text-muted-foreground">
-                {t('loci.select.count', { count: selectedCount })}
-              </span>
-              <button
-                type="button"
-                onClick={exitSelect}
-                className="text-[length:var(--p-text-label)] font-semibold text-accent"
-              >
-                {t('loci.select.done')}
-              </button>
+      {/* Search + selection controls — always present so the chrome never jumps; Select is
+          disabled until the tab has something to select. */}
+      <div className="pb-2">
+        {selectMode ? (
+          <div className="flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={toggleSelectAll}
+              className="text-[length:var(--p-text-label)] font-semibold text-heading"
+            >
+              {allVisibleSelected ? t('loci.select.clearAll') : t('loci.select.selectAll')}
+            </button>
+            <span className="text-[length:var(--p-text-label)] font-semibold text-muted-foreground">
+              {t('loci.select.count', { count: selectedCount })}
+            </span>
+            <button
+              type="button"
+              onClick={exitSelect}
+              className="text-[length:var(--p-text-label)] font-semibold text-accent"
+            >
+              {t('loci.select.done')}
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search
+                className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                aria-hidden
+              />
+              <TextField
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={isLoci ? t('loci.searchCards') : t('loci.searchQuestions')}
+                aria-label={isLoci ? t('loci.searchCards') : t('loci.searchQuestions')}
+                className="pl-9 pr-9"
+              />
+              {query ? (
+                <button
+                  type="button"
+                  onClick={() => setQuery('')}
+                  aria-label={t('loci.clearSearch')}
+                  className="absolute right-2 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-full text-muted-foreground hover:text-heading"
+                >
+                  <X className="size-4" aria-hidden />
+                </button>
+              ) : null}
             </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1">
-                <Search
-                  className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-                  aria-hidden
-                />
-                <TextField
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder={isLoci ? t('loci.searchCards') : t('loci.searchQuestions')}
-                  aria-label={isLoci ? t('loci.searchCards') : t('loci.searchQuestions')}
-                  className="pl-9 pr-9"
-                />
-                {query ? (
-                  <button
-                    type="button"
-                    onClick={() => setQuery('')}
-                    aria-label={t('loci.clearSearch')}
-                    className="absolute right-2 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-full text-muted-foreground hover:text-heading"
-                  >
-                    <X className="size-4" aria-hidden />
-                  </button>
-                ) : null}
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectMode(true)}
-                className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-control bg-card px-3 text-[length:var(--p-text-label)] font-semibold text-heading shadow-rest active:scale-[0.97]"
-              >
-                <ListChecks className="size-[17px]" aria-hidden />
-                {t('loci.select.select')}
-              </button>
-            </div>
-          )}
-        </div>
-      ) : null}
+            <button
+              type="button"
+              onClick={() => setSelectMode(true)}
+              disabled={!hasItems}
+              className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-control bg-card px-3 text-[length:var(--p-text-label)] font-semibold text-heading shadow-rest transition-transform active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40"
+            >
+              <ListChecks className="size-[17px]" aria-hidden />
+              {t('loci.select.select')}
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* List */}
       <AnimatePresence mode="wait" initial={false}>
@@ -357,11 +356,7 @@ export function RoomContentEditor({ roomId, roomName }: RoomContentEditorProps) 
         >
           {isLoci ? (
             total === 0 ? (
-              <EmptyContent
-                kind="loci"
-                onAdd={() => setEditor({ kind: 'locus', locus: null })}
-                onImport={() => setTransferOpen(true)}
-              />
+              <EmptyContent kind="loci" />
             ) : visible.length === 0 ? (
               <NoResults onClear={() => setQuery('')} />
             ) : (
@@ -396,11 +391,7 @@ export function RoomContentEditor({ roomId, roomName }: RoomContentEditorProps) 
               ))
             )
           ) : total === 0 ? (
-            <EmptyContent
-              kind="questions"
-              onAdd={() => setEditor({ kind: 'question', question: null })}
-              onImport={() => setTransferOpen(true)}
-            />
+            <EmptyContent kind="questions" />
           ) : visible.length === 0 ? (
             <NoResults onClear={() => setQuery('')} />
           ) : (
@@ -644,15 +635,7 @@ export function RoomContentEditor({ roomId, roomName }: RoomContentEditorProps) 
   )
 }
 
-function EmptyContent({
-  kind,
-  onAdd,
-  onImport,
-}: {
-  kind: Tab
-  onAdd: () => void
-  onImport: () => void
-}) {
+function EmptyContent({ kind }: { kind: Tab }) {
   const { t } = useTranslation()
   const isLoci = kind === 'loci'
   return (
@@ -667,19 +650,9 @@ function EmptyContent({
       <h3 className="mb-1.5 text-balance text-[length:var(--p-text-sub)] font-semibold text-heading">
         {isLoci ? t('loci.emptyTitle') : t('questions.emptyTitle')}
       </h3>
-      <p className="mb-5 max-w-[34ch] text-pretty text-[length:var(--p-text-body)] text-muted-foreground">
-        {isLoci ? t('loci.emptyBody') : t('questions.emptyBody')}
+      <p className="max-w-[34ch] text-pretty text-[length:var(--p-text-body)] text-muted-foreground">
+        {isLoci ? t('loci.emptyHint') : t('questions.emptyHint')}
       </p>
-      <div className="flex items-center gap-2">
-        <Button onClick={onAdd}>
-          <Plus className="size-[18px]" aria-hidden />
-          {isLoci ? t('loci.addCard') : t('questions.addQuestion')}
-        </Button>
-        <Button variant="ghost" onClick={onImport}>
-          <Upload className="size-[18px]" aria-hidden />
-          {t('loci.transfer.importShort')}
-        </Button>
-      </div>
     </div>
   )
 }

@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Sparkles } from 'lucide-react'
 import { DEFAULT_PALACE_COLOR, DEFAULT_PALACE_ICON, usePalaceStoreApi } from '@/entities/palace'
-import { Button, PalaceCover, Sheet, TextField } from '@/shared/ui'
+import { Button, Sheet, TextField } from '@/shared/ui'
 import { createPalace } from '../create-palace'
-import { ColorPicker, IconPicker } from './appearance-pickers'
+import { IconColorRow } from './appearance-pickers'
 
 export interface CreatePalaceSheetProps {
   open: boolean
@@ -54,7 +54,6 @@ export function CreatePalaceSheet({
         name: name.trim(),
         icon,
         color,
-        category: 'General',
         folderId: folderId ?? null,
       })
       onOpenChange(false)
@@ -82,38 +81,26 @@ export function CreatePalaceSheet({
       }
     >
       <div className="flex flex-col gap-5 pb-2">
-        {/* Live preview + name */}
-        <div className="flex items-center gap-3.5">
-          <PalaceCover
-            icon={icon}
-            color={color}
-            className="size-16 shrink-0 rounded-card shadow-rest"
-            iconClassName="text-3xl"
-          />
-          <label className="min-w-0 flex-1">
-            <span className="mb-1.5 block text-[length:var(--p-text-label)] font-semibold text-heading">
-              {t('palaces.createName')}
-            </span>
-            <TextField
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') void handleCreate()
-              }}
-              placeholder={t('palaces.createNamePlaceholder')}
-              autoFocus
-              enterKeyHint="done"
-              maxLength={60}
-            />
-          </label>
-        </div>
+        <TextField
+          aria-label={t('palaces.createName')}
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') void handleCreate()
+          }}
+          placeholder={t('palaces.createNamePlaceholder')}
+          autoFocus
+          enterKeyHint="done"
+          maxLength={60}
+        />
 
-        <IconPicker value={icon} onChange={setIcon} label={t('palaces.iconLabel')} />
-        <ColorPicker
-          value={color}
-          onChange={setColor}
-          label={t('palaces.colorLabel')}
-          customLabel={t('palaces.customColor')}
+        <IconColorRow
+          icon={icon}
+          color={color}
+          onIconChange={setIcon}
+          onColorChange={setColor}
+          label={t('palaces.iconColorLabel')}
+          iconLabel={t('palaces.iconLabel')}
         />
 
         <p className="text-center text-[length:var(--p-text-label)]">{t('palaces.createHint')}</p>

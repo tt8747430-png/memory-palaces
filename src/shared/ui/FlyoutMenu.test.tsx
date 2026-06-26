@@ -28,6 +28,29 @@ describe('FlyoutMenu', () => {
     expect(screen.queryByRole('menuitem', { name: 'Edit' })).toBeNull()
   })
 
+  it('opens from a custom trigger and marks the selected action', async () => {
+    const user = userEvent.setup()
+    render(
+      <FlyoutMenu
+        label="Sort"
+        trigger={
+          <button type="button" aria-label="Sort">
+            Recent
+          </button>
+        }
+        actions={[
+          { id: 'recent', label: 'Recent', selected: true, onSelect: () => {} },
+          { id: 'name', label: 'Name', onSelect: () => {} },
+        ]}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Sort' }))
+    // The selected option carries a trailing check; the other does not.
+    expect((await screen.findByRole('menuitem', { name: /recent/i })).querySelector('svg')).not.toBeNull()
+    expect(screen.getByRole('menuitem', { name: /name/i }).querySelector('svg')).toBeNull()
+  })
+
   it('skips a disabled action', async () => {
     const user = userEvent.setup()
     const onSelect = vi.fn()

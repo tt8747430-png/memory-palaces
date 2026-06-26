@@ -20,17 +20,15 @@ export interface PalaceColorOption {
   value: string
 }
 
+// A short, deliberate set — one identity per hue family, cool-leaning per the brand. A handful
+// of clear choices reads calmer than a full grid; the cover renders any legacy value too.
 export const PALACE_COLOR_OPTIONS: readonly PalaceColorOption[] = [
   { id: 'skyBlue', value: 'from-sky-500 to-blue-600' },
   { id: 'ocean', value: 'from-blue-600 to-indigo-700' },
   { id: 'teal', value: 'from-teal-500 to-emerald-600' },
   { id: 'emerald', value: 'from-emerald-500 to-green-600' },
-  { id: 'lime', value: 'from-lime-500 to-emerald-600' },
   { id: 'gold', value: 'from-yellow-500 to-amber-600' },
-  { id: 'amber', value: 'from-amber-500 to-orange-600' },
-  { id: 'coral', value: 'from-orange-500 to-rose-600' },
   { id: 'rose', value: 'from-rose-500 to-pink-600' },
-  { id: 'graphite', value: 'from-slate-500 to-slate-700' },
 ]
 
 export const DEFAULT_PALACE_ICON = '🏛️'

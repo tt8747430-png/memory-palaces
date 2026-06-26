@@ -34,7 +34,7 @@ import {
   usePalaceStore,
   usePalaceStoreApi,
 } from '@/entities/palace'
-import { selectFolders, useFolderStore, useFolderStoreApi } from '@/entities/folder'
+import { type Folder, selectFolders, useFolderStore, useFolderStoreApi } from '@/entities/folder'
 import { lociForRoom, selectLoci, useLocusStore, useLocusStoreApi } from '@/entities/locus'
 import { roomsForPalace, selectRooms, useRoomStore, useRoomStoreApi } from '@/entities/room'
 import { useQuestionStoreApi } from '@/entities/question'
@@ -63,7 +63,7 @@ import {
   CreatePalaceSheet,
 } from '@/features/palace'
 import { readPalaceFile } from '@/features/content'
-import { createFolder, deleteFolder, reorderFolders } from '@/features/folder'
+import { createFolder, deleteFolder, editFolder, reorderFolders } from '@/features/folder'
 import { setPreferences } from '@/features/preferences'
 import {
   LibraryGrid,
@@ -101,8 +101,6 @@ export interface PalacesPageProps {
   onOpenFolder?: (id: string) => void
   /** Return to the library root (clear `?folder`). */
   onCloseFolder?: () => void
-  /** Open the dedicated edit-folder page for a folder (rename, recolour, re-icon, delete). */
-  onEditFolder?: (id: string) => void
   /** Open the create sheet on mount (a `?create` deep link still opens it). */
   openCreate?: boolean
   onOpenProfile?: () => void
@@ -129,7 +127,6 @@ export function PalacesPage({
   folderId = null,
   onOpenFolder,
   onCloseFolder,
-  onEditFolder,
   openCreate = false,
   onOpenProfile,
   onOpenNotifications,
@@ -200,13 +197,21 @@ export function PalacesPage({
   const [moveTarget, setMoveTarget] = useState<string | null>(null)
   const [bulkMoveOpen, setBulkMoveOpen] = useState(false)
   const [folderSheetOpen, setFolderSheetOpen] = useState(false)
+  const [folderSheetTarget, setFolderSheetTarget] = useState<Folder | null>(null)
   const [deletePalaceTarget, setDeletePalaceTarget] = useState<string | null>(null)
   const [deleteFolderTarget, setDeleteFolderTarget] = useState<string | null>(null)
   const [selectMode, setSelectMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
 
-  const openCreateFolder = () => setFolderSheetOpen(true)
+  const openCreateFolder = () => {
+    setFolderSheetTarget(null)
+    setFolderSheetOpen(true)
+  }
+  const openEditFolder = (folder: Folder) => {
+    setFolderSheetTarget(folder)
+    setFolderSheetOpen(true)
+  }
 
   const exitSelect = () => {
     setSelectMode(false)
@@ -370,11 +375,15 @@ export function PalacesPage({
 
   const nextFolderColor = PALACE_COLOR_OPTIONS[folders.length % PALACE_COLOR_OPTIONS.length]!.value
 
-  const handleCreateFolder = (changes: { name: string; color: string; icon: string }) => {
-    void createFolder(folderStore, changes)
-    // Folders live at the library root (they don't nest), so a folder created while inside
-    // another folder/archived view would be invisible — return to the root to reveal it.
-    if (!atRoot) onCloseFolder?.()
+  const handleSubmitFolder = (changes: { name: string; color: string; icon: string }) => {
+    if (folderSheetTarget) {
+      void editFolder(folderStore, folderSheetTarget, changes)
+    } else {
+      void createFolder(folderStore, changes)
+      // Folders live at the library root (they don't nest), so a folder created while inside
+      // another folder/archived view would be invisible — return to the root to reveal it.
+      if (!atRoot) onCloseFolder?.()
+    }
     setFolderSheetOpen(false)
   }
 
@@ -435,7 +444,10 @@ export function PalacesPage({
     onArchivePalace: handleArchive,
     onDeletePalace: (id) => setDeletePalaceTarget(id),
     onOpenFolder: (id) => onOpenFolder?.(id),
-    onEditFolder: (id) => onEditFolder?.(id),
+    onEditFolder: (id) => {
+      const folder = folders.find((f) => f.id === id)
+      if (folder) openEditFolder(folder)
+    },
     onDeleteFolder: (id) => setDeleteFolderTarget(id),
     onReorderFolders: (ids) => {
       void reorderFolders(folderStore, ids)
@@ -596,11 +608,7 @@ export function PalacesPage({
       )
     }
     return (
-      <EmptyState
-        emoji="🏛️"
-        title={t('palaces.emptyTitle')}
-        description={t('palaces.emptyHint')}
-      />
+      <EmptyState emoji="🏛️" title={t('palaces.emptyTitle')} description={t('palaces.emptyHint')} />
     )
   }
 
@@ -680,7 +688,7 @@ export function PalacesPage({
                   size="sm"
                   className="absolute right-0"
                   aria-label={t('palaces.editFolderLabel', { name: currentFolder.name })}
-                  onClick={() => onEditFolder?.(currentFolder.id)}
+                  onClick={() => openEditFolder(currentFolder)}
                 >
                   <Pencil className="size-[18px]" aria-hidden />
                 </IconButton>
@@ -846,13 +854,13 @@ export function PalacesPage({
         }}
       />
 
-      {/* Creating a folder is a quick bottom sheet; editing one is its own page (opened via
-          onEditFolder), so this sheet is always in create mode. */}
+      {/* One bottom sheet for both create and "Folder settings" (edit). */}
       <FolderSheet
         open={folderSheetOpen}
         onOpenChange={setFolderSheetOpen}
+        folder={folderSheetTarget}
         defaultColor={nextFolderColor}
-        onSubmit={handleCreateFolder}
+        onSubmit={handleSubmitFolder}
       />
 
       <ConfirmDialog

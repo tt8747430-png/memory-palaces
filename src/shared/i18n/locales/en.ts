@@ -415,6 +415,7 @@ export const en = {
 
     // New folder sheet
     newFolderTitle: 'New folder',
+    folderSettings: 'Folder settings',
     folderNameLabel: 'Folder name',
     folderNamePlaceholder: 'e.g. Languages',
     folderNameHint: 'Group related palaces, like “Languages” or “Med school”.',
@@ -444,8 +445,9 @@ export const en = {
     createNamePlaceholder: 'e.g. Ancient Rome',
     iconLabel: 'Icon',
     colorLabel: 'Colour',
+    iconColorLabel: 'Icon and colour',
     customColor: 'Custom colour',
-    createHint: 'Add a description, category, and cover later in palace settings.',
+    createHint: 'Tap the icon to pick any emoji. You can add a cover photo later in settings.',
 
     // Empty states
     emptyTitle: 'Build your first palace',
@@ -491,6 +493,8 @@ export const en = {
     emptyTitle: 'No rooms yet',
     emptyBody:
       'Rooms are the stops along your palace’s route. Add one, then fill it with cards to remember.',
+    emptyHint:
+      'Rooms are the stops along your palace’s route. Tap the ＋ to add your first one, then fill it with cards.',
     addFirstRoom: 'Add the first room',
   },
   rooms: {
@@ -554,6 +558,8 @@ export const en = {
     descriptionLabel: 'Description',
     descriptionPlaceholder: 'What does this palace hold?',
     appearance: 'Appearance',
+    editAppearance: 'Edit appearance',
+    editAppearanceHint: 'Name, icon, colour & cover photo',
     appearanceCategory: 'Appearance & category',
     appearanceCategoryHint: 'Cover photo, icon, colour, and category.',
     appearanceBack: 'Back to settings',
@@ -723,6 +729,8 @@ export const en = {
     emptyTitle: 'No cards yet',
     emptyBody:
       'Each card is a spot in this room. Add what to recall, what it means, and a vivid image to picture there.',
+    emptyHint:
+      'Each card is a spot in this room. Tap the ＋ to add what to recall, what it means, and a vivid image.',
     select: {
       select: 'Select',
       selectAll: 'Select all',
@@ -812,6 +820,8 @@ export const en = {
   questions: {
     emptyTitle: 'No questions yet',
     emptyBody: 'Write multiple-choice questions to test recall. These power this room’s Test.',
+    emptyHint:
+      'Multiple-choice questions power this room’s Test. Tap the ＋ to write your first one.',
     addQuestion: 'Add question',
     editor: {
       newTitle: 'New question',

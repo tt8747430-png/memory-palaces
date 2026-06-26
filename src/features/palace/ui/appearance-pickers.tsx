@@ -1,122 +1,66 @@
-import { motion } from 'motion/react'
-import { Check, Plus } from 'lucide-react'
-import { PALACE_COLOR_OPTIONS, PALACE_ICON_OPTIONS } from '@/entities/palace'
+import { motion, useReducedMotion } from 'motion/react'
+import { Check } from 'lucide-react'
+import { PALACE_COLOR_OPTIONS } from '@/entities/palace'
 import { cn } from '@/shared/lib'
+import { EmojiField } from '@/shared/ui'
 
-/** The emoji picker — shared by the palace create sheet, palace settings, and the folder
- * editor so every surface renders identical tiles and never drifts. The option set is
- * injectable (`options`) so palaces and folders can wear different metaphors while sharing
- * one control. */
-export function IconPicker({
-  value,
-  onChange,
-  label,
-  options = PALACE_ICON_OPTIONS,
-}: {
-  value: string
-  onChange: (icon: string) => void
+export interface IconColorRowProps {
+  icon: string
+  color: string
+  onIconChange: (icon: string) => void
+  onColorChange: (color: string) => void
+  /** Section label, e.g. "Icon and colour". */
   label: string
-  options?: readonly string[]
-}) {
-  return (
-    <div>
-      <p className="mb-2 text-[length:var(--p-text-label)] font-semibold text-heading">{label}</p>
-      <div className="grid grid-cols-6 gap-2.5" role="radiogroup" aria-label={label}>
-        {options.map((option) => {
-          const active = value === option
-          return (
-            <motion.button
-              key={option}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              whileTap={{ scale: 0.9 }}
-              onClick={() => onChange(option)}
-              className={cn(
-                'grid aspect-square place-items-center rounded-control text-2xl transition-colors',
-                active
-                  ? 'bg-card shadow-rest ring-2 ring-primary'
-                  : 'bg-info-surface active:bg-secondary/40',
-              )}
-            >
-              {option}
-            </motion.button>
-          )
-        })}
-      </div>
-    </div>
-  )
+  /** Accessible name for the emoji tile, e.g. "Icon". */
+  iconLabel: string
 }
 
-/** The palace colour picker: ten preset gradients plus a free custom hue. Shared by the
- * create sheet and palace settings. */
-export function ColorPicker({
-  value,
-  onChange,
+/** The compact identity control shared by every create/edit surface: a tap-for-any-emoji tile
+ * beside a short row of brand colour swatches. One row, no grids — the emoji comes from the
+ * device keyboard ({@link EmojiField}) and the colour from a deliberately small palette, so
+ * picking an identity is a glance, not a chore. */
+export function IconColorRow({
+  icon,
+  color,
+  onIconChange,
+  onColorChange,
   label,
-  customLabel,
-}: {
-  value: string
-  onChange: (color: string) => void
-  label: string
-  customLabel: string
-}) {
-  const isCustom = !value?.startsWith('from-')
+  iconLabel,
+}: IconColorRowProps) {
+  const reduce = useReducedMotion()
   return (
     <div>
       <p className="mb-2 text-[length:var(--p-text-label)] font-semibold text-heading">{label}</p>
-      <div className="grid grid-cols-5 gap-3" role="radiogroup" aria-label={label}>
-        {PALACE_COLOR_OPTIONS.map((option) => {
-          const active = value === option.value
-          return (
-            <motion.button
-              key={option.id}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              aria-label={option.id}
-              whileTap={{ scale: 0.92 }}
-              onClick={() => onChange(option.value)}
-              className={cn(
-                'grid aspect-square place-items-center rounded-card bg-linear-to-br shadow-rest transition-transform',
-                option.value,
-                active && 'ring-2 ring-primary ring-offset-2 ring-offset-card',
-              )}
-            >
-              {active ? <Check className="size-5 text-white drop-shadow" aria-hidden /> : null}
-            </motion.button>
-          )
-        })}
-
-        {/* Free custom colour — a tinted "+" tile until the user picks a hue, then it
-            fills with their chosen colour (their data, no literal in source). */}
-        <label
-          aria-label={customLabel}
-          className={cn(
-            'relative grid aspect-square cursor-pointer place-items-center rounded-card shadow-rest transition-transform',
-            isCustom ? 'ring-2 ring-primary ring-offset-2 ring-offset-card' : 'bg-info-surface',
-          )}
-          style={
-            isCustom
-              ? {
-                  backgroundImage: `linear-gradient(135deg, ${value}, color-mix(in oklab, ${value}, black 22%))`,
-                }
-              : undefined
-          }
+      <div className="flex items-center gap-3">
+        <EmojiField value={icon} onChange={onIconChange} aria-label={iconLabel} />
+        <span aria-hidden className="h-9 w-px shrink-0 bg-border" />
+        <div
+          role="radiogroup"
+          aria-label={label}
+          className="flex flex-1 items-center gap-2.5 overflow-x-auto scrollbar-hide"
         >
-          <input
-            type="color"
-            aria-label={customLabel}
-            value={isCustom && value.startsWith('#') ? value : '#2563eb'}
-            onChange={(event) => onChange(event.target.value)}
-            className="absolute inset-0 size-full cursor-pointer opacity-0"
-          />
-          {isCustom ? (
-            <Check className="size-5 text-white drop-shadow" aria-hidden />
-          ) : (
-            <Plus className="size-5 text-primary drop-shadow" aria-hidden />
-          )}
-        </label>
+          {PALACE_COLOR_OPTIONS.map((option) => {
+            const active = color === option.value
+            return (
+              <motion.button
+                key={option.id}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                aria-label={option.id}
+                whileTap={reduce ? undefined : { scale: 0.9 }}
+                onClick={() => onColorChange(option.value)}
+                className={cn(
+                  'grid size-10 shrink-0 place-items-center rounded-full bg-linear-to-br shadow-rest',
+                  option.value,
+                  active && 'ring-2 ring-primary ring-offset-2 ring-offset-card',
+                )}
+              >
+                {active ? <Check className="size-4 text-white drop-shadow" aria-hidden /> : null}
+              </motion.button>
+            )
+          })}
+        </div>
       </div>
     </div>
   )

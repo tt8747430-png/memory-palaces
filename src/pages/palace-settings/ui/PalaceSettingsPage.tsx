@@ -7,14 +7,13 @@ import {
   Copy,
   Download,
   FileText,
-  Palette,
+  Pencil,
   RotateCcw,
   Trash2,
 } from 'lucide-react'
 import {
   deletePalace,
   duplicatePalace,
-  editPalace,
   exportPalaceAnki,
   exportPalaceJson,
   setPalaceArchived,
@@ -45,42 +44,36 @@ import {
   useQuestionStoreApi,
 } from '@/entities/question'
 import { downloadText } from '@/shared/lib'
+import { PalaceAppearanceSheet } from '@/widgets/appearance-sheet'
 import {
   ActionSheet,
   AppScreen,
   ConfirmDialog,
+  IconButton,
   PalaceCover,
   ScreenHeader,
   SettingsRow,
   SettingsSection,
-  Textarea,
-  TextField,
 } from '@/shared/ui'
 
 export interface PalaceSettingsPageProps {
   palaceId: string
   onBack?: () => void
-  /** Open the appearance & category sub-page. */
-  onOpenAppearance?: () => void
   /** Navigate away once the palace is deleted. */
   onExit?: () => void
 }
 
-/** Per-palace settings — identity, appearance & category (its own sub-page), study
- * behaviour, manage (duplicate / export / reset / archive), and delete. Every change
- * persists through the palace command layer; study toggles read straight off the reactive
- * palace, so they can't drift. */
-export function PalaceSettingsPage({
-  palaceId,
-  onBack,
-  onOpenAppearance,
-  onExit,
-}: PalaceSettingsPageProps) {
+/** Per-palace settings — a tappable identity header (opens the appearance drawer), study
+ * behaviour, manage (duplicate / export / reset / archive), and delete. Every change persists
+ * through the palace command layer; study toggles read straight off the reactive palace, so
+ * they can't drift. */
+export function PalaceSettingsPage({ palaceId, onBack, onExit }: PalaceSettingsPageProps) {
   const { t } = useTranslation()
   const palaceStore = usePalaceStoreApi()
   const roomStore = useRoomStoreApi()
   const locusStore = useLocusStoreApi()
   const questionStore = useQuestionStoreApi()
+  const [appearanceOpen, setAppearanceOpen] = useState(false)
 
   useEffect(() => {
     palaceStore.getState().start()
@@ -129,22 +122,38 @@ export function PalaceSettingsPage({
           subtitle={palace.name}
           onBack={onBack}
           backLabel={t('palaceSettings.back')}
+          action={
+            <IconButton
+              variant="glass"
+              aria-label={t('palaceSettings.editAppearance')}
+              onClick={() => setAppearanceOpen(true)}
+            >
+              <Pencil className="size-5" aria-hidden />
+            </IconButton>
+          }
         />
       }
     >
-      <PalaceSettingsForm palace={palace} onOpenAppearance={onOpenAppearance} onExit={onExit} />
+      <PalaceSettingsForm
+        palace={palace}
+        onExit={onExit}
+        appearanceOpen={appearanceOpen}
+        onAppearanceOpenChange={setAppearanceOpen}
+      />
     </AppScreen>
   )
 }
 
 function PalaceSettingsForm({
   palace,
-  onOpenAppearance,
   onExit,
+  appearanceOpen,
+  onAppearanceOpenChange,
 }: {
   palace: Palace
-  onOpenAppearance?: () => void
   onExit?: () => void
+  appearanceOpen: boolean
+  onAppearanceOpenChange: (open: boolean) => void
 }) {
   const { t } = useTranslation()
   const palaceStore = usePalaceStoreApi()
@@ -154,29 +163,9 @@ function PalaceSettingsForm({
   const loci = useLocusStore(selectLoci)
   const questions = useQuestionStore(selectQuestions)
 
-  const [name, setName] = useState(palace.name)
-  const [description, setDescription] = useState(palace.description)
   const [resetOpen, setResetOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
-
-  // Reseed the local text fields if the underlying palace identity changes.
-  useEffect(() => {
-    setName(palace.name)
-    setDescription(palace.description)
-  }, [palace.id, palace.name, palace.description])
-
-  const patch = (changes: Parameters<typeof editPalace>[2]) =>
-    void editPalace(palaceStore, palace.id, changes)
-
-  const commitName = () => {
-    const trimmed = name.trim()
-    if (!trimmed) {
-      setName(palace.name)
-      return
-    }
-    if (trimmed !== palace.name) patch({ name: trimmed })
-  }
 
   const download = (file: { filename: string; text: string; type: string }, message: string) => {
     downloadText(file.filename, file.text, file.type)
@@ -185,58 +174,30 @@ function PalaceSettingsForm({
 
   return (
     <div className="mt-4 flex flex-col gap-6 pb-28">
-      {/* Identity */}
-      <SettingsSection title={t('palaceSettings.identity')}>
-        <div className="flex items-center gap-3.5 p-4">
-          <PalaceCover
-            icon={palace.icon}
-            color={palace.color}
-            image={palace.image}
-            className="size-16 shrink-0 rounded-card shadow-rest"
-            iconClassName="text-3xl"
-          />
-          <label className="min-w-0 flex-1">
-            <span className="mb-1.5 block text-[length:var(--p-text-label)] font-semibold text-heading">
-              {t('palaceSettings.nameLabel')}
-            </span>
-            <TextField
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              onBlur={commitName}
-              maxLength={60}
-              enterKeyHint="done"
-            />
-          </label>
-        </div>
-        <label className="block p-4">
-          <span className="mb-1.5 block text-[length:var(--p-text-label)] font-semibold text-heading">
-            {t('palaceSettings.descriptionLabel')}
-          </span>
-          <Textarea
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            onBlur={() =>
-              description.trim() !== palace.description &&
-              patch({ description: description.trim() })
-            }
-            placeholder={t('palaceSettings.descriptionPlaceholder')}
-            rows={3}
-            maxLength={200}
-          />
-        </label>
-      </SettingsSection>
-
-      {/* Appearance & category — its own sub-page so the main list stays scannable. */}
-      <SettingsSection>
-        <SettingsRow
-          kind="nav"
-          icon={<Palette />}
-          label={t('palaceSettings.appearanceCategory')}
-          description={t('palaceSettings.appearanceCategoryHint')}
-          value={palace.category || undefined}
-          onClick={() => onOpenAppearance?.()}
+      {/* Identity — tap the cover (or the header pencil) to edit name, icon, colour & photo. */}
+      <button
+        type="button"
+        onClick={() => onAppearanceOpenChange(true)}
+        aria-label={t('palaceSettings.editAppearance')}
+        className="flex items-center gap-3.5 rounded-card bg-card p-4 text-left shadow-rest transition-transform active:scale-[0.99]"
+      >
+        <PalaceCover
+          icon={palace.icon}
+          color={palace.color}
+          image={palace.image}
+          className="size-16 shrink-0 rounded-card shadow-rest"
+          iconClassName="text-3xl"
         />
-      </SettingsSection>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[length:var(--p-text-title)] font-bold tracking-tight text-heading">
+            {palace.name}
+          </p>
+          <p className="mt-0.5 text-[length:var(--p-text-label)] text-muted-foreground">
+            {t('palaceSettings.editAppearanceHint')}
+          </p>
+        </div>
+        <Pencil className="size-5 shrink-0 text-muted-foreground" aria-hidden />
+      </button>
 
       {/* Manage */}
       <SettingsSection title={t('palaceSettings.manage')}>
@@ -347,6 +308,12 @@ function PalaceSettingsForm({
           toast.success(t('palaceSettings.toast.deleted'))
           onExit?.()
         }}
+      />
+
+      <PalaceAppearanceSheet
+        open={appearanceOpen}
+        onOpenChange={onAppearanceOpenChange}
+        palace={palace}
       />
     </div>
   )

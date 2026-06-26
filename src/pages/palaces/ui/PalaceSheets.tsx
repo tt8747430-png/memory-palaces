@@ -109,28 +109,37 @@ function FolderOption({
 export interface FolderSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  /** The folder being edited; `null`/undefined puts the sheet in create mode. */
+  folder?: Folder | null
   /** Seed colour for a brand-new folder (the page cycles the palette so folders differ). */
   defaultColor: string
   onSubmit: (changes: { name: string; color: string; icon: string }) => void
 }
 
-/** The quick "create a folder" bottom sheet: a live glyph preview, name, emoji, and colour,
- * so a folder gets a real identity in one pass. Naming alone is still enough — the emoji and
- * colour come pre-chosen, so the lightweight "just type a name" path survives. Editing an
- * existing folder is a dedicated page, not this sheet. */
-export function FolderSheet({ open, onOpenChange, defaultColor, onSubmit }: FolderSheetProps) {
+/** One bottom sheet for the whole folder lifecycle — create and "Folder settings" (edit).
+ * Name, a tap-for-any-emoji icon, and a brand colour, so a folder gets a real identity in one
+ * pass. Naming alone is enough on create — the emoji and colour come pre-chosen. (Deleting a
+ * folder lives in its card menu, not here.) */
+export function FolderSheet({
+  open,
+  onOpenChange,
+  folder,
+  defaultColor,
+  onSubmit,
+}: FolderSheetProps) {
   const { t } = useTranslation()
+  const isEdit = folder != null
   const [name, setName] = useState('')
   const [color, setColor] = useState(defaultColor)
   const [icon, setIcon] = useState(DEFAULT_FOLDER_ICON)
 
-  // Reset to fresh defaults (with a freshly-cycled colour) each time the create sheet opens.
+  // Seed each time the sheet opens: from the folder when editing, fresh defaults when creating.
   useEffect(() => {
     if (!open) return
-    setName('')
-    setColor(defaultColor)
-    setIcon(DEFAULT_FOLDER_ICON)
-  }, [open, defaultColor])
+    setName(folder?.name ?? '')
+    setColor(folder?.color ?? defaultColor)
+    setIcon(folder?.icon ?? DEFAULT_FOLDER_ICON)
+  }, [open, folder, defaultColor])
 
   const valid = name.trim().length > 0
   const submit = (event?: FormEvent) => {
@@ -143,11 +152,15 @@ export function FolderSheet({ open, onOpenChange, defaultColor, onSubmit }: Fold
     <Sheet
       open={open}
       onOpenChange={onOpenChange}
-      title={t('palaces.newFolderTitle')}
+      title={isEdit ? t('palaces.folderSettings') : t('palaces.newFolderTitle')}
       footer={
         <Button size="lg" className="w-full" disabled={!valid} onClick={() => submit()}>
-          <FolderPlus className="size-[18px]" aria-hidden />
-          {t('palaces.createFolder')}
+          {isEdit ? (
+            <Check className="size-[18px]" aria-hidden />
+          ) : (
+            <FolderPlus className="size-[18px]" aria-hidden />
+          )}
+          {isEdit ? t('palaces.saveFolder') : t('palaces.createFolder')}
         </Button>
       }
     >
@@ -159,7 +172,7 @@ export function FolderSheet({ open, onOpenChange, defaultColor, onSubmit }: Fold
           onNameChange={setName}
           onColorChange={setColor}
           onIconChange={setIcon}
-          autoFocusName
+          autoFocusName={!isEdit}
         />
       </form>
     </Sheet>

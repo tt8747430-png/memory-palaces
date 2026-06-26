@@ -49,7 +49,6 @@ import { RoomList, type RoomListItem } from '@/widgets/room-list'
 import { PracticeModes } from '@/widgets/practice-modes'
 import {
   AppScreen,
-  Button,
   ConfirmDialog,
   EmptyState,
   IconButton,
@@ -259,19 +258,7 @@ export function PalaceDetailPage({
             <EmptyState
               emoji="🚪"
               title={t('palaceDetail.emptyTitle')}
-              description={t('palaceDetail.emptyBody')}
-              action={
-                <div className="flex flex-col items-center gap-2.5">
-                  <Button onClick={() => setEditorTarget({ mode: 'add', palaceId })}>
-                    <Plus className="size-[18px]" aria-hidden />
-                    {t('palaceDetail.addFirstRoom')}
-                  </Button>
-                  <Button variant="ghost" onClick={() => setImportOpen(true)}>
-                    <Upload className="size-[18px]" aria-hidden />
-                    {t('importRooms.open')}
-                  </Button>
-                </div>
-              }
+              description={t('palaceDetail.emptyHint')}
             />
           ) : (
             <RoomList
@@ -352,28 +339,26 @@ export function PalaceDetailPage({
         }}
       />
 
-      {/* The empty state spells out the same Add room / Import actions, so the speed-dial
-          only joins a palace that already has rooms. */}
-      {items.length > 0 ? (
-        <SpeedDial
-          label={t('palaceDetail.quickActions')}
-          className="bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+0.75rem)]"
-          actions={[
-            {
-              id: 'room',
-              label: t('palaceDetail.addRoom'),
-              icon: <Plus className="size-5" aria-hidden />,
-              onSelect: () => setEditorTarget({ mode: 'add', palaceId }),
-            },
-            {
-              id: 'import',
-              label: t('importRooms.open'),
-              icon: <Upload className="size-5" aria-hidden />,
-              onSelect: () => setImportOpen(true),
-            },
-          ]}
-        />
-      ) : null}
+      {/* The persistent add affordance — present at every level (empty or full), so the
+          empty state can stay teaching-only with no inline buttons. */}
+      <SpeedDial
+        label={t('palaceDetail.quickActions')}
+        className="bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+0.75rem)]"
+        actions={[
+          {
+            id: 'room',
+            label: t('palaceDetail.addRoom'),
+            icon: <Plus className="size-5" aria-hidden />,
+            onSelect: () => setEditorTarget({ mode: 'add', palaceId }),
+          },
+          {
+            id: 'import',
+            label: t('importRooms.open'),
+            icon: <Upload className="size-5" aria-hidden />,
+            onSelect: () => setImportOpen(true),
+          },
+        ]}
+      />
     </AppScreen>
   )
 }
