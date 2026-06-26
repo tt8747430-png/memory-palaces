@@ -34,10 +34,12 @@ export function IconColorRow({
       <div className="flex items-center gap-3">
         <EmojiField value={icon} onChange={onIconChange} aria-label={iconLabel} />
         <span aria-hidden className="h-9 w-px shrink-0 bg-border" />
+        {/* `-my-1.5 py-1.5` keeps the active swatch's ring + offset from being clipped by the
+            horizontal scroll container, without adding visible vertical space. */}
         <div
           role="radiogroup"
           aria-label={label}
-          className="flex flex-1 items-center gap-2.5 overflow-x-auto scrollbar-hide"
+          className="-my-1.5 flex flex-1 items-center gap-2.5 overflow-x-auto py-1.5 scrollbar-hide"
         >
           {PALACE_COLOR_OPTIONS.map((option) => {
             const active = color === option.value

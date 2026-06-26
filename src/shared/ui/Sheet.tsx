@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
+import { motion } from 'motion/react'
 import { X } from 'lucide-react'
 import { cn } from '@/shared/lib'
+import { useDragToDismiss } from './use-drag-to-dismiss'
 
 export interface SheetProps {
   open: boolean
@@ -15,10 +17,9 @@ export interface SheetProps {
   className?: string
 }
 
-/** Bottom sheet built on Base UI's Dialog (focus-trapped, scroll-locked, escape /
- * backdrop dismissible). Slides up via Base UI's transition data-attributes — no
- * animation library needed. Reserved for transient study controls; the page chrome
- * stays in `ScreenHeader`. */
+/** Bottom sheet built on Base UI's Dialog (focus-trapped, escape / backdrop dismissible).
+ * Slides up via Base UI's transition data-attributes; the surface is also draggable — pull
+ * the header down to dismiss it, the way a native sheet behaves. */
 export function Sheet({
   open,
   onOpenChange,
@@ -28,6 +29,10 @@ export function Sheet({
   children,
   className,
 }: SheetProps) {
+  const { y, controls, startDrag, onDragEnd } = useDragToDismiss({
+    open,
+    onDismiss: () => onOpenChange(false),
+  })
   return (
     // `trap-focus` (not full modal): the shell never scrolls the body, so Base UI's
     // body scroll lock is unnecessary and, if a sheet unmounts mid-navigation, can
@@ -41,38 +46,59 @@ export function Sheet({
             'data-[starting-style]:opacity-0 data-[ending-style]:opacity-0',
           )}
         />
+        {/* The Popup is the positioning + open/close-slide shell; the inner motion surface owns
+            the drag transform, so the two transforms never fight. */}
         <Dialog.Popup
           className={cn(
-            'fixed inset-x-0 bottom-0 z-[310] mx-auto flex max-h-[88dvh] w-full max-w-[430px] flex-col',
-            'rounded-t-card-featured bg-card pb-safe shadow-elevated outline-none',
+            'fixed inset-x-0 bottom-0 z-[310] mx-auto w-full max-w-[430px] outline-none',
             'transition-transform duration-300 ease-out',
             'data-[starting-style]:translate-y-full data-[ending-style]:translate-y-full',
-            className,
           )}
         >
-          <div aria-hidden className="mx-auto mt-3 h-1.5 w-10 shrink-0 rounded-full bg-border" />
-          <div className="flex items-start justify-between gap-3 px-5 pt-2 pb-3">
-            <div className="min-w-0">
-              <Dialog.Title className="text-[length:var(--p-text-sub)] font-semibold text-heading">
-                {title}
-              </Dialog.Title>
-              {description ? (
-                <Dialog.Description className="mt-0.5 text-[length:var(--p-text-label)]">
-                  {description}
-                </Dialog.Description>
-              ) : null}
-            </div>
-            <Dialog.Close
-              aria-label="Close"
-              className="grid size-9 shrink-0 place-items-center rounded-control text-heading hover:bg-info-surface"
+          <motion.div
+            drag="y"
+            dragControls={controls}
+            dragListener={false}
+            dragConstraints={{ top: 0 }}
+            dragElastic={{ top: 0, bottom: 0.18 }}
+            style={{ y }}
+            onDragEnd={onDragEnd}
+            className={cn(
+              'flex max-h-[88dvh] flex-col rounded-t-card-featured bg-card pb-safe shadow-elevated',
+              className,
+            )}
+          >
+            <div
+              onPointerDown={startDrag}
+              className="shrink-0 cursor-grab touch-none select-none active:cursor-grabbing"
             >
-              <X className="size-5" aria-hidden />
-            </Dialog.Close>
-          </div>
-          <div className="flex-1 overflow-y-auto px-5 pb-3">{children}</div>
-          {footer ? (
-            <div className="shrink-0 border-t border-border px-5 pt-3 pb-2">{footer}</div>
-          ) : null}
+              <div aria-hidden className="mx-auto mt-3 h-1.5 w-10 rounded-full bg-border" />
+              <div className="flex items-start justify-between gap-3 px-5 pt-2 pb-3">
+                <div className="min-w-0">
+                  <Dialog.Title className="text-[length:var(--p-text-sub)] font-semibold text-heading">
+                    {title}
+                  </Dialog.Title>
+                  {description ? (
+                    <Dialog.Description className="mt-0.5 text-[length:var(--p-text-label)]">
+                      {description}
+                    </Dialog.Description>
+                  ) : null}
+                </div>
+                <Dialog.Close
+                  aria-label="Close"
+                  onPointerDown={(event) => event.stopPropagation()}
+                  className="grid size-9 shrink-0 place-items-center rounded-control text-heading hover:bg-info-surface"
+                >
+                  <X className="size-5" aria-hidden />
+                </Dialog.Close>
+              </div>
+            </div>
+            {/* `pt-1.5` keeps a focused field's ring from being clipped by the scroll edge. */}
+            <div className="flex-1 overflow-y-auto px-5 pb-3 pt-1.5">{children}</div>
+            {footer ? (
+              <div className="shrink-0 border-t border-border px-5 pt-3 pb-2">{footer}</div>
+            ) : null}
+          </motion.div>
         </Dialog.Popup>
       </Dialog.Portal>
     </Dialog.Root>

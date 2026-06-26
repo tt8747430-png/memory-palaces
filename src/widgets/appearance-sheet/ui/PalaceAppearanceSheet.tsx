@@ -1,10 +1,9 @@
-import { type FormEvent, useEffect, useRef, useState } from 'react'
+import { type FormEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Check, ImagePlus } from 'lucide-react'
-import { editPalace, IconColorRow } from '@/features/palace'
+import { Check } from 'lucide-react'
+import { editPalace, PalaceIdentityFields } from '@/features/palace'
 import { usePalaceStoreApi, type Palace } from '@/entities/palace'
-import { fileToAvatar } from '@/shared/lib'
-import { Button, PalaceCover, Sheet, TextField } from '@/shared/ui'
+import { Button, Sheet } from '@/shared/ui'
 
 export interface PalaceAppearanceSheetProps {
   open: boolean
@@ -18,7 +17,6 @@ export interface PalaceAppearanceSheetProps {
 export function PalaceAppearanceSheet({ open, onOpenChange, palace }: PalaceAppearanceSheetProps) {
   const { t } = useTranslation()
   const store = usePalaceStoreApi()
-  const fileRef = useRef<HTMLInputElement>(null)
   const [name, setName] = useState(palace.name)
   const [icon, setIcon] = useState(palace.icon)
   const [color, setColor] = useState(palace.color)
@@ -41,12 +39,6 @@ export function PalaceAppearanceSheet({ open, onOpenChange, palace }: PalaceAppe
     onOpenChange(false)
   }
 
-  const handlePhoto = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) setImage(await fileToAvatar(file))
-    event.target.value = ''
-  }
-
   return (
     <Sheet
       open={open}
@@ -59,57 +51,17 @@ export function PalaceAppearanceSheet({ open, onOpenChange, palace }: PalaceAppe
         </Button>
       }
     >
-      <form onSubmit={submit} className="flex flex-col gap-5 pb-2">
-        <TextField
-          aria-label={t('palaceSettings.nameLabel')}
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          placeholder={t('palaces.createNamePlaceholder')}
-          enterKeyHint="done"
-          maxLength={60}
-        />
-
-        <IconColorRow
+      <form onSubmit={submit} className="pb-1">
+        <PalaceIdentityFields
+          name={name}
           icon={icon}
           color={color}
+          image={image}
+          onNameChange={setName}
           onIconChange={setIcon}
           onColorChange={setColor}
-          label={t('palaces.iconColorLabel')}
-          iconLabel={t('palaces.iconLabel')}
+          onImageChange={setImage}
         />
-
-        <div>
-          <p className="mb-2 text-[length:var(--p-text-label)] font-semibold text-heading">
-            {t('palaceSettings.coverPhoto')}
-          </p>
-          <div className="flex items-center gap-3">
-            <PalaceCover
-              icon={icon}
-              color={color}
-              image={image}
-              className="size-16 shrink-0 rounded-card shadow-rest"
-              iconClassName="text-3xl"
-            />
-            <div className="flex flex-wrap gap-2">
-              <Button size="sm" variant="secondary" onClick={() => fileRef.current?.click()}>
-                <ImagePlus className="size-[18px]" aria-hidden />
-                {image ? t('palaceSettings.replacePhoto') : t('palaceSettings.addPhoto')}
-              </Button>
-              {image ? (
-                <Button size="sm" variant="ghost" onClick={() => setImage(undefined)}>
-                  {t('palaceSettings.removePhoto')}
-                </Button>
-              ) : null}
-            </div>
-          </div>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handlePhoto}
-          />
-        </div>
       </form>
     </Sheet>
   )
