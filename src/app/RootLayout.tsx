@@ -1,6 +1,8 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { Outlet } from '@tanstack/react-router'
+import { AnimatePresence } from 'motion/react'
 import { AppNav } from '@/widgets/bottom-nav'
+import { SplashOverlay } from '@/widgets/splash'
 
 // Dev-only router devtools, lazy so they never reach the production bundle.
 const Devtools = import.meta.env.DEV
@@ -11,16 +13,16 @@ const Devtools = import.meta.env.DEV
     )
   : () => null
 
-/** Root route shell: the routed outlet, the bottom nav (self-hiding on non-tab routes), and
- * dev-only devtools. The cold-start brand moment is the OS launch image plus the boot splash
- * in index.html, so there is no in-app splash here. */
+/** Root route shell: a once-per-cold-start splash over the routed outlet, plus the
+ * bottom nav (self-hiding on non-tab routes) and dev-only devtools. */
 export function RootLayout() {
+  const [showSplash, setShowSplash] = useState(true)
   return (
     <>
-      {/* Navy fill behind the top safe-area inset, so the notch/status-bar strip stays
-          on-brand in the browser (where the page runs edge-to-edge under the notch).
-          Collapses to 0 in the standalone app — the `black` status bar reserves that space —
-          and on screens with no top inset. */}
+      {/* Opaque navy fill behind the iOS status bar. With `black-translucent` the web
+          view runs under the status bar, so this keeps that safe-area strip on-brand
+          (readable white system text) on every screen instead of an iOS white repaint.
+          Collapses to 0 height where there's no top inset (no notch / desktop). */}
       <div
         aria-hidden
         className="pointer-events-none fixed inset-x-0 top-0 z-[400] bg-primary"
@@ -28,6 +30,9 @@ export function RootLayout() {
       />
       <Outlet />
       <AppNav />
+      <AnimatePresence>
+        {showSplash ? <SplashOverlay onDone={() => setShowSplash(false)} /> : null}
+      </AnimatePresence>
       <Suspense>
         <Devtools />
       </Suspense>
