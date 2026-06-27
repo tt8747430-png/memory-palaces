@@ -48,6 +48,9 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // iOS caches the launch images itself when the app is added to the Home Screen, so
+        // keep them out of the runtime precache (they'd add ~5 MB for no benefit).
+        globIgnores: ['**/splash/**'],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
       },
