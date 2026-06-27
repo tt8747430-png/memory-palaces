@@ -9,7 +9,6 @@ import {
   FileText,
   GraduationCap,
   HelpCircle,
-  ListChecks,
   MapPin,
   Plus,
   RotateCcw,
@@ -75,6 +74,10 @@ export interface RoomContentEditorProps {
   searchQuery?: string
   /** Clears + closes the room-header search (wired to the "clear" affordance on no results). */
   onClearSearch?: () => void
+  /** Multi-select is entered from the room header (or a long-press on a row); pass this pair
+   * to drive it from the parent. Omit both to let the editor own select mode itself. */
+  selectMode?: boolean
+  onSelectModeChange?: (on: boolean) => void
 }
 
 type Tab = 'loci' | 'questions'
@@ -94,6 +97,8 @@ export function RoomContentEditor({
   roomName,
   searchQuery,
   onClearSearch,
+  selectMode: controlledSelectMode,
+  onSelectModeChange,
 }: RoomContentEditorProps) {
   const { t } = useTranslation()
   const locusStore = useLocusStoreApi()
@@ -110,7 +115,14 @@ export function RoomContentEditor({
   const questions = useMemo(() => questionsForRoom(allQuestions, roomId), [allQuestions, roomId])
 
   const [tab, setTab] = useState<Tab>('loci')
-  const [selectMode, setSelectMode] = useState(false)
+  // Select mode is controllable: the room header drives it when both props are passed, but the
+  // editor keeps an internal fallback so it works standalone (and in isolation tests).
+  const [internalSelectMode, setInternalSelectMode] = useState(false)
+  const selectMode = controlledSelectMode ?? internalSelectMode
+  const setSelectMode = (on: boolean) => {
+    if (controlledSelectMode === undefined) setInternalSelectMode(on)
+    onSelectModeChange?.(on)
+  }
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [editor, setEditor] = useState<EditorTarget>(null)
   const [pendingDelete, setPendingDelete] = useState<{ kind: Tab; id: string } | null>(null)
@@ -118,6 +130,12 @@ export function RoomContentEditor({
   const [transferOpen, setTransferOpen] = useState(false)
   const [pasteOpen, setPasteOpen] = useState(false)
   const [verseOpen, setVerseOpen] = useState(false)
+
+  // Leaving select mode clears the picks so the next entry (header control or long-press) starts
+  // empty — needed now that the flag can be flipped off from outside the editor.
+  useEffect(() => {
+    if (!selectMode) setSelectedIds(new Set())
+  }, [selectMode])
 
   const fileRef = useRef<HTMLInputElement>(null)
   const importKind = useRef<'content' | 'anki'>('content')
@@ -147,7 +165,6 @@ export function RoomContentEditor({
   const isLoci = tab === 'loci'
   const total = isLoci ? loci.length : questions.length
   const visible = isLoci ? visibleLoci : visibleQuestions
-  const hasItems = total > 0
   const hasContent = loci.length > 0 || questions.length > 0
   const selectedCount = selectedIds.size
   const allVisibleSelected = visible.length > 0 && visible.every((item) => selectedIds.has(item.id))
@@ -281,43 +298,29 @@ export function RoomContentEditor({
         />
       </div>
 
-      {/* Selection control — search now lives in the room header (see RoomHubPage). Select is
-          disabled until the tab has something to select. */}
-      <div className="pb-2">
-        {selectMode ? (
-          <div className="flex items-center justify-between gap-3">
-            <button
-              type="button"
-              onClick={toggleSelectAll}
-              className="text-[length:var(--p-text-label)] font-semibold text-heading"
-            >
-              {allVisibleSelected ? t('loci.select.clearAll') : t('loci.select.selectAll')}
-            </button>
-            <span className="text-[length:var(--p-text-label)] font-semibold text-muted-foreground">
-              {t('loci.select.count', { count: selectedCount })}
-            </span>
-            <button
-              type="button"
-              onClick={exitSelect}
-              className="text-[length:var(--p-text-label)] font-semibold text-accent"
-            >
-              {t('loci.select.done')}
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center justify-end">
-            <button
-              type="button"
-              onClick={() => setSelectMode(true)}
-              disabled={!hasItems}
-              className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-control bg-card px-3 text-[length:var(--p-text-label)] font-semibold text-heading shadow-rest transition-transform active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40"
-            >
-              <ListChecks className="size-[17px]" aria-hidden />
-              {t('loci.select.select')}
-            </button>
-          </div>
-        )}
-      </div>
+      {/* Select mode is entered from the room header's control or a long-press on a row; this
+          bar appears only while selecting (the rows carry their own checkboxes). */}
+      {selectMode ? (
+        <div className="flex items-center justify-between gap-3 pb-2">
+          <button
+            type="button"
+            onClick={toggleSelectAll}
+            className="text-[length:var(--p-text-label)] font-semibold text-heading"
+          >
+            {allVisibleSelected ? t('loci.select.clearAll') : t('loci.select.selectAll')}
+          </button>
+          <span className="text-[length:var(--p-text-label)] font-semibold text-muted-foreground">
+            {t('loci.select.count', { count: selectedCount })}
+          </span>
+          <button
+            type="button"
+            onClick={exitSelect}
+            className="text-[length:var(--p-text-label)] font-semibold text-accent"
+          >
+            {t('loci.select.done')}
+          </button>
+        </div>
+      ) : null}
 
       {/* List */}
       <AnimatePresence mode="wait" initial={false}>

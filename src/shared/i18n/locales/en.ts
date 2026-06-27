@@ -667,6 +667,7 @@ export const en = {
     manageHeading: 'Cards & questions',
     searchLabel: 'Search this room',
     searchPlaceholder: 'Search cards & questions…',
+    selectLabel: 'Select items',
     cardCountOne: '{{count}} card',
     cardCountOther: '{{count}} cards',
     questionCountOne: '{{count}} question',

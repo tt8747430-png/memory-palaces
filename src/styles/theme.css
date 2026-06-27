@@ -63,7 +63,12 @@
 
   body {
     margin: 0;
+    /* 100% comes up short of the bottom safe-area inset under `viewport-fit=cover`, leaving a
+       white strip below the daylight ground (visible as a seam on the dark auth screens). The
+       dynamic viewport unit fills the true visible area, inset included; `100%` stays as the
+       fallback for engines without dvh. */
     height: 100%;
+    height: 100dvh;
     overflow: hidden;
     font-family: var(--p-font-sans);
     color: var(--text-primary);
@@ -84,6 +89,7 @@
 
   #root {
     height: 100%;
+    height: 100dvh;
   }
 
   h1,

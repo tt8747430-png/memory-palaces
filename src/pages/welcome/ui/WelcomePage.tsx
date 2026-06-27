@@ -89,7 +89,12 @@ export function WelcomePage({ onContinue }: WelcomePageProps) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: reduce ? 0 : 1.25, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       >
-        <Button variant="secondary" size="lg" className="w-full" onClick={onContinue}>
+        <Button
+          variant="ghost"
+          size="lg"
+          className="w-full border-transparent shadow-elevated"
+          onClick={onContinue}
+        >
           {t('auth.welcome.cta')}
         </Button>
       </motion.div>

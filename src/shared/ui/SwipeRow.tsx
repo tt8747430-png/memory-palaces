@@ -1,4 +1,4 @@
-import { type PointerEvent as ReactPointerEvent, type ReactNode, useRef, useState } from 'react'
+import { type PointerEvent as ReactPointerEvent, type ReactNode, useRef } from 'react'
 import { animate, motion, useMotionValue, useReducedMotion, useTransform } from 'motion/react'
 import { Trash2 } from 'lucide-react'
 import { clampSwipeOffset, cn, impact, shouldCommitSwipe, SWIPE_DELETE_MAX } from '@/shared/lib'
@@ -49,7 +49,6 @@ export function SwipeRow({
   const x = useMotionValue(0)
   const revealOpacity = useTransform(x, [-SWIPE_DELETE_MAX, -28, 0], [1, 0.35, 0])
   const revealScale = useTransform(x, [-SWIPE_DELETE_MAX, -40, 0], [1, 0.7, 0.6])
-  const [committing, setCommitting] = useState(false)
   const drag = useRef<{ startX: number; startY: number; axis: 'h' | 'v' | null; id: number } | null>(null)
 
   const settle = (to: number) => {
@@ -58,7 +57,6 @@ export function SwipeRow({
   }
 
   const onPointerDown = (event: ReactPointerEvent) => {
-    if (committing) return
     drag.current = { startX: event.clientX, startY: event.clientY, axis: null, id: event.pointerId }
   }
 
@@ -85,17 +83,13 @@ export function SwipeRow({
     drag.current = null
     if (!state || state.axis !== 'h') return
     const dx = event.clientX - state.startX
+    // Fire the action, then spring the row back to rest. The row never flies off-screen on its
+    // own: a confirm-gated action (folder delete) can be cancelled, and an immediate one
+    // (archive, dismiss) drops the row from the list and unmounts it before the spring shows.
+    // Either path avoids leaving the row stranded half-swiped — the old bug behind the hang.
     if (shouldCommitSwipe(dx, 0)) {
-      setCommitting(true)
       impact()
-      if (reduce) {
-        onSwipe()
-        return
-      }
-      void animate(x, -SWIPE_DELETE_MAX * 3, { duration: 0.2, ease: [0.4, 0, 1, 1] }).finished.then(
-        onSwipe,
-      )
-      return
+      onSwipe()
     }
     settle(0)
   }
