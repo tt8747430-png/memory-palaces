@@ -84,9 +84,11 @@ export function isRoomUnlocked(index: number, roomCompletions: ReadonlyArray<boo
 }
 
 /** Tally a card set by maturity bucket (independent of due-ness). */
-export function cardMaturityCounts(
-  loci: ReadonlyArray<{ srs?: SrsState }>,
-): { new: number; learning: number; known: number } {
+export function cardMaturityCounts(loci: ReadonlyArray<{ srs?: SrsState }>): {
+  new: number
+  learning: number
+  known: number
+} {
   const counts = { new: 0, learning: 0, known: 0 }
   for (const locus of loci) counts[srsStatus(locus.srs)] += 1
   return counts

@@ -177,10 +177,16 @@ export function StudyCardDeck({
 
       {swipeEnabled ? (
         <>
-          <SwipeBadge style={{ opacity: gotItOpacity }} className="left-5 top-5 -rotate-12 text-[var(--success-on-surface)]">
+          <SwipeBadge
+            style={{ opacity: gotItOpacity }}
+            className="left-5 top-5 -rotate-12 text-[var(--success-on-surface)]"
+          >
             {mode === 'review' ? t('study.swipeGotIt') : t('study.prev')}
           </SwipeBadge>
-          <SwipeBadge style={{ opacity: learningOpacity }} className="right-5 top-5 rotate-12 text-[var(--warning-foreground)]">
+          <SwipeBadge
+            style={{ opacity: learningOpacity }}
+            className="right-5 top-5 rotate-12 text-[var(--warning-foreground)]"
+          >
             {mode === 'review' ? t('study.swipeLearning') : t('study.next')}
           </SwipeBadge>
           <SwipeBadge
@@ -243,7 +249,10 @@ export function StudyCardDeck({
                       </button>
                     ) : null}
                     {locus.flagged ? (
-                      <Flag className="size-4 fill-[var(--rating)] text-[var(--rating-edge)]" aria-hidden />
+                      <Flag
+                        className="size-4 fill-[var(--rating)] text-[var(--rating-edge)]"
+                        aria-hidden
+                      />
                     ) : null}
                   </div>
                 </div>

@@ -36,14 +36,25 @@ describe('recordTrainingDay', () => {
   })
 
   it('is idempotent when already trained today', () => {
-    const trained: StreakState = { ...empty, streakCount: 3, lastTrainingDate: '2026-01-10', trainingDays: ['2026-01-10'] }
+    const trained: StreakState = {
+      ...empty,
+      streakCount: 3,
+      lastTrainingDate: '2026-01-10',
+      trainingDays: ['2026-01-10'],
+    }
     const result = recordTrainingDay(trained, NOW)
     expect(result.alreadyTrainedToday).toBe(true)
     expect(result.state).toBe(trained)
   })
 
   it('increments on a consecutive day', () => {
-    const yesterday: StreakState = { ...empty, streakCount: 4, longestStreak: 4, lastTrainingDate: '2026-01-09', trainingDays: ['2026-01-09'] }
+    const yesterday: StreakState = {
+      ...empty,
+      streakCount: 4,
+      longestStreak: 4,
+      lastTrainingDate: '2026-01-09',
+      trainingDays: ['2026-01-09'],
+    }
     const { state, continued } = recordTrainingDay(yesterday, NOW)
     expect(continued).toBe(true)
     expect(state.streakCount).toBe(5)
@@ -51,7 +62,14 @@ describe('recordTrainingDay', () => {
   })
 
   it('spends a freeze to forgive exactly one missed day', () => {
-    const gapWithFreeze: StreakState = { ...empty, streakCount: 6, longestStreak: 6, lastTrainingDate: '2026-01-08', streakFreezes: 1, trainingDays: ['2026-01-08'] }
+    const gapWithFreeze: StreakState = {
+      ...empty,
+      streakCount: 6,
+      longestStreak: 6,
+      lastTrainingDate: '2026-01-08',
+      streakFreezes: 1,
+      trainingDays: ['2026-01-08'],
+    }
     const { state, usedFreeze } = recordTrainingDay(gapWithFreeze, NOW)
     expect(usedFreeze).toBe(true)
     expect(state.streakCount).toBe(7)
@@ -60,7 +78,14 @@ describe('recordTrainingDay', () => {
   })
 
   it('resets to 1 after a missed day with no freeze, preserving the longest', () => {
-    const gapNoFreeze: StreakState = { ...empty, streakCount: 9, longestStreak: 9, lastTrainingDate: '2026-01-08', streakFreezes: 0, trainingDays: ['2026-01-08'] }
+    const gapNoFreeze: StreakState = {
+      ...empty,
+      streakCount: 9,
+      longestStreak: 9,
+      lastTrainingDate: '2026-01-08',
+      streakFreezes: 0,
+      trainingDays: ['2026-01-08'],
+    }
     const { state, continued } = recordTrainingDay(gapNoFreeze, NOW)
     expect(continued).toBe(false)
     expect(state.streakCount).toBe(1)
@@ -68,7 +93,14 @@ describe('recordTrainingDay', () => {
   })
 
   it('restocks a freeze at a 7-day milestone (capped at 2)', () => {
-    const day6: StreakState = { ...empty, streakCount: 6, longestStreak: 6, lastTrainingDate: '2026-01-09', streakFreezes: 0, trainingDays: ['2026-01-09'] }
+    const day6: StreakState = {
+      ...empty,
+      streakCount: 6,
+      longestStreak: 6,
+      lastTrainingDate: '2026-01-09',
+      streakFreezes: 0,
+      trainingDays: ['2026-01-09'],
+    }
     const { state, isMilestone } = recordTrainingDay(day6, NOW)
     expect(state.streakCount).toBe(7)
     expect(isMilestone).toBe(true)
@@ -77,7 +109,12 @@ describe('recordTrainingDay', () => {
 
   it('caps training-day history at 365 entries', () => {
     const history = Array.from({ length: 365 }, (_, i) => dayKey(NOW - (400 - i) * DAY_MS))
-    const long: StreakState = { ...empty, streakCount: 1, lastTrainingDate: history[history.length - 1]!, trainingDays: history }
+    const long: StreakState = {
+      ...empty,
+      streakCount: 1,
+      lastTrainingDate: history[history.length - 1]!,
+      trainingDays: history,
+    }
     const { state } = recordTrainingDay(long, NOW)
     expect(state.trainingDays).toHaveLength(365)
     expect(state.trainingDays[state.trainingDays.length - 1]).toBe('2026-01-10')
@@ -97,7 +134,11 @@ describe('recordPractice', () => {
   })
 
   it('marks the day active and advances the streak when the goal is reached', () => {
-    const partial: StreakState & DailyTally = { ...base, activeDayKey: '2026-01-10', activeDayCount: 4 }
+    const partial: StreakState & DailyTally = {
+      ...base,
+      activeDayKey: '2026-01-10',
+      activeDayCount: 4,
+    }
     const out = recordPractice(partial, 1, 5, NOW)
     expect(out.dayCount).toBe(5)
     expect(out.becameActive).toBe(true)
@@ -106,7 +147,11 @@ describe('recordPractice', () => {
   })
 
   it('resets the tally when the day rolls over', () => {
-    const yesterday: StreakState & DailyTally = { ...base, activeDayKey: '2026-01-09', activeDayCount: 9 }
+    const yesterday: StreakState & DailyTally = {
+      ...base,
+      activeDayKey: '2026-01-09',
+      activeDayCount: 9,
+    }
     const out = recordPractice(yesterday, 2, 5, NOW)
     expect(out.dayCount).toBe(2)
     expect(out.becameActive).toBe(false)
@@ -114,8 +159,12 @@ describe('recordPractice', () => {
 
   it('only advances once per day (further practice just bumps the tally)', () => {
     const active: StreakState & DailyTally = {
-      ...base, streakCount: 1, lastTrainingDate: '2026-01-10',
-      trainingDays: ['2026-01-10'], activeDayKey: '2026-01-10', activeDayCount: 5,
+      ...base,
+      streakCount: 1,
+      lastTrainingDate: '2026-01-10',
+      trainingDays: ['2026-01-10'],
+      activeDayKey: '2026-01-10',
+      activeDayCount: 5,
     }
     const out = recordPractice(active, 3, 5, NOW)
     expect(out.dayCount).toBe(8)

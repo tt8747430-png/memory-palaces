@@ -12,7 +12,12 @@ const at = (ms: number) => new Date(ms).toISOString()
 describe('makeProfile', () => {
   it('fills defaults and mirrors createdAt into updatedAt', () => {
     const profile = makeProfile({ id: 'profile', createdAt: at(0) })
-    expect(profile).toEqual({ id: 'profile', createdAt: at(0), updatedAt: at(0), ...DEFAULT_PROFILE })
+    expect(profile).toEqual({
+      id: 'profile',
+      createdAt: at(0),
+      updatedAt: at(0),
+      ...DEFAULT_PROFILE,
+    })
   })
 
   it('keeps provided fields', () => {
@@ -58,7 +63,11 @@ describe('profileInitials', () => {
 describe('profileHandle', () => {
   it('prefers the chosen username, slugified', () => {
     expect(
-      profileHandle({ name: 'Ada Lovelace', email: 'ada.lovelace@x.io', username: 'Ada_Lovelace99' }),
+      profileHandle({
+        name: 'Ada Lovelace',
+        email: 'ada.lovelace@x.io',
+        username: 'Ada_Lovelace99',
+      }),
     ).toBe('adalovelace99')
   })
 

@@ -118,46 +118,53 @@ export function StudyOptionsSheet({
     >
       <div className="flex flex-col gap-5">
         {allowScope && (
-        <Section title={t('study.cardsToStudy')}>
-          <div className="flex flex-wrap gap-2">
-            {filters.map(
-              ({ scope: candidate, label, count }) =>
-                (candidate.kind === 'all' || count > 0) && (
-                  <ScopeChip
-                    key={candidate.kind}
-                    label={label}
-                    count={count}
-                    active={scopesEqual(scope, candidate)}
-                    onClick={() => onScope(candidate)}
-                  />
-                ),
-            )}
-          </div>
-          {(batches.length > 0 || scopeCounts.all > 1) && (
-            <div className="space-y-2 pt-1">
-              <p className="px-1 text-[length:var(--p-text-label)] font-semibold text-heading">
-                {t('study.byRange')}
-              </p>
-              {batches.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {batches.map((batch) => (
+          <Section title={t('study.cardsToStudy')}>
+            <div className="flex flex-wrap gap-2">
+              {filters.map(
+                ({ scope: candidate, label, count }) =>
+                  (candidate.kind === 'all' || count > 0) && (
                     <ScopeChip
-                      key={batch.label}
-                      label={batch.label}
-                      active={
-                        scope.kind === 'range' &&
-                        scope.start === batch.start &&
-                        scope.end === batch.end
-                      }
-                      onClick={() => onScope({ kind: 'range', start: batch.start, end: batch.end })}
+                      key={candidate.kind}
+                      label={label}
+                      count={count}
+                      active={scopesEqual(scope, candidate)}
+                      onClick={() => onScope(candidate)}
                     />
-                  ))}
-                </div>
+                  ),
               )}
-              <CustomRange total={scopeCounts.all} scope={scope} batches={batches} onScope={onScope} />
             </div>
-          )}
-        </Section>
+            {(batches.length > 0 || scopeCounts.all > 1) && (
+              <div className="space-y-2 pt-1">
+                <p className="px-1 text-[length:var(--p-text-label)] font-semibold text-heading">
+                  {t('study.byRange')}
+                </p>
+                {batches.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {batches.map((batch) => (
+                      <ScopeChip
+                        key={batch.label}
+                        label={batch.label}
+                        active={
+                          scope.kind === 'range' &&
+                          scope.start === batch.start &&
+                          scope.end === batch.end
+                        }
+                        onClick={() =>
+                          onScope({ kind: 'range', start: batch.start, end: batch.end })
+                        }
+                      />
+                    ))}
+                  </div>
+                )}
+                <CustomRange
+                  total={scopeCounts.all}
+                  scope={scope}
+                  batches={batches}
+                  onScope={onScope}
+                />
+              </div>
+            )}
+          </Section>
         )}
 
         <Section title={t('study.general')}>
@@ -269,7 +276,12 @@ function ScopeChip({
     >
       {label}
       {count !== undefined && (
-        <span className={cn('text-[length:var(--p-text-tiny)] font-bold', active ? 'opacity-70' : 'opacity-60')}>
+        <span
+          className={cn(
+            'text-[length:var(--p-text-tiny)] font-bold',
+            active ? 'opacity-70' : 'opacity-60',
+          )}
+        >
           {count}
         </span>
       )}

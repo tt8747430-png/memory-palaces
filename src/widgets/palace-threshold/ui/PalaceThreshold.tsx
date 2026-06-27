@@ -47,7 +47,11 @@ export interface PalaceThresholdProps {
  * splash/welcome brand moments; static `tone="light"` for login/signup/forgot.
  * Reduced motion renders the final frame.
  */
-export function PalaceThreshold({ className, tone = 'dark', animated = true }: PalaceThresholdProps) {
+export function PalaceThreshold({
+  className,
+  tone = 'dark',
+  animated = true,
+}: PalaceThresholdProps) {
   const reduce = useReducedMotion()
   const isStatic = !animated || !!reduce
   const isLight = tone === 'light'
@@ -75,7 +79,13 @@ export function PalaceThreshold({ className, tone = 'dark', animated = true }: P
       <motion.line variants={draw} x1="40" y1="166" x2="160" y2="166" {...stroke} />
       <motion.line variants={draw} x1="28" y1="178" x2="172" y2="178" {...stroke} />
       {/* the locus igniting in the doorway */}
-      <motion.circle variants={locus} cx="100" cy="138" r="7" fill={isLight ? 'currentColor' : 'white'} />
+      <motion.circle
+        variants={locus}
+        cx="100"
+        cy="138"
+        r="7"
+        fill={isLight ? 'currentColor' : 'white'}
+      />
     </motion.svg>
   )
 }

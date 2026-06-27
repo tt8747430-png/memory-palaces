@@ -25,7 +25,11 @@ export function PasswordField({ icon, ...props }: PasswordFieldProps) {
           aria-label={visible ? t('auth.hidePassword') : t('auth.showPassword')}
           onClick={() => setVisible((value) => !value)}
         >
-          {visible ? <EyeOff className="size-5" aria-hidden /> : <Eye className="size-5" aria-hidden />}
+          {visible ? (
+            <EyeOff className="size-5" aria-hidden />
+          ) : (
+            <Eye className="size-5" aria-hidden />
+          )}
         </IconButton>
       }
     />

@@ -25,7 +25,11 @@ export function StickyBar({ elevation, children, className }: StickyBarProps) {
       {/* Persistent frosted header surface + edge, matching the settings ScreenHeader. */}
       <span aria-hidden className="absolute inset-0 border-b border-border bg-glass" />
       {/* A soft lift that fades in only once the content is scrolling beneath the bar. */}
-      <motion.span aria-hidden style={{ opacity: elevation }} className="absolute inset-0 shadow-rest" />
+      <motion.span
+        aria-hidden
+        style={{ opacity: elevation }}
+        className="absolute inset-0 shadow-rest"
+      />
       <div
         className={cn(
           'relative flex items-center justify-between gap-3 px-5 pb-2.5 pt-[calc(env(safe-area-inset-top)+0.625rem)]',

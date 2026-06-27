@@ -53,8 +53,18 @@ export function SocialButtons({ onSelect }: SocialButtonsProps = {}) {
       </div>
 
       <div className="flex items-center gap-4">
-        <SocialButton label={t('auth.socialGoogle')} icon={GoogleMark} onClick={() => handle('google')} className="bg-card text-foreground" />
-        <SocialButton label={t('auth.socialApple')} icon={AppleMark} onClick={() => handle('apple')} className="bg-foreground text-white" />
+        <SocialButton
+          label={t('auth.socialGoogle')}
+          icon={GoogleMark}
+          onClick={() => handle('google')}
+          className="bg-card text-foreground"
+        />
+        <SocialButton
+          label={t('auth.socialApple')}
+          icon={AppleMark}
+          onClick={() => handle('apple')}
+          className="bg-foreground text-white"
+        />
       </div>
     </div>
   )

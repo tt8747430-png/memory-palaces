@@ -1,4 +1,10 @@
-import { type PointerEvent as ReactPointerEvent, type MouseEvent as ReactMouseEvent, useCallback, useEffect, useRef } from 'react'
+import {
+  type PointerEvent as ReactPointerEvent,
+  type MouseEvent as ReactMouseEvent,
+  useCallback,
+  useEffect,
+  useRef,
+} from 'react'
 
 export interface LongPressOptions {
   /** Hold duration (ms) before the long press fires. */
@@ -58,7 +64,10 @@ export function useLongPress(
     (event: ReactPointerEvent) => {
       const start = origin.current
       if (!start) return
-      if (Math.abs(event.clientX - start.x) > moveTolerance || Math.abs(event.clientY - start.y) > moveTolerance) {
+      if (
+        Math.abs(event.clientX - start.x) > moveTolerance ||
+        Math.abs(event.clientY - start.y) > moveTolerance
+      ) {
         clear()
       }
     },

@@ -151,6 +151,7 @@ export function nextId(state: SessionState): string | undefined {
 /** Session completion in [0, 1] — graded/total in review, position in browse. */
 export function sessionProgress(state: SessionState): number {
   if (state.status === 'review') return state.total > 0 ? state.graded / state.total : 0
-  if (state.status === 'browse') return state.ids.length > 0 ? (state.pos + 1) / state.ids.length : 0
+  if (state.status === 'browse')
+    return state.ids.length > 0 ? (state.pos + 1) / state.ids.length : 0
   return 1
 }

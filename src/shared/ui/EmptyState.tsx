@@ -20,7 +20,14 @@ const EASE_OUT = [0.16, 1, 0.3, 1] as const
  * will live here, why it matters, and the one action to get started. Entrance motion
  * runs through Motion, so it honours reduced motion globally.
  */
-export function EmptyState({ icon, emoji, title, description, action, className }: EmptyStateProps) {
+export function EmptyState({
+  icon,
+  emoji,
+  title,
+  description,
+  action,
+  className,
+}: EmptyStateProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -34,7 +41,9 @@ export function EmptyState({ icon, emoji, title, description, action, className 
       <h3 className="mb-2 text-balance text-[length:var(--p-text-sub)] font-semibold text-heading">
         {title}
       </h3>
-      <p className="mb-6 max-w-[34ch] text-pretty text-[length:var(--p-text-body)]">{description}</p>
+      <p className="mb-6 max-w-[34ch] text-pretty text-[length:var(--p-text-body)]">
+        {description}
+      </p>
       {action}
     </motion.div>
   )

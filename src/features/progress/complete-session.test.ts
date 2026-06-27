@@ -69,7 +69,11 @@ describe('completeSession', () => {
 
   it('records the best quiz accuracy when provided', async () => {
     const store = startedStore()
-    const reward = await completeSession(store, { xp: 40, itemsPracticed: 4, dailyGoal: 5, quizAccuracy: 75 }, NOW)
+    const reward = await completeSession(
+      store,
+      { xp: 40, itemsPracticed: 4, dailyGoal: 5, quizAccuracy: 75 },
+      NOW,
+    )
     expect(reward.isBestQuiz).toBe(true)
     expect(reward.quizAccuracy).toBe(75)
     expect(store.getState().progress?.bestQuizAccuracy).toBe(75)

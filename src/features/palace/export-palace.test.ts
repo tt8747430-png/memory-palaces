@@ -19,7 +19,15 @@ const loci: Locus[] = [
   makeLocus({ id: 'lx', createdAt: at(0), roomId: 'other', front: 'Nope', back: 'x', order: 0 }),
 ]
 const questions: Question[] = [
-  makeQuestion({ id: 'q1', createdAt: at(0), roomId: 'r1', prompt: 'Mihi?', options: ['to me', 'to you'], correctAnswer: 0, order: 0 }),
+  makeQuestion({
+    id: 'q1',
+    createdAt: at(0),
+    roomId: 'r1',
+    prompt: 'Mihi?',
+    options: ['to me', 'to you'],
+    correctAnswer: 0,
+    order: 0,
+  }),
 ]
 
 describe('exportPalaceJson', () => {
@@ -31,7 +39,9 @@ describe('exportPalaceJson', () => {
     const parsed = JSON.parse(file.text)
     expect(parsed.palace.name).toBe('Roman Forum')
     expect(parsed.rooms.map((room: { title: string }) => room.title)).toEqual(['First', 'Second'])
-    expect(parsed.rooms[0].loci).toEqual([{ front: 'Mihi', back: 'to me', hint: undefined, tip: undefined }])
+    expect(parsed.rooms[0].loci).toEqual([
+      { front: 'Mihi', back: 'to me', hint: undefined, tip: undefined },
+    ])
     expect(parsed.rooms[0].questions[0].prompt).toBe('Mihi?')
   })
 })

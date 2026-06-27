@@ -74,11 +74,17 @@ export function PalaceCover({
   const isPreset = color?.startsWith('from-')
   const style: CSSProperties | undefined = isPreset
     ? undefined
-    : { backgroundImage: `linear-gradient(135deg, ${color}, color-mix(in oklab, ${color}, black 22%))` }
+    : {
+        backgroundImage: `linear-gradient(135deg, ${color}, color-mix(in oklab, ${color}, black 22%))`,
+      }
 
   return (
     <div
-      className={cn('flex items-center justify-center', isPreset && `bg-linear-to-br ${color}`, className)}
+      className={cn(
+        'flex items-center justify-center',
+        isPreset && `bg-linear-to-br ${color}`,
+        className,
+      )}
       style={style}
     >
       {!hideIcon ? <span className={iconClassName}>{icon}</span> : null}

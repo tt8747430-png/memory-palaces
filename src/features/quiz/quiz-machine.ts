@@ -46,7 +46,15 @@ export type QuizAction =
 
 export function initQuiz(total: number): QuizState {
   if (total <= 0) return { status: 'complete', score: 0, total: 0 }
-  return { status: 'answering', index: 0, total, selected: null, answered: false, score: 0, streak: 0 }
+  return {
+    status: 'answering',
+    index: 0,
+    total,
+    selected: null,
+    answered: false,
+    score: 0,
+    streak: 0,
+  }
 }
 
 /** Move past the current question — to the next, or to completion at the end. */
@@ -54,7 +62,14 @@ function advance(state: AnsweringState, score: number): QuizState {
   if (state.index >= state.total - 1) {
     return { status: 'complete', score, total: state.total }
   }
-  return { ...state, index: state.index + 1, selected: null, answered: false, score, streak: state.streak }
+  return {
+    ...state,
+    index: state.index + 1,
+    selected: null,
+    answered: false,
+    score,
+    streak: state.streak,
+  }
 }
 
 export function quizReducer(state: QuizState, action: QuizAction): QuizState {

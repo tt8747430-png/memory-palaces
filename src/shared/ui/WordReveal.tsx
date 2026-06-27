@@ -20,7 +20,13 @@ export interface WordRevealProps {
  * whitespace, so word count and order follow the active locale. Reduced motion
  * collapses to a single crossfade of the whole line.
  */
-export function WordReveal({ text, className, delay = 0, stagger = 0.08, as = 'span' }: WordRevealProps) {
+export function WordReveal({
+  text,
+  className,
+  delay = 0,
+  stagger = 0.08,
+  as = 'span',
+}: WordRevealProps) {
   const reduce = useReducedMotion()
   const Tag = as as ElementType
   const words = text.split(/\s+/).filter(Boolean)
@@ -28,7 +34,11 @@ export function WordReveal({ text, className, delay = 0, stagger = 0.08, as = 's
   if (reduce) {
     return (
       <Tag className={className}>
-        <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay, duration: 0.4 }}>
+        <motion.span
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay, duration: 0.4 }}
+        >
           {text}
         </motion.span>
       </Tag>

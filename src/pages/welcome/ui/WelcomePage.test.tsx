@@ -16,7 +16,9 @@ afterEach(cleanup)
 
 async function renderWelcome() {
   const store = createSessionStore(new InMemoryRepository<Session>())
-  await store.getState().set(makeAccountSession('id-1', { email: 'ada@b.com', name: 'Ada' }, '2026-01-01'))
+  await store
+    .getState()
+    .set(makeAccountSession('id-1', { email: 'ada@b.com', name: 'Ada' }, '2026-01-01'))
   const onContinue = vi.fn()
   render(
     <I18nextProvider i18n={i18n}>

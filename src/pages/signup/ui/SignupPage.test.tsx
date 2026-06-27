@@ -68,8 +68,14 @@ describe('SignupPage', () => {
     await user.click(screen.getByRole('checkbox'))
     await user.click(screen.getByRole('button', { name: /create account/i }))
     await waitFor(() => expect(onSuccess).toHaveBeenCalled())
-    expect(gateway.getPersisted()).toMatchObject({ kind: 'account', name: 'Ada', email: 'ada@b.com' })
-    expect(await profileRepo.getAll()).toEqual([expect.objectContaining({ name: 'Ada', email: 'ada@b.com' })])
+    expect(gateway.getPersisted()).toMatchObject({
+      kind: 'account',
+      name: 'Ada',
+      email: 'ada@b.com',
+    })
+    expect(await profileRepo.getAll()).toEqual([
+      expect.objectContaining({ name: 'Ada', email: 'ada@b.com' }),
+    ])
   })
 
   it('continues as guest and routes to login', async () => {

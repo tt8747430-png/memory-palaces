@@ -93,7 +93,11 @@ export function AuthField({
       </div>
 
       {hasError ? (
-        <p id={errorId} role="alert" className="text-[length:var(--p-text-label)] text-[var(--danger-on-surface)]">
+        <p
+          id={errorId}
+          role="alert"
+          className="text-[length:var(--p-text-label)] text-[var(--danger-on-surface)]"
+        >
           {error}
         </p>
       ) : null}

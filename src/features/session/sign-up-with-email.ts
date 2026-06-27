@@ -26,6 +26,10 @@ export async function signUpWithEmail(
   await deps.sessionStore
     .getState()
     .set(
-      makeAccountSession(auth.id, { email: input.email, name: input.name }, new Date(now).toISOString()),
+      makeAccountSession(
+        auth.id,
+        { email: input.email, name: input.name },
+        new Date(now).toISOString(),
+      ),
     )
 }

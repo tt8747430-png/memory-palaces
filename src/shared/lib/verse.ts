@@ -84,7 +84,8 @@ export function typedVerseStatus(verse: string, input: string): VerseTypingResul
     return normalizeWord(typed[i]!) === normalizeWord(word) ? 'correct' : 'wrong'
   })
   const correct = statuses.filter((status) => status === 'correct').length
-  const complete = typed.length >= expected.length && statuses.every((status) => status === 'correct')
+  const complete =
+    typed.length >= expected.length && statuses.every((status) => status === 'correct')
   return { statuses, typed, correct, total: expected.length, complete }
 }
 

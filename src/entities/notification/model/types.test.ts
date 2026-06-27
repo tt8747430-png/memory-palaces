@@ -5,7 +5,13 @@ const at = (ms: number) => new Date(ms).toISOString()
 
 describe('makeNotification', () => {
   it('builds a level-up notification, unread, with timestamps mirroring createdAt', () => {
-    const n = makeNotification({ id: 'n1', createdAt: at(0), type: 'level-up', level: 3, xpGain: 50 })
+    const n = makeNotification({
+      id: 'n1',
+      createdAt: at(0),
+      type: 'level-up',
+      level: 3,
+      xpGain: 50,
+    })
     expect(n).toMatchObject({
       id: 'n1',
       createdAt: at(0),
@@ -26,7 +32,13 @@ describe('makeNotification', () => {
   })
 
   it('respects an explicit read flag', () => {
-    const n = makeNotification({ id: 'n3', createdAt: at(0), type: 'quiz', accuracy: 90, read: true })
+    const n = makeNotification({
+      id: 'n3',
+      createdAt: at(0),
+      type: 'quiz',
+      accuracy: 90,
+      read: true,
+    })
     expect(n.read).toBe(true)
   })
 
