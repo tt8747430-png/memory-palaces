@@ -6,7 +6,9 @@ export type PalacesView = 'grid' | 'list'
 
 /** How the library orders its items. `manual` is a hand-dragged order; the rest are
  * automatic rules. Persisted so the choice survives sessions. */
-export type PalacesSort = 'manual' | 'recent' | 'progress' | 'name' | 'category'
+export type PalacesSort = 'manual' | 'recent' | 'progress' | 'name'
+
+const PALACES_SORTS: readonly PalacesSort[] = ['manual', 'recent', 'progress', 'name']
 
 /** The active recall mode in verse study. Persisted so it's remembered everywhere. */
 export type VerseMode = 'blur' | 'words' | 'initials' | 'type'
@@ -113,7 +115,11 @@ export function makePreferences(input: MakePreferencesInput): Preferences {
     language: input.language ?? DEFAULT_PREFERENCES.language,
     dailyGoal: input.dailyGoal ?? DEFAULT_PREFERENCES.dailyGoal,
     palacesView: input.palacesView ?? DEFAULT_PREFERENCES.palacesView,
-    palacesSort: input.palacesSort ?? DEFAULT_PREFERENCES.palacesSort,
+    // Clamp a persisted sort that's no longer offered (e.g. the retired `category`).
+    palacesSort:
+      input.palacesSort && PALACES_SORTS.includes(input.palacesSort)
+        ? input.palacesSort
+        : DEFAULT_PREFERENCES.palacesSort,
     verseMode: input.verseMode ?? DEFAULT_PREFERENCES.verseMode,
     verseShuffle: input.verseShuffle ?? DEFAULT_PREFERENCES.verseShuffle,
     verseWordSpaces: input.verseWordSpaces ?? DEFAULT_PREFERENCES.verseWordSpaces,

@@ -49,7 +49,6 @@ import {
   ActionSheet,
   AppScreen,
   ConfirmDialog,
-  IconButton,
   PalaceCover,
   ScreenHeader,
   SettingsRow,
@@ -122,15 +121,6 @@ export function PalaceSettingsPage({ palaceId, onBack, onExit }: PalaceSettingsP
           subtitle={palace.name}
           onBack={onBack}
           backLabel={t('palaceSettings.back')}
-          action={
-            <IconButton
-              variant="glass"
-              aria-label={t('palaceSettings.editAppearance')}
-              onClick={() => setAppearanceOpen(true)}
-            >
-              <Pencil className="size-5" aria-hidden />
-            </IconButton>
-          }
         />
       }
     >

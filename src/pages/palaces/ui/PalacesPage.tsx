@@ -14,7 +14,6 @@ import {
   ListChecks,
   Pencil,
   Rows3,
-  Tag,
   Trash2,
   TrendingUp,
   Upload,
@@ -74,7 +73,6 @@ import {
 import { HomeHeader } from '@/widgets/home-header'
 import {
   AppScreen,
-  Button,
   ConfirmDialog,
   EmptyState,
   FlyoutMenu,
@@ -113,7 +111,6 @@ const SORT_LABEL_KEY = {
   recent: 'palaces.sortRecent',
   progress: 'palaces.sortProgress',
   name: 'palaces.sortName',
-  category: 'palaces.sortCategory',
 } as const satisfies Record<PalacesSort, string>
 
 /** The library — a Windows-Explorer-style browse of folders and palaces. The root is the
@@ -191,8 +188,6 @@ export function PalacesPage({
   // A `?folder=` that points at a deleted folder falls back to the root.
   const atRoot = folderId === null || (folderId !== ARCHIVED_VIEW && !currentFolder)
 
-  const [searchOpen, setSearchOpen] = useState(false)
-  const [query, setQuery] = useState('')
   const [createOpen, setCreateOpen] = useState(openCreate)
   const [moveTarget, setMoveTarget] = useState<string | null>(null)
   const [bulkMoveOpen, setBulkMoveOpen] = useState(false)
@@ -218,19 +213,10 @@ export function PalacesPage({
     setSelectedIds(new Set())
   }
 
-  const closeSearch = () => {
-    setSearchOpen(false)
-    setQuery('')
-  }
-
-  // Search and select live only at the home root; leaving it (into a folder/archived view)
-  // resets both so a stray query/selection can't filter or linger where there's no UI to clear it.
+  // Select lives only at the home root; leaving it (into a folder/archived view) clears any
+  // selection so it can't linger where there's no UI to manage it.
   useEffect(() => {
-    if (!atRoot) {
-      setSearchOpen(false)
-      setQuery('')
-      exitSelect()
-    }
+    if (!atRoot) exitSelect()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [folderId])
 
@@ -269,10 +255,6 @@ export function PalacesPage({
     [palaces, rooms, loci, dueCounts],
   )
 
-  const q = query.trim().toLowerCase()
-  const matchesQuery = (name: string, category = '') =>
-    !q || name.toLowerCase().includes(q) || category.toLowerCase().includes(q)
-
   const sortPalaces = (list: Enriched[]): Enriched[] =>
     [...list].sort((a, b) => {
       switch (sort) {
@@ -282,8 +264,6 @@ export function PalacesPage({
           return b.progress - a.progress
         case 'name':
           return a.name.localeCompare(b.name)
-        case 'category':
-          return a.category.localeCompare(b.category) || a.name.localeCompare(b.name)
         default:
           if (a.favorite !== b.favorite) return a.favorite ? -1 : 1
           return b.updatedAt.localeCompare(a.updatedAt)
@@ -296,9 +276,9 @@ export function PalacesPage({
       if (item.archived) return false
       return (item.folderId ?? null) === (atRoot ? null : folderId)
     })
-    return sortPalaces(pool.filter((item) => matchesQuery(item.name, item.category)))
+    return sortPalaces(pool)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enriched, inArchived, atRoot, folderId, q, sort])
+  }, [enriched, inArchived, atRoot, folderId, sort])
 
   const visibleFolders = useMemo<LibraryFolderItem[]>(() => {
     if (!atRoot || inArchived) return []
@@ -307,17 +287,15 @@ export function PalacesPage({
       if (item.archived || !item.folderId) continue
       countByFolder.set(item.folderId, (countByFolder.get(item.folderId) ?? 0) + 1)
     }
-    const items = folders
-      .filter((folder) => matchesQuery(folder.name))
-      .map((folder) => ({
-        id: folder.id,
-        name: folder.name,
-        color: folder.color,
-        icon: folder.icon,
-        count: countByFolder.get(folder.id) ?? 0,
-        order: folder.order,
-        updatedAt: folder.updatedAt,
-      }))
+    const items = folders.map((folder) => ({
+      id: folder.id,
+      name: folder.name,
+      color: folder.color,
+      icon: folder.icon,
+      count: countByFolder.get(folder.id) ?? 0,
+      order: folder.order,
+      updatedAt: folder.updatedAt,
+    }))
     items.sort((a, b) => {
       switch (sort) {
         case 'name':
@@ -329,8 +307,7 @@ export function PalacesPage({
       }
     })
     return items.map(({ id, name, color, icon, count }) => ({ id, name, color, icon, count }))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [folders, enriched, atRoot, inArchived, q, sort])
+  }, [folders, enriched, atRoot, inArchived, sort])
 
   // Once data has loaded, whether the current view has anything to show. Drives the
   // controls + speed-dial: empty views drop them, leaning on the empty state's own CTAs.
@@ -458,10 +435,6 @@ export function PalacesPage({
       if (sort !== 'manual') setSort('manual')
     },
     onFilePalace: (palaceId, targetFolderId) => filePalaceInto(palaceId, targetFolderId),
-    onRequestSelect: (id) => {
-      setSelectMode(true)
-      setSelectedIds((prev) => new Set(prev).add(id))
-    },
   }
 
   const toggleSelect = (id: string) =>
@@ -497,15 +470,15 @@ export function PalacesPage({
     exitSelect()
   }
 
-  const sortActions: SheetAction[] = (
-    ['manual', 'recent', 'progress', 'name', 'category'] as const
-  ).map((option) => ({
-    id: option,
-    label: t(SORT_LABEL_KEY[option]),
-    icon: <SortGlyph option={option} />,
-    selected: sort === option,
-    onSelect: () => setSort(option),
-  }))
+  const sortActions: SheetAction[] = (['manual', 'recent', 'progress', 'name'] as const).map(
+    (option) => ({
+      id: option,
+      label: t(SORT_LABEL_KEY[option]),
+      icon: <SortGlyph option={option} />,
+      selected: sort === option,
+      onSelect: () => setSort(option),
+    }),
+  )
 
   // Sort / select / view, shown in one toolbar row under the header at every level (root,
   // folder, archived) so the library reads the same everywhere. Sorting leads on the left
@@ -575,20 +548,6 @@ export function PalacesPage({
   // Empty views teach, they don't carry their own add buttons — the always-present toolbar
   // and the speed-dial own creating, so the affordance lives in one place across the library.
   function renderEmptyState() {
-    if (query.trim()) {
-      return (
-        <EmptyState
-          emoji="🔍"
-          title={t('palaces.emptySearchTitle')}
-          description={t('palaces.emptySearchBody', { query: query.trim() })}
-          action={
-            <Button variant="secondary" onClick={closeSearch}>
-              {t('palaces.emptyFilteredAction')}
-            </Button>
-          }
-        />
-      )
-    }
     if (inArchived) {
       return (
         <EmptyState
@@ -633,16 +592,6 @@ export function PalacesPage({
             onOpenProfile={() => onOpenProfile?.()}
             onOpenNotifications={() => onOpenNotifications?.()}
             onOpenArchived={() => onOpenFolder?.(ARCHIVED_VIEW)}
-            search={{
-              open: searchOpen,
-              query,
-              onOpen: () => setSearchOpen(true),
-              onClose: closeSearch,
-              onQueryChange: setQuery,
-              label: t('palaces.searchLabel'),
-              placeholder: t('palaces.searchPlaceholder'),
-              closeLabel: t('palaces.closeSearch'),
-            }}
           />
         ) : (
           // A fixed-height nav bar: back pinned left, the title centred both ways, and (for a
@@ -915,7 +864,6 @@ function SortGlyph({
   if (option === 'manual') return <GripVertical className={className} aria-hidden />
   if (option === 'progress') return <TrendingUp className={className} aria-hidden />
   if (option === 'name') return <ArrowDownAZ className={className} aria-hidden />
-  if (option === 'category') return <Tag className={className} aria-hidden />
   return <Clock className={className} aria-hidden />
 }
 

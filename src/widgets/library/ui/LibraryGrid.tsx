@@ -24,15 +24,15 @@ import { CSS } from '@dnd-kit/utilities'
 import {
   Archive,
   Check,
-  DoorOpen,
   FolderInput,
   FolderOpen,
   Heart,
+  Pencil,
   Settings2,
   Trash2,
 } from 'lucide-react'
-import { cn, useLongPress } from '@/shared/lib'
-import { FlyoutMenu, FolderGlyph, PalaceCover, type SheetAction } from '@/shared/ui'
+import { cn } from '@/shared/lib'
+import { FlyoutMenu, FolderGlyph, PalaceCover, type SheetAction, SwipeRow } from '@/shared/ui'
 
 export interface LibraryFolderItem {
   id: string
@@ -74,8 +74,6 @@ export interface LibraryHandlers {
   onReorderPalaces: (orderedIds: string[]) => void
   /** File a palace into a folder by dragging it onto the folder card. */
   onFilePalace: (palaceId: string, folderId: string) => void
-  /** Long-press a card to enter select mode with that item picked. */
-  onRequestSelect: (id: string) => void
 }
 
 export interface LibraryGridProps extends LibraryHandlers {
@@ -133,8 +131,11 @@ export function LibraryGrid({
   useEffect(() => setFolderItems(folders), [folders])
   useEffect(() => setPalaceItems(palaces), [palaces])
 
+  // Long-press to drag: a hold (not an immediate move) starts the drag, so a tap opens the
+  // card and a horizontal flick is free to drive the swipe action / a scroll. `tolerance`
+  // cancels the hold if the finger travels first (that's a scroll or a swipe, not a drag).
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(PointerSensor, { activationConstraint: { delay: 220, tolerance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
 
@@ -184,8 +185,10 @@ export function LibraryGrid({
 
   const onDragStart = (event: DragStartEvent) => setActiveId(String(event.active.id))
   const active = activeId ? parseId(activeId) : null
-  const activeFolder = active?.kind === 'f' ? folderItems.find((f) => f.id === active.id) : undefined
-  const activePalace = active?.kind === 'p' ? palaceItems.find((p) => p.id === active.id) : undefined
+  const activeFolder =
+    active?.kind === 'f' ? folderItems.find((f) => f.id === active.id) : undefined
+  const activePalace =
+    active?.kind === 'p' ? palaceItems.find((p) => p.id === active.id) : undefined
 
   const strategy = view === 'grid' ? rectSortingStrategy : verticalListSortingStrategy
   const containerClass = view === 'grid' ? 'grid grid-cols-2 gap-3' : 'flex flex-col gap-2.5'
@@ -213,6 +216,7 @@ export function LibraryGrid({
                   dropReady={activePalace !== undefined}
                   isOver={drag.isOver && activePalace !== undefined}
                   receiving={receivingId === folder.id}
+                  dragActive={activeId !== null}
                   reduce={reduce}
                   onToggleSelect={() => onToggleSelect(folder.id)}
                   handlers={handlers}
@@ -231,6 +235,7 @@ export function LibraryGrid({
                   view={view}
                   selectMode={selectMode}
                   selected={selectedIds.has(palace.id)}
+                  dragActive={activeId !== null}
                   onToggleSelect={() => onToggleSelect(palace.id)}
                   handlers={handlers}
                 />
@@ -243,7 +248,13 @@ export function LibraryGrid({
       <DragOverlay dropAnimation={{ duration: 220, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }}>
         {activeFolder ? (
           <DragLift reduce={reduce}>
-            <FolderCard folder={activeFolder} view={view} dragging reduce={reduce} handlers={handlers} />
+            <FolderCard
+              folder={activeFolder}
+              view={view}
+              dragging
+              reduce={reduce}
+              handlers={handlers}
+            />
           </DragLift>
         ) : activePalace ? (
           <DragLift reduce={reduce}>
@@ -255,11 +266,12 @@ export function LibraryGrid({
   )
 }
 
-/** Lifts the dragged clone off the surface — a small scale + tilt that reads as "in hand".
- * Static (no entrance) so it composes cleanly with dnd-kit's drop animation; the card itself
- * carries the elevated shadow. Calm under reduced motion (shadow only, no transform). */
+/** Lifts the dragged clone off the surface — a small, level scale-up that reads as "in hand"
+ * (no tilt, so it stays square to the grid). Static so it composes cleanly with dnd-kit's
+ * drop animation; the card itself carries the elevated shadow. No transform under reduced
+ * motion. */
 function DragLift({ children, reduce }: { children: ReactNode; reduce: boolean | null }) {
-  return <div className={cn('origin-center', !reduce && '-rotate-2 scale-[1.03]')}>{children}</div>
+  return <div className={cn('origin-center', !reduce && 'scale-[1.03]')}>{children}</div>
 }
 
 function SortableItem({
@@ -301,6 +313,7 @@ function FolderCard({
   dropReady = false,
   receiving = false,
   dragging = false,
+  dragActive = false,
   reduce = false,
   onToggleSelect,
   handlers,
@@ -316,6 +329,8 @@ function FolderCard({
   /** Just received a palace — play the absorb pop. */
   receiving?: boolean
   dragging?: boolean
+  /** A drag is in progress somewhere — suspends the swipe gesture so they never fight. */
+  dragActive?: boolean
   reduce?: boolean | null
   onToggleSelect?: () => void
   handlers: LibraryHandlers
@@ -326,22 +341,9 @@ function FolderCard({
   })
   const actions: SheetAction[] = [
     {
-      id: 'open',
-      label: t('palaces.open'),
-      icon: <FolderOpen className="size-5" aria-hidden />,
-      onSelect: () => handlers.onOpenFolder(folder.id),
-    },
-    {
       id: 'edit',
       label: t('palaces.editFolder'),
-      icon: (
-        <FolderGlyph
-          color={folder.color}
-          icon={folder.icon}
-          className="size-5 rounded-[5px]"
-          iconClassName="text-[10px] leading-none"
-        />
-      ),
+      icon: <Pencil className="size-5" aria-hidden />,
       onSelect: () => handlers.onEditFolder(folder.id),
     },
     {
@@ -354,10 +356,6 @@ function FolderCard({
   ]
 
   const handleClick = () => (selectMode ? onToggleSelect?.() : handlers.onOpenFolder(folder.id))
-  const longPress = useLongPress({
-    onLongPress: () => handlers.onRequestSelect(folder.id),
-    onTap: handleClick,
-  })
 
   const selectRing = selected ? 'ring-2 ring-primary' : 'ring-1 ring-border'
   const popTransition = receiving ? { duration: 0.5, ease: EASE_OUT } : DROP_SPRING
@@ -387,44 +385,50 @@ function FolderCard({
         animate={animate}
         transition={popTransition}
       >
-        <button
-          type="button"
-          {...longPress}
-          aria-label={t('palaces.openFolderLabel', { name: folder.name })}
-          className={cn(
-            'relative flex w-full items-center gap-3 rounded-card bg-card p-3 text-left shadow-rest',
-            !selectMode && 'pr-12',
-            selectRing,
-          )}
+        <SwipeRow
+          onSwipe={() => handlers.onDeleteFolder(folder.id)}
+          disabled={selectMode || dragActive || dragging}
+          className="rounded-card"
         >
-          {selectMode ? <SelectDot selected={selected} /> : null}
-          <span className="relative shrink-0">
-            {!dragging ? (
-              <span
-                aria-hidden
-                className="pointer-events-none absolute inset-x-1.5 -bottom-1 h-4 rounded-[7px] bg-secondary/60"
+          <button
+            type="button"
+            onClick={handleClick}
+            aria-label={t('palaces.openFolderLabel', { name: folder.name })}
+            className={cn(
+              'relative flex w-full items-center gap-3 rounded-card bg-card p-3 text-left shadow-rest',
+              !selectMode && 'pr-12',
+              selectRing,
+            )}
+          >
+            {selectMode ? <SelectDot selected={selected} /> : null}
+            <span className="relative shrink-0">
+              {!dragging ? (
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-x-1.5 -bottom-1 h-4 rounded-[7px] bg-secondary/60"
+                />
+              ) : null}
+              <FolderGlyph
+                color={folder.color}
+                icon={folder.icon}
+                className="relative size-14 rounded-card"
+                iconClassName="text-2xl"
               />
-            ) : null}
-            <FolderGlyph
-              color={folder.color}
-              icon={folder.icon}
-              className="relative size-14 rounded-card"
-              iconClassName="text-2xl"
-            />
-          </span>
-          <div className="min-w-0 flex-1">
-            <h3 className="truncate text-[length:var(--p-text-sub)] font-bold tracking-tight text-heading">
-              {folder.name}
-            </h3>
-            <p className="mt-0.5 truncate text-[length:var(--p-text-label)] text-muted-foreground">
-              {subtitle}
-            </p>
-          </div>
-        </button>
+            </span>
+            <div className="min-w-0 flex-1">
+              <h3 className="truncate text-[length:var(--p-text-sub)] font-bold tracking-tight text-heading">
+                {folder.name}
+              </h3>
+              <p className="mt-0.5 truncate text-[length:var(--p-text-label)] text-muted-foreground">
+                {subtitle}
+              </p>
+            </div>
+          </button>
+          {!selectMode && !dragging ? (
+            <CardMenu label={t('palaces.folderActions', { name: folder.name })} actions={actions} />
+          ) : null}
+        </SwipeRow>
         <DropTargetRing ready={dropReady} active={isOver} reduce={reduce} />
-        {!selectMode && !dragging ? (
-          <CardMenu label={t('palaces.folderActions', { name: folder.name })} actions={actions} />
-        ) : null}
       </motion.div>
     )
   }
@@ -460,7 +464,7 @@ function FolderCard({
 
       <button
         type="button"
-        {...longPress}
+        onClick={handleClick}
         aria-label={t('palaces.openFolderLabel', { name: folder.name })}
         className={cn(
           'relative flex h-full w-full flex-col gap-3 rounded-card bg-card p-3.5 text-left shadow-rest',
@@ -527,6 +531,7 @@ function PalaceCard({
   selectMode = false,
   selected = false,
   dragging = false,
+  dragActive = false,
   onToggleSelect,
   handlers,
 }: {
@@ -535,6 +540,8 @@ function PalaceCard({
   selectMode?: boolean
   selected?: boolean
   dragging?: boolean
+  /** A drag is in progress somewhere — suspends the swipe gesture so they never fight. */
+  dragActive?: boolean
   onToggleSelect?: () => void
   handlers: LibraryHandlers
 }) {
@@ -545,10 +552,6 @@ function PalaceCard({
     count: item.totalRooms,
   })
   const handleClick = () => (selectMode ? onToggleSelect?.() : handlers.onOpenPalace(item.id))
-  const longPress = useLongPress({
-    onLongPress: () => handlers.onRequestSelect(item.id),
-    onTap: handleClick,
-  })
   const ring = selected ? 'ring-2 ring-primary' : ''
   const coverVariant =
     item.color?.startsWith('from-') || item.color?.startsWith('#') ? 'identity' : 'brand'
@@ -557,56 +560,64 @@ function PalaceCard({
     return (
       <div
         className={cn(
-          'relative isolate',
+          'relative',
           item.archived && 'opacity-75',
           dragging && 'rounded-card shadow-elevated',
         )}
       >
-        <button
-          type="button"
-          {...longPress}
-          aria-label={t('palaces.openLabel', { name: item.name })}
-          className={cn(
-            'flex w-full items-center gap-3 rounded-card bg-card p-3 text-left shadow-rest',
-            !selectMode && 'pr-12',
-            ring,
-          )}
+        <SwipeRow
+          onSwipe={() => handlers.onArchivePalace(item.id)}
+          revealIcon={<Archive className="size-5" aria-hidden />}
+          tone="warning"
+          disabled={selectMode || dragActive || dragging}
+          className="rounded-card"
         >
-          {selectMode ? <SelectDot selected={selected} /> : null}
-          <PalaceCover
-            icon={item.icon}
-            color={item.color}
-            image={item.image}
-            variant={coverVariant}
-            className="size-16 shrink-0 rounded-card"
-            iconClassName="text-3xl"
-          />
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5">
-              {item.favorite ? (
-                <Heart className="size-4 shrink-0 fill-favorite text-favorite" aria-hidden />
-              ) : null}
-              <h3 className="truncate text-[length:var(--p-text-sub)] font-bold tracking-tight text-heading">
-                {item.name}
-              </h3>
-              {item.dueCount > 0 ? (
-                <DueTag text={t('palaces.dueCount', { count: item.dueCount })} />
-              ) : null}
+          <button
+            type="button"
+            onClick={handleClick}
+            aria-label={t('palaces.openLabel', { name: item.name })}
+            className={cn(
+              'flex w-full items-center gap-3 rounded-card bg-card p-3 text-left shadow-rest',
+              !selectMode && 'pr-12',
+              ring,
+            )}
+          >
+            {selectMode ? <SelectDot selected={selected} /> : null}
+            <PalaceCover
+              icon={item.icon}
+              color={item.color}
+              image={item.image}
+              variant={coverVariant}
+              className="size-16 shrink-0 rounded-card"
+              iconClassName="text-3xl"
+            />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                {item.favorite ? (
+                  <Heart className="size-4 shrink-0 fill-favorite text-favorite" aria-hidden />
+                ) : null}
+                <h3 className="truncate text-[length:var(--p-text-sub)] font-bold tracking-tight text-heading">
+                  {item.name}
+                </h3>
+                {item.dueCount > 0 ? (
+                  <DueTag text={t('palaces.dueCount', { count: item.dueCount })} />
+                ) : null}
+              </div>
+              <p className="mt-0.5 truncate text-[length:var(--p-text-label)] text-muted-foreground">
+                {roomsLabel}
+              </p>
+              <div className="mt-2">
+                <ProgressMeter
+                  progress={item.progress}
+                  label={t('palaces.progressLabel', { progress: Math.round(item.progress) })}
+                />
+              </div>
             </div>
-            <p className="mt-0.5 truncate text-[length:var(--p-text-label)] text-muted-foreground">
-              {roomsLabel}
-            </p>
-            <div className="mt-2">
-              <ProgressMeter
-                progress={item.progress}
-                label={t('palaces.progressLabel', { progress: Math.round(item.progress) })}
-              />
-            </div>
-          </div>
-        </button>
-        {!selectMode && !dragging ? (
-          <CardMenu label={t('palaces.moreLabel', { name: item.name })} actions={actions} />
-        ) : null}
+          </button>
+          {!selectMode && !dragging ? (
+            <CardMenu label={t('palaces.moreLabel', { name: item.name })} actions={actions} />
+          ) : null}
+        </SwipeRow>
       </div>
     )
   }
@@ -622,7 +633,7 @@ function PalaceCard({
       <motion.button
         type="button"
         whileTap={reduce ? undefined : { scale: 0.98 }}
-        {...longPress}
+        onClick={handleClick}
         aria-label={t('palaces.openLabel', { name: item.name })}
         className={cn(
           'block w-full overflow-hidden rounded-card bg-card text-left shadow-rest',
@@ -680,12 +691,6 @@ function PalaceCard({
 function usePalaceActions(item: LibraryPalaceItem, handlers: LibraryHandlers): SheetAction[] {
   const { t } = useTranslation()
   return [
-    {
-      id: 'open',
-      label: t('palaces.open'),
-      icon: <DoorOpen className="size-5" aria-hidden />,
-      onSelect: () => handlers.onOpenPalace(item.id),
-    },
     {
       id: 'settings',
       label: t('palaces.settings'),
@@ -746,7 +751,14 @@ function SelectDot({ selected }: { selected: boolean }) {
 function CardMenu({ label, actions }: { label: string; actions: SheetAction[] }) {
   return (
     <div className="absolute right-2 top-2">
-      <FlyoutMenu label={label} actions={actions} variant="glass" size="sm" side="bottom" align="end" />
+      <FlyoutMenu
+        label={label}
+        actions={actions}
+        variant="glass"
+        size="sm"
+        side="bottom"
+        align="end"
+      />
     </div>
   )
 }

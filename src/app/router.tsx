@@ -604,7 +604,10 @@ const routeTree = rootRoute.addChildren([
 export const router = createRouter({
   routeTree,
   defaultPreload: 'intent',
-  scrollRestoration: true,
+  // Off by design: every screen is its own inner scroller that `AppScreen` resets to the top
+  // on mount. With restoration on, one screen's cached offset bled into the next (identical
+  // `<main>`) scroller, so detail/sub-pages opened pre-scrolled.
+  scrollRestoration: false,
 })
 
 declare module '@tanstack/react-router' {

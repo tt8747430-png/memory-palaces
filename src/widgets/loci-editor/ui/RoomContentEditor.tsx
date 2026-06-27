@@ -13,10 +13,8 @@ import {
   MapPin,
   Plus,
   RotateCcw,
-  Search,
   Trash2,
   Upload,
-  X,
 } from 'lucide-react'
 import {
   lociForRoom,
@@ -59,14 +57,7 @@ import {
   readContentFile,
 } from '@/features/content'
 import { ContentImportError, cn, parsePastedLoci, parseVerses } from '@/shared/lib'
-import {
-  ConfirmDialog,
-  ImportRow,
-  SegmentedControl,
-  Sheet,
-  SpeedDial,
-  TextField,
-} from '@/shared/ui'
+import { ConfirmDialog, ImportRow, SegmentedControl, Sheet, SpeedDial } from '@/shared/ui'
 import { CardRow, QuestionRow } from './ContentRows'
 import {
   CardEditorSheet,
@@ -80,6 +71,10 @@ export interface RoomContentEditorProps {
   roomId: string
   /** Used for export filenames. */
   roomName: string
+  /** Filters the active tab. Driven by the room header's search; empty = not searching. */
+  searchQuery?: string
+  /** Clears + closes the room-header search (wired to the "clear" affordance on no results). */
+  onClearSearch?: () => void
 }
 
 type Tab = 'loci' | 'questions'
@@ -94,7 +89,12 @@ type EditorTarget =
  * inline inside the room hub so studying and editing a room live on one page. Reads its
  * stores and drives the create/edit/move/duplicate commands directly.
  */
-export function RoomContentEditor({ roomId, roomName }: RoomContentEditorProps) {
+export function RoomContentEditor({
+  roomId,
+  roomName,
+  searchQuery,
+  onClearSearch,
+}: RoomContentEditorProps) {
   const { t } = useTranslation()
   const locusStore = useLocusStoreApi()
   const questionStore = useQuestionStoreApi()
@@ -110,7 +110,6 @@ export function RoomContentEditor({ roomId, roomName }: RoomContentEditorProps) 
   const questions = useMemo(() => questionsForRoom(allQuestions, roomId), [allQuestions, roomId])
 
   const [tab, setTab] = useState<Tab>('loci')
-  const [query, setQuery] = useState('')
   const [selectMode, setSelectMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [editor, setEditor] = useState<EditorTarget>(null)
@@ -123,7 +122,7 @@ export function RoomContentEditor({ roomId, roomName }: RoomContentEditorProps) 
   const fileRef = useRef<HTMLInputElement>(null)
   const importKind = useRef<'content' | 'anki'>('content')
 
-  const needle = query.trim().toLowerCase()
+  const needle = (searchQuery ?? '').trim().toLowerCase()
   const visibleLoci = useMemo(
     () =>
       needle
@@ -157,7 +156,6 @@ export function RoomContentEditor({ roomId, roomName }: RoomContentEditorProps) 
     setTab(next)
     setSelectMode(false)
     setSelectedIds(new Set())
-    setQuery('')
   }
 
   const toggleSelect = (id: string) =>
@@ -283,7 +281,7 @@ export function RoomContentEditor({ roomId, roomName }: RoomContentEditorProps) 
         />
       </div>
 
-      {/* Search + selection controls — always present so the chrome never jumps; Select is
+      {/* Selection control — search now lives in the room header (see RoomHubPage). Select is
           disabled until the tab has something to select. */}
       <div className="pb-2">
         {selectMode ? (
@@ -307,30 +305,7 @@ export function RoomContentEditor({ roomId, roomName }: RoomContentEditorProps) 
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <Search
-                className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-                aria-hidden
-              />
-              <TextField
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={isLoci ? t('loci.searchCards') : t('loci.searchQuestions')}
-                aria-label={isLoci ? t('loci.searchCards') : t('loci.searchQuestions')}
-                className="pl-9 pr-9"
-              />
-              {query ? (
-                <button
-                  type="button"
-                  onClick={() => setQuery('')}
-                  aria-label={t('loci.clearSearch')}
-                  className="absolute right-2 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-full text-muted-foreground hover:text-heading"
-                >
-                  <X className="size-4" aria-hidden />
-                </button>
-              ) : null}
-            </div>
+          <div className="flex items-center justify-end">
             <button
               type="button"
               onClick={() => setSelectMode(true)}
@@ -358,7 +333,7 @@ export function RoomContentEditor({ roomId, roomName }: RoomContentEditorProps) 
             total === 0 ? (
               <EmptyContent kind="loci" />
             ) : visible.length === 0 ? (
-              <NoResults onClear={() => setQuery('')} />
+              <NoResults onClear={() => onClearSearch?.()} />
             ) : (
               visibleLoci.map((locus) => (
                 <CardRow
@@ -393,7 +368,7 @@ export function RoomContentEditor({ roomId, roomName }: RoomContentEditorProps) 
           ) : total === 0 ? (
             <EmptyContent kind="questions" />
           ) : visible.length === 0 ? (
-            <NoResults onClear={() => setQuery('')} />
+            <NoResults onClear={() => onClearSearch?.()} />
           ) : (
             visibleQuestions.map((question) => (
               <QuestionRow

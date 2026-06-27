@@ -383,7 +383,7 @@ export const en = {
     openFolderLabel: 'Open folder {{name}}',
     folderActions: 'Folder actions for {{name}}',
     dropToFile: 'Drop to file',
-    editFolder: 'Rename & recolour',
+    editFolder: 'Edit folder',
     deleteFolderAction: 'Delete folder',
 
     // Per-palace actions
@@ -665,6 +665,8 @@ export const en = {
     back: 'Back',
     notFound: 'That room could not be found.',
     manageHeading: 'Cards & questions',
+    searchLabel: 'Search this room',
+    searchPlaceholder: 'Search cards & questions…',
     cardCountOne: '{{count}} card',
     cardCountOther: '{{count}} cards',
     questionCountOne: '{{count}} question',
