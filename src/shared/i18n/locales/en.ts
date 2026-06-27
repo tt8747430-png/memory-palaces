@@ -447,7 +447,11 @@ export const en = {
     colorLabel: 'Colour',
     iconColorLabel: 'Icon and colour',
     customColor: 'Custom colour',
-    createHint: 'Tap the icon to pick any emoji. You can add a cover photo later in settings.',
+    createHint: 'Tap the icon to pick any emoji from your keyboard.',
+    addCover: 'Add cover photo',
+    changeCover: 'Change cover photo',
+    removeCover: 'Remove cover photo',
+    photoError: 'Could not use that image. Try another.',
 
     // Empty states
     emptyTitle: 'Build your first palace',
@@ -462,7 +466,8 @@ export const en = {
     emptyFolderTitle: 'This folder is empty',
     emptyFolderBody:
       'Drag a palace onto this folder from the library, or create one here to file it inside.',
-    emptyFolderHint: 'Drag a palace onto this folder from the library, or tap the ＋ to add one here.',
+    emptyFolderHint:
+      'Drag a palace onto this folder from the library, or tap the ＋ to add one here.',
     folderNotFound: 'That folder could not be found.',
     emptySearchTitle: 'No matches',
     emptySearchBody: 'No palaces match “{{query}}”. Try a different search.',

@@ -21,7 +21,12 @@ export interface CreatePalaceSheetProps {
  * never a full-screen drawer (phone-first). The create command is the shared write-path, so
  * the AI Tutor can open the same flow.
  */
-export function CreatePalaceSheet({ open, onOpenChange, onCreated, folderId }: CreatePalaceSheetProps) {
+export function CreatePalaceSheet({
+  open,
+  onOpenChange,
+  onCreated,
+  folderId,
+}: CreatePalaceSheetProps) {
   const { t } = useTranslation()
   const store = usePalaceStoreApi()
   const [name, setName] = useState('')

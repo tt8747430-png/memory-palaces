@@ -52,7 +52,13 @@ export function PalaceIdentityFields({
     <div className="flex flex-col gap-5">
       {/* Live cover — exactly what the card will show — doubling as the photo control. */}
       <div className="relative overflow-hidden rounded-card shadow-rest">
-        <PalaceCover icon={icon} color={color} image={image} className="h-28 w-full" iconClassName="text-5xl" />
+        <PalaceCover
+          icon={icon}
+          color={color}
+          image={image}
+          className="h-28 w-full"
+          iconClassName="text-5xl"
+        />
         <div className="absolute inset-x-0 bottom-0 flex justify-end gap-2 p-2.5">
           {image ? (
             <IconButton
@@ -73,7 +79,13 @@ export function PalaceIdentityFields({
             <Camera className="size-4" aria-hidden />
           </IconButton>
         </div>
-        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePhoto} />
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handlePhoto}
+        />
       </div>
 
       <TextField
