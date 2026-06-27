@@ -77,17 +77,12 @@
     -webkit-touch-callout: none;
   }
 
-  /* The app shell, pinned to the viewport with position:fixed + inset:0 rather than a
-     height unit. Under `viewport-fit=cover` a `height: 100%`/`100dvh` chain resolves a hair
-     short of the bottom safe-area inset — and `dvh` re-rounds as the keyboard shows/hides —
-     exposing the bare white canvas as a seam below the ground (worst on the full-bleed dark
-     auth screens, where dark meets white). `inset: 0` is measured against the layout
-     viewport, which always spans the whole screen including the home-indicator inset, so the
-     shell fills it exactly and edge-to-edge on every paint, regardless of the keyboard.
-     It carries the Daylight ground — one lit-room gradient shared by every screen — so the
-     gradient is bottom-exact for the screens that let it show through; the shell never
-     scrolls (each screen owns an inner scroller), so the ground always covers the viewport
-     and never overscrolls into white. */
+  /* The app shell: a fixed, non-scrolling layer sized to the viewport (each screen owns its
+     own inner scroller). It carries the Daylight ground — one lit-room gradient shared by
+     every screen — so the ground always covers the viewport and never overscrolls into white.
+     Note: the intermittent white strip at the BOTTOM of the installed PWA was not a height
+     bug here — it was iOS offsetting the standalone viewport under a translucent status bar;
+     that's fixed at the meta layer (apple-mobile-web-app-status-bar-style in index.html). */
   #root {
     position: fixed;
     inset: 0;

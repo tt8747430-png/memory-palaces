@@ -13,10 +13,15 @@
     <meta content="#091A7A" name="theme-color" />
     <meta content="yes" name="mobile-web-app-capable" />
     <meta content="yes" name="apple-mobile-web-app-capable" />
-    <!-- black-translucent = the web view runs edge-to-edge UNDER the status bar, so iOS
-         never repaints its own opaque (white) bar over the app. A navy fill behind the
-         safe-area inset (RootLayout) keeps the strip on-brand with readable white text. -->
-    <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style" />
+    <!-- `black`, NOT `black-translucent`. In a standalone home-screen app, black-translucent
+         makes the web view extend UNDER the status bar, and iOS then offsets the entire
+         standalone viewport up by the status-bar height — which surfaces as an intermittent
+         white strip at the BOTTOM (env(safe-area-inset-bottom) reads 0; the gap equals
+         safe-area-inset-top). See Ionic #12948 / SO "white bar at bottom of WEB-APP". A
+         non-translucent bar reserves the status-bar area instead, so the viewport is never
+         offset and the bottom stays clean. `black` keeps white status-bar text for the dark
+         theme; modern iOS tints the bar from the manifest theme_color (navy) where supported. -->
+    <meta content="black" name="apple-mobile-web-app-status-bar-style" />
     <meta content="Mindscape" name="apple-mobile-web-app-title" />
     <meta
       content="Mindscape — Your Memory Palace. Train recall with the method of loci. Offline-first."
