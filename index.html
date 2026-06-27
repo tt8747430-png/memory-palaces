@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
     <link href="/apple-touch-icon.png" rel="apple-touch-icon" />
+    <!-- Hand-authored manifest in public/, served as-is. vite-plugin-pwa's own manifest
+         generation is turned off (`manifest: false`); it handles only the service worker.
+         pwacompat reads this file to build the iOS launch screen. -->
+    <link href="/manifest.webmanifest" rel="manifest" />
     <meta
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
       name="viewport"
