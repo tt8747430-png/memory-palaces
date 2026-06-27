@@ -63,20 +63,10 @@
 
   body {
     margin: 0;
-    /* 100% comes up short of the bottom safe-area inset under `viewport-fit=cover`, leaving a
-       white strip below the daylight ground (visible as a seam on the dark auth screens). The
-       dynamic viewport unit fills the true visible area, inset included; `100%` stays as the
-       fallback for engines without dvh. */
     height: 100%;
-    height: 100dvh;
     overflow: hidden;
     font-family: var(--p-font-sans);
     color: var(--text-primary);
-    /* The Daylight ground: one lit-room gradient shared by every screen. The shell
-       never scrolls (each screen owns an inner scroll container), so the gradient
-       always covers the viewport and never runs out into white on overscroll. */
-    background: var(--bg-daylight);
-    background-repeat: no-repeat;
     overscroll-behavior: none;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
@@ -87,9 +77,22 @@
     -webkit-touch-callout: none;
   }
 
+  /* The app shell, pinned to the viewport with position:fixed + inset:0 rather than a
+     height unit. Under `viewport-fit=cover` a `height: 100%`/`100dvh` chain resolves a hair
+     short of the bottom safe-area inset — and `dvh` re-rounds as the keyboard shows/hides —
+     exposing the bare white canvas as a seam below the ground (worst on the full-bleed dark
+     auth screens, where dark meets white). `inset: 0` is measured against the layout
+     viewport, which always spans the whole screen including the home-indicator inset, so the
+     shell fills it exactly and edge-to-edge on every paint, regardless of the keyboard.
+     It carries the Daylight ground — one lit-room gradient shared by every screen — so the
+     gradient is bottom-exact for the screens that let it show through; the shell never
+     scrolls (each screen owns an inner scroller), so the ground always covers the viewport
+     and never overscrolls into white. */
   #root {
-    height: 100%;
-    height: 100dvh;
+    position: fixed;
+    inset: 0;
+    background: var(--bg-daylight);
+    background-repeat: no-repeat;
   }
 
   h1,
