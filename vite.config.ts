@@ -1,32 +1,15 @@
 /// <reference types="vitest/config" />
 import { fileURLToPath, URL } from 'node:url'
-import { defineConfig, type Plugin } from 'vite'
+import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
-import { iosSplashDevices, splashHref, splashMedia } from './scripts/ios-splash-devices.mjs'
-
-// Inject the per-device <link rel="apple-touch-startup-image"> tags from the same device
-// list that generates the images (scripts/generate-ios-splash.mjs), so the tags and the
-// PNGs stay in lockstep and index.html stays free of a 13-line wall of <link>s.
-function iosSplashLinks(): Plugin {
-  return {
-    name: 'ios-splash-links',
-    transformIndexHtml: () =>
-      iosSplashDevices.map((device) => ({
-        tag: 'link',
-        attrs: { rel: 'apple-touch-startup-image', media: splashMedia(device), href: splashHref(device) },
-        injectTo: 'head',
-      })),
-  }
-}
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    iosSplashLinks(),
     VitePWA({
       // 'prompt' (not 'autoUpdate') so a waiting service worker surfaces an in-app
       // "update available" prompt the user taps, instead of silently applying on some
@@ -60,9 +43,6 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
-        // iOS caches the launch images itself when the app is added to the Home Screen, so
-        // keep them out of the runtime precache (they'd add ~1.2 MB for no benefit).
-        globIgnores: ['**/splash/**'],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
       },
