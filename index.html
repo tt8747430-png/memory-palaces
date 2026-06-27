@@ -3,20 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
-    <link href="/apple-touch-icon.png" rel="apple-touch-icon" />
+
     <!-- Hand-authored manifest in public/, served as-is. vite-plugin-pwa's own manifest
-         generation is turned off (`manifest: false`); it handles only the service worker.
-         pwacompat reads this file to build the iOS launch screen. -->
+         generation is turned off (`manifest: false`); it handles only the service worker. -->
     <link href="/manifest.webmanifest" rel="manifest" />
     <meta
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
       name="viewport"
     />
+
     <!-- Navy so the launch screen and the Android status bar match the navy safe-area
          band the app paints under the iOS status bar (white system text on navy). -->
     <meta content="#091A7A" name="theme-color" />
     <meta content="yes" name="mobile-web-app-capable" />
-    <meta content="yes" name="apple-mobile-web-app-capable" />
+
     <!-- `black`, NOT `black-translucent`. In a standalone home-screen app, black-translucent
          makes the web view extend UNDER the status bar, and iOS then offsets the entire
          standalone viewport up by the status-bar height — which surfaces as an intermittent
@@ -33,8 +33,241 @@
     />
     <title>Mindscape — Your Memory Palace</title>
 
-    <!-- iOS launch screen + apple-touch-icon are generated at runtime from the web app
-         manifest by pwacompat (imported in src/main.tsx), sized to the actual device. -->
+    <!-- Apple touch icon + iOS launch screens (every device, both orientations), generated
+         by pwa-asset-generator (`npm run generate:pwa-assets`) from assets/mindscape-logo.svg.
+         Static tags, images in public/pwa-assets/. -->
+    <link rel="apple-touch-icon" href="/pwa-assets/apple-icon-180.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-2064-2752.png"
+      media="(device-width: 1032px) and (device-height: 1376px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-2752-2064.png"
+      media="(device-width: 1032px) and (device-height: 1376px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-2048-2732.png"
+      media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-2732-2048.png"
+      media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-1668-2420.png"
+      media="(device-width: 834px) and (device-height: 1210px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-2420-1668.png"
+      media="(device-width: 834px) and (device-height: 1210px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-1668-2388.png"
+      media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-2388-1668.png"
+      media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-1668-2224.png"
+      media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-2224-1668.png"
+      media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-1536-2048.png"
+      media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-2048-1536.png"
+      media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-1640-2360.png"
+      media="(device-width: 820px) and (device-height: 1180px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-2360-1640.png"
+      media="(device-width: 820px) and (device-height: 1180px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-1620-2160.png"
+      media="(device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-2160-1620.png"
+      media="(device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-1488-2266.png"
+      media="(device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-2266-1488.png"
+      media="(device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-1320-2868.png"
+      media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-2868-1320.png"
+      media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-1206-2622.png"
+      media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-2622-1206.png"
+      media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-1260-2736.png"
+      media="(device-width: 420px) and (device-height: 912px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-2736-1260.png"
+      media="(device-width: 420px) and (device-height: 912px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-1290-2796.png"
+      media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-2796-1290.png"
+      media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-1179-2556.png"
+      media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-2556-1179.png"
+      media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-1170-2532.png"
+      media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-2532-1170.png"
+      media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-1284-2778.png"
+      media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-2778-1284.png"
+      media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-1080-2340.png"
+      media="(device-width: 360px) and (device-height: 780px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-2340-1080.png"
+      media="(device-width: 360px) and (device-height: 780px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-1242-2688.png"
+      media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-2688-1242.png"
+      media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-1125-2436.png"
+      media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-2436-1125.png"
+      media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-828-1792.png"
+      media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-1792-828.png"
+      media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-1242-2208.png"
+      media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-2208-1242.png"
+      media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-750-1334.png"
+      media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-1334-750.png"
+      media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-640-1136.png"
+      media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa-assets/apple-splash-1136-640.png"
+      media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+    />
   </head>
   <body>
     <div id="root">
@@ -43,7 +276,13 @@
            flash. It mirrors the launch image, so the hand-off is seamless. React clears
            #root on its first render. -->
       <div
-        style="position: fixed; inset: 0; display: grid; place-items: center; background: linear-gradient(to bottom, #091a7a, #4f8eff, #adc8ff)"
+        style="
+          position: fixed;
+          inset: 0;
+          display: grid;
+          place-items: center;
+          background: linear-gradient(to bottom, #091a7a, #4f8eff, #adc8ff);
+        "
       >
         <svg
           width="42%"
@@ -55,14 +294,14 @@
           stroke-linejoin="round"
           style="max-width: 180px"
         >
-          <path d="M40 64 L100 24 L160 64" />
-          <line x1="46" y1="64" x2="154" y2="64" />
-          <line x1="64" y1="64" x2="64" y2="166" />
-          <line x1="136" y1="64" x2="136" y2="166" />
-          <path d="M86 166 L86 126 A14 14 0 0 1 114 126 L114 166" />
-          <line x1="40" y1="166" x2="160" y2="166" />
-          <line x1="28" y1="178" x2="172" y2="178" />
-          <circle cx="100" cy="138" r="7" fill="#ffffff" stroke="none" />
+          <path d="M40 64 L100 24 L160 64"></path>
+          <line x1="46" y1="64" x2="154" y2="64"></line>
+          <line x1="64" y1="64" x2="64" y2="166"></line>
+          <line x1="136" y1="64" x2="136" y2="166"></line>
+          <path d="M86 166 L86 126 A14 14 0 0 1 114 126 L114 166"></path>
+          <line x1="40" y1="166" x2="160" y2="166"></line>
+          <line x1="28" y1="178" x2="172" y2="178"></line>
+          <circle cx="100" cy="138" r="7" fill="#ffffff" stroke="none"></circle>
         </svg>
       </div>
     </div>
