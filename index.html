@@ -30,7 +30,15 @@
     <title>Mindscape — Your Memory Palace</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Boot splash: paints the brand navy ground (matching the iOS launch image and the
+           SplashOverlay's first frame) the instant the HTML parses, so the cold-start gap
+           before React mounts is never a white or daylight flash. React clears #root on its
+           first render, handing off to the animated SplashOverlay. -->
+      <div
+        style="position: fixed; inset: 0; background: linear-gradient(to bottom, #091a7a, #4f8eff, #adc8ff)"
+      ></div>
+    </div>
     <script src="/src/main.tsx" type="module"></script>
   </body>
 </html>
