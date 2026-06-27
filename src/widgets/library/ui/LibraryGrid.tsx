@@ -566,9 +566,22 @@ function PalaceCard({
         )}
       >
         <SwipeRow
-          onSwipe={() => handlers.onArchivePalace(item.id)}
-          revealIcon={<Archive className="size-5" aria-hidden />}
-          tone="warning"
+          actions={[
+            {
+              id: 'archive',
+              icon: <Archive className="size-5" aria-hidden />,
+              label: t('palaces.archive'),
+              tone: 'warning',
+              onAction: () => handlers.onArchivePalace(item.id),
+            },
+            {
+              id: 'delete',
+              icon: <Trash2 className="size-5" aria-hidden />,
+              label: t('palaces.delete'),
+              tone: 'danger',
+              onAction: () => handlers.onDeletePalace(item.id),
+            },
+          ]}
           disabled={selectMode || dragActive || dragging}
           className="rounded-card"
         >
