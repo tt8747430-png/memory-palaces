@@ -5,14 +5,16 @@
 //
 //   npm run generate:ios-splash
 //
-import { mkdir, rm, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Resvg } from '@resvg/resvg-js'
 import { BRAND, markGroup } from './brand-mark.mjs'
-import { iosSplashDevices, ORIENTATIONS, physical } from './ios-splash-devices.mjs'
+import { iosSplashDevices, ORIENTATIONS, physical, splashHref, splashMedia } from './ios-splash-devices.mjs'
 
-const OUT = resolve(dirname(fileURLToPath(import.meta.url)), '../public/splash')
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+const OUT = resolve(ROOT, 'public/splash')
+const INDEX = resolve(ROOT, 'index.html')
 
 function svg(pw, ph) {
   const mark = Math.round(Math.min(pw, ph) * 0.4)
@@ -46,14 +48,30 @@ await rm(OUT, { recursive: true, force: true })
 await mkdir(OUT, { recursive: true })
 
 const written = new Set()
+const tags = []
 for (const device of iosSplashDevices) {
   for (const orientation of ORIENTATIONS) {
     const { pw, ph } = physical(device, orientation)
     const file = `apple-splash-${pw}x${ph}.png`
-    if (written.has(file)) continue // devices that share a resolution share one image
-    written.add(file)
-    await writeFile(resolve(OUT, file), new Resvg(svg(pw, ph)).render().asPng())
+    if (!written.has(file)) {
+      written.add(file)
+      await writeFile(resolve(OUT, file), new Resvg(svg(pw, ph)).render().asPng())
+    }
+    tags.push(
+      `    <link\n` +
+        `      rel="apple-touch-startup-image"\n` +
+        `      media="${splashMedia(device, orientation)}"\n` +
+        `      href="${splashHref(device, orientation)}"\n` +
+        `    />`,
+    )
   }
 }
 
-console.log(`${written.size} launch images → public/splash/`)
+// Materialise the <link> tags statically into index.html between the markers, so they are
+// always present in the served HTML (no build-time injection to depend on).
+const [START, END] = ['<!-- ios-splash:start -->', '<!-- ios-splash:end -->']
+const html = await readFile(INDEX, 'utf8')
+const block = `${START}\n${tags.join('\n')}\n    ${END}`
+await writeFile(INDEX, html.replace(new RegExp(`${START}[\\s\\S]*?${END}`), block))
+
+console.log(`${written.size} launch images → public/splash/ · ${tags.length} <link> tags → index.html`)

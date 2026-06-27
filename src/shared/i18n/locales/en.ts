@@ -92,11 +92,6 @@ export const en = {
     socialSoon: 'Social sign-in is coming soon.',
     continueAsGuest: 'Continue as a guest',
     guestNote: 'Explore first. Your progress is saved on this device.',
-    splash: {
-      tagline: 'Your Memory Palace',
-      enter: 'Enter',
-      skip: 'Skip intro',
-    },
     login: {
       title: 'Welcome back',
       subtitle: 'Sign in to continue your practice.',
