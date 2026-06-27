@@ -12,7 +12,8 @@ const FULL_MS = 2400
 const REDUCED_MS = 500
 
 /** Soft light bloom behind the mark — a single navy-ground aura, not a loop. */
-const AURA_BG = 'radial-gradient(circle at center, oklch(var(--p-tint-sky) / 0.45), transparent 60%)'
+const AURA_BG =
+  'radial-gradient(circle at center, oklch(var(--p-tint-sky) / 0.45), transparent 60%)'
 
 /** First-paint brand moment: a light aura blooms, the palace threshold draws itself
  * over a deep-navy ground, then the wordmark reveals a word at a time before handing

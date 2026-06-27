@@ -269,7 +269,9 @@ export function StudySession({
               <Button variant="secondary" onClick={() => setOptionsOpen(true)}>
                 {t('study.changeSelection')}
               </Button>
-              <Button onClick={() => changeScope({ kind: 'all' })}>{t('study.studyAllCards')}</Button>
+              <Button onClick={() => changeScope({ kind: 'all' })}>
+                {t('study.studyAllCards')}
+              </Button>
             </div>
           ) : (
             <Button onClick={onBack}>{t('study.done')}</Button>
@@ -297,7 +299,11 @@ export function StudySession({
               <p className="truncate text-[length:var(--p-text-label)]">{subtitle}</p>
             ) : null}
           </div>
-          <IconButton variant="glass" aria-label={t('study.options')} onClick={() => setOptionsOpen(true)}>
+          <IconButton
+            variant="glass"
+            aria-label={t('study.options')}
+            onClick={() => setOptionsOpen(true)}
+          >
             <MoreHorizontal className="size-5" aria-hidden />
           </IconButton>
         </div>
@@ -335,11 +341,19 @@ export function StudySession({
       {card ? (
         showPiles ? (
           <div className="flex items-center justify-between px-5 pt-3">
-            <PileChip tone="learning" count={state.status === 'review' ? state.piles.learning : 0} label={t('study.stillLearning')} />
+            <PileChip
+              tone="learning"
+              count={state.status === 'review' ? state.piles.learning : 0}
+              label={t('study.stillLearning')}
+            />
             <p className="text-[length:var(--p-text-label)] font-medium text-muted-foreground">
               {t('study.swipeToSort')}
             </p>
-            <PileChip tone="known" count={state.status === 'review' ? state.piles.known : 0} label={t('study.known')} />
+            <PileChip
+              tone="known"
+              count={state.status === 'review' ? state.piles.known : 0}
+              label={t('study.known')}
+            />
           </div>
         ) : (
           <div className="flex items-center justify-center gap-2 px-5 pt-3">
@@ -349,7 +363,10 @@ export function StudySession({
                 active={card.locus.flagged}
                 icon={
                   <Flag
-                    className={cn('size-4', card.locus.flagged && 'fill-[var(--rating)] text-[var(--rating-edge)]')}
+                    className={cn(
+                      'size-4',
+                      card.locus.flagged && 'fill-[var(--rating)] text-[var(--rating-edge)]',
+                    )}
                     aria-hidden
                   />
                 }
@@ -357,12 +374,24 @@ export function StudySession({
               />
             ) : null}
             {canEdit && onEditCard ? (
-              <ToolButton onClick={() => setEditing(true)} icon={<Pencil className="size-4" aria-hidden />} label={t('study.edit')} />
+              <ToolButton
+                onClick={() => setEditing(true)}
+                icon={<Pencil className="size-4" aria-hidden />}
+                label={t('study.edit')}
+              />
             ) : null}
             {canSpeak ? (
-              <ToolButton onClick={speakFace} icon={<Volume2 className="size-4" aria-hidden />} label={t('study.listen')} />
+              <ToolButton
+                onClick={speakFace}
+                icon={<Volume2 className="size-4" aria-hidden />}
+                label={t('study.listen')}
+              />
             ) : null}
-            <ToolButton onClick={() => dispatch({ type: 'skip' })} icon={<SkipForward className="size-4" aria-hidden />} label={t('study.skip')} />
+            <ToolButton
+              onClick={() => dispatch({ type: 'skip' })}
+              icon={<SkipForward className="size-4" aria-hidden />}
+              label={t('study.skip')}
+            />
           </div>
         )
       ) : null}
@@ -498,9 +527,13 @@ function EmptyState({
 }) {
   return (
     <div className="relative mx-auto flex h-full w-full max-w-[430px] flex-col items-center justify-center gap-5 px-6 text-center">
-      <div className="grid size-16 place-items-center rounded-card-featured bg-info-surface">{icon}</div>
+      <div className="grid size-16 place-items-center rounded-card-featured bg-info-surface">
+        {icon}
+      </div>
       <div>
-        <h2 className="mb-1 text-[length:var(--p-text-headline)] font-bold text-heading">{heading}</h2>
+        <h2 className="mb-1 text-[length:var(--p-text-headline)] font-bold text-heading">
+          {heading}
+        </h2>
         <p className="mx-auto max-w-[34ch] text-[length:var(--p-text-body)]">{body}</p>
       </div>
       {action}
@@ -559,7 +592,9 @@ function PileChip({
       <span
         className={cn(
           'flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-[length:var(--p-text-label)] font-bold',
-          known ? 'bg-[var(--success)] text-[var(--primary-foreground)]' : 'bg-[var(--warning)] text-[var(--warning-on-fill)]',
+          known
+            ? 'bg-[var(--success)] text-[var(--primary-foreground)]'
+            : 'bg-[var(--warning)] text-[var(--warning-on-fill)]',
         )}
       >
         {count}

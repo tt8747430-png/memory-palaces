@@ -19,9 +19,17 @@ describe('makeLocus', () => {
   })
 
   it('trims front/back and requires room, front, and back', () => {
-    expect(makeLocus({ id: 'l1', createdAt: T0, roomId: 'r1', front: '  Q  ', back: '  A  ' }).front).toBe('Q')
-    expect(() => makeLocus({ id: 'l1', createdAt: T0, roomId: '', front: 'Q', back: 'A' })).toThrow()
-    expect(() => makeLocus({ id: 'l1', createdAt: T0, roomId: 'r1', front: '  ', back: 'A' })).toThrow()
-    expect(() => makeLocus({ id: 'l1', createdAt: T0, roomId: 'r1', front: 'Q', back: '  ' })).toThrow()
+    expect(
+      makeLocus({ id: 'l1', createdAt: T0, roomId: 'r1', front: '  Q  ', back: '  A  ' }).front,
+    ).toBe('Q')
+    expect(() =>
+      makeLocus({ id: 'l1', createdAt: T0, roomId: '', front: 'Q', back: 'A' }),
+    ).toThrow()
+    expect(() =>
+      makeLocus({ id: 'l1', createdAt: T0, roomId: 'r1', front: '  ', back: 'A' }),
+    ).toThrow()
+    expect(() =>
+      makeLocus({ id: 'l1', createdAt: T0, roomId: 'r1', front: 'Q', back: '  ' }),
+    ).toThrow()
   })
 })

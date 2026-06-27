@@ -72,7 +72,6 @@ export function SettingsPrivacyPage({ onBack }: SettingsPrivacyPageProps) {
         />
       }
     >
-
       <div className="mt-4 flex flex-col gap-5 pb-28">
         <div className="rounded-card bg-info-surface p-4">
           <p className="text-[length:var(--p-text-sub)] font-semibold text-info-foreground">

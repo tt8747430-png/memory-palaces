@@ -2,10 +2,7 @@ export { cn } from './cn'
 export { authEntrance } from './motion'
 export { coverSquare, fileToAvatar, type CropRect } from './avatar'
 export { downloadText } from './download'
-export {
-  useStickyHeader,
-  type StickyHeader,
-} from './sticky-header/use-sticky-header'
+export { useStickyHeader, type StickyHeader } from './sticky-header/use-sticky-header'
 export {
   clampSwipeOffset,
   shouldCommitSwipe,

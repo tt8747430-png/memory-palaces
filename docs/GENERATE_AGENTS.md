@@ -10,9 +10,9 @@ Consider aspects like:
 - Project-specific conventions and patterns that differ from common practices
 - Integration points, external dependencies, and cross-component communication patterns
 
-Source existing AI conventions from *
-*/{.github/copilot-instructions.md,AGENT.md,AGENTS.md,CLAUDE.md,.cursorrules,.windsurfrules,.clinerules,.cursor/rules/**
-,.windsurf/rules/**,.clinerules/**,README.md} (do one glob search).
+Source existing AI conventions from \*
+\*/{.github/copilot-instructions.md,AGENT.md,AGENTS.md,CLAUDE.md,.cursorrules,.windsurfrules,.clinerules,.cursor/rules/**
+,.windsurf/rules/**,.clinerules/\*\*,README.md} (do one glob search).
 
 Guidelines (read more at <https://agents.md/>):
 

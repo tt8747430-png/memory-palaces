@@ -5,7 +5,11 @@ import { createRoomStore, makeRoom, type Room } from '@/entities/room'
 import { createLocusStore, makeLocus, type Locus } from '@/entities/locus'
 import { createQuestionStore, makeQuestion, type Question } from '@/entities/question'
 import { createProgressStore, makeProgress, type Progress } from '@/entities/progress'
-import { createNotificationStore, makeNotification, type AppNotification } from '@/entities/notification'
+import {
+  createNotificationStore,
+  makeNotification,
+  type AppNotification,
+} from '@/entities/notification'
 import { PROGRESS_ID } from '@/features/progress'
 import { clearAllContent, clearNotifications, resetEverything, resetProgress } from './index'
 

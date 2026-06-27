@@ -43,7 +43,9 @@ export function QuickActionsSheet({
       <div className="space-y-2 pb-2">
         <button type="button" onClick={run(onFlag)} disabled={!canEdit} className={row}>
           <Flag
-            className={flagged ? 'size-[19px] fill-[var(--rating)] text-[var(--rating-edge)]' : 'size-[19px]'}
+            className={
+              flagged ? 'size-[19px] fill-[var(--rating)] text-[var(--rating-edge)]' : 'size-[19px]'
+            }
             aria-hidden
           />
           {flagged ? t('study.removeFlag') : t('study.flagThis')}

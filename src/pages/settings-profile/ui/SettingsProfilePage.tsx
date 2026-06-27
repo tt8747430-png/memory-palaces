@@ -115,7 +115,8 @@ export function SettingsProfilePage({
     setForm((current) => ({ ...current, [key]: value }))
 
   const emailValid = form.email.trim() === '' || EMAIL_RE.test(form.email.trim())
-  const phoneValid = form.phone.trim() === '' || form.phone.replace(/\D/g, '').length >= MIN_PHONE_DIGITS
+  const phoneValid =
+    form.phone.trim() === '' || form.phone.replace(/\D/g, '').length >= MIN_PHONE_DIGITS
   const canSave = emailValid && phoneValid
 
   const handlePhoto = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -170,7 +171,6 @@ export function SettingsProfilePage({
         />
       }
     >
-
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -195,7 +195,9 @@ export function SettingsProfilePage({
               type="button"
               onClick={() => fileRef.current?.click()}
               aria-label={t(
-                form.avatar ? 'settings.profileEdit.changePhoto' : 'settings.profileEdit.uploadPhoto',
+                form.avatar
+                  ? 'settings.profileEdit.changePhoto'
+                  : 'settings.profileEdit.uploadPhoto',
               )}
               whileTap={{ scale: 0.9 }}
               transition={{ type: 'spring', stiffness: 400, damping: 24 }}

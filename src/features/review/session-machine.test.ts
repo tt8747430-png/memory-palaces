@@ -35,7 +35,12 @@ describe('initSession', () => {
   })
 
   it('builds a browse session at position 0', () => {
-    expect(browse(['a', 'b'])).toEqual({ status: 'browse', ids: ['a', 'b'], pos: 0, flipped: false })
+    expect(browse(['a', 'b'])).toEqual({
+      status: 'browse',
+      ids: ['a', 'b'],
+      pos: 0,
+      flipped: false,
+    })
   })
 })
 
@@ -53,7 +58,10 @@ describe('flip', () => {
 
 describe('grade (review)', () => {
   it('good dequeues the card, advances, counts it known, resets the flip', () => {
-    const next = sessionReducer({ ...review(['a', 'b']), flipped: true }, { type: 'grade', grade: 'good' })
+    const next = sessionReducer(
+      { ...review(['a', 'b']), flipped: true },
+      { type: 'grade', grade: 'good' },
+    )
     expect(next).toEqual({
       status: 'review',
       queue: ['b'],
@@ -137,12 +145,16 @@ describe('selectors', () => {
     const r = review(['a', 'b'])
     expect(currentId(r)).toBe('a')
     expect(nextId(r)).toBe('b')
-    expect(currentId({ status: 'complete', graded: 0, piles: { learning: 0, known: 0 } })).toBeUndefined()
+    expect(
+      currentId({ status: 'complete', graded: 0, piles: { learning: 0, known: 0 } }),
+    ).toBeUndefined()
   })
 
   it('progress is graded/total in review and pos/length in browse', () => {
     expect(sessionProgress(review(['a', 'b', 'c', 'd']))).toBe(0)
     expect(sessionProgress({ ...browse(['a', 'b']), pos: 1 })).toBe(1)
-    expect(sessionProgress({ status: 'complete', graded: 2, piles: { learning: 0, known: 2 } })).toBe(1)
+    expect(
+      sessionProgress({ status: 'complete', graded: 2, piles: { learning: 0, known: 2 } }),
+    ).toBe(1)
   })
 })

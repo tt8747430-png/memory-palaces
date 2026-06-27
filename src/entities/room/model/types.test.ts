@@ -18,8 +18,14 @@ describe('makeRoom', () => {
   })
 
   it('rejects an empty title, a missing palace, or a negative order', () => {
-    expect(() => makeRoom({ id: 'r1', createdAt: T0, palaceId: 'p1', title: '  ', order: 0 })).toThrow()
-    expect(() => makeRoom({ id: 'r1', createdAt: T0, palaceId: '', title: 'Kitchen', order: 0 })).toThrow()
-    expect(() => makeRoom({ id: 'r1', createdAt: T0, palaceId: 'p1', title: 'Kitchen', order: -1 })).toThrow()
+    expect(() =>
+      makeRoom({ id: 'r1', createdAt: T0, palaceId: 'p1', title: '  ', order: 0 }),
+    ).toThrow()
+    expect(() =>
+      makeRoom({ id: 'r1', createdAt: T0, palaceId: '', title: 'Kitchen', order: 0 }),
+    ).toThrow()
+    expect(() =>
+      makeRoom({ id: 'r1', createdAt: T0, palaceId: 'p1', title: 'Kitchen', order: -1 }),
+    ).toThrow()
   })
 })

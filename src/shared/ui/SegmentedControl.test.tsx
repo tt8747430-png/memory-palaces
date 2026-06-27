@@ -18,8 +18,14 @@ describe('SegmentedControl', () => {
 
   it('marks the active option with aria-pressed', () => {
     render(<SegmentedControl options={options} value="statistics" onChange={() => {}} />)
-    expect(screen.getByRole('button', { name: 'Statistics' })).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByRole('button', { name: 'Achievements' })).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByRole('button', { name: 'Statistics' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    expect(screen.getByRole('button', { name: 'Achievements' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    )
   })
 
   it('calls onChange with the option value when a segment is tapped', () => {

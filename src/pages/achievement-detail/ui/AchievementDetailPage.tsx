@@ -85,7 +85,11 @@ export function AchievementDetailPage({ achievementId, onBack }: AchievementDeta
     return (
       <AppScreen
         header={
-          <ScreenHeader title={t('achievementsPage.title')} onBack={onBack} backLabel={t('common.back')} />
+          <ScreenHeader
+            title={t('achievementsPage.title')}
+            onBack={onBack}
+            backLabel={t('common.back')}
+          />
         }
       />
     )
@@ -126,7 +130,11 @@ export function AchievementDetailPage({ achievementId, onBack }: AchievementDeta
                 : 'mt-4 inline-flex items-center gap-1.5 rounded-full bg-info-surface px-3 py-1 text-[length:var(--p-text-label)] font-bold text-info-foreground'
             }
           >
-            {earned ? <Check className="size-4" aria-hidden /> : <Lock className="size-3.5" aria-hidden />}
+            {earned ? (
+              <Check className="size-4" aria-hidden />
+            ) : (
+              <Lock className="size-3.5" aria-hidden />
+            )}
             {t(earned ? 'achievementDetail.earned' : 'achievementDetail.locked')}
           </span>
         </section>

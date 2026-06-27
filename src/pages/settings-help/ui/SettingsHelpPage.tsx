@@ -27,7 +27,6 @@ export function SettingsHelpPage({ onBack }: { onBack?: () => void }) {
         />
       }
     >
-
       <div className="mt-4 flex flex-col gap-6 pb-28">
         <p className="px-1 text-[length:var(--p-text-sub)] text-muted-foreground">
           {t('settings.help.intro')}

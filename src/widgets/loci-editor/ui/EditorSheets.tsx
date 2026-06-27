@@ -23,7 +23,9 @@ export interface QuestionData {
 function FieldLabel({ children, count }: { children: ReactNode; count?: number }) {
   return (
     <div className="mb-1.5 flex items-baseline justify-between">
-      <span className="text-[length:var(--p-text-label)] font-semibold text-heading">{children}</span>
+      <span className="text-[length:var(--p-text-label)] font-semibold text-heading">
+        {children}
+      </span>
       {count !== undefined ? (
         <span className="text-[length:var(--p-text-tiny)] tabular-nums text-muted-foreground">
           {count}

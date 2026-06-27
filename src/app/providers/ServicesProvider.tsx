@@ -26,19 +26,19 @@ export function ServicesProvider({
         <PalaceStoreContext value={services.palaceStore}>
           <FolderStoreContext value={services.folderStore}>
             <RoomStoreContext value={services.roomStore}>
-            <LocusStoreContext value={services.locusStore}>
-              <QuestionStoreContext value={services.questionStore}>
-                <ProgressStoreContext value={services.progressStore}>
-                  <PreferencesStoreContext value={services.preferencesStore}>
-                    <ProfileStoreContext value={services.profileStore}>
-                      <NotificationStoreContext value={services.notificationStore}>
-                        <EventBusContext value={services.eventBus}>{children}</EventBusContext>
-                      </NotificationStoreContext>
-                    </ProfileStoreContext>
-                  </PreferencesStoreContext>
-                </ProgressStoreContext>
-              </QuestionStoreContext>
-            </LocusStoreContext>
+              <LocusStoreContext value={services.locusStore}>
+                <QuestionStoreContext value={services.questionStore}>
+                  <ProgressStoreContext value={services.progressStore}>
+                    <PreferencesStoreContext value={services.preferencesStore}>
+                      <ProfileStoreContext value={services.profileStore}>
+                        <NotificationStoreContext value={services.notificationStore}>
+                          <EventBusContext value={services.eventBus}>{children}</EventBusContext>
+                        </NotificationStoreContext>
+                      </ProfileStoreContext>
+                    </PreferencesStoreContext>
+                  </ProgressStoreContext>
+                </QuestionStoreContext>
+              </LocusStoreContext>
             </RoomStoreContext>
           </FolderStoreContext>
         </PalaceStoreContext>

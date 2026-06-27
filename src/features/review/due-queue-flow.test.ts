@@ -15,7 +15,13 @@ const palaces = [{ id: 'p1', name: 'Palace' }]
 const rooms = [{ id: 'r1', palaceId: 'p1', title: 'Room' }]
 
 function card(id: string): Locus {
-  return makeLocus({ id, createdAt: new Date(0).toISOString(), roomId: 'r1', front: 'a', back: 'b' })
+  return makeLocus({
+    id,
+    createdAt: new Date(0).toISOString(),
+    roomId: 'r1',
+    front: 'a',
+    back: 'b',
+  })
 }
 
 function storeWith(loci: Locus[]) {

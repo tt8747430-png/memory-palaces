@@ -11,9 +11,9 @@ Workflow changes: new build commands, changed test procedures, updated debugging
 Convention changes: new patterns, deprecated practices, renamed files/directories
 New integration points or external dependencies
 
-Source existing AI conventions from *
-*/{.github/copilot-instructions.md,AGENT.md,AGENTS.md,CLAUDE.md,.cursorrules,.windsurfrules,.clinerules,.cursor/rules/**
-,.windsurf/rules/**,.clinerules/**,README.md} (do one glob search).
+Source existing AI conventions from \*
+\*/{.github/copilot-instructions.md,AGENT.md,AGENTS.md,CLAUDE.md,.cursorrules,.windsurfrules,.clinerules,.cursor/rules/**
+,.windsurf/rules/**,.clinerules/\*\*,README.md} (do one glob search).
 
 Apply minimal, surgical updates. Follow these guidelines (read more at <https://agents.md/>):
 Do NOT rewrite or rephrase sections that are still accurate — leave them exactly as they are

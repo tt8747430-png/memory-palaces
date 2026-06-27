@@ -20,7 +20,9 @@ export function SettingsChangePasswordPage({ onBack }: SettingsChangePasswordPag
   // Validate live so the eye-toggle fields guide as you type and Save only lights up
   // once the change is actually valid.
   const nextError =
-    next.length > 0 && next.length < MIN_PASSWORD ? t('settings.changePasswordScreen.short') : undefined
+    next.length > 0 && next.length < MIN_PASSWORD
+      ? t('settings.changePasswordScreen.short')
+      : undefined
   const confirmError =
     confirm.length > 0 && confirm !== next ? t('settings.changePasswordScreen.mismatch') : undefined
   const canSave = current.length > 0 && next.length >= MIN_PASSWORD && confirm === next
@@ -45,7 +47,6 @@ export function SettingsChangePasswordPage({ onBack }: SettingsChangePasswordPag
         />
       }
     >
-
       <form className="mt-4 flex flex-col gap-4 pb-28" onSubmit={handleSubmit} noValidate>
         <PasswordField
           id="current-password"

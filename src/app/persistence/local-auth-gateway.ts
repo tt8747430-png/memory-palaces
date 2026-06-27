@@ -1,9 +1,4 @@
-import type {
-  AuthGateway,
-  PersistedAuth,
-  SignInInput,
-  SignUpInput,
-} from '@/shared/api'
+import type { AuthGateway, PersistedAuth, SignInInput, SignUpInput } from '@/shared/api'
 
 const STORAGE_KEY = 'mindscape:auth'
 

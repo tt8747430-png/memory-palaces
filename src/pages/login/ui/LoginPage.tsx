@@ -74,7 +74,12 @@ export function LoginPage({ onAuthed, onGuest, onSignup, onForgot }: LoginPagePr
           </div>
         </motion.header>
 
-        <motion.form variants={rise} className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
+        <motion.form
+          variants={rise}
+          className="flex flex-col gap-4"
+          onSubmit={handleSubmit}
+          noValidate
+        >
           <AuthField
             id="email"
             label={t('auth.emailLabel')}

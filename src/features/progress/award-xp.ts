@@ -11,7 +11,11 @@ export async function awardXp(
 ): Promise<Progress> {
   const base = currentProgress(store, now)
   const gained = Math.max(0, Math.round(amount))
-  const updated: Progress = { ...base, xp: base.xp + gained, updatedAt: new Date(now).toISOString() }
+  const updated: Progress = {
+    ...base,
+    xp: base.xp + gained,
+    updatedAt: new Date(now).toISOString(),
+  }
   await store.getState().save(updated)
   return updated
 }

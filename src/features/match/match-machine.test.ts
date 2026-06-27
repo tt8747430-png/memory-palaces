@@ -124,10 +124,10 @@ describe('clearWrong + reset', () => {
 describe('remainingPairs', () => {
   it('is the count of unmatched pairs', () => {
     expect(remainingPairs(play())).toBe(2)
-    const one = matchReducer(
-      matchReducer(play(), { type: 'pick', tileId: 'a-t' }),
-      { type: 'pick', tileId: 'a-d' },
-    )
+    const one = matchReducer(matchReducer(play(), { type: 'pick', tileId: 'a-t' }), {
+      type: 'pick',
+      tileId: 'a-d',
+    })
     expect(remainingPairs(one)).toBe(1)
   })
 })
