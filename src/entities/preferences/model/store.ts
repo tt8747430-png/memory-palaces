@@ -1,6 +1,6 @@
 import { createStore, type StoreApi } from 'zustand/vanilla'
 import type { Unsubscribe } from '@/shared/api'
-import type { PreferencesRepository } from '../api/preferences-repository'
+import type { PreferencesRepository } from '@/entities/preferences'
 import type { Preferences } from './types'
 
 export type PreferencesStatus = 'idle' | 'loading' | 'ready'

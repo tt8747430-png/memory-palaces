@@ -1,5 +1,5 @@
 import { createStore, type StoreApi } from 'zustand/vanilla'
-import type { SessionRepository } from '../api/session-repository'
+import type { SessionRepository } from '@/entities/session'
 import type { Session } from './types'
 
 export type SessionStatus = 'idle' | 'loading' | 'ready'

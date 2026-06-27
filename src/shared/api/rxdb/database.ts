@@ -1,6 +1,6 @@
 import type { RxCollection, RxDatabase, RxJsonSchema, RxStorage } from 'rxdb'
 import { createRxDatabase } from 'rxdb'
-import type { Identifiable } from '../base-repository'
+import type { Identifiable } from '@/shared/api'
 
 export interface OpenRxdbCollectionConfig<
   T extends Identifiable,

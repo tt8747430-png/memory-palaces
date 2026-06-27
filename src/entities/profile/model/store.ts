@@ -1,6 +1,6 @@
 import { createStore, type StoreApi } from 'zustand/vanilla'
 import type { Unsubscribe } from '@/shared/api'
-import type { ProfileRepository } from '../api/profile-repository'
+import type { ProfileRepository } from '@/entities/profile'
 import type { Profile } from './types'
 
 export type ProfileStatus = 'idle' | 'loading' | 'ready'

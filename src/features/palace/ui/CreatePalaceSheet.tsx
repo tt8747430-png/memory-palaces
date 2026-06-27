@@ -4,7 +4,7 @@ import { Sparkles } from 'lucide-react'
 import { DEFAULT_PALACE_COLOR, DEFAULT_PALACE_ICON, usePalaceStoreApi } from '@/entities/palace'
 import { Button, Sheet } from '@/shared/ui'
 import { createPalace } from '../create-palace'
-import { PalaceIdentityFields } from './PalaceIdentityFields'
+import { PalaceIdentityFields } from '@/features/palace'
 
 export interface CreatePalaceSheetProps {
   open: boolean

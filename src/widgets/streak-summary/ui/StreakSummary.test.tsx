@@ -4,6 +4,7 @@ import { MotionConfig } from 'motion/react'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
 import { StreakSummary } from './StreakSummary'
+import * as React from 'react'
 
 afterEach(cleanup)
 

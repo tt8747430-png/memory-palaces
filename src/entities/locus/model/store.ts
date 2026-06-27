@@ -1,6 +1,6 @@
 import { createStore, type StoreApi } from 'zustand/vanilla'
 import type { Unsubscribe } from '@/shared/api'
-import type { LocusRepository } from '../api/locus-repository'
+import type { LocusRepository } from '@/entities/locus'
 import type { Locus } from './types'
 
 export type LocusStatus = 'idle' | 'loading' | 'ready'

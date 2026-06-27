@@ -1,6 +1,6 @@
 import { createStore, type StoreApi } from 'zustand/vanilla'
 import type { Unsubscribe } from '@/shared/api'
-import type { ProgressRepository } from '../api/progress-repository'
+import type { ProgressRepository } from '@/entities/progress'
 import type { Progress } from './types'
 
 export type ProgressStatus = 'idle' | 'loading' | 'ready'

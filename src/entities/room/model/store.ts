@@ -1,6 +1,6 @@
 import { createStore, type StoreApi } from 'zustand/vanilla'
 import type { Unsubscribe } from '@/shared/api'
-import type { RoomRepository } from '../api/room-repository'
+import type { RoomRepository } from '@/entities/room'
 import type { Room } from './types'
 
 export type RoomStatus = 'idle' | 'loading' | 'ready'

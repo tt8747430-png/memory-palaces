@@ -1,6 +1,6 @@
 import { createStore, type StoreApi } from 'zustand/vanilla'
 import type { Unsubscribe } from '@/shared/api'
-import type { NotificationRepository } from '../api/notification-repository'
+import type { NotificationRepository } from '@/entities/notification'
 import type { AppNotification } from './types'
 
 export type NotificationStatus = 'idle' | 'loading' | 'ready'

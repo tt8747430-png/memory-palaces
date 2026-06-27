@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto'
 import type { RxJsonSchema } from 'rxdb'
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie'
 import { describe, expect, it } from 'vitest'
-import type { Identifiable } from '../base-repository'
+import type { Identifiable } from '@/shared/api'
 import { openRxdbCollection } from './database'
 import { RxdbRepository } from './rxdb-repository'
 

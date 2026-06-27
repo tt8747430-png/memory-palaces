@@ -1,6 +1,6 @@
 import { createStore, type StoreApi } from 'zustand/vanilla'
 import type { Unsubscribe } from '@/shared/api'
-import type { FolderRepository } from '../api/folder-repository'
+import type { FolderRepository } from '@/entities/folder'
 import type { Folder } from './types'
 
 export type FolderStatus = 'idle' | 'loading' | 'ready'

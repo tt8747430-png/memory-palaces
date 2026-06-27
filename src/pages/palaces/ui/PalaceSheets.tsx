@@ -5,6 +5,7 @@ import { DEFAULT_FOLDER_ICON, type Folder } from '@/entities/folder'
 import { FolderForm } from '@/widgets/folder-form'
 import { cn } from '@/shared/lib'
 import { Button, FolderGlyph, Sheet } from '@/shared/ui'
+import * as React from 'react'
 
 export interface MoveToFolderSheetProps {
   open: boolean

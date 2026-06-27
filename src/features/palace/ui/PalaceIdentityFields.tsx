@@ -4,7 +4,8 @@ import { toast } from 'sonner'
 import { Camera, X } from 'lucide-react'
 import { fileToAvatar } from '@/shared/lib'
 import { IconButton, PalaceCover, TextField } from '@/shared/ui'
-import { IconColorRow } from './appearance-pickers'
+import { IconColorRow } from '@/features/palace'
+import * as React from 'react'
 
 export interface PalaceIdentityFieldsProps {
   name: string

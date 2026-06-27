@@ -1,6 +1,6 @@
 import { createStore, type StoreApi } from 'zustand/vanilla'
 import type { Unsubscribe } from '@/shared/api'
-import type { QuestionRepository } from '../api/question-repository'
+import type { QuestionRepository } from '@/entities/question'
 import type { Question } from './types'
 
 export type QuestionStatus = 'idle' | 'loading' | 'ready'

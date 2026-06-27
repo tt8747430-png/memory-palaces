@@ -13,7 +13,7 @@ import {
   type Preferences,
   PreferencesStoreContext,
 } from '@/entities/preferences'
-import { VerseStudyPage } from './VerseStudyPage'
+import { VerseStudyPage } from '@/pages/verse'
 
 afterEach(cleanup)
 

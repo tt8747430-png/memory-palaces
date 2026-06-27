@@ -1,5 +1,5 @@
 import type { RxCollection } from 'rxdb'
-import type { Identifiable, Repository, Unsubscribe } from '../base-repository'
+import type { Identifiable, Repository, Unsubscribe } from '@/shared/api'
 
 /**
  * RxDB adapter for the generic {@link Repository} port — the on-device source of

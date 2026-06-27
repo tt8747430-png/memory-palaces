@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/shared/lib'
 import { OverflowMenuButton, type SheetAction, SwipeRow } from '@/shared/ui'
+import * as React from 'react'
 
 /** A room plus the progress derived from its loci/questions — everything a card renders. */
 export interface RoomListItem {
@@ -197,11 +198,11 @@ function RoomCard({
           <div className="flex items-start gap-3">
             <Medallion position={room.position} completed={room.completed} />
             <div className="min-w-0 flex-1">
-              <h3 className="truncate text-[length:var(--p-text-sub)] font-semibold text-heading">
+              <h3 className="truncate text-(length:--p-text-sub) font-semibold text-heading">
                 {room.title}
               </h3>
               {room.description ? (
-                <p className="mt-0.5 truncate text-[length:var(--p-text-label)] text-muted-foreground">
+                <p className="mt-0.5 truncate text-(length:--p-text-label) text-muted-foreground">
                   {room.description}
                 </p>
               ) : null}
@@ -216,7 +217,7 @@ function RoomCard({
                   style={{ width: `${pct}%` }}
                 />
               </span>
-              <span className="text-[length:var(--p-text-tiny)] font-bold tabular-nums text-primary">
+              <span className="text-(length:--p-text-tiny) font-bold tabular-nums text-primary">
                 {pct}%
               </span>
             </div>
@@ -243,9 +244,9 @@ function Medallion({ position, completed }: { position: number; completed: boole
     <span
       aria-hidden
       className={cn(
-        'mt-0.5 grid size-8 shrink-0 place-items-center rounded-full text-[length:var(--p-text-label)] font-bold tabular-nums',
+        'mt-0.5 grid size-8 shrink-0 place-items-center rounded-full text-(length:--p-text-label) font-bold tabular-nums',
         completed
-          ? 'bg-[var(--success-surface)] text-[var(--success-on-surface)]'
+          ? 'bg-(--success-surface) text-(--success-on-surface)'
           : 'bg-secondary text-secondary-foreground',
       )}
     >
@@ -258,7 +259,7 @@ function RoomStats({ room }: { room: RoomListItem }) {
   const { t } = useTranslation()
   if (room.lociCount === 0) {
     return (
-      <p className="mt-2.5 text-[length:var(--p-text-label)] text-muted-foreground">
+      <p className="mt-2.5 text-(length:--p-text-label) text-muted-foreground">
         {t('rooms.card.empty')}
       </p>
     )
@@ -278,12 +279,12 @@ function RoomStats({ room }: { room: RoomListItem }) {
         </Stat>
       ) : null}
       <Stat
-        icon={<GraduationCap className="size-3.5 text-[var(--success-foreground)]" aria-hidden />}
+        icon={<GraduationCap className="size-3.5 text-(--success-foreground)" aria-hidden />}
       >
         {t('rooms.card.mastered', { known: room.knownCount, total: room.lociCount })}
       </Stat>
       {room.dueCount > 0 ? (
-        <span className="inline-flex items-center rounded-pill bg-[var(--warning-surface)] px-2 py-0.5 text-[length:var(--p-text-tiny)] font-bold text-[var(--warning-foreground)]">
+        <span className="inline-flex items-center rounded-pill bg-(--warning-surface) px-2 py-0.5 text-(length:--p-text-tiny) font-bold text-(--warning-foreground)">
           {t('rooms.card.due', { count: room.dueCount })}
         </span>
       ) : null}
@@ -293,7 +294,7 @@ function RoomStats({ room }: { room: RoomListItem }) {
 
 function Stat({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
   return (
-    <span className="inline-flex items-center gap-1.5 text-[length:var(--p-text-label)] font-medium text-heading">
+    <span className="inline-flex items-center gap-1.5 text-(length:--p-text-label) font-medium text-heading">
       {icon}
       {children}
     </span>

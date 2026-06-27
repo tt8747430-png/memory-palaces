@@ -75,6 +75,7 @@ import {
   StickyBar,
 } from '@/shared/ui'
 import { FolderSheet, MoveToFolderSheet } from './PalaceSheets'
+import * as React from 'react'
 
 /** The archived view is a reserved "folder" id, so it rides the same `?folder=` navigation. */
 export const ARCHIVED_VIEW = '__archived__'

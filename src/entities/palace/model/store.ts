@@ -1,6 +1,6 @@
 import { createStore, type StoreApi } from 'zustand/vanilla'
 import type { Unsubscribe } from '@/shared/api'
-import type { PalaceRepository } from '../api/palace-repository'
+import type { PalaceRepository } from '@/entities/palace'
 import type { Palace } from './types'
 
 export type PalaceStatus = 'idle' | 'loading' | 'ready'

@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next'
 import { cn, impact, tick } from '@/shared/lib'
 import { Chip, SrsStatusChip } from '@/shared/ui'
 import type { StudyCard, StudyDirection } from '../model/types'
+import * as React from 'react'
 
 export type SwipeAction = 'right' | 'left' | 'up' | 'down'
 

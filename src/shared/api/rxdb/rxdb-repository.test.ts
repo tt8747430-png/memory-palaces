@@ -1,7 +1,7 @@
 import type { RxJsonSchema } from 'rxdb'
 import { getRxStorageMemory } from 'rxdb/plugins/storage-memory'
 import { runRepositoryContract } from '@/shared/test/repository-contract'
-import type { Identifiable } from '../base-repository'
+import type { Identifiable } from '@/shared/api'
 import { openRxdbCollection } from './database'
 import { RxdbRepository } from './rxdb-repository'
 
