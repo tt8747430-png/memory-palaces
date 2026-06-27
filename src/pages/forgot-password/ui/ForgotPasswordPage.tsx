@@ -90,9 +90,7 @@ export function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) {
               {sent ? t('auth.forgot.sentTitle') : t('auth.forgot.title')}
             </h1>
             <p className="text-pretty text-muted-foreground">
-              {sent
-                ? t('auth.forgot.sentBody', { email: maskEmail(email.trim()) })
-                : t('auth.forgot.subtitle')}
+              {sent ? t('auth.forgot.sentBody', { email: maskEmail(email.trim()) }) : t('auth.forgot.subtitle')}
             </p>
           </div>
         </header>
@@ -105,9 +103,7 @@ export function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) {
             disabled={cooldown > 0}
             onClick={() => void send()}
           >
-            {cooldown > 0
-              ? t('auth.forgot.resendIn', { seconds: cooldown })
-              : t('auth.forgot.resend')}
+            {cooldown > 0 ? t('auth.forgot.resendIn', { seconds: cooldown }) : t('auth.forgot.resend')}
           </Button>
         ) : (
           <form className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>

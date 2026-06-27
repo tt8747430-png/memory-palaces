@@ -23,9 +23,7 @@ describe('parsePastedLoci', () => {
 
 describe('parseAnkiText', () => {
   it('parses tab-separated notes, skipping # directives and stripping HTML', () => {
-    const loci = parseAnkiText(
-      '#separator:tab\n#html:true\nFront 1\tBack <b>1</b>\nFront 2\tBack 2',
-    )
+    const loci = parseAnkiText('#separator:tab\n#html:true\nFront 1\tBack <b>1</b>\nFront 2\tBack 2')
     expect(loci).toEqual([
       { front: 'Front 1', back: 'Back 1' },
       { front: 'Front 2', back: 'Back 2' },
@@ -51,10 +49,7 @@ describe('parseRoomContent', () => {
   })
 
   it('reads a questions CSV with a 1-based answer column', () => {
-    const content = parseRoomContent(
-      'prompt,option1,option2,answer\nClosest planet?,Mercury,Venus,1',
-      'q.csv',
-    )
+    const content = parseRoomContent('prompt,option1,option2,answer\nClosest planet?,Mercury,Venus,1', 'q.csv')
     expect(content.questions).toEqual([
       { prompt: 'Closest planet?', options: ['Mercury', 'Venus'], correctAnswer: 0 },
     ])

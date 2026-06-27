@@ -1,12 +1,4 @@
-import {
-  Building2,
-  CalendarCheck,
-  DoorOpen,
-  Flame,
-  Layers,
-  Zap,
-  type LucideIcon,
-} from 'lucide-react'
+import { Building2, CalendarCheck, DoorOpen, Flame, Layers, Zap, type LucideIcon } from 'lucide-react'
 import type { BadgeId } from '@/shared/lib'
 
 /** Icon + i18n title per tiered badge. `as const satisfies` keeps the key strings

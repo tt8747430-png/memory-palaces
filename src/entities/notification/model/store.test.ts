@@ -60,9 +60,7 @@ describe('notification store — reactive, Dependency Injection', () => {
     const store = createNotificationStore(repo)
     store.getState().start()
 
-    await store
-      .getState()
-      .save(makeNotification({ id: 'a', createdAt: at(0), type: 'streak', count: 7 }))
+    await store.getState().save(makeNotification({ id: 'a', createdAt: at(0), type: 'streak', count: 7 }))
     await store
       .getState()
       .save(makeNotification({ id: 'b', createdAt: at(1), type: 'streak', count: 14, read: true }))

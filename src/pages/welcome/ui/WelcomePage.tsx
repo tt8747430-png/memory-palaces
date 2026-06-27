@@ -8,8 +8,7 @@ export interface WelcomePageProps {
   onContinue: () => void
 }
 
-const AURA_BG =
-  'radial-gradient(circle at center, oklch(var(--p-tint-sky) / 0.45), transparent 60%)'
+const AURA_BG = 'radial-gradient(circle at center, oklch(var(--p-tint-sky) / 0.45), transparent 60%)'
 
 /** Slow embers drifting up past the threshold — the locus igniting, carried into the
  * room. Fixed positions so they don't re-randomize per render; dropped under reduced motion. */

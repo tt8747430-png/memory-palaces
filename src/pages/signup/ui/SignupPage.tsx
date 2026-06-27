@@ -39,12 +39,7 @@ export function SignupPage({ onSuccess, onGuest, onLogin }: SignupPageProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [agreed, setAgreed] = useState(false)
-  const [errors, setErrors] = useState<{
-    name?: string
-    email?: string
-    password?: string
-    terms?: string
-  }>({})
+  const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string; terms?: string }>({})
   const [busy, setBusy] = useState(false)
 
   const handleSubmit = async (event: FormEvent) => {
@@ -87,12 +82,7 @@ export function SignupPage({ onSuccess, onGuest, onLogin }: SignupPageProps) {
           </div>
         </motion.header>
 
-        <motion.form
-          variants={rise}
-          className="flex flex-col gap-4"
-          onSubmit={handleSubmit}
-          noValidate
-        >
+        <motion.form variants={rise} className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
           <AuthField
             id="name"
             label={t('auth.signup.nameLabel')}
@@ -127,10 +117,7 @@ export function SignupPage({ onSuccess, onGuest, onLogin }: SignupPageProps) {
           />
 
           <div className="flex flex-col gap-1.5">
-            <label
-              htmlFor={termsId}
-              className="flex items-start gap-2.5 text-[length:var(--p-text-label)] text-muted-foreground"
-            >
+            <label htmlFor={termsId} className="flex items-start gap-2.5 text-[length:var(--p-text-label)] text-muted-foreground">
               <input
                 id={termsId}
                 type="checkbox"
@@ -147,11 +134,7 @@ export function SignupPage({ onSuccess, onGuest, onLogin }: SignupPageProps) {
               </span>
             </label>
             {errors.terms ? (
-              <p
-                id={termsErrorId}
-                role="alert"
-                className="text-[length:var(--p-text-label)] text-[var(--danger-on-surface)]"
-              >
+              <p id={termsErrorId} role="alert" className="text-[length:var(--p-text-label)] text-[var(--danger-on-surface)]">
                 {errors.terms}
               </p>
             ) : null}

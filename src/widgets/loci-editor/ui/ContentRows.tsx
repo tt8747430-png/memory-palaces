@@ -37,7 +37,8 @@ export interface CardRowProps {
   onResetSrs: () => void
 }
 
-const rowSurface = 'rounded-card border bg-card p-4 shadow-rest transition-colors'
+const rowSurface =
+  'rounded-card border bg-card p-4 shadow-rest transition-colors'
 
 function SelectDot({ selected }: { selected: boolean }) {
   return (
@@ -79,12 +80,7 @@ export function CardRow({
   })
 
   const actions: SheetAction[] = [
-    {
-      id: 'edit',
-      label: t('common.edit'),
-      icon: <Pencil className="size-5" aria-hidden />,
-      onSelect: onEdit,
-    },
+    { id: 'edit', label: t('common.edit'), icon: <Pencil className="size-5" aria-hidden />, onSelect: onEdit },
     {
       id: 'duplicate',
       label: t('loci.row.duplicate'),
@@ -162,10 +158,7 @@ export function CardRow({
               {locus.front}
             </p>
             {locus.flagged ? (
-              <Flag
-                className="size-3.5 shrink-0 fill-[var(--rating)] text-[var(--rating-edge)]"
-                aria-label={t('loci.row.flagged')}
-              />
+              <Flag className="size-3.5 shrink-0 fill-[var(--rating)] text-[var(--rating-edge)]" aria-label={t('loci.row.flagged')} />
             ) : null}
           </div>
           <p className="mt-1 text-[length:var(--p-text-body)] leading-relaxed text-muted-foreground">
@@ -184,10 +177,7 @@ export function CardRow({
           ) : null}
           {locus.tip ? (
             <div className="mt-2 flex items-start gap-2 rounded-control bg-[var(--warning-surface)] px-3 py-2">
-              <Lightbulb
-                className="mt-0.5 size-3.5 shrink-0 text-[var(--warning-foreground)]"
-                aria-hidden
-              />
+              <Lightbulb className="mt-0.5 size-3.5 shrink-0 text-[var(--warning-foreground)]" aria-hidden />
               <p className="text-[length:var(--p-text-label)] italic leading-snug text-[var(--warning-foreground)]">
                 {locus.tip}
               </p>
@@ -244,12 +234,7 @@ export function QuestionRow({
   })
 
   const actions: SheetAction[] = [
-    {
-      id: 'edit',
-      label: t('common.edit'),
-      icon: <Pencil className="size-5" aria-hidden />,
-      onSelect: onEdit,
-    },
+    { id: 'edit', label: t('common.edit'), icon: <Pencil className="size-5" aria-hidden />, onSelect: onEdit },
     {
       id: 'duplicate',
       label: t('loci.row.duplicate'),
@@ -326,16 +311,10 @@ export function QuestionRow({
                     aria-hidden
                     className={cn(
                       'grid size-5 place-items-center rounded-full text-[length:var(--p-text-tiny)] font-bold',
-                      correct
-                        ? 'bg-success text-[color:var(--surface)]'
-                        : 'bg-card text-muted-foreground',
+                      correct ? 'bg-success text-[color:var(--surface)]' : 'bg-card text-muted-foreground',
                     )}
                   >
-                    {correct ? (
-                      <Check className="size-3" strokeWidth={3} />
-                    ) : (
-                      String.fromCharCode(65 + i)
-                    )}
+                    {correct ? <Check className="size-3" strokeWidth={3} /> : String.fromCharCode(65 + i)}
                   </span>
                   {opt}
                 </li>

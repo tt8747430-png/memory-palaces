@@ -37,12 +37,7 @@ export function PasteSheet({
       title={title}
       description={description}
       footer={
-        <Button
-          size="lg"
-          className="w-full"
-          disabled={!valid}
-          onClick={() => valid && onApply(text)}
-        >
+        <Button size="lg" className="w-full" disabled={!valid} onClick={() => valid && onApply(text)}>
           <Sparkles className="size-[18px]" aria-hidden />
           {applyLabel}
         </Button>

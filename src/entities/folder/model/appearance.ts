@@ -6,24 +6,9 @@
  * collection rail, the move sheet, the editor) renders identical options and never drifts.
  */
 export const FOLDER_ICON_OPTIONS = [
-  '🗂️',
-  '📁',
-  '📚',
-  '🎓',
-  '🧠',
-  '💡',
-  '🌍',
-  '⭐',
-  '🔖',
-  '🧩',
-  '⚗️',
-  '🎨',
-  '🎵',
-  '⚽',
-  '✝️',
-  '💼',
-  '🍎',
-  '✈️',
+  '🗂️', '📁', '📚', '🎓', '🧠', '💡',
+  '🌍', '⭐', '🔖', '🧩', '⚗️', '🎨',
+  '🎵', '⚽', '✝️', '💼', '🍎', '✈️',
 ] as const
 
 export const DEFAULT_FOLDER_ICON = '🗂️'

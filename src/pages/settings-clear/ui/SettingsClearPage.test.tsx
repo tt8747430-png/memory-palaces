@@ -20,9 +20,7 @@ afterEach(cleanup)
 
 const at = (ms: number) => new Date(ms).toISOString()
 
-function setup(
-  seed: { palaces?: Palace[]; progress?: Progress; notifications?: AppNotification[] } = {},
-) {
+function setup(seed: { palaces?: Palace[]; progress?: Progress; notifications?: AppNotification[] } = {}) {
   const palaceRepo = new InMemoryRepository<Palace>(seed.palaces ?? [])
   const palaceStore = createPalaceStore(palaceRepo)
   const roomStore = createRoomStore(new InMemoryRepository<Room>())

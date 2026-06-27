@@ -3,8 +3,7 @@ import { motion, useReducedMotion } from 'motion/react'
 import { cn } from '@/shared/lib'
 
 /** One large, softly breathing sky wash that deepens the daylight ground. */
-const AURA_BG =
-  'radial-gradient(circle at center, oklch(var(--p-tint-sky) / 0.22), transparent 60%)'
+const AURA_BG = 'radial-gradient(circle at center, oklch(var(--p-tint-sky) / 0.22), transparent 60%)'
 
 /** Deterministic ambient accents (fixed so they don't re-randomize each render). */
 const ACCENTS = [
@@ -52,12 +51,7 @@ function AuthAtmosphere() {
             className="absolute size-28 rounded-full bg-gradient-to-br from-secondary to-primary blur-2xl"
             style={{ left: accent.left, top: accent.top }}
             initial={{ opacity: 0, scale: 0.7 }}
-            animate={{
-              opacity: [0, 0.16, 0],
-              scale: [0.7, 1, 0.7],
-              x: [0, accent.dx, 0],
-              y: [0, accent.dy, 0],
-            }}
+            animate={{ opacity: [0, 0.16, 0], scale: [0.7, 1, 0.7], x: [0, accent.dx, 0], y: [0, accent.dy, 0] }}
             transition={{ duration: 12, delay: accent.delay, repeat: Infinity, ease: 'easeInOut' }}
           />
         ),

@@ -112,12 +112,7 @@ export function QuizPage({ palaceId, onBack }: QuizPageProps) {
 
   const handleComplete = (result: QuizResult) => {
     // Every answered question counts toward the daily goal; XP scales with correct answers.
-    void reward({
-      kind: 'quiz',
-      correct: result.score,
-      total: result.total,
-      accuracy: result.accuracy,
-    })
+    void reward({ kind: 'quiz', correct: result.score, total: result.total, accuracy: result.accuracy })
     onBack?.()
   }
 

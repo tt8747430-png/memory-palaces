@@ -47,16 +47,10 @@ export function makeProfile(input: MakeProfileInput): Profile {
 }
 
 /** The editable fields — identity and timestamps are owned elsewhere. */
-export type ProfileChanges = Partial<
-  Pick<Profile, 'name' | 'username' | 'email' | 'bio' | 'avatar'>
->
+export type ProfileChanges = Partial<Pick<Profile, 'name' | 'username' | 'email' | 'bio' | 'avatar'>>
 
 /** Apply a change. `updatedAt` is set by the caller (clock injected) so it stays pure. */
-export function updateProfile(
-  profile: Profile,
-  changes: ProfileChanges,
-  updatedAt: string,
-): Profile {
+export function updateProfile(profile: Profile, changes: ProfileChanges, updatedAt: string): Profile {
   return { ...profile, ...changes, updatedAt }
 }
 

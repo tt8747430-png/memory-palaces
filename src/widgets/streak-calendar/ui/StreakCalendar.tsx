@@ -24,12 +24,7 @@ interface MonthCell {
 
 /** Build a 6-week UTC grid for `year`/`month`. UTC throughout so the cell keys
  * line up with how training days are stored (`YYYY-MM-DD` UTC). */
-function monthGrid(
-  year: number,
-  month: number,
-  trained: Set<string>,
-  todayKey: string,
-): MonthCell[] {
+function monthGrid(year: number, month: number, trained: Set<string>, todayKey: string): MonthCell[] {
   const firstWeekday = new Date(Date.UTC(year, month, 1)).getUTCDay()
   const start = Date.UTC(year, month, 1 - firstWeekday)
   return Array.from({ length: GRID_CELLS }, (_, i) => {
@@ -76,9 +71,7 @@ export function StreakCalendar({ trainingDays, now = Date.now() }: StreakCalenda
   return (
     <GlassCard tone="card">
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-[length:var(--p-text-title)] font-semibold text-heading">
-          {monthLabel}
-        </h3>
+        <h3 className="text-[length:var(--p-text-title)] font-semibold text-heading">{monthLabel}</h3>
         <div className="flex items-center gap-1">
           <IconButton size="sm" aria-label={t('progress.prevMonth')} onClick={() => shift(-1)}>
             <ChevronLeft className="size-4" aria-hidden />

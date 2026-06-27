@@ -64,8 +64,7 @@ export function recordTrainingDay(state: StreakState, now: number): StreakResult
 
   const isConsecutive = state.lastTrainingDate === yesterday || state.lastTrainingDate === today
   // Exactly one missed day, with a freeze in reserve, keeps the chain alive.
-  const usedFreeze =
-    !isConsecutive && state.lastTrainingDate === dayBefore && state.streakFreezes > 0
+  const usedFreeze = !isConsecutive && state.lastTrainingDate === dayBefore && state.streakFreezes > 0
   const continued = isConsecutive || usedFreeze
 
   const streakCount = continued ? state.streakCount + 1 : 1

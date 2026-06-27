@@ -277,9 +277,7 @@ function RoomStats({ room }: { room: RoomListItem }) {
           })}
         </Stat>
       ) : null}
-      <Stat
-        icon={<GraduationCap className="size-3.5 text-[var(--success-foreground)]" aria-hidden />}
-      >
+      <Stat icon={<GraduationCap className="size-3.5 text-[var(--success-foreground)]" aria-hidden />}>
         {t('rooms.card.mastered', { known: room.knownCount, total: room.lociCount })}
       </Stat>
       {room.dueCount > 0 ? (

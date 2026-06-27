@@ -82,12 +82,7 @@ function SingleActionSwipeRow({
   const x = useMotionValue(0)
   const revealOpacity = useTransform(x, [-SWIPE_DELETE_MAX, -28, 0], [1, 0.35, 0])
   const revealScale = useTransform(x, [-SWIPE_DELETE_MAX, -40, 0], [1, 0.7, 0.6])
-  const drag = useRef<{
-    startX: number
-    startY: number
-    axis: 'h' | 'v' | null
-    id: number
-  } | null>(null)
+  const drag = useRef<{ startX: number; startY: number; axis: 'h' | 'v' | null; id: number } | null>(null)
 
   const settle = (to: number) => {
     if (reduce) x.set(to)
@@ -167,12 +162,7 @@ function MultiActionSwipeRow({
   const x = useMotionValue(0)
   const trayWidth = actions.length * ACTION_WIDTH
   const [open, setOpen] = useState(false)
-  const drag = useRef<{
-    startX: number
-    startY: number
-    axis: 'h' | 'v' | null
-    id: number
-  } | null>(null)
+  const drag = useRef<{ startX: number; startY: number; axis: 'h' | 'v' | null; id: number } | null>(null)
   // The trailing click of a drag (mouse synthesizes one) must not fall through to the row's
   // own tap; swallow exactly one click after any horizontal drag. Reset on each pointerdown so
   // a stale flag can never block a later genuine tap.

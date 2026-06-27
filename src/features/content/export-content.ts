@@ -8,12 +8,7 @@ import {
 } from '@/shared/lib'
 
 type LocusLike = { front: string; back: string; hint?: string }
-type QuestionLike = {
-  prompt: string
-  options: string[]
-  correctAnswer: number
-  explanation?: string
-}
+type QuestionLike = { prompt: string; options: string[]; correctAnswer: number; explanation?: string }
 
 /** Download the full room (cards + questions) as a round-trippable JSON export. */
 export function exportRoomJson(

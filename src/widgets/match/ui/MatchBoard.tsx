@@ -4,13 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Check, Puzzle, RotateCcw, Timer, X, Zap } from 'lucide-react'
 import { cn, success } from '@/shared/lib'
 import { Button, Chip, IconButton } from '@/shared/ui'
-import {
-  buildTiles,
-  initMatch,
-  matchReducer,
-  remainingPairs,
-  type MatchLocus,
-} from '@/features/match'
+import { buildTiles, initMatch, matchReducer, remainingPairs, type MatchLocus } from '@/features/match'
 
 export interface MatchBoardProps {
   loci: MatchLocus[]

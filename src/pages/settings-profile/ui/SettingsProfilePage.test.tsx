@@ -5,12 +5,7 @@ import type { ReactNode } from 'react'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
 import { InMemoryRepository } from '@/shared/api'
-import {
-  createProfileStore,
-  makeProfile,
-  ProfileStoreContext,
-  type Profile,
-} from '@/entities/profile'
+import { createProfileStore, makeProfile, ProfileStoreContext, type Profile } from '@/entities/profile'
 import { createPalaceStore, makePalace, PalaceStoreContext, type Palace } from '@/entities/palace'
 import { createRoomStore, RoomStoreContext, type Room } from '@/entities/room'
 import { createLocusStore, LocusStoreContext, type Locus } from '@/entities/locus'
@@ -48,9 +43,7 @@ function renderPage(opts: { profile?: Profile; palaces?: Palace[] } = {}) {
           <RoomStoreContext value={createRoomStore(new InMemoryRepository<Room>())}>
             <LocusStoreContext value={createLocusStore(new InMemoryRepository<Locus>())}>
               <QuestionStoreContext value={createQuestionStore(new InMemoryRepository<Question>())}>
-                <ProgressStoreContext
-                  value={createProgressStore(new InMemoryRepository<Progress>())}
-                >
+                <ProgressStoreContext value={createProgressStore(new InMemoryRepository<Progress>())}>
                   <NotificationStoreContext
                     value={createNotificationStore(new InMemoryRepository<AppNotification>())}
                   >

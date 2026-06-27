@@ -29,11 +29,7 @@ const fresh = card('new') // srs undefined → new + due
 const due = card('due', srs({ due: new Date(NOW - DAY).toISOString() }))
 const learning = card('learning', srs({ due: new Date(NOW + DAY).toISOString(), interval: 3 }))
 const known = card('known', srs({ due: new Date(NOW + 30 * DAY).toISOString(), interval: 40 }))
-const flagged = card(
-  'flag',
-  srs({ due: new Date(NOW + 30 * DAY).toISOString(), interval: 40 }),
-  true,
-)
+const flagged = card('flag', srs({ due: new Date(NOW + 30 * DAY).toISOString(), interval: 40 }), true)
 const deck = [fresh, due, learning, known, flagged]
 
 describe('applyScope', () => {
@@ -56,10 +52,7 @@ describe('applyScope', () => {
   })
 
   it('learning → reviewed but not yet mature, due or not', () => {
-    expect(applyScope(deck, { kind: 'learning' }, NOW).map((c) => c.id)).toEqual([
-      'due',
-      'learning',
-    ])
+    expect(applyScope(deck, { kind: 'learning' }, NOW).map((c) => c.id)).toEqual(['due', 'learning'])
   })
 
   it('flagged → only flagged cards', () => {

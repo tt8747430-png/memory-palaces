@@ -11,9 +11,9 @@ import {
 
 describe('verseText', () => {
   it('strips a leading reference that prefixes the verse body', () => {
-    expect(
-      verseText({ front: '3 John 1:1', back: '3 John 1:1 The elder unto the wellbeloved' }),
-    ).toBe('The elder unto the wellbeloved')
+    expect(verseText({ front: '3 John 1:1', back: '3 John 1:1 The elder unto the wellbeloved' })).toBe(
+      'The elder unto the wellbeloved',
+    )
   })
 
   it('returns the body unchanged when it has no leading reference', () => {
@@ -67,14 +67,7 @@ describe('typedVerseStatus', () => {
 
   it('marks every word pending before anything is typed', () => {
     const result = typedVerseStatus(verse, '')
-    expect(result.statuses).toEqual([
-      'pending',
-      'pending',
-      'pending',
-      'pending',
-      'pending',
-      'pending',
-    ])
+    expect(result.statuses).toEqual(['pending', 'pending', 'pending', 'pending', 'pending', 'pending'])
     expect(result.correct).toBe(0)
     expect(result.total).toBe(6)
     expect(result.complete).toBe(false)

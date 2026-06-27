@@ -7,13 +7,7 @@ import { gradeCard } from './grade-card'
 const NOW = Date.UTC(2026, 0, 10)
 
 function newCard(id: string): Locus {
-  return makeLocus({
-    id,
-    createdAt: new Date(0).toISOString(),
-    roomId: 'r1',
-    front: 'a',
-    back: 'b',
-  })
+  return makeLocus({ id, createdAt: new Date(0).toISOString(), roomId: 'r1', front: 'a', back: 'b' })
 }
 
 function storeWith(loci: Locus[]) {

@@ -37,8 +37,7 @@ export function useSessionReward(): (outcome: SessionOutcome) => Promise<void> {
       if (reward.xpGained > 0) toast.success(t('reward.xp', { amount: reward.xpGained }))
       if (reward.leveledUp) toast(t('reward.levelUp', { level: reward.level }))
       if (reward.isMilestone) toast(t('reward.streak', { count: reward.streakCount }))
-      if (reward.dayBecameActive)
-        toast.success(t('reward.dayComplete', { count: reward.dailyGoal }))
+      if (reward.dayBecameActive) toast.success(t('reward.dayComplete', { count: reward.dailyGoal }))
     },
     [store, preferencesStore, eventBus, t],
   )

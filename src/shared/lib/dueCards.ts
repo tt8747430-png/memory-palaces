@@ -42,9 +42,7 @@ export function getDueLoci(
   loci: readonly DueLocus[],
   now: number,
 ): DueCard[] {
-  const activePalaces = new Map(
-    palaces.filter((palace) => !palace.archived).map((palace) => [palace.id, palace]),
-  )
+  const activePalaces = new Map(palaces.filter((palace) => !palace.archived).map((palace) => [palace.id, palace]))
   const roomsById = new Map(rooms.map((room) => [room.id, room]))
 
   const due: DueCard[] = []

@@ -54,10 +54,7 @@ describe('session commands', () => {
     const { gateway, deps } = setup()
     await gateway.signUp({ name: 'Ada', email: 'a@b.com' }) // persist only, no session
     await restoreSession(deps, AT)
-    expect(deps.sessionStore.getState().session).toMatchObject({
-      kind: 'account',
-      displayName: 'Ada',
-    })
+    expect(deps.sessionStore.getState().session).toMatchObject({ kind: 'account', displayName: 'Ada' })
   })
 
   it('restoreSession is a no-op when nothing is persisted', async () => {

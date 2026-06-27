@@ -110,10 +110,7 @@ export function migratePreferencesV3(oldDoc: PreferencesV2): LegacyPreferences {
 }
 
 /** The v3 preferences shape — before verse-study prefs were persisted. */
-export type PreferencesV3 = Omit<
-  LegacyPreferences,
-  'verseMode' | 'verseShuffle' | 'verseWordSpaces'
->
+export type PreferencesV3 = Omit<LegacyPreferences, 'verseMode' | 'verseShuffle' | 'verseWordSpaces'>
 
 /** v3 → v4: backfill the verse-study prefs with defaults; stored fields win. */
 export function migratePreferencesV4(oldDoc: PreferencesV3): LegacyPreferences {

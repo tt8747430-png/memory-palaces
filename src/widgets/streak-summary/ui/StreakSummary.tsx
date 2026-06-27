@@ -83,12 +83,7 @@ export function StreakSummary({
             <motion.div
               initial={{ scale: 0.6, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{
-                delay: 0.1 + index * 0.04,
-                type: 'spring',
-                stiffness: 320,
-                damping: 24,
-              }}
+              transition={{ delay: 0.1 + index * 0.04, type: 'spring', stiffness: 320, damping: 24 }}
               className={cn(
                 'grid size-9 place-items-center rounded-[14px]',
                 day.trained
@@ -99,11 +94,7 @@ export function StreakSummary({
               )}
             >
               {day.trained ? (
-                <Flame
-                  className="size-4 text-[var(--warning-on-fill)]"
-                  fill="currentColor"
-                  aria-hidden
-                />
+                <Flame className="size-4 text-[var(--warning-on-fill)]" fill="currentColor" aria-hidden />
               ) : (
                 <span
                   className={cn(
@@ -136,9 +127,7 @@ function StreakStat({
         {accent ? (
           <Flame className="size-5 text-[var(--warning)]" fill="currentColor" aria-hidden />
         ) : null}
-        <span className="text-[30px] font-bold leading-none tabular-nums text-heading">
-          {value}
-        </span>
+        <span className="text-[30px] font-bold leading-none tabular-nums text-heading">{value}</span>
       </span>
       <span className="mt-1.5 text-[length:var(--p-text-tiny)] font-semibold uppercase tracking-wide text-muted-foreground">
         {label}

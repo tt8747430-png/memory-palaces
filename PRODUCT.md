@@ -48,7 +48,7 @@ the details.
   Anki.
 - **Not a generic SaaS template.** No cream/beige body background, identical icon-card grids,
   tiny tracked uppercase eyebrows, or the rest of the AI-slop default kit.
-- Loud, gamified energy is _not_ on the avoid list: celebration and play are wanted. The
+- Loud, gamified energy is *not* on the avoid list: celebration and play are wanted. The
   guardrail is that they stay earned and tasteful (no confetti spam, no streak-guilt
   nagging), in service of the calm ground rather than fighting it.
 

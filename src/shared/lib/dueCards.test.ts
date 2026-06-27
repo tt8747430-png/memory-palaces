@@ -26,12 +26,7 @@ describe('getDueLoci', () => {
     const loci: DueLocus[] = [{ id: 'l1', roomId: 'r1' }]
     const due = getDueLoci(palaces, rooms, loci, NOW)
     expect(due).toHaveLength(1)
-    expect(due[0]).toMatchObject({
-      palaceId: 'p1',
-      palaceName: 'Spanish',
-      roomId: 'r1',
-      roomTitle: 'Kitchen',
-    })
+    expect(due[0]).toMatchObject({ palaceId: 'p1', palaceName: 'Spanish', roomId: 'r1', roomTitle: 'Kitchen' })
   })
 
   it('excludes loci that are scheduled for the future', () => {

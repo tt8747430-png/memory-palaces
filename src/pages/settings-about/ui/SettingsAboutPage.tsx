@@ -24,6 +24,7 @@ export function SettingsAboutPage({ onBack }: { onBack?: () => void }) {
         />
       }
     >
+
       <div className="mt-4 flex flex-col gap-6 pb-28">
         <div className="flex flex-col items-center gap-3 pt-4 text-center">
           <motion.span

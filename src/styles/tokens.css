@@ -237,11 +237,7 @@
 [data-theme='dark'] {
   color-scheme: dark;
 
-  --bg: linear-gradient(
-    to bottom right,
-    oklch(24.2% 0.113 267.7) 0%,
-    oklch(19.9% 0.089 267.7) 100%
-  );
+  --bg: linear-gradient(to bottom right, oklch(24.2% 0.113 267.7) 0%, oklch(19.9% 0.089 267.7) 100%);
   --bg-daylight: var(--bg);
   --surface: oklch(27.3% 0.131 267.1);
   --surface-sky: oklch(30.4% 0.128 267.2);

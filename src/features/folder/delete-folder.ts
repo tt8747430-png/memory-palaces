@@ -15,9 +15,7 @@ export async function deleteFolder(
   const now = new Date().toISOString()
   const filed = palaceStore.getState().palaces.filter((palace) => palace.folderId === id)
   await Promise.all(
-    filed.map((palace) =>
-      palaceStore.getState().save(updatePalace(palace, { folderId: null }, now)),
-    ),
+    filed.map((palace) => palaceStore.getState().save(updatePalace(palace, { folderId: null }, now))),
   )
   await folderStore.getState().remove(id)
 }

@@ -31,17 +31,7 @@ function renderLogin(props: Partial<Parameters<typeof LoginPage>[0]> = {}) {
   const onGuest = vi.fn()
   const onSignup = vi.fn()
   const onForgot = vi.fn()
-  render(
-    wrap(
-      <LoginPage
-        onAuthed={onAuthed}
-        onGuest={onGuest}
-        onSignup={onSignup}
-        onForgot={onForgot}
-        {...props}
-      />,
-    ),
-  )
+  render(wrap(<LoginPage onAuthed={onAuthed} onGuest={onGuest} onSignup={onSignup} onForgot={onForgot} {...props} />))
   return { gateway, onAuthed, onGuest, onSignup, onForgot }
 }
 

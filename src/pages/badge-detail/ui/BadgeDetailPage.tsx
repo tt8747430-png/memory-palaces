@@ -21,8 +21,7 @@ import { AppScreen, BadgeMedallion, ScreenHeader, cardSurface } from '@/shared/u
 const EASE_OUT = [0.22, 1, 0.36, 1] as const
 
 const BADGE_IDS: readonly BadgeId[] = ['xp', 'streak', 'rooms', 'palaces', 'cards', 'days']
-const isBadgeId = (value: string): value is BadgeId =>
-  (BADGE_IDS as readonly string[]).includes(value)
+const isBadgeId = (value: string): value is BadgeId => (BADGE_IDS as readonly string[]).includes(value)
 
 export interface BadgeDetailPageProps {
   badgeId: string
@@ -69,9 +68,7 @@ export function BadgeDetailPage({ badgeId, onBack }: BadgeDetailPageProps) {
   if (!badge) {
     return (
       <AppScreen
-        header={
-          <ScreenHeader title={t('badges.title')} onBack={onBack} backLabel={t('common.back')} />
-        }
+        header={<ScreenHeader title={t('badges.title')} onBack={onBack} backLabel={t('common.back')} />}
       />
     )
   }
@@ -80,10 +77,7 @@ export function BadgeDetailPage({ badgeId, onBack }: BadgeDetailPageProps) {
   const title = t(meta.titleKey)
   const heroTier = Math.max(badge.tier, 1)
   const maxed = badge.next === null
-  const tierLabel =
-    badge.tier === 0
-      ? t('badgeDetail.locked')
-      : t('badgeDetail.tierOf', { tier: badge.tier, total: badge.tiers.length })
+  const tierLabel = badge.tier === 0 ? t('badgeDetail.locked') : t('badgeDetail.tierOf', { tier: badge.tier, total: badge.tiers.length })
 
   return (
     <AppScreen
@@ -145,10 +139,7 @@ function Hero({
       </motion.div>
 
       <p className="mt-4 text-[length:var(--p-text-headline)] font-bold leading-none tabular-nums text-heading">
-        <CountUp
-          to={badge.value}
-          format={(n) => t('badgeDetail.nowValue', { value: n.toLocaleString() })}
-        />
+        <CountUp to={badge.value} format={(n) => t('badgeDetail.nowValue', { value: n.toLocaleString() })} />
       </p>
       <span className="mt-3 inline-flex items-center rounded-full bg-info-surface px-3 py-1 text-[length:var(--p-text-label)] font-bold text-info-foreground">
         {tierLabel}

@@ -95,11 +95,7 @@ export function scopesEqual(a: Scope, b: Scope): boolean {
 }
 
 /** Order a deck's ids for browse mode. `random` is injectable for deterministic tests. */
-export function orderIds(
-  loci: Locus[],
-  order: CardOrder,
-  random: () => number = Math.random,
-): string[] {
+export function orderIds(loci: Locus[], order: CardOrder, random: () => number = Math.random): string[] {
   const ids = loci.map((locus) => locus.id)
   if (order === 'reverse') return [...ids].reverse()
   if (order === 'shuffle') return shuffle(ids, random)

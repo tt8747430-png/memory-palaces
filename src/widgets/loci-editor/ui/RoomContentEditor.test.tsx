@@ -21,9 +21,7 @@ function renderEditor({
     <I18nextProvider i18n={i18n}>
       <MotionConfig reducedMotion="always">
         <LocusStoreContext value={createLocusStore(new InMemoryRepository<Locus>(loci))}>
-          <QuestionStoreContext
-            value={createQuestionStore(new InMemoryRepository<Question>(questions))}
-          >
+          <QuestionStoreContext value={createQuestionStore(new InMemoryRepository<Question>(questions))}>
             <RoomContentEditor roomId="r1" roomName="Garden Room" />
           </QuestionStoreContext>
         </LocusStoreContext>
@@ -35,16 +33,7 @@ function renderEditor({
 describe('RoomContentEditor', () => {
   it('lists a room’s cards and offers the add dial', async () => {
     renderEditor({
-      loci: [
-        makeLocus({
-          id: 'l1',
-          createdAt: at(1),
-          roomId: 'r1',
-          front: 'mihi',
-          back: 'to me',
-          order: 0,
-        }),
-      ],
+      loci: [makeLocus({ id: 'l1', createdAt: at(1), roomId: 'r1', front: 'mihi', back: 'to me', order: 0 })],
     })
 
     expect(await screen.findByText('mihi')).toBeInTheDocument()
@@ -55,16 +44,7 @@ describe('RoomContentEditor', () => {
   it('adds a card through the dial and editor sheet', async () => {
     const user = userEvent.setup()
     renderEditor({
-      loci: [
-        makeLocus({
-          id: 'l1',
-          createdAt: at(1),
-          roomId: 'r1',
-          front: 'seed',
-          back: 'root',
-          order: 0,
-        }),
-      ],
+      loci: [makeLocus({ id: 'l1', createdAt: at(1), roomId: 'r1', front: 'seed', back: 'root', order: 0 })],
     })
     await screen.findByText('seed')
 
@@ -81,9 +61,7 @@ describe('RoomContentEditor', () => {
   it('switches to the Questions tab and teaches the empty state', async () => {
     const user = userEvent.setup()
     renderEditor({
-      loci: [
-        makeLocus({ id: 'l1', createdAt: at(1), roomId: 'r1', front: 'a', back: 'A', order: 0 }),
-      ],
+      loci: [makeLocus({ id: 'l1', createdAt: at(1), roomId: 'r1', front: 'a', back: 'A', order: 0 })],
     })
     await screen.findByText('a')
 

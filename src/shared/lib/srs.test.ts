@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { isDue, markKnown, nextIntervalLabel, schedule, srsStatus, type SrsState } from './srs'
+import {
+  isDue,
+  markKnown,
+  nextIntervalLabel,
+  schedule,
+  srsStatus,
+  type SrsState,
+} from './srs'
 
 const DAY_MS = 86_400_000
 const NOW = Date.UTC(2026, 0, 1) // fixed instant injected everywhere

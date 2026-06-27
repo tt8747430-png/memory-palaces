@@ -16,7 +16,10 @@ export interface StudyOverview {
   isCaughtUp: boolean
 }
 
-export function studyOverview(loci: ReadonlyArray<{ srs?: SrsState }>, now: number): StudyOverview {
+export function studyOverview(
+  loci: ReadonlyArray<{ srs?: SrsState }>,
+  now: number,
+): StudyOverview {
   const breakdown = { new: 0, learning: 0, known: 0 }
   let count = 0
   for (const locus of loci) {

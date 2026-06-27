@@ -1,5 +1,10 @@
 import { makeRoom, roomsForPalace, selectRooms, type Room, type RoomStore } from '@/entities/room'
-import { lociForRoom, makeLocus, selectLoci, type LocusStore } from '@/entities/locus'
+import {
+  lociForRoom,
+  makeLocus,
+  selectLoci,
+  type LocusStore,
+} from '@/entities/locus'
 import {
   makeQuestion,
   questionsForRoom,

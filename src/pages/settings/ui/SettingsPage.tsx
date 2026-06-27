@@ -102,26 +102,13 @@ export function SettingsPage({
   const isGuest = sessionKind === 'guest'
 
   const themeOptions = [
-    {
-      value: 'light',
-      icon: <Sun className="size-4" aria-hidden />,
-      label: t('settings.themeLight'),
-    },
-    {
-      value: 'dark',
-      icon: <Moon className="size-4" aria-hidden />,
-      label: t('settings.themeDark'),
-    },
-    {
-      value: 'system',
-      icon: <Monitor className="size-4" aria-hidden />,
-      label: t('settings.themeSystem'),
-    },
+    { value: 'light', icon: <Sun className="size-4" aria-hidden />, label: t('settings.themeLight') },
+    { value: 'dark', icon: <Moon className="size-4" aria-hidden />, label: t('settings.themeDark') },
+    { value: 'system', icon: <Monitor className="size-4" aria-hidden />, label: t('settings.themeSystem') },
   ] as const
 
   const currentLanguage =
-    AVAILABLE_LANGUAGES.find((language) => language.code === prefs.language) ??
-    AVAILABLE_LANGUAGES[0]!
+    AVAILABLE_LANGUAGES.find((language) => language.code === prefs.language) ?? AVAILABLE_LANGUAGES[0]!
   const selectLanguage = (code: string) => {
     void i18n.changeLanguage(code)
     update({ language: code })
@@ -308,12 +295,7 @@ export function SettingsPage({
             label={t('settings.helpCenter')}
             onClick={() => onHelp?.()}
           />
-          <SettingsRow
-            kind="nav"
-            icon={<Info />}
-            label={t('settings.about')}
-            onClick={() => onAbout?.()}
-          />
+          <SettingsRow kind="nav" icon={<Info />} label={t('settings.about')} onClick={() => onAbout?.()} />
         </SettingsSection>
 
         {isGuest ? null : (

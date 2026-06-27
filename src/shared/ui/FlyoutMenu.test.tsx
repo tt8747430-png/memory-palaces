@@ -47,9 +47,7 @@ describe('FlyoutMenu', () => {
 
     await user.click(screen.getByRole('button', { name: 'Sort' }))
     // The selected option carries a trailing check; the other does not.
-    expect(
-      (await screen.findByRole('menuitem', { name: /recent/i })).querySelector('svg'),
-    ).not.toBeNull()
+    expect((await screen.findByRole('menuitem', { name: /recent/i })).querySelector('svg')).not.toBeNull()
     expect(screen.getByRole('menuitem', { name: /name/i }).querySelector('svg')).toBeNull()
   })
 
