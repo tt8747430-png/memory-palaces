@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { nextIntervalLabel, type Grade, type SrsState } from '@/shared/lib'
-import { cn } from '@/shared/lib'
+import { cn, type Grade, nextIntervalLabel, type SrsState } from '@/shared/lib'
 
 export interface GradeButtonsProps {
   /** The card's current schedule (absent = brand new). */

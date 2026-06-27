@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import {
-  ArrowDownAZ,
   Archive,
+  ArrowDownAZ,
   Building2,
   ChevronDown,
   ChevronLeft,
@@ -19,8 +19,8 @@ import {
   Upload,
 } from 'lucide-react'
 import {
-  ContentImportError,
   cn,
+  ContentImportError,
   countDuePerPalace,
   isRoomCompleted,
   palaceProgress,
@@ -40,36 +40,27 @@ import { useQuestionStoreApi } from '@/entities/question'
 import { selectProgress, useProgressStore, useProgressStoreApi } from '@/entities/progress'
 import { selectEffectiveProfile, useProfileStore, useProfileStoreApi } from '@/entities/profile'
 import { useSessionStore } from '@/entities/session'
+import { selectUnreadCount, useNotificationStore, useNotificationStoreApi, } from '@/entities/notification'
 import {
-  selectUnreadCount,
-  useNotificationStore,
-  useNotificationStoreApi,
-} from '@/entities/notification'
-import {
+  type PalacesSort,
+  type PalacesView,
   selectEffectivePreferences,
   usePreferencesStore,
   usePreferencesStoreApi,
-  type PalacesSort,
-  type PalacesView,
 } from '@/entities/preferences'
 import {
+  CreatePalaceSheet,
   deletePalace,
   importPalace,
   reorderPalaces,
   setPalaceArchived,
   setPalaceFolder,
   togglePalaceFavorite,
-  CreatePalaceSheet,
 } from '@/features/palace'
 import { readPalaceFile } from '@/features/content'
 import { createFolder, deleteFolder, editFolder, reorderFolders } from '@/features/folder'
 import { setPreferences } from '@/features/preferences'
-import {
-  LibraryGrid,
-  type LibraryFolderItem,
-  type LibraryHandlers,
-  type LibraryPalaceItem,
-} from '@/widgets/library'
+import { type LibraryFolderItem, LibraryGrid, type LibraryHandlers, type LibraryPalaceItem, } from '@/widgets/library'
 import { HomeHeader } from '@/widgets/home-header'
 import {
   AppScreen,

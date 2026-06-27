@@ -8,18 +8,18 @@ import { InMemoryRepository } from '@/shared/api'
 import {
   createProfileStore,
   makeProfile,
-  ProfileStoreContext,
   type Profile,
+  ProfileStoreContext,
 } from '@/entities/profile'
-import { createPalaceStore, makePalace, PalaceStoreContext, type Palace } from '@/entities/palace'
-import { createRoomStore, RoomStoreContext, type Room } from '@/entities/room'
-import { createLocusStore, LocusStoreContext, type Locus } from '@/entities/locus'
-import { createQuestionStore, QuestionStoreContext, type Question } from '@/entities/question'
-import { createProgressStore, ProgressStoreContext, type Progress } from '@/entities/progress'
+import { createPalaceStore, makePalace, type Palace, PalaceStoreContext } from '@/entities/palace'
+import { createRoomStore, type Room, RoomStoreContext } from '@/entities/room'
+import { createLocusStore, type Locus, LocusStoreContext } from '@/entities/locus'
+import { createQuestionStore, type Question, QuestionStoreContext } from '@/entities/question'
+import { createProgressStore, type Progress, ProgressStoreContext } from '@/entities/progress'
 import {
+  type AppNotification,
   createNotificationStore,
   NotificationStoreContext,
-  type AppNotification,
 } from '@/entities/notification'
 import { SettingsProfilePage } from './SettingsProfilePage'
 

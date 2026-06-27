@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@/shared/api'
 import { createFolderStore } from './store'
-import { makeFolder, type Folder } from './types'
+import { type Folder, makeFolder } from './types'
 
 const at = (ms: number) => new Date(ms).toISOString()
 const folder = (id: string, createdAt: string, name = id): Folder =>

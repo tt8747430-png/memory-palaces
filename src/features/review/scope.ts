@@ -1,4 +1,4 @@
-import { isDue, srsStatus, shuffle } from '@/shared/lib'
+import { isDue, shuffle, srsStatus } from '@/shared/lib'
 import type { Locus } from '@/entities/locus'
 
 /** Build a review queue from a scoped deck: lead with the cards due now (or the

@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   buildTiles,
   initMatch,
-  MAX_PAIRS,
   matchReducer,
+  MAX_PAIRS,
   remainingPairs,
   type Tile,
 } from './match-machine'

@@ -1,4 +1,4 @@
-import { isDue, srsStatus, type SrsState } from './srs'
+import { isDue, type SrsState, srsStatus } from './srs'
 
 /**
  * The study-overview numbers for a scope's cards: how many are due today and the

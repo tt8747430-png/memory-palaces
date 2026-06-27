@@ -1,4 +1,4 @@
-import { updateLocus, type Locus, type LocusChanges, type LocusStore } from '@/entities/locus'
+import { type Locus, type LocusChanges, type LocusStore, updateLocus } from '@/entities/locus'
 import { requireLocus } from './require-locus'
 
 /** Command — edit a locus (front/back/hint/tip/flagged/memorized). Runs through the

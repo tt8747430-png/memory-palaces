@@ -1,11 +1,5 @@
 import { type PointerEvent as ReactPointerEvent, useEffect } from 'react'
-import {
-  animate,
-  type PanInfo,
-  useDragControls,
-  useMotionValue,
-  useReducedMotion,
-} from 'motion/react'
+import { animate, type PanInfo, useDragControls, useMotionValue, useReducedMotion, } from 'motion/react'
 
 /** Distance (px) or downward velocity past which a flick/drag dismisses the sheet. */
 const DISMISS_OFFSET = 130

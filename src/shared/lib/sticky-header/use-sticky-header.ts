@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react'
-import { useMotionValue, useTransform, type MotionValue } from 'motion/react'
+import { type MotionValue, useMotionValue, useTransform } from 'motion/react'
 import { barElevation } from './elevation'
 
 /** Scroll distance (px) over which the bar reaches full elevation (glass + edge). */

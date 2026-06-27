@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
+  type AnsweringState,
   initQuiz,
   quizAccuracy,
   quizReducer,
-  type AnsweringState,
   type QuizState,
 } from './quiz-machine'
 

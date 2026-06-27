@@ -6,10 +6,10 @@ import { i18n } from '@/shared/i18n'
 import { InMemoryRepository } from '@/shared/api'
 import {
   createPreferencesStore,
-  PreferencesStoreContext,
   type Preferences,
+  PreferencesStoreContext,
 } from '@/entities/preferences'
-import { createProfileStore, ProfileStoreContext, type Profile } from '@/entities/profile'
+import { createProfileStore, type Profile, ProfileStoreContext } from '@/entities/profile'
 import { SettingsPage, type SettingsPageProps } from './SettingsPage'
 
 afterEach(cleanup)

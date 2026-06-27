@@ -1,4 +1,4 @@
-import { updateLocus, type Locus, type LocusStore } from '@/entities/locus'
+import { type Locus, type LocusStore, updateLocus } from '@/entities/locus'
 import { requireLocus } from './require-locus'
 
 /** Command — flip a card's "flagged" mark (come back to this). */

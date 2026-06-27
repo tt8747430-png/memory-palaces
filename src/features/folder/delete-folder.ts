@@ -1,4 +1,4 @@
-import { updatePalace, type PalaceStore } from '@/entities/palace'
+import { type PalaceStore, updatePalace } from '@/entities/palace'
 import type { FolderStore } from '@/entities/folder'
 
 /**

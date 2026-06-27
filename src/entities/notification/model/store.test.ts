@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@/shared/api'
 import { createNotificationStore } from './store'
 import { selectUnreadCount } from './selectors'
-import { makeNotification, type AppNotification } from './types'
+import { type AppNotification, makeNotification } from './types'
 
 const at = (ms: number) => new Date(ms).toISOString()
 const notif = (id: string, createdAt: string) =>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { computeAchievements, type AchievementInput } from './achievements'
+import { type AchievementInput, computeAchievements } from './achievements'
 
 const base: AchievementInput = {
   palaceCount: 0,

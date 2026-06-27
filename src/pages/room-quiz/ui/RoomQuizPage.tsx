@@ -15,7 +15,7 @@ import {
   useQuestionStoreApi,
 } from '@/entities/question'
 import { editPalace } from '@/features/palace'
-import { QuizOptionsSheet, QuizSession, type QuizResult } from '@/widgets/quiz'
+import { QuizOptionsSheet, type QuizResult, QuizSession } from '@/widgets/quiz'
 import { type QuizQuestion } from '@/features/quiz'
 import { useSessionReward } from '@/widgets/session-reward'
 import { AppScreen, ScreenHeader } from '@/shared/ui'

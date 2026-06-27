@@ -7,9 +7,9 @@ import { Button, Chip, IconButton } from '@/shared/ui'
 import {
   buildTiles,
   initMatch,
+  type MatchLocus,
   matchReducer,
   remainingPairs,
-  type MatchLocus,
 } from '@/features/match'
 
 export interface MatchBoardProps {

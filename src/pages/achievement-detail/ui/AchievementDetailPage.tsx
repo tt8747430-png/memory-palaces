@@ -13,7 +13,7 @@ import { selectPalaces, usePalaceStore, usePalaceStoreApi } from '@/entities/pal
 import { roomsForPalace, selectRooms, useRoomStore, useRoomStoreApi } from '@/entities/room'
 import { lociForRoom, selectLoci, useLocusStore, useLocusStoreApi } from '@/entities/locus'
 import { ACHIEVEMENT_META } from '@/widgets/achievement-list'
-import { AppScreen, BadgeMedallion, ScreenHeader, cardSurface } from '@/shared/ui'
+import { AppScreen, BadgeMedallion, cardSurface, ScreenHeader } from '@/shared/ui'
 
 const ACHIEVEMENT_IDS: readonly AchievementId[] = [
   'first-palace',

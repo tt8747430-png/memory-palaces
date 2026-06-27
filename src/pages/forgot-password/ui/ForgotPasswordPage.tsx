@@ -3,7 +3,7 @@ import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft, Mail, MailCheck } from 'lucide-react'
 import { authEntrance, isEmail, useAuthGateway } from '@/shared/lib'
-import { AuthScreen, AuthField, Button } from '@/shared/ui'
+import { AuthField, AuthScreen, Button } from '@/shared/ui'
 import { AuthLogo } from '@/widgets/palace-threshold'
 import { requestPasswordReset } from '@/features/session'
 

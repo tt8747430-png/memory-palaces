@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { srsStatus, type SrsState, type SrsStatus } from '@/shared/lib'
-import { cn } from '@/shared/lib'
+import { cn, type SrsState, type SrsStatus, srsStatus } from '@/shared/lib'
 
 /** Tone per maturity — each pre-checked to clear AA at small sizes. State is shown by
  * label + tone, never color alone. */

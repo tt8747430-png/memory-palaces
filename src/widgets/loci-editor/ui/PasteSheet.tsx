@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
+import { useEffect, useState } from 'react'
 import { Sparkles } from 'lucide-react'
 import { Button, Sheet, Textarea } from '@/shared/ui'
 

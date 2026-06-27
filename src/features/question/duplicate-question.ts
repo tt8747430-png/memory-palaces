@@ -1,9 +1,9 @@
 import {
   makeQuestion,
-  questionsForRoom,
-  selectQuestions,
   type Question,
+  questionsForRoom,
   type QuestionStore,
+  selectQuestions,
 } from '@/entities/question'
 import { nextOrder } from '@/shared/lib'
 import { requireQuestion } from './require-question'

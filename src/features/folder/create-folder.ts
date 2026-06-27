@@ -1,4 +1,4 @@
-import { makeFolder, type Folder, type FolderStore } from '@/entities/folder'
+import { type Folder, type FolderStore, makeFolder } from '@/entities/folder'
 
 export interface CreateFolderInput {
   name: string

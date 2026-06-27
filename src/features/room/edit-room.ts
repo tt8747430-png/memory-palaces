@@ -1,4 +1,4 @@
-import { updateRoom, type Room, type RoomChanges, type RoomStore } from '@/entities/room'
+import { type Room, type RoomChanges, type RoomStore, updateRoom } from '@/entities/room'
 import { requireRoom } from './require-room'
 
 /** Command — edit a room's title/description (and, internally, order). Runs through

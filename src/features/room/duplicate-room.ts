@@ -1,11 +1,6 @@
-import { makeRoom, roomsForPalace, selectRooms, type Room, type RoomStore } from '@/entities/room'
-import { lociForRoom, makeLocus, selectLoci, type LocusStore } from '@/entities/locus'
-import {
-  makeQuestion,
-  questionsForRoom,
-  selectQuestions,
-  type QuestionStore,
-} from '@/entities/question'
+import { makeRoom, type Room, roomsForPalace, type RoomStore, selectRooms } from '@/entities/room'
+import { lociForRoom, type LocusStore, makeLocus, selectLoci } from '@/entities/locus'
+import { makeQuestion, questionsForRoom, type QuestionStore, selectQuestions, } from '@/entities/question'
 import { nextOrder } from '@/shared/lib'
 import { requireRoom } from './require-room'
 

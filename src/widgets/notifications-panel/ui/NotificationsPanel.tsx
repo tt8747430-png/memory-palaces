@@ -1,12 +1,12 @@
-import { useMemo, type CSSProperties } from 'react'
+import { type CSSProperties, useMemo } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
-import { BellOff, Flame, Star, Trophy, X, Zap, type LucideIcon } from 'lucide-react'
+import { BellOff, Flame, type LucideIcon, Star, Trophy, X, Zap } from 'lucide-react'
 import { cn } from '@/shared/lib'
-import { Chip, IconButton, SwipeRow, cardSurface } from '@/shared/ui'
+import { cardSurface, Chip, IconButton, SwipeRow } from '@/shared/ui'
 import type { AppNotification, NotificationType } from '@/entities/notification'
-import { bucketOf, relativeTime, type DayBucket, type RelativeTime } from '../lib/group'
+import { bucketOf, type DayBucket, relativeTime, type RelativeTime } from '../lib/group'
 
 interface Visual {
   icon: LucideIcon

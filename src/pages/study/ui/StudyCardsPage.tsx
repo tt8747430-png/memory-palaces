@@ -15,16 +15,16 @@ import {
   useRoomStoreApi,
 } from '@/entities/room'
 import {
+  type Palace,
+  type PalaceSettings,
   selectIsReady as selectPalacesReady,
   usePalaceStore,
   usePalaceStoreApi,
-  type Palace,
-  type PalaceSettings,
 } from '@/entities/palace'
 import { editLocus } from '@/features/locus'
 import { editPalace } from '@/features/palace'
 import { gradeCard } from '@/features/review'
-import { StudySession, type StudyCard, type StudyPrefs } from '@/widgets/study-session'
+import { type StudyCard, type StudyPrefs, StudySession } from '@/widgets/study-session'
 import { useSessionReward } from '@/widgets/session-reward'
 import { AppScreen, ScreenHeader } from '@/shared/ui'
 

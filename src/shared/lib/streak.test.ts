@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildDayCells,
+  type DailyTally,
   dayKey,
   recordPractice,
   recordTrainingDay,
-  totalTrainingDays,
-  type DailyTally,
   type StreakState,
+  totalTrainingDays,
 } from './streak'
 
 const DAY_MS = 86_400_000

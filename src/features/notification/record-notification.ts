@@ -1,8 +1,8 @@
 import {
-  makeNotification,
-  NOTIFICATION_CAP,
-  type MakeNotificationInput,
   type AppNotification,
+  makeNotification,
+  type MakeNotificationInput,
+  NOTIFICATION_CAP,
   type NotificationStore,
 } from '@/entities/notification'
 

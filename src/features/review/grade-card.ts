@@ -1,4 +1,4 @@
-import { schedule, type Grade } from '@/shared/lib'
+import { type Grade, schedule } from '@/shared/lib'
 import type { Locus, LocusStore } from '@/entities/locus'
 
 /**

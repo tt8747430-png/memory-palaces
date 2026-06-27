@@ -3,7 +3,7 @@ import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
-import { makeNotification, type AppNotification } from '@/entities/notification'
+import { type AppNotification, makeNotification } from '@/entities/notification'
 import { NotificationsPanel } from './NotificationsPanel'
 
 afterEach(cleanup)

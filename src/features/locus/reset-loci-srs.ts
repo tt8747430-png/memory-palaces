@@ -1,4 +1,4 @@
-import { updateLocus, type LocusStore } from '@/entities/locus'
+import { type LocusStore, updateLocus } from '@/entities/locus'
 
 /** Command — clear the spaced-repetition schedule of the given loci, returning them to
  * "new". Serves both the single-row "Reset schedule" and the multi-select bulk action. */

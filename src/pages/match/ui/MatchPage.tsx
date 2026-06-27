@@ -1,12 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import {
-  lociForRoom,
-  selectIsReady,
-  selectLoci,
-  useLocusStore,
-  useLocusStoreApi,
-} from '@/entities/locus'
+import { lociForRoom, selectIsReady, selectLoci, useLocusStore, useLocusStoreApi, } from '@/entities/locus'
 import { roomsForPalace, selectRooms, useRoomStore, useRoomStoreApi } from '@/entities/room'
 import { usePalaceStore, usePalaceStoreApi } from '@/entities/palace'
 import { MatchBoard } from '@/widgets/match'

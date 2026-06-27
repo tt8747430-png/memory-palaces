@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ChangeEvent } from 'react'
+import { type ChangeEvent, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Bell,
@@ -21,10 +21,10 @@ import {
   Volume2,
 } from 'lucide-react'
 import {
+  type PreferencesChanges,
   selectEffectivePreferences,
   usePreferencesStore,
   usePreferencesStoreApi,
-  type PreferencesChanges,
 } from '@/entities/preferences'
 import {
   profileHandle,

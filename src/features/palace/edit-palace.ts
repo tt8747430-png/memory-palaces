@@ -1,4 +1,4 @@
-import { updatePalace, type Palace, type PalaceChanges, type PalaceStore } from '@/entities/palace'
+import { type Palace, type PalaceChanges, type PalaceStore, updatePalace } from '@/entities/palace'
 import { requirePalace } from './require-palace'
 
 /** Command — edit a palace. Applies the changes through the entity's invariant

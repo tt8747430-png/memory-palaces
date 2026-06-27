@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/shared/lib'
 import { Button, Card, Chip, IconButton } from '@/shared/ui'
-import { initQuiz, quizAccuracy, quizReducer, type QuizQuestion } from '@/features/quiz'
+import { initQuiz, quizAccuracy, type QuizQuestion, quizReducer } from '@/features/quiz'
 
 export interface QuizResult {
   score: number

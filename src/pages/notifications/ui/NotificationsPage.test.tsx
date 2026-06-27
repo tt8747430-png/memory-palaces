@@ -5,12 +5,12 @@ import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
 import { InMemoryRepository } from '@/shared/api'
 import {
+  type AppNotification,
   createNotificationStore,
   makeNotification,
+  type NotificationStore,
   NotificationStoreContext,
   selectUnreadCount,
-  type AppNotification,
-  type NotificationStore,
 } from '@/entities/notification'
 import { NotificationsPage } from './NotificationsPage'
 

@@ -1,4 +1,4 @@
-import { lociForRoom, selectLoci, updateLocus, type LocusStore } from '@/entities/locus'
+import { lociForRoom, type LocusStore, selectLoci, updateLocus } from '@/entities/locus'
 import { resequence } from '@/shared/lib'
 import { requireLocus } from './require-locus'
 

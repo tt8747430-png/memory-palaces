@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DoorOpen } from 'lucide-react'
 import type { Room, RoomStore } from '@/entities/room'
-import { Button, Sheet, TextField, Textarea } from '@/shared/ui'
+import { Button, Sheet, Textarea, TextField } from '@/shared/ui'
 import { createRoom } from '../create-room'
 import { editRoom } from '../edit-room'
 

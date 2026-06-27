@@ -2,13 +2,13 @@ import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@/shared/api'
 import { createPalaceStore, makePalace, type Palace } from '@/entities/palace'
 import { createRoomStore, makeRoom, type Room } from '@/entities/room'
-import { createLocusStore, makeLocus, type Locus } from '@/entities/locus'
+import { createLocusStore, type Locus, makeLocus } from '@/entities/locus'
 import { createQuestionStore, makeQuestion, type Question } from '@/entities/question'
 import { createProgressStore, makeProgress, type Progress } from '@/entities/progress'
 import {
+  type AppNotification,
   createNotificationStore,
   makeNotification,
-  type AppNotification,
 } from '@/entities/notification'
 import { PROGRESS_ID } from '@/features/progress'
 import { clearAllContent, clearNotifications, resetEverything, resetProgress } from './index'

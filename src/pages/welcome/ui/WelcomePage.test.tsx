@@ -7,8 +7,8 @@ import { InMemoryRepository } from '@/shared/api'
 import {
   createSessionStore,
   makeAccountSession,
-  SessionStoreContext,
   type Session,
+  SessionStoreContext,
 } from '@/entities/session'
 import { WelcomePage } from './WelcomePage'
 

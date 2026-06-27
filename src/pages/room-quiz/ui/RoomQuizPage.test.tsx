@@ -5,13 +5,13 @@ import { MotionConfig } from 'motion/react'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
 import { InMemoryRepository } from '@/shared/api'
-import { createPalaceStore, makePalace, PalaceStoreContext, type Palace } from '@/entities/palace'
-import { createRoomStore, makeRoom, RoomStoreContext, type Room } from '@/entities/room'
+import { createPalaceStore, makePalace, type Palace, PalaceStoreContext } from '@/entities/palace'
+import { createRoomStore, makeRoom, type Room, RoomStoreContext } from '@/entities/room'
 import {
   createQuestionStore,
   makeQuestion,
-  QuestionStoreContext,
   type Question,
+  QuestionStoreContext,
 } from '@/entities/question'
 import { RoomQuizPage } from './RoomQuizPage'
 

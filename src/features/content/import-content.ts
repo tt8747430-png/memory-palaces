@@ -1,9 +1,9 @@
 import {
   ContentImportError,
+  type PalaceContentData,
   parseAnkiText,
   parsePalaceContent,
   parseRoomContent,
-  type PalaceContentData,
   type RoomContentData,
 } from '@/shared/lib'
 

@@ -1,5 +1,5 @@
-import { roomsForPalace, selectRooms, type RoomStore } from '@/entities/room'
-import { lociForRoom, selectLoci, type LocusStore } from '@/entities/locus'
+import { roomsForPalace, type RoomStore, selectRooms } from '@/entities/room'
+import { lociForRoom, type LocusStore, selectLoci } from '@/entities/locus'
 import { resetLociSrs } from './reset-loci-srs'
 
 /**

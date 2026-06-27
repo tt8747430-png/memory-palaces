@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useRef, type ReactNode } from 'react'
+import { type ReactNode, useCallback, useLayoutEffect, useRef } from 'react'
 import { cn } from '@/shared/lib'
 
 // `overscroll-contain` keeps the native iOS pull-and-bounce inside this scroller (and

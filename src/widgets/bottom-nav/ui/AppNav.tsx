@@ -3,7 +3,7 @@ import { useNavigate, useRouterState } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'motion/react'
 import { House, User } from 'lucide-react'
-import { ROUTES, type RoutePath } from '@/shared/config/routes'
+import { type RoutePath, ROUTES } from '@/shared/config/routes'
 import { cn } from '@/shared/lib'
 
 interface Tab {

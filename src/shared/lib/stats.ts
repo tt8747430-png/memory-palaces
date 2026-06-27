@@ -1,4 +1,4 @@
-import { srsStatus, type SrsState } from './srs'
+import { type SrsState, srsStatus } from './srs'
 
 /**
  * Derived progress numbers. None of these are stored on entities — they are

@@ -4,23 +4,23 @@ import userEvent from '@testing-library/user-event'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
 import { InMemoryRepository } from '@/shared/api'
-import { createPalaceStore, makePalace, PalaceStoreContext, type Palace } from '@/entities/palace'
-import { createFolderStore, FolderStoreContext, type Folder } from '@/entities/folder'
-import { createRoomStore, RoomStoreContext, type Room } from '@/entities/room'
-import { createLocusStore, LocusStoreContext, type Locus } from '@/entities/locus'
-import { createQuestionStore, QuestionStoreContext, type Question } from '@/entities/question'
+import { createPalaceStore, makePalace, type Palace, PalaceStoreContext } from '@/entities/palace'
+import { createFolderStore, type Folder, FolderStoreContext } from '@/entities/folder'
+import { createRoomStore, type Room, RoomStoreContext } from '@/entities/room'
+import { createLocusStore, type Locus, LocusStoreContext } from '@/entities/locus'
+import { createQuestionStore, type Question, QuestionStoreContext } from '@/entities/question'
 import {
   createPreferencesStore,
-  PreferencesStoreContext,
   type Preferences,
+  PreferencesStoreContext,
 } from '@/entities/preferences'
-import { createSessionStore, SessionStoreContext, type Session } from '@/entities/session'
-import { createProfileStore, ProfileStoreContext, type Profile } from '@/entities/profile'
-import { createProgressStore, ProgressStoreContext, type Progress } from '@/entities/progress'
+import { createSessionStore, type Session, SessionStoreContext } from '@/entities/session'
+import { createProfileStore, type Profile, ProfileStoreContext } from '@/entities/profile'
+import { createProgressStore, type Progress, ProgressStoreContext } from '@/entities/progress'
 import {
+  type AppNotification,
   createNotificationStore,
   NotificationStoreContext,
-  type AppNotification,
 } from '@/entities/notification'
 import { PalacesPage } from './PalacesPage'
 

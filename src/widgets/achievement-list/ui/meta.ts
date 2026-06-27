@@ -1,4 +1,4 @@
-import { Calendar, Crown, Star, Target, Trophy, Zap, type LucideIcon } from 'lucide-react'
+import { Calendar, Crown, type LucideIcon, Star, Target, Trophy, Zap } from 'lucide-react'
 import type { AchievementId } from '@/shared/lib'
 
 /** Icon + literal i18n keys per milestone achievement. `as const satisfies` keeps the

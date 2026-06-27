@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { dayKey, cn } from '@/shared/lib'
+import { cn, dayKey } from '@/shared/lib'
 import { GlassCard, IconButton } from '@/shared/ui'
 
 export interface StreakCalendarProps {

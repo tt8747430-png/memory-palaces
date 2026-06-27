@@ -5,8 +5,8 @@ import { MotionConfig } from 'motion/react'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
 import { InMemoryRepository } from '@/shared/api'
-import { createLocusStore, LocusStoreContext, makeLocus, type Locus } from '@/entities/locus'
-import { createQuestionStore, QuestionStoreContext, type Question } from '@/entities/question'
+import { createLocusStore, type Locus, LocusStoreContext, makeLocus } from '@/entities/locus'
+import { createQuestionStore, type Question, QuestionStoreContext } from '@/entities/question'
 import { RoomContentEditor } from './RoomContentEditor'
 
 afterEach(cleanup)

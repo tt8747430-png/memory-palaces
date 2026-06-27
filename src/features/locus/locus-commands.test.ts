@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@/shared/api'
 import { srsStatus } from '@/shared/lib'
-import { createLocusStore, lociForRoom, selectLoci, type Locus } from '@/entities/locus'
+import { createLocusStore, lociForRoom, type Locus, selectLoci } from '@/entities/locus'
 import { createLocus } from './create-locus'
 import { editLocus } from './edit-locus'
 import { deleteLocus } from './delete-locus'

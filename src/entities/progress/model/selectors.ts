@@ -1,4 +1,4 @@
-import { levelFromXp, totalTrainingDays, type LevelInfo } from '@/shared/lib'
+import { levelFromXp, type LevelInfo, totalTrainingDays } from '@/shared/lib'
 import type { Progress } from './types'
 import type { ProgressState } from './store'
 

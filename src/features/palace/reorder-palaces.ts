@@ -1,4 +1,4 @@
-import { updatePalace, type PalaceStore } from '@/entities/palace'
+import { type PalaceStore, updatePalace } from '@/entities/palace'
 
 /**
  * Command — persist a manual palace order. Given the ids in their new order, write each

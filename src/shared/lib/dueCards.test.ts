@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest'
 import {
   countDueLoci,
   countDuePerPalace,
-  getDueLoci,
   type DueLocus,
   type DuePalace,
   type DueRoom,
+  getDueLoci,
 } from './dueCards'
 import { schedule } from './srs'
 

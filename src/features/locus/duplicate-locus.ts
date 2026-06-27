@@ -1,4 +1,4 @@
-import { lociForRoom, makeLocus, selectLoci, type Locus, type LocusStore } from '@/entities/locus'
+import { lociForRoom, type Locus, type LocusStore, makeLocus, selectLoci } from '@/entities/locus'
 import { nextOrder } from '@/shared/lib'
 import { requireLocus } from './require-locus'
 

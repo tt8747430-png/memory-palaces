@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@/shared/api'
-import { createRoomStore, roomsForPalace, selectRooms, type Room } from '@/entities/room'
-import { createLocusStore, lociForRoom, selectLoci, type Locus } from '@/entities/locus'
+import { createRoomStore, type Room, roomsForPalace, selectRooms } from '@/entities/room'
+import { createLocusStore, lociForRoom, type Locus, selectLoci } from '@/entities/locus'
 import {
   createQuestionStore,
+  type Question,
   questionsForRoom,
   selectQuestions,
-  type Question,
 } from '@/entities/question'
 import { importRooms } from './import-rooms'
 

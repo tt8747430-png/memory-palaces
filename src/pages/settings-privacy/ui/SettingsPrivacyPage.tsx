@@ -1,11 +1,11 @@
-import { useEffect, type ReactNode } from 'react'
+import { type ReactNode, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Eye, Lock, MapPin, Share2, TrendingUp } from 'lucide-react'
 import {
+  type PrivacySettings,
   selectEffectivePreferences,
   usePreferencesStore,
   usePreferencesStoreApi,
-  type PrivacySettings,
 } from '@/entities/preferences'
 import { setPreferences } from '@/features/preferences'
 import { AppScreen, ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui'

@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
+  type BrowseState,
   currentId,
   initSession,
   nextId,
+  type ReviewState,
   sessionProgress,
   sessionReducer,
-  type BrowseState,
-  type ReviewState,
   type SessionState,
 } from './session-machine'
 

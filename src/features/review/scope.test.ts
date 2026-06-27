@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { SrsState } from '@/shared/lib'
-import { makeLocus, type Locus } from '@/entities/locus'
+import { type Locus, makeLocus } from '@/entities/locus'
 import { applyScope, orderIds, rangeBatches, scopeCounts, scopesEqual } from './scope'
 
 const NOW = Date.UTC(2026, 0, 10)

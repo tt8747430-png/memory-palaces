@@ -17,17 +17,17 @@ import {
 } from 'lucide-react'
 import {
   lociForRoom,
+  type Locus,
   selectLoci,
   useLocusStore,
   useLocusStoreApi,
-  type Locus,
 } from '@/entities/locus'
 import {
+  type Question,
   questionsForRoom,
   selectQuestions,
   useQuestionStore,
   useQuestionStoreApi,
-  type Question,
 } from '@/entities/question'
 import {
   createLocus,
@@ -55,14 +55,14 @@ import {
   readAnkiFile,
   readContentFile,
 } from '@/features/content'
-import { ContentImportError, cn, parsePastedLoci, parseVerses } from '@/shared/lib'
+import { cn, ContentImportError, parsePastedLoci, parseVerses } from '@/shared/lib'
 import { ConfirmDialog, ImportRow, SegmentedControl, Sheet, SpeedDial } from '@/shared/ui'
 import { CardRow, QuestionRow } from './ContentRows'
 import {
-  CardEditorSheet,
-  QuestionEditorSheet,
   type CardData,
+  CardEditorSheet,
   type QuestionData,
+  QuestionEditorSheet,
 } from './EditorSheets'
 import { PasteSheet } from './PasteSheet'
 

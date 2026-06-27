@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MotionConfig } from 'motion/react'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
-import { VerseStudy, type VerseCard, type VerseStudyPrefs } from './VerseStudy'
+import { type VerseCard, VerseStudy, type VerseStudyPrefs } from './VerseStudy'
 
 afterEach(cleanup)
 

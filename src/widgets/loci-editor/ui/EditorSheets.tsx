@@ -4,7 +4,7 @@ import { Check, Plus, X } from 'lucide-react'
 import type { Locus } from '@/entities/locus'
 import type { Question } from '@/entities/question'
 import { cn } from '@/shared/lib'
-import { Button, Sheet, TextField, Textarea } from '@/shared/ui'
+import { Button, Sheet, Textarea, TextField } from '@/shared/ui'
 
 export interface CardData {
   front: string

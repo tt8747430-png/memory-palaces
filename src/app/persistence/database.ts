@@ -1,6 +1,6 @@
+import type { RxCollection, RxStorage } from 'rxdb'
 import { addRxPlugin, createRxDatabase } from 'rxdb'
 import { RxDBMigrationSchemaPlugin } from 'rxdb/plugins/migration-schema'
-import type { RxCollection, RxStorage } from 'rxdb'
 import type { Folder } from '@/entities/folder'
 import type { Palace } from '@/entities/palace'
 import type { Room } from '@/entities/room'

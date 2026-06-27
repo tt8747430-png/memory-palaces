@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@/shared/api'
-import { createQuestionStore, type Question } from '@/entities/question'
-import { questionsForRoom, selectQuestions } from '@/entities/question'
+import {
+  createQuestionStore,
+  type Question,
+  questionsForRoom,
+  selectQuestions,
+} from '@/entities/question'
 import { createQuestion } from './create-question'
 import { editQuestion } from './edit-question'
 import { deleteQuestion } from './delete-question'

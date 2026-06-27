@@ -1,7 +1,7 @@
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie'
-import { InMemoryRepository, type AuthGateway } from '@/shared/api'
+import { type AuthGateway, InMemoryRepository } from '@/shared/api'
 import { RxdbRepository } from '@/shared/api/rxdb'
-import { EventBus, type AppEvents } from '@/shared/lib'
+import { type AppEvents, EventBus } from '@/shared/lib'
 import { createSessionStore, type Session, type SessionStore } from '@/entities/session'
 import { createPalaceStore, type Palace, type PalaceStore } from '@/entities/palace'
 import { createFolderStore, type Folder, type FolderStore } from '@/entities/folder'
@@ -16,8 +16,8 @@ import {
 } from '@/entities/preferences'
 import { createProfileStore, type Profile, type ProfileStore } from '@/entities/profile'
 import {
-  createNotificationStore,
   type AppNotification,
+  createNotificationStore,
   type NotificationStore,
 } from '@/entities/notification'
 import { createAppDatabase } from './persistence/database'

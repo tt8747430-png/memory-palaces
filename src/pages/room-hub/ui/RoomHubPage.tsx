@@ -35,9 +35,9 @@ import {
   IconButton,
   OverflowMenuButton,
   ScreenHeader,
+  type SheetAction,
   StudyOverviewCard,
   TextField,
-  type SheetAction,
 } from '@/shared/ui'
 
 export interface RoomHubPageProps {

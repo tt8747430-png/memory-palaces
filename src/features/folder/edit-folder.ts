@@ -1,4 +1,4 @@
-import { updateFolder, type Folder, type FolderChanges, type FolderStore } from '@/entities/folder'
+import { type Folder, type FolderChanges, type FolderStore, updateFolder } from '@/entities/folder'
 
 /**
  * Command — edit a folder's name, colour, or icon. The single write-path used by the UI

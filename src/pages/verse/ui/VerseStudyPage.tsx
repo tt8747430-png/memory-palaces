@@ -1,23 +1,13 @@
 import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { verseText } from '@/shared/lib'
-import {
-  lociForRoom,
-  selectIsReady,
-  selectLoci,
-  useLocusStore,
-  useLocusStoreApi,
-} from '@/entities/locus'
+import { lociForRoom, selectIsReady, selectLoci, useLocusStore, useLocusStoreApi, } from '@/entities/locus'
 import { roomsForPalace, selectRooms, useRoomStore, useRoomStoreApi } from '@/entities/room'
 import { usePalaceStore, usePalaceStoreApi } from '@/entities/palace'
-import {
-  selectEffectivePreferences,
-  usePreferencesStore,
-  usePreferencesStoreApi,
-} from '@/entities/preferences'
+import { selectEffectivePreferences, usePreferencesStore, usePreferencesStoreApi, } from '@/entities/preferences'
 import { editLocus } from '@/features/locus'
 import { setPreferences } from '@/features/preferences'
-import { VerseStudy, type VerseCard, type VerseStudyPrefs } from '@/widgets/verse'
+import { type VerseCard, VerseStudy, type VerseStudyPrefs } from '@/widgets/verse'
 import { useSessionReward } from '@/widgets/session-reward'
 import { AppScreen, ScreenHeader } from '@/shared/ui'
 

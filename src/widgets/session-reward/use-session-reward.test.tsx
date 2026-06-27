@@ -4,12 +4,12 @@ import { cleanup, renderHook } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
 import { InMemoryRepository } from '@/shared/api'
-import { EventBus, EventBusContext, dayKey, type AppEvents } from '@/shared/lib'
+import { type AppEvents, dayKey, EventBus, EventBusContext } from '@/shared/lib'
 import {
   createProgressStore,
   makeProgress,
-  ProgressStoreContext,
   type Progress,
+  ProgressStoreContext,
 } from '@/entities/progress'
 import { useSessionReward } from './use-session-reward'
 

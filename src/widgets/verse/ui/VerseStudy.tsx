@@ -29,7 +29,7 @@ import {
   typedVerseStatus,
   wordInitial,
 } from '@/shared/lib'
-import { Button, Chip, IconButton, Sheet, Switch, TextField, Textarea } from '@/shared/ui'
+import { Button, Chip, IconButton, Sheet, Switch, Textarea, TextField } from '@/shared/ui'
 
 export interface VerseCard {
   id: string

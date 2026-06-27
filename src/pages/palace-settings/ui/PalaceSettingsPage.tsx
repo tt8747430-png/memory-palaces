@@ -20,10 +20,10 @@ import {
 } from '@/features/palace'
 import { resetPalaceSrs } from '@/features/locus'
 import {
+  type Palace,
   selectIsReady as selectPalacesReady,
   usePalaceStore,
   usePalaceStoreApi,
-  type Palace,
 } from '@/entities/palace'
 import {
   selectIsReady as selectRoomsReady,

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@/shared/api'
 import { createLocusStore } from './store'
-import { makeLocus, type Locus } from './types'
+import { type Locus, makeLocus } from './types'
 
 const at = (ms: number) => new Date(ms).toISOString()
 const locus = (id: string, roomId: string, createdAt: string, front = id): Locus =>

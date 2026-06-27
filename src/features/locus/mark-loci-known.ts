@@ -1,4 +1,4 @@
-import { updateLocus, type LocusStore } from '@/entities/locus'
+import { type LocusStore, updateLocus } from '@/entities/locus'
 import { markKnown } from '@/shared/lib'
 
 /** Command — force the given loci into a "known" (mastered) schedule. Serves both the

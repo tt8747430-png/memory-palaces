@@ -16,7 +16,7 @@ import {
 import type { Locus } from '@/entities/locus'
 import type { Question } from '@/entities/question'
 import { cn, useLongPress } from '@/shared/lib'
-import { OverflowMenuButton, SrsStatusChip, type SheetAction } from '@/shared/ui'
+import { OverflowMenuButton, type SheetAction, SrsStatusChip } from '@/shared/ui'
 
 export interface CardRowProps {
   locus: Locus

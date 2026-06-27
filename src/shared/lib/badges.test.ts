@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { computeBadges, milestoneProgress, nextMilestone, type BadgeInput } from './badges'
+import { type BadgeInput, computeBadges, milestoneProgress, nextMilestone } from './badges'
 
 const ZERO: BadgeInput = {
   xp: 0,

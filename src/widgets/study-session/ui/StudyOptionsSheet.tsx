@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   ArrowLeftRight,
@@ -14,11 +14,11 @@ import {
 import { cn } from '@/shared/lib'
 import { Button, Sheet } from '@/shared/ui'
 import {
-  scopesEqual,
   type CardOrder,
   type RangeBatch,
   type Scope,
   type ScopeCounts,
+  scopesEqual,
 } from '@/features/review'
 import type { StudyDirection } from '../model/types'
 

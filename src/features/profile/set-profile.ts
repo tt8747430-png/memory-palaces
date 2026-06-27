@@ -1,10 +1,4 @@
-import {
-  makeProfile,
-  updateProfile,
-  type Profile,
-  type ProfileChanges,
-  type ProfileStore,
-} from '@/entities/profile'
+import { makeProfile, type Profile, type ProfileChanges, type ProfileStore, updateProfile, } from '@/entities/profile'
 
 /** The one profile record's id — singleton, so a fixed key prevents duplicates. */
 export const PROFILE_ID = 'profile'

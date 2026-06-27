@@ -1,12 +1,12 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, render } from '@testing-library/react'
-import { EventBus, EventBusContext, type AppEvents } from '@/shared/lib'
+import { type AppEvents, EventBus, EventBusContext } from '@/shared/lib'
 import { InMemoryRepository } from '@/shared/api'
 import {
+  type AppNotification,
   createNotificationStore,
   NotificationStoreContext,
   selectNotifications,
-  type AppNotification,
 } from '@/entities/notification'
 import { NotificationBridge } from './NotificationBridge'
 

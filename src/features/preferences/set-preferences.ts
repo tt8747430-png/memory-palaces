@@ -1,9 +1,9 @@
 import {
   makePreferences,
-  updatePreferences,
   type Preferences,
   type PreferencesChanges,
   type PreferencesStore,
+  updatePreferences,
 } from '@/entities/preferences'
 
 /** The one preferences record's id — singleton, so a fixed key prevents duplicates. */

@@ -16,7 +16,7 @@ import { selectPalaces, usePalaceStore, usePalaceStoreApi } from '@/entities/pal
 import { selectRooms, useRoomStore, useRoomStoreApi } from '@/entities/room'
 import { selectLoci, useLocusStore, useLocusStoreApi } from '@/entities/locus'
 import { BADGE_META } from '@/widgets/badge-list'
-import { AppScreen, BadgeMedallion, ScreenHeader, cardSurface } from '@/shared/ui'
+import { AppScreen, BadgeMedallion, cardSurface, ScreenHeader } from '@/shared/ui'
 
 const EASE_OUT = [0.22, 1, 0.36, 1] as const
 

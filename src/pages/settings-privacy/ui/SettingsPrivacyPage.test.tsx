@@ -6,8 +6,8 @@ import { i18n } from '@/shared/i18n'
 import { InMemoryRepository } from '@/shared/api'
 import {
   createPreferencesStore,
-  PreferencesStoreContext,
   type Preferences,
+  PreferencesStoreContext,
 } from '@/entities/preferences'
 import { SettingsPrivacyPage } from './SettingsPrivacyPage'
 

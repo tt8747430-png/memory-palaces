@@ -37,7 +37,7 @@ import {
   useLocusStoreApi,
 } from '@/entities/locus'
 import { AchievementGrid } from '@/widgets/achievement-list'
-import { AppScreen, ScreenHeader, cardSurface } from '@/shared/ui'
+import { AppScreen, cardSurface, ScreenHeader } from '@/shared/ui'
 
 export interface AchievementsPageProps {
   onBack?: () => void

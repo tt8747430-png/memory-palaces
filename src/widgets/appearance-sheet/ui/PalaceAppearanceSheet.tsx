@@ -2,7 +2,7 @@ import { type FormEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Check } from 'lucide-react'
 import { editPalace, PalaceIdentityFields } from '@/features/palace'
-import { usePalaceStoreApi, type Palace } from '@/entities/palace'
+import { type Palace, usePalaceStoreApi } from '@/entities/palace'
 import { Button, Sheet } from '@/shared/ui'
 
 export interface PalaceAppearanceSheetProps {

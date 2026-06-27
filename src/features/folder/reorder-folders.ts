@@ -1,4 +1,4 @@
-import { updateFolder, type FolderStore } from '@/entities/folder'
+import { type FolderStore, updateFolder } from '@/entities/folder'
 
 /**
  * Command — persist a manual folder order. Given the folder ids in their new order, write

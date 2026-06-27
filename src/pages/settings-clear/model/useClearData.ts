@@ -5,23 +5,14 @@ import { selectPalaceCount, usePalaceStore, usePalaceStoreApi } from '@/entities
 import { useRoomStoreApi } from '@/entities/room'
 import { useLocusStoreApi } from '@/entities/locus'
 import { useQuestionStoreApi } from '@/entities/question'
-import {
-  progressTrainingDays,
-  selectProgress,
-  useProgressStore,
-  useProgressStoreApi,
-} from '@/entities/progress'
-import {
-  selectNotifications,
-  useNotificationStore,
-  useNotificationStoreApi,
-} from '@/entities/notification'
+import { progressTrainingDays, selectProgress, useProgressStore, useProgressStoreApi, } from '@/entities/progress'
+import { selectNotifications, useNotificationStore, useNotificationStoreApi, } from '@/entities/notification'
 import {
   clearAllContent,
   clearNotifications,
   resetEverything,
-  resetProgress,
   type ResetEverythingStores,
+  resetProgress,
 } from '@/features/data'
 
 /** What each clear target will remove, live from the stores — so the screen can show the

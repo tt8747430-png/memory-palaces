@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@/shared/api'
-import { createLocusStore, makeLocus, type Locus } from '@/entities/locus'
+import { createLocusStore, type Locus, makeLocus } from '@/entities/locus'
 import { isDue, schedule } from '@/shared/lib'
 import { gradeCard } from './grade-card'
 

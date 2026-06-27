@@ -1,8 +1,8 @@
 import { contentSlug, lociToAnkiTsv, palaceContentToJson } from '@/shared/lib'
 import type { Palace } from '@/entities/palace'
-import { roomsForPalace, type Room } from '@/entities/room'
+import { type Room, roomsForPalace } from '@/entities/room'
 import { lociForRoom, type Locus } from '@/entities/locus'
-import { questionsForRoom, type Question } from '@/entities/question'
+import { type Question, questionsForRoom } from '@/entities/question'
 
 /** A ready-to-download file: what to name it, what's in it, and its MIME type. */
 export interface PalaceExportFile {

@@ -3,21 +3,21 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
 import { InMemoryRepository } from '@/shared/api'
-import { createProgressStore, ProgressStoreContext, type Progress } from '@/entities/progress'
-import { createPalaceStore, PalaceStoreContext, type Palace } from '@/entities/palace'
-import { createRoomStore, RoomStoreContext, type Room } from '@/entities/room'
-import { createLocusStore, LocusStoreContext, type Locus } from '@/entities/locus'
-import { createSessionStore, SessionStoreContext, type Session } from '@/entities/session'
+import { createProgressStore, type Progress, ProgressStoreContext } from '@/entities/progress'
+import { createPalaceStore, type Palace, PalaceStoreContext } from '@/entities/palace'
+import { createRoomStore, type Room, RoomStoreContext } from '@/entities/room'
+import { createLocusStore, type Locus, LocusStoreContext } from '@/entities/locus'
+import { createSessionStore, type Session, SessionStoreContext } from '@/entities/session'
 import {
+  type AppNotification,
   createNotificationStore,
   NotificationStoreContext,
-  type AppNotification,
 } from '@/entities/notification'
 import {
   createProfileStore,
   makeProfile,
-  ProfileStoreContext,
   type Profile,
+  ProfileStoreContext,
 } from '@/entities/profile'
 import { ProfilePage, type ProfilePageProps } from './ProfilePage'
 

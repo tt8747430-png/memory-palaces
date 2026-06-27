@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { makePalace, type Palace } from '@/entities/palace'
 import { makeRoom, type Room } from '@/entities/room'
-import { makeLocus, type Locus } from '@/entities/locus'
+import { type Locus, makeLocus } from '@/entities/locus'
 import { makeQuestion, type Question } from '@/entities/question'
 import { exportPalaceAnki, exportPalaceJson } from './export-palace'
 

@@ -1,4 +1,4 @@
-import { lociForRoom, selectLoci, type LocusStore } from '@/entities/locus'
+import { lociForRoom, type LocusStore, selectLoci } from '@/entities/locus'
 import { markLociKnown } from './mark-loci-known'
 
 /** Command — force every locus in a room into a "known" (mastered) schedule. Backs the

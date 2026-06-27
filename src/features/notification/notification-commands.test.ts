@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@/shared/api'
 import {
+  type AppNotification,
   createNotificationStore,
   NOTIFICATION_CAP,
-  type AppNotification,
 } from '@/entities/notification'
 import {
   clearNotifications,

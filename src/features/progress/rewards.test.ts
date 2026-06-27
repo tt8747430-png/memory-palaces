@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { outcomeToReward, studyXp, quizXp, XP_MATCH, XP_VERSE } from './rewards'
+import { outcomeToReward, quizXp, studyXp, XP_MATCH, XP_VERSE } from './rewards'
 
 describe('outcomeToReward', () => {
   it('maps a study outcome to xp by cards graded, items = graded', () => {

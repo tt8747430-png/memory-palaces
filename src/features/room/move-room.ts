@@ -1,4 +1,4 @@
-import { updateRoom, type RoomStore } from '@/entities/room'
+import { type RoomStore, updateRoom } from '@/entities/room'
 import { requireRoom } from './require-room'
 
 export type MoveDirection = 'up' | 'down'

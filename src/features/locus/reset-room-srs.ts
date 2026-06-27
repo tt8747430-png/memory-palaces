@@ -1,4 +1,4 @@
-import { lociForRoom, selectLoci, type LocusStore } from '@/entities/locus'
+import { lociForRoom, type LocusStore, selectLoci } from '@/entities/locus'
 import { resetLociSrs } from './reset-loci-srs'
 
 /** Command — clear the spaced-repetition schedule of every locus in a room, returning

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from 'react'
+import { type ReactNode, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -26,11 +26,11 @@ import {
   nextId,
   orderIds,
   rangeBatches,
+  type Scope,
   scopeCounts as computeScopeCounts,
   sessionProgress,
   sessionReducer,
   shuffleFirstDue,
-  type Scope,
 } from '@/features/review'
 import { StudyCardDeck, type SwipeAction } from './StudyCardDeck'
 import { StudyOptionsSheet } from './StudyOptionsSheet'
