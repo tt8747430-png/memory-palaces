@@ -4,31 +4,20 @@ import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
-import {
-  iosSplashDevices,
-  ORIENTATIONS,
-  splashHref,
-  splashMedia,
-} from './scripts/ios-splash-devices.mjs'
+import { iosSplashDevices, splashHref, splashMedia } from './scripts/ios-splash-devices.mjs'
 
 // Inject the per-device <link rel="apple-touch-startup-image"> tags from the same device
 // list that generates the images (scripts/generate-ios-splash.mjs), so the tags and the
-// PNGs stay in lockstep and index.html stays free of a wall of <link>s.
+// PNGs stay in lockstep and index.html stays free of a 13-line wall of <link>s.
 function iosSplashLinks(): Plugin {
   return {
     name: 'ios-splash-links',
     transformIndexHtml: () =>
-      iosSplashDevices.flatMap((device) =>
-        ORIENTATIONS.map((orientation) => ({
-          tag: 'link',
-          attrs: {
-            rel: 'apple-touch-startup-image',
-            media: splashMedia(device, orientation),
-            href: splashHref(device, orientation),
-          },
-          injectTo: 'head' as const,
-        })),
-      ),
+      iosSplashDevices.map((device) => ({
+        tag: 'link',
+        attrs: { rel: 'apple-touch-startup-image', media: splashMedia(device), href: splashHref(device) },
+        injectTo: 'head',
+      })),
   }
 }
 

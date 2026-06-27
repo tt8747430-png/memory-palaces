@@ -14,9 +14,7 @@
     "test:cov": "vitest run --coverage",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "generate:icons": "node scripts/generate-icons.mjs",
-    "generate:ios-splash": "node scripts/generate-ios-splash.mjs",
-    "generate:assets": "npm run generate:icons && npm run generate:ios-splash"
+    "generate:ios-splash": "node scripts/generate-ios-splash.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
