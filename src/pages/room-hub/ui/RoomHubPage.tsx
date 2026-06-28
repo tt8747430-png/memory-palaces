@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { GraduationCap, ListChecks, RotateCcw, Search, Trash2 } from 'lucide-react'
+import { GraduationCap, RotateCcw, Search, Trash2 } from 'lucide-react'
 import {
   selectIsReady as selectPalacesReady,
   usePalaceStore,
@@ -58,6 +58,12 @@ export interface RoomHubPageProps {
   onTest?: () => void
   /** Launch verse-study. */
   onVerse?: () => void
+  /** Open the full-screen card editor (add / edit). */
+  onAddCard?: () => void
+  onEditCard?: (cardId: string) => void
+  /** Open the full-screen question editor (add / edit). */
+  onAddQuestion?: () => void
+  onEditQuestion?: (questionId: string) => void
   /** Navigate away after the room is deleted. */
   onDeleted?: () => void
 }
@@ -72,6 +78,10 @@ export function RoomHubPage({
   onMatch,
   onTest,
   onVerse,
+  onAddCard,
+  onEditCard,
+  onAddQuestion,
+  onEditQuestion,
   onDeleted,
 }: RoomHubPageProps) {
   const { t } = useTranslation()
@@ -205,22 +215,13 @@ export function RoomHubPage({
             action={
               <div className="flex items-center gap-0.5">
                 {hasContent && !selectMode ? (
-                  <>
-                    <IconButton
-                      variant="glass"
-                      aria-label={t('roomHub.searchLabel')}
-                      onClick={openSearch}
-                    >
-                      <Search className="size-5" aria-hidden />
-                    </IconButton>
-                    <IconButton
-                      variant="glass"
-                      aria-label={t('roomHub.selectLabel')}
-                      onClick={() => setSelectMode(true)}
-                    >
-                      <ListChecks className="size-5" aria-hidden />
-                    </IconButton>
-                  </>
+                  <IconButton
+                    variant="glass"
+                    aria-label={t('roomHub.searchLabel')}
+                    onClick={openSearch}
+                  >
+                    <Search className="size-5" aria-hidden />
+                  </IconButton>
                 ) : null}
                 <OverflowMenuButton label={t('roomHub.menu.label')} actions={menuActions} />
               </div>
@@ -277,6 +278,10 @@ export function RoomHubPage({
             onSelectModeChange={setSelectMode}
             sort={prefs.contentSort}
             onSortChange={setContentSort}
+            onAddCard={onAddCard}
+            onEditCard={onEditCard}
+            onAddQuestion={onAddQuestion}
+            onEditQuestion={onEditQuestion}
           />
         </section>
       </div>

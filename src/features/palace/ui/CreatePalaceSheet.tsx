@@ -16,10 +16,10 @@ export interface CreatePalaceSheetProps {
 }
 
 /**
- * Create a palace in one pass — name, a tap-for-any-emoji icon, a colour, and an optional
- * cover photo, over a live preview of the card you're making. A keyboard-aware bottom sheet,
- * never a full-screen drawer (phone-first). The create command is the shared write-path, so
- * the AI Tutor can open the same flow.
+ * Create a palace in one pass — name, a tap-for-any-emoji icon, and a colour. A cover photo
+ * isn't offered here; it's added later from palace settings, keeping creation to one quick
+ * decision. A keyboard-aware bottom sheet, never a full-screen drawer (phone-first). The
+ * create command is the shared write-path, so the AI Tutor can open the same flow.
  */
 export function CreatePalaceSheet({
   open,
@@ -32,7 +32,6 @@ export function CreatePalaceSheet({
   const [name, setName] = useState('')
   const [icon, setIcon] = useState(DEFAULT_PALACE_ICON)
   const [color, setColor] = useState(DEFAULT_PALACE_COLOR)
-  const [image, setImage] = useState<string | undefined>(undefined)
   const [submitting, setSubmitting] = useState(false)
 
   // Fresh state every time the sheet opens.
@@ -41,7 +40,6 @@ export function CreatePalaceSheet({
     setName('')
     setIcon(DEFAULT_PALACE_ICON)
     setColor(DEFAULT_PALACE_COLOR)
-    setImage(undefined)
     setSubmitting(false)
   }, [open])
 
@@ -56,7 +54,6 @@ export function CreatePalaceSheet({
         name: name.trim(),
         icon,
         color,
-        image,
         folderId: folderId ?? null,
       })
       onOpenChange(false)
@@ -88,11 +85,11 @@ export function CreatePalaceSheet({
           name={name}
           icon={icon}
           color={color}
-          image={image}
           onNameChange={setName}
           onIconChange={setIcon}
           onColorChange={setColor}
-          onImageChange={setImage}
+          onImageChange={() => {}}
+          showCover={false}
           autoFocusName
         />
         <p className="mt-4 text-center text-[length:var(--p-text-label)] text-muted-foreground">

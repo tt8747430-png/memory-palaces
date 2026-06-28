@@ -33,7 +33,8 @@ import {
   Trash2,
 } from 'lucide-react'
 import { cn } from '@/shared/lib'
-import { OverflowMenuButton, type SheetAction, SwipeRow } from '@/shared/ui'
+import type { SwipeConfig } from '@/shared/config/swipe'
+import { buildSwipeActions, OverflowMenuButton, type SheetAction, SwipeRow } from '@/shared/ui'
 import * as React from 'react'
 
 /** A room plus the progress derived from its loci/questions — everything a card renders. */
@@ -73,6 +74,8 @@ export interface RoomListProps extends RoomListHandlers {
   /** Manual sort is active — show the drag handles and let rows be hand-arranged. An
    * automatic sort renders the list read-only (no handles). */
   reorderable: boolean
+  /** The user's swipe-gesture mapping for room rows (leading/trailing action trays). */
+  swipe: SwipeConfig
 }
 
 const EASE_OUT = [0.22, 1, 0.36, 1] as const
@@ -82,7 +85,7 @@ const EASE_OUT = [0.22, 1, 0.36, 1] as const
  * questions · mastered · due). Swipe-left to delete; a ⋮ overflow carries edit, duplicate,
  * reset, delete. In manual sort each card grows a grip handle and is drag-reorderable.
  * Presentational — the page derives the items, owns the sort, and wires the commands. */
-export function RoomList({ rooms, reorderable, ...handlers }: RoomListProps) {
+export function RoomList({ rooms, reorderable, swipe, ...handlers }: RoomListProps) {
   const reduce = useReducedMotion()
   // Bumped after a swipe-delete fires so the swiped card remounts at rest — if the
   // page's confirm dialog is dismissed, the row isn't left slid off-screen.
@@ -127,6 +130,7 @@ export function RoomList({ rooms, reorderable, ...handlers }: RoomListProps) {
           reorderable={reorderable}
           dragActive={activeId !== null}
           reduce={reduce}
+          swipe={swipe}
           handlers={handlers}
           onSwipeDelete={() => onSwipeDelete(room.id)}
         />
@@ -151,7 +155,7 @@ export function RoomList({ rooms, reorderable, ...handlers }: RoomListProps) {
       <DragOverlay dropAnimation={{ duration: 220, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }}>
         {activeRoom ? (
           <div className={cn('rounded-card shadow-elevated', !reduce && 'scale-[1.02]')}>
-            <RoomCard room={activeRoom} reorderable dragging handlers={handlers} />
+            <RoomCard room={activeRoom} reorderable dragging swipe={swipe} handlers={handlers} />
           </div>
         ) : null}
       </DragOverlay>
@@ -165,6 +169,7 @@ function SortableRoom({
   reorderable,
   dragActive,
   reduce,
+  swipe,
   handlers,
   onSwipeDelete,
 }: {
@@ -173,6 +178,7 @@ function SortableRoom({
   reorderable: boolean
   dragActive: boolean
   reduce: boolean | null
+  swipe: SwipeConfig
   handlers: RoomListHandlers
   onSwipeDelete: () => void
 }) {
@@ -207,6 +213,7 @@ function SortableRoom({
           dragActive={dragActive}
           handleRef={setActivatorNodeRef}
           handleProps={{ ...attributes, ...listeners }}
+          swipe={swipe}
           handlers={handlers}
           onSwipeDelete={onSwipeDelete}
         />
@@ -255,6 +262,7 @@ function RoomCard({
   dragging = false,
   handleRef,
   handleProps,
+  swipe,
   handlers,
   onSwipeDelete,
 }: {
@@ -264,11 +272,23 @@ function RoomCard({
   dragging?: boolean
   handleRef?: (node: HTMLElement | null) => void
   handleProps?: React.HTMLAttributes<HTMLButtonElement>
+  swipe: SwipeConfig
   handlers: RoomListHandlers
   onSwipeDelete?: () => void
 }) {
   const { t } = useTranslation()
   const actions = useRoomActions(room, handlers)
+  const hasProgress = room.reviewedCount > 0 || room.completed
+  const { leading, trailing } = buildSwipeActions(
+    swipe,
+    {
+      edit: { onAction: () => handlers.onEdit(room.id) },
+      duplicate: { onAction: () => handlers.onDuplicate(room.id) },
+      ...(hasProgress ? { reset: { onAction: () => handlers.onResetProgress(room.id) } } : {}),
+      delete: { onAction: () => onSwipeDelete?.() },
+    },
+    t,
+  )
   const pct = Math.min(100, Math.max(0, Math.round(room.progress)))
   const statusLabel = room.completed
     ? t('rooms.card.complete')
@@ -349,7 +369,7 @@ function RoomCard({
   // The menu and handle live inside the swiped content so they travel with the card on
   // swipe; the swipe is suspended while any drag is in flight so the two never fight.
   return (
-    <SwipeRow onSwipe={onSwipeDelete} disabled={dragActive}>
+    <SwipeRow leading={leading} trailing={trailing} disabled={dragActive}>
       {card}
     </SwipeRow>
   )

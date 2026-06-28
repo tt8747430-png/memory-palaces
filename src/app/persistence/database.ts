@@ -33,6 +33,7 @@ import {
   migratePreferencesV5,
   migratePreferencesV6,
   migratePreferencesV7,
+  migratePreferencesV8,
   migrateProfileV1,
   migrateProgressV1,
   migrateQuestionV1,
@@ -81,6 +82,7 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
         5: migratePreferencesV5,
         6: migratePreferencesV6,
         7: migratePreferencesV7,
+        8: migratePreferencesV8,
       },
     },
     profiles: {

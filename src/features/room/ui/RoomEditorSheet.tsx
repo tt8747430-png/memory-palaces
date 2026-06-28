@@ -19,10 +19,10 @@ export interface RoomEditorSheetProps {
 }
 
 /**
- * Add or edit a room — a name and an optional description, the only fields the lean
- * Room carries (order is derived, schedule lives on its loci). A keyboard-aware bottom
- * sheet, mirroring `CreatePalaceSheet`; the create/edit commands are the shared
- * write-path so the Tutor can reuse them.
+ * Add or edit a room. Adding asks for just a name — the description is added later from room
+ * settings (edit mode), keeping the add step to one decision. Editing shows both fields.
+ * A keyboard-aware bottom sheet, mirroring `CreatePalaceSheet`; the create/edit commands are
+ * the shared write-path so the Tutor can reuse them.
  */
 export function RoomEditorSheet({ store, target, onOpenChange, onSaved }: RoomEditorSheetProps) {
   const { t } = useTranslation()
@@ -94,18 +94,20 @@ export function RoomEditorSheet({ store, target, onOpenChange, onSaved }: RoomEd
             maxLength={80}
           />
         </label>
-        <label className="block">
-          <span className="mb-1.5 block text-[length:var(--p-text-label)] font-semibold text-heading">
-            {t('rooms.editor.descriptionLabel')}
-          </span>
-          <Textarea
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            placeholder={t('rooms.editor.descriptionPlaceholder')}
-            rows={3}
-            maxLength={160}
-          />
-        </label>
+        {editing ? (
+          <label className="block">
+            <span className="mb-1.5 block text-[length:var(--p-text-label)] font-semibold text-heading">
+              {t('rooms.editor.descriptionLabel')}
+            </span>
+            <Textarea
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              placeholder={t('rooms.editor.descriptionPlaceholder')}
+              rows={3}
+              maxLength={160}
+            />
+          </label>
+        ) : null}
       </div>
     </Sheet>
   )

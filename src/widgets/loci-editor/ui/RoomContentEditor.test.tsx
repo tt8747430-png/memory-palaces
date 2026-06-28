@@ -70,8 +70,8 @@ describe('RoomContentEditor', () => {
 
     await user.click(screen.getByRole('button', { name: /add to room/i }))
     await user.click(screen.getByRole('button', { name: /add card/i }))
-    await user.type(screen.getByPlaceholderText('e.g. Zeus'), 'novum')
-    await user.type(screen.getByPlaceholderText(/king of the gods/i), 'new')
+    await user.type(screen.getByPlaceholderText('e.g. Genesis 1:1'), 'novum')
+    await user.type(screen.getByPlaceholderText(/in the beginning/i), 'new')
     await user.click(screen.getByRole('button', { name: /save card/i }))
 
     expect(await screen.findByText('novum')).toBeInTheDocument()

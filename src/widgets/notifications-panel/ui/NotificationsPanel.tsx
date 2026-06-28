@@ -2,7 +2,7 @@ import { type CSSProperties, useMemo } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
-import { BellOff, Flame, type LucideIcon, Star, Trophy, X, Zap } from 'lucide-react'
+import { BellOff, Flame, type LucideIcon, Star, Trash2, Trophy, X, Zap } from 'lucide-react'
 import { cn } from '@/shared/lib'
 import { cardSurface, Chip, IconButton, SwipeRow } from '@/shared/ui'
 import type { AppNotification, NotificationType } from '@/entities/notification'
@@ -94,7 +94,17 @@ export function NotificationsPanel({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, x: -24, transition: { duration: 0.18 } }}
                   >
-                    <SwipeRow onSwipe={() => onRemove(notification.id)}>
+                    <SwipeRow
+                      trailing={[
+                        {
+                          id: 'dismiss',
+                          icon: <Trash2 className="size-5" aria-hidden />,
+                          label: t('common.delete'),
+                          tone: 'danger',
+                          onAction: () => onRemove(notification.id),
+                        },
+                      ]}
+                    >
                       <NotificationRow notification={notification} now={now} onRemove={onRemove} />
                     </SwipeRow>
                   </motion.li>

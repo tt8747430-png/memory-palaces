@@ -1,6 +1,7 @@
 import { type ChangeEvent, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
+  ArrowLeftRight,
   Bell,
   Check,
   ChevronRight,
@@ -51,6 +52,8 @@ export interface SettingsPageProps {
   onBack?: () => void
   onEditProfile?: () => void
   onPrivacy?: () => void
+  /** Open the swipe-actions screen (re-map list-row swipe gestures). */
+  onSwipe?: () => void
   /** Open the destructive Clear data screen. */
   onClearData?: () => void
   onHelp?: () => void
@@ -73,6 +76,7 @@ export function SettingsPage({
   onBack,
   onEditProfile,
   onPrivacy,
+  onSwipe,
   onClearData,
   onHelp,
   onAbout,
@@ -264,6 +268,13 @@ export function SettingsPage({
             label={t('settings.language')}
             value={currentLanguage.label}
             onClick={() => setLanguageOpen(true)}
+          />
+          <SettingsRow
+            kind="nav"
+            icon={<ArrowLeftRight />}
+            label={t('settings.swipeActions')}
+            description={t('settings.swipeActionsHint')}
+            onClick={() => onSwipe?.()}
           />
         </SettingsSection>
 

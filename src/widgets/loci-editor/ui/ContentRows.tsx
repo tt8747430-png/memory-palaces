@@ -16,7 +16,14 @@ import {
 import type { Locus } from '@/entities/locus'
 import type { Question } from '@/entities/question'
 import { cn, useLongPress } from '@/shared/lib'
-import { OverflowMenuButton, type SheetAction, SrsStatusChip } from '@/shared/ui'
+import type { SwipeConfig } from '@/shared/config/swipe'
+import {
+  buildSwipeActions,
+  OverflowMenuButton,
+  type SheetAction,
+  SrsStatusChip,
+  SwipeRow,
+} from '@/shared/ui'
 
 /** Props that wire a row's grip to dnd-kit's drag activator. Present only while the room
  * is in manual sort; absent otherwise (the row renders without a handle). */
@@ -52,6 +59,8 @@ export interface CardRowProps {
   dragHandle?: RowDragHandle
   /** The lifted clone shown in the drag overlay — drops the swipe/menu chrome. */
   dragging?: boolean
+  /** The user's swipe-gesture mapping for card rows (leading/trailing action trays). */
+  swipe: SwipeConfig
   onToggleSelect: () => void
   /** Long-press the row to enter select mode with this card picked. */
   onRequestSelect: () => void
@@ -89,6 +98,7 @@ export function CardRow({
   reorderable,
   dragHandle,
   dragging = false,
+  swipe,
   onToggleSelect,
   onRequestSelect,
   onEdit,
@@ -103,6 +113,23 @@ export function CardRow({
     onLongPress: onRequestSelect,
     onTap: selectMode ? onToggleSelect : undefined,
   })
+  const { leading, trailing } = buildSwipeActions(
+    swipe,
+    {
+      flag: {
+        onAction: onToggleFlag,
+        label: locus.flagged ? t('loci.row.unflag') : t('loci.row.flag'),
+      },
+      known: { onAction: onMarkKnown },
+      reset: { onAction: onResetSrs },
+      duplicate: { onAction: onDuplicate },
+      delete: { onAction: onDelete },
+    },
+    t,
+  )
+  // Swipe is the at-rest gesture only: it stands down while selecting, hand-reordering, or
+  // riding in the drag overlay so the gestures never fight.
+  const swipeEnabled = !selectMode && !reorderable && !dragging
 
   const actions: SheetAction[] = [
     {
@@ -144,7 +171,7 @@ export function CardRow({
     },
   ]
 
-  return (
+  const card = (
     <motion.div
       initial={dragging ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
@@ -214,6 +241,13 @@ export function CardRow({
       </div>
     </motion.div>
   )
+
+  if (!swipeEnabled) return card
+  return (
+    <SwipeRow leading={leading} trailing={trailing} className="rounded-card">
+      {card}
+    </SwipeRow>
+  )
 }
 
 export interface QuestionRowProps {
@@ -227,6 +261,9 @@ export interface QuestionRowProps {
   dragHandle?: RowDragHandle
   /** The lifted clone shown in the drag overlay — drops the swipe/menu chrome. */
   dragging?: boolean
+  /** The user's swipe-gesture mapping for card rows; questions honour the duplicate/delete
+   * actions in it and ignore the card-only ones. */
+  swipe: SwipeConfig
   onToggleSelect: () => void
   /** Long-press the row to enter select mode with this question picked. */
   onRequestSelect: () => void
@@ -243,6 +280,7 @@ export function QuestionRow({
   reorderable,
   dragHandle,
   dragging = false,
+  swipe,
   onToggleSelect,
   onRequestSelect,
   onEdit,
@@ -254,6 +292,12 @@ export function QuestionRow({
     onLongPress: onRequestSelect,
     onTap: selectMode ? onToggleSelect : undefined,
   })
+  const { leading, trailing } = buildSwipeActions(
+    swipe,
+    { duplicate: { onAction: onDuplicate }, delete: { onAction: onDelete } },
+    t,
+  )
+  const swipeEnabled = !selectMode && !reorderable && !dragging
 
   const actions: SheetAction[] = [
     {
@@ -277,7 +321,7 @@ export function QuestionRow({
     },
   ]
 
-  return (
+  const card = (
     <motion.div
       initial={dragging ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
@@ -348,5 +392,12 @@ export function QuestionRow({
         )}
       </div>
     </motion.div>
+  )
+
+  if (!swipeEnabled) return card
+  return (
+    <SwipeRow leading={leading} trailing={trailing} className="rounded-card">
+      {card}
+    </SwipeRow>
   )
 }

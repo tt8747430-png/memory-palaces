@@ -212,7 +212,7 @@ export const progressSchema: RxJsonSchema<Progress> = {
 }
 
 export const preferencesSchema: RxJsonSchema<Preferences> = {
-  version: 7,
+  version: 8,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -233,6 +233,17 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
     verseMode: { type: 'string', enum: ['blur', 'words', 'initials', 'type'] },
     verseShuffle: { type: 'boolean' },
     verseWordSpaces: { type: 'boolean' },
+    swipe: {
+      type: 'object',
+      properties: {
+        palace: { type: 'object' },
+        folder: { type: 'object' },
+        room: { type: 'object' },
+        card: { type: 'object' },
+      },
+      required: ['palace', 'folder', 'room', 'card'],
+      additionalProperties: false,
+    },
     privacy: {
       type: 'object',
       properties: {
@@ -270,6 +281,7 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
     'verseMode',
     'verseShuffle',
     'verseWordSpaces',
+    'swipe',
     'privacy',
   ],
 }

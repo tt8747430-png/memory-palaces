@@ -26,13 +26,22 @@ import {
   Check,
   FolderInput,
   FolderOpen,
+  GripVertical,
   Heart,
   Pencil,
   Settings2,
   Trash2,
 } from 'lucide-react'
-import { cn } from '@/shared/lib'
-import { FlyoutMenu, FolderGlyph, PalaceCover, type SheetAction, SwipeRow } from '@/shared/ui'
+import { cn, useLongPress } from '@/shared/lib'
+import type { SwipeConfig } from '@/shared/config/swipe'
+import {
+  buildSwipeActions,
+  FlyoutMenu,
+  FolderGlyph,
+  PalaceCover,
+  type SheetAction,
+  SwipeRow,
+} from '@/shared/ui'
 
 export interface LibraryFolderItem {
   id: string
@@ -68,11 +77,13 @@ export interface LibraryHandlers {
   onOpenFolder: (id: string) => void
   onEditFolder: (id: string) => void
   onDeleteFolder: (id: string) => void
+  /** Long-press on a row: enter select mode with this item picked. */
+  onRequestSelect: (id: string) => void
   /** Persist a new manual folder order (root only). */
   onReorderFolders: (orderedIds: string[]) => void
   /** Persist a new manual palace order within the current level. */
   onReorderPalaces: (orderedIds: string[]) => void
-  /** File a palace into a folder by dragging it onto the folder card. */
+  /** File a palace into a folder by dragging it onto the folder card (select mode). */
   onFilePalace: (palaceId: string, folderId: string) => void
 }
 
@@ -83,10 +94,13 @@ export interface LibraryGridProps extends LibraryHandlers {
   view: 'grid' | 'list'
   loading?: boolean
   emptyState: ReactNode
-  /** Multi-select mode disables drag and turns taps into checkbox toggles. */
+  /** Multi-select mode: rows grow a grip + checkbox; taps toggle, drags reorder, swipe is off. */
   selectMode: boolean
   selectedIds: Set<string>
   onToggleSelect: (id: string) => void
+  /** The user's swipe-gesture mapping for palace / folder rows (list view only). */
+  palaceSwipe: SwipeConfig
+  folderSwipe: SwipeConfig
 }
 
 // Exponential ease-out + a calm spring, shared by the drop-target and receive animations.
@@ -101,11 +115,21 @@ const parseId = (raw: string): { kind: 'f' | 'p'; id: string } => ({
   id: raw.slice(2),
 })
 
-/** The library explorer: folder cards and palace cards together, reorderable by drag (manual
- * sort) and droppable — drag a palace onto a folder to file it. Presentational: the page owns
- * the data and commands and reacts to the drag/select callbacks. Reorders apply to a local
- * copy of the list the instant they happen, so the cards settle straight into place instead
- * of snapping back while the new order persists to the store. */
+/** Drag wiring handed to a card so it can mount the grip (list) or the card body (grid) as the
+ * reorder activator while the row's own tap stays free for selection. */
+interface CardDrag {
+  isOver: boolean
+  setActivatorNodeRef: (node: HTMLElement | null) => void
+  listeners: ReturnType<typeof useSortable>['listeners']
+  attributes: ReturnType<typeof useSortable>['attributes']
+}
+
+/** The library explorer: folder cards and palace cards together. At rest a tap opens an item, a
+ * long-press enters multi-select, and (list view) a swipe runs the user's configured action. In
+ * select mode each row carries a grip + checkbox: taps toggle the pick, a grip-drag reorders
+ * (manual sort), and dropping a palace on a folder files it. Presentational — the page owns the
+ * data + commands and reacts to the callbacks; reorders apply to a local copy first so cards
+ * settle straight into place instead of snapping back while the new order persists. */
 export function LibraryGrid({
   folders,
   palaces,
@@ -115,6 +139,8 @@ export function LibraryGrid({
   selectMode,
   selectedIds,
   onToggleSelect,
+  palaceSwipe,
+  folderSwipe,
   ...handlers
 }: LibraryGridProps) {
   const reduce = useReducedMotion()
@@ -131,11 +157,10 @@ export function LibraryGrid({
   useEffect(() => setFolderItems(folders), [folders])
   useEffect(() => setPalaceItems(palaces), [palaces])
 
-  // Long-press to drag: a hold (not an immediate move) starts the drag, so a tap opens the
-  // card and a horizontal flick is free to drive the swipe action / a scroll. `tolerance`
-  // cancels the hold if the finger travels first (that's a scroll or a swipe, not a drag).
+  // Reorder lives only in select mode, so the drag starts on real travel (a grip pull or a
+  // press-drag), never on a hold — a hold is reserved for entering select mode.
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { delay: 220, tolerance: 8 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
 
@@ -204,7 +229,7 @@ export function LibraryGrid({
       <div className={containerClass}>
         <SortableContext items={folderItems.map((f) => fid(f.id))} strategy={strategy}>
           {folderItems.map((folder) => (
-            <SortableItem key={folder.id} dndId={fid(folder.id)} disabled={selectMode}>
+            <SortableItem key={folder.id} dndId={fid(folder.id)} disabled={!selectMode}>
               {(drag) => (
                 <FolderCard
                   folder={folder}
@@ -217,7 +242,9 @@ export function LibraryGrid({
                   isOver={drag.isOver && activePalace !== undefined}
                   receiving={receivingId === folder.id}
                   dragActive={activeId !== null}
+                  drag={drag}
                   reduce={reduce}
+                  swipe={folderSwipe}
                   onToggleSelect={() => onToggleSelect(folder.id)}
                   handlers={handlers}
                 />
@@ -228,14 +255,16 @@ export function LibraryGrid({
 
         <SortableContext items={palaceItems.map((p) => pid(p.id))} strategy={strategy}>
           {palaceItems.map((palace) => (
-            <SortableItem key={palace.id} dndId={pid(palace.id)} disabled={selectMode}>
-              {() => (
+            <SortableItem key={palace.id} dndId={pid(palace.id)} disabled={!selectMode}>
+              {(drag) => (
                 <PalaceCard
                   item={palace}
                   view={view}
                   selectMode={selectMode}
                   selected={selectedIds.has(palace.id)}
                   dragActive={activeId !== null}
+                  drag={drag}
+                  swipe={palaceSwipe}
                   onToggleSelect={() => onToggleSelect(palace.id)}
                   handlers={handlers}
                 />
@@ -253,12 +282,19 @@ export function LibraryGrid({
               view={view}
               dragging
               reduce={reduce}
+              swipe={folderSwipe}
               handlers={handlers}
             />
           </DragLift>
         ) : activePalace ? (
           <DragLift reduce={reduce}>
-            <PalaceCard item={activePalace} view={view} dragging handlers={handlers} />
+            <PalaceCard
+              item={activePalace}
+              view={view}
+              dragging
+              swipe={palaceSwipe}
+              handlers={handlers}
+            />
           </DragLift>
         ) : null}
       </DragOverlay>
@@ -281,10 +317,18 @@ function SortableItem({
 }: {
   dndId: string
   disabled: boolean
-  children: (drag: { isOver: boolean }) => ReactNode
+  children: (drag: CardDrag) => ReactNode
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } =
-    useSortable({ id: dndId, disabled })
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+    isOver,
+  } = useSortable({ id: dndId, disabled })
   return (
     <div
       ref={setNodeRef}
@@ -296,11 +340,38 @@ function SortableItem({
         opacity: isDragging ? 0.35 : 1,
       }}
       className={cn('touch-manipulation', isDragging && 'z-50')}
-      {...attributes}
-      {...listeners}
     >
-      {children({ isOver })}
+      {children({ isOver, setActivatorNodeRef, listeners, attributes })}
     </div>
+  )
+}
+
+/** A left-edge grip (list) / corner badge (grid) that activates a reorder drag in select mode
+ * without stealing the row's tap. */
+function DragGrip({
+  drag,
+  className,
+  label,
+}: {
+  drag: CardDrag
+  className?: string
+  label: string
+}) {
+  return (
+    <button
+      ref={drag.setActivatorNodeRef}
+      type="button"
+      aria-label={label}
+      // `touch-none` hands the gesture to dnd-kit's pointer sensor instead of the page scroll.
+      className={cn(
+        'grid cursor-grab touch-none place-items-center text-muted-foreground active:cursor-grabbing',
+        className,
+      )}
+      {...drag.attributes}
+      {...drag.listeners}
+    >
+      <GripVertical className="size-5" aria-hidden />
+    </button>
   )
 }
 
@@ -315,6 +386,8 @@ function FolderCard({
   dragging = false,
   dragActive = false,
   reduce = false,
+  drag,
+  swipe,
   onToggleSelect,
   handlers,
 }: {
@@ -332,6 +405,8 @@ function FolderCard({
   /** A drag is in progress somewhere — suspends the swipe gesture so they never fight. */
   dragActive?: boolean
   reduce?: boolean | null
+  drag?: CardDrag
+  swipe: SwipeConfig
   onToggleSelect?: () => void
   handlers: LibraryHandlers
 }) {
@@ -355,7 +430,19 @@ function FolderCard({
     },
   ]
 
-  const handleClick = () => (selectMode ? onToggleSelect?.() : handlers.onOpenFolder(folder.id))
+  const { leading, trailing } = buildSwipeActions(
+    swipe,
+    {
+      edit: { onAction: () => handlers.onEditFolder(folder.id) },
+      delete: { onAction: () => handlers.onDeleteFolder(folder.id) },
+    },
+    t,
+  )
+
+  const press = useLongPress(
+    { onLongPress: () => handlers.onRequestSelect(folder.id), onTap: () => handlers.onOpenFolder(folder.id) },
+    { delay: 400 },
+  )
 
   const selectRing = selected ? 'ring-2 ring-primary' : 'ring-1 ring-border'
   const popTransition = receiving ? { duration: 0.5, ease: EASE_OUT } : DROP_SPRING
@@ -379,6 +466,47 @@ function FolderCard({
         : receiving
           ? { scale: [1, 1.03, 1] }
           : { scale: 1 }
+    const body = (
+      <button
+        type="button"
+        {...(selectMode || dragging ? { onClick: onToggleSelect } : press)}
+        aria-label={
+          selectMode
+            ? t('palaces.selectFolderLabel', { name: folder.name })
+            : t('palaces.openFolderLabel', { name: folder.name })
+        }
+        className={cn(
+          'relative flex w-full items-center gap-3 rounded-card bg-card p-3 text-left shadow-rest',
+          !selectMode && 'pr-12',
+          selectMode && 'pl-11',
+          selectRing,
+        )}
+      >
+        {selectMode ? <SelectDot selected={selected} /> : null}
+        <span className="relative shrink-0">
+          {!dragging ? (
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-x-1.5 -bottom-1 h-4 rounded-[7px] bg-secondary/60"
+            />
+          ) : null}
+          <FolderGlyph
+            color={folder.color}
+            icon={folder.icon}
+            className="relative size-14 rounded-card"
+            iconClassName="text-2xl"
+          />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate text-[length:var(--p-text-sub)] font-bold tracking-tight text-heading">
+            {folder.name}
+          </h3>
+          <p className="mt-0.5 truncate text-[length:var(--p-text-label)] text-muted-foreground">
+            {subtitle}
+          </p>
+        </div>
+      </button>
+    )
     return (
       <motion.div
         className={cn('relative', dragging && 'rounded-card shadow-elevated')}
@@ -386,44 +514,19 @@ function FolderCard({
         transition={popTransition}
       >
         <SwipeRow
-          onSwipe={() => handlers.onDeleteFolder(folder.id)}
+          leading={leading}
+          trailing={trailing}
           disabled={selectMode || dragActive || dragging}
           className="rounded-card"
         >
-          <button
-            type="button"
-            onClick={handleClick}
-            aria-label={t('palaces.openFolderLabel', { name: folder.name })}
-            className={cn(
-              'relative flex w-full items-center gap-3 rounded-card bg-card p-3 text-left shadow-rest',
-              !selectMode && 'pr-12',
-              selectRing,
-            )}
-          >
-            {selectMode ? <SelectDot selected={selected} /> : null}
-            <span className="relative shrink-0">
-              {!dragging ? (
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute inset-x-1.5 -bottom-1 h-4 rounded-[7px] bg-secondary/60"
-                />
-              ) : null}
-              <FolderGlyph
-                color={folder.color}
-                icon={folder.icon}
-                className="relative size-14 rounded-card"
-                iconClassName="text-2xl"
-              />
-            </span>
-            <div className="min-w-0 flex-1">
-              <h3 className="truncate text-[length:var(--p-text-sub)] font-bold tracking-tight text-heading">
-                {folder.name}
-              </h3>
-              <p className="mt-0.5 truncate text-[length:var(--p-text-label)] text-muted-foreground">
-                {subtitle}
-              </p>
-            </div>
-          </button>
+          {body}
+          {selectMode && drag ? (
+            <DragGrip
+              drag={drag}
+              label={t('palaces.reorderFolderLabel', { name: folder.name })}
+              className="absolute bottom-0 left-0 top-0 w-11 rounded-l-card"
+            />
+          ) : null}
           {!selectMode && !dragging ? (
             <CardMenu label={t('palaces.folderActions', { name: folder.name })} actions={actions} />
           ) : null}
@@ -464,10 +567,13 @@ function FolderCard({
 
       <button
         type="button"
-        onClick={handleClick}
+        {...(selectMode || dragging
+          ? { onClick: onToggleSelect, ...(drag ? { ...drag.attributes, ...drag.listeners, ref: drag.setActivatorNodeRef } : {}) }
+          : press)}
         aria-label={t('palaces.openFolderLabel', { name: folder.name })}
         className={cn(
           'relative flex h-full w-full flex-col gap-3 rounded-card bg-card p-3.5 text-left shadow-rest',
+          selectMode && 'touch-none',
           selectRing,
         )}
       >
@@ -532,6 +638,8 @@ function PalaceCard({
   selected = false,
   dragging = false,
   dragActive = false,
+  drag,
+  swipe,
   onToggleSelect,
   handlers,
 }: {
@@ -542,6 +650,8 @@ function PalaceCard({
   dragging?: boolean
   /** A drag is in progress somewhere — suspends the swipe gesture so they never fight. */
   dragActive?: boolean
+  drag?: CardDrag
+  swipe: SwipeConfig
   onToggleSelect?: () => void
   handlers: LibraryHandlers
 }) {
@@ -551,10 +661,34 @@ function PalaceCard({
   const roomsLabel = t(item.totalRooms === 1 ? 'palaces.roomCountOne' : 'palaces.roomCountOther', {
     count: item.totalRooms,
   })
-  const handleClick = () => (selectMode ? onToggleSelect?.() : handlers.onOpenPalace(item.id))
+  const press = useLongPress(
+    { onLongPress: () => handlers.onRequestSelect(item.id), onTap: () => handlers.onOpenPalace(item.id) },
+    { delay: 400 },
+  )
   const ring = selected ? 'ring-2 ring-primary' : ''
   const coverVariant =
     item.color?.startsWith('from-') || item.color?.startsWith('#') ? 'identity' : 'brand'
+
+  const { leading, trailing } = buildSwipeActions(
+    swipe,
+    {
+      favorite: {
+        onAction: () => handlers.onToggleFavorite(item.id),
+        label: item.favorite ? t('palaces.unfavorite') : t('palaces.favorite'),
+        icon: (
+          <Heart className={cn('size-5', item.favorite && 'fill-current')} aria-hidden />
+        ),
+      },
+      move: { onAction: () => handlers.onMovePalace(item.id) },
+      archive: {
+        onAction: () => handlers.onArchivePalace(item.id),
+        label: item.archived ? t('palaces.restore') : t('palaces.archive'),
+      },
+      settings: { onAction: () => handlers.onOpenPalaceSettings(item.id) },
+      delete: { onAction: () => handlers.onDeletePalace(item.id) },
+    },
+    t,
+  )
 
   if (view === 'list') {
     return (
@@ -566,32 +700,23 @@ function PalaceCard({
         )}
       >
         <SwipeRow
-          actions={[
-            {
-              id: 'archive',
-              icon: <Archive className="size-5" aria-hidden />,
-              label: t('palaces.archive'),
-              tone: 'warning',
-              onAction: () => handlers.onArchivePalace(item.id),
-            },
-            {
-              id: 'delete',
-              icon: <Trash2 className="size-5" aria-hidden />,
-              label: t('palaces.delete'),
-              tone: 'danger',
-              onAction: () => handlers.onDeletePalace(item.id),
-            },
-          ]}
+          leading={leading}
+          trailing={trailing}
           disabled={selectMode || dragActive || dragging}
           className="rounded-card"
         >
           <button
             type="button"
-            onClick={handleClick}
-            aria-label={t('palaces.openLabel', { name: item.name })}
+            {...(selectMode || dragging ? { onClick: onToggleSelect } : press)}
+            aria-label={
+              selectMode
+                ? t('palaces.selectLabel', { name: item.name })
+                : t('palaces.openLabel', { name: item.name })
+            }
             className={cn(
               'flex w-full items-center gap-3 rounded-card bg-card p-3 text-left shadow-rest',
               !selectMode && 'pr-12',
+              selectMode && 'pl-11',
               ring,
             )}
           >
@@ -627,6 +752,13 @@ function PalaceCard({
               </div>
             </div>
           </button>
+          {selectMode && drag ? (
+            <DragGrip
+              drag={drag}
+              label={t('palaces.reorderLabel', { name: item.name })}
+              className="absolute bottom-0 left-0 top-0 w-11 rounded-l-card"
+            />
+          ) : null}
           {!selectMode && !dragging ? (
             <CardMenu label={t('palaces.moreLabel', { name: item.name })} actions={actions} />
           ) : null}
@@ -646,10 +778,13 @@ function PalaceCard({
       <motion.button
         type="button"
         whileTap={reduce ? undefined : { scale: 0.98 }}
-        onClick={handleClick}
+        {...(selectMode || dragging
+          ? { onClick: onToggleSelect, ...(drag ? { ...drag.attributes, ...drag.listeners, ref: drag.setActivatorNodeRef } : {}) }
+          : press)}
         aria-label={t('palaces.openLabel', { name: item.name })}
         className={cn(
           'block w-full overflow-hidden rounded-card bg-card text-left shadow-rest',
+          selectMode && 'touch-none',
           ring,
         )}
       >

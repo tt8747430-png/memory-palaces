@@ -11,7 +11,6 @@ import {
   FolderPlus,
   GripVertical,
   LayoutGrid,
-  ListChecks,
   Pencil,
   Rows3,
   Trash2,
@@ -301,10 +300,6 @@ export function PalacesPage({
     return items.map(({ id, name, color, icon, count }) => ({ id, name, color, icon, count }))
   }, [folders, enriched, atRoot, inArchived, sort])
 
-  // Once data has loaded, whether the current view has anything to show. Drives the
-  // controls + speed-dial: empty views drop them, leaning on the empty state's own CTAs.
-  const hasItems = palacesReady && (visibleFolders.length > 0 || visiblePalaces.length > 0)
-
   const palaceById = (id: string) => palaces.find((palace) => palace.id === id)
   const deletingPalace = deletePalaceTarget ? palaceById(deletePalaceTarget) : undefined
   const deletingFolder = deleteFolderTarget
@@ -405,6 +400,11 @@ export function PalacesPage({
     setDeleteFolderTarget(null)
   }
 
+  const requestSelect = (id: string) => {
+    setSelectMode(true)
+    setSelectedIds((prev) => new Set(prev).add(id))
+  }
+
   const dndHandlers: LibraryHandlers = {
     onOpenPalace: (id) => onOpenPalace?.(id),
     onOpenPalaceSettings: (id) => onOpenPalaceSettings?.(id),
@@ -412,6 +412,7 @@ export function PalacesPage({
     onMovePalace: (id) => setMoveTarget(id),
     onArchivePalace: handleArchive,
     onDeletePalace: (id) => setDeletePalaceTarget(id),
+    onRequestSelect: requestSelect,
     onOpenFolder: (id) => onOpenFolder?.(id),
     onEditFolder: (id) => {
       const folder = folders.find((f) => f.id === id)
@@ -501,18 +502,6 @@ export function PalacesPage({
     />
   )
 
-  const selectControl = (
-    <IconButton
-      variant="ghost"
-      size="sm"
-      aria-label={t('palaces.selectLabel')}
-      disabled={!hasItems}
-      onClick={() => setSelectMode(true)}
-    >
-      <ListChecks className="size-[18px]" aria-hidden />
-    </IconButton>
-  )
-
   const viewControl = (
     <SegmentedControl
       aria-label={t('palaces.viewLabel')}
@@ -522,14 +511,14 @@ export function PalacesPage({
       onChange={(value) => setView(value)}
       options={[
         {
-          value: 'grid',
-          label: <LayoutGrid className="size-[18px]" aria-hidden />,
-          ariaLabel: t('palaces.viewGrid'),
-        },
-        {
           value: 'list',
           label: <Rows3 className="size-[18px]" aria-hidden />,
           ariaLabel: t('palaces.viewList'),
+        },
+        {
+          value: 'grid',
+          label: <LayoutGrid className="size-[18px]" aria-hidden />,
+          ariaLabel: t('palaces.viewGrid'),
         },
       ]}
     />
@@ -666,15 +655,12 @@ export function PalacesPage({
         </div>
       ) : (
         // The library toolbar — always present (so the chrome never jumps), identical at the
-        // root and inside a folder/archived view: sorting leads on the left; selection +
-        // layout sit on the right. Select is disabled while a view has nothing to select.
+        // root and inside a folder/archived view: sorting leads on the left, the layout
+        // switch sits on the right. Multi-select is entered by long-pressing any card.
         // (Archive lives in the home header.)
         <div className="mb-3 mt-3 flex items-center gap-2">
           {sortControl}
-          <div className="ml-auto flex items-center gap-1.5">
-            {selectControl}
-            {viewControl}
-          </div>
+          <div className="ml-auto flex items-center gap-1.5">{viewControl}</div>
         </div>
       )}
 
@@ -687,6 +673,8 @@ export function PalacesPage({
         selectMode={selectMode}
         selectedIds={selectedIds}
         onToggleSelect={toggleSelect}
+        palaceSwipe={prefs.swipe.palace}
+        folderSwipe={prefs.swipe.folder}
         {...dndHandlers}
       />
 

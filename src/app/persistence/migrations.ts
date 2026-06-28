@@ -42,7 +42,7 @@ export function migrateQuestionV1(oldDoc: Omit<Question, 'order'>): Question {
  * three-way `theme`. The whole v0→v5 chain produces this legacy shape;
  * {@link migratePreferencesV6} converts it to the current {@link Preferences}.
  */
-type LegacyPreferences = Omit<Preferences, 'theme' | 'roomsSort' | 'contentSort'> & {
+type LegacyPreferences = Omit<Preferences, 'theme' | 'roomsSort' | 'contentSort' | 'swipe'> & {
   darkMode: boolean
 }
 
@@ -147,14 +147,23 @@ export function migratePreferencesV6(oldDoc: PreferencesV5): PreferencesV6 {
 
 /** The v6 preferences shape — before per-room sort prefs (`roomsSort`, `contentSort`)
  * were persisted. This is the first version on the current `theme`-based shape. */
-export type PreferencesV6 = Omit<Preferences, 'roomsSort' | 'contentSort'>
+export type PreferencesV6 = Omit<Preferences, 'roomsSort' | 'contentSort' | 'swipe'>
 
 /** v6 → v7: backfill the rooms/content sort prefs with defaults (both `manual`); a stored
  * value always wins, so the spread puts the saved doc last. */
-export function migratePreferencesV7(oldDoc: PreferencesV6): Preferences {
+export function migratePreferencesV7(oldDoc: PreferencesV6): PreferencesV7 {
   return {
     roomsSort: DEFAULT_PREFERENCES.roomsSort,
     contentSort: DEFAULT_PREFERENCES.contentSort,
     ...oldDoc,
   }
+}
+
+/** The v7 preferences shape — before the per-item-type `swipe` map was persisted. */
+export type PreferencesV7 = Omit<Preferences, 'swipe'>
+
+/** v7 → v8: backfill the swipe-gesture map with the shipped defaults. A stored doc never had
+ * one, so there's nothing to preserve — every upgrading user gets the default mapping. */
+export function migratePreferencesV8(oldDoc: PreferencesV7): Preferences {
+  return { ...oldDoc, swipe: DEFAULT_PREFERENCES.swipe }
 }

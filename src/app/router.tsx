@@ -15,6 +15,8 @@ import { PalacesPage } from '@/pages/palaces'
 import { PalaceDetailPage } from '@/pages/palace-detail'
 import { PalaceSettingsPage } from '@/pages/palace-settings'
 import { RoomHubPage } from '@/pages/room-hub'
+import { CardEditorPage } from '@/pages/card-editor'
+import { QuestionEditorPage } from '@/pages/question-editor'
 import { StudyCardsPage } from '@/pages/study'
 import { MatchPage } from '@/pages/match'
 import { VerseStudyPage } from '@/pages/verse'
@@ -30,6 +32,7 @@ import { SettingsPage, useProgressTransfer } from '@/pages/settings'
 import { SettingsProfilePage } from '@/pages/settings-profile'
 import { SettingsChangePasswordPage } from '@/pages/settings-change-password'
 import { SettingsPrivacyPage } from '@/pages/settings-privacy'
+import { SettingsSwipePage } from '@/pages/settings-swipe'
 import { SettingsClearPage } from '@/pages/settings-clear'
 import { SettingsHelpPage } from '@/pages/settings-help'
 import { SettingsAboutPage } from '@/pages/settings-about'
@@ -226,6 +229,12 @@ function RoomHubRoute() {
       onMatch={() => navigate({ to: ROUTES.roomMatch, params: { roomId } })}
       onTest={() => navigate({ to: ROUTES.roomQuiz, params: { roomId } })}
       onVerse={() => navigate({ to: ROUTES.roomVerse, params: { roomId } })}
+      onAddCard={() => navigate({ to: ROUTES.roomCardNew, params: { roomId } })}
+      onEditCard={(cardId) => navigate({ to: ROUTES.roomCardEdit, params: { roomId, cardId } })}
+      onAddQuestion={() => navigate({ to: ROUTES.roomQuestionNew, params: { roomId } })}
+      onEditQuestion={(questionId) =>
+        navigate({ to: ROUTES.roomQuestionEdit, params: { roomId, questionId } })
+      }
       onDeleted={back}
     />
   )
@@ -235,6 +244,64 @@ const roomHubRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.roomHub,
   component: RoomHubRoute,
+})
+
+function RoomCardNewRoute() {
+  const { roomId } = roomCardNewRoute.useParams()
+  const navigate = useNavigate()
+  const toRoom = () => navigate({ to: ROUTES.roomHub, params: { roomId } })
+  const back = useBack(toRoom)
+  return <CardEditorPage roomId={roomId} onBack={back} onDone={toRoom} />
+}
+
+const roomCardNewRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.roomCardNew,
+  component: RoomCardNewRoute,
+})
+
+function RoomCardEditRoute() {
+  const { roomId, cardId } = roomCardEditRoute.useParams()
+  const navigate = useNavigate()
+  const toRoom = () => navigate({ to: ROUTES.roomHub, params: { roomId } })
+  const back = useBack(toRoom)
+  return <CardEditorPage roomId={roomId} cardId={cardId} onBack={back} onDone={toRoom} />
+}
+
+const roomCardEditRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.roomCardEdit,
+  component: RoomCardEditRoute,
+})
+
+function RoomQuestionNewRoute() {
+  const { roomId } = roomQuestionNewRoute.useParams()
+  const navigate = useNavigate()
+  const toRoom = () => navigate({ to: ROUTES.roomHub, params: { roomId } })
+  const back = useBack(toRoom)
+  return <QuestionEditorPage roomId={roomId} onBack={back} onDone={toRoom} />
+}
+
+const roomQuestionNewRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.roomQuestionNew,
+  component: RoomQuestionNewRoute,
+})
+
+function RoomQuestionEditRoute() {
+  const { roomId, questionId } = roomQuestionEditRoute.useParams()
+  const navigate = useNavigate()
+  const toRoom = () => navigate({ to: ROUTES.roomHub, params: { roomId } })
+  const back = useBack(toRoom)
+  return (
+    <QuestionEditorPage roomId={roomId} questionId={questionId} onBack={back} onDone={toRoom} />
+  )
+}
+
+const roomQuestionEditRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.roomQuestionEdit,
+  component: RoomQuestionEditRoute,
 })
 
 function RoomStudyRoute() {
@@ -454,6 +521,7 @@ function SettingsRoute() {
       onBack={back}
       onEditProfile={() => navigate({ to: ROUTES.settingsProfile })}
       onPrivacy={() => navigate({ to: ROUTES.settingsPrivacy })}
+      onSwipe={() => navigate({ to: ROUTES.settingsSwipe })}
       onClearData={() => navigate({ to: ROUTES.settingsClear })}
       onHelp={() => navigate({ to: ROUTES.settingsHelp })}
       onAbout={() => navigate({ to: ROUTES.settingsAbout })}
@@ -519,6 +587,18 @@ const settingsPrivacyRoute = createRoute({
   component: SettingsPrivacyRoute,
 })
 
+function SettingsSwipeRoute() {
+  const navigate = useNavigate()
+  const back = useBack(() => navigate({ to: ROUTES.settings }))
+  return <SettingsSwipePage onBack={back} />
+}
+
+const settingsSwipeRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.settingsSwipe,
+  component: SettingsSwipeRoute,
+})
+
 function SettingsClearRoute() {
   const navigate = useNavigate()
   const back = useBack(() => navigate({ to: ROUTES.settings }))
@@ -577,6 +657,10 @@ const routeTree = rootRoute.addChildren([
   palaceDetailRoute,
   palaceSettingsRoute,
   roomHubRoute,
+  roomCardNewRoute,
+  roomCardEditRoute,
+  roomQuestionNewRoute,
+  roomQuestionEditRoute,
   roomStudyRoute,
   palaceStudyRoute,
   roomMatchRoute,
@@ -595,6 +679,7 @@ const routeTree = rootRoute.addChildren([
   settingsProfileRoute,
   settingsChangePasswordRoute,
   settingsPrivacyRoute,
+  settingsSwipeRoute,
   settingsClearRoute,
   settingsHelpRoute,
   settingsAboutRoute,

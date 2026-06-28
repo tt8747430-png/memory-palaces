@@ -327,6 +327,7 @@ export function PalaceDetailPage({
             <RoomList
               rooms={displayItems}
               reorderable={roomsSort === 'manual'}
+              swipe={prefs.swipe.room}
               onOpen={(id) => onOpenRoom?.(id)}
               onEdit={(id) => {
                 const room = roomById(id)

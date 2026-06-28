@@ -71,7 +71,8 @@ import {
   editQuestion,
   reorderQuestions,
 } from '@/features/question'
-import type { ContentSort } from '@/entities/preferences'
+import { type ContentSort, usePreferencesStoreApiOptional } from '@/entities/preferences'
+import { DEFAULT_SWIPE, type SwipeConfig } from '@/shared/config/swipe'
 import {
   applyRoomContent,
   exportLociAnki,
@@ -116,6 +117,12 @@ export interface RoomContentEditorProps {
    * let the editor own an internal sort (default `manual`), so it works standalone. */
   sort?: ContentSort
   onSortChange?: (sort: ContentSort) => void
+  /** Navigate to the full-screen card/question editors. When provided, add/edit route to a
+   * page; when omitted (standalone/tests), the editor falls back to its bottom sheets. */
+  onAddCard?: () => void
+  onEditCard?: (cardId: string) => void
+  onAddQuestion?: () => void
+  onEditQuestion?: (questionId: string) => void
 }
 
 type Tab = 'loci' | 'questions'
@@ -139,6 +146,10 @@ export function RoomContentEditor({
   onSelectModeChange,
   sort: controlledSort,
   onSortChange,
+  onAddCard,
+  onEditCard,
+  onAddQuestion,
+  onEditQuestion,
 }: RoomContentEditorProps) {
   const { t } = useTranslation()
   const locusStore = useLocusStoreApi()
@@ -150,6 +161,20 @@ export function RoomContentEditor({
     locusStore.getState().start()
     questionStore.getState().start()
   }, [locusStore, questionStore])
+
+  // Read the card swipe-config reactively when a preferences store is wired (the app), and
+  // fall back to the defaults when it isn't (the widget's standalone/isolation tests).
+  const prefStore = usePreferencesStoreApiOptional()
+  const [cardSwipe, setCardSwipe] = useState<SwipeConfig>(
+    () => prefStore?.getState().preferences?.swipe.card ?? DEFAULT_SWIPE.card,
+  )
+  useEffect(() => {
+    if (!prefStore) return
+    const read = () =>
+      setCardSwipe(prefStore.getState().preferences?.swipe.card ?? DEFAULT_SWIPE.card)
+    read()
+    return prefStore.subscribe(read)
+  }, [prefStore])
 
   const loci = useMemo(() => lociForRoom(allLoci, roomId), [allLoci, roomId])
   const questions = useMemo(() => questionsForRoom(allQuestions, roomId), [allQuestions, roomId])
@@ -262,9 +287,12 @@ export function RoomContentEditor({
       reorderable={reorderable}
       dragHandle={dragHandle}
       dragging={dragging}
+      swipe={cardSwipe}
       onToggleSelect={() => toggleSelect(locus.id)}
       onRequestSelect={() => requestSelect(locus.id)}
-      onEdit={() => setEditor({ kind: 'locus', locus })}
+      onEdit={() =>
+        onEditCard ? onEditCard(locus.id) : setEditor({ kind: 'locus', locus })
+      }
       onDuplicate={() => {
         void duplicateLocus(locusStore, locus.id)
         toast.success(t('loci.row.duplicated'))
@@ -292,9 +320,12 @@ export function RoomContentEditor({
       reorderable={reorderable}
       dragHandle={dragHandle}
       dragging={dragging}
+      swipe={cardSwipe}
       onToggleSelect={() => toggleSelect(question.id)}
       onRequestSelect={() => requestSelect(question.id)}
-      onEdit={() => setEditor({ kind: 'question', question })}
+      onEdit={() =>
+        onEditQuestion ? onEditQuestion(question.id) : setEditor({ kind: 'question', question })
+      }
       onDuplicate={() => {
         void duplicateQuestion(questionStore, question.id)
         toast.success(t('loci.row.duplicated'))
@@ -703,13 +734,14 @@ export function RoomContentEditor({
             id: 'card',
             label: t('loci.addCard'),
             icon: <Plus className="size-5" aria-hidden />,
-            onSelect: () => setEditor({ kind: 'locus', locus: null }),
+            onSelect: () => (onAddCard ? onAddCard() : setEditor({ kind: 'locus', locus: null })),
           },
           {
             id: 'question',
             label: t('questions.addQuestion'),
             icon: <HelpCircle className="size-5" aria-hidden />,
-            onSelect: () => setEditor({ kind: 'question', question: null }),
+            onSelect: () =>
+              onAddQuestion ? onAddQuestion() : setEditor({ kind: 'question', question: null }),
           },
           {
             id: 'import',

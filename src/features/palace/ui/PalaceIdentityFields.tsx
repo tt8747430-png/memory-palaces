@@ -18,6 +18,9 @@ export interface PalaceIdentityFieldsProps {
   onImageChange: (value: string | undefined) => void
   /** Autofocus the name field on mount (create flow only). */
   autoFocusName?: boolean
+  /** Show the cover-photo control. Off in the create sheet — a cover is added later from
+   * palace settings — on everywhere the full identity is edited. */
+  showCover?: boolean
 }
 
 /** A palace's full identity in one block: a live cover preview that doubles as the photo
@@ -34,6 +37,7 @@ export function PalaceIdentityFields({
   onColorChange,
   onImageChange,
   autoFocusName = false,
+  showCover = true,
 }: PalaceIdentityFieldsProps) {
   const { t } = useTranslation()
   const fileRef = useRef<HTMLInputElement>(null)
@@ -51,43 +55,46 @@ export function PalaceIdentityFields({
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Live cover — exactly what the card will show — doubling as the photo control. */}
-      <div className="relative overflow-hidden rounded-card shadow-rest">
-        <PalaceCover
-          icon={icon}
-          color={color}
-          image={image}
-          className="h-28 w-full"
-          iconClassName="text-5xl"
-        />
-        <div className="absolute inset-x-0 bottom-0 flex justify-end gap-2 p-2.5">
-          {image ? (
+      {/* Live cover — exactly what the card will show — doubling as the photo control. Hidden
+          in the create flow, where a cover is added later from palace settings. */}
+      {showCover ? (
+        <div className="relative overflow-hidden rounded-card shadow-rest">
+          <PalaceCover
+            icon={icon}
+            color={color}
+            image={image}
+            className="h-28 w-full"
+            iconClassName="text-5xl"
+          />
+          <div className="absolute inset-x-0 bottom-0 flex justify-end gap-2 p-2.5">
+            {image ? (
+              <IconButton
+                variant="glass"
+                size="sm"
+                aria-label={t('palaces.removeCover')}
+                onClick={() => onImageChange(undefined)}
+              >
+                <X className="size-4" aria-hidden />
+              </IconButton>
+            ) : null}
             <IconButton
               variant="glass"
               size="sm"
-              aria-label={t('palaces.removeCover')}
-              onClick={() => onImageChange(undefined)}
+              aria-label={image ? t('palaces.changeCover') : t('palaces.addCover')}
+              onClick={() => fileRef.current?.click()}
             >
-              <X className="size-4" aria-hidden />
+              <Camera className="size-4" aria-hidden />
             </IconButton>
-          ) : null}
-          <IconButton
-            variant="glass"
-            size="sm"
-            aria-label={image ? t('palaces.changeCover') : t('palaces.addCover')}
-            onClick={() => fileRef.current?.click()}
-          >
-            <Camera className="size-4" aria-hidden />
-          </IconButton>
+          </div>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handlePhoto}
+          />
         </div>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handlePhoto}
-        />
-      </div>
+      ) : null}
 
       <TextField
         aria-label={t('palaces.createName')}

@@ -7,43 +7,41 @@ import {
   useState,
 } from 'react'
 import { animate, motion, useMotionValue, useReducedMotion, useTransform } from 'motion/react'
-import { Trash2 } from 'lucide-react'
-import { clampSwipeOffset, cn, impact, shouldCommitSwipe, SWIPE_DELETE_MAX } from '@/shared/lib'
+import type { SwipeTone } from '@/shared/config/swipe'
+import { cn, impact } from '@/shared/lib'
 
-/** Visual register of the revealed action — `danger` for a destructive remove (the
- * default), `warning` for a reversible "tuck away" like archive. */
-export type SwipeTone = 'danger' | 'warning'
+export type { SwipeTone }
 
+/** Solid, saturated action surfaces (iOS-Mail register) — not the muted tints used elsewhere.
+ * Amber needs dark text; the rest carry white. */
 const TONE_SURFACE: Record<SwipeTone, string> = {
-  danger: 'bg-[var(--danger-surface)] text-[var(--danger-on-surface)]',
-  warning: 'bg-[var(--warning-surface)] text-[var(--warning-foreground)]',
+  danger: 'bg-[var(--danger)] text-white',
+  warning: 'bg-[var(--warning)] text-[var(--p-navy-900)]',
+  success: 'bg-[var(--success)] text-white',
+  accent: 'bg-[var(--accent)] text-white',
+  neutral: 'bg-[var(--p-gray-500)] text-white',
 }
 
-/** One button in a multi-action swipe tray. Array order is left→right, so the LAST action
- * sits at the trailing (far-right) edge — the slot for the most destructive one. */
+/** One button in a swipe tray. */
 export interface SwipeAction {
   id: string
   /** Glyph shown in the tray button. */
   icon: ReactNode
   /** Caption under the glyph, and the button's accessible name. */
   label: string
-  /** Tints the button; defaults to `danger`. */
+  /** Tints the button; defaults to `neutral`. */
   tone?: SwipeTone
   onAction: () => void
 }
 
 export interface SwipeRowProps {
   children: ReactNode
-  /** Single-action mode: committed when the row is swiped left past the threshold. Ignored
-   * when {@link actions} is provided. */
-  onSwipe?: () => void
-  /** The glyph revealed behind the row in single-action mode; defaults to a trash can. */
-  revealIcon?: ReactNode
-  /** Tints the single-action revealed panel; defaults to `danger`. */
-  tone?: SwipeTone
-  /** Multi-action mode: a left-swipe reveals this tray of buttons (last = far right) and
-   * rests open so the user picks one. Takes precedence over {@link onSwipe}. */
-  actions?: SwipeAction[]
+  /** Revealed by swiping the row RIGHT (tray on the left edge). Index 0 is the edge-most
+   * action — the one a full swipe auto-fires. */
+  leading?: SwipeAction[]
+  /** Revealed by swiping the row LEFT (tray on the right edge). The LAST action is the
+   * edge-most — the one a full swipe auto-fires. */
+  trailing?: SwipeAction[]
   /** Disable the gesture (children still render and stay tappable). */
   disabled?: boolean
   className?: string
@@ -51,51 +49,98 @@ export interface SwipeRowProps {
 
 /** Movement (px) before the gesture locks to an axis — below this it's still a tap. */
 const AXIS_LOCK = 8
-/** Width (px) of each revealed tray button in multi-action mode. */
-const ACTION_WIDTH = 76
+/** Width (px) of each tray button. */
+const ACTION_WIDTH = 82
+/** Share of the row width past which a full swipe arms the edge-most action. */
+const FULL_SWIPE_RATIO = 0.5
+
+type Side = 'leading' | 'trailing'
 
 /**
- * Wraps a list row so a left-swipe slides it aside to reveal an action. With {@link
- * SwipeRowProps.onSwipe} it's a single commit-on-threshold action; with {@link
- * SwipeRowProps.actions} it reveals a tray of buttons that rests open for the user to pick
- * (the last action sits at the far right). Built on plain pointer events (not a gesture lib)
- * so a tap never gets swallowed: tracking only locks to the horizontal axis after real
- * movement, and vertical drags fall through to native scroll (`touch-action: pan-y`). The
- * gesture is additive — the row should keep a visible menu as the keyboard/assistive path.
+ * Wraps a list row with the iOS-Mail swipe pattern. A short swipe rests the row open over a
+ * tray of actions (the user taps one); a long swipe past ~half the row arms the edge-most
+ * action of that side and releasing auto-fires it, the action's surface expanding to fill as
+ * it arms. Built on plain pointer events so a tap is never swallowed — tracking locks to the
+ * horizontal axis only after real movement, and vertical drags fall through to native scroll
+ * (`touch-action: pan-y`). The gesture is additive: the row keeps its own menu as the
+ * keyboard/assistive path, so the trays are `aria-hidden`.
  */
-export function SwipeRow(props: SwipeRowProps) {
-  if (props.actions && props.actions.length > 0) {
-    return <MultiActionSwipeRow {...props} actions={props.actions} />
-  }
-  return <SingleActionSwipeRow {...props} />
-}
-
-function SingleActionSwipeRow({
+export function SwipeRow({
   children,
-  onSwipe,
-  revealIcon = <Trash2 className="size-5" />,
-  tone = 'danger',
+  leading = [],
+  trailing = [],
   disabled = false,
   className,
 }: SwipeRowProps) {
   const reduce = useReducedMotion()
   const x = useMotionValue(0)
-  const revealOpacity = useTransform(x, [-SWIPE_DELETE_MAX, -28, 0], [1, 0.35, 0])
-  const revealScale = useTransform(x, [-SWIPE_DELETE_MAX, -40, 0], [1, 0.7, 0.6])
-  const drag = useRef<{
-    startX: number
-    startY: number
-    axis: 'h' | 'v' | null
-    id: number
-  } | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [open, setOpen] = useState<Side | null>(null)
+  const [armed, setArmed] = useState<Side | null>(null)
+  const wasArmed = useRef<Side | null>(null)
+
+  const hasLeading = leading.length > 0
+  const hasTrailing = trailing.length > 0
+  const leadingWidth = leading.length * ACTION_WIDTH
+  const trailingWidth = trailing.length * ACTION_WIDTH
+
+  const leadingOpacity = useTransform(x, (v) => (v > 0 ? 1 : 0))
+  const trailingOpacity = useTransform(x, (v) => (v < 0 ? 1 : 0))
+
+  const drag = useRef<{ startX: number; startY: number; axis: 'h' | 'v' | null; id: number } | null>(
+    null,
+  )
 
   const settle = (to: number) => {
     if (reduce) x.set(to)
-    else animate(x, to, { type: 'spring', stiffness: 520, damping: 38 })
+    else animate(x, to, { type: 'spring', stiffness: 520, damping: 42 })
+  }
+
+  const close = () => {
+    setOpen(null)
+    setArmed(null)
+    settle(0)
+  }
+
+  // A disabled row (drag in flight, select mode) can't be left resting open.
+  useEffect(() => {
+    if (disabled && (open || x.get() !== 0)) {
+      setOpen(null)
+      setArmed(null)
+      x.set(0)
+    }
+  }, [disabled, open, x])
+
+  const fullThreshold = () => {
+    const w = containerRef.current?.offsetWidth ?? 320
+    return w * FULL_SWIPE_RATIO
+  }
+
+  // Resistance past the rest-open width so the row feels weighted but a full swipe stays
+  // reachable; hard-stopped a touch beyond the row width.
+  const clampOffset = (raw: number) => {
+    if (raw < 0) {
+      if (!hasTrailing) return raw * 0.12
+      if (raw >= -trailingWidth) return raw
+      const past = -raw - trailingWidth
+      return -(trailingWidth + past * 0.7)
+    }
+    if (raw > 0) {
+      if (!hasLeading) return raw * 0.12
+      if (raw <= leadingWidth) return raw
+      const past = raw - leadingWidth
+      return leadingWidth + past * 0.7
+    }
+    return 0
   }
 
   const onPointerDown = (event: ReactPointerEvent) => {
-    drag.current = { startX: event.clientX, startY: event.clientY, axis: null, id: event.pointerId }
+    drag.current = {
+      startX: event.clientX,
+      startY: event.clientY,
+      axis: null,
+      id: event.pointerId,
+    }
   }
 
   const onPointerMove = (event: ReactPointerEvent) => {
@@ -113,115 +158,18 @@ function SingleActionSwipeRow({
       state.axis = 'h'
       event.currentTarget.setPointerCapture?.(state.id)
     }
-    x.set(clampSwipeOffset(dx))
-  }
+    const base = open === 'trailing' ? -trailingWidth : open === 'leading' ? leadingWidth : 0
+    const next = clampOffset(dx + base)
+    x.set(next)
 
-  const finish = (event: ReactPointerEvent) => {
-    const state = drag.current
-    drag.current = null
-    if (!state || state.axis !== 'h') return
-    const dx = event.clientX - state.startX
-    // Fire the action, then spring the row back to rest. The row never flies off-screen on its
-    // own: a confirm-gated action (folder delete) can be cancelled, and an immediate one
-    // (archive, dismiss) drops the row from the list and unmounts it before the spring shows.
-    // Either path avoids leaving the row stranded half-swiped — the old bug behind the hang.
-    if (shouldCommitSwipe(dx, 0)) {
-      impact()
-      onSwipe?.()
+    const limit = fullThreshold()
+    const nextArmed: Side | null =
+      next <= -limit && hasTrailing ? 'trailing' : next >= limit && hasLeading ? 'leading' : null
+    if (nextArmed !== wasArmed.current) {
+      wasArmed.current = nextArmed
+      setArmed(nextArmed)
+      if (nextArmed) impact()
     }
-    settle(0)
-  }
-
-  return (
-    <div className={cn('relative isolate', className)}>
-      <motion.div
-        aria-hidden
-        style={{ opacity: revealOpacity }}
-        className={cn(
-          'absolute inset-0 -z-10 flex items-center justify-end rounded-card pr-6',
-          TONE_SURFACE[tone],
-        )}
-      >
-        <motion.span style={{ scale: revealScale }}>{revealIcon}</motion.span>
-      </motion.div>
-      <motion.div
-        style={{ x, touchAction: 'pan-y' }}
-        onPointerDown={disabled ? undefined : onPointerDown}
-        onPointerMove={disabled ? undefined : onPointerMove}
-        onPointerUp={disabled ? undefined : finish}
-        onPointerCancel={disabled ? undefined : finish}
-      >
-        {children}
-      </motion.div>
-    </div>
-  )
-}
-
-function MultiActionSwipeRow({
-  children,
-  actions,
-  disabled = false,
-  className,
-}: SwipeRowProps & { actions: SwipeAction[] }) {
-  const reduce = useReducedMotion()
-  const x = useMotionValue(0)
-  const trayWidth = actions.length * ACTION_WIDTH
-  const [open, setOpen] = useState(false)
-  const drag = useRef<{
-    startX: number
-    startY: number
-    axis: 'h' | 'v' | null
-    id: number
-  } | null>(null)
-  // The trailing click of a drag (mouse synthesizes one) must not fall through to the row's
-  // own tap; swallow exactly one click after any horizontal drag. Reset on each pointerdown so
-  // a stale flag can never block a later genuine tap.
-  const suppressClick = useRef(false)
-
-  const settle = (to: number) => {
-    if (reduce) x.set(to)
-    else animate(x, to, { type: 'spring', stiffness: 520, damping: 40 })
-  }
-
-  const close = () => {
-    setOpen(false)
-    settle(0)
-  }
-
-  // A disabled row (drag in progress, select mode) can't be left resting open.
-  useEffect(() => {
-    if (disabled && open) {
-      setOpen(false)
-      x.set(0)
-    }
-  }, [disabled, open, x])
-
-  const clamp = (offset: number) => {
-    if (offset >= 0) return offset * 0.18
-    return Math.max(offset, -(trayWidth + 28))
-  }
-
-  const onPointerDown = (event: ReactPointerEvent) => {
-    suppressClick.current = false
-    drag.current = { startX: event.clientX, startY: event.clientY, axis: null, id: event.pointerId }
-  }
-
-  const onPointerMove = (event: ReactPointerEvent) => {
-    const state = drag.current
-    if (!state) return
-    const dx = event.clientX - state.startX
-    const dy = event.clientY - state.startY
-    if (state.axis === null) {
-      if (Math.abs(dx) < AXIS_LOCK && Math.abs(dy) < AXIS_LOCK) return
-      if (Math.abs(dy) >= Math.abs(dx)) {
-        drag.current = null
-        return
-      }
-      state.axis = 'h'
-      event.currentTarget.setPointerCapture?.(state.id)
-    }
-    // Drag is relative to wherever the row is resting (open = already pulled out by trayWidth).
-    x.set(clamp(dx + (open ? -trayWidth : 0)))
   }
 
   const finish = (event: ReactPointerEvent) => {
@@ -229,18 +177,43 @@ function MultiActionSwipeRow({
     drag.current = null
     if (!state || state.axis !== 'h') return
     suppressClick.current = true
-    const offset = event.clientX - state.startX + (open ? -trayWidth : 0)
-    // Past ~half the tray, rest open showing every action; otherwise snap shut.
-    if (-offset >= trayWidth * 0.45) {
-      if (!open) impact()
-      setOpen(true)
-      settle(-trayWidth)
+    const base = open === 'trailing' ? -trailingWidth : open === 'leading' ? leadingWidth : 0
+    const offset = clampOffset(event.clientX - state.startX + base)
+    const limit = fullThreshold()
+    wasArmed.current = null
+    setArmed(null)
+
+    // Full swipe: auto-fire the edge-most action, then return to rest. A destructive action
+    // unmounts the row before the spring shows; a reversible one springs back.
+    if (offset <= -limit && hasTrailing) {
+      impact()
+      const action = trailing[trailing.length - 1]!
+      action.onAction()
+      close()
+      return
+    }
+    if (offset >= limit && hasLeading) {
+      impact()
+      const action = leading[0]!
+      action.onAction()
+      close()
+      return
+    }
+    // Short swipe: rest open over the tray if past half its width, else snap shut.
+    if (offset <= -trailingWidth * 0.5 && hasTrailing) {
+      setOpen('trailing')
+      settle(-trailingWidth)
+    } else if (offset >= leadingWidth * 0.5 && hasLeading) {
+      setOpen('leading')
+      settle(leadingWidth)
     } else {
-      setOpen(false)
-      settle(0)
+      close()
     }
   }
 
+  // The synthetic click a mouse drag trails must not fall through to the row's own tap;
+  // swallow exactly one after any horizontal drag, and a tap while open closes instead.
+  const suppressClick = useRef(false)
   const onClickCapture = (event: ReactMouseEvent) => {
     if (suppressClick.current) {
       suppressClick.current = false
@@ -248,7 +221,6 @@ function MultiActionSwipeRow({
       event.stopPropagation()
       return
     }
-    // While the tray is open, a tap on the row closes it instead of activating the row.
     if (open) {
       event.preventDefault()
       event.stopPropagation()
@@ -256,37 +228,54 @@ function MultiActionSwipeRow({
     }
   }
 
+  const fireFromTray = (action: SwipeAction) => {
+    impact()
+    close()
+    action.onAction()
+  }
+
   return (
-    <div className={cn('relative isolate', className)}>
-      {/* The revealed tray, pinned to the right and sitting behind the row; the row's opaque
-          surface hides it at rest and uncovers it as it slides left. `aria-hidden` because the
-          same actions live in the row's own overflow menu (the keyboard/assistive path). */}
-      <div
-        aria-hidden
-        className="absolute inset-y-0 right-0 -z-10 flex overflow-hidden rounded-r-card"
-      >
-        {actions.map((action) => (
-          <button
-            key={action.id}
-            type="button"
-            tabIndex={-1}
-            aria-label={action.label}
-            onClick={() => {
-              impact()
-              close()
-              action.onAction()
-            }}
-            style={{ width: ACTION_WIDTH }}
-            className={cn(
-              'flex h-full flex-col items-center justify-center gap-1 text-[length:var(--p-text-tiny)] font-semibold transition-[filter] active:brightness-95',
-              TONE_SURFACE[action.tone ?? 'danger'],
-            )}
-          >
-            {action.icon}
-            {action.label}
-          </button>
-        ))}
-      </div>
+    <div ref={containerRef} className={cn('relative isolate', className)}>
+      {hasLeading ? (
+        <motion.div
+          aria-hidden
+          style={{ opacity: leadingOpacity }}
+          className={cn(
+            'absolute inset-y-0 left-0 -z-10 flex w-full justify-start overflow-hidden rounded-card',
+            TONE_SURFACE[leading[0]!.tone ?? 'neutral'],
+          )}
+        >
+          {leading.map((action, index) => (
+            <TrayButton
+              key={action.id}
+              action={action}
+              hidden={armed === 'leading' && index !== 0}
+              onFire={() => fireFromTray(action)}
+            />
+          ))}
+        </motion.div>
+      ) : null}
+
+      {hasTrailing ? (
+        <motion.div
+          aria-hidden
+          style={{ opacity: trailingOpacity }}
+          className={cn(
+            'absolute inset-y-0 right-0 -z-10 flex w-full justify-end overflow-hidden rounded-card',
+            TONE_SURFACE[trailing[trailing.length - 1]!.tone ?? 'neutral'],
+          )}
+        >
+          {trailing.map((action, index) => (
+            <TrayButton
+              key={action.id}
+              action={action}
+              hidden={armed === 'trailing' && index !== trailing.length - 1}
+              onFire={() => fireFromTray(action)}
+            />
+          ))}
+        </motion.div>
+      ) : null}
+
       <motion.div
         style={{ x, touchAction: 'pan-y' }}
         onPointerDown={disabled ? undefined : onPointerDown}
@@ -298,5 +287,34 @@ function MultiActionSwipeRow({
         {children}
       </motion.div>
     </div>
+  )
+}
+
+function TrayButton({
+  action,
+  hidden,
+  onFire,
+}: {
+  action: SwipeAction
+  hidden: boolean
+  onFire: () => void
+}) {
+  return (
+    <motion.button
+      type="button"
+      tabIndex={-1}
+      aria-label={action.label}
+      animate={{ opacity: hidden ? 0 : 1 }}
+      transition={{ duration: 0.12, ease: 'easeOut' }}
+      onClick={onFire}
+      style={{ width: ACTION_WIDTH }}
+      className={cn(
+        'flex h-full shrink-0 flex-col items-center justify-center gap-1 text-(length:--p-text-tiny) font-semibold transition-[filter] active:brightness-95',
+        TONE_SURFACE[action.tone ?? 'neutral'],
+      )}
+    >
+      {action.icon}
+      {action.label}
+    </motion.button>
   )
 }

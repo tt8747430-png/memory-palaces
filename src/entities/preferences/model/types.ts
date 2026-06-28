@@ -1,5 +1,13 @@
 import type { Entity } from '@/shared/lib'
 import { DEFAULT_DAILY_GOAL } from '@/shared/config/constants'
+import {
+  DEFAULT_SWIPE,
+  normalizeSwipeConfig,
+  type SwipePreferences,
+  SWIPE_ITEM_TYPES,
+} from '@/shared/config/swipe'
+
+export type { SwipePreferences } from '@/shared/config/swipe'
 
 /** How the Palaces screen lays out its list. Persisted so the choice survives sessions. */
 export type PalacesView = 'grid' | 'list'
@@ -82,6 +90,8 @@ export interface Preferences extends Entity {
   verseShuffle: boolean
   /** Verse study: mark a blank for each hidden word so length is felt (Initials mode). */
   verseWordSpaces: boolean
+  /** Per-item-type swipe-gesture mapping for list rows (leading/trailing action trays). */
+  swipe: SwipePreferences
   privacy: PrivacySettings
 }
 
@@ -93,13 +103,14 @@ export const DEFAULT_PREFERENCES = {
   theme: 'system',
   language: 'en',
   dailyGoal: DEFAULT_DAILY_GOAL,
-  palacesView: 'grid',
+  palacesView: 'list',
   palacesSort: 'recent',
   roomsSort: 'manual',
   contentSort: 'manual',
   verseMode: 'blur',
   verseShuffle: false,
   verseWordSpaces: true,
+  swipe: DEFAULT_SWIPE,
   privacy: DEFAULT_PRIVACY,
 } as const satisfies Omit<Preferences, keyof Entity>
 
@@ -120,7 +131,18 @@ export interface MakePreferencesInput {
   verseMode?: VerseMode
   verseShuffle?: boolean
   verseWordSpaces?: boolean
+  swipe?: SwipePreferences
   privacy?: PrivacySettings
+}
+
+/** Merge a (possibly partial / stale) stored swipe map onto the defaults, normalizing each
+ * type so a retired action id or an over-long tray can never reach the gesture layer. */
+function resolveSwipe(input?: SwipePreferences): SwipePreferences {
+  const out = {} as SwipePreferences
+  for (const type of SWIPE_ITEM_TYPES) {
+    out[type] = normalizeSwipeConfig(type, input?.[type] ?? DEFAULT_SWIPE[type])
+  }
+  return out
 }
 
 export function makePreferences(input: MakePreferencesInput): Preferences {
@@ -152,6 +174,7 @@ export function makePreferences(input: MakePreferencesInput): Preferences {
     verseMode: input.verseMode ?? DEFAULT_PREFERENCES.verseMode,
     verseShuffle: input.verseShuffle ?? DEFAULT_PREFERENCES.verseShuffle,
     verseWordSpaces: input.verseWordSpaces ?? DEFAULT_PREFERENCES.verseWordSpaces,
+    swipe: resolveSwipe(input.swipe),
     privacy: input.privacy ?? { ...DEFAULT_PRIVACY },
   }
 }
@@ -174,6 +197,7 @@ export type PreferencesChanges = Partial<
     | 'verseMode'
     | 'verseShuffle'
     | 'verseWordSpaces'
+    | 'swipe'
     | 'privacy'
   >
 >

@@ -61,7 +61,7 @@ describe('migratePreferencesV2', () => {
 
   it('backfills palacesView and palacesSort with defaults on a v1 record', () => {
     const v2 = migratePreferencesV2(v1)
-    expect(v2.palacesView).toBe('grid')
+    expect(v2.palacesView).toBe('list')
     expect(v2.palacesSort).toBe('recent')
   })
 
@@ -74,7 +74,7 @@ describe('migratePreferencesV2', () => {
 
   it('composes after v0 → v1 so a v0 record reaches a complete v2 shape', () => {
     const v2 = migratePreferencesV2(migratePreferencesV1(v0))
-    expect(v2.palacesView).toBe('grid')
+    expect(v2.palacesView).toBe('list')
     expect(v2.palacesSort).toBe('recent')
     expect(v2.darkMode).toBe(false)
     expect(v2.soundEffects).toBe(false)
