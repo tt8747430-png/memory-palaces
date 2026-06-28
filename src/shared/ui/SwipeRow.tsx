@@ -12,14 +12,15 @@ import { cn, impact } from '@/shared/lib'
 
 export type { SwipeTone }
 
-/** Solid, saturated action surfaces (iOS-Mail register) — not the muted tints used elsewhere.
- * Amber needs dark text; the rest carry white. */
-const TONE_SURFACE: Record<SwipeTone, string> = {
+/** The filled circle / pill behind an action's glyph (iOS-Mail register): a saturated round
+ * button per tone, white glyph on the status hues, navy glyph on the on-brand neutral. The
+ * caption underneath is always muted ink, never tinted — so it reads on the daylight ground. */
+const TONE_CIRCLE: Record<SwipeTone, string> = {
   danger: 'bg-[var(--danger)] text-white',
-  warning: 'bg-[var(--warning)] text-[var(--p-navy-900)]',
+  warning: 'bg-[var(--warning)] text-white',
   success: 'bg-[var(--success)] text-white',
   accent: 'bg-[var(--accent)] text-white',
-  neutral: 'bg-[var(--p-gray-500)] text-white',
+  neutral: 'bg-secondary text-primary',
 }
 
 /** One button in a swipe tray. */
@@ -240,16 +241,15 @@ export function SwipeRow({
         <motion.div
           aria-hidden
           style={{ opacity: leadingOpacity }}
-          className={cn(
-            'absolute inset-y-0 left-0 -z-10 flex w-full justify-start overflow-hidden rounded-card',
-            TONE_SURFACE[leading[0]!.tone ?? 'neutral'],
-          )}
+          className="absolute inset-y-0 left-0 -z-10 flex w-full justify-start overflow-hidden"
         >
           {leading.map((action, index) => (
             <TrayButton
               key={action.id}
               action={action}
-              hidden={armed === 'leading' && index !== 0}
+              mode={
+                armed === 'leading' ? (index === 0 ? 'expanded' : 'dim') : 'rest'
+              }
               onFire={() => fireFromTray(action)}
             />
           ))}
@@ -260,16 +260,19 @@ export function SwipeRow({
         <motion.div
           aria-hidden
           style={{ opacity: trailingOpacity }}
-          className={cn(
-            'absolute inset-y-0 right-0 -z-10 flex w-full justify-end overflow-hidden rounded-card',
-            TONE_SURFACE[trailing[trailing.length - 1]!.tone ?? 'neutral'],
-          )}
+          className="absolute inset-y-0 right-0 -z-10 flex w-full justify-end overflow-hidden"
         >
           {trailing.map((action, index) => (
             <TrayButton
               key={action.id}
               action={action}
-              hidden={armed === 'trailing' && index !== trailing.length - 1}
+              mode={
+                armed === 'trailing'
+                  ? index === trailing.length - 1
+                    ? 'expanded'
+                    : 'dim'
+                  : 'rest'
+              }
               onFire={() => fireFromTray(action)}
             />
           ))}
@@ -290,31 +293,52 @@ export function SwipeRow({
   )
 }
 
+/** Diameter (px) of the resting circular action button. */
+const CIRCLE_SIZE = 52
+/** Width (px) the edge-most action's circle stretches into when a full swipe arms it. */
+const PILL_WIDTH = ACTION_WIDTH - 8
+
+/**
+ * One tray action, iOS-Mail style: a saturated circular glyph button with a muted caption
+ * beneath it, floating on the daylight ground. `dim` fades the secondary actions back when a
+ * full swipe arms the edge one; `expanded` stretches the edge action's circle into a filled
+ * pill so its imminent firing is unmistakable.
+ */
 function TrayButton({
   action,
-  hidden,
+  mode,
   onFire,
 }: {
   action: SwipeAction
-  hidden: boolean
+  mode: 'rest' | 'dim' | 'expanded'
   onFire: () => void
 }) {
+  const reduce = useReducedMotion()
   return (
     <motion.button
       type="button"
       tabIndex={-1}
       aria-label={action.label}
-      animate={{ opacity: hidden ? 0 : 1 }}
-      transition={{ duration: 0.12, ease: 'easeOut' }}
       onClick={onFire}
+      animate={{ opacity: mode === 'dim' ? 0.4 : 1 }}
+      transition={{ duration: 0.14, ease: 'easeOut' }}
       style={{ width: ACTION_WIDTH }}
-      className={cn(
-        'flex h-full shrink-0 flex-col items-center justify-center gap-1 text-(length:--p-text-tiny) font-semibold transition-[filter] active:brightness-95',
-        TONE_SURFACE[action.tone ?? 'neutral'],
-      )}
+      className="flex h-full shrink-0 flex-col items-center justify-center gap-1.5"
     >
-      {action.icon}
-      {action.label}
+      <motion.span
+        animate={{ width: mode === 'expanded' ? PILL_WIDTH : CIRCLE_SIZE }}
+        transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 480, damping: 34 }}
+        style={{ height: CIRCLE_SIZE }}
+        className={cn(
+          'grid shrink-0 place-items-center rounded-full transition-[filter] active:brightness-95',
+          TONE_CIRCLE[action.tone ?? 'neutral'],
+        )}
+      >
+        {action.icon}
+      </motion.span>
+      <span className="text-(length:--p-text-tiny) font-medium text-muted-foreground">
+        {action.label}
+      </span>
     </motion.button>
   )
 }
