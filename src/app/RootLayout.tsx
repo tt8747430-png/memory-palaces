@@ -22,10 +22,14 @@ export function RootLayout() {
       {/* Opaque navy fill behind the iOS status bar. With `black-translucent` the web
           view runs under the status bar, so this keeps that safe-area strip on-brand
           (readable white system text) on every screen instead of an iOS white repaint.
-          Collapses to 0 height where there's no top inset (no notch / desktop). */}
+          Collapses to 0 height where there's no top inset (no notch / desktop).
+          z-index must outrank every overlay — iOS standalone tints the status bar from the
+          topmost opaque layer behind it, so a Sonner toast (z 999999999) sliding up into the
+          strip would otherwise repaint the bar with the toast's background. This band stays
+          on top so the bar is always navy. */}
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-x-0 top-0 z-[400] bg-primary"
+        className="pointer-events-none fixed inset-x-0 top-0 z-1000000000 bg-primary"
         style={{ height: 'env(safe-area-inset-top)' }}
       />
       <Outlet />
