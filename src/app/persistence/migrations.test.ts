@@ -5,12 +5,14 @@ import {
   migratePreferencesV2,
   migratePreferencesV3,
   migratePreferencesV6,
+  migratePreferencesV7,
   migrateProfileV1,
   migrateProgressV1,
   type PreferencesV0,
   type PreferencesV1,
   type PreferencesV2,
   type PreferencesV5,
+  type PreferencesV6,
   type ProfileV0,
   type ProgressV0,
 } from './migrations'
@@ -176,5 +178,34 @@ describe('migratePreferencesV6', () => {
   it('maps darkMode:false to theme:light', () => {
     const v6 = migratePreferencesV6({ ...v5, darkMode: false })
     expect(v6.theme).toBe('light')
+  })
+})
+
+describe('migratePreferencesV7', () => {
+  const v6: PreferencesV6 = {
+    id: 'preferences',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-05T00:00:00.000Z',
+    soundEffects: true,
+    haptics: true,
+    reducedMotion: false,
+    notifications: true,
+    theme: 'system',
+    language: 'en',
+    dailyGoal: 5,
+    palacesView: 'grid',
+    palacesSort: 'recent',
+    verseMode: 'blur',
+    verseShuffle: false,
+    verseWordSpaces: true,
+    privacy: DEFAULT_PRIVACY,
+  }
+
+  it('backfills the rooms/content sort prefs with manual and preserves the rest', () => {
+    const v7 = migratePreferencesV7(v6)
+    expect(v7.roomsSort).toBe('manual')
+    expect(v7.contentSort).toBe('manual')
+    expect(v7.palacesSort).toBe('recent')
+    expect(v7.updatedAt).toBe('2026-01-05T00:00:00.000Z')
   })
 })

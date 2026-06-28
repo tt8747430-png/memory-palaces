@@ -42,10 +42,18 @@ export function migrateQuestionV1(oldDoc: Omit<Question, 'order'>): Question {
  * three-way `theme`. The whole v0→v5 chain produces this legacy shape;
  * {@link migratePreferencesV6} converts it to the current {@link Preferences}.
  */
-type LegacyPreferences = Omit<Preferences, 'theme'> & { darkMode: boolean }
+type LegacyPreferences = Omit<Preferences, 'theme' | 'roomsSort' | 'contentSort'> & {
+  darkMode: boolean
+}
 
-/** Legacy defaults: today's defaults with `theme` swapped back for `darkMode`. */
-const { theme: _legacyTheme, ...DEFAULTS_SANS_THEME } = DEFAULT_PREFERENCES
+/** Legacy defaults: today's defaults with `theme` swapped back for `darkMode`, and without
+ * the post-v6 sort prefs the darkMode era never carried. */
+const {
+  theme: _legacyTheme,
+  roomsSort: _legacyRoomsSort,
+  contentSort: _legacyContentSort,
+  ...DEFAULTS_SANS_THEME
+} = DEFAULT_PREFERENCES
 const DEFAULT_LEGACY = { ...DEFAULTS_SANS_THEME, darkMode: false }
 
 /** Fields added after v0; never present on an old persisted doc. */
@@ -132,7 +140,21 @@ export type PreferencesV5 = LegacyPreferences
 /** v5 → v6: rename the boolean `darkMode` to the three-way `theme` — `true` → `dark`,
  * `false` → `light`. New installs (created at v6) default to `system`; this conversion
  * preserves the explicit light/dark choice an upgrading user already had. */
-export function migratePreferencesV6(oldDoc: PreferencesV5): Preferences {
+export function migratePreferencesV6(oldDoc: PreferencesV5): PreferencesV6 {
   const { darkMode, ...rest } = oldDoc
   return { ...rest, theme: darkMode ? 'dark' : 'light' }
+}
+
+/** The v6 preferences shape — before per-room sort prefs (`roomsSort`, `contentSort`)
+ * were persisted. This is the first version on the current `theme`-based shape. */
+export type PreferencesV6 = Omit<Preferences, 'roomsSort' | 'contentSort'>
+
+/** v6 → v7: backfill the rooms/content sort prefs with defaults (both `manual`); a stored
+ * value always wins, so the spread puts the saved doc last. */
+export function migratePreferencesV7(oldDoc: PreferencesV6): Preferences {
+  return {
+    roomsSort: DEFAULT_PREFERENCES.roomsSort,
+    contentSort: DEFAULT_PREFERENCES.contentSort,
+    ...oldDoc,
+  }
 }

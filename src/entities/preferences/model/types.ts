@@ -10,6 +10,19 @@ export type PalacesSort = 'manual' | 'recent' | 'progress' | 'name'
 
 const PALACES_SORTS: readonly PalacesSort[] = ['manual', 'recent', 'progress', 'name']
 
+/** How a palace's rooms are ordered on the palace screen. `manual` is the hand-dragged
+ * route order (the default — the journey is intentional); the rest are automatic rules. */
+export type RoomsSort = 'manual' | 'recent' | 'progress' | 'name'
+
+const ROOMS_SORTS: readonly RoomsSort[] = ['manual', 'recent', 'progress', 'name']
+
+/** How a room's cards/questions are ordered in the content editor. `manual` is the
+ * hand-dragged order; `due` and `flagged` apply to cards only (questions fall back to
+ * `manual` for them). Shared across both tabs and persisted so the choice survives. */
+export type ContentSort = 'manual' | 'recent' | 'name' | 'due' | 'flagged'
+
+const CONTENT_SORTS: readonly ContentSort[] = ['manual', 'recent', 'name', 'due', 'flagged']
+
 /** The active recall mode in verse study. Persisted so it's remembered everywhere. */
 export type VerseMode = 'blur' | 'words' | 'initials' | 'type'
 
@@ -59,6 +72,10 @@ export interface Preferences extends Entity {
   palacesView: PalacesView
   /** Palaces screen: list ordering. */
   palacesSort: PalacesSort
+  /** Palace screen: how a palace's rooms are ordered. */
+  roomsSort: RoomsSort
+  /** Room editor: how a room's cards/questions are ordered. */
+  contentSort: ContentSort
   /** Verse study: the last-used recall mode. */
   verseMode: VerseMode
   /** Verse study: practise verses in a random order. */
@@ -78,6 +95,8 @@ export const DEFAULT_PREFERENCES = {
   dailyGoal: DEFAULT_DAILY_GOAL,
   palacesView: 'grid',
   palacesSort: 'recent',
+  roomsSort: 'manual',
+  contentSort: 'manual',
   verseMode: 'blur',
   verseShuffle: false,
   verseWordSpaces: true,
@@ -96,6 +115,8 @@ export interface MakePreferencesInput {
   dailyGoal?: number
   palacesView?: PalacesView
   palacesSort?: PalacesSort
+  roomsSort?: RoomsSort
+  contentSort?: ContentSort
   verseMode?: VerseMode
   verseShuffle?: boolean
   verseWordSpaces?: boolean
@@ -120,6 +141,14 @@ export function makePreferences(input: MakePreferencesInput): Preferences {
       input.palacesSort && PALACES_SORTS.includes(input.palacesSort)
         ? input.palacesSort
         : DEFAULT_PREFERENCES.palacesSort,
+    roomsSort:
+      input.roomsSort && ROOMS_SORTS.includes(input.roomsSort)
+        ? input.roomsSort
+        : DEFAULT_PREFERENCES.roomsSort,
+    contentSort:
+      input.contentSort && CONTENT_SORTS.includes(input.contentSort)
+        ? input.contentSort
+        : DEFAULT_PREFERENCES.contentSort,
     verseMode: input.verseMode ?? DEFAULT_PREFERENCES.verseMode,
     verseShuffle: input.verseShuffle ?? DEFAULT_PREFERENCES.verseShuffle,
     verseWordSpaces: input.verseWordSpaces ?? DEFAULT_PREFERENCES.verseWordSpaces,
@@ -140,6 +169,8 @@ export type PreferencesChanges = Partial<
     | 'dailyGoal'
     | 'palacesView'
     | 'palacesSort'
+    | 'roomsSort'
+    | 'contentSort'
     | 'verseMode'
     | 'verseShuffle'
     | 'verseWordSpaces'

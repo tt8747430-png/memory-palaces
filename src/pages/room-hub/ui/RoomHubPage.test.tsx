@@ -8,6 +8,11 @@ import { createPalaceStore, makePalace, type Palace, PalaceStoreContext } from '
 import { createRoomStore, makeRoom, type Room, RoomStoreContext } from '@/entities/room'
 import { createLocusStore, type Locus, LocusStoreContext, makeLocus } from '@/entities/locus'
 import { createQuestionStore, type Question, QuestionStoreContext } from '@/entities/question'
+import {
+  createPreferencesStore,
+  type Preferences,
+  PreferencesStoreContext,
+} from '@/entities/preferences'
 import { RoomHubPage } from './RoomHubPage'
 
 afterEach(cleanup)
@@ -26,21 +31,25 @@ function renderHub({ loci = [] as Locus[] }: { loci?: Locus[] } = {}) {
   render(
     <I18nextProvider i18n={i18n}>
       <MotionConfig reducedMotion="always">
-        <PalaceStoreContext value={createPalaceStore(palaceRepo)}>
-          <RoomStoreContext value={createRoomStore(roomRepo)}>
-            <LocusStoreContext value={createLocusStore(locusRepo)}>
-              <QuestionStoreContext value={createQuestionStore(questionRepo)}>
-                <RoomHubPage
-                  roomId="r1"
-                  onBack={() => {}}
-                  onStudy={() => {}}
-                  onMatch={() => {}}
-                  onTest={() => {}}
-                />
-              </QuestionStoreContext>
-            </LocusStoreContext>
-          </RoomStoreContext>
-        </PalaceStoreContext>
+        <PreferencesStoreContext
+          value={createPreferencesStore(new InMemoryRepository<Preferences>())}
+        >
+          <PalaceStoreContext value={createPalaceStore(palaceRepo)}>
+            <RoomStoreContext value={createRoomStore(roomRepo)}>
+              <LocusStoreContext value={createLocusStore(locusRepo)}>
+                <QuestionStoreContext value={createQuestionStore(questionRepo)}>
+                  <RoomHubPage
+                    roomId="r1"
+                    onBack={() => {}}
+                    onStudy={() => {}}
+                    onMatch={() => {}}
+                    onTest={() => {}}
+                  />
+                </QuestionStoreContext>
+              </LocusStoreContext>
+            </RoomStoreContext>
+          </PalaceStoreContext>
+        </PreferencesStoreContext>
       </MotionConfig>
     </I18nextProvider>,
   )

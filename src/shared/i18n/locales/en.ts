@@ -504,6 +504,14 @@ export const en = {
   },
   rooms: {
     openLabel: 'Open {{title}}',
+    reorderLabel: 'Drag to reorder {{title}}',
+    sortLabel: 'Sort rooms',
+    sort: {
+      manual: 'Manual',
+      recent: 'Recent',
+      progress: 'Progress',
+      name: 'Name',
+    },
     card: {
       complete: 'Complete',
       progress: '{{percent}}% reviewed',
@@ -518,8 +526,6 @@ export const en = {
     menu: {
       label: '{{title}} actions',
       edit: 'Edit room',
-      moveUp: 'Move up',
-      moveDown: 'Move down',
       duplicate: 'Duplicate room',
       reset: 'Reset progress',
       delete: 'Delete room',
@@ -734,6 +740,14 @@ export const en = {
     searchQuestions: 'Search questions',
     clearSearch: 'Clear search',
     noResults: 'No matches. Try another search.',
+    sortLabel: 'Sort',
+    sort: {
+      manual: 'Manual',
+      recent: 'Recent',
+      name: 'Name',
+      due: 'Due first',
+      flagged: 'Flagged first',
+    },
     emptyTitle: 'No cards yet',
     emptyBody:
       'Each card is a spot in this room. Add what to recall, what it means, and a vivid image to picture there.',
@@ -752,10 +766,9 @@ export const en = {
     },
     row: {
       menuLabel: 'Card actions',
+      reorder: 'Drag to reorder',
       duplicate: 'Duplicate',
       duplicated: 'Card duplicated',
-      moveUp: 'Move up',
-      moveDown: 'Move down',
       flag: 'Flag',
       unflag: 'Unflag',
       flagged: 'Flagged',

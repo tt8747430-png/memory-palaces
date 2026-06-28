@@ -9,7 +9,7 @@ import {
 import { createQuestion } from './create-question'
 import { editQuestion } from './edit-question'
 import { deleteQuestion } from './delete-question'
-import { moveQuestion } from './move-question'
+import { reorderQuestions } from './reorder-questions'
 import { duplicateQuestion } from './duplicate-question'
 
 function startedStore() {
@@ -104,15 +104,21 @@ describe('deleteQuestion', () => {
   })
 })
 
-describe('moveQuestion', () => {
-  it('reorders a question one step and renumbers the room', async () => {
+describe('reorderQuestions', () => {
+  it('writes each question its index in the supplied order and renumbers the room', async () => {
     const store = startedStore()
-    await makeQ(store, 'a')
+    const a = await makeQ(store, 'a')
     const b = await makeQ(store, 'b')
-    await makeQ(store, 'c')
+    const c = await makeQ(store, 'c')
 
-    await moveQuestion(store, b.id, 'up')
-    expect(promptsForRoom(store)).toEqual(['b', 'a', 'c'])
+    await reorderQuestions(store, [c.id, a.id, b.id])
+
+    expect(promptsForRoom(store)).toEqual(['c', 'a', 'b'])
+    const byPrompt = (prompt: string) =>
+      store.getState().questions.find((q) => q.prompt === prompt)!
+    expect(byPrompt('c').order).toBe(0)
+    expect(byPrompt('a').order).toBe(1)
+    expect(byPrompt('b').order).toBe(2)
   })
 })
 

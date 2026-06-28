@@ -1,7 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { Plus, RotateCcw, Settings2, Trash2, Upload } from 'lucide-react'
+import {
+  ArrowDownAZ,
+  Clock,
+  GripVertical,
+  Plus,
+  RotateCcw,
+  Settings2,
+  Trash2,
+  TrendingUp,
+  Upload,
+} from 'lucide-react'
 import {
   selectIsReady as selectPalacesReady,
   usePalaceStore,
@@ -31,11 +41,18 @@ import {
 import {
   deleteRoom,
   duplicateRoom,
-  moveRoom,
+  reorderRooms,
   RoomEditorSheet,
   type RoomEditorTarget,
 } from '@/features/room'
 import { resetRoomSrs } from '@/features/locus'
+import {
+  type RoomsSort,
+  selectEffectivePreferences,
+  usePreferencesStore,
+  usePreferencesStoreApi,
+} from '@/entities/preferences'
+import { setPreferences } from '@/features/preferences'
 import { ImportRoomsSheet } from '@/features/content'
 import {
   isDue,
@@ -53,6 +70,8 @@ import {
   EmptyState,
   IconButton,
   ScreenHeader,
+  SortControl,
+  type SortControlOption,
   SpeedDial,
   StudyOverviewCard,
 } from '@/shared/ui'
@@ -94,13 +113,15 @@ export function PalaceDetailPage({
   const roomStore = useRoomStoreApi()
   const locusStore = useLocusStoreApi()
   const questionStore = useQuestionStoreApi()
+  const prefStore = usePreferencesStoreApi()
 
   useEffect(() => {
     palaceStore.getState().start()
     roomStore.getState().start()
     locusStore.getState().start()
     questionStore.getState().start()
-  }, [palaceStore, roomStore, locusStore, questionStore])
+    prefStore.getState().start()
+  }, [palaceStore, roomStore, locusStore, questionStore, prefStore])
 
   const palace = usePalaceStore((state) =>
     state.palaces.find((candidate) => candidate.id === palaceId),
@@ -114,9 +135,17 @@ export function PalaceDetailPage({
   const questionsReady = useQuestionStore(selectQuestionsReady)
   const ready = palacesReady && roomsReady && lociReady && questionsReady
 
+  const prefs = usePreferencesStore(selectEffectivePreferences)
+  const roomsSort = prefs.roomsSort
+  const setRoomsSort = (value: RoomsSort) => void setPreferences(prefStore, { roomsSort: value })
+
   const rooms = useMemo(() => roomsForPalace(allRooms, palaceId), [allRooms, palaceId])
 
-  const items = useMemo<RoomListItem[]>(() => {
+  // Built in the manual route order; `position` is the room's permanent place along the
+  // journey (it never renumbers when the view is sorted some other way). `createdAt` rides
+  // along as a sort key.
+  type EnrichedRoom = RoomListItem & { createdAt: string }
+  const items = useMemo<EnrichedRoom[]>(() => {
     const now = Date.now()
     return rooms.map((room, index) => {
       const loci = lociForRoom(allLoci, room.id)
@@ -134,6 +163,7 @@ export function PalaceDetailPage({
         title: room.title,
         description: room.description,
         position: index + 1,
+        createdAt: room.createdAt,
         lociCount: loci.length,
         questionCount: questions.length,
         knownCount: known,
@@ -144,6 +174,29 @@ export function PalaceDetailPage({
       }
     })
   }, [rooms, allLoci, allQuestions])
+
+  // The list as shown: `manual` keeps the route order; the rest are automatic rules. A
+  // drag (only offered in manual) reorders the stored route, so the view never fights it.
+  const displayItems = useMemo<RoomListItem[]>(() => {
+    if (roomsSort === 'manual') return items
+    return [...items].sort((a, b) => {
+      switch (roomsSort) {
+        case 'name':
+          return a.title.localeCompare(b.title)
+        case 'progress':
+          return b.progress - a.progress || a.position - b.position
+        case 'recent':
+          return b.createdAt.localeCompare(a.createdAt)
+      }
+    })
+  }, [items, roomsSort])
+
+  const roomsSortOptions: SortControlOption<RoomsSort>[] = [
+    { value: 'manual', label: t('rooms.sort.manual'), icon: <GripVertical className="size-4" /> },
+    { value: 'recent', label: t('rooms.sort.recent'), icon: <Clock className="size-4" /> },
+    { value: 'progress', label: t('rooms.sort.progress'), icon: <TrendingUp className="size-4" /> },
+    { value: 'name', label: t('rooms.sort.name'), icon: <ArrowDownAZ className="size-4" /> },
+  ]
 
   const summary = useMemo(() => {
     return {
@@ -247,12 +300,22 @@ export function PalaceDetailPage({
         ) : null}
 
         <section aria-labelledby="rooms-heading">
-          <h2
-            id="rooms-heading"
-            className="mb-3 px-0.5 text-[length:var(--p-text-title)] font-semibold text-heading"
-          >
-            {t('palaceDetail.roomsHeading')}
-          </h2>
+          <div className="mb-3 flex items-center justify-between gap-3 px-0.5">
+            <h2
+              id="rooms-heading"
+              className="text-(length:--p-text-title) font-semibold text-heading"
+            >
+              {t('palaceDetail.roomsHeading')}
+            </h2>
+            {items.length > 1 ? (
+              <SortControl
+                label={t('rooms.sortLabel')}
+                value={roomsSort}
+                options={roomsSortOptions}
+                onChange={setRoomsSort}
+              />
+            ) : null}
+          </div>
 
           {items.length === 0 ? (
             <EmptyState
@@ -262,14 +325,14 @@ export function PalaceDetailPage({
             />
           ) : (
             <RoomList
-              rooms={items}
+              rooms={displayItems}
+              reorderable={roomsSort === 'manual'}
               onOpen={(id) => onOpenRoom?.(id)}
               onEdit={(id) => {
                 const room = roomById(id)
                 if (room) setEditorTarget({ mode: 'edit', room })
               }}
-              onMoveUp={(id) => void moveRoom(roomStore, id, 'up')}
-              onMoveDown={(id) => void moveRoom(roomStore, id, 'down')}
+              onReorder={(orderedIds) => void reorderRooms(roomStore, orderedIds)}
               onDuplicate={(id) => void handleDuplicate(id)}
               onResetProgress={(id) => setResetTarget(id)}
               onDelete={(id) => setDeleteTarget(id)}

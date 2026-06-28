@@ -7,7 +7,7 @@ import { editLocus } from './edit-locus'
 import { deleteLocus } from './delete-locus'
 import { markRoomKnown } from './mark-room-known'
 import { resetRoomSrs } from './reset-room-srs'
-import { moveLocus } from './move-locus'
+import { reorderLoci } from './reorder-loci'
 import { duplicateLocus } from './duplicate-locus'
 import { toggleLocusFlag } from './toggle-locus-flag'
 
@@ -116,25 +116,31 @@ describe('createLocus order', () => {
   })
 })
 
-describe('moveLocus', () => {
-  it('reorders a card one step and renumbers the room', async () => {
+describe('reorderLoci', () => {
+  it('writes each card its index in the supplied order and renumbers the room', async () => {
     const store = startedStore()
     const a = await createLocus(store, 'r1', { front: 'a', back: 'A' })
     const b = await createLocus(store, 'r1', { front: 'b', back: 'B' })
-    await createLocus(store, 'r1', { front: 'c', back: 'C' })
+    const c = await createLocus(store, 'r1', { front: 'c', back: 'C' })
 
-    await moveLocus(store, b.id, 'up')
-    expect(frontsForRoom(store)).toEqual(['b', 'a', 'c'])
+    await reorderLoci(store, [c.id, a.id, b.id])
 
-    await moveLocus(store, a.id, 'up') // a is now at index 1
-    expect(frontsForRoom(store)).toEqual(['a', 'b', 'c'])
+    expect(frontsForRoom(store)).toEqual(['c', 'a', 'b'])
+    const byFront = (front: string) => store.getState().loci.find((locus) => locus.front === front)!
+    expect(byFront('c').order).toBe(0)
+    expect(byFront('a').order).toBe(1)
+    expect(byFront('b').order).toBe(2)
   })
 
-  it('is a no-op at the edges', async () => {
+  it('persists only the cards whose order actually changed', async () => {
     const store = startedStore()
     const a = await createLocus(store, 'r1', { front: 'a', back: 'A' })
-    await createLocus(store, 'r1', { front: 'b', back: 'B' })
-    await moveLocus(store, a.id, 'up')
+    const b = await createLocus(store, 'r1', { front: 'b', back: 'B' })
+    const before = store.getState().loci.find((locus) => locus.front === 'a')!.updatedAt
+
+    await reorderLoci(store, [a.id, b.id])
+
+    expect(store.getState().loci.find((locus) => locus.front === 'a')!.updatedAt).toBe(before)
     expect(frontsForRoom(store)).toEqual(['a', 'b'])
   })
 })

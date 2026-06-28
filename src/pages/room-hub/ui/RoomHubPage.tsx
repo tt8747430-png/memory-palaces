@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { GraduationCap, ListChecks, RotateCcw, Search, Trash2 } from 'lucide-react'
@@ -22,8 +22,15 @@ import {
   useQuestionStore,
   useQuestionStoreApi,
 } from '@/entities/question'
+import {
+  type ContentSort,
+  selectEffectivePreferences,
+  usePreferencesStore,
+  usePreferencesStoreApi,
+} from '@/entities/preferences'
 import { markRoomKnown, resetRoomSrs } from '@/features/locus'
 import { deleteRoom } from '@/features/room'
+import { setPreferences } from '@/features/preferences'
 import { cardMaturityCounts, studyOverview } from '@/shared/lib'
 import { LociPreviewCarousel } from '@/widgets/loci-preview'
 import { RoomContentEditor } from '@/widgets/loci-editor'
@@ -72,13 +79,15 @@ export function RoomHubPage({
   const roomStore = useRoomStoreApi()
   const locusStore = useLocusStoreApi()
   const questionStore = useQuestionStoreApi()
+  const prefStore = usePreferencesStoreApi()
 
   useEffect(() => {
     palaceStore.getState().start()
     roomStore.getState().start()
     locusStore.getState().start()
     questionStore.getState().start()
-  }, [palaceStore, roomStore, locusStore, questionStore])
+    prefStore.getState().start()
+  }, [palaceStore, roomStore, locusStore, questionStore, prefStore])
 
   const room = useRoomStore((state) => state.rooms.find((candidate) => candidate.id === roomId))
   const palace = usePalaceStore((state) =>
@@ -99,11 +108,18 @@ export function RoomHubPage({
   const overview = useMemo(() => studyOverview(loci, now), [loci, now])
   const maturity = useMemo(() => cardMaturityCounts(loci), [loci])
 
+  const prefs = usePreferencesStore(selectEffectivePreferences)
+  const setContentSort = (value: ContentSort) =>
+    void setPreferences(prefStore, { contentSort: value })
+
   const [resetOpen, setResetOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [selectMode, setSelectMode] = useState(false)
+  // The page's scroll container, so opening search can snap it back to the top — the
+  // filtered list owns the screen and should never start mid-scroll from where you were.
+  const scrollRef = useRef<HTMLElement | null>(null)
   const closeSearch = () => {
     setSearchOpen(false)
     setQuery('')
@@ -111,6 +127,7 @@ export function RoomHubPage({
   const openSearch = () => {
     setSelectMode(false)
     setSearchOpen(true)
+    if (scrollRef.current) scrollRef.current.scrollTop = 0
   }
 
   if (!ready) {
@@ -166,6 +183,9 @@ export function RoomHubPage({
 
   return (
     <AppScreen
+      scrollRef={(node) => {
+        scrollRef.current = node
+      }}
       header={
         searchOpen ? (
           <RoomSearchHeader
@@ -255,6 +275,8 @@ export function RoomHubPage({
             onClearSearch={closeSearch}
             selectMode={selectMode}
             onSelectModeChange={setSelectMode}
+            sort={prefs.contentSort}
+            onSortChange={setContentSort}
           />
         </section>
       </div>

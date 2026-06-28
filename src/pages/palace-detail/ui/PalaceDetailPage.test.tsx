@@ -9,6 +9,11 @@ import { createPalaceStore, makePalace, type Palace, PalaceStoreContext } from '
 import { createRoomStore, makeRoom, type Room, RoomStoreContext } from '@/entities/room'
 import { createLocusStore, type Locus, LocusStoreContext } from '@/entities/locus'
 import { createQuestionStore, type Question, QuestionStoreContext } from '@/entities/question'
+import {
+  createPreferencesStore,
+  type Preferences,
+  PreferencesStoreContext,
+} from '@/entities/preferences'
 import { PalaceDetailPage } from './PalaceDetailPage'
 
 afterEach(cleanup)
@@ -24,15 +29,21 @@ function renderDetail({ palaceId = 'p1', rooms = [] as Room[] } = {}) {
   render(
     <I18nextProvider i18n={i18n}>
       <MotionConfig reducedMotion="always">
-        <PalaceStoreContext value={createPalaceStore(palaceRepo)}>
-          <RoomStoreContext value={createRoomStore(roomRepo)}>
-            <LocusStoreContext value={createLocusStore(new InMemoryRepository<Locus>())}>
-              <QuestionStoreContext value={createQuestionStore(new InMemoryRepository<Question>())}>
-                <PalaceDetailPage palaceId={palaceId} />
-              </QuestionStoreContext>
-            </LocusStoreContext>
-          </RoomStoreContext>
-        </PalaceStoreContext>
+        <PreferencesStoreContext
+          value={createPreferencesStore(new InMemoryRepository<Preferences>())}
+        >
+          <PalaceStoreContext value={createPalaceStore(palaceRepo)}>
+            <RoomStoreContext value={createRoomStore(roomRepo)}>
+              <LocusStoreContext value={createLocusStore(new InMemoryRepository<Locus>())}>
+                <QuestionStoreContext
+                  value={createQuestionStore(new InMemoryRepository<Question>())}
+                >
+                  <PalaceDetailPage palaceId={palaceId} />
+                </QuestionStoreContext>
+              </LocusStoreContext>
+            </RoomStoreContext>
+          </PalaceStoreContext>
+        </PreferencesStoreContext>
       </MotionConfig>
     </I18nextProvider>,
   )
@@ -69,14 +80,15 @@ describe('PalaceDetailPage', () => {
     await waitFor(async () => expect(await roomRepo.getAll()).toHaveLength(1))
   })
 
-  it('reorders rooms through the overflow menu', async () => {
+  it('reorders the view by an automatic sort through the sort menu', async () => {
     const user = userEvent.setup()
     renderDetail({ rooms: [room('r1', 'p1', 0, 'Kitchen'), room('r2', 'p1', 1, 'Hallway')] })
     await screen.findByRole('heading', { name: 'Kitchen' })
+    // Manual order (the saved route) leads.
     expect(roomTitles()).toEqual(['Kitchen', 'Hallway'])
 
-    await user.click(screen.getByRole('button', { name: /hallway actions/i }))
-    await user.click(await screen.findByRole('menuitem', { name: /move up/i }))
+    await user.click(screen.getByRole('button', { name: /sort rooms/i }))
+    await user.click(await screen.findByRole('menuitem', { name: /^name$/i }))
 
     await waitFor(() => expect(roomTitles()).toEqual(['Hallway', 'Kitchen']))
   })

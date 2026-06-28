@@ -3,6 +3,8 @@ export type {
   PrivacySettings,
   PalacesView,
   PalacesSort,
+  RoomsSort,
+  ContentSort,
   VerseMode,
   Theme,
   MakePreferencesInput,

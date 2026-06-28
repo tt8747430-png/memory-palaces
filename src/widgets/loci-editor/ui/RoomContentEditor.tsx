@@ -3,15 +3,40 @@ import { useTranslation } from 'react-i18next'
 import { AnimatePresence, motion } from 'motion/react'
 import { toast } from 'sonner'
 import {
+  closestCenter,
+  DndContext,
+  type DragEndEvent,
+  DragOverlay,
+  type DragStartEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import {
+  ArrowDownAZ,
   BookOpen,
   ClipboardPaste,
+  Clock,
   Download,
   FileText,
+  Flag,
   GraduationCap,
+  GripVertical,
   HelpCircle,
   MapPin,
   Plus,
   RotateCcw,
+  Sparkles,
   Trash2,
   Upload,
 } from 'lucide-react'
@@ -35,7 +60,7 @@ import {
   duplicateLocus,
   editLocus,
   markLociKnown,
-  moveLocus,
+  reorderLoci,
   resetLociSrs,
   toggleLocusFlag,
 } from '@/features/locus'
@@ -44,8 +69,9 @@ import {
   deleteQuestion,
   duplicateQuestion,
   editQuestion,
-  moveQuestion,
+  reorderQuestions,
 } from '@/features/question'
+import type { ContentSort } from '@/entities/preferences'
 import {
   applyRoomContent,
   exportLociAnki,
@@ -56,8 +82,16 @@ import {
   readContentFile,
 } from '@/features/content'
 import { cn, ContentImportError, parsePastedLoci, parseVerses } from '@/shared/lib'
-import { ConfirmDialog, ImportRow, SegmentedControl, Sheet, SpeedDial } from '@/shared/ui'
-import { CardRow, QuestionRow } from './ContentRows'
+import {
+  ConfirmDialog,
+  ImportRow,
+  SegmentedControl,
+  Sheet,
+  SortControl,
+  type SortControlOption,
+  SpeedDial,
+} from '@/shared/ui'
+import { CardRow, QuestionRow, type RowDragHandle } from './ContentRows'
 import {
   type CardData,
   CardEditorSheet,
@@ -78,6 +112,10 @@ export interface RoomContentEditorProps {
    * to drive it from the parent. Omit both to let the editor own select mode itself. */
   selectMode?: boolean
   onSelectModeChange?: (on: boolean) => void
+  /** Content ordering, persisted by the host page. Pass this pair to drive it; omit both to
+   * let the editor own an internal sort (default `manual`), so it works standalone. */
+  sort?: ContentSort
+  onSortChange?: (sort: ContentSort) => void
 }
 
 type Tab = 'loci' | 'questions'
@@ -90,7 +128,7 @@ type EditorTarget =
  * The room's content-management surface: Cards / Questions tabs with inline quick-add,
  * search, multi-select bulk actions, import/export, and full editor sheets. Rendered
  * inline inside the room hub so studying and editing a room live on one page. Reads its
- * stores and drives the create/edit/move/duplicate commands directly.
+ * stores and drives the create/edit/reorder/duplicate commands directly.
  */
 export function RoomContentEditor({
   roomId,
@@ -99,6 +137,8 @@ export function RoomContentEditor({
   onClearSearch,
   selectMode: controlledSelectMode,
   onSelectModeChange,
+  sort: controlledSort,
+  onSortChange,
 }: RoomContentEditorProps) {
   const { t } = useTranslation()
   const locusStore = useLocusStoreApi()
@@ -123,6 +163,14 @@ export function RoomContentEditor({
     if (controlledSelectMode === undefined) setInternalSelectMode(on)
     onSelectModeChange?.(on)
   }
+  // Sort is controllable like select mode: the host persists it, but the editor keeps an
+  // internal fallback so it works standalone (and in isolation tests).
+  const [internalSort, setInternalSort] = useState<ContentSort>('manual')
+  const sort = controlledSort ?? internalSort
+  const setSort = (next: ContentSort) => {
+    if (controlledSort === undefined) setInternalSort(next)
+    onSortChange?.(next)
+  }
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [editor, setEditor] = useState<EditorTarget>(null)
   const [pendingDelete, setPendingDelete] = useState<{ kind: Tab; id: string } | null>(null)
@@ -140,26 +188,34 @@ export function RoomContentEditor({
   const fileRef = useRef<HTMLInputElement>(null)
   const importKind = useRef<'content' | 'anki'>('content')
 
+  // `due` and `flagged` are card-only signals; the Questions tab falls back to `manual`.
+  const questionsSort: ContentSort = sort === 'due' || sort === 'flagged' ? 'manual' : sort
+  const sortedLoci = useMemo(() => sortLoci(loci, sort), [loci, sort])
+  const sortedQuestions = useMemo(
+    () => sortQuestions(questions, questionsSort),
+    [questions, questionsSort],
+  )
+
   const needle = (searchQuery ?? '').trim().toLowerCase()
   const visibleLoci = useMemo(
     () =>
       needle
-        ? loci.filter((l) =>
+        ? sortedLoci.filter((l) =>
             [l.front, l.back, l.hint, l.tip]
               .filter(Boolean)
               .some((field) => (field as string).toLowerCase().includes(needle)),
           )
-        : loci,
-    [loci, needle],
+        : sortedLoci,
+    [sortedLoci, needle],
   )
   const visibleQuestions = useMemo(
     () =>
       needle
-        ? questions.filter((q) =>
+        ? sortedQuestions.filter((q) =>
             [q.prompt, ...q.options].some((field) => field.toLowerCase().includes(needle)),
           )
-        : questions,
-    [questions, needle],
+        : sortedQuestions,
+    [sortedQuestions, needle],
   )
 
   const isLoci = tab === 'loci'
@@ -168,6 +224,84 @@ export function RoomContentEditor({
   const hasContent = loci.length > 0 || questions.length > 0
   const selectedCount = selectedIds.size
   const allVisibleSelected = visible.length > 0 && visible.every((item) => selectedIds.has(item.id))
+
+  // The sort applied to the active tab; cards drive the full option set, questions a subset.
+  const activeSort = isLoci ? sort : questionsSort
+  // Hand-arranging is offered only in manual sort, and never while searching or selecting
+  // (you reorder the whole list, not a filtered subset).
+  const reorderable = activeSort === 'manual' && !needle && !selectMode
+  const sortOptions: SortControlOption<ContentSort>[] = isLoci
+    ? [
+        {
+          value: 'manual',
+          label: t('loci.sort.manual'),
+          icon: <GripVertical className="size-4" />,
+        },
+        { value: 'recent', label: t('loci.sort.recent'), icon: <Clock className="size-4" /> },
+        { value: 'name', label: t('loci.sort.name'), icon: <ArrowDownAZ className="size-4" /> },
+        { value: 'due', label: t('loci.sort.due'), icon: <Sparkles className="size-4" /> },
+        { value: 'flagged', label: t('loci.sort.flagged'), icon: <Flag className="size-4" /> },
+      ]
+    : [
+        {
+          value: 'manual',
+          label: t('loci.sort.manual'),
+          icon: <GripVertical className="size-4" />,
+        },
+        { value: 'recent', label: t('loci.sort.recent'), icon: <Clock className="size-4" /> },
+        { value: 'name', label: t('loci.sort.name'), icon: <ArrowDownAZ className="size-4" /> },
+      ]
+
+  const renderCard = (locus: Locus, dragHandle?: RowDragHandle, dragging = false) => (
+    <CardRow
+      key={locus.id}
+      locus={locus}
+      index={sortedLoci.indexOf(locus)}
+      selectMode={selectMode}
+      selected={selectedIds.has(locus.id)}
+      reorderable={reorderable}
+      dragHandle={dragHandle}
+      dragging={dragging}
+      onToggleSelect={() => toggleSelect(locus.id)}
+      onRequestSelect={() => requestSelect(locus.id)}
+      onEdit={() => setEditor({ kind: 'locus', locus })}
+      onDuplicate={() => {
+        void duplicateLocus(locusStore, locus.id)
+        toast.success(t('loci.row.duplicated'))
+      }}
+      onDelete={() => setPendingDelete({ kind: 'loci', id: locus.id })}
+      onToggleFlag={() => void toggleLocusFlag(locusStore, locus.id)}
+      onMarkKnown={() => {
+        void markLociKnown(locusStore, [locus.id])
+        toast.success(t('loci.row.markedKnown'))
+      }}
+      onResetSrs={() => {
+        void resetLociSrs(locusStore, [locus.id])
+        toast.success(t('loci.row.scheduleReset'))
+      }}
+    />
+  )
+
+  const renderQuestion = (question: Question, dragHandle?: RowDragHandle, dragging = false) => (
+    <QuestionRow
+      key={question.id}
+      question={question}
+      index={sortedQuestions.indexOf(question)}
+      selectMode={selectMode}
+      selected={selectedIds.has(question.id)}
+      reorderable={reorderable}
+      dragHandle={dragHandle}
+      dragging={dragging}
+      onToggleSelect={() => toggleSelect(question.id)}
+      onRequestSelect={() => requestSelect(question.id)}
+      onEdit={() => setEditor({ kind: 'question', question })}
+      onDuplicate={() => {
+        void duplicateQuestion(questionStore, question.id)
+        toast.success(t('loci.row.duplicated'))
+      }}
+      onDelete={() => setPendingDelete({ kind: 'questions', id: question.id })}
+    />
+  )
 
   const changeTab = (next: Tab) => {
     setTab(next)
@@ -298,6 +432,19 @@ export function RoomContentEditor({
         />
       </div>
 
+      {/* Sort control: hidden while searching or selecting, and below 2 items there's
+          nothing to order. Manual sort grows the per-row grips. */}
+      {!selectMode && !needle && total > 1 ? (
+        <div className="mb-3 flex justify-end">
+          <SortControl
+            label={t('loci.sortLabel')}
+            value={activeSort}
+            options={sortOptions}
+            onChange={setSort}
+          />
+        </div>
+      ) : null}
+
       {/* Select mode is entered from the room header's control or a long-press on a row; this
           bar appears only while selecting (the rows carry their own checkboxes). */}
       {selectMode ? (
@@ -338,61 +485,24 @@ export function RoomContentEditor({
             ) : visible.length === 0 ? (
               <NoResults onClear={() => onClearSearch?.()} />
             ) : (
-              visibleLoci.map((locus) => (
-                <CardRow
-                  key={locus.id}
-                  locus={locus}
-                  index={loci.indexOf(locus)}
-                  selectMode={selectMode}
-                  selected={selectedIds.has(locus.id)}
-                  canMoveUp={loci.indexOf(locus) > 0}
-                  canMoveDown={loci.indexOf(locus) < loci.length - 1}
-                  onToggleSelect={() => toggleSelect(locus.id)}
-                  onRequestSelect={() => requestSelect(locus.id)}
-                  onEdit={() => setEditor({ kind: 'locus', locus })}
-                  onDuplicate={() => {
-                    void duplicateLocus(locusStore, locus.id)
-                    toast.success(t('loci.row.duplicated'))
-                  }}
-                  onMove={(dir) => void moveLocus(locusStore, locus.id, dir)}
-                  onDelete={() => setPendingDelete({ kind: 'loci', id: locus.id })}
-                  onToggleFlag={() => void toggleLocusFlag(locusStore, locus.id)}
-                  onMarkKnown={() => {
-                    void markLociKnown(locusStore, [locus.id])
-                    toast.success(t('loci.row.markedKnown'))
-                  }}
-                  onResetSrs={() => {
-                    void resetLociSrs(locusStore, [locus.id])
-                    toast.success(t('loci.row.scheduleReset'))
-                  }}
-                />
-              ))
+              <ReorderableList
+                items={visibleLoci}
+                reorderable={reorderable}
+                onReorder={(ids) => void reorderLoci(locusStore, ids)}
+                renderItem={renderCard}
+              />
             )
           ) : total === 0 ? (
             <EmptyContent kind="questions" />
           ) : visible.length === 0 ? (
             <NoResults onClear={() => onClearSearch?.()} />
           ) : (
-            visibleQuestions.map((question) => (
-              <QuestionRow
-                key={question.id}
-                question={question}
-                index={questions.indexOf(question)}
-                selectMode={selectMode}
-                selected={selectedIds.has(question.id)}
-                canMoveUp={questions.indexOf(question) > 0}
-                canMoveDown={questions.indexOf(question) < questions.length - 1}
-                onToggleSelect={() => toggleSelect(question.id)}
-                onRequestSelect={() => requestSelect(question.id)}
-                onEdit={() => setEditor({ kind: 'question', question })}
-                onDuplicate={() => {
-                  void duplicateQuestion(questionStore, question.id)
-                  toast.success(t('loci.row.duplicated'))
-                }}
-                onMove={(dir) => void moveQuestion(questionStore, question.id, dir)}
-                onDelete={() => setPendingDelete({ kind: 'questions', id: question.id })}
-              />
-            ))
+            <ReorderableList
+              items={visibleQuestions}
+              reorderable={reorderable}
+              onReorder={(ids) => void reorderQuestions(questionStore, ids)}
+              renderItem={renderQuestion}
+            />
           )}
         </motion.div>
       </AnimatePresence>
@@ -610,6 +720,126 @@ export function RoomContentEditor({
         ]}
       />
     </div>
+  )
+}
+
+/** New cards (no schedule yet) are effectively due now, so they sort to the front. */
+const dueKey = (locus: Locus) => locus.srs?.due ?? ''
+
+/** Cards in the chosen order. `manual` is the stored order (the list arrives pre-sorted by
+ * it); the rest are derived. JS sort is stable, so equal keys keep the manual sequence. */
+function sortLoci(loci: Locus[], sort: ContentSort): Locus[] {
+  switch (sort) {
+    case 'name':
+      return [...loci].sort((a, b) => a.front.localeCompare(b.front))
+    case 'recent':
+      return [...loci].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    case 'due':
+      return [...loci].sort((a, b) => dueKey(a).localeCompare(dueKey(b)))
+    case 'flagged':
+      return [...loci].sort((a, b) => Number(b.flagged) - Number(a.flagged))
+    case 'manual':
+      return loci
+  }
+}
+
+/** Questions in the chosen order. Only `manual`/`recent`/`name` apply; the card-only
+ * `due`/`flagged` are mapped to `manual` by the caller before this runs. */
+function sortQuestions(questions: Question[], sort: ContentSort): Question[] {
+  switch (sort) {
+    case 'name':
+      return [...questions].sort((a, b) => a.prompt.localeCompare(b.prompt))
+    case 'recent':
+      return [...questions].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    default:
+      return questions
+  }
+}
+
+/** Wraps a row as a dnd-kit sortable: the wrapper carries the transform/transition and
+ * ghosts the source while its overlay clone is in hand; the row gets the grip's activator
+ * wiring through the render prop. */
+function SortableContentRow({
+  id,
+  children,
+}: {
+  id: string
+  children: (handle: RowDragHandle) => ReactNode
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id })
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={cn(isDragging && 'relative z-10 opacity-40')}
+    >
+      {children({ ref: setActivatorNodeRef, props: { ...attributes, ...listeners } })}
+    </div>
+  )
+}
+
+/** Renders a list of rows, drag-reorderable when `reorderable`. Off, it's a plain map; on,
+ * it lifts a clone into a {@link DragOverlay} and commits the new id order on drop. Shared
+ * by the cards and questions tabs. */
+function ReorderableList<T extends { id: string }>({
+  items,
+  reorderable,
+  onReorder,
+  renderItem,
+}: {
+  items: T[]
+  reorderable: boolean
+  onReorder: (orderedIds: string[]) => void
+  renderItem: (item: T, dragHandle?: RowDragHandle, dragging?: boolean) => ReactNode
+}) {
+  const [activeId, setActiveId] = useState<string | null>(null)
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
+
+  if (!reorderable) return <>{items.map((item) => renderItem(item))}</>
+
+  const active = activeId ? items.find((item) => item.id === activeId) : undefined
+
+  return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      modifiers={[restrictToVerticalAxis]}
+      onDragStart={(event: DragStartEvent) => setActiveId(String(event.active.id))}
+      onDragEnd={(event: DragEndEvent) => {
+        setActiveId(null)
+        const { active: from, over } = event
+        if (!over || from.id === over.id) return
+        const fromIndex = items.findIndex((item) => item.id === from.id)
+        const toIndex = items.findIndex((item) => item.id === over.id)
+        if (fromIndex < 0 || toIndex < 0) return
+        onReorder(arrayMove(items, fromIndex, toIndex).map((item) => item.id))
+      }}
+      onDragCancel={() => setActiveId(null)}
+    >
+      <SortableContext items={items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
+        <div className="flex flex-col gap-3">
+          {items.map((item) => (
+            <SortableContentRow key={item.id} id={item.id}>
+              {(handle) => renderItem(item, handle)}
+            </SortableContentRow>
+          ))}
+        </div>
+      </SortableContext>
+      <DragOverlay dropAnimation={{ duration: 220, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }}>
+        {active ? renderItem(active, undefined, true) : null}
+      </DragOverlay>
+    </DndContext>
   )
 }
 

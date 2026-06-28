@@ -1,12 +1,12 @@
+import type { HTMLAttributes } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'motion/react'
 import {
   Check,
-  ChevronDown,
-  ChevronUp,
   Copy,
   Flag,
   GraduationCap,
+  GripVertical,
   Lightbulb,
   MapPin,
   Pencil,
@@ -18,19 +18,45 @@ import type { Question } from '@/entities/question'
 import { cn, useLongPress } from '@/shared/lib'
 import { OverflowMenuButton, type SheetAction, SrsStatusChip } from '@/shared/ui'
 
+/** Props that wire a row's grip to dnd-kit's drag activator. Present only while the room
+ * is in manual sort; absent otherwise (the row renders without a handle). */
+export interface RowDragHandle {
+  ref: (node: HTMLElement | null) => void
+  props: HTMLAttributes<HTMLButtonElement>
+}
+
+/** The left-edge grip a row shows in manual sort. `touch-none` hands the gesture to
+ * dnd-kit's pointer sensor instead of the scroller. */
+function DragHandle({ handle, label }: { handle: RowDragHandle; label: string }) {
+  return (
+    <button
+      ref={handle.ref}
+      type="button"
+      aria-label={label}
+      className="-ml-1 mt-0.5 grid size-7 shrink-0 cursor-grab touch-none place-items-center rounded-control text-muted-foreground active:cursor-grabbing"
+      {...handle.props}
+    >
+      <GripVertical className="size-5" aria-hidden />
+    </button>
+  )
+}
+
 export interface CardRowProps {
   locus: Locus
   index: number
   selectMode: boolean
   selected: boolean
-  canMoveUp: boolean
-  canMoveDown: boolean
+  /** Manual sort is active — show the grip and let the row be hand-dragged. */
+  reorderable: boolean
+  /** The grip's dnd-kit activator wiring; only supplied while `reorderable`. */
+  dragHandle?: RowDragHandle
+  /** The lifted clone shown in the drag overlay — drops the swipe/menu chrome. */
+  dragging?: boolean
   onToggleSelect: () => void
   /** Long-press the row to enter select mode with this card picked. */
   onRequestSelect: () => void
   onEdit: () => void
   onDuplicate: () => void
-  onMove: (direction: 'up' | 'down') => void
   onDelete: () => void
   onToggleFlag: () => void
   onMarkKnown: () => void
@@ -60,13 +86,13 @@ export function CardRow({
   index,
   selectMode,
   selected,
-  canMoveUp,
-  canMoveDown,
+  reorderable,
+  dragHandle,
+  dragging = false,
   onToggleSelect,
   onRequestSelect,
   onEdit,
   onDuplicate,
-  onMove,
   onDelete,
   onToggleFlag,
   onMarkKnown,
@@ -91,26 +117,6 @@ export function CardRow({
       icon: <Copy className="size-5" aria-hidden />,
       onSelect: onDuplicate,
     },
-    ...(canMoveUp
-      ? [
-          {
-            id: 'up',
-            label: t('loci.row.moveUp'),
-            icon: <ChevronUp className="size-5" aria-hidden />,
-            onSelect: () => onMove('up'),
-          },
-        ]
-      : []),
-    ...(canMoveDown
-      ? [
-          {
-            id: 'down',
-            label: t('loci.row.moveDown'),
-            icon: <ChevronDown className="size-5" aria-hidden />,
-            onSelect: () => onMove('down'),
-          },
-        ]
-      : []),
     {
       id: 'flag',
       label: locus.flagged ? t('loci.row.unflag') : t('loci.row.flag'),
@@ -140,18 +146,21 @@ export function CardRow({
 
   return (
     <motion.div
-      layout
-      initial={{ opacity: 0, y: 8 }}
+      initial={dragging ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.97 }}
-      {...longPress}
+      {...(dragging ? {} : longPress)}
       className={cn(
         rowSurface,
         selected ? 'border-accent ring-2 ring-accent/25' : 'border-border',
         selectMode && 'cursor-pointer',
+        dragging && 'shadow-elevated',
       )}
     >
       <div className="flex items-start gap-3">
+        {reorderable && dragHandle && !selectMode ? (
+          <DragHandle handle={dragHandle} label={t('loci.row.reorder')} />
+        ) : null}
         {selectMode ? <SelectDot selected={selected} /> : null}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -212,14 +221,17 @@ export interface QuestionRowProps {
   index: number
   selectMode: boolean
   selected: boolean
-  canMoveUp: boolean
-  canMoveDown: boolean
+  /** Manual sort is active — show the grip and let the row be hand-dragged. */
+  reorderable: boolean
+  /** The grip's dnd-kit activator wiring; only supplied while `reorderable`. */
+  dragHandle?: RowDragHandle
+  /** The lifted clone shown in the drag overlay — drops the swipe/menu chrome. */
+  dragging?: boolean
   onToggleSelect: () => void
   /** Long-press the row to enter select mode with this question picked. */
   onRequestSelect: () => void
   onEdit: () => void
   onDuplicate: () => void
-  onMove: (direction: 'up' | 'down') => void
   onDelete: () => void
 }
 
@@ -228,13 +240,13 @@ export function QuestionRow({
   index,
   selectMode,
   selected,
-  canMoveUp,
-  canMoveDown,
+  reorderable,
+  dragHandle,
+  dragging = false,
   onToggleSelect,
   onRequestSelect,
   onEdit,
   onDuplicate,
-  onMove,
   onDelete,
 }: QuestionRowProps) {
   const { t } = useTranslation()
@@ -256,26 +268,6 @@ export function QuestionRow({
       icon: <Copy className="size-5" aria-hidden />,
       onSelect: onDuplicate,
     },
-    ...(canMoveUp
-      ? [
-          {
-            id: 'up',
-            label: t('loci.row.moveUp'),
-            icon: <ChevronUp className="size-5" aria-hidden />,
-            onSelect: () => onMove('up'),
-          },
-        ]
-      : []),
-    ...(canMoveDown
-      ? [
-          {
-            id: 'down',
-            label: t('loci.row.moveDown'),
-            icon: <ChevronDown className="size-5" aria-hidden />,
-            onSelect: () => onMove('down'),
-          },
-        ]
-      : []),
     {
       id: 'delete',
       label: t('common.delete'),
@@ -287,18 +279,21 @@ export function QuestionRow({
 
   return (
     <motion.div
-      layout
-      initial={{ opacity: 0, y: 8 }}
+      initial={dragging ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.97 }}
-      {...longPress}
+      {...(dragging ? {} : longPress)}
       className={cn(
         rowSurface,
         selected ? 'border-accent ring-2 ring-accent/25' : 'border-border',
         selectMode && 'cursor-pointer',
+        dragging && 'shadow-elevated',
       )}
     >
       <div className="flex items-start gap-3">
+        {reorderable && dragHandle && !selectMode ? (
+          <DragHandle handle={dragHandle} label={t('loci.row.reorder')} />
+        ) : null}
         {selectMode ? <SelectDot selected={selected} /> : null}
         <div className="min-w-0 flex-1">
           <div className="mb-2 flex items-center gap-2">
