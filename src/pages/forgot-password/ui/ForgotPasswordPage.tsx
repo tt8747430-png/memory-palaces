@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useState } from 'react'
+import { type SyntheticEvent, useEffect, useState } from 'react'
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft, Mail, MailCheck } from 'lucide-react'
@@ -46,7 +46,7 @@ export function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) {
     setCooldown(RESEND_SECONDS)
   }
 
-  const handleSubmit = (event: FormEvent) => {
+  const handleSubmit = (event: SyntheticEvent) => {
     event.preventDefault()
     if (!isEmail(email)) {
       setError(t('auth.errors.emailInvalid'))

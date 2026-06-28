@@ -54,11 +54,12 @@ export function QuizSession({
   // After the reveal, drift to the next question; a Continue tap pre-empts the timer.
   // With auto-advance off, the reveal waits for the learner to tap Continue.
   const answered = state.status === 'answering' && state.answered
+  const answeringIndex = state.status === 'answering' ? state.index : -1
   useEffect(() => {
     if (!answered || !autoAdvance) return
     const handle = window.setTimeout(() => dispatch({ type: 'next' }), FEEDBACK_MS)
     return () => window.clearTimeout(handle)
-  }, [answered, autoAdvance, state.status === 'answering' ? state.index : -1])
+  }, [answered, autoAdvance, answeringIndex])
 
   // Hand back the result once the run completes.
   const done = state.status === 'complete'

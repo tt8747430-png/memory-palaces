@@ -156,9 +156,9 @@ export function StudyCardDeck({
         snapBack()
         return
       }
-      if (ax >= ay) commit(mx > 0 ? 'right' : 'left')
-      else if (my < 0) commit('up')
-      else commit('down')
+      if (ax >= ay) void commit(mx > 0 ? 'right' : 'left')
+      else if (my < 0) void commit('up')
+      else void commit('down')
     },
     { filterTaps: true, pointer: { touch: true }, enabled: swipeEnabled },
   )

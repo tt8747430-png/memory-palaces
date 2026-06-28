@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from 'react'
+import { type SyntheticEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { AppScreen, Button, PasswordField, ScreenHeader } from '@/shared/ui'
@@ -27,7 +27,7 @@ export function SettingsChangePasswordPage({ onBack }: SettingsChangePasswordPag
     confirm.length > 0 && confirm !== next ? t('settings.changePasswordScreen.mismatch') : undefined
   const canSave = current.length > 0 && next.length >= MIN_PASSWORD && confirm === next
 
-  const handleSubmit = (event: FormEvent) => {
+  const handleSubmit = (event: SyntheticEvent) => {
     event.preventDefault()
     if (!canSave) return
 

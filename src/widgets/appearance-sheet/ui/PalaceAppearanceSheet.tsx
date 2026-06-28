@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useState } from 'react'
+import { type SyntheticEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Check } from 'lucide-react'
 import { editPalace, PalaceIdentityFields } from '@/features/palace'
@@ -32,7 +32,7 @@ export function PalaceAppearanceSheet({ open, onOpenChange, palace }: PalaceAppe
   }, [open, palace.name, palace.icon, palace.color, palace.image])
 
   const valid = name.trim().length > 0
-  const submit = (event?: FormEvent) => {
+  const submit = (event?: SyntheticEvent) => {
     event?.preventDefault()
     if (!valid) return
     void editPalace(store, palace.id, { name: name.trim(), icon, color, image })

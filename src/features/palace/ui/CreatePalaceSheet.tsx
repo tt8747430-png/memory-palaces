@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useState } from 'react'
+import { type SyntheticEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Sparkles } from 'lucide-react'
 import { DEFAULT_PALACE_COLOR, DEFAULT_PALACE_ICON, usePalaceStoreApi } from '@/entities/palace'
@@ -47,7 +47,7 @@ export function CreatePalaceSheet({
 
   const valid = name.trim().length >= 2
 
-  const handleCreate = async (event?: FormEvent) => {
+  const handleCreate = async (event?: SyntheticEvent) => {
     event?.preventDefault()
     if (!valid || submitting) return
     setSubmitting(true)

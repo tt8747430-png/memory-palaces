@@ -55,4 +55,10 @@ export default tseslint.config(
       'boundaries/dependencies': ['error', { default: 'disallow', rules: fsdDependencyRules }],
     },
   },
+  {
+    // The code-based router defines route objects alongside their components in one
+    // file by design; Fast Refresh's component-only-export rule does not apply here.
+    files: ['src/app/router.tsx'],
+    rules: { 'react-refresh/only-export-components': 'off' },
+  },
 )

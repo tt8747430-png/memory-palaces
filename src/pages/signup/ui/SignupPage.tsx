@@ -1,4 +1,4 @@
-import { type FormEvent, useId, useState } from 'react'
+import { type SyntheticEvent, useId, useState } from 'react'
 import { motion, type Variants } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Mail, User } from 'lucide-react'
@@ -47,7 +47,7 @@ export function SignupPage({ onSuccess, onGuest, onLogin }: SignupPageProps) {
   }>({})
   const [busy, setBusy] = useState(false)
 
-  const handleSubmit = async (event: FormEvent) => {
+  const handleSubmit = async (event: SyntheticEvent) => {
     event.preventDefault()
     const next: typeof errors = {}
     if (!name.trim()) next.name = t('auth.errors.nameRequired')

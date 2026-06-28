@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useState } from 'react'
+import { type SyntheticEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Check, FolderPlus, Sparkles } from 'lucide-react'
 import { DEFAULT_FOLDER_ICON, type Folder } from '@/entities/folder'
@@ -143,7 +143,7 @@ export function FolderSheet({
   }, [open, folder, defaultColor])
 
   const valid = name.trim().length > 0
-  const submit = (event?: FormEvent) => {
+  const submit = (event?: SyntheticEvent) => {
     event?.preventDefault()
     if (!valid) return
     onSubmit({ name: name.trim(), color, icon })

@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from 'react'
+import { type SyntheticEvent, useState } from 'react'
 import { motion, type Variants } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Mail } from 'lucide-react'
@@ -37,7 +37,7 @@ export function LoginPage({ onAuthed, onGuest, onSignup, onForgot }: LoginPagePr
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
   const [busy, setBusy] = useState(false)
 
-  const handleSubmit = async (event: FormEvent) => {
+  const handleSubmit = async (event: SyntheticEvent) => {
     event.preventDefault()
     const next: typeof errors = {}
     if (!email.trim()) next.email = t('auth.errors.emailRequired')

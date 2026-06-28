@@ -65,7 +65,7 @@
         margin: 0;
         height: 100%;
         overflow: hidden;
-        font-family: var(--p-font-sans);
+        font-family: var(--p-font-sans), sans-serif;
         color: var(--text-primary);
         overscroll-behavior: none;
         -webkit-font-smoothing: antialiased;
