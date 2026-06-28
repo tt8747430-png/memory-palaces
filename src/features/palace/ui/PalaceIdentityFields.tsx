@@ -15,7 +15,8 @@ export interface PalaceIdentityFieldsProps {
   onNameChange: (value: string) => void
   onIconChange: (value: string) => void
   onColorChange: (value: string) => void
-  onImageChange: (value: string | undefined) => void
+  /** Required only when {@link showCover} is on. */
+  onImageChange?: (value: string | undefined) => void
   /** Autofocus the name field on mount (create flow only). */
   autoFocusName?: boolean
   /** Show the cover-photo control. Off in the create sheet — a cover is added later from
@@ -47,7 +48,7 @@ export function PalaceIdentityFields({
     event.target.value = ''
     if (!file) return
     try {
-      onImageChange(await fileToAvatar(file))
+      onImageChange?.(await fileToAvatar(file))
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t('palaces.photoError'))
     }
@@ -72,7 +73,7 @@ export function PalaceIdentityFields({
                 variant="glass"
                 size="sm"
                 aria-label={t('palaces.removeCover')}
-                onClick={() => onImageChange(undefined)}
+                onClick={() => onImageChange?.(undefined)}
               >
                 <X className="size-4" aria-hidden />
               </IconButton>

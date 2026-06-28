@@ -59,11 +59,11 @@ export interface RoomHubPageProps {
   /** Launch verse-study. */
   onVerse?: () => void
   /** Open the full-screen card editor (add / edit). */
-  onAddCard?: () => void
-  onEditCard?: (cardId: string) => void
+  onAddCard: () => void
+  onEditCard: (cardId: string) => void
   /** Open the full-screen question editor (add / edit). */
-  onAddQuestion?: () => void
-  onEditQuestion?: (questionId: string) => void
+  onAddQuestion: () => void
+  onEditQuestion: (questionId: string) => void
   /** Navigate away after the room is deleted. */
   onDeleted?: () => void
 }

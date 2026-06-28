@@ -55,24 +55,19 @@ import {
   useQuestionStoreApi,
 } from '@/entities/question'
 import {
-  createLocus,
   deleteLocus,
   duplicateLocus,
-  editLocus,
   markLociKnown,
   reorderLoci,
   resetLociSrs,
   toggleLocusFlag,
 } from '@/features/locus'
+import { deleteQuestion, duplicateQuestion, reorderQuestions } from '@/features/question'
 import {
-  createQuestion,
-  deleteQuestion,
-  duplicateQuestion,
-  editQuestion,
-  reorderQuestions,
-} from '@/features/question'
-import { type ContentSort, usePreferencesStoreApiOptional } from '@/entities/preferences'
-import { DEFAULT_SWIPE, type SwipeConfig } from '@/shared/config/swipe'
+  type ContentSort,
+  selectEffectivePreferences,
+  usePreferencesStore,
+} from '@/entities/preferences'
 import {
   applyRoomContent,
   exportLociAnki,
@@ -93,12 +88,6 @@ import {
   SpeedDial,
 } from '@/shared/ui'
 import { CardRow, QuestionRow, type RowDragHandle } from './ContentRows'
-import {
-  type CardData,
-  CardEditorSheet,
-  type QuestionData,
-  QuestionEditorSheet,
-} from './EditorSheets'
 import { PasteSheet } from './PasteSheet'
 
 export interface RoomContentEditorProps {
@@ -109,42 +98,35 @@ export interface RoomContentEditorProps {
   searchQuery?: string
   /** Clears + closes the room-header search (wired to the "clear" affordance on no results). */
   onClearSearch?: () => void
-  /** Multi-select is entered from the room header (or a long-press on a row); pass this pair
-   * to drive it from the parent. Omit both to let the editor own select mode itself. */
-  selectMode?: boolean
-  onSelectModeChange?: (on: boolean) => void
-  /** Content ordering, persisted by the host page. Pass this pair to drive it; omit both to
-   * let the editor own an internal sort (default `manual`), so it works standalone. */
-  sort?: ContentSort
-  onSortChange?: (sort: ContentSort) => void
-  /** Navigate to the full-screen card/question editors. When provided, add/edit route to a
-   * page; when omitted (standalone/tests), the editor falls back to its bottom sheets. */
-  onAddCard?: () => void
-  onEditCard?: (cardId: string) => void
-  onAddQuestion?: () => void
-  onEditQuestion?: (questionId: string) => void
+  /** Multi-select, driven from the room header / a long-press on a row. */
+  selectMode: boolean
+  onSelectModeChange: (on: boolean) => void
+  /** Content ordering, persisted by the host page. */
+  sort: ContentSort
+  onSortChange: (sort: ContentSort) => void
+  /** Open the full-screen card/question editors (add / edit). */
+  onAddCard: () => void
+  onEditCard: (cardId: string) => void
+  onAddQuestion: () => void
+  onEditQuestion: (questionId: string) => void
 }
 
 type Tab = 'loci' | 'questions'
-type EditorTarget =
-  | { kind: 'locus'; locus: Locus | null }
-  | { kind: 'question'; question: Question | null }
-  | null
 
 /**
- * The room's content-management surface: Cards / Questions tabs with inline quick-add,
- * search, multi-select bulk actions, import/export, and full editor sheets. Rendered
- * inline inside the room hub so studying and editing a room live on one page. Reads its
- * stores and drives the create/edit/reorder/duplicate commands directly.
+ * The room's content-management surface: Cards / Questions tabs with search, multi-select
+ * bulk actions, import/export, and drag-reorder. Rendered inline inside the room hub so
+ * studying and editing a room live on one page; add/edit open the full-screen editors. Reads
+ * its stores and drives the reorder/duplicate/delete commands directly.
  */
 export function RoomContentEditor({
   roomId,
   roomName,
   searchQuery,
   onClearSearch,
-  selectMode: controlledSelectMode,
+  selectMode,
   onSelectModeChange,
-  sort: controlledSort,
+  sort,
   onSortChange,
   onAddCard,
   onEditCard,
@@ -162,42 +144,15 @@ export function RoomContentEditor({
     questionStore.getState().start()
   }, [locusStore, questionStore])
 
-  // Read the card swipe-config reactively when a preferences store is wired (the app), and
-  // fall back to the defaults when it isn't (the widget's standalone/isolation tests).
-  const prefStore = usePreferencesStoreApiOptional()
-  const [cardSwipe, setCardSwipe] = useState<SwipeConfig>(
-    () => prefStore?.getState().preferences?.swipe.card ?? DEFAULT_SWIPE.card,
-  )
-  useEffect(() => {
-    if (!prefStore) return
-    const read = () =>
-      setCardSwipe(prefStore.getState().preferences?.swipe.card ?? DEFAULT_SWIPE.card)
-    read()
-    return prefStore.subscribe(read)
-  }, [prefStore])
+  const cardSwipe = usePreferencesStore(selectEffectivePreferences).swipe.card
 
   const loci = useMemo(() => lociForRoom(allLoci, roomId), [allLoci, roomId])
   const questions = useMemo(() => questionsForRoom(allQuestions, roomId), [allQuestions, roomId])
 
   const [tab, setTab] = useState<Tab>('loci')
-  // Select mode is controllable: the room header drives it when both props are passed, but the
-  // editor keeps an internal fallback so it works standalone (and in isolation tests).
-  const [internalSelectMode, setInternalSelectMode] = useState(false)
-  const selectMode = controlledSelectMode ?? internalSelectMode
-  const setSelectMode = (on: boolean) => {
-    if (controlledSelectMode === undefined) setInternalSelectMode(on)
-    onSelectModeChange?.(on)
-  }
-  // Sort is controllable like select mode: the host persists it, but the editor keeps an
-  // internal fallback so it works standalone (and in isolation tests).
-  const [internalSort, setInternalSort] = useState<ContentSort>('manual')
-  const sort = controlledSort ?? internalSort
-  const setSort = (next: ContentSort) => {
-    if (controlledSort === undefined) setInternalSort(next)
-    onSortChange?.(next)
-  }
+  const setSelectMode = onSelectModeChange
+  const setSort = onSortChange
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [editor, setEditor] = useState<EditorTarget>(null)
   const [pendingDelete, setPendingDelete] = useState<{ kind: Tab; id: string } | null>(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [transferOpen, setTransferOpen] = useState(false)
@@ -290,9 +245,7 @@ export function RoomContentEditor({
       swipe={cardSwipe}
       onToggleSelect={() => toggleSelect(locus.id)}
       onRequestSelect={() => requestSelect(locus.id)}
-      onEdit={() =>
-        onEditCard ? onEditCard(locus.id) : setEditor({ kind: 'locus', locus })
-      }
+      onEdit={() => onEditCard(locus.id)}
       onDuplicate={() => {
         void duplicateLocus(locusStore, locus.id)
         toast.success(t('loci.row.duplicated'))
@@ -323,9 +276,7 @@ export function RoomContentEditor({
       swipe={cardSwipe}
       onToggleSelect={() => toggleSelect(question.id)}
       onRequestSelect={() => requestSelect(question.id)}
-      onEdit={() =>
-        onEditQuestion ? onEditQuestion(question.id) : setEditor({ kind: 'question', question })
-      }
+      onEdit={() => onEditQuestion(question.id)}
       onDuplicate={() => {
         void duplicateQuestion(questionStore, question.id)
         toast.success(t('loci.row.duplicated'))
@@ -575,43 +526,6 @@ export function RoomContentEditor({
         </div>
       ) : null}
 
-      {/* Editor sheets */}
-      <CardEditorSheet
-        open={editor?.kind === 'locus'}
-        initial={editor?.kind === 'locus' ? editor.locus : null}
-        onOpenChange={(open) => !open && setEditor(null)}
-        onSave={(data: CardData) => {
-          if (editor?.kind === 'locus' && editor.locus) {
-            void editLocus(locusStore, editor.locus.id, data)
-            toast.success(t('loci.editor.updated'))
-          } else {
-            void createLocus(locusStore, roomId, data)
-            toast.success(t('loci.editor.added'))
-          }
-          setEditor(null)
-        }}
-        onSaveAndAddAnother={(data: CardData) => {
-          void createLocus(locusStore, roomId, data)
-          toast.success(t('loci.editor.addedNext'))
-        }}
-      />
-
-      <QuestionEditorSheet
-        open={editor?.kind === 'question'}
-        initial={editor?.kind === 'question' ? editor.question : null}
-        onOpenChange={(open) => !open && setEditor(null)}
-        onSave={(data: QuestionData) => {
-          if (editor?.kind === 'question' && editor.question) {
-            void editQuestion(questionStore, editor.question.id, data)
-            toast.success(t('questions.editor.updated'))
-          } else {
-            void createQuestion(questionStore, roomId, data)
-            toast.success(t('questions.editor.added'))
-          }
-          setEditor(null)
-        }}
-      />
-
       {/* Transfer + paste sheets */}
       <Sheet
         open={transferOpen}
@@ -734,14 +648,13 @@ export function RoomContentEditor({
             id: 'card',
             label: t('loci.addCard'),
             icon: <Plus className="size-5" aria-hidden />,
-            onSelect: () => (onAddCard ? onAddCard() : setEditor({ kind: 'locus', locus: null })),
+            onSelect: onAddCard,
           },
           {
             id: 'question',
             label: t('questions.addQuestion'),
             icon: <HelpCircle className="size-5" aria-hidden />,
-            onSelect: () =>
-              onAddQuestion ? onAddQuestion() : setEditor({ kind: 'question', question: null }),
+            onSelect: onAddQuestion,
           },
           {
             id: 'import',

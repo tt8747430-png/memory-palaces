@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MotionConfig } from 'motion/react'
@@ -7,6 +7,11 @@ import { i18n } from '@/shared/i18n'
 import { InMemoryRepository } from '@/shared/api'
 import { createLocusStore, type Locus, LocusStoreContext, makeLocus } from '@/entities/locus'
 import { createQuestionStore, type Question, QuestionStoreContext } from '@/entities/question'
+import {
+  createPreferencesStore,
+  type Preferences,
+  PreferencesStoreContext,
+} from '@/entities/preferences'
 import { RoomContentEditor } from './RoomContentEditor'
 
 afterEach(cleanup)
@@ -16,17 +21,33 @@ const at = (ms: number) => new Date(ms).toISOString()
 function renderEditor({
   loci = [] as Locus[],
   questions = [] as Question[],
-}: { loci?: Locus[]; questions?: Question[] } = {}) {
+  onAddCard = vi.fn(),
+}: { loci?: Locus[]; questions?: Question[]; onAddCard?: () => void } = {}) {
   render(
     <I18nextProvider i18n={i18n}>
       <MotionConfig reducedMotion="always">
-        <LocusStoreContext value={createLocusStore(new InMemoryRepository<Locus>(loci))}>
-          <QuestionStoreContext
-            value={createQuestionStore(new InMemoryRepository<Question>(questions))}
-          >
-            <RoomContentEditor roomId="r1" roomName="Garden Room" />
-          </QuestionStoreContext>
-        </LocusStoreContext>
+        <PreferencesStoreContext
+          value={createPreferencesStore(new InMemoryRepository<Preferences>())}
+        >
+          <LocusStoreContext value={createLocusStore(new InMemoryRepository<Locus>(loci))}>
+            <QuestionStoreContext
+              value={createQuestionStore(new InMemoryRepository<Question>(questions))}
+            >
+              <RoomContentEditor
+                roomId="r1"
+                roomName="Garden Room"
+                selectMode={false}
+                onSelectModeChange={() => {}}
+                sort="manual"
+                onSortChange={() => {}}
+                onAddCard={onAddCard}
+                onEditCard={() => {}}
+                onAddQuestion={() => {}}
+                onEditQuestion={() => {}}
+              />
+            </QuestionStoreContext>
+          </LocusStoreContext>
+        </PreferencesStoreContext>
       </MotionConfig>
     </I18nextProvider>,
   )
@@ -52,8 +73,9 @@ describe('RoomContentEditor', () => {
     expect(screen.getByRole('button', { name: /add to room/i })).toBeInTheDocument()
   })
 
-  it('adds a card through the dial and editor sheet', async () => {
+  it('opens the card editor from the dial', async () => {
     const user = userEvent.setup()
+    const onAddCard = vi.fn()
     renderEditor({
       loci: [
         makeLocus({
@@ -65,17 +87,14 @@ describe('RoomContentEditor', () => {
           order: 0,
         }),
       ],
+      onAddCard,
     })
     await screen.findByText('seed')
 
     await user.click(screen.getByRole('button', { name: /add to room/i }))
     await user.click(screen.getByRole('button', { name: /add card/i }))
-    await user.type(screen.getByPlaceholderText('e.g. Genesis 1:1'), 'novum')
-    await user.type(screen.getByPlaceholderText(/in the beginning/i), 'new')
-    await user.click(screen.getByRole('button', { name: /save card/i }))
 
-    expect(await screen.findByText('novum')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /cards · 2/i })).toBeInTheDocument()
+    expect(onAddCard).toHaveBeenCalledOnce()
   })
 
   it('switches to the Questions tab and teaches the empty state', async () => {

@@ -88,7 +88,6 @@ export function CreatePalaceSheet({
           onNameChange={setName}
           onIconChange={setIcon}
           onColorChange={setColor}
-          onImageChange={() => {}}
           showCover={false}
           autoFocusName
         />
