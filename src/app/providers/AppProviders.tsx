@@ -22,7 +22,16 @@ export function AppProviders({ children }: { children: ReactNode }) {
         </PreferencesProvider>
         <NotificationBridge />
         <UpdatePrompt />
-        <Toaster position="top-center" richColors theme="system" />
+        {/* Keep the toaster clear of the iOS status-bar safe area. Sonner's container is a
+            full-width fixed element anchored 16px below the viewport top with a huge z-index;
+            left at the default it intrudes under the status bar, and iOS (standalone PWA)
+            re-tints the bar from that topmost transparent layer — repainting it white. */}
+        <Toaster
+          position="top-center"
+          richColors
+          theme="system"
+          mobileOffset={{ top: 'calc(env(safe-area-inset-top) + 16px)' }}
+        />
       </ServicesProvider>
     </I18nextProvider>
   )
