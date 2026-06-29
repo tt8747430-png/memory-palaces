@@ -65,6 +65,8 @@ export interface CardRowProps {
   onToggleSelect: () => void
   /** Long-press the row to enter select mode with this card picked. */
   onRequestSelect: () => void
+  /** Tap the row at rest to open the full-screen card browser at this card. */
+  onOpen: () => void
   onEdit: () => void
   onDuplicate: () => void
   onDelete: () => void
@@ -73,7 +75,9 @@ export interface CardRowProps {
   onResetSrs: () => void
 }
 
-const rowSurface = 'rounded-card border bg-card p-4 shadow-rest transition-colors'
+// Shadow is applied conditionally by the row (rest vs the lifted drag clone) — baking
+// `shadow-rest` in here would beat `shadow-elevated` in the cascade and the clone would never lift.
+const rowSurface = 'rounded-card border bg-card p-4 transition-colors'
 
 function SelectDot({ selected }: { selected: boolean }) {
   return (
@@ -102,6 +106,7 @@ export function CardRow({
   swipe,
   onToggleSelect,
   onRequestSelect,
+  onOpen,
   onEdit,
   onDuplicate,
   onDelete,
@@ -112,7 +117,7 @@ export function CardRow({
   const { t } = useTranslation()
   const longPress = useLongPress({
     onLongPress: onRequestSelect,
-    onTap: selectMode ? onToggleSelect : undefined,
+    onTap: selectMode ? onToggleSelect : onOpen,
   })
   const { leading, trailing } = buildSwipeActions(
     swipe,
@@ -182,7 +187,7 @@ export function CardRow({
         rowSurface,
         selected ? 'border-accent ring-2 ring-accent/25' : 'border-border',
         selectMode && 'cursor-pointer',
-        dragging && 'shadow-elevated',
+        dragging ? 'shadow-elevated' : 'shadow-rest',
       )}
     >
       <div className="flex items-start gap-3">
@@ -332,7 +337,7 @@ export function QuestionRow({
         rowSurface,
         selected ? 'border-accent ring-2 ring-accent/25' : 'border-border',
         selectMode && 'cursor-pointer',
-        dragging && 'shadow-elevated',
+        dragging ? 'shadow-elevated' : 'shadow-rest',
       )}
     >
       <div className="flex items-start gap-3">

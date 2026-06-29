@@ -87,6 +87,7 @@ import {
   type SortControlOption,
   SpeedDial,
 } from '@/shared/ui'
+import { CardBrowser } from './CardBrowser'
 import { CardRow, QuestionRow, type RowDragHandle } from './ContentRows'
 import { PasteSheet } from './PasteSheet'
 
@@ -162,6 +163,8 @@ export function RoomContentEditor({
   const [transferOpen, setTransferOpen] = useState(false)
   const [pasteOpen, setPasteOpen] = useState(false)
   const [verseOpen, setVerseOpen] = useState(false)
+  // The card the full-screen browser is open on (null = closed). Tapping a card row opens it.
+  const [browserCardId, setBrowserCardId] = useState<string | null>(null)
 
   // Leaving select mode clears the picks so the next long-press starts empty — needed now that
   // the flag can be flipped off from outside the editor (search opening, tab switch).
@@ -254,6 +257,7 @@ export function RoomContentEditor({
       swipe={cardSwipe}
       onToggleSelect={() => toggleSelect(locus.id)}
       onRequestSelect={() => requestSelect(locus.id)}
+      onOpen={() => setBrowserCardId(locus.id)}
       onEdit={() => onEditCard(locus.id)}
       onDuplicate={() => {
         void duplicateLocus(locusStore, locus.id)
@@ -673,6 +677,29 @@ export function RoomContentEditor({
           },
         ]}
       />
+
+      {/* Full-screen card browser — opened by tapping a card row; swipe/flip through the
+          (currently visible) deck. Edit closes it and opens the editor; delete routes through
+          the same confirm the list uses. */}
+      <CardBrowser
+        open={browserCardId !== null}
+        loci={visibleLoci}
+        startId={browserCardId}
+        onClose={() => setBrowserCardId(null)}
+        onEdit={(id) => {
+          setBrowserCardId(null)
+          onEditCard(id)
+        }}
+        onToggleFlag={(id) => void toggleLocusFlag(locusStore, id)}
+        onDuplicate={(id) => {
+          void duplicateLocus(locusStore, id)
+          toast.success(t('loci.row.duplicated'))
+        }}
+        onDelete={(id) => {
+          setBrowserCardId(null)
+          setPendingDelete({ kind: 'loci', id })
+        }}
+      />
     </div>
   )
 }
@@ -791,7 +818,14 @@ function ReorderableList<T extends { id: string }>({
         </div>
       </SortableContext>
       <DragOverlay dropAnimation={{ duration: 220, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }}>
-        {active ? renderItem(active, undefined, true) : null}
+        {active ? (
+          // Lift the clone off the list: the card already carries the elevated shadow; this
+          // adds a small level scale so the row clearly reads as "in hand" (no tilt, no scale
+          // under reduced motion).
+          <div className="origin-center motion-safe:scale-[1.03]">
+            {renderItem(active, undefined, true)}
+          </div>
+        ) : null}
       </DragOverlay>
     </DndContext>
   )

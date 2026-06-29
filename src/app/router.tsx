@@ -251,7 +251,14 @@ function RoomCardNewRoute() {
   const navigate = useNavigate()
   const toRoom = () => navigate({ to: ROUTES.roomHub, params: { roomId } })
   const back = useBack(toRoom)
-  return <CardEditorPage roomId={roomId} onBack={back} onDone={toRoom} />
+  // `replace` on done so the just-left editor isn't a back-route from the room.
+  return (
+    <CardEditorPage
+      roomId={roomId}
+      onBack={back}
+      onDone={() => navigate({ to: ROUTES.roomHub, params: { roomId }, replace: true })}
+    />
+  )
 }
 
 const roomCardNewRoute = createRoute({
@@ -265,7 +272,19 @@ function RoomCardEditRoute() {
   const navigate = useNavigate()
   const toRoom = () => navigate({ to: ROUTES.roomHub, params: { roomId } })
   const back = useBack(toRoom)
-  return <CardEditorPage roomId={roomId} cardId={cardId} onBack={back} onDone={toRoom} />
+  // `replace` everywhere so neither finishing nor walking prev/next stacks editor entries in
+  // the back history — Back from the room always lands on the room.
+  return (
+    <CardEditorPage
+      roomId={roomId}
+      cardId={cardId}
+      onBack={back}
+      onDone={() => navigate({ to: ROUTES.roomHub, params: { roomId }, replace: true })}
+      onNavigateCard={(id) =>
+        navigate({ to: ROUTES.roomCardEdit, params: { roomId, cardId: id }, replace: true })
+      }
+    />
+  )
 }
 
 const roomCardEditRoute = createRoute({

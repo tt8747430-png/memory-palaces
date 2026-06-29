@@ -32,7 +32,6 @@ import { markRoomKnown, resetRoomSrs } from '@/features/locus'
 import { deleteRoom } from '@/features/room'
 import { setPreferences } from '@/features/preferences'
 import { cardMaturityCounts, studyOverview } from '@/shared/lib'
-import { LociPreviewCarousel } from '@/widgets/loci-preview'
 import { RoomContentEditor } from '@/widgets/loci-editor'
 import { PracticeModes } from '@/widgets/practice-modes'
 import {
@@ -231,15 +230,8 @@ export function RoomHubPage({
       }
     >
       <div className="mt-2 space-y-4 pb-24">
-        {/* While searching, the study chrome steps aside so the filtered list owns the screen. */}
-        {!searchOpen && hasLoci ? (
-          <LociPreviewCarousel
-            loci={loci}
-            direction={palace?.settings.studyDirection ?? 'front'}
-            speakable={palace?.settings.textToSpeech ?? false}
-          />
-        ) : null}
-
+        {/* While searching, the study chrome steps aside so the filtered list owns the screen.
+            The deck is no longer previewed here — tapping any card opens the full browser. */}
         {!searchOpen && hasLoci ? (
           <StudyOverviewCard
             count={overview.count}
