@@ -273,6 +273,7 @@ export function RoomHubPage({
             roomId={roomId}
             roomName={room.title}
             searchQuery={searchOpen ? query : ''}
+            searching={searchOpen}
             onClearSearch={closeSearch}
             selectMode={selectMode}
             onSelectModeChange={setSelectMode}

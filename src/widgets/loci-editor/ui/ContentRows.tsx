@@ -32,15 +32,16 @@ export interface RowDragHandle {
   props: HTMLAttributes<HTMLButtonElement>
 }
 
-/** The left-edge grip a row shows in select mode. `touch-none` hands the gesture to
- * dnd-kit's pointer sensor instead of the scroller. */
+/** The left-edge grip a row shows in select mode. `self-stretch` spans the row's full height
+ * so the glyph centres vertically against the whole card (not pinned to the first line);
+ * `touch-none` hands the gesture to dnd-kit's pointer sensor instead of the scroller. */
 function DragHandle({ handle, label }: { handle: RowDragHandle; label: string }) {
   return (
     <button
       ref={handle.ref}
       type="button"
       aria-label={label}
-      className="-ml-1 mt-0.5 grid size-7 shrink-0 cursor-grab touch-none place-items-center rounded-control text-muted-foreground active:cursor-grabbing"
+      className="-ml-1 grid w-7 shrink-0 cursor-grab touch-none place-items-center self-stretch rounded-control text-muted-foreground active:cursor-grabbing"
       {...handle.props}
     >
       <GripVertical className="size-5" aria-hidden />

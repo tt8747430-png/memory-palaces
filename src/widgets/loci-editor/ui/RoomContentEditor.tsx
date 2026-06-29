@@ -96,6 +96,9 @@ export interface RoomContentEditorProps {
   roomName: string
   /** Filters the active tab. Driven by the room header's search; empty = not searching. */
   searchQuery?: string
+  /** Whether the room-header search is open, regardless of the query — so the sort control
+   * steps aside the moment search takes over, not only once something is typed. */
+  searching?: boolean
   /** Clears + closes the room-header search (wired to the "clear" affordance on no results). */
   onClearSearch?: () => void
   /** Multi-select, entered by a long-press on a row. */
@@ -123,6 +126,7 @@ export function RoomContentEditor({
   roomId,
   roomName,
   searchQuery,
+  searching = false,
   onClearSearch,
   selectMode,
   onSelectModeChange,
@@ -419,9 +423,9 @@ export function RoomContentEditor({
         />
       </div>
 
-      {/* Sort control: hidden while searching or selecting, and below 2 items there's
-          nothing to order. Reordering itself lives in select mode (the per-row grips). */}
-      {!selectMode && !needle && total > 1 ? (
+      {/* Sort control: hidden the moment search or select takes over, and below 2 items
+          there's nothing to order. Reordering itself lives in select mode (per-row grips). */}
+      {!selectMode && !searching && total > 1 ? (
         <div className="mb-3 flex justify-end">
           <SortControl
             label={t('loci.sortLabel')}

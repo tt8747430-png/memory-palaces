@@ -52,17 +52,26 @@ export interface SwipeRowProps {
 const AXIS_LOCK = 8
 /** Width (px) of each tray button. */
 const ACTION_WIDTH = 82
-/** Share of the row width past which a full swipe arms the edge-most action. */
-const FULL_SWIPE_RATIO = 0.5
+/** Pull (px) PAST the open tray that arms the edge-most action's auto-fire. Anchoring the
+ * commit to the tray width (not the row width) makes left and right fire with the same extra
+ * pull, however many actions a side holds — the old row-fraction threshold made a one-action
+ * side (the usual leading case) feel impossible to trigger. */
+const COMMIT_GAP = 72
+
+const EASE_OUT = [0.22, 1, 0.36, 1] as const
+/** Closing / resting spring — quick and well-damped so the row never wobbles. */
+const SETTLE_SPRING = { type: 'spring', stiffness: 540, damping: 40 } as const
+/** The arm (expand / dim) spring — a touch looser so the fill reads as a deliberate swell. */
+const ARM_SPRING = { type: 'spring', stiffness: 460, damping: 32 } as const
 
 type Side = 'leading' | 'trailing'
 
 /**
  * Wraps a list row with the iOS-Mail swipe pattern. A short swipe rests the row open over a
- * tray of actions (the user taps one); a long swipe past ~half the row arms the edge-most
- * action of that side and releasing auto-fires it, the action's surface expanding to fill as
- * it arms. Built on plain pointer events so a tap is never swallowed — tracking locks to the
- * horizontal axis only after real movement, and vertical drags fall through to native scroll
+ * tray of actions (the user taps one); a longer swipe past the tray arms the edge-most action
+ * of that side and releasing auto-fires it, the action's surface swelling as it arms. Built on
+ * plain pointer events so a tap is never swallowed — tracking locks to the horizontal axis
+ * only after real movement, and vertical drags fall through to native scroll
  * (`touch-action: pan-y`). The gesture is additive: the row keeps its own menu as the
  * keyboard/assistive path, so the trays are `aria-hidden`.
  */
@@ -84,6 +93,8 @@ export function SwipeRow({
   const hasTrailing = trailing.length > 0
   const leadingWidth = leading.length * ACTION_WIDTH
   const trailingWidth = trailing.length * ACTION_WIDTH
+  const leadingCommit = leadingWidth + COMMIT_GAP
+  const trailingCommit = trailingWidth + COMMIT_GAP
 
   const leadingOpacity = useTransform(x, (v) => (v > 0 ? 1 : 0))
   const trailingOpacity = useTransform(x, (v) => (v < 0 ? 1 : 0))
@@ -94,7 +105,7 @@ export function SwipeRow({
 
   const settle = (to: number) => {
     if (reduce) x.set(to)
-    else animate(x, to, { type: 'spring', stiffness: 520, damping: 42 })
+    else animate(x, to, SETTLE_SPRING)
   }
 
   const close = () => {
@@ -112,25 +123,19 @@ export function SwipeRow({
     }
   }, [disabled, open, x])
 
-  const fullThreshold = () => {
-    const w = containerRef.current?.offsetWidth ?? 320
-    return w * FULL_SWIPE_RATIO
-  }
-
-  // Resistance past the rest-open width so the row feels weighted but a full swipe stays
-  // reachable; hard-stopped a touch beyond the row width.
+  // 1:1 reveal out to the commit point (tray + a short over-pull), then a soft rubber-band so
+  // a hard fling can't run the row off-screen. Pulling the wrong way (no actions that side)
+  // barely gives, signalling "nothing here".
   const clampOffset = (raw: number) => {
-    if (raw < 0) {
-      if (!hasTrailing) return raw * 0.12
-      if (raw >= -trailingWidth) return raw
-      const past = -raw - trailingWidth
-      return -(trailingWidth + past * 0.7)
-    }
     if (raw > 0) {
       if (!hasLeading) return raw * 0.12
-      if (raw <= leadingWidth) return raw
-      const past = raw - leadingWidth
-      return leadingWidth + past * 0.7
+      if (raw <= leadingCommit) return raw
+      return leadingCommit + (raw - leadingCommit) * 0.35
+    }
+    if (raw < 0) {
+      if (!hasTrailing) return raw * 0.12
+      if (raw >= -trailingCommit) return raw
+      return -(trailingCommit + (-raw - trailingCommit) * 0.35)
     }
     return 0
   }
@@ -163,9 +168,12 @@ export function SwipeRow({
     const next = clampOffset(dx + base)
     x.set(next)
 
-    const limit = fullThreshold()
     const nextArmed: Side | null =
-      next <= -limit && hasTrailing ? 'trailing' : next >= limit && hasLeading ? 'leading' : null
+      next <= -trailingCommit && hasTrailing
+        ? 'trailing'
+        : next >= leadingCommit && hasLeading
+          ? 'leading'
+          : null
     if (nextArmed !== wasArmed.current) {
       wasArmed.current = nextArmed
       setArmed(nextArmed)
@@ -180,23 +188,20 @@ export function SwipeRow({
     suppressClick.current = true
     const base = open === 'trailing' ? -trailingWidth : open === 'leading' ? leadingWidth : 0
     const offset = clampOffset(event.clientX - state.startX + base)
-    const limit = fullThreshold()
     wasArmed.current = null
     setArmed(null)
 
     // Full swipe: auto-fire the edge-most action, then return to rest. A destructive action
     // unmounts the row before the spring shows; a reversible one springs back.
-    if (offset <= -limit && hasTrailing) {
+    if (offset <= -trailingCommit && hasTrailing) {
       impact()
-      const action = trailing[trailing.length - 1]!
-      action.onAction()
+      trailing[trailing.length - 1]!.onAction()
       close()
       return
     }
-    if (offset >= limit && hasLeading) {
+    if (offset >= leadingCommit && hasLeading) {
       impact()
-      const action = leading[0]!
-      action.onAction()
+      leading[0]!.onAction()
       close()
       return
     }
@@ -247,9 +252,7 @@ export function SwipeRow({
             <TrayButton
               key={action.id}
               action={action}
-              mode={
-                armed === 'leading' ? (index === 0 ? 'expanded' : 'dim') : 'rest'
-              }
+              mode={armed === 'leading' ? (index === 0 ? 'expanded' : 'dim') : 'rest'}
               onFire={() => fireFromTray(action)}
             />
           ))}
@@ -299,10 +302,11 @@ const CIRCLE_SIZE = 52
 const PILL_WIDTH = ACTION_WIDTH - 8
 
 /**
- * One tray action, iOS-Mail style: a saturated circular glyph button with a muted caption
- * beneath it, floating on the daylight ground. `dim` fades the secondary actions back when a
- * full swipe arms the edge one; `expanded` stretches the edge action's circle into a filled
- * pill so its imminent firing is unmistakable.
+ * One tray action, iOS-Mail style: a saturated circular glyph button with a single-line muted
+ * caption beneath it, both centred in the action's column on the daylight ground. `dim` fades
+ * and shrinks the secondary actions back when a full swipe arms the edge one; `expanded`
+ * swells the edge action's circle into a filled pill and lifts its glyph, so its imminent
+ * firing is unmistakable.
  */
 function TrayButton({
   action,
@@ -314,29 +318,36 @@ function TrayButton({
   onFire: () => void
 }) {
   const reduce = useReducedMotion()
+  const expanded = mode === 'expanded'
   return (
     <motion.button
       type="button"
       tabIndex={-1}
       aria-label={action.label}
       onClick={onFire}
-      animate={{ opacity: mode === 'dim' ? 0.4 : 1 }}
-      transition={{ duration: 0.14, ease: 'easeOut' }}
+      animate={{ opacity: mode === 'dim' ? 0.35 : 1, scale: mode === 'dim' ? 0.92 : 1 }}
+      transition={reduce ? { duration: 0 } : { duration: 0.16, ease: EASE_OUT }}
       style={{ width: ACTION_WIDTH }}
-      className="flex h-full shrink-0 flex-col items-center justify-center gap-1.5"
+      className="flex h-full shrink-0 flex-col items-center justify-center gap-1.5 px-1"
     >
       <motion.span
-        animate={{ width: mode === 'expanded' ? PILL_WIDTH : CIRCLE_SIZE }}
-        transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 480, damping: 34 }}
+        animate={{ width: expanded ? PILL_WIDTH : CIRCLE_SIZE }}
+        transition={reduce ? { duration: 0 } : ARM_SPRING}
         style={{ height: CIRCLE_SIZE }}
         className={cn(
           'grid shrink-0 place-items-center rounded-full transition-[filter] active:brightness-95',
           TONE_CIRCLE[action.tone ?? 'neutral'],
         )}
       >
-        {action.icon}
+        <motion.span
+          animate={{ scale: expanded ? 1.08 : 1 }}
+          transition={reduce ? { duration: 0 } : ARM_SPRING}
+          className="grid place-items-center"
+        >
+          {action.icon}
+        </motion.span>
       </motion.span>
-      <span className="text-(length:--p-text-tiny) font-medium text-muted-foreground">
+      <span className="max-w-full truncate text-(length:--p-text-tiny) font-medium text-muted-foreground">
         {action.label}
       </span>
     </motion.button>
