@@ -1,14 +1,28 @@
 import { type ReactNode, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Check, Plus, X } from 'lucide-react'
+import { Check, Lightbulb, MapPin, Plus, X } from 'lucide-react'
 import { cn } from '@/shared/lib'
 import { Textarea, TextField } from '@/shared/ui'
 import { MAX_OPTIONS, MIN_OPTIONS } from './editor-helpers'
 
-function FieldLabel({ children, count }: { children: ReactNode; count?: number }) {
+function FieldLabel({
+  children,
+  count,
+  icon,
+}: {
+  children: ReactNode
+  count?: number
+  /** Optional leading glyph, tinted by the caller — ties a field to how it reads on the card. */
+  icon?: ReactNode
+}) {
   return (
-    <div className="mb-1.5 flex items-baseline justify-between">
-      <span className="text-[length:var(--p-text-label)] font-semibold text-heading">
+    <div className="mb-1.5 flex items-baseline justify-between gap-2">
+      <span className="inline-flex items-center gap-1.5 text-[length:var(--p-text-label)] font-semibold text-heading">
+        {icon ? (
+          <span className="shrink-0" aria-hidden>
+            {icon}
+          </span>
+        ) : null}
         {children}
       </span>
       {count !== undefined ? (
@@ -20,8 +34,10 @@ function FieldLabel({ children, count }: { children: ReactNode; count?: number }
   )
 }
 
-/** The card's editable fields — front/back plus the optional place cue and peek hint. State
- * lives in the container (sheet or page) so the same fields serve both. */
+/** The card's editable fields: the required front/back pair, then an optional "memory aids"
+ * group (place/image cue + peek hint) set off by its own heading. State lives in the host page
+ * so the fields stay presentational. The aid glyphs mirror how the cues surface on the card
+ * row (place = map pin, peek = lightbulb) so the editor and the list read as one. */
 export function CardFields({
   front,
   back,
@@ -45,43 +61,65 @@ export function CardFields({
 }) {
   const { t } = useTranslation()
   return (
-    <div className="flex flex-col gap-4">
-      <div>
-        <FieldLabel count={front.length}>{t('loci.editor.front')}</FieldLabel>
-        <TextField
-          ref={frontRef}
-          value={front}
-          onChange={(e) => onFront(e.target.value)}
-          placeholder={t('loci.editor.frontPlaceholder')}
-          enterKeyHint="next"
-        />
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4">
+        <div>
+          <FieldLabel count={front.length}>{t('loci.editor.front')}</FieldLabel>
+          <TextField
+            ref={frontRef}
+            value={front}
+            onChange={(e) => onFront(e.target.value)}
+            placeholder={t('loci.editor.frontPlaceholder')}
+            enterKeyHint="next"
+          />
+        </div>
+        <div>
+          <FieldLabel count={back.length}>{t('loci.editor.back')}</FieldLabel>
+          <Textarea
+            value={back}
+            onChange={(e) => onBack(e.target.value)}
+            placeholder={t('loci.editor.backPlaceholder')}
+            rows={3}
+          />
+        </div>
       </div>
+
       <div>
-        <FieldLabel count={back.length}>{t('loci.editor.back')}</FieldLabel>
-        <Textarea
-          value={back}
-          onChange={(e) => onBack(e.target.value)}
-          placeholder={t('loci.editor.backPlaceholder')}
-          rows={3}
-        />
-      </div>
-      <div>
-        <FieldLabel>{t('loci.editor.hint')}</FieldLabel>
-        <Textarea
-          value={hint}
-          onChange={(e) => onHint(e.target.value)}
-          placeholder={t('loci.editor.hintPlaceholder')}
-          rows={2}
-        />
-      </div>
-      <div>
-        <FieldLabel>{t('loci.editor.tip')}</FieldLabel>
-        <Textarea
-          value={tip}
-          onChange={(e) => onTip(e.target.value)}
-          placeholder={t('loci.editor.tipPlaceholder')}
-          rows={2}
-        />
+        <div className="mb-2 flex items-center gap-3">
+          <h2 className="text-[length:var(--p-text-sub)] font-semibold text-heading">
+            {t('loci.editor.aidsLabel')}
+          </h2>
+          <span className="h-px flex-1 bg-border" aria-hidden />
+        </div>
+        <p className="mb-4 text-[length:var(--p-text-label)] leading-snug text-muted-foreground">
+          {t('loci.editor.aidsHint')}
+        </p>
+        <div className="flex flex-col gap-4">
+          <div>
+            <FieldLabel icon={<MapPin className="size-3.5 text-accent" aria-hidden />}>
+              {t('loci.editor.hint')}
+            </FieldLabel>
+            <Textarea
+              value={hint}
+              onChange={(e) => onHint(e.target.value)}
+              placeholder={t('loci.editor.hintPlaceholder')}
+              rows={2}
+            />
+          </div>
+          <div>
+            <FieldLabel
+              icon={<Lightbulb className="size-3.5 text-[var(--warning-foreground)]" aria-hidden />}
+            >
+              {t('loci.editor.tip')}
+            </FieldLabel>
+            <Textarea
+              value={tip}
+              onChange={(e) => onTip(e.target.value)}
+              placeholder={t('loci.editor.tipPlaceholder')}
+              rows={2}
+            />
+          </div>
+        </div>
       </div>
     </div>
   )
