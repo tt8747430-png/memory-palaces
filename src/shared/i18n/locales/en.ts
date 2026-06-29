@@ -445,7 +445,7 @@ export const en = {
     createdToast: 'Created “{{name}}”',
     importError: 'Couldn’t import that palace file.',
     createName: 'Name',
-    createNamePlaceholder: 'e.g. Ancient Rome',
+    createNamePlaceholder: 'e.g. Solomon’s Temple',
     iconLabel: 'Icon',
     colorLabel: 'Colour',
     iconColorLabel: 'Icon and colour',
@@ -507,6 +507,7 @@ export const en = {
   },
   rooms: {
     openLabel: 'Open {{title}}',
+    selectLabel: 'Select {{title}}',
     reorderLabel: 'Drag to reorder {{title}}',
     sortLabel: 'Sort rooms',
     sort: {
@@ -555,12 +556,22 @@ export const en = {
       body: 'Every card goes back to new — your cards and questions stay, only the schedule clears.',
       confirm: 'Reset progress',
     },
+    bulkDelete: {
+      title: 'Delete {{count}} rooms?',
+      body: 'This removes the selected rooms and all their cards and questions. It can’t be undone.',
+    },
+    bulkReset: {
+      title: 'Reset {{count}} rooms?',
+      body: 'Every card in the selected rooms goes back to new — the cards stay, only the schedule clears.',
+    },
     toast: {
       added: 'Added {{title}}',
       updated: 'Room updated',
       duplicated: 'Room duplicated',
       deleted: 'Room deleted',
       reset: 'Room progress reset',
+      bulkDeleted: 'Deleted {{count}} rooms',
+      bulkReset: 'Reset {{count}} rooms',
     },
   },
   palaceSettings: {
@@ -757,7 +768,6 @@ export const en = {
     emptyHint:
       'Each card is a spot in this room. Tap the ＋ to add what to recall, what it means, and a vivid image.',
     select: {
-      select: 'Select',
       selectAll: 'Select all',
       clearAll: 'Clear all',
       done: 'Done',

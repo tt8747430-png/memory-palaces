@@ -98,7 +98,7 @@ export interface RoomContentEditorProps {
   searchQuery?: string
   /** Clears + closes the room-header search (wired to the "clear" affordance on no results). */
   onClearSearch?: () => void
-  /** Multi-select, driven from the room header / a long-press on a row. */
+  /** Multi-select, entered by a long-press on a row. */
   selectMode: boolean
   onSelectModeChange: (on: boolean) => void
   /** Content ordering, persisted by the host page. */
@@ -159,8 +159,8 @@ export function RoomContentEditor({
   const [pasteOpen, setPasteOpen] = useState(false)
   const [verseOpen, setVerseOpen] = useState(false)
 
-  // Leaving select mode clears the picks so the next entry (header control or long-press) starts
-  // empty — needed now that the flag can be flipped off from outside the editor.
+  // Leaving select mode clears the picks so the next long-press starts empty — needed now that
+  // the flag can be flipped off from outside the editor (search opening, tab switch).
   useEffect(() => {
     if (!selectMode) setSelectedIds(new Set())
   }, [selectMode])
@@ -207,9 +207,14 @@ export function RoomContentEditor({
 
   // The sort applied to the active tab; cards drive the full option set, questions a subset.
   const activeSort = isLoci ? sort : questionsSort
-  // Hand-arranging is offered only in manual sort, and never while searching or selecting
-  // (you reorder the whole list, not a filtered subset).
-  const reorderable = activeSort === 'manual' && !needle && !selectMode
+  // Hand-arranging lives in select mode (long-press → grip-drag), mirroring the library; it's
+  // off while searching, since you reorder the whole list, not a filtered subset. A drop
+  // forces manual sort — a hand-arranged order only reads against the manual rule.
+  const reorderable = selectMode && !needle
+  const reorderTo = (commit: () => void) => {
+    commit()
+    if (sort !== 'manual') setSort('manual')
+  }
   const sortOptions: SortControlOption<ContentSort>[] = isLoci
     ? [
         {
@@ -415,7 +420,7 @@ export function RoomContentEditor({
       </div>
 
       {/* Sort control: hidden while searching or selecting, and below 2 items there's
-          nothing to order. Manual sort grows the per-row grips. */}
+          nothing to order. Reordering itself lives in select mode (the per-row grips). */}
       {!selectMode && !needle && total > 1 ? (
         <div className="mb-3 flex justify-end">
           <SortControl
@@ -427,8 +432,8 @@ export function RoomContentEditor({
         </div>
       ) : null}
 
-      {/* Select mode is entered from the room header's control or a long-press on a row; this
-          bar appears only while selecting (the rows carry their own checkboxes). */}
+      {/* Select mode is entered by a long-press on a row; this bar appears only while selecting
+          (the rows carry their own checkboxes, and a grip-drag reorders). */}
       {selectMode ? (
         <div className="flex items-center justify-between gap-3 pb-2">
           <button
@@ -470,7 +475,7 @@ export function RoomContentEditor({
               <ReorderableList
                 items={visibleLoci}
                 reorderable={reorderable}
-                onReorder={(ids) => void reorderLoci(locusStore, ids)}
+                onReorder={(ids) => reorderTo(() => void reorderLoci(locusStore, ids))}
                 renderItem={renderCard}
               />
             )
@@ -482,7 +487,7 @@ export function RoomContentEditor({
             <ReorderableList
               items={visibleQuestions}
               reorderable={reorderable}
-              onReorder={(ids) => void reorderQuestions(questionStore, ids)}
+              onReorder={(ids) => reorderTo(() => void reorderQuestions(questionStore, ids))}
               renderItem={renderQuestion}
             />
           )}

@@ -25,14 +25,14 @@ import {
   SwipeRow,
 } from '@/shared/ui'
 
-/** Props that wire a row's grip to dnd-kit's drag activator. Present only while the room
- * is in manual sort; absent otherwise (the row renders without a handle). */
+/** Props that wire a row's grip to dnd-kit's drag activator. Present only while selecting
+ * (reorder mode); absent otherwise (the row renders without a handle). */
 export interface RowDragHandle {
   ref: (node: HTMLElement | null) => void
   props: HTMLAttributes<HTMLButtonElement>
 }
 
-/** The left-edge grip a row shows in manual sort. `touch-none` hands the gesture to
+/** The left-edge grip a row shows in select mode. `touch-none` hands the gesture to
  * dnd-kit's pointer sensor instead of the scroller. */
 function DragHandle({ handle, label }: { handle: RowDragHandle; label: string }) {
   return (
@@ -53,7 +53,7 @@ export interface CardRowProps {
   index: number
   selectMode: boolean
   selected: boolean
-  /** Manual sort is active — show the grip and let the row be hand-dragged. */
+  /** Select mode is active — show the grip and let the row be hand-dragged (reorder). */
   reorderable: boolean
   /** The grip's dnd-kit activator wiring; only supplied while `reorderable`. */
   dragHandle?: RowDragHandle
@@ -127,9 +127,9 @@ export function CardRow({
     },
     t,
   )
-  // Swipe is the at-rest gesture only: it stands down while selecting, hand-reordering, or
-  // riding in the drag overlay so the gestures never fight.
-  const swipeEnabled = !selectMode && !reorderable && !dragging
+  // Swipe is the at-rest gesture only: it stands down while selecting (reorder lives there
+  // too) or riding in the drag overlay, so the gestures never fight.
+  const swipeEnabled = !selectMode && !dragging
 
   const actions: SheetAction[] = [
     {
@@ -185,7 +185,7 @@ export function CardRow({
       )}
     >
       <div className="flex items-start gap-3">
-        {reorderable && dragHandle && !selectMode ? (
+        {reorderable && dragHandle ? (
           <DragHandle handle={dragHandle} label={t('loci.row.reorder')} />
         ) : null}
         {selectMode ? <SelectDot selected={selected} /> : null}
@@ -255,7 +255,7 @@ export interface QuestionRowProps {
   index: number
   selectMode: boolean
   selected: boolean
-  /** Manual sort is active — show the grip and let the row be hand-dragged. */
+  /** Select mode is active — show the grip and let the row be hand-dragged (reorder). */
   reorderable: boolean
   /** The grip's dnd-kit activator wiring; only supplied while `reorderable`. */
   dragHandle?: RowDragHandle
@@ -335,7 +335,7 @@ export function QuestionRow({
       )}
     >
       <div className="flex items-start gap-3">
-        {reorderable && dragHandle && !selectMode ? (
+        {reorderable && dragHandle ? (
           <DragHandle handle={dragHandle} label={t('loci.row.reorder')} />
         ) : null}
         {selectMode ? <SelectDot selected={selected} /> : null}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { type ReactNode, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import {
@@ -55,6 +55,7 @@ import {
 import { setPreferences } from '@/features/preferences'
 import { ImportRoomsSheet } from '@/features/content'
 import {
+  cn,
   isDue,
   isLocusReviewed,
   isRoomCompleted,
@@ -217,6 +218,10 @@ export function PalaceDetailPage({
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [resetTarget, setResetTarget] = useState<string | null>(null)
   const [importOpen, setImportOpen] = useState(false)
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
+  const [bulkResetOpen, setBulkResetOpen] = useState(false)
 
   const roomById = (id: string) => rooms.find((room) => room.id === id)
   const deletingRoom = deleteTarget ? roomById(deleteTarget) : undefined
@@ -225,6 +230,47 @@ export function PalaceDetailPage({
   const handleDuplicate = async (id: string) => {
     await duplicateRoom(roomStore, locusStore, questionStore, id)
     toast.success(t('rooms.toast.duplicated'))
+  }
+
+  // Long-press enters select mode with the pressed room already picked; a grip-drag then
+  // reorders the route (forcing manual sort, since a hand-arranged order only makes sense
+  // against the manual rule).
+  const requestSelect = (id: string) => {
+    setSelectMode(true)
+    setSelectedIds((prev) => new Set(prev).add(id))
+  }
+  const toggleSelect = (id: string) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  const exitSelect = () => {
+    setSelectMode(false)
+    setSelectedIds(new Set())
+  }
+  const allSelected =
+    displayItems.length > 0 && displayItems.every((room) => selectedIds.has(room.id))
+  const toggleSelectAll = () =>
+    setSelectedIds(allSelected ? new Set() : new Set(displayItems.map((room) => room.id)))
+
+  const handleReorder = (orderedIds: string[]) => {
+    void reorderRooms(roomStore, orderedIds)
+    if (roomsSort !== 'manual') setRoomsSort('manual')
+  }
+
+  const confirmBulkDelete = () => {
+    for (const id of selectedIds) void deleteRoom(roomStore, id)
+    toast.success(t('rooms.toast.bulkDeleted', { count: selectedIds.size }))
+    setBulkDeleteOpen(false)
+    exitSelect()
+  }
+  const confirmBulkReset = () => {
+    for (const id of selectedIds) void resetRoomSrs(locusStore, id)
+    toast.success(t('rooms.toast.bulkReset', { count: selectedIds.size }))
+    setBulkResetOpen(false)
+    exitSelect()
   }
 
   if (!ready) {
@@ -299,23 +345,44 @@ export function PalaceDetailPage({
           />
         ) : null}
 
-        <section aria-labelledby="rooms-heading">
-          <div className="mb-3 flex items-center justify-between gap-3 px-0.5">
-            <h2
-              id="rooms-heading"
-              className="text-(length:--p-text-title) font-semibold text-heading"
-            >
-              {t('palaceDetail.roomsHeading')}
-            </h2>
-            {items.length > 1 ? (
-              <SortControl
-                label={t('rooms.sortLabel')}
-                value={roomsSort}
-                options={roomsSortOptions}
-                onChange={setRoomsSort}
-              />
-            ) : null}
-          </div>
+        <section aria-label={t('palaceDetail.roomsHeading')}>
+          {selectMode ? (
+            // Select-mode bar — replaces the heading + sort while picking rooms. Reuses the
+            // shared select strings (select-all · count · done) the library already uses.
+            <div className="mb-3 flex items-center gap-3 px-0.5">
+              <button
+                type="button"
+                onClick={toggleSelectAll}
+                className="text-(length:--p-text-label) font-semibold text-heading"
+              >
+                {allSelected ? t('loci.select.clearAll') : t('loci.select.selectAll')}
+              </button>
+              <span className="text-(length:--p-text-label) font-semibold text-muted-foreground">
+                {t('loci.select.count', { count: selectedIds.size })}
+              </span>
+              <button
+                type="button"
+                onClick={exitSelect}
+                className="ml-auto text-(length:--p-text-label) font-semibold text-accent"
+              >
+                {t('loci.select.done')}
+              </button>
+            </div>
+          ) : (
+            <div className="mb-3 flex items-center justify-between gap-3 px-0.5">
+              <h2 className="text-(length:--p-text-title) font-semibold text-heading">
+                {t('palaceDetail.roomsHeading')}
+              </h2>
+              {items.length > 1 ? (
+                <SortControl
+                  label={t('rooms.sortLabel')}
+                  value={roomsSort}
+                  options={roomsSortOptions}
+                  onChange={setRoomsSort}
+                />
+              ) : null}
+            </div>
+          )}
 
           {items.length === 0 ? (
             <EmptyState
@@ -326,14 +393,17 @@ export function PalaceDetailPage({
           ) : (
             <RoomList
               rooms={displayItems}
-              reorderable={roomsSort === 'manual'}
               swipe={prefs.swipe.room}
+              selectMode={selectMode}
+              selectedIds={selectedIds}
+              onToggleSelect={toggleSelect}
+              onRequestSelect={requestSelect}
               onOpen={(id) => onOpenRoom?.(id)}
               onEdit={(id) => {
                 const room = roomById(id)
                 if (room) setEditorTarget({ mode: 'edit', room })
               }}
-              onReorder={(orderedIds) => void reorderRooms(roomStore, orderedIds)}
+              onReorder={handleReorder}
               onDuplicate={(id) => void handleDuplicate(id)}
               onResetProgress={(id) => setResetTarget(id)}
               onDelete={(id) => setDeleteTarget(id)}
@@ -341,6 +411,26 @@ export function PalaceDetailPage({
           )}
         </section>
       </div>
+
+      {/* Bulk-action bar — appears in select mode with at least one room picked, floating
+          just above the safe area (this detail route hides the bottom nav). */}
+      {selectMode && selectedIds.size > 0 ? (
+        <div className="fixed inset-x-0 bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+0.75rem)] z-180 mx-auto max-w-[430px] px-4">
+          <div className="flex items-center gap-2 rounded-card-featured bg-card/95 p-2.5 shadow-elevated backdrop-blur-xl">
+            <BulkButton
+              icon={<RotateCcw className="size-[17px]" aria-hidden />}
+              label={t('rooms.menu.reset')}
+              onClick={() => setBulkResetOpen(true)}
+            />
+            <BulkButton
+              tone="danger"
+              icon={<Trash2 className="size-[17px]" aria-hidden />}
+              label={t('common.delete')}
+              onClick={() => setBulkDeleteOpen(true)}
+            />
+          </div>
+        </div>
+      ) : null}
 
       <ImportRoomsSheet
         palaceId={palaceId}
@@ -403,26 +493,80 @@ export function PalaceDetailPage({
         }}
       />
 
-      {/* The persistent add affordance — present at every level (empty or full), so the
-          empty state can stay teaching-only with no inline buttons. */}
-      <SpeedDial
-        label={t('palaceDetail.quickActions')}
-        className="bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+0.75rem)]"
-        actions={[
-          {
-            id: 'room',
-            label: t('palaceDetail.addRoom'),
-            icon: <Plus className="size-5" aria-hidden />,
-            onSelect: () => setEditorTarget({ mode: 'add', palaceId }),
-          },
-          {
-            id: 'import',
-            label: t('importRooms.open'),
-            icon: <Upload className="size-5" aria-hidden />,
-            onSelect: () => setImportOpen(true),
-          },
-        ]}
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        onOpenChange={setBulkDeleteOpen}
+        destructive
+        icon={<Trash2 className="size-6" aria-hidden />}
+        title={t('rooms.bulkDelete.title', { count: selectedIds.size })}
+        description={t('rooms.bulkDelete.body')}
+        confirmLabel={t('common.delete')}
+        cancelLabel={t('common.cancel')}
+        onConfirm={confirmBulkDelete}
       />
+
+      <ConfirmDialog
+        open={bulkResetOpen}
+        onOpenChange={setBulkResetOpen}
+        icon={<RotateCcw className="size-6" aria-hidden />}
+        title={t('rooms.bulkReset.title', { count: selectedIds.size })}
+        description={t('rooms.bulkReset.body')}
+        confirmLabel={t('rooms.menu.reset')}
+        cancelLabel={t('common.cancel')}
+        onConfirm={confirmBulkReset}
+      />
+
+      {/* The persistent add affordance — present at every level (empty or full), so the
+          empty state can stay teaching-only with no inline buttons. Hidden while selecting,
+          where the bulk bar owns the bottom of the screen. */}
+      {!selectMode ? (
+        <SpeedDial
+          label={t('palaceDetail.quickActions')}
+          className="bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+0.75rem)]"
+          actions={[
+            {
+              id: 'room',
+              label: t('palaceDetail.addRoom'),
+              icon: <Plus className="size-5" aria-hidden />,
+              onSelect: () => setEditorTarget({ mode: 'add', palaceId }),
+            },
+            {
+              id: 'import',
+              label: t('importRooms.open'),
+              icon: <Upload className="size-5" aria-hidden />,
+              onSelect: () => setImportOpen(true),
+            },
+          ]}
+        />
+      ) : null}
     </AppScreen>
+  )
+}
+
+function BulkButton({
+  icon,
+  label,
+  onClick,
+  tone = 'default',
+}: {
+  icon: ReactNode
+  label: string
+  onClick: () => void
+  tone?: 'default' | 'danger'
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'flex h-11 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-control text-(length:--p-text-label) font-semibold transition-transform active:scale-[0.97]',
+        tone === 'danger'
+          ? 'bg-(--danger-surface) text-(--danger-on-surface)'
+          : 'bg-info-surface text-heading',
+      )}
+    >
+      {icon}
+      {label}
+    </button>
   )
 }

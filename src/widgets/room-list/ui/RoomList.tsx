@@ -32,7 +32,7 @@ import {
   RotateCcw,
   Trash2,
 } from 'lucide-react'
-import { cn } from '@/shared/lib'
+import { cn, useLongPress } from '@/shared/lib'
 import type { SwipeConfig } from '@/shared/config/swipe'
 import { buildSwipeActions, OverflowMenuButton, type SheetAction, SwipeRow } from '@/shared/ui'
 import * as React from 'react'
@@ -71,21 +71,35 @@ export interface RoomListHandlers {
 
 export interface RoomListProps extends RoomListHandlers {
   rooms: RoomListItem[]
-  /** Manual sort is active — show the drag handles and let rows be hand-arranged. An
-   * automatic sort renders the list read-only (no handles). */
-  reorderable: boolean
   /** The user's swipe-gesture mapping for room rows (leading/trailing action trays). */
   swipe: SwipeConfig
+  /** Multi-select mode: rows grow a grip + checkbox; taps toggle, a grip-drag reorders,
+   * swipe is suspended. Entered by long-pressing a row (the page owns the flag). */
+  selectMode: boolean
+  selectedIds: Set<string>
+  onToggleSelect: (id: string) => void
+  /** Long-press on a row: enter select mode with this room picked. */
+  onRequestSelect: (id: string) => void
 }
 
 const EASE_OUT = [0.22, 1, 0.36, 1] as const
 
 /** The palace's rooms as rich, derived-progress cards: a position medallion (a check once
  * complete), the title + description, a reviewed-progress bar, and a stats row (loci ·
- * questions · mastered · due). Swipe-left to delete; a ⋮ overflow carries edit, duplicate,
- * reset, delete. In manual sort each card grows a grip handle and is drag-reorderable.
- * Presentational — the page derives the items, owns the sort, and wires the commands. */
-export function RoomList({ rooms, reorderable, swipe, ...handlers }: RoomListProps) {
+ * questions · mastered · due). At rest a tap opens the room, a swipe runs the user's
+ * configured action, and a long-press enters multi-select. In select mode each card grows a
+ * grip + checkbox: taps toggle the pick and a grip-drag reorders the route (manual sort).
+ * Presentational — the page derives the items, owns the selection/sort, and wires the
+ * commands; the reorder applies to a local copy first so cards settle straight into place. */
+export function RoomList({
+  rooms,
+  swipe,
+  selectMode,
+  selectedIds,
+  onToggleSelect,
+  onRequestSelect,
+  ...handlers
+}: RoomListProps) {
   const reduce = useReducedMotion()
   // Bumped after a swipe-delete fires so the swiped card remounts at rest — if the
   // page's confirm dialog is dismissed, the row isn't left slid off-screen.
@@ -127,19 +141,24 @@ export function RoomList({ rooms, reorderable, swipe, ...handlers }: RoomListPro
           key={`${room.id}:${swipeReset}`}
           room={room}
           index={index}
-          reorderable={reorderable}
+          selectMode={selectMode}
+          selected={selectedIds.has(room.id)}
           dragActive={activeId !== null}
           reduce={reduce}
           swipe={swipe}
           handlers={handlers}
+          onToggleSelect={() => onToggleSelect(room.id)}
+          onRequestSelect={() => onRequestSelect(room.id)}
           onSwipeDelete={() => onSwipeDelete(room.id)}
         />
       ))}
     </ol>
   )
 
-  if (!reorderable) return list
-
+  // The DndContext stays mounted (mirroring the library) so entering select mode never
+  // re-mounts the list and replays its entrance stagger; each row's sortable is disabled until
+  // then, so at rest a tap or swipe is never intercepted by the sensors. Reorder is a
+  // grip-drag, offered only in select mode.
   return (
     <DndContext
       sensors={sensors}
@@ -155,7 +174,7 @@ export function RoomList({ rooms, reorderable, swipe, ...handlers }: RoomListPro
       <DragOverlay dropAnimation={{ duration: 220, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }}>
         {activeRoom ? (
           <div className={cn('rounded-card shadow-elevated', !reduce && 'scale-[1.02]')}>
-            <RoomCard room={activeRoom} reorderable dragging swipe={swipe} handlers={handlers} />
+            <RoomCard room={activeRoom} dragging swipe={swipe} handlers={handlers} />
           </div>
         ) : null}
       </DragOverlay>
@@ -166,20 +185,26 @@ export function RoomList({ rooms, reorderable, swipe, ...handlers }: RoomListPro
 function SortableRoom({
   room,
   index,
-  reorderable,
+  selectMode,
+  selected,
   dragActive,
   reduce,
   swipe,
   handlers,
+  onToggleSelect,
+  onRequestSelect,
   onSwipeDelete,
 }: {
   room: RoomListItem
   index: number
-  reorderable: boolean
+  selectMode: boolean
+  selected: boolean
   dragActive: boolean
   reduce: boolean | null
   swipe: SwipeConfig
   handlers: RoomListHandlers
+  onToggleSelect: () => void
+  onRequestSelect: () => void
   onSwipeDelete: () => void
 }) {
   const {
@@ -190,7 +215,7 @@ function SortableRoom({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: room.id, disabled: !reorderable })
+  } = useSortable({ id: room.id, disabled: !selectMode })
 
   // Motion owns the entrance stagger on the <li>; dnd-kit owns the drag transform on the
   // inner node (kept separate so the two transform engines never fight).
@@ -209,12 +234,15 @@ function SortableRoom({
       >
         <RoomCard
           room={room}
-          reorderable={reorderable}
+          selectMode={selectMode}
+          selected={selected}
           dragActive={dragActive}
           handleRef={setActivatorNodeRef}
           handleProps={{ ...attributes, ...listeners }}
           swipe={swipe}
           handlers={handlers}
+          onToggleSelect={onToggleSelect}
+          onRequestSelect={onRequestSelect}
           onSwipeDelete={onSwipeDelete}
         />
       </div>
@@ -257,23 +285,29 @@ function useRoomActions(room: RoomListItem, handlers: RoomListHandlers): SheetAc
 
 function RoomCard({
   room,
-  reorderable,
+  selectMode = false,
+  selected = false,
   dragActive = false,
   dragging = false,
   handleRef,
   handleProps,
   swipe,
   handlers,
+  onToggleSelect,
+  onRequestSelect,
   onSwipeDelete,
 }: {
   room: RoomListItem
-  reorderable: boolean
+  selectMode?: boolean
+  selected?: boolean
   dragActive?: boolean
   dragging?: boolean
   handleRef?: (node: HTMLElement | null) => void
   handleProps?: React.HTMLAttributes<HTMLButtonElement>
   swipe: SwipeConfig
   handlers: RoomListHandlers
+  onToggleSelect?: () => void
+  onRequestSelect?: () => void
   onSwipeDelete?: () => void
 }) {
   const { t } = useTranslation()
@@ -289,6 +323,10 @@ function RoomCard({
     },
     t,
   )
+  const press = useLongPress({
+    onLongPress: () => onRequestSelect?.(),
+    onTap: () => handlers.onOpen(room.id),
+  })
   const pct = Math.min(100, Math.max(0, Math.round(room.progress)))
   const statusLabel = room.completed
     ? t('rooms.card.complete')
@@ -299,14 +337,21 @@ function RoomCard({
       <motion.button
         type="button"
         whileTap={dragging ? undefined : { scale: 0.99 }}
-        onClick={() => handlers.onOpen(room.id)}
-        aria-label={t('rooms.openLabel', { title: room.title })}
+        {...(selectMode || dragging ? { onClick: onToggleSelect } : press)}
+        aria-label={
+          selectMode
+            ? t('rooms.selectLabel', { title: room.title })
+            : t('rooms.openLabel', { title: room.title })
+        }
         className={cn(
-          'block w-full rounded-card bg-card p-3.5 pr-12 text-left shadow-rest',
-          reorderable && 'pl-11',
+          'block w-full rounded-card bg-card p-3.5 text-left shadow-rest',
+          !selectMode && 'pr-12',
+          selectMode && 'pl-11',
+          selected && 'ring-2 ring-primary',
         )}
       >
         <div className="flex items-start gap-3">
+          {selectMode ? <SelectDot selected={selected} /> : null}
           <Medallion position={room.position} completed={room.completed} />
           <div className="min-w-0 flex-1">
             <h3 className="truncate text-(length:--p-text-sub) font-semibold text-heading">
@@ -337,7 +382,7 @@ function RoomCard({
         <RoomStats room={room} />
       </motion.button>
 
-      {reorderable ? (
+      {selectMode && !dragging ? (
         <button
           ref={handleRef}
           type="button"
@@ -351,7 +396,7 @@ function RoomCard({
         </button>
       ) : null}
 
-      {!dragging ? (
+      {!selectMode && !dragging ? (
         <div className="absolute right-2 top-2.5">
           <OverflowMenuButton
             variant="glass"
@@ -364,14 +409,30 @@ function RoomCard({
     </div>
   )
 
-  if (dragging || !onSwipeDelete) return card
+  // Swipe is the at-rest gesture only: it stands down while selecting, hand-reordering, or
+  // riding in the drag overlay so the gestures never fight.
+  if (dragging || selectMode || !onSwipeDelete) return card
 
-  // The menu and handle live inside the swiped content so they travel with the card on
-  // swipe; the swipe is suspended while any drag is in flight so the two never fight.
   return (
     <SwipeRow leading={leading} trailing={trailing} disabled={dragActive}>
       {card}
     </SwipeRow>
+  )
+}
+
+function SelectDot({ selected }: { selected: boolean }) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        'mt-0.5 grid size-7 shrink-0 place-items-center rounded-full border-2 shadow-rest transition-colors',
+        selected
+          ? 'border-primary bg-primary text-primary-foreground'
+          : 'border-border bg-card-glass',
+      )}
+    >
+      {selected ? <Check className="size-4" strokeWidth={3} /> : null}
+    </span>
   )
 }
 
