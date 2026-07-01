@@ -383,6 +383,7 @@ export const en = {
     viewArchived: 'Archived',
     openFolderLabel: 'Open folder {{name}}',
     selectFolderLabel: 'Select folder {{name}}',
+    renameFolderLabel: 'Rename folder {{name}}',
     folderActions: 'Folder actions for {{name}}',
     dropToFile: 'Drop to file',
     editFolder: 'Edit folder',
@@ -507,6 +508,7 @@ export const en = {
   rooms: {
     openLabel: 'Open {{title}}',
     selectLabel: 'Select {{title}}',
+    renameLabel: 'Rename {{title}}',
     sortLabel: 'Sort rooms',
     sort: {
       manual: 'Manual',

@@ -37,6 +37,7 @@ import type { SwipeConfig } from '@/shared/config/swipe'
 import { folderKey, palaceKey, parseLibraryKey } from '../lib/library-keys'
 import {
   buildSwipeActions,
+  EditableTitle,
   FlyoutMenu,
   FolderGlyph,
   PalaceCover,
@@ -78,6 +79,9 @@ export interface LibraryHandlers {
   onOpenFolder: (id: string) => void
   onEditFolder: (id: string) => void
   onDeleteFolder: (id: string) => void
+  /** Rename a palace / folder in place (from tapping its title). */
+  onRenamePalace: (id: string, name: string) => void
+  onRenameFolder: (id: string, name: string) => void
   /** Long-press on a row: enter select mode with this item picked. */
   onRequestSelect: (id: string) => void
   /** Persist the level's new manual order after a drop — the full display sequence as
@@ -490,6 +494,15 @@ function FolderCard({
     { delay: 400 },
   )
 
+  // Keyboard equivalent of the card tap now that the card is a role="button" div, not a
+  // native button. Enter opens (or toggles the pick in select mode).
+  const openOnEnter = (event: { key: string; preventDefault: () => void }) => {
+    if (dragging || event.key !== 'Enter') return
+    event.preventDefault()
+    if (selectMode) onToggleSelect?.()
+    else handlers.onOpenFolder(folder.id)
+  }
+
   const selectRing = selected ? 'ring-2 ring-primary' : 'ring-1 ring-border'
   const popTransition = receiving ? { duration: 0.5, ease: EASE_OUT } : DROP_SPRING
 
@@ -513,8 +526,9 @@ function FolderCard({
           ? { scale: [1, 1.03, 1] }
           : { scale: 1 }
     const body = (
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         // In select mode the whole row is the drag activator (no visible grip): a tap still
         // toggles the pick — dnd-kit only starts a drag after real travel — and `touch-none`
         // hands the touch gesture to the pointer sensor, not the scroller.
@@ -526,13 +540,14 @@ function FolderCard({
                 : {}),
             }
           : press)}
+        onKeyDown={openOnEnter}
         aria-label={
           selectMode
             ? t('palaces.selectFolderLabel', { name: folder.name })
             : t('palaces.openFolderLabel', { name: folder.name })
         }
         className={cn(
-          'relative flex w-full items-center gap-3 rounded-card bg-card p-3 text-left shadow-rest',
+          'relative flex w-full cursor-pointer items-center gap-3 rounded-card bg-card p-3 text-left shadow-rest',
           !selectMode && 'pr-12',
           selectMode && 'touch-none',
           selectRing,
@@ -554,14 +569,18 @@ function FolderCard({
           />
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-[length:var(--p-text-sub)] font-bold tracking-tight text-heading">
-            {folder.name}
-          </h3>
+          <EditableTitle
+            value={folder.name}
+            onRename={(name) => handlers.onRenameFolder(folder.id, name)}
+            editLabel={t('palaces.renameFolderLabel', { name: folder.name })}
+            disabled={selectMode || dragging}
+            className="block max-w-full truncate text-[length:var(--p-text-sub)] font-bold tracking-tight text-heading"
+          />
           <p className="mt-0.5 truncate text-[length:var(--p-text-label)] text-muted-foreground">
             {subtitle}
           </p>
         </div>
-      </button>
+      </div>
     )
     return (
       <motion.div
@@ -614,14 +633,16 @@ function FolderCard({
         </>
       ) : null}
 
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         {...(selectMode || dragging
           ? { onClick: onToggleSelect, ...(drag ? { ...drag.attributes, ...drag.listeners, ref: drag.setActivatorNodeRef } : {}) }
           : press)}
+        onKeyDown={openOnEnter}
         aria-label={t('palaces.openFolderLabel', { name: folder.name })}
         className={cn(
-          'relative flex h-full w-full flex-col gap-3 rounded-card bg-card p-3.5 text-left shadow-rest',
+          'relative flex h-full w-full cursor-pointer flex-col gap-3 rounded-card bg-card p-3.5 text-left shadow-rest',
           selectMode && 'touch-none',
           selectRing,
         )}
@@ -636,14 +657,18 @@ function FolderCard({
           {selectMode ? <SelectDot selected={selected} /> : null}
         </div>
         <div className="min-w-0">
-          <h3 className="truncate text-[length:var(--p-text-sub)] font-bold tracking-tight text-heading">
-            {folder.name}
-          </h3>
+          <EditableTitle
+            value={folder.name}
+            onRename={(name) => handlers.onRenameFolder(folder.id, name)}
+            editLabel={t('palaces.renameFolderLabel', { name: folder.name })}
+            disabled={selectMode || dragging}
+            className="block max-w-full truncate text-[length:var(--p-text-sub)] font-bold tracking-tight text-heading"
+          />
           <p className="mt-0.5 truncate text-[length:var(--p-text-label)] text-muted-foreground">
             {subtitle}
           </p>
         </div>
-      </button>
+      </div>
       <DropTargetRing ready={dropReady} active={isOver} reduce={reduce} />
       {!selectMode && !dragging ? (
         <CardMenu label={t('palaces.folderActions', { name: folder.name })} actions={actions} />
@@ -714,6 +739,13 @@ function PalaceCard({
     { onLongPress: () => handlers.onRequestSelect(item.id), onTap: () => handlers.onOpenPalace(item.id) },
     { delay: 400 },
   )
+  // Keyboard equivalent of the card tap (the card is a role="button" div, not a native button).
+  const openOnEnter = (event: { key: string; preventDefault: () => void }) => {
+    if (dragging || event.key !== 'Enter') return
+    event.preventDefault()
+    if (selectMode) onToggleSelect?.()
+    else handlers.onOpenPalace(item.id)
+  }
   const ring = selected ? 'ring-2 ring-primary' : ''
   const coverVariant =
     item.color?.startsWith('from-') || item.color?.startsWith('#') ? 'identity' : 'brand'
@@ -754,8 +786,9 @@ function PalaceCard({
           disabled={selectMode || dragActive || dragging}
           className="rounded-card"
         >
-          <button
-            type="button"
+          <div
+            role="button"
+            tabIndex={0}
             // Whole-row drag activator in select mode (no visible grip) — mirrors FolderCard.
             {...(selectMode || dragging
               ? {
@@ -765,13 +798,14 @@ function PalaceCard({
                     : {}),
                 }
               : press)}
+            onKeyDown={openOnEnter}
             aria-label={
               selectMode
                 ? t('palaces.selectLabel', { name: item.name })
                 : t('palaces.openLabel', { name: item.name })
             }
             className={cn(
-              'flex w-full items-center gap-3 rounded-card bg-card p-3 text-left shadow-rest',
+              'flex w-full cursor-pointer items-center gap-3 rounded-card bg-card p-3 text-left shadow-rest',
               !selectMode && 'pr-12',
               selectMode && 'touch-none',
               ring,
@@ -791,9 +825,13 @@ function PalaceCard({
                 {item.favorite ? (
                   <Heart className="size-4 shrink-0 fill-favorite text-favorite" aria-hidden />
                 ) : null}
-                <h3 className="truncate text-[length:var(--p-text-sub)] font-bold tracking-tight text-heading">
-                  {item.name}
-                </h3>
+                <EditableTitle
+                  value={item.name}
+                  onRename={(name) => handlers.onRenamePalace(item.id, name)}
+                  editLabel={t('palaces.renameLabel', { name: item.name })}
+                  disabled={selectMode || dragging}
+                  className="min-w-0 flex-1 truncate text-[length:var(--p-text-sub)] font-bold tracking-tight text-heading"
+                />
                 {item.dueCount > 0 ? (
                   <DueTag text={t('palaces.dueCount', { count: item.dueCount })} />
                 ) : null}
@@ -808,7 +846,7 @@ function PalaceCard({
                 />
               </div>
             </div>
-          </button>
+          </div>
           {!selectMode && !dragging ? (
             <CardMenu label={t('palaces.moreLabel', { name: item.name })} actions={actions} />
           ) : null}
@@ -825,15 +863,17 @@ function PalaceCard({
         dragging && 'rounded-card shadow-elevated',
       )}
     >
-      <motion.button
-        type="button"
+      <motion.div
+        role="button"
+        tabIndex={0}
         whileTap={reduce ? undefined : { scale: 0.98 }}
         {...(selectMode || dragging
           ? { onClick: onToggleSelect, ...(drag ? { ...drag.attributes, ...drag.listeners, ref: drag.setActivatorNodeRef } : {}) }
           : press)}
+        onKeyDown={openOnEnter}
         aria-label={t('palaces.openLabel', { name: item.name })}
         className={cn(
-          'block w-full overflow-hidden rounded-card bg-card text-left shadow-rest',
+          'block w-full cursor-pointer overflow-hidden rounded-card bg-card text-left shadow-rest',
           selectMode && 'touch-none',
           ring,
         )}
@@ -856,9 +896,13 @@ function PalaceCard({
           ) : null}
         </div>
         <div className="p-3.5">
-          <h3 className="truncate text-[length:var(--p-text-title)] font-bold tracking-tight text-heading">
-            {item.name}
-          </h3>
+          <EditableTitle
+            value={item.name}
+            onRename={(name) => handlers.onRenamePalace(item.id, name)}
+            editLabel={t('palaces.renameLabel', { name: item.name })}
+            disabled={selectMode || dragging}
+            className="block max-w-full truncate text-[length:var(--p-text-title)] font-bold tracking-tight text-heading"
+          />
           <p className="mt-0.5 truncate text-[length:var(--p-text-label)] text-muted-foreground">
             {roomsLabel}
           </p>
@@ -869,7 +913,7 @@ function PalaceCard({
             />
           </div>
         </div>
-      </motion.button>
+      </motion.div>
 
       <div className="pointer-events-none absolute left-2 top-2 flex gap-1.5">
         {item.favorite ? <FavoriteBadge /> : null}

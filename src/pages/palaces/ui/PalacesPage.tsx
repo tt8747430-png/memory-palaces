@@ -50,6 +50,7 @@ import {
 import {
   CreatePalaceSheet,
   deletePalace,
+  editPalace,
   importPalace,
   reorderPalaces,
   setPalaceArchived,
@@ -444,6 +445,11 @@ export function PalacesPage({
       if (folder) openEditFolder(folder)
     },
     onDeleteFolder: (id) => setDeleteFolderTarget(id),
+    onRenamePalace: (id, name) => void editPalace(palaceStore, id, { name }),
+    onRenameFolder: (id, name) => {
+      const folder = folders.find((candidate) => candidate.id === id)
+      if (folder) void editFolder(folderStore, folder, { name })
+    },
     onReorder: (orderedKeys) => {
       const folderIds = orderedKeys
         .filter((key) => parseLibraryKey(key).kind === 'f')

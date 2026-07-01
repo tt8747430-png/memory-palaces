@@ -33,7 +33,13 @@ import {
 } from 'lucide-react'
 import { cn, useLongPress } from '@/shared/lib'
 import type { SwipeConfig } from '@/shared/config/swipe'
-import { buildSwipeActions, OverflowMenuButton, type SheetAction, SwipeRow } from '@/shared/ui'
+import {
+  buildSwipeActions,
+  EditableTitle,
+  OverflowMenuButton,
+  type SheetAction,
+  SwipeRow,
+} from '@/shared/ui'
 import * as React from 'react'
 
 /** A room plus the progress derived from its loci/questions — everything a card renders. */
@@ -59,6 +65,8 @@ export interface RoomListItem {
 export interface RoomListHandlers {
   onOpen: (id: string) => void
   onEdit: (id: string) => void
+  /** Rename a room in place (from tapping its title). */
+  onRename: (id: string, title: string) => void
   onDuplicate: (id: string) => void
   /** Persist a new manual room order (passes the ids in their final order). */
   onReorder: (orderedIds: string[]) => void
@@ -342,8 +350,9 @@ function RoomCard({
 
   const card = (
     <div className="relative">
-      <motion.button
-        type="button"
+      <motion.div
+        role="button"
+        tabIndex={0}
         ref={selectMode && !dragging ? handleRef : undefined}
         whileTap={dragging ? undefined : { scale: 0.99 }}
         // In select mode the whole card is the drag activator (no visible grip): a tap still
@@ -352,13 +361,19 @@ function RoomCard({
         {...(selectMode || dragging
           ? { onClick: onToggleSelect, ...(dragging ? {} : handleProps) }
           : press)}
+        onKeyDown={(event) => {
+          if (dragging || event.key !== 'Enter') return
+          event.preventDefault()
+          if (selectMode) onToggleSelect?.()
+          else handlers.onOpen(room.id)
+        }}
         aria-label={
           selectMode
             ? t('rooms.selectLabel', { title: room.title })
             : t('rooms.openLabel', { title: room.title })
         }
         className={cn(
-          'block w-full rounded-card bg-card p-3.5 text-left shadow-rest',
+          'block w-full cursor-pointer rounded-card bg-card p-3.5 text-left shadow-rest',
           !selectMode && 'pr-12',
           selectMode && !dragging && 'touch-none',
           selected && 'ring-2 ring-primary',
@@ -368,9 +383,13 @@ function RoomCard({
           {selectMode ? <SelectDot selected={selected} /> : null}
           <Medallion position={room.position} completed={room.completed} />
           <div className="min-w-0 flex-1">
-            <h3 className="truncate text-(length:--p-text-sub) font-semibold text-heading">
-              {room.title}
-            </h3>
+            <EditableTitle
+              value={room.title}
+              onRename={(title) => handlers.onRename(room.id, title)}
+              editLabel={t('rooms.renameLabel', { title: room.title })}
+              disabled={selectMode || dragging}
+              className="block max-w-full truncate text-(length:--p-text-sub) font-semibold text-heading"
+            />
             {room.description ? (
               <p className="mt-0.5 truncate text-(length:--p-text-label) text-muted-foreground">
                 {room.description}
@@ -394,7 +413,7 @@ function RoomCard({
         ) : null}
 
         <RoomStats room={room} />
-      </motion.button>
+      </motion.div>
 
       {!selectMode && !dragging ? (
         <div className="absolute right-2 top-2.5">

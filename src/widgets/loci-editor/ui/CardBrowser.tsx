@@ -155,7 +155,7 @@ export function CardBrowser({
       <Dialog.Portal>
         <Dialog.Backdrop
           className={cn(
-            'fixed inset-0 z-[300] bg-[color-mix(in_oklch,var(--primary)_42%,transparent)] backdrop-blur-sm',
+            'fixed inset-0 z-[300] bg-[color-mix(in_oklch,var(--primary)_42%,transparent)] backdrop-blur-md',
             'transition-opacity duration-300 ease-out',
             'data-[starting-style]:opacity-0 data-[ending-style]:opacity-0',
           )}
@@ -174,11 +174,11 @@ export function CardBrowser({
                 <div className="flex w-full items-center justify-between gap-2 pt-2">
                   <Dialog.Close
                     aria-label={t('common.close')}
-                    className="grid size-10 place-items-center rounded-full bg-card text-heading shadow-rest transition-transform active:scale-95"
+                    className="grid size-10 place-items-center rounded-full bg-card-glass text-heading ring-1 ring-[color:var(--border-glass)] shadow-rest transition-transform active:scale-95"
                   >
                     <X className="size-5" aria-hidden />
                   </Dialog.Close>
-                  <Dialog.Title className="rounded-pill bg-card px-3.5 py-1.5 text-[length:var(--p-text-label)] font-semibold text-heading shadow-rest">
+                  <Dialog.Title className="rounded-pill bg-card-glass px-3.5 py-1.5 text-[length:var(--p-text-label)] font-semibold text-heading ring-1 ring-[color:var(--border-glass)] shadow-rest">
                     {t('loci.browser.position', { current: index + 1, total: count })}
                   </Dialog.Title>
                   <FlyoutMenu
@@ -190,7 +190,7 @@ export function CardBrowser({
                       <button
                         type="button"
                         aria-label={t('loci.browser.menu')}
-                        className="grid size-10 place-items-center rounded-full bg-card text-heading shadow-rest transition-transform active:scale-95"
+                        className="grid size-10 place-items-center rounded-full bg-card-glass text-heading ring-1 ring-[color:var(--border-glass)] shadow-rest transition-transform active:scale-95"
                       >
                         <MoreVertical className="size-5" aria-hidden />
                       </button>
@@ -285,13 +285,13 @@ export function CardBrowser({
                 </motion.div>
               </div>
 
-              <div className="flex items-center justify-center gap-4 px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2">
+              <div className="flex items-center justify-between px-6 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2">
                 <button
                   type="button"
                   onClick={() => go(-1)}
                   disabled={index === 0}
                   aria-label={t('loci.browser.prev')}
-                  className="grid size-12 place-items-center rounded-full bg-card text-heading shadow-rest transition-transform active:scale-95 disabled:pointer-events-none disabled:opacity-35"
+                  className="grid size-12 place-items-center rounded-full bg-card-glass text-heading ring-1 ring-[color:var(--border-glass)] shadow-rest transition-transform active:scale-95 disabled:pointer-events-none disabled:opacity-35"
                 >
                   <ChevronLeft className="size-5" aria-hidden />
                 </button>
@@ -308,7 +308,7 @@ export function CardBrowser({
                   onClick={() => go(1)}
                   disabled={index >= count - 1}
                   aria-label={t('loci.browser.next')}
-                  className="grid size-12 place-items-center rounded-full bg-card text-heading shadow-rest transition-transform active:scale-95 disabled:pointer-events-none disabled:opacity-35"
+                  className="grid size-12 place-items-center rounded-full bg-card-glass text-heading ring-1 ring-[color:var(--border-glass)] shadow-rest transition-transform active:scale-95 disabled:pointer-events-none disabled:opacity-35"
                 >
                   <ChevronRight className="size-5" aria-hidden />
                 </button>

@@ -41,6 +41,7 @@ import {
 import {
   deleteRoom,
   duplicateRoom,
+  editRoom,
   reorderRooms,
   RoomEditorSheet,
   type RoomEditorTarget,
@@ -403,6 +404,7 @@ export function PalaceDetailPage({
                 const room = roomById(id)
                 if (room) setEditorTarget({ mode: 'edit', room })
               }}
+              onRename={(id, title) => void editRoom(roomStore, id, { title })}
               onReorder={handleReorder}
               onDuplicate={(id) => void handleDuplicate(id)}
               onResetProgress={(id) => setResetTarget(id)}

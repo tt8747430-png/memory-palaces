@@ -50,8 +50,10 @@ function renderDetail({ palaceId = 'p1', rooms = [] as Room[] } = {}) {
   return { roomRepo }
 }
 
+// Room titles are inline-rename controls now (tap to rename), so read them off the rename
+// buttons rather than an <h3>.
 const roomTitles = () =>
-  screen.getAllByRole('heading', { level: 3 }).map((heading) => heading.textContent)
+  screen.getAllByRole('button', { name: /^rename /i }).map((button) => button.textContent)
 
 describe('PalaceDetailPage', () => {
   it('shows the palace name', async () => {
@@ -76,14 +78,14 @@ describe('PalaceDetailPage', () => {
     await user.type(within(sheet).getByRole('textbox', { name: /room name/i }), 'Kitchen')
     await user.click(within(sheet).getByRole('button', { name: /add room/i }))
 
-    expect(await screen.findByRole('heading', { name: 'Kitchen' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /rename kitchen/i })).toBeInTheDocument()
     await waitFor(async () => expect(await roomRepo.getAll()).toHaveLength(1))
   })
 
   it('reorders the view by an automatic sort through the sort menu', async () => {
     const user = userEvent.setup()
     renderDetail({ rooms: [room('r1', 'p1', 0, 'Kitchen'), room('r2', 'p1', 1, 'Hallway')] })
-    await screen.findByRole('heading', { name: 'Kitchen' })
+    await screen.findByRole('button', { name: /rename kitchen/i })
     // Manual order (the saved route) leads.
     expect(roomTitles()).toEqual(['Kitchen', 'Hallway'])
 
@@ -96,7 +98,7 @@ describe('PalaceDetailPage', () => {
   it('deletes a room through the menu and confirm dialog', async () => {
     const user = userEvent.setup()
     const { roomRepo } = renderDetail({ rooms: [room('r1', 'p1', 0, 'Kitchen')] })
-    await screen.findByRole('heading', { name: 'Kitchen' })
+    await screen.findByRole('button', { name: /rename kitchen/i })
 
     await user.click(screen.getByRole('button', { name: /kitchen actions/i }))
     await user.click(await screen.findByRole('menuitem', { name: /delete room/i }))
@@ -107,7 +109,7 @@ describe('PalaceDetailPage', () => {
     await user.click(within(dialog).getByRole('button', { name: /delete room/i }))
 
     await waitFor(() =>
-      expect(screen.queryByRole('heading', { name: 'Kitchen' })).not.toBeInTheDocument(),
+      expect(screen.queryByRole('button', { name: /rename kitchen/i })).not.toBeInTheDocument(),
     )
     expect(await roomRepo.getAll()).toHaveLength(0)
   })

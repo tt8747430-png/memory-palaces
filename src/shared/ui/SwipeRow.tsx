@@ -12,12 +12,12 @@ import { cn, impact } from '@/shared/lib'
 
 export type { SwipeTone }
 
-/** The filled circle / pill behind an action's glyph (iOS-Mail register): a saturated round
- * button per tone, white glyph on the status hues, navy glyph on the on-brand neutral. The
- * caption underneath is always muted ink, never tinted — so it reads on the daylight ground. */
-const TONE_CIRCLE: Record<SwipeTone, string> = {
+/** The filled action button per tone (iOS-Mail register): a saturated rounded rectangle
+ * carrying the glyph + label stacked inside it. Amber needs ink text (white fails on it);
+ * the on-brand neutral carries navy. */
+const TONE_FILL: Record<SwipeTone, string> = {
   danger: 'bg-[var(--danger)] text-white',
-  warning: 'bg-[var(--warning)] text-white',
+  warning: 'bg-[var(--warning)] text-[var(--p-navy-900)]',
   success: 'bg-[var(--success)] text-white',
   accent: 'bg-[var(--accent)] text-white',
   neutral: 'bg-secondary text-primary',
@@ -50,30 +50,33 @@ export interface SwipeRowProps {
 
 /** Movement (px) before the gesture locks to an axis — below this it's still a tap. */
 const AXIS_LOCK = 8
-/** Width (px) of each tray button. */
-const ACTION_WIDTH = 82
-/** Pull (px) PAST the open tray that arms the edge-most action's auto-fire. Anchoring the
- * commit to the tray width (not the row width) makes left and right fire with the same extra
- * pull, however many actions a side holds — the old row-fraction threshold made a one-action
- * side (the usual leading case) feel impossible to trigger. */
+/** Width (px) of each resting tray button (slot). The coloured pill sits inside with a margin,
+ * so this doubles as the reveal width per action. */
+const ACTION_WIDTH = 88
+/** Pull (px) PAST the open tray that arms the edge-most action's auto-fire. Anchored to the
+ * tray width (not the row width) so left and right fire with the same extra pull, however many
+ * actions a side holds. */
 const COMMIT_GAP = 72
 
-const EASE_OUT = [0.22, 1, 0.36, 1] as const
 /** Closing / resting spring — quick and well-damped so the row never wobbles. */
 const SETTLE_SPRING = { type: 'spring', stiffness: 540, damping: 40 } as const
-/** The arm (expand / dim) spring — a touch looser so the fill reads as a deliberate swell. */
-const ARM_SPRING = { type: 'spring', stiffness: 460, damping: 32 } as const
+/** The arm (expand / collapse) spring — a touch looser so the fill reads as a deliberate swell. */
+const ARM_SPRING = { type: 'spring', stiffness: 460, damping: 34 } as const
 
 type Side = 'leading' | 'trailing'
 
 /**
  * Wraps a list row with the iOS-Mail swipe pattern. A short swipe rests the row open over a
- * tray of actions (the user taps one); a longer swipe past the tray arms the edge-most action
- * of that side and releasing auto-fires it, the action's surface swelling as it arms. Built on
- * plain pointer events so a tap is never swallowed — tracking locks to the horizontal axis
- * only after real movement, and vertical drags fall through to native scroll
- * (`touch-action: pan-y`). The gesture is additive: the row keeps its own menu as the
- * keyboard/assistive path, so the trays are `aria-hidden`.
+ * tray of filled action buttons (the user taps one); a longer swipe past the tray arms the
+ * edge-most action of that side, expanding it to fill the tray, and releasing auto-fires it.
+ *
+ * Built on plain pointer events so a tap is never swallowed. The **live x offset is the single
+ * source of truth**: the drag starts from wherever the row currently sits, tracks the finger
+ * 1:1 into `x`, and both the visuals and the release decision read from `x` — never a re-read
+ * pointer coordinate — so what you see is always what commits. Tracking locks to the horizontal
+ * axis only once horizontal movement wins; a vertical drag falls through to native scroll
+ * (`touch-action: pan-y`). The trays are `aria-hidden`; the row keeps its own menu as the
+ * keyboard/assistive path.
  */
 export function SwipeRow({
   children,
@@ -84,7 +87,6 @@ export function SwipeRow({
 }: SwipeRowProps) {
   const reduce = useReducedMotion()
   const x = useMotionValue(0)
-  const containerRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState<Side | null>(null)
   const [armed, setArmed] = useState<Side | null>(null)
   const wasArmed = useRef<Side | null>(null)
@@ -99,9 +101,15 @@ export function SwipeRow({
   const leadingOpacity = useTransform(x, (v) => (v > 0 ? 1 : 0))
   const trailingOpacity = useTransform(x, (v) => (v < 0 ? 1 : 0))
 
-  const drag = useRef<{ startX: number; startY: number; axis: 'h' | 'v' | null; id: number } | null>(
-    null,
-  )
+  // The gesture's start point plus the row's offset at press — so tracking continues from
+  // wherever the row already rests, without a separate `base`/open bookkeeping that can desync.
+  const drag = useRef<{
+    startX: number
+    startY: number
+    startOffset: number
+    axis: 'h' | 'v' | null
+    id: number
+  } | null>(null)
 
   const settle = (to: number) => {
     if (reduce) x.set(to)
@@ -111,6 +119,7 @@ export function SwipeRow({
   const close = () => {
     setOpen(null)
     setArmed(null)
+    wasArmed.current = null
     settle(0)
   }
 
@@ -119,6 +128,7 @@ export function SwipeRow({
     if (disabled && (open || x.get() !== 0)) {
       setOpen(null)
       setArmed(null)
+      wasArmed.current = null
       x.set(0)
     }
   }, [disabled, open, x])
@@ -144,6 +154,7 @@ export function SwipeRow({
     drag.current = {
       startX: event.clientX,
       startY: event.clientY,
+      startOffset: x.get(),
       axis: null,
       id: event.pointerId,
     }
@@ -156,16 +167,20 @@ export function SwipeRow({
     const dy = event.clientY - state.startY
     if (state.axis === null) {
       if (Math.abs(dx) < AXIS_LOCK && Math.abs(dy) < AXIS_LOCK) return
-      // A vertical intent isn't ours — let the page scroll.
-      if (Math.abs(dy) >= Math.abs(dx)) {
+      // Lock horizontal as soon as it wins; a clearly-vertical intent is a scroll and falls
+      // through. A tie waits for more travel instead of discarding the gesture — that "drop on
+      // the first ambiguous sample" is what made a slow, slightly-diagonal swipe unreliable.
+      if (Math.abs(dx) > Math.abs(dy)) {
+        state.axis = 'h'
+        event.currentTarget.setPointerCapture?.(state.id)
+      } else if (Math.abs(dy) > Math.abs(dx)) {
         drag.current = null
         return
+      } else {
+        return
       }
-      state.axis = 'h'
-      event.currentTarget.setPointerCapture?.(state.id)
     }
-    const base = open === 'trailing' ? -trailingWidth : open === 'leading' ? leadingWidth : 0
-    const next = clampOffset(dx + base)
+    const next = clampOffset(state.startOffset + dx)
     x.set(next)
 
     const nextArmed: Side | null =
@@ -181,15 +196,17 @@ export function SwipeRow({
     }
   }
 
-  const finish = (event: ReactPointerEvent) => {
+  const finish = () => {
     const state = drag.current
     drag.current = null
     if (!state || state.axis !== 'h') return
     suppressClick.current = true
-    const base = open === 'trailing' ? -trailingWidth : open === 'leading' ? leadingWidth : 0
-    const offset = clampOffset(event.clientX - state.startX + base)
     wasArmed.current = null
     setArmed(null)
+
+    // Decide from the offset the user actually SEES (the tracked motion value), never a re-read
+    // pointer coordinate — that re-derivation was the source of the wrong-side commits.
+    const offset = x.get()
 
     // Full swipe: auto-fire the edge-most action, then return to rest. A destructive action
     // unmounts the row before the spring shows; a reversible one springs back.
@@ -241,7 +258,7 @@ export function SwipeRow({
   }
 
   return (
-    <div ref={containerRef} className={cn('relative isolate', className)}>
+    <div className={cn('relative isolate', className)}>
       {hasLeading ? (
         <motion.div
           aria-hidden
@@ -252,6 +269,7 @@ export function SwipeRow({
             <TrayButton
               key={action.id}
               action={action}
+              expandWidth={leadingWidth}
               mode={armed === 'leading' ? (index === 0 ? 'expanded' : 'dim') : 'rest'}
               onFire={() => fireFromTray(action)}
             />
@@ -269,6 +287,7 @@ export function SwipeRow({
             <TrayButton
               key={action.id}
               action={action}
+              expandWidth={trailingWidth}
               mode={
                 armed === 'trailing'
                   ? index === trailing.length - 1
@@ -296,59 +315,47 @@ export function SwipeRow({
   )
 }
 
-/** Diameter (px) of the resting circular action button. */
-const CIRCLE_SIZE = 52
-/** Width (px) the edge-most action's circle stretches into when a full swipe arms it. */
-const PILL_WIDTH = ACTION_WIDTH - 8
-
 /**
- * One tray action, iOS-Mail style: a saturated circular glyph button with a single-line muted
- * caption beneath it, both centred in the action's column on the daylight ground. `dim` fades
- * and shrinks the secondary actions back when a full swipe arms the edge one; `expanded`
- * swells the edge action's circle into a filled pill and lifts its glyph, so its imminent
- * firing is unmistakable.
+ * One tray action, iOS-Mail style: a saturated rounded-rectangle button with the glyph and its
+ * label stacked and centred inside it, inset from the card so the fills read as floating pills.
+ * `dim` collapses + fades the secondary actions when a full swipe arms the edge one; `expanded`
+ * swells the edge action to fill the whole tray, so its imminent firing is unmistakable.
  */
 function TrayButton({
   action,
   mode,
+  expandWidth,
   onFire,
 }: {
   action: SwipeAction
   mode: 'rest' | 'dim' | 'expanded'
+  /** Full tray width the edge action swells to when armed. */
+  expandWidth: number
   onFire: () => void
 }) {
   const reduce = useReducedMotion()
-  const expanded = mode === 'expanded'
+  const width = mode === 'expanded' ? expandWidth : mode === 'dim' ? 0 : ACTION_WIDTH
   return (
     <motion.button
       type="button"
       tabIndex={-1}
       aria-label={action.label}
       onClick={onFire}
-      animate={{ opacity: mode === 'dim' ? 0.35 : 1, scale: mode === 'dim' ? 0.92 : 1 }}
-      transition={reduce ? { duration: 0 } : { duration: 0.16, ease: EASE_OUT }}
-      style={{ width: ACTION_WIDTH }}
-      className="flex h-full shrink-0 flex-col items-center justify-center gap-1.5 px-1"
+      animate={{ width, opacity: mode === 'dim' ? 0 : 1 }}
+      transition={reduce ? { duration: 0 } : ARM_SPRING}
+      className="h-full shrink-0 overflow-hidden p-1"
     >
-      <motion.span
-        animate={{ width: expanded ? PILL_WIDTH : CIRCLE_SIZE }}
-        transition={reduce ? { duration: 0 } : ARM_SPRING}
-        style={{ height: CIRCLE_SIZE }}
+      <span
         className={cn(
-          'grid shrink-0 place-items-center rounded-full transition-[filter] active:brightness-95',
-          TONE_CIRCLE[action.tone ?? 'neutral'],
+          'flex size-full flex-col items-center justify-center gap-1 rounded-[20px] px-2',
+          'transition-[filter] active:brightness-95',
+          TONE_FILL[action.tone ?? 'neutral'],
         )}
       >
-        <motion.span
-          animate={{ scale: expanded ? 1.08 : 1 }}
-          transition={reduce ? { duration: 0 } : ARM_SPRING}
-          className="grid place-items-center"
-        >
-          {action.icon}
-        </motion.span>
-      </motion.span>
-      <span className="max-w-full truncate text-(length:--p-text-tiny) font-medium text-muted-foreground">
-        {action.label}
+        <span className="grid shrink-0 place-items-center">{action.icon}</span>
+        <span className="whitespace-nowrap text-(length:--p-text-tiny) font-semibold leading-none">
+          {action.label}
+        </span>
       </span>
     </motion.button>
   )
