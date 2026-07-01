@@ -25,7 +25,6 @@ import {
   Check,
   Copy,
   GraduationCap,
-  GripVertical,
   HelpCircle,
   MapPin,
   Pencil,
@@ -174,7 +173,14 @@ export function RoomList({
       <DragOverlay dropAnimation={{ duration: 220, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }}>
         {activeRoom ? (
           <div className={cn('rounded-card shadow-elevated', !reduce && 'scale-[1.02]')}>
-            <RoomCard room={activeRoom} dragging swipe={swipe} handlers={handlers} />
+            <RoomCard
+              room={activeRoom}
+              dragging
+              selectMode
+              selected={selectedIds.has(activeRoom.id)}
+              swipe={swipe}
+              handlers={handlers}
+            />
           </div>
         ) : null}
       </DragOverlay>
@@ -303,7 +309,9 @@ function RoomCard({
   dragActive?: boolean
   dragging?: boolean
   handleRef?: (node: HTMLElement | null) => void
-  handleProps?: React.HTMLAttributes<HTMLButtonElement>
+  /** dnd-kit's attributes + listeners, typed as an open record so spreading onto the motion
+   * button never collides with motion's own gesture props. */
+  handleProps?: Record<string, unknown>
   swipe: SwipeConfig
   handlers: RoomListHandlers
   onToggleSelect?: () => void
@@ -336,8 +344,14 @@ function RoomCard({
     <div className="relative">
       <motion.button
         type="button"
+        ref={selectMode && !dragging ? handleRef : undefined}
         whileTap={dragging ? undefined : { scale: 0.99 }}
-        {...(selectMode || dragging ? { onClick: onToggleSelect } : press)}
+        // In select mode the whole card is the drag activator (no visible grip): a tap still
+        // toggles the pick — dnd-kit only starts the drag after real travel — and
+        // `touch-none` hands the touch gesture to the pointer sensor, not the scroller.
+        {...(selectMode || dragging
+          ? { onClick: onToggleSelect, ...(dragging ? {} : handleProps) }
+          : press)}
         aria-label={
           selectMode
             ? t('rooms.selectLabel', { title: room.title })
@@ -346,7 +360,7 @@ function RoomCard({
         className={cn(
           'block w-full rounded-card bg-card p-3.5 text-left shadow-rest',
           !selectMode && 'pr-12',
-          selectMode && 'pl-11',
+          selectMode && !dragging && 'touch-none',
           selected && 'ring-2 ring-primary',
         )}
       >
@@ -381,20 +395,6 @@ function RoomCard({
 
         <RoomStats room={room} />
       </motion.button>
-
-      {selectMode && !dragging ? (
-        <button
-          ref={handleRef}
-          type="button"
-          aria-label={t('rooms.reorderLabel', { title: room.title })}
-          // `touch-none` hands the gesture to dnd-kit's pointer sensor instead of the
-          // page scroll, so a drag from the handle is unambiguous on touch.
-          className="absolute bottom-0 left-0 top-0 grid w-11 cursor-grab touch-none place-items-center rounded-l-card text-muted-foreground active:cursor-grabbing"
-          {...handleProps}
-        >
-          <GripVertical className="size-5" aria-hidden />
-        </button>
-      ) : null}
 
       {!selectMode && !dragging ? (
         <div className="absolute right-2 top-2.5">

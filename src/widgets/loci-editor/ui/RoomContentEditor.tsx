@@ -1,27 +1,6 @@
 import { type ChangeEvent, type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AnimatePresence, motion } from 'motion/react'
 import { toast } from 'sonner'
-import {
-  closestCenter,
-  DndContext,
-  type DragEndEvent,
-  DragOverlay,
-  type DragStartEvent,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core'
-import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
 import {
   ArrowDownAZ,
   BookOpen,
@@ -32,10 +11,11 @@ import {
   Flag,
   GraduationCap,
   GripVertical,
-  HelpCircle,
+  Landmark,
   MapPin,
   Plus,
   RotateCcw,
+  SlidersHorizontal,
   Sparkles,
   Trash2,
   Upload,
@@ -48,7 +28,6 @@ import {
   useLocusStoreApi,
 } from '@/entities/locus'
 import {
-  type Question,
   questionsForRoom,
   selectQuestions,
   useQuestionStore,
@@ -62,7 +41,6 @@ import {
   resetLociSrs,
   toggleLocusFlag,
 } from '@/features/locus'
-import { deleteQuestion, duplicateQuestion, reorderQuestions } from '@/features/question'
 import {
   type ContentSort,
   selectEffectivePreferences,
@@ -77,25 +55,35 @@ import {
   readAnkiFile,
   readContentFile,
 } from '@/features/content'
-import { cn, ContentImportError, parsePastedLoci, parseVerses } from '@/shared/lib'
 import {
+  cardMaturityCounts,
+  cn,
+  ContentImportError,
+  parsePastedLoci,
+  parseVerses,
+  srsStatus,
+} from '@/shared/lib'
+import {
+  Button,
+  CardMaturityOverview,
   ConfirmDialog,
   ImportRow,
-  SegmentedControl,
   Sheet,
   SortControl,
   type SortControlOption,
   SpeedDial,
+  Switch,
 } from '@/shared/ui'
 import { CardBrowser } from './CardBrowser'
-import { CardRow, QuestionRow, type RowDragHandle } from './ContentRows'
+import { CardRow, type RowDragHandle } from './ContentRows'
 import { PasteSheet } from './PasteSheet'
+import { ReorderableList } from './ReorderableList'
 
 export interface RoomContentEditorProps {
   roomId: string
   /** Used for export filenames. */
   roomName: string
-  /** Filters the active tab. Driven by the room header's search; empty = not searching. */
+  /** Filters the cards list. Driven by the room header's search; empty = not searching. */
   searchQuery?: string
   /** Whether the room-header search is open, regardless of the query — so the sort control
    * steps aside the moment search takes over, not only once something is typed. */
@@ -108,20 +96,19 @@ export interface RoomContentEditorProps {
   /** Content ordering, persisted by the host page. */
   sort: ContentSort
   onSortChange: (sort: ContentSort) => void
-  /** Open the full-screen card/question editors (add / edit). */
+  /** Open the full-screen card editor (add / edit). */
   onAddCard: () => void
   onEditCard: (cardId: string) => void
-  onAddQuestion: () => void
-  onEditQuestion: (questionId: string) => void
 }
 
-type Tab = 'loci' | 'questions'
+/** Card maturity buckets the filter can narrow to — mirrors `srsStatus`. */
+type MaturityKey = 'new' | 'learning' | 'known'
 
 /**
- * The room's content-management surface: Cards / Questions tabs with search, multi-select
- * bulk actions, import/export, and drag-reorder. Rendered inline inside the room hub so
- * studying and editing a room live on one page; add/edit open the full-screen editors. Reads
- * its stores and drives the reorder/duplicate/delete commands directly.
+ * The room's card-management surface: "Cards in this room" with its maturity overview, search,
+ * sort + filter, multi-select bulk actions, import/export, and drag-reorder. Rendered inline in
+ * the room hub; add/edit open the full-screen editor. Questions live on their own page.
+ * Still reads questions for the room-level import/export (a room export carries both).
  */
 export function RoomContentEditor({
   roomId,
@@ -135,8 +122,6 @@ export function RoomContentEditor({
   onSortChange,
   onAddCard,
   onEditCard,
-  onAddQuestion,
-  onEditQuestion,
 }: RoomContentEditorProps) {
   const { t } = useTranslation()
   const locusStore = useLocusStoreApi()
@@ -152,13 +137,13 @@ export function RoomContentEditor({
   const cardSwipe = usePreferencesStore(selectEffectivePreferences).swipe.card
 
   const loci = useMemo(() => lociForRoom(allLoci, roomId), [allLoci, roomId])
+  // Questions are managed on their own page; kept here only for room-level import/export.
   const questions = useMemo(() => questionsForRoom(allQuestions, roomId), [allQuestions, roomId])
 
-  const [tab, setTab] = useState<Tab>('loci')
   const setSelectMode = onSelectModeChange
   const setSort = onSortChange
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [pendingDelete, setPendingDelete] = useState<{ kind: Tab; id: string } | null>(null)
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [transferOpen, setTransferOpen] = useState(false)
   const [pasteOpen, setPasteOpen] = useState(false)
@@ -166,8 +151,48 @@ export function RoomContentEditor({
   // The card the full-screen browser is open on (null = closed). Tapping a card row opens it.
   const [browserCardId, setBrowserCardId] = useState<string | null>(null)
 
+  // Card filters: narrow by maturity and/or flagged. Empty = show everything. The applied
+  // filter drives the list; the sheet edits a draft that only commits on Apply.
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [maturityFilter, setMaturityFilter] = useState<Set<MaturityKey>>(new Set())
+  const [flaggedOnly, setFlaggedOnly] = useState(false)
+  const [draftMaturity, setDraftMaturity] = useState<Set<MaturityKey>>(new Set())
+  const [draftFlagged, setDraftFlagged] = useState(false)
+  const cardFilterCount = maturityFilter.size + (flaggedOnly ? 1 : 0)
+  const draftFilterCount = draftMaturity.size + (draftFlagged ? 1 : 0)
+
+  // Opening seeds the draft from what's applied, so the sheet reflects the live filter.
+  const openFilter = () => {
+    setDraftMaturity(new Set(maturityFilter))
+    setDraftFlagged(flaggedOnly)
+    setFilterOpen(true)
+  }
+  const resetDraftFilter = () => {
+    setDraftMaturity(new Set())
+    setDraftFlagged(false)
+  }
+  const applyFilter = () => {
+    setMaturityFilter(new Set(draftMaturity))
+    setFlaggedOnly(draftFlagged)
+    setFilterOpen(false)
+  }
+  // The one-tap reset on the filter-empty state clears the applied filter immediately.
+  const clearCardFilter = () => {
+    setMaturityFilter(new Set())
+    setFlaggedOnly(false)
+  }
+  const toggleDraftMaturity = (key: MaturityKey) =>
+    setDraftMaturity((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+
+  const maturity = useMemo(() => cardMaturityCounts(loci), [loci])
+
   // Leaving select mode clears the picks so the next long-press starts empty — needed now that
-  // the flag can be flipped off from outside the editor (search opening, tab switch).
+  // the flag can be flipped off from outside the editor (search opening).
   useEffect(() => {
     if (!selectMode) setSelectedIds(new Set())
   }, [selectMode])
@@ -175,45 +200,28 @@ export function RoomContentEditor({
   const fileRef = useRef<HTMLInputElement>(null)
   const importKind = useRef<'content' | 'anki'>('content')
 
-  // `due` and `flagged` are card-only signals; the Questions tab falls back to `manual`.
-  const questionsSort: ContentSort = sort === 'due' || sort === 'flagged' ? 'manual' : sort
   const sortedLoci = useMemo(() => sortLoci(loci, sort), [loci, sort])
-  const sortedQuestions = useMemo(
-    () => sortQuestions(questions, questionsSort),
-    [questions, questionsSort],
-  )
 
   const needle = (searchQuery ?? '').trim().toLowerCase()
-  const visibleLoci = useMemo(
-    () =>
-      needle
-        ? sortedLoci.filter((l) =>
-            [l.front, l.back, l.hint, l.tip]
-              .filter(Boolean)
-              .some((field) => (field as string).toLowerCase().includes(needle)),
-          )
-        : sortedLoci,
-    [sortedLoci, needle],
-  )
-  const visibleQuestions = useMemo(
-    () =>
-      needle
-        ? sortedQuestions.filter((q) =>
-            [q.prompt, ...q.options].some((field) => field.toLowerCase().includes(needle)),
-          )
-        : sortedQuestions,
-    [sortedQuestions, needle],
-  )
+  const visibleLoci = useMemo(() => {
+    let list = sortedLoci
+    if (needle)
+      list = list.filter((l) =>
+        [l.front, l.back, l.hint, l.tip]
+          .filter(Boolean)
+          .some((field) => (field as string).toLowerCase().includes(needle)),
+      )
+    if (maturityFilter.size > 0) list = list.filter((l) => maturityFilter.has(srsStatus(l.srs)))
+    if (flaggedOnly) list = list.filter((l) => l.flagged)
+    return list
+  }, [sortedLoci, needle, maturityFilter, flaggedOnly])
 
-  const isLoci = tab === 'loci'
-  const total = isLoci ? loci.length : questions.length
-  const visible = isLoci ? visibleLoci : visibleQuestions
+  const total = loci.length
   const hasContent = loci.length > 0 || questions.length > 0
   const selectedCount = selectedIds.size
-  const allVisibleSelected = visible.length > 0 && visible.every((item) => selectedIds.has(item.id))
+  const allVisibleSelected =
+    visibleLoci.length > 0 && visibleLoci.every((item) => selectedIds.has(item.id))
 
-  // The sort applied to the active tab; cards drive the full option set, questions a subset.
-  const activeSort = isLoci ? sort : questionsSort
   // Hand-arranging lives in select mode (long-press → grip-drag), mirroring the library; it's
   // off while searching, since you reorder the whole list, not a filtered subset. A drop
   // forces manual sort — a hand-arranged order only reads against the manual rule.
@@ -222,27 +230,13 @@ export function RoomContentEditor({
     commit()
     if (sort !== 'manual') setSort('manual')
   }
-  const sortOptions: SortControlOption<ContentSort>[] = isLoci
-    ? [
-        {
-          value: 'manual',
-          label: t('loci.sort.manual'),
-          icon: <GripVertical className="size-4" />,
-        },
-        { value: 'recent', label: t('loci.sort.recent'), icon: <Clock className="size-4" /> },
-        { value: 'name', label: t('loci.sort.name'), icon: <ArrowDownAZ className="size-4" /> },
-        { value: 'due', label: t('loci.sort.due'), icon: <Sparkles className="size-4" /> },
-        { value: 'flagged', label: t('loci.sort.flagged'), icon: <Flag className="size-4" /> },
-      ]
-    : [
-        {
-          value: 'manual',
-          label: t('loci.sort.manual'),
-          icon: <GripVertical className="size-4" />,
-        },
-        { value: 'recent', label: t('loci.sort.recent'), icon: <Clock className="size-4" /> },
-        { value: 'name', label: t('loci.sort.name'), icon: <ArrowDownAZ className="size-4" /> },
-      ]
+  const sortOptions: SortControlOption<ContentSort>[] = [
+    { value: 'manual', label: t('loci.sort.manual'), icon: <GripVertical className="size-4" /> },
+    { value: 'recent', label: t('loci.sort.recent'), icon: <Clock className="size-4" /> },
+    { value: 'name', label: t('loci.sort.name'), icon: <ArrowDownAZ className="size-4" /> },
+    { value: 'due', label: t('loci.sort.due'), icon: <Sparkles className="size-4" /> },
+    { value: 'flagged', label: t('loci.sort.flagged'), icon: <Flag className="size-4" /> },
+  ]
 
   const renderCard = (locus: Locus, dragHandle?: RowDragHandle, dragging = false) => (
     <CardRow
@@ -263,7 +257,7 @@ export function RoomContentEditor({
         void duplicateLocus(locusStore, locus.id)
         toast.success(t('loci.row.duplicated'))
       }}
-      onDelete={() => setPendingDelete({ kind: 'loci', id: locus.id })}
+      onDelete={() => setPendingDeleteId(locus.id)}
       onToggleFlag={() => void toggleLocusFlag(locusStore, locus.id)}
       onMarkKnown={() => {
         void markLociKnown(locusStore, [locus.id])
@@ -275,34 +269,6 @@ export function RoomContentEditor({
       }}
     />
   )
-
-  const renderQuestion = (question: Question, dragHandle?: RowDragHandle, dragging = false) => (
-    <QuestionRow
-      key={question.id}
-      question={question}
-      index={sortedQuestions.indexOf(question)}
-      selectMode={selectMode}
-      selected={selectedIds.has(question.id)}
-      reorderable={reorderable}
-      dragHandle={dragHandle}
-      dragging={dragging}
-      swipe={cardSwipe}
-      onToggleSelect={() => toggleSelect(question.id)}
-      onRequestSelect={() => requestSelect(question.id)}
-      onEdit={() => onEditQuestion(question.id)}
-      onDuplicate={() => {
-        void duplicateQuestion(questionStore, question.id)
-        toast.success(t('loci.row.duplicated'))
-      }}
-      onDelete={() => setPendingDelete({ kind: 'questions', id: question.id })}
-    />
-  )
-
-  const changeTab = (next: Tab) => {
-    setTab(next)
-    setSelectMode(false)
-    setSelectedIds(new Set())
-  }
 
   const toggleSelect = (id: string) =>
     setSelectedIds((prev) => {
@@ -321,8 +287,8 @@ export function RoomContentEditor({
   const toggleSelectAll = () =>
     setSelectedIds((prev) => {
       const next = new Set(prev)
-      if (allVisibleSelected) visible.forEach((item) => next.delete(item.id))
-      else visible.forEach((item) => next.add(item.id))
+      if (allVisibleSelected) visibleLoci.forEach((item) => next.delete(item.id))
+      else visibleLoci.forEach((item) => next.add(item.id))
       return next
     })
 
@@ -388,16 +354,14 @@ export function RoomContentEditor({
   }
 
   const confirmSingleDelete = () => {
-    if (!pendingDelete) return
-    if (pendingDelete.kind === 'loci') void deleteLocus(locusStore, pendingDelete.id)
-    else void deleteQuestion(questionStore, pendingDelete.id)
+    if (!pendingDeleteId) return
+    void deleteLocus(locusStore, pendingDeleteId)
     toast.success(t('loci.transfer.deleted'))
   }
 
   const confirmBulkDelete = () => {
     const ids = [...selectedIds]
-    if (isLoci) void Promise.all(ids.map((id) => deleteLocus(locusStore, id)))
-    else void Promise.all(ids.map((id) => deleteQuestion(questionStore, id)))
+    void Promise.all(ids.map((id) => deleteLocus(locusStore, id)))
     toast.success(t('loci.transfer.deletedMany', { count: ids.length }))
     exitSelect()
   }
@@ -413,29 +377,32 @@ export function RoomContentEditor({
         tabIndex={-1}
       />
 
-      {/* Toolbar: tabs + import/export */}
-      <div className="mb-3 flex items-center gap-2">
-        <SegmentedControl<Tab>
-          className="flex-1"
-          aria-label={t('loci.tabs.label')}
-          value={tab}
-          onChange={changeTab}
-          options={[
-            { value: 'loci', label: `${t('loci.tabs.cards')} · ${loci.length}` },
-            { value: 'questions', label: `${t('loci.tabs.questions')} · ${questions.length}` },
-          ]}
-        />
-      </div>
+      {/* "Cards in this room (N)" header with its maturity overview (the overview owns the
+          heading). Steps aside while searching or selecting so the list owns the screen. */}
+      {!searching && !selectMode && loci.length > 0 ? (
+        <div className="mb-3">
+          <CardMaturityOverview total={loci.length} counts={maturity} scope="room" />
+        </div>
+      ) : null}
 
-      {/* Sort control: hidden the moment search or select takes over, and below 2 items
-          there's nothing to order. Reordering itself lives in select mode (per-row grips). */}
-      {!selectMode && !searching && total > 1 ? (
-        <div className="mb-3 flex justify-end">
-          <SortControl
-            label={t('loci.sortLabel')}
-            value={activeSort}
-            options={sortOptions}
-            onChange={setSort}
+      {/* Toolbar: sort on the left, a filter control on the right. Both step aside the moment
+          search or select takes over; sort needs 2+ items to be meaningful. */}
+      {!selectMode && !searching && total > 0 ? (
+        <div className="mb-3 flex items-center justify-between gap-2">
+          {total > 1 ? (
+            <SortControl
+              label={t('loci.sortLabel')}
+              value={sort}
+              options={sortOptions}
+              onChange={setSort}
+            />
+          ) : (
+            <span aria-hidden />
+          )}
+          <FilterButton
+            label={t('loci.filterLabel')}
+            count={cardFilterCount}
+            onClick={openFilter}
           />
         </div>
       ) : null}
@@ -447,88 +414,77 @@ export function RoomContentEditor({
           <button
             type="button"
             onClick={toggleSelectAll}
-            className="text-[length:var(--p-text-label)] font-semibold text-heading"
+            className="text-(length:--p-text-label) font-semibold text-heading"
           >
             {allVisibleSelected ? t('loci.select.clearAll') : t('loci.select.selectAll')}
           </button>
-          <span className="text-[length:var(--p-text-label)] font-semibold text-muted-foreground">
+          <span className="text-(length:--p-text-label) font-semibold text-muted-foreground">
             {t('loci.select.count', { count: selectedCount })}
           </span>
           <button
             type="button"
             onClick={exitSelect}
-            className="text-[length:var(--p-text-label)] font-semibold text-accent"
+            className="text-(length:--p-text-label) font-semibold text-accent"
           >
             {t('loci.select.done')}
           </button>
         </div>
       ) : null}
 
-      {/* List */}
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.div
-          key={tab}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.2 }}
-          className="flex flex-col gap-3"
-        >
-          {isLoci ? (
-            total === 0 ? (
-              <EmptyContent kind="loci" />
-            ) : visible.length === 0 ? (
-              <NoResults onClear={() => onClearSearch?.()} />
-            ) : (
-              <ReorderableList
-                items={visibleLoci}
-                reorderable={reorderable}
-                onReorder={(ids) => reorderTo(() => void reorderLoci(locusStore, ids))}
-                renderItem={renderCard}
-              />
-            )
-          ) : total === 0 ? (
-            <EmptyContent kind="questions" />
-          ) : visible.length === 0 ? (
+      {/* Cards list */}
+      <div className="flex flex-col gap-3">
+        {total === 0 ? (
+          <EmptyCards />
+        ) : visibleLoci.length === 0 ? (
+          needle ? (
             <NoResults onClear={() => onClearSearch?.()} />
           ) : (
-            <ReorderableList
-              items={visibleQuestions}
-              reorderable={reorderable}
-              onReorder={(ids) => reorderTo(() => void reorderQuestions(questionStore, ids))}
-              renderItem={renderQuestion}
-            />
-          )}
-        </motion.div>
-      </AnimatePresence>
+            <FilterEmpty onClear={clearCardFilter} />
+          )
+        ) : (
+          <ReorderableList
+            items={visibleLoci}
+            reorderable={reorderable}
+            onReorder={(ids) => reorderTo(() => void reorderLoci(locusStore, ids))}
+            renderItem={renderCard}
+          />
+        )}
+      </div>
 
-      {/* Bottom bar: bulk actions in select mode, otherwise Add */}
+      {/* Bottom bar: bulk actions in select mode */}
       {selectMode ? (
         <div className="sticky bottom-2 z-20 mt-3 flex items-center gap-2 rounded-card-featured bg-card/95 p-2.5 shadow-elevated backdrop-blur-xl">
-          {isLoci ? (
-            <>
-              <BulkButton
-                disabled={selectedCount === 0}
-                icon={<GraduationCap className="size-[17px]" aria-hidden />}
-                label={t('loci.bulk.known')}
-                onClick={() => {
-                  void markLociKnown(locusStore, [...selectedIds])
-                  toast.success(t('loci.row.markedKnown'))
-                  exitSelect()
-                }}
-              />
-              <BulkButton
-                disabled={selectedCount === 0}
-                icon={<RotateCcw className="size-[17px]" aria-hidden />}
-                label={t('loci.bulk.reset')}
-                onClick={() => {
-                  void resetLociSrs(locusStore, [...selectedIds])
-                  toast.success(t('loci.row.scheduleReset'))
-                  exitSelect()
-                }}
-              />
-            </>
-          ) : null}
+          <BulkButton
+            disabled={selectedCount === 0}
+            icon={<Flag className="size-[17px]" aria-hidden />}
+            label={t('loci.bulk.flag')}
+            onClick={() => {
+              const toFlag = loci.filter((l) => selectedIds.has(l.id) && !l.flagged)
+              toFlag.forEach((l) => void toggleLocusFlag(locusStore, l.id))
+              toast.success(t('loci.bulk.flagged', { count: toFlag.length }))
+              exitSelect()
+            }}
+          />
+          <BulkButton
+            disabled={selectedCount === 0}
+            icon={<GraduationCap className="size-[17px]" aria-hidden />}
+            label={t('loci.bulk.known')}
+            onClick={() => {
+              void markLociKnown(locusStore, [...selectedIds])
+              toast.success(t('loci.row.markedKnown'))
+              exitSelect()
+            }}
+          />
+          <BulkButton
+            disabled={selectedCount === 0}
+            icon={<RotateCcw className="size-[17px]" aria-hidden />}
+            label={t('loci.bulk.reset')}
+            onClick={() => {
+              void resetLociSrs(locusStore, [...selectedIds])
+              toast.success(t('loci.row.scheduleReset'))
+              exitSelect()
+            }}
+          />
           <BulkButton
             disabled={selectedCount === 0}
             tone="danger"
@@ -550,24 +506,30 @@ export function RoomContentEditor({
           <TransferGroup label={t('loci.transfer.importGroup')}>
             <ImportRow
               icon={<Upload className="size-5" aria-hidden />}
+              tone="accent"
+              badge="JSON · CSV"
               title={t('loci.transfer.importFile')}
               subtitle={t('loci.transfer.importFileSub')}
               onClick={() => pickFile('.json,.csv', 'content')}
             />
             <ImportRow
               icon={<FileText className="size-5" aria-hidden />}
+              tone="accent"
+              badge="TXT · TSV"
               title={t('loci.transfer.importAnki')}
               subtitle={t('loci.transfer.importAnkiSub')}
               onClick={() => pickFile('.txt,.tsv', 'anki')}
             />
             <ImportRow
               icon={<ClipboardPaste className="size-5" aria-hidden />}
+              tone="brand"
               title={t('loci.transfer.pasteList')}
               subtitle={t('loci.transfer.pasteListSub')}
               onClick={() => closeTransfer(() => setPasteOpen(true))}
             />
             <ImportRow
               icon={<BookOpen className="size-5" aria-hidden />}
+              tone="brand"
               title={t('loci.transfer.pasteVerses')}
               subtitle={t('loci.transfer.pasteVersesSub')}
               onClick={() => closeTransfer(() => setVerseOpen(true))}
@@ -576,28 +538,40 @@ export function RoomContentEditor({
 
           <TransferGroup label={t('loci.transfer.exportGroup')}>
             <ImportRow
-              icon={<Download className="size-5" aria-hidden />}
+              icon={<Landmark className="size-5" aria-hidden />}
+              tone="positive"
+              badge="JSON"
+              trailing={<Download className="size-5 shrink-0 text-faint" aria-hidden />}
               title={t('loci.transfer.exportJson')}
               subtitle={t('loci.transfer.exportJsonSub')}
               disabled={!hasContent}
               onClick={() => closeTransfer(() => exportRoomJson(roomName, loci, questions))}
             />
             <ImportRow
-              icon={<Download className="size-5" aria-hidden />}
+              icon={<MapPin className="size-5" aria-hidden />}
+              tone="neutral"
+              badge="CSV"
+              trailing={<Download className="size-5 shrink-0 text-faint" aria-hidden />}
               title={t('loci.transfer.exportCards')}
               subtitle={t('loci.transfer.exportCardsSub')}
               disabled={loci.length === 0}
               onClick={() => closeTransfer(() => exportLociCsv(roomName, loci))}
             />
             <ImportRow
-              icon={<Download className="size-5" aria-hidden />}
+              icon={<FileText className="size-5" aria-hidden />}
+              tone="neutral"
+              badge="CSV"
+              trailing={<Download className="size-5 shrink-0 text-faint" aria-hidden />}
               title={t('loci.transfer.exportQuestions')}
               subtitle={t('loci.transfer.exportQuestionsSub')}
               disabled={questions.length === 0}
               onClick={() => closeTransfer(() => exportQuestionsCsv(roomName, questions))}
             />
             <ImportRow
-              icon={<Download className="size-5" aria-hidden />}
+              icon={<FileText className="size-5" aria-hidden />}
+              tone="neutral"
+              badge="TXT"
+              trailing={<Download className="size-5 shrink-0 text-faint" aria-hidden />}
               title={t('loci.transfer.exportAnki')}
               subtitle={t('loci.transfer.exportAnkiSub')}
               disabled={loci.length === 0}
@@ -625,17 +599,85 @@ export function RoomContentEditor({
         onApply={applyVerses}
       />
 
+      {/* Card filter sheet — narrow the cards list by maturity and/or flagged. */}
+      <Sheet
+        open={filterOpen}
+        onOpenChange={setFilterOpen}
+        title={t('loci.filter.title')}
+        footer={
+          <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              className="flex-1"
+              onClick={resetDraftFilter}
+              disabled={draftFilterCount === 0}
+            >
+              {t('loci.filter.reset')}
+            </Button>
+            <Button className="flex-1" onClick={applyFilter}>
+              {t('loci.filter.apply')}
+            </Button>
+          </div>
+        }
+      >
+        <div className="flex flex-col gap-5 pb-2">
+          <div>
+            <p className="mb-2 px-1 text-(length:--p-text-label) font-bold uppercase tracking-wide text-muted-foreground">
+              {t('loci.filter.maturity')}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {(
+                [
+                  { key: 'new', label: t('loci.filter.new') },
+                  { key: 'learning', label: t('loci.filter.learning') },
+                  { key: 'known', label: t('loci.filter.known') },
+                ] as const
+              ).map(({ key, label }) => {
+                const on = draftMaturity.has(key)
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => toggleDraftMaturity(key)}
+                    className={cn(
+                      'inline-flex items-center gap-2 rounded-pill px-3.5 py-2 text-(length:--p-text-label) font-semibold transition-transform active:scale-[0.97]',
+                      on ? 'bg-primary text-primary-foreground' : 'bg-secondary/50 text-heading',
+                    )}
+                  >
+                    {label}
+                    <span className="tabular-nums opacity-70">{maturity[key]}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+          <div>
+            <p className="mb-2 px-1 text-(length:--p-text-label) font-bold uppercase tracking-wide text-muted-foreground">
+              {t('loci.filter.status')}
+            </p>
+            <label className="flex items-center justify-between gap-3 rounded-card border border-border bg-card px-4 py-3">
+              <span className="inline-flex items-center gap-2 text-(length:--p-text-body) font-semibold text-heading">
+                <Flag className="size-4 text-[var(--warning-foreground)]" aria-hidden />
+                {t('loci.filter.flagged')}
+              </span>
+              <Switch
+                label={t('loci.filter.flagged')}
+                checked={draftFlagged}
+                onCheckedChange={setDraftFlagged}
+              />
+            </label>
+          </div>
+        </div>
+      </Sheet>
+
       {/* Delete confirms */}
       <ConfirmDialog
-        open={pendingDelete !== null}
-        onOpenChange={(open) => !open && setPendingDelete(null)}
+        open={pendingDeleteId !== null}
+        onOpenChange={(open) => !open && setPendingDeleteId(null)}
         destructive
         icon={<Trash2 className="size-6" aria-hidden />}
-        title={
-          pendingDelete?.kind === 'questions'
-            ? t('loci.delete.questionTitle')
-            : t('loci.delete.cardTitle')
-        }
+        title={t('loci.delete.cardTitle')}
         description={t('loci.delete.body')}
         confirmLabel={t('common.delete')}
         cancelLabel={t('common.cancel')}
@@ -662,12 +704,6 @@ export function RoomContentEditor({
             label: t('loci.addCard'),
             icon: <Plus className="size-5" aria-hidden />,
             onSelect: onAddCard,
-          },
-          {
-            id: 'question',
-            label: t('questions.addQuestion'),
-            icon: <HelpCircle className="size-5" aria-hidden />,
-            onSelect: onAddQuestion,
           },
           {
             id: 'import',
@@ -697,7 +733,7 @@ export function RoomContentEditor({
         }}
         onDelete={(id) => {
           setBrowserCardId(null)
-          setPendingDelete({ kind: 'loci', id })
+          setPendingDeleteId(id)
         }}
       />
     </div>
@@ -724,130 +760,18 @@ function sortLoci(loci: Locus[], sort: ContentSort): Locus[] {
   }
 }
 
-/** Questions in the chosen order. Only `manual`/`recent`/`name` apply; the card-only
- * `due`/`flagged` are mapped to `manual` by the caller before this runs. */
-function sortQuestions(questions: Question[], sort: ContentSort): Question[] {
-  switch (sort) {
-    case 'name':
-      return [...questions].sort((a, b) => a.prompt.localeCompare(b.prompt))
-    case 'recent':
-      return [...questions].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-    default:
-      return questions
-  }
-}
-
-/** Wraps a row as a dnd-kit sortable: the wrapper carries the transform/transition and
- * ghosts the source while its overlay clone is in hand; the row gets the grip's activator
- * wiring through the render prop. */
-function SortableContentRow({
-  id,
-  children,
-}: {
-  id: string
-  children: (handle: RowDragHandle) => ReactNode
-}) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    setActivatorNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id })
-  return (
-    <div
-      ref={setNodeRef}
-      style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={cn(isDragging && 'relative z-10 opacity-40')}
-    >
-      {children({ ref: setActivatorNodeRef, props: { ...attributes, ...listeners } })}
-    </div>
-  )
-}
-
-/** Renders a list of rows, drag-reorderable when `reorderable`. Off, it's a plain map; on,
- * it lifts a clone into a {@link DragOverlay} and commits the new id order on drop. Shared
- * by the cards and questions tabs. */
-function ReorderableList<T extends { id: string }>({
-  items,
-  reorderable,
-  onReorder,
-  renderItem,
-}: {
-  items: T[]
-  reorderable: boolean
-  onReorder: (orderedIds: string[]) => void
-  renderItem: (item: T, dragHandle?: RowDragHandle, dragging?: boolean) => ReactNode
-}) {
-  const [activeId, setActiveId] = useState<string | null>(null)
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  )
-
-  if (!reorderable) return <>{items.map((item) => renderItem(item))}</>
-
-  const active = activeId ? items.find((item) => item.id === activeId) : undefined
-
-  return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      modifiers={[restrictToVerticalAxis]}
-      onDragStart={(event: DragStartEvent) => setActiveId(String(event.active.id))}
-      onDragEnd={(event: DragEndEvent) => {
-        setActiveId(null)
-        const { active: from, over } = event
-        if (!over || from.id === over.id) return
-        const fromIndex = items.findIndex((item) => item.id === from.id)
-        const toIndex = items.findIndex((item) => item.id === over.id)
-        if (fromIndex < 0 || toIndex < 0) return
-        onReorder(arrayMove(items, fromIndex, toIndex).map((item) => item.id))
-      }}
-      onDragCancel={() => setActiveId(null)}
-    >
-      <SortableContext items={items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
-        <div className="flex flex-col gap-3">
-          {items.map((item) => (
-            <SortableContentRow key={item.id} id={item.id}>
-              {(handle) => renderItem(item, handle)}
-            </SortableContentRow>
-          ))}
-        </div>
-      </SortableContext>
-      <DragOverlay dropAnimation={{ duration: 220, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }}>
-        {active ? (
-          // Lift the clone off the list: the card already carries the elevated shadow; this
-          // adds a small level scale so the row clearly reads as "in hand" (no tilt, no scale
-          // under reduced motion).
-          <div className="origin-center motion-safe:scale-[1.03]">
-            {renderItem(active, undefined, true)}
-          </div>
-        ) : null}
-      </DragOverlay>
-    </DndContext>
-  )
-}
-
-function EmptyContent({ kind }: { kind: Tab }) {
+function EmptyCards() {
   const { t } = useTranslation()
-  const isLoci = kind === 'loci'
   return (
     <div className="flex flex-col items-center px-6 py-10 text-center">
       <div className="mb-4 grid size-14 place-items-center rounded-card-featured bg-info-surface text-accent">
-        {isLoci ? (
-          <MapPin className="size-6" aria-hidden />
-        ) : (
-          <HelpCircle className="size-6" aria-hidden />
-        )}
+        <MapPin className="size-6" aria-hidden />
       </div>
-      <h3 className="mb-1.5 text-balance text-[length:var(--p-text-sub)] font-semibold text-heading">
-        {isLoci ? t('loci.emptyTitle') : t('questions.emptyTitle')}
+      <h3 className="mb-1.5 text-balance text-(length:--p-text-sub) font-semibold text-heading">
+        {t('loci.emptyTitle')}
       </h3>
-      <p className="max-w-[34ch] text-pretty text-[length:var(--p-text-body)] text-muted-foreground">
-        {isLoci ? t('loci.emptyHint') : t('questions.emptyHint')}
+      <p className="max-w-[34ch] text-pretty text-(length:--p-text-body) text-muted-foreground">
+        {t('loci.emptyHint')}
       </p>
     </div>
   )
@@ -857,15 +781,62 @@ function NoResults({ onClear }: { onClear: () => void }) {
   const { t } = useTranslation()
   return (
     <div className="rounded-card bg-card-glass p-6 text-center shadow-rest">
-      <p className="text-[length:var(--p-text-body)] text-muted-foreground">
-        {t('loci.noResults')}
-      </p>
+      <p className="text-(length:--p-text-body) text-muted-foreground">{t('loci.noResults')}</p>
       <button
         type="button"
         onClick={onClear}
-        className="mt-2 text-[length:var(--p-text-label)] font-semibold text-accent"
+        className="mt-2 text-(length:--p-text-label) font-semibold text-accent"
       >
         {t('loci.clearSearch')}
+      </button>
+    </div>
+  )
+}
+
+/** The filter trigger — a pill mirroring the {@link SortControl} trigger, with a count badge
+ * when filters are active. Opens the card filter sheet. */
+function FilterButton({
+  label,
+  count,
+  onClick,
+}: {
+  label: string
+  count: number
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      className={cn(
+        'flex h-9 items-center gap-1.5 rounded-control bg-card pl-2.5 pr-3 shadow-rest transition-transform active:scale-[0.97]',
+        count > 0 && 'ring-1 ring-accent/45',
+      )}
+    >
+      <SlidersHorizontal className="size-4 shrink-0 text-accent" aria-hidden />
+      <span className="text-(length:--p-text-label) font-semibold text-heading">{label}</span>
+      {count > 0 ? (
+        <span className="grid size-5 place-items-center rounded-full bg-accent text-(length:--p-text-tiny) font-bold tabular-nums text-accent-foreground">
+          {count}
+        </span>
+      ) : null}
+    </button>
+  )
+}
+
+/** Shown when active filters hide every card — offers a one-tap reset. */
+function FilterEmpty({ onClear }: { onClear: () => void }) {
+  const { t } = useTranslation()
+  return (
+    <div className="rounded-card bg-card-glass p-6 text-center shadow-rest">
+      <p className="text-(length:--p-text-body) text-muted-foreground">{t('loci.filterEmpty')}</p>
+      <button
+        type="button"
+        onClick={onClear}
+        className="mt-2 text-(length:--p-text-label) font-semibold text-accent"
+      >
+        {t('loci.filterClear')}
       </button>
     </div>
   )
@@ -874,7 +845,7 @@ function NoResults({ onClear }: { onClear: () => void }) {
 function TransferGroup({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="space-y-2">
-      <p className="px-1 text-[length:var(--p-text-label)] font-bold uppercase tracking-wide text-muted-foreground">
+      <p className="px-1 text-(length:--p-text-label) font-bold uppercase tracking-wide text-muted-foreground">
         {label}
       </p>
       <div className="flex flex-col gap-2">{children}</div>
@@ -901,7 +872,7 @@ function BulkButton({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'flex h-11 flex-1 items-center justify-center gap-1.5 rounded-control text-[length:var(--p-text-label)] font-semibold',
+        'flex h-11 flex-1 items-center justify-center gap-1.5 rounded-control text-(length:--p-text-label) font-semibold',
         'transition-transform active:scale-[0.97] disabled:opacity-40',
         tone === 'danger'
           ? 'bg-[var(--danger-surface)] text-[var(--danger-on-surface)]'

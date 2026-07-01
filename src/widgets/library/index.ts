@@ -5,3 +5,4 @@ export type {
   LibraryFolderItem,
   LibraryPalaceItem,
 } from './ui/LibraryGrid'
+export { folderKey, palaceKey, parseLibraryKey } from './lib/library-keys'

@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import {
   ArrowLeftRight,
   Bell,
-  Check,
   ChevronRight,
   Download,
   Globe,
@@ -37,9 +36,9 @@ import type { SessionKind } from '@/entities/session'
 import { setPreferences } from '@/features/preferences'
 import { AVAILABLE_LANGUAGES, DAILY_GOAL_OPTIONS } from '@/shared/config/constants'
 import {
-  ActionSheet,
   AppScreen,
   Avatar,
+  Combobox,
   ConfirmDialog,
   ScreenHeader,
   SegmentedControl,
@@ -93,7 +92,6 @@ export function SettingsPage({
   const profile = useProfileStore(selectEffectiveProfile)
   const importInputRef = useRef<HTMLInputElement>(null)
   const [logoutOpen, setLogoutOpen] = useState(false)
-  const [languageOpen, setLanguageOpen] = useState(false)
 
   useEffect(() => {
     prefsStore.getState().start()
@@ -129,18 +127,11 @@ export function SettingsPage({
   const selectLanguage = (code: string) => {
     void i18n.changeLanguage(code)
     update({ language: code })
-    setLanguageOpen(false)
   }
-  const languageActions = AVAILABLE_LANGUAGES.map((language) => ({
-    id: language.code,
+  const languageOptions = AVAILABLE_LANGUAGES.map((language) => ({
+    value: language.code,
     label: language.label,
-    icon:
-      language.code === currentLanguage.code ? (
-        <Check className="size-5 text-primary" aria-hidden />
-      ) : (
-        <Globe className="size-5 text-accent" aria-hidden />
-      ),
-    onSelect: () => selectLanguage(language.code),
+    icon: <Globe className="size-[18px]" aria-hidden />,
   }))
 
   const handleImport = (event: ChangeEvent<HTMLInputElement>) => {
@@ -262,13 +253,20 @@ export function SettingsPage({
               }))}
             />
           </div>
-          <SettingsRow
-            kind="nav"
-            icon={<Globe />}
-            label={t('settings.language')}
-            value={currentLanguage.label}
-            onClick={() => setLanguageOpen(true)}
-          />
+          <div className="px-4 py-3">
+            <p className="text-[length:var(--p-text-body)] font-semibold text-heading">
+              {t('settings.language')}
+            </p>
+            <p className="mb-2.5 text-[length:var(--p-text-label)] text-muted-foreground">
+              {t('settings.languageHint')}
+            </p>
+            <Combobox
+              label={t('settings.language')}
+              value={currentLanguage.code}
+              options={languageOptions}
+              onChange={selectLanguage}
+            />
+          </div>
           <SettingsRow
             kind="nav"
             icon={<ArrowLeftRight />}
@@ -346,14 +344,6 @@ export function SettingsPage({
         accept="application/json,.json"
         className="hidden"
         onChange={handleImport}
-      />
-
-      <ActionSheet
-        open={languageOpen}
-        onOpenChange={setLanguageOpen}
-        title={t('settings.language')}
-        actions={languageActions}
-        cancelLabel={t('common.cancel')}
       />
 
       <ConfirmDialog

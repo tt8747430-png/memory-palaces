@@ -42,8 +42,6 @@ function renderEditor({
                 onSortChange={() => {}}
                 onAddCard={onAddCard}
                 onEditCard={() => {}}
-                onAddQuestion={() => {}}
-                onEditQuestion={() => {}}
               />
             </QuestionStoreContext>
           </LocusStoreContext>
@@ -69,7 +67,7 @@ describe('RoomContentEditor', () => {
     })
 
     expect(await screen.findByText('mihi')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /cards · 1/i })).toBeInTheDocument()
+    expect(screen.getByText(/cards in this room/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /add to room/i })).toBeInTheDocument()
   })
 
@@ -95,19 +93,6 @@ describe('RoomContentEditor', () => {
     await user.click(screen.getByRole('button', { name: /add card/i }))
 
     expect(onAddCard).toHaveBeenCalledOnce()
-  })
-
-  it('switches to the Questions tab and teaches the empty state', async () => {
-    const user = userEvent.setup()
-    renderEditor({
-      loci: [
-        makeLocus({ id: 'l1', createdAt: at(1), roomId: 'r1', front: 'a', back: 'A', order: 0 }),
-      ],
-    })
-    await screen.findByText('a')
-
-    await user.click(screen.getByRole('button', { name: /questions · 0/i }))
-    expect(await screen.findByText(/no questions yet/i)).toBeInTheDocument()
   })
 
   it('shows the cards empty state for a fresh room', async () => {

@@ -363,7 +363,6 @@ export const en = {
     sortCategory: 'Category',
     sortedBy: 'Sorted by {{sort}}',
     selectLabel: 'Select {{name}}',
-    reorderLabel: 'Drag to reorder {{name}}',
 
     // Counts + markers
     countOne: '{{count}} palace',
@@ -384,7 +383,6 @@ export const en = {
     viewArchived: 'Archived',
     openFolderLabel: 'Open folder {{name}}',
     selectFolderLabel: 'Select folder {{name}}',
-    reorderFolderLabel: 'Drag to reorder folder {{name}}',
     folderActions: 'Folder actions for {{name}}',
     dropToFile: 'Drop to file',
     editFolder: 'Edit folder',
@@ -509,7 +507,6 @@ export const en = {
   rooms: {
     openLabel: 'Open {{title}}',
     selectLabel: 'Select {{title}}',
-    reorderLabel: 'Drag to reorder {{title}}',
     sortLabel: 'Sort rooms',
     sort: {
       manual: 'Manual',
@@ -687,7 +684,7 @@ export const en = {
     notFound: 'That room could not be found.',
     manageHeading: 'Cards & questions',
     searchLabel: 'Search this room',
-    searchPlaceholder: 'Search cards & questions…',
+    searchPlaceholder: 'Search cards…',
     selectLabel: 'Select items',
     cardCountOne: '{{count}} card',
     cardCountOther: '{{count}} cards',
@@ -727,6 +724,7 @@ export const en = {
     testSubOne: 'Quiz · {{count}} question',
     testSubOther: 'Quiz · {{count}} questions',
     testEmpty: 'Add questions to test',
+    testManage: 'Write questions & start',
   },
   loci: {
     browser: {
@@ -752,6 +750,20 @@ export const en = {
     searchQuestions: 'Search questions',
     clearSearch: 'Clear search',
     noResults: 'No matches. Try another search.',
+    filterLabel: 'Filters',
+    filterEmpty: 'No cards match these filters.',
+    filterClear: 'Clear filters',
+    filter: {
+      title: 'Filter cards',
+      maturity: 'Learning status',
+      new: 'New',
+      learning: 'Learning',
+      known: 'Mastered',
+      status: 'Card status',
+      flagged: 'Flagged only',
+      reset: 'Reset',
+      apply: 'Apply',
+    },
     sortLabel: 'Sort',
     sort: {
       manual: 'Manual',
@@ -772,12 +784,13 @@ export const en = {
       count: '{{count}} selected',
     },
     bulk: {
+      flag: 'Flag',
+      flagged: 'Flagged {{count}} cards',
       known: 'Known',
       reset: 'Reset',
     },
     row: {
       menuLabel: 'Card actions',
-      reorder: 'Drag to reorder',
       duplicate: 'Duplicate',
       duplicated: 'Card duplicated',
       flag: 'Flag',
@@ -862,6 +875,13 @@ export const en = {
     emptyHint:
       'Multiple-choice questions power this room’s Test. Tap the ＋ to write your first one.',
     addQuestion: 'Add question',
+    title: 'Questions',
+    inRoom: 'Questions in this room',
+    startTest: 'Start test',
+    testLead: 'Multiple-choice test',
+    testReadyOne: '{{count}} question ready',
+    testReadyOther: '{{count}} questions ready',
+    testNone: 'Add a question to start a test',
     editor: {
       newTitle: 'New question',
       editTitle: 'Edit question',
@@ -1155,6 +1175,7 @@ export const en = {
     themeDark: 'Dark',
     themeSystem: 'System',
     language: 'Language',
+    languageHint: 'Pick the language for the app’s interface.',
     swipeActions: 'Swipe actions',
     swipeActionsHint: 'Choose what swiping a list row left or right does.',
     privacy: 'Privacy settings',
@@ -1348,6 +1369,11 @@ export const en = {
     trailing: 'Swipe left',
     trailingHint: 'Revealed from the right edge.',
     none: 'None',
+    emptySide: 'No action — tap one to add it.',
+    sideCount: '{{count}} / 2',
+    autoFire: 'Full-swipe',
+    fullFires: 'Full swipe → {{action}}',
+    capHint: '2 max — clear one to swap.',
     fullSwipeNote: 'Tip: a long, full swipe instantly runs the action nearest the edge.',
     reset: 'Reset to defaults',
     resetToast: 'Swipe actions reset.',

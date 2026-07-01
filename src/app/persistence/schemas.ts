@@ -16,7 +16,7 @@ import type { AppNotification } from '@/entities/notification'
  * type-checks each schema against its entity, so drift is a compile error.
  */
 export const palaceSchema: RxJsonSchema<Palace> = {
-  version: 1,
+  version: 0,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -76,7 +76,7 @@ export const palaceSchema: RxJsonSchema<Palace> = {
 }
 
 export const folderSchema: RxJsonSchema<Folder> = {
-  version: 1,
+  version: 0,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -108,7 +108,7 @@ export const roomSchema: RxJsonSchema<Room> = {
 }
 
 export const locusSchema: RxJsonSchema<Locus> = {
-  version: 1,
+  version: 0,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -151,7 +151,7 @@ export const locusSchema: RxJsonSchema<Locus> = {
 }
 
 export const questionSchema: RxJsonSchema<Question> = {
-  version: 1,
+  version: 0,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -178,7 +178,7 @@ export const questionSchema: RxJsonSchema<Question> = {
 }
 
 export const progressSchema: RxJsonSchema<Progress> = {
-  version: 1,
+  version: 0,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -212,7 +212,7 @@ export const progressSchema: RxJsonSchema<Progress> = {
 }
 
 export const preferencesSchema: RxJsonSchema<Preferences> = {
-  version: 8,
+  version: 0,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -227,7 +227,8 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
     language: { type: 'string' },
     dailyGoal: { type: 'number' },
     palacesView: { type: 'string', enum: ['grid', 'list'] },
-    palacesSort: { type: 'string', enum: ['manual', 'recent', 'progress', 'name', 'category'] },
+    palacesSort: { type: 'string', enum: ['manual', 'recent', 'progress', 'name'] },
+    libraryOrder: { type: 'array', items: { type: 'string' } },
     roomsSort: { type: 'string', enum: ['manual', 'recent', 'progress', 'name'] },
     contentSort: { type: 'string', enum: ['manual', 'recent', 'name', 'due', 'flagged'] },
     verseMode: { type: 'string', enum: ['blur', 'words', 'initials', 'type'] },
@@ -276,6 +277,7 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
     'dailyGoal',
     'palacesView',
     'palacesSort',
+    'libraryOrder',
     'roomsSort',
     'contentSort',
     'verseMode',
@@ -287,7 +289,7 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
 }
 
 export const profileSchema: RxJsonSchema<Profile> = {
-  version: 1,
+  version: 0,
   primaryKey: 'id',
   type: 'object',
   properties: {

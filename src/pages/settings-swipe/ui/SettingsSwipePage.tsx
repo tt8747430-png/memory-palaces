@@ -1,6 +1,16 @@
-import { useEffect } from 'react'
+import { type ReactNode, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeftRight, RotateCcw } from 'lucide-react'
+import {
+  ArrowLeft,
+  ArrowLeftRight,
+  ArrowRight,
+  Folder,
+  Layers,
+  DoorOpen,
+  Landmark,
+  RotateCcw,
+  Zap,
+} from 'lucide-react'
 import {
   selectEffectivePreferences,
   usePreferencesStore,
@@ -33,6 +43,14 @@ const TONE_CHIP: Record<SwipeTone, string> = {
   success: 'bg-[var(--success)] text-white',
   accent: 'bg-[var(--accent)] text-white',
   neutral: 'bg-[var(--p-gray-500)] text-white',
+}
+
+/** One glyph per row type, so each section reads at a glance instead of by heading alone. */
+const TYPE_ICON: Record<SwipeItemType, typeof Landmark> = {
+  palace: Landmark,
+  folder: Folder,
+  room: DoorOpen,
+  card: Layers,
 }
 
 /**
@@ -75,40 +93,51 @@ export function SettingsSwipePage({ onBack }: SettingsSwipePageProps) {
     >
       <div className="mt-4 flex flex-col gap-5 pb-28">
         <div className="rounded-card bg-info-surface p-4">
-          <p className="flex items-center gap-2 text-[length:var(--p-text-sub)] font-semibold text-info-foreground">
-            <ArrowLeftRight className="size-4 shrink-0" aria-hidden />
+          <p className="flex items-center gap-2 text-[length:var(--p-text-title)] font-bold tracking-tight text-info-foreground">
+            <span className="grid size-8 shrink-0 place-items-center rounded-control bg-card/70 text-primary">
+              <ArrowLeftRight className="size-4" aria-hidden />
+            </span>
             {t('swipe.title')}
           </p>
-          <p className="mt-1 text-[length:var(--p-text-label)] leading-snug text-info-foreground/80">
+          <p className="mt-2 text-[length:var(--p-text-label)] leading-relaxed text-info-foreground/80">
             {t('swipe.subtitle')}
           </p>
         </div>
 
-        {SWIPE_ITEM_TYPES.map((type) => (
-          <section key={type} className={cn(cardSurface, 'p-4')}>
-            <h2 className="text-[length:var(--p-text-sub)] font-bold tracking-tight text-heading">
-              {t(`swipe.types.${type}` as never)}
-            </h2>
-            <SideGroup
-              label={t('swipe.leading')}
-              hint={t('swipe.leadingHint')}
-              type={type}
-              side="leading"
-              selected={prefs.swipe[type].leading}
-              onToggle={(id) => toggle(type, 'leading', id)}
-            />
-            <SideGroup
-              label={t('swipe.trailing')}
-              hint={t('swipe.trailingHint')}
-              type={type}
-              side="trailing"
-              selected={prefs.swipe[type].trailing}
-              onToggle={(id) => toggle(type, 'trailing', id)}
-            />
-          </section>
-        ))}
+        {SWIPE_ITEM_TYPES.map((type) => {
+          const TypeIcon = TYPE_ICON[type]
+          return (
+            <section key={type} className={cn(cardSurface, 'p-4')}>
+              <h2 className="flex items-center gap-2.5 text-[length:var(--p-text-title)] font-bold tracking-tight text-heading">
+                <span className="grid size-8 shrink-0 place-items-center rounded-control bg-info-surface text-primary">
+                  <TypeIcon className="size-[18px]" aria-hidden />
+                </span>
+                {t(`swipe.types.${type}` as never)}
+              </h2>
+              <SideGroup
+                icon={<ArrowRight className="size-4" aria-hidden />}
+                label={t('swipe.leading')}
+                hint={t('swipe.leadingHint')}
+                type={type}
+                side="leading"
+                selected={prefs.swipe[type].leading}
+                onToggle={(id) => toggle(type, 'leading', id)}
+              />
+              <SideGroup
+                icon={<ArrowLeft className="size-4" aria-hidden />}
+                label={t('swipe.trailing')}
+                hint={t('swipe.trailingHint')}
+                type={type}
+                side="trailing"
+                selected={prefs.swipe[type].trailing}
+                onToggle={(id) => toggle(type, 'trailing', id)}
+              />
+            </section>
+          )
+        })}
 
-        <p className="px-1 text-[length:var(--p-text-label)] leading-snug text-muted-foreground">
+        <p className="flex items-start gap-2 px-1 text-[length:var(--p-text-label)] leading-snug text-muted-foreground">
+          <Zap className="mt-0.5 size-4 shrink-0 text-[var(--warning-foreground)]" aria-hidden />
           {t('swipe.fullSwipeNote')}
         </p>
 
@@ -122,6 +151,7 @@ export function SettingsSwipePage({ onBack }: SettingsSwipePageProps) {
 }
 
 function SideGroup({
+  icon,
   label,
   hint,
   type,
@@ -129,6 +159,7 @@ function SideGroup({
   selected,
   onToggle,
 }: {
+  icon: ReactNode
   label: string
   hint: string
   type: SwipeItemType
@@ -136,17 +167,37 @@ function SideGroup({
   selected: SwipeActionId[]
   onToggle: (id: SwipeActionId) => void
 }) {
+  const { t } = useTranslation()
   const atCap = selected.length >= 2
+  // The action a full swipe auto-fires: index 0 on the leading tray, the last on the trailing.
+  const autoFireId =
+    selected.length === 0 ? null : side === 'leading' ? selected[0] : selected[selected.length - 1]
+
   return (
-    <div className="mt-4">
-      <div className="flex items-baseline justify-between gap-2">
-        <span className="text-[length:var(--p-text-label)] font-semibold text-heading">{label}</span>
-        <span className="text-[length:var(--p-text-tiny)] text-muted-foreground">{hint}</span>
+    <div className="mt-4 border-t border-border/60 pt-4 first:border-t-0 first:pt-0">
+      <div className="flex items-center justify-between gap-2">
+        <span className="inline-flex items-center gap-1.5 text-[length:var(--p-text-sub)] font-bold text-heading">
+          <span className="text-muted-foreground">{icon}</span>
+          {label}
+        </span>
+        <span
+          className={cn(
+            'rounded-pill px-2 py-0.5 text-[length:var(--p-text-tiny)] font-bold tabular-nums',
+            atCap ? 'bg-info-surface text-info-foreground' : 'bg-secondary/40 text-heading',
+          )}
+        >
+          {t('swipe.sideCount', { count: selected.length })}
+        </span>
       </div>
-      <div className="mt-2 flex flex-wrap gap-2">
+      <p className="mt-0.5 text-[length:var(--p-text-tiny)] text-muted-foreground">
+        {atCap ? t('swipe.capHint') : hint}
+      </p>
+
+      <div className="mt-2.5 flex flex-wrap gap-2">
         {SWIPE_ACTIONS[type].map((id) => {
           const on = selected.includes(id)
           const meta = SWIPE_ACTION_META[id]
+          const isAutoFire = on && id === autoFireId
           // An off chip when both slots are full is disabled — you swap by clearing one first.
           const disabled = !on && atCap
           return (
@@ -157,10 +208,10 @@ function SideGroup({
               disabled={disabled}
               onClick={() => onToggle(id)}
               className={cn(
-                'inline-flex items-center gap-1.5 rounded-pill px-3 py-2 text-[length:var(--p-text-label)] font-semibold transition-[transform,background-color] active:scale-[0.97]',
-                on
-                  ? TONE_CHIP[meta.tone]
-                  : 'bg-secondary/50 text-heading',
+                'inline-flex items-center gap-1.5 rounded-pill px-3 py-2 text-[length:var(--p-text-label)] font-bold transition-[transform,background-color,box-shadow] active:scale-[0.97]',
+                'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40',
+                on ? TONE_CHIP[meta.tone] : 'bg-secondary/50 text-heading',
+                isAutoFire && 'shadow-interactive',
                 disabled && 'opacity-40',
               )}
               data-swipe-side={side}
@@ -168,16 +219,28 @@ function SideGroup({
               <span className="grid size-4 place-items-center [&_svg]:size-4">
                 {swipeActionIcon(id)}
               </span>
-              <ActionLabel id={id} />
+              {t(meta.labelKey as never)}
+              {isAutoFire ? (
+                <Zap
+                  className="size-3 fill-current"
+                  aria-label={t('swipe.autoFire')}
+                />
+              ) : null}
             </button>
           )
         })}
       </div>
+
+      {autoFireId ? (
+        <p className="mt-2 inline-flex items-center gap-1.5 text-[length:var(--p-text-tiny)] font-semibold text-muted-foreground">
+          <Zap className="size-3 shrink-0 text-[var(--warning-foreground)]" aria-hidden />
+          {t('swipe.fullFires', { action: t(SWIPE_ACTION_META[autoFireId].labelKey as never) })}
+        </p>
+      ) : (
+        <p className="mt-2 text-[length:var(--p-text-tiny)] italic text-faint">
+          {t('swipe.emptySide')}
+        </p>
+      )}
     </div>
   )
-}
-
-function ActionLabel({ id }: { id: SwipeActionId }) {
-  const { t } = useTranslation()
-  return <>{t(SWIPE_ACTION_META[id].labelKey as never)}</>
 }

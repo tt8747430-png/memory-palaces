@@ -80,6 +80,10 @@ export interface Preferences extends Entity {
   palacesView: PalacesView
   /** Palaces screen: list ordering. */
   palacesSort: PalacesSort
+  /** Palaces screen: the hand-dragged root order, folders and palaces interleaved. Entries
+   * are namespaced ids (`f:<folderId>` / `p:<palaceId>`); items missing from the list group
+   * folders-first behind it, and stale entries are ignored on read. */
+  libraryOrder: string[]
   /** Palace screen: how a palace's rooms are ordered. */
   roomsSort: RoomsSort
   /** Room editor: how a room's cards/questions are ordered. */
@@ -105,6 +109,7 @@ export const DEFAULT_PREFERENCES = {
   dailyGoal: DEFAULT_DAILY_GOAL,
   palacesView: 'list',
   palacesSort: 'recent',
+  libraryOrder: [] as string[],
   roomsSort: 'manual',
   contentSort: 'manual',
   verseMode: 'blur',
@@ -126,6 +131,7 @@ export interface MakePreferencesInput {
   dailyGoal?: number
   palacesView?: PalacesView
   palacesSort?: PalacesSort
+  libraryOrder?: string[]
   roomsSort?: RoomsSort
   contentSort?: ContentSort
   verseMode?: VerseMode
@@ -163,6 +169,7 @@ export function makePreferences(input: MakePreferencesInput): Preferences {
       input.palacesSort && PALACES_SORTS.includes(input.palacesSort)
         ? input.palacesSort
         : DEFAULT_PREFERENCES.palacesSort,
+    libraryOrder: input.libraryOrder ?? [],
     roomsSort:
       input.roomsSort && ROOMS_SORTS.includes(input.roomsSort)
         ? input.roomsSort
@@ -192,6 +199,7 @@ export type PreferencesChanges = Partial<
     | 'dailyGoal'
     | 'palacesView'
     | 'palacesSort'
+    | 'libraryOrder'
     | 'roomsSort'
     | 'contentSort'
     | 'verseMode'

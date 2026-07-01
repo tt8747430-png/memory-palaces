@@ -104,8 +104,8 @@ describe('SettingsPage', () => {
     const { prefsRepo } = renderSettings()
 
     await user.click(screen.getByRole('button', { name: /language/i }))
-    const sheet = await screen.findByRole('dialog')
-    await user.click(within(sheet).getByRole('button', { name: /english/i }))
+    const menu = await screen.findByRole('menu')
+    await user.click(within(menu).getByRole('menuitem', { name: /english/i }))
 
     await waitFor(async () => {
       const [prefs] = await prefsRepo.getAll()

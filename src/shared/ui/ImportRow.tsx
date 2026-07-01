@@ -1,5 +1,19 @@
 import { type ReactNode } from 'react'
 import { ChevronRight } from 'lucide-react'
+import { cn } from '@/shared/lib'
+
+/** Icon-chip tone. Colorizes the leading glyph so each source/target reads distinctly while
+ * staying inside the navy-anchored palette (no ad-hoc brand colors). */
+export type ImportRowTone = 'brand' | 'accent' | 'positive' | 'warning' | 'danger' | 'neutral'
+
+const TONE_CHIP: Record<ImportRowTone, string> = {
+  brand: 'bg-info-surface text-primary',
+  accent: 'bg-secondary/45 text-primary',
+  positive: 'bg-[var(--success-surface)] text-[var(--success-on-surface)]',
+  warning: 'bg-[var(--warning-surface)] text-[var(--warning-foreground)]',
+  danger: 'bg-[var(--danger-surface)] text-[var(--danger-on-surface)]',
+  neutral: 'bg-secondary/25 text-secondary-foreground',
+}
 
 export interface ImportRowProps {
   icon: ReactNode
@@ -7,31 +21,67 @@ export interface ImportRowProps {
   subtitle: string
   onClick: () => void
   disabled?: boolean
+  /** Colorizes the icon chip; defaults to the navy brand tone. */
+  tone?: ImportRowTone
+  /** Small trailing hint (e.g. a file-type pill) shown before the chevron. */
+  badge?: ReactNode
+  /** Replaces the chevron when the row isn't a drill-in (e.g. an export action). */
+  trailing?: ReactNode
 }
 
-/** A tappable import/export option: an icon chip, a title + subtitle, and a chevron, on a
- * soft info-surface card. Shared by the palace import sheet and the room transfer sheet so
+/** A tappable import/export option: a tonal icon chip, a title + subtitle, and a trailing
+ * affordance, on a soft card. Shared by the palace import sheet and the room transfer sheet so
  * both read as one family. */
-export function ImportRow({ icon, title, subtitle, onClick, disabled }: ImportRowProps) {
+export function ImportRow({
+  icon,
+  title,
+  subtitle,
+  onClick,
+  disabled,
+  tone = 'brand',
+  badge,
+  trailing,
+}: ImportRowProps) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="flex w-full items-center gap-3.5 rounded-card bg-info-surface px-4 py-3 text-left transition-transform active:scale-[0.99] disabled:pointer-events-none disabled:opacity-45"
+      className={cn(
+        'group flex w-full items-center gap-3.5 rounded-card border border-border bg-card px-4 py-3 text-left',
+        'shadow-rest transition-[transform,box-shadow,border-color] duration-150 ease-out',
+        'hover:border-[oklch(var(--p-tint-navy)/0.14)] active:scale-[0.985]',
+        'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/45',
+        'disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none',
+      )}
     >
-      <span className="grid size-10 shrink-0 place-items-center rounded-control bg-card text-primary">
+      <span
+        className={cn(
+          'grid size-11 shrink-0 place-items-center rounded-control transition-transform duration-150 ease-out group-active:scale-95',
+          TONE_CHIP[tone],
+        )}
+      >
         {icon}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[length:var(--p-text-sub)] font-semibold text-heading">
+        <span className="block truncate text-[length:var(--p-text-sub)] font-semibold text-heading">
           {title}
         </span>
         <span className="mt-0.5 block text-[length:var(--p-text-label)] leading-snug text-muted-foreground">
           {subtitle}
         </span>
       </span>
-      <ChevronRight className="size-5 shrink-0 text-faint" aria-hidden />
+      {badge ? (
+        <span className="shrink-0 rounded-pill bg-info-surface px-2 py-0.5 text-[length:var(--p-text-tiny)] font-semibold uppercase tracking-wide text-info-foreground">
+          {badge}
+        </span>
+      ) : null}
+      {trailing ?? (
+        <ChevronRight
+          className="size-5 shrink-0 text-faint transition-transform duration-150 ease-out group-hover:translate-x-0.5 group-hover:text-muted-foreground"
+          aria-hidden
+        />
+      )}
     </button>
   )
 }

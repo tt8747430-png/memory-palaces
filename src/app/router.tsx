@@ -16,6 +16,7 @@ import { PalaceDetailPage } from '@/pages/palace-detail'
 import { PalaceSettingsPage } from '@/pages/palace-settings'
 import { RoomHubPage } from '@/pages/room-hub'
 import { CardEditorPage } from '@/pages/card-editor'
+import { RoomQuestionsPage } from '@/pages/room-questions'
 import { QuestionEditorPage } from '@/pages/question-editor'
 import { StudyCardsPage } from '@/pages/study'
 import { MatchPage } from '@/pages/match'
@@ -227,14 +228,10 @@ function RoomHubRoute() {
       onBack={back}
       onStudy={() => navigate({ to: ROUTES.roomStudy, params: { roomId } })}
       onMatch={() => navigate({ to: ROUTES.roomMatch, params: { roomId } })}
-      onTest={() => navigate({ to: ROUTES.roomQuiz, params: { roomId } })}
+      onTest={() => navigate({ to: ROUTES.roomQuestions, params: { roomId } })}
       onVerse={() => navigate({ to: ROUTES.roomVerse, params: { roomId } })}
       onAddCard={() => navigate({ to: ROUTES.roomCardNew, params: { roomId } })}
       onEditCard={(cardId) => navigate({ to: ROUTES.roomCardEdit, params: { roomId, cardId } })}
-      onAddQuestion={() => navigate({ to: ROUTES.roomQuestionNew, params: { roomId } })}
-      onEditQuestion={(questionId) =>
-        navigate({ to: ROUTES.roomQuestionEdit, params: { roomId, questionId } })
-      }
       onDeleted={back}
     />
   )
@@ -293,12 +290,36 @@ const roomCardEditRoute = createRoute({
   component: RoomCardEditRoute,
 })
 
+function RoomQuestionsRoute() {
+  const { roomId } = roomQuestionsRoute.useParams()
+  const navigate = useNavigate()
+  const back = useBack(() => navigate({ to: ROUTES.roomHub, params: { roomId } }))
+  return (
+    <RoomQuestionsPage
+      roomId={roomId}
+      onBack={back}
+      onAddQuestion={() => navigate({ to: ROUTES.roomQuestionNew, params: { roomId } })}
+      onEditQuestion={(questionId) =>
+        navigate({ to: ROUTES.roomQuestionEdit, params: { roomId, questionId } })
+      }
+      onStartTest={() => navigate({ to: ROUTES.roomQuiz, params: { roomId } })}
+    />
+  )
+}
+
+const roomQuestionsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.roomQuestions,
+  component: RoomQuestionsRoute,
+})
+
 function RoomQuestionNewRoute() {
   const { roomId } = roomQuestionNewRoute.useParams()
   const navigate = useNavigate()
-  const toRoom = () => navigate({ to: ROUTES.roomHub, params: { roomId } })
-  const back = useBack(toRoom)
-  return <QuestionEditorPage roomId={roomId} onBack={back} onDone={toRoom} />
+  // Add/edit return to the Questions page (where authoring lives), not the room hub.
+  const toQuestions = () => navigate({ to: ROUTES.roomQuestions, params: { roomId } })
+  const back = useBack(toQuestions)
+  return <QuestionEditorPage roomId={roomId} onBack={back} onDone={toQuestions} />
 }
 
 const roomQuestionNewRoute = createRoute({
@@ -310,10 +331,15 @@ const roomQuestionNewRoute = createRoute({
 function RoomQuestionEditRoute() {
   const { roomId, questionId } = roomQuestionEditRoute.useParams()
   const navigate = useNavigate()
-  const toRoom = () => navigate({ to: ROUTES.roomHub, params: { roomId } })
-  const back = useBack(toRoom)
+  const toQuestions = () => navigate({ to: ROUTES.roomQuestions, params: { roomId } })
+  const back = useBack(toQuestions)
   return (
-    <QuestionEditorPage roomId={roomId} questionId={questionId} onBack={back} onDone={toRoom} />
+    <QuestionEditorPage
+      roomId={roomId}
+      questionId={questionId}
+      onBack={back}
+      onDone={toQuestions}
+    />
   )
 }
 
@@ -678,6 +704,7 @@ const routeTree = rootRoute.addChildren([
   roomHubRoute,
   roomCardNewRoute,
   roomCardEditRoute,
+  roomQuestionsRoute,
   roomQuestionNewRoute,
   roomQuestionEditRoute,
   roomStudyRoute,

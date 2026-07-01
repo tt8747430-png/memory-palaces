@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { motion, useReducedMotion } from 'motion/react'
 import {
   closestCenter,
+  type CollisionDetection,
   DndContext,
   type DragEndEvent,
   DragOverlay,
@@ -26,7 +27,6 @@ import {
   Check,
   FolderInput,
   FolderOpen,
-  GripVertical,
   Heart,
   Pencil,
   Settings2,
@@ -34,6 +34,7 @@ import {
 } from 'lucide-react'
 import { cn, useLongPress } from '@/shared/lib'
 import type { SwipeConfig } from '@/shared/config/swipe'
+import { folderKey, palaceKey, parseLibraryKey } from '../lib/library-keys'
 import {
   buildSwipeActions,
   FlyoutMenu,
@@ -79,11 +80,11 @@ export interface LibraryHandlers {
   onDeleteFolder: (id: string) => void
   /** Long-press on a row: enter select mode with this item picked. */
   onRequestSelect: (id: string) => void
-  /** Persist a new manual folder order (root only). */
-  onReorderFolders: (orderedIds: string[]) => void
-  /** Persist a new manual palace order within the current level. */
-  onReorderPalaces: (orderedIds: string[]) => void
-  /** File a palace into a folder by dragging it onto the folder card (select mode). */
+  /** Persist the level's new manual order after a drop — the full display sequence as
+   * namespaced keys (see {@link folderKey}/{@link palaceKey}), folders and palaces
+   * interleaved. The page decides how to store it. */
+  onReorder: (orderedKeys: string[]) => void
+  /** File a palace into a folder by dropping it onto the folder's centre (select mode). */
   onFilePalace: (palaceId: string, folderId: string) => void
 }
 
@@ -91,6 +92,10 @@ export interface LibraryGridProps extends LibraryHandlers {
   /** Folders at the current level (root only; empty inside a folder). */
   folders: LibraryFolderItem[]
   palaces: LibraryPalaceItem[]
+  /** The full display sequence for this level as namespaced keys — the grid renders exactly
+   * this order (mixed folders/palaces at root, palaces elsewhere). Items missing from it
+   * append behind, folders first, as a safety net. */
+  order: string[]
   view: 'grid' | 'list'
   loading?: boolean
   emptyState: ReactNode
@@ -105,15 +110,40 @@ export interface LibraryGridProps extends LibraryHandlers {
 
 // Exponential ease-out + a calm spring, shared by the drop-target and receive animations.
 const EASE_OUT = [0.22, 1, 0.36, 1] as const
+/** The same ease-out curve as {@link EASE_OUT}, as a CSS string for dnd-kit's layout transition. */
+const EASE_OUT_CSS = 'cubic-bezier(0.22, 1, 0.36, 1)'
 const DROP_SPRING = { type: 'spring', stiffness: 420, damping: 26 } as const
 
-// dnd ids are namespaced so a drag's source/target type is unambiguous: `f:` folder, `p:` palace.
-const fid = (id: string) => `f:${id}`
-const pid = (id: string) => `p:${id}`
-const parseId = (raw: string): { kind: 'f' | 'p'; id: string } => ({
-  kind: raw.slice(0, 1) as 'f' | 'p',
-  id: raw.slice(2),
-})
+/** One slot in the merged, reorderable library sequence. */
+type LibraryEntry =
+  | { key: string; kind: 'f'; folder: LibraryFolderItem }
+  | { key: string; kind: 'p'; palace: LibraryPalaceItem }
+
+/** Resolve the display sequence into renderable entries: keys map to their items in order,
+ * stale keys drop out, and anything the sequence missed appends behind (folders first). */
+function buildEntries(
+  folders: LibraryFolderItem[],
+  palaces: LibraryPalaceItem[],
+  order: string[],
+): LibraryEntry[] {
+  const byKey = new Map<string, LibraryEntry>()
+  for (const folder of folders) {
+    const key = folderKey(folder.id)
+    byKey.set(key, { key, kind: 'f', folder })
+  }
+  for (const palace of palaces) {
+    const key = palaceKey(palace.id)
+    byKey.set(key, { key, kind: 'p', palace })
+  }
+  const entries: LibraryEntry[] = []
+  for (const key of order) {
+    const entry = byKey.get(key)
+    if (!entry) continue
+    entries.push(entry)
+    byKey.delete(key)
+  }
+  return [...entries, ...byKey.values()]
+}
 
 /** Drag wiring handed to a card so it can mount the grip (list) or the card body (grid) as the
  * reorder activator while the row's own tap stays free for selection. */
@@ -133,6 +163,7 @@ interface CardDrag {
 export function LibraryGrid({
   folders,
   palaces,
+  order,
   view,
   loading = false,
   emptyState,
@@ -152,10 +183,18 @@ export function LibraryGrid({
   // Optimistic order: seeded from props, reordered in place on drop, and reconciled
   // whenever the persisted order flows back. This is what kills the reorder flicker — the
   // grid never renders the stale order between the drop and the async store update.
-  const [folderItems, setFolderItems] = useState(folders)
-  const [palaceItems, setPalaceItems] = useState(palaces)
-  useEffect(() => setFolderItems(folders), [folders])
-  useEffect(() => setPalaceItems(palaces), [palaces])
+  const [entries, setEntries] = useState(() => buildEntries(folders, palaces, order))
+  useEffect(() => setEntries(buildEntries(folders, palaces, order)), [folders, palaces, order])
+
+  // A palace hovering a folder's centre zone — the "file into it" target. The ref mirrors the
+  // state so the drop handler reads the latest value without re-binding mid-drag.
+  const [fileTarget, setFileTarget] = useState<string | null>(null)
+  const fileTargetRef = useRef<string | null>(null)
+  const updateFileTarget = (value: string | null) => {
+    if (fileTargetRef.current === value) return
+    fileTargetRef.current = value
+    setFileTarget(value)
+  }
 
   // Reorder lives only in select mode, so the drag starts on real travel (a grip pull or a
   // press-drag), never on a hold — a hold is reserved for entering select mode.
@@ -177,43 +216,70 @@ export function LibraryGrid({
     return <>{emptyState}</>
   }
 
+  // Filing vs reordering share one gesture, resolved here so the list never fights the drop:
+  // while a PALACE is dragged so its own centre falls over (or near) a FOLDER, that folder
+  // becomes the file target and reordering freezes (the collision reports the palace as its
+  // own target, so no sibling shifts and the folder stays put under the card). Judging by the
+  // dragged CARD's centre — not the finger — with a generous margin makes filing forgiving on
+  // touch, where the pointer sits under the card. Anywhere else it's a plain reorder via
+  // closestCenter; folders themselves never file — they always reorder.
+  const collisionDetection: CollisionDetection = (args) => {
+    if (parseLibraryKey(String(args.active.id)).kind === 'p') {
+      const card = args.collisionRect
+      const cx = card.left + card.width / 2
+      const cy = card.top + card.height / 2
+      for (const [id, rect] of args.droppableRects) {
+        if (id === args.active.id || parseLibraryKey(String(id)).kind !== 'f') continue
+        // Expand the folder's catch area by ~40% of its size on each axis.
+        const mx = rect.width * 0.4
+        const my = rect.height * 0.4
+        if (
+          cx > rect.left - mx &&
+          cx < rect.right + mx &&
+          cy > rect.top - my &&
+          cy < rect.bottom + my
+        ) {
+          updateFileTarget(parseLibraryKey(String(id)).id)
+          return [{ id: args.active.id }]
+        }
+      }
+    }
+    updateFileTarget(null)
+    return closestCenter(args)
+  }
+
   const handleDragEnd = (event: DragEndEvent) => {
     setActiveId(null)
+    const target = fileTargetRef.current
+    updateFileTarget(null)
     const { active, over } = event
-    if (!over || active.id === over.id) return
-    const a = parseId(String(active.id))
-    const o = parseId(String(over.id))
 
-    if (a.kind === 'p' && o.kind === 'f') {
-      handlers.onFilePalace(a.id, o.id)
-      flashReceive(o.id)
+    if (parseLibraryKey(String(active.id)).kind === 'p' && target) {
+      handlers.onFilePalace(parseLibraryKey(String(active.id)).id, target)
+      flashReceive(target)
       return
     }
-    if (a.kind === 'p' && o.kind === 'p') {
-      const from = palaceItems.findIndex((p) => p.id === a.id)
-      const to = palaceItems.findIndex((p) => p.id === o.id)
-      if (from < 0 || to < 0) return
-      const next = arrayMove(palaceItems, from, to)
-      setPalaceItems(next)
-      handlers.onReorderPalaces(next.map((p) => p.id))
-      return
-    }
-    if (a.kind === 'f' && o.kind === 'f') {
-      const from = folderItems.findIndex((f) => f.id === a.id)
-      const to = folderItems.findIndex((f) => f.id === o.id)
-      if (from < 0 || to < 0) return
-      const next = arrayMove(folderItems, from, to)
-      setFolderItems(next)
-      handlers.onReorderFolders(next.map((f) => f.id))
-    }
+    if (!over || active.id === over.id) return
+    const from = entries.findIndex((entry) => entry.key === String(active.id))
+    const to = entries.findIndex((entry) => entry.key === String(over.id))
+    if (from < 0 || to < 0) return
+    const next = arrayMove(entries, from, to)
+    setEntries(next)
+    handlers.onReorder(next.map((entry) => entry.key))
   }
 
   const onDragStart = (event: DragStartEvent) => setActiveId(String(event.active.id))
-  const active = activeId ? parseId(activeId) : null
+  const active = activeId ? parseLibraryKey(activeId) : null
   const activeFolder =
-    active?.kind === 'f' ? folderItems.find((f) => f.id === active.id) : undefined
+    active?.kind === 'f'
+      ? entries.find((entry): entry is Extract<LibraryEntry, { kind: 'f' }> => entry.key === activeId)
+          ?.folder
+      : undefined
   const activePalace =
-    active?.kind === 'p' ? palaceItems.find((p) => p.id === active.id) : undefined
+    active?.kind === 'p'
+      ? entries.find((entry): entry is Extract<LibraryEntry, { kind: 'p' }> => entry.key === activeId)
+          ?.palace
+      : undefined
 
   const strategy = view === 'grid' ? rectSortingStrategy : verticalListSortingStrategy
   const containerClass = view === 'grid' ? 'grid grid-cols-2 gap-3' : 'flex flex-col gap-2.5'
@@ -221,56 +287,57 @@ export function LibraryGrid({
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCenter}
+      collisionDetection={collisionDetection}
       onDragStart={onDragStart}
       onDragEnd={handleDragEnd}
-      onDragCancel={() => setActiveId(null)}
+      onDragCancel={() => {
+        setActiveId(null)
+        updateFileTarget(null)
+      }}
     >
       <div className={containerClass}>
-        <SortableContext items={folderItems.map((f) => fid(f.id))} strategy={strategy}>
-          {folderItems.map((folder) => (
-            <SortableItem key={folder.id} dndId={fid(folder.id)} disabled={!selectMode}>
-              {(drag) => (
-                <FolderCard
-                  folder={folder}
-                  view={view}
-                  selectMode={selectMode}
-                  selected={selectedIds.has(folder.id)}
-                  // A palace in hand turns every folder into a visible drop zone; the one
-                  // under the cursor becomes the active "open" target.
-                  dropReady={activePalace !== undefined}
-                  isOver={drag.isOver && activePalace !== undefined}
-                  receiving={receivingId === folder.id}
-                  dragActive={activeId !== null}
-                  drag={drag}
-                  reduce={reduce}
-                  swipe={folderSwipe}
-                  onToggleSelect={() => onToggleSelect(folder.id)}
-                  handlers={handlers}
-                />
-              )}
-            </SortableItem>
-          ))}
-        </SortableContext>
-
-        <SortableContext items={palaceItems.map((p) => pid(p.id))} strategy={strategy}>
-          {palaceItems.map((palace) => (
-            <SortableItem key={palace.id} dndId={pid(palace.id)} disabled={!selectMode}>
-              {(drag) => (
-                <PalaceCard
-                  item={palace}
-                  view={view}
-                  selectMode={selectMode}
-                  selected={selectedIds.has(palace.id)}
-                  dragActive={activeId !== null}
-                  drag={drag}
-                  swipe={palaceSwipe}
-                  onToggleSelect={() => onToggleSelect(palace.id)}
-                  handlers={handlers}
-                />
-              )}
-            </SortableItem>
-          ))}
+        <SortableContext items={entries.map((entry) => entry.key)} strategy={strategy}>
+          {entries.map((entry) =>
+            entry.kind === 'f' ? (
+              <SortableItem key={entry.key} dndId={entry.key} disabled={!selectMode}>
+                {(drag) => (
+                  <FolderCard
+                    folder={entry.folder}
+                    view={view}
+                    selectMode={selectMode}
+                    selected={selectedIds.has(entry.folder.id)}
+                    // A palace in hand turns every folder into a visible drop zone; the one
+                    // whose centre it hovers becomes the active "file into it" target.
+                    dropReady={activePalace !== undefined}
+                    isOver={fileTarget === entry.folder.id}
+                    receiving={receivingId === entry.folder.id}
+                    dragActive={activeId !== null}
+                    drag={drag}
+                    reduce={reduce}
+                    swipe={folderSwipe}
+                    onToggleSelect={() => onToggleSelect(entry.folder.id)}
+                    handlers={handlers}
+                  />
+                )}
+              </SortableItem>
+            ) : (
+              <SortableItem key={entry.key} dndId={entry.key} disabled={!selectMode}>
+                {(drag) => (
+                  <PalaceCard
+                    item={entry.palace}
+                    view={view}
+                    selectMode={selectMode}
+                    selected={selectedIds.has(entry.palace.id)}
+                    dragActive={activeId !== null}
+                    drag={drag}
+                    swipe={palaceSwipe}
+                    onToggleSelect={() => onToggleSelect(entry.palace.id)}
+                    handlers={handlers}
+                  />
+                )}
+              </SortableItem>
+            ),
+          )}
         </SortableContext>
       </div>
 
@@ -281,6 +348,8 @@ export function LibraryGrid({
               folder={activeFolder}
               view={view}
               dragging
+              selectMode
+              selected={selectedIds.has(activeFolder.id)}
               reduce={reduce}
               swipe={folderSwipe}
               handlers={handlers}
@@ -292,6 +361,8 @@ export function LibraryGrid({
               item={activePalace}
               view={view}
               dragging
+              selectMode
+              selected={selectedIds.has(activePalace.id)}
               swipe={palaceSwipe}
               handlers={handlers}
             />
@@ -328,7 +399,9 @@ function SortableItem({
     transition,
     isDragging,
     isOver,
-  } = useSortable({ id: dndId, disabled })
+    // A softer, slightly longer layout ease so siblings glide aside instead of snapping —
+    // the abrupt swap made a folder jump out from under a palace mid-file.
+  } = useSortable({ id: dndId, disabled, transition: { duration: 260, easing: EASE_OUT_CSS } })
   return (
     <div
       ref={setNodeRef}
@@ -348,33 +421,6 @@ function SortableItem({
 
 /** A left-edge grip (list) / corner badge (grid) that activates a reorder drag in select mode
  * without stealing the row's tap. */
-function DragGrip({
-  drag,
-  className,
-  label,
-}: {
-  drag: CardDrag
-  className?: string
-  label: string
-}) {
-  return (
-    <button
-      ref={drag.setActivatorNodeRef}
-      type="button"
-      aria-label={label}
-      // `touch-none` hands the gesture to dnd-kit's pointer sensor instead of the page scroll.
-      className={cn(
-        'grid cursor-grab touch-none place-items-center text-muted-foreground active:cursor-grabbing',
-        className,
-      )}
-      {...drag.attributes}
-      {...drag.listeners}
-    >
-      <GripVertical className="size-5" aria-hidden />
-    </button>
-  )
-}
-
 function FolderCard({
   folder,
   view,
@@ -469,7 +515,17 @@ function FolderCard({
     const body = (
       <button
         type="button"
-        {...(selectMode || dragging ? { onClick: onToggleSelect } : press)}
+        // In select mode the whole row is the drag activator (no visible grip): a tap still
+        // toggles the pick — dnd-kit only starts a drag after real travel — and `touch-none`
+        // hands the touch gesture to the pointer sensor, not the scroller.
+        {...(selectMode || dragging
+          ? {
+              onClick: onToggleSelect,
+              ...(drag
+                ? { ...drag.attributes, ...drag.listeners, ref: drag.setActivatorNodeRef }
+                : {}),
+            }
+          : press)}
         aria-label={
           selectMode
             ? t('palaces.selectFolderLabel', { name: folder.name })
@@ -478,7 +534,7 @@ function FolderCard({
         className={cn(
           'relative flex w-full items-center gap-3 rounded-card bg-card p-3 text-left shadow-rest',
           !selectMode && 'pr-12',
-          selectMode && 'pl-11',
+          selectMode && 'touch-none',
           selectRing,
         )}
       >
@@ -520,13 +576,6 @@ function FolderCard({
           className="rounded-card"
         >
           {body}
-          {selectMode && drag ? (
-            <DragGrip
-              drag={drag}
-              label={t('palaces.reorderFolderLabel', { name: folder.name })}
-              className="absolute bottom-0 left-0 top-0 w-11 rounded-l-card"
-            />
-          ) : null}
           {!selectMode && !dragging ? (
             <CardMenu label={t('palaces.folderActions', { name: folder.name })} actions={actions} />
           ) : null}
@@ -707,7 +756,15 @@ function PalaceCard({
         >
           <button
             type="button"
-            {...(selectMode || dragging ? { onClick: onToggleSelect } : press)}
+            // Whole-row drag activator in select mode (no visible grip) — mirrors FolderCard.
+            {...(selectMode || dragging
+              ? {
+                  onClick: onToggleSelect,
+                  ...(drag
+                    ? { ...drag.attributes, ...drag.listeners, ref: drag.setActivatorNodeRef }
+                    : {}),
+                }
+              : press)}
             aria-label={
               selectMode
                 ? t('palaces.selectLabel', { name: item.name })
@@ -716,7 +773,7 @@ function PalaceCard({
             className={cn(
               'flex w-full items-center gap-3 rounded-card bg-card p-3 text-left shadow-rest',
               !selectMode && 'pr-12',
-              selectMode && 'pl-11',
+              selectMode && 'touch-none',
               ring,
             )}
           >
@@ -752,13 +809,6 @@ function PalaceCard({
               </div>
             </div>
           </button>
-          {selectMode && drag ? (
-            <DragGrip
-              drag={drag}
-              label={t('palaces.reorderLabel', { name: item.name })}
-              className="absolute bottom-0 left-0 top-0 w-11 rounded-l-card"
-            />
-          ) : null}
           {!selectMode && !dragging ? (
             <CardMenu label={t('palaces.moreLabel', { name: item.name })} actions={actions} />
           ) : null}

@@ -27,7 +27,7 @@ export function CardMaturityOverview({ total, counts, scope }: CardMaturityOverv
   const { t } = useTranslation()
   return (
     <div>
-      <p className="mb-2 text-[length:var(--p-text-label)] font-semibold text-heading">
+      <p className="mb-2.5 text-[length:var(--p-text-title)] font-bold tracking-tight text-heading">
         {t(scope === 'palace' ? 'study.cardsInPalace' : 'study.cardsInRoom', { count: total })}
       </p>
       {total > 0 ? (

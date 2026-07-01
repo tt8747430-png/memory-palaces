@@ -59,7 +59,15 @@ import {
 import { readPalaceFile } from '@/features/content'
 import { createFolder, deleteFolder, editFolder, reorderFolders } from '@/features/folder'
 import { setPreferences } from '@/features/preferences'
-import { type LibraryFolderItem, LibraryGrid, type LibraryHandlers, type LibraryPalaceItem, } from '@/widgets/library'
+import {
+  folderKey,
+  type LibraryFolderItem,
+  LibraryGrid,
+  type LibraryHandlers,
+  type LibraryPalaceItem,
+  palaceKey,
+  parseLibraryKey,
+} from '@/widgets/library'
 import { HomeHeader } from '@/widgets/home-header'
 import {
   AppScreen,
@@ -300,6 +308,23 @@ export function PalacesPage({
     return items.map(({ id, name, color, icon, count }) => ({ id, name, color, icon, count }))
   }, [folders, enriched, atRoot, inArchived, sort])
 
+  // The full display sequence the grid renders. Under manual sort at root, the persisted
+  // mixed order leads (folders and palaces interleaved) and anything not yet hand-placed
+  // follows, folders first — so an untouched library reads exactly as before. Every other
+  // sort (and every other level) stays grouped: folders, then palaces.
+  const librarySequence = useMemo(() => {
+    const folderKeys = visibleFolders.map((folder) => folderKey(folder.id))
+    const palaceKeys = visiblePalaces.map((palace) => palaceKey(palace.id))
+    if (!atRoot || inArchived || sort !== 'manual') return [...folderKeys, ...palaceKeys]
+    const present = new Set([...folderKeys, ...palaceKeys])
+    const placed = new Set(prefs.libraryOrder)
+    return [
+      ...prefs.libraryOrder.filter((key) => present.has(key)),
+      ...folderKeys.filter((key) => !placed.has(key)),
+      ...palaceKeys.filter((key) => !placed.has(key)),
+    ]
+  }, [visibleFolders, visiblePalaces, atRoot, inArchived, sort, prefs.libraryOrder])
+
   const palaceById = (id: string) => palaces.find((palace) => palace.id === id)
   const deletingPalace = deletePalaceTarget ? palaceById(deletePalaceTarget) : undefined
   const deletingFolder = deleteFolderTarget
@@ -419,12 +444,22 @@ export function PalacesPage({
       if (folder) openEditFolder(folder)
     },
     onDeleteFolder: (id) => setDeleteFolderTarget(id),
-    onReorderFolders: (ids) => {
-      void reorderFolders(folderStore, ids)
-      if (sort !== 'manual') setSort('manual')
-    },
-    onReorderPalaces: (ids) => {
-      void reorderPalaces(palaceStore, ids)
+    onReorder: (orderedKeys) => {
+      const folderIds = orderedKeys
+        .filter((key) => parseLibraryKey(key).kind === 'f')
+        .map((key) => parseLibraryKey(key).id)
+      const palaceIds = orderedKeys
+        .filter((key) => parseLibraryKey(key).kind === 'p')
+        .map((key) => parseLibraryKey(key).id)
+      if (atRoot && !inArchived) {
+        // The mixed sequence is the manual truth at root; the per-kind entity orders are
+        // kept in step so every other surface (pickers, exports) sees the same relative order.
+        void setPreferences(prefStore, { libraryOrder: orderedKeys })
+        void reorderFolders(folderStore, folderIds)
+        void reorderPalaces(palaceStore, palaceIds)
+      } else {
+        void reorderPalaces(palaceStore, palaceIds)
+      }
       if (sort !== 'manual') setSort('manual')
     },
     onFilePalace: (palaceId, targetFolderId) => filePalaceInto(palaceId, targetFolderId),
@@ -667,6 +702,7 @@ export function PalacesPage({
       <LibraryGrid
         folders={visibleFolders}
         palaces={visiblePalaces}
+        order={librarySequence}
         view={view}
         loading={!palacesReady}
         emptyState={emptyState}

@@ -31,12 +31,11 @@ import {
 import { markRoomKnown, resetRoomSrs } from '@/features/locus'
 import { deleteRoom } from '@/features/room'
 import { setPreferences } from '@/features/preferences'
-import { cardMaturityCounts, studyOverview } from '@/shared/lib'
+import { studyOverview } from '@/shared/lib'
 import { RoomContentEditor } from '@/widgets/loci-editor'
 import { PracticeModes } from '@/widgets/practice-modes'
 import {
   AppScreen,
-  CardMaturityOverview,
   ConfirmDialog,
   IconButton,
   OverflowMenuButton,
@@ -53,16 +52,13 @@ export interface RoomHubPageProps {
   onStudy?: () => void
   /** Launch the Match mini-game. */
   onMatch?: () => void
-  /** Launch the room-scoped quiz (Test). */
+  /** Open the room's Questions & Test page (author questions, then start the test). */
   onTest?: () => void
   /** Launch verse-study. */
   onVerse?: () => void
   /** Open the full-screen card editor (add / edit). */
   onAddCard: () => void
   onEditCard: (cardId: string) => void
-  /** Open the full-screen question editor (add / edit). */
-  onAddQuestion: () => void
-  onEditQuestion: (questionId: string) => void
   /** Navigate away after the room is deleted. */
   onDeleted?: () => void
 }
@@ -79,8 +75,6 @@ export function RoomHubPage({
   onVerse,
   onAddCard,
   onEditCard,
-  onAddQuestion,
-  onEditQuestion,
   onDeleted,
 }: RoomHubPageProps) {
   const { t } = useTranslation()
@@ -115,7 +109,6 @@ export function RoomHubPage({
 
   const [now] = useState(() => Date.now())
   const overview = useMemo(() => studyOverview(loci, now), [loci, now])
-  const maturity = useMemo(() => cardMaturityCounts(loci), [loci])
 
   const prefs = usePreferencesStore(selectEffectivePreferences)
   const setContentSort = (value: ContentSort) =>
@@ -162,7 +155,6 @@ export function RoomHubPage({
   }
 
   const hasLoci = loci.length > 0
-  const hasContent = hasLoci || questions.length > 0
   const menuActions: SheetAction[] = [
     {
       id: 'mark-known',
@@ -213,7 +205,7 @@ export function RoomHubPage({
             backLabel={t('roomHub.back')}
             action={
               <div className="flex items-center gap-0.5">
-                {hasContent && !selectMode ? (
+                {hasLoci && !selectMode ? (
                   <IconButton
                     variant="glass"
                     aria-label={t('roomHub.searchLabel')}
@@ -249,18 +241,11 @@ export function RoomHubPage({
             onVerse={onVerse}
             onMatch={onMatch}
             onTest={onTest}
+            alwaysEnableTest
           />
         ) : null}
 
         <section aria-label={t('roomHub.manageHeading')} className="space-y-3 pt-1">
-          {!searchOpen ? (
-            <h2 className="text-[length:var(--p-text-title)] font-semibold text-heading">
-              {t('roomHub.manageHeading')}
-            </h2>
-          ) : null}
-          {!searchOpen && hasLoci ? (
-            <CardMaturityOverview total={loci.length} counts={maturity} scope="room" />
-          ) : null}
           <RoomContentEditor
             roomId={roomId}
             roomName={room.title}
@@ -273,8 +258,6 @@ export function RoomHubPage({
             onSortChange={setContentSort}
             onAddCard={onAddCard}
             onEditCard={onEditCard}
-            onAddQuestion={onAddQuestion}
-            onEditQuestion={onEditQuestion}
           />
         </section>
       </div>

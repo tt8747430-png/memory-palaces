@@ -46,8 +46,6 @@ function renderHub({ loci = [] as Locus[] }: { loci?: Locus[] } = {}) {
                     onTest={() => {}}
                     onAddCard={() => {}}
                     onEditCard={() => {}}
-                    onAddQuestion={() => {}}
-                    onEditQuestion={() => {}}
                   />
                 </QuestionStoreContext>
               </LocusStoreContext>
@@ -74,19 +72,17 @@ describe('RoomHubPage', () => {
     expect(screen.getByRole('button', { name: /^match/i })).toBeInTheDocument()
   })
 
-  it('disables Test until the room has questions', async () => {
+  it('keeps Test reachable even without questions (opens the questions & test page)', async () => {
     renderHub({ loci: [card('l1', 'a', 'A', 0)] })
     await screen.findByRole('heading', { name: 'Garden Room' })
-    expect(screen.getByRole('button', { name: /^test/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /^test/i })).toBeEnabled()
   })
 
-  it('shows the cards-and-questions editor inline (one scroll)', async () => {
+  it('shows the cards editor inline with its header (one scroll)', async () => {
     renderHub({ loci: [card('l1', 'a', 'A', 0)] })
     await screen.findByRole('heading', { name: 'Garden Room' })
 
-    expect(screen.getByRole('heading', { name: /cards & questions/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /cards · 1/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /questions · 0/i })).toBeInTheDocument()
+    expect(screen.getByText(/cards in this room/i)).toBeInTheDocument()
   })
 
   it('teaches the empty room instead of showing a blank deck', async () => {

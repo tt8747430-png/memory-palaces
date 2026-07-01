@@ -1,4 +1,3 @@
-import type { HTMLAttributes } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'motion/react'
 import {
@@ -6,7 +5,6 @@ import {
   Copy,
   Flag,
   GraduationCap,
-  GripVertical,
   Lightbulb,
   MapPin,
   Pencil,
@@ -25,28 +23,13 @@ import {
   SwipeRow,
 } from '@/shared/ui'
 
-/** Props that wire a row's grip to dnd-kit's drag activator. Present only while selecting
- * (reorder mode); absent otherwise (the row renders without a handle). */
+/** Props that wire a row to dnd-kit's drag activator. Present only while selecting (reorder
+ * mode); absent otherwise. The whole card is the activator — there is no visible grip. Typed
+ * as an open record (dnd-kit's attributes + listeners) so spreading onto a motion element
+ * never collides with motion's own gesture props. */
 export interface RowDragHandle {
   ref: (node: HTMLElement | null) => void
-  props: HTMLAttributes<HTMLButtonElement>
-}
-
-/** The left-edge grip a row shows in select mode. `self-stretch` spans the row's full height
- * so the glyph centres vertically against the whole card (not pinned to the first line);
- * `touch-none` hands the gesture to dnd-kit's pointer sensor instead of the scroller. */
-function DragHandle({ handle, label }: { handle: RowDragHandle; label: string }) {
-  return (
-    <button
-      ref={handle.ref}
-      type="button"
-      aria-label={label}
-      className="-ml-1 grid w-7 shrink-0 cursor-grab touch-none place-items-center self-stretch rounded-control text-muted-foreground active:cursor-grabbing"
-      {...handle.props}
-    >
-      <GripVertical className="size-5" aria-hidden />
-    </button>
-  )
+  props: Record<string, unknown>
 }
 
 export interface CardRowProps {
@@ -177,23 +160,31 @@ export function CardRow({
     },
   ]
 
+  // In reorder mode the whole card is the drag activator (no visible grip): a tap still
+  // toggles the pick (dnd-kit only starts the drag after real travel), and `touch-none`
+  // hands the touch gesture to the pointer sensor instead of the scroller.
+  const interaction = dragging
+    ? {}
+    : reorderable && dragHandle
+      ? { onClick: onToggleSelect, ...dragHandle.props }
+      : longPress
+
   const card = (
     <motion.div
+      ref={!dragging && reorderable && dragHandle ? dragHandle.ref : undefined}
       initial={dragging ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.97 }}
-      {...(dragging ? {} : longPress)}
+      {...interaction}
       className={cn(
         rowSurface,
         selected ? 'border-accent ring-2 ring-accent/25' : 'border-border',
         selectMode && 'cursor-pointer',
+        reorderable && !dragging && 'touch-none',
         dragging ? 'shadow-elevated' : 'shadow-rest',
       )}
     >
       <div className="flex items-start gap-3">
-        {reorderable && dragHandle ? (
-          <DragHandle handle={dragHandle} label={t('loci.row.reorder')} />
-        ) : null}
         {selectMode ? <SelectDot selected={selected} /> : null}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -327,23 +318,29 @@ export function QuestionRow({
     },
   ]
 
+  // Whole-card drag activator in reorder mode — mirrors CardRow (no visible grip).
+  const interaction = dragging
+    ? {}
+    : reorderable && dragHandle
+      ? { onClick: onToggleSelect, ...dragHandle.props }
+      : longPress
+
   const card = (
     <motion.div
+      ref={!dragging && reorderable && dragHandle ? dragHandle.ref : undefined}
       initial={dragging ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.97 }}
-      {...(dragging ? {} : longPress)}
+      {...interaction}
       className={cn(
         rowSurface,
         selected ? 'border-accent ring-2 ring-accent/25' : 'border-border',
         selectMode && 'cursor-pointer',
+        reorderable && !dragging && 'touch-none',
         dragging ? 'shadow-elevated' : 'shadow-rest',
       )}
     >
       <div className="flex items-start gap-3">
-        {reorderable && dragHandle ? (
-          <DragHandle handle={dragHandle} label={t('loci.row.reorder')} />
-        ) : null}
         {selectMode ? <SelectDot selected={selected} /> : null}
         <div className="min-w-0 flex-1">
           <div className="mb-2 flex items-center gap-2">

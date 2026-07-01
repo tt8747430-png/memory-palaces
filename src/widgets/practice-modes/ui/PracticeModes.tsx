@@ -12,6 +12,9 @@ export interface PracticeModesProps {
   onVerse?: () => void
   onMatch?: () => void
   onTest?: () => void
+  /** Keep the Test tile enabled even with no questions — used where it opens the questions
+   * page (author + start) rather than launching the quiz directly. */
+  alwaysEnableTest?: boolean
 }
 
 /** The practice-mode tiles (Verses / Match / Test) shared by the room hub and palace
@@ -24,6 +27,7 @@ export function PracticeModes({
   onVerse,
   onMatch,
   onTest,
+  alwaysEnableTest = false,
 }: PracticeModesProps) {
   const { t } = useTranslation()
   return (
@@ -55,10 +59,12 @@ export function PracticeModes({
             ? t(questionCount === 1 ? 'practice.testSubOne' : 'practice.testSubOther', {
                 count: questionCount,
               })
-            : t('practice.testEmpty')
+            : alwaysEnableTest
+              ? t('practice.testManage')
+              : t('practice.testEmpty')
         }
         onClick={onTest}
-        disabled={questionCount === 0}
+        disabled={!alwaysEnableTest && questionCount === 0}
       />
     </div>
   )

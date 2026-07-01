@@ -164,18 +164,23 @@ export function ImportRoomsSheet({
           <div className="flex flex-col gap-2.5 pb-2">
             <ImportRow
               icon={<BookOpen className="size-5" aria-hidden />}
+              tone="brand"
               title={t('importRooms.verses')}
               subtitle={t('importRooms.versesSub')}
               onClick={() => setStep('verses')}
             />
             <ImportRow
               icon={<FileText className="size-5" aria-hidden />}
+              tone="accent"
+              badge="CSV · TSV"
               title={t('importRooms.deck')}
               subtitle={t('importRooms.deckSub')}
               onClick={() => pickFile('.txt,.tsv,.csv', 'deck')}
             />
             <ImportRow
               icon={<Landmark className="size-5" aria-hidden />}
+              tone="positive"
+              badge="JSON"
               title={t('importRooms.palaceFile')}
               subtitle={t('importRooms.palaceFileSub')}
               onClick={() => pickFile('.json', 'palace')}

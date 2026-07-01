@@ -15,6 +15,7 @@ export const ROUTES = {
   roomHub: '/rooms/$roomId',
   roomCardNew: '/rooms/$roomId/cards/new',
   roomCardEdit: '/rooms/$roomId/cards/$cardId',
+  roomQuestions: '/rooms/$roomId/questions',
   roomQuestionNew: '/rooms/$roomId/questions/new',
   roomQuestionEdit: '/rooms/$roomId/questions/$questionId',
   roomStudy: '/rooms/$roomId/study',
