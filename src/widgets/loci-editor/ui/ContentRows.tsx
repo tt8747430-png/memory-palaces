@@ -160,9 +160,9 @@ export function CardRow({
     },
   ]
 
-  // In reorder mode the whole card is the drag activator (no visible grip): a tap still
-  // toggles the pick (dnd-kit only starts the drag after real travel), and `touch-none`
-  // hands the touch gesture to the pointer sensor instead of the scroller.
+  // In reorder mode the whole card is the drag activator (no visible grip): a tap toggles the
+  // pick, a press-and-hold starts the drag (the touch sensor's delay), and `touch-pan-y` keeps
+  // the list scrollable until that hold — so a swipe scrolls instead of grabbing the card.
   const interaction = dragging
     ? {}
     : reorderable && dragHandle
@@ -180,7 +180,7 @@ export function CardRow({
         rowSurface,
         selected ? 'border-accent ring-2 ring-accent/25' : 'border-border',
         selectMode && 'cursor-pointer',
-        reorderable && !dragging && 'touch-none',
+        reorderable && !dragging && 'touch-pan-y',
         dragging ? 'shadow-elevated' : 'shadow-rest',
       )}
     >
@@ -318,7 +318,8 @@ export function QuestionRow({
     },
   ]
 
-  // Whole-card drag activator in reorder mode — mirrors CardRow (no visible grip).
+  // Whole-card drag activator in reorder mode — mirrors CardRow (no visible grip): tap toggles,
+  // press-and-hold drags, `touch-pan-y` keeps the list scrollable until the hold.
   const interaction = dragging
     ? {}
     : reorderable && dragHandle
@@ -336,7 +337,7 @@ export function QuestionRow({
         rowSurface,
         selected ? 'border-accent ring-2 ring-accent/25' : 'border-border',
         selectMode && 'cursor-pointer',
-        reorderable && !dragging && 'touch-none',
+        reorderable && !dragging && 'touch-pan-y',
         dragging ? 'shadow-elevated' : 'shadow-rest',
       )}
     >

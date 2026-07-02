@@ -5,21 +5,16 @@ import {
   type DragEndEvent,
   DragOverlay,
   type DragStartEvent,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
 } from '@dnd-kit/core'
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
 import {
   arrayMove,
   SortableContext,
-  sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { cn } from '@/shared/lib'
+import { cn, useSortableSensors } from '@/shared/lib'
 import type { RowDragHandle } from './ContentRows'
 
 /** A non-interactive grip binding for the lifted overlay clone: it renders the same grip and
@@ -72,10 +67,7 @@ export function ReorderableList<T extends { id: string }>({
   renderItem: (item: T, dragHandle?: RowDragHandle, dragging?: boolean) => ReactNode
 }) {
   const [activeId, setActiveId] = useState<string | null>(null)
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  )
+  const sensors = useSortableSensors()
 
   if (!reorderable) return <>{items.map((item) => renderItem(item))}</>
 

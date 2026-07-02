@@ -7,16 +7,11 @@ import {
   type DragEndEvent,
   DragOverlay,
   type DragStartEvent,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
 } from '@dnd-kit/core'
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
 import {
   arrayMove,
   SortableContext,
-  sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
@@ -31,7 +26,7 @@ import {
   RotateCcw,
   Trash2,
 } from 'lucide-react'
-import { cn, useLongPress } from '@/shared/lib'
+import { cn, useLongPress, useSortableSensors } from '@/shared/lib'
 import type { SwipeConfig } from '@/shared/config/swipe'
 import {
   buildSwipeActions,
@@ -117,10 +112,7 @@ export function RoomList({
   useEffect(() => setItems(rooms), [rooms])
   const [activeId, setActiveId] = useState<string | null>(null)
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  )
+  const sensors = useSortableSensors()
 
   const handleDragEnd = (event: DragEndEvent) => {
     setActiveId(null)
@@ -355,9 +347,9 @@ function RoomCard({
         tabIndex={0}
         ref={selectMode && !dragging ? handleRef : undefined}
         whileTap={dragging ? undefined : { scale: 0.99 }}
-        // In select mode the whole card is the drag activator (no visible grip): a tap still
-        // toggles the pick — dnd-kit only starts the drag after real travel — and
-        // `touch-none` hands the touch gesture to the pointer sensor, not the scroller.
+        // In select mode the whole card is the drag activator (no visible grip): a tap toggles
+        // the pick, a press-and-hold starts the drag (the touch sensor's delay), and
+        // `touch-pan-y` keeps the list scrollable until that hold.
         {...(selectMode || dragging
           ? { onClick: onToggleSelect, ...(dragging ? {} : handleProps) }
           : press)}
@@ -375,7 +367,7 @@ function RoomCard({
         className={cn(
           'block w-full cursor-pointer rounded-card bg-card p-3.5 text-left shadow-rest',
           !selectMode && 'pr-12',
-          selectMode && !dragging && 'touch-none',
+          selectMode && !dragging && 'touch-pan-y',
           selected && 'ring-2 ring-primary',
         )}
       >

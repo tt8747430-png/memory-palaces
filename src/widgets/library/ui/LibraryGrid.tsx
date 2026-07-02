@@ -8,16 +8,11 @@ import {
   type DragEndEvent,
   DragOverlay,
   type DragStartEvent,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
 } from '@dnd-kit/core'
 import {
   arrayMove,
   rectSortingStrategy,
   SortableContext,
-  sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
@@ -32,7 +27,7 @@ import {
   Settings2,
   Trash2,
 } from 'lucide-react'
-import { cn, useLongPress } from '@/shared/lib'
+import { cn, useLongPress, useSortableSensors } from '@/shared/lib'
 import type { SwipeConfig } from '@/shared/config/swipe'
 import { folderKey, palaceKey, parseLibraryKey } from '../lib/library-keys'
 import {
@@ -200,12 +195,10 @@ export function LibraryGrid({
     setFileTarget(value)
   }
 
-  // Reorder lives only in select mode, so the drag starts on real travel (a grip pull or a
-  // press-drag), never on a hold — a hold is reserved for entering select mode.
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  )
+  // Reorder lives only in select mode: there a tap toggles the pick and a press-and-hold starts
+  // the drag (see useSortableSensors). The 400 ms long-press that *enters* select mode is a
+  // different, earlier gesture, so the two never collide.
+  const sensors = useSortableSensors()
 
   const flashReceive = (folderId: string) => {
     setReceivingId(folderId)
@@ -529,9 +522,9 @@ function FolderCard({
       <div
         role="button"
         tabIndex={0}
-        // In select mode the whole row is the drag activator (no visible grip): a tap still
-        // toggles the pick — dnd-kit only starts a drag after real travel — and `touch-none`
-        // hands the touch gesture to the pointer sensor, not the scroller.
+        // In select mode the whole row is the drag activator (no visible grip): a tap toggles
+        // the pick, a press-and-hold starts the drag (the touch sensor's delay), and
+        // `touch-pan-y` keeps the list scrollable until that hold.
         {...(selectMode || dragging
           ? {
               onClick: onToggleSelect,
@@ -549,7 +542,7 @@ function FolderCard({
         className={cn(
           'relative flex w-full cursor-pointer items-center gap-3 rounded-card bg-card p-3 text-left shadow-rest',
           !selectMode && 'pr-12',
-          selectMode && 'touch-none',
+          selectMode && 'touch-pan-y',
           selectRing,
         )}
       >
@@ -643,7 +636,7 @@ function FolderCard({
         aria-label={t('palaces.openFolderLabel', { name: folder.name })}
         className={cn(
           'relative flex h-full w-full cursor-pointer flex-col gap-3 rounded-card bg-card p-3.5 text-left shadow-rest',
-          selectMode && 'touch-none',
+          selectMode && 'touch-pan-y',
           selectRing,
         )}
       >
@@ -807,7 +800,7 @@ function PalaceCard({
             className={cn(
               'flex w-full cursor-pointer items-center gap-3 rounded-card bg-card p-3 text-left shadow-rest',
               !selectMode && 'pr-12',
-              selectMode && 'touch-none',
+              selectMode && 'touch-pan-y',
               ring,
             )}
           >
@@ -874,7 +867,7 @@ function PalaceCard({
         aria-label={t('palaces.openLabel', { name: item.name })}
         className={cn(
           'block w-full cursor-pointer overflow-hidden rounded-card bg-card text-left shadow-rest',
-          selectMode && 'touch-none',
+          selectMode && 'touch-pan-y',
           ring,
         )}
       >
