@@ -298,18 +298,22 @@ export function RoomQuestionsPage({
         onConfirm={confirmBulkDelete}
       />
 
-      <SpeedDial
-        label={t('questions.addQuestion')}
-        className="bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+0.75rem)]"
-        actions={[
-          {
-            id: 'question',
-            label: t('questions.addQuestion'),
-            icon: <Plus className="size-5" aria-hidden />,
-            onSelect: onAddQuestion,
-          },
-        ]}
-      />
+      {/* Hidden while selecting, where the bulk bar owns the bottom of the screen (otherwise
+          the dial overlaps the bar's trailing action). */}
+      {!selectMode ? (
+        <SpeedDial
+          label={t('questions.addQuestion')}
+          className="bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+0.75rem)]"
+          actions={[
+            {
+              id: 'question',
+              label: t('questions.addQuestion'),
+              icon: <Plus className="size-5" aria-hidden />,
+              onSelect: onAddQuestion,
+            },
+          ]}
+        />
+      ) : null}
     </AppScreen>
   )
 }

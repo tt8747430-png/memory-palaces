@@ -2,6 +2,7 @@ import {
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -97,6 +98,7 @@ export function SwipeRow({
   const [open, setOpen] = useState<Side | null>(null)
   const [armed, setArmed] = useState<Side | null>(null)
   const wasArmed = useRef<Side | null>(null)
+  const rootRef = useRef<HTMLDivElement>(null)
 
   const hasLeading = leading.length > 0
   const hasTrailing = trailing.length > 0
@@ -154,17 +156,20 @@ export function SwipeRow({
     id: number
   } | null>(null)
 
-  const settle = (to: number) => {
-    if (reduce) x.set(to)
-    else animate(x, to, SETTLE_SPRING)
-  }
+  const settle = useCallback(
+    (to: number) => {
+      if (reduce) x.set(to)
+      else animate(x, to, SETTLE_SPRING)
+    },
+    [reduce, x],
+  )
 
-  const close = () => {
+  const close = useCallback(() => {
     setOpen(null)
     setArmed(null)
     wasArmed.current = null
     settle(0)
-  }
+  }, [settle])
 
   // A disabled row (drag in flight, select mode) can't be left resting open.
   useEffect(() => {
@@ -175,6 +180,20 @@ export function SwipeRow({
       x.set(0)
     }
   }, [disabled, open, x])
+
+  // A row left resting open snaps shut the moment the user touches anything outside it — a tap
+  // elsewhere, another row, the toolbar — so an opened tray never lingers behind unrelated
+  // interaction. Only armed while actually open, and it never blocks the outside gesture (no
+  // preventDefault): it just closes in the capture phase.
+  useEffect(() => {
+    if (!open) return
+    const closeOnOutside = (event: PointerEvent) => {
+      const root = rootRef.current
+      if (root && !root.contains(event.target as Node)) close()
+    }
+    document.addEventListener('pointerdown', closeOnOutside, true)
+    return () => document.removeEventListener('pointerdown', closeOnOutside, true)
+  }, [open, close])
 
   // 1:1 reveal out to the commit point (tray + a short over-pull), then a soft rubber-band so
   // a hard fling can't run the row off-screen. Pulling the wrong way (no actions that side)
@@ -302,6 +321,7 @@ export function SwipeRow({
 
   return (
     <div
+      ref={rootRef}
       className={cn(
         // Clip the row horizontally so a card dragged past its edge can't widen the scroll
         // container (which made the whole page pannable and let a slow swipe get hijacked by

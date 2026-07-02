@@ -468,7 +468,17 @@ export function PalacesPage({
       }
       if (sort !== 'manual') setSort('manual')
     },
-    onFilePalace: (palaceId, targetFolderId) => filePalaceInto(palaceId, targetFolderId),
+    onFilePalace: (palaceId, targetFolderId) => {
+      filePalaceInto(palaceId, targetFolderId)
+      // Filing consumes the pick: the palace leaves this level for the folder, so it must not
+      // linger in the selection (a stale id inflates the count and can't be unpicked from here).
+      setSelectedIds((prev) => {
+        if (!prev.has(palaceId)) return prev
+        const next = new Set(prev)
+        next.delete(palaceId)
+        return next
+      })
+    },
   }
 
   const toggleSelect = (id: string) =>

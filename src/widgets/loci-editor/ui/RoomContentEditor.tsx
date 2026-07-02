@@ -695,24 +695,28 @@ export function RoomContentEditor({
         onConfirm={confirmBulkDelete}
       />
 
-      <SpeedDial
-        label={t('loci.quickActions')}
-        className="bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+0.75rem)]"
-        actions={[
-          {
-            id: 'card',
-            label: t('loci.addCard'),
-            icon: <Plus className="size-5" aria-hidden />,
-            onSelect: onAddCard,
-          },
-          {
-            id: 'import',
-            label: t('loci.transfer.importShort'),
-            icon: <Upload className="size-5" aria-hidden />,
-            onSelect: () => setTransferOpen(true),
-          },
-        ]}
-      />
+      {/* The add/import affordance. Hidden while selecting, where the bulk bar owns the bottom
+          of the screen (otherwise the dial overlaps the bar's trailing action). */}
+      {!selectMode ? (
+        <SpeedDial
+          label={t('loci.quickActions')}
+          className="bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+0.75rem)]"
+          actions={[
+            {
+              id: 'card',
+              label: t('loci.addCard'),
+              icon: <Plus className="size-5" aria-hidden />,
+              onSelect: onAddCard,
+            },
+            {
+              id: 'import',
+              label: t('loci.transfer.importShort'),
+              icon: <Upload className="size-5" aria-hidden />,
+              onSelect: () => setTransferOpen(true),
+            },
+          ]}
+        />
+      ) : null}
 
       {/* Full-screen card browser — opened by tapping a card row; swipe/flip through the
           (currently visible) deck. Edit closes it and opens the editor; delete routes through
