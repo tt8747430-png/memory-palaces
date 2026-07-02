@@ -39,11 +39,15 @@
     --color-rating: var(--rating);
     --color-favorite: var(--favorite);
 
-    /* Radius scale (keys reference primitives to avoid name collisions) */
+    /* Radius scale (keys reference primitives to avoid name collisions). Every role a
+       `rounded-*` utility references must be registered here — `@theme` is what generates the
+       utility; a role defined only in tokens.css sets the variable but no class (that omission
+       left `rounded-pill` producing square corners on every pill, tag, and chip). */
     --radius-control: var(--p-radius-sm);
     --radius-card: var(--p-radius-md);
     --radius-card-featured: var(--p-radius-xl);
     --radius-nav: var(--p-radius-nav);
+    --radius-pill: var(--p-radius-pill);
 }
 
 @layer base {

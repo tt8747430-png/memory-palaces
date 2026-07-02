@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 import {
   closestCenter,
   DndContext,
@@ -67,11 +67,17 @@ export function ReorderableList<T extends { id: string }>({
   renderItem: (item: T, dragHandle?: RowDragHandle, dragging?: boolean) => ReactNode
 }) {
   const [activeId, setActiveId] = useState<string | null>(null)
+  // Optimistic order: seeded from props, reordered in place on drop, reconciled when the
+  // persisted order flows back — mirrors the library and rooms lists. Without it the row snaps
+  // back to the stale prop order for a frame between the drop and the async store write (the
+  // flicker); rendering the dropped order right away lets the card settle straight into place.
+  const [ordered, setOrdered] = useState(items)
+  useEffect(() => setOrdered(items), [items])
   const sensors = useSortableSensors()
 
   if (!reorderable) return <>{items.map((item) => renderItem(item))}</>
 
-  const active = activeId ? items.find((item) => item.id === activeId) : undefined
+  const active = activeId ? ordered.find((item) => item.id === activeId) : undefined
 
   return (
     <DndContext
@@ -83,16 +89,18 @@ export function ReorderableList<T extends { id: string }>({
         setActiveId(null)
         const { active: from, over } = event
         if (!over || from.id === over.id) return
-        const fromIndex = items.findIndex((item) => item.id === from.id)
-        const toIndex = items.findIndex((item) => item.id === over.id)
+        const fromIndex = ordered.findIndex((item) => item.id === from.id)
+        const toIndex = ordered.findIndex((item) => item.id === over.id)
         if (fromIndex < 0 || toIndex < 0) return
-        onReorder(arrayMove(items, fromIndex, toIndex).map((item) => item.id))
+        const next = arrayMove(ordered, fromIndex, toIndex)
+        setOrdered(next)
+        onReorder(next.map((item) => item.id))
       }}
       onDragCancel={() => setActiveId(null)}
     >
-      <SortableContext items={items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
+      <SortableContext items={ordered.map((item) => item.id)} strategy={verticalListSortingStrategy}>
         <div className="flex flex-col gap-3">
-          {items.map((item) => (
+          {ordered.map((item) => (
             <SortableContentRow key={item.id} id={item.id}>
               {(handle) => renderItem(item, handle)}
             </SortableContentRow>

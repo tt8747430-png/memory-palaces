@@ -628,11 +628,11 @@ export function RoomContentEditor({
             <div className="flex flex-wrap gap-2">
               {(
                 [
-                  { key: 'new', label: t('loci.filter.new') },
-                  { key: 'learning', label: t('loci.filter.learning') },
-                  { key: 'known', label: t('loci.filter.known') },
+                  { key: 'new', label: t('loci.filter.new'), dot: 'bg-[var(--text-faint)]' },
+                  { key: 'learning', label: t('loci.filter.learning'), dot: 'bg-accent' },
+                  { key: 'known', label: t('loci.filter.known'), dot: 'bg-success' },
                 ] as const
-              ).map(({ key, label }) => {
+              ).map(({ key, label, dot }) => {
                 const on = draftMaturity.has(key)
                 return (
                   <button
@@ -641,12 +641,28 @@ export function RoomContentEditor({
                     aria-pressed={on}
                     onClick={() => toggleDraftMaturity(key)}
                     className={cn(
-                      'inline-flex items-center gap-2 rounded-pill px-3.5 py-2 text-(length:--p-text-label) font-semibold transition-transform active:scale-[0.97]',
-                      on ? 'bg-primary text-primary-foreground' : 'bg-secondary/50 text-heading',
+                      'inline-flex items-center gap-2 rounded-pill py-2 pl-3 pr-2 text-(length:--p-text-label) font-semibold transition-[background-color,box-shadow,transform] duration-150 active:scale-[0.96]',
+                      on
+                        ? 'bg-primary text-primary-foreground shadow-interactive'
+                        : 'bg-secondary/40 text-heading ring-1 ring-inset ring-primary/10',
                     )}
                   >
-                    {label}
-                    <span className="tabular-nums opacity-70">{maturity[key]}</span>
+                    <span
+                      aria-hidden
+                      className={cn(
+                        'size-2.5 rounded-full transition-colors',
+                        on ? 'bg-primary-foreground' : dot,
+                      )}
+                    />
+                    <span>{label}</span>
+                    <span
+                      className={cn(
+                        'grid h-5 min-w-5 place-items-center rounded-full px-1.5 text-(length:--p-text-tiny) font-bold tabular-nums transition-colors',
+                        on ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-card text-muted-foreground',
+                      )}
+                    >
+                      {maturity[key]}
+                    </span>
                   </button>
                 )
               })}
@@ -656,9 +672,14 @@ export function RoomContentEditor({
             <p className="mb-2 px-1 text-(length:--p-text-label) font-bold uppercase tracking-wide text-muted-foreground">
               {t('loci.filter.status')}
             </p>
-            <label className="flex items-center justify-between gap-3 rounded-card border border-border bg-card px-4 py-3">
-              <span className="inline-flex items-center gap-2 text-(length:--p-text-body) font-semibold text-heading">
-                <Flag className="size-4 text-[var(--warning-foreground)]" aria-hidden />
+            <label className="flex items-center justify-between gap-3 rounded-card bg-secondary/40 px-3.5 py-3">
+              <span className="inline-flex items-center gap-2.5 text-(length:--p-text-body) font-semibold text-heading">
+                <span
+                  aria-hidden
+                  className="grid size-8 shrink-0 place-items-center rounded-full bg-(--warning-surface)"
+                >
+                  <Flag className="size-4 text-(--warning-foreground)" aria-hidden />
+                </span>
                 {t('loci.filter.flagged')}
               </span>
               <Switch
