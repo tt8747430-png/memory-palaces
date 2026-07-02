@@ -6,7 +6,14 @@ import {
   useRef,
   useState,
 } from 'react'
-import { animate, motion, useMotionValue, useReducedMotion, useTransform } from 'motion/react'
+import {
+  animate,
+  motion,
+  type MotionValue,
+  useMotionValue,
+  useReducedMotion,
+  useTransform,
+} from 'motion/react'
 import type { SwipeTone } from '@/shared/config/swipe'
 import { cn, impact } from '@/shared/lib'
 
@@ -100,6 +107,42 @@ export function SwipeRow({
 
   const leadingOpacity = useTransform(x, (v) => (v > 0 ? 1 : 0))
   const trailingOpacity = useTransform(x, (v) => (v < 0 ? 1 : 0))
+
+  // Arm progress per side (0 → the secondary actions are still parked on the card side; 1 → they
+  // have collapsed and the edge action owns the whole tray). Springs on the commit so the edge
+  // swells smoothly into the freed space, in step with the secondaries folding away.
+  const leadingArm = useMotionValue(0)
+  const trailingArm = useMotionValue(0)
+  useEffect(() => {
+    const target = armed === 'leading' ? 1 : 0
+    if (reduce) {
+      leadingArm.set(target)
+      return
+    }
+    const controls = animate(leadingArm, target, ARM_SPRING)
+    return () => controls.stop()
+  }, [armed, reduce, leadingArm])
+  useEffect(() => {
+    const target = armed === 'trailing' ? 1 : 0
+    if (reduce) {
+      trailingArm.set(target)
+      return
+    }
+    const controls = animate(trailingArm, target, ARM_SPRING)
+    return () => controls.stop()
+  }, [armed, reduce, trailingArm])
+
+  // The edge action stays flush with the card: it fills the revealed strip minus whatever width
+  // the (not-yet-collapsed) secondary actions still occupy on the card side. So it begins
+  // stretching the instant a gap would open past the resting tray — not only at the commit point.
+  const leadingEdgeFill = useTransform([x, leadingArm], ([v, arm]: number[]) => {
+    const siblings = Math.max(0, leading.length - 1) * ACTION_WIDTH
+    return Math.max(ACTION_WIDTH, Math.max(0, v!) - siblings * (1 - arm!))
+  })
+  const trailingEdgeFill = useTransform([x, trailingArm], ([v, arm]: number[]) => {
+    const siblings = Math.max(0, trailing.length - 1) * ACTION_WIDTH
+    return Math.max(ACTION_WIDTH, Math.max(0, -v!) - siblings * (1 - arm!))
+  })
 
   // The gesture's start point plus the row's offset at press — so tracking continues from
   // wherever the row already rests, without a separate `base`/open bookkeeping that can desync.
@@ -258,22 +301,38 @@ export function SwipeRow({
   }
 
   return (
-    <div className={cn('relative isolate', className)}>
+    <div
+      className={cn(
+        // Clip the row horizontally so a card dragged past its edge can't widen the scroll
+        // container (which made the whole page pannable and let a slow swipe get hijacked by
+        // the native pan). A clip-margin keeps the resting card's soft side shadow intact.
+        'relative isolate overflow-x-clip [overflow-clip-margin:16px]',
+        className,
+      )}
+    >
       {hasLeading ? (
         <motion.div
           aria-hidden
           style={{ opacity: leadingOpacity }}
           className="absolute inset-y-0 left-0 -z-10 flex w-full justify-start overflow-hidden"
         >
-          {leading.map((action, index) => (
-            <TrayButton
-              key={action.id}
-              action={action}
-              expandWidth={leadingWidth}
-              mode={armed === 'leading' ? (index === 0 ? 'expanded' : 'dim') : 'rest'}
-              onFire={() => fireFromTray(action)}
-            />
-          ))}
+          {leading.map((action, index) =>
+            index === 0 ? (
+              <TrayButton
+                key={action.id}
+                action={action}
+                fillWidth={leadingEdgeFill}
+                onFire={() => fireFromTray(action)}
+              />
+            ) : (
+              <TrayButton
+                key={action.id}
+                action={action}
+                collapsed={armed === 'leading'}
+                onFire={() => fireFromTray(action)}
+              />
+            ),
+          )}
         </motion.div>
       ) : null}
 
@@ -283,21 +342,23 @@ export function SwipeRow({
           style={{ opacity: trailingOpacity }}
           className="absolute inset-y-0 right-0 -z-10 flex w-full justify-end overflow-hidden"
         >
-          {trailing.map((action, index) => (
-            <TrayButton
-              key={action.id}
-              action={action}
-              expandWidth={trailingWidth}
-              mode={
-                armed === 'trailing'
-                  ? index === trailing.length - 1
-                    ? 'expanded'
-                    : 'dim'
-                  : 'rest'
-              }
-              onFire={() => fireFromTray(action)}
-            />
-          ))}
+          {trailing.map((action, index) =>
+            index === trailing.length - 1 ? (
+              <TrayButton
+                key={action.id}
+                action={action}
+                fillWidth={trailingEdgeFill}
+                onFire={() => fireFromTray(action)}
+              />
+            ) : (
+              <TrayButton
+                key={action.id}
+                action={action}
+                collapsed={armed === 'trailing'}
+                onFire={() => fireFromTray(action)}
+              />
+            ),
+          )}
         </motion.div>
       ) : null}
 
@@ -318,32 +379,41 @@ export function SwipeRow({
 /**
  * One tray action, iOS-Mail style: a saturated rounded-rectangle button with the glyph and its
  * label stacked and centred inside it, inset from the card so the fills read as floating pills.
- * `dim` collapses + fades the secondary actions when a full swipe arms the edge one; `expanded`
- * swells the edge action to fill the whole tray, so its imminent firing is unmistakable.
+ *
+ * The EDGE action (the one a full swipe fires) is given a live `fillWidth`: it tracks the reveal
+ * and stays flush against the card the instant a gap would open past the resting tray, right
+ * through the commit — capped at the tray via `max-w-full`. A SECONDARY action instead takes
+ * `collapsed`, folding away behind the card once the edge action arms.
  */
 function TrayButton({
   action,
-  mode,
-  expandWidth,
+  fillWidth,
+  collapsed = false,
   onFire,
 }: {
   action: SwipeAction
-  mode: 'rest' | 'dim' | 'expanded'
-  /** Full tray width the edge action swells to when armed. */
-  expandWidth: number
+  /** Given to the edge action only: its live flush-fill width (rest → stretch → armed-full). */
+  fillWidth?: MotionValue<number>
+  /** Secondary actions collapse behind the card once the edge action arms. */
+  collapsed?: boolean
   onFire: () => void
 }) {
   const reduce = useReducedMotion()
-  const width = mode === 'expanded' ? expandWidth : mode === 'dim' ? 0 : ACTION_WIDTH
+  const isEdge = fillWidth !== undefined
   return (
     <motion.button
       type="button"
       tabIndex={-1}
       aria-label={action.label}
       onClick={onFire}
-      animate={{ width, opacity: mode === 'dim' ? 0 : 1 }}
+      style={isEdge ? { width: fillWidth } : undefined}
+      animate={
+        isEdge
+          ? { opacity: 1 }
+          : { width: collapsed ? 0 : ACTION_WIDTH, opacity: collapsed ? 0 : 1 }
+      }
       transition={reduce ? { duration: 0 } : ARM_SPRING}
-      className="h-full shrink-0 overflow-hidden p-1"
+      className="h-full max-w-full shrink-0 overflow-hidden p-1"
     >
       <span
         className={cn(
