@@ -459,12 +459,16 @@ function WordsMode({ text }: { text: string }) {
 
 function InitialsMode({ text, wordSpaces }: { text: string; wordSpaces: boolean }) {
   const { t } = useTranslation()
+  const reduce = useReducedMotion()
   const tokens = useMemo(() => tokenizeWords(text), [text])
   const [revealed, setRevealed] = useState(false)
+  // The single cue currently peeked open (its full word floats above it). Tapping a cue toggles
+  // it; tapping another moves the peek; tapping empty space or revealing the whole text clears it.
+  const [peek, setPeek] = useState<number | null>(null)
 
   return (
     <div className={PANEL}>
-      <div className={SCROLL}>
+      <div className={SCROLL} onClick={() => setPeek(null)}>
         <div className="flex min-h-full items-center justify-center px-6 py-6">
           {revealed ? (
             <p className="allow-select text-balance text-center text-[clamp(16px,4.4vw,21px)] font-medium leading-relaxed text-heading">
@@ -486,8 +490,21 @@ function InitialsMode({ text, wordSpaces }: { text: string; wordSpaces: boolean 
                   )
                 }
                 const { lead, initial, hidden, trail } = wordInitial(token)
+                const open = peek === i
                 return (
-                  <span key={i} className="whitespace-nowrap">
+                  <button
+                    key={i}
+                    type="button"
+                    aria-label={t('verse.revealWord', { word: token })}
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      setPeek((current) => (current === i ? null : i))
+                    }}
+                    className={cn(
+                      'relative -mx-0.5 whitespace-nowrap rounded-control px-0.5 transition-colors',
+                      open ? 'bg-primary/10' : 'active:bg-primary/5',
+                    )}
+                  >
                     {lead}
                     <span className="font-bold">{initial}</span>
                     {wordSpaces && hidden > 0 ? (
@@ -498,7 +515,24 @@ function InitialsMode({ text, wordSpaces }: { text: string; wordSpaces: boolean 
                       />
                     ) : null}
                     {trail}
-                  </span>
+                    <AnimatePresence>
+                      {open ? (
+                        <motion.span
+                          initial={reduce ? { opacity: 0 } : { opacity: 0, y: 4, scale: 0.9 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={reduce ? { opacity: 0 } : { opacity: 0, y: 4, scale: 0.9 }}
+                          transition={{ type: 'spring', stiffness: 520, damping: 32 }}
+                          className="absolute bottom-full left-1/2 z-20 mb-1.5 max-w-[70vw] -translate-x-1/2 rounded-control bg-primary px-2.5 py-1 text-[length:var(--p-text-label)] font-semibold text-primary-foreground shadow-elevated"
+                        >
+                          {token}
+                          <span
+                            aria-hidden
+                            className="absolute left-1/2 top-full size-2 -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-[2px] bg-primary"
+                          />
+                        </motion.span>
+                      ) : null}
+                    </AnimatePresence>
+                  </button>
                 )
               })}
             </p>
@@ -506,7 +540,14 @@ function InitialsMode({ text, wordSpaces }: { text: string; wordSpaces: boolean 
         </div>
       </div>
       <div className="px-5 pb-5">
-        <Button size="lg" className="w-full" onClick={() => setRevealed((r) => !r)}>
+        <Button
+          size="lg"
+          className="w-full"
+          onClick={() => {
+            setPeek(null)
+            setRevealed((r) => !r)
+          }}
+        >
           {revealed ? (
             <EyeOff className="size-5" aria-hidden />
           ) : (

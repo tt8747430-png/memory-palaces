@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { toast } from 'sonner'
-import { GraduationCap, RotateCcw, Search, Trash2 } from 'lucide-react'
+import { Search, Settings2 } from 'lucide-react'
 import {
   selectIsReady as selectPalacesReady,
   usePalaceStore,
@@ -28,19 +27,14 @@ import {
   usePreferencesStore,
   usePreferencesStoreApi,
 } from '@/entities/preferences'
-import { markRoomKnown, resetRoomSrs } from '@/features/locus'
-import { deleteRoom } from '@/features/room'
 import { setPreferences } from '@/features/preferences'
 import { studyOverview } from '@/shared/lib'
 import { RoomContentEditor } from '@/widgets/loci-editor'
 import { PracticeModes } from '@/widgets/practice-modes'
 import {
   AppScreen,
-  ConfirmDialog,
   IconButton,
-  OverflowMenuButton,
   ScreenHeader,
-  type SheetAction,
   StudyOverviewCard,
   TextField,
 } from '@/shared/ui'
@@ -48,6 +42,8 @@ import {
 export interface RoomHubPageProps {
   roomId: string
   onBack?: () => void
+  /** Open the room's settings page (rename, duplicate, reset, delete). */
+  onOpenSettings?: () => void
   /** Open the room's Study-cards session (the one flashcard surface). */
   onStudy?: () => void
   /** Launch the Match mini-game. */
@@ -59,8 +55,6 @@ export interface RoomHubPageProps {
   /** Open the full-screen card editor (add / edit). */
   onAddCard: () => void
   onEditCard: (cardId: string) => void
-  /** Navigate away after the room is deleted. */
-  onDeleted?: () => void
 }
 
 /** The room hub — one screen per room: a card preview, then the study overview, then the
@@ -69,13 +63,13 @@ export interface RoomHubPageProps {
 export function RoomHubPage({
   roomId,
   onBack,
+  onOpenSettings,
   onStudy,
   onMatch,
   onTest,
   onVerse,
   onAddCard,
   onEditCard,
-  onDeleted,
 }: RoomHubPageProps) {
   const { t } = useTranslation()
   const palaceStore = usePalaceStoreApi()
@@ -114,8 +108,6 @@ export function RoomHubPage({
   const setContentSort = (value: ContentSort) =>
     void setPreferences(prefStore, { contentSort: value })
 
-  const [resetOpen, setResetOpen] = useState(false)
-  const [deleteOpen, setDeleteOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [selectMode, setSelectMode] = useState(false)
@@ -155,32 +147,6 @@ export function RoomHubPage({
   }
 
   const hasLoci = loci.length > 0
-  const menuActions: SheetAction[] = [
-    {
-      id: 'mark-known',
-      label: t('roomHub.menu.markKnown'),
-      icon: <GraduationCap className="size-5" aria-hidden />,
-      disabled: !hasLoci,
-      onSelect: () => {
-        void markRoomKnown(locusStore, roomId)
-        toast.success(t('roomHub.toast.markedKnown'))
-      },
-    },
-    {
-      id: 'reset',
-      label: t('roomHub.menu.reset'),
-      icon: <RotateCcw className="size-5" aria-hidden />,
-      disabled: !hasLoci,
-      onSelect: () => setResetOpen(true),
-    },
-    {
-      id: 'delete',
-      label: t('roomHub.menu.delete'),
-      icon: <Trash2 className="size-5" aria-hidden />,
-      destructive: true,
-      onSelect: () => setDeleteOpen(true),
-    },
-  ]
 
   return (
     <AppScreen
@@ -214,7 +180,15 @@ export function RoomHubPage({
                     <Search className="size-5" aria-hidden />
                   </IconButton>
                 ) : null}
-                <OverflowMenuButton label={t('roomHub.menu.label')} actions={menuActions} />
+                {onOpenSettings ? (
+                  <IconButton
+                    variant="glass"
+                    aria-label={t('roomHub.settings')}
+                    onClick={onOpenSettings}
+                  >
+                    <Settings2 className="size-5" aria-hidden />
+                  </IconButton>
+                ) : null}
               </div>
             }
           />
@@ -261,36 +235,6 @@ export function RoomHubPage({
           />
         </section>
       </div>
-
-      <ConfirmDialog
-        open={resetOpen}
-        onOpenChange={setResetOpen}
-        icon={<RotateCcw className="size-6" aria-hidden />}
-        title={t('roomHub.resetConfirm.title')}
-        description={t('roomHub.resetConfirm.body')}
-        confirmLabel={t('roomHub.resetConfirm.confirm')}
-        cancelLabel={t('common.cancel')}
-        onConfirm={() => {
-          void resetRoomSrs(locusStore, roomId)
-          toast.success(t('roomHub.toast.reset'))
-        }}
-      />
-
-      <ConfirmDialog
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        destructive
-        icon={<Trash2 className="size-6" aria-hidden />}
-        title={t('roomHub.deleteConfirm.title', { title: room.title })}
-        description={t('roomHub.deleteConfirm.body')}
-        confirmLabel={t('roomHub.deleteConfirm.confirm')}
-        cancelLabel={t('roomHub.deleteConfirm.cancel')}
-        onConfirm={() => {
-          void deleteRoom(roomStore, roomId)
-          toast.success(t('roomHub.toast.deleted'))
-          onDeleted?.()
-        }}
-      />
     </AppScreen>
   )
 }

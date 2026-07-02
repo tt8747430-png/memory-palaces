@@ -13,6 +13,7 @@ export const ROUTES = {
   palaceVerse: '/palaces/$palaceId/verse',
   palaceQuiz: '/palaces/$palaceId/quiz',
   roomHub: '/rooms/$roomId',
+  roomSettings: '/rooms/$roomId/settings',
   roomCardNew: '/rooms/$roomId/cards/new',
   roomCardEdit: '/rooms/$roomId/cards/$cardId',
   roomQuestions: '/rooms/$roomId/questions',

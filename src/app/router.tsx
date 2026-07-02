@@ -15,6 +15,7 @@ import { PalacesPage } from '@/pages/palaces'
 import { PalaceDetailPage } from '@/pages/palace-detail'
 import { PalaceSettingsPage } from '@/pages/palace-settings'
 import { RoomHubPage } from '@/pages/room-hub'
+import { RoomSettingsPage } from '@/pages/room-settings'
 import { CardEditorPage } from '@/pages/card-editor'
 import { RoomQuestionsPage } from '@/pages/room-questions'
 import { QuestionEditorPage } from '@/pages/question-editor'
@@ -226,13 +227,13 @@ function RoomHubRoute() {
     <RoomHubPage
       roomId={roomId}
       onBack={back}
+      onOpenSettings={() => navigate({ to: ROUTES.roomSettings, params: { roomId } })}
       onStudy={() => navigate({ to: ROUTES.roomStudy, params: { roomId } })}
       onMatch={() => navigate({ to: ROUTES.roomMatch, params: { roomId } })}
       onTest={() => navigate({ to: ROUTES.roomQuestions, params: { roomId } })}
       onVerse={() => navigate({ to: ROUTES.roomVerse, params: { roomId } })}
       onAddCard={() => navigate({ to: ROUTES.roomCardNew, params: { roomId } })}
       onEditCard={(cardId) => navigate({ to: ROUTES.roomCardEdit, params: { roomId, cardId } })}
-      onDeleted={back}
     />
   )
 }
@@ -241,6 +242,25 @@ const roomHubRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.roomHub,
   component: RoomHubRoute,
+})
+
+function RoomSettingsRoute() {
+  const { roomId } = roomSettingsRoute.useParams()
+  const navigate = useNavigate()
+  const back = useBack(() => navigate({ to: ROUTES.roomHub, params: { roomId } }))
+  return (
+    <RoomSettingsPage
+      roomId={roomId}
+      onBack={back}
+      onExit={(palaceId) => navigate({ to: ROUTES.palaceDetail, params: { palaceId } })}
+    />
+  )
+}
+
+const roomSettingsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.roomSettings,
+  component: RoomSettingsRoute,
 })
 
 function RoomCardNewRoute() {
@@ -702,6 +722,7 @@ const routeTree = rootRoute.addChildren([
   palaceDetailRoute,
   palaceSettingsRoute,
   roomHubRoute,
+  roomSettingsRoute,
   roomCardNewRoute,
   roomCardEditRoute,
   roomQuestionsRoute,

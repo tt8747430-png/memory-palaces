@@ -43,6 +43,17 @@ describe('wordInitial', () => {
     expect(wordInitial('Hello,')).toEqual({ lead: '', initial: 'H', hidden: 4, trail: ',' })
     expect(wordInitial('"Word')).toEqual({ lead: '"', initial: 'W', hidden: 3, trail: '' })
   })
+
+  it('keeps intra-word hyphens and cues the first letter of each part', () => {
+    expect(wordInitial('s-a')).toEqual({ lead: '', initial: 's-a', hidden: 0, trail: '' })
+    expect(wordInitial('M-ati')).toEqual({ lead: '', initial: 'M-a', hidden: 2, trail: '' })
+    // Surrounding punctuation is still peeled off, connectors inside are not.
+    expect(wordInitial('„L-a.”')).toEqual({ lead: '„', initial: 'L-a', hidden: 0, trail: '.”' })
+  })
+
+  it('treats an apostrophe as an intra-word connector too', () => {
+    expect(wordInitial('într’un')).toEqual({ lead: '', initial: 'î’u', hidden: 4, trail: '' })
+  })
 })
 
 describe('normalizeWord', () => {

@@ -35,25 +35,39 @@ export function isVerseMarker(token: string): boolean {
 export interface WordInitial {
   /** Leading punctuation kept before the cue (e.g. an opening quote). */
   lead: string
-  /** The first letter/number shown as the recall cue. */
+  /** The recall cue: the first letter of each hyphen/apostrophe-joined part, with the
+   *  connectors kept intact — so "s-a" → "s-a" and "M-ati" → "M-a" rather than collapsing to a
+   *  single letter. */
   initial: string
-  /** Count of hidden trailing letters, for sizing the underline. */
+  /** Count of hidden letters across all parts, for sizing the underline. */
   hidden: number
   /** Trailing punctuation kept after the word. */
   trail: string
 }
 
-/** Break a word into its first-letter cue plus the punctuation around it. */
+/** Characters that join a word internally (hyphen, apostrophes) — kept in the cue so a
+ *  contraction/compound reads as itself instead of a lone letter. */
+const WORD_CONNECTORS = /([-'’‑])/u
+
+/** Break a word into its first-letter cue plus the punctuation around it. A word joined by a
+ *  hyphen or apostrophe keeps that connector and cues the first letter of each part. */
 export function wordInitial(token: string): WordInitial {
   const lead = token.match(/^[^\p{L}\p{N}]*/u)?.[0] ?? ''
   const trail = token.match(/[^\p{L}\p{N}]*$/u)?.[0] ?? ''
   const core = token.slice(lead.length, token.length - trail.length)
-  return {
-    lead,
-    initial: core.charAt(0),
-    hidden: Math.max(0, core.length - 1),
-    trail,
+
+  let initial = ''
+  let hidden = 0
+  for (const part of core.split(WORD_CONNECTORS)) {
+    if (part === '') continue
+    if (WORD_CONNECTORS.test(part)) {
+      initial += part
+    } else {
+      initial += part.charAt(0)
+      hidden += Math.max(0, part.length - 1)
+    }
   }
+  return { lead, initial, hidden, trail }
 }
 
 /** Lowercased, punctuation-free form for comparing typed words to the verse. */
