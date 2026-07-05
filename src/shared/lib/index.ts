@@ -98,18 +98,16 @@ export {
   type BadgeInput,
 } from './badges'
 export {
-  verseText,
   tokenizeWords,
-  isVerseMarker,
+  isReferenceMarker,
   wordInitial,
   normalizeWord,
   scramble,
-  typedVerseStatus,
-  type VerseSource,
+  typedRecallStatus,
   type WordInitial,
   type TypedWordStatus,
-  type VerseTypingResult,
-} from './verse'
+  type RecallTypingResult,
+} from './recall'
 export {
   getDueLoci,
   countDueLoci,

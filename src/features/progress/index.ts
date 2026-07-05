@@ -12,7 +12,6 @@ export {
   quizXp,
   XP_MATCH,
   XP_PER_CORRECT,
-  XP_VERSE,
   outcomeToReward,
   type SessionOutcome,
 } from './rewards'

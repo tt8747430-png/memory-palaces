@@ -1,27 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
-  isVerseMarker,
+  isReferenceMarker,
   normalizeWord,
   scramble,
   tokenizeWords,
-  typedVerseStatus,
-  verseText,
+  typedRecallStatus,
   wordInitial,
-} from './verse'
-
-describe('verseText', () => {
-  it('strips a leading reference that prefixes the verse body', () => {
-    expect(
-      verseText({ front: '3 John 1:1', back: '3 John 1:1 The elder unto the wellbeloved' }),
-    ).toBe('The elder unto the wellbeloved')
-  })
-
-  it('returns the body unchanged when it has no leading reference', () => {
-    expect(verseText({ front: 'John 3:16', back: 'For God so loved the world' })).toBe(
-      'For God so loved the world',
-    )
-  })
-})
+} from './recall'
 
 describe('tokenizeWords', () => {
   it('splits on whitespace and drops empties', () => {
@@ -29,12 +14,12 @@ describe('tokenizeWords', () => {
   })
 })
 
-describe('isVerseMarker', () => {
-  it('recognizes verse-number markers, not words', () => {
-    expect(isVerseMarker('15:1')).toBe(true)
-    expect(isVerseMarker('(1:1)')).toBe(true)
-    expect(isVerseMarker('3:16.')).toBe(true)
-    expect(isVerseMarker('world')).toBe(false)
+describe('isReferenceMarker', () => {
+  it('recognizes reference/number markers, not words', () => {
+    expect(isReferenceMarker('15:1')).toBe(true)
+    expect(isReferenceMarker('(1:1)')).toBe(true)
+    expect(isReferenceMarker('3:16.')).toBe(true)
+    expect(isReferenceMarker('world')).toBe(false)
   })
 })
 
@@ -73,11 +58,11 @@ describe('scramble', () => {
   })
 })
 
-describe('typedVerseStatus', () => {
-  const verse = 'For God so loved the world'
+describe('typedRecallStatus', () => {
+  const answer = 'For God so loved the world'
 
   it('marks every word pending before anything is typed', () => {
-    const result = typedVerseStatus(verse, '')
+    const result = typedRecallStatus(answer, '')
     expect(result.statuses).toEqual([
       'pending',
       'pending',
@@ -92,20 +77,20 @@ describe('typedVerseStatus', () => {
   })
 
   it('greens each word that matches in order, ignoring case and punctuation', () => {
-    const result = typedVerseStatus(verse, 'for GOD, so')
+    const result = typedRecallStatus(answer, 'for GOD, so')
     expect(result.statuses.slice(0, 3)).toEqual(['correct', 'correct', 'correct'])
     expect(result.statuses.slice(3)).toEqual(['pending', 'pending', 'pending'])
     expect(result.correct).toBe(3)
   })
 
   it('flags a wrong word at its position', () => {
-    const result = typedVerseStatus(verse, 'for cat so')
+    const result = typedRecallStatus(answer, 'for cat so')
     expect(result.statuses.slice(0, 3)).toEqual(['correct', 'wrong', 'correct'])
     expect(result.correct).toBe(2)
   })
 
-  it('is complete only when the whole verse is reproduced', () => {
-    expect(typedVerseStatus(verse, 'For God so loved the world.').complete).toBe(true)
-    expect(typedVerseStatus(verse, 'For God so loved the').complete).toBe(false)
+  it('is complete only when the whole answer is reproduced', () => {
+    expect(typedRecallStatus(answer, 'For God so loved the world.').complete).toBe(true)
+    expect(typedRecallStatus(answer, 'For God so loved the').complete).toBe(false)
   })
 })

@@ -5,11 +5,17 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUp,
+  Blocks,
   Check,
+  EyeOff,
+  Keyboard,
+  Repeat,
   RotateCcw,
   Shuffle,
   Volume2,
+  WholeWord,
 } from 'lucide-react'
+import type { StudyMode } from '@/entities/preferences'
 import { cn } from '@/shared/lib'
 import { Button, SegmentedControl, Sheet } from '@/shared/ui'
 import { type Scope, type ScopeCounts, scopesEqual } from '@/features/review'
@@ -27,12 +33,16 @@ export interface StudyOptionsSheetProps {
   onClose: () => void
   scope: Scope
   scopeCounts: ScopeCounts
+  mode: StudyMode
+  wordSpaces: boolean
   direction: StudyDirection
   shuffle: boolean
   textToSpeech: boolean
   canSpeak: boolean
   swipeConfig: FlashcardSwipeConfig
   onScope: (scope: Scope) => void
+  onMode: (mode: StudyMode) => void
+  onWordSpaces: (value: boolean) => void
   onDirection: (direction: StudyDirection) => void
   onShuffle: (value: boolean) => void
   onTextToSpeech: (value: boolean) => void
@@ -40,6 +50,38 @@ export interface StudyOptionsSheetProps {
   onRestart: () => void
   onFinish: () => void
 }
+
+type ModeMeta = { mode: StudyMode; icon: ReactNode; labelKey: string }
+
+const FLIP_MODE: ModeMeta = {
+  mode: 'flip',
+  icon: <Repeat className="size-[18px]" aria-hidden />,
+  labelKey: 'study.modeFlip',
+}
+
+/** The recall modes that test the answer text before grading, shown below the default Flip. */
+const RECALL_MODES: ModeMeta[] = [
+  {
+    mode: 'type',
+    icon: <Keyboard className="size-[18px]" aria-hidden />,
+    labelKey: 'study.modeType',
+  },
+  {
+    mode: 'initials',
+    icon: <WholeWord className="size-[18px]" aria-hidden />,
+    labelKey: 'study.modeInitials',
+  },
+  {
+    mode: 'blur',
+    icon: <EyeOff className="size-[18px]" aria-hidden />,
+    labelKey: 'study.modeBlur',
+  },
+  {
+    mode: 'words',
+    icon: <Blocks className="size-[18px]" aria-hidden />,
+    labelKey: 'study.modeWords',
+  },
+]
 
 const DIRECTION_META: {
   direction: SwipeDirection
@@ -85,12 +127,16 @@ export function StudyOptionsSheet({
   onClose,
   scope,
   scopeCounts,
+  mode,
+  wordSpaces,
   direction,
   shuffle,
   textToSpeech,
   canSpeak,
   swipeConfig,
   onScope,
+  onMode,
+  onWordSpaces,
   onDirection,
   onShuffle,
   onTextToSpeech,
@@ -127,6 +173,38 @@ export function StudyOptionsSheet({
       }
     >
       <div className="flex flex-col gap-5">
+        <Section title={t('study.modeTitle')}>
+          <p className="-mt-1 px-1 text-[length:var(--p-text-label)] leading-snug text-muted-foreground">
+            {t('study.modeHint')}
+          </p>
+          <ModeTile
+            icon={FLIP_MODE.icon}
+            label={t(FLIP_MODE.labelKey as never)}
+            active={mode === FLIP_MODE.mode}
+            onClick={() => onMode(FLIP_MODE.mode)}
+          />
+          <div className="grid grid-cols-2 gap-2">
+            {RECALL_MODES.map(({ mode: candidate, icon, labelKey }) => (
+              <ModeTile
+                key={candidate}
+                icon={icon}
+                label={t(labelKey as never)}
+                active={candidate === mode}
+                onClick={() => onMode(candidate)}
+              />
+            ))}
+          </div>
+          {mode === 'initials' ? (
+            <ToggleRow
+              icon={<WholeWord className="size-[18px]" aria-hidden />}
+              label={t('study.wordSpaces')}
+              description={t('study.wordSpacesHint')}
+              checked={wordSpaces}
+              onChange={onWordSpaces}
+            />
+          ) : null}
+        </Section>
+
         <Section title={t('study.cardsToStudy')}>
           <div className="flex flex-wrap gap-2">
             {filters.map(
@@ -174,22 +252,24 @@ export function StudyOptionsSheet({
           />
         </Section>
 
-        <Section title={t('study.swipeActionsTitle')}>
-          <p className="-mt-1 px-1 text-[length:var(--p-text-label)] leading-snug text-muted-foreground">
-            {t('study.swipeActionsHint')}
-          </p>
-          <div className="flex flex-col gap-2.5">
-            {DIRECTION_META.map(({ direction: dir, icon, labelKey }) => (
-              <SwipeRow
-                key={dir}
-                icon={icon}
-                label={t(labelKey as never)}
-                selected={swipeConfig[dir]}
-                onSelect={(action) => onSwipe(dir, action)}
-              />
-            ))}
-          </div>
-        </Section>
+        {mode === 'flip' ? (
+          <Section title={t('study.swipeActionsTitle')}>
+            <p className="-mt-1 px-1 text-[length:var(--p-text-label)] leading-snug text-muted-foreground">
+              {t('study.swipeActionsHint')}
+            </p>
+            <div className="flex flex-col gap-2.5">
+              {DIRECTION_META.map(({ direction: dir, icon, labelKey }) => (
+                <SwipeRow
+                  key={dir}
+                  icon={icon}
+                  label={t(labelKey as never)}
+                  selected={swipeConfig[dir]}
+                  onSelect={(action) => onSwipe(dir, action)}
+                />
+              ))}
+            </div>
+          </Section>
+        ) : null}
 
         <button
           type="button"
@@ -200,10 +280,42 @@ export function StudyOptionsSheet({
           className="flex w-full items-center justify-center gap-2 rounded-control bg-[var(--danger-surface)] py-3.5 text-[length:var(--p-text-sub)] font-semibold text-[var(--danger-on-surface)] transition-transform active:scale-[0.99]"
         >
           <RotateCcw className="size-[18px]" aria-hidden />
-          {t('study.restartFlashcards')}
+          {t('study.restartSession')}
         </button>
       </div>
     </Sheet>
+  )
+}
+
+function ModeTile({
+  icon,
+  label,
+  active,
+  onClick,
+}: {
+  icon: ReactNode
+  label: string
+  active: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={cn(
+        'flex min-h-[48px] items-center justify-center gap-2 rounded-card px-3 py-3 transition-transform active:scale-[0.97]',
+        'text-[length:var(--p-text-sub)] font-semibold',
+        active
+          ? 'bg-primary text-primary-foreground shadow-interactive'
+          : 'bg-info-surface text-heading',
+      )}
+    >
+      <span className={cn('shrink-0', active ? 'text-primary-foreground' : 'text-primary')}>
+        {icon}
+      </span>
+      {label}
+    </button>
   )
 }
 

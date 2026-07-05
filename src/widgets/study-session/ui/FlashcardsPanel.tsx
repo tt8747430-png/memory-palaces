@@ -2,6 +2,7 @@ import { type ReactNode, useEffect, useMemo, useReducer, useRef, useState } from
 import { AnimatePresence, motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Eye, Flag, Pencil, SkipForward, Sparkles, Volume2 } from 'lucide-react'
+import type { StudyMode } from '@/entities/preferences'
 import { cn, speak, speechAvailable, success } from '@/shared/lib'
 import { Button, GradeButtons } from '@/shared/ui'
 import {
@@ -21,6 +22,7 @@ import {
   type SwipeDirection,
 } from '@/shared/config/flashcard-swipe'
 import { StudyCardDeck } from './StudyCardDeck'
+import { RecallCard } from './RecallCard'
 import { StudyOptionsSheet } from './StudyOptionsSheet'
 import { QuickActionsSheet } from './QuickActionsSheet'
 import { InStudyEditor } from './InStudyEditor'
@@ -30,11 +32,19 @@ import type { Grade, LocusChanges, SessionSummary, StudyCard, StudyPrefs } from 
 export interface FlashcardsPanelProps {
   cards: StudyCard[]
   prefs: StudyPrefs
+  /** How each card's answer is recalled. Global preference; `flip` uses the swipeable deck. */
+  mode: StudyMode
+  /** Mark blanks for each hidden letter in Initials mode. Global preference. */
+  wordSpaces: boolean
   swipeConfig: FlashcardSwipeConfig
   /** Persist study-preference changes (the host mirrors them to palace settings). */
   onPrefsChange?: (prefs: StudyPrefs) => void
   /** Persist the swipe map (the host mirrors it to global preferences). */
   onSwipeConfigChange?: (config: FlashcardSwipeConfig) => void
+  /** Persist the recall mode (global preference). */
+  onModeChange?: (mode: StudyMode) => void
+  /** Persist the Initials word-spaces toggle (global preference). */
+  onWordSpacesChange?: (value: boolean) => void
   onGrade: (locusId: string, grade: Grade) => void
   onToggleFlag?: (locusId: string) => void
   onEditCard?: (locusId: string, changes: LocusChanges) => void
@@ -49,16 +59,21 @@ export interface FlashcardsPanelProps {
 /** Linger on the completion overlay before handing back to the host. */
 const COMPLETE_DELAY_MS = 2200
 
-/** The flashcard body of the study surface (ADR-0005): a spaced-review session over a scope's
- * cards. Opens in review (due cards lead); grading runs through the four-grade SM-2 control and
- * the host's `gradeCard` command so schedules survive offline. Headerless — the page owns the
- * title, the Flashcards/Verses switch, and the options trigger. */
+/** The study surface (ADR-0005): a spaced-review session over a scope's cards. Opens in review
+ * (due cards lead); grading runs through the four-grade SM-2 control and the host's `gradeCard`
+ * command so schedules survive offline. The recall `mode` decides how each card's answer is
+ * worked — `flip` is the swipeable tap-to-reveal deck, the rest test the answer text first — but
+ * every mode ends in the same grade. Headerless: the page owns the title and options trigger. */
 export function FlashcardsPanel({
   cards,
   prefs,
+  mode,
+  wordSpaces,
   swipeConfig,
   onPrefsChange,
   onSwipeConfigChange,
+  onModeChange,
+  onWordSpacesChange,
   onGrade,
   onToggleFlag,
   onEditCard,
@@ -70,6 +85,7 @@ export function FlashcardsPanel({
 }: FlashcardsPanelProps) {
   const { t } = useTranslation()
   const canSpeak = speechAvailable()
+  const isFlip = mode === 'flip'
 
   const [scope, setScope] = useState<Scope>({ kind: 'all' })
   const [quickOpen, setQuickOpen] = useState(false)
@@ -171,18 +187,24 @@ export function FlashcardsPanel({
       ? { graded: state.graded, learning: state.piles.learning, known: state.piles.known }
       : { graded: 0, learning: 0, known: 0 }
 
+  const revealAnswer = () => dispatch({ type: isFlip ? 'flip' : 'reveal' })
+
   const optionsSheet = (
     <StudyOptionsSheet
       open={optionsOpen}
       onClose={() => onOptionsOpenChange(false)}
       scope={scope}
       scopeCounts={counts}
+      mode={mode}
+      wordSpaces={wordSpaces}
       direction={prefs.direction}
       shuffle={prefs.shuffle}
       textToSpeech={prefs.textToSpeech}
       canSpeak={canSpeak}
       swipeConfig={swipeConfig}
       onScope={changeScope}
+      onMode={(next) => onModeChange?.(next)}
+      onWordSpaces={(value) => onWordSpacesChange?.(value)}
       onDirection={(direction) => updatePrefs({ direction })}
       onShuffle={(value) => updatePrefs({ shuffle: value })}
       onTextToSpeech={(value) => updatePrefs({ textToSpeech: value })}
@@ -253,21 +275,35 @@ export function FlashcardsPanel({
         </div>
       ) : null}
 
-      {/* Deck or empty-scope state */}
+      {/* Deck (flip) or recall card, or empty-scope state */}
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-5 py-3">
         {card ? (
-          <StudyCardDeck
-            card={card}
-            nextCard={nextCard}
-            direction={prefs.direction}
-            flipped={flipped}
-            swipeConfig={swipeConfig}
-            canSpeak={canSpeak}
-            onFlip={() => dispatch({ type: 'flip' })}
-            onCommit={handleCommit}
-            onSpeak={(text) => speak(text)}
-            onLongPress={() => setQuickOpen(true)}
-          />
+          isFlip ? (
+            <StudyCardDeck
+              card={card}
+              nextCard={nextCard}
+              direction={prefs.direction}
+              flipped={flipped}
+              swipeConfig={swipeConfig}
+              canSpeak={canSpeak}
+              onFlip={() => dispatch({ type: 'flip' })}
+              onCommit={handleCommit}
+              onSpeak={(text) => speak(text)}
+              onLongPress={() => setQuickOpen(true)}
+            />
+          ) : (
+            <RecallCard
+              key={`${mode}-${card.locus.id}`}
+              card={card}
+              mode={mode}
+              direction={prefs.direction}
+              wordSpaces={wordSpaces}
+              revealed={flipped}
+              canSpeak={canSpeak}
+              onReveal={() => dispatch({ type: 'reveal' })}
+              onSpeak={(text) => speak(text)}
+            />
+          )
         ) : !completed ? (
           <EmptyScope
             emptyScope={scope.kind !== 'all'}
@@ -284,7 +320,7 @@ export function FlashcardsPanel({
           {flipped ? (
             <GradeButtons srs={card.locus.srs} now={now} onGrade={handleGrade} />
           ) : (
-            <Button size="lg" className="w-full" onClick={() => dispatch({ type: 'flip' })}>
+            <Button size="lg" className="w-full" onClick={revealAnswer}>
               <Eye className="size-5" aria-hidden />
               {t('study.showAnswer')}
             </Button>

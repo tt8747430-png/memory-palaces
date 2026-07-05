@@ -1,34 +1,19 @@
 /**
- * Helpers for the verse-study modes (Blur / Words / Initials / Type). A verse
- * locus stores its reference in `front` (e.g. "3 John 1:1") and the verse text
- * in `back`; some imports prefix the body with the reference, so `verseText`
- * strips a leading reference to recover the prose to memorize. Takes a minimal
- * structural shape so `shared/lib` stays below the entity layer.
+ * Pure text helpers shared by the recall study modes (Blur / Rebuild / Initials /
+ * Type). They work on a card's answer text: tokenizing it, reducing words to
+ * first-letter cues, and scoring a typed attempt. A minimal structural input keeps
+ * `shared/lib` below the entity layer.
  */
-export interface VerseSource {
-  front?: string
-  back?: string
-}
-
-/** The pure verse prose: `back` with a leading reference stripped when present. */
-export function verseText(source: VerseSource): string {
-  const back = (source.back ?? '').trim()
-  const front = (source.front ?? '').trim()
-  if (front && back.startsWith(front)) {
-    const rest = back.slice(front.length).trim()
-    return rest || back
-  }
-  return back
-}
 
 /** Split text into word tokens, keeping any attached punctuation. */
 export function tokenizeWords(text: string): string[] {
   return text.split(/\s+/).filter(Boolean)
 }
 
-/** A standalone verse-number marker like "15:1" or "(1:1)" — kept intact in the
- *  Initials view instead of reduced to a single first letter. */
-export function isVerseMarker(token: string): boolean {
+/** A standalone reference/number marker like "15:1" or "(1:1)" — kept intact in the
+ *  Initials view instead of reduced to a single first letter (so scripture answers
+ *  keep their verse numbers legible). */
+export function isReferenceMarker(token: string): boolean {
   return /^\(?\d+[:.]\d+\)?[.:,]?$/.test(token)
 }
 
@@ -70,15 +55,15 @@ export function wordInitial(token: string): WordInitial {
   return { lead, initial, hidden, trail }
 }
 
-/** Lowercased, punctuation-free form for comparing typed words to the verse. */
+/** Lowercased, punctuation-free form for comparing typed words to the answer. */
 export function normalizeWord(word: string): string {
   return word.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '')
 }
 
 export type TypedWordStatus = 'correct' | 'wrong' | 'pending'
 
-export interface VerseTypingResult {
-  /** One status per EXPECTED word, in verse order. */
+export interface RecallTypingResult {
+  /** One status per EXPECTED word, in answer order. */
   statuses: TypedWordStatus[]
   /** The typed tokens, for rendering the attempt. */
   typed: string[]
@@ -87,11 +72,11 @@ export interface VerseTypingResult {
   complete: boolean
 }
 
-/** Compare a typed attempt to the verse, word by word (case/punctuation-insensitive
+/** Compare a typed attempt to the answer, word by word (case/punctuation-insensitive
  * via {@link normalizeWord}). Each expected word is `correct`, `wrong`, or still
- * `pending`; `complete` once every word is reproduced in order. Drives the Type mode. */
-export function typedVerseStatus(verse: string, input: string): VerseTypingResult {
-  const expected = tokenizeWords(verse)
+ * `pending`; `complete` once every word is reproduced in order. Drives Type mode. */
+export function typedRecallStatus(answer: string, input: string): RecallTypingResult {
+  const expected = tokenizeWords(answer)
   const typed = tokenizeWords(input)
   const statuses: TypedWordStatus[] = expected.map((word, i) => {
     if (i >= typed.length) return 'pending'

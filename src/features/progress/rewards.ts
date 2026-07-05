@@ -8,8 +8,6 @@ const STUDY_XP_MAX = 150
 
 export const XP_PER_CORRECT = 20
 export const XP_MATCH = 60
-/** XP for memorising a single verse (bible mode). */
-export const XP_VERSE = 20
 
 const clamp = (value: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, value))
 
@@ -32,7 +30,6 @@ export type SessionOutcome =
   | { kind: 'study'; graded: number }
   | { kind: 'quiz'; correct: number; total: number; accuracy: number }
   | { kind: 'match'; pairs: number }
-  | { kind: 'verse'; memorized: number }
 
 /** Pure map from a finished session to the XP / items / accuracy a reward applies.
  * Exhaustive over `SessionOutcome.kind` — a new mode won't compile until it's handled. */
@@ -50,7 +47,5 @@ export function outcomeToReward(
       }
     case 'match':
       return { xp: XP_MATCH, itemsPracticed: outcome.pairs }
-    case 'verse':
-      return { xp: XP_VERSE * outcome.memorized, itemsPracticed: outcome.memorized }
   }
 }

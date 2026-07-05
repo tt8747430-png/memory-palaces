@@ -37,8 +37,10 @@ export type ContentSort = 'manual' | 'recent' | 'name' | 'due' | 'flagged'
 
 const CONTENT_SORTS: readonly ContentSort[] = ['manual', 'recent', 'name', 'due', 'flagged']
 
-/** The active recall mode in verse study. Persisted so it's remembered everywhere. */
-export type VerseMode = 'blur' | 'words' | 'initials' | 'type'
+/** How a flashcard's answer is recalled in a study session. `flip` is the classic
+ * tap-to-reveal card; the rest test the answer text before you grade. Persisted so the
+ * choice is remembered everywhere. */
+export type StudyMode = 'flip' | 'type' | 'initials' | 'blur' | 'words'
 
 /** App appearance: an explicit light/dark choice, or `system` to follow the OS. */
 export type Theme = 'light' | 'dark' | 'system'
@@ -94,12 +96,10 @@ export interface Preferences extends Entity {
   roomsSort: RoomsSort
   /** Room editor: how a room's cards/questions are ordered. */
   contentSort: ContentSort
-  /** Verse study: the last-used recall mode. */
-  verseMode: VerseMode
-  /** Verse study: practise verses in a random order. */
-  verseShuffle: boolean
-  /** Verse study: mark a blank for each hidden word so length is felt (Initials mode). */
-  verseWordSpaces: boolean
+  /** Study surface: how each card's answer is recalled (flip / type / initials / blur / words). */
+  studyMode: StudyMode
+  /** Study surface: mark a blank for each hidden letter so length is felt (Initials mode). */
+  studyWordSpaces: boolean
   /** Per-item-type swipe-gesture mapping for list rows (leading/trailing action trays). */
   swipe: SwipePreferences
   /** Which grade/gesture each of the four flashcard fling directions commits. */
@@ -120,9 +120,8 @@ export const DEFAULT_PREFERENCES = {
   libraryOrder: [] as string[],
   roomsSort: 'manual',
   contentSort: 'manual',
-  verseMode: 'blur',
-  verseShuffle: false,
-  verseWordSpaces: true,
+  studyMode: 'flip',
+  studyWordSpaces: true,
   swipe: DEFAULT_SWIPE,
   flashcardSwipe: DEFAULT_FLASHCARD_SWIPE,
   privacy: DEFAULT_PRIVACY,
@@ -143,9 +142,8 @@ export interface MakePreferencesInput {
   libraryOrder?: string[]
   roomsSort?: RoomsSort
   contentSort?: ContentSort
-  verseMode?: VerseMode
-  verseShuffle?: boolean
-  verseWordSpaces?: boolean
+  studyMode?: StudyMode
+  studyWordSpaces?: boolean
   swipe?: SwipePreferences
   flashcardSwipe?: FlashcardSwipeConfig
   privacy?: PrivacySettings
@@ -188,9 +186,8 @@ export function makePreferences(input: MakePreferencesInput): Preferences {
       input.contentSort && CONTENT_SORTS.includes(input.contentSort)
         ? input.contentSort
         : DEFAULT_PREFERENCES.contentSort,
-    verseMode: input.verseMode ?? DEFAULT_PREFERENCES.verseMode,
-    verseShuffle: input.verseShuffle ?? DEFAULT_PREFERENCES.verseShuffle,
-    verseWordSpaces: input.verseWordSpaces ?? DEFAULT_PREFERENCES.verseWordSpaces,
+    studyMode: input.studyMode ?? DEFAULT_PREFERENCES.studyMode,
+    studyWordSpaces: input.studyWordSpaces ?? DEFAULT_PREFERENCES.studyWordSpaces,
     swipe: resolveSwipe(input.swipe),
     flashcardSwipe: normalizeFlashcardSwipe(input.flashcardSwipe),
     privacy: input.privacy ?? { ...DEFAULT_PRIVACY },
@@ -213,9 +210,8 @@ export type PreferencesChanges = Partial<
     | 'libraryOrder'
     | 'roomsSort'
     | 'contentSort'
-    | 'verseMode'
-    | 'verseShuffle'
-    | 'verseWordSpaces'
+    | 'studyMode'
+    | 'studyWordSpaces'
     | 'swipe'
     | 'flashcardSwipe'
     | 'privacy'

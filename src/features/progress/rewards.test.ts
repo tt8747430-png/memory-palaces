@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { outcomeToReward, quizXp, studyXp, XP_MATCH, XP_VERSE } from './rewards'
+import { outcomeToReward, quizXp, studyXp, XP_MATCH } from './rewards'
 
 describe('outcomeToReward', () => {
   it('maps a study outcome to xp by cards graded, items = graded', () => {
@@ -21,13 +21,6 @@ describe('outcomeToReward', () => {
     expect(outcomeToReward({ kind: 'match', pairs: 6 })).toEqual({
       xp: XP_MATCH,
       itemsPracticed: 6,
-    })
-  })
-
-  it('maps a verse outcome to xp and items scaled by verses memorized', () => {
-    expect(outcomeToReward({ kind: 'verse', memorized: 1 })).toEqual({
-      xp: XP_VERSE,
-      itemsPracticed: 1,
     })
   })
 })

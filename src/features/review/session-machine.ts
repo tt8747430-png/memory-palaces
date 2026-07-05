@@ -33,6 +33,7 @@ export type SessionState = ReviewState | CompleteState
 
 export type SessionAction =
   | { type: 'flip' }
+  | { type: 'reveal' }
   | { type: 'grade'; grade: Grade }
   | { type: 'skip' }
   | { type: 'finish' }
@@ -64,6 +65,13 @@ export function sessionReducer(state: SessionState, action: SessionAction): Sess
     case 'flip': {
       if (state.status === 'complete') return state
       return { ...state, flipped: !state.flipped }
+    }
+
+    // One-way reveal for the non-flip recall modes: showing the answer never toggles
+    // it back, so a solve and a manual "show answer" can't race into a hidden state.
+    case 'reveal': {
+      if (state.status === 'complete' || state.flipped) return state
+      return { ...state, flipped: true }
     }
 
     case 'grade': {

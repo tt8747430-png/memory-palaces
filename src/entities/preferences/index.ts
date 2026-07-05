@@ -5,7 +5,7 @@ export type {
   PalacesSort,
   RoomsSort,
   ContentSort,
-  VerseMode,
+  StudyMode,
   Theme,
   SwipePreferences,
   FlashcardSwipeConfig,

@@ -40,6 +40,23 @@ describe('flip', () => {
   })
 })
 
+describe('reveal', () => {
+  it('shows the answer one-way', () => {
+    const revealed = sessionReducer(review(['a']), { type: 'reveal' })
+    expect(revealed.status === 'review' && revealed.flipped).toBe(true)
+  })
+
+  it('is idempotent once revealed', () => {
+    const revealed = sessionReducer(review(['a']), { type: 'reveal' })
+    expect(sessionReducer(revealed, { type: 'reveal' })).toBe(revealed)
+  })
+
+  it('is a no-op once complete', () => {
+    const done: SessionState = { status: 'complete', graded: 1, piles: { learning: 0, known: 1 } }
+    expect(sessionReducer(done, { type: 'reveal' })).toBe(done)
+  })
+})
+
 describe('grade', () => {
   it('good dequeues the card, advances, counts it known, resets the flip', () => {
     const next = sessionReducer(

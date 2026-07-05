@@ -6,6 +6,7 @@ import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
 import { makeLocus } from '@/entities/locus'
 import { DEFAULT_FLASHCARD_SWIPE } from '@/shared/config/flashcard-swipe'
+import type { StudyMode } from '@/entities/preferences'
 import { FlashcardsPanel } from './FlashcardsPanel'
 import type { StudyCard, StudyPrefs } from '../model/types'
 
@@ -35,6 +36,7 @@ function renderPanel(
     onGrade: (id: string, grade: string) => void
     onComplete: () => void
     prefs: Partial<StudyPrefs>
+    mode: StudyMode
   }> = {},
 ) {
   const onGrade = vi.fn(overrides.onGrade)
@@ -45,6 +47,8 @@ function renderPanel(
         <FlashcardsPanel
           cards={cards}
           prefs={{ ...DEFAULT_PREFS, ...overrides.prefs }}
+          mode={overrides.mode ?? 'flip'}
+          wordSpaces
           swipeConfig={DEFAULT_FLASHCARD_SWIPE}
           onGrade={onGrade}
           onBack={() => {}}
@@ -88,6 +92,21 @@ describe('FlashcardsPanel', () => {
     expect(onGrade).toHaveBeenCalledWith('a', 'again')
 
     // 'a' goes to the back, so 'b' leads now; 'a' returns after it.
+    expect(await screen.findByText('Front b')).toBeInTheDocument()
+  })
+
+  it('reveals then grades a card in a non-flip recall mode', async () => {
+    const user = userEvent.setup()
+    const { onGrade } = renderPanel([studyCard('a'), studyCard('b')], { mode: 'type' })
+
+    // The prompt is visible; the grade control only appears once the answer is revealed.
+    expect(screen.getByText('Front a')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /good/i })).toBeNull()
+
+    await user.click(screen.getByRole('button', { name: /show answer/i }))
+    await user.click(screen.getByRole('button', { name: /good/i }))
+    expect(onGrade).toHaveBeenCalledWith('a', 'good')
+
     expect(await screen.findByText('Front b')).toBeInTheDocument()
   })
 })
