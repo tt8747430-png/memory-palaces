@@ -1,7 +1,20 @@
-import { useEffect, useMemo, useState } from 'react'
+import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { ArrowDownAZ, Brain, Clock, GripVertical, HelpCircle, Play, Plus, Trash2 } from 'lucide-react'
+import {
+  ArrowDownAZ,
+  Brain,
+  Clock,
+  Download,
+  FileJson,
+  FileText,
+  GripVertical,
+  HelpCircle,
+  Play,
+  Plus,
+  Trash2,
+  Upload,
+} from 'lucide-react'
 import {
   type Question,
   questionsForRoom,
@@ -10,6 +23,7 @@ import {
   useQuestionStore,
   useQuestionStoreApi,
 } from '@/entities/question'
+import { useLocusStoreApi } from '@/entities/locus'
 import {
   selectIsReady as selectRoomsReady,
   selectRooms,
@@ -18,12 +32,20 @@ import {
 } from '@/entities/room'
 import { selectEffectivePreferences, usePreferencesStore } from '@/entities/preferences'
 import { deleteQuestion, duplicateQuestion, reorderQuestions } from '@/features/question'
-import { cn } from '@/shared/lib'
+import {
+  applyRoomContent,
+  exportQuestionsCsv,
+  exportRoomJson,
+  readContentFile,
+} from '@/features/content'
+import { cn, ContentImportError } from '@/shared/lib'
 import {
   AppScreen,
   Button,
   ConfirmDialog,
+  ImportRow,
   ScreenHeader,
+  Sheet,
   SortControl,
   type SortControlOption,
   SpeedDial,
@@ -57,6 +79,9 @@ export function RoomQuestionsPage({
   const { t } = useTranslation()
   const questionStore = useQuestionStoreApi()
   const roomStore = useRoomStoreApi()
+  // The locus store is only here to satisfy the shared `applyRoomContent` signature; question
+  // import never writes cards (it applies `{ loci: [], questions }`).
+  const locusStore = useLocusStoreApi()
 
   useEffect(() => {
     questionStore.getState().start()
@@ -71,6 +96,7 @@ export function RoomQuestionsPage({
   const swipe = usePreferencesStore(selectEffectivePreferences).swipe.card
 
   const room = rooms.find((candidate) => candidate.id === roomId)
+  const roomName = room?.title ?? ''
   const questions = useMemo(() => questionsForRoom(allQuestions, roomId), [allQuestions, roomId])
 
   const [sort, setSort] = useState<QuestionSort>('manual')
@@ -78,6 +104,9 @@ export function RoomQuestionsPage({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
+  const [exportOpen, setExportOpen] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!selectMode) setSelectedIds(new Set())
@@ -150,6 +179,43 @@ export function RoomQuestionsPage({
     void Promise.all(ids.map((id) => deleteQuestion(questionStore, id)))
     toast.success(t('loci.transfer.deletedMany', { count: ids.length }))
     exitSelect()
+  }
+
+  const pickFile = (accept: string) => {
+    setImportOpen(false)
+    const input = fileRef.current
+    if (!input) return
+    input.value = ''
+    input.accept = accept
+    input.click()
+  }
+
+  const onFile = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    try {
+      const data = await readContentFile(file)
+      // Questions only — any cards in the file are dropped (they import from the Cards page).
+      const applied = await applyRoomContent(locusStore, questionStore, roomId, {
+        loci: [],
+        questions: data.questions,
+      })
+      if (applied.questions === 0) {
+        toast.error(t('questions.transfer.noneFound'))
+        return
+      }
+      toast.success(t('questions.transfer.imported', { count: applied.questions }))
+    } catch (error) {
+      toast.error(
+        error instanceof ContentImportError ? error.message : t('questions.transfer.importFailed'),
+      )
+    }
+  }
+
+  const closeExport = (run: () => void) => {
+    setExportOpen(false)
+    run()
+    toast.success(t('questions.transfer.exported'))
   }
 
   if (!ready) {
@@ -298,11 +364,70 @@ export function RoomQuestionsPage({
         onConfirm={confirmBulkDelete}
       />
 
+      <input
+        ref={fileRef}
+        type="file"
+        className="hidden"
+        onChange={onFile}
+        aria-hidden
+        tabIndex={-1}
+      />
+
+      {/* Import sheet — add questions from a file. Cards are imported from the Cards page. */}
+      <Sheet
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        title={t('questions.transfer.importTitle')}
+        description={t('questions.transfer.importSubtitle')}
+      >
+        <div className="flex flex-col gap-2.5 pb-2">
+          <ImportRow
+            icon={<Upload className="size-5" aria-hidden />}
+            tone="accent"
+            badge="CSV · JSON"
+            title={t('questions.transfer.importFile')}
+            subtitle={t('questions.transfer.importFileSub')}
+            onClick={() => pickFile('.csv,.json')}
+          />
+        </div>
+      </Sheet>
+
+      {/* Export sheet — save this room's questions. */}
+      <Sheet
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        title={t('questions.transfer.exportTitle')}
+        description={t('questions.transfer.exportSubtitle')}
+      >
+        <div className="flex flex-col gap-2.5 pb-2">
+          <ImportRow
+            icon={<FileJson className="size-5" aria-hidden />}
+            tone="brand"
+            badge="JSON"
+            trailing={<Download className="size-5 shrink-0 text-faint" aria-hidden />}
+            title={t('questions.transfer.exportJson')}
+            subtitle={t('questions.transfer.exportJsonSub')}
+            disabled={!hasQuestions}
+            onClick={() => closeExport(() => exportRoomJson(roomName, [], questions))}
+          />
+          <ImportRow
+            icon={<FileText className="size-5" aria-hidden />}
+            tone="positive"
+            badge="CSV"
+            trailing={<Download className="size-5 shrink-0 text-faint" aria-hidden />}
+            title={t('questions.transfer.exportCsv')}
+            subtitle={t('questions.transfer.exportCsvSub')}
+            disabled={!hasQuestions}
+            onClick={() => closeExport(() => exportQuestionsCsv(roomName, questions))}
+          />
+        </div>
+      </Sheet>
+
       {/* Hidden while selecting, where the bulk bar owns the bottom of the screen (otherwise
           the dial overlaps the bar's trailing action). */}
       {!selectMode ? (
         <SpeedDial
-          label={t('questions.addQuestion')}
+          label={t('questions.quickActions')}
           className="bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+0.75rem)]"
           actions={[
             {
@@ -310,6 +435,18 @@ export function RoomQuestionsPage({
               label: t('questions.addQuestion'),
               icon: <Plus className="size-5" aria-hidden />,
               onSelect: onAddQuestion,
+            },
+            {
+              id: 'import',
+              label: t('questions.transfer.importShort'),
+              icon: <Upload className="size-5" aria-hidden />,
+              onSelect: () => setImportOpen(true),
+            },
+            {
+              id: 'export',
+              label: t('questions.transfer.exportShort'),
+              icon: <Download className="size-5" aria-hidden />,
+              onSelect: () => setExportOpen(true),
             },
           ]}
         />

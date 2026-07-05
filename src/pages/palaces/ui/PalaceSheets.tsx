@@ -1,11 +1,10 @@
-import { type SyntheticEvent, useEffect, useState } from 'react'
+import { type ReactNode, type SyntheticEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Check, FolderPlus, Sparkles } from 'lucide-react'
+import { Check, FolderPlus, Home } from 'lucide-react'
 import { DEFAULT_FOLDER_ICON, type Folder } from '@/entities/folder'
 import { FolderForm } from '@/widgets/folder-form'
 import { cn } from '@/shared/lib'
 import { Button, FolderGlyph, Sheet } from '@/shared/ui'
-import * as React from 'react'
 
 export interface MoveToFolderSheetProps {
   open: boolean
@@ -43,12 +42,12 @@ export function MoveToFolderSheet({
         </Button>
       }
     >
-      <div className="flex flex-col gap-1.5 pb-2">
+      <div className="flex flex-col gap-2 pb-2">
         <FolderOption
           label={t('palaces.moveNone')}
           glyph={
-            <span className="grid size-9 shrink-0 place-items-center rounded-[7px] bg-info-surface text-accent">
-              <Sparkles className="size-4" aria-hidden />
+            <span className="grid size-10 shrink-0 place-items-center rounded-control bg-primary/10 text-primary">
+              <Home className="size-[18px]" aria-hidden />
             </span>
           }
           selected={currentFolderId === null}
@@ -62,8 +61,8 @@ export function MoveToFolderSheet({
               <FolderGlyph
                 color={folder.color}
                 icon={folder.icon}
-                className="size-9"
-                iconClassName="text-base leading-none"
+                className="size-10"
+                iconClassName="text-lg leading-none"
               />
             }
             selected={currentFolderId === folder.id}
@@ -82,27 +81,33 @@ function FolderOption({
   onClick,
 }: {
   label: string
-  glyph: React.ReactNode
+  glyph: ReactNode
   selected: boolean
   onClick: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <button
       type="button"
       onClick={onClick}
       aria-pressed={selected}
       className={cn(
-        'flex w-full items-center gap-3 rounded-card px-3 py-2.5 text-left transition-colors',
+        'flex w-full items-center gap-3 rounded-card px-3 py-2.5 text-left transition-[background-color,box-shadow] duration-150 active:scale-[0.99]',
         selected
-          ? 'bg-primary text-primary-foreground'
-          : 'bg-info-surface text-heading active:bg-secondary/30',
+          ? 'bg-primary text-primary-foreground shadow-interactive'
+          : 'bg-card text-heading shadow-rest ring-1 ring-inset ring-border active:bg-secondary/15',
       )}
     >
       {glyph}
-      <span className="min-w-0 flex-1 truncate text-[length:var(--p-text-body)] font-medium">
+      <span className="min-w-0 flex-1 truncate text-[length:var(--p-text-body)] font-semibold">
         {label}
       </span>
-      {selected ? <Check className="size-5 shrink-0" aria-hidden /> : null}
+      {selected ? (
+        <span className="inline-flex shrink-0 items-center gap-1 rounded-pill bg-primary-foreground/15 py-0.5 pl-1.5 pr-2 text-[length:var(--p-text-tiny)] font-bold">
+          <Check className="size-3.5" strokeWidth={3} aria-hidden />
+          {t('palaces.moveCurrent')}
+        </span>
+      ) : null}
     </button>
   )
 }

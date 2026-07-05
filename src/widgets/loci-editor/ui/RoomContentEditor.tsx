@@ -7,11 +7,11 @@ import {
   ClipboardPaste,
   Clock,
   Download,
-  FileText,
+  FileJson,
   Flag,
   GraduationCap,
   GripVertical,
-  Landmark,
+  Layers,
   MapPin,
   Plus,
   RotateCcw,
@@ -27,12 +27,7 @@ import {
   useLocusStore,
   useLocusStoreApi,
 } from '@/entities/locus'
-import {
-  questionsForRoom,
-  selectQuestions,
-  useQuestionStore,
-  useQuestionStoreApi,
-} from '@/entities/question'
+import { useQuestionStoreApi } from '@/entities/question'
 import {
   deleteLocus,
   duplicateLocus,
@@ -50,7 +45,6 @@ import {
   applyRoomContent,
   exportLociAnki,
   exportLociCsv,
-  exportQuestionsCsv,
   exportRoomJson,
   readAnkiFile,
   readContentFile,
@@ -106,9 +100,9 @@ type MaturityKey = 'new' | 'learning' | 'known'
 
 /**
  * The room's card-management surface: "Cards in this room" with its maturity overview, search,
- * sort + filter, multi-select bulk actions, import/export, and drag-reorder. Rendered inline in
- * the room hub; add/edit open the full-screen editor. Questions live on their own page.
- * Still reads questions for the room-level import/export (a room export carries both).
+ * sort + filter, multi-select bulk actions, card import/export, and drag-reorder. Rendered inline
+ * in the room hub; add/edit open the full-screen editor. Import/export here is cards-only —
+ * questions have their own import/export on the Questions page.
  */
 export function RoomContentEditor({
   roomId,
@@ -125,9 +119,10 @@ export function RoomContentEditor({
 }: RoomContentEditorProps) {
   const { t } = useTranslation()
   const locusStore = useLocusStoreApi()
+  // Questions live on their own page; the store is only needed to satisfy the shared
+  // `applyRoomContent` signature (this surface never writes questions).
   const questionStore = useQuestionStoreApi()
   const allLoci = useLocusStore(selectLoci)
-  const allQuestions = useQuestionStore(selectQuestions)
 
   useEffect(() => {
     locusStore.getState().start()
@@ -137,15 +132,14 @@ export function RoomContentEditor({
   const cardSwipe = usePreferencesStore(selectEffectivePreferences).swipe.card
 
   const loci = useMemo(() => lociForRoom(allLoci, roomId), [allLoci, roomId])
-  // Questions are managed on their own page; kept here only for room-level import/export.
-  const questions = useMemo(() => questionsForRoom(allQuestions, roomId), [allQuestions, roomId])
 
   const setSelectMode = onSelectModeChange
   const setSort = onSortChange
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
-  const [transferOpen, setTransferOpen] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
+  const [exportOpen, setExportOpen] = useState(false)
   const [pasteOpen, setPasteOpen] = useState(false)
   const [verseOpen, setVerseOpen] = useState(false)
   // The card the full-screen browser is open on (null = closed). Tapping a card row opens it.
@@ -217,7 +211,6 @@ export function RoomContentEditor({
   }, [sortedLoci, needle, maturityFilter, flaggedOnly])
 
   const total = loci.length
-  const hasContent = loci.length > 0 || questions.length > 0
   const selectedCount = selectedIds.size
   const allVisibleSelected =
     visibleLoci.length > 0 && visibleLoci.every((item) => selectedIds.has(item.id))
@@ -298,7 +291,7 @@ export function RoomContentEditor({
   }
 
   const pickFile = (accept: string, kind: 'content' | 'anki') => {
-    setTransferOpen(false)
+    setImportOpen(false)
     importKind.current = kind
     const input = fileRef.current
     if (!input) return
@@ -313,10 +306,17 @@ export function RoomContentEditor({
     try {
       const data =
         importKind.current === 'anki' ? await readAnkiFile(file) : await readContentFile(file)
-      const applied = await applyRoomContent(locusStore, questionStore, roomId, data)
-      toast.success(
-        t('loci.transfer.imported', { loci: applied.loci, questions: applied.questions }),
-      )
+      // This surface imports cards only — any questions in the file are dropped (they're
+      // imported from the Questions page instead).
+      const applied = await applyRoomContent(locusStore, questionStore, roomId, {
+        loci: data.loci,
+        questions: [],
+      })
+      if (applied.loci === 0) {
+        toast.error(t('loci.transfer.noCardsFound'))
+        return
+      }
+      toast.success(t('loci.transfer.importedCards', { count: applied.loci }))
     } catch (error) {
       toast.error(
         error instanceof ContentImportError ? error.message : t('loci.transfer.importFailed'),
@@ -348,8 +348,12 @@ export function RoomContentEditor({
     )
   }
 
-  const closeTransfer = (run: () => void) => {
-    setTransferOpen(false)
+  const closeImport = (run: () => void) => {
+    setImportOpen(false)
+    run()
+  }
+  const closeExport = (run: () => void) => {
+    setExportOpen(false)
     run()
   }
 
@@ -495,89 +499,85 @@ export function RoomContentEditor({
         </div>
       ) : null}
 
-      {/* Transfer + paste sheets */}
+      {/* Import sheet — bring cards in, from a file or pasted text. */}
       <Sheet
-        open={transferOpen}
-        onOpenChange={setTransferOpen}
-        title={t('loci.transfer.title')}
-        description={t('loci.transfer.subtitle')}
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        title={t('loci.transfer.importTitle')}
+        description={t('loci.transfer.importSubtitle')}
       >
-        <div className="flex flex-col gap-5 pb-2">
-          <TransferGroup label={t('loci.transfer.importGroup')}>
-            <ImportRow
-              icon={<Upload className="size-5" aria-hidden />}
-              tone="accent"
-              badge="JSON · CSV"
-              title={t('loci.transfer.importFile')}
-              subtitle={t('loci.transfer.importFileSub')}
-              onClick={() => pickFile('.json,.csv', 'content')}
-            />
-            <ImportRow
-              icon={<FileText className="size-5" aria-hidden />}
-              tone="accent"
-              badge="TXT · TSV"
-              title={t('loci.transfer.importAnki')}
-              subtitle={t('loci.transfer.importAnkiSub')}
-              onClick={() => pickFile('.txt,.tsv', 'anki')}
-            />
-            <ImportRow
-              icon={<ClipboardPaste className="size-5" aria-hidden />}
-              tone="brand"
-              title={t('loci.transfer.pasteList')}
-              subtitle={t('loci.transfer.pasteListSub')}
-              onClick={() => closeTransfer(() => setPasteOpen(true))}
-            />
-            <ImportRow
-              icon={<BookOpen className="size-5" aria-hidden />}
-              tone="brand"
-              title={t('loci.transfer.pasteVerses')}
-              subtitle={t('loci.transfer.pasteVersesSub')}
-              onClick={() => closeTransfer(() => setVerseOpen(true))}
-            />
-          </TransferGroup>
+        <div className="flex flex-col gap-2.5 pb-2">
+          <ImportRow
+            icon={<Upload className="size-5" aria-hidden />}
+            tone="accent"
+            badge="JSON · CSV"
+            title={t('loci.transfer.importFile')}
+            subtitle={t('loci.transfer.importFileSub')}
+            onClick={() => pickFile('.json,.csv', 'content')}
+          />
+          <ImportRow
+            icon={<Layers className="size-5" aria-hidden />}
+            tone="warning"
+            badge="TXT · TSV"
+            title={t('loci.transfer.importAnki')}
+            subtitle={t('loci.transfer.importAnkiSub')}
+            onClick={() => pickFile('.txt,.tsv', 'anki')}
+          />
+          <ImportRow
+            icon={<ClipboardPaste className="size-5" aria-hidden />}
+            tone="neutral"
+            title={t('loci.transfer.pasteList')}
+            subtitle={t('loci.transfer.pasteListSub')}
+            onClick={() => closeImport(() => setPasteOpen(true))}
+          />
+          <ImportRow
+            icon={<BookOpen className="size-5" aria-hidden />}
+            tone="brand"
+            title={t('loci.transfer.pasteVerses')}
+            subtitle={t('loci.transfer.pasteVersesSub')}
+            onClick={() => closeImport(() => setVerseOpen(true))}
+          />
+        </div>
+      </Sheet>
 
-          <TransferGroup label={t('loci.transfer.exportGroup')}>
-            <ImportRow
-              icon={<Landmark className="size-5" aria-hidden />}
-              tone="positive"
-              badge="JSON"
-              trailing={<Download className="size-5 shrink-0 text-faint" aria-hidden />}
-              title={t('loci.transfer.exportJson')}
-              subtitle={t('loci.transfer.exportJsonSub')}
-              disabled={!hasContent}
-              onClick={() => closeTransfer(() => exportRoomJson(roomName, loci, questions))}
-            />
-            <ImportRow
-              icon={<MapPin className="size-5" aria-hidden />}
-              tone="neutral"
-              badge="CSV"
-              trailing={<Download className="size-5 shrink-0 text-faint" aria-hidden />}
-              title={t('loci.transfer.exportCards')}
-              subtitle={t('loci.transfer.exportCardsSub')}
-              disabled={loci.length === 0}
-              onClick={() => closeTransfer(() => exportLociCsv(roomName, loci))}
-            />
-            <ImportRow
-              icon={<FileText className="size-5" aria-hidden />}
-              tone="neutral"
-              badge="CSV"
-              trailing={<Download className="size-5 shrink-0 text-faint" aria-hidden />}
-              title={t('loci.transfer.exportQuestions')}
-              subtitle={t('loci.transfer.exportQuestionsSub')}
-              disabled={questions.length === 0}
-              onClick={() => closeTransfer(() => exportQuestionsCsv(roomName, questions))}
-            />
-            <ImportRow
-              icon={<FileText className="size-5" aria-hidden />}
-              tone="neutral"
-              badge="TXT"
-              trailing={<Download className="size-5 shrink-0 text-faint" aria-hidden />}
-              title={t('loci.transfer.exportAnki')}
-              subtitle={t('loci.transfer.exportAnkiSub')}
-              disabled={loci.length === 0}
-              onClick={() => closeTransfer(() => exportLociAnki(roomName, loci))}
-            />
-          </TransferGroup>
+      {/* Export sheet — save the room's cards & questions in a portable format. */}
+      <Sheet
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        title={t('loci.transfer.exportTitle')}
+        description={t('loci.transfer.exportSubtitle')}
+      >
+        <div className="flex flex-col gap-2.5 pb-2">
+          <ImportRow
+            icon={<FileJson className="size-5" aria-hidden />}
+            tone="brand"
+            badge="JSON"
+            trailing={<Download className="size-5 shrink-0 text-faint" aria-hidden />}
+            title={t('loci.transfer.exportJson')}
+            subtitle={t('loci.transfer.exportJsonSub')}
+            disabled={loci.length === 0}
+            onClick={() => closeExport(() => exportRoomJson(roomName, loci, []))}
+          />
+          <ImportRow
+            icon={<MapPin className="size-5" aria-hidden />}
+            tone="accent"
+            badge="CSV"
+            trailing={<Download className="size-5 shrink-0 text-faint" aria-hidden />}
+            title={t('loci.transfer.exportCards')}
+            subtitle={t('loci.transfer.exportCardsSub')}
+            disabled={loci.length === 0}
+            onClick={() => closeExport(() => exportLociCsv(roomName, loci))}
+          />
+          <ImportRow
+            icon={<Layers className="size-5" aria-hidden />}
+            tone="warning"
+            badge="TXT"
+            trailing={<Download className="size-5 shrink-0 text-faint" aria-hidden />}
+            title={t('loci.transfer.exportAnki')}
+            subtitle={t('loci.transfer.exportAnkiSub')}
+            disabled={loci.length === 0}
+            onClick={() => closeExport(() => exportLociAnki(roomName, loci))}
+          />
         </div>
       </Sheet>
       <PasteSheet
@@ -733,7 +733,13 @@ export function RoomContentEditor({
               id: 'import',
               label: t('loci.transfer.importShort'),
               icon: <Upload className="size-5" aria-hidden />,
-              onSelect: () => setTransferOpen(true),
+              onSelect: () => setImportOpen(true),
+            },
+            {
+              id: 'export',
+              label: t('loci.transfer.exportShort'),
+              icon: <Download className="size-5" aria-hidden />,
+              onSelect: () => setExportOpen(true),
             },
           ]}
         />
@@ -863,17 +869,6 @@ function FilterEmpty({ onClear }: { onClear: () => void }) {
       >
         {t('loci.filterClear')}
       </button>
-    </div>
-  )
-}
-
-function TransferGroup({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="space-y-2">
-      <p className="px-1 text-(length:--p-text-label) font-bold uppercase tracking-wide text-muted-foreground">
-        {label}
-      </p>
-      <div className="flex flex-col gap-2">{children}</div>
     </div>
   )
 }

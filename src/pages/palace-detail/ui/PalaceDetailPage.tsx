@@ -84,6 +84,8 @@ export interface PalaceDetailPageProps {
   onBack?: () => void
   /** Open a room's hub; wired by the route wrapper. */
   onOpenRoom?: (roomId: string) => void
+  /** Open a room's settings page (the room counterpart to palace settings). */
+  onOpenRoomSettings?: (roomId: string) => void
   /** Open this palace's settings; wired by the route wrapper. */
   onOpenSettings?: () => void
   /** Open the palace-wide Study-cards session. */
@@ -104,6 +106,7 @@ export function PalaceDetailPage({
   palaceId,
   onBack,
   onOpenRoom,
+  onOpenRoomSettings,
   onOpenSettings,
   onStudyPalace,
   onMatch,
@@ -400,10 +403,7 @@ export function PalaceDetailPage({
               onToggleSelect={toggleSelect}
               onRequestSelect={requestSelect}
               onOpen={(id) => onOpenRoom?.(id)}
-              onEdit={(id) => {
-                const room = roomById(id)
-                if (room) setEditorTarget({ mode: 'edit', room })
-              }}
+              onEdit={(id) => onOpenRoomSettings?.(id)}
               onRename={(id, title) => void editRoom(roomStore, id, { title })}
               onReorder={handleReorder}
               onDuplicate={(id) => void handleDuplicate(id)}

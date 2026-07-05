@@ -1,12 +1,13 @@
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Brain, FileText, Info, Scale, ScrollText, ShieldCheck, Wrench } from 'lucide-react'
+import { LEGAL_URLS } from '@/shared/config/constants'
 import { AppScreen, ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui'
 
 const LEGAL_LINKS = [
-  { key: 'terms', icon: <FileText />, url: 'https://mindscape.app/terms' },
-  { key: 'privacyPolicy', icon: <ShieldCheck />, url: 'https://mindscape.app/privacy' },
-  { key: 'licenses', icon: <ScrollText />, url: 'https://mindscape.app/licenses' },
+  { key: 'terms', icon: <FileText />, url: LEGAL_URLS.terms },
+  { key: 'privacyPolicy', icon: <ShieldCheck />, url: LEGAL_URLS.privacy },
+  { key: 'licenses', icon: <ScrollText />, url: LEGAL_URLS.licenses },
 ] as const
 
 /** About — app identity, version/build/license, legal links, and credits. */

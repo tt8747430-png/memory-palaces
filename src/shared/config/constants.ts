@@ -1,6 +1,14 @@
 /** Namespace for any persisted key (localStorage now; RxDB collections later). */
 export const STORAGE_PREFIX = 'mindscape'
 
+/** Public legal pages, opened in a new tab from signup and the About screen. Defined once here
+ * so the two surfaces can never drift to different URLs. */
+export const LEGAL_URLS = {
+  terms: 'https://mindscape.app/terms',
+  privacy: 'https://mindscape.app/privacy',
+  licenses: 'https://mindscape.app/licenses',
+} as const
+
 /** Items practised in a day to make it "active" (advance the streak). */
 export const DEFAULT_DAILY_GOAL = 5
 

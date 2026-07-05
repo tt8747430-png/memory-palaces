@@ -185,6 +185,7 @@ function PalaceDetailRoute() {
       palaceId={palaceId}
       onBack={back}
       onOpenRoom={(roomId) => navigate({ to: ROUTES.roomHub, params: { roomId } })}
+      onOpenRoomSettings={(roomId) => navigate({ to: ROUTES.roomSettings, params: { roomId } })}
       onOpenSettings={() => navigate({ to: ROUTES.palaceSettings, params: { palaceId } })}
       onStudyPalace={() => navigate({ to: ROUTES.palaceStudy, params: { palaceId } })}
       onMatch={() => navigate({ to: ROUTES.palaceMatch, params: { palaceId } })}

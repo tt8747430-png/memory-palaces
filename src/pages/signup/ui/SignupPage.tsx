@@ -3,6 +3,7 @@ import { motion, type Variants } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Mail, User } from 'lucide-react'
 import { isEmail } from '@/shared/lib'
+import { LEGAL_URLS } from '@/shared/config/constants'
 import { AuthField, AuthScreen, Button, PasswordField, SocialButtons } from '@/shared/ui'
 import { AuthLogo } from '@/widgets/palace-threshold'
 import { useAuthActions } from '@/features/session'
@@ -141,9 +142,25 @@ export function SignupPage({ onSuccess, onGuest, onLogin }: SignupPageProps) {
               />
               <span>
                 {t('auth.signup.agreePrefix')}{' '}
-                <span className="font-semibold text-heading">{t('auth.signup.terms')}</span>{' '}
+                <a
+                  href={LEGAL_URLS.terms}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(event) => event.stopPropagation()}
+                  className="font-semibold text-accent underline underline-offset-2"
+                >
+                  {t('auth.signup.terms')}
+                </a>{' '}
                 {t('auth.signup.and')}{' '}
-                <span className="font-semibold text-heading">{t('auth.signup.privacy')}</span>
+                <a
+                  href={LEGAL_URLS.privacy}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(event) => event.stopPropagation()}
+                  className="font-semibold text-accent underline underline-offset-2"
+                >
+                  {t('auth.signup.privacy')}
+                </a>
               </span>
             </label>
             {errors.terms ? (
