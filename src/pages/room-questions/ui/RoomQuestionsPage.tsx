@@ -228,6 +228,28 @@ export function RoomQuestionsPage({
 
   const hasQuestions = questions.length > 0
 
+  // Pinned as the screen footer (not a sticky child) so the bulk bar sits at the bottom even
+  // when a single short question wouldn't scroll the list far enough to pin a sticky element.
+  const selectionBar = (
+    <div className="px-4 pb-[calc(max(0.75rem,env(safe-area-inset-bottom)))] pt-2">
+      <div className="flex items-center gap-2 rounded-card-featured bg-card/95 p-2.5 shadow-elevated backdrop-blur-xl">
+        <button
+          type="button"
+          disabled={selectedCount === 0}
+          onClick={() => setBulkDeleteOpen(true)}
+          className={cn(
+            'flex h-11 flex-1 items-center justify-center gap-1.5 rounded-control text-(length:--p-text-label) font-semibold',
+            'bg-[var(--danger-surface)] text-[var(--danger-on-surface)]',
+            'transition-transform active:scale-[0.97] disabled:opacity-40',
+          )}
+        >
+          <Trash2 className="size-[17px]" aria-hidden />
+          {t('common.delete')}
+        </button>
+      </div>
+    </div>
+  )
+
   return (
     <AppScreen
       header={
@@ -238,6 +260,7 @@ export function RoomQuestionsPage({
           backLabel={t('roomHub.back')}
         />
       }
+      footer={selectMode ? selectionBar : undefined}
     >
       <div className="mt-2 space-y-4 pb-24">
         {/* Start-test hero — author below, launch from here. */}
@@ -255,9 +278,14 @@ export function RoomQuestionsPage({
               </p>
               <p className="text-(length:--p-text-label) text-muted-foreground">
                 {hasQuestions
-                  ? t(questions.length === 1 ? 'questions.testReadyOne' : 'questions.testReadyOther', {
-                      count: questions.length,
-                    })
+                  ? t(
+                      questions.length === 1
+                        ? 'questions.testReadyOne'
+                        : 'questions.testReadyOther',
+                      {
+                        count: questions.length,
+                      },
+                    )
                   : t('questions.testNone')}
               </p>
             </div>
@@ -322,24 +350,6 @@ export function RoomQuestionsPage({
           )}
         </section>
       </div>
-
-      {selectMode ? (
-        <div className="sticky bottom-2 z-20 mx-4 flex items-center gap-2 rounded-card-featured bg-card/95 p-2.5 shadow-elevated backdrop-blur-xl">
-          <button
-            type="button"
-            disabled={selectedCount === 0}
-            onClick={() => setBulkDeleteOpen(true)}
-            className={cn(
-              'flex h-11 flex-1 items-center justify-center gap-1.5 rounded-control text-(length:--p-text-label) font-semibold',
-              'bg-[var(--danger-surface)] text-[var(--danger-on-surface)]',
-              'transition-transform active:scale-[0.97] disabled:opacity-40',
-            )}
-          >
-            <Trash2 className="size-[17px]" aria-hidden />
-            {t('common.delete')}
-          </button>
-        </div>
-      ) : null}
 
       <ConfirmDialog
         open={pendingDeleteId !== null}

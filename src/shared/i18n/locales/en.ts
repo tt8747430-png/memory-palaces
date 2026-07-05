@@ -1419,19 +1419,11 @@ export const en = {
   },
   swipe: {
     title: 'Swipe actions',
-    subtitle:
-      'Pick what a left or right swipe does on each kind of list row. The edge-most action fires on a full swipe.',
+    subtitle: 'Pick what a left or right swipe does on each kind of list row.',
     leading: 'Swipe right',
-    leadingHint: 'Revealed from the left edge.',
     trailing: 'Swipe left',
-    trailingHint: 'Revealed from the right edge.',
     none: 'None',
-    emptySide: 'No action — tap one to add it.',
     sideCount: '{{count}} / 2',
-    autoFire: 'Full-swipe',
-    fullFires: 'Full swipe → {{action}}',
-    capHint: '2 max — clear one to swap.',
-    fullSwipeNote: 'Tip: a long, full swipe instantly runs the action nearest the edge.',
     reset: 'Reset to defaults',
     resetToast: 'Swipe actions reset.',
     types: {

@@ -14,12 +14,16 @@ export interface EditableTitleProps {
   disabled?: boolean
 }
 
+/** Window within which two taps count as a double-tap (ms). */
+const DOUBLE_TAP_MS = 300
+
 /**
- * A title that renames in place: tapping it swaps the text for an input (Enter / blur saves,
- * Esc / empty cancels). Stops its own pointer + click from bubbling so the host card's
- * open/swipe/drag gestures never fire from the title — the card opens from everywhere else.
- * Rendered as a real control (button ↔ input), so the host card must be a non-button clickable
- * element (a `role="button"` div), never a native `<button>`.
+ * A title that renames in place: double-tapping it swaps the text for an input (Enter / blur
+ * saves, Esc / empty cancels). A single tap is deliberately inert, so a stray tap while reading
+ * never drops the title into an editor. Stops its own pointer + click from bubbling so the host
+ * card's open/swipe/drag gestures never fire from the title — the card opens from everywhere
+ * else. Rendered as a real control (button ↔ input), so the host card must be a non-button
+ * clickable element (a `role="button"` div), never a native `<button>`.
  */
 export function EditableTitle({
   value,
@@ -31,6 +35,8 @@ export function EditableTitle({
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(value)
   const inputRef = useRef<HTMLInputElement>(null)
+  const lastTapRef = useRef(0)
+  const keyActivatedRef = useRef(false)
 
   // Reseed the draft from upstream whenever we're not mid-edit.
   useEffect(() => {
@@ -101,10 +107,29 @@ export function EditableTitle({
       type="button"
       aria-label={editLabel}
       onPointerDown={stop}
-      onKeyDown={stop}
+      onKeyDown={(event) => {
+        stop(event)
+        // Keyboard activates in one press — a double-key isn't a natural affordance.
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          keyActivatedRef.current = true
+          setEditing(true)
+        }
+      }}
       onClick={(event) => {
         stop(event)
-        setEditing(true)
+        if (keyActivatedRef.current) {
+          keyActivatedRef.current = false
+          return
+        }
+        // Pointer / touch: only a double-tap opens the editor; a lone tap does nothing.
+        const now = Date.now()
+        if (now - lastTapRef.current < DOUBLE_TAP_MS) {
+          lastTapRef.current = 0
+          setEditing(true)
+        } else {
+          lastTapRef.current = now
+        }
       }}
       className={cn(className, 'cursor-text text-left')}
     >

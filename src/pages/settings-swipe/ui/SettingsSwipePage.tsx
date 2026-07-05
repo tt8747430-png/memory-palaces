@@ -9,7 +9,6 @@ import {
   DoorOpen,
   Landmark,
   RotateCcw,
-  Zap,
 } from 'lucide-react'
 import {
   selectEffectivePreferences,
@@ -117,7 +116,6 @@ export function SettingsSwipePage({ onBack }: SettingsSwipePageProps) {
               <SideGroup
                 icon={<ArrowRight className="size-4" aria-hidden />}
                 label={t('swipe.leading')}
-                hint={t('swipe.leadingHint')}
                 type={type}
                 side="leading"
                 selected={prefs.swipe[type].leading}
@@ -126,7 +124,6 @@ export function SettingsSwipePage({ onBack }: SettingsSwipePageProps) {
               <SideGroup
                 icon={<ArrowLeft className="size-4" aria-hidden />}
                 label={t('swipe.trailing')}
-                hint={t('swipe.trailingHint')}
                 type={type}
                 side="trailing"
                 selected={prefs.swipe[type].trailing}
@@ -135,11 +132,6 @@ export function SettingsSwipePage({ onBack }: SettingsSwipePageProps) {
             </section>
           )
         })}
-
-        <p className="flex items-start gap-2 px-1 text-[length:var(--p-text-label)] leading-snug text-muted-foreground">
-          <Zap className="mt-0.5 size-4 shrink-0 text-[var(--warning-foreground)]" aria-hidden />
-          {t('swipe.fullSwipeNote')}
-        </p>
 
         <Button variant="ghost" onClick={resetAll} className="self-start">
           <RotateCcw className="size-[18px]" aria-hidden />
@@ -153,7 +145,6 @@ export function SettingsSwipePage({ onBack }: SettingsSwipePageProps) {
 function SideGroup({
   icon,
   label,
-  hint,
   type,
   side,
   selected,
@@ -161,7 +152,6 @@ function SideGroup({
 }: {
   icon: ReactNode
   label: string
-  hint: string
   type: SwipeItemType
   side: keyof SwipeConfig
   selected: SwipeActionId[]
@@ -169,9 +159,6 @@ function SideGroup({
 }) {
   const { t } = useTranslation()
   const atCap = selected.length >= 2
-  // The action a full swipe auto-fires: index 0 on the leading tray, the last on the trailing.
-  const autoFireId =
-    selected.length === 0 ? null : side === 'leading' ? selected[0] : selected[selected.length - 1]
 
   return (
     <div className="mt-4 border-t border-border/60 pt-4 first:border-t-0 first:pt-0">
@@ -189,15 +176,11 @@ function SideGroup({
           {t('swipe.sideCount', { count: selected.length })}
         </span>
       </div>
-      <p className="mt-0.5 text-[length:var(--p-text-tiny)] text-muted-foreground">
-        {atCap ? t('swipe.capHint') : hint}
-      </p>
 
       <div className="mt-2.5 flex flex-wrap gap-2">
         {SWIPE_ACTIONS[type].map((id) => {
           const on = selected.includes(id)
           const meta = SWIPE_ACTION_META[id]
-          const isAutoFire = on && id === autoFireId
           // An off chip when both slots are full is disabled — you swap by clearing one first.
           const disabled = !on && atCap
           return (
@@ -211,7 +194,6 @@ function SideGroup({
                 'inline-flex items-center gap-1.5 rounded-pill px-3 py-2 text-[length:var(--p-text-label)] font-bold transition-[transform,background-color,box-shadow] active:scale-[0.97]',
                 'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40',
                 on ? TONE_CHIP[meta.tone] : 'bg-secondary/50 text-heading',
-                isAutoFire && 'shadow-interactive',
                 disabled && 'opacity-40',
               )}
               data-swipe-side={side}
@@ -220,27 +202,10 @@ function SideGroup({
                 {swipeActionIcon(id)}
               </span>
               {t(meta.labelKey as never)}
-              {isAutoFire ? (
-                <Zap
-                  className="size-3 fill-current"
-                  aria-label={t('swipe.autoFire')}
-                />
-              ) : null}
             </button>
           )
         })}
       </div>
-
-      {autoFireId ? (
-        <p className="mt-2 inline-flex items-center gap-1.5 text-[length:var(--p-text-tiny)] font-semibold text-muted-foreground">
-          <Zap className="size-3 shrink-0 text-[var(--warning-foreground)]" aria-hidden />
-          {t('swipe.fullFires', { action: t(SWIPE_ACTION_META[autoFireId].labelKey as never) })}
-        </p>
-      ) : (
-        <p className="mt-2 text-[length:var(--p-text-tiny)] italic text-faint">
-          {t('swipe.emptySide')}
-        </p>
-      )}
     </div>
   )
 }

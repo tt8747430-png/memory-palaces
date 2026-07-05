@@ -383,8 +383,11 @@ function RebuildMode({ answer, onSolved }: { answer: string; onSolved: () => voi
     () => scramble(words.map((word, pos) => ({ pos, word, key: `${pos}-${word}` }))),
     [words],
   )
-  const [placed, setPlaced] = useState(0)
+  // Track consumed chips by key, not by position, so two identical words (e.g. "în" … "în")
+  // are interchangeable — tapping either one satisfies the next slot as long as the word matches.
+  const [usedKeys, setUsedKeys] = useState<Set<string>>(() => new Set())
   const [wrongKey, setWrongKey] = useState<string | null>(null)
+  const placed = usedKeys.size
   const done = words.length > 0 && placed >= words.length
 
   useEffect(() => {
@@ -393,8 +396,9 @@ function RebuildMode({ answer, onSolved }: { answer: string; onSolved: () => voi
   }, [done])
 
   const tapChip = (chip: WordChip) => {
-    if (chip.pos === placed) {
-      setPlaced((p) => p + 1)
+    if (usedKeys.has(chip.key)) return
+    if (chip.word === words[placed]) {
+      setUsedKeys((prev) => new Set(prev).add(chip.key))
       setWrongKey(null)
     } else {
       setWrongKey(chip.key)
@@ -417,7 +421,7 @@ function RebuildMode({ answer, onSolved }: { answer: string; onSolved: () => voi
       <div className="mt-5 flex flex-1 flex-col items-center justify-center gap-4">
         <div className="flex flex-wrap justify-center gap-2">
           {chips.map((chip) => {
-            const used = chip.pos < placed
+            const used = usedKeys.has(chip.key)
             const isWrong = wrongKey === chip.key
             return (
               <motion.button
@@ -445,7 +449,7 @@ function RebuildMode({ answer, onSolved }: { answer: string; onSolved: () => voi
           <button
             type="button"
             onClick={() => {
-              setPlaced(0)
+              setUsedKeys(new Set())
               setWrongKey(null)
             }}
             className="inline-flex items-center gap-1.5 text-[length:var(--p-text-label)] font-semibold text-muted-foreground transition-colors active:text-heading"
