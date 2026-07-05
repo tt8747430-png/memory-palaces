@@ -1,9 +1,3 @@
-export { StudySession } from './ui/StudySession'
-export type { StudySessionProps } from './ui/StudySession'
-export type {
-  StudyCard,
-  StudyPrefs,
-  StudyFeatures,
-  StudyDirection,
-  SessionSummary,
-} from './model/types'
+export { FlashcardsPanel } from './ui/FlashcardsPanel'
+export type { FlashcardsPanelProps } from './ui/FlashcardsPanel'
+export type { StudyCard, StudyPrefs, StudyDirection, SessionSummary } from './model/types'

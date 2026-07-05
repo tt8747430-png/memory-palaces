@@ -94,8 +94,6 @@ export interface PalaceDetailPageProps {
   onMatch?: () => void
   /** Launch the palace-wide quiz (Test). */
   onTest?: () => void
-  /** Launch palace-wide verse study (Bible-mode palaces only). */
-  onVerse?: () => void
 }
 
 /** Palace detail — the palace-scoped study overview and practice modes above its ordered
@@ -111,7 +109,6 @@ export function PalaceDetailPage({
   onStudyPalace,
   onMatch,
   onTest,
-  onVerse,
 }: PalaceDetailPageProps) {
   const { t } = useTranslation()
   const palaceStore = usePalaceStoreApi()
@@ -343,7 +340,6 @@ export function PalaceDetailPage({
           <PracticeModes
             cardCount={summary.totalLoci}
             questionCount={summary.totalQuestions}
-            onVerse={onVerse}
             onMatch={onMatch}
             onTest={onTest}
           />

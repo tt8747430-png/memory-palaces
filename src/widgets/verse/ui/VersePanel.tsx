@@ -11,7 +11,6 @@ import {
   Lightbulb,
   Pencil,
   RotateCcw,
-  Settings2,
   Shuffle,
   Sparkles,
   Type as TypeIcon,
@@ -44,15 +43,16 @@ export interface VerseStudyPrefs {
   wordSpaces: boolean
 }
 
-export interface VerseStudyProps {
+export interface VersePanelProps {
   verses: VerseCard[]
-  title: string
-  subtitle?: string
   prefs: VerseStudyPrefs
   onPrefsChange: (changes: Partial<VerseStudyPrefs>) => void
   onBack: () => void
   onToggleMemorized: (id: string) => void
   onEditVerse: (id: string, data: { front: string; back: string }) => void
+  /** The header's options button; the panel owns the sheet, the page owns the trigger. */
+  settingsOpen: boolean
+  onSettingsOpenChange: (open: boolean) => void
 }
 
 const MODES: { value: VerseMode; key: 'modeBlur' | 'modeWords' | 'modeInitials' | 'modeType' }[] = [
@@ -66,19 +66,18 @@ const MODES: { value: VerseMode; key: 'modeBlur' | 'modeWords' | 'modeInitials' 
  * verses, with prev/next navigation, a memorized marker, read-aloud, inline editing, and a
  * settings sheet (shuffle order, word spaces). Each mode owns its own attempt state, reset
  * when the verse or mode changes (via the panel key). Prefs are owned by the host. */
-export function VerseStudy({
+export function VersePanel({
   verses,
-  title,
-  subtitle,
   prefs,
   onPrefsChange,
   onBack,
   onToggleMemorized,
   onEditVerse,
-}: VerseStudyProps) {
+  settingsOpen,
+  onSettingsOpenChange,
+}: VersePanelProps) {
   const { t } = useTranslation()
   const [index, setIndex] = useState(0)
-  const [settingsOpen, setSettingsOpen] = useState(false)
   const [editing, setEditing] = useState(false)
 
   const byId = useMemo(() => new Map(verses.map((verse) => [verse.id, verse])), [verses])
@@ -101,48 +100,22 @@ export function VerseStudy({
 
   if (verses.length === 0 || !current) {
     return (
-      <div className="relative mx-auto flex h-full w-full max-w-[430px] flex-col items-center justify-center gap-5 px-6 text-center">
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-5 px-6 text-center">
         <div className="grid size-16 place-items-center rounded-card-featured bg-info-surface">
           <TypeIcon className="size-8 text-accent" aria-hidden />
         </div>
-        <div>
-          <h2 className="mb-1 text-[length:var(--p-text-headline)] font-bold text-heading">
-            {t('verse.empty')}
-          </h2>
-          <p className="mx-auto max-w-[34ch] text-[length:var(--p-text-body)]">
-            {t('verse.emptyHint', { room: title })}
-          </p>
-        </div>
+        <h2 className="text-[length:var(--p-text-headline)] font-bold text-heading">
+          {t('verse.empty')}
+        </h2>
         <Button onClick={onBack}>{t('verse.back')}</Button>
       </div>
     )
   }
 
   return (
-    <div className="relative mx-auto flex h-full w-full max-w-[430px] flex-col overflow-hidden">
-      <div className="px-5 pt-safe">
-        <div className="flex items-center justify-between gap-2 pt-3">
-          <IconButton variant="glass" aria-label={t('verse.goBack')} onClick={onBack}>
-            <ChevronLeft className="size-5" aria-hidden />
-          </IconButton>
-          <div className="min-w-0 flex-1 text-center">
-            <h1 className="truncate text-[length:var(--p-text-title)] font-semibold text-heading">
-              {title}
-            </h1>
-            {subtitle ? (
-              <p className="truncate text-[length:var(--p-text-label)]">{subtitle}</p>
-            ) : null}
-          </div>
-          <IconButton
-            variant="glass"
-            aria-label={t('verse.settings')}
-            onClick={() => setSettingsOpen(true)}
-          >
-            <Settings2 className="size-5" aria-hidden />
-          </IconButton>
-        </div>
-
-        <div className="relative mt-4 flex items-center gap-1 rounded-card bg-info-surface p-1">
+    <>
+      <div className="px-5 pt-1">
+        <div className="relative flex items-center gap-1 rounded-card bg-info-surface p-1">
           {MODES.map(({ value, key }) => {
             const active = value === prefs.mode
             return (
@@ -258,11 +231,11 @@ export function VerseStudy({
 
       <VerseSettingsSheet
         open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
+        onClose={() => onSettingsOpenChange(false)}
         prefs={prefs}
         onPrefsChange={onPrefsChange}
         onEditVerse={() => {
-          setSettingsOpen(false)
+          onSettingsOpenChange(false)
           setEditing(true)
         }}
       />
@@ -276,7 +249,7 @@ export function VerseStudy({
           setEditing(false)
         }}
       />
-    </div>
+    </>
   )
 }
 

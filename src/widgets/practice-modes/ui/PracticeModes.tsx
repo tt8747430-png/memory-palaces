@@ -1,15 +1,14 @@
 import { type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'motion/react'
-import { BookOpen, Brain, ChevronRight, Puzzle } from 'lucide-react'
+import { Brain, ChevronRight, Puzzle } from 'lucide-react'
 import { cn } from '@/shared/lib'
 
 export interface PracticeModesProps {
-  /** Cards in scope — Match needs at least two; Verses needs at least one. */
+  /** Cards in scope — Match needs at least two. */
   cardCount: number
   /** Authored questions in scope — Test needs at least one. */
   questionCount: number
-  onVerse?: () => void
   onMatch?: () => void
   onTest?: () => void
   /** Keep the Test tile enabled even with no questions — used where it opens the questions
@@ -17,14 +16,13 @@ export interface PracticeModesProps {
   alwaysEnableTest?: boolean
 }
 
-/** The practice-mode tiles (Verses / Match / Test) shared by the room hub and palace
- * detail. The Study-cards session is the headline above; these are the alternate ways to
- * exercise the same set, scoped to whichever surface renders them. Every mode is available
- * on every palace and room. */
+/** The practice-mode tiles (Match / Test) shared by the room hub and palace detail. The
+ * Study-cards session is the headline above (flashcards and verse memorization both live
+ * there); these are the alternate ways to exercise the same set, scoped to whichever surface
+ * renders them. Every mode is available on every palace and room. */
 export function PracticeModes({
   cardCount,
   questionCount,
-  onVerse,
   onMatch,
   onTest,
   alwaysEnableTest = false,
@@ -32,16 +30,6 @@ export function PracticeModes({
   const { t } = useTranslation()
   return (
     <div className="space-y-2.5">
-      {onVerse ? (
-        <ModeTile
-          icon={<BookOpen className="size-5" aria-hidden />}
-          tint="bg-gradient-to-br from-primary to-accent"
-          label={t('practice.verses')}
-          sublabel={t('practice.versesSub')}
-          onClick={onVerse}
-          disabled={cardCount === 0}
-        />
-      ) : null}
       <ModeTile
         icon={<Puzzle className="size-5" aria-hidden />}
         tint="bg-accent"

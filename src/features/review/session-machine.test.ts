@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  type BrowseState,
   currentId,
   initSession,
   nextId,
@@ -11,14 +10,8 @@ import {
 } from './session-machine'
 
 function review(ids: string[]): ReviewState {
-  const state = initSession({ mode: 'review', ids })
+  const state = initSession({ ids })
   if (state.status !== 'review') throw new Error('expected a review session')
-  return state
-}
-
-function browse(ids: string[]): BrowseState {
-  const state = initSession({ mode: 'browse', ids })
-  if (state.status !== 'browse') throw new Error('expected a browse session')
   return state
 }
 
@@ -30,15 +23,6 @@ describe('initSession', () => {
       total: 3,
       graded: 0,
       piles: { learning: 0, known: 0 },
-      flipped: false,
-    })
-  })
-
-  it('builds a browse session at position 0', () => {
-    expect(browse(['a', 'b'])).toEqual({
-      status: 'browse',
-      ids: ['a', 'b'],
-      pos: 0,
       flipped: false,
     })
   })
@@ -56,7 +40,7 @@ describe('flip', () => {
   })
 })
 
-describe('grade (review)', () => {
+describe('grade', () => {
   it('good dequeues the card, advances, counts it known, resets the flip', () => {
     const next = sessionReducer(
       { ...review(['a', 'b']), flipped: true },
@@ -90,9 +74,9 @@ describe('grade (review)', () => {
     expect(next).toEqual({ status: 'complete', graded: 1, piles: { learning: 0, known: 1 } })
   })
 
-  it('is ignored outside review mode', () => {
-    const b = browse(['a'])
-    expect(sessionReducer(b, { type: 'grade', grade: 'good' })).toBe(b)
+  it('is ignored once complete', () => {
+    const done: SessionState = { status: 'complete', graded: 0, piles: { learning: 0, known: 0 } }
+    expect(sessionReducer(done, { type: 'grade', grade: 'good' })).toBe(done)
   })
 })
 
@@ -103,24 +87,10 @@ describe('skip', () => {
     expect(next.status === 'review' && next.graded).toBe(0)
   })
 
-  it('advances in browse mode but stops at the end', () => {
-    const advanced = sessionReducer(browse(['a', 'b']), { type: 'skip' })
-    expect(advanced.status === 'browse' && advanced.pos).toBe(1)
-    expect(sessionReducer(advanced, { type: 'skip' })).toBe(advanced)
-  })
-})
-
-describe('browseNav', () => {
-  it('clamps within bounds and resets the flip', () => {
-    const start = { ...browse(['a', 'b', 'c']), flipped: true }
-    expect(sessionReducer(start, { type: 'browseNav', delta: -1 })).toEqual({
-      status: 'browse',
-      ids: ['a', 'b', 'c'],
-      pos: 0,
-      flipped: false,
-    })
-    const last = sessionReducer(browse(['a', 'b']), { type: 'browseNav', delta: 5 })
-    expect(last.status === 'browse' && last.pos).toBe(1)
+  it('is a no-op on a single-card queue', () => {
+    const one = review(['a'])
+    const next = sessionReducer(one, { type: 'skip' })
+    expect(next.status === 'review' && next.queue).toEqual(['a'])
   })
 })
 
@@ -136,7 +106,7 @@ describe('finish + reset', () => {
 
   it('reset replaces the whole machine state', () => {
     const fresh = review(['x'])
-    expect(sessionReducer(browse(['a']), { type: 'reset', state: fresh })).toBe(fresh)
+    expect(sessionReducer(review(['a']), { type: 'reset', state: fresh })).toBe(fresh)
   })
 })
 
@@ -150,9 +120,8 @@ describe('selectors', () => {
     ).toBeUndefined()
   })
 
-  it('progress is graded/total in review and pos/length in browse', () => {
+  it('progress is graded/total in review and 1 once complete', () => {
     expect(sessionProgress(review(['a', 'b', 'c', 'd']))).toBe(0)
-    expect(sessionProgress({ ...browse(['a', 'b']), pos: 1 })).toBe(1)
     expect(
       sessionProgress({ status: 'complete', graded: 2, piles: { learning: 0, known: 2 } }),
     ).toBe(1)

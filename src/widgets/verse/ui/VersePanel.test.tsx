@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MotionConfig } from 'motion/react'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
-import { type VerseCard, VerseStudy, type VerseStudyPrefs } from './VerseStudy'
+import { type VerseCard, VersePanel, type VerseStudyPrefs } from './VersePanel'
 
 afterEach(cleanup)
 
@@ -21,15 +21,15 @@ function renderVerse(verses: VerseCard[] = VERSES, prefs: Partial<VerseStudyPref
   render(
     <I18nextProvider i18n={i18n}>
       <MotionConfig reducedMotion="always">
-        <VerseStudy
+        <VersePanel
           verses={verses}
-          title="Epistles"
-          subtitle="Scripture"
           prefs={{ ...DEFAULT_PREFS, ...prefs }}
           onPrefsChange={onPrefsChange}
           onBack={() => {}}
           onToggleMemorized={onToggleMemorized}
           onEditVerse={onEditVerse}
+          settingsOpen={false}
+          onSettingsOpenChange={() => {}}
         />
       </MotionConfig>
     </I18nextProvider>,
@@ -37,7 +37,7 @@ function renderVerse(verses: VerseCard[] = VERSES, prefs: Partial<VerseStudyPref
   return { onToggleMemorized, onPrefsChange, onEditVerse }
 }
 
-describe('VerseStudy', () => {
+describe('VersePanel', () => {
   it('shows the verse reference and toggles the memorized marker', async () => {
     const user = userEvent.setup()
     const { onToggleMemorized } = renderVerse()

@@ -4,6 +4,7 @@ import {
   AnimatePresence,
   type HTMLMotionProps,
   motion,
+  type MotionValue,
   useMotionValue,
   useReducedMotion,
   useTransform,
@@ -13,22 +14,28 @@ import { Flag, Lightbulb, MapPin, Volume2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn, impact, tick } from '@/shared/lib'
 import { Chip, SrsStatusChip } from '@/shared/ui'
+import {
+  type FlashcardSwipeAction,
+  FLASHCARD_SWIPE_ACTION_META,
+  type FlashcardSwipeConfig,
+  isGradeAction,
+  type SwipeDirection,
+} from '@/shared/config/flashcard-swipe'
 import type { StudyCard, StudyDirection } from '../model/types'
-import * as React from 'react'
 
-export type SwipeAction = 'right' | 'left' | 'up' | 'down'
+export type { SwipeDirection }
 
 export interface StudyCardDeckProps {
   card: StudyCard
   nextCard?: StudyCard
   direction: StudyDirection
   flipped: boolean
-  mode: 'review' | 'browse'
-  swipeEnabled: boolean
+  /** The active four-direction gesture map. */
+  swipeConfig: FlashcardSwipeConfig
   canSpeak: boolean
   onFlip: () => void
-  /** A committed swipe in one of four directions. */
-  onCommit: (action: SwipeAction) => void
+  /** A committed swipe in a direction whose action is not `none`. */
+  onCommit: (direction: SwipeDirection) => void
   onSpeak: (text: string) => void
   /** Press-and-hold opened (quick actions). */
   onLongPress?: () => void
@@ -36,16 +43,32 @@ export interface StudyCardDeckProps {
 
 const CARD_HEIGHT = 'h-[clamp(300px,52vh,440px)]'
 
-/** The flip-card deck: tap to flip, swipe to sort (right/left), nudge up to flag,
- * down to skip — the gesture surface over the session's dispatch actions. Owns its
- * own motion values; the parent maps `onCommit` to the State machine + grade command. */
+/** Text tint per swipe action, so a badge reads in the same colour language as the grade
+ * buttons. `none` never renders a badge. */
+const ACTION_TINT: Record<Exclude<FlashcardSwipeAction, 'none'>, string> = {
+  again: 'text-[var(--danger-on-surface)]',
+  hard: 'text-[var(--warning-foreground)]',
+  good: 'text-[var(--success-on-surface)]',
+  easy: 'text-[var(--accent)]',
+  flag: 'text-[var(--rating-edge)]',
+  skip: 'text-muted-foreground',
+}
+
+/** Actions that leave the current card (grades + skip). `flag` and `none` keep it in place,
+ * so a fling in their direction springs back instead of flying off. */
+function actionAdvances(action: FlashcardSwipeAction): boolean {
+  return isGradeAction(action) || action === 'skip'
+}
+
+/** The flip-card deck: tap to flip, fling in any of four directions to run that direction's
+ * configured action. Owns its own motion values; the parent maps `onCommit(direction)` to the
+ * state machine + grade command via the same swipe config passed here. */
 export function StudyCardDeck({
   card,
   nextCard,
   direction,
   flipped,
-  mode,
-  swipeEnabled,
+  swipeConfig,
   canSpeak,
   onFlip,
   onCommit,
@@ -70,10 +93,10 @@ export function StudyCardDeck({
   const y = useMotionValue(0)
   const scale = useMotionValue(1)
   const rotate = useTransform(x, [-260, 0, 260], [-10, 0, 10])
-  const gotItOpacity = useTransform(x, [36, 130], [0, 1])
-  const learningOpacity = useTransform(x, [-130, -36], [1, 0])
-  const flagOpacity = useTransform(y, [-130, -40], [1, 0])
-  const skipOpacity = useTransform(y, [40, 130], [0, 1])
+  const rightOpacity = useTransform(x, [36, 130], [0, 1])
+  const leftOpacity = useTransform(x, [-130, -36], [1, 0])
+  const upOpacity = useTransform(y, [-130, -40], [1, 0])
+  const downOpacity = useTransform(y, [40, 130], [0, 1])
 
   const clearHold = () => {
     if (holdTimer.current) {
@@ -88,25 +111,32 @@ export function StudyCardDeck({
     animate(y, 0, { type: 'spring', stiffness: 520, damping: 34 })
   }
 
-  const commit = async (action: SwipeAction) => {
+  const commit = async (dir: SwipeDirection) => {
     if (locked) return
-    if (action === 'up') {
-      onCommit('up')
+    const action = swipeConfig[dir]
+    if (action === 'none') {
+      snapBack()
+      return
+    }
+    // Flag keeps the card in place — a quick haptic tick, then spring back.
+    if (!actionAdvances(action)) {
+      onCommit(dir)
       tick()
       snapBack()
       return
     }
+    // Grades + skip advance: fling the card off in the direction it was thrown.
     setLocked(true)
     impact()
     const off = 620
-    const tx = action === 'right' ? off : action === 'left' ? -off : 0
-    const ty = action === 'down' ? off : 0
+    const tx = dir === 'right' ? off : dir === 'left' ? -off : 0
+    const ty = dir === 'down' ? off : dir === 'up' ? -off : 0
     const dur = reduce ? 0 : 0.24
     await Promise.all([
-      animate(x, tx, { duration: dur, ease: [0.4, 0, 1, 1] }).finished,
+      tx ? animate(x, tx, { duration: dur, ease: [0.4, 0, 1, 1] }).finished : Promise.resolve(),
       ty ? animate(y, ty, { duration: dur, ease: [0.4, 0, 1, 1] }).finished : Promise.resolve(),
     ])
-    onCommit(action)
+    onCommit(dir)
     x.jump(0)
     y.jump(0)
     if (!reduce) {
@@ -160,7 +190,7 @@ export function StudyCardDeck({
       else if (my < 0) void commit('up')
       else void commit('down')
     },
-    { filterTaps: true, pointer: { touch: true }, enabled: swipeEnabled },
+    { filterTaps: true, pointer: { touch: true } },
   )
 
   const faceClass =
@@ -176,34 +206,26 @@ export function StudyCardDeck({
         />
       ) : null}
 
-      {swipeEnabled ? (
-        <>
-          <SwipeBadge
-            style={{ opacity: gotItOpacity }}
-            className="left-5 top-5 -rotate-12 text-[var(--success-on-surface)]"
-          >
-            {mode === 'review' ? t('study.swipeGotIt') : t('study.prev')}
-          </SwipeBadge>
-          <SwipeBadge
-            style={{ opacity: learningOpacity }}
-            className="right-5 top-5 rotate-12 text-[var(--warning-foreground)]"
-          >
-            {mode === 'review' ? t('study.swipeLearning') : t('study.next')}
-          </SwipeBadge>
-          <SwipeBadge
-            style={{ opacity: flagOpacity }}
-            className="left-1/2 top-4 -translate-x-1/2 text-[var(--rating-edge)]"
-          >
-            {t('study.flag')}
-          </SwipeBadge>
-          <SwipeBadge
-            style={{ opacity: skipOpacity }}
-            className="bottom-4 left-1/2 -translate-x-1/2 text-muted-foreground"
-          >
-            {t('study.skip')}
-          </SwipeBadge>
-        </>
-      ) : null}
+      <DirectionBadge
+        action={swipeConfig.right}
+        opacity={rightOpacity}
+        className="left-5 top-5 -rotate-12"
+      />
+      <DirectionBadge
+        action={swipeConfig.left}
+        opacity={leftOpacity}
+        className="right-5 top-5 rotate-12"
+      />
+      <DirectionBadge
+        action={swipeConfig.up}
+        opacity={upOpacity}
+        className="left-1/2 top-4 -translate-x-1/2"
+      />
+      <DirectionBadge
+        action={swipeConfig.down}
+        opacity={downOpacity}
+        className="bottom-4 left-1/2 -translate-x-1/2"
+      />
 
       <motion.div
         {...(bind() as unknown as HTMLMotionProps<'div'>)}
@@ -232,7 +254,7 @@ export function StudyCardDeck({
                     <Chip icon={<MapPin className="size-3" aria-hidden />}>
                       {direction === 'front' ? t('study.recall') : t('study.term')}
                     </Chip>
-                    {mode === 'review' ? <SrsStatusChip srs={locus.srs} /> : null}
+                    <SrsStatusChip srs={locus.srs} />
                   </div>
                   <div className="flex items-center gap-1.5">
                     {canSpeak ? (
@@ -324,24 +346,28 @@ export function StudyCardDeck({
   )
 }
 
-function SwipeBadge({
-  children,
-  style,
+function DirectionBadge({
+  action,
+  opacity,
   className,
 }: {
-  children: React.ReactNode
-  style: HTMLMotionProps<'div'>['style']
+  action: FlashcardSwipeAction
+  opacity: MotionValue<number>
   className: string
 }) {
+  const { t } = useTranslation()
+  if (action === 'none') return null
+  const meta = FLASHCARD_SWIPE_ACTION_META[action]
   return (
     <motion.div
-      style={style}
+      style={{ opacity }}
       className={cn(
         'pointer-events-none absolute z-30 rounded-card border-2 border-current bg-card px-3 py-1.5 text-[length:var(--p-text-sub)] font-extrabold uppercase tracking-wide',
+        ACTION_TINT[action],
         className,
       )}
     >
-      {children}
+      {t(meta.labelKey as never)}
     </motion.div>
   )
 }

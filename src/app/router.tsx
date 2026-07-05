@@ -23,7 +23,6 @@ import { RoomQuestionsPage } from '@/pages/room-questions'
 import { QuestionEditorPage } from '@/pages/question-editor'
 import { StudyCardsPage } from '@/pages/study'
 import { MatchPage } from '@/pages/match'
-import { VerseStudyPage } from '@/pages/verse'
 import { RoomQuizPage } from '@/pages/room-quiz'
 import { QuizPage } from '@/pages/quiz'
 import { ProfilePage } from '@/pages/profile'
@@ -192,7 +191,6 @@ function PalaceDetailRoute() {
       onStudyPalace={() => navigate({ to: ROUTES.palaceStudy, params: { palaceId } })}
       onMatch={() => navigate({ to: ROUTES.palaceMatch, params: { palaceId } })}
       onTest={() => navigate({ to: ROUTES.palaceQuiz, params: { palaceId } })}
-      onVerse={() => navigate({ to: ROUTES.palaceVerse, params: { palaceId } })}
     />
   )
 }
@@ -234,7 +232,6 @@ function RoomHubRoute() {
       onStudy={() => navigate({ to: ROUTES.roomStudy, params: { roomId } })}
       onMatch={() => navigate({ to: ROUTES.roomMatch, params: { roomId } })}
       onTest={() => navigate({ to: ROUTES.roomQuestions, params: { roomId } })}
-      onVerse={() => navigate({ to: ROUTES.roomVerse, params: { roomId } })}
       onAddCard={() => navigate({ to: ROUTES.roomCardNew, params: { roomId } })}
       onEditCard={(cardId) => navigate({ to: ROUTES.roomCardEdit, params: { roomId, cardId } })}
       onPasteNotes={() => navigate({ to: ROUTES.roomPaste, params: { roomId } })}
@@ -452,31 +449,6 @@ const palaceMatchRoute = createRoute({
   component: PalaceMatchRoute,
 })
 
-function RoomVerseRoute() {
-  const { roomId } = roomVerseRoute.useParams()
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.roomHub, params: { roomId } }))
-  return <VerseStudyPage scope={{ kind: 'room', roomId }} onBack={back} />
-}
-
-const roomVerseRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: ROUTES.roomVerse,
-  component: RoomVerseRoute,
-})
-
-function PalaceVerseRoute() {
-  const { palaceId } = palaceVerseRoute.useParams()
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.palaceDetail, params: { palaceId } }))
-  return <VerseStudyPage scope={{ kind: 'palace', palaceId }} onBack={back} />
-}
-
-const palaceVerseRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: ROUTES.palaceVerse,
-  component: PalaceVerseRoute,
-})
 
 function RoomQuizRoute() {
   const { roomId } = roomQuizRoute.useParams()
@@ -765,8 +737,6 @@ const routeTree = rootRoute.addChildren([
   palaceStudyRoute,
   roomMatchRoute,
   palaceMatchRoute,
-  roomVerseRoute,
-  palaceVerseRoute,
   roomQuizRoute,
   quizRoute,
   profileRoute,

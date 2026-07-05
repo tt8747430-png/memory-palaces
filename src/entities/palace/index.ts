@@ -2,8 +2,6 @@ export type {
   Palace,
   PalaceSettings,
   StudyDirection,
-  CardOrder,
-  StudyMode,
   MakePalaceInput,
   PalaceChanges,
 } from './model/types'

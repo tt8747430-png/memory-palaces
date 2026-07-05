@@ -1,2 +1,2 @@
-export { VerseStudy } from './ui/VerseStudy'
-export type { VerseStudyProps, VerseStudyPrefs, VerseCard } from './ui/VerseStudy'
+export { VersePanel } from './ui/VersePanel'
+export type { VersePanelProps, VerseStudyPrefs, VerseCard } from './ui/VersePanel'

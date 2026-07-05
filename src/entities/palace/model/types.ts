@@ -1,30 +1,22 @@
 import type { Entity } from '@/shared/lib'
 
 export type StudyDirection = 'front' | 'back'
-export type CardOrder = 'inOrder' | 'shuffle' | 'reverse'
-export type StudyMode = 'review' | 'browse'
 
 /** Per-palace study configuration. */
 export interface PalaceSettings {
   quizTimer: boolean
   studyDirection: StudyDirection
-  cardOrder: CardOrder
-  studyMode: StudyMode
   shuffleQuestions: boolean
   shuffleCards: boolean
   textToSpeech: boolean
-  sortIntoPiles: boolean
 }
 
 export const DEFAULT_PALACE_SETTINGS: PalaceSettings = {
   quizTimer: true,
   studyDirection: 'front',
-  cardOrder: 'inOrder',
-  studyMode: 'review',
   shuffleQuestions: false,
   shuffleCards: false,
   textToSpeech: false,
-  sortIntoPiles: true,
 }
 
 export interface Palace extends Entity {

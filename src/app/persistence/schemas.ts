@@ -34,22 +34,16 @@ export const palaceSchema: RxJsonSchema<Palace> = {
       properties: {
         quizTimer: { type: 'boolean' },
         studyDirection: { type: 'string', enum: ['front', 'back'] },
-        cardOrder: { type: 'string', enum: ['inOrder', 'shuffle', 'reverse'] },
-        studyMode: { type: 'string', enum: ['review', 'browse'] },
         shuffleQuestions: { type: 'boolean' },
         shuffleCards: { type: 'boolean' },
         textToSpeech: { type: 'boolean' },
-        sortIntoPiles: { type: 'boolean' },
       },
       required: [
         'quizTimer',
         'studyDirection',
-        'cardOrder',
-        'studyMode',
         'shuffleQuestions',
         'shuffleCards',
         'textToSpeech',
-        'sortIntoPiles',
       ],
       additionalProperties: false,
     },
@@ -245,6 +239,17 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
       required: ['palace', 'folder', 'room', 'card'],
       additionalProperties: false,
     },
+    flashcardSwipe: {
+      type: 'object',
+      properties: {
+        up: { type: 'string', enum: ['again', 'hard', 'good', 'easy', 'flag', 'skip', 'none'] },
+        down: { type: 'string', enum: ['again', 'hard', 'good', 'easy', 'flag', 'skip', 'none'] },
+        left: { type: 'string', enum: ['again', 'hard', 'good', 'easy', 'flag', 'skip', 'none'] },
+        right: { type: 'string', enum: ['again', 'hard', 'good', 'easy', 'flag', 'skip', 'none'] },
+      },
+      required: ['up', 'down', 'left', 'right'],
+      additionalProperties: false,
+    },
     privacy: {
       type: 'object',
       properties: {
@@ -284,6 +289,7 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
     'verseShuffle',
     'verseWordSpaces',
     'swipe',
+    'flashcardSwipe',
     'privacy',
   ],
 }

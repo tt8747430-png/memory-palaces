@@ -7,6 +7,8 @@ export type {
   ContentSort,
   VerseMode,
   Theme,
+  SwipePreferences,
+  FlashcardSwipeConfig,
   MakePreferencesInput,
   PreferencesChanges,
 } from './model/types'

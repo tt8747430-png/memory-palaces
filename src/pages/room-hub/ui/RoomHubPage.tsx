@@ -50,8 +50,6 @@ export interface RoomHubPageProps {
   onMatch?: () => void
   /** Open the room's Questions & Test page (author questions, then start the test). */
   onTest?: () => void
-  /** Launch verse-study. */
-  onVerse?: () => void
   /** Open the full-screen card editor (add / edit). */
   onAddCard: () => void
   onEditCard: (cardId: string) => void
@@ -71,7 +69,6 @@ export function RoomHubPage({
   onStudy,
   onMatch,
   onTest,
-  onVerse,
   onAddCard,
   onEditCard,
   onPasteNotes,
@@ -218,7 +215,6 @@ export function RoomHubPage({
           <PracticeModes
             cardCount={loci.length}
             questionCount={questions.length}
-            onVerse={onVerse}
             onMatch={onMatch}
             onTest={onTest}
             alwaysEnableTest

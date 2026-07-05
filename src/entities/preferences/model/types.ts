@@ -6,8 +6,14 @@ import {
   type SwipePreferences,
   SWIPE_ITEM_TYPES,
 } from '@/shared/config/swipe'
+import {
+  DEFAULT_FLASHCARD_SWIPE,
+  type FlashcardSwipeConfig,
+  normalizeFlashcardSwipe,
+} from '@/shared/config/flashcard-swipe'
 
 export type { SwipePreferences } from '@/shared/config/swipe'
+export type { FlashcardSwipeConfig } from '@/shared/config/flashcard-swipe'
 
 /** How the Palaces screen lays out its list. Persisted so the choice survives sessions. */
 export type PalacesView = 'grid' | 'list'
@@ -96,6 +102,8 @@ export interface Preferences extends Entity {
   verseWordSpaces: boolean
   /** Per-item-type swipe-gesture mapping for list rows (leading/trailing action trays). */
   swipe: SwipePreferences
+  /** Which grade/gesture each of the four flashcard fling directions commits. */
+  flashcardSwipe: FlashcardSwipeConfig
   privacy: PrivacySettings
 }
 
@@ -116,6 +124,7 @@ export const DEFAULT_PREFERENCES = {
   verseShuffle: false,
   verseWordSpaces: true,
   swipe: DEFAULT_SWIPE,
+  flashcardSwipe: DEFAULT_FLASHCARD_SWIPE,
   privacy: DEFAULT_PRIVACY,
 } as const satisfies Omit<Preferences, keyof Entity>
 
@@ -138,6 +147,7 @@ export interface MakePreferencesInput {
   verseShuffle?: boolean
   verseWordSpaces?: boolean
   swipe?: SwipePreferences
+  flashcardSwipe?: FlashcardSwipeConfig
   privacy?: PrivacySettings
 }
 
@@ -182,6 +192,7 @@ export function makePreferences(input: MakePreferencesInput): Preferences {
     verseShuffle: input.verseShuffle ?? DEFAULT_PREFERENCES.verseShuffle,
     verseWordSpaces: input.verseWordSpaces ?? DEFAULT_PREFERENCES.verseWordSpaces,
     swipe: resolveSwipe(input.swipe),
+    flashcardSwipe: normalizeFlashcardSwipe(input.flashcardSwipe),
     privacy: input.privacy ?? { ...DEFAULT_PRIVACY },
   }
 }
@@ -206,6 +217,7 @@ export type PreferencesChanges = Partial<
     | 'verseShuffle'
     | 'verseWordSpaces'
     | 'swipe'
+    | 'flashcardSwipe'
     | 'privacy'
   >
 >

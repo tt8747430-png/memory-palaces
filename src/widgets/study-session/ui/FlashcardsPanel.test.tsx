@@ -5,12 +5,15 @@ import { MotionConfig } from 'motion/react'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
 import { makeLocus } from '@/entities/locus'
-import { StudySession } from './StudySession'
+import { DEFAULT_FLASHCARD_SWIPE } from '@/shared/config/flashcard-swipe'
+import { FlashcardsPanel } from './FlashcardsPanel'
 import type { StudyCard, StudyPrefs } from '../model/types'
 
 afterEach(cleanup)
 
 const NOW = Date.UTC(2026, 0, 10)
+
+const DEFAULT_PREFS: StudyPrefs = { direction: 'front', shuffle: false, textToSpeech: false }
 
 function studyCard(id: string): StudyCard {
   return {
@@ -26,7 +29,7 @@ function studyCard(id: string): StudyCard {
   }
 }
 
-function renderSession(
+function renderPanel(
   cards: StudyCard[],
   overrides: Partial<{
     onGrade: (id: string, grade: string) => void
@@ -39,13 +42,15 @@ function renderSession(
   render(
     <I18nextProvider i18n={i18n}>
       <MotionConfig reducedMotion="always">
-        <StudySession
+        <FlashcardsPanel
           cards={cards}
-          title="Atrium"
-          initialPrefs={overrides.prefs}
+          prefs={{ ...DEFAULT_PREFS, ...overrides.prefs }}
+          swipeConfig={DEFAULT_FLASHCARD_SWIPE}
           onGrade={onGrade}
           onBack={() => {}}
           onComplete={onComplete}
+          optionsOpen={false}
+          onOptionsOpenChange={() => {}}
           now={NOW}
         />
       </MotionConfig>
@@ -54,10 +59,10 @@ function renderSession(
   return { onGrade, onComplete }
 }
 
-describe('StudySession', () => {
+describe('FlashcardsPanel', () => {
   it('flips and grades a review session through to completion', async () => {
     const user = userEvent.setup()
-    const { onGrade, onComplete } = renderSession([studyCard('a'), studyCard('b')])
+    const { onGrade, onComplete } = renderPanel([studyCard('a'), studyCard('b')])
 
     expect(screen.getByText('Front a')).toBeInTheDocument()
 
@@ -76,7 +81,7 @@ describe('StudySession', () => {
 
   it("requeues a card graded 'again' to the back of the session", async () => {
     const user = userEvent.setup()
-    const { onGrade } = renderSession([studyCard('a'), studyCard('b')])
+    const { onGrade } = renderPanel([studyCard('a'), studyCard('b')])
 
     await user.click(screen.getByRole('button', { name: /show answer/i }))
     await user.click(screen.getByRole('button', { name: /again/i }))
@@ -84,22 +89,5 @@ describe('StudySession', () => {
 
     // 'a' goes to the back, so 'b' leads now; 'a' returns after it.
     expect(await screen.findByText('Front b')).toBeInTheDocument()
-  })
-
-  it('navigates a browse session and finishes it', async () => {
-    const user = userEvent.setup()
-    renderSession([studyCard('a'), studyCard('b')], { prefs: { mode: 'browse' } })
-
-    expect(screen.getByText('Front a')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: /next card/i }))
-    expect(await screen.findByText('Front b')).toBeInTheDocument()
-
-    await user.click(screen.getByRole('button', { name: /complete session/i }))
-    expect(await screen.findByText(/session complete/i)).toBeInTheDocument()
-  })
-
-  it('shows an empty state for a deck with no cards', () => {
-    renderSession([])
-    expect(screen.getByText(/no cards yet/i)).toBeInTheDocument()
   })
 })

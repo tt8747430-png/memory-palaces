@@ -22,14 +22,6 @@ export type Scope =
   | { kind: 'new' }
   | { kind: 'learning' }
   | { kind: 'flagged' }
-  /** A contiguous batch by position, e.g. cards 1–10 (0-indexed [start, end)). */
-  | { kind: 'range'; start: number; end: number }
-
-/** Browse order; review always leads with due cards. */
-export type CardOrder = 'inOrder' | 'shuffle' | 'reverse'
-
-/** Default cards per range batch (the "1–10 / 11–20" chunks). */
-export const BATCH_SIZE = 10
 
 /** Filter a deck down to the active scope, preserving the deck's card order. */
 export function applyScope(loci: Locus[], scope: Scope, now: number): Locus[] {
@@ -42,8 +34,6 @@ export function applyScope(loci: Locus[], scope: Scope, now: number): Locus[] {
       return loci.filter((locus) => srsStatus(locus.srs) === 'learning')
     case 'flagged':
       return loci.filter((locus) => locus.flagged)
-    case 'range':
-      return loci.slice(scope.start, scope.end)
     default:
       return loci
   }
@@ -68,40 +58,6 @@ export function scopeCounts(loci: Locus[], now: number): ScopeCounts {
   }
 }
 
-export interface RangeBatch {
-  start: number
-  end: number
-  label: string
-}
-
-/** Split a deck into labelled, 1-indexed position batches ("1–10", "11–20", …).
- * Empty when the deck fits in a single batch (nothing to choose between). */
-export function rangeBatches(count: number, batchSize = BATCH_SIZE): RangeBatch[] {
-  if (count <= batchSize) return []
-  const batches: RangeBatch[] = []
-  for (let start = 0; start < count; start += batchSize) {
-    const end = Math.min(start + batchSize, count)
-    batches.push({ start, end, label: `${start + 1}–${end}` })
-  }
-  return batches
-}
-
 export function scopesEqual(a: Scope, b: Scope): boolean {
-  if (a.kind !== b.kind) return false
-  if (a.kind === 'range' && b.kind === 'range') {
-    return a.start === b.start && a.end === b.end
-  }
-  return true
-}
-
-/** Order a deck's ids for browse mode. `random` is injectable for deterministic tests. */
-export function orderIds(
-  loci: Locus[],
-  order: CardOrder,
-  random: () => number = Math.random,
-): string[] {
-  const ids = loci.map((locus) => locus.id)
-  if (order === 'reverse') return [...ids].reverse()
-  if (order === 'shuffle') return shuffle(ids, random)
-  return ids
+  return a.kind === b.kind
 }

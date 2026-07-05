@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { SrsState } from '@/shared/lib'
 import { type Locus, makeLocus } from '@/entities/locus'
-import { applyScope, orderIds, rangeBatches, scopeCounts, scopesEqual } from './scope'
+import { applyScope, scopeCounts, scopesEqual } from './scope'
 
 const NOW = Date.UTC(2026, 0, 10)
 const DAY = 86_400_000
@@ -65,13 +65,6 @@ describe('applyScope', () => {
   it('flagged → only flagged cards', () => {
     expect(applyScope(deck, { kind: 'flagged' }, NOW).map((c) => c.id)).toEqual(['flag'])
   })
-
-  it('range → a contiguous slice [start, end)', () => {
-    expect(applyScope(deck, { kind: 'range', start: 1, end: 3 }, NOW).map((c) => c.id)).toEqual([
-      'due',
-      'learning',
-    ])
-  })
 })
 
 describe('scopeCounts', () => {
@@ -80,44 +73,10 @@ describe('scopeCounts', () => {
   })
 })
 
-describe('rangeBatches', () => {
-  it('is empty for a deck within one batch', () => {
-    expect(rangeBatches(10)).toEqual([])
-  })
-
-  it('splits into labelled 1-indexed batches of the given size', () => {
-    expect(rangeBatches(23, 10)).toEqual([
-      { start: 0, end: 10, label: '1–10' },
-      { start: 10, end: 20, label: '11–20' },
-      { start: 20, end: 23, label: '21–23' },
-    ])
-  })
-})
-
 describe('scopesEqual', () => {
-  it('compares kind and, for ranges, the bounds', () => {
+  it('compares the scope kind', () => {
     expect(scopesEqual({ kind: 'all' }, { kind: 'all' })).toBe(true)
     expect(scopesEqual({ kind: 'all' }, { kind: 'due' })).toBe(false)
-    expect(
-      scopesEqual({ kind: 'range', start: 0, end: 10 }, { kind: 'range', start: 0, end: 10 }),
-    ).toBe(true)
-    expect(
-      scopesEqual({ kind: 'range', start: 0, end: 10 }, { kind: 'range', start: 0, end: 5 }),
-    ).toBe(false)
-  })
-})
-
-describe('orderIds', () => {
-  it('inOrder keeps the deck order', () => {
-    expect(orderIds(deck, 'inOrder')).toEqual(['new', 'due', 'learning', 'known', 'flag'])
-  })
-
-  it('reverse flips the order', () => {
-    expect(orderIds(deck, 'reverse')).toEqual(['flag', 'known', 'learning', 'due', 'new'])
-  })
-
-  it('shuffle is a permutation of the same ids', () => {
-    const out = orderIds(deck, 'shuffle', () => 0.5)
-    expect([...out].sort()).toEqual(['due', 'flag', 'known', 'learning', 'new'])
+    expect(scopesEqual({ kind: 'flagged' }, { kind: 'flagged' })).toBe(true)
   })
 })
