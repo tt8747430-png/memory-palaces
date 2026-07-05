@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react'
+import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { BookOpen, Sparkles } from 'lucide-react'
-import { parseDelimitedNotes, parseVerses } from '@/shared/lib'
-import { AppScreen, Button, ScreenHeader, SegmentedControl, TextField, Textarea } from '@/shared/ui'
+import { BookOpen, List, Sparkles } from 'lucide-react'
+import { cn, parseDelimitedNotes, parseVerses } from '@/shared/lib'
+import { AppScreen, Button, ScreenHeader, TextField, Textarea } from '@/shared/ui'
 import { useImportDraft } from '@/widgets/loci-editor'
 
 export interface PasteNotesPageProps {
@@ -65,14 +65,24 @@ export function PasteNotesPage({ onBack, onReview }: PasteNotesPageProps) {
       }
     >
       <div className="mt-4 flex flex-col gap-6 pb-6">
-        <SegmentedControl<Kind>
-          aria-label={t('loci.paste.kindLabel')}
-          options={[
-            { value: 'notes', label: t('loci.paste.kindNotes') },
-            { value: 'bible', label: t('loci.paste.kindBible') },
-          ]}
+        <OptionGroup<Kind>
+          label={t('loci.paste.kindLabel')}
           value={kind}
           onChange={setKind}
+          options={[
+            {
+              value: 'notes',
+              label: t('loci.paste.kindNotes'),
+              description: t('loci.paste.kindNotesSub'),
+              icon: <List className="size-[18px]" aria-hidden />,
+            },
+            {
+              value: 'bible',
+              label: t('loci.paste.kindBible'),
+              description: t('loci.paste.kindBibleSub'),
+              icon: <BookOpen className="size-[18px]" aria-hidden />,
+            },
+          ]}
         />
 
         <div>
@@ -106,33 +116,43 @@ export function PasteNotesPage({ onBack, onReview }: PasteNotesPageProps) {
           </div>
         ) : (
           <div className="flex flex-col gap-5">
-            <DelimiterGroup<FieldSep>
+            <OptionGroup<FieldSep>
               label={t('loci.paste.fieldLabel')}
               value={fieldSep}
               onChange={setFieldSep}
               options={[
-                { value: 'tab', label: t('loci.paste.sepTab') },
-                { value: 'comma', label: t('loci.paste.sepComma') },
+                { value: 'tab', label: t('loci.paste.sepTab'), hint: '⇥' },
+                { value: 'comma', label: t('loci.paste.sepComma'), hint: ',' },
                 { value: 'custom', label: t('loci.paste.sepCustom') },
               ]}
-              custom={fieldSep === 'custom'}
-              customValue={customField}
-              onCustom={setCustomField}
-              customPlaceholder={t('loci.paste.customFieldPlaceholder')}
+              footer={
+                fieldSep === 'custom' ? (
+                  <CustomField
+                    value={customField}
+                    onChange={setCustomField}
+                    placeholder={t('loci.paste.customFieldPlaceholder')}
+                  />
+                ) : undefined
+              }
             />
-            <DelimiterGroup<CardSep>
+            <OptionGroup<CardSep>
               label={t('loci.paste.cardLabel')}
               value={cardSep}
               onChange={setCardSep}
               options={[
-                { value: 'newline', label: t('loci.paste.sepNewline') },
-                { value: 'semicolon', label: t('loci.paste.sepSemicolon') },
+                { value: 'newline', label: t('loci.paste.sepNewline'), hint: '↵' },
+                { value: 'semicolon', label: t('loci.paste.sepSemicolon'), hint: ';' },
                 { value: 'custom', label: t('loci.paste.sepCustom') },
               ]}
-              custom={cardSep === 'custom'}
-              customValue={customCard}
-              onCustom={setCustomCard}
-              customPlaceholder={t('loci.paste.customCardPlaceholder')}
+              footer={
+                cardSep === 'custom' ? (
+                  <CustomField
+                    value={customCard}
+                    onChange={setCustomCard}
+                    placeholder={t('loci.paste.customCardPlaceholder')}
+                  />
+                ) : undefined
+              }
             />
           </div>
         )}
@@ -151,40 +171,133 @@ function CountBadge({ count }: { count: number }) {
   )
 }
 
-/** A labelled separator picker: a 3-way segmented toggle with an inline field when Custom. */
-function DelimiterGroup<T extends string>({
+interface Option<T extends string> {
+  value: T
+  label: string
+  description?: string
+  /** Leading glyph, tinted accent when the row is selected. */
+  icon?: ReactNode
+  /** A right-aligned monospace chip showing the literal this option stands for (e.g. `,`). */
+  hint?: string
+}
+
+/**
+ * A single-select list of rows, each with a radio indicator — the clearer alternative to a
+ * segmented toggle for a set of options. Rows sit in one bordered card; an optional `footer`
+ * (e.g. a custom-value field) drops in under the last row.
+ */
+function OptionGroup<T extends string>({
   label,
   value,
   onChange,
   options,
-  custom,
-  customValue,
-  onCustom,
-  customPlaceholder,
+  footer,
 }: {
   label: string
   value: T
   onChange: (value: T) => void
-  options: ReadonlyArray<{ value: T; label: string }>
-  custom: boolean
-  customValue: string
-  onCustom: (value: string) => void
-  customPlaceholder: string
+  options: ReadonlyArray<Option<T>>
+  footer?: ReactNode
 }) {
   return (
-    <div>
-      <span className="mb-2 block text-[length:var(--p-text-label)] font-semibold text-heading">
+    <fieldset className="min-w-0">
+      <legend className="mb-2 text-[length:var(--p-text-label)] font-semibold text-heading">
         {label}
-      </span>
-      <SegmentedControl<T> aria-label={label} options={options} value={value} onChange={onChange} size="sm" />
-      {custom ? (
-        <TextField
-          value={customValue}
-          onChange={(e) => onCustom(e.target.value)}
-          placeholder={customPlaceholder}
-          className="mt-2 font-mono"
-        />
-      ) : null}
+      </legend>
+      <div
+        role="radiogroup"
+        aria-label={label}
+        className="overflow-hidden rounded-card border border-border bg-card shadow-rest"
+      >
+        {options.map((option, i) => {
+          const selected = option.value === value
+          const divide = i < options.length - 1 || Boolean(footer)
+          return (
+            <button
+              key={option.value}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              onClick={() => onChange(option.value)}
+              className={cn(
+                'flex w-full items-center gap-3 px-4 py-3 text-left transition-colors',
+                divide && 'border-b border-border',
+                selected ? 'bg-info-surface' : 'active:bg-info-surface/60',
+              )}
+            >
+              <RadioDot selected={selected} />
+              {option.icon ? (
+                <span
+                  className={cn('shrink-0', selected ? 'text-accent' : 'text-muted-foreground')}
+                  aria-hidden
+                >
+                  {option.icon}
+                </span>
+              ) : null}
+              <span className="min-w-0 flex-1">
+                <span
+                  className={cn(
+                    'block truncate text-[length:var(--p-text-body)] font-semibold',
+                    selected ? 'text-heading' : 'text-foreground',
+                  )}
+                >
+                  {option.label}
+                </span>
+                {option.description ? (
+                  <span className="block truncate text-[length:var(--p-text-label)] text-muted-foreground">
+                    {option.description}
+                  </span>
+                ) : null}
+              </span>
+              {option.hint ? (
+                <span
+                  className="shrink-0 rounded-md bg-primary/[0.06] px-1.5 py-0.5 font-mono text-[length:var(--p-text-label)] text-muted-foreground"
+                  aria-hidden
+                >
+                  {option.hint}
+                </span>
+              ) : null}
+            </button>
+          )
+        })}
+        {footer}
+      </div>
+    </fieldset>
+  )
+}
+
+function RadioDot({ selected }: { selected: boolean }) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        'grid size-5 shrink-0 place-items-center rounded-full border-2 transition-colors',
+        selected ? 'border-primary' : 'border-border',
+      )}
+    >
+      {selected ? <span className="size-2.5 rounded-full bg-primary" /> : null}
+    </span>
+  )
+}
+
+function CustomField({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string
+  onChange: (value: string) => void
+  placeholder: string
+}) {
+  return (
+    <div className="p-3">
+      <TextField
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="font-mono"
+        autoFocus
+      />
     </div>
   )
 }
