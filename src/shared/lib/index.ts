@@ -11,6 +11,7 @@ export {
   SWIPE_FLING_SPEED,
 } from './gestures'
 export { useLongPress, type LongPressHandlers, type LongPressOptions } from './use-long-press'
+export { useViewportHeight } from './use-viewport-height'
 export { useSortableSensors } from './use-sortable-sensors'
 export { shuffle } from './shuffle'
 export { nextOrder, resequence } from './order'
@@ -99,6 +100,7 @@ export {
 } from './badges'
 export {
   tokenizeWords,
+  recallAnswer,
   isReferenceMarker,
   wordInitial,
   normalizeWord,

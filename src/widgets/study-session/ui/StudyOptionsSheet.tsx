@@ -59,6 +59,15 @@ const FLIP_MODE: ModeMeta = {
   labelKey: 'study.modeFlip',
 }
 
+/** One-line description of each mode, shown live under the picker for the selected mode. */
+const MODE_HINT: Record<StudyMode, string> = {
+  flip: 'study.modeFlipHint',
+  type: 'study.modeTypeHint',
+  initials: 'study.modeInitialsHint',
+  blur: 'study.modeBlurHint',
+  words: 'study.modeWordsHint',
+}
+
 /** The recall modes that test the answer text before grading, shown below the default Flip. */
 const RECALL_MODES: ModeMeta[] = [
   {
@@ -174,9 +183,6 @@ export function StudyOptionsSheet({
     >
       <div className="flex flex-col gap-5">
         <Section title={t('study.modeTitle')}>
-          <p className="-mt-1 px-1 text-[length:var(--p-text-label)] leading-snug text-muted-foreground">
-            {t('study.modeHint')}
-          </p>
           <ModeTile
             icon={FLIP_MODE.icon}
             label={t(FLIP_MODE.labelKey as never)}
@@ -194,6 +200,9 @@ export function StudyOptionsSheet({
               />
             ))}
           </div>
+          <p className="px-1 text-[length:var(--p-text-label)] leading-snug text-muted-foreground">
+            {t(MODE_HINT[mode] as never)}
+          </p>
           {mode === 'initials' ? (
             <ToggleRow
               icon={<WholeWord className="size-[18px]" aria-hidden />}

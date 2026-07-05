@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { type ReactNode, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Flag, Lightbulb, MapPin, RotateCcw, Sparkles, Volume2 } from 'lucide-react'
@@ -6,6 +6,7 @@ import type { StudyMode } from '@/entities/preferences'
 import {
   cn,
   isReferenceMarker,
+  recallAnswer,
   scramble,
   tokenizeWords,
   typedRecallStatus,
@@ -27,6 +28,8 @@ export interface RecallCardProps {
   /** Reveal the answer (idempotent). Fired by the footer button and on a solved attempt. */
   onReveal: () => void
   onSpeak: (text: string) => void
+  /** Type mode reports its textarea focus so the panel can free up room for the keyboard. */
+  onInputFocusChange?: (focused: boolean) => void
 }
 
 /** The non-flip study surface: the prompt stays visible while the answer is recalled through
@@ -43,19 +46,25 @@ export function RecallCard({
   canSpeak,
   onReveal,
   onSpeak,
+  onInputFocusChange,
 }: RecallCardProps) {
   const { t } = useTranslation()
   const [peekTip, setPeekTip] = useState(false)
 
   const locus = card.locus
   const prompt = direction === 'front' ? locus.front : locus.back
-  const answer = direction === 'front' ? locus.back : locus.front
+  // Strip a leading reference the answer repeats from the prompt, so a recall mode never asks
+  // the user to reproduce the very prompt they're looking at.
+  const answer = useMemo(
+    () => recallAnswer(prompt, direction === 'front' ? locus.back : locus.front),
+    [prompt, direction, locus.back, locus.front],
+  )
 
   useEffect(() => setPeekTip(false), [locus.id])
 
   return (
-    <div className="flex h-full w-full max-w-md flex-col rounded-card-featured bg-card-glass p-6 shadow-elevated">
-      <header className="flex items-start justify-between gap-2">
+    <div className="flex h-full w-full max-w-md flex-col rounded-card-featured bg-card-glass p-5 shadow-elevated">
+      <header className="flex shrink-0 items-start justify-between gap-2">
         <div className="flex min-w-0 flex-wrap items-center gap-1.5">
           <Chip icon={<MapPin className="size-3" aria-hidden />}>
             {direction === 'front' ? t('study.recall') : t('study.term')}
@@ -79,12 +88,12 @@ export function RecallCard({
         </div>
       </header>
 
-      <div className="shrink-0 pt-3 text-center">
-        <h2 className="text-balance break-words text-[clamp(20px,5.4vw,26px)] font-bold leading-tight text-heading">
+      <div className="shrink-0 pt-2.5 text-center">
+        <h2 className="text-balance break-words text-[clamp(19px,5vw,23px)] font-bold leading-tight text-heading">
           {prompt}
         </h2>
         {locus.tip ? (
-          <div className="mt-2 flex min-h-[36px] items-center justify-center">
+          <div className="mt-2 flex min-h-[32px] items-center justify-center">
             {peekTip ? (
               <motion.p
                 initial={{ opacity: 0, y: 4 }}
@@ -131,7 +140,9 @@ export function RecallCard({
               transition={{ duration: 0.2 }}
               className="flex min-h-0 flex-1 flex-col"
             >
-              {mode === 'type' ? <TypeMode answer={answer} onSolved={onReveal} /> : null}
+              {mode === 'type' ? (
+                <TypeMode answer={answer} onSolved={onReveal} onFocusChange={onInputFocusChange} />
+              ) : null}
               {mode === 'initials' ? (
                 <InitialsMode answer={answer} wordSpaces={wordSpaces} />
               ) : null}
@@ -145,17 +156,26 @@ export function RecallCard({
   )
 }
 
-const SCROLL = 'min-h-0 flex-1 overflow-y-auto scrollbar-hide'
+/** The centered-scroll shell every recall mode shares: content sits centered when it's short and
+ * scrolls (top-aligned growth) when it's a long verse — the `min-h-full` inner is what keeps a
+ * tall block from spilling out of a fixed `flex-1` box and overlapping the prompt above it. */
+function ModeScroll({ children, onClick }: { children: ReactNode; onClick?: () => void }) {
+  return (
+    <div className="min-h-0 flex-1 overflow-y-auto scrollbar-hide" onClick={onClick}>
+      <div className="flex min-h-full flex-col justify-center gap-4 py-1">{children}</div>
+    </div>
+  )
+}
 
 function RevealedAnswer({ answer, hint }: { answer: string; hint?: string }) {
   const { t } = useTranslation()
   return (
-    <div className={cn(SCROLL, 'flex flex-col items-center justify-center text-center')}>
-      <p className="allow-select text-balance break-words text-[clamp(17px,4.6vw,21px)] font-semibold leading-relaxed text-heading">
+    <ModeScroll>
+      <p className="allow-select text-balance break-words text-center text-[clamp(17px,4.6vw,21px)] font-semibold leading-relaxed text-heading">
         {answer}
       </p>
       {hint ? (
-        <div className="mt-5 w-full rounded-card bg-secondary/20 p-4 text-left">
+        <div className="w-full rounded-card bg-secondary/20 p-4 text-left">
           <div className="mb-1.5 flex items-center gap-2">
             <MapPin className="size-4 shrink-0 text-heading" aria-hidden />
             <p className="text-[length:var(--p-text-label)] font-semibold text-heading">
@@ -167,41 +187,64 @@ function RevealedAnswer({ answer, hint }: { answer: string; hint?: string }) {
           </p>
         </div>
       ) : null}
-    </div>
+    </ModeScroll>
   )
 }
 
-function TypeMode({ answer, onSolved }: { answer: string; onSolved: () => void }) {
+function TypeMode({
+  answer,
+  onSolved,
+  onFocusChange,
+}: {
+  answer: string
+  onSolved: () => void
+  onFocusChange?: (focused: boolean) => void
+}) {
   const { t } = useTranslation()
   const [value, setValue] = useState('')
   const result = typedRecallStatus(answer, value)
+  const pct = result.total > 0 ? Math.round((result.correct / result.total) * 100) : 0
 
   useEffect(() => {
     if (result.complete) onSolved()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [result.complete])
 
+  // Blur reports false even when the field is torn down on card change, so the panel's own
+  // per-card reset is the backstop.
+  useEffect(() => () => onFocusChange?.(false), [onFocusChange])
+
   return (
-    <div className={cn(SCROLL, 'space-y-3')}>
+    <div className="flex min-h-0 flex-1 flex-col gap-2.5">
       <textarea
         value={value}
         onChange={(event) => setValue(event.target.value)}
+        onFocus={() => onFocusChange?.(true)}
+        onBlur={() => onFocusChange?.(false)}
         placeholder={t('study.typePlaceholder')}
-        rows={3}
         aria-label={t('study.typePlaceholder')}
-        className="w-full resize-none rounded-card border border-border bg-card px-4 py-3 text-[length:var(--p-text-body)] text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+        className="min-h-[88px] w-full flex-1 resize-none rounded-card border border-border bg-card px-4 py-3 text-[length:var(--p-text-body)] leading-relaxed text-foreground placeholder:text-muted-foreground focus-visible:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
       />
 
-      <div className="rounded-card bg-info-surface px-4 py-3">
-        <div className="mb-1.5 flex items-center justify-between">
-          <p className="text-[length:var(--p-text-tiny)] font-bold uppercase tracking-wide text-muted-foreground">
-            {t('study.feedback')}
-          </p>
-          <span className="text-[length:var(--p-text-label)] font-bold tabular-nums text-heading">
+      <div className="shrink-0 rounded-card bg-info-surface px-4 py-3">
+        <div className="mb-2 flex items-center gap-3">
+          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-primary/10">
+            <motion.div
+              className="h-full rounded-full bg-primary"
+              animate={{ width: `${pct}%` }}
+              transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+            />
+          </div>
+          <span className="shrink-0 text-[length:var(--p-text-label)] font-bold tabular-nums text-heading">
             {result.correct} / {result.total}
           </span>
         </div>
-        {result.typed.length === 0 ? (
+        {result.complete ? (
+          <p className="inline-flex items-center gap-1.5 text-[length:var(--p-text-label)] font-semibold text-[var(--success-foreground)]">
+            <Sparkles className="size-4" aria-hidden />
+            {t('study.wordPerfect')}
+          </p>
+        ) : result.typed.length === 0 ? (
           <p className="text-[length:var(--p-text-label)] text-muted-foreground">
             {t('study.typeFeedbackHint')}
           </p>
@@ -228,76 +271,62 @@ function TypeMode({ answer, onSolved }: { answer: string; onSolved: () => void }
 
 function InitialsMode({ answer, wordSpaces }: { answer: string; wordSpaces: boolean }) {
   const { t } = useTranslation()
-  const reduce = useReducedMotion()
   const tokens = useMemo(() => tokenizeWords(answer), [answer])
   const [peek, setPeek] = useState<number | null>(null)
 
   return (
-    <div className={SCROLL} onClick={() => setPeek(null)}>
-      <div className="flex min-h-full items-center justify-center py-2">
-        <p
-          className={cn(
-            'flex w-full flex-wrap items-baseline justify-center gap-y-2.5 text-[clamp(17px,4.6vw,22px)] font-semibold text-heading',
-            wordSpaces ? 'gap-x-3' : 'gap-x-2',
-          )}
-        >
-          {tokens.map((token, i) => {
-            if (isReferenceMarker(token)) {
-              return (
-                <span key={i} className="font-bold text-accent">
-                  {token}
-                </span>
-              )
-            }
-            const { lead, initial, hidden, trail } = wordInitial(token)
-            const open = peek === i
+    <ModeScroll onClick={() => setPeek(null)}>
+      <p
+        className={cn(
+          'flex w-full flex-wrap items-baseline justify-center gap-y-2.5 text-[clamp(17px,4.6vw,22px)] font-semibold text-heading',
+          wordSpaces ? 'gap-x-3' : 'gap-x-2',
+        )}
+      >
+        {tokens.map((token, i) => {
+          if (isReferenceMarker(token)) {
             return (
-              <button
-                key={i}
-                type="button"
-                aria-label={t('study.revealWord', { word: token })}
-                onClick={(event) => {
-                  event.stopPropagation()
-                  setPeek((current) => (current === i ? null : i))
-                }}
-                className={cn(
-                  'relative -mx-0.5 whitespace-nowrap rounded-control px-0.5 transition-colors',
-                  open ? 'bg-primary/10' : 'active:bg-primary/5',
-                )}
-              >
-                {lead}
-                <span className="font-bold">{initial}</span>
-                {wordSpaces && hidden > 0 ? (
-                  <span
-                    aria-hidden
-                    className="ml-0.5 inline-block border-b-2 border-[color-mix(in_oklch,var(--primary)_40%,transparent)] align-baseline"
-                    style={{ width: `${Math.min(Math.max(hidden, 1), 16)}ch` }}
-                  />
-                ) : null}
-                {trail}
-                <AnimatePresence>
-                  {open ? (
-                    <motion.span
-                      initial={reduce ? { opacity: 0 } : { opacity: 0, y: 4, scale: 0.9 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={reduce ? { opacity: 0 } : { opacity: 0, y: 4, scale: 0.9 }}
-                      transition={{ type: 'spring', stiffness: 520, damping: 32 }}
-                      className="absolute bottom-full left-1/2 z-20 mb-1.5 max-w-[70vw] -translate-x-1/2 rounded-control bg-primary px-2.5 py-1 text-[length:var(--p-text-label)] font-semibold text-primary-foreground shadow-elevated"
-                    >
-                      {token}
-                      <span
-                        aria-hidden
-                        className="absolute left-1/2 top-full size-2 -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-[2px] bg-primary"
-                      />
-                    </motion.span>
-                  ) : null}
-                </AnimatePresence>
-              </button>
+              <span key={i} className="font-bold text-accent">
+                {token}
+              </span>
             )
-          })}
-        </p>
-      </div>
-    </div>
+          }
+          const { lead, initial, hidden, trail } = wordInitial(token)
+          const open = peek === i
+          return (
+            <button
+              key={i}
+              type="button"
+              aria-label={t('study.revealWord', { word: token })}
+              onClick={(event) => {
+                event.stopPropagation()
+                setPeek((current) => (current === i ? null : i))
+              }}
+              className={cn(
+                'whitespace-nowrap rounded-control px-1 transition-colors',
+                open ? 'bg-primary/12 text-heading' : 'active:bg-primary/5',
+              )}
+            >
+              {open ? (
+                token
+              ) : (
+                <>
+                  {lead}
+                  <span className="font-bold">{initial}</span>
+                  {wordSpaces && hidden > 0 ? (
+                    <span
+                      aria-hidden
+                      className="ml-0.5 inline-block border-b-2 border-[color-mix(in_oklch,var(--primary)_40%,transparent)] align-baseline"
+                      style={{ width: `${Math.min(Math.max(hidden, 1), 16)}ch` }}
+                    />
+                  ) : null}
+                  {trail}
+                </>
+              )}
+            </button>
+          )
+        })}
+      </p>
+    </ModeScroll>
   )
 }
 
@@ -308,8 +337,8 @@ function BlurMode({ answer, onSolved }: { answer: string; onSolved: () => void }
     () => tokens.flatMap((token, i) => (isReferenceMarker(token) ? [] : [i])),
     [tokens],
   )
-  // Every hideable word starts blurred; tapping one clears it. Recall the answer, then
-  // tap the words you got right — clear them all and the card auto-reveals to grade.
+  // Every hideable word starts blurred; tapping one clears it. Recall the answer, then tap the
+  // words you got right — clear them all and the card auto-reveals to grade.
   const [shown, setShown] = useState<Set<number>>(() => new Set())
   const allShown = hideable.length > 0 && hideable.every((i) => shown.has(i))
 
@@ -319,53 +348,43 @@ function BlurMode({ answer, onSolved }: { answer: string; onSolved: () => void }
   }, [allShown])
 
   return (
-    <div className={SCROLL}>
-      <div className="flex min-h-full flex-col items-center justify-center gap-4 py-2">
-        <p className="flex w-full flex-wrap items-baseline justify-center gap-x-2 gap-y-2 text-[clamp(17px,4.6vw,22px)] font-semibold leading-relaxed text-heading">
-          {tokens.map((token, i) => {
-            if (isReferenceMarker(token)) {
-              return (
-                <span key={i} className="font-bold text-accent">
-                  {token}
-                </span>
-              )
-            }
-            const blurred = !shown.has(i)
+    <ModeScroll>
+      <p className="flex w-full flex-wrap items-baseline justify-center gap-x-2 gap-y-2 text-[clamp(17px,4.6vw,22px)] font-semibold leading-relaxed text-heading">
+        {tokens.map((token, i) => {
+          if (isReferenceMarker(token)) {
             return (
-              <button
-                key={i}
-                type="button"
-                aria-label={blurred ? t('study.revealWord', { word: '' }) : token}
-                onClick={() => setShown((prev) => new Set(prev).add(i))}
-                className="whitespace-nowrap rounded-control px-0.5 transition-transform active:scale-95"
-              >
-                <span
-                  className={cn(
-                    'inline-block transition-[filter,opacity] duration-300',
-                    blurred && 'select-none opacity-70 blur-[6px]',
-                  )}
-                  style={
-                    blurred
-                      ? {
-                          textShadow:
-                            '0 0 10px color-mix(in oklch, var(--primary) 30%, transparent)',
-                        }
-                      : undefined
-                  }
-                >
-                  {token}
-                </span>
-              </button>
+              <span key={i} className="font-bold text-accent">
+                {token}
+              </span>
             )
-          })}
+          }
+          const blurred = !shown.has(i)
+          return (
+            <button
+              key={i}
+              type="button"
+              aria-label={blurred ? t('study.revealWord', { word: '' }) : token}
+              onClick={() => setShown((prev) => new Set(prev).add(i))}
+              className="whitespace-nowrap rounded-control px-0.5 transition-transform active:scale-95"
+            >
+              <span
+                className={cn(
+                  'inline-block transition-[filter,opacity] duration-300',
+                  blurred && 'select-none opacity-70 blur-[6px]',
+                )}
+              >
+                {token}
+              </span>
+            </button>
+          )
+        })}
+      </p>
+      {!allShown ? (
+        <p className="text-center text-[length:var(--p-text-label)] text-muted-foreground">
+          {t('study.blurHint')}
         </p>
-        {!allShown ? (
-          <p className="text-[length:var(--p-text-label)] text-muted-foreground">
-            {t('study.blurHint')}
-          </p>
-        ) : null}
-      </div>
-    </div>
+      ) : null}
+    </ModeScroll>
   )
 }
 
@@ -383,8 +402,8 @@ function RebuildMode({ answer, onSolved }: { answer: string; onSolved: () => voi
     () => scramble(words.map((word, pos) => ({ pos, word, key: `${pos}-${word}` }))),
     [words],
   )
-  // Track consumed chips by key, not by position, so two identical words (e.g. "în" … "în")
-  // are interchangeable — tapping either one satisfies the next slot as long as the word matches.
+  // Track consumed chips by key, not by position, so two identical words (e.g. "în" … "în") are
+  // interchangeable — tapping either satisfies the next slot as long as the word matches.
   const [usedKeys, setUsedKeys] = useState<Set<string>>(() => new Set())
   const [wrongKey, setWrongKey] = useState<string | null>(null)
   const placed = usedKeys.size
@@ -407,8 +426,8 @@ function RebuildMode({ answer, onSolved }: { answer: string; onSolved: () => voi
   }
 
   return (
-    <div className={cn(SCROLL, 'flex flex-col')}>
-      <p className="min-h-[40px] text-balance text-center text-[clamp(16px,4.6vw,21px)] font-semibold leading-relaxed text-heading">
+    <ModeScroll>
+      <p className="min-h-[32px] text-balance text-center text-[clamp(16px,4.4vw,20px)] font-semibold leading-relaxed text-heading">
         {placed === 0 ? (
           <span className="text-[length:var(--p-text-body)] font-medium text-muted-foreground">
             {t('study.rebuildHint')}
@@ -418,53 +437,52 @@ function RebuildMode({ answer, onSolved }: { answer: string; onSolved: () => voi
         )}
       </p>
 
-      <div className="mt-5 flex flex-1 flex-col items-center justify-center gap-4">
-        <div className="flex flex-wrap justify-center gap-2">
-          {chips.map((chip) => {
-            const used = usedKeys.has(chip.key)
-            const isWrong = wrongKey === chip.key
-            return (
-              <motion.button
-                key={chip.key}
-                type="button"
-                disabled={used}
-                onClick={() => !used && tapChip(chip)}
-                animate={isWrong && !reduce ? { x: [0, -6, 6, -4, 4, 0] } : { x: 0 }}
-                transition={{ duration: 0.4 }}
-                className={cn(
-                  'rounded-full px-3.5 py-2 text-[length:var(--p-text-sub)] font-semibold transition-colors',
-                  used
-                    ? 'bg-info-surface text-muted-foreground opacity-40'
-                    : isWrong
-                      ? 'bg-[var(--danger-surface)] text-[var(--danger-on-surface)] ring-2 ring-[var(--danger)]'
-                      : 'bg-secondary/20 text-heading',
-                )}
-              >
-                {chip.word}
-              </motion.button>
-            )
-          })}
-        </div>
-        {placed > 0 && !done ? (
-          <button
-            type="button"
-            onClick={() => {
-              setUsedKeys(new Set())
-              setWrongKey(null)
-            }}
-            className="inline-flex items-center gap-1.5 text-[length:var(--p-text-label)] font-semibold text-muted-foreground transition-colors active:text-heading"
-          >
-            <RotateCcw className="size-3.5" aria-hidden />
-            {t('study.startOver')}
-          </button>
-        ) : null}
-        {done ? (
-          <p className="inline-flex items-center gap-1.5 text-[length:var(--p-text-sub)] font-semibold text-[var(--success-foreground)]">
-            <Sparkles className="size-4" aria-hidden />
-            {t('study.rebuilt')}
-          </p>
-        ) : null}
+      <div className="flex flex-wrap justify-center gap-2">
+        {chips.map((chip) => {
+          const used = usedKeys.has(chip.key)
+          const isWrong = wrongKey === chip.key
+          return (
+            <motion.button
+              key={chip.key}
+              type="button"
+              disabled={used}
+              onClick={() => !used && tapChip(chip)}
+              animate={isWrong && !reduce ? { x: [0, -6, 6, -4, 4, 0] } : { x: 0 }}
+              transition={{ duration: 0.4 }}
+              className={cn(
+                'rounded-full px-3.5 py-2 text-[length:var(--p-text-sub)] font-semibold transition-colors',
+                used
+                  ? 'bg-info-surface text-muted-foreground opacity-40'
+                  : isWrong
+                    ? 'bg-[var(--danger-surface)] text-[var(--danger-on-surface)] ring-2 ring-[var(--danger)]'
+                    : 'bg-secondary/20 text-heading',
+              )}
+            >
+              {chip.word}
+            </motion.button>
+          )
+        })}
       </div>
-    </div>
+
+      {placed > 0 && !done ? (
+        <button
+          type="button"
+          onClick={() => {
+            setUsedKeys(new Set())
+            setWrongKey(null)
+          }}
+          className="mx-auto inline-flex items-center gap-1.5 text-[length:var(--p-text-label)] font-semibold text-muted-foreground transition-colors active:text-heading"
+        >
+          <RotateCcw className="size-3.5" aria-hidden />
+          {t('study.startOver')}
+        </button>
+      ) : null}
+      {done ? (
+        <p className="inline-flex items-center justify-center gap-1.5 text-[length:var(--p-text-sub)] font-semibold text-[var(--success-foreground)]">
+          <Sparkles className="size-4" aria-hidden />
+          {t('study.rebuilt')}
+        </p>
+      ) : null}
+    </ModeScroll>
   )
 }

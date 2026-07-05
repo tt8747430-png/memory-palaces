@@ -90,6 +90,9 @@ export function FlashcardsPanel({
   const [scope, setScope] = useState<Scope>({ kind: 'all' })
   const [quickOpen, setQuickOpen] = useState(false)
   const [editing, setEditing] = useState(false)
+  // Type mode's textarea is focused → the keyboard is up; collapse the tools row and progress
+  // so the input, feedback, and grade control all fit above it.
+  const [typing, setTyping] = useState(false)
 
   const loci = useMemo(() => cards.map((card) => card.locus), [cards])
   const byId = useMemo(() => new Map(cards.map((card) => [card.locus.id, card])), [cards])
@@ -132,6 +135,9 @@ export function FlashcardsPanel({
   const next = nextId(state)
   const nextCard = next ? byId.get(next) : undefined
   const flipped = state.status !== 'complete' && state.flipped
+
+  // The keyboard can't survive a card or mode change, so neither should the collapsed layout.
+  useEffect(() => setTyping(false), [id, mode])
 
   const canEdit = Boolean(onEditCard || onToggleFlag)
 
@@ -216,8 +222,8 @@ export function FlashcardsPanel({
 
   return (
     <>
-      {/* Progress */}
-      {card ? (
+      {/* Progress — hidden while typing to give the keyboard room. */}
+      {card && !typing ? (
         <div className="space-y-2 px-5 pt-1">
           <p className="text-right text-[length:var(--p-text-label)] font-medium text-muted-foreground">
             {state.status === 'review'
@@ -234,8 +240,8 @@ export function FlashcardsPanel({
         </div>
       ) : null}
 
-      {/* Tools */}
-      {card ? (
+      {/* Tools — hidden while typing to give the keyboard room. */}
+      {card && !typing ? (
         <div className="flex items-center justify-center gap-2 px-5 pt-3">
           {canEdit ? (
             <ToolButton
@@ -302,6 +308,7 @@ export function FlashcardsPanel({
               canSpeak={canSpeak}
               onReveal={() => dispatch({ type: 'reveal' })}
               onSpeak={(text) => speak(text)}
+              onInputFocusChange={setTyping}
             />
           )
         ) : !completed ? (

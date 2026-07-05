@@ -10,6 +10,26 @@ export function tokenizeWords(text: string): string[] {
   return text.split(/\s+/).filter(Boolean)
 }
 
+/**
+ * The answer text a recall mode should test, with a leading copy of the prompt stripped when
+ * the answer opens by repeating it — e.g. a card whose back ("2 Timotei 1:3 Îi mulțumesc…")
+ * is prefixed with its front reference ("2 Timotei 1:3"). Without this the modes make the user
+ * reproduce the prompt they were just shown. Case-insensitive; if stripping would empty the
+ * answer, the original is kept.
+ */
+export function recallAnswer(prompt: string, answer: string): string {
+  const p = prompt.trim()
+  const a = answer.trim()
+  if (p && a.length > p.length && a.slice(0, p.length).toLowerCase() === p.toLowerCase()) {
+    const rest = a
+      .slice(p.length)
+      .replace(/^[\s:.,;–—-]+/u, '')
+      .trim()
+    if (rest) return rest
+  }
+  return a
+}
+
 /** A standalone reference/number marker like "15:1" or "(1:1)" — kept intact in the
  *  Initials view instead of reduced to a single first letter (so scripture answers
  *  keep their verse numbers legible). */

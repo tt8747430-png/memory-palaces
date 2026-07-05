@@ -12,7 +12,7 @@ import {
 import { useDrag } from '@use-gesture/react'
 import { Flag, Lightbulb, MapPin, Volume2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { cn, impact, tick } from '@/shared/lib'
+import { cn, impact, recallAnswer, tick } from '@/shared/lib'
 import { Chip, SrsStatusChip } from '@/shared/ui'
 import {
   type FlashcardSwipeAction,
@@ -84,7 +84,9 @@ export function StudyCardDeck({
 
   const locus = card.locus
   const prompt = direction === 'front' ? locus.front : locus.back
-  const answer = direction === 'front' ? locus.back : locus.front
+  // Drop a leading copy of the prompt the answer repeats (e.g. a verse body prefixed with its
+  // reference), so the back doesn't restate the front.
+  const answer = recallAnswer(prompt, direction === 'front' ? locus.back : locus.front)
 
   // Reset the peek hint whenever the card changes.
   useEffect(() => setPeek(false), [locus.id])

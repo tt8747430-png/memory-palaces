@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   isReferenceMarker,
   normalizeWord,
+  recallAnswer,
   scramble,
   tokenizeWords,
   typedRecallStatus,
@@ -11,6 +12,26 @@ import {
 describe('tokenizeWords', () => {
   it('splits on whitespace and drops empties', () => {
     expect(tokenizeWords('  the   quick brown ')).toEqual(['the', 'quick', 'brown'])
+  })
+})
+
+describe('recallAnswer', () => {
+  it('strips a leading reference the answer repeats from the prompt', () => {
+    expect(recallAnswer('2 Timotei 1:3', '2 Timotei 1:3 Îi mulțumesc lui Dumnezeu')).toBe(
+      'Îi mulțumesc lui Dumnezeu',
+    )
+  })
+
+  it('ignores case and trims the separator after the reference', () => {
+    expect(recallAnswer('John 3:16', 'JOHN 3:16 — For God so loved')).toBe('For God so loved')
+  })
+
+  it('leaves the answer untouched when it does not repeat the prompt', () => {
+    expect(recallAnswer('Capital of France', 'Paris')).toBe('Paris')
+  })
+
+  it('keeps the original when stripping would empty it', () => {
+    expect(recallAnswer('Paris', 'Paris')).toBe('Paris')
   })
 })
 
