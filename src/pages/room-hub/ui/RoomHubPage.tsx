@@ -55,6 +55,10 @@ export interface RoomHubPageProps {
   /** Open the full-screen card editor (add / edit). */
   onAddCard: () => void
   onEditCard: (cardId: string) => void
+  /** Open the paste-notes page. */
+  onPasteNotes: () => void
+  /** Go to the shared import-review page (after a file has seeded the draft). */
+  onReviewImport: () => void
 }
 
 /** The room hub — one screen per room: a card preview, then the study overview, then the
@@ -70,6 +74,8 @@ export function RoomHubPage({
   onVerse,
   onAddCard,
   onEditCard,
+  onPasteNotes,
+  onReviewImport,
 }: RoomHubPageProps) {
   const { t } = useTranslation()
   const palaceStore = usePalaceStoreApi()
@@ -232,6 +238,8 @@ export function RoomHubPage({
             onSortChange={setContentSort}
             onAddCard={onAddCard}
             onEditCard={onEditCard}
+            onPasteNotes={onPasteNotes}
+            onReviewImport={onReviewImport}
           />
         </section>
       </div>

@@ -6,11 +6,21 @@
  * mapping this data onto the create commands.
  */
 
-/** A card's importable content (no identity/order/schedule — the create command adds those). */
+import type { SrsState } from './srs'
+
+/**
+ * A card's importable content. Text + cues are the common case; the extra fields carry the
+ * full-fidelity Mindscape round-trip (flag, known status, schedule) and stay absent for the
+ * lighter sources (CSV / Anki / paste). Identity and order are assigned by the create command.
+ */
 export interface ParsedLocus {
   front: string
   back: string
   hint?: string
+  tip?: string
+  flagged?: boolean
+  memorized?: boolean
+  srs?: SrsState
 }
 
 /** A question's importable content. */
@@ -104,9 +114,23 @@ function parseCsv(text: string): string[][] {
 
 // --- Serialize (export) -----------------------------------------------------
 
+/** The full card shape the Mindscape JSON export writes — the mirror of what
+ * {@link parseMindscapeRoom} restores. Undefined fields are dropped so the file stays lean. */
+function toMindscapeLocus(l: ParsedLocus): ParsedLocus {
+  return {
+    front: l.front,
+    back: l.back,
+    ...(l.hint ? { hint: l.hint } : {}),
+    ...(l.tip ? { tip: l.tip } : {}),
+    ...(l.flagged ? { flagged: true } : {}),
+    ...(l.memorized ? { memorized: true } : {}),
+    ...(l.srs ? { srs: l.srs } : {}),
+  }
+}
+
 export function roomContentToJson(
   roomName: string,
-  loci: ReadonlyArray<LocusLike>,
+  loci: ReadonlyArray<ParsedLocus>,
   questions: ReadonlyArray<QuestionLike>,
 ): string {
   return JSON.stringify(
@@ -115,7 +139,7 @@ export function roomContentToJson(
       version: JSON_VERSION,
       room: roomName,
       exportedAt: new Date().toISOString(),
-      loci,
+      loci: loci.map(toMindscapeLocus),
       questions,
     },
     null,
@@ -165,6 +189,25 @@ export function lociToAnkiTsv(loci: ReadonlyArray<LocusLike>): string {
 
 // --- Coerce / parse (import) ------------------------------------------------
 
+/** Coerce a raw `srs` object into a valid {@link SrsState}, or drop it. A schedule is only
+ * meaningful with a `due` date; the rest fall back to a "new"-card default so a partial or
+ * lightly-malformed export never yields a broken schedule. */
+function coerceSrs(raw: unknown): SrsState | undefined {
+  if (!raw || typeof raw !== 'object') return undefined
+  const o = raw as Record<string, unknown>
+  if (typeof o.due !== 'string' || !o.due) return undefined
+  const num = (value: unknown, fallback: number) =>
+    Number.isFinite(Number(value)) ? Number(value) : fallback
+  return {
+    due: o.due,
+    interval: num(o.interval, 0),
+    ease: num(o.ease, 2.5),
+    reps: num(o.reps, 0),
+    lapses: num(o.lapses, 0),
+    lastReviewed: typeof o.lastReviewed === 'string' ? o.lastReviewed : o.due,
+  }
+}
+
 function coerceLoci(raw: unknown): ParsedLocus[] {
   if (!Array.isArray(raw)) return []
   return raw.flatMap((item) => {
@@ -174,7 +217,18 @@ function coerceLoci(raw: unknown): ParsedLocus[] {
     const back = String(o.back ?? o.definition ?? o.answer ?? '').trim()
     if (!front || !back) return []
     const hint = o.hint ?? o.cue ?? o.note ?? o.place
-    return [{ front, back, ...(hint ? { hint: String(hint).trim() } : {}) }]
+    const srs = coerceSrs(o.srs)
+    return [
+      {
+        front,
+        back,
+        ...(hint ? { hint: String(hint).trim() } : {}),
+        ...(o.tip ? { tip: String(o.tip).trim() } : {}),
+        ...(o.flagged === true ? { flagged: true } : {}),
+        ...(o.memorized === true ? { memorized: true } : {}),
+        ...(srs ? { srs } : {}),
+      },
+    ]
   })
 }
 
@@ -262,6 +316,36 @@ export function parsePastedLoci(text: string): ParsedLocus[] {
     if (!m) return []
     const front = (m[1] ?? '').trim()
     const back = (m[2] ?? '').trim()
+    if (!front || !back) return []
+    return [{ front, back }]
+  })
+}
+
+export interface NoteDelimiters {
+  /** Separator between a card's front and back — only the FIRST occurrence per card splits,
+   * so a comma-separated back keeps its commas. */
+  field: string
+  /** Separator between cards. `'\n'` treats any newline (CRLF or LF) as a break. */
+  card: string
+}
+
+/**
+ * Parse pasted text into cards using explicit delimiters (the "Paste notes → Notes" flow).
+ * Each card chunk splits once on `field` into front/back; blank chunks and chunks without
+ * the separator are skipped.
+ */
+export function parseDelimitedNotes(
+  text: string,
+  { field, card }: NoteDelimiters,
+): ParsedLocus[] {
+  const chunks = card === '\n' ? text.split(/\r?\n/) : text.split(card)
+  return chunks.flatMap((chunk) => {
+    const trimmed = chunk.trim()
+    if (!trimmed || !field) return []
+    const at = trimmed.indexOf(field)
+    if (at < 0) return []
+    const front = trimmed.slice(0, at).trim()
+    const back = trimmed.slice(at + field.length).trim()
     if (!front || !back) return []
     return [{ front, back }]
   })
@@ -400,6 +484,32 @@ export function parseRoomContent(text: string, fileName: string): RoomContentDat
   }
   if (content.loci.length === 0 && content.questions.length === 0) {
     throw new ContentImportError('No cards or questions found in that file.')
+  }
+  return content
+}
+
+/**
+ * Parse a Mindscape room export (`.json`, type `mindscape-room-content`) at full fidelity —
+ * cards keep their cues, flag, known status, and schedule. JSON only; a `.csv`/`.tsv` file
+ * belongs to the Anki import. Throws {@link ContentImportError} on a bad or empty file.
+ */
+export function parseMindscapeRoom(text: string): RoomContentData {
+  let data: unknown
+  try {
+    data = JSON.parse(text)
+  } catch {
+    throw new ContentImportError('That file isn’t a valid Mindscape export (.json).')
+  }
+  if (!data || typeof data !== 'object') {
+    throw new ContentImportError('That file isn’t a Mindscape export.')
+  }
+  const root = data as Record<string, unknown>
+  const content: RoomContentData = {
+    loci: coerceLoci(root.loci ?? root.flashcards),
+    questions: coerceQuestions(root.questions),
+  }
+  if (content.loci.length === 0 && content.questions.length === 0) {
+    throw new ContentImportError('No cards found in that Mindscape file.')
   }
   return content
 }

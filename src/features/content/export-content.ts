@@ -3,6 +3,7 @@ import {
   downloadText,
   lociToAnkiTsv,
   lociToCsv,
+  type ParsedLocus,
   questionsToCsv,
   roomContentToJson,
 } from '@/shared/lib'
@@ -15,10 +16,11 @@ type QuestionLike = {
   explanation?: string
 }
 
-/** Download the full room (cards + questions) as a round-trippable JSON export. */
+/** Download the full room (cards + questions) as a round-trippable JSON export — cards keep
+ * their cues, flag, known status, and schedule so a Mindscape import restores them. */
 export function exportRoomJson(
   roomName: string,
-  loci: ReadonlyArray<LocusLike>,
+  loci: ReadonlyArray<ParsedLocus>,
   questions: ReadonlyArray<QuestionLike>,
 ): void {
   downloadText(

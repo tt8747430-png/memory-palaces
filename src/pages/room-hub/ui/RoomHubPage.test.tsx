@@ -46,6 +46,8 @@ function renderHub({ loci = [] as Locus[] }: { loci?: Locus[] } = {}) {
                     onTest={() => {}}
                     onAddCard={() => {}}
                     onEditCard={() => {}}
+                    onPasteNotes={() => {}}
+                    onReviewImport={() => {}}
                   />
                 </QuestionStoreContext>
               </LocusStoreContext>

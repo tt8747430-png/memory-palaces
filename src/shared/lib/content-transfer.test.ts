@@ -4,6 +4,8 @@ import {
   lociToAnkiTsv,
   lociToCsv,
   parseAnkiText,
+  parseDelimitedNotes,
+  parseMindscapeRoom,
   parsePastedLoci,
   parseRoomContent,
   parseVerses,
@@ -40,6 +42,63 @@ describe('parseVerses', () => {
       { front: '3 John 1:1', back: '3 John 1:1 The elder, to Gaius' },
       { front: '3 John 1:2', back: '3 John 1:2 Beloved, I pray' },
     ])
+  })
+})
+
+describe('parseDelimitedNotes', () => {
+  it('splits on the chosen field and card separators', () => {
+    const loci = parseDelimitedNotes('a=1;b=2', { field: '=', card: ';' })
+    expect(loci).toEqual([
+      { front: 'a', back: '1' },
+      { front: 'b', back: '2' },
+    ])
+  })
+
+  it('splits on tab between sides and newline between cards', () => {
+    const loci = parseDelimitedNotes('a\t1\r\nb\t2', { field: '\t', card: '\n' })
+    expect(loci).toEqual([
+      { front: 'a', back: '1' },
+      { front: 'b', back: '2' },
+    ])
+  })
+
+  it('only splits on the first field separator, keeping the rest in back', () => {
+    const loci = parseDelimitedNotes('Zeus,King, of the gods', { field: ',', card: '\n' })
+    expect(loci).toEqual([{ front: 'Zeus', back: 'King, of the gods' }])
+  })
+
+  it('skips blank chunks and lines without a separator', () => {
+    const loci = parseDelimitedNotes('a,1\n\nnope\nb,2', { field: ',', card: '\n' })
+    expect(loci).toEqual([
+      { front: 'a', back: '1' },
+      { front: 'b', back: '2' },
+    ])
+  })
+})
+
+describe('parseMindscapeRoom', () => {
+  it('round-trips every locus field (cues, flag, known status, schedule)', () => {
+    const srs = {
+      due: '2026-01-01T00:00:00.000Z',
+      interval: 4,
+      ease: 2.5,
+      reps: 3,
+      lapses: 1,
+      lastReviewed: '2025-12-28T00:00:00.000Z',
+    }
+    const json = roomContentToJson(
+      'Room',
+      [{ front: 'a', back: 'A', hint: 'h', tip: 't', flagged: true, memorized: true, srs }],
+      [],
+    )
+    const content = parseMindscapeRoom(json)
+    expect(content.loci).toEqual([
+      { front: 'a', back: 'A', hint: 'h', tip: 't', flagged: true, memorized: true, srs },
+    ])
+  })
+
+  it('rejects a file that is not Mindscape JSON', () => {
+    expect(() => parseMindscapeRoom('front,back\na,b')).toThrow(ContentImportError)
   })
 })
 

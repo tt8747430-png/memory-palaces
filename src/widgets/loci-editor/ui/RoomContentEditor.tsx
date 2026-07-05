@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import {
   ArrowDownAZ,
-  BookOpen,
   ClipboardPaste,
   Clock,
   Download,
@@ -27,7 +26,6 @@ import {
   useLocusStore,
   useLocusStoreApi,
 } from '@/entities/locus'
-import { useQuestionStoreApi } from '@/entities/question'
 import {
   deleteLocus,
   duplicateLocus,
@@ -42,21 +40,13 @@ import {
   usePreferencesStore,
 } from '@/entities/preferences'
 import {
-  applyRoomContent,
   exportLociAnki,
   exportLociCsv,
   exportRoomJson,
   readAnkiFile,
-  readContentFile,
+  readMindscapeFile,
 } from '@/features/content'
-import {
-  cardMaturityCounts,
-  cn,
-  ContentImportError,
-  parsePastedLoci,
-  parseVerses,
-  srsStatus,
-} from '@/shared/lib'
+import { cardMaturityCounts, cn, ContentImportError, srsStatus } from '@/shared/lib'
 import {
   Button,
   CardMaturityOverview,
@@ -68,9 +58,9 @@ import {
   SpeedDial,
   Switch,
 } from '@/shared/ui'
+import { useImportDraft } from '../model/import-draft'
 import { CardBrowser } from './CardBrowser'
 import { CardRow, type RowDragHandle } from './ContentRows'
-import { PasteSheet } from './PasteSheet'
 import { ReorderableList } from './ReorderableList'
 
 export interface RoomContentEditorProps {
@@ -93,6 +83,10 @@ export interface RoomContentEditorProps {
   /** Open the full-screen card editor (add / edit). */
   onAddCard: () => void
   onEditCard: (cardId: string) => void
+  /** Open the paste-notes page. */
+  onPasteNotes: () => void
+  /** Go to the shared import-review page (a file pick has seeded the import draft). */
+  onReviewImport: () => void
 }
 
 /** Card maturity buckets the filter can narrow to — mirrors `srsStatus`. */
@@ -116,18 +110,17 @@ export function RoomContentEditor({
   onSortChange,
   onAddCard,
   onEditCard,
+  onPasteNotes,
+  onReviewImport,
 }: RoomContentEditorProps) {
   const { t } = useTranslation()
   const locusStore = useLocusStoreApi()
-  // Questions live on their own page; the store is only needed to satisfy the shared
-  // `applyRoomContent` signature (this surface never writes questions).
-  const questionStore = useQuestionStoreApi()
   const allLoci = useLocusStore(selectLoci)
+  const setImportDraft = useImportDraft((s) => s.setDraft)
 
   useEffect(() => {
     locusStore.getState().start()
-    questionStore.getState().start()
-  }, [locusStore, questionStore])
+  }, [locusStore])
 
   const cardSwipe = usePreferencesStore(selectEffectivePreferences).swipe.card
 
@@ -140,8 +133,6 @@ export function RoomContentEditor({
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
-  const [pasteOpen, setPasteOpen] = useState(false)
-  const [verseOpen, setVerseOpen] = useState(false)
   // The card the full-screen browser is open on (null = closed). Tapping a card row opens it.
   const [browserCardId, setBrowserCardId] = useState<string | null>(null)
 
@@ -192,7 +183,7 @@ export function RoomContentEditor({
   }, [selectMode])
 
   const fileRef = useRef<HTMLInputElement>(null)
-  const importKind = useRef<'content' | 'anki'>('content')
+  const importKind = useRef<'mindscape' | 'anki'>('mindscape')
 
   const sortedLoci = useMemo(() => sortLoci(loci, sort), [loci, sort])
 
@@ -290,7 +281,7 @@ export function RoomContentEditor({
     setSelectedIds(new Set())
   }
 
-  const pickFile = (accept: string, kind: 'content' | 'anki') => {
+  const pickFile = (accept: string, kind: 'mindscape' | 'anki') => {
     setImportOpen(false)
     importKind.current = kind
     const input = fileRef.current
@@ -300,52 +291,26 @@ export function RoomContentEditor({
     input.click()
   }
 
+  // A file pick parses the deck, then hands the cards to the shared review page — nothing is
+  // written to the room until the user confirms there. Cards-only: questions in a file are
+  // dropped (they're imported from the Questions page instead).
   const onFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
     try {
-      const data =
-        importKind.current === 'anki' ? await readAnkiFile(file) : await readContentFile(file)
-      // This surface imports cards only — any questions in the file are dropped (they're
-      // imported from the Questions page instead).
-      const applied = await applyRoomContent(locusStore, questionStore, roomId, {
-        loci: data.loci,
-        questions: [],
-      })
-      if (applied.loci === 0) {
+      const kind = importKind.current
+      const data = kind === 'anki' ? await readAnkiFile(file) : await readMindscapeFile(file)
+      if (data.loci.length === 0) {
         toast.error(t('loci.transfer.noCardsFound'))
         return
       }
-      toast.success(t('loci.transfer.importedCards', { count: applied.loci }))
+      setImportDraft(kind, data.loci)
+      onReviewImport()
     } catch (error) {
       toast.error(
         error instanceof ContentImportError ? error.message : t('loci.transfer.importFailed'),
       )
     }
-  }
-
-  const applyPaste = (text: string) => {
-    const parsed = parsePastedLoci(text)
-    setPasteOpen(false)
-    if (parsed.length === 0) {
-      toast.error(t('loci.transfer.noneParsed'))
-      return
-    }
-    void applyRoomContent(locusStore, questionStore, roomId, { loci: parsed, questions: [] }).then(
-      (applied) => toast.success(t('loci.transfer.added', { count: applied.loci })),
-    )
-  }
-
-  const applyVerses = (text: string) => {
-    const parsed = parseVerses(text)
-    setVerseOpen(false)
-    if (parsed.length === 0) {
-      toast.error(t('loci.transfer.noneParsed'))
-      return
-    }
-    void applyRoomContent(locusStore, questionStore, roomId, { loci: parsed, questions: [] }).then(
-      (applied) => toast.success(t('loci.transfer.added', { count: applied.loci })),
-    )
   }
 
   const closeImport = (run: () => void) => {
@@ -499,7 +464,7 @@ export function RoomContentEditor({
         </div>
       ) : null}
 
-      {/* Import sheet — bring cards in, from a file or pasted text. */}
+      {/* Import sheet — a native Mindscape restore, a delimited/Anki file, or free-text paste. */}
       <Sheet
         open={importOpen}
         onOpenChange={setImportOpen}
@@ -508,34 +473,27 @@ export function RoomContentEditor({
       >
         <div className="flex flex-col gap-2.5 pb-2">
           <ImportRow
-            icon={<Upload className="size-5" aria-hidden />}
-            tone="accent"
-            badge="JSON · CSV"
-            title={t('loci.transfer.importFile')}
-            subtitle={t('loci.transfer.importFileSub')}
-            onClick={() => pickFile('.json,.csv', 'content')}
+            icon={<FileJson className="size-5" aria-hidden />}
+            tone="brand"
+            badge="JSON"
+            title={t('loci.transfer.importMindscape')}
+            subtitle={t('loci.transfer.importMindscapeSub')}
+            onClick={() => pickFile('.json', 'mindscape')}
           />
           <ImportRow
             icon={<Layers className="size-5" aria-hidden />}
             tone="warning"
-            badge="TXT · TSV"
+            badge="CSV · TSV · TXT"
             title={t('loci.transfer.importAnki')}
             subtitle={t('loci.transfer.importAnkiSub')}
-            onClick={() => pickFile('.txt,.tsv', 'anki')}
+            onClick={() => pickFile('.csv,.tsv,.txt', 'anki')}
           />
           <ImportRow
             icon={<ClipboardPaste className="size-5" aria-hidden />}
-            tone="neutral"
-            title={t('loci.transfer.pasteList')}
-            subtitle={t('loci.transfer.pasteListSub')}
-            onClick={() => closeImport(() => setPasteOpen(true))}
-          />
-          <ImportRow
-            icon={<BookOpen className="size-5" aria-hidden />}
-            tone="brand"
-            title={t('loci.transfer.pasteVerses')}
-            subtitle={t('loci.transfer.pasteVersesSub')}
-            onClick={() => closeImport(() => setVerseOpen(true))}
+            tone="accent"
+            title={t('loci.transfer.pasteNotes')}
+            subtitle={t('loci.transfer.pasteNotesSub')}
+            onClick={() => closeImport(onPasteNotes)}
           />
         </div>
       </Sheet>
@@ -580,24 +538,6 @@ export function RoomContentEditor({
           />
         </div>
       </Sheet>
-      <PasteSheet
-        open={pasteOpen}
-        onOpenChange={setPasteOpen}
-        title={t('loci.transfer.pasteTitle')}
-        description={t('loci.transfer.pasteHint')}
-        placeholder={t('loci.transfer.pastePlaceholder')}
-        applyLabel={t('loci.transfer.pasteApply')}
-        onApply={applyPaste}
-      />
-      <PasteSheet
-        open={verseOpen}
-        onOpenChange={setVerseOpen}
-        title={t('loci.transfer.verseTitle')}
-        description={t('loci.transfer.verseHint')}
-        placeholder={t('loci.transfer.versePlaceholder')}
-        applyLabel={t('loci.transfer.pasteApply')}
-        onApply={applyVerses}
-      />
 
       {/* Card filter sheet — narrow the cards list by maturity and/or flagged. */}
       <Sheet

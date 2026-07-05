@@ -42,6 +42,8 @@ function renderEditor({
                 onSortChange={() => {}}
                 onAddCard={onAddCard}
                 onEditCard={() => {}}
+                onPasteNotes={() => {}}
+                onReviewImport={() => {}}
               />
             </QuestionStoreContext>
           </LocusStoreContext>

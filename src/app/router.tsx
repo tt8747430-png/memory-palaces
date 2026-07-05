@@ -17,6 +17,8 @@ import { PalaceSettingsPage } from '@/pages/palace-settings'
 import { RoomHubPage } from '@/pages/room-hub'
 import { RoomSettingsPage } from '@/pages/room-settings'
 import { CardEditorPage } from '@/pages/card-editor'
+import { PasteNotesPage } from '@/pages/paste-notes'
+import { ImportReviewPage } from '@/pages/import-review'
 import { RoomQuestionsPage } from '@/pages/room-questions'
 import { QuestionEditorPage } from '@/pages/question-editor'
 import { StudyCardsPage } from '@/pages/study'
@@ -235,6 +237,8 @@ function RoomHubRoute() {
       onVerse={() => navigate({ to: ROUTES.roomVerse, params: { roomId } })}
       onAddCard={() => navigate({ to: ROUTES.roomCardNew, params: { roomId } })}
       onEditCard={(cardId) => navigate({ to: ROUTES.roomCardEdit, params: { roomId, cardId } })}
+      onPasteNotes={() => navigate({ to: ROUTES.roomPaste, params: { roomId } })}
+      onReviewImport={() => navigate({ to: ROUTES.roomImport, params: { roomId } })}
     />
   )
 }
@@ -301,6 +305,40 @@ const roomCardEditRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.roomCardEdit,
   component: RoomCardEditRoute,
+})
+
+function RoomPasteRoute() {
+  const { roomId } = roomPasteRoute.useParams()
+  const navigate = useNavigate()
+  const toRoom = () => navigate({ to: ROUTES.roomHub, params: { roomId } })
+  const back = useBack(toRoom)
+  return (
+    <PasteNotesPage
+      onBack={back}
+      // `replace` so Back from the review page lands on the room, not the paste form.
+      onReview={() => navigate({ to: ROUTES.roomImport, params: { roomId }, replace: true })}
+    />
+  )
+}
+
+const roomPasteRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.roomPaste,
+  component: RoomPasteRoute,
+})
+
+function RoomImportRoute() {
+  const { roomId } = roomImportRoute.useParams()
+  const navigate = useNavigate()
+  const toRoom = () => navigate({ to: ROUTES.roomHub, params: { roomId }, replace: true })
+  const back = useBack(toRoom)
+  return <ImportReviewPage roomId={roomId} onBack={back} onDone={toRoom} />
+}
+
+const roomImportRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.roomImport,
+  component: RoomImportRoute,
 })
 
 function RoomQuestionsRoute() {
@@ -718,6 +756,8 @@ const routeTree = rootRoute.addChildren([
   roomSettingsRoute,
   roomCardNewRoute,
   roomCardEditRoute,
+  roomPasteRoute,
+  roomImportRoute,
   roomQuestionsRoute,
   roomQuestionNewRoute,
   roomQuestionEditRoute,

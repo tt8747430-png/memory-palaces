@@ -16,6 +16,8 @@ export const ROUTES = {
   roomSettings: '/rooms/$roomId/settings',
   roomCardNew: '/rooms/$roomId/cards/new',
   roomCardEdit: '/rooms/$roomId/cards/$cardId',
+  roomPaste: '/rooms/$roomId/paste',
+  roomImport: '/rooms/$roomId/import',
   roomQuestions: '/rooms/$roomId/questions',
   roomQuestionNew: '/rooms/$roomId/questions/new',
   roomQuestionEdit: '/rooms/$roomId/questions/$questionId',
