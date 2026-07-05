@@ -46,8 +46,11 @@ export function FlyoutMenu({
       size={size}
       aria-label={label}
       className={className}
-      // Shield the trigger from any drag/long-press ancestor so opening never starts a drag.
+      // Shield the trigger from any gesture/tap ancestor so opening the menu never also starts a
+      // drag (pointerdown) or fires the row's tap-to-open (click) — the kebab lives inside
+      // tappable, long-pressable list rows.
       onPointerDown={(event) => event.stopPropagation()}
+      onClick={(event) => event.stopPropagation()}
     >
       <MoreVertical className={size === 'md' ? 'size-5' : 'size-4'} aria-hidden />
     </IconButton>

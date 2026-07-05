@@ -16,10 +16,12 @@ import {
   ChevronRight,
   Copy,
   Flag,
+  GraduationCap,
   Lightbulb,
   MapPin,
   MoreVertical,
   Pencil,
+  RotateCcw,
   Trash2,
   X,
 } from 'lucide-react'
@@ -40,6 +42,8 @@ export interface CardBrowserProps {
   onEdit: (id: string) => void
   onToggleFlag: (id: string) => void
   onDuplicate: (id: string) => void
+  onMarkKnown: (id: string) => void
+  onResetSrs: (id: string) => void
   /** Request deletion (the host closes the browser and runs its confirm). */
   onDelete: (id: string) => void
 }
@@ -59,6 +63,8 @@ export function CardBrowser({
   onEdit,
   onToggleFlag,
   onDuplicate,
+  onMarkKnown,
+  onResetSrs,
   onDelete,
 }: CardBrowserProps) {
   const { t } = useTranslation()
@@ -120,6 +126,8 @@ export function CardBrowser({
 
   const current = count > 0 ? loci[Math.min(index, count - 1)]! : null
 
+  // The overview's action set mirrors the list row (minus Edit, which owns the primary button
+  // below): quick toggles first, then the two SRS actions, then destructive Delete last.
   const menuActions: SheetAction[] = current
     ? [
         {
@@ -133,6 +141,18 @@ export function CardBrowser({
           label: t('loci.row.duplicate'),
           icon: <Copy className="size-5" aria-hidden />,
           onSelect: () => onDuplicate(current.id),
+        },
+        {
+          id: 'known',
+          label: t('loci.row.markKnown'),
+          icon: <GraduationCap className="size-5" aria-hidden />,
+          onSelect: () => onMarkKnown(current.id),
+        },
+        {
+          id: 'reset',
+          label: t('loci.row.resetSchedule'),
+          icon: <RotateCcw className="size-5" aria-hidden />,
+          onSelect: () => onResetSrs(current.id),
         },
         {
           id: 'delete',
@@ -170,33 +190,31 @@ export function CardBrowser({
         >
           {current ? (
             <>
-              <div className="flex min-h-14 items-center justify-between gap-2 px-4 pt-safe">
-                <div className="flex w-full items-center justify-between gap-2 pt-2">
-                  <Dialog.Close
-                    aria-label={t('common.close')}
-                    className="grid size-10 place-items-center rounded-full bg-card-glass text-heading ring-1 ring-[color:var(--border-glass)] shadow-rest transition-transform active:scale-95"
-                  >
-                    <X className="size-5" aria-hidden />
-                  </Dialog.Close>
-                  <Dialog.Title className="rounded-pill bg-card-glass px-3.5 py-1.5 text-[length:var(--p-text-label)] font-semibold text-heading ring-1 ring-[color:var(--border-glass)] shadow-rest">
-                    {t('loci.browser.position', { current: index + 1, total: count })}
-                  </Dialog.Title>
-                  <FlyoutMenu
-                    label={t('loci.browser.menu')}
-                    actions={menuActions}
-                    side="bottom"
-                    align="end"
-                    trigger={
-                      <button
-                        type="button"
-                        aria-label={t('loci.browser.menu')}
-                        className="grid size-10 place-items-center rounded-full bg-card-glass text-heading ring-1 ring-[color:var(--border-glass)] shadow-rest transition-transform active:scale-95"
-                      >
-                        <MoreVertical className="size-5" aria-hidden />
-                      </button>
-                    }
-                  />
-                </div>
+              <div className="flex min-h-14 w-full items-center justify-between gap-2 px-4 pb-1 pt-[max(0.5rem,env(safe-area-inset-top))]">
+                <Dialog.Close
+                  aria-label={t('common.close')}
+                  className="grid size-10 place-items-center rounded-full bg-card-glass text-heading ring-1 ring-[color:var(--border-glass)] shadow-rest transition-transform active:scale-95"
+                >
+                  <X className="size-5" aria-hidden />
+                </Dialog.Close>
+                <Dialog.Title className="rounded-pill bg-card-glass px-4 py-1.5 text-[length:var(--p-text-label)] font-bold tabular-nums text-heading ring-1 ring-[color:var(--border-glass)] shadow-rest">
+                  {t('loci.browser.position', { current: index + 1, total: count })}
+                </Dialog.Title>
+                <FlyoutMenu
+                  label={t('loci.browser.menu')}
+                  actions={menuActions}
+                  side="bottom"
+                  align="end"
+                  trigger={
+                    <button
+                      type="button"
+                      aria-label={t('loci.browser.menu')}
+                      className="grid size-10 place-items-center rounded-full bg-card-glass text-heading ring-1 ring-[color:var(--border-glass)] shadow-rest transition-transform active:scale-95"
+                    >
+                      <MoreVertical className="size-5" aria-hidden />
+                    </button>
+                  }
+                />
               </div>
 
               <div className="relative flex flex-1 items-center px-5 pb-2 [perspective:1400px]">

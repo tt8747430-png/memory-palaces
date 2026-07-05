@@ -762,6 +762,14 @@ export function RoomContentEditor({
           void duplicateLocus(locusStore, id)
           toast.success(t('loci.row.duplicated'))
         }}
+        onMarkKnown={(id) => {
+          void markLociKnown(locusStore, [id])
+          toast.success(t('loci.row.markedKnown'))
+        }}
+        onResetSrs={(id) => {
+          void resetLociSrs(locusStore, [id])
+          toast.success(t('loci.row.scheduleReset'))
+        }}
         onDelete={(id) => {
           setBrowserCardId(null)
           setPendingDeleteId(id)

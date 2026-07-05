@@ -21,6 +21,10 @@ const FILL = 'min-h-[calc(100dvh_-_3.5rem)]'
  * `<main>`, not a child, so the content can scroll and bounce under it while the header
  * stays put. The header owns the top safe-area inset, so `<main>` needs no `pt-safe`.
  *
+ * Pass `footer` to pin an action bar below the scroll container — likewise a sibling of
+ * `<main>`, so it never scrolls or shifts and content never hides behind it (`<main>`
+ * simply takes the space that's left). The footer owns the bottom safe-area inset.
+ *
  * Every route mounts a fresh scroller, so the scroll always starts at the top — the
  * layout effect guarantees it even if the browser or scroll-restoration tries to carry
  * a position across the navigation. Pass `fill` on short screens so the native
@@ -30,12 +34,14 @@ export function AppScreen({
   className,
   scrollRef,
   header,
+  footer,
   fill,
 }: {
   children?: ReactNode
   className?: string
   scrollRef?: (node: HTMLElement | null) => void
   header?: ReactNode
+  footer?: ReactNode
   fill?: boolean
 }) {
   const innerRef = useRef<HTMLElement | null>(null)
@@ -62,7 +68,7 @@ export function AppScreen({
 
   const content = fill ? <div className={FILL}>{children}</div> : children
 
-  if (!header) {
+  if (!header && !footer) {
     return (
       <main
         ref={setRef}
@@ -79,6 +85,7 @@ export function AppScreen({
       <main ref={setRef} className={cn('min-h-0 flex-1', SCROLL, className)}>
         {content}
       </main>
+      {footer}
     </div>
   )
 }
