@@ -48,9 +48,6 @@ export type StudyScope = { kind: 'room'; roomId: string } | { kind: 'palace'; pa
 
 export interface StudyCardsPageProps {
   scope: StudyScope
-  /** The mode the session opens in — the entry point decides: the Study action omits it
-   * (flip), a Practice row deep-links its own mode. Switchable in-session any time. */
-  initialMode?: StudyMode
   /** Provided by the route wrapper so the page stays router-free. */
   onBack?: () => void
 }
@@ -64,12 +61,11 @@ function studyPrefsFromSettings(settings: PalaceSettings): StudyPrefs {
 }
 
 /** The one study surface (ADR-0005): a scope's loci worked as a single spaced-review deck.
- * The study mode (flip / type / initials / blur / rebuild) decides how each card's answer is
- * tested, but every mode grades through `gradeCard`, so SRS schedules survive offline. The
- * entry point sets the opening mode; in-session switches happen through the header mode
- * button and are recorded to global preferences. Flashcard orientation/shuffle/speech seed
- * from and persist to the palace. */
-export function StudyCardsPage({ scope, initialMode = 'flip', onBack }: StudyCardsPageProps) {
+ * Always opens in flip; the other study modes (type / initials / blur / rebuild) switch in
+ * through the header mode button, and every mode grades through `gradeCard`, so SRS
+ * schedules survive offline. Flashcard orientation/shuffle/speech seed from and persist to
+ * the palace; mode switches are recorded to global preferences. */
+export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
   const { t } = useTranslation()
   const locusStore = useLocusStoreApi()
   const roomStore = useRoomStoreApi()
@@ -99,7 +95,7 @@ export function StudyCardsPage({ scope, initialMode = 'flip', onBack }: StudyCar
 
   const [optionsOpen, setOptionsOpen] = useState(false)
   const [modeSheetOpen, setModeSheetOpen] = useState(false)
-  const [mode, setMode] = useState<StudyMode>(initialMode)
+  const [mode, setMode] = useState<StudyMode>('flip')
 
   const room = useMemo(
     () =>

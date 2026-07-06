@@ -15,7 +15,9 @@ import {
   useLocusStoreApi,
 } from '@/entities/locus'
 import {
+  questionsForRoom,
   selectIsReady as selectQuestionsReady,
+  selectQuestions,
   useQuestionStore,
   useQuestionStoreApi,
 } from '@/entities/question'
@@ -28,7 +30,7 @@ import {
 import { setPreferences } from '@/features/preferences'
 import { studyOverview } from '@/shared/lib'
 import { RoomContentEditor } from '@/widgets/loci-editor'
-import { PracticeEntry } from '@/widgets/practice-modes'
+import { PracticeModes } from '@/widgets/practice-modes'
 import { AppScreen, IconButton, ScreenHeader, StudyOverviewCard, TextField } from '@/shared/ui'
 
 export interface RoomHubPageProps {
@@ -38,8 +40,10 @@ export interface RoomHubPageProps {
   onOpenSettings?: () => void
   /** Open the room's Study-cards session (the one flashcard surface). */
   onStudy?: () => void
-  /** Open the room's Practice page (the full mode list lives there). */
-  onOpenPractice?: () => void
+  /** Launch the Match mini-game. */
+  onMatch?: () => void
+  /** Open the room's Questions & Test page (author questions, then start the test). */
+  onTest?: () => void
   /** Open the full-screen card editor (add / edit). */
   onAddCard: () => void
   onEditCard: (cardId: string) => void
@@ -57,7 +61,8 @@ export function RoomHubPage({
   onBack,
   onOpenSettings,
   onStudy,
-  onOpenPractice,
+  onMatch,
+  onTest,
   onAddCard,
   onEditCard,
   onPasteNotes,
@@ -83,6 +88,7 @@ export function RoomHubPage({
     state.palaces.find((candidate) => candidate.id === room?.palaceId),
   )
   const allLoci = useLocusStore(selectLoci)
+  const allQuestions = useQuestionStore(selectQuestions)
   const palacesReady = usePalaceStore(selectPalacesReady)
   const roomsReady = useRoomStore(selectRoomsReady)
   const lociReady = useLocusStore(selectLociReady)
@@ -90,6 +96,7 @@ export function RoomHubPage({
   const ready = palacesReady && roomsReady && lociReady && questionsReady
 
   const loci = useMemo(() => lociForRoom(allLoci, roomId), [allLoci, roomId])
+  const questions = useMemo(() => questionsForRoom(allQuestions, roomId), [allQuestions, roomId])
 
   const [now] = useState(() => Date.now())
   const overview = useMemo(() => studyOverview(loci, now), [loci, now])
@@ -198,7 +205,15 @@ export function RoomHubPage({
           />
         ) : null}
 
-        {!searchOpen ? <PracticeEntry onOpen={onOpenPractice} /> : null}
+        {!searchOpen ? (
+          <PracticeModes
+            cardCount={loci.length}
+            questionCount={questions.length}
+            onMatch={onMatch}
+            onTest={onTest}
+            alwaysEnableTest
+          />
+        ) : null}
 
         <section aria-label={t('roomHub.manageHeading')} className="space-y-3 pt-1">
           <RoomContentEditor

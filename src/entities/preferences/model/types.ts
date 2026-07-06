@@ -44,10 +44,6 @@ const CONTENT_SORTS: readonly ContentSort[] = ['manual', 'recent', 'name', 'due'
 export const STUDY_MODES = ['flip', 'type', 'initials', 'blur', 'words'] as const
 export type StudyMode = (typeof STUDY_MODES)[number]
 
-export function isStudyMode(value: unknown): value is StudyMode {
-  return STUDY_MODES.includes(value as StudyMode)
-}
-
 /** App appearance: an explicit light/dark choice, or `system` to follow the OS. */
 export type Theme = 'light' | 'dark' | 'system'
 

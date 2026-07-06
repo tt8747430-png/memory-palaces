@@ -1,29 +1,14 @@
 import { type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'motion/react'
-import {
-  Blocks,
-  Brain,
-  ChevronRight,
-  Dumbbell,
-  EyeOff,
-  Keyboard,
-  Puzzle,
-  WholeWord,
-} from 'lucide-react'
-import type { StudyMode } from '@/entities/preferences'
+import { Brain, ChevronRight, Puzzle } from 'lucide-react'
 import { cn } from '@/shared/lib'
 
-/** The study modes that open the study session preset to an active-recall variant. */
-export type PracticeStudyMode = Exclude<StudyMode, 'flip'>
-
 export interface PracticeModesProps {
-  /** Cards in scope — the study-mode rows need one, Match needs at least two. */
+  /** Cards in scope — Match needs at least two. */
   cardCount: number
   /** Authored questions in scope — Test needs at least one. */
   questionCount: number
-  /** Open the study session preset to the given mode (deep-links `?mode=`). */
-  onPractice?: (mode: PracticeStudyMode) => void
   onMatch?: () => void
   onTest?: () => void
   /** Keep the Test tile enabled even with no questions — used where it opens the questions
@@ -31,48 +16,13 @@ export interface PracticeModesProps {
   alwaysEnableTest?: boolean
 }
 
-/** The four study-session modes surfaced as practice entries. Labels reuse the session's
- * mode names (one name per mode, everywhere); sublabels are the hub-length hints. */
-const PRACTICE_STUDY_MODES: {
-  mode: PracticeStudyMode
-  icon: ReactNode
-  labelKey: string
-  sublabelKey: string
-}[] = [
-  {
-    mode: 'type',
-    icon: <Keyboard className="size-5" aria-hidden />,
-    labelKey: 'study.modeType',
-    sublabelKey: 'practice.typeSub',
-  },
-  {
-    mode: 'initials',
-    icon: <WholeWord className="size-5" aria-hidden />,
-    labelKey: 'study.modeInitials',
-    sublabelKey: 'practice.initialsSub',
-  },
-  {
-    mode: 'blur',
-    icon: <EyeOff className="size-5" aria-hidden />,
-    labelKey: 'study.modeBlur',
-    sublabelKey: 'practice.blurSub',
-  },
-  {
-    mode: 'words',
-    icon: <Blocks className="size-5" aria-hidden />,
-    labelKey: 'study.modeWords',
-    sublabelKey: 'practice.wordsSub',
-  },
-]
-
-/** The Practice mode list, one full row per mode — every way to exercise the scope's cards
- * beyond the flip session: the four recall modes of the study session (each deep-links into
- * it), the Match game, and the Test. Rendered by the Practice page; the hubs link there
- * through {@link PracticeEntry}. */
+/** The practice rows (Match / Questions & Test) shared by the room hub and palace detail.
+ * The Study-cards session is the headline above; its study modes (flip, type, initials,
+ * blur, rebuild) all live inside the session behind the header mode button. These rows are
+ * the alternate games over the same set, scoped to whichever surface renders them. */
 export function PracticeModes({
   cardCount,
   questionCount,
-  onPractice,
   onMatch,
   onTest,
   alwaysEnableTest = false,
@@ -80,16 +30,6 @@ export function PracticeModes({
   const { t } = useTranslation()
   return (
     <div className="space-y-2.5">
-      {PRACTICE_STUDY_MODES.map(({ mode, icon, labelKey, sublabelKey }) => (
-        <ModeTile
-          key={mode}
-          icon={icon}
-          label={t(labelKey as never)}
-          sublabel={t(sublabelKey as never)}
-          onClick={onPractice ? () => onPractice(mode) : undefined}
-          disabled={cardCount < 1}
-        />
-      ))}
       <ModeTile
         icon={<Puzzle className="size-5" aria-hidden />}
         label={t('practice.match')}
@@ -113,20 +53,6 @@ export function PracticeModes({
         disabled={!alwaysEnableTest && questionCount === 0}
       />
     </div>
-  )
-}
-
-/** The single Practice row on the room hub and palace detail: one door to the Practice page,
- * where the full mode list lives. */
-export function PracticeEntry({ onOpen }: { onOpen?: () => void }) {
-  const { t } = useTranslation()
-  return (
-    <ModeTile
-      icon={<Dumbbell className="size-5" aria-hidden />}
-      label={t('practice.entry')}
-      sublabel={t('practice.entrySub')}
-      onClick={onOpen}
-    />
   )
 }
 
