@@ -10,7 +10,10 @@ and the roadmap at `docs/NEW_ARCHITECHTURE.md`.
 This repo **is the Mindscape mobile app**: a mobile-first, phone-only PWA. Design every
 screen for touch on a phone (44px+ targets, `whileTap`/spring feedback, native-feeling
 gestures — swipe actions, kebab `⋮` overflow menus, pull-to-refresh, long-press quick
-actions). Do not design for desktop/tablet layouts.
+actions). Do not design for desktop/tablet layouts. Screens must be self-explanatory:
+consistent color roles and icons carry meaning (`DESIGN.md` §6 "Self-Evidence & UX Copy");
+UI copy stays brief and verb-first — one short supporting line at most, never explanatory
+paragraphs — and required reading never drops below 12px.
 
 The sibling `../memory-palaces-app-ui` is the **previous SPA, kept only as the visual/
 design reference** ("The Lucid Atrium" look). Port its craft into `shared/ui` + the

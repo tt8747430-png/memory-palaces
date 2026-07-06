@@ -148,6 +148,8 @@ never as ambient noise.
 - Phone-only, one primary task per screen, ≥44px touch targets.
 - Glass as a rare signature material, not decoration.
 - Calm at rest, with spring-loaded delight on interaction.
+- Self-evident surfaces: color roles, icons, and placement explain the screen; supporting
+  copy stays to one line.
 
 ## 2. Colors
 
@@ -216,6 +218,12 @@ neutrals lean toward the navy hue, never toward warm.
 **The Navy-Text-On-Tint Rule.** On any blue tint (chip-blue, sky, light-blue), text is navy,
 never bright-blue. Bright-blue on tint fails contrast.
 
+**The One-Meaning Rule.** Every saturated hue owns exactly one job, app-wide: navy is brand
+and "this acts", green is success, amber is warning, red is danger, gold is rating, coral is
+favorite. Pale sky tints are atmosphere, never signals. A hue never moonlights — a color
+that always means the same thing replaces a sentence of UI copy, and that replacement is the
+point. Color is still never the sole carrier: pair it with icon, shape, or label.
+
 ## 3. Typography
 
 **Display / Body / Label Font:** Lexend (with `-apple-system, BlinkMacSystemFont, 'Segoe UI',
@@ -244,6 +252,20 @@ weight and color, not from scale.
 
 **The One Family Rule.** Lexend carries every role. Do not pair a second typeface; reach for a
 heavier weight instead.
+
+**The 12px Floor Rule.** Nothing the user must read sits below the 12px Label size. Tiny
+(10px) exists only for redundant text — nav labels under icons, decorative meta — that
+repeats what an icon or shape already says. (Apple's HIG floors legible text at 11pt; the
+required-reading floor here is 12px.)
+
+**The Weight-Before-Size Rule.** Emphasis climbs through weight (400 → 500 → 600) and color
+(slate → ink → navy) before it ever climbs in pixels. The scale is deliberately narrow —
+12px floor to 20px ceiling — so weight and color do the talking; heavier weights also hold
+up better at phone sizes than bigger type.
+
+**The Scale-Survives Rule.** Type respects the reader's OS text-size setting: no fixed-height
+text containers, and every screen tolerates one text-size step up without clipping or
+truncating required reading.
 
 ## 4. Elevation
 
@@ -325,7 +347,35 @@ Not a component but the canvas: one fixed radial-plus-linear gradient
 `body` background. Screens are transparent and float their cards over it; they never paint
 their own opaque background.
 
-## 6. Do's and Don'ts
+## 6. Self-Evidence & UX Copy
+
+The interface explains itself; words are the fallback, not the plan. These rules follow
+Apple's Human Interface Guidelines on writing and color: use fewer words, put the important
+thing first, and let one consistent color signal interactivity.
+
+**The Show-Before-Tell Rule.** Meaning arrives through the system — a consistent color role,
+an icon, placement, a motion cue — before any words. A paragraph of instructions on a
+working screen is a design bug: redesign the element until it explains itself, then delete
+the paragraph.
+
+**The One-Line Rule.** Supporting copy is one short line, placed at the point of action.
+Anything longer gets absorbed into the interface itself: an empty state, a label, a
+progressive-disclosure sheet. Titles name the object ("Kitchen", "Cards for today"), not the
+concept.
+
+**The Verb-First Rule.** Buttons and actions lead with the verb and stop: "Study",
+"Add room", "Move to folder". Never clever or chatty ("Let's do this!"), never a description
+of consequences where a verb would do.
+
+**The Empty-State-Teaches Rule.** First-run guidance lives in the empty state: one
+encouraging line plus the primary action, in place. No onboarding tours, coach marks, or
+persistent hints — the second visit must never re-read the first visit's help.
+
+**The Disclosure Rule.** One primary action per screen; secondary actions retreat into the
+kebab (⋮), sheets, swipe actions, and long-press. Detail is one tap away, never stacked on
+the resting surface.
+
+## 7. Do's and Don'ts
 
 ### Do:
 
@@ -341,6 +391,10 @@ their own opaque background.
   a `prefers-reduced-motion` fallback.
 - **Do** let celebration be earned and spring-loaded (a completed session, an extended
   streak), then return to calm.
+- **Do** let color roles, icons, and placement explain the screen; keep any supporting copy
+  to one verb-first line at the point of action.
+- **Do** emphasize with weight and color before size, and keep required reading at 12px or
+  above (Tiny is for redundant labels only).
 
 ### Don't:
 
@@ -357,4 +411,7 @@ their own opaque background.
   intent.
 - **Don't** use glass as decoration; it is reserved for hero and floating chrome.
 - **Don't** let color be the only signal of a state; pair it with shape, icon, or label.
-  </content>
+- **Don't** ship explanatory paragraphs, onboarding tours, or hints that restate what the
+  interface already shows; if a screen needs a manual, redesign the screen.
+- **Don't** reuse a status hue decoratively or give one hue two meanings (The One-Meaning
+  Rule).

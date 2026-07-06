@@ -66,13 +66,21 @@ the details.
    shame the user or manufacture guilt for a missed day.
 5. **Guest-first, no walls.** Deliver value before any signup. An account is an upgrade that
    claims and protects existing local progress, never a gate in front of the product.
+6. **Self-evident, not explained.** The interface teaches itself: one accent family that
+   always means "this acts", status colors that never change meaning, icons beside short
+   labels. Explanatory copy is the last resort — if a screen needs a paragraph to be usable,
+   redesign the screen, don't write the paragraph.
+7. **Say less, front-load it.** Copy is brief and starts with what matters: verb-first
+   buttons ("Study", "Add room"), the key information first, at most one short supporting
+   line. First-run guidance lives in empty states, never in tours, coach marks, or
+   persistent hints.
 
 ## Accessibility & Inclusion
 
 Target WCAG 2.1 AA; the design tokens already carry verified contrast ratios for every text
 role, and body/placeholder text must clear 4.5:1. Color is never the sole indicator of state
 (pair it with shape, icon, or label). Every animation has a `prefers-reduced-motion`
-alternative (crossfade or instant). Touch targets are ≥44px. Respect OS-level text scaling
-and the device safe areas (notch, home indicator).
-</content>
-</invoke>
+alternative (crossfade or instant). Touch targets are ≥44px. Required reading never drops
+below 12px — Apple's Human Interface Guidelines floor legible text at 11pt — and every
+screen tolerates one OS text-size step up without clipping or truncating it. Respect
+OS-level text scaling and the device safe areas (notch, home indicator).
