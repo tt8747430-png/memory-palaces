@@ -1,9 +1,9 @@
-import { type ReactNode, useEffect, useMemo, useReducer, useRef, useState } from 'react'
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-import { ChevronDown, Eye, Flag, Pencil, SkipForward, Sparkles, Volume2 } from 'lucide-react'
+import { Eye, Sparkles } from 'lucide-react'
 import type { StudyMode } from '@/entities/preferences'
-import { cn, speak, speechAvailable, success } from '@/shared/lib'
+import { cn, speak, speechAvailable, srsStatus, success } from '@/shared/lib'
 import { Button, GradeButtons } from '@/shared/ui'
 import {
   applyScope,
@@ -25,7 +25,6 @@ import { StudyCardDeck } from './StudyCardDeck'
 import { RecallCard } from './RecallCard'
 import { StudyOptionsSheet } from './StudyOptionsSheet'
 import { ModeSheet } from './ModeSheet'
-import { STUDY_MODE_META } from './mode-meta'
 import { QuickActionsSheet } from './QuickActionsSheet'
 import { InStudyEditor } from './InStudyEditor'
 import { CompletionOverlay } from './CompletionOverlay'
@@ -55,6 +54,9 @@ export interface FlashcardsPanelProps {
   /** The header's options button; the panel owns the sheet, the page owns the trigger. */
   optionsOpen: boolean
   onOptionsOpenChange: (open: boolean) => void
+  /** The header's mode button; same split — the panel owns the mode sheet. */
+  modeSheetOpen: boolean
+  onModeSheetOpenChange: (open: boolean) => void
   now?: number
 }
 
@@ -83,6 +85,8 @@ export function FlashcardsPanel({
   onComplete,
   optionsOpen,
   onOptionsOpenChange,
+  modeSheetOpen,
+  onModeSheetOpenChange,
   now = Date.now(),
 }: FlashcardsPanelProps) {
   const { t } = useTranslation()
@@ -91,7 +95,6 @@ export function FlashcardsPanel({
 
   const [scope, setScope] = useState<Scope>({ kind: 'all' })
   const [quickOpen, setQuickOpen] = useState(false)
-  const [modeSheetOpen, setModeSheetOpen] = useState(false)
   const [editing, setEditing] = useState(false)
   // Type mode's textarea is focused → the keyboard is up; collapse the tools row and progress
   // so the input, feedback, and grade control all fit above it.
@@ -196,7 +199,19 @@ export function FlashcardsPanel({
       ? { graded: state.graded, learning: state.piles.learning, known: state.piles.known }
       : { graded: 0, learning: 0, known: 0 }
 
-  const revealAnswer = () => dispatch({ type: isFlip ? 'flip' : 'reveal' })
+  const revealAnswer = () => dispatch({ type: 'reveal' })
+
+  // How many new / learning / known cards are still ahead in this session (the head of the
+  // queue is the active card) — the footer's at-a-glance overview before a reveal.
+  const remaining = useMemo(() => {
+    const tally = { new: 0, learning: 0, known: 0 }
+    if (state.status !== 'review') return tally
+    for (const queuedId of state.queue) {
+      const queued = byId.get(queuedId)
+      if (queued) tally[srsStatus(queued.locus.srs)] += 1
+    }
+    return tally
+  }, [state, byId])
 
   const optionsSheet = (
     <StudyOptionsSheet
@@ -217,30 +232,12 @@ export function FlashcardsPanel({
       onSwipe={(dir, action) => onSwipeConfigChange?.({ ...swipeConfig, [dir]: action })}
       onRestart={() => rebuild(scope)}
       onFinish={() => dispatch({ type: 'finish' })}
+      onEditCard={canEdit && onEditCard && card ? () => setEditing(true) : undefined}
     />
   )
 
-  const ModeIcon = STUDY_MODE_META[mode].Icon
-
   return (
     <>
-      {/* The mode button: names the session's current mode and opens the mode sheet — the
-          one always-visible way to switch how answers are recalled. Hidden while typing. */}
-      {card && !typing ? (
-        <div className="flex justify-center px-5 pt-1.5">
-          <button
-            type="button"
-            onClick={() => setModeSheetOpen(true)}
-            aria-label={t('study.changeMode')}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card-glass px-3.5 py-2 text-(length:--p-text-label) font-semibold text-heading transition-transform active:scale-[0.94]"
-          >
-            <ModeIcon className="size-4 text-primary" aria-hidden />
-            {t(STUDY_MODE_META[mode].labelKey as never)}
-            <ChevronDown className="size-3.5 text-faint" aria-hidden />
-          </button>
-        </div>
-      ) : null}
-
       {/* Progress — hidden while typing to give the keyboard room. */}
       {card && !typing ? (
         <div className="space-y-2 px-5 pt-1">
@@ -256,47 +253,6 @@ export function FlashcardsPanel({
               transition={{ duration: 0.3 }}
             />
           </div>
-        </div>
-      ) : null}
-
-      {/* Tools — hidden while typing to give the keyboard room. */}
-      {card && !typing ? (
-        <div className="flex items-center justify-center gap-2 px-5 pt-3">
-          {canEdit ? (
-            <ToolButton
-              onClick={handleFlag}
-              active={card.locus.flagged}
-              icon={
-                <Flag
-                  className={cn(
-                    'size-4',
-                    card.locus.flagged && 'fill-[var(--rating)] text-[var(--rating-edge)]',
-                  )}
-                  aria-hidden
-                />
-              }
-              label={card.locus.flagged ? t('study.flagged') : t('study.flag')}
-            />
-          ) : null}
-          {canEdit && onEditCard ? (
-            <ToolButton
-              onClick={() => setEditing(true)}
-              icon={<Pencil className="size-4" aria-hidden />}
-              label={t('study.edit')}
-            />
-          ) : null}
-          {canSpeak ? (
-            <ToolButton
-              onClick={speakFace}
-              icon={<Volume2 className="size-4" aria-hidden />}
-              label={t('study.listen')}
-            />
-          ) : null}
-          <ToolButton
-            onClick={() => dispatch({ type: 'skip' })}
-            icon={<SkipForward className="size-4" aria-hidden />}
-            label={t('study.skip')}
-          />
         </div>
       ) : null}
 
@@ -340,16 +296,25 @@ export function FlashcardsPanel({
         ) : null}
       </div>
 
-      {/* Footer */}
+      {/* Footer: grades once the answer is up. Before that, flip mode shows only the
+          remaining queue (the card itself invites the flip); recall modes keep the reveal
+          button because Initials — and any given-up attempt — can't self-solve. */}
       {card ? (
         <div className="px-5 pb-7 pt-2">
           {flipped ? (
             <GradeButtons srs={card.locus.srs} now={now} onGrade={handleGrade} />
           ) : (
-            <Button size="lg" className="w-full" onClick={revealAnswer}>
-              <Eye className="size-5" aria-hidden />
-              {t('study.showAnswer')}
-            </Button>
+            <div className="flex flex-col items-center gap-3">
+              {!isFlip ? (
+                <Button size="lg" className="w-full" onClick={revealAnswer}>
+                  <Eye className="size-5" aria-hidden />
+                  {t('study.showAnswer')}
+                </Button>
+              ) : null}
+              {!typing ? (
+                <RemainingCounts remaining={remaining} current={srsStatus(card.locus.srs)} />
+              ) : null}
+            </div>
           )}
         </div>
       ) : null}
@@ -368,7 +333,7 @@ export function FlashcardsPanel({
 
       <ModeSheet
         open={modeSheetOpen}
-        onClose={() => setModeSheetOpen(false)}
+        onClose={() => onModeSheetOpenChange(false)}
         mode={mode}
         wordSpaces={wordSpaces}
         onMode={(next) => onModeChange?.(next)}
@@ -436,30 +401,38 @@ function EmptyScope({
   )
 }
 
-function ToolButton({
-  icon,
-  label,
-  onClick,
-  active,
+/** The remaining-queue overview shown before a reveal: how many new / learning / known
+ * cards are still ahead in this session, the current card's bucket ringed. Uses the same
+ * tint vocabulary as the SRS status chips so color never means two things. */
+const COUNT_CHIP: Record<'new' | 'learning' | 'known', string> = {
+  new: 'bg-info-surface text-info-foreground',
+  learning: 'bg-secondary text-secondary-foreground',
+  known: 'bg-[var(--success-surface)] text-[var(--success-on-surface)]',
+}
+
+function RemainingCounts({
+  remaining,
+  current,
 }: {
-  icon: ReactNode
-  label: string
-  onClick: () => void
-  active?: boolean
+  remaining: Record<'new' | 'learning' | 'known', number>
+  current?: 'new' | 'learning' | 'known'
 }) {
+  const { t } = useTranslation()
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        'inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-[length:var(--p-text-label)] font-semibold transition-transform active:scale-[0.94]',
-        active
-          ? 'border-[var(--rating)] bg-[var(--warning-surface)] text-[var(--warning-foreground)]'
-          : 'border-border bg-card-glass text-heading',
-      )}
-    >
-      {icon}
-      {label}
-    </button>
+    <div className="flex items-center justify-center gap-2">
+      {(['new', 'learning', 'known'] as const).map((key) => (
+        <span
+          key={key}
+          className={cn(
+            'inline-flex items-baseline gap-1.5 rounded-pill px-3 py-1.5 text-(length:--p-text-label) font-bold tabular-nums',
+            COUNT_CHIP[key],
+            current === key && 'ring-2 ring-(--ring)/30',
+          )}
+        >
+          {remaining[key]}
+          <span className="font-medium">{t(`srs.${key}` as never)}</span>
+        </span>
+      ))}
+    </div>
   )
 }

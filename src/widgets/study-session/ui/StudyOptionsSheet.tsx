@@ -6,6 +6,7 @@ import {
   ArrowRight,
   ArrowUp,
   Check,
+  Pencil,
   RotateCcw,
   Shuffle,
   Volume2,
@@ -42,6 +43,8 @@ export interface StudyOptionsSheetProps {
   onShuffle: (value: boolean) => void
   onTextToSpeech: (value: boolean) => void
   onSwipe: (direction: SwipeDirection, action: FlashcardSwipeAction) => void
+  /** Open the in-study editor for the current card; absent when the host can't edit. */
+  onEditCard?: () => void
   onRestart: () => void
   onFinish: () => void
 }
@@ -101,6 +104,7 @@ export function StudyOptionsSheet({
   onShuffle,
   onTextToSpeech,
   onSwipe,
+  onEditCard,
   onRestart,
   onFinish,
 }: StudyOptionsSheetProps) {
@@ -197,6 +201,20 @@ export function StudyOptionsSheet({
               ))}
             </div>
           </Section>
+        ) : null}
+
+        {onEditCard ? (
+          <button
+            type="button"
+            onClick={() => {
+              onEditCard()
+              onClose()
+            }}
+            className="flex w-full items-center justify-center gap-2 rounded-control bg-info-surface py-3.5 text-(length:--p-text-sub) font-semibold text-heading transition-transform active:scale-[0.99]"
+          >
+            <Pencil className="size-[18px]" aria-hidden />
+            {t('study.editCard')}
+          </button>
         ) : null}
 
         <button

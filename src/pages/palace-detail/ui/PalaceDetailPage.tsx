@@ -65,7 +65,7 @@ import {
   studyOverview,
 } from '@/shared/lib'
 import { RoomList, type RoomListItem } from '@/widgets/room-list'
-import { PracticeModes, type PracticeStudyMode } from '@/widgets/practice-modes'
+import { PracticeEntry } from '@/widgets/practice-modes'
 import {
   AppScreen,
   ConfirmDialog,
@@ -90,12 +90,8 @@ export interface PalaceDetailPageProps {
   onOpenSettings?: () => void
   /** Open the palace-wide Study-cards session. */
   onStudyPalace?: () => void
-  /** Open the palace-wide study session preset to an active-recall mode (a Practice row). */
-  onPractice?: (mode: PracticeStudyMode) => void
-  /** Launch the palace-wide Match game. */
-  onMatch?: () => void
-  /** Launch the palace-wide quiz (Test). */
-  onTest?: () => void
+  /** Open the palace's Practice page (the full mode list lives there). */
+  onOpenPractice?: () => void
 }
 
 /** Palace detail — the palace-scoped study overview and practice modes above its ordered
@@ -109,9 +105,7 @@ export function PalaceDetailPage({
   onOpenRoomSettings,
   onOpenSettings,
   onStudyPalace,
-  onPractice,
-  onMatch,
-  onTest,
+  onOpenPractice,
 }: PalaceDetailPageProps) {
   const { t } = useTranslation()
   const palaceStore = usePalaceStoreApi()
@@ -339,15 +333,7 @@ export function PalaceDetailPage({
           />
         ) : null}
 
-        {items.length > 0 ? (
-          <PracticeModes
-            cardCount={summary.totalLoci}
-            questionCount={summary.totalQuestions}
-            onPractice={onPractice}
-            onMatch={onMatch}
-            onTest={onTest}
-          />
-        ) : null}
+        {items.length > 0 ? <PracticeEntry onOpen={onOpenPractice} /> : null}
 
         <section aria-label={t('palaceDetail.roomsHeading')}>
           {selectMode ? (

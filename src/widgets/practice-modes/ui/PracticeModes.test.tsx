@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MotionConfig } from 'motion/react'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
-import { PracticeModes, type PracticeModesProps } from './PracticeModes'
+import { PracticeEntry, PracticeModes, type PracticeModesProps } from './PracticeModes'
 
 afterEach(cleanup)
 
@@ -30,12 +30,25 @@ function renderModes(overrides: Partial<PracticeModesProps> = {}) {
 }
 
 describe('PracticeModes', () => {
-  it('renders the Practice section with all six mode rows', () => {
+  it('renders all six mode rows', () => {
     renderModes()
-    expect(screen.getByRole('heading', { name: 'Practice' })).toBeInTheDocument()
     for (const name of [/type it/i, /first letters/i, /blur/i, /rebuild/i, /match/i, /test/i]) {
       expect(screen.getByRole('button', { name })).toBeInTheDocument()
     }
+  })
+
+  it('offers the single Practice entry row for the hubs', async () => {
+    const user = userEvent.setup()
+    const onOpen = vi.fn()
+    render(
+      <I18nextProvider i18n={i18n}>
+        <MotionConfig reducedMotion="always">
+          <PracticeEntry onOpen={onOpen} />
+        </MotionConfig>
+      </I18nextProvider>,
+    )
+    await user.click(screen.getByRole('button', { name: /practice cards/i }))
+    expect(onOpen).toHaveBeenCalledTimes(1)
   })
 
   it('reports the tapped study mode through onPractice', async () => {

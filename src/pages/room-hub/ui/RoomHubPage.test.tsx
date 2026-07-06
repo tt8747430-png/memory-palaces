@@ -42,8 +42,7 @@ function renderHub({ loci = [] as Locus[] }: { loci?: Locus[] } = {}) {
                     roomId="r1"
                     onBack={() => {}}
                     onStudy={() => {}}
-                    onMatch={() => {}}
-                    onTest={() => {}}
+                    onOpenPractice={() => {}}
                     onAddCard={() => {}}
                     onEditCard={() => {}}
                     onPasteNotes={() => {}}
@@ -63,7 +62,7 @@ const card = (id: string, front: string, back: string, order: number) =>
   makeLocus({ id, createdAt: at(order + 1), roomId: 'r1', front, back, order })
 
 describe('RoomHubPage', () => {
-  it('leads with the room title, card count, preview, and study modes', async () => {
+  it('leads with the room title, card count, and the Practice entry', async () => {
     renderHub({ loci: [card('l1', 'mihi', 'to me', 0), card('l2', 'tibi', 'to you', 1)] })
 
     expect(await screen.findByRole('heading', { name: 'Garden Room' })).toBeInTheDocument()
@@ -71,13 +70,8 @@ describe('RoomHubPage', () => {
     expect(screen.getByText(/2 cards for today/i)).toBeInTheDocument()
     // The study overview owns the single Study action (the carousel is preview-only).
     expect(screen.getByRole('button', { name: /study cards/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /^match/i })).toBeInTheDocument()
-  })
-
-  it('keeps Test reachable even without questions (opens the questions & test page)', async () => {
-    renderHub({ loci: [card('l1', 'a', 'A', 0)] })
-    await screen.findByRole('heading', { name: 'Garden Room' })
-    expect(screen.getByRole('button', { name: /^test/i })).toBeEnabled()
+    // The full mode list lives on the Practice page; the hub keeps one door to it.
+    expect(screen.getByRole('button', { name: /practice cards/i })).toBeEnabled()
   })
 
   it('shows the cards editor inline with its header (one scroll)', async () => {

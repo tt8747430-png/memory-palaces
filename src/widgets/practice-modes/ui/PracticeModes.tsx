@@ -1,7 +1,16 @@
 import { type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'motion/react'
-import { Blocks, Brain, ChevronRight, EyeOff, Keyboard, Puzzle, WholeWord } from 'lucide-react'
+import {
+  Blocks,
+  Brain,
+  ChevronRight,
+  Dumbbell,
+  EyeOff,
+  Keyboard,
+  Puzzle,
+  WholeWord,
+} from 'lucide-react'
 import type { StudyMode } from '@/entities/preferences'
 import { cn } from '@/shared/lib'
 
@@ -56,10 +65,10 @@ const PRACTICE_STUDY_MODES: {
   },
 ]
 
-/** The Practice section shared by the room hub and palace detail: every way to exercise the
- * scope's cards beyond the flip session — the four recall modes of the study session (each
- * deep-links into it), the Match game, and the Test. The flip Study session is the headline
- * in the study overview above; every mode is available on every palace and room. */
+/** The Practice mode list, one full row per mode — every way to exercise the scope's cards
+ * beyond the flip session: the four recall modes of the study session (each deep-links into
+ * it), the Match game, and the Test. Rendered by the Practice page; the hubs link there
+ * through {@link PracticeEntry}. */
 export function PracticeModes({
   cardCount,
   questionCount,
@@ -70,10 +79,7 @@ export function PracticeModes({
 }: PracticeModesProps) {
   const { t } = useTranslation()
   return (
-    <section aria-label={t('practice.title')} className="space-y-2.5">
-      <h2 className="px-0.5 text-(length:--p-text-title) font-semibold text-heading">
-        {t('practice.title')}
-      </h2>
+    <div className="space-y-2.5">
       {PRACTICE_STUDY_MODES.map(({ mode, icon, labelKey, sublabelKey }) => (
         <ModeTile
           key={mode}
@@ -106,7 +112,21 @@ export function PracticeModes({
         onClick={onTest}
         disabled={!alwaysEnableTest && questionCount === 0}
       />
-    </section>
+    </div>
+  )
+}
+
+/** The single Practice row on the room hub and palace detail: one door to the Practice page,
+ * where the full mode list lives. */
+export function PracticeEntry({ onOpen }: { onOpen?: () => void }) {
+  const { t } = useTranslation()
+  return (
+    <ModeTile
+      icon={<Dumbbell className="size-5" aria-hidden />}
+      label={t('practice.entry')}
+      sublabel={t('practice.entrySub')}
+      onClick={onOpen}
+    />
   )
 }
 

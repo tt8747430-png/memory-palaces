@@ -754,6 +754,9 @@ export const en = {
   },
   practice: {
     title: 'Practice',
+    entry: 'Practice cards',
+    entrySub: 'Type · First letters · Blur · Rebuild · Match · Test',
+    notFound: 'There was nothing to practice here.',
     typeSub: 'Type the answer from memory',
     initialsSub: 'Recall it from first letters',
     blurSub: 'Unblur the answer as you recall it',

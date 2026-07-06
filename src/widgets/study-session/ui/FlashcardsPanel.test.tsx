@@ -37,6 +37,7 @@ function renderPanel(
     onComplete: () => void
     prefs: Partial<StudyPrefs>
     mode: StudyMode
+    modeSheetOpen: boolean
   }> = {},
 ) {
   const onGrade = vi.fn(overrides.onGrade)
@@ -57,6 +58,8 @@ function renderPanel(
           onComplete={onComplete}
           optionsOpen={false}
           onOptionsOpenChange={() => {}}
+          modeSheetOpen={overrides.modeSheetOpen ?? false}
+          onModeSheetOpenChange={() => {}}
           now={NOW}
         />
       </MotionConfig>
@@ -66,9 +69,11 @@ function renderPanel(
 }
 
 describe('FlashcardsPanel', () => {
-  it('flips and grades a review session through to completion', async () => {
+  it('reveals and grades a review session through to completion', async () => {
     const user = userEvent.setup()
-    const { onGrade, onComplete } = renderPanel([studyCard('a'), studyCard('b')])
+    const { onGrade, onComplete } = renderPanel([studyCard('a'), studyCard('b')], {
+      mode: 'type',
+    })
 
     expect(screen.getByText('Front a')).toBeInTheDocument()
 
@@ -87,7 +92,7 @@ describe('FlashcardsPanel', () => {
 
   it("requeues a card graded 'again' to the back of the session", async () => {
     const user = userEvent.setup()
-    const { onGrade } = renderPanel([studyCard('a'), studyCard('b')])
+    const { onGrade } = renderPanel([studyCard('a'), studyCard('b')], { mode: 'type' })
 
     await user.click(screen.getByRole('button', { name: /show answer/i }))
     await user.click(screen.getByRole('button', { name: /again/i }))
@@ -95,6 +100,17 @@ describe('FlashcardsPanel', () => {
 
     // 'a' goes to the back, so 'b' leads now; 'a' returns after it.
     expect(await screen.findByText('Front b')).toBeInTheDocument()
+  })
+
+  it('shows the remaining-queue counts instead of a reveal button in flip mode', () => {
+    renderPanel([studyCard('a'), studyCard('b')])
+
+    // Tap-to-flip owns the reveal in flip mode; the footer carries the queue overview.
+    expect(screen.queryByRole('button', { name: /show answer/i })).toBeNull()
+    // Both cards are unseen, so the whole queue sits in the "new" bucket of the counter
+    // (the card's own status chip says "New" too, hence the second match).
+    expect(screen.getByText('2')).toBeInTheDocument()
+    expect(screen.getAllByText(/new/i)).toHaveLength(2)
   })
 
   it('reveals then grades a card in a non-flip recall mode', async () => {
@@ -112,14 +128,10 @@ describe('FlashcardsPanel', () => {
     expect(await screen.findByText('Front b')).toBeInTheDocument()
   })
 
-  it('switches the study mode from the header mode button', async () => {
+  it('switches the study mode through the mode sheet', async () => {
     const user = userEvent.setup()
-    const { onModeChange } = renderPanel([studyCard('a')], { mode: 'type' })
+    const { onModeChange } = renderPanel([studyCard('a')], { mode: 'type', modeSheetOpen: true })
 
-    const modeButton = screen.getByRole('button', { name: /change study mode/i })
-    expect(modeButton).toHaveTextContent('Type it')
-
-    await user.click(modeButton)
     await user.click(await screen.findByRole('button', { name: /rebuild/i }))
     expect(onModeChange).toHaveBeenCalledWith('words')
   })
