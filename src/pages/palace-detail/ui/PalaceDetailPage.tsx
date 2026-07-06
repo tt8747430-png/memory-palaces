@@ -65,7 +65,7 @@ import {
   studyOverview,
 } from '@/shared/lib'
 import { RoomList, type RoomListItem } from '@/widgets/room-list'
-import { PracticeModes } from '@/widgets/practice-modes'
+import { PracticeModes, type PracticeStudyMode } from '@/widgets/practice-modes'
 import {
   AppScreen,
   ConfirmDialog,
@@ -90,6 +90,8 @@ export interface PalaceDetailPageProps {
   onOpenSettings?: () => void
   /** Open the palace-wide Study-cards session. */
   onStudyPalace?: () => void
+  /** Open the palace-wide study session preset to an active-recall mode (a Practice row). */
+  onPractice?: (mode: PracticeStudyMode) => void
   /** Launch the palace-wide Match game. */
   onMatch?: () => void
   /** Launch the palace-wide quiz (Test). */
@@ -107,6 +109,7 @@ export function PalaceDetailPage({
   onOpenRoomSettings,
   onOpenSettings,
   onStudyPalace,
+  onPractice,
   onMatch,
   onTest,
 }: PalaceDetailPageProps) {
@@ -340,6 +343,7 @@ export function PalaceDetailPage({
           <PracticeModes
             cardCount={summary.totalLoci}
             questionCount={summary.totalQuestions}
+            onPractice={onPractice}
             onMatch={onMatch}
             onTest={onTest}
           />

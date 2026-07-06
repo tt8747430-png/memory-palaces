@@ -5,15 +5,10 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUp,
-  Blocks,
   Check,
-  EyeOff,
-  Keyboard,
-  Repeat,
   RotateCcw,
   Shuffle,
   Volume2,
-  WholeWord,
 } from 'lucide-react'
 import type { StudyMode } from '@/entities/preferences'
 import { cn } from '@/shared/lib'
@@ -26,6 +21,7 @@ import {
   type FlashcardSwipeConfig,
   type SwipeDirection,
 } from '@/shared/config/flashcard-swipe'
+import { ToggleRow } from './ToggleRow'
 import type { StudyDirection } from '../model/types'
 
 export interface StudyOptionsSheetProps {
@@ -33,16 +29,15 @@ export interface StudyOptionsSheetProps {
   onClose: () => void
   scope: Scope
   scopeCounts: ScopeCounts
+  /** The active study mode — switched via the header mode button, not here; the sheet only
+   * conditions the swipe-map section on flip. */
   mode: StudyMode
-  wordSpaces: boolean
   direction: StudyDirection
   shuffle: boolean
   textToSpeech: boolean
   canSpeak: boolean
   swipeConfig: FlashcardSwipeConfig
   onScope: (scope: Scope) => void
-  onMode: (mode: StudyMode) => void
-  onWordSpaces: (value: boolean) => void
   onDirection: (direction: StudyDirection) => void
   onShuffle: (value: boolean) => void
   onTextToSpeech: (value: boolean) => void
@@ -50,47 +45,6 @@ export interface StudyOptionsSheetProps {
   onRestart: () => void
   onFinish: () => void
 }
-
-type ModeMeta = { mode: StudyMode; icon: ReactNode; labelKey: string }
-
-const FLIP_MODE: ModeMeta = {
-  mode: 'flip',
-  icon: <Repeat className="size-[18px]" aria-hidden />,
-  labelKey: 'study.modeFlip',
-}
-
-/** One-line description of each mode, shown live under the picker for the selected mode. */
-const MODE_HINT: Record<StudyMode, string> = {
-  flip: 'study.modeFlipHint',
-  type: 'study.modeTypeHint',
-  initials: 'study.modeInitialsHint',
-  blur: 'study.modeBlurHint',
-  words: 'study.modeWordsHint',
-}
-
-/** The recall modes that test the answer text before grading, shown below the default Flip. */
-const RECALL_MODES: ModeMeta[] = [
-  {
-    mode: 'type',
-    icon: <Keyboard className="size-[18px]" aria-hidden />,
-    labelKey: 'study.modeType',
-  },
-  {
-    mode: 'initials',
-    icon: <WholeWord className="size-[18px]" aria-hidden />,
-    labelKey: 'study.modeInitials',
-  },
-  {
-    mode: 'blur',
-    icon: <EyeOff className="size-[18px]" aria-hidden />,
-    labelKey: 'study.modeBlur',
-  },
-  {
-    mode: 'words',
-    icon: <Blocks className="size-[18px]" aria-hidden />,
-    labelKey: 'study.modeWords',
-  },
-]
 
 const DIRECTION_META: {
   direction: SwipeDirection
@@ -130,22 +84,19 @@ const ACTION_CHIP_ACTIVE: Record<FlashcardSwipeAction, string> = {
 /** The flashcard options sheet: which cards to study (filters), general toggles, card
  * orientation, the four-direction swipe map, and a destructive restart. Every option persists
  * back through the host — palace settings for orientation/shuffle/speech, global preferences
- * for the swipe map. */
+ * for the swipe map. The study mode is not here: it switches via the header mode button. */
 export function StudyOptionsSheet({
   open,
   onClose,
   scope,
   scopeCounts,
   mode,
-  wordSpaces,
   direction,
   shuffle,
   textToSpeech,
   canSpeak,
   swipeConfig,
   onScope,
-  onMode,
-  onWordSpaces,
   onDirection,
   onShuffle,
   onTextToSpeech,
@@ -182,38 +133,6 @@ export function StudyOptionsSheet({
       }
     >
       <div className="flex flex-col gap-5">
-        <Section title={t('study.modeTitle')}>
-          <ModeTile
-            icon={FLIP_MODE.icon}
-            label={t(FLIP_MODE.labelKey as never)}
-            active={mode === FLIP_MODE.mode}
-            onClick={() => onMode(FLIP_MODE.mode)}
-          />
-          <div className="grid grid-cols-2 gap-2">
-            {RECALL_MODES.map(({ mode: candidate, icon, labelKey }) => (
-              <ModeTile
-                key={candidate}
-                icon={icon}
-                label={t(labelKey as never)}
-                active={candidate === mode}
-                onClick={() => onMode(candidate)}
-              />
-            ))}
-          </div>
-          <p className="px-1 text-[length:var(--p-text-label)] leading-snug text-muted-foreground">
-            {t(MODE_HINT[mode] as never)}
-          </p>
-          {mode === 'initials' ? (
-            <ToggleRow
-              icon={<WholeWord className="size-[18px]" aria-hidden />}
-              label={t('study.wordSpaces')}
-              description={t('study.wordSpacesHint')}
-              checked={wordSpaces}
-              onChange={onWordSpaces}
-            />
-          ) : null}
-        </Section>
-
         <Section title={t('study.cardsToStudy')}>
           <div className="flex flex-wrap gap-2">
             {filters.map(
@@ -293,38 +212,6 @@ export function StudyOptionsSheet({
         </button>
       </div>
     </Sheet>
-  )
-}
-
-function ModeTile({
-  icon,
-  label,
-  active,
-  onClick,
-}: {
-  icon: ReactNode
-  label: string
-  active: boolean
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={active}
-      onClick={onClick}
-      className={cn(
-        'flex min-h-[48px] items-center justify-center gap-2 rounded-card px-3 py-3 transition-transform active:scale-[0.97]',
-        'text-[length:var(--p-text-sub)] font-semibold',
-        active
-          ? 'bg-primary text-primary-foreground shadow-interactive'
-          : 'bg-info-surface text-heading',
-      )}
-    >
-      <span className={cn('shrink-0', active ? 'text-primary-foreground' : 'text-primary')}>
-        {icon}
-      </span>
-      {label}
-    </button>
   )
 }
 
@@ -417,63 +304,5 @@ function SwipeRow({
         })}
       </div>
     </div>
-  )
-}
-
-function ToggleRow({
-  icon,
-  label,
-  description,
-  checked,
-  onChange,
-  disabled,
-}: {
-  icon: ReactNode
-  label: string
-  description?: string
-  checked: boolean
-  onChange: (value: boolean) => void
-  disabled?: boolean
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      disabled={disabled}
-      onClick={() => onChange(!checked)}
-      className={cn(
-        'flex w-full items-center justify-between gap-3 rounded-card bg-info-surface px-4 py-3 text-left transition-transform active:scale-[0.99]',
-        disabled && 'opacity-50',
-      )}
-    >
-      <span className="flex min-w-0 items-center gap-3">
-        <span className="text-heading">{icon}</span>
-        <span className="min-w-0">
-          <span className="block text-[length:var(--p-text-sub)] font-semibold text-heading">
-            {label}
-          </span>
-          {description && (
-            <span className="mt-0.5 block text-[length:var(--p-text-label)] leading-snug text-muted-foreground">
-              {description}
-            </span>
-          )}
-        </span>
-      </span>
-      <span
-        className={cn(
-          'relative h-7 w-12 shrink-0 rounded-full transition-colors',
-          checked ? 'bg-primary' : 'bg-[color-mix(in_oklch,var(--text-muted)_32%,transparent)]',
-        )}
-      >
-        <span
-          className={cn(
-            'absolute top-0.5 block size-6 rounded-full bg-card shadow-rest transition-transform',
-            checked ? 'translate-x-[22px]' : 'translate-x-0.5',
-          )}
-        />
-      </span>
-    </button>
   )
 }

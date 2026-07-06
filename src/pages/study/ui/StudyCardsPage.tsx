@@ -43,6 +43,9 @@ export type StudyScope = { kind: 'room'; roomId: string } | { kind: 'palace'; pa
 
 export interface StudyCardsPageProps {
   scope: StudyScope
+  /** The mode the session opens in — the entry point decides: the Study action omits it
+   * (flip), a Practice row deep-links its own mode. Switchable in-session any time. */
+  initialMode?: StudyMode
   /** Provided by the route wrapper so the page stays router-free. */
   onBack?: () => void
 }
@@ -56,11 +59,12 @@ function studyPrefsFromSettings(settings: PalaceSettings): StudyPrefs {
 }
 
 /** The one study surface (ADR-0005): a scope's loci worked as a single spaced-review deck.
- * The recall mode (flip / type / initials / blur / rebuild) decides how each card's answer is
- * tested, but every mode grades through `gradeCard`, so SRS schedules survive offline. Flashcard
- * orientation/shuffle/speech seed from and persist to the palace; the recall mode and its
- * word-spaces aid are global preferences. */
-export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
+ * The study mode (flip / type / initials / blur / rebuild) decides how each card's answer is
+ * tested, but every mode grades through `gradeCard`, so SRS schedules survive offline. The
+ * entry point sets the opening mode; in-session switches happen through the header mode
+ * button and are recorded to global preferences. Flashcard orientation/shuffle/speech seed
+ * from and persist to the palace. */
+export function StudyCardsPage({ scope, initialMode = 'flip', onBack }: StudyCardsPageProps) {
   const { t } = useTranslation()
   const locusStore = useLocusStoreApi()
   const roomStore = useRoomStoreApi()
@@ -89,6 +93,7 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
   const ready = lociReady && roomsReady && palacesReady
 
   const [optionsOpen, setOptionsOpen] = useState(false)
+  const [mode, setMode] = useState<StudyMode>(initialMode)
 
   const room = useMemo(
     () =>
@@ -141,8 +146,10 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
   }
   const persistSwipe = (config: FlashcardSwipeConfig) =>
     void setPreferences(preferencesStore, { flashcardSwipe: config })
-  const persistMode = (mode: StudyMode) =>
-    void setPreferences(preferencesStore, { studyMode: mode })
+  const changeMode = (next: StudyMode) => {
+    setMode(next)
+    void setPreferences(preferencesStore, { studyMode: next })
+  }
   const persistWordSpaces = (value: boolean) =>
     void setPreferences(preferencesStore, { studyWordSpaces: value })
 
@@ -222,12 +229,12 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
         key={`flashcards-${scopeKey}`}
         cards={cards}
         prefs={studyPrefsFromSettings(palace.settings)}
-        mode={preferences.studyMode}
+        mode={mode}
         wordSpaces={preferences.studyWordSpaces}
         swipeConfig={preferences.flashcardSwipe}
         onPrefsChange={persistStudyPrefs(palace)}
         onSwipeConfigChange={persistSwipe}
-        onModeChange={persistMode}
+        onModeChange={changeMode}
         onWordSpacesChange={persistWordSpaces}
         onGrade={handleGrade}
         onToggleFlag={handleToggleFlag}

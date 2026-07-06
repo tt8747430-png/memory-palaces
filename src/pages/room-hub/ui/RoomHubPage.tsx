@@ -30,14 +30,8 @@ import {
 import { setPreferences } from '@/features/preferences'
 import { studyOverview } from '@/shared/lib'
 import { RoomContentEditor } from '@/widgets/loci-editor'
-import { PracticeModes } from '@/widgets/practice-modes'
-import {
-  AppScreen,
-  IconButton,
-  ScreenHeader,
-  StudyOverviewCard,
-  TextField,
-} from '@/shared/ui'
+import { PracticeModes, type PracticeStudyMode } from '@/widgets/practice-modes'
+import { AppScreen, IconButton, ScreenHeader, StudyOverviewCard, TextField } from '@/shared/ui'
 
 export interface RoomHubPageProps {
   roomId: string
@@ -46,6 +40,8 @@ export interface RoomHubPageProps {
   onOpenSettings?: () => void
   /** Open the room's Study-cards session (the one flashcard surface). */
   onStudy?: () => void
+  /** Open the study session preset to an active-recall mode (a Practice row). */
+  onPractice?: (mode: PracticeStudyMode) => void
   /** Launch the Match mini-game. */
   onMatch?: () => void
   /** Open the room's Questions & Test page (author questions, then start the test). */
@@ -67,6 +63,7 @@ export function RoomHubPage({
   onBack,
   onOpenSettings,
   onStudy,
+  onPractice,
   onMatch,
   onTest,
   onAddCard,
@@ -215,6 +212,7 @@ export function RoomHubPage({
           <PracticeModes
             cardCount={loci.length}
             questionCount={questions.length}
+            onPractice={onPractice}
             onMatch={onMatch}
             onTest={onTest}
             alwaysEnableTest

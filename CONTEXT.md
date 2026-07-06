@@ -7,8 +7,8 @@ fixes the domain language so the UI, copy, and code all name the same things the
 
 **Palace**:
 A place a learner builds to remember things, made of ordered rooms. Every practice mode
-(Study cards, Match, Test, Verses) is available on every palace; nothing is gated by a
-palace "type". A palace carries a manual `order` for hand-sorting in the library.
+(the study session in any mode, Match, Test) is available on every palace; nothing is
+gated by a palace "type". A palace carries a manual `order` for hand-sorting in the library.
 _Avoid_: deck, set, collection (a Folder is the grouping above a Palace, not a Palace);
 "Bible-mode"/"Scripture" palace as a distinct type (removed — verse study is always on).
 
@@ -32,7 +32,8 @@ _Avoid_: "collections rail", "filters row" (removed); calling the root a folder.
 The single screen for one palace (route `/palaces/:palaceId`): the place to create, rename,
 reorder, and delete its ordered rooms. It leads with a **study overview** scoped to the whole
 palace (cards for today aggregated across all its rooms, with a palace-wide Study action),
-then the palace-wide **practice modes** (Match, Test, Verses), above its ordered rooms.
+then the palace-wide **Practice section** (Type, First letters, Blur, Rebuild, Match, Test),
+above its ordered rooms.
 Identity and progress live in the header and palace settings, not a hero card. Per-card
 editing stays room-scoped; opening a room leaves this screen.
 _Avoid_: palace page, palace screen, palace home; an identity/progress "hero" card (removed).
@@ -43,8 +44,9 @@ _Avoid_: level, stage, chapter.
 
 **Room hub**:
 The single screen for one room (route `/rooms/:roomId`): one scroll that leads with the card
-**preview** (carousel), then the **study overview**, then the **practice modes** (Match, Test,
-Verses), then the room's cards-and-questions editor inline below. The place a learner lands
+**preview** (carousel), then the **study overview**, then the **Practice section** (Type,
+First letters, Blur, Rebuild, Match, Test), then the room's cards-and-questions editor
+inline below. The place a learner lands
 when they open a room.
 _Avoid_: room detail, room page, room-content, Study/Manage tabs (the hub is one scroll, not
 a segmented view); a "Study flashcards" launcher on the carousel (the carousel is preview-only,
@@ -105,25 +107,33 @@ _Avoid_: "deck" for a room's card set (say "cards in this room"); calling due a 
 The per-surface daily-study panel: a headline _cards for today_ count, a New/Learning/Known
 breakdown of that queue, and the **Study action**. On the room hub it is scoped to one room;
 on palace detail it aggregates every room. The Study action opens the one **study session**
-(see below) in review mode — due cards lead — over the scope's whole set; when nothing is due
-the action becomes _Study ahead_ over the same set. It sits apart from the card carousel,
+(see below) in Flip, in review mode — due cards lead — over the scope's whole set; when
+nothing is due the action becomes _Study ahead_ over the same set. It sits apart from the card carousel,
 which stays a visual preview.
 _Avoid_: "today's training", "review hero", "up next" — the old home cards, removed.
 
 **Study session** (the one flashcard surface):
 A single full-featured session over a scope's cards (route `/rooms/:roomId/study` or
-`/palaces/:palaceId/study`). Opens in review mode (due-first) but exposes every option from
-its in-session sheet: browse mode, filter/range scope, in-study edit, orientation, shuffle,
-text-to-speech, sort-into-piles. There is exactly one such surface — the old "train all cards",
-the stripped "review", and the carousel's "Study flashcards" all collapsed into it. There is
-**no global cross-library review**: study is always room- or palace-scoped.
-_Avoid_: "train", "flashcard session", "review" as separate things — they are this one session.
+`/palaces/:palaceId/study`). Opens in review mode (due-first); the entry point sets the
+**study mode** — the Study action opens Flip, a Practice row deep-links its own mode
+(`?mode=`), and the header mode button switches it mid-session (Flip, Type, First letters,
+Blur, Rebuild — every mode grades the same SRS deck). The remaining options live in the
+in-session sheet: filter/range scope, in-study edit, orientation, shuffle, text-to-speech,
+sort-into-piles. There is exactly one such surface — the old "train all cards", the stripped
+"review", and the carousel's "Study flashcards" all collapsed into it. There is **no global
+cross-library review**: study is always room- or palace-scoped.
+_Avoid_: "train", "flashcard session", "review" as separate things — they are this one
+session; "Verses" as a mode name (verse study generalized into the recall modes); a separate
+page or engine per mode (the Practice rows are entries into this one session).
 
 **Practice**:
-The umbrella for every study activity that exercises memory: flashcard review/train, the
-Match game, the Test/Quiz, and verse memorization. Each completed item is one unit of
-practice.
-_Avoid_: "training" as the streak verb (see _Active day_).
+The umbrella for every study activity that exercises memory: the study session (any mode),
+the Match game, and the Test/Quiz. Each completed item is one unit of practice. On the room
+hub and palace detail, the **Practice section** lists every way to exercise the scope's set
+beyond the flip Study action — Type, First letters, Blur, Rebuild (each opens the study
+session preset to that mode), Match, and Test.
+_Avoid_: "training" as the streak verb (see _Active day_); "Recall"/"Memorize" as section
+names (the flip session is Study, everything else is Practice).
 
 **Daily goal**:
 The number of practiced items a learner must reach in a day to keep their streak — a user

@@ -41,6 +41,7 @@ import { SettingsHelpPage } from '@/pages/settings-help'
 import { SettingsAboutPage } from '@/pages/settings-about'
 import { NotificationsPage } from '@/pages/notifications'
 import { useSessionStore } from '@/entities/session'
+import { isStudyMode, type StudyMode } from '@/entities/preferences'
 import { useAuthActions } from '@/features/session'
 import { ROUTES } from '@/shared/config/routes'
 import { RootLayout } from './RootLayout'
@@ -189,6 +190,9 @@ function PalaceDetailRoute() {
       onOpenRoomSettings={(roomId) => navigate({ to: ROUTES.roomSettings, params: { roomId } })}
       onOpenSettings={() => navigate({ to: ROUTES.palaceSettings, params: { palaceId } })}
       onStudyPalace={() => navigate({ to: ROUTES.palaceStudy, params: { palaceId } })}
+      onPractice={(mode) =>
+        navigate({ to: ROUTES.palaceStudy, params: { palaceId }, search: { mode } })
+      }
       onMatch={() => navigate({ to: ROUTES.palaceMatch, params: { palaceId } })}
       onTest={() => navigate({ to: ROUTES.palaceQuiz, params: { palaceId } })}
     />
@@ -230,6 +234,9 @@ function RoomHubRoute() {
       onBack={back}
       onOpenSettings={() => navigate({ to: ROUTES.roomSettings, params: { roomId } })}
       onStudy={() => navigate({ to: ROUTES.roomStudy, params: { roomId } })}
+      onPractice={(mode) =>
+        navigate({ to: ROUTES.roomStudy, params: { roomId }, search: { mode } })
+      }
       onMatch={() => navigate({ to: ROUTES.roomMatch, params: { roomId } })}
       onTest={() => navigate({ to: ROUTES.roomQuestions, params: { roomId } })}
       onAddCard={() => navigate({ to: ROUTES.roomCardNew, params: { roomId } })}
@@ -397,29 +404,38 @@ const roomQuestionEditRoute = createRoute({
   component: RoomQuestionEditRoute,
 })
 
+// `?mode=` picks the session's opening study mode: the Study action omits it (flip),
+// a Practice row deep-links its own mode. Anything unrecognized falls back to flip.
+const validateStudySearch = (search: Record<string, unknown>): { mode?: StudyMode } =>
+  isStudyMode(search.mode) ? { mode: search.mode } : {}
+
 function RoomStudyRoute() {
   const { roomId } = roomStudyRoute.useParams()
+  const { mode } = roomStudyRoute.useSearch()
   const navigate = useNavigate()
   const back = useBack(() => navigate({ to: ROUTES.roomHub, params: { roomId } }))
-  return <StudyCardsPage scope={{ kind: 'room', roomId }} onBack={back} />
+  return <StudyCardsPage scope={{ kind: 'room', roomId }} initialMode={mode} onBack={back} />
 }
 
 const roomStudyRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.roomStudy,
+  validateSearch: validateStudySearch,
   component: RoomStudyRoute,
 })
 
 function PalaceStudyRoute() {
   const { palaceId } = palaceStudyRoute.useParams()
+  const { mode } = palaceStudyRoute.useSearch()
   const navigate = useNavigate()
   const back = useBack(() => navigate({ to: ROUTES.palaceDetail, params: { palaceId } }))
-  return <StudyCardsPage scope={{ kind: 'palace', palaceId }} onBack={back} />
+  return <StudyCardsPage scope={{ kind: 'palace', palaceId }} initialMode={mode} onBack={back} />
 }
 
 const palaceStudyRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.palaceStudy,
+  validateSearch: validateStudySearch,
   component: PalaceStudyRoute,
 })
 
@@ -448,7 +464,6 @@ const palaceMatchRoute = createRoute({
   path: ROUTES.palaceMatch,
   component: PalaceMatchRoute,
 })
-
 
 function RoomQuizRoute() {
   const { roomId } = roomQuizRoute.useParams()

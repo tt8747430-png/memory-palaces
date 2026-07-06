@@ -1,14 +1,20 @@
 import { type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'motion/react'
-import { Brain, ChevronRight, Puzzle } from 'lucide-react'
+import { Blocks, Brain, ChevronRight, EyeOff, Keyboard, Puzzle, WholeWord } from 'lucide-react'
+import type { StudyMode } from '@/entities/preferences'
 import { cn } from '@/shared/lib'
 
+/** The study modes that open the study session preset to an active-recall variant. */
+export type PracticeStudyMode = Exclude<StudyMode, 'flip'>
+
 export interface PracticeModesProps {
-  /** Cards in scope — Match needs at least two. */
+  /** Cards in scope — the study-mode rows need one, Match needs at least two. */
   cardCount: number
   /** Authored questions in scope — Test needs at least one. */
   questionCount: number
+  /** Open the study session preset to the given mode (deep-links `?mode=`). */
+  onPractice?: (mode: PracticeStudyMode) => void
   onMatch?: () => void
   onTest?: () => void
   /** Keep the Test tile enabled even with no questions — used where it opens the questions
@@ -16,23 +22,70 @@ export interface PracticeModesProps {
   alwaysEnableTest?: boolean
 }
 
-/** The practice-mode tiles (Match / Test) shared by the room hub and palace detail. The
- * Study-cards session is the headline above (flashcards and verse memorization both live
- * there); these are the alternate ways to exercise the same set, scoped to whichever surface
- * renders them. Every mode is available on every palace and room. */
+/** The four study-session modes surfaced as practice entries. Labels reuse the session's
+ * mode names (one name per mode, everywhere); sublabels are the hub-length hints. */
+const PRACTICE_STUDY_MODES: {
+  mode: PracticeStudyMode
+  icon: ReactNode
+  labelKey: string
+  sublabelKey: string
+}[] = [
+  {
+    mode: 'type',
+    icon: <Keyboard className="size-5" aria-hidden />,
+    labelKey: 'study.modeType',
+    sublabelKey: 'practice.typeSub',
+  },
+  {
+    mode: 'initials',
+    icon: <WholeWord className="size-5" aria-hidden />,
+    labelKey: 'study.modeInitials',
+    sublabelKey: 'practice.initialsSub',
+  },
+  {
+    mode: 'blur',
+    icon: <EyeOff className="size-5" aria-hidden />,
+    labelKey: 'study.modeBlur',
+    sublabelKey: 'practice.blurSub',
+  },
+  {
+    mode: 'words',
+    icon: <Blocks className="size-5" aria-hidden />,
+    labelKey: 'study.modeWords',
+    sublabelKey: 'practice.wordsSub',
+  },
+]
+
+/** The Practice section shared by the room hub and palace detail: every way to exercise the
+ * scope's cards beyond the flip session — the four recall modes of the study session (each
+ * deep-links into it), the Match game, and the Test. The flip Study session is the headline
+ * in the study overview above; every mode is available on every palace and room. */
 export function PracticeModes({
   cardCount,
   questionCount,
+  onPractice,
   onMatch,
   onTest,
   alwaysEnableTest = false,
 }: PracticeModesProps) {
   const { t } = useTranslation()
   return (
-    <div className="space-y-2.5">
+    <section aria-label={t('practice.title')} className="space-y-2.5">
+      <h2 className="px-0.5 text-(length:--p-text-title) font-semibold text-heading">
+        {t('practice.title')}
+      </h2>
+      {PRACTICE_STUDY_MODES.map(({ mode, icon, labelKey, sublabelKey }) => (
+        <ModeTile
+          key={mode}
+          icon={icon}
+          label={t(labelKey as never)}
+          sublabel={t(sublabelKey as never)}
+          onClick={onPractice ? () => onPractice(mode) : undefined}
+          disabled={cardCount < 1}
+        />
+      ))}
       <ModeTile
         icon={<Puzzle className="size-5" aria-hidden />}
-        tint="bg-accent"
         label={t('practice.match')}
         sublabel={t('practice.matchSub')}
         onClick={onMatch}
@@ -40,7 +93,6 @@ export function PracticeModes({
       />
       <ModeTile
         icon={<Brain className="size-5" aria-hidden />}
-        tint="bg-primary"
         label={t('practice.test')}
         sublabel={
           questionCount > 0
@@ -54,20 +106,18 @@ export function PracticeModes({
         onClick={onTest}
         disabled={!alwaysEnableTest && questionCount === 0}
       />
-    </div>
+    </section>
   )
 }
 
 function ModeTile({
   icon,
-  tint,
   label,
   sublabel,
   onClick,
   disabled,
 }: {
   icon: ReactNode
-  tint: string
   label: string
   sublabel: string
   onClick?: () => void
@@ -85,19 +135,14 @@ function ModeTile({
       )}
     >
       <span
-        className={cn(
-          'grid size-11 shrink-0 place-items-center rounded-control text-primary-foreground',
-          tint,
-        )}
+        className="grid size-11 shrink-0 place-items-center rounded-control bg-primary text-primary-foreground"
         aria-hidden
       >
         {icon}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[length:var(--p-text-sub)] font-semibold text-heading">
-          {label}
-        </span>
-        <span className="block truncate text-[length:var(--p-text-label)] text-muted-foreground">
+        <span className="block text-(length:--p-text-sub) font-semibold text-heading">{label}</span>
+        <span className="block truncate text-(length:--p-text-label) text-muted-foreground">
           {sublabel}
         </span>
       </span>

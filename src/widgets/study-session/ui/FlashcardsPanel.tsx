@@ -1,7 +1,7 @@
 import { type ReactNode, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-import { Eye, Flag, Pencil, SkipForward, Sparkles, Volume2 } from 'lucide-react'
+import { ChevronDown, Eye, Flag, Pencil, SkipForward, Sparkles, Volume2 } from 'lucide-react'
 import type { StudyMode } from '@/entities/preferences'
 import { cn, speak, speechAvailable, success } from '@/shared/lib'
 import { Button, GradeButtons } from '@/shared/ui'
@@ -24,6 +24,8 @@ import {
 import { StudyCardDeck } from './StudyCardDeck'
 import { RecallCard } from './RecallCard'
 import { StudyOptionsSheet } from './StudyOptionsSheet'
+import { ModeSheet } from './ModeSheet'
+import { STUDY_MODE_META } from './mode-meta'
 import { QuickActionsSheet } from './QuickActionsSheet'
 import { InStudyEditor } from './InStudyEditor'
 import { CompletionOverlay } from './CompletionOverlay'
@@ -89,6 +91,7 @@ export function FlashcardsPanel({
 
   const [scope, setScope] = useState<Scope>({ kind: 'all' })
   const [quickOpen, setQuickOpen] = useState(false)
+  const [modeSheetOpen, setModeSheetOpen] = useState(false)
   const [editing, setEditing] = useState(false)
   // Type mode's textarea is focused → the keyboard is up; collapse the tools row and progress
   // so the input, feedback, and grade control all fit above it.
@@ -202,15 +205,12 @@ export function FlashcardsPanel({
       scope={scope}
       scopeCounts={counts}
       mode={mode}
-      wordSpaces={wordSpaces}
       direction={prefs.direction}
       shuffle={prefs.shuffle}
       textToSpeech={prefs.textToSpeech}
       canSpeak={canSpeak}
       swipeConfig={swipeConfig}
       onScope={changeScope}
-      onMode={(next) => onModeChange?.(next)}
-      onWordSpaces={(value) => onWordSpacesChange?.(value)}
       onDirection={(direction) => updatePrefs({ direction })}
       onShuffle={(value) => updatePrefs({ shuffle: value })}
       onTextToSpeech={(value) => updatePrefs({ textToSpeech: value })}
@@ -220,8 +220,27 @@ export function FlashcardsPanel({
     />
   )
 
+  const ModeIcon = STUDY_MODE_META[mode].Icon
+
   return (
     <>
+      {/* The mode button: names the session's current mode and opens the mode sheet — the
+          one always-visible way to switch how answers are recalled. Hidden while typing. */}
+      {card && !typing ? (
+        <div className="flex justify-center px-5 pt-1.5">
+          <button
+            type="button"
+            onClick={() => setModeSheetOpen(true)}
+            aria-label={t('study.changeMode')}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card-glass px-3.5 py-2 text-(length:--p-text-label) font-semibold text-heading transition-transform active:scale-[0.94]"
+          >
+            <ModeIcon className="size-4 text-primary" aria-hidden />
+            {t(STUDY_MODE_META[mode].labelKey as never)}
+            <ChevronDown className="size-3.5 text-faint" aria-hidden />
+          </button>
+        </div>
+      ) : null}
+
       {/* Progress — hidden while typing to give the keyboard room. */}
       {card && !typing ? (
         <div className="space-y-2 px-5 pt-1">
@@ -346,6 +365,15 @@ export function FlashcardsPanel({
       ) : null}
 
       {optionsSheet}
+
+      <ModeSheet
+        open={modeSheetOpen}
+        onClose={() => setModeSheetOpen(false)}
+        mode={mode}
+        wordSpaces={wordSpaces}
+        onMode={(next) => onModeChange?.(next)}
+        onWordSpaces={(value) => onWordSpacesChange?.(value)}
+      />
 
       {card ? (
         <QuickActionsSheet

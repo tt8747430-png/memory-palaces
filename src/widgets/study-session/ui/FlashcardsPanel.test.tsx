@@ -41,6 +41,7 @@ function renderPanel(
 ) {
   const onGrade = vi.fn(overrides.onGrade)
   const onComplete = vi.fn(overrides.onComplete)
+  const onModeChange = vi.fn()
   render(
     <I18nextProvider i18n={i18n}>
       <MotionConfig reducedMotion="always">
@@ -51,6 +52,7 @@ function renderPanel(
           wordSpaces
           swipeConfig={DEFAULT_FLASHCARD_SWIPE}
           onGrade={onGrade}
+          onModeChange={onModeChange}
           onBack={() => {}}
           onComplete={onComplete}
           optionsOpen={false}
@@ -60,7 +62,7 @@ function renderPanel(
       </MotionConfig>
     </I18nextProvider>,
   )
-  return { onGrade, onComplete }
+  return { onGrade, onComplete, onModeChange }
 }
 
 describe('FlashcardsPanel', () => {
@@ -108,5 +110,17 @@ describe('FlashcardsPanel', () => {
     expect(onGrade).toHaveBeenCalledWith('a', 'good')
 
     expect(await screen.findByText('Front b')).toBeInTheDocument()
+  })
+
+  it('switches the study mode from the header mode button', async () => {
+    const user = userEvent.setup()
+    const { onModeChange } = renderPanel([studyCard('a')], { mode: 'type' })
+
+    const modeButton = screen.getByRole('button', { name: /change study mode/i })
+    expect(modeButton).toHaveTextContent('Type it')
+
+    await user.click(modeButton)
+    await user.click(await screen.findByRole('button', { name: /rebuild/i }))
+    expect(onModeChange).toHaveBeenCalledWith('words')
   })
 })

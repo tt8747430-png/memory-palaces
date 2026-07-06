@@ -17,6 +17,8 @@ export {
   updatePreferences,
   DEFAULT_PREFERENCES,
   DEFAULT_PRIVACY,
+  STUDY_MODES,
+  isStudyMode,
 } from './model/types'
 export { createPreferencesStore } from './model/store'
 export type { PreferencesState, PreferencesStatus, PreferencesStore } from './model/store'
