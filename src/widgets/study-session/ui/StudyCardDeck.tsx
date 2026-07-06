@@ -13,7 +13,6 @@ import { useDrag } from '@use-gesture/react'
 import { Flag, Lightbulb, MapPin, Volume2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn, impact, recallAnswer, tick } from '@/shared/lib'
-import { Chip, SrsStatusChip } from '@/shared/ui'
 import {
   type FlashcardSwipeAction,
   FLASHCARD_SWIPE_ACTION_META,
@@ -251,48 +250,40 @@ export function StudyCardDeck({
             >
               {/* Front */}
               <div className={faceClass}>
-                <div className="mb-1 flex items-center justify-between">
-                  <div className="flex min-w-0 items-center gap-1.5">
-                    <Chip icon={<MapPin className="size-3" aria-hidden />}>
-                      {direction === 'front' ? t('study.recall') : t('study.term')}
-                    </Chip>
-                    <SrsStatusChip srs={locus.srs} />
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    {canSpeak ? (
-                      <button
-                        type="button"
-                        onPointerDown={(event) => event.stopPropagation()}
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          onSpeak(prompt)
-                        }}
-                        aria-label={t('study.readAloud')}
-                        className="grid size-7 place-items-center rounded-control bg-info-surface text-heading active:scale-90"
-                      >
-                        <Volume2 className="size-3.5" aria-hidden />
-                      </button>
-                    ) : null}
-                    {locus.flagged ? (
-                      <Flag
-                        className="size-4 fill-[var(--rating)] text-[var(--rating-edge)]"
-                        aria-hidden
-                      />
-                    ) : null}
-                  </div>
+                <div className="flex h-7 items-center justify-end gap-1.5">
+                  {locus.flagged ? (
+                    <Flag
+                      className="size-4 fill-[var(--rating)] text-[var(--rating-edge)]"
+                      aria-hidden
+                    />
+                  ) : null}
+                  {canSpeak ? (
+                    <button
+                      type="button"
+                      onPointerDown={(event) => event.stopPropagation()}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        onSpeak(prompt)
+                      }}
+                      aria-label={t('study.readAloud')}
+                      className="grid size-7 place-items-center rounded-control bg-info-surface text-heading active:scale-90"
+                    >
+                      <Volume2 className="size-3.5" aria-hidden />
+                    </button>
+                  ) : null}
                 </div>
 
                 <div className="flex min-h-0 flex-1 scrollbar-hide flex-col items-center justify-center overflow-y-auto py-2 text-center">
-                  <h2 className="mb-3 text-balance break-words text-[clamp(22px,6vw,30px)] font-bold text-heading">
+                  <h2 className="text-balance break-words text-[clamp(22px,6vw,30px)] font-bold leading-[1.15] tracking-[-0.01em] text-heading">
                     {prompt}
                   </h2>
                   {locus.tip ? (
-                    <div className="mt-1 flex min-h-[44px] items-center justify-center">
+                    <div className="mt-4 flex min-h-[44px] items-center justify-center">
                       {peek ? (
                         <motion.p
                           initial={{ opacity: 0, y: 4 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="max-w-[36ch] text-[length:var(--p-text-label)] italic text-muted-foreground"
+                          className="max-w-[36ch] text-pretty text-(length:--p-text-label) italic text-muted-foreground"
                         >
                           {locus.tip}
                         </motion.p>
@@ -304,7 +295,7 @@ export function StudyCardDeck({
                             event.stopPropagation()
                             setPeek(true)
                           }}
-                          className="inline-flex items-center gap-1.5 rounded-full bg-[var(--warning-surface)] px-3 py-1.5 text-[length:var(--p-text-label)] font-semibold text-[var(--warning-foreground)]"
+                          className="inline-flex items-center gap-1.5 rounded-full bg-[var(--warning-surface)] px-3 py-1.5 text-(length:--p-text-label) font-semibold text-[var(--warning-foreground)]"
                         >
                           <Lightbulb className="size-3.5" aria-hidden />
                           {t('study.peekHint')}
@@ -313,10 +304,6 @@ export function StudyCardDeck({
                     </div>
                   ) : null}
                 </div>
-
-                <p className="text-center text-[length:var(--p-text-label)] text-muted-foreground">
-                  {t('study.tapToFlip')}
-                </p>
               </div>
 
               {/* Back */}

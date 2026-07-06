@@ -4,7 +4,6 @@ import {
   initSession,
   nextId,
   type ReviewState,
-  sessionProgress,
   sessionReducer,
   type SessionState,
 } from './session-machine'
@@ -135,12 +134,5 @@ describe('selectors', () => {
     expect(
       currentId({ status: 'complete', graded: 0, piles: { learning: 0, known: 0 } }),
     ).toBeUndefined()
-  })
-
-  it('progress is graded/total in review and 1 once complete', () => {
-    expect(sessionProgress(review(['a', 'b', 'c', 'd']))).toBe(0)
-    expect(
-      sessionProgress({ status: 'complete', graded: 2, piles: { learning: 0, known: 2 } }),
-    ).toBe(1)
   })
 })

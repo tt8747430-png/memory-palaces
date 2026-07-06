@@ -107,10 +107,9 @@ describe('FlashcardsPanel', () => {
 
     // Tap-to-flip owns the reveal in flip mode; the footer carries the queue overview.
     expect(screen.queryByRole('button', { name: /show answer/i })).toBeNull()
-    // Both cards are unseen, so the whole queue sits in the "new" bucket of the counter
-    // (the card's own status chip says "New" too, hence the second match).
+    // Both cards are unseen, so the whole queue sits in the "New" bucket of the footer.
     expect(screen.getByText('2')).toBeInTheDocument()
-    expect(screen.getAllByText(/new/i)).toHaveLength(2)
+    expect(screen.getByText(/new/i)).toBeInTheDocument()
   })
 
   it('reveals then grades a card in a non-flip recall mode', async () => {

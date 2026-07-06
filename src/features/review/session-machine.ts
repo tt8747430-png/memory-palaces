@@ -126,9 +126,3 @@ export function nextId(state: SessionState): string | undefined {
   if (state.status === 'review') return state.queue[1]
   return undefined
 }
-
-/** Session completion in [0, 1] — graded/total in review, 1 once complete. */
-export function sessionProgress(state: SessionState): number {
-  if (state.status === 'review') return state.total > 0 ? state.graded / state.total : 0
-  return 1
-}

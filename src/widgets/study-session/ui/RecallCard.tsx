@@ -12,7 +12,6 @@ import {
   typedRecallStatus,
   wordInitial,
 } from '@/shared/lib'
-import { Chip, SrsStatusChip } from '@/shared/ui'
 import type { StudyCard, StudyDirection } from '../model/types'
 
 export interface RecallCardProps {
@@ -64,32 +63,24 @@ export function RecallCard({
 
   return (
     <div className="flex h-full w-full max-w-md flex-col rounded-card-featured bg-card-glass p-5 shadow-elevated">
-      <header className="flex shrink-0 items-start justify-between gap-2">
-        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-          <Chip icon={<MapPin className="size-3" aria-hidden />}>
-            {direction === 'front' ? t('study.recall') : t('study.term')}
-          </Chip>
-          <SrsStatusChip srs={locus.srs} />
-        </div>
-        <div className="flex shrink-0 items-center gap-1.5">
-          {canSpeak ? (
-            <button
-              type="button"
-              onClick={() => onSpeak(revealed ? answer : prompt)}
-              aria-label={t('study.readAloud')}
-              className="grid size-7 place-items-center rounded-control bg-info-surface text-heading transition-transform active:scale-90"
-            >
-              <Volume2 className="size-3.5" aria-hidden />
-            </button>
-          ) : null}
-          {locus.flagged ? (
-            <Flag className="size-4 fill-[var(--rating)] text-[var(--rating-edge)]" aria-hidden />
-          ) : null}
-        </div>
+      <header className="flex h-7 shrink-0 items-center justify-end gap-1.5">
+        {locus.flagged ? (
+          <Flag className="size-4 fill-[var(--rating)] text-[var(--rating-edge)]" aria-hidden />
+        ) : null}
+        {canSpeak ? (
+          <button
+            type="button"
+            onClick={() => onSpeak(revealed ? answer : prompt)}
+            aria-label={t('study.readAloud')}
+            className="grid size-7 place-items-center rounded-control bg-info-surface text-heading transition-transform active:scale-90"
+          >
+            <Volume2 className="size-3.5" aria-hidden />
+          </button>
+        ) : null}
       </header>
 
-      <div className="shrink-0 pt-2.5 text-center">
-        <h2 className="text-balance break-words text-[clamp(19px,5vw,23px)] font-bold leading-tight text-heading">
+      <div className="shrink-0 pt-1 text-center">
+        <h2 className="text-balance break-words text-[clamp(19px,5vw,23px)] font-bold leading-tight tracking-[-0.01em] text-heading">
           {prompt}
         </h2>
         {locus.tip ? (

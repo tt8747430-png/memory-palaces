@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Eye, Sparkles } from 'lucide-react'
 import type { StudyMode } from '@/entities/preferences'
@@ -12,7 +12,6 @@ import {
   nextId,
   type Scope,
   scopeCounts as computeScopeCounts,
-  sessionProgress,
   sessionReducer,
   shuffleFirstDue,
 } from '@/features/review'
@@ -236,26 +235,20 @@ export function FlashcardsPanel({
     />
   )
 
+  // The one control shown below the queue overview: grade buttons once the answer is up;
+  // before that a reveal button for the recall modes (flip needs none — the card is the
+  // control). `null` leaves the footer as the overview alone.
+  const footerAction = flipped ? (
+    <GradeButtons srs={card?.locus.srs} now={now} onGrade={handleGrade} />
+  ) : !isFlip ? (
+    <Button size="lg" className="w-full" onClick={revealAnswer}>
+      <Eye className="size-5" aria-hidden />
+      {t('study.showAnswer')}
+    </Button>
+  ) : null
+
   return (
     <>
-      {/* Progress — hidden while typing to give the keyboard room. */}
-      {card && !typing ? (
-        <div className="space-y-2 px-5 pt-1">
-          <p className="text-right text-[length:var(--p-text-label)] font-medium text-muted-foreground">
-            {state.status === 'review'
-              ? t('study.reviewedCount', { graded: state.graded, total: state.total })
-              : null}
-          </p>
-          <div className="h-2 overflow-hidden rounded-full bg-secondary/30">
-            <motion.div
-              className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
-              animate={{ width: `${sessionProgress(state) * 100}%` }}
-              transition={{ duration: 0.3 }}
-            />
-          </div>
-        </div>
-      ) : null}
-
       {/* Deck (flip) or recall card, or empty-scope state */}
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-5 py-3">
         {card ? (
@@ -296,26 +289,15 @@ export function FlashcardsPanel({
         ) : null}
       </div>
 
-      {/* Footer: grades once the answer is up. Before that, flip mode shows only the
-          remaining queue (the card itself invites the flip); recall modes keep the reveal
-          button because Initials — and any given-up attempt — can't self-solve. */}
+      {/* The controls bar: the remaining-queue overview (the sole progress signal now the
+          top bar is gone) sits above the primary action. Both step aside while the Type
+          keyboard is up so the input and grade control keep their room. */}
       {card ? (
-        <div className="px-5 pb-7 pt-2">
-          {flipped ? (
-            <GradeButtons srs={card.locus.srs} now={now} onGrade={handleGrade} />
-          ) : (
-            <div className="flex flex-col items-center gap-3">
-              {!isFlip ? (
-                <Button size="lg" className="w-full" onClick={revealAnswer}>
-                  <Eye className="size-5" aria-hidden />
-                  {t('study.showAnswer')}
-                </Button>
-              ) : null}
-              {!typing ? (
-                <RemainingCounts remaining={remaining} current={srsStatus(card.locus.srs)} />
-              ) : null}
-            </div>
-          )}
+        <div className="shrink-0 space-y-3 border-t border-border/60 bg-card-glass px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-3.5">
+          {!typing ? (
+            <RemainingCounts remaining={remaining} current={srsStatus(card.locus.srs)} />
+          ) : null}
+          {footerAction}
         </div>
       ) : null}
 

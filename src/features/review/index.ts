@@ -12,7 +12,6 @@ export {
   sessionReducer,
   currentId,
   nextId,
-  sessionProgress,
   type SessionState,
   type SessionAction,
   type ReviewState,
