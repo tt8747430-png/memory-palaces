@@ -296,8 +296,8 @@ export function FlashcardsPanel({
           keyboard is up it stands down entirely instead of riding above the keyboard; it
           returns the moment typing ends. */}
       {card && !typing ? (
-        <div className="shrink-0 border-t border-border/60 bg-card-glass px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3">
-          <div className="h-22">
+        <div className="shrink-0 border-t border-border/60 bg-card-glass px-5 pb-[max(0.875rem,env(safe-area-inset-bottom))] pt-2.5">
+          <div className="h-14">
             <AnimatePresence initial={false} mode="wait">
               {flipped ? (
                 <motion.div
