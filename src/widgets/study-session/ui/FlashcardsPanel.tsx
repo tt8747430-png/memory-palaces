@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
-import { AnimatePresence } from 'motion/react'
+import { AnimatePresence, motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Eye, Sparkles } from 'lucide-react'
 import type { StudyMode } from '@/entities/preferences'
@@ -95,9 +95,12 @@ export function FlashcardsPanel({
   const [scope, setScope] = useState<Scope>({ kind: 'all' })
   const [quickOpen, setQuickOpen] = useState(false)
   const [editing, setEditing] = useState(false)
-  // Type mode's textarea is focused → the keyboard is up; collapse the tools row and progress
-  // so the input, feedback, and grade control all fit above it.
+  // Type mode's input is focused → the keyboard is up; compress the card's prompt block so
+  // the input, feedback, and footer all keep their room. The footer itself never moves.
   const [typing, setTyping] = useState(false)
+  // Type mode's aid (full text vs first letters). Session-scoped on purpose: it's a way of
+  // working a card, not a lasting preference.
+  const [typeInitialsOnly, setTypeInitialsOnly] = useState(false)
 
   const loci = useMemo(() => cards.map((card) => card.locus), [cards])
   const byId = useMemo(() => new Map(cards.map((card) => [card.locus.id, card])), [cards])
@@ -224,28 +227,18 @@ export function FlashcardsPanel({
       textToSpeech={prefs.textToSpeech}
       canSpeak={canSpeak}
       swipeConfig={swipeConfig}
+      wordSpaces={wordSpaces}
       onScope={changeScope}
       onDirection={(direction) => updatePrefs({ direction })}
       onShuffle={(value) => updatePrefs({ shuffle: value })}
       onTextToSpeech={(value) => updatePrefs({ textToSpeech: value })}
       onSwipe={(dir, action) => onSwipeConfigChange?.({ ...swipeConfig, [dir]: action })}
+      onWordSpaces={(value) => onWordSpacesChange?.(value)}
       onRestart={() => rebuild(scope)}
       onFinish={() => dispatch({ type: 'finish' })}
       onEditCard={canEdit && onEditCard && card ? () => setEditing(true) : undefined}
     />
   )
-
-  // The one control shown below the queue overview: grade buttons once the answer is up;
-  // before that a reveal button for the recall modes (flip needs none — the card is the
-  // control). `null` leaves the footer as the overview alone.
-  const footerAction = flipped ? (
-    <GradeButtons srs={card?.locus.srs} now={now} onGrade={handleGrade} />
-  ) : !isFlip ? (
-    <Button size="lg" className="w-full" onClick={revealAnswer}>
-      <Eye className="size-5" aria-hidden />
-      {t('study.showAnswer')}
-    </Button>
-  ) : null
 
   return (
     <>
@@ -274,6 +267,9 @@ export function FlashcardsPanel({
               wordSpaces={wordSpaces}
               revealed={flipped}
               canSpeak={canSpeak}
+              compact={typing}
+              typeInitialsOnly={typeInitialsOnly}
+              onTypeInitialsOnly={setTypeInitialsOnly}
               onReveal={() => dispatch({ type: 'reveal' })}
               onSpeak={(text) => speak(text)}
               onInputFocusChange={setTyping}
@@ -289,15 +285,49 @@ export function FlashcardsPanel({
         ) : null}
       </div>
 
-      {/* The controls bar: the remaining-queue overview (the sole progress signal now the
-          top bar is gone) sits above the primary action. Both step aside while the Type
-          keyboard is up so the input and grade control keep their room. */}
+      {/* The controls bar. Fixed-height by design: before the reveal it stacks the
+          remaining-queue overview (the sole progress signal now the top bar is gone) over
+          the one primary action; after it, the grade control takes the whole slot. The two
+          states crossfade in place — the bar never grows, shrinks, or jumps, keyboard up
+          or not, so the thumb always lands where it expects. */}
       {card ? (
-        <div className="shrink-0 space-y-3 border-t border-border/60 bg-card-glass px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-3.5">
-          {!typing ? (
-            <RemainingCounts remaining={remaining} current={srsStatus(card.locus.srs)} />
-          ) : null}
-          {footerAction}
+        <div className="shrink-0 border-t border-border/60 bg-card-glass px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3">
+          <div className="h-22">
+            <AnimatePresence initial={false} mode="wait">
+              {flipped ? (
+                <motion.div
+                  key="grade"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.12 }}
+                  className="h-full"
+                >
+                  <GradeButtons
+                    className="h-full"
+                    srs={card.locus.srs}
+                    now={now}
+                    onGrade={handleGrade}
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="preview"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.12 }}
+                  className="flex h-full flex-col justify-between"
+                >
+                  <RemainingCounts remaining={remaining} current={srsStatus(card.locus.srs)} />
+                  <Button size="lg" className="w-full" onClick={revealAnswer}>
+                    <Eye className="size-5" aria-hidden />
+                    {t('study.showAnswer')}
+                  </Button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       ) : null}
 
@@ -317,9 +347,7 @@ export function FlashcardsPanel({
         open={modeSheetOpen}
         onClose={() => onModeSheetOpenChange(false)}
         mode={mode}
-        wordSpaces={wordSpaces}
         onMode={(next) => onModeChange?.(next)}
-        onWordSpaces={(value) => onWordSpacesChange?.(value)}
       />
 
       {card ? (

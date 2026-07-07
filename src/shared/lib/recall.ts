@@ -80,6 +80,12 @@ export function normalizeWord(word: string): string {
   return word.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '')
 }
 
+/** Case- and diacritic-insensitive form of a single letter, so a plain keyboard "s"
+ *  matches "Ș" when typing initials. */
+export function normalizeInitial(char: string): string {
+  return char.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
+}
+
 export type TypedWordStatus = 'correct' | 'wrong' | 'pending'
 
 export interface RecallTypingResult {

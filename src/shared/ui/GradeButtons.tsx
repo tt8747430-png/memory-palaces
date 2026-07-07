@@ -7,6 +7,8 @@ export interface GradeButtonsProps {
   /** Injected clock (epoch ms) so the interval previews are deterministic. */
   now?: number
   onGrade: (grade: Grade) => void
+  /** Merged on the grid so a host can stretch the control (e.g. a fixed-height footer). */
+  className?: string
 }
 
 const GRADES: { grade: Grade; key: `grade.${Grade}`; tone: string }[] = [
@@ -30,10 +32,10 @@ const GRADES: { grade: Grade; key: `grade.${Grade}`; tone: string }[] = [
 
 /** The four-grade review control (SM-2), each button previewing the interval the
  * grade would schedule (`nextIntervalLabel`). The single way to grade a card. */
-export function GradeButtons({ srs, now = Date.now(), onGrade }: GradeButtonsProps) {
+export function GradeButtons({ srs, now = Date.now(), onGrade, className }: GradeButtonsProps) {
   const { t } = useTranslation()
   return (
-    <div className="grid grid-cols-4 gap-2">
+    <div className={cn('grid grid-cols-4 gap-2', className)}>
       {GRADES.map(({ grade, key, tone }) => (
         <button
           key={grade}
@@ -46,7 +48,7 @@ export function GradeButtons({ srs, now = Date.now(), onGrade }: GradeButtonsPro
             tone,
           )}
         >
-          <span className="text-[length:var(--p-text-label)]">{t(key)}</span>
+          <span className="text-[length:var(--p-text-label)] font-semibold">{t(key)}</span>
           <span className="text-[length:var(--p-text-tiny)] opacity-80">
             {nextIntervalLabel(srs, grade, now)}
           </span>

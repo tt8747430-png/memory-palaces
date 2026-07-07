@@ -10,6 +10,7 @@ import {
   RotateCcw,
   Shuffle,
   Volume2,
+  WholeWord,
 } from 'lucide-react'
 import type { StudyMode } from '@/entities/preferences'
 import { cn } from '@/shared/lib'
@@ -22,6 +23,7 @@ import {
   type FlashcardSwipeConfig,
   type SwipeDirection,
 } from '@/shared/config/flashcard-swipe'
+import { SheetSection } from './SheetSection'
 import { ToggleRow } from './ToggleRow'
 import type { StudyDirection } from '../model/types'
 
@@ -31,18 +33,21 @@ export interface StudyOptionsSheetProps {
   scope: Scope
   scopeCounts: ScopeCounts
   /** The active study mode — switched via the header mode button, not here; the sheet only
-   * conditions the swipe-map section on flip. */
+   * conditions its per-mode sections (swipe map on flip, word spaces on Initials) on it. */
   mode: StudyMode
   direction: StudyDirection
   shuffle: boolean
   textToSpeech: boolean
   canSpeak: boolean
   swipeConfig: FlashcardSwipeConfig
+  /** Mark blanks for each hidden letter in Initials mode. Global preference. */
+  wordSpaces: boolean
   onScope: (scope: Scope) => void
   onDirection: (direction: StudyDirection) => void
   onShuffle: (value: boolean) => void
   onTextToSpeech: (value: boolean) => void
   onSwipe: (direction: SwipeDirection, action: FlashcardSwipeAction) => void
+  onWordSpaces: (value: boolean) => void
   /** Open the in-study editor for the current card; absent when the host can't edit. */
   onEditCard?: () => void
   onRestart: () => void
@@ -85,9 +90,10 @@ const ACTION_CHIP_ACTIVE: Record<FlashcardSwipeAction, string> = {
 }
 
 /** The flashcard options sheet: which cards to study (filters), general toggles, card
- * orientation, the four-direction swipe map, and a destructive restart. Every option persists
- * back through the host — palace settings for orientation/shuffle/speech, global preferences
- * for the swipe map. The study mode is not here: it switches via the header mode button. */
+ * orientation, the active mode's settings (swipe map on flip, word spaces on Initials), and
+ * a destructive restart. Every option persists back through the host — palace settings for
+ * orientation/shuffle/speech, global preferences for the swipe map and word spaces. The
+ * study mode is not here: it switches via the header mode button. */
 export function StudyOptionsSheet({
   open,
   onClose,
@@ -99,11 +105,13 @@ export function StudyOptionsSheet({
   textToSpeech,
   canSpeak,
   swipeConfig,
+  wordSpaces,
   onScope,
   onDirection,
   onShuffle,
   onTextToSpeech,
   onSwipe,
+  onWordSpaces,
   onEditCard,
   onRestart,
   onFinish,
@@ -137,7 +145,7 @@ export function StudyOptionsSheet({
       }
     >
       <div className="flex flex-col gap-5">
-        <Section title={t('study.cardsToStudy')}>
+        <SheetSection title={t('study.cardsToStudy')}>
           <div className="flex flex-wrap gap-2">
             {filters.map(
               ({ scope: candidate, label, count }) =>
@@ -152,9 +160,9 @@ export function StudyOptionsSheet({
                 ),
             )}
           </div>
-        </Section>
+        </SheetSection>
 
-        <Section title={t('study.general')}>
+        <SheetSection title={t('study.general')}>
           <ToggleRow
             icon={<Shuffle className="size-[18px]" aria-hidden />}
             label={t('study.shuffle')}
@@ -170,9 +178,9 @@ export function StudyOptionsSheet({
             onChange={onTextToSpeech}
             disabled={!canSpeak}
           />
-        </Section>
+        </SheetSection>
 
-        <Section title={t('study.orientation')}>
+        <SheetSection title={t('study.orientation')}>
           <SegmentedControl
             value={direction}
             options={[
@@ -182,10 +190,10 @@ export function StudyOptionsSheet({
             onChange={onDirection}
             aria-label={t('study.orientation')}
           />
-        </Section>
+        </SheetSection>
 
         {mode === 'flip' ? (
-          <Section title={t('study.swipeActionsTitle')}>
+          <SheetSection title={t('study.swipeActionsTitle')}>
             <p className="-mt-1 px-1 text-[length:var(--p-text-label)] leading-snug text-muted-foreground">
               {t('study.swipeActionsHint')}
             </p>
@@ -200,7 +208,19 @@ export function StudyOptionsSheet({
                 />
               ))}
             </div>
-          </Section>
+          </SheetSection>
+        ) : null}
+
+        {mode === 'initials' ? (
+          <SheetSection title={t('study.modeInitials')}>
+            <ToggleRow
+              icon={<WholeWord className="size-[18px]" aria-hidden />}
+              label={t('study.wordSpaces')}
+              description={t('study.wordSpacesHint')}
+              checked={wordSpaces}
+              onChange={onWordSpaces}
+            />
+          </SheetSection>
         ) : null}
 
         {onEditCard ? (
@@ -230,17 +250,6 @@ export function StudyOptionsSheet({
         </button>
       </div>
     </Sheet>
-  )
-}
-
-function Section({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <div className="space-y-2">
-      <p className="px-1 text-[length:var(--p-text-label)] font-bold uppercase tracking-wide text-muted-foreground">
-        {title}
-      </p>
-      {children}
-    </div>
   )
 }
 

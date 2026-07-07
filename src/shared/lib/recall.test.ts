@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   isReferenceMarker,
+  normalizeInitial,
   normalizeWord,
   recallAnswer,
   scramble,
@@ -59,6 +60,15 @@ describe('wordInitial', () => {
 
   it('treats an apostrophe as an intra-word connector too', () => {
     expect(wordInitial('într’un')).toEqual({ lead: '', initial: 'î’u', hidden: 4, trail: '' })
+  })
+})
+
+describe('normalizeInitial', () => {
+  it('matches a plain keyboard letter against a diacritic initial, case-insensitively', () => {
+    expect(normalizeInitial('Ș')).toBe('s')
+    expect(normalizeInitial('s')).toBe('s')
+    expect(normalizeInitial('Î')).toBe('i')
+    expect(normalizeInitial('ă')).toBe('a')
   })
 })
 

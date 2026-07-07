@@ -38,10 +38,11 @@ export type ContentSort = 'manual' | 'recent' | 'name' | 'due' | 'flagged'
 const CONTENT_SORTS: readonly ContentSort[] = ['manual', 'recent', 'name', 'due', 'flagged']
 
 /** How a flashcard's answer is recalled in a study session. `flip` is the classic
- * tap-to-reveal card; the rest test the answer text before you grade. The session's
- * entry point decides the opening mode (Study opens flip, a practice row opens its own
- * mode); the persisted preference records the last in-session switch. */
-export const STUDY_MODES = ['flip', 'type', 'initials', 'blur', 'words'] as const
+ * tap-to-reveal card; the rest test the answer text before you grade, ordered by how
+ * hard they push recall (Blur → Rebuild → Initials → Type). The session's entry point
+ * decides the opening mode (Study opens flip, a practice row opens its own mode); the
+ * persisted preference records the last in-session switch. */
+export const STUDY_MODES = ['flip', 'blur', 'words', 'initials', 'type'] as const
 export type StudyMode = (typeof STUDY_MODES)[number]
 
 /** App appearance: an explicit light/dark choice, or `system` to follow the OS. */

@@ -78,12 +78,12 @@ describe('FlashcardsPanel', () => {
     expect(screen.getByText('Front a')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /show answer/i }))
-    await user.click(screen.getByRole('button', { name: /good/i }))
+    await user.click(await screen.findByRole('button', { name: /good/i }))
     expect(onGrade).toHaveBeenCalledWith('a', 'good')
 
     expect(await screen.findByText('Front b')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: /show answer/i }))
-    await user.click(screen.getByRole('button', { name: /good/i }))
+    await user.click(await screen.findByRole('button', { name: /show answer/i }))
+    await user.click(await screen.findByRole('button', { name: /good/i }))
 
     expect(await screen.findByText(/session complete/i)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /^done$/i }))
@@ -95,21 +95,55 @@ describe('FlashcardsPanel', () => {
     const { onGrade } = renderPanel([studyCard('a'), studyCard('b')], { mode: 'type' })
 
     await user.click(screen.getByRole('button', { name: /show answer/i }))
-    await user.click(screen.getByRole('button', { name: /again/i }))
+    await user.click(await screen.findByRole('button', { name: /again/i }))
     expect(onGrade).toHaveBeenCalledWith('a', 'again')
 
     // 'a' goes to the back, so 'b' leads now; 'a' returns after it.
     expect(await screen.findByText('Front b')).toBeInTheDocument()
   })
 
-  it('shows the remaining-queue counts instead of a reveal button in flip mode', () => {
+  it('swaps the fixed footer from overview + reveal to grades on flip', async () => {
+    const user = userEvent.setup()
     renderPanel([studyCard('a'), studyCard('b')])
 
-    // Tap-to-flip owns the reveal in flip mode; the footer carries the queue overview.
-    expect(screen.queryByRole('button', { name: /show answer/i })).toBeNull()
-    // Both cards are unseen, so the whole queue sits in the "New" bucket of the footer.
+    // Both cards are unseen, so the whole queue sits in the "New" bucket of the footer,
+    // above the one primary action; the grade control is not up yet.
     expect(screen.getByText('2')).toBeInTheDocument()
     expect(screen.getByText(/new/i)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /good/i })).toBeNull()
+
+    await user.click(screen.getByRole('button', { name: /show answer/i }))
+
+    // The overview steps aside and the grade control takes the whole footer slot.
+    expect(await screen.findByRole('button', { name: /good/i })).toBeInTheDocument()
+    expect(screen.queryByText(/new/i)).toBeNull()
+  })
+
+  it('keeps the rebuilt text in place once solved and grades from there', async () => {
+    const user = userEvent.setup()
+    const { onGrade } = renderPanel([studyCard('a')], { mode: 'words' })
+
+    await user.click(screen.getByRole('button', { name: 'Back' }))
+    await user.click(screen.getByRole('button', { name: 'a' }))
+
+    // The reconstructed answer stays on the card — no swap to a separate answer view.
+    expect(await screen.findByText('Rebuilt')).toBeInTheDocument()
+    expect(screen.getByText('Back a')).toBeInTheDocument()
+
+    await user.click(await screen.findByRole('button', { name: /good/i }))
+    expect(onGrade).toHaveBeenCalledWith('a', 'good')
+  })
+
+  it('solves a card from typed initials in Type mode', async () => {
+    const user = userEvent.setup()
+    const { onGrade } = renderPanel([studyCard('a')], { mode: 'type' })
+
+    await user.click(screen.getByRole('button', { name: 'Initials' }))
+    await user.type(screen.getByPlaceholderText(/first letter/i), 'ba')
+
+    // "b" reveals "Back", "a" reveals "a" — the attempt solved itself, grades are up.
+    await user.click(await screen.findByRole('button', { name: /good/i }))
+    expect(onGrade).toHaveBeenCalledWith('a', 'good')
   })
 
   it('reveals then grades a card in a non-flip recall mode', async () => {
@@ -121,7 +155,7 @@ describe('FlashcardsPanel', () => {
     expect(screen.queryByRole('button', { name: /good/i })).toBeNull()
 
     await user.click(screen.getByRole('button', { name: /show answer/i }))
-    await user.click(screen.getByRole('button', { name: /good/i }))
+    await user.click(await screen.findByRole('button', { name: /good/i }))
     expect(onGrade).toHaveBeenCalledWith('a', 'good')
 
     expect(await screen.findByText('Front b')).toBeInTheDocument()

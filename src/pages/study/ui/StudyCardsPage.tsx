@@ -40,7 +40,7 @@ import {
   STUDY_MODE_META,
 } from '@/widgets/study-session'
 import { useSessionReward } from '@/widgets/session-reward'
-import { useViewportHeight } from '@/shared/lib'
+import { useVisualViewport } from '@/shared/lib'
 import { AppScreen, Button, IconButton, ScreenHeader } from '@/shared/ui'
 
 /** Study a single room's cards, or a whole palace's cards aggregated across its rooms. */
@@ -74,8 +74,10 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
   const reward = useSessionReward()
   // The app shell is fixed to the layout viewport, so it doesn't shrink for the keyboard. This
   // surface owns an inline text field (Type mode), so it sizes itself to the *visual* viewport —
-  // the header, deck, and grade controls compress above the keyboard instead of being pushed off.
-  const viewportHeight = useViewportHeight()
+  // the header, deck, and grade controls compress above the keyboard — and follows its pan
+  // offset, so the footer hugs the keyboard instead of floating mid-screen when iOS scrolls
+  // the focused field into view.
+  const viewport = useVisualViewport()
 
   useEffect(() => {
     locusStore.getState().start()
@@ -203,7 +205,11 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
   return (
     <div
       className="relative mx-auto flex h-full w-full max-w-[430px] flex-col overflow-hidden"
-      style={viewportHeight ? { height: `${viewportHeight}px` } : undefined}
+      style={
+        viewport
+          ? { height: `${viewport.height}px`, transform: `translateY(${viewport.offsetTop}px)` }
+          : undefined
+      }
     >
       <div className="px-5 pt-safe">
         <div className="flex items-center justify-between pt-3">

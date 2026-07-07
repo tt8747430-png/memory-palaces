@@ -4,8 +4,11 @@
     <meta charset="UTF-8" />
     <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
     <link href="/apple-touch-icon.png" rel="apple-touch-icon" />
+    <!-- `interactive-widget=resizes-content`: Chrome/Android resizes the layout viewport for
+         the keyboard instead of panning it, so fixed chrome stays put. iOS ignores it; the
+         study screen follows the visual viewport (height + offsetTop) there. -->
     <meta
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content"
       name="viewport"
     />
     <!-- Navy so the launch screen and the Android status bar match the navy safe-area
