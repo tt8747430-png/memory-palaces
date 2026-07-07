@@ -126,22 +126,21 @@ describe('FlashcardsPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Back' }))
     await user.click(screen.getByRole('button', { name: 'a' }))
 
-    // The reconstructed answer stays on the card — no swap to a separate answer view.
-    expect(await screen.findByText('Rebuilt')).toBeInTheDocument()
+    // The reconstructed answer stays on the card — no swap to a separate answer view —
+    // and only the footer flips to the grade control.
     expect(screen.getByText('Back a')).toBeInTheDocument()
-
     await user.click(await screen.findByRole('button', { name: /good/i }))
     expect(onGrade).toHaveBeenCalledWith('a', 'good')
+    expect(screen.queryByText('Back a')).toBeNull()
   })
 
-  it('solves a card from typed initials in Type mode', async () => {
+  it('solves a card by typing the full answer in Type mode', async () => {
     const user = userEvent.setup()
     const { onGrade } = renderPanel([studyCard('a')], { mode: 'type' })
 
-    await user.click(screen.getByRole('button', { name: 'Initials' }))
-    await user.type(screen.getByPlaceholderText(/first letter/i), 'ba')
+    await user.type(screen.getByPlaceholderText(/type the answer/i), 'Back a')
 
-    // "b" reveals "Back", "a" reveals "a" — the attempt solved itself, grades are up.
+    // A word-perfect attempt flips the card; the grade control takes the footer.
     await user.click(await screen.findByRole('button', { name: /good/i }))
     expect(onGrade).toHaveBeenCalledWith('a', 'good')
   })

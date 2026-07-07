@@ -1,7 +1,7 @@
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-import { Eye, EyeOff, Flag, Lightbulb, MapPin, RotateCcw, Sparkles, Volume2 } from 'lucide-react'
+import { Eye, EyeOff, Flag, Lightbulb, MapPin, RotateCcw, Volume2 } from 'lucide-react'
 import type { StudyMode } from '@/entities/preferences'
 import {
   cn,
@@ -14,40 +14,35 @@ import {
   typedRecallStatus,
   wordInitial,
 } from '@/shared/lib'
-import { SegmentedControl } from '@/shared/ui'
 import type { StudyCard, StudyDirection } from '../model/types'
 
 export interface RecallCardProps {
   card: StudyCard
-  /** Which recall mode drives the answer area. `flip` is handled by `StudyCardDeck`, not here. */
+  /** Which recall mode dresses the back face. `flip` is handled by `StudyCardDeck`, not here. */
   mode: Exclude<StudyMode, 'flip'>
   direction: StudyDirection
   /** Mark blanks for each hidden letter in Initials mode. */
   wordSpaces: boolean
-  /** True once the answer is shown — the panel swaps its footer to the grade buttons. */
+  /** True once the card is flipped — the panel swaps its footer to the grade buttons. */
   revealed: boolean
   canSpeak: boolean
   /** The keyboard is up — compress the prompt block so the working area keeps its room. */
   compact: boolean
   /** Type mode's aid: type only each word's first letter instead of the full text. */
   typeInitialsOnly: boolean
-  onTypeInitialsOnly: (value: boolean) => void
-  /** Reveal the answer (idempotent). Fired by the footer button and on a solved attempt. */
+  /** Flip to the back (idempotent). Fired by the footer button, the front face, and a
+   * completed attempt. */
   onReveal: () => void
   onSpeak: (text: string) => void
-  /** Type mode reports its input focus so the panel can free up room for the keyboard. */
+  /** Type mode reports its input focus so the panel can stand its footer down for the keyboard. */
   onInputFocusChange?: (focused: boolean) => void
 }
 
-/** The non-flip study surface: the prompt stays visible while the answer is recalled through
- * one of the recall modes (Blur / Rebuild / Initials / Type). Completing an attempt — or the
- * panel's "Show answer" — reveals the full answer, at which point the panel grades the card
- * through the same SRS control as flip mode. Keyed per card by the panel, so each mode's
- * attempt state resets on the next card.
- *
- * Reveal presentation is per-mode: Initials and Blur reveal in place (the words simply fill
- * in, no layout swap), a solved Rebuild keeps its reconstructed text, and only Type — or an
- * abandoned Rebuild — swaps to the plain answer view. */
+/** The non-flip study surface, shaped like a flip flashcard: the front is the prompt alone
+ * (recite from memory), the back is the answer dressed by the mode — plain text after Type,
+ * blanked words in Blur, first letters in Initials. Rebuild and Type work on the front and
+ * flip on completion; Rebuild keeps its reconstructed text in place instead of swapping.
+ * Keyed per card by the panel, so each mode's attempt state resets on the next card. */
 export function RecallCard({
   card,
   mode,
@@ -57,7 +52,6 @@ export function RecallCard({
   canSpeak,
   compact,
   typeInitialsOnly,
-  onTypeInitialsOnly,
   onReveal,
   onSpeak,
   onInputFocusChange,
@@ -80,7 +74,43 @@ export function RecallCard({
     onReveal()
   }
 
-  const swapToAnswer = revealed && (mode === 'type' || (mode === 'words' && !solved))
+  const face = (): ReactNode => {
+    if (mode === 'type') {
+      return revealed ? (
+        <BackFace key="answer" answer={answer} hint={locus.hint} />
+      ) : (
+        <WorkFace key="type">
+          <TypeMode
+            answer={answer}
+            initialsOnly={typeInitialsOnly}
+            onSolved={solve}
+            onFocusChange={onInputFocusChange}
+          />
+        </WorkFace>
+      )
+    }
+    if (mode === 'words') {
+      // A completed rebuild stays put — only an abandoned one shows the plain answer.
+      return revealed && !solved ? (
+        <BackFace key="answer" answer={answer} hint={locus.hint} />
+      ) : (
+        <WorkFace key="words">
+          <RebuildMode answer={answer} onSolved={solve} />
+        </WorkFace>
+      )
+    }
+    // Blur / Initials ARE the back face; the front is the bare prompt.
+    if (!revealed) return <FrontFace key="front" onReveal={onReveal} />
+    return (
+      <WorkFace key={mode}>
+        {mode === 'blur' ? (
+          <BlurMode answer={answer} hint={locus.hint} />
+        ) : (
+          <InitialsMode answer={answer} wordSpaces={wordSpaces} hint={locus.hint} />
+        )}
+      </WorkFace>
+    )
+  }
 
   return (
     <div className="flex h-full w-full max-w-md flex-col rounded-card-featured bg-card-glass p-5 shadow-elevated">
@@ -138,59 +168,67 @@ export function RecallCard({
       <div className={cn('h-px shrink-0 bg-border', compact ? 'my-2' : 'my-3')} aria-hidden />
 
       <div className="flex min-h-0 flex-1 flex-col">
-        <AnimatePresence mode="wait">
-          {swapToAnswer ? (
-            <motion.div
-              key="revealed"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="flex min-h-0 flex-1 flex-col"
-            >
-              <RevealedAnswer answer={answer} hint={locus.hint} />
-            </motion.div>
-          ) : (
-            <motion.div
-              key={mode}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.2 }}
-              className="flex min-h-0 flex-1 flex-col"
-            >
-              {mode === 'type' ? (
-                <TypeMode
-                  answer={answer}
-                  initialsOnly={typeInitialsOnly}
-                  onInitialsOnly={onTypeInitialsOnly}
-                  onSolved={solve}
-                  onFocusChange={onInputFocusChange}
-                />
-              ) : null}
-              {mode === 'initials' ? (
-                <InitialsMode
-                  answer={answer}
-                  wordSpaces={wordSpaces}
-                  revealed={revealed}
-                  hint={locus.hint}
-                />
-              ) : null}
-              {mode === 'blur' ? (
-                <BlurMode answer={answer} revealed={revealed} hint={locus.hint} />
-              ) : null}
-              {mode === 'words' ? (
-                <RebuildMode answer={answer} hint={locus.hint} onSolved={solve} />
-              ) : null}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <AnimatePresence mode="wait">{face()}</AnimatePresence>
       </div>
     </div>
   )
 }
 
-/** The centered-scroll shell every recall mode shares: content sits centered when it's short and
+/** The animated shell every face shares. */
+function WorkFace({ children }: { children: ReactNode }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ duration: 0.2 }}
+      className="flex min-h-0 flex-1 flex-col"
+    >
+      {children}
+    </motion.div>
+  )
+}
+
+/** The bare front: recite from memory, then flip — the whole area is the flip control. */
+function FrontFace({ onReveal }: { onReveal: () => void }) {
+  const { t } = useTranslation()
+  return (
+    <motion.button
+      type="button"
+      onClick={onReveal}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ duration: 0.2 }}
+      className="flex min-h-0 flex-1 items-center justify-center"
+    >
+      <span className="text-[length:var(--p-text-label)] font-medium text-muted-foreground">
+        {t('study.tapToReveal')}
+      </span>
+    </motion.button>
+  )
+}
+
+function BackFace({ answer, hint }: { answer: string; hint?: string }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      className="flex min-h-0 flex-1 flex-col"
+    >
+      <ModeScroll>
+        <p className="allow-select text-balance break-words text-center text-[clamp(17px,4.6vw,21px)] font-semibold leading-relaxed text-heading">
+          {answer}
+        </p>
+        {hint ? <HintCard hint={hint} /> : null}
+      </ModeScroll>
+    </motion.div>
+  )
+}
+
+/** The centered-scroll shell every mode shares: content sits centered when it's short and
  * scrolls (top-aligned growth) when it's a long verse — the `min-h-full` inner is what keeps a
  * tall block from spilling out of a fixed `flex-1` box and overlapping the prompt above it. */
 function ModeScroll({ children, onClick }: { children: ReactNode; onClick?: () => void }) {
@@ -219,14 +257,21 @@ function HintCard({ hint }: { hint: string }) {
   )
 }
 
-function RevealedAnswer({ answer, hint }: { answer: string; hint?: string }) {
+/** Icon-only reset, tucked into a working surface's corner. */
+function ResetButton({ onClick, className }: { onClick: () => void; className?: string }) {
+  const { t } = useTranslation()
   return (
-    <ModeScroll>
-      <p className="allow-select text-balance break-words text-center text-[clamp(17px,4.6vw,21px)] font-semibold leading-relaxed text-heading">
-        {answer}
-      </p>
-      {hint ? <HintCard hint={hint} /> : null}
-    </ModeScroll>
+    <button
+      type="button"
+      aria-label={t('study.startOver')}
+      onClick={onClick}
+      className={cn(
+        'grid size-8 place-items-center rounded-control text-muted-foreground transition-transform active:scale-90',
+        className,
+      )}
+    >
+      <RotateCcw className="size-4" aria-hidden />
+    </button>
   )
 }
 
@@ -239,63 +284,22 @@ function isAutoToken(token: string): boolean {
 function TypeMode({
   answer,
   initialsOnly,
-  onInitialsOnly,
   onSolved,
   onFocusChange,
 }: {
   answer: string
   initialsOnly: boolean
-  onInitialsOnly: (value: boolean) => void
   onSolved: () => void
   onFocusChange?: (focused: boolean) => void
 }) {
-  const { t } = useTranslation()
-  const [resetKey, setResetKey] = useState(0)
-
   // Blur reports false even when the field is torn down on card change, so the panel's own
   // per-card reset is the backstop.
   useEffect(() => () => onFocusChange?.(false), [onFocusChange])
 
-  return (
-    <div className="flex min-h-0 flex-1 flex-col gap-2.5">
-      <div className="flex shrink-0 items-center justify-between gap-3">
-        <SegmentedControl
-          size="sm"
-          className="max-w-[220px] flex-1"
-          aria-label={t('study.typeAid')}
-          value={initialsOnly ? 'initials' : 'full'}
-          options={[
-            { value: 'full', label: t('study.typeFull') },
-            { value: 'initials', label: t('study.typeInitialsOnly') },
-          ]}
-          onChange={(value) => onInitialsOnly(value === 'initials')}
-        />
-        <button
-          type="button"
-          onClick={() => setResetKey((key) => key + 1)}
-          className="inline-flex min-h-9 items-center gap-1.5 rounded-control px-2 text-[length:var(--p-text-label)] font-semibold text-muted-foreground transition-colors active:text-heading"
-        >
-          <RotateCcw className="size-3.5" aria-hidden />
-          {t('study.startOver')}
-        </button>
-      </div>
-
-      {initialsOnly ? (
-        <TypeInitials
-          key={`initials-${resetKey}`}
-          answer={answer}
-          onSolved={onSolved}
-          onFocusChange={onFocusChange}
-        />
-      ) : (
-        <TypeFull
-          key={`full-${resetKey}`}
-          answer={answer}
-          onSolved={onSolved}
-          onFocusChange={onFocusChange}
-        />
-      )}
-    </div>
+  return initialsOnly ? (
+    <TypeInitials answer={answer} onSolved={onSolved} onFocusChange={onFocusChange} />
+  ) : (
+    <TypeFull answer={answer} onSolved={onSolved} onFocusChange={onFocusChange} />
   )
 }
 
@@ -312,7 +316,6 @@ function TypeFull({
   const [value, setValue] = useState('')
   const expected = useMemo(() => tokenizeWords(answer), [answer])
   const result = typedRecallStatus(answer, value)
-  const pct = result.total > 0 ? Math.round((result.correct / result.total) * 100) : 0
 
   useEffect(() => {
     if (result.complete) onSolved()
@@ -320,7 +323,8 @@ function TypeFull({
   }, [result.complete])
 
   return (
-    <>
+    <div className="flex min-h-0 flex-1 flex-col gap-2.5">
+      {/* 16px type: anything smaller makes iOS zoom the page on focus. */}
       <textarea
         value={value}
         onChange={(event) => setValue(event.target.value)}
@@ -331,21 +335,11 @@ function TypeFull({
         autoCapitalize="none"
         autoCorrect="off"
         spellCheck={false}
-        className="min-h-[72px] w-full flex-1 resize-none rounded-card border border-border bg-card px-4 py-3 text-[length:var(--p-text-body)] leading-relaxed text-foreground placeholder:text-muted-foreground focus-visible:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+        className="min-h-[96px] w-full flex-1 resize-none rounded-card border border-border bg-card px-4 py-3 text-base leading-relaxed text-foreground placeholder:text-muted-foreground focus-visible:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
       />
 
-      <div className="max-h-44 shrink-0 overflow-y-auto scrollbar-hide rounded-card bg-info-surface px-4 py-3">
-        <RecallProgress correct={result.correct} total={result.total} pct={pct} />
-        {result.complete ? (
-          <p className="inline-flex items-center gap-1.5 text-[length:var(--p-text-label)] font-semibold text-[var(--success-foreground)]">
-            <Sparkles className="size-4" aria-hidden />
-            {t('study.wordPerfect')}
-          </p>
-        ) : result.typed.length === 0 ? (
-          <p className="text-[length:var(--p-text-label)] text-muted-foreground">
-            {t('study.typeFeedbackHint')}
-          </p>
-        ) : (
+      {result.typed.length > 0 ? (
+        <div className="relative max-h-44 shrink-0 overflow-y-auto scrollbar-hide rounded-card bg-info-surface py-3 pl-4 pr-11">
           <p className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1.5 text-[length:var(--p-text-body)] font-medium leading-relaxed">
             {result.statuses.map((status, i) => {
               if (status === 'pending') return null
@@ -370,9 +364,10 @@ function TypeFull({
               )
             })}
           </p>
-        )}
-      </div>
-    </>
+          <ResetButton onClick={() => setValue('')} className="absolute right-1.5 top-1.5" />
+        </div>
+      ) : null}
+    </div>
   )
 }
 
@@ -390,6 +385,7 @@ function TypeInitials({
   const { t } = useTranslation()
   const reduce = useReducedMotion()
   const tokens = useMemo(() => tokenizeWords(answer), [answer])
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const advanceAuto = (from: number): number => {
     let index = from
@@ -404,9 +400,7 @@ function TypeInitials({
 
   useEffect(() => () => window.clearTimeout(wrongTimer.current), [])
 
-  const typable = useMemo(() => tokens.filter((token) => !isAutoToken(token)), [tokens])
   const typedCount = tokens.slice(0, accepted).filter((token) => !isAutoToken(token)).length
-  const pct = typable.length > 0 ? Math.round((typedCount / typable.length) * 100) : 100
   const complete = tokens.length > 0 && accepted >= tokens.length
 
   useEffect(() => {
@@ -421,8 +415,8 @@ function TypeInitials({
     wrongTimer.current = window.setTimeout(() => setWrong(null), WRONG_LETTER_MS)
   }
 
-  // The input is kept empty on purpose: each keystroke is judged and consumed, a wrong
-  // letter is rejected with a flash instead of accumulating — so there is nothing to erase.
+  // The input stays empty and invisible: each keystroke is judged and consumed — a correct
+  // letter writes its word into the surface, a wrong one flashes and leaves no trace.
   const handleInput = (raw: string) => {
     let next = accepted
     let rejected: string | null = null
@@ -441,93 +435,79 @@ function TypeInitials({
   }
 
   return (
-    <>
+    // One surface: tap it, type. The real input is visually hidden — no field, no caret,
+    // just words appearing (or the wrong-letter flash).
+    <div
+      onClick={() => inputRef.current?.focus()}
+      className="relative flex min-h-0 flex-1 cursor-text flex-col rounded-card bg-info-surface transition-shadow focus-within:ring-2 focus-within:ring-primary/30"
+    >
       <input
+        ref={inputRef}
         type="text"
         value=""
         onChange={(event) => handleInput(event.target.value)}
         onFocus={() => onFocusChange?.(true)}
         onBlur={() => onFocusChange?.(false)}
-        placeholder={t('study.initialsPlaceholder')}
         aria-label={t('study.initialsPlaceholder')}
         autoCapitalize="none"
         autoCorrect="off"
         autoComplete="off"
         spellCheck={false}
         enterKeyHint="done"
-        className="h-12 w-full shrink-0 rounded-card border border-border bg-card px-4 text-[length:var(--p-text-body)] text-foreground placeholder:text-muted-foreground focus-visible:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+        className="sr-only text-base"
       />
 
-      <div className="relative flex min-h-0 flex-1 flex-col rounded-card bg-info-surface px-4 py-3">
-        <RecallProgress correct={typedCount} total={typable.length} pct={pct} />
-        <div className="min-h-0 flex-1 overflow-y-auto scrollbar-hide">
-          {complete ? (
-            <p className="mb-1.5 inline-flex items-center gap-1.5 text-[length:var(--p-text-label)] font-semibold text-[var(--success-foreground)]">
-              <Sparkles className="size-4" aria-hidden />
-              {t('study.wordPerfect')}
-            </p>
-          ) : typedCount === 0 ? (
-            <p className="mb-1.5 text-[length:var(--p-text-label)] text-muted-foreground">
-              {t('study.initialsFeedbackHint')}
-            </p>
-          ) : null}
-          {accepted > 0 ? (
-            <p className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1.5 text-[length:var(--p-text-body)] font-medium leading-relaxed">
-              {tokens.slice(0, accepted).map((token, i) => (
-                <span
-                  key={i}
-                  className={
-                    isReferenceMarker(token)
-                      ? 'font-bold text-accent'
-                      : 'text-[var(--success-foreground)]'
-                  }
-                >
-                  {token}
-                </span>
-              ))}
-            </p>
-          ) : null}
-        </div>
-
-        {/* The rejected-letter flash: an iOS-key-style bubble over the feedback area. */}
-        <div className="pointer-events-none absolute inset-0 z-20 grid place-items-center">
-          <AnimatePresence>
-            {wrong ? (
-              <motion.div
-                key={wrong.seq}
-                initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.5, y: 12 }}
-                animate={reduce ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, transition: { duration: 0.12 } }}
-                transition={{ type: 'spring', stiffness: 480, damping: 26 }}
-                aria-hidden
-                className="grid h-16 w-14 place-items-center rounded-card bg-[var(--danger)] text-[26px] font-bold text-white shadow-elevated"
+      <div className="min-h-0 flex-1 overflow-y-auto scrollbar-hide px-4 py-3">
+        {typedCount === 0 && accepted === 0 ? (
+          <p className="text-[length:var(--p-text-body)] text-muted-foreground">
+            {t('study.initialsPlaceholder')}
+          </p>
+        ) : null}
+        {accepted > 0 ? (
+          <p className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1.5 text-[length:var(--p-text-body)] font-medium leading-relaxed">
+            {tokens.slice(0, accepted).map((token, i) => (
+              <span
+                key={i}
+                className={
+                  isReferenceMarker(token)
+                    ? 'font-bold text-accent'
+                    : 'text-[var(--success-foreground)]'
+                }
               >
-                {wrong.char}
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
-        </div>
-        <span aria-live="polite" className="sr-only">
-          {wrong ? t('study.wrongLetter', { letter: wrong.char }) : ''}
-        </span>
+                {token}
+              </span>
+            ))}
+          </p>
+        ) : null}
       </div>
-    </>
-  )
-}
 
-/** The shared attempt-progress row: a spring-filled bar plus an n / total tally. */
-function RecallProgress({ correct, total, pct }: { correct: number; total: number; pct: number }) {
-  return (
-    <div className="mb-2 flex shrink-0 items-center gap-3">
-      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-primary/10">
-        <motion.div
-          className="h-full rounded-full bg-primary"
-          animate={{ width: `${pct}%` }}
-          transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+      {typedCount > 0 && !complete ? (
+        <ResetButton
+          onClick={() => setAccepted(advanceAuto(0))}
+          className="absolute right-1.5 top-1.5 z-20"
         />
+      ) : null}
+
+      {/* The rejected-letter flash: an iOS-key-style bubble over the surface. */}
+      <div className="pointer-events-none absolute inset-0 z-20 grid place-items-center">
+        <AnimatePresence>
+          {wrong ? (
+            <motion.div
+              key={wrong.seq}
+              initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.5, y: 12 }}
+              animate={reduce ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, transition: { duration: 0.12 } }}
+              transition={{ type: 'spring', stiffness: 480, damping: 26 }}
+              aria-hidden
+              className="grid h-16 w-14 place-items-center rounded-card bg-[var(--danger)] text-[26px] font-bold text-white shadow-elevated"
+            >
+              {wrong.char}
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       </div>
-      <span className="shrink-0 text-[length:var(--p-text-label)] font-bold tabular-nums text-heading">
-        {correct} / {total}
+      <span aria-live="polite" className="sr-only">
+        {wrong ? t('study.wrongLetter', { letter: wrong.char }) : ''}
       </span>
     </div>
   )
@@ -536,12 +516,10 @@ function RecallProgress({ correct, total, pct }: { correct: number; total: numbe
 function InitialsMode({
   answer,
   wordSpaces,
-  revealed,
   hint,
 }: {
   answer: string
   wordSpaces: boolean
-  revealed: boolean
   hint?: string
 }) {
   const { t } = useTranslation()
@@ -553,23 +531,15 @@ function InitialsMode({
     <ModeScroll onClick={() => setPeek(null)}>
       <p
         className={cn(
-          'flex w-full flex-wrap items-baseline justify-center gap-y-3 text-[clamp(17px,4.6vw,22px)] font-semibold text-heading',
+          // pt-9 leaves headroom for the peek bubble over a first-line word.
+          'flex w-full flex-wrap items-baseline justify-center gap-y-3 pt-9 text-[clamp(17px,4.6vw,22px)] font-semibold text-heading',
           wordSpaces ? 'gap-x-3' : 'gap-x-2',
-          // Headroom for the peek bubble over a first-line word.
-          !revealed && 'pt-9',
         )}
       >
         {tokens.map((token, i) => {
           if (isReferenceMarker(token)) {
             return (
               <span key={i} className="font-bold text-accent">
-                {token}
-              </span>
-            )
-          }
-          if (revealed) {
-            return (
-              <span key={i} className="whitespace-nowrap">
                 {token}
               </span>
             )
@@ -623,32 +593,24 @@ function InitialsMode({
           )
         })}
       </p>
-      {revealed && hint ? <HintCard hint={hint} /> : null}
+      {hint ? <HintCard hint={hint} /> : null}
     </ModeScroll>
   )
 }
 
-/** Fraction of the hideable words each "Hide words" press takes away (of the total, sampled
- * from the still-visible ones) — three presses hide a whole verse. */
+/** Fraction of the hideable words each "Hide" press takes away (of the total, sampled from
+ * the still-visible ones) — three presses hide a whole verse. */
 const BLUR_BATCH = 3
 
-function BlurMode({
-  answer,
-  revealed,
-  hint,
-}: {
-  answer: string
-  revealed: boolean
-  hint?: string
-}) {
+function BlurMode({ answer, hint }: { answer: string; hint?: string }) {
   const { t } = useTranslation()
   const tokens = useMemo(() => tokenizeWords(answer), [answer])
   const hideable = useMemo(
     () => tokens.flatMap((token, i) => (isReferenceMarker(token) ? [] : [i])),
     [tokens],
   )
-  // Everything starts visible; each "Hide words" press blanks another random batch, a tap on
-  // a blank peeks that word back, "Show all" resets. Grading stays with the footer reveal.
+  // The back opens fully visible; each "Hide" blanks another random batch, a tap on a blank
+  // peeks that word back, "Show" restores everything.
   const [hidden, setHidden] = useState<ReadonlySet<number>>(() => new Set<number>())
   const visible = hideable.filter((i) => !hidden.has(i))
 
@@ -677,7 +639,7 @@ function BlurMode({
               </span>
             )
           }
-          if (revealed || !hidden.has(i)) {
+          if (!hidden.has(i)) {
             return (
               <span key={i} className="whitespace-nowrap">
                 {token}
@@ -702,43 +664,28 @@ function BlurMode({
         })}
       </p>
 
-      {!revealed ? (
-        <>
-          <div className="flex items-center justify-center gap-2.5">
-            <button
-              type="button"
-              onClick={hideMore}
-              disabled={visible.length === 0}
-              className={cn(
-                'inline-flex min-h-11 items-center gap-2 rounded-control px-4 text-[length:var(--p-text-sub)] font-semibold transition-transform active:scale-[0.97]',
-                visible.length === 0
-                  ? 'bg-info-surface text-muted-foreground'
-                  : 'bg-primary text-primary-foreground shadow-interactive',
-              )}
-            >
-              <EyeOff className="size-4" aria-hidden />
-              {t('study.hideWords')}
-            </button>
-            {hidden.size > 0 ? (
-              <button
-                type="button"
-                onClick={() => setHidden(new Set())}
-                className="inline-flex min-h-11 items-center gap-2 rounded-control bg-secondary/20 px-4 text-[length:var(--p-text-sub)] font-semibold text-heading transition-transform active:scale-[0.97]"
-              >
-                <Eye className="size-4" aria-hidden />
-                {t('study.showAllWords')}
-              </button>
-            ) : null}
-          </div>
-          {hidden.size > 0 ? (
-            <p className="text-center text-[length:var(--p-text-label)] text-muted-foreground">
-              {t('study.blurHint')}
-            </p>
-          ) : null}
-        </>
-      ) : hint ? (
-        <HintCard hint={hint} />
-      ) : null}
+      <div className="flex items-center justify-center gap-2.5">
+        <button
+          type="button"
+          onClick={hideMore}
+          disabled={visible.length === 0}
+          className="inline-flex min-h-11 items-center gap-2 rounded-control bg-primary px-5 text-[length:var(--p-text-sub)] font-semibold text-primary-foreground shadow-interactive transition-transform active:scale-[0.97] disabled:opacity-40 disabled:shadow-none"
+        >
+          <EyeOff className="size-4" aria-hidden />
+          {t('study.hideWords')}
+        </button>
+        <button
+          type="button"
+          onClick={() => setHidden(new Set())}
+          disabled={hidden.size === 0}
+          className="inline-flex min-h-11 items-center gap-2 rounded-control bg-secondary/20 px-5 text-[length:var(--p-text-sub)] font-semibold text-heading transition-transform active:scale-[0.97] disabled:opacity-40"
+        >
+          <Eye className="size-4" aria-hidden />
+          {t('study.showAllWords')}
+        </button>
+      </div>
+
+      {hint ? <HintCard hint={hint} /> : null}
     </ModeScroll>
   )
 }
@@ -749,15 +696,7 @@ interface WordChip {
   key: string
 }
 
-function RebuildMode({
-  answer,
-  hint,
-  onSolved,
-}: {
-  answer: string
-  hint?: string
-  onSolved: () => void
-}) {
+function RebuildMode({ answer, onSolved }: { answer: string; onSolved: () => void }) {
   const { t } = useTranslation()
   const reduce = useReducedMotion()
   const words = useMemo(() => tokenizeWords(answer), [answer])
@@ -772,6 +711,7 @@ function RebuildMode({
   const placed = usedKeys.size
   const done = words.length > 0 && placed >= words.length
 
+  // Completion flips only the footer to the grades; the surface stays exactly as built.
   useEffect(() => {
     if (done) onSolved()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -800,60 +740,46 @@ function RebuildMode({
         )}
       </p>
 
-      {/* Solved: the reconstructed text stays put — no swap to another surface — and the
-          footer's grade control takes over. */}
-      {done ? (
-        <>
-          <p className="inline-flex items-center justify-center gap-1.5 text-[length:var(--p-text-sub)] font-semibold text-[var(--success-foreground)]">
-            <Sparkles className="size-4" aria-hidden />
-            {t('study.rebuilt')}
-          </p>
-          {hint ? <HintCard hint={hint} /> : null}
-        </>
-      ) : (
-        <>
-          <div className="flex flex-wrap justify-center gap-2">
-            {chips.map((chip) => {
-              const used = usedKeys.has(chip.key)
-              const isWrong = wrongKey === chip.key
-              return (
-                <motion.button
-                  key={chip.key}
-                  type="button"
-                  disabled={used}
-                  onClick={() => !used && tapChip(chip)}
-                  animate={isWrong && !reduce ? { x: [0, -6, 6, -4, 4, 0] } : { x: 0 }}
-                  transition={{ duration: 0.4 }}
-                  className={cn(
-                    'rounded-full px-3.5 py-2 text-[length:var(--p-text-sub)] font-semibold transition-colors',
-                    used
-                      ? 'bg-info-surface text-muted-foreground opacity-40'
-                      : isWrong
-                        ? 'bg-[var(--danger-surface)] text-[var(--danger-on-surface)] ring-2 ring-[var(--danger)]'
-                        : 'bg-secondary/20 text-heading',
-                  )}
-                >
-                  {chip.word}
-                </motion.button>
-              )
-            })}
-          </div>
-
-          {placed > 0 ? (
-            <button
+      <div className="flex flex-wrap justify-center gap-2">
+        {chips.map((chip) => {
+          const used = usedKeys.has(chip.key)
+          const isWrong = wrongKey === chip.key
+          return (
+            <motion.button
+              key={chip.key}
               type="button"
-              onClick={() => {
-                setUsedKeys(new Set())
-                setWrongKey(null)
-              }}
-              className="mx-auto inline-flex min-h-9 items-center gap-1.5 text-[length:var(--p-text-label)] font-semibold text-muted-foreground transition-colors active:text-heading"
+              disabled={used}
+              onClick={() => !used && tapChip(chip)}
+              animate={isWrong && !reduce ? { x: [0, -6, 6, -4, 4, 0] } : { x: 0 }}
+              transition={{ duration: 0.4 }}
+              className={cn(
+                'rounded-full px-3.5 py-2 text-[length:var(--p-text-sub)] font-semibold transition-colors',
+                used
+                  ? 'bg-info-surface text-muted-foreground opacity-40'
+                  : isWrong
+                    ? 'bg-[var(--danger-surface)] text-[var(--danger-on-surface)] ring-2 ring-[var(--danger)]'
+                    : 'bg-secondary/20 text-heading',
+              )}
             >
-              <RotateCcw className="size-3.5" aria-hidden />
-              {t('study.startOver')}
-            </button>
-          ) : null}
-        </>
-      )}
+              {chip.word}
+            </motion.button>
+          )
+        })}
+      </div>
+
+      {placed > 0 && !done ? (
+        <button
+          type="button"
+          onClick={() => {
+            setUsedKeys(new Set())
+            setWrongKey(null)
+          }}
+          className="mx-auto inline-flex min-h-9 items-center gap-1.5 text-[length:var(--p-text-label)] font-semibold text-muted-foreground transition-colors active:text-heading"
+        >
+          <RotateCcw className="size-3.5" aria-hidden />
+          {t('study.startOver')}
+        </button>
+      ) : null}
     </ModeScroll>
   )
 }

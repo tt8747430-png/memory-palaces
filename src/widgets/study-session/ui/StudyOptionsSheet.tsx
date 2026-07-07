@@ -42,12 +42,15 @@ export interface StudyOptionsSheetProps {
   swipeConfig: FlashcardSwipeConfig
   /** Mark blanks for each hidden letter in Initials mode. Global preference. */
   wordSpaces: boolean
+  /** Type mode's aid: type only each word's first letter. Session-scoped. */
+  typeInitialsOnly: boolean
   onScope: (scope: Scope) => void
   onDirection: (direction: StudyDirection) => void
   onShuffle: (value: boolean) => void
   onTextToSpeech: (value: boolean) => void
   onSwipe: (direction: SwipeDirection, action: FlashcardSwipeAction) => void
   onWordSpaces: (value: boolean) => void
+  onTypeInitialsOnly: (value: boolean) => void
   /** Open the in-study editor for the current card; absent when the host can't edit. */
   onEditCard?: () => void
   onRestart: () => void
@@ -106,12 +109,14 @@ export function StudyOptionsSheet({
   canSpeak,
   swipeConfig,
   wordSpaces,
+  typeInitialsOnly,
   onScope,
   onDirection,
   onShuffle,
   onTextToSpeech,
   onSwipe,
   onWordSpaces,
+  onTypeInitialsOnly,
   onEditCard,
   onRestart,
   onFinish,
@@ -219,6 +224,20 @@ export function StudyOptionsSheet({
               description={t('study.wordSpacesHint')}
               checked={wordSpaces}
               onChange={onWordSpaces}
+            />
+          </SheetSection>
+        ) : null}
+
+        {mode === 'type' ? (
+          <SheetSection title={t('study.typeAid')}>
+            <SegmentedControl
+              value={typeInitialsOnly ? 'initials' : 'full'}
+              options={[
+                { value: 'full', label: t('study.typeFull') },
+                { value: 'initials', label: t('study.typeInitialsOnly') },
+              ]}
+              onChange={(value) => onTypeInitialsOnly(value === 'initials')}
+              aria-label={t('study.typeAid')}
             />
           </SheetSection>
         ) : null}

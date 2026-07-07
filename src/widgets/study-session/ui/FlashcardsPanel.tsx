@@ -228,6 +228,8 @@ export function FlashcardsPanel({
       canSpeak={canSpeak}
       swipeConfig={swipeConfig}
       wordSpaces={wordSpaces}
+      typeInitialsOnly={typeInitialsOnly}
+      onTypeInitialsOnly={setTypeInitialsOnly}
       onScope={changeScope}
       onDirection={(direction) => updatePrefs({ direction })}
       onShuffle={(value) => updatePrefs({ shuffle: value })}
@@ -269,7 +271,6 @@ export function FlashcardsPanel({
               canSpeak={canSpeak}
               compact={typing}
               typeInitialsOnly={typeInitialsOnly}
-              onTypeInitialsOnly={setTypeInitialsOnly}
               onReveal={() => dispatch({ type: 'reveal' })}
               onSpeak={(text) => speak(text)}
               onInputFocusChange={setTyping}
@@ -288,9 +289,10 @@ export function FlashcardsPanel({
       {/* The controls bar. Fixed-height by design: before the reveal it stacks the
           remaining-queue overview (the sole progress signal now the top bar is gone) over
           the one primary action; after it, the grade control takes the whole slot. The two
-          states crossfade in place — the bar never grows, shrinks, or jumps, keyboard up
-          or not, so the thumb always lands where it expects. */}
-      {card ? (
+          states crossfade in place — the bar never grows, shrinks, or jumps. While the Type
+          keyboard is up it stands down entirely instead of riding above the keyboard; it
+          returns the moment typing ends. */}
+      {card && !typing ? (
         <div className="shrink-0 border-t border-border/60 bg-card-glass px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3">
           <div className="h-22">
             <AnimatePresence initial={false} mode="wait">
