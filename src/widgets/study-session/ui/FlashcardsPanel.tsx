@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-import { Eye, Sparkles } from 'lucide-react'
+import { Sparkles } from 'lucide-react'
 import type { StudyMode } from '@/entities/preferences'
 import { cn, speak, speechAvailable, srsStatus, success } from '@/shared/lib'
 import { Button, GradeButtons } from '@/shared/ui'
@@ -88,7 +88,6 @@ export function FlashcardsPanel({
   onModeSheetOpenChange,
   now = Date.now(),
 }: FlashcardsPanelProps) {
-  const { t } = useTranslation()
   const canSpeak = speechAvailable()
   const isFlip = mode === 'flip'
 
@@ -113,6 +112,14 @@ export function FlashcardsPanel({
   const [state, dispatch] = useReducer(sessionReducer, undefined, () =>
     initSession({ ids: buildIds({ kind: 'all' }) }),
   )
+
+  // A mode switch resets the card to its front face — e.g. a revealed Blur card must not
+  // land in Rebuild already flipped. Render-phase adjustment, so the old face never paints.
+  const [prevMode, setPrevMode] = useState(mode)
+  if (prevMode !== mode) {
+    setPrevMode(mode)
+    dispatch({ type: 'unflip' })
+  }
 
   const rebuild = (activeScope: Scope) => {
     dispatch({ type: 'reset', state: initSession({ ids: buildIds(activeScope) }) })
@@ -201,8 +208,6 @@ export function FlashcardsPanel({
       ? { graded: state.graded, learning: state.piles.learning, known: state.piles.known }
       : { graded: 0, learning: 0, known: 0 }
 
-  const revealAnswer = () => dispatch({ type: 'reveal' })
-
   // How many new / learning / known cards are still ahead in this session (the head of the
   // queue is the active card) — the footer's at-a-glance overview before a reveal.
   const remaining = useMemo(() => {
@@ -227,15 +232,11 @@ export function FlashcardsPanel({
       textToSpeech={prefs.textToSpeech}
       canSpeak={canSpeak}
       swipeConfig={swipeConfig}
-      wordSpaces={wordSpaces}
-      typeInitialsOnly={typeInitialsOnly}
-      onTypeInitialsOnly={setTypeInitialsOnly}
       onScope={changeScope}
       onDirection={(direction) => updatePrefs({ direction })}
       onShuffle={(value) => updatePrefs({ shuffle: value })}
       onTextToSpeech={(value) => updatePrefs({ textToSpeech: value })}
       onSwipe={(dir, action) => onSwipeConfigChange?.({ ...swipeConfig, [dir]: action })}
-      onWordSpaces={(value) => onWordSpacesChange?.(value)}
       onRestart={() => rebuild(scope)}
       onFinish={() => dispatch({ type: 'finish' })}
       onEditCard={canEdit && onEditCard && card ? () => setEditing(true) : undefined}
@@ -269,10 +270,12 @@ export function FlashcardsPanel({
               wordSpaces={wordSpaces}
               revealed={flipped}
               canSpeak={canSpeak}
-              compact={typing}
               typeInitialsOnly={typeInitialsOnly}
+              onFlip={() => dispatch({ type: 'flip' })}
               onReveal={() => dispatch({ type: 'reveal' })}
               onSpeak={(text) => speak(text)}
+              onWordSpaces={(value) => onWordSpacesChange?.(value)}
+              onTypeInitialsOnly={setTypeInitialsOnly}
               onInputFocusChange={setTyping}
             />
           )
@@ -319,13 +322,9 @@ export function FlashcardsPanel({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.12 }}
-                  className="flex h-full flex-col justify-between"
+                  className="flex h-full items-center justify-center"
                 >
                   <RemainingCounts remaining={remaining} current={srsStatus(card.locus.srs)} />
-                  <Button size="lg" className="w-full" onClick={revealAnswer}>
-                    <Eye className="size-5" aria-hidden />
-                    {t('study.showAnswer')}
-                  </Button>
                 </motion.div>
               )}
             </AnimatePresence>

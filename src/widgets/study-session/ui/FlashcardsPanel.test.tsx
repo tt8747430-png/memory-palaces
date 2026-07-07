@@ -75,13 +75,14 @@ describe('FlashcardsPanel', () => {
       mode: 'type',
     })
 
-    expect(screen.getByText('Front a')).toBeInTheDocument()
+    // The prompt leads the front face (it also captions the back, so query the heading).
+    expect(screen.getByRole('heading', { name: 'Front a' })).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /show answer/i }))
     await user.click(await screen.findByRole('button', { name: /good/i }))
     expect(onGrade).toHaveBeenCalledWith('a', 'good')
 
-    expect(await screen.findByText('Front b')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Front b' })).toBeInTheDocument()
     await user.click(await screen.findByRole('button', { name: /show answer/i }))
     await user.click(await screen.findByRole('button', { name: /good/i }))
 
@@ -99,24 +100,29 @@ describe('FlashcardsPanel', () => {
     expect(onGrade).toHaveBeenCalledWith('a', 'again')
 
     // 'a' goes to the back, so 'b' leads now; 'a' returns after it.
-    expect(await screen.findByText('Front b')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Front b' })).toBeInTheDocument()
   })
 
-  it('swaps the fixed footer from overview + reveal to grades on flip', async () => {
+  it('swaps the fixed footer from overview to grades when the card turns', async () => {
     const user = userEvent.setup()
-    renderPanel([studyCard('a'), studyCard('b')])
+    renderPanel([studyCard('a'), studyCard('b')], { mode: 'blur' })
 
-    // Both cards are unseen, so the whole queue sits in the "New" bucket of the footer,
-    // above the one primary action; the grade control is not up yet.
+    // Both cards are unseen, so the whole queue sits in the "New" bucket of the footer —
+    // the overview alone; there is no reveal button in the footer anymore.
     expect(screen.getByText('2')).toBeInTheDocument()
     expect(screen.getByText(/new/i)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /good/i })).toBeNull()
 
+    // The card itself is the flip control.
     await user.click(screen.getByRole('button', { name: /show answer/i }))
 
     // The overview steps aside and the grade control takes the whole footer slot.
     expect(await screen.findByRole('button', { name: /good/i })).toBeInTheDocument()
     expect(screen.queryByText(/new/i)).toBeNull()
+
+    // The card turns both ways: back to the front, back to the overview.
+    await user.click(screen.getByRole('button', { name: /show front/i }))
+    expect(await screen.findByText(/new/i)).toBeInTheDocument()
   })
 
   it('keeps the rebuilt text in place once solved and grades from there', async () => {
@@ -128,10 +134,10 @@ describe('FlashcardsPanel', () => {
 
     // The reconstructed answer stays on the card — no swap to a separate answer view —
     // and only the footer flips to the grade control.
-    expect(screen.getByText('Back a')).toBeInTheDocument()
+    expect(screen.getAllByText('Back a').length).toBeGreaterThan(0)
     await user.click(await screen.findByRole('button', { name: /good/i }))
     expect(onGrade).toHaveBeenCalledWith('a', 'good')
-    expect(screen.queryByText('Back a')).toBeNull()
+    expect(screen.queryAllByText('Back a')).toHaveLength(0)
   })
 
   it('solves a card by typing the full answer in Type mode', async () => {
@@ -150,14 +156,14 @@ describe('FlashcardsPanel', () => {
     const { onGrade } = renderPanel([studyCard('a'), studyCard('b')], { mode: 'type' })
 
     // The prompt is visible; the grade control only appears once the answer is revealed.
-    expect(screen.getByText('Front a')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Front a' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /good/i })).toBeNull()
 
     await user.click(screen.getByRole('button', { name: /show answer/i }))
     await user.click(await screen.findByRole('button', { name: /good/i }))
     expect(onGrade).toHaveBeenCalledWith('a', 'good')
 
-    expect(await screen.findByText('Front b')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Front b' })).toBeInTheDocument()
   })
 
   it('switches the study mode through the mode sheet', async () => {

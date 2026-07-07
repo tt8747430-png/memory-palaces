@@ -10,7 +10,6 @@ import {
   RotateCcw,
   Shuffle,
   Volume2,
-  WholeWord,
 } from 'lucide-react'
 import type { StudyMode } from '@/entities/preferences'
 import { cn } from '@/shared/lib'
@@ -33,24 +32,18 @@ export interface StudyOptionsSheetProps {
   scope: Scope
   scopeCounts: ScopeCounts
   /** The active study mode — switched via the header mode button, not here; the sheet only
-   * conditions its per-mode sections (swipe map on flip, word spaces on Initials) on it. */
+   * conditions the flip-only swipe map on it. Recall-mode settings live in the card's gear. */
   mode: StudyMode
   direction: StudyDirection
   shuffle: boolean
   textToSpeech: boolean
   canSpeak: boolean
   swipeConfig: FlashcardSwipeConfig
-  /** Mark blanks for each hidden letter in Initials mode. Global preference. */
-  wordSpaces: boolean
-  /** Type mode's aid: type only each word's first letter. Session-scoped. */
-  typeInitialsOnly: boolean
   onScope: (scope: Scope) => void
   onDirection: (direction: StudyDirection) => void
   onShuffle: (value: boolean) => void
   onTextToSpeech: (value: boolean) => void
   onSwipe: (direction: SwipeDirection, action: FlashcardSwipeAction) => void
-  onWordSpaces: (value: boolean) => void
-  onTypeInitialsOnly: (value: boolean) => void
   /** Open the in-study editor for the current card; absent when the host can't edit. */
   onEditCard?: () => void
   onRestart: () => void
@@ -108,15 +101,11 @@ export function StudyOptionsSheet({
   textToSpeech,
   canSpeak,
   swipeConfig,
-  wordSpaces,
-  typeInitialsOnly,
   onScope,
   onDirection,
   onShuffle,
   onTextToSpeech,
   onSwipe,
-  onWordSpaces,
-  onTypeInitialsOnly,
   onEditCard,
   onRestart,
   onFinish,
@@ -213,32 +202,6 @@ export function StudyOptionsSheet({
                 />
               ))}
             </div>
-          </SheetSection>
-        ) : null}
-
-        {mode === 'initials' ? (
-          <SheetSection title={t('study.modeInitials')}>
-            <ToggleRow
-              icon={<WholeWord className="size-[18px]" aria-hidden />}
-              label={t('study.wordSpaces')}
-              description={t('study.wordSpacesHint')}
-              checked={wordSpaces}
-              onChange={onWordSpaces}
-            />
-          </SheetSection>
-        ) : null}
-
-        {mode === 'type' ? (
-          <SheetSection title={t('study.typeAid')}>
-            <SegmentedControl
-              value={typeInitialsOnly ? 'initials' : 'full'}
-              options={[
-                { value: 'full', label: t('study.typeFull') },
-                { value: 'initials', label: t('study.typeInitialsOnly') },
-              ]}
-              onChange={(value) => onTypeInitialsOnly(value === 'initials')}
-              aria-label={t('study.typeAid')}
-            />
           </SheetSection>
         ) : null}
 

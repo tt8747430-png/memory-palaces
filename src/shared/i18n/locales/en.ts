@@ -1070,6 +1070,8 @@ export const en = {
     wrongLetter: 'Not “{{letter}}”',
     revealWord: 'Reveal “{{word}}”',
     tapToReveal: 'Tap to reveal',
+    showFront: 'Show front',
+    modeSettings: 'Mode settings',
     hideWords: 'Hide',
     showAllWords: 'Show',
     rebuildHint: 'Tap the words in order.',

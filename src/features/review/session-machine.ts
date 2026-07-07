@@ -34,6 +34,7 @@ export type SessionState = ReviewState | CompleteState
 export type SessionAction =
   | { type: 'flip' }
   | { type: 'reveal' }
+  | { type: 'unflip' }
   | { type: 'grade'; grade: Grade }
   | { type: 'skip' }
   | { type: 'finish' }
@@ -67,11 +68,17 @@ export function sessionReducer(state: SessionState, action: SessionAction): Sess
       return { ...state, flipped: !state.flipped }
     }
 
-    // One-way reveal for the non-flip recall modes: showing the answer never toggles
-    // it back, so a solve and a manual "show answer" can't race into a hidden state.
+    // One-way reveal for a solved recall attempt: showing the answer never toggles
+    // it back, so a solve and a manual flip can't race into a hidden state.
     case 'reveal': {
       if (state.status === 'complete' || state.flipped) return state
       return { ...state, flipped: true }
+    }
+
+    // Back to the front face, idempotent — a mode switch resets the card to its start.
+    case 'unflip': {
+      if (state.status === 'complete' || !state.flipped) return state
+      return { ...state, flipped: false }
     }
 
     case 'grade': {

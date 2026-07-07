@@ -56,6 +56,21 @@ describe('reveal', () => {
   })
 })
 
+describe('unflip', () => {
+  it('returns a flipped card to the front', () => {
+    const flipped = sessionReducer(review(['a']), { type: 'flip' })
+    const front = sessionReducer(flipped, { type: 'unflip' })
+    expect(front.status === 'review' && front.flipped).toBe(false)
+  })
+
+  it('is a no-op on an unflipped card and once complete', () => {
+    const state = review(['a'])
+    expect(sessionReducer(state, { type: 'unflip' })).toBe(state)
+    const done: SessionState = { status: 'complete', graded: 1, piles: { learning: 0, known: 1 } }
+    expect(sessionReducer(done, { type: 'unflip' })).toBe(done)
+  })
+})
+
 describe('grade', () => {
   it('good dequeues the card, advances, counts it known, resets the flip', () => {
     const next = sessionReducer(
