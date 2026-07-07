@@ -17,6 +17,7 @@ export type SettingsRowProps = BaseProps &
   (
     | { kind: 'toggle'; checked: boolean; onCheckedChange: (value: boolean) => void }
     | { kind: 'nav'; onClick: () => void; value?: string; disabled?: boolean }
+    | { kind: 'action'; onClick: () => void; disabled?: boolean }
     | { kind: 'value'; value: string }
     | { kind: 'soon'; badge: string }
   )
@@ -63,8 +64,9 @@ const trailingValue = (value: string) => (
 )
 
 /** One row in a grouped settings list: a tinted icon, a label (+optional description),
- * and a trailing control chosen by `kind` — a toggle, a navigation chevron, a static
- * value, or a "coming soon" badge (inert/disabled). */
+ * and a trailing control chosen by `kind` — a toggle, a navigation chevron, a chevron-less
+ * action (fires in place instead of navigating), a static value, or a "coming soon" badge
+ * (inert/disabled). */
 export function SettingsRow(props: SettingsRowProps) {
   const { icon, label, description, tone } = props
   const body = <RowBody icon={icon} label={label} description={description} tone={tone} />
@@ -104,6 +106,24 @@ export function SettingsRow(props: SettingsRowProps) {
           className="size-5 shrink-0 text-muted-foreground transition-transform duration-200 ease-out group-active:translate-x-0.5"
           aria-hidden
         />
+      </button>
+    )
+  }
+
+  if (props.kind === 'action') {
+    return (
+      <button
+        type="button"
+        aria-label={label}
+        onClick={props.onClick}
+        disabled={props.disabled}
+        className={cn(
+          ROW,
+          'group active:bg-primary/[0.04]',
+          'disabled:pointer-events-none disabled:opacity-45',
+        )}
+      >
+        {body}
       </button>
     )
   }

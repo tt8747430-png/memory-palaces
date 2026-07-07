@@ -86,8 +86,11 @@ describe('RoomHubPage', () => {
   it('teaches the empty room instead of showing a blank deck', async () => {
     renderHub()
     await screen.findByRole('heading', { name: 'Garden Room' })
-    // The study overview/carousel hide for an empty room; the editor's empty state guides.
+    // The study overview and practice rows hide for an empty room; the editor's empty
+    // state guides, with the primary action in place.
     expect(screen.getByText(/no cards yet/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /add card/i })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /study cards/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^match/i })).not.toBeInTheDocument()
   })
 })

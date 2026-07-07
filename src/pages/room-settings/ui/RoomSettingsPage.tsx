@@ -106,6 +106,7 @@ function RoomSettingsForm({ room, onExit }: { room: Room; onExit?: (palaceId: st
   const hasLoci = lociForRoom(loci, room.id).length > 0
 
   const [editorOpen, setEditorOpen] = useState(false)
+  const [knownOpen, setKnownOpen] = useState(false)
   const [resetOpen, setResetOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
 
@@ -135,10 +136,10 @@ function RoomSettingsForm({ room, onExit }: { room: Room; onExit?: (palaceId: st
         <Pencil className="size-5 shrink-0 text-muted-foreground" aria-hidden />
       </button>
 
-      {/* Manage */}
+      {/* Manage — action rows, not nav: each fires in place (or opens its confirm). */}
       <SettingsSection title={t('roomSettings.manage')}>
         <SettingsRow
-          kind="nav"
+          kind="action"
           icon={<Copy />}
           label={t('roomSettings.duplicate')}
           description={t('roomSettings.duplicateHint')}
@@ -148,18 +149,15 @@ function RoomSettingsForm({ room, onExit }: { room: Room; onExit?: (palaceId: st
           }}
         />
         <SettingsRow
-          kind="nav"
+          kind="action"
           icon={<GraduationCap />}
           label={t('roomSettings.markKnown')}
           description={t('roomSettings.markKnownHint')}
           disabled={!hasLoci}
-          onClick={() => {
-            void markRoomKnown(locusStore, room.id)
-            toast.success(t('roomSettings.toast.markedKnown'))
-          }}
+          onClick={() => setKnownOpen(true)}
         />
         <SettingsRow
-          kind="nav"
+          kind="action"
           icon={<RotateCcw />}
           label={t('roomSettings.resetProgress')}
           description={t('roomSettings.resetProgressHint')}
@@ -171,7 +169,7 @@ function RoomSettingsForm({ room, onExit }: { room: Room; onExit?: (palaceId: st
       {/* Delete */}
       <SettingsSection>
         <SettingsRow
-          kind="nav"
+          kind="action"
           tone="danger"
           icon={<Trash2 />}
           label={t('roomSettings.delete')}
@@ -185,6 +183,22 @@ function RoomSettingsForm({ room, onExit }: { room: Room; onExit?: (palaceId: st
         target={editorOpen ? { mode: 'edit', room } : null}
         onOpenChange={(open) => !open && setEditorOpen(false)}
         onSaved={() => toast.success(t('roomSettings.toast.saved'))}
+      />
+
+      {/* Marking every card known rewrites each schedule irreversibly — same confirm
+          treatment as reset, which is the same class of mutation. */}
+      <ConfirmDialog
+        open={knownOpen}
+        onOpenChange={setKnownOpen}
+        icon={<GraduationCap className="size-6" aria-hidden />}
+        title={t('roomSettings.markKnownConfirm.title')}
+        description={t('roomSettings.markKnownConfirm.body')}
+        confirmLabel={t('roomSettings.markKnownConfirm.confirm')}
+        cancelLabel={t('common.cancel')}
+        onConfirm={() => {
+          void markRoomKnown(locusStore, room.id)
+          toast.success(t('roomSettings.toast.markedKnown'))
+        }}
       />
 
       <ConfirmDialog

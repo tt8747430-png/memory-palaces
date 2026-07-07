@@ -38,7 +38,7 @@ import {
   exportRoomJson,
   readContentFile,
 } from '@/features/content'
-import { cn, ContentImportError } from '@/shared/lib'
+import { ContentImportError, type RoomContentData } from '@/shared/lib'
 import {
   AppScreen,
   Button,
@@ -50,7 +50,13 @@ import {
   type SortControlOption,
   SpeedDial,
 } from '@/shared/ui'
-import { QuestionRow, ReorderableList, type RowDragHandle } from '@/widgets/loci-editor'
+import {
+  BulkButton,
+  QuestionRow,
+  ReorderableList,
+  type RowDragHandle,
+  SelectModeBar,
+} from '@/widgets/loci-editor'
 
 export interface RoomQuestionsPageProps {
   roomId: string
@@ -106,6 +112,9 @@ export function RoomQuestionsPage({
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
+  // Parsed but not yet applied — a picked file waits behind a count-confirm, mirroring the
+  // review step card imports get, so a wrong file never writes straight into the room.
+  const [pendingImport, setPendingImport] = useState<RoomContentData['questions'] | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -190,26 +199,33 @@ export function RoomQuestionsPage({
     input.click()
   }
 
+  // Questions only — any cards in the file are dropped (they import from the Cards page).
+  // Parsing never writes; the count-confirm below does.
   const onFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
     try {
       const data = await readContentFile(file)
-      // Questions only — any cards in the file are dropped (they import from the Cards page).
-      const applied = await applyRoomContent(locusStore, questionStore, roomId, {
-        loci: [],
-        questions: data.questions,
-      })
-      if (applied.questions === 0) {
+      if (data.questions.length === 0) {
         toast.error(t('questions.transfer.noneFound'))
         return
       }
-      toast.success(t('questions.transfer.imported', { count: applied.questions }))
+      setPendingImport(data.questions)
     } catch (error) {
       toast.error(
         error instanceof ContentImportError ? error.message : t('questions.transfer.importFailed'),
       )
     }
+  }
+
+  const confirmImport = async () => {
+    if (!pendingImport) return
+    const applied = await applyRoomContent(locusStore, questionStore, roomId, {
+      loci: [],
+      questions: pendingImport,
+    })
+    setPendingImport(null)
+    toast.success(t('questions.transfer.imported', { count: applied.questions }))
   }
 
   const closeExport = (run: () => void) => {
@@ -233,19 +249,13 @@ export function RoomQuestionsPage({
   const selectionBar = (
     <div className="px-4 pb-[calc(max(0.75rem,env(safe-area-inset-bottom)))] pt-2">
       <div className="flex items-center gap-2 rounded-card-featured bg-card/95 p-2.5 shadow-elevated backdrop-blur-xl">
-        <button
-          type="button"
+        <BulkButton
           disabled={selectedCount === 0}
+          tone="danger"
+          icon={<Trash2 className="size-[17px]" aria-hidden />}
+          label={t('common.delete')}
           onClick={() => setBulkDeleteOpen(true)}
-          className={cn(
-            'flex h-11 flex-1 items-center justify-center gap-1.5 rounded-control text-(length:--p-text-label) font-semibold',
-            'bg-[var(--danger-surface)] text-[var(--danger-on-surface)]',
-            'transition-transform active:scale-[0.97] disabled:opacity-40',
-          )}
-        >
-          <Trash2 className="size-[17px]" aria-hidden />
-          {t('common.delete')}
-        </button>
+        />
       </div>
     </div>
   )
@@ -314,29 +324,16 @@ export function RoomQuestionsPage({
           ) : null}
 
           {selectMode ? (
-            <div className="flex items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={toggleSelectAll}
-                className="text-(length:--p-text-label) font-semibold text-heading"
-              >
-                {allSelected ? t('loci.select.clearAll') : t('loci.select.selectAll')}
-              </button>
-              <span className="text-(length:--p-text-label) font-semibold text-muted-foreground">
-                {t('loci.select.count', { count: selectedCount })}
-              </span>
-              <button
-                type="button"
-                onClick={exitSelect}
-                className="text-(length:--p-text-label) font-semibold text-accent"
-              >
-                {t('loci.select.done')}
-              </button>
-            </div>
+            <SelectModeBar
+              allSelected={allSelected}
+              count={selectedCount}
+              onToggleAll={toggleSelectAll}
+              onDone={exitSelect}
+            />
           ) : null}
 
           {questions.length === 0 ? (
-            <EmptyQuestions />
+            <EmptyQuestions onAdd={onAddQuestion} />
           ) : (
             <ReorderableList
               items={sortedQuestions}
@@ -372,6 +369,23 @@ export function RoomQuestionsPage({
         confirmLabel={t('common.delete')}
         cancelLabel={t('common.cancel')}
         onConfirm={confirmBulkDelete}
+      />
+
+      {/* A picked file is parsed, then held here until the count is confirmed. */}
+      <ConfirmDialog
+        open={pendingImport !== null}
+        onOpenChange={(open) => !open && setPendingImport(null)}
+        icon={<Upload className="size-6" aria-hidden />}
+        title={t(
+          pendingImport?.length === 1
+            ? 'questions.transfer.importConfirmTitleOne'
+            : 'questions.transfer.importConfirmTitleOther',
+          { count: pendingImport?.length ?? 0 },
+        )}
+        description={t('questions.transfer.importConfirmBody')}
+        confirmLabel={t('questions.transfer.importConfirm')}
+        cancelLabel={t('common.cancel')}
+        onConfirm={() => void confirmImport()}
       />
 
       <input
@@ -476,7 +490,7 @@ function sortQuestions(questions: Question[], sort: QuestionSort): Question[] {
   }
 }
 
-function EmptyQuestions() {
+function EmptyQuestions({ onAdd }: { onAdd: () => void }) {
   const { t } = useTranslation()
   return (
     <div className="flex flex-col items-center px-6 py-10 text-center">
@@ -489,6 +503,10 @@ function EmptyQuestions() {
       <p className="max-w-[34ch] text-pretty text-(length:--p-text-body) text-muted-foreground">
         {t('questions.emptyHint')}
       </p>
+      <Button className="mt-5" onClick={onAdd}>
+        <Plus className="size-[18px]" aria-hidden />
+        {t('questions.addQuestion')}
+      </Button>
     </div>
   )
 }

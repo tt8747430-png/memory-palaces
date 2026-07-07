@@ -205,7 +205,9 @@ export function RoomHubPage({
           />
         ) : null}
 
-        {!searchOpen ? (
+        {/* An empty room leads with the editor's empty state and its Add action; practice
+            rows would only stack disabled tiles above the one thing worth doing. */}
+        {!searchOpen && (hasLoci || questions.length > 0) ? (
           <PracticeModes
             cardCount={loci.length}
             questionCount={questions.length}
@@ -276,7 +278,7 @@ function RoomSearchHeader({
         <button
           type="button"
           onClick={onClose}
-          className="shrink-0 px-1 text-[length:var(--p-text-body)] font-semibold text-accent"
+          className="inline-flex min-h-11 shrink-0 items-center rounded-control px-2 text-[length:var(--p-text-body)] font-semibold text-accent"
         >
           {cancelLabel}
         </button>

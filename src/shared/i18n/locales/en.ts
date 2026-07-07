@@ -685,9 +685,9 @@ export const en = {
   roomHub: {
     back: 'Back',
     notFound: 'That room could not be found.',
-    manageHeading: 'Cards & questions',
+    manageHeading: 'Cards in this room',
     settings: 'Room settings',
-    searchLabel: 'Search this room',
+    searchLabel: 'Search cards',
     searchPlaceholder: 'Search cards…',
     selectLabel: 'Select items',
     cardCountOne: '{{count}} card',
@@ -734,6 +734,11 @@ export const en = {
     resetProgressHint: 'Send every card back to new',
     delete: 'Delete room',
     deleteHint: 'Remove this room and its cards and questions',
+    markKnownConfirm: {
+      title: 'Mark every card as known?',
+      body: 'Each card is rescheduled as mastered — the current schedules can’t be restored.',
+      confirm: 'Mark known',
+    },
     resetConfirm: {
       title: 'Reset room progress?',
       body: 'Every card goes back to new — your cards and questions stay, only the schedule clears.',
@@ -808,10 +813,8 @@ export const en = {
       flagged: 'Flagged first',
     },
     emptyTitle: 'No cards yet',
-    emptyBody:
-      'Each card is a spot in this room. Add what to recall, what it means, and a vivid image to picture there.',
     emptyHint:
-      'Each card is a spot in this room. Tap the ＋ to add what to recall, what it means, and a vivid image.',
+      'Each card is a spot in this room: what to recall, what it means, and a vivid image to picture there.',
     select: {
       selectAll: 'Select all',
       clearAll: 'Clear all',
@@ -951,9 +954,7 @@ export const en = {
   },
   questions: {
     emptyTitle: 'No questions yet',
-    emptyBody: 'Write multiple-choice questions to test recall. These power this room’s Test.',
-    emptyHint:
-      'Multiple-choice questions power this room’s Test. Tap the ＋ to write your first one.',
+    emptyHint: 'Multiple-choice questions power this room’s Test.',
     addQuestion: 'Add question',
     quickActions: 'Quick actions',
     transfer: {
@@ -970,6 +971,10 @@ export const en = {
       exportCsv: 'Questions spreadsheet',
       exportCsvSub: 'Prompt, options & answer as .csv',
       imported: 'Imported {{count}} questions',
+      importConfirmTitleOne: 'Import {{count}} question?',
+      importConfirmTitleOther: 'Import {{count}} questions?',
+      importConfirmBody: 'They’ll be added to this room’s questions.',
+      importConfirm: 'Import',
       noneFound: 'No questions found in that file.',
       importFailed: 'That file couldn’t be imported.',
       exported: 'Exported',

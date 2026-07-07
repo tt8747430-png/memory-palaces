@@ -1,4 +1,4 @@
-import { type ChangeEvent, type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
+import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import {
@@ -62,6 +62,7 @@ import { useImportDraft } from '../model/import-draft'
 import { CardBrowser } from './CardBrowser'
 import { CardRow, type RowDragHandle } from './ContentRows'
 import { ReorderableList } from './ReorderableList'
+import { BulkButton, SelectModeBar } from './SelectModeBar'
 
 export interface RoomContentEditorProps {
   roomId: string
@@ -379,31 +380,20 @@ export function RoomContentEditor({
       {/* Select mode is entered by a long-press on a row; this bar appears only while selecting
           (the rows carry their own checkboxes, and a grip-drag reorders). */}
       {selectMode ? (
-        <div className="flex items-center justify-between gap-3 pb-2">
-          <button
-            type="button"
-            onClick={toggleSelectAll}
-            className="text-(length:--p-text-label) font-semibold text-heading"
-          >
-            {allVisibleSelected ? t('loci.select.clearAll') : t('loci.select.selectAll')}
-          </button>
-          <span className="text-(length:--p-text-label) font-semibold text-muted-foreground">
-            {t('loci.select.count', { count: selectedCount })}
-          </span>
-          <button
-            type="button"
-            onClick={exitSelect}
-            className="text-(length:--p-text-label) font-semibold text-accent"
-          >
-            {t('loci.select.done')}
-          </button>
+        <div className="pb-2">
+          <SelectModeBar
+            allSelected={allVisibleSelected}
+            count={selectedCount}
+            onToggleAll={toggleSelectAll}
+            onDone={exitSelect}
+          />
         </div>
       ) : null}
 
       {/* Cards list */}
       <div className="flex flex-col gap-3">
         {total === 0 ? (
-          <EmptyCards />
+          <EmptyCards onAdd={onAddCard} />
         ) : visibleLoci.length === 0 ? (
           needle ? (
             <NoResults onClear={() => onClearSearch?.()} />
@@ -739,7 +729,7 @@ function sortLoci(loci: Locus[], sort: ContentSort): Locus[] {
   }
 }
 
-function EmptyCards() {
+function EmptyCards({ onAdd }: { onAdd: () => void }) {
   const { t } = useTranslation()
   return (
     <div className="flex flex-col items-center px-6 py-10 text-center">
@@ -752,6 +742,10 @@ function EmptyCards() {
       <p className="max-w-[34ch] text-pretty text-(length:--p-text-body) text-muted-foreground">
         {t('loci.emptyHint')}
       </p>
+      <Button className="mt-5" onClick={onAdd}>
+        <Plus className="size-[18px]" aria-hidden />
+        {t('loci.addCard')}
+      </Button>
     </div>
   )
 }
@@ -821,34 +815,3 @@ function FilterEmpty({ onClear }: { onClear: () => void }) {
   )
 }
 
-function BulkButton({
-  icon,
-  label,
-  onClick,
-  disabled,
-  tone = 'default',
-}: {
-  icon: ReactNode
-  label: string
-  onClick: () => void
-  disabled?: boolean
-  tone?: 'default' | 'danger'
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={cn(
-        'flex h-11 flex-1 items-center justify-center gap-1.5 rounded-control text-(length:--p-text-label) font-semibold',
-        'transition-transform active:scale-[0.97] disabled:opacity-40',
-        tone === 'danger'
-          ? 'bg-[var(--danger-surface)] text-[var(--danger-on-surface)]'
-          : 'bg-info-surface text-heading',
-      )}
-    >
-      {icon}
-      {label}
-    </button>
-  )
-}
