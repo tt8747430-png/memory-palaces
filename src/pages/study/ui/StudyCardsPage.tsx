@@ -24,14 +24,16 @@ import {
 } from '@/entities/palace'
 import {
   type FlashcardSwipeConfig,
+  resolveStudyMode,
   selectEffectivePreferences,
+  selectIsReady as selectPrefsReady,
   type StudyMode,
   usePreferencesStore,
   usePreferencesStoreApi,
 } from '@/entities/preferences'
 import { editLocus } from '@/features/locus'
 import { editPalace } from '@/features/palace'
-import { gradeCard } from '@/features/review'
+import { gradeCard, restoreSchedule } from '@/features/review'
 import { setPreferences } from '@/features/preferences'
 import {
   type StudyCard,
@@ -40,7 +42,6 @@ import {
   STUDY_MODE_META,
 } from '@/widgets/study-session'
 import { useSessionReward } from '@/widgets/session-reward'
-import { useVisualViewport } from '@/shared/lib'
 import { AppScreen, Button, IconButton, ScreenHeader } from '@/shared/ui'
 
 /** Study a single room's cards, or a whole palace's cards aggregated across its rooms. */
@@ -61,10 +62,10 @@ function studyPrefsFromSettings(settings: PalaceSettings): StudyPrefs {
 }
 
 /** The one study surface (ADR-0005): a scope's loci worked as a single spaced-review deck.
- * Always opens in flip; the other study modes (type / initials / blur / rebuild) switch in
- * through the header mode button, and every mode grades through `gradeCard`, so SRS
- * schedules survive offline. Flashcard orientation/shuffle/speech seed from and persist to
- * the palace; mode switches are recorded to global preferences. */
+ * Opens in the last-used mode (persisted globally); every mode grades through `gradeCard`,
+ * so SRS schedules survive offline. Flashcard orientation/shuffle/speech seed from and persist
+ * to the palace; mode and shake-to-undo are recorded to global preferences. The Type keyboard
+ * simply overlays the bottom — the card's own body scrolls to keep the input in view. */
 export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
   const { t } = useTranslation()
   const locusStore = useLocusStoreApi()
@@ -72,12 +73,6 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
   const palaceStore = usePalaceStoreApi()
   const preferencesStore = usePreferencesStoreApi()
   const reward = useSessionReward()
-  // The app shell is fixed to the layout viewport, so it doesn't shrink for the keyboard. This
-  // surface owns an inline text field (Type mode), so it sizes itself to the *visual* viewport —
-  // the header, deck, and grade controls compress above the keyboard — and follows its pan
-  // offset, so the footer hugs the keyboard instead of floating mid-screen when iOS scrolls
-  // the focused field into view.
-  const viewport = useVisualViewport()
 
   useEffect(() => {
     locusStore.getState().start()
@@ -93,11 +88,15 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
   const lociReady = useLocusStore(selectLociReady)
   const roomsReady = useRoomStore(selectRoomsReady)
   const palacesReady = usePalaceStore(selectPalacesReady)
-  const ready = lociReady && roomsReady && palacesReady
+  const prefsReady = usePreferencesStore(selectPrefsReady)
+  // Wait on preferences too, so the surface opens straight into the persisted mode.
+  const ready = lociReady && roomsReady && palacesReady && prefsReady
 
   const [optionsOpen, setOptionsOpen] = useState(false)
   const [modeSheetOpen, setModeSheetOpen] = useState(false)
-  const [mode, setMode] = useState<StudyMode>('flip')
+  // The mode IS the persisted preference — last-used, resumed on open, clamped in case a
+  // retired value survived in storage.
+  const mode: StudyMode = resolveStudyMode(preferences.studyMode)
 
   const room = useMemo(
     () =>
@@ -151,7 +150,6 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
   const persistSwipe = (config: FlashcardSwipeConfig) =>
     void setPreferences(preferencesStore, { flashcardSwipe: config })
   const changeMode = (next: StudyMode) => {
-    setMode(next)
     void setPreferences(preferencesStore, { studyMode: next })
   }
   const persistWordSpaces = (value: boolean) =>
@@ -203,14 +201,7 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
   }
 
   return (
-    <div
-      className="relative mx-auto flex h-full w-full max-w-[430px] flex-col overflow-hidden"
-      style={
-        viewport
-          ? { height: `${viewport.height}px`, transform: `translateY(${viewport.offsetTop}px)` }
-          : undefined
-      }
-    >
+    <div className="relative mx-auto flex h-full w-full max-w-[430px] flex-col overflow-hidden">
       <div className="px-5 pt-safe">
         <div className="flex items-center justify-between pt-3">
           <IconButton variant="glass" aria-label={t('study.goBack')} onClick={back}>
@@ -249,12 +240,17 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
         prefs={studyPrefsFromSettings(palace.settings)}
         mode={mode}
         wordSpaces={preferences.studyWordSpaces}
+        shakeToUndo={preferences.shakeToUndo}
         swipeConfig={preferences.flashcardSwipe}
         onPrefsChange={persistStudyPrefs(palace)}
         onSwipeConfigChange={persistSwipe}
         onModeChange={changeMode}
         onWordSpacesChange={persistWordSpaces}
+        onShakeToUndoChange={(value) =>
+          void setPreferences(preferencesStore, { shakeToUndo: value })
+        }
         onGrade={handleGrade}
+        onRestoreCard={(id, srs) => void restoreSchedule(locusStore, id, srs)}
         onToggleFlag={handleToggleFlag}
         onEditCard={(id, changes) => void editLocus(locusStore, id, changes)}
         onBack={back}

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MotionConfig } from 'motion/react'
 import { I18nextProvider } from 'react-i18next'
@@ -15,6 +15,14 @@ afterEach(cleanup)
 const NOW = Date.UTC(2026, 0, 10)
 
 const DEFAULT_PREFS: StudyPrefs = { direction: 'front', shuffle: false, textToSpeech: false }
+
+// Controls inside the swipe deck are driven with fireEvent.click: userEvent's synthetic pointer
+// sequence collides with the deck's touch-gesture binding under jsdom, whereas the click event
+// itself dispatches cleanly. Controls outside the deck (grades, sheets) use userEvent normally.
+async function tap(name: RegExp | string) {
+  // The footer crossfades grade ↔ overview on a frame, which can lag under parallel test load.
+  fireEvent.click(await screen.findByRole('button', { name }, { timeout: 3000 }))
+}
 
 function studyCard(id: string): StudyCard {
   return {
@@ -49,8 +57,9 @@ function renderPanel(
         <FlashcardsPanel
           cards={cards}
           prefs={{ ...DEFAULT_PREFS, ...overrides.prefs }}
-          mode={overrides.mode ?? 'flip'}
+          mode={overrides.mode ?? 'blur'}
           wordSpaces
+          shakeToUndo={false}
           swipeConfig={DEFAULT_FLASHCARD_SWIPE}
           onGrade={onGrade}
           onModeChange={onModeChange}
@@ -71,20 +80,19 @@ function renderPanel(
 describe('FlashcardsPanel', () => {
   it('reveals and grades a review session through to completion', async () => {
     const user = userEvent.setup()
-    const { onGrade, onComplete } = renderPanel([studyCard('a'), studyCard('b')], {
-      mode: 'type',
-    })
+    const { onGrade, onComplete } = renderPanel([studyCard('a'), studyCard('b')])
 
-    // The prompt leads the front face (it also captions the back, so query the heading).
+    // The prompt leads the active front face; the inert back face is out of the a11y tree,
+    // so the heading role targets only the card in front.
     expect(screen.getByRole('heading', { name: 'Front a' })).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: /show answer/i }))
-    await user.click(await screen.findByRole('button', { name: /good/i }))
+    await tap(/show answer/i)
+    await tap(/good/i)
     expect(onGrade).toHaveBeenCalledWith('a', 'good')
 
     expect(await screen.findByRole('heading', { name: 'Front b' })).toBeInTheDocument()
-    await user.click(await screen.findByRole('button', { name: /show answer/i }))
-    await user.click(await screen.findByRole('button', { name: /good/i }))
+    await tap(/show answer/i)
+    await tap(/good/i)
 
     expect(await screen.findByText(/session complete/i)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /^done$/i }))
@@ -92,52 +100,46 @@ describe('FlashcardsPanel', () => {
   })
 
   it("requeues a card graded 'again' to the back of the session", async () => {
-    const user = userEvent.setup()
-    const { onGrade } = renderPanel([studyCard('a'), studyCard('b')], { mode: 'type' })
+    const { onGrade } = renderPanel([studyCard('a'), studyCard('b')])
 
-    await user.click(screen.getByRole('button', { name: /show answer/i }))
-    await user.click(await screen.findByRole('button', { name: /again/i }))
+    await tap(/show answer/i)
+    await tap(/again/i)
     expect(onGrade).toHaveBeenCalledWith('a', 'again')
 
     // 'a' goes to the back, so 'b' leads now; 'a' returns after it.
     expect(await screen.findByRole('heading', { name: 'Front b' })).toBeInTheDocument()
   })
 
-  it('swaps the fixed footer from overview to grades when the card turns', async () => {
-    const user = userEvent.setup()
-    renderPanel([studyCard('a'), studyCard('b')], { mode: 'blur' })
+  it('swaps the fixed footer from overview to grades when the card turns both ways', async () => {
+    renderPanel([studyCard('a'), studyCard('b')])
 
-    // Both cards are unseen, so the whole queue sits in the "New" bucket of the footer —
-    // the overview alone; there is no reveal button in the footer anymore.
+    // Both cards are unseen, so the whole queue sits in the "New" bucket — the overview alone;
+    // there is no reveal button in the footer.
     expect(screen.getByText('2')).toBeInTheDocument()
     expect(screen.getByText(/new/i)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /good/i })).toBeNull()
 
-    // The card itself is the flip control.
-    await user.click(screen.getByRole('button', { name: /show answer/i }))
-
-    // The overview steps aside and the grade control takes the whole footer slot.
+    // Tapping the card (its flip control) turns it and swaps the footer to the grade control.
+    await tap(/show answer/i)
     expect(await screen.findByRole('button', { name: /good/i })).toBeInTheDocument()
     expect(screen.queryByText(/new/i)).toBeNull()
 
-    // The card turns both ways: back to the front, back to the overview.
-    await user.click(screen.getByRole('button', { name: /show front/i }))
+    // It turns both ways: back to the front, back to the overview.
+    await tap(/show front/i)
     expect(await screen.findByText(/new/i)).toBeInTheDocument()
   })
 
   it('keeps the rebuilt text in place once solved and grades from there', async () => {
-    const user = userEvent.setup()
     const { onGrade } = renderPanel([studyCard('a')], { mode: 'words' })
 
-    await user.click(screen.getByRole('button', { name: 'Back' }))
-    await user.click(screen.getByRole('button', { name: 'a' }))
+    await tap('Back')
+    await tap('a')
 
-    // The reconstructed answer stays on the card — no swap to a separate answer view —
-    // and only the footer flips to the grade control.
+    // The reconstructed answer stays on the front and only the footer flips to grades.
     expect(screen.getAllByText('Back a').length).toBeGreaterThan(0)
-    await user.click(await screen.findByRole('button', { name: /good/i }))
+    await tap(/good/i)
     expect(onGrade).toHaveBeenCalledWith('a', 'good')
-    expect(screen.queryAllByText('Back a')).toHaveLength(0)
+    expect(screen.queryByRole('button', { name: /good/i })).toBeNull()
   })
 
   it('solves a card by typing the full answer in Type mode', async () => {
@@ -147,20 +149,18 @@ describe('FlashcardsPanel', () => {
     await user.type(screen.getByPlaceholderText(/type the answer/i), 'Back a')
 
     // A word-perfect attempt flips the card; the grade control takes the footer.
-    await user.click(await screen.findByRole('button', { name: /good/i }))
+    await tap(/good/i)
     expect(onGrade).toHaveBeenCalledWith('a', 'good')
   })
 
-  it('reveals then grades a card in a non-flip recall mode', async () => {
-    const user = userEvent.setup()
+  it('reveals the answer through the Type aid, then grades', async () => {
     const { onGrade } = renderPanel([studyCard('a'), studyCard('b')], { mode: 'type' })
 
-    // The prompt is visible; the grade control only appears once the answer is revealed.
     expect(screen.getByRole('heading', { name: 'Front a' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /good/i })).toBeNull()
 
-    await user.click(screen.getByRole('button', { name: /show answer/i }))
-    await user.click(await screen.findByRole('button', { name: /good/i }))
+    await tap(/reveal answer/i)
+    await tap(/good/i)
     expect(onGrade).toHaveBeenCalledWith('a', 'good')
 
     expect(await screen.findByRole('heading', { name: 'Front b' })).toBeInTheDocument()
@@ -170,6 +170,7 @@ describe('FlashcardsPanel', () => {
     const user = userEvent.setup()
     const { onModeChange } = renderPanel([studyCard('a')], { mode: 'type', modeSheetOpen: true })
 
+    // The mode sheet renders outside the deck, so userEvent drives it directly.
     await user.click(await screen.findByRole('button', { name: /rebuild/i }))
     expect(onModeChange).toHaveBeenCalledWith('words')
   })

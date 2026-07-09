@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Flag, Pencil, RotateCcw, SkipForward, Volume2 } from 'lucide-react'
+import { Flag, Pencil, RotateCcw, SkipForward, Undo2, Volume2 } from 'lucide-react'
 import { Sheet } from '@/shared/ui'
 
 export interface QuickActionsSheetProps {
@@ -8,6 +8,9 @@ export interface QuickActionsSheetProps {
   flagged: boolean
   canEdit: boolean
   canSpeak: boolean
+  /** There is graded/skipped history to step back to. */
+  canUndo: boolean
+  onUndo: () => void
   onFlag: () => void
   onEdit: () => void
   onSpeak: () => void
@@ -26,6 +29,8 @@ export function QuickActionsSheet({
   flagged,
   canEdit,
   canSpeak,
+  canUndo,
+  onUndo,
   onFlag,
   onEdit,
   onSpeak,
@@ -41,6 +46,10 @@ export function QuickActionsSheet({
   return (
     <Sheet open={open} onOpenChange={(next) => !next && onClose()} title={t('study.quickActions')}>
       <div className="space-y-2 pb-2">
+        <button type="button" onClick={run(onUndo)} disabled={!canUndo} className={row}>
+          <Undo2 className="size-[19px]" aria-hidden />
+          {t('study.undoLast')}
+        </button>
         <button type="button" onClick={run(onFlag)} disabled={!canEdit} className={row}>
           <Flag
             className={

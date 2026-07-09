@@ -37,12 +37,12 @@ export type ContentSort = 'manual' | 'recent' | 'name' | 'due' | 'flagged'
 
 const CONTENT_SORTS: readonly ContentSort[] = ['manual', 'recent', 'name', 'due', 'flagged']
 
-/** How a flashcard's answer is recalled in a study session. `flip` is the classic
- * tap-to-reveal card; the rest test the answer text before you grade, ordered by how
- * hard they push recall (Blur → Rebuild → Initials → Type). The session's entry point
- * decides the opening mode (Study opens flip, a practice row opens its own mode); the
- * persisted preference records the last in-session switch. */
-export const STUDY_MODES = ['flip', 'blur', 'words', 'initials', 'type'] as const
+/** How a flashcard's answer is recalled in a study session. Every mode is a two-faced
+ * card that flips on tap and grades on swipe; they differ only in how the back tests the
+ * answer, ordered by how hard they push recall (Blur → Rebuild → Initials → Type). Blur
+ * opens fully visible, so it's the gentlest on-ramp and the default. The study surface
+ * always resumes this last-used mode, whatever its entry point. */
+export const STUDY_MODES = ['blur', 'words', 'initials', 'type'] as const
 export type StudyMode = (typeof STUDY_MODES)[number]
 
 /** App appearance: an explicit light/dark choice, or `system` to follow the OS. */
@@ -99,10 +99,12 @@ export interface Preferences extends Entity {
   roomsSort: RoomsSort
   /** Room editor: how a room's cards/questions are ordered. */
   contentSort: ContentSort
-  /** Study surface: how each card's answer is recalled (flip / type / initials / blur / words). */
+  /** Study surface: how each card's answer is recalled (blur / words / initials / type). */
   studyMode: StudyMode
   /** Study surface: mark a blank for each hidden letter so length is felt (Initials mode). */
   studyWordSpaces: boolean
+  /** Study surface: shake the device to undo the last graded card (supported devices only). */
+  shakeToUndo: boolean
   /** Per-item-type swipe-gesture mapping for list rows (leading/trailing action trays). */
   swipe: SwipePreferences
   /** Which grade/gesture each of the four flashcard fling directions commits. */
@@ -123,12 +125,21 @@ export const DEFAULT_PREFERENCES = {
   libraryOrder: [] as string[],
   roomsSort: 'manual',
   contentSort: 'manual',
-  studyMode: 'flip',
+  studyMode: 'blur',
   studyWordSpaces: true,
+  shakeToUndo: true,
   swipe: DEFAULT_SWIPE,
   flashcardSwipe: DEFAULT_FLASHCARD_SWIPE,
   privacy: DEFAULT_PRIVACY,
 } as const satisfies Omit<Preferences, keyof Entity>
+
+/** Clamp a possibly-stale persisted study mode (e.g. the retired `flip`) to a supported one.
+ * Shared by record creation and by the study surface, which reads the raw persisted value. */
+export function resolveStudyMode(value: string | undefined): StudyMode {
+  return value && (STUDY_MODES as readonly string[]).includes(value)
+    ? (value as StudyMode)
+    : DEFAULT_PREFERENCES.studyMode
+}
 
 export interface MakePreferencesInput {
   id: string
@@ -147,6 +158,7 @@ export interface MakePreferencesInput {
   contentSort?: ContentSort
   studyMode?: StudyMode
   studyWordSpaces?: boolean
+  shakeToUndo?: boolean
   swipe?: SwipePreferences
   flashcardSwipe?: FlashcardSwipeConfig
   privacy?: PrivacySettings
@@ -189,8 +201,9 @@ export function makePreferences(input: MakePreferencesInput): Preferences {
       input.contentSort && CONTENT_SORTS.includes(input.contentSort)
         ? input.contentSort
         : DEFAULT_PREFERENCES.contentSort,
-    studyMode: input.studyMode ?? DEFAULT_PREFERENCES.studyMode,
+    studyMode: resolveStudyMode(input.studyMode),
     studyWordSpaces: input.studyWordSpaces ?? DEFAULT_PREFERENCES.studyWordSpaces,
+    shakeToUndo: input.shakeToUndo ?? DEFAULT_PREFERENCES.shakeToUndo,
     swipe: resolveSwipe(input.swipe),
     flashcardSwipe: normalizeFlashcardSwipe(input.flashcardSwipe),
     privacy: input.privacy ?? { ...DEFAULT_PRIVACY },
@@ -215,6 +228,7 @@ export type PreferencesChanges = Partial<
     | 'contentSort'
     | 'studyMode'
     | 'studyWordSpaces'
+    | 'shakeToUndo'
     | 'swipe'
     | 'flashcardSwipe'
     | 'privacy'

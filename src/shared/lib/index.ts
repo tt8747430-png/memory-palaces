@@ -11,7 +11,6 @@ export {
   SWIPE_FLING_SPEED,
 } from './gestures'
 export { useLongPress, type LongPressHandlers, type LongPressOptions } from './use-long-press'
-export { useVisualViewport, type VisualViewportBox } from './use-viewport-height'
 export { useSortableSensors } from './use-sortable-sensors'
 export { shuffle } from './shuffle'
 export { nextOrder, resequence } from './order'
@@ -43,6 +42,7 @@ export {
 } from './content-transfer'
 export { speak, cancelSpeech, speechAvailable } from './speech'
 export { tick, impact, success, setHapticsEnabled } from './haptics'
+export { useShake, motionSupported, requestMotionPermission } from './shake'
 export { EventBus, type EventHandler } from './event-bus'
 export type { AppEvents } from './events'
 export { EventBusContext, useEventBus, useEventBusOptional } from './event-bus-context'

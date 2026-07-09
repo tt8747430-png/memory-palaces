@@ -21,6 +21,27 @@ describe('makePreferences — extended defaults', () => {
     expect(makePreferences({ id: 'preferences', createdAt: at(0) }).dailyGoal).toBe(5)
   })
 
+  it('defaults the study mode to blur and shake-to-undo on', () => {
+    const prefs = makePreferences({ id: 'preferences', createdAt: at(0) })
+    expect(prefs.studyMode).toBe('blur')
+    expect(prefs.shakeToUndo).toBe(true)
+  })
+
+  it('clamps a retired study mode (flip) back to the default', () => {
+    const prefs = makePreferences({
+      id: 'preferences',
+      createdAt: at(0),
+      // A record persisted before Classic was removed.
+      studyMode: 'flip' as never,
+    })
+    expect(prefs.studyMode).toBe('blur')
+  })
+
+  it('keeps a still-offered study mode', () => {
+    const prefs = makePreferences({ id: 'preferences', createdAt: at(0), studyMode: 'type' })
+    expect(prefs.studyMode).toBe('type')
+  })
+
   it('gives each record its own privacy object (no shared mutation)', () => {
     const a = makePreferences({ id: 'a', createdAt: at(0) })
     const b = makePreferences({ id: 'b', createdAt: at(0) })

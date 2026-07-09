@@ -1,4 +1,5 @@
 export { gradeCard } from './grade-card'
+export { restoreSchedule } from './restore-schedule'
 export {
   applyScope,
   scopeCounts,
@@ -12,6 +13,7 @@ export {
   sessionReducer,
   currentId,
   nextId,
+  canUndo,
   type SessionState,
   type SessionAction,
   type ReviewState,

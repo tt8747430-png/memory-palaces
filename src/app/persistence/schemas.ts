@@ -219,8 +219,9 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
     libraryOrder: { type: 'array', items: { type: 'string' } },
     roomsSort: { type: 'string', enum: ['manual', 'recent', 'progress', 'name'] },
     contentSort: { type: 'string', enum: ['manual', 'recent', 'name', 'due', 'flagged'] },
-    studyMode: { type: 'string', enum: ['flip', 'type', 'initials', 'blur', 'words'] },
+    studyMode: { type: 'string', enum: ['blur', 'words', 'initials', 'type'] },
     studyWordSpaces: { type: 'boolean' },
+    shakeToUndo: { type: 'boolean' },
     swipe: {
       type: 'object',
       properties: {
@@ -280,6 +281,7 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
     'contentSort',
     'studyMode',
     'studyWordSpaces',
+    'shakeToUndo',
     'swipe',
     'flashcardSwipe',
     'privacy',
