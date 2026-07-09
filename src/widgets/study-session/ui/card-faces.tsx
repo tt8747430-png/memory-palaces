@@ -76,6 +76,7 @@ export function CardFace({
   speakText,
   onSpeak,
   active,
+  back = false,
   align = 'center',
   footer,
   children,
@@ -85,6 +86,9 @@ export function CardFace({
   speakText: string
   onSpeak: (text: string) => void
   active: boolean
+  /** The back face is pre-rotated 180° so the flip lands it un-mirrored — the rotation and the
+   * backface-culling must share the one element that fills the card (see StudyDeck's flip). */
+  back?: boolean
   /** Vertical alignment of short content. Type top-anchors so its input clears the keyboard. */
   align?: 'center' | 'start'
   footer?: ReactNode
@@ -118,7 +122,10 @@ export function CardFace({
 
   return (
     <div
-      className="absolute inset-0 flex flex-col rounded-card-featured bg-card-glass shadow-elevated [backface-visibility:hidden]"
+      className={cn(
+        'absolute inset-0 flex flex-col rounded-card-featured bg-card-glass shadow-elevated [backface-visibility:hidden]',
+        back && '[transform:rotateY(180deg)]',
+      )}
       inert={!active}
     >
       <header className="flex h-9 shrink-0 touch-none items-center justify-end gap-1.5 px-4 pt-2.5">
@@ -769,6 +776,7 @@ export function AnswerFace(props: FaceProps) {
       speakText={answer}
       onSpeak={onSpeak}
       active={active}
+      back
     >
       <BackPrompt prompt={prompt} onFlip={props.onFlip} />
       <p className="allow-select text-balance break-words text-center text-[clamp(17px,4.6vw,21px)] font-semibold leading-relaxed text-heading">
@@ -833,6 +841,7 @@ export function BlurFace(props: FaceProps) {
       speakText={answer}
       onSpeak={onSpeak}
       active={active}
+      back
       footer={footer}
     >
       <BackPrompt prompt={prompt} onFlip={props.onFlip} />
@@ -942,6 +951,7 @@ export function InitialsFace(props: FaceProps) {
         speakText={answer}
         onSpeak={onSpeak}
         active={active}
+        back
         footer={footer}
       >
         <BackPrompt prompt={prompt} onFlip={props.onFlip} />

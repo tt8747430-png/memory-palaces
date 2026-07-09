@@ -337,7 +337,7 @@ export function StudyDeck({
               className="relative h-full w-full"
             >
               {front}
-              <div className="[transform:rotateY(180deg)]">{back}</div>
+              {back}
             </motion.div>
           </motion.div>
         </AnimatePresence>
