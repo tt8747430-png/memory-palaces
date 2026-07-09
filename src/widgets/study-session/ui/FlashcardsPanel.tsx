@@ -3,10 +3,12 @@ import { AnimatePresence, motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Sparkles } from 'lucide-react'
 import type { StudyMode } from '@/entities/preferences'
-import { cn, speak, speechAvailable, srsStatus, success } from '@/shared/lib'
+import { cn, speak, speechAvailable, srsStatus, success, tick, useShake } from '@/shared/lib'
+import type { SrsState } from '@/shared/lib'
 import { Button, GradeButtons } from '@/shared/ui'
 import {
   applyScope,
+  canUndo,
   currentId,
   initSession,
   nextId,
@@ -20,8 +22,7 @@ import {
   isGradeAction,
   type SwipeDirection,
 } from '@/shared/config/flashcard-swipe'
-import { StudyCardDeck } from './StudyCardDeck'
-import { RecallCard } from './RecallCard'
+import { StudyDeck } from './StudyDeck'
 import { StudyOptionsSheet } from './StudyOptionsSheet'
 import { ModeSheet } from './ModeSheet'
 import { QuickActionsSheet } from './QuickActionsSheet'
@@ -32,10 +33,12 @@ import type { Grade, LocusChanges, SessionSummary, StudyCard, StudyPrefs } from 
 export interface FlashcardsPanelProps {
   cards: StudyCard[]
   prefs: StudyPrefs
-  /** How each card's answer is recalled. Global preference; `flip` uses the swipeable deck. */
+  /** How each card's answer is recalled. Global preference, resumed across sessions. */
   mode: StudyMode
   /** Mark blanks for each hidden letter in Initials mode. Global preference. */
   wordSpaces: boolean
+  /** Shake the device to undo the last graded card. Global preference. */
+  shakeToUndo: boolean
   swipeConfig: FlashcardSwipeConfig
   /** Persist study-preference changes (the host mirrors them to palace settings). */
   onPrefsChange?: (prefs: StudyPrefs) => void
@@ -45,7 +48,11 @@ export interface FlashcardsPanelProps {
   onModeChange?: (mode: StudyMode) => void
   /** Persist the Initials word-spaces toggle (global preference). */
   onWordSpacesChange?: (value: boolean) => void
+  /** Persist the shake-to-undo toggle (global preference). */
+  onShakeToUndoChange?: (value: boolean) => void
   onGrade: (locusId: string, grade: Grade) => void
+  /** Reverse a grade's SRS write on undo, restoring the card's prior schedule. */
+  onRestoreCard?: (locusId: string, srs: SrsState | undefined) => void
   onToggleFlag?: (locusId: string) => void
   onEditCard?: (locusId: string, changes: LocusChanges) => void
   onBack: () => void
@@ -62,22 +69,30 @@ export interface FlashcardsPanelProps {
 /** Linger on the completion overlay before handing back to the host. */
 const COMPLETE_DELAY_MS = 2200
 
+/** The undo trail parallel to the session machine's history — one entry per grade/skip. A
+ * grade remembers the card's prior schedule so undo can reverse the SRS write; a skip has
+ * nothing to reverse. Popped in lockstep with the machine's `undo`. */
+type UndoEntry = { locusId: string; prevSrs: SrsState | undefined } | null
+
 /** The study surface (ADR-0005): a spaced-review session over a scope's cards. Opens in review
  * (due cards lead); grading runs through the four-grade SM-2 control and the host's `gradeCard`
- * command so schedules survive offline. The recall `mode` decides how each card's answer is
- * worked — `flip` is the swipeable tap-to-reveal deck, the rest test the answer text first — but
- * every mode ends in the same grade. Headerless: the page owns the title and options trigger. */
+ * command so schedules survive offline. Every mode is the same two-faced `StudyDeck` — tap to
+ * flip, swipe to grade — differing only in how its back tests the answer. Headerless: the page
+ * owns the title, mode, and options triggers. */
 export function FlashcardsPanel({
   cards,
   prefs,
   mode,
   wordSpaces,
+  shakeToUndo,
   swipeConfig,
   onPrefsChange,
   onSwipeConfigChange,
   onModeChange,
   onWordSpacesChange,
+  onShakeToUndoChange,
   onGrade,
+  onRestoreCard,
   onToggleFlag,
   onEditCard,
   onBack,
@@ -89,14 +104,10 @@ export function FlashcardsPanel({
   now = Date.now(),
 }: FlashcardsPanelProps) {
   const canSpeak = speechAvailable()
-  const isFlip = mode === 'flip'
 
   const [scope, setScope] = useState<Scope>({ kind: 'all' })
   const [quickOpen, setQuickOpen] = useState(false)
   const [editing, setEditing] = useState(false)
-  // Type mode's input is focused → the keyboard is up; compress the card's prompt block so
-  // the input, feedback, and footer all keep their room. The footer itself never moves.
-  const [typing, setTyping] = useState(false)
   // Type mode's aid (full text vs first letters). Session-scoped on purpose: it's a way of
   // working a card, not a lasting preference.
   const [typeInitialsOnly, setTypeInitialsOnly] = useState(false)
@@ -113,6 +124,9 @@ export function FlashcardsPanel({
     initSession({ ids: buildIds({ kind: 'all' }) }),
   )
 
+  // The undo trail (card + prior schedule per grade), reset whenever the queue is rebuilt.
+  const undoTrail = useRef<UndoEntry[]>([])
+
   // A mode switch resets the card to its front face — e.g. a revealed Blur card must not
   // land in Rebuild already flipped. Render-phase adjustment, so the old face never paints.
   const [prevMode, setPrevMode] = useState(mode)
@@ -122,6 +136,7 @@ export function FlashcardsPanel({
   }
 
   const rebuild = (activeScope: Scope) => {
+    undoTrail.current = []
     dispatch({ type: 'reset', state: initSession({ ids: buildIds(activeScope) }) })
   }
 
@@ -151,9 +166,6 @@ export function FlashcardsPanel({
   const nextCard = next ? byId.get(next) : undefined
   const flipped = state.status !== 'complete' && state.flipped
 
-  // The keyboard can't survive a card or mode change, so neither should the collapsed layout.
-  useEffect(() => setTyping(false), [id, mode])
-
   const canEdit = Boolean(onEditCard || onToggleFlag)
 
   const prompt = card ? (prefs.direction === 'front' ? card.locus.front : card.locus.back) : ''
@@ -170,10 +182,25 @@ export function FlashcardsPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [flipped])
 
-  const handleGrade = (grade: Grade) => {
-    if (!id) return
+  const applyGrade = (grade: Grade) => {
+    if (!id || !card) return
+    undoTrail.current.push({ locusId: id, prevSrs: card.locus.srs })
     onGrade(id, grade)
     dispatch({ type: 'grade', grade })
+  }
+
+  const applySkip = () => {
+    if (!id) return
+    undoTrail.current.push(null)
+    dispatch({ type: 'skip' })
+  }
+
+  const handleUndo = () => {
+    if (!canUndo(state)) return
+    const entry = undoTrail.current.pop() ?? null
+    dispatch({ type: 'undo' })
+    if (entry) onRestoreCard?.(entry.locusId, entry.prevSrs)
+    tick()
   }
 
   const handleFlag = () => {
@@ -185,17 +212,20 @@ export function FlashcardsPanel({
   const handleCommit = (dir: SwipeDirection) => {
     const action = swipeConfig[dir]
     if (action === 'flag') handleFlag()
-    else if (action === 'skip') dispatch({ type: 'skip' })
-    else if (isGradeAction(action)) handleGrade(action)
+    else if (action === 'skip') applySkip()
+    else if (isGradeAction(action)) applyGrade(action)
   }
+
+  // Shake to undo — only while it's on and there's history to reverse (and never on desktop,
+  // where the hook is inert). The visible Undo in quick actions is always the reliable path.
+  useShake(shakeToUndo && canUndo(state), handleUndo)
 
   const speakFace = () => {
     if (card) speak(flipped ? answer : prompt)
   }
 
   const updatePrefs = (partial: Partial<StudyPrefs>) => {
-    const nextPrefs = { ...prefs, ...partial }
-    onPrefsChange?.(nextPrefs)
+    onPrefsChange?.({ ...prefs, ...partial })
   }
 
   const changeScope = (nextScope: Scope) => {
@@ -226,16 +256,17 @@ export function FlashcardsPanel({
       onClose={() => onOptionsOpenChange(false)}
       scope={scope}
       scopeCounts={counts}
-      mode={mode}
       direction={prefs.direction}
       shuffle={prefs.shuffle}
       textToSpeech={prefs.textToSpeech}
+      shakeToUndo={shakeToUndo}
       canSpeak={canSpeak}
       swipeConfig={swipeConfig}
       onScope={changeScope}
       onDirection={(direction) => updatePrefs({ direction })}
       onShuffle={(value) => updatePrefs({ shuffle: value })}
       onTextToSpeech={(value) => updatePrefs({ textToSpeech: value })}
+      onShakeToUndo={(value) => onShakeToUndoChange?.(value)}
       onSwipe={(dir, action) => onSwipeConfigChange?.({ ...swipeConfig, [dir]: action })}
       onRestart={() => rebuild(scope)}
       onFinish={() => dispatch({ type: 'finish' })}
@@ -245,40 +276,28 @@ export function FlashcardsPanel({
 
   return (
     <>
-      {/* Deck (flip) or recall card, or empty-scope state */}
+      {/* The study deck, or the empty-scope state */}
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-5 py-3">
         {card ? (
-          isFlip ? (
-            <StudyCardDeck
-              card={card}
-              nextCard={nextCard}
-              direction={prefs.direction}
-              flipped={flipped}
-              swipeConfig={swipeConfig}
-              canSpeak={canSpeak}
-              onFlip={() => dispatch({ type: 'flip' })}
-              onCommit={handleCommit}
-              onSpeak={(text) => speak(text)}
-              onLongPress={() => setQuickOpen(true)}
-            />
-          ) : (
-            <RecallCard
-              key={`${mode}-${card.locus.id}`}
-              card={card}
-              mode={mode}
-              direction={prefs.direction}
-              wordSpaces={wordSpaces}
-              revealed={flipped}
-              canSpeak={canSpeak}
-              typeInitialsOnly={typeInitialsOnly}
-              onFlip={() => dispatch({ type: 'flip' })}
-              onReveal={() => dispatch({ type: 'reveal' })}
-              onSpeak={(text) => speak(text)}
-              onWordSpaces={(value) => onWordSpacesChange?.(value)}
-              onTypeInitialsOnly={setTypeInitialsOnly}
-              onInputFocusChange={setTyping}
-            />
-          )
+          <StudyDeck
+            key={`${mode}-${card.locus.id}`}
+            card={card}
+            nextCard={nextCard}
+            mode={mode}
+            direction={prefs.direction}
+            wordSpaces={wordSpaces}
+            typeInitialsOnly={typeInitialsOnly}
+            flipped={flipped}
+            swipeConfig={swipeConfig}
+            canSpeak={canSpeak}
+            onFlip={() => dispatch({ type: 'flip' })}
+            onReveal={() => dispatch({ type: 'reveal' })}
+            onCommit={handleCommit}
+            onSpeak={(text) => speak(text)}
+            onWordSpaces={(value) => onWordSpacesChange?.(value)}
+            onTypeInitialsOnly={setTypeInitialsOnly}
+            onLongPress={() => setQuickOpen(true)}
+          />
         ) : !completed ? (
           <EmptyScope
             emptyScope={scope.kind !== 'all'}
@@ -290,12 +309,9 @@ export function FlashcardsPanel({
       </div>
 
       {/* The controls bar. Fixed-height by design: before the reveal it stacks the
-          remaining-queue overview (the sole progress signal now the top bar is gone) over
-          the one primary action; after it, the grade control takes the whole slot. The two
-          states crossfade in place — the bar never grows, shrinks, or jumps. While the Type
-          keyboard is up it stands down entirely instead of riding above the keyboard; it
-          returns the moment typing ends. */}
-      {card && !typing ? (
+          remaining-queue overview over the current status; after it, the grade control takes
+          the whole slot. The two states crossfade in place — the bar never grows or jumps. */}
+      {card ? (
         <div className="shrink-0 border-t border-border/60 bg-card-glass px-5 pb-[max(0.875rem,env(safe-area-inset-bottom))] pt-2.5">
           <div className="h-14">
             <AnimatePresence initial={false} mode="wait">
@@ -312,7 +328,7 @@ export function FlashcardsPanel({
                     className="h-full"
                     srs={card.locus.srs}
                     now={now}
-                    onGrade={handleGrade}
+                    onGrade={applyGrade}
                   />
                 </motion.div>
               ) : (
@@ -348,7 +364,7 @@ export function FlashcardsPanel({
         open={modeSheetOpen}
         onClose={() => onModeSheetOpenChange(false)}
         mode={mode}
-        onMode={(next) => onModeChange?.(next)}
+        onMode={(nextMode) => onModeChange?.(nextMode)}
       />
 
       {card ? (
@@ -358,10 +374,12 @@ export function FlashcardsPanel({
           flagged={card.locus.flagged}
           canEdit={canEdit}
           canSpeak={canSpeak}
+          canUndo={canUndo(state)}
+          onUndo={handleUndo}
           onFlag={handleFlag}
           onEdit={() => setEditing(true)}
           onSpeak={speakFace}
-          onSkip={() => dispatch({ type: 'skip' })}
+          onSkip={applySkip}
           onRestart={() => rebuild(scope)}
         />
       ) : null}

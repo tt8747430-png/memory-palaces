@@ -3,6 +3,7 @@ import { InMemoryRepository } from '@/shared/api'
 import { createLocusStore, type Locus, makeLocus } from '@/entities/locus'
 import { isDue, schedule } from '@/shared/lib'
 import { gradeCard } from './grade-card'
+import { restoreSchedule } from './restore-schedule'
 
 const NOW = Date.UTC(2026, 0, 10)
 
@@ -54,5 +55,40 @@ describe('gradeCard', () => {
   it('throws when the locus does not exist', async () => {
     const store = storeWith([])
     await expect(gradeCard(store, 'missing', 'good', NOW)).rejects.toThrow(/not found/i)
+  })
+})
+
+describe('restoreSchedule', () => {
+  it('reverses a grade by writing back the prior schedule', async () => {
+    const store = storeWith([newCard('l1')])
+    const before = store.getState().loci[0]?.srs
+    const graded = await gradeCard(store, 'l1', 'good', NOW)
+    expect(graded.srs).not.toEqual(before)
+
+    const restored = await restoreSchedule(store, 'l1', before, NOW)
+
+    expect(restored.srs).toEqual(before)
+    expect(store.getState().loci[0]?.srs).toEqual(before)
+  })
+
+  it('returns a first-ever graded card to brand-new (undefined schedule)', async () => {
+    const store = storeWith([newCard('l1')])
+    await gradeCard(store, 'l1', 'good', NOW)
+    expect(store.getState().loci[0]?.srs).toBeDefined()
+
+    await restoreSchedule(store, 'l1', undefined, NOW)
+
+    expect(store.getState().loci[0]?.srs).toBeUndefined()
+  })
+
+  it('bumps updatedAt to the injected clock', async () => {
+    const store = storeWith([newCard('l1')])
+    const restored = await restoreSchedule(store, 'l1', undefined, NOW)
+    expect(restored.updatedAt).toBe(new Date(NOW).toISOString())
+  })
+
+  it('throws when the locus does not exist', async () => {
+    const store = storeWith([])
+    await expect(restoreSchedule(store, 'missing', undefined, NOW)).rejects.toThrow(/not found/i)
   })
 })

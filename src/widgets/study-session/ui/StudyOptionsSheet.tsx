@@ -9,10 +9,11 @@ import {
   Pencil,
   RotateCcw,
   Shuffle,
+  Smartphone,
   Volume2,
 } from 'lucide-react'
-import type { StudyMode } from '@/entities/preferences'
-import { cn } from '@/shared/lib'
+import { toast } from 'sonner'
+import { cn, motionSupported, requestMotionPermission } from '@/shared/lib'
 import { Button, SegmentedControl, Sheet } from '@/shared/ui'
 import { type Scope, type ScopeCounts, scopesEqual } from '@/features/review'
 import {
@@ -31,18 +32,17 @@ export interface StudyOptionsSheetProps {
   onClose: () => void
   scope: Scope
   scopeCounts: ScopeCounts
-  /** The active study mode — switched via the header mode button, not here; the sheet only
-   * conditions the flip-only swipe map on it. Recall-mode settings live in the card's gear. */
-  mode: StudyMode
   direction: StudyDirection
   shuffle: boolean
   textToSpeech: boolean
+  shakeToUndo: boolean
   canSpeak: boolean
   swipeConfig: FlashcardSwipeConfig
   onScope: (scope: Scope) => void
   onDirection: (direction: StudyDirection) => void
   onShuffle: (value: boolean) => void
   onTextToSpeech: (value: boolean) => void
+  onShakeToUndo: (value: boolean) => void
   onSwipe: (direction: SwipeDirection, action: FlashcardSwipeAction) => void
   /** Open the in-study editor for the current card; absent when the host can't edit. */
   onEditCard?: () => void
@@ -95,22 +95,35 @@ export function StudyOptionsSheet({
   onClose,
   scope,
   scopeCounts,
-  mode,
   direction,
   shuffle,
   textToSpeech,
+  shakeToUndo,
   canSpeak,
   swipeConfig,
   onScope,
   onDirection,
   onShuffle,
   onTextToSpeech,
+  onShakeToUndo,
   onSwipe,
   onEditCard,
   onRestart,
   onFinish,
 }: StudyOptionsSheetProps) {
   const { t } = useTranslation()
+
+  // Enabling shake requests device-motion permission (iOS demands the gesture); it only sticks
+  // on if the OS grants it, so a denied prompt leaves the toggle honestly off.
+  const handleShakeToUndo = async (value: boolean) => {
+    if (!value) {
+      onShakeToUndo(false)
+      return
+    }
+    const granted = await requestMotionPermission()
+    onShakeToUndo(granted)
+    if (!granted) toast(t('study.shakeUnsupported'))
+  }
 
   const filters: { scope: Scope; label: string; count: number }[] = [
     { scope: { kind: 'all' }, label: t('study.filterAll'), count: scopeCounts.all },
@@ -172,6 +185,15 @@ export function StudyOptionsSheet({
             onChange={onTextToSpeech}
             disabled={!canSpeak}
           />
+          {motionSupported() ? (
+            <ToggleRow
+              icon={<Smartphone className="size-[18px]" aria-hidden />}
+              label={t('study.shakeToUndo')}
+              description={t('study.shakeToUndoHint')}
+              checked={shakeToUndo}
+              onChange={handleShakeToUndo}
+            />
+          ) : null}
         </SheetSection>
 
         <SheetSection title={t('study.orientation')}>
@@ -186,24 +208,22 @@ export function StudyOptionsSheet({
           />
         </SheetSection>
 
-        {mode === 'flip' ? (
-          <SheetSection title={t('study.swipeActionsTitle')}>
-            <p className="-mt-1 px-1 text-[length:var(--p-text-label)] leading-snug text-muted-foreground">
-              {t('study.swipeActionsHint')}
-            </p>
-            <div className="flex flex-col gap-2.5">
-              {DIRECTION_META.map(({ direction: dir, icon, labelKey }) => (
-                <SwipeRow
-                  key={dir}
-                  icon={icon}
-                  label={t(labelKey as never)}
-                  selected={swipeConfig[dir]}
-                  onSelect={(action) => onSwipe(dir, action)}
-                />
-              ))}
-            </div>
-          </SheetSection>
-        ) : null}
+        <SheetSection title={t('study.swipeActionsTitle')}>
+          <p className="-mt-1 px-1 text-[length:var(--p-text-label)] leading-snug text-muted-foreground">
+            {t('study.swipeActionsHint')}
+          </p>
+          <div className="flex flex-col gap-2.5">
+            {DIRECTION_META.map(({ direction: dir, icon, labelKey }) => (
+              <SwipeRow
+                key={dir}
+                icon={icon}
+                label={t(labelKey as never)}
+                selected={swipeConfig[dir]}
+                onSelect={(action) => onSwipe(dir, action)}
+              />
+            ))}
+          </div>
+        </SheetSection>
 
         {onEditCard ? (
           <button

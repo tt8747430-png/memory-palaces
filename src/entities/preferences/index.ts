@@ -15,6 +15,7 @@ export type {
 export {
   makePreferences,
   updatePreferences,
+  resolveStudyMode,
   DEFAULT_PREFERENCES,
   DEFAULT_PRIVACY,
   STUDY_MODES,
