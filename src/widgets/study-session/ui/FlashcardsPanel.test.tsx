@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MotionConfig } from 'motion/react'
 import { I18nextProvider } from 'react-i18next'
@@ -153,17 +153,28 @@ describe('FlashcardsPanel', () => {
     expect(onGrade).toHaveBeenCalledWith('a', 'good')
   })
 
-  it('reveals the answer through the Type aid, then grades', async () => {
-    const { onGrade } = renderPanel([studyCard('a'), studyCard('b')], { mode: 'type' })
+  it('has no reveal shortcut in Type mode — the answer must be typed', async () => {
+    renderPanel([studyCard('a')], { mode: 'type' })
 
+    // The reveal/peek aid was removed: the only footer aid is the mode switch, never a
+    // "show" that would hand over the answer.
     expect(screen.getByRole('heading', { name: 'Front a' })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /good/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^show$/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: /reveal/i })).toBeNull()
+  })
 
-    await tap(/reveal answer/i)
-    await tap(/good/i)
-    expect(onGrade).toHaveBeenCalledWith('a', 'good')
+  it('clears a solved Rebuild with Reset and returns to the overview', async () => {
+    renderPanel([studyCard('a')], { mode: 'words' })
 
-    expect(await screen.findByRole('heading', { name: 'Front b' })).toBeInTheDocument()
+    // Solve by tapping the scrambled words back into order → reveals in place, grades show.
+    await tap('Back')
+    await tap('a')
+    expect(await screen.findByRole('button', { name: /good/i })).toBeInTheDocument()
+
+    // Reset is always mounted; it clears the rebuild and un-reveals, so the grades give way
+    // back to the overview (regression — the footer used to unmount, trapping the card).
+    await tap(/^reset$/i)
+    await waitFor(() => expect(screen.queryByRole('button', { name: /good/i })).toBeNull())
   })
 
   it('switches the study mode through the mode sheet', async () => {

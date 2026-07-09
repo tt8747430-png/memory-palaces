@@ -9,19 +9,7 @@ import {
 } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-import {
-  Eye,
-  EyeOff,
-  Flag,
-  Lightbulb,
-  MapPin,
-  RotateCcw,
-  Settings2,
-  SkipForward,
-  Sparkles,
-  Volume2,
-  WholeWord,
-} from 'lucide-react'
+import { Flag, Lightbulb, MapPin, RotateCcw, Settings2, Volume2 } from 'lucide-react'
 import type { StudyMode } from '@/entities/preferences'
 import {
   cn,
@@ -34,6 +22,7 @@ import {
   wordInitial,
 } from '@/shared/lib'
 import { SegmentedControl, Sheet } from '@/shared/ui'
+import { STUDY_MODE_META } from './mode-meta'
 import type { StudyCard } from '../model/types'
 
 /** Shared props every face needs to dress its header and reveal cues. */
@@ -59,6 +48,12 @@ export interface FaceProps {
   /** One-way reveal that keeps this face up and only moves the grades in (Rebuild, and
    * Type's read-only answer peek). */
   onRevealInPlace: () => void
+  /** Undo an in-place reveal: drop the peeked/rebuilt answer and return the session to
+   * its front face, so the footer swaps grades back for the overview. Mirror of
+   * `onRevealInPlace`. */
+  onHideInPlace: () => void
+  /** Open the study-mode picker — the footer's left control (moved off the page header). */
+  onChangeMode: () => void
 }
 
 /** Keep a control's press from reaching the deck's drag gesture, so its tap/type fires cleanly
@@ -76,9 +71,12 @@ export function CardFace({
   speakText,
   onSpeak,
   active,
+  mode,
+  onChangeMode,
   back = false,
   align = 'center',
   footer,
+  settings,
   children,
 }: {
   flagged: boolean
@@ -86,12 +84,19 @@ export function CardFace({
   speakText: string
   onSpeak: (text: string) => void
   active: boolean
+  /** Current mode — drives the footer's mode-switch icon. */
+  mode: StudyMode
+  /** Open the mode picker from the footer's left control. */
+  onChangeMode: () => void
   /** The back face is pre-rotated 180° so the flip lands it un-mirrored — the rotation and the
    * backface-culling must share the one element that fills the card (see StudyDeck's flip). */
   back?: boolean
   /** Vertical alignment of short content. Type top-anchors so its input clears the keyboard. */
   align?: 'center' | 'start'
+  /** The mode's reveal/undo aids, centered in the footer. */
   footer?: ReactNode
+  /** The mode's settings control, pinned to the footer's right. */
+  settings?: ReactNode
   children: ReactNode
 }) {
   const { t } = useTranslation()
@@ -157,8 +162,12 @@ export function CardFace({
         {children}
       </div>
 
-      <footer className="flex min-h-[3.25rem] shrink-0 touch-none items-center justify-center px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-1.5">
-        {footer}
+      <footer className="flex min-h-[3.25rem] shrink-0 touch-none items-center justify-between gap-2 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-1.5">
+        <ModeButton mode={mode} onClick={onChangeMode} />
+        <div className="flex min-w-0 flex-1 flex-wrap items-center justify-center gap-2">
+          {footer}
+        </div>
+        <div className="grid size-11 shrink-0 place-items-center">{settings}</div>
       </footer>
     </div>
   )
@@ -166,43 +175,43 @@ export function CardFace({
 
 // ─── Shared bits ─────────────────────────────────────────────────────────────
 
-/** A footer control chip — the consistent aid affordance across every mode. */
-function AidButton({
-  icon,
-  label,
-  onClick,
-  disabled,
-  primary,
-  active,
-}: {
-  icon: ReactNode
-  label: string
-  onClick: () => void
-  disabled?: boolean
-  primary?: boolean
-  active?: boolean
-}) {
+/** The one aid affordance shared by every mode's footer — same shape, size, and tint
+ * everywhere so the modes read as one family. Text-only on purpose: an icon here would
+ * clash with each mode's own glyphs (the Blur eye, the mode-switch icon). Each mode gives
+ * it a verb ("Blur", "Show all", "Reset", "Next word"); an aid with nothing to do no-ops,
+ * it is never disabled, so the control set never shifts under the thumb. */
+function AidButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <button
       type="button"
       onPointerDown={stopPress}
       onClick={onClick}
-      disabled={disabled}
-      aria-pressed={active}
-      className={cn(
-        'inline-flex min-h-11 items-center gap-1.5 rounded-control px-3.5 text-(length:--p-text-label) font-semibold transition-transform active:scale-[0.97] disabled:opacity-40 disabled:active:scale-100',
-        primary || active
-          ? 'bg-primary text-primary-foreground shadow-interactive'
-          : 'bg-info-surface text-heading',
-      )}
+      className="inline-flex min-h-11 items-center rounded-control bg-info-surface px-4 text-(length:--p-text-label) font-semibold text-heading transition-transform active:scale-[0.97]"
     >
-      {icon}
-      <span>{label}</span>
+      {label}
     </button>
   )
 }
 
-/** The mode's settings gear — opens the per-mode options sheet from the footer. */
+/** The mode picker, pinned to the footer's left — the single place to switch how the answer
+ * is recalled (moved off the page header). Wears the active mode's own icon. */
+function ModeButton({ mode, onClick }: { mode: StudyMode; onClick: () => void }) {
+  const { t } = useTranslation()
+  const Icon = STUDY_MODE_META[mode].Icon
+  return (
+    <button
+      type="button"
+      aria-label={t('study.changeMode')}
+      onPointerDown={stopPress}
+      onClick={onClick}
+      className="grid size-11 shrink-0 place-items-center rounded-control bg-info-surface text-heading transition-transform active:scale-[0.97]"
+    >
+      <Icon className="size-[18px]" aria-hidden />
+    </button>
+  )
+}
+
+/** The mode's settings gear — opens the per-mode options sheet from the footer's right. */
 function SettingsButton({ onClick }: { onClick: () => void }) {
   const { t } = useTranslation()
   return (
@@ -346,6 +355,8 @@ export function PromptFace(props: FaceProps) {
       speakText={prompt}
       onSpeak={onSpeak}
       active={active}
+      mode={props.mode}
+      onChangeMode={props.onChangeMode}
     >
       <h2 className="text-balance break-words text-center text-[clamp(22px,6vw,28px)] font-bold leading-[1.15] tracking-[-0.01em] text-heading">
         {prompt}
@@ -360,35 +371,21 @@ export function PromptFace(props: FaceProps) {
   )
 }
 
-/** Type front: recall the answer by typing it, aided by a full-text or first-letters mode. */
+/** Type front: recall the answer by typing it, aided by a full-text or first-letters mode.
+ * There is no reveal shortcut — the only ways forward are to type it or, in first-letters
+ * mode, unlock words one at a time with the footer's "Next word". */
 export function TypeFace(props: FaceProps) {
   const { t } = useTranslation()
   const { card, prompt, answer, canSpeak, typeInitialsOnly, active, onSpeak } = props
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [peeking, setPeeking] = useState(false)
+  // The first-letters recall lives here (not in the child) so its "Next word" aid can sit in
+  // the shared footer; it only grades on completion while first-letters mode is active.
+  const initials = useInitialsRecall(answer, typeInitialsOnly, props.onReveal)
 
-  const peek = () => {
-    setPeeking(true)
-    props.onRevealInPlace()
-  }
-
-  const footer = (
-    <div className="flex flex-wrap items-center justify-center gap-2">
-      <AidButton
-        icon={
-          peeking ? (
-            <EyeOff className="size-4" aria-hidden />
-          ) : (
-            <Eye className="size-4" aria-hidden />
-          )
-        }
-        label={peeking ? t('study.hideAnswer') : t('study.revealAnswer')}
-        onClick={() => (peeking ? setPeeking(false) : peek())}
-        active={peeking}
-      />
-      <SettingsButton onClick={() => setSettingsOpen(true)} />
-    </div>
-  )
+  const footer =
+    typeInitialsOnly && !initials.complete ? (
+      <AidButton label={t('study.nextWord')} onClick={initials.nextWord} />
+    ) : null
 
   return (
     <>
@@ -398,8 +395,11 @@ export function TypeFace(props: FaceProps) {
         speakText={prompt}
         onSpeak={onSpeak}
         active={active}
+        mode={props.mode}
+        onChangeMode={props.onChangeMode}
         align="start"
         footer={footer}
+        settings={<SettingsButton onClick={() => setSettingsOpen(true)} />}
       >
         <div className="shrink-0 text-center">
           <h2 className="text-balance break-words text-[clamp(18px,5vw,22px)] font-bold leading-tight tracking-[-0.01em] text-heading">
@@ -408,12 +408,8 @@ export function TypeFace(props: FaceProps) {
           {card.locus.tip ? <TipRow tip={card.locus.tip} /> : null}
         </div>
         <div className="h-px shrink-0 bg-border" aria-hidden />
-        {peeking ? (
-          <div className="allow-select rounded-card bg-info-surface px-4 py-3 text-[length:var(--p-text-body)] font-medium leading-relaxed text-heading">
-            {answer}
-          </div>
-        ) : typeInitialsOnly ? (
-          <TypeInitials answer={answer} onSolved={props.onReveal} />
+        {typeInitialsOnly ? (
+          <TypeInitials recall={initials} />
         ) : (
           <TypeFull answer={answer} onSolved={props.onReveal} />
         )}
@@ -500,11 +496,25 @@ function TypeFull({ answer, onSolved }: { answer: string; onSolved: () => void }
 
 const WRONG_LETTER_MS = 650
 
-function TypeInitials({ answer, onSolved }: { answer: string; onSolved: () => void }) {
-  const { t } = useTranslation()
-  const reduce = useReducedMotion()
+/** What `useInitialsRecall` exposes to the Type face and its footer aid. */
+interface InitialsRecall {
+  tokens: string[]
+  accepted: number
+  typedCount: number
+  complete: boolean
+  wrong: { char: string; seq: number } | null
+  /** Unlock the next expected word outright (the footer's "Next word" aid). */
+  nextWord: () => void
+  handleInput: (raw: string) => void
+  reset: () => void
+}
+
+/** First-letters recall state, lifted out of the input so the "Next word" aid can live in the
+ * shared footer. Accepts a keystroke only when it matches the next word's cue; a miss flashes
+ * the rejected letter. Auto-tokens (references, punctuation) fill themselves. Only reports a
+ * solve while `enabled`, so it can't grade a card that is being typed in full-text mode. */
+function useInitialsRecall(answer: string, enabled: boolean, onSolved: () => void): InitialsRecall {
   const tokens = useMemo(() => tokenizeWords(answer), [answer])
-  const inputRef = useRef<HTMLInputElement>(null)
 
   const advanceAuto = (from: number): number => {
     let index = from
@@ -523,9 +533,9 @@ function TypeInitials({ answer, onSolved }: { answer: string; onSolved: () => vo
   const complete = tokens.length > 0 && accepted >= tokens.length
 
   useEffect(() => {
-    if (complete) onSolved()
+    if (enabled && complete) onSolved()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [complete])
+  }, [enabled, complete])
 
   const flashWrong = (char: string) => {
     seq.current += 1
@@ -534,7 +544,6 @@ function TypeInitials({ answer, onSolved }: { answer: string; onSolved: () => vo
     wrongTimer.current = window.setTimeout(() => setWrong(null), WRONG_LETTER_MS)
   }
 
-  // Reveal the next expected word outright when a cue won't come — the "Next word" aid.
   const nextWord = () => {
     if (accepted < tokens.length) setAccepted(advanceAuto(accepted + 1))
   }
@@ -555,6 +564,19 @@ function TypeInitials({ answer, onSolved }: { answer: string; onSolved: () => vo
     if (next !== accepted) setAccepted(next)
     if (rejected) flashWrong(rejected)
   }
+
+  const reset = () => setAccepted(advanceAuto(0))
+
+  return { tokens, accepted, typedCount, complete, wrong, nextWord, handleInput, reset }
+}
+
+/** First-letters input surface — a hidden field that accepts one cue at a time, the accepted
+ * words rendered as they land. Purely presentational; the "Next word" aid sits in the footer. */
+function TypeInitials({ recall }: { recall: InitialsRecall }) {
+  const { t } = useTranslation()
+  const reduce = useReducedMotion()
+  const inputRef = useRef<HTMLInputElement>(null)
+  const { tokens, accepted, typedCount, complete, wrong, handleInput, reset } = recall
 
   return (
     <>
@@ -602,10 +624,7 @@ function TypeInitials({ answer, onSolved }: { answer: string; onSolved: () => vo
         </div>
 
         {typedCount > 0 && !complete ? (
-          <ResetButton
-            onClick={() => setAccepted(advanceAuto(0))}
-            className="absolute right-1.5 top-1.5 z-20"
-          />
+          <ResetButton onClick={reset} className="absolute right-1.5 top-1.5 z-20" />
         ) : null}
 
         <div className="pointer-events-none absolute inset-0 z-20 grid place-items-center">
@@ -629,18 +648,6 @@ function TypeInitials({ answer, onSolved }: { answer: string; onSolved: () => vo
           {wrong ? t('study.wrongLetter', { letter: wrong.char }) : ''}
         </span>
       </div>
-
-      {!complete ? (
-        <button
-          type="button"
-          onPointerDown={stopPress}
-          onClick={nextWord}
-          className="mx-auto inline-flex min-h-9 shrink-0 items-center gap-1.5 text-[length:var(--p-text-label)] font-semibold text-muted-foreground transition-colors active:text-heading"
-        >
-          <SkipForward className="size-3.5" aria-hidden />
-          {t('study.nextWord')}
-        </button>
-      ) : null}
     </>
   )
 }
@@ -682,28 +689,17 @@ export function RebuildFace(props: FaceProps) {
     }
   }
 
-  const fillAll = () => setUsedKeys(new Set(chips.map((chip) => chip.key)))
-  const startOver = () => {
+  // The only aid is Reset: clear the placed words AND un-reveal (so a solved card's footer
+  // returns from grades to the overview). Solving is done by tapping every chip into order;
+  // there is no fill-all shortcut. Reset stays mounted through `done`, so a solved card is
+  // never trapped with grades and no way back.
+  const reset = () => {
     setUsedKeys(new Set())
     setWrongKey(null)
+    props.onHideInPlace()
   }
 
-  const footer = done ? null : (
-    <div className="flex items-center justify-center gap-2">
-      <AidButton
-        icon={<Sparkles className="size-4" aria-hidden />}
-        label={t('study.autoFill')}
-        onClick={fillAll}
-        primary
-      />
-      <AidButton
-        icon={<RotateCcw className="size-4" aria-hidden />}
-        label={t('study.startOver')}
-        onClick={startOver}
-        disabled={placed === 0}
-      />
-    </div>
-  )
+  const footer = <AidButton label={t('study.reset')} onClick={reset} />
 
   return (
     <CardFace
@@ -712,6 +708,8 @@ export function RebuildFace(props: FaceProps) {
       speakText={prompt}
       onSpeak={onSpeak}
       active={active}
+      mode={props.mode}
+      onChangeMode={props.onChangeMode}
       align="start"
       footer={footer}
     >
@@ -776,6 +774,8 @@ export function AnswerFace(props: FaceProps) {
       speakText={answer}
       onSpeak={onSpeak}
       active={active}
+      mode={props.mode}
+      onChangeMode={props.onChangeMode}
       back
     >
       <BackPrompt prompt={prompt} onFlip={props.onFlip} />
@@ -816,22 +816,14 @@ export function BlurFace(props: FaceProps) {
     })
   }
 
+  // Blur takes away another batch (no-op once nothing is left visible); Show all reveals
+  // everything (no-op once all words are visible) — neither ever disables, so the pair holds
+  // still. Text labels only: an eye icon here would echo the mode's own eye glyph.
   const footer = (
-    <div className="flex items-center justify-center gap-2">
-      <AidButton
-        icon={<EyeOff className="size-4" aria-hidden />}
-        label={t('study.hideWords')}
-        onClick={hideMore}
-        disabled={visible.length === 0}
-        primary
-      />
-      <AidButton
-        icon={<Eye className="size-4" aria-hidden />}
-        label={t('study.showAllWords')}
-        onClick={() => setHidden(new Set())}
-        disabled={hidden.size === 0}
-      />
-    </div>
+    <>
+      <AidButton label={t('study.blur')} onClick={hideMore} />
+      <AidButton label={t('study.showAll')} onClick={() => setHidden(new Set())} />
+    </>
   )
 
   return (
@@ -841,6 +833,8 @@ export function BlurFace(props: FaceProps) {
       speakText={answer}
       onSpeak={onSpeak}
       active={active}
+      mode={props.mode}
+      onChangeMode={props.onChangeMode}
       back
       footer={footer}
     >
@@ -928,19 +922,15 @@ export function InitialsFace(props: FaceProps) {
     if (Math.abs(clamped - peek.x) > 0.5) setPeek({ ...peek, x: clamped })
   }, [peek])
 
+  // One toggle: spell every word out, or drop back to first-letters. Peeks close either way.
   const footer = (
-    <div className="flex items-center justify-center gap-2">
-      <AidButton
-        icon={<WholeWord className="size-4" aria-hidden />}
-        label={showAll ? t('study.showInitials') : t('study.showWords')}
-        onClick={() => {
-          setShowAll((prev) => !prev)
-          setPeek(null)
-        }}
-        active={showAll}
-      />
-      <SettingsButton onClick={() => setSettingsOpen(true)} />
-    </div>
+    <AidButton
+      label={showAll ? t('study.showInitials') : t('study.showWords')}
+      onClick={() => {
+        setShowAll((prev) => !prev)
+        setPeek(null)
+      }}
+    />
   )
 
   return (
@@ -951,8 +941,11 @@ export function InitialsFace(props: FaceProps) {
         speakText={answer}
         onSpeak={onSpeak}
         active={active}
+        mode={props.mode}
+        onChangeMode={props.onChangeMode}
         back
         footer={footer}
+        settings={<SettingsButton onClick={() => setSettingsOpen(true)} />}
       >
         <BackPrompt prompt={prompt} onFlip={props.onFlip} />
         <div ref={rootRef} className="relative w-full" onClick={() => setPeek(null)}>

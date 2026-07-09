@@ -35,12 +35,7 @@ import { editLocus } from '@/features/locus'
 import { editPalace } from '@/features/palace'
 import { gradeCard, restoreSchedule } from '@/features/review'
 import { setPreferences } from '@/features/preferences'
-import {
-  type StudyCard,
-  type StudyPrefs,
-  FlashcardsPanel,
-  STUDY_MODE_META,
-} from '@/widgets/study-session'
+import { type StudyCard, type StudyPrefs, FlashcardsPanel } from '@/widgets/study-session'
 import { useSessionReward } from '@/widgets/session-reward'
 import { AppScreen, Button, IconButton, ScreenHeader } from '@/shared/ui'
 
@@ -178,7 +173,6 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
   const subtitle = scope.kind === 'room' ? palace.name : t('study.palaceScope')
   const scopeKey = scope.kind === 'room' ? scope.roomId : scope.palaceId
   const back = onBack ?? (() => {})
-  const ModeIcon = STUDY_MODE_META[mode].Icon
 
   // A scope with no authored cards: a real empty state, not a deck over nothing.
   if (cards.length === 0) {
@@ -215,22 +209,13 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
               <p className="truncate text-[length:var(--p-text-label)]">{subtitle}</p>
             ) : null}
           </div>
-          <div className="flex items-center gap-0.5">
-            <IconButton
-              variant="glass"
-              aria-label={t('study.changeMode')}
-              onClick={() => setModeSheetOpen(true)}
-            >
-              <ModeIcon className="size-5" aria-hidden />
-            </IconButton>
-            <IconButton
-              variant="glass"
-              aria-label={t('study.options')}
-              onClick={() => setOptionsOpen(true)}
-            >
-              <SlidersHorizontal className="size-5" aria-hidden />
-            </IconButton>
-          </div>
+          <IconButton
+            variant="glass"
+            aria-label={t('study.options')}
+            onClick={() => setOptionsOpen(true)}
+          >
+            <SlidersHorizontal className="size-5" aria-hidden />
+          </IconButton>
         </div>
       </div>
 

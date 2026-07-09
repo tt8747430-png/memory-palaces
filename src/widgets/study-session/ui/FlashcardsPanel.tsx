@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Sparkles } from 'lucide-react'
 import type { StudyMode } from '@/entities/preferences'
@@ -104,6 +104,9 @@ export function FlashcardsPanel({
   now = Date.now(),
 }: FlashcardsPanelProps) {
   const canSpeak = speechAvailable()
+  const reduce = useReducedMotion()
+  // The footer's grade↔overview crossfade; instant under reduced motion (a valid alternative).
+  const crossfade = { duration: reduce ? 0 : 0.12 }
 
   const [scope, setScope] = useState<Scope>({ kind: 'all' })
   const [quickOpen, setQuickOpen] = useState(false)
@@ -292,10 +295,12 @@ export function FlashcardsPanel({
             canSpeak={canSpeak}
             onFlip={() => dispatch({ type: 'flip' })}
             onReveal={() => dispatch({ type: 'reveal' })}
+            onUnflip={() => dispatch({ type: 'unflip' })}
             onCommit={handleCommit}
             onSpeak={(text) => speak(text)}
             onWordSpaces={(value) => onWordSpacesChange?.(value)}
             onTypeInitialsOnly={setTypeInitialsOnly}
+            onChangeMode={() => onModeSheetOpenChange(true)}
             onLongPress={() => setQuickOpen(true)}
           />
         ) : !completed ? (
@@ -321,7 +326,7 @@ export function FlashcardsPanel({
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  transition={{ duration: 0.12 }}
+                  transition={crossfade}
                   className="h-full"
                 >
                   <GradeButtons
@@ -337,7 +342,7 @@ export function FlashcardsPanel({
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  transition={{ duration: 0.12 }}
+                  transition={crossfade}
                   className="flex h-full items-center justify-center"
                 >
                   <RemainingCounts remaining={remaining} current={srsStatus(card.locus.srs)} />

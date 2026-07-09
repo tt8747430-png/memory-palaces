@@ -46,10 +46,14 @@ export interface StudyDeckProps {
   canSpeak: boolean
   onFlip: () => void
   onReveal: () => void
+  /** Undo an in-place reveal (Rebuild reset, Type hide) — returns the card to its front. */
+  onUnflip: () => void
   onCommit: (direction: SwipeDirection) => void
   onSpeak: (text: string) => void
   onWordSpaces: (value: boolean) => void
   onTypeInitialsOnly: (value: boolean) => void
+  /** Open the study-mode picker — wired to the footer's left control. */
+  onChangeMode: () => void
   onLongPress?: () => void
 }
 
@@ -112,10 +116,12 @@ export function StudyDeck({
   canSpeak,
   onFlip,
   onReveal,
+  onUnflip,
   onCommit,
   onSpeak,
   onWordSpaces,
   onTypeInitialsOnly,
+  onChangeMode,
   onLongPress,
 }: StudyDeckProps) {
   const reduce = useReducedMotion()
@@ -257,6 +263,11 @@ export function StudyDeck({
       setHeldFront(true)
       onReveal()
     },
+    onHideInPlace: () => {
+      setHeldFront(false)
+      onUnflip()
+    },
+    onChangeMode,
   }
   const backProps: FaceProps = { ...faceProps, active: showBack }
 
