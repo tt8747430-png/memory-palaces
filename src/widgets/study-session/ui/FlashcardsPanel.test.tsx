@@ -5,7 +5,7 @@ import { MotionConfig } from 'motion/react'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
 import { makeLocus } from '@/entities/locus'
-import { DEFAULT_FLASHCARD_SWIPE } from '@/shared/config/flashcard-swipe'
+import { DEFAULT_FLASHCARD_SWIPE_BY_MODE } from '@/shared/config/flashcard-swipe'
 import type { StudyMode } from '@/entities/preferences'
 import { FlashcardsPanel } from './FlashcardsPanel'
 import type { StudyCard, StudyPrefs } from '../model/types'
@@ -45,7 +45,6 @@ function renderPanel(
     onComplete: () => void
     prefs: Partial<StudyPrefs>
     mode: StudyMode
-    modeSheetOpen: boolean
   }> = {},
 ) {
   const onGrade = vi.fn(overrides.onGrade)
@@ -60,15 +59,11 @@ function renderPanel(
           mode={overrides.mode ?? 'blur'}
           wordSpaces
           shakeToUndo={false}
-          swipeConfig={DEFAULT_FLASHCARD_SWIPE}
+          swipeByMode={DEFAULT_FLASHCARD_SWIPE_BY_MODE}
           onGrade={onGrade}
           onModeChange={onModeChange}
           onBack={() => {}}
           onComplete={onComplete}
-          optionsOpen={false}
-          onOptionsOpenChange={() => {}}
-          modeSheetOpen={overrides.modeSheetOpen ?? false}
-          onModeSheetOpenChange={() => {}}
           now={NOW}
         />
       </MotionConfig>
@@ -179,9 +174,11 @@ describe('FlashcardsPanel', () => {
 
   it('switches the study mode through the mode sheet', async () => {
     const user = userEvent.setup()
-    const { onModeChange } = renderPanel([studyCard('a')], { mode: 'type', modeSheetOpen: true })
+    const { onModeChange } = renderPanel([studyCard('a')], { mode: 'type' })
 
-    // The mode sheet renders outside the deck, so userEvent drives it directly.
+    // The footer mode button opens the picker; both card faces carry one (front + inert back),
+    // so drive the first. The sheet then renders outside the deck.
+    fireEvent.click(screen.getAllByRole('button', { name: /change study mode/i })[0]!)
     await user.click(await screen.findByRole('button', { name: /rebuild/i }))
     expect(onModeChange).toHaveBeenCalledWith('words')
   })

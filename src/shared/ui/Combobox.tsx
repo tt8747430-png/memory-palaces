@@ -18,6 +18,9 @@ export interface ComboboxProps<T extends string> {
   onChange: (value: T) => void
   placeholder?: string
   disabled?: boolean
+  /** `field` (default) is the full-width input-shaped trigger; `bare` is a borderless,
+   * content-width value+chevron for the trailing edge of a settings/option row. */
+  variant?: 'field' | 'bare'
   className?: string
 }
 
@@ -35,9 +38,11 @@ export function Combobox<T extends string>({
   onChange,
   placeholder,
   disabled,
+  variant = 'field',
   className,
 }: ComboboxProps<T>) {
   const selected = options.find((option) => option.value === value)
+  const bare = variant === 'bare'
 
   return (
     <Menu.Root modal={false}>
@@ -46,9 +51,11 @@ export function Combobox<T extends string>({
         aria-label={label}
         onPointerDown={(event) => event.stopPropagation()}
         className={cn(
-          'flex h-11 w-full items-center gap-2.5 rounded-control border border-border bg-card px-3.5 text-left',
-          'shadow-rest outline-none transition-[border-color,box-shadow] duration-150 ease-out',
-          'focus-visible:ring-[3px] focus-visible:ring-ring/45 data-[popup-open]:border-[oklch(var(--p-tint-navy)/0.2)]',
+          bare
+            ? 'flex min-h-11 items-center gap-1 rounded-control pl-2 -mr-1.5 pr-1.5 text-right outline-none data-[popup-open]:text-accent'
+            : 'flex h-11 w-full items-center gap-2.5 rounded-control border border-border bg-card px-3.5 text-left shadow-rest data-[popup-open]:border-[oklch(var(--p-tint-navy)/0.2)]',
+          'outline-none transition-[color,border-color,box-shadow] duration-150 ease-out',
+          'focus-visible:ring-[3px] focus-visible:ring-ring/45',
           'disabled:pointer-events-none disabled:opacity-50',
           className,
         )}
@@ -60,21 +67,25 @@ export function Combobox<T extends string>({
         ) : null}
         <span
           className={cn(
-            'min-w-0 flex-1 truncate text-[length:var(--p-text-body)] font-semibold',
+            'min-w-0 truncate text-(length:--p-text-body) font-semibold',
+            bare ? 'text-heading' : 'flex-1',
             selected ? 'text-heading' : 'text-muted-foreground',
           )}
         >
           {selected?.label ?? placeholder ?? ''}
         </span>
-        <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+        <ChevronsUpDown
+          className={cn('size-4 shrink-0', bare ? 'text-muted-foreground/70' : 'text-muted-foreground')}
+          aria-hidden
+        />
       </Menu.Trigger>
       <Menu.Portal>
         <Menu.Positioner
           side="bottom"
-          align="start"
+          align={bare ? 'end' : 'start'}
           sideOffset={6}
           collisionPadding={12}
-          className="z-[500] w-[var(--anchor-width)]"
+          className={cn('z-[500]', bare ? 'min-w-[11rem]' : 'w-[var(--anchor-width)]')}
         >
           <Menu.Popup
             className={cn(

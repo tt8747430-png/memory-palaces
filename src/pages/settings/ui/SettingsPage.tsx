@@ -12,9 +12,11 @@ import {
   LogOut,
   Monitor,
   Moon,
+  Palette,
   Shield,
   Sparkles,
   Sun,
+  Target,
   Trash2,
   Upload,
   Vibrate,
@@ -38,10 +40,8 @@ import { AVAILABLE_LANGUAGES, DAILY_GOAL_OPTIONS } from '@/shared/config/constan
 import {
   AppScreen,
   Avatar,
-  Combobox,
   ConfirmDialog,
   ScreenHeader,
-  SegmentedControl,
   SettingsRow,
   SettingsSection,
 } from '@/shared/ui'
@@ -216,57 +216,37 @@ export function SettingsPage({
             checked={prefs.reducedMotion}
             onCheckedChange={(value) => update({ reducedMotion: value })}
           />
-          <div className="px-4 py-3">
-            <p className="text-[length:var(--p-text-body)] font-semibold text-heading">
-              {t('settings.dailyGoal')}
-            </p>
-            <p className="mb-2.5 text-[length:var(--p-text-label)] text-muted-foreground">
-              {t('settings.dailyGoalHint')}
-            </p>
-            <SegmentedControl
-              aria-label={t('settings.dailyGoal')}
-              value={String(prefs.dailyGoal)}
-              onChange={(value) => update({ dailyGoal: Number(value) })}
-              options={DAILY_GOAL_OPTIONS.map((n) => ({ value: String(n), label: String(n) }))}
-            />
-          </div>
-          <div className="px-4 py-3">
-            <p className="text-[length:var(--p-text-body)] font-semibold text-heading">
-              {t('settings.theme')}
-            </p>
-            <p className="mb-2.5 text-[length:var(--p-text-label)] text-muted-foreground">
-              {t('settings.themeHint')}
-            </p>
-            <SegmentedControl
-              aria-label={t('settings.theme')}
-              value={prefs.theme}
-              onChange={(value) => update({ theme: value })}
-              options={themeOptions.map((option) => ({
-                value: option.value,
-                ariaLabel: option.label,
-                label: (
-                  <span className="inline-flex items-center gap-1.5">
-                    {option.icon}
-                    {option.label}
-                  </span>
-                ),
-              }))}
-            />
-          </div>
-          <div className="px-4 py-3">
-            <p className="text-[length:var(--p-text-body)] font-semibold text-heading">
-              {t('settings.language')}
-            </p>
-            <p className="mb-2.5 text-[length:var(--p-text-label)] text-muted-foreground">
-              {t('settings.languageHint')}
-            </p>
-            <Combobox
-              label={t('settings.language')}
-              value={currentLanguage.code}
-              options={languageOptions}
-              onChange={selectLanguage}
-            />
-          </div>
+          <SettingsRow
+            kind="select"
+            icon={<Target />}
+            label={t('settings.dailyGoal')}
+            description={t('settings.dailyGoalHint')}
+            value={String(prefs.dailyGoal)}
+            options={DAILY_GOAL_OPTIONS.map((n) => ({ value: String(n), label: String(n) }))}
+            onValueChange={(value) => update({ dailyGoal: Number(value) })}
+          />
+          <SettingsRow
+            kind="select"
+            icon={<Palette />}
+            label={t('settings.theme')}
+            description={t('settings.themeHint')}
+            value={prefs.theme}
+            options={themeOptions.map((option) => ({
+              value: option.value,
+              label: option.label,
+              icon: option.icon,
+            }))}
+            onValueChange={(value) => update({ theme: value as (typeof themeOptions)[number]['value'] })}
+          />
+          <SettingsRow
+            kind="select"
+            icon={<Globe />}
+            label={t('settings.language')}
+            description={t('settings.languageHint')}
+            value={currentLanguage.code}
+            options={languageOptions}
+            onValueChange={selectLanguage}
+          />
           <SettingsRow
             kind="nav"
             icon={<ArrowLeftRight />}

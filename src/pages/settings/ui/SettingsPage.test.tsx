@@ -39,11 +39,13 @@ describe('SettingsPage', () => {
     expect(screen.getByRole('switch', { name: /reduced motion/i })).toBeInTheDocument()
   })
 
-  it('persists the appearance theme chosen from the segmented control', async () => {
+  it('persists the appearance theme chosen from the picker', async () => {
     const user = userEvent.setup()
     const { prefsRepo } = renderSettings()
 
-    await user.click(screen.getByRole('button', { name: 'Dark' }))
+    // Appearance is an inline combobox row: open it, then pick Dark.
+    await user.click(screen.getByRole('button', { name: 'Appearance' }))
+    await user.click(await screen.findByRole('menuitem', { name: 'Dark' }))
 
     await waitFor(async () => {
       const [prefs] = await prefsRepo.getAll()

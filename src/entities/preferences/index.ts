@@ -9,6 +9,7 @@ export type {
   Theme,
   SwipePreferences,
   FlashcardSwipeConfig,
+  FlashcardSwipeByMode,
   MakePreferencesInput,
   PreferencesChanges,
 } from './model/types'

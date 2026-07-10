@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { cn } from '@/shared/lib'
 import { Chip } from './Chip'
+import { Combobox, type ComboboxOption } from './Combobox'
 import { SwitchTrack } from './Switch'
 
 type Tone = 'default' | 'danger'
@@ -19,6 +20,12 @@ export type SettingsRowProps = BaseProps &
     | { kind: 'nav'; onClick: () => void; value?: string; disabled?: boolean }
     | { kind: 'action'; onClick: () => void; disabled?: boolean }
     | { kind: 'value'; value: string }
+    | {
+        kind: 'select'
+        value: string
+        options: ComboboxOption<string>[]
+        onValueChange: (value: string) => void
+      }
     | { kind: 'soon'; badge: string }
   )
 
@@ -125,6 +132,21 @@ export function SettingsRow(props: SettingsRowProps) {
       >
         {body}
       </button>
+    )
+  }
+
+  if (props.kind === 'select') {
+    return (
+      <div className={ROW}>
+        {body}
+        <Combobox
+          variant="bare"
+          label={label}
+          value={props.value}
+          options={props.options}
+          onChange={props.onValueChange}
+        />
+      </div>
     )
   }
 

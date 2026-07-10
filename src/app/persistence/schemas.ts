@@ -234,14 +234,16 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
       additionalProperties: false,
     },
     flashcardSwipe: {
+      // One four-direction map per study mode. Inner shape validated at the entity layer
+      // (`normalizeFlashcardSwipe`), like the list-row `swipe` field above.
       type: 'object',
       properties: {
-        up: { type: 'string', enum: ['again', 'hard', 'good', 'easy', 'flag', 'skip', 'none'] },
-        down: { type: 'string', enum: ['again', 'hard', 'good', 'easy', 'flag', 'skip', 'none'] },
-        left: { type: 'string', enum: ['again', 'hard', 'good', 'easy', 'flag', 'skip', 'none'] },
-        right: { type: 'string', enum: ['again', 'hard', 'good', 'easy', 'flag', 'skip', 'none'] },
+        blur: { type: 'object' },
+        words: { type: 'object' },
+        initials: { type: 'object' },
+        type: { type: 'object' },
       },
-      required: ['up', 'down', 'left', 'right'],
+      required: ['blur', 'words', 'initials', 'type'],
       additionalProperties: false,
     },
     privacy: {

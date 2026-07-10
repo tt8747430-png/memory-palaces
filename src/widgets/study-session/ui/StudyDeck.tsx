@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   animate,
   AnimatePresence,
@@ -18,6 +18,7 @@ import {
   FLASHCARD_SWIPE_ACTION_META,
   type FlashcardSwipeConfig,
   isGradeAction,
+  isModeAction,
   type SwipeDirection,
 } from '@/shared/config/flashcard-swipe'
 import {
@@ -25,6 +26,7 @@ import {
   BlurFace,
   type FaceProps,
   InitialsFace,
+  type MechanicHandlers,
   PromptFace,
   RebuildFace,
   TypeFace,
@@ -40,7 +42,8 @@ export interface StudyDeckProps {
   direction: StudyDirection
   wordSpaces: boolean
   typeInitialsOnly: boolean
-  /** The session machine's flip flag (a solved Rebuild reveals in place — see `heldFront`). */
+  /** The session machine's flip flag (grades in the footer). A solved card keeps its working
+   * surface up (see `solved`/`peek`); a normal flip turns it to the back. */
   flipped: boolean
   swipeConfig: FlashcardSwipeConfig
   canSpeak: boolean
@@ -50,14 +53,15 @@ export interface StudyDeckProps {
   onUnflip: () => void
   onCommit: (direction: SwipeDirection) => void
   onSpeak: (text: string) => void
-  onWordSpaces: (value: boolean) => void
-  onTypeInitialsOnly: (value: boolean) => void
-  /** Open the study-mode picker — wired to the footer's left control. */
+  /** Open the study-mode picker — the footer's left control. */
   onChangeMode: () => void
+  /** Open the merged gear sheet — the footer's right control. */
+  onOpenGear: () => void
   onLongPress?: () => void
 }
 
-/** Text tint per swipe action, matching the grade-button palette. `none` renders no chip. */
+/** Text tint per swipe action, matching the grade-button palette. Mode-specific actions read in
+ * the neutral heading tint (they act on the card, not the schedule). `none` renders no chip. */
 const ACTION_TINT: Record<Exclude<FlashcardSwipeAction, 'none'>, string> = {
   again: 'text-[var(--danger-on-surface)]',
   hard: 'text-[var(--warning-foreground)]',
@@ -65,18 +69,24 @@ const ACTION_TINT: Record<Exclude<FlashcardSwipeAction, 'none'>, string> = {
   easy: 'text-[var(--accent)]',
   flag: 'text-[var(--rating-edge)]',
   skip: 'text-muted-foreground',
+  hideMore: 'text-heading',
+  showAll: 'text-heading',
+  showWords: 'text-heading',
+  reset: 'text-heading',
+  nextWord: 'text-heading',
 }
 
-/** Actions that leave the current card (grades + skip). `flag`/`none` keep it in place. */
+/** Actions that leave the current card (grades + skip). Flag/none/mode-specific keep it. */
 function actionAdvances(action: FlashcardSwipeAction): boolean {
   return isGradeAction(action) || action === 'skip'
 }
 
-/** The interactive element a gesture began on, if any. */
+/** The interactive element a gesture began on, if any. `data-card-control` covers surfaces that
+ * are controls without a native control tag (the first-letters input area). */
 function controlOf(target: EventTarget | null): HTMLElement | null {
   return (
     (target as HTMLElement | null)?.closest<HTMLElement>(
-      'button, input, textarea, a, select, [role="button"]',
+      'button, input, textarea, a, select, [role="button"], [data-card-control]',
     ) ?? null
   )
 }
@@ -99,11 +109,16 @@ function swipeAllowed(target: EventTarget | null): boolean {
   return control === null || control.hasAttribute('data-flip')
 }
 
+/** How long a still press must hold before it opens quick actions. */
+const LONG_PRESS_MS = 450
+/** Finger drift allowed during the hold before it's read as a swipe, not a press. */
+const LONG_PRESS_SLOP = 12
+
 /** The unified study deck: one swipeable, two-faced card behind every mode. Tap a
- * non-interactive area to flip, fling to grade/skip/flag (only one chip ever shows — the
- * direction you're committing to), press-and-hold for quick actions. Swipe is armed on the
- * card's fixed header/footer and on a body that fits; a scrolling body keeps its own pan and
- * its controls always win. The parent maps `onCommit(direction)` through the same swipe config. */
+ * non-interactive area to flip (or, once solved in place, to peek the answer and back), fling to
+ * grade/skip/flag or run this mode's own action, press-and-hold for quick actions. The parent
+ * maps `onCommit(direction)` through the active mode's swipe config; mode-specific actions are
+ * dispatched to the active face's registered mechanic. */
 export function StudyDeck({
   card,
   nextCard,
@@ -119,9 +134,8 @@ export function StudyDeck({
   onUnflip,
   onCommit,
   onSpeak,
-  onWordSpaces,
-  onTypeInitialsOnly,
   onChangeMode,
+  onOpenGear,
   onLongPress,
 }: StudyDeckProps) {
   const reduce = useReducedMotion()
@@ -134,11 +148,28 @@ export function StudyDeck({
   const prompt = direction === 'front' ? locus.front : locus.back
   const answer = recallAnswer(prompt, direction === 'front' ? locus.back : locus.front)
 
-  // A solved Rebuild (and Type's read-only peek) reveals the grades without turning the card,
-  // so the reconstructed answer stays in view. Reset whenever the card or mode changes.
-  const [heldFront, setHeldFront] = useState(false)
-  useEffect(() => setHeldFront(false), [locus.id, mode])
-  const showBack = flipped && !heldFront
+  // A solved Type/Rebuild reveals the grades without turning the card, so the reconstruction
+  // stays in view; tapping then peeks the answer face. Both reset when the card or mode changes.
+  const [solved, setSolved] = useState(false)
+  const [peek, setPeek] = useState(false)
+  useEffect(() => {
+    setSolved(false)
+    setPeek(false)
+  }, [locus.id, mode])
+  const showBack = solved ? peek : flipped
+
+  // Mode-specific swipe mechanics published by the active face (Blur hide, Type next word, …).
+  const mechanicRef = useRef<MechanicHandlers>({})
+  const registerMechanic = useCallback((handlers: MechanicHandlers | null) => {
+    mechanicRef.current = handlers ?? {}
+  }, [])
+
+  // Tap / FlipZone / BackPrompt all route here so flipping respects the solved state: a solved
+  // card peeks the answer instead of un-revealing.
+  const handleFlip = useCallback(() => {
+    if (solved) setPeek((prev) => !prev)
+    else onFlip()
+  }, [solved, onFlip])
 
   const x = useMotionValue(0)
   const y = useMotionValue(0)
@@ -162,6 +193,13 @@ export function StudyDeck({
     if (locked) return
     const action = swipeConfig[dir]
     if (action === 'none') {
+      snapBack()
+      return
+    }
+    // A mode-specific action runs the active face's mechanic in place — a tick, then spring back.
+    if (isModeAction(action)) {
+      mechanicRef.current[action]?.()
+      tick()
       snapBack()
       return
     }
@@ -205,7 +243,7 @@ export function StudyDeck({
             heldRef.current = true
             impact()
             onLongPress?.()
-          }, 480)
+          }, LONG_PRESS_MS)
         }
       }
       if (tap) {
@@ -214,12 +252,14 @@ export function StudyDeck({
           heldRef.current = false
           return
         }
-        // Tap any non-interactive area — including a scrolling body — to flip.
-        if (!isControl(event.target)) onFlip()
+        // Tap any non-interactive area to flip (or peek, once solved).
+        if (!isControl(event.target)) handleFlip()
         return
       }
       if (!armedRef.current) return
-      if (Math.abs(mx) > 6 || Math.abs(my) > 6) clearHold()
+      // Cancel the pending long-press only once the finger has clearly moved (a real drag),
+      // so a still thumb with minor jitter still opens quick actions.
+      if (Math.abs(mx) > LONG_PRESS_SLOP || Math.abs(my) > LONG_PRESS_SLOP) clearHold()
       if (down) {
         x.set(mx)
         y.set(my)
@@ -255,19 +295,20 @@ export function StudyDeck({
     typeInitialsOnly,
     active: !showBack,
     onSpeak,
-    onWordSpaces,
-    onTypeInitialsOnly,
-    onFlip,
-    onReveal,
+    onFlip: handleFlip,
     onRevealInPlace: () => {
-      setHeldFront(true)
+      setSolved(true)
+      setPeek(false)
       onReveal()
     },
     onHideInPlace: () => {
-      setHeldFront(false)
+      setSolved(false)
+      setPeek(false)
       onUnflip()
     },
     onChangeMode,
+    onOpenGear,
+    registerMechanic,
   }
   const backProps: FaceProps = { ...faceProps, active: showBack }
 

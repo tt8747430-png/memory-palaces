@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChevronLeft, Layers, SlidersHorizontal } from 'lucide-react'
+import { ChevronLeft, Layers } from 'lucide-react'
 import {
   lociForRoom,
   selectIsReady as selectLociReady,
@@ -23,7 +23,7 @@ import {
   usePalaceStoreApi,
 } from '@/entities/palace'
 import {
-  type FlashcardSwipeConfig,
+  type FlashcardSwipeByMode,
   resolveStudyMode,
   selectEffectivePreferences,
   selectIsReady as selectPrefsReady,
@@ -31,6 +31,7 @@ import {
   usePreferencesStore,
   usePreferencesStoreApi,
 } from '@/entities/preferences'
+import { normalizeFlashcardSwipe } from '@/shared/config/flashcard-swipe'
 import { editLocus } from '@/features/locus'
 import { editPalace } from '@/features/palace'
 import { gradeCard, restoreSchedule } from '@/features/review'
@@ -87,11 +88,14 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
   // Wait on preferences too, so the surface opens straight into the persisted mode.
   const ready = lociReady && roomsReady && palacesReady && prefsReady
 
-  const [optionsOpen, setOptionsOpen] = useState(false)
-  const [modeSheetOpen, setModeSheetOpen] = useState(false)
   // The mode IS the persisted preference — last-used, resumed on open, clamped in case a
   // retired value survived in storage.
   const mode: StudyMode = resolveStudyMode(preferences.studyMode)
+  // Normalize the stored map to the per-mode shape so an indexed lookup is always safe.
+  const swipeByMode = useMemo(
+    () => normalizeFlashcardSwipe(preferences.flashcardSwipe),
+    [preferences.flashcardSwipe],
+  )
 
   const room = useMemo(
     () =>
@@ -142,7 +146,7 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
       },
     })
   }
-  const persistSwipe = (config: FlashcardSwipeConfig) =>
+  const persistSwipe = (config: FlashcardSwipeByMode) =>
     void setPreferences(preferencesStore, { flashcardSwipe: config })
   const changeMode = (next: StudyMode) => {
     void setPreferences(preferencesStore, { studyMode: next })
@@ -209,13 +213,8 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
               <p className="truncate text-[length:var(--p-text-label)]">{subtitle}</p>
             ) : null}
           </div>
-          <IconButton
-            variant="glass"
-            aria-label={t('study.options')}
-            onClick={() => setOptionsOpen(true)}
-          >
-            <SlidersHorizontal className="size-5" aria-hidden />
-          </IconButton>
+          {/* Options moved onto the card's footer gear; a spacer keeps the title centered. */}
+          <div className="size-10 shrink-0" aria-hidden />
         </div>
       </div>
 
@@ -226,9 +225,9 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
         mode={mode}
         wordSpaces={preferences.studyWordSpaces}
         shakeToUndo={preferences.shakeToUndo}
-        swipeConfig={preferences.flashcardSwipe}
+        swipeByMode={swipeByMode}
         onPrefsChange={persistStudyPrefs(palace)}
-        onSwipeConfigChange={persistSwipe}
+        onSwipeByModeChange={persistSwipe}
         onModeChange={changeMode}
         onWordSpacesChange={persistWordSpaces}
         onShakeToUndoChange={(value) =>
@@ -243,10 +242,6 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
           void reward({ kind: 'study', graded: summary.graded })
           back()
         }}
-        optionsOpen={optionsOpen}
-        onOptionsOpenChange={setOptionsOpen}
-        modeSheetOpen={modeSheetOpen}
-        onModeSheetOpenChange={setModeSheetOpen}
       />
     </div>
   )

@@ -18,14 +18,16 @@ import {
   shuffleFirstDue,
 } from '@/features/review'
 import {
+  type FlashcardSwipeByMode,
   type FlashcardSwipeConfig,
   isGradeAction,
   type SwipeDirection,
 } from '@/shared/config/flashcard-swipe'
 import { StudyDeck } from './StudyDeck'
-import { StudyOptionsSheet } from './StudyOptionsSheet'
+import { GearSheet } from './GearSheet'
 import { ModeSheet } from './ModeSheet'
 import { QuickActionsSheet } from './QuickActionsSheet'
+import type { QuickActionsModel } from './QuickActionRows'
 import { InStudyEditor } from './InStudyEditor'
 import { CompletionOverlay } from './CompletionOverlay'
 import type { Grade, LocusChanges, SessionSummary, StudyCard, StudyPrefs } from '../model/types'
@@ -39,11 +41,12 @@ export interface FlashcardsPanelProps {
   wordSpaces: boolean
   /** Shake the device to undo the last graded card. Global preference. */
   shakeToUndo: boolean
-  swipeConfig: FlashcardSwipeConfig
+  /** Per-mode swipe maps. Global preference. */
+  swipeByMode: FlashcardSwipeByMode
   /** Persist study-preference changes (the host mirrors them to palace settings). */
   onPrefsChange?: (prefs: StudyPrefs) => void
-  /** Persist the swipe map (the host mirrors it to global preferences). */
-  onSwipeConfigChange?: (config: FlashcardSwipeConfig) => void
+  /** Persist the per-mode swipe maps (the host mirrors them to global preferences). */
+  onSwipeByModeChange?: (config: FlashcardSwipeByMode) => void
   /** Persist the recall mode (global preference). */
   onModeChange?: (mode: StudyMode) => void
   /** Persist the Initials word-spaces toggle (global preference). */
@@ -57,12 +60,6 @@ export interface FlashcardsPanelProps {
   onEditCard?: (locusId: string, changes: LocusChanges) => void
   onBack: () => void
   onComplete: (summary: SessionSummary) => void
-  /** The header's options button; the panel owns the sheet, the page owns the trigger. */
-  optionsOpen: boolean
-  onOptionsOpenChange: (open: boolean) => void
-  /** The header's mode button; same split — the panel owns the mode sheet. */
-  modeSheetOpen: boolean
-  onModeSheetOpenChange: (open: boolean) => void
   now?: number
 }
 
@@ -77,17 +74,17 @@ type UndoEntry = { locusId: string; prevSrs: SrsState | undefined } | null
 /** The study surface (ADR-0005): a spaced-review session over a scope's cards. Opens in review
  * (due cards lead); grading runs through the four-grade SM-2 control and the host's `gradeCard`
  * command so schedules survive offline. Every mode is the same two-faced `StudyDeck` — tap to
- * flip, swipe to grade — differing only in how its back tests the answer. Headerless: the page
- * owns the title, mode, and options triggers. */
+ * flip, swipe to grade/act — differing only in how its back tests the answer. Headerless: the
+ * page owns the title; the footer gear owns the merged options sheet. */
 export function FlashcardsPanel({
   cards,
   prefs,
   mode,
   wordSpaces,
   shakeToUndo,
-  swipeConfig,
+  swipeByMode,
   onPrefsChange,
-  onSwipeConfigChange,
+  onSwipeByModeChange,
   onModeChange,
   onWordSpacesChange,
   onShakeToUndoChange,
@@ -97,10 +94,6 @@ export function FlashcardsPanel({
   onEditCard,
   onBack,
   onComplete,
-  optionsOpen,
-  onOptionsOpenChange,
-  modeSheetOpen,
-  onModeSheetOpenChange,
   now = Date.now(),
 }: FlashcardsPanelProps) {
   const canSpeak = speechAvailable()
@@ -109,11 +102,15 @@ export function FlashcardsPanel({
   const crossfade = { duration: reduce ? 0 : 0.12 }
 
   const [scope, setScope] = useState<Scope>({ kind: 'all' })
+  const [gearOpen, setGearOpen] = useState(false)
+  const [modeOpen, setModeOpen] = useState(false)
   const [quickOpen, setQuickOpen] = useState(false)
   const [editing, setEditing] = useState(false)
   // Type mode's aid (full text vs first letters). Session-scoped on purpose: it's a way of
   // working a card, not a lasting preference.
   const [typeInitialsOnly, setTypeInitialsOnly] = useState(false)
+
+  const activeSwipe: FlashcardSwipeConfig = swipeByMode[mode]
 
   const loci = useMemo(() => cards.map((card) => card.locus), [cards])
   const byId = useMemo(() => new Map(cards.map((card) => [card.locus.id, card])), [cards])
@@ -129,14 +126,6 @@ export function FlashcardsPanel({
 
   // The undo trail (card + prior schedule per grade), reset whenever the queue is rebuilt.
   const undoTrail = useRef<UndoEntry[]>([])
-
-  // A mode switch resets the card to its front face — e.g. a revealed Blur card must not
-  // land in Rebuild already flipped. Render-phase adjustment, so the old face never paints.
-  const [prevMode, setPrevMode] = useState(mode)
-  if (prevMode !== mode) {
-    setPrevMode(mode)
-    dispatch({ type: 'unflip' })
-  }
 
   const rebuild = (activeScope: Scope) => {
     undoTrail.current = []
@@ -210,10 +199,10 @@ export function FlashcardsPanel({
     if (id && canEdit) onToggleFlag?.(id)
   }
 
-  // Map a committed swipe direction through the active config. `none` never reaches here — the
-  // deck springs it back — so every direction here is a grade, a flag, or a skip.
+  // Map a committed swipe direction through the active mode's config. Mode-specific actions are
+  // handled in the deck; only grades, flag, and skip reach here.
   const handleCommit = (dir: SwipeDirection) => {
-    const action = swipeConfig[dir]
+    const action = activeSwipe[dir]
     if (action === 'flag') handleFlag()
     else if (action === 'skip') applySkip()
     else if (isGradeAction(action)) applyGrade(action)
@@ -236,6 +225,10 @@ export function FlashcardsPanel({
     rebuild(nextScope)
   }
 
+  const setSwipe = (dir: SwipeDirection, action: FlashcardSwipeConfig[SwipeDirection]) => {
+    onSwipeByModeChange?.({ ...swipeByMode, [mode]: { ...activeSwipe, [dir]: action } })
+  }
+
   const summaryNow: SessionSummary =
     state.status === 'complete'
       ? { graded: state.graded, learning: state.piles.learning, known: state.piles.known }
@@ -253,29 +246,18 @@ export function FlashcardsPanel({
     return tally
   }, [state, byId])
 
-  const optionsSheet = (
-    <StudyOptionsSheet
-      open={optionsOpen}
-      onClose={() => onOptionsOpenChange(false)}
-      scope={scope}
-      scopeCounts={counts}
-      direction={prefs.direction}
-      shuffle={prefs.shuffle}
-      textToSpeech={prefs.textToSpeech}
-      shakeToUndo={shakeToUndo}
-      canSpeak={canSpeak}
-      swipeConfig={swipeConfig}
-      onScope={changeScope}
-      onDirection={(direction) => updatePrefs({ direction })}
-      onShuffle={(value) => updatePrefs({ shuffle: value })}
-      onTextToSpeech={(value) => updatePrefs({ textToSpeech: value })}
-      onShakeToUndo={(value) => onShakeToUndoChange?.(value)}
-      onSwipe={(dir, action) => onSwipeConfigChange?.({ ...swipeConfig, [dir]: action })}
-      onRestart={() => rebuild(scope)}
-      onFinish={() => dispatch({ type: 'finish' })}
-      onEditCard={canEdit && onEditCard && card ? () => setEditing(true) : undefined}
-    />
-  )
+  const quick: QuickActionsModel = {
+    flagged: Boolean(card?.locus.flagged),
+    canEdit,
+    canSpeak,
+    canUndo: canUndo(state),
+    onUndo: handleUndo,
+    onFlag: handleFlag,
+    onEdit: () => setEditing(true),
+    onSpeak: speakFace,
+    onSkip: applySkip,
+    onRestart: () => rebuild(scope),
+  }
 
   return (
     <>
@@ -291,22 +273,21 @@ export function FlashcardsPanel({
             wordSpaces={wordSpaces}
             typeInitialsOnly={typeInitialsOnly}
             flipped={flipped}
-            swipeConfig={swipeConfig}
+            swipeConfig={activeSwipe}
             canSpeak={canSpeak}
             onFlip={() => dispatch({ type: 'flip' })}
             onReveal={() => dispatch({ type: 'reveal' })}
             onUnflip={() => dispatch({ type: 'unflip' })}
             onCommit={handleCommit}
             onSpeak={(text) => speak(text)}
-            onWordSpaces={(value) => onWordSpacesChange?.(value)}
-            onTypeInitialsOnly={setTypeInitialsOnly}
-            onChangeMode={() => onModeSheetOpenChange(true)}
+            onChangeMode={() => setModeOpen(true)}
+            onOpenGear={() => setGearOpen(true)}
             onLongPress={() => setQuickOpen(true)}
           />
         ) : !completed ? (
           <EmptyScope
             emptyScope={scope.kind !== 'all'}
-            onChangeSelection={() => onOptionsOpenChange(true)}
+            onChangeSelection={() => setGearOpen(true)}
             onStudyAll={() => changeScope({ kind: 'all' })}
             onDone={onBack}
           />
@@ -363,31 +344,42 @@ export function FlashcardsPanel({
         />
       ) : null}
 
-      {optionsSheet}
+      {card ? (
+        <GearSheet
+          open={gearOpen}
+          onClose={() => setGearOpen(false)}
+          mode={mode}
+          canSpeak={canSpeak}
+          quick={quick}
+          typeInitialsOnly={typeInitialsOnly}
+          onTypeInitialsOnly={setTypeInitialsOnly}
+          wordSpaces={wordSpaces}
+          onWordSpaces={(value) => onWordSpacesChange?.(value)}
+          swipeConfig={activeSwipe}
+          onSwipe={setSwipe}
+          scope={scope}
+          scopeCounts={counts}
+          onScope={changeScope}
+          shuffle={prefs.shuffle}
+          onShuffle={(value) => updatePrefs({ shuffle: value })}
+          textToSpeech={prefs.textToSpeech}
+          onTextToSpeech={(value) => updatePrefs({ textToSpeech: value })}
+          shakeToUndo={shakeToUndo}
+          onShakeToUndo={(value) => onShakeToUndoChange?.(value)}
+          direction={prefs.direction}
+          onDirection={(direction) => updatePrefs({ direction })}
+          onFinish={() => dispatch({ type: 'finish' })}
+        />
+      ) : null}
 
       <ModeSheet
-        open={modeSheetOpen}
-        onClose={() => onModeSheetOpenChange(false)}
+        open={modeOpen}
+        onClose={() => setModeOpen(false)}
         mode={mode}
         onMode={(nextMode) => onModeChange?.(nextMode)}
       />
 
-      {card ? (
-        <QuickActionsSheet
-          open={quickOpen}
-          onClose={() => setQuickOpen(false)}
-          flagged={card.locus.flagged}
-          canEdit={canEdit}
-          canSpeak={canSpeak}
-          canUndo={canUndo(state)}
-          onUndo={handleUndo}
-          onFlag={handleFlag}
-          onEdit={() => setEditing(true)}
-          onSpeak={speakFace}
-          onSkip={applySkip}
-          onRestart={() => rebuild(scope)}
-        />
-      ) : null}
+      {card ? <QuickActionsSheet open={quickOpen} onClose={() => setQuickOpen(false)} {...quick} /> : null}
 
       <AnimatePresence>
         {completed ? <CompletionOverlay summary={summaryNow} onDone={handoff} /> : null}

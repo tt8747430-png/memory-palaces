@@ -9,8 +9,9 @@ import {
 } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-import { Flag, Lightbulb, MapPin, RotateCcw, Settings2, Volume2 } from 'lucide-react'
+import { Check, Flag, Lightbulb, MapPin, RotateCcw, SlidersHorizontal, Volume2 } from 'lucide-react'
 import type { StudyMode } from '@/entities/preferences'
+import type { ModeSwipeAction } from '@/shared/config/flashcard-swipe'
 import {
   cn,
   isReferenceMarker,
@@ -21,11 +22,13 @@ import {
   typedRecallStatus,
   wordInitial,
 } from '@/shared/lib'
-import { SegmentedControl, Sheet } from '@/shared/ui'
 import { STUDY_MODE_META } from './mode-meta'
 import type { StudyCard } from '../model/types'
 
-/** Shared props every face needs to dress its header and reveal cues. */
+/** The mode-specific on-card actions a face publishes for the swipe layer while it's active. */
+export type MechanicHandlers = Partial<Record<ModeSwipeAction, () => void>>
+
+/** Shared props every face needs to dress its header, footer, and reveal cues. */
 export interface FaceProps {
   card: StudyCard
   mode: StudyMode
@@ -39,26 +42,48 @@ export interface FaceProps {
   /** This face is the one showing (the other is rotated away + inert). */
   active: boolean
   onSpeak: (text: string) => void
-  onWordSpaces: (value: boolean) => void
-  onTypeInitialsOnly: (value: boolean) => void
   /** Turn the card over both ways (manual tap / keyboard). */
   onFlip: () => void
-  /** One-way reveal that flips to the back on a solved Type attempt. */
-  onReveal: () => void
-  /** One-way reveal that keeps this face up and only moves the grades in (Rebuild, and
-   * Type's read-only answer peek). */
+  /** Solve the card in place: keep this working surface up and move the footer to grades
+   * (Rebuild's placed words, Type's typed answer). Tapping then peeks the answer face. */
   onRevealInPlace: () => void
-  /** Undo an in-place reveal: drop the peeked/rebuilt answer and return the session to
-   * its front face, so the footer swaps grades back for the overview. Mirror of
-   * `onRevealInPlace`. */
+  /** Undo an in-place solve (Reset): drop the built/typed answer and return the footer to
+   * the overview. Mirror of {@link onRevealInPlace}. */
   onHideInPlace: () => void
-  /** Open the study-mode picker — the footer's left control (moved off the page header). */
+  /** Open the study-mode picker — the footer's left control. */
   onChangeMode: () => void
+  /** Open the merged gear sheet — the footer's right control. */
+  onOpenGear: () => void
+  /** Publish this face's mode-specific swipe mechanics while it is active (Blur hide/show,
+   * Rebuild reset, Initials show-words, Type next-word/reset). Cleared when it turns away. */
+  registerMechanic?: (handlers: MechanicHandlers | null) => void
 }
 
 /** Keep a control's press from reaching the deck's drag gesture, so its tap/type fires cleanly
  * and no swipe begins under it. The deck owns the swipe; every interactive control opts out. */
 const stopPress = (event: ReactPointerEvent) => event.stopPropagation()
+
+/** Publish a face's mode-specific mechanics to the deck while active, always calling the latest
+ * handler (kept in a ref) so a bound action reflects current state without re-registering. */
+function useSwipeMechanic(
+  active: boolean,
+  register: FaceProps['registerMechanic'],
+  handlers: MechanicHandlers,
+) {
+  const ref = useRef(handlers)
+  ref.current = handlers
+  useEffect(() => {
+    if (!active || !register) return
+    register({
+      hideMore: () => ref.current.hideMore?.(),
+      showAll: () => ref.current.showAll?.(),
+      showWords: () => ref.current.showWords?.(),
+      reset: () => ref.current.reset?.(),
+      nextWord: () => ref.current.nextWord?.(),
+    })
+    return () => register(null)
+  }, [active, register])
+}
 
 // ─── Scaffold ────────────────────────────────────────────────────────────────
 
@@ -73,10 +98,10 @@ export function CardFace({
   active,
   mode,
   onChangeMode,
+  onOpenGear,
   back = false,
   align = 'center',
   footer,
-  settings,
   children,
 }: {
   flagged: boolean
@@ -88,6 +113,8 @@ export function CardFace({
   mode: StudyMode
   /** Open the mode picker from the footer's left control. */
   onChangeMode: () => void
+  /** Open the merged gear sheet from the footer's right control. */
+  onOpenGear: () => void
   /** The back face is pre-rotated 180° so the flip lands it un-mirrored — the rotation and the
    * backface-culling must share the one element that fills the card (see StudyDeck's flip). */
   back?: boolean
@@ -95,8 +122,6 @@ export function CardFace({
   align?: 'center' | 'start'
   /** The mode's reveal/undo aids, centered in the footer. */
   footer?: ReactNode
-  /** The mode's settings control, pinned to the footer's right. */
-  settings?: ReactNode
   children: ReactNode
 }) {
   const { t } = useTranslation()
@@ -167,7 +192,7 @@ export function CardFace({
         <div className="flex min-w-0 flex-1 flex-wrap items-center justify-center gap-2">
           {footer}
         </div>
-        <div className="grid size-11 shrink-0 place-items-center">{settings}</div>
+        <GearButton onClick={onOpenGear} />
       </footer>
     </div>
   )
@@ -177,9 +202,9 @@ export function CardFace({
 
 /** The one aid affordance shared by every mode's footer — same shape, size, and tint
  * everywhere so the modes read as one family. Text-only on purpose: an icon here would
- * clash with each mode's own glyphs (the Blur eye, the mode-switch icon). Each mode gives
- * it a verb ("Blur", "Show all", "Reset", "Next word"); an aid with nothing to do no-ops,
- * it is never disabled, so the control set never shifts under the thumb. */
+ * clash with each mode's own glyphs. Each mode gives it a verb ("Blur", "Show all", "Reset",
+ * "Next word"); an aid with nothing to do no-ops, it is never disabled, so the control set
+ * never shifts under the thumb. */
 function AidButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <button
@@ -194,7 +219,7 @@ function AidButton({ label, onClick }: { label: string; onClick: () => void }) {
 }
 
 /** The mode picker, pinned to the footer's left — the single place to switch how the answer
- * is recalled (moved off the page header). Wears the active mode's own icon. */
+ * is recalled. Wears the active mode's own icon. */
 function ModeButton({ mode, onClick }: { mode: StudyMode; onClick: () => void }) {
   const { t } = useTranslation()
   const Icon = STUDY_MODE_META[mode].Icon
@@ -211,18 +236,19 @@ function ModeButton({ mode, onClick }: { mode: StudyMode; onClick: () => void })
   )
 }
 
-/** The mode's settings gear — opens the per-mode options sheet from the footer's right. */
-function SettingsButton({ onClick }: { onClick: () => void }) {
+/** The footer's right control: the one merged gear — quick actions, this mode's options and
+ * swipe map, and the session settings all live behind it. Thumb-reachable, present every mode. */
+function GearButton({ onClick }: { onClick: () => void }) {
   const { t } = useTranslation()
   return (
     <button
       type="button"
-      aria-label={t('study.modeSettings')}
+      aria-label={t('study.options')}
       onPointerDown={stopPress}
       onClick={onClick}
-      className="grid size-11 place-items-center rounded-control bg-info-surface text-heading transition-transform active:scale-[0.97]"
+      className="grid size-11 shrink-0 place-items-center rounded-control bg-info-surface text-heading transition-transform active:scale-[0.97]"
     >
-      <Settings2 className="size-[18px]" aria-hidden />
+      <SlidersHorizontal className="size-[18px]" aria-hidden />
     </button>
   )
 }
@@ -243,6 +269,23 @@ function ResetButton({ onClick, className }: { onClick: () => void; className?: 
     >
       <RotateCcw className="size-4" aria-hidden />
     </button>
+  )
+}
+
+/** The "you got it" marker shown on the working surface once a Type/Rebuild card is solved
+ * in place — the cue that the footer's grades are now live and the answer is a tap away. */
+function SolvedBadge() {
+  const { t } = useTranslation()
+  return (
+    <motion.span
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ type: 'spring', stiffness: 520, damping: 30 }}
+      className="inline-flex items-center gap-1.5 rounded-pill bg-[var(--success-surface)] px-3 py-1 text-(length:--p-text-label) font-bold text-[var(--success-on-surface)]"
+    >
+      <Check className="size-3.5" aria-hidden />
+      {t('study.solvedTapToSee')}
+    </motion.span>
   )
 }
 
@@ -357,6 +400,7 @@ export function PromptFace(props: FaceProps) {
       active={active}
       mode={props.mode}
       onChangeMode={props.onChangeMode}
+      onOpenGear={props.onOpenGear}
     >
       <h2 className="text-balance break-words text-center text-[clamp(22px,6vw,28px)] font-bold leading-[1.15] tracking-[-0.01em] text-heading">
         {prompt}
@@ -372,80 +416,89 @@ export function PromptFace(props: FaceProps) {
 }
 
 /** Type front: recall the answer by typing it, aided by a full-text or first-letters mode.
- * There is no reveal shortcut — the only ways forward are to type it or, in first-letters
- * mode, unlock words one at a time with the footer's "Next word". */
+ * Solving reveals the grades in place (the typed answer stays up); a tap then peeks the answer.
+ * "Next word" (first-letters) morphs into "Reset" once solved so the control never vanishes. */
 export function TypeFace(props: FaceProps) {
   const { t } = useTranslation()
   const { card, prompt, answer, canSpeak, typeInitialsOnly, active, onSpeak } = props
-  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [fullValue, setFullValue] = useState('')
   // The first-letters recall lives here (not in the child) so its "Next word" aid can sit in
   // the shared footer; it only grades on completion while first-letters mode is active.
-  const initials = useInitialsRecall(answer, typeInitialsOnly, props.onReveal)
+  const initials = useInitialsRecall(answer, typeInitialsOnly, props.onRevealInPlace)
+  const fullResult = typedRecallStatus(answer, fullValue)
+  const solved = typeInitialsOnly ? initials.complete : fullResult.complete
 
-  const footer =
-    typeInitialsOnly && !initials.complete ? (
-      <AidButton label={t('study.nextWord')} onClick={initials.nextWord} />
-    ) : null
+  // Full-text solve reveals in place too (mirrors first-letters, whose recall reports its own).
+  useEffect(() => {
+    if (!typeInitialsOnly && fullResult.complete) props.onRevealInPlace()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [typeInitialsOnly, fullResult.complete])
+
+  const resetType = () => {
+    if (typeInitialsOnly) initials.reset()
+    else setFullValue('')
+    props.onHideInPlace()
+  }
+
+  // Swipe mechanics for this mode: advance a word (first-letters, before solving) and reset.
+  useSwipeMechanic(active, props.registerMechanic, {
+    nextWord: typeInitialsOnly && !initials.complete ? initials.nextWord : undefined,
+    reset: resetType,
+  })
+
+  const footer = solved ? (
+    <AidButton label={t('study.reset')} onClick={resetType} />
+  ) : typeInitialsOnly ? (
+    <AidButton label={t('study.nextWord')} onClick={initials.nextWord} />
+  ) : null
 
   return (
-    <>
-      <CardFace
-        flagged={card.locus.flagged}
-        canSpeak={canSpeak}
-        speakText={prompt}
-        onSpeak={onSpeak}
-        active={active}
-        mode={props.mode}
-        onChangeMode={props.onChangeMode}
-        align="start"
-        footer={footer}
-        settings={<SettingsButton onClick={() => setSettingsOpen(true)} />}
-      >
-        <div className="shrink-0 text-center">
-          <h2 className="text-balance break-words text-[clamp(18px,5vw,22px)] font-bold leading-tight tracking-[-0.01em] text-heading">
-            {prompt}
-          </h2>
-          {card.locus.tip ? <TipRow tip={card.locus.tip} /> : null}
+    <CardFace
+      flagged={card.locus.flagged}
+      canSpeak={canSpeak}
+      speakText={prompt}
+      onSpeak={onSpeak}
+      active={active}
+      mode={props.mode}
+      onChangeMode={props.onChangeMode}
+      onOpenGear={props.onOpenGear}
+      align="start"
+      footer={footer}
+    >
+      <div className="shrink-0 text-center">
+        <h2 className="text-balance break-words text-[clamp(18px,5vw,22px)] font-bold leading-tight tracking-[-0.01em] text-heading">
+          {prompt}
+        </h2>
+        {card.locus.tip ? <TipRow tip={card.locus.tip} /> : null}
+      </div>
+      <div className="h-px shrink-0 bg-border" aria-hidden />
+      {solved ? (
+        <div className="flex shrink-0 justify-center">
+          <SolvedBadge />
         </div>
-        <div className="h-px shrink-0 bg-border" aria-hidden />
-        {typeInitialsOnly ? (
-          <TypeInitials recall={initials} />
-        ) : (
-          <TypeFull answer={answer} onSolved={props.onReveal} />
-        )}
-      </CardFace>
-
-      <Sheet
-        open={settingsOpen}
-        onOpenChange={(open) => !open && setSettingsOpen(false)}
-        title={t('study.modeType')}
-      >
-        <div className="pb-2">
-          <SegmentedControl
-            value={typeInitialsOnly ? 'initials' : 'full'}
-            options={[
-              { value: 'full', label: t('study.typeFull') },
-              { value: 'initials', label: t('study.typeInitialsOnly') },
-            ]}
-            onChange={(value) => props.onTypeInitialsOnly(value === 'initials')}
-            aria-label={t('study.typeAid')}
-          />
-        </div>
-      </Sheet>
-    </>
+      ) : null}
+      {typeInitialsOnly ? (
+        <TypeInitials recall={initials} />
+      ) : (
+        <TypeFull value={fullValue} onChange={setFullValue} answer={answer} result={fullResult} />
+      )}
+    </CardFace>
   )
 }
 
-function TypeFull({ answer, onSolved }: { answer: string; onSolved: () => void }) {
+function TypeFull({
+  value,
+  onChange,
+  answer,
+  result,
+}: {
+  value: string
+  onChange: (value: string) => void
+  answer: string
+  result: ReturnType<typeof typedRecallStatus>
+}) {
   const { t } = useTranslation()
-  const [value, setValue] = useState('')
   const expected = useMemo(() => tokenizeWords(answer), [answer])
-  const result = typedRecallStatus(answer, value)
-
-  useEffect(() => {
-    if (result.complete) onSolved()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [result.complete])
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2.5">
@@ -453,7 +506,7 @@ function TypeFull({ answer, onSolved }: { answer: string; onSolved: () => void }
       <textarea
         value={value}
         onPointerDown={stopPress}
-        onChange={(event) => setValue(event.target.value)}
+        onChange={(event) => onChange(event.target.value)}
         placeholder={t('study.typePlaceholder')}
         aria-label={t('study.typePlaceholder')}
         autoCapitalize="none"
@@ -487,7 +540,7 @@ function TypeFull({ answer, onSolved }: { answer: string; onSolved: () => void }
               )
             })}
           </p>
-          <ResetButton onClick={() => setValue('')} className="absolute right-1.5 top-1.5" />
+          <ResetButton onClick={() => onChange('')} className="absolute right-1.5 top-1.5" />
         </div>
       ) : null}
     </div>
@@ -544,9 +597,8 @@ function useInitialsRecall(answer: string, enabled: boolean, onSolved: () => voi
     wrongTimer.current = window.setTimeout(() => setWrong(null), WRONG_LETTER_MS)
   }
 
-  const nextWord = () => {
-    if (accepted < tokens.length) setAccepted(advanceAuto(accepted + 1))
-  }
+  // Functional so the "Next word" aid stays a stable handler for the swipe mechanic.
+  const nextWord = () => setAccepted((prev) => (prev < tokens.length ? advanceAuto(prev + 1) : prev))
 
   const handleInput = (raw: string) => {
     let next = accepted
@@ -571,7 +623,8 @@ function useInitialsRecall(answer: string, enabled: boolean, onSolved: () => voi
 }
 
 /** First-letters input surface — a hidden field that accepts one cue at a time, the accepted
- * words rendered as they land. Purely presentational; the "Next word" aid sits in the footer. */
+ * words rendered as they land. Marked `data-card-control` so a tap here types (focuses the
+ * field) instead of flipping the card. */
 function TypeInitials({ recall }: { recall: InitialsRecall }) {
   const { t } = useTranslation()
   const reduce = useReducedMotion()
@@ -581,6 +634,7 @@ function TypeInitials({ recall }: { recall: InitialsRecall }) {
   return (
     <>
       <div
+        data-card-control
         onPointerDown={stopPress}
         onClick={() => inputRef.current?.focus()}
         className="relative flex min-h-[92px] flex-1 cursor-text flex-col rounded-card bg-info-surface transition-shadow focus-within:ring-2 focus-within:ring-primary/30"
@@ -658,7 +712,8 @@ interface WordChip {
   key: string
 }
 
-/** Rebuild front: tap the scrambled word-chips back into order, or fill them at once. */
+/** Rebuild front: tap the scrambled word-chips back into order. Solving reveals the grades in
+ * place — the reconstruction stays up; a tap then peeks the answer face. Reset clears it. */
 export function RebuildFace(props: FaceProps) {
   const { t } = useTranslation()
   const reduce = useReducedMotion()
@@ -689,15 +744,15 @@ export function RebuildFace(props: FaceProps) {
     }
   }
 
-  // The only aid is Reset: clear the placed words AND un-reveal (so a solved card's footer
-  // returns from grades to the overview). Solving is done by tapping every chip into order;
-  // there is no fill-all shortcut. Reset stays mounted through `done`, so a solved card is
-  // never trapped with grades and no way back.
+  // Reset clears the placed words AND un-reveals (so a solved card's footer returns from grades
+  // to the overview). Stays mounted through `done`, so a solved card is never trapped.
   const reset = () => {
     setUsedKeys(new Set())
     setWrongKey(null)
     props.onHideInPlace()
   }
+
+  useSwipeMechanic(active, props.registerMechanic, { reset })
 
   const footer = <AidButton label={t('study.reset')} onClick={reset} />
 
@@ -710,6 +765,7 @@ export function RebuildFace(props: FaceProps) {
       active={active}
       mode={props.mode}
       onChangeMode={props.onChangeMode}
+      onOpenGear={props.onOpenGear}
       align="start"
       footer={footer}
     >
@@ -720,6 +776,12 @@ export function RebuildFace(props: FaceProps) {
         {card.locus.tip ? <TipRow tip={card.locus.tip} /> : null}
       </div>
       <div className="h-px shrink-0 bg-border" aria-hidden />
+
+      {done ? (
+        <div className="flex shrink-0 justify-center">
+          <SolvedBadge />
+        </div>
+      ) : null}
 
       <p className="min-h-[32px] shrink-0 text-balance text-center text-[clamp(16px,4.4vw,20px)] font-semibold leading-relaxed text-heading">
         {placed === 0 ? (
@@ -776,6 +838,7 @@ export function AnswerFace(props: FaceProps) {
       active={active}
       mode={props.mode}
       onChangeMode={props.onChangeMode}
+      onOpenGear={props.onOpenGear}
       back
     >
       <BackPrompt prompt={prompt} onFlip={props.onFlip} />
@@ -816,6 +879,11 @@ export function BlurFace(props: FaceProps) {
     })
   }
 
+  useSwipeMechanic(active, props.registerMechanic, {
+    hideMore,
+    showAll: () => setHidden(new Set()),
+  })
+
   // Blur takes away another batch (no-op once nothing is left visible); Show all reveals
   // everything (no-op once all words are visible) — neither ever disables, so the pair holds
   // still. Text labels only: an eye icon here would echo the mode's own eye glyph.
@@ -835,6 +903,7 @@ export function BlurFace(props: FaceProps) {
       active={active}
       mode={props.mode}
       onChangeMode={props.onChangeMode}
+      onOpenGear={props.onOpenGear}
       back
       footer={footer}
     >
@@ -891,7 +960,6 @@ export function InitialsFace(props: FaceProps) {
   const { t } = useTranslation()
   const reduce = useReducedMotion()
   const { card, prompt, answer, canSpeak, wordSpaces, active, onSpeak } = props
-  const [settingsOpen, setSettingsOpen] = useState(false)
   const [showAll, setShowAll] = useState(false)
   const tokens = useMemo(() => tokenizeWords(answer), [answer])
   const rootRef = useRef<HTMLDivElement>(null)
@@ -922,139 +990,116 @@ export function InitialsFace(props: FaceProps) {
     if (Math.abs(clamped - peek.x) > 0.5) setPeek({ ...peek, x: clamped })
   }, [peek])
 
+  const toggleWords = () => {
+    setShowAll((prev) => !prev)
+    setPeek(null)
+  }
+
+  useSwipeMechanic(active, props.registerMechanic, { showWords: toggleWords })
+
   // One toggle: spell every word out, or drop back to first-letters. Peeks close either way.
   const footer = (
     <AidButton
       label={showAll ? t('study.showInitials') : t('study.showWords')}
-      onClick={() => {
-        setShowAll((prev) => !prev)
-        setPeek(null)
-      }}
+      onClick={toggleWords}
     />
   )
 
   return (
-    <>
-      <CardFace
-        flagged={card.locus.flagged}
-        canSpeak={canSpeak}
-        speakText={answer}
-        onSpeak={onSpeak}
-        active={active}
-        mode={props.mode}
-        onChangeMode={props.onChangeMode}
-        back
-        footer={footer}
-        settings={<SettingsButton onClick={() => setSettingsOpen(true)} />}
-      >
-        <BackPrompt prompt={prompt} onFlip={props.onFlip} />
-        <div ref={rootRef} className="relative w-full" onClick={() => setPeek(null)}>
-          <p
-            className={cn(
-              'flex w-full flex-wrap items-baseline justify-center gap-y-3 text-[clamp(17px,4.6vw,22px)] font-semibold text-heading',
-              wordSpaces ? 'gap-x-3' : 'gap-x-2',
-            )}
-          >
-            {tokens.map((token, i) => {
-              if (isReferenceMarker(token)) {
-                return (
-                  <span key={i} className="font-bold text-accent">
-                    {token}
-                  </span>
-                )
-              }
-              if (showAll) {
-                return (
-                  <span key={i} className="whitespace-nowrap">
-                    {token}
-                  </span>
-                )
-              }
-              const { lead, initial, hidden, trail } = wordInitial(token)
-              const open = peek?.index === i
+    <CardFace
+      flagged={card.locus.flagged}
+      canSpeak={canSpeak}
+      speakText={answer}
+      onSpeak={onSpeak}
+      active={active}
+      mode={props.mode}
+      onChangeMode={props.onChangeMode}
+      onOpenGear={props.onOpenGear}
+      back
+      footer={footer}
+    >
+      <BackPrompt prompt={prompt} onFlip={props.onFlip} />
+      <div ref={rootRef} className="relative w-full" onClick={() => setPeek(null)}>
+        <p
+          className={cn(
+            'flex w-full flex-wrap items-baseline justify-center gap-y-3 text-[clamp(17px,4.6vw,22px)] font-semibold text-heading',
+            wordSpaces ? 'gap-x-3' : 'gap-x-2',
+          )}
+        >
+          {tokens.map((token, i) => {
+            if (isReferenceMarker(token)) {
               return (
-                <button
-                  key={i}
-                  type="button"
-                  aria-label={t('study.revealWord', { word: token })}
-                  onPointerDown={stopPress}
-                  onClick={(event) => {
-                    event.stopPropagation()
-                    if (open) setPeek(null)
-                    else openPeek(i, event.currentTarget)
-                  }}
-                  className={cn(
-                    'whitespace-nowrap rounded-control px-1 transition-colors',
-                    open ? 'bg-primary/12 text-heading' : 'active:bg-primary/5',
-                  )}
-                >
-                  {lead}
-                  <span className="font-bold">{initial}</span>
-                  {wordSpaces && hidden > 0 ? (
-                    <span
-                      aria-hidden
-                      className="ml-0.5 inline-block border-b-2 border-[color-mix(in_oklch,var(--primary)_40%,transparent)] align-baseline"
-                      style={{ width: `${Math.min(Math.max(hidden, 1), 16)}ch` }}
-                    />
-                  ) : null}
-                  {trail}
-                </button>
+                <span key={i} className="font-bold text-accent">
+                  {token}
+                </span>
               )
-            })}
-          </p>
-
-          <AnimatePresence>
-            {peek ? (
-              <span
-                key={peek.index}
-                aria-hidden
+            }
+            if (showAll) {
+              return (
+                <span key={i} className="whitespace-nowrap">
+                  {token}
+                </span>
+              )
+            }
+            const { lead, initial, hidden, trail } = wordInitial(token)
+            const open = peek?.index === i
+            return (
+              <button
+                key={i}
+                type="button"
+                aria-label={t('study.revealWord', { word: token })}
+                onPointerDown={stopPress}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  if (open) setPeek(null)
+                  else openPeek(i, event.currentTarget)
+                }}
                 className={cn(
-                  'pointer-events-none absolute z-20 -translate-x-1/2',
-                  !peek.below && '-translate-y-full',
+                  'whitespace-nowrap rounded-control px-1 transition-colors',
+                  open ? 'bg-primary/12 text-heading' : 'active:bg-primary/5',
                 )}
-                style={{ left: peek.x, top: peek.top }}
               >
-                <motion.span
-                  ref={bubbleRef}
-                  initial={
-                    reduce ? { opacity: 0 } : { opacity: 0, y: peek.below ? -6 : 6, scale: 0.9 }
-                  }
-                  animate={reduce ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, transition: { duration: 0.1 } }}
-                  transition={{ type: 'spring', stiffness: 520, damping: 30 }}
-                  className="block whitespace-nowrap rounded-control bg-primary px-2.5 py-1.5 text-[length:var(--p-text-sub)] font-semibold text-primary-foreground shadow-interactive"
-                >
-                  {tokens[peek.index]}
-                </motion.span>
-              </span>
-            ) : null}
-          </AnimatePresence>
-        </div>
-        {card.locus.hint ? <HintCard hint={card.locus.hint} /> : null}
-      </CardFace>
+                {lead}
+                <span className="font-bold">{initial}</span>
+                {wordSpaces && hidden > 0 ? (
+                  <span
+                    aria-hidden
+                    className="ml-0.5 inline-block border-b-2 border-[color-mix(in_oklch,var(--primary)_40%,transparent)] align-baseline"
+                    style={{ width: `${Math.min(Math.max(hidden, 1), 16)}ch` }}
+                  />
+                ) : null}
+                {trail}
+              </button>
+            )
+          })}
+        </p>
 
-      <Sheet
-        open={settingsOpen}
-        onOpenChange={(open) => !open && setSettingsOpen(false)}
-        title={t('study.modeInitials')}
-      >
-        <label className="flex items-center justify-between gap-3 pb-2">
-          <span className="min-w-0">
-            <span className="block text-[length:var(--p-text-sub)] font-semibold text-heading">
-              {t('study.wordSpaces')}
+        <AnimatePresence>
+          {peek ? (
+            <span
+              key={peek.index}
+              aria-hidden
+              className={cn(
+                'pointer-events-none absolute z-20 -translate-x-1/2',
+                !peek.below && '-translate-y-full',
+              )}
+              style={{ left: peek.x, top: peek.top }}
+            >
+              <motion.span
+                ref={bubbleRef}
+                initial={reduce ? { opacity: 0 } : { opacity: 0, y: peek.below ? -6 : 6, scale: 0.9 }}
+                animate={reduce ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, transition: { duration: 0.1 } }}
+                transition={{ type: 'spring', stiffness: 520, damping: 30 }}
+                className="block whitespace-nowrap rounded-control bg-primary px-2.5 py-1.5 text-[length:var(--p-text-sub)] font-semibold text-primary-foreground shadow-interactive"
+              >
+                {tokens[peek.index]}
+              </motion.span>
             </span>
-            <span className="block text-[length:var(--p-text-label)] text-muted-foreground">
-              {t('study.wordSpacesHint')}
-            </span>
-          </span>
-          <input
-            type="checkbox"
-            checked={wordSpaces}
-            onChange={(event) => props.onWordSpaces(event.target.checked)}
-            className="size-6 shrink-0 accent-primary"
-          />
-        </label>
-      </Sheet>
-    </>
+          ) : null}
+        </AnimatePresence>
+      </div>
+      {card.locus.hint ? <HintCard hint={card.locus.hint} /> : null}
+    </CardFace>
   )
 }

@@ -7,13 +7,13 @@ import {
   SWIPE_ITEM_TYPES,
 } from '@/shared/config/swipe'
 import {
-  DEFAULT_FLASHCARD_SWIPE,
-  type FlashcardSwipeConfig,
+  DEFAULT_FLASHCARD_SWIPE_BY_MODE,
+  type FlashcardSwipeByMode,
   normalizeFlashcardSwipe,
 } from '@/shared/config/flashcard-swipe'
 
 export type { SwipePreferences } from '@/shared/config/swipe'
-export type { FlashcardSwipeConfig } from '@/shared/config/flashcard-swipe'
+export type { FlashcardSwipeConfig, FlashcardSwipeByMode } from '@/shared/config/flashcard-swipe'
 
 /** How the Palaces screen lays out its list. Persisted so the choice survives sessions. */
 export type PalacesView = 'grid' | 'list'
@@ -107,8 +107,8 @@ export interface Preferences extends Entity {
   shakeToUndo: boolean
   /** Per-item-type swipe-gesture mapping for list rows (leading/trailing action trays). */
   swipe: SwipePreferences
-  /** Which grade/gesture each of the four flashcard fling directions commits. */
-  flashcardSwipe: FlashcardSwipeConfig
+  /** Which grade/gesture each of the four flashcard fling directions commits, per study mode. */
+  flashcardSwipe: FlashcardSwipeByMode
   privacy: PrivacySettings
 }
 
@@ -129,7 +129,7 @@ export const DEFAULT_PREFERENCES = {
   studyWordSpaces: true,
   shakeToUndo: true,
   swipe: DEFAULT_SWIPE,
-  flashcardSwipe: DEFAULT_FLASHCARD_SWIPE,
+  flashcardSwipe: DEFAULT_FLASHCARD_SWIPE_BY_MODE,
   privacy: DEFAULT_PRIVACY,
 } as const satisfies Omit<Preferences, keyof Entity>
 
@@ -160,7 +160,7 @@ export interface MakePreferencesInput {
   studyWordSpaces?: boolean
   shakeToUndo?: boolean
   swipe?: SwipePreferences
-  flashcardSwipe?: FlashcardSwipeConfig
+  flashcardSwipe?: FlashcardSwipeByMode
   privacy?: PrivacySettings
 }
 
