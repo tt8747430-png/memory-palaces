@@ -43,7 +43,7 @@ export interface FlashcardsPanelProps {
   shakeToUndo: boolean
   /** Per-mode swipe maps. Global preference. */
   swipeByMode: FlashcardSwipeByMode
-  /** Persist study-preference changes (the host mirrors them to palace settings). */
+  /** Persist study-preference changes (the host mirrors them to deck settings). */
   onPrefsChange?: (prefs: StudyPrefs) => void
   /** Persist the per-mode swipe maps (the host mirrors them to global preferences). */
   onSwipeByModeChange?: (config: FlashcardSwipeByMode) => void

@@ -80,13 +80,13 @@ export function CardFields({
             count={front.length}
             icon={<MessageSquareText className="size-[18px] text-heading" aria-hidden />}
           >
-            {t('loci.editor.front')}
+            {t('cards.editor.front')}
           </FieldLabel>
           <TextField
             ref={frontRef}
             value={front}
             onChange={(e) => onFront(e.target.value)}
-            placeholder={t('loci.editor.frontPlaceholder')}
+            placeholder={t('cards.editor.frontPlaceholder')}
             enterKeyHint="next"
           />
         </div>
@@ -96,12 +96,12 @@ export function CardFields({
             count={back.length}
             icon={<BookOpen className="size-[18px] text-heading" aria-hidden />}
           >
-            {t('loci.editor.back')}
+            {t('cards.editor.back')}
           </FieldLabel>
           <Textarea
             value={back}
             onChange={(e) => onBack(e.target.value)}
-            placeholder={t('loci.editor.backPlaceholder')}
+            placeholder={t('cards.editor.backPlaceholder')}
             rows={3}
           />
         </div>
@@ -110,12 +110,12 @@ export function CardFields({
       <div className="flex flex-col gap-4 border-t border-border pt-5">
         <div>
           <FieldLabel icon={<MapPin className="size-3.5 text-accent" aria-hidden />}>
-            {t('loci.editor.hint')}
+            {t('cards.editor.hint')}
           </FieldLabel>
           <Textarea
             value={hint}
             onChange={(e) => onHint(e.target.value)}
-            placeholder={t('loci.editor.hintPlaceholder')}
+            placeholder={t('cards.editor.hintPlaceholder')}
             rows={2}
           />
         </div>
@@ -123,12 +123,12 @@ export function CardFields({
           <FieldLabel
             icon={<Lightbulb className="size-3.5 text-[var(--warning-foreground)]" aria-hidden />}
           >
-            {t('loci.editor.tip')}
+            {t('cards.editor.tip')}
           </FieldLabel>
           <Textarea
             value={tip}
             onChange={(e) => onTip(e.target.value)}
-            placeholder={t('loci.editor.tipPlaceholder')}
+            placeholder={t('cards.editor.tipPlaceholder')}
             rows={2}
           />
         </div>

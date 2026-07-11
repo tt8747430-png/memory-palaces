@@ -23,7 +23,7 @@ export type FolderStore = StoreApi<FolderState>
 const byOldestFirst = (a: Folder, b: Folder): number => a.createdAt.localeCompare(b.createdAt)
 
 /**
- * Store FACTORY (repository INJECTED — Dependency Inversion). Mirrors the palace store:
+ * Store FACTORY (repository INJECTED — Dependency Inversion). Mirrors the deck store:
  * the list is RxDB-reactive, so `start()` subscribes once and saves/removes flow into
  * `folders` without a manual reload. Mutations persist only through the port.
  */

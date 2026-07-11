@@ -1,9 +1,12 @@
 /**
- * Pure import/export for a room's study content (cards + questions). Parsers turn text
+ * Pure import/export for a deck's study content (cards + questions). Parsers turn text
  * (CSV / JSON / pasted lines / Anki notes / verse paste) into plain content data; the
  * serializers turn content back into CSV / JSON / Anki TSV strings. No DOM, no IO, no
  * entity imports — the `features/content` slice handles file reads, downloads, and
  * mapping this data onto the create commands.
+ *
+ * Wire compatibility: parsers accept both the current deck-era field names and the legacy
+ * palace-era ones (`room`/`loci`/`rooms`), so exports from the old app still import.
  */
 
 import type { SrsState } from './srs'
@@ -13,7 +16,7 @@ import type { SrsState } from './srs'
  * full-fidelity Mindscape round-trip (flag, known status, schedule) and stay absent for the
  * lighter sources (CSV / Anki / paste). Identity and order are assigned by the create command.
  */
-export interface ParsedLocus {
+export interface ParsedCard {
   front: string
   back: string
   hint?: string
@@ -31,13 +34,13 @@ export interface ParsedQuestion {
   explanation?: string
 }
 
-export interface RoomContentData {
-  loci: ParsedLocus[]
+export interface DeckContentData {
+  cards: ParsedCard[]
   questions: ParsedQuestion[]
 }
 
 /** Minimal shapes the serializers read — structural, so no entity dependency. */
-type LocusLike = { front: string; back: string; hint?: string }
+type CardLike = { front: string; back: string; hint?: string }
 type QuestionLike = {
   prompt: string
   options: string[]
@@ -45,8 +48,8 @@ type QuestionLike = {
   explanation?: string
 }
 
-const JSON_TYPE = 'mindscape-room-content'
-const JSON_VERSION = 2
+const JSON_TYPE = 'mindscape-deck-content'
+const JSON_VERSION = 3
 
 /** A user-facing import failure; the UI shows `.message` verbatim. */
 export class ContentImportError extends Error {}
@@ -58,7 +61,7 @@ export function contentSlug(name: string): string {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '')
-      .slice(0, 40) || 'room'
+      .slice(0, 40) || 'deck'
   )
 }
 
@@ -115,31 +118,31 @@ function parseCsv(text: string): string[][] {
 // --- Serialize (export) -----------------------------------------------------
 
 /** The full card shape the Mindscape JSON export writes — the mirror of what
- * {@link parseMindscapeRoom} restores. Undefined fields are dropped so the file stays lean. */
-function toMindscapeLocus(l: ParsedLocus): ParsedLocus {
+ * {@link parseMindscapeDeck} restores. Undefined fields are dropped so the file stays lean. */
+function toMindscapeCard(c: ParsedCard): ParsedCard {
   return {
-    front: l.front,
-    back: l.back,
-    ...(l.hint ? { hint: l.hint } : {}),
-    ...(l.tip ? { tip: l.tip } : {}),
-    ...(l.flagged ? { flagged: true } : {}),
-    ...(l.memorized ? { memorized: true } : {}),
-    ...(l.srs ? { srs: l.srs } : {}),
+    front: c.front,
+    back: c.back,
+    ...(c.hint ? { hint: c.hint } : {}),
+    ...(c.tip ? { tip: c.tip } : {}),
+    ...(c.flagged ? { flagged: true } : {}),
+    ...(c.memorized ? { memorized: true } : {}),
+    ...(c.srs ? { srs: c.srs } : {}),
   }
 }
 
-export function roomContentToJson(
-  roomName: string,
-  loci: ReadonlyArray<ParsedLocus>,
+export function deckContentToJson(
+  deckName: string,
+  cards: ReadonlyArray<ParsedCard>,
   questions: ReadonlyArray<QuestionLike>,
 ): string {
   return JSON.stringify(
     {
       type: JSON_TYPE,
       version: JSON_VERSION,
-      room: roomName,
+      deck: deckName,
       exportedAt: new Date().toISOString(),
-      loci: loci.map(toMindscapeLocus),
+      cards: cards.map(toMindscapeCard),
       questions,
     },
     null,
@@ -147,9 +150,9 @@ export function roomContentToJson(
   )
 }
 
-export function lociToCsv(loci: ReadonlyArray<LocusLike>): string {
+export function cardsToCsv(cards: ReadonlyArray<CardLike>): string {
   const header = 'front,back,hint'
-  const lines = loci.map((c) =>
+  const lines = cards.map((c) =>
     [csvCell(c.front), csvCell(c.back), csvCell(c.hint ?? '')].join(','),
   )
   return [header, ...lines].join('\n')
@@ -181,9 +184,9 @@ function ankiField(value: string): string {
 
 /** Cards as Anki "Notes in Plain Text" (tab-separated Front/Back); drops in via Anki's
  * File → Import. */
-export function lociToAnkiTsv(loci: ReadonlyArray<LocusLike>): string {
+export function cardsToAnkiTsv(cards: ReadonlyArray<CardLike>): string {
   const header = '#separator:tab\n#html:true\n#columns:Front\tBack'
-  const lines = loci.map((c) => `${ankiField(c.front)}\t${ankiField(c.back)}`)
+  const lines = cards.map((c) => `${ankiField(c.front)}\t${ankiField(c.back)}`)
   return [header, ...lines].join('\n')
 }
 
@@ -208,7 +211,7 @@ function coerceSrs(raw: unknown): SrsState | undefined {
   }
 }
 
-function coerceLoci(raw: unknown): ParsedLocus[] {
+function coerceCards(raw: unknown): ParsedCard[] {
   if (!Array.isArray(raw)) return []
   return raw.flatMap((item) => {
     if (!item || typeof item !== 'object') return []
@@ -257,10 +260,15 @@ function coerceQuestions(raw: unknown): ParsedQuestion[] {
   })
 }
 
+/** Cards from any wire shape: current `cards`, legacy `loci`, or ad-hoc `flashcards`. */
+function coerceCardsField(root: Record<string, unknown>): ParsedCard[] {
+  return coerceCards(root.cards ?? root.loci ?? root.flashcards)
+}
+
 /** Map CSV rows (with a header) onto cards or questions by their columns. */
-function contentFromCsv(rows: string[][]): RoomContentData {
+function contentFromCsv(rows: string[][]): DeckContentData {
   const header = rows[0]
-  if (!header) return { loci: [], questions: [] }
+  if (!header) return { cards: [], questions: [] }
   const cols = header.map((h) => h.trim().toLowerCase())
   const body = rows.slice(1)
 
@@ -284,7 +292,7 @@ function contentFromCsv(rows: string[][]): RoomContentData {
       const explanation = explIdx >= 0 ? (cells[explIdx] ?? '').trim() : ''
       return [{ prompt, options, correctAnswer: answer, ...(explanation ? { explanation } : {}) }]
     })
-    return { loci: [], questions }
+    return { cards: [], questions }
   }
 
   const frontIdx = Math.max(
@@ -294,21 +302,21 @@ function contentFromCsv(rows: string[][]): RoomContentData {
   const backIdxRaw = cols.findIndex((h) => h === 'back' || h === 'definition' || h === 'answer')
   const backIdx = backIdxRaw >= 0 ? backIdxRaw : 1
   const hintIdx = cols.findIndex((h) => h === 'hint' || h === 'cue' || h === 'note')
-  const loci = body.flatMap((cells) => {
+  const cards = body.flatMap((cells) => {
     const front = (cells[frontIdx] ?? '').trim()
     const back = (cells[backIdx] ?? '').trim()
     if (!front || !back) return []
     const hint = hintIdx >= 0 ? (cells[hintIdx] ?? '').trim() : ''
     return [{ front, back, ...(hint ? { hint } : {}) }]
   })
-  return { loci, questions: [] }
+  return { cards, questions: [] }
 }
 
 /**
  * Parse pasted text into cards. Each non-empty line is one card, split on the first tab,
  * semicolon, or comma into `front` then `back`. Lines without a separator are skipped.
  */
-export function parsePastedLoci(text: string): ParsedLocus[] {
+export function parsePastedCards(text: string): ParsedCard[] {
   return text.split(/\r?\n/).flatMap((line) => {
     const trimmed = line.trim()
     if (!trimmed) return []
@@ -334,10 +342,7 @@ export interface NoteDelimiters {
  * Each card chunk splits once on `field` into front/back; blank chunks and chunks without
  * the separator are skipped.
  */
-export function parseDelimitedNotes(
-  text: string,
-  { field, card }: NoteDelimiters,
-): ParsedLocus[] {
+export function parseDelimitedNotes(text: string, { field, card }: NoteDelimiters): ParsedCard[] {
   const chunks = card === '\n' ? text.split(/\r?\n/) : text.split(card)
   return chunks.flatMap((chunk) => {
     const trimmed = chunk.trim()
@@ -379,9 +384,9 @@ const ANKI_SEPARATORS: Record<string, string> = {
 
 /** Parse Anki's "Notes in Plain Text" export (tab/`#separator`-delimited, `#`-directives
  * skipped) into cards — field 0 → front, field 1 → back, HTML stripped. */
-export function parseAnkiText(text: string): ParsedLocus[] {
+export function parseAnkiText(text: string): ParsedCard[] {
   let separator = '\t'
-  const loci: ParsedLocus[] = []
+  const cards: ParsedCard[] = []
   for (const raw of text.split(/\r?\n/)) {
     const line = raw.replace(/\r$/, '')
     if (!line.trim()) continue
@@ -394,15 +399,15 @@ export function parseAnkiText(text: string): ParsedLocus[] {
     if (fields.length < 2) continue
     const front = stripHtml(fields[0] ?? '')
     const back = stripHtml(fields[1] ?? '')
-    if (front && back) loci.push({ front, back })
+    if (front && back) cards.push({ front, back })
   }
-  return loci
+  return cards
 }
 
 /** One chapter from a verse paste: a title and its verse cards. */
 export interface VerseChapter {
   title: string
-  loci: ParsedLocus[]
+  cards: ParsedCard[]
 }
 
 /**
@@ -419,11 +424,11 @@ export function parseVerseChapters(text: string): VerseChapter[] {
   const chapters: VerseChapter[] = []
   let current: VerseChapter | null = null
   let book = ''
-  let last: ParsedLocus | null = null
+  let last: ParsedCard | null = null
 
   const ensureChapter = (): VerseChapter => {
     if (!current) {
-      current = { title: book || 'Verses', loci: [] }
+      current = { title: book || 'Verses', cards: [] }
       chapters.push(current)
     }
     return current
@@ -437,15 +442,15 @@ export function parseVerseChapters(text: string): VerseChapter[] {
     if (verse) {
       const [, ch, vs, bodyText] = verse
       const ref = `${book ? `${book} ` : ''}${ch}:${vs}`.trim()
-      const locus: ParsedLocus = { front: ref, back: bodyText ? `${ref} ${bodyText}`.trim() : ref }
-      ensureChapter().loci.push(locus)
-      last = locus
+      const card: ParsedCard = { front: ref, back: bodyText ? `${ref} ${bodyText}`.trim() : ref }
+      ensureChapter().cards.push(card)
+      last = card
       continue
     }
 
     if (headerRe.test(line)) {
       book = line.replace(chapterTail, '').trim()
-      current = { title: line, loci: [] }
+      current = { title: line, cards: [] }
       chapters.push(current)
       last = null
       continue
@@ -454,46 +459,47 @@ export function parseVerseChapters(text: string): VerseChapter[] {
     if (last) last.back = `${last.back} ${line}`.trim()
   }
 
-  return chapters.filter((c) => c.loci.length > 0)
+  return chapters.filter((c) => c.cards.length > 0)
 }
 
 /** Flatten a verse paste into one card per verse (chapter-agnostic). */
-export function parseVerses(text: string): ParsedLocus[] {
-  return parseVerseChapters(text).flatMap((c) => c.loci)
+export function parseVerses(text: string): ParsedCard[] {
+  return parseVerseChapters(text).flatMap((c) => c.cards)
 }
 
-/** Parse a `.json` or `.csv` file's text into room content, choosing the format by
+/** Parse a `.json` or `.csv` file's text into deck content, choosing the format by
  * extension/shape. Throws {@link ContentImportError} when nothing usable is found. */
-export function parseRoomContent(text: string, fileName: string): RoomContentData {
+export function parseDeckContent(text: string, fileName: string): DeckContentData {
   const lower = fileName.toLowerCase()
   const isCsv =
     lower.endsWith('.csv') || (!lower.endsWith('.json') && !text.trimStart().startsWith('{'))
-  let content: RoomContentData
+  let content: DeckContentData
   try {
     if (isCsv) {
       content = contentFromCsv(parseCsv(text))
     } else {
       const data = JSON.parse(text) as Record<string, unknown>
       content = {
-        loci: coerceLoci(data.loci ?? data.flashcards),
+        cards: coerceCardsField(data),
         questions: coerceQuestions(data.questions),
       }
     }
   } catch {
     throw new ContentImportError("That file isn't a valid Mindscape export (.json or .csv).")
   }
-  if (content.loci.length === 0 && content.questions.length === 0) {
+  if (content.cards.length === 0 && content.questions.length === 0) {
     throw new ContentImportError('No cards or questions found in that file.')
   }
   return content
 }
 
 /**
- * Parse a Mindscape room export (`.json`, type `mindscape-room-content`) at full fidelity —
- * cards keep their cues, flag, known status, and schedule. JSON only; a `.csv`/`.tsv` file
- * belongs to the Anki import. Throws {@link ContentImportError} on a bad or empty file.
+ * Parse a Mindscape deck export (`.json`, type `mindscape-deck-content`, or the legacy
+ * `mindscape-room-content`) at full fidelity — cards keep their cues, flag, known status,
+ * and schedule. JSON only; a `.csv`/`.tsv` file belongs to the Anki import. Throws
+ * {@link ContentImportError} on a bad or empty file.
  */
-export function parseMindscapeRoom(text: string): RoomContentData {
+export function parseMindscapeDeck(text: string): DeckContentData {
   let data: unknown
   try {
     data = JSON.parse(text)
@@ -504,68 +510,69 @@ export function parseMindscapeRoom(text: string): RoomContentData {
     throw new ContentImportError('That file isn’t a Mindscape export.')
   }
   const root = data as Record<string, unknown>
-  const content: RoomContentData = {
-    loci: coerceLoci(root.loci ?? root.flashcards),
+  const content: DeckContentData = {
+    cards: coerceCardsField(root),
     questions: coerceQuestions(root.questions),
   }
-  if (content.loci.length === 0 && content.questions.length === 0) {
+  if (content.cards.length === 0 && content.questions.length === 0) {
     throw new ContentImportError('No cards found in that Mindscape file.')
   }
   return content
 }
 
-// --- Palace-level transfer --------------------------------------------------
+// --- Deck-tree transfer ------------------------------------------------------
 
-const PALACE_JSON_TYPE = 'mindscape.palace'
-const PALACE_JSON_VERSION = 1
+const TREE_JSON_TYPE = 'mindscape.decks'
+/** Legacy type written by the palace-era app; still accepted on import. */
+const TREE_JSON_TYPE_LEGACY = 'mindscape.palace'
+const TREE_JSON_VERSION = 2
 
-/** One room's importable content: a title/description plus its cards and questions. */
-export interface ImportedRoom {
+/** One deck's importable content: a name/description plus its cards and questions. */
+export interface ImportedDeck {
   title: string
   description?: string
-  loci: ParsedLocus[]
+  cards: ParsedCard[]
   questions: ParsedQuestion[]
 }
 
-/** A palace's identity as it travels in an export — no ids, timestamps, or schedule. */
-export interface PalaceMeta {
+/** The export's top-level identity as it travels in a file — no ids or timestamps. */
+export interface DeckTreeMeta {
   name: string
   description?: string
   icon?: string
   color?: string
-  category?: string
 }
 
-export interface PalaceContentData {
-  palace: PalaceMeta
-  rooms: ImportedRoom[]
+export interface DeckTreeContentData {
+  meta: DeckTreeMeta
+  decks: ImportedDeck[]
 }
 
 /**
- * Serialize a whole palace — identity plus every room's content — as a Mindscape palace
- * file. Structural inputs (no entity dependency); the mirror of {@link parsePalaceContent},
- * so export and import can never drift out of one format.
+ * Serialize a deck and its subdecks' content as a Mindscape decks file. Structural inputs
+ * (no entity dependency); the mirror of {@link parseDeckTreeContent}, so export and import
+ * can never drift out of one format.
  */
-export function palaceContentToJson(
-  palace: PalaceMeta & { settings?: unknown },
-  rooms: ReadonlyArray<{
+export function deckTreeToJson(
+  meta: DeckTreeMeta,
+  decks: ReadonlyArray<{
     title: string
     description?: string
-    loci: ReadonlyArray<LocusLike & { tip?: string }>
+    cards: ReadonlyArray<CardLike & { tip?: string }>
     questions: ReadonlyArray<QuestionLike>
   }>,
 ): string {
   return JSON.stringify(
     {
-      type: PALACE_JSON_TYPE,
-      version: PALACE_JSON_VERSION,
+      type: TREE_JSON_TYPE,
+      version: TREE_JSON_VERSION,
       exportedAt: new Date().toISOString(),
-      palace,
-      rooms: rooms.map((room) => ({
-        title: room.title,
-        description: room.description,
-        loci: room.loci.map((l) => ({ front: l.front, back: l.back, hint: l.hint, tip: l.tip })),
-        questions: room.questions.map((q) => ({
+      deck: meta,
+      decks: decks.map((deck) => ({
+        title: deck.title,
+        description: deck.description,
+        cards: deck.cards.map((c) => ({ front: c.front, back: c.back, hint: c.hint, tip: c.tip })),
+        questions: deck.questions.map((q) => ({
           prompt: q.prompt,
           options: q.options,
           correctAnswer: q.correctAnswer,
@@ -579,53 +586,50 @@ export function palaceContentToJson(
 }
 
 /**
- * Parse a Mindscape palace file into its identity and rooms, tolerating missing fields.
- * Throws {@link ContentImportError} with a user-facing message on a bad file.
+ * Parse a Mindscape decks file (or a legacy palace file) into its identity and decks,
+ * tolerating missing fields. Throws {@link ContentImportError} with a user-facing message
+ * on a bad file.
  */
-export function parsePalaceContent(text: string, fileName?: string): PalaceContentData {
+export function parseDeckTreeContent(text: string, fileName?: string): DeckTreeContentData {
   let data: unknown
   try {
     data = JSON.parse(text)
   } catch {
-    throw new ContentImportError('That file isn’t a valid Mindscape palace file.')
+    throw new ContentImportError('That file isn’t a valid Mindscape decks file.')
   }
-  if (
-    !data ||
-    typeof data !== 'object' ||
-    (data as Record<string, unknown>).type !== PALACE_JSON_TYPE
-  ) {
-    throw new ContentImportError('That file isn’t a Mindscape palace export.')
+  const type = data && typeof data === 'object' ? (data as Record<string, unknown>).type : undefined
+  if (type !== TREE_JSON_TYPE && type !== TREE_JSON_TYPE_LEGACY) {
+    throw new ContentImportError('That file isn’t a Mindscape decks export.')
   }
   const root = data as Record<string, unknown>
-  const meta = (root.palace ?? {}) as Record<string, unknown>
+  const meta = (root.deck ?? root.palace ?? {}) as Record<string, unknown>
   const fallback = fileName ? fileName.replace(/\.[^.]+$/, '').trim() : ''
-  const name = (String(meta.name ?? '').trim() || fallback || 'Imported palace').slice(0, 60)
-  const roomsRaw = Array.isArray(root.rooms) ? root.rooms : []
-  const rooms = roomsRaw.flatMap((entry): ImportedRoom[] => {
+  const name = (String(meta.name ?? '').trim() || fallback || 'Imported deck').slice(0, 60)
+  const decksRaw = Array.isArray(root.decks ?? root.rooms) ? (root.decks ?? root.rooms) : []
+  const decks = (decksRaw as unknown[]).flatMap((entry): ImportedDeck[] => {
     if (!entry || typeof entry !== 'object') return []
-    const room = entry as Record<string, unknown>
-    const title = String(room.title ?? '').trim()
+    const deck = entry as Record<string, unknown>
+    const title = String(deck.title ?? '').trim()
     if (!title) return []
     return [
       {
         title,
-        description: room.description ? String(room.description).trim() : undefined,
-        loci: coerceLoci(room.loci),
-        questions: coerceQuestions(room.questions),
+        description: deck.description ? String(deck.description).trim() : undefined,
+        cards: coerceCardsField(deck),
+        questions: coerceQuestions(deck.questions),
       },
     ]
   })
-  if (rooms.length === 0) {
-    throw new ContentImportError('No rooms found in that palace file.')
+  if (decks.length === 0) {
+    throw new ContentImportError('No decks found in that file.')
   }
   return {
-    palace: {
+    meta: {
       name,
       description: meta.description ? String(meta.description).trim() : undefined,
       icon: meta.icon ? String(meta.icon) : undefined,
       color: meta.color ? String(meta.color) : undefined,
-      category: meta.category ? String(meta.category).trim() : undefined,
     },
-    rooms,
+    decks,
   }
 }

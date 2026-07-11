@@ -4,22 +4,22 @@ import userEvent from '@testing-library/user-event'
 import { MotionConfig } from 'motion/react'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
-import type { MatchLocus } from '@/features/match'
+import type { MatchCard } from '@/features/match'
 import { MatchBoard } from './MatchBoard'
 
 afterEach(cleanup)
 
-const LOCI: MatchLocus[] = [
+const CARDS: MatchCard[] = [
   { id: 'l1', front: 'Alpha', back: 'first letter' },
   { id: 'l2', front: 'Beta', back: 'second letter' },
 ]
 
-function renderBoard(loci: MatchLocus[] = LOCI) {
+function renderBoard(cards: MatchCard[] = CARDS) {
   const onComplete = vi.fn()
   render(
     <I18nextProvider i18n={i18n}>
       <MotionConfig reducedMotion="always">
-        <MatchBoard loci={loci} subtitle="Atrium" onBack={() => {}} onComplete={onComplete} />
+        <MatchBoard cards={cards} subtitle="Atrium" onBack={() => {}} onComplete={onComplete} />
       </MotionConfig>
     </I18nextProvider>,
   )

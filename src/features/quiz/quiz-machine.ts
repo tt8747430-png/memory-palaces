@@ -11,7 +11,7 @@ export interface QuizQuestion {
   options: string[]
   /** Index into `options` of the correct choice. */
   correctAnswer: number
-  roomTitle: string
+  deckName: string
   explanation?: string
 }
 

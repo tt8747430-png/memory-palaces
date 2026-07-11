@@ -1,9 +1,6 @@
 export type {
   Preferences,
   PrivacySettings,
-  PalacesView,
-  PalacesSort,
-  RoomsSort,
   ContentSort,
   StudyMode,
   Theme,

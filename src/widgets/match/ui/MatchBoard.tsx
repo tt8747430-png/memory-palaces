@@ -7,13 +7,13 @@ import { Button, Chip, IconButton } from '@/shared/ui'
 import {
   buildTiles,
   initMatch,
-  type MatchLocus,
+  type MatchCard,
   matchReducer,
   remainingPairs,
 } from '@/features/match'
 
 export interface MatchBoardProps {
-  loci: MatchLocus[]
+  cards: MatchCard[]
   /** Context line under the "Match" title (e.g. "Atrium · Forum"). */
   subtitle?: string
   onBack: () => void
@@ -32,10 +32,10 @@ function formatTime(seconds: number): string {
 /** Match game: a shuffled board of term/definition tiles; tap a term then its
  * definition to clear the pair. Driven by the pure `matchReducer`; the widget owns
  * the count-up timer and the mismatch-flash timeout. */
-export function MatchBoard({ loci, subtitle, onBack, onComplete }: MatchBoardProps) {
+export function MatchBoard({ cards, subtitle, onBack, onComplete }: MatchBoardProps) {
   const { t } = useTranslation()
   const reduce = useReducedMotion()
-  const [state, dispatch] = useReducer(matchReducer, loci, (init) => initMatch(buildTiles(init)))
+  const [state, dispatch] = useReducer(matchReducer, cards, (init) => initMatch(buildTiles(init)))
   const [elapsed, setElapsed] = useState(0)
 
   const won = state.status === 'won'
@@ -60,11 +60,11 @@ export function MatchBoard({ loci, subtitle, onBack, onComplete }: MatchBoardPro
   }, [won])
 
   const restart = () => {
-    dispatch({ type: 'reset', tiles: buildTiles(loci) })
+    dispatch({ type: 'reset', tiles: buildTiles(cards) })
     setElapsed(0)
   }
 
-  if (loci.length < 2) {
+  if (cards.length < 2) {
     return (
       <div className="relative mx-auto flex h-full w-full max-w-[430px] flex-col items-center justify-center gap-5 px-6 text-center">
         <div className="grid size-16 place-items-center rounded-card-featured bg-info-surface">

@@ -24,7 +24,7 @@ export interface Snapshot {
 
 export interface ReviewState {
   status: 'review'
-  /** Remaining locus ids; the head is the active card. */
+  /** Remaining card ids; the head is the active card. */
   queue: string[]
   /** Session size, fixed at start, for the progress bar. */
   total: number

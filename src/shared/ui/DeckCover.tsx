@@ -1,14 +1,14 @@
 import type { CSSProperties } from 'react'
 import { cn } from '@/shared/lib'
 
-export interface PalaceCoverProps {
+export interface DeckCoverProps {
   icon: string
   /** A preset Tailwind gradient (`from-… to-…`) or a custom hex (`#7C3AED`). */
   color: string
   /** When set, a downscaled photo data URL shown as the cover. */
   image?: string
   /**
-   * No-photo backdrop. `identity` paints the palace's own color; `brand` keeps the
+   * No-photo backdrop. `identity` paints the deck's own color; `brand` keeps the
    * calm daylight gradient (large card covers, per the Cool-Daylight Rule). A photo
    * overrides both.
    */
@@ -22,14 +22,14 @@ export interface PalaceCoverProps {
 }
 
 /**
- * The one place that knows how a palace cover renders, so custom photos and free
- * colors work everywhere a palace is shown (cards, list rows, the create preview).
+ * The one place that knows how a deck cover renders, so custom photos and free
+ * colors work everywhere a deck is shown (cards, list rows, the create preview).
  * Three cases:
  * - `image` → the photo under a navy scrim so an overlaid title stays legible.
  * - preset `color` (`from-… to-…`) → a Tailwind gradient + emoji.
  * - custom `color` (hex) → an inline gradient derived from the hex + emoji.
  */
-export function PalaceCover({
+export function DeckCover({
   icon,
   color,
   image,
@@ -37,7 +37,7 @@ export function PalaceCover({
   className,
   iconClassName = 'text-2xl',
   hideIcon = false,
-}: PalaceCoverProps) {
+}: DeckCoverProps) {
   if (image) {
     return (
       <div className={cn('relative overflow-hidden bg-primary', className)}>

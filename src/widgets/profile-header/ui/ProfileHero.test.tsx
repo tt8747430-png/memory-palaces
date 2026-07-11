@@ -36,14 +36,14 @@ describe('ProfileHero', () => {
     expect(screen.getByText('@ada')).toBeInTheDocument()
   })
 
-  it('shows the streak, XP and palaces headline stats', () => {
+  it('shows the streak, XP and decks headline stats', () => {
     renderHero({ streakCount: 5, xp: 4600, palaceCount: 7 })
     expect(screen.getByText('5')).toBeInTheDocument()
     expect(screen.getByText('4,600')).toBeInTheDocument()
     expect(screen.getByText('7')).toBeInTheDocument()
     expect(screen.getByText('Day streak')).toBeInTheDocument()
     expect(screen.getByText('Total XP')).toBeInTheDocument()
-    expect(screen.getByText('Palaces')).toBeInTheDocument()
+    expect(screen.getByText('Decks')).toBeInTheDocument()
   })
 
   it('shows the level and the XP-to-next meter', () => {

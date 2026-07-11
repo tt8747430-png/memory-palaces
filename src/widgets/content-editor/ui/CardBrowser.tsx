@@ -132,25 +132,25 @@ export function CardBrowser({
     ? [
         {
           id: 'flag',
-          label: current.flagged ? t('loci.row.unflag') : t('loci.row.flag'),
+          label: current.flagged ? t('cards.row.unflag') : t('cards.row.flag'),
           icon: <Flag className="size-5" aria-hidden />,
           onSelect: () => onToggleFlag(current.id),
         },
         {
           id: 'duplicate',
-          label: t('loci.row.duplicate'),
+          label: t('cards.row.duplicate'),
           icon: <Copy className="size-5" aria-hidden />,
           onSelect: () => onDuplicate(current.id),
         },
         {
           id: 'known',
-          label: t('loci.row.markKnown'),
+          label: t('cards.row.markKnown'),
           icon: <GraduationCap className="size-5" aria-hidden />,
           onSelect: () => onMarkKnown(current.id),
         },
         {
           id: 'reset',
-          label: t('loci.row.resetSchedule'),
+          label: t('cards.row.resetSchedule'),
           icon: <RotateCcw className="size-5" aria-hidden />,
           onSelect: () => onResetSrs(current.id),
         },
@@ -198,17 +198,17 @@ export function CardBrowser({
                   <X className="size-5" aria-hidden />
                 </Dialog.Close>
                 <Dialog.Title className="rounded-pill bg-card-glass px-4 py-1.5 text-[length:var(--p-text-label)] font-bold tabular-nums text-heading ring-1 ring-[color:var(--border-glass)] shadow-rest">
-                  {t('loci.browser.position', { current: index + 1, total: count })}
+                  {t('cards.browser.position', { current: index + 1, total: count })}
                 </Dialog.Title>
                 <FlyoutMenu
-                  label={t('loci.browser.menu')}
+                  label={t('cards.browser.menu')}
                   actions={menuActions}
                   side="bottom"
                   align="end"
                   trigger={
                     <button
                       type="button"
-                      aria-label={t('loci.browser.menu')}
+                      aria-label={t('cards.browser.menu')}
                       className="grid size-10 place-items-center rounded-full bg-card-glass text-heading ring-1 ring-[color:var(--border-glass)] shadow-rest transition-transform active:scale-95"
                     >
                       <MoreVertical className="size-5" aria-hidden />
@@ -251,12 +251,12 @@ export function CardBrowser({
                         >
                           <div className="flex items-center justify-between">
                             <span className="rounded-control bg-info-surface px-2.5 py-1 text-[length:var(--p-text-tiny)] font-semibold text-info-foreground">
-                              {t('loci.browser.front')}
+                              {t('cards.browser.front')}
                             </span>
                             {current.flagged ? (
                               <Flag
                                 className="size-4 fill-[var(--rating)] text-[var(--rating-edge)]"
-                                aria-label={t('loci.row.flagged')}
+                                aria-label={t('cards.row.flagged')}
                               />
                             ) : null}
                           </div>
@@ -266,7 +266,7 @@ export function CardBrowser({
                             </p>
                           </div>
                           <p className="text-center text-[length:var(--p-text-label)] font-medium text-muted-foreground">
-                            {t('loci.browser.flip')}
+                            {t('cards.browser.flip')}
                           </p>
                         </div>
                         <div
@@ -274,7 +274,7 @@ export function CardBrowser({
                           className="absolute inset-0 flex flex-col rounded-card-featured border border-border bg-card p-6 shadow-elevated"
                         >
                           <span className="self-start rounded-control bg-info-surface px-2.5 py-1 text-[length:var(--p-text-tiny)] font-semibold text-info-foreground">
-                            {t('loci.browser.back')}
+                            {t('cards.browser.back')}
                           </span>
                           <div className="flex flex-1 flex-col items-center justify-center gap-4 overflow-y-auto py-3 text-center scrollbar-hide">
                             <p className="text-balance break-words text-[clamp(18px,5vw,24px)] font-semibold leading-snug text-heading">
@@ -294,7 +294,7 @@ export function CardBrowser({
                             ) : null}
                           </div>
                           <p className="text-center text-[length:var(--p-text-label)] font-medium text-muted-foreground">
-                            {t('loci.browser.flipBack')}
+                            {t('cards.browser.flipBack')}
                           </p>
                         </div>
                       </motion.div>
@@ -308,7 +308,7 @@ export function CardBrowser({
                   type="button"
                   onClick={() => go(-1)}
                   disabled={index === 0}
-                  aria-label={t('loci.browser.prev')}
+                  aria-label={t('cards.browser.prev')}
                   className="grid size-12 place-items-center rounded-full bg-card-glass text-heading ring-1 ring-[color:var(--border-glass)] shadow-rest transition-transform active:scale-95 disabled:pointer-events-none disabled:opacity-35"
                 >
                   <ChevronLeft className="size-5" aria-hidden />
@@ -325,7 +325,7 @@ export function CardBrowser({
                   type="button"
                   onClick={() => go(1)}
                   disabled={index >= count - 1}
-                  aria-label={t('loci.browser.next')}
+                  aria-label={t('cards.browser.next')}
                   className="grid size-12 place-items-center rounded-full bg-card-glass text-heading ring-1 ring-[color:var(--border-glass)] shadow-rest transition-transform active:scale-95 disabled:pointer-events-none disabled:opacity-35"
                 >
                   <ChevronRight className="size-5" aria-hidden />

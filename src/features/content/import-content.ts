@@ -1,22 +1,22 @@
 import {
   ContentImportError,
-  type PalaceContentData,
+  type DeckTreeContentData,
   parseAnkiText,
-  parseMindscapeRoom,
-  parsePalaceContent,
-  parseRoomContent,
-  type RoomContentData,
+  parseMindscapeDeck,
+  parseDeckTreeContent,
+  parseDeckContent,
+  type DeckContentData,
 } from '@/shared/lib'
 
 /** Read a `.json` / `.csv` Mindscape export into room content (the file-IO boundary). Used by
- * the palace-rooms and questions imports; the room card import uses the split readers below. */
-export function readContentFile(file: File): Promise<RoomContentData> {
-  return readText(file).then((text) => parseRoomContent(text, file.name))
+ * the deck-tree and questions imports; the per-deck card import uses the split readers below. */
+export function readContentFile(file: File): Promise<DeckContentData> {
+  return readText(file).then((text) => parseDeckContent(text, file.name))
 }
 
 /** Read a Mindscape room export (`.json`) at full card fidelity (cues, flag, known, schedule). */
-export function readMindscapeFile(file: File): Promise<RoomContentData> {
-  return readText(file).then((text) => parseMindscapeRoom(text))
+export function readMindscapeFile(file: File): Promise<DeckContentData> {
+  return readText(file).then((text) => parseMindscapeDeck(text))
 }
 
 /**
@@ -25,7 +25,7 @@ export function readMindscapeFile(file: File): Promise<RoomContentData> {
  * (`.apkg` / `.colpkg`) are routed to a clear re-export message — Mindscape doesn't bundle a
  * SQLite/zip reader to keep the offline bundle lean.
  */
-export async function readAnkiFile(file: File): Promise<RoomContentData> {
+export async function readAnkiFile(file: File): Promise<DeckContentData> {
   const name = file.name.toLowerCase()
   if (name.endsWith('.apkg') || name.endsWith('.colpkg')) {
     throw new ContentImportError(
@@ -33,15 +33,15 @@ export async function readAnkiFile(file: File): Promise<RoomContentData> {
     )
   }
   const text = await file.text()
-  if (name.endsWith('.csv')) return parseRoomContent(text, file.name)
-  const loci = parseAnkiText(text)
-  if (loci.length === 0) throw new ContentImportError('No cards found in that file.')
-  return { loci, questions: [] }
+  if (name.endsWith('.csv')) return parseDeckContent(text, file.name)
+  const cards = parseAnkiText(text)
+  if (cards.length === 0) throw new ContentImportError('No cards found in that file.')
+  return { cards, questions: [] }
 }
 
-/** Read a Mindscape palace export (`.json`) into its identity and rooms. */
-export function readPalaceFile(file: File): Promise<PalaceContentData> {
-  return readText(file).then((text) => parsePalaceContent(text, file.name))
+/** Read a Mindscape decks export (`.json`, legacy palace files included) into its decks. */
+export function readDeckTreeFile(file: File): Promise<DeckTreeContentData> {
+  return readText(file).then((text) => parseDeckTreeContent(text, file.name))
 }
 
 function readText(file: File): Promise<string> {

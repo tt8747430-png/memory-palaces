@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { ArrowLeft, Mail, MailCheck } from 'lucide-react'
 import { authEntrance, isEmail, useAuthGateway } from '@/shared/lib'
 import { AuthField, AuthScreen, Button } from '@/shared/ui'
-import { AuthLogo } from '@/widgets/palace-threshold'
+import { AuthLogo } from '@/widgets/threshold'
 import { requestPasswordReset } from '@/features/session'
 
 export interface ForgotPasswordPageProps {

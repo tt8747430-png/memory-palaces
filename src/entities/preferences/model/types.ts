@@ -15,22 +15,7 @@ import {
 export type { SwipePreferences } from '@/shared/config/swipe'
 export type { FlashcardSwipeConfig, FlashcardSwipeByMode } from '@/shared/config/flashcard-swipe'
 
-/** How the Palaces screen lays out its list. Persisted so the choice survives sessions. */
-export type PalacesView = 'grid' | 'list'
-
-/** How the library orders its items. `manual` is a hand-dragged order; the rest are
- * automatic rules. Persisted so the choice survives sessions. */
-export type PalacesSort = 'manual' | 'recent' | 'progress' | 'name'
-
-const PALACES_SORTS: readonly PalacesSort[] = ['manual', 'recent', 'progress', 'name']
-
-/** How a palace's rooms are ordered on the palace screen. `manual` is the hand-dragged
- * route order (the default — the journey is intentional); the rest are automatic rules. */
-export type RoomsSort = 'manual' | 'recent' | 'progress' | 'name'
-
-const ROOMS_SORTS: readonly RoomsSort[] = ['manual', 'recent', 'progress', 'name']
-
-/** How a room's cards/questions are ordered in the content editor. `manual` is the
+/** How a deck's cards/questions are ordered in the content editor. `manual` is the
  * hand-dragged order; `due` and `flagged` apply to cards only (questions fall back to
  * `manual` for them). Shared across both tabs and persisted so the choice survives. */
 export type ContentSort = 'manual' | 'recent' | 'name' | 'due' | 'flagged'
@@ -87,17 +72,7 @@ export interface Preferences extends Entity {
   language: string
   /** Items to practise per day to keep the streak (the daily goal). */
   dailyGoal: number
-  /** Palaces screen: grid or list layout. */
-  palacesView: PalacesView
-  /** Palaces screen: list ordering. */
-  palacesSort: PalacesSort
-  /** Palaces screen: the hand-dragged root order, folders and palaces interleaved. Entries
-   * are namespaced ids (`f:<folderId>` / `p:<palaceId>`); items missing from the list group
-   * folders-first behind it, and stale entries are ignored on read. */
-  libraryOrder: string[]
-  /** Palace screen: how a palace's rooms are ordered. */
-  roomsSort: RoomsSort
-  /** Room editor: how a room's cards/questions are ordered. */
+  /** Content editor: how a deck's cards/questions are ordered. */
   contentSort: ContentSort
   /** Study surface: how each card's answer is recalled (blur / words / initials / type). */
   studyMode: StudyMode
@@ -120,10 +95,6 @@ export const DEFAULT_PREFERENCES = {
   theme: 'system',
   language: 'en',
   dailyGoal: DEFAULT_DAILY_GOAL,
-  palacesView: 'list',
-  palacesSort: 'recent',
-  libraryOrder: [] as string[],
-  roomsSort: 'manual',
   contentSort: 'manual',
   studyMode: 'blur',
   studyWordSpaces: true,
@@ -151,10 +122,6 @@ export interface MakePreferencesInput {
   theme?: Theme
   language?: string
   dailyGoal?: number
-  palacesView?: PalacesView
-  palacesSort?: PalacesSort
-  libraryOrder?: string[]
-  roomsSort?: RoomsSort
   contentSort?: ContentSort
   studyMode?: StudyMode
   studyWordSpaces?: boolean
@@ -186,17 +153,6 @@ export function makePreferences(input: MakePreferencesInput): Preferences {
     theme: input.theme ?? DEFAULT_PREFERENCES.theme,
     language: input.language ?? DEFAULT_PREFERENCES.language,
     dailyGoal: input.dailyGoal ?? DEFAULT_PREFERENCES.dailyGoal,
-    palacesView: input.palacesView ?? DEFAULT_PREFERENCES.palacesView,
-    // Clamp a persisted sort that's no longer offered (e.g. the retired `category`).
-    palacesSort:
-      input.palacesSort && PALACES_SORTS.includes(input.palacesSort)
-        ? input.palacesSort
-        : DEFAULT_PREFERENCES.palacesSort,
-    libraryOrder: input.libraryOrder ?? [],
-    roomsSort:
-      input.roomsSort && ROOMS_SORTS.includes(input.roomsSort)
-        ? input.roomsSort
-        : DEFAULT_PREFERENCES.roomsSort,
     contentSort:
       input.contentSort && CONTENT_SORTS.includes(input.contentSort)
         ? input.contentSort
@@ -221,10 +177,6 @@ export type PreferencesChanges = Partial<
     | 'theme'
     | 'language'
     | 'dailyGoal'
-    | 'palacesView'
-    | 'palacesSort'
-    | 'libraryOrder'
-    | 'roomsSort'
     | 'contentSort'
     | 'studyMode'
     | 'studyWordSpaces'

@@ -1,4 +1,4 @@
-import type { ImportedRoom } from '@/shared/lib'
+import type { ImportedDeck } from '@/shared/lib'
 import type { DeckStore } from '@/entities/deck'
 import type { CardStore } from '@/entities/card'
 import type { QuestionStore } from '@/entities/question'
@@ -23,7 +23,7 @@ export async function importDecks(
   cardStore: CardStore,
   questionStore: QuestionStore,
   parentId: string | null,
-  decks: ReadonlyArray<ImportedRoom>,
+  decks: ReadonlyArray<ImportedDeck>,
 ): Promise<ImportDecksResult> {
   let cards = 0
   let questions = 0
@@ -34,7 +34,7 @@ export async function importDecks(
       parentId,
     })
     const applied = await applyDeckContent(cardStore, questionStore, deck.id, {
-      loci: incoming.loci,
+      cards: incoming.cards,
       questions: incoming.questions,
     })
     cards += applied.cards

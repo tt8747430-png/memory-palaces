@@ -18,9 +18,9 @@ const earnedIds = (input: AchievementInput) =>
 describe('computeAchievements', () => {
   it('returns the six badges in canonical order', () => {
     expect(computeAchievements(base).map((a) => a.id)).toEqual([
-      'first-palace',
+      'first-deck',
       'week-warrior',
-      'palace-master',
+      'deck-master',
       'xp-champion',
       'perfectionist',
       'dedicated-learner',
@@ -31,8 +31,8 @@ describe('computeAchievements', () => {
     expect(earnedIds(base)).toEqual([])
   })
 
-  it('earns first-palace with at least one palace', () => {
-    expect(earnedIds({ ...base, deckCount: 1 })).toContain('first-palace')
+  it('earns first-deck with at least one deck', () => {
+    expect(earnedIds({ ...base, deckCount: 1 })).toContain('first-deck')
   })
 
   it('earns week-warrior at a 7-day streak, not 6', () => {
@@ -40,8 +40,8 @@ describe('computeAchievements', () => {
     expect(earnedIds({ ...base, streakCount: 7 })).toContain('week-warrior')
   })
 
-  it('earns palace-master when any palace is fully complete', () => {
-    expect(earnedIds({ ...base, anyDeckCompleted: true })).toContain('palace-master')
+  it('earns deck-master when any deck is fully complete', () => {
+    expect(earnedIds({ ...base, anyDeckCompleted: true })).toContain('deck-master')
   })
 
   it('earns xp-champion at 2000 XP, not 1999', () => {

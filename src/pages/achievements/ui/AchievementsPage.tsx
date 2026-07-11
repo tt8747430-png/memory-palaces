@@ -109,7 +109,7 @@ export function AchievementsPage({ onBack, onOpenAchievement }: AchievementsPage
     {
       id: 'rooms',
       value: String(totals.decksCompleted),
-      label: t('achievementsPage.records.rooms'),
+      label: t('achievementsPage.records.decks'),
     },
     {
       id: 'days',

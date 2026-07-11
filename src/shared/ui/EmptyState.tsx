@@ -8,7 +8,7 @@ export interface EmptyStateProps {
   emoji?: string
   title: string
   description: string
-  /** Primary call to action, e.g. a "Create palace" button. */
+  /** Primary call to action, e.g. a "Create deck" button. */
   action?: ReactNode
   className?: string
 }

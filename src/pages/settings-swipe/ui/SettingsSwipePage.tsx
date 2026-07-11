@@ -6,8 +6,8 @@ import {
   ArrowRight,
   Folder,
   Layers,
-  DoorOpen,
   Landmark,
+  WalletCards,
   RotateCcw,
 } from 'lucide-react'
 import {
@@ -46,10 +46,9 @@ const TONE_CHIP: Record<SwipeTone, string> = {
 
 /** One glyph per row type, so each section reads at a glance instead of by heading alone. */
 const TYPE_ICON: Record<SwipeItemType, typeof Landmark> = {
-  palace: Landmark,
+  deck: Layers,
   folder: Folder,
-  room: DoorOpen,
-  card: Layers,
+  card: WalletCards,
 }
 
 /**

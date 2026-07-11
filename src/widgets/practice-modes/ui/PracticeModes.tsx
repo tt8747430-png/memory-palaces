@@ -16,7 +16,7 @@ export interface PracticeModesProps {
   alwaysEnableTest?: boolean
 }
 
-/** The practice rows (Match / Questions & Test) shared by the room hub and palace detail.
+/** The practice rows (Match / Questions & Test) rendered on deck detail.
  * The Study-cards session is the headline above; its study modes (flip, type, initials,
  * blur, rebuild) all live inside the session behind the header mode button. These rows are
  * the alternate games over the same set, scoped to whichever surface renders them. */

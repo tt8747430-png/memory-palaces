@@ -6,7 +6,7 @@
  * that renders them.
  */
 
-export type BadgeId = 'xp' | 'streak' | 'rooms' | 'palaces' | 'cards' | 'days'
+export type BadgeId = 'xp' | 'streak' | 'decks' | 'library' | 'cards' | 'days'
 
 export interface BadgeInput {
   xp: number
@@ -36,14 +36,14 @@ export interface Badge {
 const TIERS = {
   xp: [1000, 2500, 5000, 10000, 25000],
   streak: [7, 30, 100, 365],
-  rooms: [10, 50, 100, 250],
-  palaces: [1, 3, 10, 25],
+  decks: [10, 50, 100, 250],
+  library: [1, 3, 10, 25],
   cards: [50, 200, 500, 1000],
   days: [10, 50, 100, 365],
 } as const satisfies Record<BadgeId, readonly number[]>
 
 /** Canonical display order. */
-const BADGE_ORDER: readonly BadgeId[] = ['xp', 'streak', 'rooms', 'palaces', 'cards', 'days']
+const BADGE_ORDER: readonly BadgeId[] = ['xp', 'streak', 'decks', 'library', 'cards', 'days']
 
 function metricFor(id: BadgeId, input: BadgeInput): number {
   switch (id) {
@@ -51,9 +51,9 @@ function metricFor(id: BadgeId, input: BadgeInput): number {
       return input.xp
     case 'streak':
       return input.longestStreak
-    case 'rooms':
+    case 'decks':
       return input.decksCompleted
-    case 'palaces':
+    case 'library':
       return input.deckCount
     case 'cards':
       return input.totalCards

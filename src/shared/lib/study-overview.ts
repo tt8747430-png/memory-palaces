@@ -3,9 +3,9 @@ import { isDue, type SrsState, srsStatus } from './srs'
 /**
  * The study-overview numbers for a scope's cards: how many are due today and the
  * New/Learning/Known split of just that due set. The single definition of "cards for
- * today + its breakdown" that the room hub and palace detail both render — they pass
- * their already-scoped loci (room set or the whole palace) so this stays below the
- * entity layer. Pure; `now` injected. One pass over the loci.
+ * today + its breakdown" that deck detail renders — callers pass their already-scoped
+ * cards (a deck's subtree) so this stays below the entity layer. Pure; `now` injected.
+ * One pass over the cards.
  */
 export interface StudyOverview {
   /** Cards for today (due) in the scope. */
@@ -16,13 +16,16 @@ export interface StudyOverview {
   isCaughtUp: boolean
 }
 
-export function studyOverview(loci: ReadonlyArray<{ srs?: SrsState }>, now: number): StudyOverview {
+export function studyOverview(
+  cards: ReadonlyArray<{ srs?: SrsState }>,
+  now: number,
+): StudyOverview {
   const breakdown = { new: 0, learning: 0, known: 0 }
   let count = 0
-  for (const locus of loci) {
-    if (!isDue(locus.srs, now)) continue
+  for (const card of cards) {
+    if (!isDue(card.srs, now)) continue
     count += 1
-    breakdown[srsStatus(locus.srs)] += 1
+    breakdown[srsStatus(card.srs)] += 1
   }
   return { count, breakdown, isCaughtUp: count === 0 }
 }

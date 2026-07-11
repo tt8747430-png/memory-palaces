@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { WordReveal } from '@/shared/ui'
-import { PalaceThreshold } from '@/widgets/palace-threshold'
+import { Threshold } from '@/widgets/threshold'
 
 export interface SplashOverlayProps {
   onDone: () => void
@@ -15,7 +15,7 @@ const REDUCED_MS = 500
 const AURA_BG =
   'radial-gradient(circle at center, oklch(var(--p-tint-sky) / 0.45), transparent 60%)'
 
-/** First-paint brand moment: a light aura blooms, the palace threshold draws itself
+/** First-paint brand moment: a light aura blooms, the threshold draws itself
  * over a deep-navy ground, then the wordmark reveals a word at a time before handing
  * off to the app. Self-dismisses (shorter under reduced motion) and is skippable. */
 export function SplashOverlay({ onDone }: SplashOverlayProps) {
@@ -68,7 +68,7 @@ export function SplashOverlay({ onDone }: SplashOverlayProps) {
         />
       )}
 
-      <PalaceThreshold className="relative z-10 size-44" />
+      <Threshold className="relative z-10 size-44" />
 
       <div className="relative z-10 flex flex-col items-center gap-1">
         <WordReveal

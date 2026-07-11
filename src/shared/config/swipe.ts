@@ -6,10 +6,10 @@
  */
 
 /** The kinds of row a swipe can be configured for. Each carries its own action menu because
- * the available actions differ (a palace archives, a card flags). */
-export type SwipeItemType = 'palace' | 'folder' | 'room' | 'card'
+ * the available actions differ (a deck archives, a card flags). */
+export type SwipeItemType = 'deck' | 'folder' | 'card'
 
-export const SWIPE_ITEM_TYPES: readonly SwipeItemType[] = ['palace', 'folder', 'room', 'card']
+export const SWIPE_ITEM_TYPES: readonly SwipeItemType[] = ['deck', 'folder', 'card']
 
 /** Every action a swipe can be bound to, across all item types. The union is flat so the
  * stored config is just a list of ids; {@link SWIPE_ACTIONS} says which apply to which type. */
@@ -52,9 +52,8 @@ export const SWIPE_ACTION_META: Record<SwipeActionId, SwipeActionMeta> = {
 /** Which actions each item type can offer, in menu order. The settings screen lists these as
  * the pool the user assigns to a side. */
 export const SWIPE_ACTIONS: Record<SwipeItemType, readonly SwipeActionId[]> = {
-  palace: ['favorite', 'move', 'archive', 'settings', 'delete'],
+  deck: ['favorite', 'move', 'archive', 'settings', 'duplicate', 'delete'],
   folder: ['edit', 'delete'],
-  room: ['edit', 'duplicate', 'reset', 'delete'],
   card: ['flag', 'known', 'reset', 'duplicate', 'delete'],
 }
 
@@ -75,9 +74,8 @@ export type SwipePreferences = Record<SwipeItemType, SwipeConfig>
 /** Sensible out-of-the-box mapping: the destructive action sits at the trailing edge (the
  * iOS-Mail home for "delete"), a lighter positive action on the leading edge. */
 export const DEFAULT_SWIPE: SwipePreferences = {
-  palace: { leading: ['favorite'], trailing: ['archive', 'delete'] },
+  deck: { leading: ['favorite'], trailing: ['archive', 'delete'] },
   folder: { leading: ['edit'], trailing: ['delete'] },
-  room: { leading: ['edit'], trailing: ['duplicate', 'delete'] },
   card: { leading: ['known'], trailing: ['flag', 'delete'] },
 }
 

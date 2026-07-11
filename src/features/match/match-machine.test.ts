@@ -9,16 +9,16 @@ import {
 } from './match-machine'
 
 const tiles: Tile[] = [
-  { id: 'a-t', locusId: 'a', kind: 'term', text: 'Alpha' },
-  { id: 'a-d', locusId: 'a', kind: 'def', text: 'first letter' },
-  { id: 'b-t', locusId: 'b', kind: 'term', text: 'Beta' },
-  { id: 'b-d', locusId: 'b', kind: 'def', text: 'second letter' },
+  { id: 'a-t', cardId: 'a', kind: 'term', text: 'Alpha' },
+  { id: 'a-d', cardId: 'a', kind: 'def', text: 'first letter' },
+  { id: 'b-t', cardId: 'b', kind: 'term', text: 'Beta' },
+  { id: 'b-d', cardId: 'b', kind: 'def', text: 'second letter' },
 ]
 
 const play = () => initMatch(tiles)
 
 describe('buildTiles', () => {
-  it('makes a term + def tile for each locus', () => {
+  it('makes a term + def tile for each card', () => {
     const built = buildTiles(
       [
         { id: 'l1', front: 'A', back: 'aaa' },
@@ -27,19 +27,19 @@ describe('buildTiles', () => {
       () => 0,
     )
     expect(built).toHaveLength(4)
-    const byLocus = built.filter((tile) => tile.locusId === 'l1')
+    const byLocus = built.filter((tile) => tile.cardId === 'l1')
     expect(byLocus.map((tile) => tile.kind).sort()).toEqual(['def', 'term'])
     expect(byLocus.find((tile) => tile.kind === 'term')?.text).toBe('A')
     expect(byLocus.find((tile) => tile.kind === 'def')?.text).toBe('aaa')
   })
 
   it('caps the board at MAX_PAIRS pairs', () => {
-    const loci = Array.from({ length: MAX_PAIRS + 3 }, (_, i) => ({
+    const cards = Array.from({ length: MAX_PAIRS + 3 }, (_, i) => ({
       id: `l${i}`,
       front: `f${i}`,
       back: `b${i}`,
     }))
-    expect(buildTiles(loci, () => 0)).toHaveLength(MAX_PAIRS * 2)
+    expect(buildTiles(cards, () => 0)).toHaveLength(MAX_PAIRS * 2)
   })
 })
 

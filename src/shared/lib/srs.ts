@@ -1,5 +1,5 @@
 /**
- * Spaced-repetition scheduler (an SM-2 variant) for loci. A locus with no
+ * Spaced-repetition scheduler (an SM-2 variant) for cards. A card with no
  * `SrsState` is "new" and always due. Grading advances the schedule. Kept small:
  * four grades, one ease factor, day intervals. `now` is injected (epoch ms) so
  * scheduling is pure and deterministic.
@@ -33,7 +33,7 @@ function isoInDays(now: number, days: number): string {
   return new Date(now + days * DAY_MS).toISOString()
 }
 
-/** A locus with no SRS state is brand new and therefore due. */
+/** A card with no SRS state is brand new and therefore due. */
 export function isDue(srs: SrsState | undefined, now: number): boolean {
   if (!srs) return true
   return new Date(srs.due).getTime() <= now

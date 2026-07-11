@@ -1,22 +1,22 @@
 import { describe, expect, it } from 'vitest'
 import {
   ContentImportError,
-  lociToAnkiTsv,
-  lociToCsv,
+  cardsToAnkiTsv,
+  cardsToCsv,
   parseAnkiText,
   parseDelimitedNotes,
-  parseMindscapeRoom,
-  parsePastedLoci,
-  parseRoomContent,
+  parseMindscapeDeck,
+  parsePastedCards,
+  parseDeckContent,
   parseVerses,
   questionsToCsv,
-  roomContentToJson,
+  deckContentToJson,
 } from './content-transfer'
 
-describe('parsePastedLoci', () => {
+describe('parsePastedCards', () => {
   it('splits each line on the first comma/tab/semicolon', () => {
-    const loci = parsePastedLoci('Zeus, King of the gods\nPoseidon\tGod of the sea\nskip-me')
-    expect(loci).toEqual([
+    const cards = parsePastedCards('Zeus, King of the gods\nPoseidon\tGod of the sea\nskip-me')
+    expect(cards).toEqual([
       { front: 'Zeus', back: 'King of the gods' },
       { front: 'Poseidon', back: 'God of the sea' },
     ])
@@ -25,10 +25,10 @@ describe('parsePastedLoci', () => {
 
 describe('parseAnkiText', () => {
   it('parses tab-separated notes, skipping # directives and stripping HTML', () => {
-    const loci = parseAnkiText(
+    const cards = parseAnkiText(
       '#separator:tab\n#html:true\nFront 1\tBack <b>1</b>\nFront 2\tBack 2',
     )
-    expect(loci).toEqual([
+    expect(cards).toEqual([
       { front: 'Front 1', back: 'Back 1' },
       { front: 'Front 2', back: 'Back 2' },
     ])
@@ -37,8 +37,8 @@ describe('parseAnkiText', () => {
 
 describe('parseVerses', () => {
   it('turns (chapter:verse) lines into cards prefixed with the book', () => {
-    const loci = parseVerses('3 John 1\n(1:1) The elder, to Gaius\n(1:2) Beloved, I pray')
-    expect(loci).toEqual([
+    const cards = parseVerses('3 John 1\n(1:1) The elder, to Gaius\n(1:2) Beloved, I pray')
+    expect(cards).toEqual([
       { front: '3 John 1:1', back: '3 John 1:1 The elder, to Gaius' },
       { front: '3 John 1:2', back: '3 John 1:2 Beloved, I pray' },
     ])
@@ -47,37 +47,37 @@ describe('parseVerses', () => {
 
 describe('parseDelimitedNotes', () => {
   it('splits on the chosen field and card separators', () => {
-    const loci = parseDelimitedNotes('a=1;b=2', { field: '=', card: ';' })
-    expect(loci).toEqual([
+    const cards = parseDelimitedNotes('a=1;b=2', { field: '=', card: ';' })
+    expect(cards).toEqual([
       { front: 'a', back: '1' },
       { front: 'b', back: '2' },
     ])
   })
 
   it('splits on tab between sides and newline between cards', () => {
-    const loci = parseDelimitedNotes('a\t1\r\nb\t2', { field: '\t', card: '\n' })
-    expect(loci).toEqual([
+    const cards = parseDelimitedNotes('a\t1\r\nb\t2', { field: '\t', card: '\n' })
+    expect(cards).toEqual([
       { front: 'a', back: '1' },
       { front: 'b', back: '2' },
     ])
   })
 
   it('only splits on the first field separator, keeping the rest in back', () => {
-    const loci = parseDelimitedNotes('Zeus,King, of the gods', { field: ',', card: '\n' })
-    expect(loci).toEqual([{ front: 'Zeus', back: 'King, of the gods' }])
+    const cards = parseDelimitedNotes('Zeus,King, of the gods', { field: ',', card: '\n' })
+    expect(cards).toEqual([{ front: 'Zeus', back: 'King, of the gods' }])
   })
 
   it('skips blank chunks and lines without a separator', () => {
-    const loci = parseDelimitedNotes('a,1\n\nnope\nb,2', { field: ',', card: '\n' })
-    expect(loci).toEqual([
+    const cards = parseDelimitedNotes('a,1\n\nnope\nb,2', { field: ',', card: '\n' })
+    expect(cards).toEqual([
       { front: 'a', back: '1' },
       { front: 'b', back: '2' },
     ])
   })
 })
 
-describe('parseMindscapeRoom', () => {
-  it('round-trips every locus field (cues, flag, known status, schedule)', () => {
+describe('parseMindscapeDeck', () => {
+  it('round-trips every card field (cues, flag, known status, schedule)', () => {
     const srs = {
       due: '2026-01-01T00:00:00.000Z',
       interval: 4,
@@ -86,31 +86,31 @@ describe('parseMindscapeRoom', () => {
       lapses: 1,
       lastReviewed: '2025-12-28T00:00:00.000Z',
     }
-    const json = roomContentToJson(
+    const json = deckContentToJson(
       'Room',
       [{ front: 'a', back: 'A', hint: 'h', tip: 't', flagged: true, memorized: true, srs }],
       [],
     )
-    const content = parseMindscapeRoom(json)
-    expect(content.loci).toEqual([
+    const content = parseMindscapeDeck(json)
+    expect(content.cards).toEqual([
       { front: 'a', back: 'A', hint: 'h', tip: 't', flagged: true, memorized: true, srs },
     ])
   })
 
   it('rejects a file that is not Mindscape JSON', () => {
-    expect(() => parseMindscapeRoom('front,back\na,b')).toThrow(ContentImportError)
+    expect(() => parseMindscapeDeck('front,back\na,b')).toThrow(ContentImportError)
   })
 })
 
-describe('parseRoomContent', () => {
+describe('parseDeckContent', () => {
   it('reads a cards CSV (front,back,hint)', () => {
-    const content = parseRoomContent('front,back,hint\nZeus,King,On a throne', 'deck.csv')
-    expect(content.loci).toEqual([{ front: 'Zeus', back: 'King', hint: 'On a throne' }])
+    const content = parseDeckContent('front,back,hint\nZeus,King,On a throne', 'deck.csv')
+    expect(content.cards).toEqual([{ front: 'Zeus', back: 'King', hint: 'On a throne' }])
     expect(content.questions).toEqual([])
   })
 
   it('reads a questions CSV with a 1-based answer column', () => {
-    const content = parseRoomContent(
+    const content = parseDeckContent(
       'prompt,option1,option2,answer\nClosest planet?,Mercury,Venus,1',
       'q.csv',
     )
@@ -120,24 +120,24 @@ describe('parseRoomContent', () => {
   })
 
   it('round-trips JSON exported by the app', () => {
-    const json = roomContentToJson(
+    const json = deckContentToJson(
       'Room',
       [{ front: 'a', back: 'A' }],
       [{ prompt: 'p?', options: ['x', 'y'], correctAnswer: 1 }],
     )
-    const content = parseRoomContent(json, 'room.json')
-    expect(content.loci).toEqual([{ front: 'a', back: 'A' }])
+    const content = parseDeckContent(json, 'room.json')
+    expect(content.cards).toEqual([{ front: 'a', back: 'A' }])
     expect(content.questions).toEqual([{ prompt: 'p?', options: ['x', 'y'], correctAnswer: 1 }])
   })
 
   it('throws a ContentImportError when nothing usable is found', () => {
-    expect(() => parseRoomContent('not, a, deck\n', 'junk.csv')).toThrow(ContentImportError)
+    expect(() => parseDeckContent('not, a, deck\n', 'junk.csv')).toThrow(ContentImportError)
   })
 })
 
 describe('serializers', () => {
   it('emits a cards CSV header', () => {
-    expect(lociToCsv([{ front: 'a', back: 'A' }]).split('\n')[0]).toBe('front,back,hint')
+    expect(cardsToCsv([{ front: 'a', back: 'A' }]).split('\n')[0]).toBe('front,back,hint')
   })
 
   it('emits a questions CSV with a 1-based answer', () => {
@@ -146,6 +146,6 @@ describe('serializers', () => {
   })
 
   it('emits Anki plain-text directives', () => {
-    expect(lociToAnkiTsv([{ front: 'a', back: 'A' }])).toContain('#separator:tab')
+    expect(cardsToAnkiTsv([{ front: 'a', back: 'A' }])).toContain('#separator:tab')
   })
 })

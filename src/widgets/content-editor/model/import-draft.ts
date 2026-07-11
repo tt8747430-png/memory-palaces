@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { ParsedLocus, SrsState } from '@/shared/lib'
+import type { ParsedCard, SrsState } from '@/shared/lib'
 
 /** Where a pending import came from — drives the review page's options (restore toggles are
  * Mindscape-only) and the confirmation copy. */
@@ -29,7 +29,7 @@ export type DraftCardEdit = Partial<Pick<DraftCard, 'front' | 'back' | 'hint' | 
 interface ImportDraftState {
   draft: ImportDraft | null
   /** Seed the review with freshly parsed cards; assigns local ids. */
-  setDraft: (source: ImportSource, cards: ParsedLocus[]) => void
+  setDraft: (source: ImportSource, cards: ParsedCard[]) => void
   editCard: (id: string, changes: DraftCardEdit) => void
   removeCard: (id: string) => void
   clear: () => void

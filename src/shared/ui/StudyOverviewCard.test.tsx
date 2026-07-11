@@ -18,7 +18,7 @@ function renderCard(props: StudyOverviewCardProps) {
 describe('StudyOverviewCard', () => {
   it('shows the due count and fires onStudy', async () => {
     const onStudy = vi.fn()
-    renderCard({ count: 8, breakdown: { new: 2, learning: 1, known: 5 }, onStudy, scope: 'room' })
+    renderCard({ count: 8, breakdown: { new: 2, learning: 1, known: 5 }, onStudy })
     expect(screen.getByText('8')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: /study cards/i }))
     expect(onStudy).toHaveBeenCalledOnce()
@@ -31,7 +31,6 @@ describe('StudyOverviewCard', () => {
       breakdown: { new: 0, learning: 0, known: 0 },
       onStudy: vi.fn(),
       onStudyAhead,
-      scope: 'room',
     })
     expect(screen.getByText(/caught up/i)).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: /study ahead/i }))

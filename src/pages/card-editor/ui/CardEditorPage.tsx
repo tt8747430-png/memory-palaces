@@ -97,7 +97,7 @@ export function CardEditorPage({ deckId, cardId, onBack, onNavigateCard }: CardE
     if (!valid) return
     await createCard(cardStore, deckId, build())
     flashSaved()
-    toast.success(t('loci.editor.addedNext'))
+    toast.success(t('cards.editor.addedNext'))
     clear()
   }
   const saveEdit = async () => {
@@ -118,7 +118,7 @@ export function CardEditorPage({ deckId, cardId, onBack, onNavigateCard }: CardE
       fill
       header={
         <ScreenHeader
-          title={editing ? t('loci.editor.editTitle') : t('loci.editor.newTitle')}
+          title={editing ? t('cards.editor.editTitle') : t('cards.editor.newTitle')}
           subtitle={deck?.name}
           onBack={onBack}
           backLabel={t('common.back')}
@@ -137,8 +137,8 @@ export function CardEditorPage({ deckId, cardId, onBack, onNavigateCard }: CardE
           <DeckNav
             position={position}
             total={deckCards.length}
-            prevLabel={t('loci.editor.prevCard')}
-            nextLabel={t('loci.editor.nextCard')}
+            prevLabel={t('cards.editor.prevCard')}
+            nextLabel={t('cards.editor.nextCard')}
             hasPrev={Boolean(prevCard)}
             hasNext={Boolean(nextCard)}
             onPrev={() => void goToCard(prevCard)}
@@ -179,13 +179,13 @@ function SaveButton({
 }) {
   const { t } = useTranslation()
   const IdleIcon = adding ? Plus : Check
-  const idleLabel = adding ? t('loci.editor.saveAndAdd') : t('common.saveChanges')
+  const idleLabel = adding ? t('cards.editor.saveAndAdd') : t('common.saveChanges')
   return (
     <button
       type="button"
       disabled={disabled}
       onClick={onClick}
-      aria-label={saved ? t('loci.editor.saved') : idleLabel}
+      aria-label={saved ? t('cards.editor.saved') : idleLabel}
       className={cn(
         'flex h-11 shrink-0 items-center gap-1.5 rounded-control px-5 text-[length:var(--p-text-sub)] font-semibold text-primary-foreground shadow-interactive',
         'transition-[background-color,transform] duration-200 ease-out active:scale-[0.97]',
@@ -198,7 +198,7 @@ function SaveButton({
       ) : (
         <IdleIcon className="size-[18px]" aria-hidden />
       )}
-      {saved ? t('loci.editor.saved') : t('loci.editor.save')}
+      {saved ? t('cards.editor.saved') : t('cards.editor.save')}
     </button>
   )
 }

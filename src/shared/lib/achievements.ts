@@ -6,9 +6,9 @@
  */
 
 export type AchievementId =
-  | 'first-palace'
+  | 'first-deck'
   | 'week-warrior'
-  | 'palace-master'
+  | 'deck-master'
   | 'xp-champion'
   | 'perfectionist'
   | 'dedicated-learner'
@@ -35,9 +35,9 @@ const DEDICATED_LEARNER_DECKS = 10
 /** The six badges in canonical display order, each marked earned from live progress. */
 export function computeAchievements(input: AchievementInput): Achievement[] {
   return [
-    { id: 'first-palace', earned: input.deckCount >= 1 },
+    { id: 'first-deck', earned: input.deckCount >= 1 },
     { id: 'week-warrior', earned: input.streakCount >= WEEK_WARRIOR_STREAK },
-    { id: 'palace-master', earned: input.anyDeckCompleted },
+    { id: 'deck-master', earned: input.anyDeckCompleted },
     { id: 'xp-champion', earned: input.xp >= XP_CHAMPION_XP },
     { id: 'perfectionist', earned: input.bestQuizAccuracy >= PERFECT_ACCURACY },
     { id: 'dedicated-learner', earned: input.decksCompleted >= DEDICATED_LEARNER_DECKS },

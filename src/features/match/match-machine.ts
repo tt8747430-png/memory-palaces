@@ -8,14 +8,14 @@ import { shuffle } from '@/shared/lib'
  */
 export interface Tile {
   id: string
-  locusId: string
+  cardId: string
   kind: 'term' | 'def'
   text: string
 }
 
-/** The minimal locus shape the board needs (front/back), kept structural so this
+/** The minimal card shape the board needs (front/back), kept structural so this
  * stays a feature over the entity, not a dependency on its full type. */
-export interface MatchLocus {
+export interface MatchCard {
   id: string
   front: string
   back: string
@@ -40,13 +40,13 @@ export type MatchAction =
 /** Tiles never exceed this many pairs, so the board stays a single phone screen. */
 export const MAX_PAIRS = 6
 
-/** Build a shuffled board of term/def tiles from loci (capped at MAX_PAIRS pairs).
+/** Build a shuffled board of term/def tiles from cards (capped at MAX_PAIRS pairs).
  * `random` is injectable for deterministic tests. */
-export function buildTiles(loci: MatchLocus[], random: () => number = Math.random): Tile[] {
-  const chosen = shuffle(loci, random).slice(0, Math.min(MAX_PAIRS, loci.length))
-  const tiles = chosen.flatMap((locus): Tile[] => [
-    { id: `${locus.id}-t`, locusId: locus.id, kind: 'term', text: locus.front },
-    { id: `${locus.id}-d`, locusId: locus.id, kind: 'def', text: locus.back },
+export function buildTiles(cards: MatchCard[], random: () => number = Math.random): Tile[] {
+  const chosen = shuffle(cards, random).slice(0, Math.min(MAX_PAIRS, cards.length))
+  const tiles = chosen.flatMap((card): Tile[] => [
+    { id: `${card.id}-t`, cardId: card.id, kind: 'term', text: card.front },
+    { id: `${card.id}-d`, cardId: card.id, kind: 'def', text: card.back },
   ])
   return shuffle(tiles, random)
 }
@@ -63,7 +63,7 @@ export function initMatch(tiles: Tile[]): MatchState {
 }
 
 function isPair(a: Tile | undefined, b: Tile | undefined): boolean {
-  return Boolean(a && b && a.locusId === b.locusId && a.kind !== b.kind)
+  return Boolean(a && b && a.cardId === b.cardId && a.kind !== b.kind)
 }
 
 export function matchReducer(state: MatchState, action: MatchAction): MatchState {

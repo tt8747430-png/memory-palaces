@@ -14,8 +14,8 @@ export interface QuizOptionsSheetProps {
   onShuffleQuestions: (value: boolean) => void
 }
 
-/** The quiz's own options sheet — auto-advance and shuffle. These used to live in palace
- * settings; they belong with the quiz that uses them (ADR-0005). Persisted to the palace
+/** The quiz's own options sheet — auto-advance and shuffle. They belong with the quiz that
+ * uses them; persisted to the deck
  * by the host, so the choice is remembered. */
 export function QuizOptionsSheet({
   open,

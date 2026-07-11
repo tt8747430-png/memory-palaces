@@ -38,7 +38,7 @@ import {
   exportDeckJson,
   readContentFile,
 } from '@/features/content'
-import { ContentImportError, type RoomContentData } from '@/shared/lib'
+import { ContentImportError, type DeckContentData } from '@/shared/lib'
 import {
   AppScreen,
   Button,
@@ -85,8 +85,8 @@ export function DeckQuestionsPage({
   const { t } = useTranslation()
   const questionStore = useQuestionStoreApi()
   const deckStore = useDeckStoreApi()
-  // The locus store is only here to satisfy the shared `applyDeckContent` signature; question
-  // import never writes cards (it applies `{ loci: [], questions }`).
+  // The card store is only here to satisfy the shared `applyDeckContent` signature; question
+  // import never writes cards (it applies `{ cards: [], questions }`).
   const cardStore = useCardStoreApi()
 
   useEffect(() => {
@@ -114,7 +114,7 @@ export function DeckQuestionsPage({
   const [exportOpen, setExportOpen] = useState(false)
   // Parsed but not yet applied — a picked file waits behind a count-confirm, mirroring the
   // review step card imports get, so a wrong file never writes straight into the deck.
-  const [pendingImport, setPendingImport] = useState<RoomContentData['questions'] | null>(null)
+  const [pendingImport, setPendingImport] = useState<DeckContentData['questions'] | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -128,9 +128,9 @@ export function DeckQuestionsPage({
   const reorderable = selectMode
 
   const sortOptions: SortControlOption<QuestionSort>[] = [
-    { value: 'manual', label: t('loci.sort.manual'), icon: <GripVertical className="size-4" /> },
-    { value: 'recent', label: t('loci.sort.recent'), icon: <Clock className="size-4" /> },
-    { value: 'name', label: t('loci.sort.name'), icon: <ArrowDownAZ className="size-4" /> },
+    { value: 'manual', label: t('cards.sort.manual'), icon: <GripVertical className="size-4" /> },
+    { value: 'recent', label: t('cards.sort.recent'), icon: <Clock className="size-4" /> },
+    { value: 'name', label: t('cards.sort.name'), icon: <ArrowDownAZ className="size-4" /> },
   ]
 
   const toggleSelect = (id: string) =>
@@ -172,7 +172,7 @@ export function DeckQuestionsPage({
       onEdit={() => onEditQuestion(question.id)}
       onDuplicate={() => {
         void duplicateQuestion(questionStore, question.id)
-        toast.success(t('loci.row.duplicated'))
+        toast.success(t('cards.row.duplicated'))
       }}
       onDelete={() => setPendingDeleteId(question.id)}
     />
@@ -181,12 +181,12 @@ export function DeckQuestionsPage({
   const confirmSingleDelete = () => {
     if (!pendingDeleteId) return
     void deleteQuestion(questionStore, pendingDeleteId)
-    toast.success(t('loci.transfer.deleted'))
+    toast.success(t('cards.transfer.deleted'))
   }
   const confirmBulkDelete = () => {
     const ids = [...selectedIds]
     void Promise.all(ids.map((id) => deleteQuestion(questionStore, id)))
-    toast.success(t('loci.transfer.deletedMany', { count: ids.length }))
+    toast.success(t('cards.transfer.deletedMany', { count: ids.length }))
     exitSelect()
   }
 
@@ -221,7 +221,7 @@ export function DeckQuestionsPage({
   const confirmImport = async () => {
     if (!pendingImport) return
     const applied = await applyDeckContent(cardStore, questionStore, deckId, {
-      loci: [],
+      cards: [],
       questions: pendingImport,
     })
     setPendingImport(null)
@@ -311,11 +311,11 @@ export function DeckQuestionsPage({
           </Button>
         </div>
 
-        <section aria-label={t('questions.inRoom')} className="space-y-3">
+        <section aria-label={t('questions.inDeck')} className="space-y-3">
           {!selectMode && questions.length > 1 ? (
             <div className="flex justify-end">
               <SortControl
-                label={t('loci.sortLabel')}
+                label={t('cards.sortLabel')}
                 value={sort}
                 options={sortOptions}
                 onChange={setSort}
@@ -353,8 +353,8 @@ export function DeckQuestionsPage({
         onOpenChange={(open) => !open && setPendingDeleteId(null)}
         destructive
         icon={<Trash2 className="size-6" aria-hidden />}
-        title={t('loci.delete.questionTitle')}
-        description={t('loci.delete.body')}
+        title={t('cards.delete.questionTitle')}
+        description={t('cards.delete.body')}
         confirmLabel={t('common.delete')}
         cancelLabel={t('common.cancel')}
         onConfirm={confirmSingleDelete}
@@ -364,8 +364,8 @@ export function DeckQuestionsPage({
         onOpenChange={setBulkDeleteOpen}
         destructive
         icon={<Trash2 className="size-6" aria-hidden />}
-        title={t('loci.delete.bulkTitle', { count: selectedCount })}
-        description={t('loci.delete.body')}
+        title={t('cards.delete.bulkTitle', { count: selectedCount })}
+        description={t('cards.delete.body')}
         confirmLabel={t('common.delete')}
         cancelLabel={t('common.cancel')}
         onConfirm={confirmBulkDelete}

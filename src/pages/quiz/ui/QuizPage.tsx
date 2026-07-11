@@ -64,7 +64,7 @@ export function QuizPage({ deckId, onBack }: QuizPageProps) {
               prompt: question.prompt,
               options: question.options,
               correctAnswer: question.correctAnswer,
-              roomTitle: nameById.get(question.deckId) ?? '',
+              deckName: nameById.get(question.deckId) ?? '',
               explanation: question.explanation,
             },
           ]
@@ -117,7 +117,7 @@ export function QuizPage({ deckId, onBack }: QuizPageProps) {
       <QuizSession
         key={deckId}
         questions={runQuestions}
-        title={t('quiz.title', { palace: deck.name })}
+        title={t('quiz.title', { deck: deck.name })}
         autoAdvance={settings.quizTimer}
         onOpenOptions={() => setOptionsOpen(true)}
         onBack={onBack ?? (() => {})}

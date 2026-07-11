@@ -5,7 +5,7 @@ export {
   remainingPairs,
   MAX_PAIRS,
   type Tile,
-  type MatchLocus,
+  type MatchCard,
   type MatchState,
   type MatchAction,
 } from './match-machine'

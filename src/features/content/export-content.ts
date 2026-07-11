@@ -1,11 +1,11 @@
 import {
   contentSlug,
   downloadText,
-  lociToAnkiTsv,
-  lociToCsv,
-  type ParsedLocus,
+  cardsToAnkiTsv,
+  cardsToCsv,
+  type ParsedCard,
   questionsToCsv,
-  roomContentToJson,
+  deckContentToJson,
 } from '@/shared/lib'
 
 type CardLike = { front: string; back: string; hint?: string }
@@ -20,19 +20,19 @@ type QuestionLike = {
  * their cues, flag, known status, and schedule so a Mindscape import restores them. */
 export function exportDeckJson(
   deckName: string,
-  cards: ReadonlyArray<ParsedLocus>,
+  cards: ReadonlyArray<ParsedCard>,
   questions: ReadonlyArray<QuestionLike>,
 ): void {
   downloadText(
     `${contentSlug(deckName)}-content.json`,
-    roomContentToJson(deckName, cards, questions),
+    deckContentToJson(deckName, cards, questions),
     'application/json',
   )
 }
 
 /** Download the deck's cards as CSV (front,back,hint). */
 export function exportCardsCsv(deckName: string, cards: ReadonlyArray<CardLike>): void {
-  downloadText(`${contentSlug(deckName)}-cards.csv`, lociToCsv(cards), 'text/csv')
+  downloadText(`${contentSlug(deckName)}-cards.csv`, cardsToCsv(cards), 'text/csv')
 }
 
 /** Download the deck's questions as CSV. */
@@ -42,5 +42,5 @@ export function exportQuestionsCsv(deckName: string, questions: ReadonlyArray<Qu
 
 /** Download the deck's cards as Anki "Notes in Plain Text" (.txt). */
 export function exportCardsAnki(deckName: string, cards: ReadonlyArray<CardLike>): void {
-  downloadText(`${contentSlug(deckName)}-anki.txt`, lociToAnkiTsv(cards), 'text/plain')
+  downloadText(`${contentSlug(deckName)}-anki.txt`, cardsToAnkiTsv(cards), 'text/plain')
 }

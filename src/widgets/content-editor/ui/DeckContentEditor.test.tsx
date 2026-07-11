@@ -64,7 +64,7 @@ describe('DeckContentEditor', () => {
     })
 
     expect(await screen.findByText('mihi')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /add to room/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /add to deck/i })).toBeInTheDocument()
   })
 
   it('opens the card editor from the dial', async () => {
@@ -76,7 +76,7 @@ describe('DeckContentEditor', () => {
     })
     await screen.findByText('seed')
 
-    await user.click(screen.getByRole('button', { name: /add to room/i }))
+    await user.click(screen.getByRole('button', { name: /add to deck/i }))
     await user.click(screen.getByRole('button', { name: /add card/i }))
 
     expect(onAddCard).toHaveBeenCalledOnce()

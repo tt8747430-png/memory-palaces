@@ -5,7 +5,7 @@ import { Download, Pencil, Trash2 } from 'lucide-react'
 import { useCardStoreApi } from '@/entities/card'
 import { useQuestionStoreApi } from '@/entities/question'
 import { applyDeckContent } from '@/features/content'
-import type { ParsedLocus } from '@/shared/lib'
+import type { ParsedCard } from '@/shared/lib'
 import {
   AppScreen,
   Button,
@@ -76,7 +76,7 @@ export function ImportReviewPage({ deckId, onBack, onDone }: ImportReviewPagePro
     [draft, editingId],
   )
 
-  const toApplied = (card: DraftCard): ParsedLocus => {
+  const toApplied = (card: DraftCard): ParsedCard => {
     const keepCues = !isMindscape || restore.cues
     return {
       front: card.front,
@@ -92,9 +92,9 @@ export function ImportReviewPage({ deckId, onBack, onDone }: ImportReviewPagePro
   const doImport = async () => {
     if (busy || cards.length === 0) return
     setBusy(true)
-    const loci = cards.map(toApplied)
-    await applyDeckContent(cardStore, questionStore, deckId, { loci, questions: [] })
-    toast.success(t('loci.review.done', { count: loci.length }))
+    const applied = cards.map(toApplied)
+    await applyDeckContent(cardStore, questionStore, deckId, { cards: applied, questions: [] })
+    toast.success(t('cards.review.done', { count: applied.length }))
     clear()
     onDone()
   }
@@ -106,9 +106,9 @@ export function ImportReviewPage({ deckId, onBack, onDone }: ImportReviewPagePro
       fill
       header={
         <ScreenHeader
-          title={t('loci.review.title')}
+          title={t('cards.review.title')}
           onBack={onBack}
-          backLabel={t('roomHub.back')}
+          backLabel={t('common.back')}
         />
       }
       footer={
@@ -120,7 +120,7 @@ export function ImportReviewPage({ deckId, onBack, onDone }: ImportReviewPagePro
             onClick={() => void doImport()}
           >
             <Download className="size-[18px]" aria-hidden />
-            {t('loci.review.importCards', { count: cards.length })}
+            {t('cards.review.importCards', { count: cards.length })}
           </Button>
         </div>
       }
@@ -129,26 +129,26 @@ export function ImportReviewPage({ deckId, onBack, onDone }: ImportReviewPagePro
         {isMindscape ? (
           <section>
             <h2 className="mb-2 text-[length:var(--p-text-label)] font-bold uppercase tracking-wide text-muted-foreground">
-              {t('loci.review.restoreLabel')}
+              {t('cards.review.restoreLabel')}
             </h2>
             <div className="overflow-hidden rounded-card border border-border bg-card shadow-rest">
               <RestoreToggle
-                label={t('loci.review.restoreCues')}
+                label={t('cards.review.restoreCues')}
                 checked={restore.cues}
                 onChange={(v) => setRestore((r) => ({ ...r, cues: v }))}
               />
               <RestoreToggle
-                label={t('loci.review.restoreFlags')}
+                label={t('cards.review.restoreFlags')}
                 checked={restore.flags}
                 onChange={(v) => setRestore((r) => ({ ...r, flags: v }))}
               />
               <RestoreToggle
-                label={t('loci.review.restoreKnown')}
+                label={t('cards.review.restoreKnown')}
                 checked={restore.known}
                 onChange={(v) => setRestore((r) => ({ ...r, known: v }))}
               />
               <RestoreToggle
-                label={t('loci.review.restoreSchedule')}
+                label={t('cards.review.restoreSchedule')}
                 checked={restore.schedule}
                 onChange={(v) => setRestore((r) => ({ ...r, schedule: v }))}
                 last
@@ -160,13 +160,13 @@ export function ImportReviewPage({ deckId, onBack, onDone }: ImportReviewPagePro
         <section>
           <div className="mb-2 flex items-center justify-between gap-2">
             <h2 className="text-[length:var(--p-text-sub)] font-bold text-heading">
-              {t('loci.review.generated', { count: cards.length })}
+              {t('cards.review.generated', { count: cards.length })}
             </h2>
             {cards.length > 0 ? (
               <IconButton
                 variant="ghost"
                 size="sm"
-                aria-label={t('loci.review.clearAll')}
+                aria-label={t('cards.review.clearAll')}
                 onClick={() => setClearOpen(true)}
                 className="text-[var(--danger-on-surface)]"
               >
@@ -178,14 +178,14 @@ export function ImportReviewPage({ deckId, onBack, onDone }: ImportReviewPagePro
           {cards.length === 0 ? (
             <div className="rounded-card bg-card-glass p-6 text-center shadow-rest">
               <p className="text-[length:var(--p-text-body)] text-muted-foreground">
-                {t('loci.review.empty')}
+                {t('cards.review.empty')}
               </p>
               <button
                 type="button"
                 onClick={onDone}
                 className="mt-2 text-[length:var(--p-text-label)] font-semibold text-accent"
               >
-                {t('loci.review.emptyBack')}
+                {t('cards.review.emptyBack')}
               </button>
             </div>
           ) : (
@@ -215,9 +215,9 @@ export function ImportReviewPage({ deckId, onBack, onDone }: ImportReviewPagePro
         onOpenChange={setClearOpen}
         destructive
         icon={<Trash2 className="size-6" aria-hidden />}
-        title={t('loci.review.clearTitle')}
-        description={t('loci.review.clearBody')}
-        confirmLabel={t('loci.review.clearConfirm')}
+        title={t('cards.review.clearTitle')}
+        description={t('cards.review.clearBody')}
+        confirmLabel={t('cards.review.clearConfirm')}
         cancelLabel={t('common.cancel')}
         onConfirm={() => {
           clear()
@@ -273,7 +273,7 @@ function ReviewRow({
       <OverflowMenuButton
         variant="tint"
         size="sm"
-        label={t('loci.row.menuLabel')}
+        label={t('cards.row.menuLabel')}
         actions={[
           {
             id: 'edit',
@@ -336,7 +336,7 @@ function EditCardSheet({
     <Sheet
       open={card !== null}
       onOpenChange={(open) => !open && onClose()}
-      title={t('loci.review.editTitle')}
+      title={t('cards.review.editTitle')}
       footer={
         <Button size="lg" className="w-full" disabled={!valid} onClick={save}>
           {t('common.saveChanges')}

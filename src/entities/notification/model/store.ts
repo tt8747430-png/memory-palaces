@@ -22,7 +22,7 @@ const byNewestFirst = (a: AppNotification, b: AppNotification): number =>
   b.createdAt.localeCompare(a.createdAt)
 
 /** Store FACTORY (repository INJECTED — Dependency Inversion). RxDB-reactive list,
- * mirroring the palace store; mutations persist through the port and the subscription
+ * mirroring the deck store; mutations persist through the port and the subscription
  * updates state. */
 export function createNotificationStore(repo: NotificationRepository): NotificationStore {
   let unsubscribe: Unsubscribe | null = null

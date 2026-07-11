@@ -2,7 +2,7 @@ import { motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { useSessionStore } from '@/entities/session'
 import { Button, WordReveal } from '@/shared/ui'
-import { PalaceThreshold } from '@/widgets/palace-threshold'
+import { Threshold } from '@/widgets/threshold'
 
 export interface WelcomePageProps {
   onContinue: () => void
@@ -11,7 +11,7 @@ export interface WelcomePageProps {
 const AURA_BG =
   'radial-gradient(circle at center, oklch(var(--p-tint-sky) / 0.45), transparent 60%)'
 
-/** Slow embers drifting up past the threshold — the locus igniting, carried into the
+/** Slow embers drifting up past the threshold — the spark igniting, carried into the
  * room. Fixed positions so they don't re-randomize per render; dropped under reduced motion. */
 const EMBERS = [
   { left: '32%', top: '62%', dx: 10, dy: -44, delay: 0.4, duration: 7 },
@@ -65,7 +65,7 @@ export function WelcomePage({ onContinue }: WelcomePageProps) {
             />
           ))}
 
-      <PalaceThreshold className="relative z-10 size-48" />
+      <Threshold className="relative z-10 size-48" />
 
       <div className="relative z-10 flex flex-col gap-2">
         <WordReveal

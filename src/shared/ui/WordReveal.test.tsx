@@ -6,10 +6,10 @@ afterEach(cleanup)
 
 describe('WordReveal', () => {
   it('renders every word of the line', () => {
-    render(<WordReveal text="Your Memory Palace" />)
-    expect(screen.getByText('Your')).toBeInTheDocument()
-    expect(screen.getByText('Memory')).toBeInTheDocument()
-    expect(screen.getByText('Palace')).toBeInTheDocument()
+    render(<WordReveal text="Remember every card" />)
+    expect(screen.getByText('Remember')).toBeInTheDocument()
+    expect(screen.getByText('every')).toBeInTheDocument()
+    expect(screen.getByText('card')).toBeInTheDocument()
   })
 
   it('exposes the whole line as a single accessible name on the chosen element', () => {

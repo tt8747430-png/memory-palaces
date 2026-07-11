@@ -16,9 +16,9 @@ import { ACHIEVEMENT_META } from '@/widgets/achievement-list'
 import { AppScreen, BadgeMedallion, cardSurface, ScreenHeader } from '@/shared/ui'
 
 const ACHIEVEMENT_IDS: readonly AchievementId[] = [
-  'first-palace',
+  'first-deck',
   'week-warrior',
-  'palace-master',
+  'deck-master',
   'xp-champion',
   'perfectionist',
   'dedicated-learner',

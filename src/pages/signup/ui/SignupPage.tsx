@@ -5,7 +5,7 @@ import { Mail, User } from 'lucide-react'
 import { isEmail } from '@/shared/lib'
 import { LEGAL_URLS } from '@/shared/config/constants'
 import { AuthField, AuthScreen, Button, PasswordField, SocialButtons } from '@/shared/ui'
-import { AuthLogo } from '@/widgets/palace-threshold'
+import { AuthLogo } from '@/widgets/threshold'
 import { useAuthActions } from '@/features/session'
 
 export interface SignupPageProps {

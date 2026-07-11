@@ -39,8 +39,8 @@ describe('csvStrategy', () => {
 })
 
 describe('exportCards', () => {
-  it('serializes a room’s loci as portable cards', () => {
-    const loci: Card[] = [
+  it('serializes a deck’s cards as portable drafts', () => {
+    const cards: Card[] = [
       makeCard({
         id: 'l1',
         createdAt: new Date(0).toISOString(),
@@ -49,7 +49,7 @@ describe('exportCards', () => {
         back: 'B',
       }),
     ]
-    const text = exportCards(loci, jsonStrategy)
+    const text = exportCards(cards, jsonStrategy)
     expect(jsonStrategy.parse(text)).toEqual([
       { front: 'A', back: 'B', hint: undefined, tip: undefined },
     ])
@@ -57,7 +57,7 @@ describe('exportCards', () => {
 })
 
 describe('importCards', () => {
-  it('creates a locus per parsed card, scoped to the room and persisted', async () => {
+  it('creates a card per parsed row, scoped to the deck and persisted', async () => {
     const repo = new InMemoryRepository<Card>()
     const store = createCardStore(repo)
     store.getState().start()

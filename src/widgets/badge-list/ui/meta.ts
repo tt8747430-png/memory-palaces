@@ -1,4 +1,12 @@
-import { Building2, CalendarCheck, DoorOpen, Flame, Layers, type LucideIcon, Zap, } from 'lucide-react'
+import {
+  Building2,
+  CalendarCheck,
+  DoorOpen,
+  Flame,
+  Layers,
+  type LucideIcon,
+  Zap,
+} from 'lucide-react'
 import type { BadgeId } from '@/shared/lib'
 
 /** Icon + i18n title per tiered badge. `as const satisfies` keeps the key strings
@@ -6,8 +14,8 @@ import type { BadgeId } from '@/shared/lib'
 export const BADGE_META = {
   xp: { icon: Zap, titleKey: 'badges.xp.title' },
   streak: { icon: Flame, titleKey: 'badges.streak.title' },
-  rooms: { icon: DoorOpen, titleKey: 'badges.rooms.title' },
-  palaces: { icon: Building2, titleKey: 'badges.palaces.title' },
+  decks: { icon: DoorOpen, titleKey: 'badges.decks.title' },
+  library: { icon: Building2, titleKey: 'badges.library.title' },
   cards: { icon: Layers, titleKey: 'badges.cards.title' },
   days: { icon: CalendarCheck, titleKey: 'badges.days.title' },
 } as const satisfies Record<BadgeId, { icon: LucideIcon; titleKey: string }>

@@ -163,7 +163,7 @@ export function countDueInSubtree(
  * Due counts for every deck, each tallying its whole subtree — so a parent's badge includes
  * its descendants' (intended, not double counting; ADR-0003). One pass: each due card walks up
  * to the root, incrementing every ancestor. Cards under an archived deck (or archived ancestor)
- * are skipped, mirroring the old archived-palace rule.
+ * are skipped — an archived branch owes nothing today.
  */
 export function dueCountsPerDeck(
   decks: readonly TreeDeck[],

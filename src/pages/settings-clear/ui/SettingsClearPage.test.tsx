@@ -63,7 +63,7 @@ describe('SettingsClearPage', () => {
 
     await waitFor(async () => expect(await deckRepo.getAll()).toHaveLength(1))
 
-    await user.click(screen.getByRole('button', { name: /memory palaces/i }))
+    await user.click(screen.getByRole('button', { name: /decks/i }))
     const dialog = await screen.findByRole('dialog')
     await user.click(within(dialog).getByRole('button', { name: /^clear$/i }))
 

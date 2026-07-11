@@ -17,7 +17,7 @@ describe('applyDeckContent', () => {
     questionStore.getState().start()
 
     const result = await applyDeckContent(cardStore, questionStore, 'd1', {
-      loci: [
+      cards: [
         { front: 'a', back: 'A' },
         { front: 'b', back: 'B', hint: 'picture' },
       ],
@@ -50,7 +50,7 @@ describe('applyDeckContent', () => {
       lastReviewed: '2025-12-28T00:00:00.000Z',
     }
     await applyDeckContent(cardStore, questionStore, 'd1', {
-      loci: [{ front: 'a', back: 'A', tip: 'peek', flagged: true, memorized: true, srs }],
+      cards: [{ front: 'a', back: 'A', tip: 'peek', flagged: true, memorized: true, srs }],
       questions: [],
     })
 

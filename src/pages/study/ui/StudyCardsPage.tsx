@@ -167,10 +167,10 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
             {t('study.noCards')}
           </h2>
           <p className="mx-auto max-w-[34ch] text-[length:var(--p-text-body)]">
-            {t('study.noCardsHint', { room: title })}
+            {t('study.noCardsHint', { deck: title })}
           </p>
         </div>
-        <Button onClick={back}>{t('study.backToRoom')}</Button>
+        <Button onClick={back}>{t('study.backToDeck')}</Button>
       </div>
     )
   }

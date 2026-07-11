@@ -8,7 +8,7 @@ import type { Profile, ProfileStore } from '@/entities/profile'
 import type { AppNotification, NotificationStore } from '@/entities/notification'
 
 /** Bump when the bundle shape changes incompatibly; import rejects unknown majors.
- * v2: the recursive deck tree replaced palaces/rooms/loci (ADR-0001). */
+ * v2: the recursive deck tree replaced the palace-era shape (ADR-0001). */
 export const APP_DATA_VERSION = 2
 
 /** A full snapshot of the learner's data, for backup or device transfer. */

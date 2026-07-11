@@ -6,7 +6,6 @@ export interface CardMaturityOverviewProps {
   total: number
   counts: { new: number; learning: number; known: number }
   /** Heading copy variant. */
-  scope: 'room' | 'palace'
 }
 
 const ORDER: Array<'new' | 'learning' | 'known'> = ['new', 'learning', 'known']
@@ -23,12 +22,12 @@ const DOT: Record<'new' | 'learning' | 'known', string> = {
 
 /** Whole-set maturity overview: "Cards in this room (N)" + a New/Learning/Known bar and
  * legend. Reads no stores — counts are passed in. */
-export function CardMaturityOverview({ total, counts, scope }: CardMaturityOverviewProps) {
+export function CardMaturityOverview({ total, counts }: CardMaturityOverviewProps) {
   const { t } = useTranslation()
   return (
     <div>
       <p className="mb-2.5 text-[length:var(--p-text-title)] font-bold tracking-tight text-heading">
-        {t(scope === 'palace' ? 'study.cardsInPalace' : 'study.cardsInRoom', { count: total })}
+        {t('study.cardsInDeck', { count: total })}
       </p>
       {total > 0 ? (
         <div className="flex h-2 overflow-hidden rounded-full bg-[var(--divider)]" aria-hidden>

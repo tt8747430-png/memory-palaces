@@ -24,17 +24,17 @@ export function SelectModeBar({
         onClick={onToggleAll}
         className="-mx-2 -my-1 inline-flex min-h-11 items-center rounded-control px-2 text-(length:--p-text-label) font-semibold text-heading"
       >
-        {allSelected ? t('loci.select.clearAll') : t('loci.select.selectAll')}
+        {allSelected ? t('cards.select.clearAll') : t('cards.select.selectAll')}
       </button>
       <span className="text-(length:--p-text-label) font-semibold text-muted-foreground">
-        {t('loci.select.count', { count })}
+        {t('cards.select.count', { count })}
       </span>
       <button
         type="button"
         onClick={onDone}
         className="-mx-2 -my-1 inline-flex min-h-11 items-center rounded-control px-2 text-(length:--p-text-label) font-semibold text-accent"
       >
-        {t('loci.select.done')}
+        {t('cards.select.done')}
       </button>
     </div>
   )

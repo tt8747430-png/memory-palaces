@@ -15,14 +15,14 @@ const QUESTIONS: QuizQuestion[] = [
     prompt: 'Capital of France?',
     options: ['Paris', 'Rome'],
     correctAnswer: 0,
-    roomTitle: 'Geography',
+    deckName: 'Geography',
   },
   {
     id: 'q2',
     prompt: '2 + 2?',
     options: ['3', '4'],
     correctAnswer: 1,
-    roomTitle: 'Maths',
+    deckName: 'Maths',
   },
 ]
 
@@ -81,7 +81,7 @@ describe('QuizSession', () => {
     expect(screen.getByText(/not quite/i)).toBeInTheDocument()
   })
 
-  it('shows an empty state when the palace has no questions', () => {
+  it('shows an empty state when the deck has no questions', () => {
     renderQuiz([])
     expect(screen.getByText(/no questions yet/i)).toBeInTheDocument()
   })

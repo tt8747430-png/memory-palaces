@@ -1,5 +1,5 @@
 import { cn } from '@/shared/lib'
-import { PalaceCover } from './PalaceCover'
+import { DeckCover } from './DeckCover'
 
 export interface FolderGlyphProps {
   color: string
@@ -13,7 +13,7 @@ export interface FolderGlyphProps {
  * grid, the move sheet, and the folder editor, so the glyph never drifts. */
 export function FolderGlyph({ color, icon, className, iconClassName }: FolderGlyphProps) {
   return (
-    <PalaceCover
+    <DeckCover
       icon={icon}
       color={color}
       variant="identity"

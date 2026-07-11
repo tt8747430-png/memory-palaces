@@ -144,7 +144,6 @@ export function DeckDetailPage({
             breakdown={overview.breakdown}
             onStudy={() => onStudy?.()}
             onStudyAhead={onStudy}
-            scope="palace"
           />
         ) : null}
 

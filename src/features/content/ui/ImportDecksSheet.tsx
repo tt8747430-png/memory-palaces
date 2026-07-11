@@ -5,9 +5,9 @@ import { toast } from 'sonner'
 import type { DeckStore } from '@/entities/deck'
 import type { CardStore } from '@/entities/card'
 import type { QuestionStore } from '@/entities/question'
-import { ContentImportError, type ImportedRoom, parseVerseChapters } from '@/shared/lib'
+import { ContentImportError, type ImportedDeck, parseVerseChapters } from '@/shared/lib'
 import { Button, ImportRow, Sheet, Textarea } from '@/shared/ui'
-import { readAnkiFile, readContentFile, readPalaceFile } from '../import-content'
+import { readAnkiFile, readContentFile, readDeckTreeFile } from '../import-content'
 import { importDecks, type ImportDecksResult } from '../import-decks'
 
 type FileKind = 'cards' | 'mindscape'
@@ -57,7 +57,7 @@ export function ImportDecksSheet({
   const fileKind = useRef<FileKind>('cards')
 
   const chapters = parseVerseChapters(verseText)
-  const verseCount = chapters.reduce((sum, chapter) => sum + chapter.loci.length, 0)
+  const verseCount = chapters.reduce((sum, chapter) => sum + chapter.cards.length, 0)
 
   const reset = () => {
     setStep('menu')
@@ -71,17 +71,17 @@ export function ImportDecksSheet({
     setTimeout(reset, 200)
   }
 
-  const run = async (decks: ImportedRoom[]) => {
+  const run = async (decks: ImportedDeck[]) => {
     if (busy) return
     if (decks.length === 0) {
-      toast.warning(t('importRooms.toast.empty'))
+      toast.warning(t('importDecks.toast.empty'))
       return
     }
     setBusy(true)
     try {
       const result = await importDecks(deckStore, cardStore, questionStore, parentId, decks)
       toast.success(
-        t(result.decks === 1 ? 'importRooms.toast.addedOne' : 'importRooms.toast.addedOther', {
+        t(result.decks === 1 ? 'importDecks.toast.addedOne' : 'importDecks.toast.addedOther', {
           count: result.decks,
           cards: result.cards,
         }),
@@ -90,7 +90,7 @@ export function ImportDecksSheet({
       close()
     } catch (error) {
       toast.error(
-        error instanceof ContentImportError ? error.message : t('importRooms.toast.error'),
+        error instanceof ContentImportError ? error.message : t('importDecks.toast.error'),
       )
       setBusy(false)
     }
@@ -111,8 +111,8 @@ export function ImportDecksSheet({
     if (!file) return
     try {
       if (fileKind.current === 'mindscape') {
-        const data = await readPalaceFile(file)
-        await run(data.rooms)
+        const data = await readDeckTreeFile(file)
+        await run(data.decks)
       } else {
         const lower = file.name.toLowerCase()
         const content = lower.endsWith('.csv')
@@ -122,14 +122,14 @@ export function ImportDecksSheet({
       }
     } catch (error) {
       toast.error(
-        error instanceof ContentImportError ? error.message : t('importRooms.toast.error'),
+        error instanceof ContentImportError ? error.message : t('importDecks.toast.error'),
       )
     }
   }
 
   const createVerseDecks = () =>
     void run(
-      chapters.map((chapter) => ({ title: chapter.title, loci: chapter.loci, questions: [] })),
+      chapters.map((chapter) => ({ title: chapter.title, cards: chapter.cards, questions: [] })),
     )
 
   return (
@@ -138,8 +138,8 @@ export function ImportDecksSheet({
       <Sheet
         open={open}
         onOpenChange={(next) => (next ? onOpenChange(true) : close())}
-        title={step === 'verses' ? t('importRooms.versesTitle') : t('importRooms.title')}
-        description={step === 'menu' ? t('importRooms.intro') : undefined}
+        title={step === 'verses' ? t('importDecks.versesTitle') : t('importDecks.title')}
+        description={step === 'menu' ? t('importDecks.intro') : undefined}
         footer={
           step === 'verses' ? (
             <Button
@@ -152,11 +152,11 @@ export function ImportDecksSheet({
               {verseCount > 0
                 ? t(
                     chapters.length === 1
-                      ? 'importRooms.versesCtaOne'
-                      : 'importRooms.versesCtaOther',
+                      ? 'importDecks.versesCtaOne'
+                      : 'importDecks.versesCtaOther',
                     { count: chapters.length, verses: verseCount },
                   )
-                : t('importRooms.versesEmptyCta')}
+                : t('importDecks.versesEmptyCta')}
             </Button>
           ) : undefined
         }
@@ -166,24 +166,24 @@ export function ImportDecksSheet({
             <ImportRow
               icon={<BookOpen className="size-5" aria-hidden />}
               tone="brand"
-              title={t('importRooms.verses')}
-              subtitle={t('importRooms.versesSub')}
+              title={t('importDecks.verses')}
+              subtitle={t('importDecks.versesSub')}
               onClick={() => setStep('verses')}
             />
             <ImportRow
               icon={<FileText className="size-5" aria-hidden />}
               tone="accent"
               badge="CSV · TSV"
-              title={t('importRooms.deck')}
-              subtitle={t('importRooms.deckSub')}
+              title={t('importDecks.deck')}
+              subtitle={t('importDecks.deckSub')}
               onClick={() => pickFile('.txt,.tsv,.csv', 'cards')}
             />
             <ImportRow
               icon={<Landmark className="size-5" aria-hidden />}
               tone="positive"
               badge="JSON"
-              title={t('importRooms.palaceFile')}
-              subtitle={t('importRooms.palaceFileSub')}
+              title={t('importDecks.mindscapeFile')}
+              subtitle={t('importDecks.mindscapeFileSub')}
               onClick={() => pickFile('.json', 'mindscape')}
             />
           </div>
@@ -195,14 +195,14 @@ export function ImportDecksSheet({
               className="inline-flex w-fit items-center gap-1 text-[length:var(--p-text-label)] font-semibold text-primary"
             >
               <ChevronLeft className="size-4" aria-hidden />
-              {t('importRooms.back')}
+              {t('importDecks.back')}
             </button>
             <Textarea
               value={verseText}
               onChange={(event) => setVerseText(event.target.value)}
-              placeholder={t('importRooms.versesPlaceholder')}
+              placeholder={t('importDecks.versesPlaceholder')}
               rows={7}
-              aria-label={t('importRooms.versesTitle')}
+              aria-label={t('importDecks.versesTitle')}
               className="font-mono"
             />
           </div>

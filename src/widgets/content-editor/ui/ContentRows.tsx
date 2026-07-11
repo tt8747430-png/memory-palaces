@@ -107,7 +107,7 @@ export function CardRow({
     {
       flag: {
         onAction: onToggleFlag,
-        label: card.flagged ? t('loci.row.unflag') : t('loci.row.flag'),
+        label: card.flagged ? t('cards.row.unflag') : t('cards.row.flag'),
       },
       known: { onAction: onMarkKnown },
       reset: { onAction: onResetSrs },
@@ -129,25 +129,25 @@ export function CardRow({
     },
     {
       id: 'duplicate',
-      label: t('loci.row.duplicate'),
+      label: t('cards.row.duplicate'),
       icon: <Copy className="size-5" aria-hidden />,
       onSelect: onDuplicate,
     },
     {
       id: 'flag',
-      label: card.flagged ? t('loci.row.unflag') : t('loci.row.flag'),
+      label: card.flagged ? t('cards.row.unflag') : t('cards.row.flag'),
       icon: <Flag className="size-5" aria-hidden />,
       onSelect: onToggleFlag,
     },
     {
       id: 'known',
-      label: t('loci.row.markKnown'),
+      label: t('cards.row.markKnown'),
       icon: <GraduationCap className="size-5" aria-hidden />,
       onSelect: onMarkKnown,
     },
     {
       id: 'reset',
-      label: t('loci.row.resetSchedule'),
+      label: t('cards.row.resetSchedule'),
       icon: <RotateCcw className="size-5" aria-hidden />,
       onSelect: onResetSrs,
     },
@@ -197,7 +197,7 @@ export function CardRow({
             {card.flagged ? (
               <Flag
                 className="size-3.5 shrink-0 fill-[var(--rating)] text-[var(--rating-edge)]"
-                aria-label={t('loci.row.flagged')}
+                aria-label={t('cards.row.flagged')}
               />
             ) : null}
           </div>
@@ -231,7 +231,7 @@ export function CardRow({
           <OverflowMenuButton
             variant="tint"
             size="sm"
-            label={t('loci.row.menuLabel')}
+            label={t('cards.row.menuLabel')}
             actions={actions}
           />
         )}
@@ -305,7 +305,7 @@ export function QuestionRow({
     },
     {
       id: 'duplicate',
-      label: t('loci.row.duplicate'),
+      label: t('cards.row.duplicate'),
       icon: <Copy className="size-5" aria-hidden />,
       onSelect: onDuplicate,
     },
@@ -390,7 +390,7 @@ export function QuestionRow({
           <OverflowMenuButton
             variant="tint"
             size="sm"
-            label={t('loci.row.menuLabel')}
+            label={t('cards.row.menuLabel')}
             actions={actions}
           />
         )}

@@ -13,7 +13,7 @@ const ZERO: BadgeInput = {
 describe('computeBadges', () => {
   it('returns the six badges in canonical order, all locked at zero', () => {
     const badges = computeBadges(ZERO)
-    expect(badges.map((b) => b.id)).toEqual(['xp', 'streak', 'rooms', 'palaces', 'cards', 'days'])
+    expect(badges.map((b) => b.id)).toEqual(['xp', 'streak', 'decks', 'library', 'cards', 'days'])
     expect(badges.every((b) => b.tier === 0)).toBe(true)
     expect(badges.every((b) => b.current === null)).toBe(true)
     // The next target is the first threshold while locked.

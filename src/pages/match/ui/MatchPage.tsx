@@ -9,7 +9,7 @@ import {
 import { selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
 import { cardsInSubtree, deckPath } from '@/shared/lib'
 import { MatchBoard } from '@/widgets/match'
-import { type MatchLocus } from '@/features/match'
+import { type MatchCard } from '@/features/match'
 import { useSessionReward } from '@/widgets/session-reward'
 import { AppScreen, ScreenHeader } from '@/shared/ui'
 
@@ -44,7 +44,7 @@ export function MatchPage({ scope, onBack }: MatchPageProps) {
     [decks, scope.deckId],
   )
 
-  const cards = useMemo<MatchLocus[]>(
+  const cards = useMemo<MatchCard[]>(
     () =>
       cardsInSubtree(decks, allCards, scope.deckId).map((card) => ({
         id: card.id,
@@ -66,7 +66,7 @@ export function MatchPage({ scope, onBack }: MatchPageProps) {
     return (
       <AppScreen
         header={
-          <ScreenHeader title={t('train.notFound')} onBack={onBack} backLabel={t('match.back')} />
+          <ScreenHeader title={t('match.notFound')} onBack={onBack} backLabel={t('match.back')} />
         }
       />
     )
@@ -79,7 +79,7 @@ export function MatchPage({ scope, onBack }: MatchPageProps) {
   return (
     <MatchBoard
       key={scope.deckId}
-      loci={cards}
+      cards={cards}
       subtitle={subtitle}
       onBack={onBack ?? (() => {})}
       onComplete={() => {

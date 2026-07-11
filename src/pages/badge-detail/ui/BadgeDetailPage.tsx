@@ -19,7 +19,7 @@ import { AppScreen, BadgeMedallion, cardSurface, ScreenHeader } from '@/shared/u
 
 const EASE_OUT = [0.22, 1, 0.36, 1] as const
 
-const BADGE_IDS: readonly BadgeId[] = ['xp', 'streak', 'rooms', 'palaces', 'cards', 'days']
+const BADGE_IDS: readonly BadgeId[] = ['xp', 'streak', 'decks', 'library', 'cards', 'days']
 const isBadgeId = (value: string): value is BadgeId =>
   (BADGE_IDS as readonly string[]).includes(value)
 

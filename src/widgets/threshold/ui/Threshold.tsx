@@ -11,7 +11,7 @@ const draw: Variants = {
   show: { pathLength: 1, opacity: 1, transition: { duration: 0.9, ease: [0.16, 1, 0.3, 1] } },
 }
 
-const locus: Variants = {
+const spark: Variants = {
   hidden: { r: 0, opacity: 0 },
   show: { r: 7, opacity: 1, transition: { type: 'spring', stiffness: 220, damping: 16 } },
 }
@@ -29,8 +29,8 @@ const GLOW = 'drop-shadow(0 0 12px oklch(83.2% 0.083 264.3 / 0.55))'
 export interface PalaceThresholdProps {
   className?: string
   /**
-   * `dark` — drenched-navy brand moments (light-blue lines, white locus, glow).
-   * `light` — in-task daylight surfaces (navy lines + locus, no glow).
+   * `dark` — drenched-navy brand moments (light-blue lines, white spark, glow).
+   * `light` — in-task daylight surfaces (navy lines + spark, no glow).
    */
   tone?: 'dark' | 'light'
   /**
@@ -42,16 +42,12 @@ export interface PalaceThresholdProps {
 
 /**
  * The single Mindscape mark: blueprint lines draw a temple/threshold, then a lone
- * locus ignites at its heart — "stepping into your memory palace". Pure SVG
+ * spark ignites at its heart — the brand's doorway moment. Pure SVG
  * pathLength + motion (60fps, no deps). Drenched `tone="dark"` + `animated` for the
  * splash/welcome brand moments; static `tone="light"` for login/signup/forgot.
  * Reduced motion renders the final frame.
  */
-export function PalaceThreshold({
-  className,
-  tone = 'dark',
-  animated = true,
-}: PalaceThresholdProps) {
+export function Threshold({ className, tone = 'dark', animated = true }: PalaceThresholdProps) {
   const reduce = useReducedMotion()
   const isStatic = !animated || !!reduce
   const isLight = tone === 'light'
@@ -78,9 +74,9 @@ export function PalaceThreshold({
       {/* steps */}
       <motion.line variants={draw} x1="40" y1="166" x2="160" y2="166" {...stroke} />
       <motion.line variants={draw} x1="28" y1="178" x2="172" y2="178" {...stroke} />
-      {/* the locus igniting in the doorway */}
+      {/* the spark igniting in the doorway */}
       <motion.circle
-        variants={locus}
+        variants={spark}
         cx="100"
         cy="138"
         r="7"

@@ -4,20 +4,20 @@ import type { AchievementId } from '@/shared/lib'
 /** Icon + literal i18n keys per milestone achievement. `as const satisfies` keeps the
  * key strings literal for the typed t() while checking every id is covered. */
 export const ACHIEVEMENT_META = {
-  'first-palace': {
+  'first-deck': {
     icon: Crown,
-    titleKey: 'achievements.first-palace.title',
-    descriptionKey: 'achievements.first-palace.description',
+    titleKey: 'achievements.first-deck.title',
+    descriptionKey: 'achievements.first-deck.description',
   },
   'week-warrior': {
     icon: Calendar,
     titleKey: 'achievements.week-warrior.title',
     descriptionKey: 'achievements.week-warrior.description',
   },
-  'palace-master': {
+  'deck-master': {
     icon: Trophy,
-    titleKey: 'achievements.palace-master.title',
-    descriptionKey: 'achievements.palace-master.description',
+    titleKey: 'achievements.deck-master.title',
+    descriptionKey: 'achievements.deck-master.description',
   },
   'xp-champion': {
     icon: Zap,

@@ -170,7 +170,7 @@ export function QuizSession({
                   <Brain className="size-5 text-heading" aria-hidden />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <Chip className="mb-2">{question.roomTitle}</Chip>
+                  <Chip className="mb-2">{question.deckName}</Chip>
                   <h2 className="text-[length:var(--p-text-sub)] font-medium leading-relaxed text-heading">
                     {question.prompt}
                   </h2>

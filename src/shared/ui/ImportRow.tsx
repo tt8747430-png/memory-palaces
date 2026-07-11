@@ -30,7 +30,7 @@ export interface ImportRowProps {
 }
 
 /** A tappable import/export option: a tonal icon chip, a title + subtitle, and a trailing
- * affordance, on a soft card. Shared by the palace import sheet and the room transfer sheet so
+ * affordance, on a soft card. Shared by the deck import sheet and the content transfer sheet so
  * both read as one family. */
 export function ImportRow({
   icon,

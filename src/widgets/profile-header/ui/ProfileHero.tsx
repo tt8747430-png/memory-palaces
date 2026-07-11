@@ -119,7 +119,7 @@ export function ProfileHero({
         <Stat
           icon={<Building2 className="size-4 text-primary" aria-hidden />}
           value={String(palaceCount)}
-          label={t('profile.tiles.palaces')}
+          label={t('profile.tiles.decks')}
         />
       </motion.div>
 

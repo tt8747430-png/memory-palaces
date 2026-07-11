@@ -15,7 +15,7 @@ describe('SettingsHelpPage', () => {
     )
     expect(screen.getByRole('heading', { name: 'Getting started' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Troubleshooting' })).toBeInTheDocument()
-    expect(screen.getByText(/how do i create a memory palace/i)).toBeInTheDocument()
+    expect(screen.getByText(/how do i create a deck/i)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /email support/i })).toHaveAttribute(
       'href',
       'mailto:support@mindscape.app',

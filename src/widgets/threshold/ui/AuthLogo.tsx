@@ -1,6 +1,6 @@
 import { motion, useReducedMotion } from 'motion/react'
 import { cn } from '@/shared/lib'
-import { PalaceThreshold } from './PalaceThreshold'
+import { Threshold } from './Threshold'
 
 const GLOW = 'radial-gradient(circle, oklch(var(--p-tint-sky) / 0.6), transparent 70%)'
 
@@ -29,7 +29,7 @@ export function AuthLogo({ className }: { className?: string }) {
           transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
         />
       )}
-      <PalaceThreshold tone="light" animated={false} className="relative size-full" />
+      <Threshold tone="light" animated={false} className="relative size-full" />
     </span>
   )
 }

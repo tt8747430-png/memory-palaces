@@ -43,13 +43,13 @@ describe('importDecks', () => {
     const result = await importDecks(deckStore, cardStore, questionStore, 'parent', [
       {
         title: 'Genesis 1',
-        loci: [
+        cards: [
           { front: '1:1', back: 'In the beginning…' },
           { front: '1:2', back: 'And the earth…' },
         ],
         questions: [{ prompt: 'Day one?', options: ['Light', 'Sea'], correctAnswer: 0 }],
       },
-      { title: 'Genesis 2', loci: [{ front: '2:1', back: 'Thus the heavens…' }], questions: [] },
+      { title: 'Genesis 2', cards: [{ front: '2:1', back: 'Thus the heavens…' }], questions: [] },
     ])
 
     expect(result).toEqual({ decks: 2, cards: 3, questions: 1 })

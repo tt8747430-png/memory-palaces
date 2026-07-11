@@ -212,11 +212,11 @@ export function DeckContentEditor({
     if (sort !== 'manual') setSort('manual')
   }
   const sortOptions: SortControlOption<ContentSort>[] = [
-    { value: 'manual', label: t('loci.sort.manual'), icon: <GripVertical className="size-4" /> },
-    { value: 'recent', label: t('loci.sort.recent'), icon: <Clock className="size-4" /> },
-    { value: 'name', label: t('loci.sort.name'), icon: <ArrowDownAZ className="size-4" /> },
-    { value: 'due', label: t('loci.sort.due'), icon: <Sparkles className="size-4" /> },
-    { value: 'flagged', label: t('loci.sort.flagged'), icon: <Flag className="size-4" /> },
+    { value: 'manual', label: t('cards.sort.manual'), icon: <GripVertical className="size-4" /> },
+    { value: 'recent', label: t('cards.sort.recent'), icon: <Clock className="size-4" /> },
+    { value: 'name', label: t('cards.sort.name'), icon: <ArrowDownAZ className="size-4" /> },
+    { value: 'due', label: t('cards.sort.due'), icon: <Sparkles className="size-4" /> },
+    { value: 'flagged', label: t('cards.sort.flagged'), icon: <Flag className="size-4" /> },
   ]
 
   const renderCard = (card: Card, dragHandle?: RowDragHandle, dragging = false) => (
@@ -236,17 +236,17 @@ export function DeckContentEditor({
       onEdit={() => onEditCard(card.id)}
       onDuplicate={() => {
         void duplicateCard(cardStore, card.id)
-        toast.success(t('loci.row.duplicated'))
+        toast.success(t('cards.row.duplicated'))
       }}
       onDelete={() => setPendingDeleteId(card.id)}
       onToggleFlag={() => void toggleCardFlag(cardStore, card.id)}
       onMarkKnown={() => {
         void markCardsKnown(cardStore, [card.id])
-        toast.success(t('loci.row.markedKnown'))
+        toast.success(t('cards.row.markedKnown'))
       }}
       onResetSrs={() => {
         void resetCardsSrs(cardStore, [card.id])
-        toast.success(t('loci.row.scheduleReset'))
+        toast.success(t('cards.row.scheduleReset'))
       }}
     />
   )
@@ -297,15 +297,15 @@ export function DeckContentEditor({
     try {
       const kind = importKind.current
       const data = kind === 'anki' ? await readAnkiFile(file) : await readMindscapeFile(file)
-      if (data.loci.length === 0) {
-        toast.error(t('loci.transfer.noCardsFound'))
+      if (data.cards.length === 0) {
+        toast.error(t('cards.transfer.noCardsFound'))
         return
       }
-      setImportDraft(kind, data.loci)
+      setImportDraft(kind, data.cards)
       onReviewImport()
     } catch (error) {
       toast.error(
-        error instanceof ContentImportError ? error.message : t('loci.transfer.importFailed'),
+        error instanceof ContentImportError ? error.message : t('cards.transfer.importFailed'),
       )
     }
   }
@@ -322,13 +322,13 @@ export function DeckContentEditor({
   const confirmSingleDelete = () => {
     if (!pendingDeleteId) return
     void deleteCard(cardStore, pendingDeleteId)
-    toast.success(t('loci.transfer.deleted'))
+    toast.success(t('cards.transfer.deleted'))
   }
 
   const confirmBulkDelete = () => {
     const ids = [...selectedIds]
     void Promise.all(ids.map((id) => deleteCard(cardStore, id)))
-    toast.success(t('loci.transfer.deletedMany', { count: ids.length }))
+    toast.success(t('cards.transfer.deletedMany', { count: ids.length }))
     exitSelect()
   }
 
@@ -347,7 +347,7 @@ export function DeckContentEditor({
           heading). Steps aside while searching or selecting so the list owns the screen. */}
       {!searching && !selectMode && cards.length > 0 ? (
         <div className="mb-3">
-          <CardMaturityOverview total={cards.length} counts={maturity} scope="room" />
+          <CardMaturityOverview total={cards.length} counts={maturity} />
         </div>
       ) : null}
 
@@ -357,7 +357,7 @@ export function DeckContentEditor({
         <div className="mb-3 flex items-center justify-between gap-2">
           {total > 1 ? (
             <SortControl
-              label={t('loci.sortLabel')}
+              label={t('cards.sortLabel')}
               value={sort}
               options={sortOptions}
               onChange={setSort}
@@ -366,7 +366,7 @@ export function DeckContentEditor({
             <span aria-hidden />
           )}
           <FilterButton
-            label={t('loci.filterLabel')}
+            label={t('cards.filterLabel')}
             count={cardFilterCount}
             onClick={openFilter}
           />
@@ -412,31 +412,31 @@ export function DeckContentEditor({
           <BulkButton
             disabled={selectedCount === 0}
             icon={<Flag className="size-[17px]" aria-hidden />}
-            label={t('loci.bulk.flag')}
+            label={t('cards.bulk.flag')}
             onClick={() => {
               const toFlag = cards.filter((l) => selectedIds.has(l.id) && !l.flagged)
               toFlag.forEach((l) => void toggleCardFlag(cardStore, l.id))
-              toast.success(t('loci.bulk.flagged', { count: toFlag.length }))
+              toast.success(t('cards.bulk.flagged', { count: toFlag.length }))
               exitSelect()
             }}
           />
           <BulkButton
             disabled={selectedCount === 0}
             icon={<GraduationCap className="size-[17px]" aria-hidden />}
-            label={t('loci.bulk.known')}
+            label={t('cards.bulk.known')}
             onClick={() => {
               void markCardsKnown(cardStore, [...selectedIds])
-              toast.success(t('loci.row.markedKnown'))
+              toast.success(t('cards.row.markedKnown'))
               exitSelect()
             }}
           />
           <BulkButton
             disabled={selectedCount === 0}
             icon={<RotateCcw className="size-[17px]" aria-hidden />}
-            label={t('loci.bulk.reset')}
+            label={t('cards.bulk.reset')}
             onClick={() => {
               void resetCardsSrs(cardStore, [...selectedIds])
-              toast.success(t('loci.row.scheduleReset'))
+              toast.success(t('cards.row.scheduleReset'))
               exitSelect()
             }}
           />
@@ -454,31 +454,31 @@ export function DeckContentEditor({
       <Sheet
         open={importOpen}
         onOpenChange={setImportOpen}
-        title={t('loci.transfer.importTitle')}
-        description={t('loci.transfer.importSubtitle')}
+        title={t('cards.transfer.importTitle')}
+        description={t('cards.transfer.importSubtitle')}
       >
         <div className="flex flex-col gap-2.5 pb-2">
           <ImportRow
             icon={<FileJson className="size-5" aria-hidden />}
             tone="brand"
             badge="JSON"
-            title={t('loci.transfer.importMindscape')}
-            subtitle={t('loci.transfer.importMindscapeSub')}
+            title={t('cards.transfer.importMindscape')}
+            subtitle={t('cards.transfer.importMindscapeSub')}
             onClick={() => pickFile('.json', 'mindscape')}
           />
           <ImportRow
             icon={<Layers className="size-5" aria-hidden />}
             tone="warning"
             badge="CSV · TSV · TXT"
-            title={t('loci.transfer.importAnki')}
-            subtitle={t('loci.transfer.importAnkiSub')}
+            title={t('cards.transfer.importAnki')}
+            subtitle={t('cards.transfer.importAnkiSub')}
             onClick={() => pickFile('.csv,.tsv,.txt', 'anki')}
           />
           <ImportRow
             icon={<ClipboardPaste className="size-5" aria-hidden />}
             tone="accent"
-            title={t('loci.transfer.pasteNotes')}
-            subtitle={t('loci.transfer.pasteNotesSub')}
+            title={t('cards.transfer.pasteNotes')}
+            subtitle={t('cards.transfer.pasteNotesSub')}
             onClick={() => closeImport(onPasteNotes)}
           />
         </div>
@@ -488,8 +488,8 @@ export function DeckContentEditor({
       <Sheet
         open={exportOpen}
         onOpenChange={setExportOpen}
-        title={t('loci.transfer.exportTitle')}
-        description={t('loci.transfer.exportSubtitle')}
+        title={t('cards.transfer.exportTitle')}
+        description={t('cards.transfer.exportSubtitle')}
       >
         <div className="flex flex-col gap-2.5 pb-2">
           <ImportRow
@@ -497,8 +497,8 @@ export function DeckContentEditor({
             tone="brand"
             badge="JSON"
             trailing={<Download className="size-5 shrink-0 text-faint" aria-hidden />}
-            title={t('loci.transfer.exportJson')}
-            subtitle={t('loci.transfer.exportJsonSub')}
+            title={t('cards.transfer.exportJson')}
+            subtitle={t('cards.transfer.exportJsonSub')}
             disabled={cards.length === 0}
             onClick={() => closeExport(() => exportDeckJson(deckName, cards, []))}
           />
@@ -507,8 +507,8 @@ export function DeckContentEditor({
             tone="accent"
             badge="CSV"
             trailing={<Download className="size-5 shrink-0 text-faint" aria-hidden />}
-            title={t('loci.transfer.exportCards')}
-            subtitle={t('loci.transfer.exportCardsSub')}
+            title={t('cards.transfer.exportCards')}
+            subtitle={t('cards.transfer.exportCardsSub')}
             disabled={cards.length === 0}
             onClick={() => closeExport(() => exportCardsCsv(deckName, cards))}
           />
@@ -517,8 +517,8 @@ export function DeckContentEditor({
             tone="warning"
             badge="TXT"
             trailing={<Download className="size-5 shrink-0 text-faint" aria-hidden />}
-            title={t('loci.transfer.exportAnki')}
-            subtitle={t('loci.transfer.exportAnkiSub')}
+            title={t('cards.transfer.exportAnki')}
+            subtitle={t('cards.transfer.exportAnkiSub')}
             disabled={cards.length === 0}
             onClick={() => closeExport(() => exportCardsAnki(deckName, cards))}
           />
@@ -529,7 +529,7 @@ export function DeckContentEditor({
       <Sheet
         open={filterOpen}
         onOpenChange={setFilterOpen}
-        title={t('loci.filter.title')}
+        title={t('cards.filter.title')}
         footer={
           <div className="flex gap-2">
             <Button
@@ -538,10 +538,10 @@ export function DeckContentEditor({
               onClick={resetDraftFilter}
               disabled={draftFilterCount === 0}
             >
-              {t('loci.filter.reset')}
+              {t('cards.filter.reset')}
             </Button>
             <Button className="flex-1" onClick={applyFilter}>
-              {t('loci.filter.apply')}
+              {t('cards.filter.apply')}
             </Button>
           </div>
         }
@@ -549,14 +549,14 @@ export function DeckContentEditor({
         <div className="flex flex-col gap-5 pb-2">
           <div>
             <p className="mb-2 px-1 text-(length:--p-text-label) font-bold uppercase tracking-wide text-muted-foreground">
-              {t('loci.filter.maturity')}
+              {t('cards.filter.maturity')}
             </p>
             <div className="flex flex-wrap gap-2">
               {(
                 [
-                  { key: 'new', label: t('loci.filter.new'), dot: 'bg-[var(--text-faint)]' },
-                  { key: 'learning', label: t('loci.filter.learning'), dot: 'bg-accent' },
-                  { key: 'known', label: t('loci.filter.known'), dot: 'bg-success' },
+                  { key: 'new', label: t('cards.filter.new'), dot: 'bg-[var(--text-faint)]' },
+                  { key: 'learning', label: t('cards.filter.learning'), dot: 'bg-accent' },
+                  { key: 'known', label: t('cards.filter.known'), dot: 'bg-success' },
                 ] as const
               ).map(({ key, label, dot }) => {
                 const on = draftMaturity.has(key)
@@ -598,7 +598,7 @@ export function DeckContentEditor({
           </div>
           <div>
             <p className="mb-2 px-1 text-(length:--p-text-label) font-bold uppercase tracking-wide text-muted-foreground">
-              {t('loci.filter.status')}
+              {t('cards.filter.status')}
             </p>
             <label className="flex items-center justify-between gap-3 rounded-card bg-secondary/40 px-3.5 py-3">
               <span className="inline-flex items-center gap-2.5 text-(length:--p-text-body) font-semibold text-heading">
@@ -608,10 +608,10 @@ export function DeckContentEditor({
                 >
                   <Flag className="size-4 text-(--warning-foreground)" aria-hidden />
                 </span>
-                {t('loci.filter.flagged')}
+                {t('cards.filter.flagged')}
               </span>
               <Switch
-                label={t('loci.filter.flagged')}
+                label={t('cards.filter.flagged')}
                 checked={draftFlagged}
                 onCheckedChange={setDraftFlagged}
               />
@@ -626,8 +626,8 @@ export function DeckContentEditor({
         onOpenChange={(open) => !open && setPendingDeleteId(null)}
         destructive
         icon={<Trash2 className="size-6" aria-hidden />}
-        title={t('loci.delete.cardTitle')}
-        description={t('loci.delete.body')}
+        title={t('cards.delete.cardTitle')}
+        description={t('cards.delete.body')}
         confirmLabel={t('common.delete')}
         cancelLabel={t('common.cancel')}
         onConfirm={confirmSingleDelete}
@@ -637,8 +637,8 @@ export function DeckContentEditor({
         onOpenChange={setBulkDeleteOpen}
         destructive
         icon={<Trash2 className="size-6" aria-hidden />}
-        title={t('loci.delete.bulkTitle', { count: selectedCount })}
-        description={t('loci.delete.body')}
+        title={t('cards.delete.bulkTitle', { count: selectedCount })}
+        description={t('cards.delete.body')}
         confirmLabel={t('common.delete')}
         cancelLabel={t('common.cancel')}
         onConfirm={confirmBulkDelete}
@@ -648,24 +648,24 @@ export function DeckContentEditor({
           of the screen (otherwise the dial overlaps the bar's trailing action). */}
       {!selectMode ? (
         <SpeedDial
-          label={t('loci.quickActions')}
+          label={t('cards.quickActions')}
           className="bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+0.75rem)]"
           actions={[
             {
               id: 'card',
-              label: t('loci.addCard'),
+              label: t('cards.addCard'),
               icon: <Plus className="size-5" aria-hidden />,
               onSelect: onAddCard,
             },
             {
               id: 'import',
-              label: t('loci.transfer.importShort'),
+              label: t('cards.transfer.importShort'),
               icon: <Upload className="size-5" aria-hidden />,
               onSelect: () => setImportOpen(true),
             },
             {
               id: 'export',
-              label: t('loci.transfer.exportShort'),
+              label: t('cards.transfer.exportShort'),
               icon: <Download className="size-5" aria-hidden />,
               onSelect: () => setExportOpen(true),
             },
@@ -688,15 +688,15 @@ export function DeckContentEditor({
         onToggleFlag={(id) => void toggleCardFlag(cardStore, id)}
         onDuplicate={(id) => {
           void duplicateCard(cardStore, id)
-          toast.success(t('loci.row.duplicated'))
+          toast.success(t('cards.row.duplicated'))
         }}
         onMarkKnown={(id) => {
           void markCardsKnown(cardStore, [id])
-          toast.success(t('loci.row.markedKnown'))
+          toast.success(t('cards.row.markedKnown'))
         }}
         onResetSrs={(id) => {
           void resetCardsSrs(cardStore, [id])
-          toast.success(t('loci.row.scheduleReset'))
+          toast.success(t('cards.row.scheduleReset'))
         }}
         onDelete={(id) => {
           setBrowserCardId(null)
@@ -735,14 +735,14 @@ function EmptyCards({ onAdd }: { onAdd: () => void }) {
         <MapPin className="size-6" aria-hidden />
       </div>
       <h3 className="mb-1.5 text-balance text-(length:--p-text-sub) font-semibold text-heading">
-        {t('loci.emptyTitle')}
+        {t('cards.emptyTitle')}
       </h3>
       <p className="max-w-[34ch] text-pretty text-(length:--p-text-body) text-muted-foreground">
-        {t('loci.emptyHint')}
+        {t('cards.emptyHint')}
       </p>
       <Button className="mt-5" onClick={onAdd}>
         <Plus className="size-[18px]" aria-hidden />
-        {t('loci.addCard')}
+        {t('cards.addCard')}
       </Button>
     </div>
   )
@@ -752,13 +752,13 @@ function NoResults({ onClear }: { onClear: () => void }) {
   const { t } = useTranslation()
   return (
     <div className="rounded-card bg-card-glass p-6 text-center shadow-rest">
-      <p className="text-(length:--p-text-body) text-muted-foreground">{t('loci.noResults')}</p>
+      <p className="text-(length:--p-text-body) text-muted-foreground">{t('cards.noResults')}</p>
       <button
         type="button"
         onClick={onClear}
         className="mt-2 text-(length:--p-text-label) font-semibold text-accent"
       >
-        {t('loci.clearSearch')}
+        {t('cards.clearSearch')}
       </button>
     </div>
   )
@@ -801,13 +801,13 @@ function FilterEmpty({ onClear }: { onClear: () => void }) {
   const { t } = useTranslation()
   return (
     <div className="rounded-card bg-card-glass p-6 text-center shadow-rest">
-      <p className="text-(length:--p-text-body) text-muted-foreground">{t('loci.filterEmpty')}</p>
+      <p className="text-(length:--p-text-body) text-muted-foreground">{t('cards.filterEmpty')}</p>
       <button
         type="button"
         onClick={onClear}
         className="mt-2 text-(length:--p-text-label) font-semibold text-accent"
       >
-        {t('loci.filterClear')}
+        {t('cards.filterClear')}
       </button>
     </div>
   )

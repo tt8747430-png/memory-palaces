@@ -55,33 +55,33 @@ export function PasteNotesPage({ onBack, onReview }: PasteNotesPageProps) {
     <AppScreen
       fill
       header={
-        <ScreenHeader title={t('loci.paste.title')} onBack={onBack} backLabel={t('roomHub.back')} />
+        <ScreenHeader title={t('cards.paste.title')} onBack={onBack} backLabel={t('common.back')} />
       }
       footer={
         <div className="bg-glass shrink-0 border-t border-white/40 px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-10px_30px_oklch(var(--p-tint-navy)/0.1)]">
           <Button size="lg" className="w-full" disabled={cards.length === 0} onClick={create}>
             <Sparkles className="size-[18px]" aria-hidden />
-            {t('loci.paste.create')}
+            {t('cards.paste.create')}
           </Button>
         </div>
       }
     >
       <div className="mt-4 flex flex-col gap-6 pb-6">
         <OptionGroup<Kind>
-          label={t('loci.paste.kindLabel')}
+          label={t('cards.paste.kindLabel')}
           value={kind}
           onChange={setKind}
           options={[
             {
               value: 'notes',
-              label: t('loci.paste.kindNotes'),
-              description: t('loci.paste.kindNotesSub'),
+              label: t('cards.paste.kindNotes'),
+              description: t('cards.paste.kindNotesSub'),
               icon: <List className="size-[18px]" aria-hidden />,
             },
             {
               value: 'bible',
-              label: t('loci.paste.kindBible'),
-              description: t('loci.paste.kindBibleSub'),
+              label: t('cards.paste.kindBible'),
+              description: t('cards.paste.kindBibleSub'),
               icon: <BookOpen className="size-[18px]" aria-hidden />,
             },
           ]}
@@ -90,7 +90,7 @@ export function PasteNotesPage({ onBack, onReview }: PasteNotesPageProps) {
         <div>
           <div className="mb-2 flex items-baseline justify-between gap-2">
             <span className="text-[length:var(--p-text-sub)] font-bold text-heading">
-              {t('loci.paste.dataLabel')}
+              {t('cards.paste.dataLabel')}
             </span>
             <CountBadge count={cards.length} />
           </div>
@@ -98,7 +98,9 @@ export function PasteNotesPage({ onBack, onReview }: PasteNotesPageProps) {
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder={
-              kind === 'bible' ? t('loci.paste.biblePlaceholder') : t('loci.paste.notesPlaceholder')
+              kind === 'bible'
+                ? t('cards.paste.biblePlaceholder')
+                : t('cards.paste.notesPlaceholder')
             }
             rows={8}
             className="min-h-[184px] font-mono text-[length:var(--p-text-label)] leading-relaxed"
@@ -111,49 +113,49 @@ export function PasteNotesPage({ onBack, onReview }: PasteNotesPageProps) {
             <BookOpen className="mt-0.5 size-5 shrink-0 text-accent" aria-hidden />
             <div>
               <p className="text-[length:var(--p-text-sub)] font-semibold text-heading">
-                {t('loci.paste.bibleHintTitle')}
+                {t('cards.paste.bibleHintTitle')}
               </p>
               <p className="mt-0.5 text-[length:var(--p-text-label)] leading-snug text-info-foreground">
-                {t('loci.paste.bibleHint')}
+                {t('cards.paste.bibleHint')}
               </p>
             </div>
           </div>
         ) : (
           <div className="flex flex-col gap-5">
             <OptionGroup<FieldSep>
-              label={t('loci.paste.fieldLabel')}
+              label={t('cards.paste.fieldLabel')}
               value={fieldSep}
               onChange={setFieldSep}
               options={[
-                { value: 'tab', label: t('loci.paste.sepTab'), hint: '⇥' },
-                { value: 'comma', label: t('loci.paste.sepComma'), hint: ',' },
-                { value: 'custom', label: t('loci.paste.sepCustom') },
+                { value: 'tab', label: t('cards.paste.sepTab'), hint: '⇥' },
+                { value: 'comma', label: t('cards.paste.sepComma'), hint: ',' },
+                { value: 'custom', label: t('cards.paste.sepCustom') },
               ]}
               footer={
                 fieldSep === 'custom' ? (
                   <CustomField
                     value={customField}
                     onChange={setCustomField}
-                    placeholder={t('loci.paste.customFieldPlaceholder')}
+                    placeholder={t('cards.paste.customFieldPlaceholder')}
                   />
                 ) : undefined
               }
             />
             <OptionGroup<CardSep>
-              label={t('loci.paste.cardLabel')}
+              label={t('cards.paste.cardLabel')}
               value={cardSep}
               onChange={setCardSep}
               options={[
-                { value: 'newline', label: t('loci.paste.sepNewline'), hint: '↵' },
-                { value: 'semicolon', label: t('loci.paste.sepSemicolon'), hint: ';' },
-                { value: 'custom', label: t('loci.paste.sepCustom') },
+                { value: 'newline', label: t('cards.paste.sepNewline'), hint: '↵' },
+                { value: 'semicolon', label: t('cards.paste.sepSemicolon'), hint: ';' },
+                { value: 'custom', label: t('cards.paste.sepCustom') },
               ]}
               footer={
                 cardSep === 'custom' ? (
                   <CustomField
                     value={customCard}
                     onChange={setCustomCard}
-                    placeholder={t('loci.paste.customCardPlaceholder')}
+                    placeholder={t('cards.paste.customCardPlaceholder')}
                   />
                 ) : undefined
               }
@@ -170,7 +172,7 @@ function CountBadge({ count }: { count: number }) {
   if (count === 0) return null
   return (
     <span className="rounded-pill bg-info-surface px-2.5 py-1 text-[length:var(--p-text-tiny)] font-bold tabular-nums text-info-foreground">
-      {t('loci.paste.found', { count })}
+      {t('cards.paste.found', { count })}
     </span>
   )
 }

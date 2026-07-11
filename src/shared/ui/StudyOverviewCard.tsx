@@ -13,8 +13,6 @@ export interface StudyOverviewCardProps {
   onStudy: () => void
   /** Practise the whole set when nothing is due. */
   onStudyAhead?: () => void
-  /** Copy variant: a single room vs the whole palace. */
-  scope: 'room' | 'palace'
 }
 
 /** The "cards for today" study panel (see the reference screenshots): a big due count,
@@ -26,7 +24,6 @@ export function StudyOverviewCard({
   breakdown,
   onStudy,
   onStudyAhead,
-  scope,
 }: StudyOverviewCardProps) {
   const { t } = useTranslation()
 
@@ -85,7 +82,7 @@ export function StudyOverviewCard({
 
       <Button className="w-full" onClick={onStudy}>
         <GraduationCap className="size-[18px]" aria-hidden />
-        {t(scope === 'palace' ? 'study.studyPalace' : 'study.studyCards')}
+        {t('study.studyCards')}
       </Button>
     </GlassCard>
   )
