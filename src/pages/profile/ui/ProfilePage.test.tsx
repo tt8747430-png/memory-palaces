@@ -4,9 +4,9 @@ import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
 import { InMemoryRepository } from '@/shared/api'
 import { createProgressStore, type Progress, ProgressStoreContext } from '@/entities/progress'
-import { createPalaceStore, type Palace, PalaceStoreContext } from '@/entities/palace'
-import { createRoomStore, type Room, RoomStoreContext } from '@/entities/room'
-import { createLocusStore, type Locus, LocusStoreContext } from '@/entities/locus'
+import { createDeckStore, type Deck, DeckStoreContext } from '@/entities/deck'
+import { CardStoreContext, createCardStore, type Card } from '@/entities/card'
+import { createFolderStore, type Folder, FolderStoreContext } from '@/entities/folder'
 import { createSessionStore, type Session, SessionStoreContext } from '@/entities/session'
 import {
   type AppNotification,
@@ -33,13 +33,13 @@ function renderPage(props: ProfilePageProps = {}, profileSeed?: Profile) {
         >
           <ProfileStoreContext value={createProfileStore(profileRepo)}>
             <ProgressStoreContext value={createProgressStore(new InMemoryRepository<Progress>())}>
-              <PalaceStoreContext value={createPalaceStore(new InMemoryRepository<Palace>())}>
-                <RoomStoreContext value={createRoomStore(new InMemoryRepository<Room>())}>
-                  <LocusStoreContext value={createLocusStore(new InMemoryRepository<Locus>())}>
+              <DeckStoreContext value={createDeckStore(new InMemoryRepository<Deck>())}>
+                <CardStoreContext value={createCardStore(new InMemoryRepository<Card>())}>
+                  <FolderStoreContext value={createFolderStore(new InMemoryRepository<Folder>())}>
                     <ProfilePage {...props} />
-                  </LocusStoreContext>
-                </RoomStoreContext>
-              </PalaceStoreContext>
+                  </FolderStoreContext>
+                </CardStoreContext>
+              </DeckStoreContext>
             </ProgressStoreContext>
           </ProfileStoreContext>
         </NotificationStoreContext>

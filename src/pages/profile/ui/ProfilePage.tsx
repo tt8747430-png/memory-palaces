@@ -3,10 +3,11 @@ import { useTranslation } from 'react-i18next'
 import {
   type AchievementId,
   type BadgeId,
+  cardsInSubtree,
   computeAchievements,
   computeBadges,
   computeTrainingTotals,
-  isRoomCompleted,
+  isDeckCompleted,
   nextMilestone,
   totalTrainingDays,
   useStickyHeader,
@@ -20,25 +21,17 @@ import {
   useProgressStoreApi,
 } from '@/entities/progress'
 import {
-  selectIsReady as selectPalacesReady,
-  selectPalaces,
-  usePalaceStore,
-  usePalaceStoreApi,
-} from '@/entities/palace'
+  selectDecks,
+  selectIsReady as selectDecksReady,
+  useDeckStore,
+  useDeckStoreApi,
+} from '@/entities/deck'
 import {
-  roomsForPalace,
-  selectIsReady as selectRoomsReady,
-  selectRooms,
-  useRoomStore,
-  useRoomStoreApi,
-} from '@/entities/room'
-import {
-  lociForRoom,
-  selectIsReady as selectLociReady,
-  selectLoci,
-  useLocusStore,
-  useLocusStoreApi,
-} from '@/entities/locus'
+  selectCards,
+  selectIsReady as selectCardsReady,
+  useCardStore,
+  useCardStoreApi,
+} from '@/entities/card'
 import {
   selectUnreadCount,
   useNotificationStore,
@@ -75,9 +68,9 @@ function joinedYearOf(createdAt: string): number | null {
 
 /** Profile tab. A guest identity today (account claim is Phase 9). One persistent bar
  * (name + notifications + settings) over a centered hero — circular avatar, @handle ·
- * joined, and a streak/XP/palaces headline. Below: the closest-milestone nudge, then the
+ * joined, and a streak/XP/decks headline. Below: the closest-milestone nudge, then the
  * Badges and Achievements preview rows. Everything derives live from the
- * progress/palace/room/locus stores — a glance, never stored or faked. */
+ * progress/deck/card stores — a glance, never stored or faked. */
 export function ProfilePage({
   onOpenSettings,
   onOpenNotifications,
@@ -93,31 +86,27 @@ export function ProfilePage({
   const profileStore = useProfileStoreApi()
   const profile = useProfileStore(selectEffectiveProfile)
   const progressStore = useProgressStoreApi()
-  const palaceStore = usePalaceStoreApi()
-  const roomStore = useRoomStoreApi()
-  const locusStore = useLocusStoreApi()
+  const deckStore = useDeckStoreApi()
+  const cardStore = useCardStoreApi()
   const notificationStore = useNotificationStoreApi()
   const progress = useProgressStore(selectProgress)
-  const palaces = usePalaceStore(selectPalaces)
-  const rooms = useRoomStore(selectRooms)
-  const loci = useLocusStore(selectLoci)
+  const decks = useDeckStore(selectDecks)
+  const cards = useCardStore(selectCards)
   const unreadCount = useNotificationStore(selectUnreadCount)
   // Gate the progress-derived hero/badges/achievements on hydration so a returning user
   // never sees a flash of zeros and locked medallions before RxDB resolves.
   const progressReady = useProgressStore(selectProgressReady)
-  const palacesReady = usePalaceStore(selectPalacesReady)
-  const roomsReady = useRoomStore(selectRoomsReady)
-  const lociReady = useLocusStore(selectLociReady)
-  const dataReady = progressReady && palacesReady && roomsReady && lociReady
+  const decksReady = useDeckStore(selectDecksReady)
+  const cardsReady = useCardStore(selectCardsReady)
+  const dataReady = progressReady && decksReady && cardsReady
 
   useEffect(() => {
     profileStore.getState().start()
     progressStore.getState().start()
-    palaceStore.getState().start()
-    roomStore.getState().start()
-    locusStore.getState().start()
+    deckStore.getState().start()
+    cardStore.getState().start()
     notificationStore.getState().start()
-  }, [profileStore, progressStore, palaceStore, roomStore, locusStore, notificationStore])
+  }, [profileStore, progressStore, deckStore, cardStore, notificationStore])
 
   const { t } = useTranslation()
   const name = profile.name.trim() || session?.displayName || t('profile.guest')
@@ -127,18 +116,12 @@ export function ProfilePage({
   const bestQuizAccuracy = progress?.bestQuizAccuracy ?? 0
   const trainingDays = useMemo(() => progress?.trainingDays ?? [], [progress])
 
-  const totals = useMemo(() => computeTrainingTotals(rooms, loci), [rooms, loci])
+  const totals = useMemo(() => computeTrainingTotals(decks, cards), [decks, cards])
   const daysTrained = useMemo(() => totalTrainingDays(trainingDays), [trainingDays])
-  const anyPalaceCompleted = useMemo(
-    () =>
-      palaces.some((palace) => {
-        const palaceRooms = roomsForPalace(rooms, palace.id)
-        return (
-          palaceRooms.length > 0 &&
-          palaceRooms.every((room) => isRoomCompleted(lociForRoom(loci, room.id)))
-        )
-      }),
-    [palaces, rooms, loci],
+  const topLevelDecks = useMemo(() => decks.filter((deck) => deck.parentId === null), [decks])
+  const anyDeckCompleted = useMemo(
+    () => topLevelDecks.some((deck) => isDeckCompleted(cardsInSubtree(decks, cards, deck.id))),
+    [topLevelDecks, decks, cards],
   )
 
   const badges = useMemo(
@@ -146,25 +129,32 @@ export function ProfilePage({
       computeBadges({
         xp,
         longestStreak,
-        roomsCompleted: totals.roomsCompleted,
-        palaceCount: palaces.length,
+        decksCompleted: totals.decksCompleted,
+        deckCount: topLevelDecks.length,
         totalCards: totals.totalCards,
         trainingDayCount: daysTrained,
       }),
-    [xp, longestStreak, totals, palaces.length, daysTrained],
+    [xp, longestStreak, totals, topLevelDecks.length, daysTrained],
   )
   const milestone = useMemo(() => nextMilestone(badges), [badges])
   const achievements = useMemo(
     () =>
       computeAchievements({
-        palaceCount: palaces.length,
+        deckCount: topLevelDecks.length,
         streakCount,
         xp,
         bestQuizAccuracy,
-        roomsCompleted: totals.roomsCompleted,
-        anyPalaceCompleted,
+        decksCompleted: totals.decksCompleted,
+        anyDeckCompleted,
       }),
-    [palaces.length, streakCount, xp, bestQuizAccuracy, totals.roomsCompleted, anyPalaceCompleted],
+    [
+      topLevelDecks.length,
+      streakCount,
+      xp,
+      bestQuizAccuracy,
+      totals.decksCompleted,
+      anyDeckCompleted,
+    ],
   )
 
   return (
@@ -191,7 +181,7 @@ export function ProfilePage({
             avatar={profile.avatar}
             xp={xp}
             streakCount={streakCount}
-            palaceCount={palaces.length}
+            palaceCount={topLevelDecks.length}
             joinedYear={session?.createdAt ? joinedYearOf(session.createdAt) : null}
             onEditProfile={() => onEditProfile?.()}
             onOpenStreak={() => onOpenStreak?.()}

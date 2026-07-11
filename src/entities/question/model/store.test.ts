@@ -4,8 +4,8 @@ import { createQuestionStore } from './store'
 import { makeQuestion, type Question } from './types'
 
 const at = (ms: number) => new Date(ms).toISOString()
-const question = (id: string, roomId: string, createdAt: string): Question =>
-  makeQuestion({ id, createdAt, roomId, prompt: id, options: ['a', 'b'], correctAnswer: 0 })
+const question = (id: string, deckId: string, createdAt: string): Question =>
+  makeQuestion({ id, createdAt, deckId, prompt: id, options: ['a', 'b'], correctAnswer: 0 })
 
 describe('question store — reactive, Dependency Injection', () => {
   it('start() hydrates questions and becomes ready', () => {

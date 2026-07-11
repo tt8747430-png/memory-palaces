@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MotionConfig } from 'motion/react'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
-import { makeLocus } from '@/entities/locus'
+import { makeCard } from '@/entities/card'
 import { DEFAULT_FLASHCARD_SWIPE_BY_MODE } from '@/shared/config/flashcard-swipe'
 import type { StudyMode } from '@/entities/preferences'
 import { FlashcardsPanel } from './FlashcardsPanel'
@@ -26,15 +26,15 @@ async function tap(name: RegExp | string) {
 
 function studyCard(id: string): StudyCard {
   return {
-    locus: makeLocus({
+    card: makeCard({
       id,
       createdAt: new Date(0).toISOString(),
-      roomId: 'r1',
+      deckId: 'd1',
       front: `Front ${id}`,
       back: `Back ${id}`,
     }),
-    palaceName: 'Forum',
-    roomTitle: 'Atrium',
+    deckName: 'Forum',
+    deckPath: 'Forum',
   }
 }
 

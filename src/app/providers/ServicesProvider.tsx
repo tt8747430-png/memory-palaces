@@ -1,9 +1,8 @@
 import type { ReactNode } from 'react'
 import { SessionStoreContext } from '@/entities/session'
-import { PalaceStoreContext } from '@/entities/palace'
+import { DeckStoreContext } from '@/entities/deck'
+import { CardStoreContext } from '@/entities/card'
 import { FolderStoreContext } from '@/entities/folder'
-import { RoomStoreContext } from '@/entities/room'
-import { LocusStoreContext } from '@/entities/locus'
 import { QuestionStoreContext } from '@/entities/question'
 import { ProgressStoreContext } from '@/entities/progress'
 import { PreferencesStoreContext } from '@/entities/preferences'
@@ -23,25 +22,23 @@ export function ServicesProvider({
   return (
     <AuthGatewayContext value={services.authGateway}>
       <SessionStoreContext value={services.sessionStore}>
-        <PalaceStoreContext value={services.palaceStore}>
-          <FolderStoreContext value={services.folderStore}>
-            <RoomStoreContext value={services.roomStore}>
-              <LocusStoreContext value={services.locusStore}>
-                <QuestionStoreContext value={services.questionStore}>
-                  <ProgressStoreContext value={services.progressStore}>
-                    <PreferencesStoreContext value={services.preferencesStore}>
-                      <ProfileStoreContext value={services.profileStore}>
-                        <NotificationStoreContext value={services.notificationStore}>
-                          <EventBusContext value={services.eventBus}>{children}</EventBusContext>
-                        </NotificationStoreContext>
-                      </ProfileStoreContext>
-                    </PreferencesStoreContext>
-                  </ProgressStoreContext>
-                </QuestionStoreContext>
-              </LocusStoreContext>
-            </RoomStoreContext>
-          </FolderStoreContext>
-        </PalaceStoreContext>
+        <DeckStoreContext value={services.deckStore}>
+          <CardStoreContext value={services.cardStore}>
+            <FolderStoreContext value={services.folderStore}>
+              <QuestionStoreContext value={services.questionStore}>
+                <ProgressStoreContext value={services.progressStore}>
+                  <PreferencesStoreContext value={services.preferencesStore}>
+                    <ProfileStoreContext value={services.profileStore}>
+                      <NotificationStoreContext value={services.notificationStore}>
+                        <EventBusContext value={services.eventBus}>{children}</EventBusContext>
+                      </NotificationStoreContext>
+                    </ProfileStoreContext>
+                  </PreferencesStoreContext>
+                </ProgressStoreContext>
+              </QuestionStoreContext>
+            </FolderStoreContext>
+          </CardStoreContext>
+        </DeckStoreContext>
       </SessionStoreContext>
     </AuthGatewayContext>
   )

@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Download, Pencil, Trash2 } from 'lucide-react'
-import { useLocusStoreApi } from '@/entities/locus'
+import { useCardStoreApi } from '@/entities/card'
 import { useQuestionStoreApi } from '@/entities/question'
-import { applyRoomContent } from '@/features/content'
+import { applyDeckContent } from '@/features/content'
 import type { ParsedLocus } from '@/shared/lib'
 import {
   AppScreen,
@@ -16,10 +16,10 @@ import {
   Sheet,
   Switch,
 } from '@/shared/ui'
-import { CardFields, type DraftCard, useImportDraft } from '@/widgets/loci-editor'
+import { CardFields, type DraftCard, useImportDraft } from '@/widgets/content-editor'
 
 export interface ImportReviewPageProps {
-  roomId: string
+  deckId: string
   onBack: () => void
   /** Import committed (or draft abandoned) — return to the room. */
   onDone: () => void
@@ -38,21 +38,21 @@ interface RestoreOptions {
  * which restorable fields to keep. "Import cards" writes them into the room. Fed by the
  * ephemeral `importDraft` store; a deep-link with no pending draft bounces back to the room.
  */
-export function ImportReviewPage({ roomId, onBack, onDone }: ImportReviewPageProps) {
+export function ImportReviewPage({ deckId, onBack, onDone }: ImportReviewPageProps) {
   const { t } = useTranslation()
   const draft = useImportDraft((s) => s.draft)
   const editCard = useImportDraft((s) => s.editCard)
   const removeCard = useImportDraft((s) => s.removeCard)
   const clear = useImportDraft((s) => s.clear)
 
-  const locusStore = useLocusStoreApi()
+  const cardStore = useCardStoreApi()
   const questionStore = useQuestionStoreApi()
 
   // The review always arrives from the room (store already warm), but starting is idempotent
   // and guarantees appended order reads correctly even on a deep link.
   useEffect(() => {
-    locusStore.getState().start()
-  }, [locusStore])
+    cardStore.getState().start()
+  }, [cardStore])
 
   const [restore, setRestore] = useState<RestoreOptions>({
     cues: true,
@@ -93,7 +93,7 @@ export function ImportReviewPage({ roomId, onBack, onDone }: ImportReviewPagePro
     if (busy || cards.length === 0) return
     setBusy(true)
     const loci = cards.map(toApplied)
-    await applyRoomContent(locusStore, questionStore, roomId, { loci, questions: [] })
+    await applyDeckContent(cardStore, questionStore, deckId, { loci, questions: [] })
     toast.success(t('loci.review.done', { count: loci.length }))
     clear()
     onDone()
@@ -104,7 +104,13 @@ export function ImportReviewPage({ roomId, onBack, onDone }: ImportReviewPagePro
   return (
     <AppScreen
       fill
-      header={<ScreenHeader title={t('loci.review.title')} onBack={onBack} backLabel={t('roomHub.back')} />}
+      header={
+        <ScreenHeader
+          title={t('loci.review.title')}
+          onBack={onBack}
+          backLabel={t('roomHub.back')}
+        />
+      }
       footer={
         <div className="bg-glass shrink-0 border-t border-white/40 px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-10px_30px_oklch(var(--p-tint-navy)/0.1)]">
           <Button

@@ -50,8 +50,10 @@ entity/feature code**. The ephemeral session uses the in-memory adapter.
 ## Status
 
 Well past the walking skeleton. An installable PWA boots as a guest with full local-first
-CRUD for palaces, rooms, loci, and questions; spaced-repetition review, quizzes, and
-matching; streaks/XP and achievements; notifications; and a complete settings/profile area.
+CRUD for **folders, decks, arbitrarily-nested subdecks, and cards** (the recursive deck tree
+that replaced Palace→Room→Locus — see `CONTEXT.md` and `docs/adr/`); spaced-repetition review
+over a deck's whole subtree; streaks/XP and achievements; notifications; and a complete
+settings/profile area.
 Every persisted entity lives in RxDB (IndexedDB via Dexie) behind injected ports, and the
 whole UI is styled via semantic tokens. Remaining: Supabase sync (Phase 9) and the AI Tutor
 (final phase), per the architecture plan.

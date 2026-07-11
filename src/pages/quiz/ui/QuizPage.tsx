@@ -1,85 +1,77 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { shuffle } from '@/shared/lib'
+import { resolveDeckSettings, shuffle, subtreeDeckIds } from '@/shared/lib'
 import {
-  selectIsReady as selectPalacesReady,
-  usePalaceStore,
-  usePalaceStoreApi,
-} from '@/entities/palace'
-import {
-  roomsForPalace,
-  selectIsReady as selectRoomsReady,
-  selectRooms,
-  useRoomStore,
-  useRoomStoreApi,
-} from '@/entities/room'
+  DEFAULT_DECK_SETTINGS,
+  selectDecks,
+  selectIsReady as selectDecksReady,
+  useDeckStore,
+  useDeckStoreApi,
+} from '@/entities/deck'
 import {
   selectIsReady as selectQuestionsReady,
   selectQuestions,
   useQuestionStore,
   useQuestionStoreApi,
 } from '@/entities/question'
-import { editPalace } from '@/features/palace'
+import { editDeck } from '@/features/deck'
 import { QuizOptionsSheet, type QuizResult, QuizSession } from '@/widgets/quiz'
 import { type QuizQuestion } from '@/features/quiz'
 import { useSessionReward } from '@/widgets/session-reward'
 import { AppScreen, ScreenHeader } from '@/shared/ui'
 
 export interface QuizPageProps {
-  palaceId: string
+  deckId: string
   /** Provided by the route wrapper so the page stays router-free. */
   onBack?: () => void
 }
 
-/** Palace quiz — tests recall over every authored question across the palace's
- * rooms. Questions optionally shuffle per the palace's settings. Result handling
- * (XP/accuracy history) lands with the progress entity in Phase 8. */
-export function QuizPage({ palaceId, onBack }: QuizPageProps) {
+/** Deck test — recall over every authored question across the deck's subtree. Questions
+ * optionally shuffle per the deck's resolved settings; toggles write overrides back to this
+ * deck. Result handling (XP/accuracy history) rides the session reward. */
+export function QuizPage({ deckId, onBack }: QuizPageProps) {
   const { t } = useTranslation()
-  const palaceStore = usePalaceStoreApi()
-  const roomStore = useRoomStoreApi()
+  const deckStore = useDeckStoreApi()
   const questionStore = useQuestionStoreApi()
   const reward = useSessionReward()
   const [optionsOpen, setOptionsOpen] = useState(false)
 
   useEffect(() => {
-    palaceStore.getState().start()
-    roomStore.getState().start()
+    deckStore.getState().start()
     questionStore.getState().start()
-  }, [palaceStore, roomStore, questionStore])
+  }, [deckStore, questionStore])
 
-  const palace = usePalaceStore((state) =>
-    state.palaces.find((candidate) => candidate.id === palaceId),
-  )
-  const allRooms = useRoomStore(selectRooms)
+  const decks = useDeckStore(selectDecks)
   const allQuestions = useQuestionStore(selectQuestions)
-  // Each store hook runs unconditionally (Rules of Hooks); combine after.
-  const palacesReady = usePalaceStore(selectPalacesReady)
-  const roomsReady = useRoomStore(selectRoomsReady)
+  const decksReady = useDeckStore(selectDecksReady)
   const questionsReady = useQuestionStore(selectQuestionsReady)
-  const ready = palacesReady && roomsReady && questionsReady
+  const ready = decksReady && questionsReady
 
-  const shuffleQuestions = palace?.settings.shuffleQuestions ?? false
+  const deck = useMemo(() => decks.find((candidate) => candidate.id === deckId), [decks, deckId])
+  const settings = useMemo(
+    () => resolveDeckSettings(decks, deckId, DEFAULT_DECK_SETTINGS),
+    [decks, deckId],
+  )
+
   const questions = useMemo<QuizQuestion[]>(() => {
-    const rooms = roomsForPalace(allRooms, palaceId)
-    const roomById = new Map(rooms.map((room) => [room.id, room]))
-    const built = allQuestions.flatMap((question) => {
-      const room = roomById.get(question.roomId)
-      return room
+    const nameById = new Map(decks.map((each) => [each.id, each.name]))
+    const subtree = new Set(subtreeDeckIds(decks, deckId))
+    const built = allQuestions.flatMap((question) =>
+      subtree.has(question.deckId)
         ? [
             {
               id: question.id,
               prompt: question.prompt,
               options: question.options,
               correctAnswer: question.correctAnswer,
-              roomTitle: room.title,
+              roomTitle: nameById.get(question.deckId) ?? '',
               explanation: question.explanation,
             },
           ]
-        : []
-    })
-    return shuffleQuestions ? shuffle(built) : built
-  }, [allQuestions, allRooms, palaceId, shuffleQuestions])
+        : [],
+    )
+    return settings.shuffleQuestions ? shuffle(built) : built
+  }, [allQuestions, decks, deckId, settings.shuffleQuestions])
 
   // Freeze the question set for the active run so toggling shuffle from the options sheet
   // re-orders the next quiz, not the one in progress.
@@ -88,8 +80,7 @@ export function QuizPage({ palaceId, onBack }: QuizPageProps) {
   const runQuestions = frozenRef.current ?? questions
 
   const setSetting = (changes: Partial<{ quizTimer: boolean; shuffleQuestions: boolean }>) => {
-    if (palace)
-      void editPalace(palaceStore, palace.id, { settings: { ...palace.settings, ...changes } })
+    if (deck) void editDeck(deckStore, deck.id, { settings: { ...deck.settings, ...changes } })
   }
 
   if (!ready) {
@@ -100,7 +91,7 @@ export function QuizPage({ palaceId, onBack }: QuizPageProps) {
     )
   }
 
-  if (!palace) {
+  if (!deck) {
     return (
       <AppScreen
         header={
@@ -124,10 +115,10 @@ export function QuizPage({ palaceId, onBack }: QuizPageProps) {
   return (
     <>
       <QuizSession
-        key={palaceId}
+        key={deckId}
         questions={runQuestions}
-        title={t('quiz.title', { palace: palace.name })}
-        autoAdvance={palace.settings.quizTimer}
+        title={t('quiz.title', { palace: deck.name })}
+        autoAdvance={settings.quizTimer}
         onOpenOptions={() => setOptionsOpen(true)}
         onBack={onBack ?? (() => {})}
         onComplete={handleComplete}
@@ -135,8 +126,8 @@ export function QuizPage({ palaceId, onBack }: QuizPageProps) {
       <QuizOptionsSheet
         open={optionsOpen}
         onClose={() => setOptionsOpen(false)}
-        quizTimer={palace.settings.quizTimer}
-        shuffleQuestions={palace.settings.shuffleQuestions}
+        quizTimer={settings.quizTimer}
+        shuffleQuestions={settings.shuffleQuestions}
         onQuizTimer={(value) => setSetting({ quizTimer: value })}
         onShuffleQuestions={(value) => setSetting({ shuffleQuestions: value })}
       />

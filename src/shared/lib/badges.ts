@@ -12,8 +12,8 @@ export interface BadgeInput {
   xp: number
   /** Best streak ever reached — a badge reflects a lifetime best, not today's count. */
   longestStreak: number
-  roomsCompleted: number
-  palaceCount: number
+  decksCompleted: number
+  deckCount: number
   totalCards: number
   trainingDayCount: number
 }
@@ -52,9 +52,9 @@ function metricFor(id: BadgeId, input: BadgeInput): number {
     case 'streak':
       return input.longestStreak
     case 'rooms':
-      return input.roomsCompleted
+      return input.decksCompleted
     case 'palaces':
-      return input.palaceCount
+      return input.deckCount
     case 'cards':
       return input.totalCards
     case 'days':

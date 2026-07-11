@@ -5,8 +5,7 @@ import { MotionConfig } from 'motion/react'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
 import { InMemoryRepository } from '@/shared/api'
-import { createPalaceStore, makePalace, type Palace, PalaceStoreContext } from '@/entities/palace'
-import { createRoomStore, makeRoom, type Room, RoomStoreContext } from '@/entities/room'
+import { createDeckStore, type Deck, DeckStoreContext, makeDeck } from '@/entities/deck'
 import {
   createQuestionStore,
   makeQuestion,
@@ -19,18 +18,15 @@ afterEach(cleanup)
 
 const at = (ms: number) => new Date(ms).toISOString()
 
-function renderQuiz(palaceId = 'p1') {
-  const palaceRepo = new InMemoryRepository<Palace>([
-    makePalace({ id: 'p1', createdAt: at(0), name: 'Forum' }),
-  ])
-  const roomRepo = new InMemoryRepository<Room>([
-    makeRoom({ id: 'r1', createdAt: at(0), palaceId: 'p1', title: 'Geography', order: 0 }),
+function renderQuiz(deckId = 'd1') {
+  const deckRepo = new InMemoryRepository<Deck>([
+    makeDeck({ id: 'd1', createdAt: at(0), name: 'Forum' }),
   ])
   const questionRepo = new InMemoryRepository<Question>([
     makeQuestion({
       id: 'q1',
       createdAt: at(1),
-      roomId: 'r1',
+      deckId: 'd1',
       prompt: 'Capital of France?',
       options: ['Paris', 'Rome'],
       correctAnswer: 0,
@@ -39,20 +35,18 @@ function renderQuiz(palaceId = 'p1') {
   render(
     <I18nextProvider i18n={i18n}>
       <MotionConfig reducedMotion="always">
-        <PalaceStoreContext value={createPalaceStore(palaceRepo)}>
-          <RoomStoreContext value={createRoomStore(roomRepo)}>
-            <QuestionStoreContext value={createQuestionStore(questionRepo)}>
-              <QuizPage palaceId={palaceId} onBack={() => {}} />
-            </QuestionStoreContext>
-          </RoomStoreContext>
-        </PalaceStoreContext>
+        <DeckStoreContext value={createDeckStore(deckRepo)}>
+          <QuestionStoreContext value={createQuestionStore(questionRepo)}>
+            <QuizPage deckId={deckId} onBack={() => {}} />
+          </QuestionStoreContext>
+        </DeckStoreContext>
       </MotionConfig>
     </I18nextProvider>,
   )
 }
 
 describe('QuizPage', () => {
-  it('builds the quiz from the palace questions', async () => {
+  it('builds the quiz from the deck subtree questions', async () => {
     renderQuiz()
     expect(await screen.findByText('Forum Quiz')).toBeInTheDocument()
     expect(screen.getByText('Capital of France?')).toBeInTheDocument()
@@ -68,7 +62,7 @@ describe('QuizPage', () => {
     expect(screen.getByText(/correct/i)).toBeInTheDocument()
   })
 
-  it('shows a not-found message for an unknown palace', async () => {
+  it('shows a not-found message for an unknown deck', async () => {
     renderQuiz('nope')
     expect(await screen.findByText(/could not be found/i)).toBeInTheDocument()
   })

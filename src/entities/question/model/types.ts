@@ -1,21 +1,21 @@
 import type { Entity } from '@/shared/lib'
 
-/** A multiple-choice recall question scoped to a room. */
+/** A multiple-choice recall question scoped to a deck. */
 export interface Question extends Entity {
-  roomId: string
+  deckId: string
   prompt: string
   options: string[]
   /** Index into `options` of the correct choice. */
   correctAnswer: number
   explanation?: string
-  /** Position within the room; questions read and reorder in this order. */
+  /** Position within the deck; questions read and reorder in this order. */
   order: number
 }
 
 export interface MakeQuestionInput {
   id: string
   createdAt: string
-  roomId: string
+  deckId: string
   prompt: string
   options: string[]
   correctAnswer: number
@@ -27,7 +27,7 @@ export interface MakeQuestionInput {
 
 export function makeQuestion(input: MakeQuestionInput): Question {
   const prompt = input.prompt.trim()
-  if (!input.roomId) throw new Error('Question must belong to a room')
+  if (!input.deckId) throw new Error('Question must belong to a deck')
   if (!prompt) throw new Error('Question prompt is required')
   if (input.options.length < 2) throw new Error('Question needs at least two options')
   if (input.correctAnswer < 0 || input.correctAnswer >= input.options.length) {
@@ -39,7 +39,7 @@ export function makeQuestion(input: MakeQuestionInput): Question {
     id: input.id,
     createdAt: input.createdAt,
     updatedAt: input.createdAt,
-    roomId: input.roomId,
+    deckId: input.deckId,
     prompt,
     options: [...input.options],
     correctAnswer: input.correctAnswer,
@@ -48,8 +48,8 @@ export function makeQuestion(input: MakeQuestionInput): Question {
   }
 }
 
-/** Editable fields of a question — identity, timestamps, and room are owned elsewhere. */
-export type QuestionChanges = Partial<Omit<Question, 'id' | 'createdAt' | 'updatedAt' | 'roomId'>>
+/** Editable fields of a question — identity, timestamps, and deck are owned elsewhere. */
+export type QuestionChanges = Partial<Omit<Question, 'id' | 'createdAt' | 'updatedAt' | 'deckId'>>
 
 /** Apply an edit, enforcing the same invariants as {@link makeQuestion}. `updatedAt`
  * is set by the caller (clock injected) so the function stays pure. */

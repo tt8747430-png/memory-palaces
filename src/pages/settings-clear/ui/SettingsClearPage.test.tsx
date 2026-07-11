@@ -4,9 +4,9 @@ import userEvent from '@testing-library/user-event'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
 import { InMemoryRepository } from '@/shared/api'
-import { createPalaceStore, makePalace, type Palace, PalaceStoreContext } from '@/entities/palace'
-import { createRoomStore, type Room, RoomStoreContext } from '@/entities/room'
-import { createLocusStore, type Locus, LocusStoreContext } from '@/entities/locus'
+import { createDeckStore, makeDeck, type Deck, DeckStoreContext } from '@/entities/deck'
+import { CardStoreContext, createCardStore, type Card } from '@/entities/card'
+import { createFolderStore, type Folder, FolderStoreContext } from '@/entities/folder'
 import { createQuestionStore, type Question, QuestionStoreContext } from '@/entities/question'
 import { createProgressStore, type Progress, ProgressStoreContext } from '@/entities/progress'
 import {
@@ -21,12 +21,12 @@ afterEach(cleanup)
 const at = (ms: number) => new Date(ms).toISOString()
 
 function setup(
-  seed: { palaces?: Palace[]; progress?: Progress; notifications?: AppNotification[] } = {},
+  seed: { decks?: Deck[]; progress?: Progress; notifications?: AppNotification[] } = {},
 ) {
-  const palaceRepo = new InMemoryRepository<Palace>(seed.palaces ?? [])
-  const palaceStore = createPalaceStore(palaceRepo)
-  const roomStore = createRoomStore(new InMemoryRepository<Room>())
-  const locusStore = createLocusStore(new InMemoryRepository<Locus>())
+  const deckRepo = new InMemoryRepository<Deck>(seed.decks ?? [])
+  const deckStore = createDeckStore(deckRepo)
+  const cardStore = createCardStore(new InMemoryRepository<Card>())
+  const folderStore = createFolderStore(new InMemoryRepository<Folder>())
   const questionStore = createQuestionStore(new InMemoryRepository<Question>())
   const progressStore = createProgressStore(
     new InMemoryRepository<Progress>(seed.progress ? [seed.progress] : []),
@@ -36,9 +36,9 @@ function setup(
   )
   render(
     <I18nextProvider i18n={i18n}>
-      <PalaceStoreContext value={palaceStore}>
-        <RoomStoreContext value={roomStore}>
-          <LocusStoreContext value={locusStore}>
+      <DeckStoreContext value={deckStore}>
+        <CardStoreContext value={cardStore}>
+          <FolderStoreContext value={folderStore}>
             <QuestionStoreContext value={questionStore}>
               <ProgressStoreContext value={progressStore}>
                 <NotificationStoreContext value={notificationStore}>
@@ -46,28 +46,28 @@ function setup(
                 </NotificationStoreContext>
               </ProgressStoreContext>
             </QuestionStoreContext>
-          </LocusStoreContext>
-        </RoomStoreContext>
-      </PalaceStoreContext>
+          </FolderStoreContext>
+        </CardStoreContext>
+      </DeckStoreContext>
     </I18nextProvider>,
   )
-  return { palaceRepo }
+  return { deckRepo }
 }
 
 describe('SettingsClearPage', () => {
   it('clears all content after the confirm is accepted', async () => {
     const user = userEvent.setup()
-    const { palaceRepo } = setup({
-      palaces: [makePalace({ id: 'p1', createdAt: at(0), name: 'Home' })],
+    const { deckRepo } = setup({
+      decks: [makeDeck({ id: 'd1', createdAt: at(0), name: 'Home' })],
     })
 
-    await waitFor(async () => expect(await palaceRepo.getAll()).toHaveLength(1))
+    await waitFor(async () => expect(await deckRepo.getAll()).toHaveLength(1))
 
     await user.click(screen.getByRole('button', { name: /memory palaces/i }))
     const dialog = await screen.findByRole('dialog')
     await user.click(within(dialog).getByRole('button', { name: /^clear$/i }))
 
-    await waitFor(async () => expect(await palaceRepo.getAll()).toHaveLength(0))
+    await waitFor(async () => expect(await deckRepo.getAll()).toHaveLength(0))
   })
 
   it('disables reset everything when there is nothing to clear', async () => {

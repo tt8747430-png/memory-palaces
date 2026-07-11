@@ -14,12 +14,12 @@ export type AchievementId =
   | 'dedicated-learner'
 
 export interface AchievementInput {
-  palaceCount: number
+  deckCount: number
   streakCount: number
   xp: number
   bestQuizAccuracy: number
-  roomsCompleted: number
-  anyPalaceCompleted: boolean
+  decksCompleted: number
+  anyDeckCompleted: boolean
 }
 
 export interface Achievement {
@@ -30,16 +30,16 @@ export interface Achievement {
 const WEEK_WARRIOR_STREAK = 7
 const XP_CHAMPION_XP = 2000
 const PERFECT_ACCURACY = 100
-const DEDICATED_LEARNER_ROOMS = 10
+const DEDICATED_LEARNER_DECKS = 10
 
 /** The six badges in canonical display order, each marked earned from live progress. */
 export function computeAchievements(input: AchievementInput): Achievement[] {
   return [
-    { id: 'first-palace', earned: input.palaceCount >= 1 },
+    { id: 'first-palace', earned: input.deckCount >= 1 },
     { id: 'week-warrior', earned: input.streakCount >= WEEK_WARRIOR_STREAK },
-    { id: 'palace-master', earned: input.anyPalaceCompleted },
+    { id: 'palace-master', earned: input.anyDeckCompleted },
     { id: 'xp-champion', earned: input.xp >= XP_CHAMPION_XP },
     { id: 'perfectionist', earned: input.bestQuizAccuracy >= PERFECT_ACCURACY },
-    { id: 'dedicated-learner', earned: input.roomsCompleted >= DEDICATED_LEARNER_ROOMS },
+    { id: 'dedicated-learner', earned: input.decksCompleted >= DEDICATED_LEARNER_DECKS },
   ]
 }

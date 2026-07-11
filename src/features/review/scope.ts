@@ -1,21 +1,21 @@
 import { isDue, shuffle, srsStatus } from '@/shared/lib'
-import type { Locus } from '@/entities/locus'
+import type { Card } from '@/entities/card'
 
-/** Build a review queue from a scoped deck: lead with the cards due now (or the
- * whole deck if none are due yet), optionally shuffled. The id order the State
- * machine starts from. `random` is injectable for deterministic tests. */
+/** Build a review queue from a scoped set of cards: lead with the cards due now (or the
+ * whole set if none are due yet), optionally shuffled. The id order the session machine
+ * starts from. `random` is injectable for deterministic tests. */
 export function shuffleFirstDue(
-  loci: Locus[],
+  cards: Card[],
   now: number,
   shuffleCards: boolean,
   random: () => number = Math.random,
 ): string[] {
-  const due = loci.filter((locus) => isDue(locus.srs, now))
-  const base = (due.length > 0 ? due : loci).map((locus) => locus.id)
+  const due = cards.filter((card) => isDue(card.srs, now))
+  const base = (due.length > 0 ? due : cards).map((card) => card.id)
   return shuffleCards ? shuffle(base, random) : base
 }
 
-/** Which subset of a room's loci a session studies. */
+/** Which subset of a deck's cards a session studies. */
 export type Scope =
   | { kind: 'all' }
   | { kind: 'due' }
@@ -23,19 +23,19 @@ export type Scope =
   | { kind: 'learning' }
   | { kind: 'flagged' }
 
-/** Filter a deck down to the active scope, preserving the deck's card order. */
-export function applyScope(loci: Locus[], scope: Scope, now: number): Locus[] {
+/** Filter a set of cards down to the active scope, preserving card order. */
+export function applyScope(cards: Card[], scope: Scope, now: number): Card[] {
   switch (scope.kind) {
     case 'due':
-      return loci.filter((locus) => isDue(locus.srs, now))
+      return cards.filter((card) => isDue(card.srs, now))
     case 'new':
-      return loci.filter((locus) => srsStatus(locus.srs) === 'new')
+      return cards.filter((card) => srsStatus(card.srs) === 'new')
     case 'learning':
-      return loci.filter((locus) => srsStatus(locus.srs) === 'learning')
+      return cards.filter((card) => srsStatus(card.srs) === 'learning')
     case 'flagged':
-      return loci.filter((locus) => locus.flagged)
+      return cards.filter((card) => card.flagged)
     default:
-      return loci
+      return cards
   }
 }
 
@@ -48,13 +48,13 @@ export interface ScopeCounts {
 }
 
 /** Live counts per filter, for the "Cards to study" chips. */
-export function scopeCounts(loci: Locus[], now: number): ScopeCounts {
+export function scopeCounts(cards: Card[], now: number): ScopeCounts {
   return {
-    all: loci.length,
-    due: loci.filter((locus) => isDue(locus.srs, now)).length,
-    new: loci.filter((locus) => srsStatus(locus.srs) === 'new').length,
-    learning: loci.filter((locus) => srsStatus(locus.srs) === 'learning').length,
-    flagged: loci.filter((locus) => locus.flagged).length,
+    all: cards.length,
+    due: cards.filter((card) => isDue(card.srs, now)).length,
+    new: cards.filter((card) => srsStatus(card.srs) === 'new').length,
+    learning: cards.filter((card) => srsStatus(card.srs) === 'learning').length,
+    flagged: cards.filter((card) => card.flagged).length,
   }
 }
 

@@ -11,20 +11,17 @@ import { LoginPage } from '@/pages/login'
 import { SignupPage } from '@/pages/signup'
 import { ForgotPasswordPage } from '@/pages/forgot-password'
 import { WelcomePage } from '@/pages/welcome'
-import { PalacesPage } from '@/pages/palaces'
-import { PalaceDetailPage } from '@/pages/palace-detail'
-import { PalaceSettingsPage } from '@/pages/palace-settings'
-import { RoomHubPage } from '@/pages/room-hub'
-import { RoomSettingsPage } from '@/pages/room-settings'
+import { DeckLibraryPage } from '@/pages/deck-library'
+import { DeckDetailPage } from '@/pages/deck-detail'
+import { DeckSettingsPage } from '@/pages/deck-settings'
+import { DeckQuestionsPage } from '@/pages/deck-questions'
+import { QuestionEditorPage } from '@/pages/question-editor'
 import { CardEditorPage } from '@/pages/card-editor'
 import { PasteNotesPage } from '@/pages/paste-notes'
 import { ImportReviewPage } from '@/pages/import-review'
-import { RoomQuestionsPage } from '@/pages/room-questions'
-import { QuestionEditorPage } from '@/pages/question-editor'
-import { StudyCardsPage } from '@/pages/study'
 import { MatchPage } from '@/pages/match'
-import { RoomQuizPage } from '@/pages/room-quiz'
 import { QuizPage } from '@/pages/quiz'
+import { StudyCardsPage } from '@/pages/study'
 import { ProfilePage } from '@/pages/profile'
 import { StreakPage } from '@/pages/streak'
 import { BadgesPage } from '@/pages/badges'
@@ -48,10 +45,9 @@ import { authRedirect } from './auth-guard'
 import { services } from './composition-root'
 
 /**
- * Back handler that returns to the actual previous screen via history when there is
- * one, so a screen reached from different places goes back to wherever the user came
- * from (e.g. the profile badge → edit-profile → back lands on Profile, not Settings).
- * The `fallback` only runs on a fresh load / deep link with no in-app history.
+ * Back handler that returns to the actual previous screen via history when there is one, so a
+ * screen reached from different places goes back to wherever the user came from. The `fallback`
+ * only runs on a fresh load / deep link with no in-app history.
  */
 function useBack(fallback: () => void): () => void {
   const router = useRouter()
@@ -64,8 +60,6 @@ function useBack(fallback: () => void): () => void {
 
 const rootRoute = createRootRoute({
   component: RootLayout,
-  // Session gate: the gateway (localStorage) is the source of truth, read
-  // synchronously so the redirect resolves before any screen paints.
   beforeLoad: ({ location }) => {
     const target = authRedirect(
       location.pathname,
@@ -133,25 +127,12 @@ const welcomeRoute = createRoute({
   component: WelcomeRoute,
 })
 
-// The palaces library is the home: `/` renders it directly. Due-card counts surface
-// per-palace in the grid rather than as a separate hero. The thin wrapper keeps the page
-// router-free and testable.
+// The deck library is the home: `/` renders it directly.
 function HomeRoute() {
   const navigate = useNavigate()
-  const { create, folder } = homeRoute.useSearch()
   return (
-    <PalacesPage
-      openCreate={create}
-      folderId={folder ?? null}
-      onOpenFolder={(id) => navigate({ to: ROUTES.home, search: { folder: id } })}
-      onCloseFolder={() => navigate({ to: ROUTES.home, search: {} })}
-      onOpenPalace={(palaceId) => navigate({ to: ROUTES.palaceDetail, params: { palaceId } })}
-      onOpenPalaceSettings={(palaceId) =>
-        navigate({ to: ROUTES.palaceSettings, params: { palaceId } })
-      }
-      onOpenProfile={() => navigate({ to: ROUTES.profile })}
-      onOpenNotifications={() => navigate({ to: ROUTES.notifications })}
-      onOpenStreak={() => navigate({ to: ROUTES.streak })}
+    <DeckLibraryPage
+      onOpenDeck={(deckId) => navigate({ to: ROUTES.deckDetail, params: { deckId } })}
     />
   )
 }
@@ -159,231 +140,107 @@ function HomeRoute() {
 const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.home,
-  // `?create` opens the create sheet on arrival; `?folder=<id>` drills into a folder (or the
-  // archived view) so the Back button and deep links walk the library tree.
-  validateSearch: (search: Record<string, unknown>): { create?: boolean; folder?: string } => ({
-    create: search.create === true || search.create === 'true' ? true : undefined,
-    folder: typeof search.folder === 'string' && search.folder ? search.folder : undefined,
-  }),
   component: HomeRoute,
 })
 
-// `/palaces` folds into the home; keep the path alive for old links by redirecting it there.
-const palacesRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: ROUTES.palaces,
-  beforeLoad: () => {
-    throw redirect({ to: ROUTES.home })
-  },
-})
-
-function PalaceDetailRoute() {
-  const { palaceId } = palaceDetailRoute.useParams()
+function DeckDetailRoute() {
+  const { deckId } = deckDetailRoute.useParams()
   const navigate = useNavigate()
   const back = useBack(() => navigate({ to: ROUTES.home }))
   return (
-    <PalaceDetailPage
-      palaceId={palaceId}
+    <DeckDetailPage
+      deckId={deckId}
       onBack={back}
-      onOpenRoom={(roomId) => navigate({ to: ROUTES.roomHub, params: { roomId } })}
-      onOpenRoomSettings={(roomId) => navigate({ to: ROUTES.roomSettings, params: { roomId } })}
-      onOpenSettings={() => navigate({ to: ROUTES.palaceSettings, params: { palaceId } })}
-      onStudyPalace={() => navigate({ to: ROUTES.palaceStudy, params: { palaceId } })}
-      onMatch={() => navigate({ to: ROUTES.palaceMatch, params: { palaceId } })}
-      onTest={() => navigate({ to: ROUTES.palaceQuiz, params: { palaceId } })}
+      onOpenSettings={() => navigate({ to: ROUTES.deckSettings, params: { deckId } })}
+      onStudy={() => navigate({ to: ROUTES.deckStudy, params: { deckId } })}
+      onMatch={() => navigate({ to: ROUTES.deckMatch, params: { deckId } })}
+      onTest={() => navigate({ to: ROUTES.deckQuestions, params: { deckId } })}
+      onAddCard={() => navigate({ to: ROUTES.deckCardNew, params: { deckId } })}
+      onEditCard={(cardId) => navigate({ to: ROUTES.deckCardEdit, params: { deckId, cardId } })}
+      onPasteNotes={() => navigate({ to: ROUTES.deckPaste, params: { deckId } })}
+      onReviewImport={() => navigate({ to: ROUTES.deckImport, params: { deckId } })}
     />
   )
 }
 
-const palaceDetailRoute = createRoute({
+const deckDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: ROUTES.palaceDetail,
-  component: PalaceDetailRoute,
+  path: ROUTES.deckDetail,
+  component: DeckDetailRoute,
 })
 
-function PalaceSettingsRoute() {
-  const { palaceId } = palaceSettingsRoute.useParams()
+function DeckMatchRoute() {
+  const { deckId } = deckMatchRoute.useParams()
   const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.palaceDetail, params: { palaceId } }))
+  const back = useBack(() => navigate({ to: ROUTES.deckDetail, params: { deckId } }))
+  return <MatchPage scope={{ kind: 'deck', deckId }} onBack={back} />
+}
+
+const deckMatchRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.deckMatch,
+  component: DeckMatchRoute,
+})
+
+function DeckQuizRoute() {
+  const { deckId } = deckQuizRoute.useParams()
+  const navigate = useNavigate()
+  const back = useBack(() => navigate({ to: ROUTES.deckDetail, params: { deckId } }))
+  return <QuizPage deckId={deckId} onBack={back} />
+}
+
+const deckQuizRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.deckQuiz,
+  component: DeckQuizRoute,
+})
+
+function DeckQuestionsRoute() {
+  const { deckId } = deckQuestionsRoute.useParams()
+  const navigate = useNavigate()
+  const back = useBack(() => navigate({ to: ROUTES.deckDetail, params: { deckId } }))
   return (
-    <PalaceSettingsPage
-      palaceId={palaceId}
+    <DeckQuestionsPage
+      deckId={deckId}
       onBack={back}
-      onExit={() => navigate({ to: ROUTES.home })}
-    />
-  )
-}
-
-const palaceSettingsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: ROUTES.palaceSettings,
-  component: PalaceSettingsRoute,
-})
-
-function RoomHubRoute() {
-  const { roomId } = roomHubRoute.useParams()
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.home }))
-  return (
-    <RoomHubPage
-      roomId={roomId}
-      onBack={back}
-      onOpenSettings={() => navigate({ to: ROUTES.roomSettings, params: { roomId } })}
-      onStudy={() => navigate({ to: ROUTES.roomStudy, params: { roomId } })}
-      onMatch={() => navigate({ to: ROUTES.roomMatch, params: { roomId } })}
-      onTest={() => navigate({ to: ROUTES.roomQuestions, params: { roomId } })}
-      onAddCard={() => navigate({ to: ROUTES.roomCardNew, params: { roomId } })}
-      onEditCard={(cardId) => navigate({ to: ROUTES.roomCardEdit, params: { roomId, cardId } })}
-      onPasteNotes={() => navigate({ to: ROUTES.roomPaste, params: { roomId } })}
-      onReviewImport={() => navigate({ to: ROUTES.roomImport, params: { roomId } })}
-    />
-  )
-}
-
-const roomHubRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: ROUTES.roomHub,
-  component: RoomHubRoute,
-})
-
-function RoomSettingsRoute() {
-  const { roomId } = roomSettingsRoute.useParams()
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.roomHub, params: { roomId } }))
-  return (
-    <RoomSettingsPage
-      roomId={roomId}
-      onBack={back}
-      onExit={(palaceId) => navigate({ to: ROUTES.palaceDetail, params: { palaceId } })}
-    />
-  )
-}
-
-const roomSettingsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: ROUTES.roomSettings,
-  component: RoomSettingsRoute,
-})
-
-function RoomCardNewRoute() {
-  const { roomId } = roomCardNewRoute.useParams()
-  const navigate = useNavigate()
-  const toRoom = () => navigate({ to: ROUTES.roomHub, params: { roomId } })
-  const back = useBack(toRoom)
-  return <CardEditorPage roomId={roomId} onBack={back} />
-}
-
-const roomCardNewRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: ROUTES.roomCardNew,
-  component: RoomCardNewRoute,
-})
-
-function RoomCardEditRoute() {
-  const { roomId, cardId } = roomCardEditRoute.useParams()
-  const navigate = useNavigate()
-  const toRoom = () => navigate({ to: ROUTES.roomHub, params: { roomId } })
-  const back = useBack(toRoom)
-  // `replace` on prev/next so walking the deck never stacks editor entries in the back
-  // history — Back from the room always lands on the room.
-  return (
-    <CardEditorPage
-      roomId={roomId}
-      cardId={cardId}
-      onBack={back}
-      onNavigateCard={(id) =>
-        navigate({ to: ROUTES.roomCardEdit, params: { roomId, cardId: id }, replace: true })
-      }
-    />
-  )
-}
-
-const roomCardEditRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: ROUTES.roomCardEdit,
-  component: RoomCardEditRoute,
-})
-
-function RoomPasteRoute() {
-  const { roomId } = roomPasteRoute.useParams()
-  const navigate = useNavigate()
-  const toRoom = () => navigate({ to: ROUTES.roomHub, params: { roomId } })
-  const back = useBack(toRoom)
-  return (
-    <PasteNotesPage
-      onBack={back}
-      // `replace` so Back from the review page lands on the room, not the paste form.
-      onReview={() => navigate({ to: ROUTES.roomImport, params: { roomId }, replace: true })}
-    />
-  )
-}
-
-const roomPasteRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: ROUTES.roomPaste,
-  component: RoomPasteRoute,
-})
-
-function RoomImportRoute() {
-  const { roomId } = roomImportRoute.useParams()
-  const navigate = useNavigate()
-  const toRoom = () => navigate({ to: ROUTES.roomHub, params: { roomId }, replace: true })
-  const back = useBack(toRoom)
-  return <ImportReviewPage roomId={roomId} onBack={back} onDone={toRoom} />
-}
-
-const roomImportRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: ROUTES.roomImport,
-  component: RoomImportRoute,
-})
-
-function RoomQuestionsRoute() {
-  const { roomId } = roomQuestionsRoute.useParams()
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.roomHub, params: { roomId } }))
-  return (
-    <RoomQuestionsPage
-      roomId={roomId}
-      onBack={back}
-      onAddQuestion={() => navigate({ to: ROUTES.roomQuestionNew, params: { roomId } })}
+      onAddQuestion={() => navigate({ to: ROUTES.deckQuestionNew, params: { deckId } })}
       onEditQuestion={(questionId) =>
-        navigate({ to: ROUTES.roomQuestionEdit, params: { roomId, questionId } })
+        navigate({ to: ROUTES.deckQuestionEdit, params: { deckId, questionId } })
       }
-      onStartTest={() => navigate({ to: ROUTES.roomQuiz, params: { roomId } })}
+      onStartTest={() => navigate({ to: ROUTES.deckQuiz, params: { deckId } })}
     />
   )
 }
 
-const roomQuestionsRoute = createRoute({
+const deckQuestionsRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: ROUTES.roomQuestions,
-  component: RoomQuestionsRoute,
+  path: ROUTES.deckQuestions,
+  component: DeckQuestionsRoute,
 })
 
-function RoomQuestionNewRoute() {
-  const { roomId } = roomQuestionNewRoute.useParams()
+function DeckQuestionNewRoute() {
+  const { deckId } = deckQuestionNewRoute.useParams()
   const navigate = useNavigate()
-  // Add/edit return to the Questions page (where authoring lives), not the room hub.
-  const toQuestions = () => navigate({ to: ROUTES.roomQuestions, params: { roomId } })
+  // Add/edit return to the Questions page (where authoring lives), not deck detail.
+  const toQuestions = () => navigate({ to: ROUTES.deckQuestions, params: { deckId } })
   const back = useBack(toQuestions)
-  return <QuestionEditorPage roomId={roomId} onBack={back} onDone={toQuestions} />
+  return <QuestionEditorPage deckId={deckId} onBack={back} onDone={toQuestions} />
 }
 
-const roomQuestionNewRoute = createRoute({
+const deckQuestionNewRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: ROUTES.roomQuestionNew,
-  component: RoomQuestionNewRoute,
+  path: ROUTES.deckQuestionNew,
+  component: DeckQuestionNewRoute,
 })
 
-function RoomQuestionEditRoute() {
-  const { roomId, questionId } = roomQuestionEditRoute.useParams()
+function DeckQuestionEditRoute() {
+  const { deckId, questionId } = deckQuestionEditRoute.useParams()
   const navigate = useNavigate()
-  const toQuestions = () => navigate({ to: ROUTES.roomQuestions, params: { roomId } })
+  const toQuestions = () => navigate({ to: ROUTES.deckQuestions, params: { deckId } })
   const back = useBack(toQuestions)
   return (
     <QuestionEditorPage
-      roomId={roomId}
+      deckId={deckId}
       questionId={questionId}
       onBack={back}
       onDone={toQuestions}
@@ -391,88 +248,111 @@ function RoomQuestionEditRoute() {
   )
 }
 
-const roomQuestionEditRoute = createRoute({
+const deckQuestionEditRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: ROUTES.roomQuestionEdit,
-  component: RoomQuestionEditRoute,
+  path: ROUTES.deckQuestionEdit,
+  component: DeckQuestionEditRoute,
 })
 
-function RoomStudyRoute() {
-  const { roomId } = roomStudyRoute.useParams()
+function DeckPasteRoute() {
+  const { deckId } = deckPasteRoute.useParams()
   const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.roomHub, params: { roomId } }))
-  return <StudyCardsPage scope={{ kind: 'room', roomId }} onBack={back} />
+  const toDeck = () => navigate({ to: ROUTES.deckDetail, params: { deckId } })
+  const back = useBack(toDeck)
+  return (
+    <PasteNotesPage
+      onBack={back}
+      // `replace` so Back from the review page lands on the deck, not the paste form.
+      onReview={() => navigate({ to: ROUTES.deckImport, params: { deckId }, replace: true })}
+    />
+  )
 }
 
-const roomStudyRoute = createRoute({
+const deckPasteRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: ROUTES.roomStudy,
-  component: RoomStudyRoute,
+  path: ROUTES.deckPaste,
+  component: DeckPasteRoute,
 })
 
-function PalaceStudyRoute() {
-  const { palaceId } = palaceStudyRoute.useParams()
+function DeckImportRoute() {
+  const { deckId } = deckImportRoute.useParams()
   const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.palaceDetail, params: { palaceId } }))
-  return <StudyCardsPage scope={{ kind: 'palace', palaceId }} onBack={back} />
+  const toDeck = () => navigate({ to: ROUTES.deckDetail, params: { deckId }, replace: true })
+  const back = useBack(toDeck)
+  return <ImportReviewPage deckId={deckId} onBack={back} onDone={toDeck} />
 }
 
-const palaceStudyRoute = createRoute({
+const deckImportRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: ROUTES.palaceStudy,
-  component: PalaceStudyRoute,
+  path: ROUTES.deckImport,
+  component: DeckImportRoute,
 })
 
-function RoomMatchRoute() {
-  const { roomId } = roomMatchRoute.useParams()
+function DeckSettingsRoute() {
+  const { deckId } = deckSettingsRoute.useParams()
   const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.roomHub, params: { roomId } }))
-  return <MatchPage scope={{ kind: 'room', roomId }} onBack={back} />
+  const back = useBack(() => navigate({ to: ROUTES.deckDetail, params: { deckId } }))
+  return (
+    <DeckSettingsPage
+      deckId={deckId}
+      onBack={back}
+      onDeleted={() => navigate({ to: ROUTES.home })}
+    />
+  )
 }
 
-const roomMatchRoute = createRoute({
+const deckSettingsRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: ROUTES.roomMatch,
-  component: RoomMatchRoute,
+  path: ROUTES.deckSettings,
+  component: DeckSettingsRoute,
 })
 
-function PalaceMatchRoute() {
-  const { palaceId } = palaceMatchRoute.useParams()
+function DeckStudyRoute() {
+  const { deckId } = deckStudyRoute.useParams()
   const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.palaceDetail, params: { palaceId } }))
-  return <MatchPage scope={{ kind: 'palace', palaceId }} onBack={back} />
+  const back = useBack(() => navigate({ to: ROUTES.deckDetail, params: { deckId } }))
+  return <StudyCardsPage scope={{ kind: 'deck', deckId }} onBack={back} />
 }
 
-const palaceMatchRoute = createRoute({
+const deckStudyRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: ROUTES.palaceMatch,
-  component: PalaceMatchRoute,
+  path: ROUTES.deckStudy,
+  component: DeckStudyRoute,
 })
 
-function RoomQuizRoute() {
-  const { roomId } = roomQuizRoute.useParams()
+function DeckCardNewRoute() {
+  const { deckId } = deckCardNewRoute.useParams()
   const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.roomHub, params: { roomId } }))
-  return <RoomQuizPage roomId={roomId} onBack={back} />
+  const back = useBack(() => navigate({ to: ROUTES.deckDetail, params: { deckId } }))
+  return <CardEditorPage deckId={deckId} onBack={back} />
 }
 
-const roomQuizRoute = createRoute({
+const deckCardNewRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: ROUTES.roomQuiz,
-  component: RoomQuizRoute,
+  path: ROUTES.deckCardNew,
+  component: DeckCardNewRoute,
 })
 
-function QuizRoute() {
-  const { palaceId } = quizRoute.useParams()
+function DeckCardEditRoute() {
+  const { deckId, cardId } = deckCardEditRoute.useParams()
   const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.palaceDetail, params: { palaceId } }))
-  return <QuizPage palaceId={palaceId} onBack={back} />
+  const back = useBack(() => navigate({ to: ROUTES.deckDetail, params: { deckId } }))
+  return (
+    <CardEditorPage
+      deckId={deckId}
+      cardId={cardId}
+      onBack={back}
+      onNavigateCard={(id) =>
+        navigate({ to: ROUTES.deckCardEdit, params: { deckId, cardId: id }, replace: true })
+      }
+    />
+  )
 }
 
-const quizRoute = createRoute({
+const deckCardEditRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: ROUTES.palaceQuiz,
-  component: QuizRoute,
+  path: ROUTES.deckCardEdit,
+  component: DeckCardEditRoute,
 })
 
 function ProfileRoute() {
@@ -720,24 +600,18 @@ const routeTree = rootRoute.addChildren([
   forgotRoute,
   welcomeRoute,
   homeRoute,
-  palacesRoute,
-  palaceDetailRoute,
-  palaceSettingsRoute,
-  roomHubRoute,
-  roomSettingsRoute,
-  roomCardNewRoute,
-  roomCardEditRoute,
-  roomPasteRoute,
-  roomImportRoute,
-  roomQuestionsRoute,
-  roomQuestionNewRoute,
-  roomQuestionEditRoute,
-  roomStudyRoute,
-  palaceStudyRoute,
-  roomMatchRoute,
-  palaceMatchRoute,
-  roomQuizRoute,
-  quizRoute,
+  deckDetailRoute,
+  deckSettingsRoute,
+  deckStudyRoute,
+  deckMatchRoute,
+  deckQuizRoute,
+  deckQuestionsRoute,
+  deckQuestionNewRoute,
+  deckQuestionEditRoute,
+  deckPasteRoute,
+  deckImportRoute,
+  deckCardNewRoute,
+  deckCardEditRoute,
   profileRoute,
   streakRoute,
   badgesRoute,
@@ -758,9 +632,6 @@ const routeTree = rootRoute.addChildren([
 export const router = createRouter({
   routeTree,
   defaultPreload: 'intent',
-  // Off by design: every screen is its own inner scroller that `AppScreen` resets to the top
-  // on mount. With restoration on, one screen's cached offset bled into the next (identical
-  // `<main>`) scroller, so detail/sub-pages opened pre-scrolled.
   scrollRestoration: false,
 })
 

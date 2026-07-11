@@ -1,6 +1,6 @@
-import type { LocusDraft, TransferStrategy } from './model'
+import type { CardDraft, TransferStrategy } from './model'
 
-function toDraft(value: unknown): LocusDraft {
+function toDraft(value: unknown): CardDraft {
   if (typeof value !== 'object' || value === null) throw new Error('Each card must be an object')
   const record = value as Record<string, unknown>
   if (typeof record.front !== 'string' || typeof record.back !== 'string') {

@@ -1,6 +1,6 @@
-/** A portable card: a locus stripped of identity, room, and timestamps. The unit
+/** A portable card: a card stripped of identity, deck, and timestamps. The unit
  * every transfer format reads and writes. */
-export interface LocusDraft {
+export interface CardDraft {
   front: string
   back: string
   hint?: string
@@ -9,11 +9,11 @@ export interface LocusDraft {
 
 /**
  * Strategy for one transfer format (Adapter/Strategy). Add a format by adding a
- * strategy — `exportLoci`/`importLoci` never change. An Anki (.apkg) strategy is a
+ * strategy — `exportCards`/`importCards` never change. An Anki (.apkg) strategy is a
  * future addition here (needs sql.js + fflate; deferred).
  */
 export interface TransferStrategy {
   id: string
-  serialize: (cards: LocusDraft[]) => string
-  parse: (text: string) => LocusDraft[]
+  serialize: (cards: CardDraft[]) => string
+  parse: (text: string) => CardDraft[]
 }

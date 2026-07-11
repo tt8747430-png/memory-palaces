@@ -3,7 +3,7 @@ import { InMemoryRepository } from '@/shared/api'
 import {
   createQuestionStore,
   type Question,
-  questionsForRoom,
+  questionsForDeck,
   selectQuestions,
 } from '@/entities/question'
 import { createQuestion } from './create-question'
@@ -22,10 +22,10 @@ const makeQ = (store: ReturnType<typeof startedStore>, prompt: string) =>
   createQuestion(store, 'r1', { prompt, options: ['a', 'b'], correctAnswer: 0 })
 
 const promptsForRoom = (store: ReturnType<typeof startedStore>) =>
-  questionsForRoom(selectQuestions(store.getState()), 'r1').map((q) => q.prompt)
+  questionsForDeck(selectQuestions(store.getState()), 'r1').map((q) => q.prompt)
 
 describe('createQuestion', () => {
-  it('creates a question under a room', async () => {
+  it('creates a question under a deck', async () => {
     const store = startedStore()
 
     const question = await createQuestion(store, 'r1', {
@@ -34,7 +34,7 @@ describe('createQuestion', () => {
       correctAnswer: 0,
     })
 
-    expect(question.roomId).toBe('r1')
+    expect(question.deckId).toBe('r1')
     expect(question.prompt).toBe('Capital of France?')
     expect(question.options).toEqual(['Paris', 'Lyon'])
     expect(store.getState().questions).toHaveLength(1)
@@ -67,7 +67,7 @@ describe('editQuestion', () => {
     })
 
     expect(edited.id).toBe(question.id)
-    expect(edited.roomId).toBe('r1')
+    expect(edited.deckId).toBe('r1')
     expect(edited.prompt).toBe('new')
     expect(edited.correctAnswer).toBe(1)
     expect(edited.explanation).toBe('because')
@@ -105,7 +105,7 @@ describe('deleteQuestion', () => {
 })
 
 describe('reorderQuestions', () => {
-  it('writes each question its index in the supplied order and renumbers the room', async () => {
+  it('writes each question its index in the supplied order and renumbers the deck', async () => {
     const store = startedStore()
     const a = await makeQ(store, 'a')
     const b = await makeQ(store, 'b')
@@ -123,7 +123,7 @@ describe('reorderQuestions', () => {
 })
 
 describe('duplicateQuestion', () => {
-  it('copies a question into a fresh one appended to the room', async () => {
+  it('copies a question into a fresh one appended to the deck', async () => {
     const store = startedStore()
     const a = await makeQ(store, 'a')
     const copy = await duplicateQuestion(store, a.id)

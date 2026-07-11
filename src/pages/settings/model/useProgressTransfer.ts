@@ -1,9 +1,9 @@
 import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { usePalaceStoreApi } from '@/entities/palace'
-import { useRoomStoreApi } from '@/entities/room'
-import { useLocusStoreApi } from '@/entities/locus'
+import { useFolderStoreApi } from '@/entities/folder'
+import { useDeckStoreApi } from '@/entities/deck'
+import { useCardStoreApi } from '@/entities/card'
 import { useQuestionStoreApi } from '@/entities/question'
 import { useProgressStoreApi } from '@/entities/progress'
 import { usePreferencesStoreApi } from '@/entities/preferences'
@@ -22,9 +22,9 @@ export interface ProgressTransfer {
  * (export) and a file-restore (import) with success/error toasts. */
 export function useProgressTransfer(): ProgressTransfer {
   const { t } = useTranslation()
-  const palaceStore = usePalaceStoreApi()
-  const roomStore = useRoomStoreApi()
-  const locusStore = useLocusStoreApi()
+  const folderStore = useFolderStoreApi()
+  const deckStore = useDeckStoreApi()
+  const cardStore = useCardStoreApi()
   const questionStore = useQuestionStoreApi()
   const progressStore = useProgressStoreApi()
   const preferencesStore = usePreferencesStoreApi()
@@ -33,9 +33,9 @@ export function useProgressTransfer(): ProgressTransfer {
 
   const stores = useMemo<TransferStores>(
     () => ({
-      palaceStore,
-      roomStore,
-      locusStore,
+      folderStore,
+      deckStore,
+      cardStore,
       questionStore,
       progressStore,
       preferencesStore,
@@ -43,9 +43,9 @@ export function useProgressTransfer(): ProgressTransfer {
       notificationStore,
     }),
     [
-      palaceStore,
-      roomStore,
-      locusStore,
+      folderStore,
+      deckStore,
+      cardStore,
       questionStore,
       progressStore,
       preferencesStore,

@@ -1,30 +1,30 @@
-import type { LocusStore } from '@/entities/locus'
+import type { CardStore } from '@/entities/card'
 import type { QuestionStore } from '@/entities/question'
-import { createLocus } from '@/features/locus'
+import { createCard } from '@/features/card'
 import { createQuestion } from '@/features/question'
 import type { RoomContentData } from '@/shared/lib'
 
 export interface AppliedContent {
-  loci: number
+  cards: number
   questions: number
 }
 
 /**
- * Command — write parsed import content into a room through the create commands, so
- * imported cards/questions get fresh ids, timestamps, and appended order like any other.
- * Sequential by design: each create reads the running order off the store.
+ * Command — write parsed import content into a deck through the create commands, so imported
+ * cards/questions get fresh ids, timestamps, and appended order like any other. Sequential by
+ * design: each create reads the running order off the store.
  */
-export async function applyRoomContent(
-  locusStore: LocusStore,
+export async function applyDeckContent(
+  cardStore: CardStore,
   questionStore: QuestionStore,
-  roomId: string,
+  deckId: string,
   data: RoomContentData,
 ): Promise<AppliedContent> {
-  for (const locus of data.loci) {
-    await createLocus(locusStore, roomId, locus)
+  for (const card of data.loci) {
+    await createCard(cardStore, deckId, card)
   }
   for (const question of data.questions) {
-    await createQuestion(questionStore, roomId, question)
+    await createQuestion(questionStore, deckId, question)
   }
-  return { loci: data.loci.length, questions: data.questions.length }
+  return { cards: data.loci.length, questions: data.questions.length }
 }

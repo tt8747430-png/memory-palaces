@@ -12,9 +12,8 @@ import {
   totalTrainingDays,
 } from '@/shared/lib'
 import { selectProgress, useProgressStore, useProgressStoreApi } from '@/entities/progress'
-import { selectPalaces, usePalaceStore, usePalaceStoreApi } from '@/entities/palace'
-import { selectRooms, useRoomStore, useRoomStoreApi } from '@/entities/room'
-import { selectLoci, useLocusStore, useLocusStoreApi } from '@/entities/locus'
+import { selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
+import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
 import { BADGE_META } from '@/widgets/badge-list'
 import { AppScreen, BadgeMedallion, cardSurface, ScreenHeader } from '@/shared/ui'
 
@@ -35,33 +34,31 @@ export interface BadgeDetailPageProps {
 export function BadgeDetailPage({ badgeId, onBack }: BadgeDetailPageProps) {
   const { t } = useTranslation()
   const progressStore = useProgressStoreApi()
-  const palaceStore = usePalaceStoreApi()
-  const roomStore = useRoomStoreApi()
-  const locusStore = useLocusStoreApi()
+  const deckStore = useDeckStoreApi()
+  const cardStore = useCardStoreApi()
   const progress = useProgressStore(selectProgress)
-  const palaces = usePalaceStore(selectPalaces)
-  const rooms = useRoomStore(selectRooms)
-  const loci = useLocusStore(selectLoci)
+  const decks = useDeckStore(selectDecks)
+  const cards = useCardStore(selectCards)
 
   useEffect(() => {
     progressStore.getState().start()
-    palaceStore.getState().start()
-    roomStore.getState().start()
-    locusStore.getState().start()
-  }, [progressStore, palaceStore, roomStore, locusStore])
+    deckStore.getState().start()
+    cardStore.getState().start()
+  }, [progressStore, deckStore, cardStore])
 
-  const totals = useMemo(() => computeTrainingTotals(rooms, loci), [rooms, loci])
+  const totals = useMemo(() => computeTrainingTotals(decks, cards), [decks, cards])
+  const topLevelDecks = useMemo(() => decks.filter((deck) => deck.parentId === null), [decks])
   const badges = useMemo(
     () =>
       computeBadges({
         xp: progress?.xp ?? 0,
         longestStreak: progress?.longestStreak ?? 0,
-        roomsCompleted: totals.roomsCompleted,
-        palaceCount: palaces.length,
+        decksCompleted: totals.decksCompleted,
+        deckCount: topLevelDecks.length,
         totalCards: totals.totalCards,
         trainingDayCount: totalTrainingDays(progress?.trainingDays ?? []),
       }),
-    [progress, totals, palaces.length],
+    [progress, totals, topLevelDecks.length],
   )
 
   const badge = isBadgeId(badgeId) ? badges.find((entry) => entry.id === badgeId) : undefined

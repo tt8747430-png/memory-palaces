@@ -3,10 +3,9 @@ import { type AuthGateway, InMemoryRepository } from '@/shared/api'
 import { RxdbRepository } from '@/shared/api/rxdb'
 import { type AppEvents, EventBus } from '@/shared/lib'
 import { createSessionStore, type Session, type SessionStore } from '@/entities/session'
-import { createPalaceStore, type Palace, type PalaceStore } from '@/entities/palace'
+import { createDeckStore, type Deck, type DeckStore } from '@/entities/deck'
+import { createCardStore, type Card, type CardStore } from '@/entities/card'
 import { createFolderStore, type Folder, type FolderStore } from '@/entities/folder'
-import { createRoomStore, type Room, type RoomStore } from '@/entities/room'
-import { createLocusStore, type Locus, type LocusStore } from '@/entities/locus'
 import { createQuestionStore, type Question, type QuestionStore } from '@/entities/question'
 import { createProgressStore, type Progress, type ProgressStore } from '@/entities/progress'
 import {
@@ -26,10 +25,9 @@ import { LocalAuthGateway } from './persistence/local-auth-gateway'
 export interface Services {
   authGateway: AuthGateway
   sessionStore: SessionStore
-  palaceStore: PalaceStore
+  deckStore: DeckStore
+  cardStore: CardStore
   folderStore: FolderStore
-  roomStore: RoomStore
-  locusStore: LocusStore
   questionStore: QuestionStore
   progressStore: ProgressStore
   preferencesStore: PreferencesStore
@@ -40,7 +38,7 @@ export interface Services {
 
 /**
  * Composition root — the ONE place concrete adapters are chosen and injected into
- * ports. Palaces now persist to RxDB (IndexedDB via Dexie); the database is created
+ * ports. Content persists to RxDB (IndexedDB via Dexie); the database is created
  * eagerly and its collection promise handed to the adapter, so construction stays
  * synchronous. `createServices()` keeps it all reconstructable for tests.
  */
@@ -48,10 +46,9 @@ export function createServices(): Services {
   const collections = createAppDatabase(getRxStorageDexie())
   const authGateway = new LocalAuthGateway() // → SupabaseAuthGateway in Phase 9
   const sessionRepo = new InMemoryRepository<Session>() // → RxDB in a later slice
-  const palaceRepo = new RxdbRepository<Palace>(collections.then((c) => c.palaces))
+  const deckRepo = new RxdbRepository<Deck>(collections.then((c) => c.decks))
+  const cardRepo = new RxdbRepository<Card>(collections.then((c) => c.cards))
   const folderRepo = new RxdbRepository<Folder>(collections.then((c) => c.folders))
-  const roomRepo = new RxdbRepository<Room>(collections.then((c) => c.rooms))
-  const locusRepo = new RxdbRepository<Locus>(collections.then((c) => c.loci))
   const questionRepo = new RxdbRepository<Question>(collections.then((c) => c.questions))
   const progressRepo = new RxdbRepository<Progress>(collections.then((c) => c.progress))
   const preferencesRepo = new RxdbRepository<Preferences>(collections.then((c) => c.preferences))
@@ -62,10 +59,9 @@ export function createServices(): Services {
   return {
     authGateway,
     sessionStore: createSessionStore(sessionRepo),
-    palaceStore: createPalaceStore(palaceRepo),
+    deckStore: createDeckStore(deckRepo),
+    cardStore: createCardStore(cardRepo),
     folderStore: createFolderStore(folderRepo),
-    roomStore: createRoomStore(roomRepo),
-    locusStore: createLocusStore(locusRepo),
     questionStore: createQuestionStore(questionRepo),
     progressStore: createProgressStore(progressRepo),
     preferencesStore: createPreferencesStore(preferencesRepo),

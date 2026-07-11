@@ -43,9 +43,10 @@ paths live in `shared/config/routes.ts`.
   the codebase clean — do not pollute it with redundant comments.
 - **Naming:** intent-revealing names over abbreviations. Components/types `PascalCase`,
   variables/functions `camelCase`, hooks `useX`, true constants `UPPER_SNAKE`. Booleans
-  read as predicates (`isDue`, `hasSession`); features/commands are verbs (`createPalace`,
-  `gradeCard`); event handlers are `handleX`. Mirror the domain vocabulary (`Palace`,
-  `Room`, `Locus`, `Session`).
+  read as predicates (`isDue`, `hasSession`); features/commands are verbs (`createDeck`,
+  `gradeCard`); event handlers are `handleX`. Mirror the domain vocabulary (`Folder`,
+  `Deck`, `Card`, `Session`) — see `CONTEXT.md`. The recursive deck tree replaces the old
+  Palace→Room→Locus model (ADR-0001).
 - **Types:** never `any` (strict + `noUncheckedIndexedAccess` are on); model shapes
   precisely. Prefer discriminated unions for state machines (review/quiz/tutor turns)
   and entity variants. Type a module's public surface; let locals infer.

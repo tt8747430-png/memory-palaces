@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { type AchievementInput, computeAchievements } from './achievements'
 
 const base: AchievementInput = {
-  palaceCount: 0,
+  deckCount: 0,
   streakCount: 0,
   xp: 0,
   bestQuizAccuracy: 0,
-  roomsCompleted: 0,
-  anyPalaceCompleted: false,
+  decksCompleted: 0,
+  anyDeckCompleted: false,
 }
 
 const earnedIds = (input: AchievementInput) =>
@@ -32,7 +32,7 @@ describe('computeAchievements', () => {
   })
 
   it('earns first-palace with at least one palace', () => {
-    expect(earnedIds({ ...base, palaceCount: 1 })).toContain('first-palace')
+    expect(earnedIds({ ...base, deckCount: 1 })).toContain('first-palace')
   })
 
   it('earns week-warrior at a 7-day streak, not 6', () => {
@@ -41,7 +41,7 @@ describe('computeAchievements', () => {
   })
 
   it('earns palace-master when any palace is fully complete', () => {
-    expect(earnedIds({ ...base, anyPalaceCompleted: true })).toContain('palace-master')
+    expect(earnedIds({ ...base, anyDeckCompleted: true })).toContain('palace-master')
   })
 
   it('earns xp-champion at 2000 XP, not 1999', () => {
@@ -55,7 +55,7 @@ describe('computeAchievements', () => {
   })
 
   it('earns dedicated-learner at 10 completed rooms, not 9', () => {
-    expect(earnedIds({ ...base, roomsCompleted: 9 })).not.toContain('dedicated-learner')
-    expect(earnedIds({ ...base, roomsCompleted: 10 })).toContain('dedicated-learner')
+    expect(earnedIds({ ...base, decksCompleted: 9 })).not.toContain('dedicated-learner')
+    expect(earnedIds({ ...base, decksCompleted: 10 })).toContain('dedicated-learner')
   })
 })

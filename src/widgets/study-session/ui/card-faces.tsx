@@ -289,7 +289,7 @@ function SolvedBadge() {
   )
 }
 
-/** The peek-a-tip pill shown under a prompt when the locus carries one. */
+/** The peek-a-tip pill shown under a prompt when the card carries one. */
 function TipRow({ tip }: { tip: string }) {
   const { t } = useTranslation()
   const [peek, setPeek] = useState(false)
@@ -393,7 +393,7 @@ export function PromptFace(props: FaceProps) {
   const { card, prompt, canSpeak, active, onSpeak, onFlip } = props
   return (
     <CardFace
-      flagged={card.locus.flagged}
+      flagged={card.card.flagged}
       canSpeak={canSpeak}
       speakText={prompt}
       onSpeak={onSpeak}
@@ -405,7 +405,7 @@ export function PromptFace(props: FaceProps) {
       <h2 className="text-balance break-words text-center text-[clamp(22px,6vw,28px)] font-bold leading-[1.15] tracking-[-0.01em] text-heading">
         {prompt}
       </h2>
-      {card.locus.tip ? <TipRow tip={card.locus.tip} /> : null}
+      {card.card.tip ? <TipRow tip={card.card.tip} /> : null}
       <FlipZone label={t('study.showAnswer')} onFlip={onFlip} className="mx-auto w-fit">
         <span className="inline-flex items-center gap-1.5 rounded-full bg-info-surface px-3.5 py-1.5 text-[length:var(--p-text-label)] font-medium text-muted-foreground">
           {t('study.tapToReveal')}
@@ -454,7 +454,7 @@ export function TypeFace(props: FaceProps) {
 
   return (
     <CardFace
-      flagged={card.locus.flagged}
+      flagged={card.card.flagged}
       canSpeak={canSpeak}
       speakText={prompt}
       onSpeak={onSpeak}
@@ -469,7 +469,7 @@ export function TypeFace(props: FaceProps) {
         <h2 className="text-balance break-words text-[clamp(18px,5vw,22px)] font-bold leading-tight tracking-[-0.01em] text-heading">
           {prompt}
         </h2>
-        {card.locus.tip ? <TipRow tip={card.locus.tip} /> : null}
+        {card.card.tip ? <TipRow tip={card.card.tip} /> : null}
       </div>
       <div className="h-px shrink-0 bg-border" aria-hidden />
       {solved ? (
@@ -598,7 +598,8 @@ function useInitialsRecall(answer: string, enabled: boolean, onSolved: () => voi
   }
 
   // Functional so the "Next word" aid stays a stable handler for the swipe mechanic.
-  const nextWord = () => setAccepted((prev) => (prev < tokens.length ? advanceAuto(prev + 1) : prev))
+  const nextWord = () =>
+    setAccepted((prev) => (prev < tokens.length ? advanceAuto(prev + 1) : prev))
 
   const handleInput = (raw: string) => {
     let next = accepted
@@ -758,7 +759,7 @@ export function RebuildFace(props: FaceProps) {
 
   return (
     <CardFace
-      flagged={card.locus.flagged}
+      flagged={card.card.flagged}
       canSpeak={canSpeak}
       speakText={prompt}
       onSpeak={onSpeak}
@@ -773,7 +774,7 @@ export function RebuildFace(props: FaceProps) {
         <h2 className="text-balance break-words text-[clamp(18px,5vw,22px)] font-bold leading-tight tracking-[-0.01em] text-heading">
           {prompt}
         </h2>
-        {card.locus.tip ? <TipRow tip={card.locus.tip} /> : null}
+        {card.card.tip ? <TipRow tip={card.card.tip} /> : null}
       </div>
       <div className="h-px shrink-0 bg-border" aria-hidden />
 
@@ -831,7 +832,7 @@ export function AnswerFace(props: FaceProps) {
   const { card, prompt, answer, canSpeak, active, onSpeak } = props
   return (
     <CardFace
-      flagged={card.locus.flagged}
+      flagged={card.card.flagged}
       canSpeak={canSpeak}
       speakText={answer}
       onSpeak={onSpeak}
@@ -845,7 +846,7 @@ export function AnswerFace(props: FaceProps) {
       <p className="allow-select text-balance break-words text-center text-[clamp(17px,4.6vw,21px)] font-semibold leading-relaxed text-heading">
         {answer}
       </p>
-      {card.locus.hint ? <HintCard hint={card.locus.hint} /> : null}
+      {card.card.hint ? <HintCard hint={card.card.hint} /> : null}
     </CardFace>
   )
 }
@@ -896,7 +897,7 @@ export function BlurFace(props: FaceProps) {
 
   return (
     <CardFace
-      flagged={card.locus.flagged}
+      flagged={card.card.flagged}
       canSpeak={canSpeak}
       speakText={answer}
       onSpeak={onSpeak}
@@ -942,7 +943,7 @@ export function BlurFace(props: FaceProps) {
           )
         })}
       </p>
-      {card.locus.hint ? <HintCard hint={card.locus.hint} /> : null}
+      {card.card.hint ? <HintCard hint={card.card.hint} /> : null}
     </CardFace>
   )
 }
@@ -1007,7 +1008,7 @@ export function InitialsFace(props: FaceProps) {
 
   return (
     <CardFace
-      flagged={card.locus.flagged}
+      flagged={card.card.flagged}
       canSpeak={canSpeak}
       speakText={answer}
       onSpeak={onSpeak}
@@ -1087,7 +1088,9 @@ export function InitialsFace(props: FaceProps) {
             >
               <motion.span
                 ref={bubbleRef}
-                initial={reduce ? { opacity: 0 } : { opacity: 0, y: peek.below ? -6 : 6, scale: 0.9 }}
+                initial={
+                  reduce ? { opacity: 0 } : { opacity: 0, y: peek.below ? -6 : 6, scale: 0.9 }
+                }
                 animate={reduce ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, transition: { duration: 0.1 } }}
                 transition={{ type: 'spring', stiffness: 520, damping: 30 }}
@@ -1099,7 +1102,7 @@ export function InitialsFace(props: FaceProps) {
           ) : null}
         </AnimatePresence>
       </div>
-      {card.locus.hint ? <HintCard hint={card.locus.hint} /> : null}
+      {card.card.hint ? <HintCard hint={card.card.hint} /> : null}
     </CardFace>
   )
 }

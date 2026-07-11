@@ -5,8 +5,9 @@ import {
   type AchievementId,
   cn,
   computeAchievements,
+  cardsInSubtree,
   computeTrainingTotals,
-  isRoomCompleted,
+  isDeckCompleted,
   levelFromXp,
   totalTrainingDays,
 } from '@/shared/lib'
@@ -17,25 +18,17 @@ import {
   useProgressStoreApi,
 } from '@/entities/progress'
 import {
-  selectIsReady as selectPalacesReady,
-  selectPalaces,
-  usePalaceStore,
-  usePalaceStoreApi,
-} from '@/entities/palace'
+  selectDecks,
+  selectIsReady as selectDecksReady,
+  useDeckStore,
+  useDeckStoreApi,
+} from '@/entities/deck'
 import {
-  roomsForPalace,
-  selectIsReady as selectRoomsReady,
-  selectRooms,
-  useRoomStore,
-  useRoomStoreApi,
-} from '@/entities/room'
-import {
-  lociForRoom,
-  selectIsReady as selectLociReady,
-  selectLoci,
-  useLocusStore,
-  useLocusStoreApi,
-} from '@/entities/locus'
+  selectCards,
+  selectIsReady as selectCardsReady,
+  useCardStore,
+  useCardStoreApi,
+} from '@/entities/card'
 import { AchievementGrid } from '@/widgets/achievement-list'
 import { AppScreen, cardSurface, ScreenHeader } from '@/shared/ui'
 
@@ -51,55 +44,45 @@ export interface AchievementsPageProps {
 export function AchievementsPage({ onBack, onOpenAchievement }: AchievementsPageProps = {}) {
   const { t } = useTranslation()
   const progressStore = useProgressStoreApi()
-  const palaceStore = usePalaceStoreApi()
-  const roomStore = useRoomStoreApi()
-  const locusStore = useLocusStoreApi()
+  const deckStore = useDeckStoreApi()
+  const cardStore = useCardStoreApi()
   const progress = useProgressStore(selectProgress)
-  const palaces = usePalaceStore(selectPalaces)
-  const rooms = useRoomStore(selectRooms)
-  const loci = useLocusStore(selectLoci)
+  const decks = useDeckStore(selectDecks)
+  const cards = useCardStore(selectCards)
   // Each store hook must run unconditionally (Rules of Hooks); combine after.
   const progressReady = useProgressStore(selectProgressReady)
-  const palacesReady = usePalaceStore(selectPalacesReady)
-  const roomsReady = useRoomStore(selectRoomsReady)
-  const lociReady = useLocusStore(selectLociReady)
-  const dataReady = progressReady && palacesReady && roomsReady && lociReady
+  const decksReady = useDeckStore(selectDecksReady)
+  const cardsReady = useCardStore(selectCardsReady)
+  const dataReady = progressReady && decksReady && cardsReady
 
   useEffect(() => {
     progressStore.getState().start()
-    palaceStore.getState().start()
-    roomStore.getState().start()
-    locusStore.getState().start()
-  }, [progressStore, palaceStore, roomStore, locusStore])
+    deckStore.getState().start()
+    cardStore.getState().start()
+  }, [progressStore, deckStore, cardStore])
 
   const xp = progress?.xp ?? 0
-  const totals = useMemo(() => computeTrainingTotals(rooms, loci), [rooms, loci])
+  const totals = useMemo(() => computeTrainingTotals(decks, cards), [decks, cards])
   const daysTrained = useMemo(
     () => totalTrainingDays(progress?.trainingDays ?? []),
     [progress?.trainingDays],
   )
-  const anyPalaceCompleted = useMemo(
-    () =>
-      palaces.some((palace) => {
-        const palaceRooms = roomsForPalace(rooms, palace.id)
-        return (
-          palaceRooms.length > 0 &&
-          palaceRooms.every((room) => isRoomCompleted(lociForRoom(loci, room.id)))
-        )
-      }),
-    [palaces, rooms, loci],
+  const topLevelDecks = useMemo(() => decks.filter((deck) => deck.parentId === null), [decks])
+  const anyDeckCompleted = useMemo(
+    () => topLevelDecks.some((deck) => isDeckCompleted(cardsInSubtree(decks, cards, deck.id))),
+    [topLevelDecks, decks, cards],
   )
   const achievements = useMemo(
     () =>
       computeAchievements({
-        palaceCount: palaces.length,
+        deckCount: topLevelDecks.length,
         streakCount: progress?.streakCount ?? 0,
         xp,
         bestQuizAccuracy: progress?.bestQuizAccuracy ?? 0,
-        roomsCompleted: totals.roomsCompleted,
-        anyPalaceCompleted,
+        decksCompleted: totals.decksCompleted,
+        anyDeckCompleted,
       }),
-    [palaces.length, progress, xp, totals.roomsCompleted, anyPalaceCompleted],
+    [topLevelDecks.length, progress, xp, totals.decksCompleted, anyDeckCompleted],
   )
 
   const records = [
@@ -125,7 +108,7 @@ export function AchievementsPage({ onBack, onOpenAchievement }: AchievementsPage
     },
     {
       id: 'rooms',
-      value: String(totals.roomsCompleted),
+      value: String(totals.decksCompleted),
       label: t('achievementsPage.records.rooms'),
     },
     {

@@ -10,9 +10,9 @@ import {
   useProfileStore,
   useProfileStoreApi,
 } from '@/entities/profile'
-import { usePalaceStoreApi } from '@/entities/palace'
-import { useRoomStoreApi } from '@/entities/room'
-import { useLocusStoreApi } from '@/entities/locus'
+import { useDeckStoreApi } from '@/entities/deck'
+import { useFolderStoreApi } from '@/entities/folder'
+import { useCardStoreApi } from '@/entities/card'
 import { useQuestionStoreApi } from '@/entities/question'
 import { useProgressStoreApi } from '@/entities/progress'
 import { useNotificationStoreApi } from '@/entities/notification'
@@ -65,9 +65,9 @@ export function SettingsProfilePage({
 }: SettingsProfilePageProps) {
   const { t } = useTranslation()
   const store = useProfileStoreApi()
-  const palaceStore = usePalaceStoreApi()
-  const roomStore = useRoomStoreApi()
-  const locusStore = useLocusStoreApi()
+  const deckStore = useDeckStoreApi()
+  const folderStore = useFolderStoreApi()
+  const cardStore = useCardStoreApi()
   const questionStore = useQuestionStoreApi()
   const progressStore = useProgressStoreApi()
   const notificationStore = useNotificationStoreApi()
@@ -89,13 +89,13 @@ export function SettingsProfilePage({
   // Start the data stores so the delete-account wipe sees the on-device records.
   useEffect(() => {
     store.getState().start()
-    palaceStore.getState().start()
-    roomStore.getState().start()
-    locusStore.getState().start()
+    deckStore.getState().start()
+    folderStore.getState().start()
+    cardStore.getState().start()
     questionStore.getState().start()
     progressStore.getState().start()
     notificationStore.getState().start()
-  }, [store, palaceStore, roomStore, locusStore, questionStore, progressStore, notificationStore])
+  }, [store, deckStore, folderStore, cardStore, questionStore, progressStore, notificationStore])
 
   useEffect(() => {
     if (isReady && !hydrated.current) {
@@ -149,9 +149,9 @@ export function SettingsProfilePage({
 
   const handleDelete = async () => {
     await resetEverything({
-      palaceStore,
-      roomStore,
-      locusStore,
+      deckStore,
+      folderStore,
+      cardStore,
       questionStore,
       progressStore,
       notificationStore,

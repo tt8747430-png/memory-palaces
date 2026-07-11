@@ -2,50 +2,50 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Check, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
-import { lociForRoom, selectLoci, useLocusStore, useLocusStoreApi } from '@/entities/locus'
-import { selectRooms, useRoomStore, useRoomStoreApi } from '@/entities/room'
-import { createLocus, editLocus } from '@/features/locus'
+import { cardsForDeck, selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
+import { selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
+import { createCard, editCard } from '@/features/card'
 import { cn } from '@/shared/lib'
 import { AppScreen, ScreenHeader } from '@/shared/ui'
-import { type CardData, CardFields } from '@/widgets/loci-editor'
+import { type CardData, CardFields } from '@/widgets/content-editor'
 
 export interface CardEditorPageProps {
-  roomId: string
+  deckId: string
   /** Present in edit mode; omit to create. */
   cardId?: string
   onBack: () => void
-  /** Edit mode: jump to another card in the room (prev/next) without leaving the editor. The
+  /** Edit mode: jump to another card in the deck (prev/next) without leaving the editor. The
    * route navigates with replace, so browsing cards never stacks the back history. */
   onNavigateCard?: (cardId: string) => void
 }
 
 /** Full-screen create/edit for a flashcard — the required front/back pair plus the optional
  * place and peek cues. Creating always saves-and-adds-another (one primary button); the deck
- * grows without leaving the screen, and Back returns to the room. Editing saves *in place*
+ * grows without leaving the screen, and Back returns to the deck. Editing saves *in place*
  * (the button confirms with "Saved" and you stay), with a pinned prev/next footer to walk the
- * deck — moving auto-saves a valid change so edits are never lost. `createLocus`/`editLocus`
- * are the shared write commands the Tutor reuses. */
-export function CardEditorPage({ roomId, cardId, onBack, onNavigateCard }: CardEditorPageProps) {
+ * deck's own cards — moving auto-saves a valid change so edits are never lost. `createCard`/
+ * `editCard` are the shared write commands the Tutor reuses. */
+export function CardEditorPage({ deckId, cardId, onBack, onNavigateCard }: CardEditorPageProps) {
   const { t } = useTranslation()
-  const locusStore = useLocusStoreApi()
-  const roomStore = useRoomStoreApi()
-  const allLoci = useLocusStore(selectLoci)
-  const rooms = useRoomStore(selectRooms)
+  const cardStore = useCardStoreApi()
+  const deckStore = useDeckStoreApi()
+  const allCards = useCardStore(selectCards)
+  const decks = useDeckStore(selectDecks)
 
   useEffect(() => {
-    locusStore.getState().start()
-    roomStore.getState().start()
-  }, [locusStore, roomStore])
+    cardStore.getState().start()
+    deckStore.getState().start()
+  }, [cardStore, deckStore])
 
-  const editing = cardId ? (allLoci.find((l) => l.id === cardId) ?? null) : null
-  const room = rooms.find((r) => r.id === roomId)
+  const editing = cardId ? (allCards.find((c) => c.id === cardId) ?? null) : null
+  const deck = decks.find((d) => d.id === deckId)
 
-  // The room's deck in route order — drives the prev/next position.
-  const roomCards = useMemo(() => lociForRoom(allLoci, roomId), [allLoci, roomId])
-  const position = editing ? roomCards.findIndex((c) => c.id === editing.id) : -1
-  const prevCard = position > 0 ? roomCards[position - 1] : undefined
+  // The deck's own cards in order — drives the prev/next position.
+  const deckCards = useMemo(() => cardsForDeck(allCards, deckId), [allCards, deckId])
+  const position = editing ? deckCards.findIndex((c) => c.id === editing.id) : -1
+  const prevCard = position > 0 ? deckCards[position - 1] : undefined
   const nextCard =
-    position >= 0 && position < roomCards.length - 1 ? roomCards[position + 1] : undefined
+    position >= 0 && position < deckCards.length - 1 ? deckCards[position + 1] : undefined
 
   const [front, setFront] = useState('')
   const [back, setBack] = useState('')
@@ -53,7 +53,6 @@ export function CardEditorPage({ roomId, cardId, onBack, onNavigateCard }: CardE
   const [tip, setTip] = useState('')
   const frontRef = useRef<HTMLInputElement>(null)
 
-  // A brief "Saved" confirmation on the save button after a successful in-place save.
   const [justSaved, setJustSaved] = useState(false)
   const savedTimer = useRef<number | undefined>(undefined)
   useEffect(() => () => window.clearTimeout(savedTimer.current), [])
@@ -63,15 +62,12 @@ export function CardEditorPage({ roomId, cardId, onBack, onNavigateCard }: CardE
     savedTimer.current = window.setTimeout(() => setJustSaved(false), 1500)
   }
 
-  // Seed from the card; clears the saved flash when the target changes (prev/next).
   useEffect(() => {
     setFront(editing?.front ?? '')
     setBack(editing?.back ?? '')
     setHint(editing?.hint ?? '')
     setTip(editing?.tip ?? '')
     setJustSaved(false)
-    // Seed only when the target card changes — not on every field, or the form would reset
-    // mid-edit each time the store re-emits.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editing?.id])
 
@@ -97,30 +93,25 @@ export function CardEditorPage({ roomId, cardId, onBack, onNavigateCard }: CardE
     frontRef.current?.focus()
   }
 
-  // Create — the only create action: save, confirm, then reset to a blank card with the front
-  // refocused, so building a deck never leaves this screen. Back returns to the room.
   const saveAndAdd = async () => {
     if (!valid) return
-    await createLocus(locusStore, roomId, build())
+    await createCard(cardStore, deckId, build())
     flashSaved()
     toast.success(t('loci.editor.addedNext'))
     clear()
   }
-  // Edit — persist in place and confirm on the button; the user stays to keep editing or browse.
   const saveEdit = async () => {
     if (!valid || !editing) return
-    await editLocus(locusStore, editing.id, build())
+    await editCard(cardStore, editing.id, build())
     flashSaved()
   }
-  // Prev/next — persist a valid change to the current card before swapping, so edits survive
-  // moving between cards.
   const goToCard = async (target?: { id: string }) => {
     if (!target || !onNavigateCard) return
-    if (editing && valid && dirty) await editLocus(locusStore, editing.id, build())
+    if (editing && valid && dirty) await editCard(cardStore, editing.id, build())
     onNavigateCard(target.id)
   }
 
-  const showNav = Boolean(editing && onNavigateCard && roomCards.length > 1)
+  const showNav = Boolean(editing && onNavigateCard && deckCards.length > 1)
 
   return (
     <AppScreen
@@ -128,9 +119,9 @@ export function CardEditorPage({ roomId, cardId, onBack, onNavigateCard }: CardE
       header={
         <ScreenHeader
           title={editing ? t('loci.editor.editTitle') : t('loci.editor.newTitle')}
-          subtitle={room?.title}
+          subtitle={deck?.name}
           onBack={onBack}
-          backLabel={t('roomHub.back')}
+          backLabel={t('common.back')}
           action={
             <SaveButton
               adding={!editing}
@@ -145,7 +136,7 @@ export function CardEditorPage({ roomId, cardId, onBack, onNavigateCard }: CardE
         showNav ? (
           <DeckNav
             position={position}
-            total={roomCards.length}
+            total={deckCards.length}
             prevLabel={t('loci.editor.prevCard')}
             nextLabel={t('loci.editor.nextCard')}
             hasPrev={Boolean(prevCard)}
@@ -174,8 +165,7 @@ export function CardEditorPage({ roomId, cardId, onBack, onNavigateCard }: CardE
 }
 
 /** The header save button — one shape for both modes. A primary pill that flips green and
- * reads "Saved" for a beat after a write. In create mode (`adding`) it leads with a plus and
- * announces "Save & add another"; in edit mode it leads with a check and saves in place. */
+ * reads "Saved" for a beat after a write. */
 function SaveButton({
   adding,
   saved,
@@ -213,10 +203,7 @@ function SaveButton({
   )
 }
 
-/** The pinned edit-mode footer: walk the room's deck without leaving the editor. Frosted
- * sky-glass over the daylight ground (not a bare white bar), lifted by an upward navy-tinted
- * shadow and a glass hairline; owns the bottom safe-area inset. Prev/next are light-blue pills
- * flanking a bold position counter with a slim progress track. */
+/** The pinned edit-mode footer: walk the deck's own cards without leaving the editor. */
 function DeckNav({
   position,
   total,

@@ -13,9 +13,9 @@ export class InvalidImportError extends Error {
  * records with the same id are overwritten (last-write-wins). */
 export async function importProgress(json: string, stores: TransferStores): Promise<void> {
   const bundle = parseBundle(json)
-  for (const palace of bundle.palaces) await stores.palaceStore.getState().save(palace)
-  for (const room of bundle.rooms) await stores.roomStore.getState().save(room)
-  for (const locus of bundle.loci) await stores.locusStore.getState().save(locus)
+  for (const folder of bundle.folders) await stores.folderStore.getState().save(folder)
+  for (const deck of bundle.decks) await stores.deckStore.getState().save(deck)
+  for (const card of bundle.cards) await stores.cardStore.getState().save(card)
   for (const question of bundle.questions) await stores.questionStore.getState().save(question)
   for (const notification of bundle.notifications) {
     await stores.notificationStore.getState().save(notification)
@@ -41,9 +41,9 @@ function isBundle(value: unknown): value is AppDataBundle {
   const v = value as Record<string, unknown>
   return (
     typeof v.version === 'number' &&
-    Array.isArray(v.palaces) &&
-    Array.isArray(v.rooms) &&
-    Array.isArray(v.loci) &&
+    Array.isArray(v.folders) &&
+    Array.isArray(v.decks) &&
+    Array.isArray(v.cards) &&
     Array.isArray(v.questions) &&
     Array.isArray(v.notifications)
   )

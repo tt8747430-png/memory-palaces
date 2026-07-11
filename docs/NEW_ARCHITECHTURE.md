@@ -1,5 +1,11 @@
 # Plan: New Architecture for Mindscape — React + Vite **PWA**, **Feature-Sliced Design + Clean Architecture**
 
+> **Model update (post-plan):** the organizing model has been refactored from the fixed
+> `Folder → Palace → Room → Locus` chain to a recursive **`Folder → Deck → Subdeck(∞) → Card`**
+> tree (a single self-referential `Deck` entity; a subdeck is a deck with a deck parent).
+> See `CONTEXT.md` and `docs/adr/0001-recursive-deck-replaces-palace-room.md`. Where this
+> document says palace/room/locus below, read deck/subdeck/card.
+
 ## Context
 
 Mindscape ("Your Memory Palace") is a phone-first method-of-loci training app — today a polished but structurally weak React 18 + Vite + Capacitor web SPA (~26k LOC) with a 1444-line god-hook, 900–1800-line god-components, no router, no layering, no tests. We are doing a **structured big-bang rewrite into a new, separate repository**, with the old app kept as the reference spec.

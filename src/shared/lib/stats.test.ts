@@ -2,12 +2,9 @@ import { describe, expect, it } from 'vitest'
 import {
   cardMaturityCounts,
   computeTrainingTotals,
-  isLocusReviewed,
-  isRoomCompleted,
-  isRoomUnlocked,
+  isCardReviewed,
+  isDeckCompleted,
   levelFromXp,
-  palaceProgress,
-  roomProgress,
 } from './stats'
 import type { SrsState } from './srs'
 
@@ -18,13 +15,13 @@ const fresh: { srs?: SrsState } = {}
 
 describe('cardMaturityCounts', () => {
   it('tallies new / learning / known', () => {
-    const loci = [
+    const cards = [
       { srs: undefined },
       { srs: { due: '', interval: 3, ease: 2.5, reps: 2, lapses: 0, lastReviewed: '' } },
       { srs: { due: '', interval: 40, ease: 2.5, reps: 5, lapses: 0, lastReviewed: '' } },
       { srs: { due: '', interval: 40, ease: 2.5, reps: 5, lapses: 0, lastReviewed: '' } },
     ]
-    expect(cardMaturityCounts(loci)).toEqual({ new: 1, learning: 1, known: 2 })
+    expect(cardMaturityCounts(cards)).toEqual({ new: 1, learning: 1, known: 2 })
   })
 })
 
@@ -36,75 +33,45 @@ describe('levelFromXp', () => {
   })
 })
 
-describe('isLocusReviewed', () => {
-  it('is true once a locus has at least one rep', () => {
-    expect(isLocusReviewed(reviewed)).toBe(true)
-    expect(isLocusReviewed(fresh)).toBe(false)
+describe('isCardReviewed', () => {
+  it('is true once a card has at least one rep', () => {
+    expect(isCardReviewed(reviewed)).toBe(true)
+    expect(isCardReviewed(fresh)).toBe(false)
   })
 })
 
-describe('roomProgress', () => {
-  it('is 0 for an empty room', () => {
-    expect(roomProgress([])).toBe(0)
-  })
-
-  it('is the percentage of reviewed loci', () => {
-    expect(roomProgress([reviewed, fresh])).toBe(50)
-    expect(roomProgress([reviewed, reviewed])).toBe(100)
-  })
-})
-
-describe('isRoomCompleted', () => {
-  it('is false for an empty room and true only when every locus is reviewed', () => {
-    expect(isRoomCompleted([])).toBe(false)
-    expect(isRoomCompleted([reviewed, fresh])).toBe(false)
-    expect(isRoomCompleted([reviewed, reviewed])).toBe(true)
-  })
-})
-
-describe('palaceProgress', () => {
-  it('is the percentage of completed rooms', () => {
-    expect(palaceProgress([])).toBe(0)
-    expect(palaceProgress([true, false])).toBe(50)
-    expect(palaceProgress([true, true])).toBe(100)
-  })
-})
-
-describe('isRoomUnlocked', () => {
-  it('always unlocks the first room', () => {
-    expect(isRoomUnlocked(0, [false, false])).toBe(true)
-  })
-
-  it('unlocks a later room only when the previous one is complete', () => {
-    expect(isRoomUnlocked(1, [true, false])).toBe(true)
-    expect(isRoomUnlocked(1, [false, false])).toBe(false)
+describe('isDeckCompleted', () => {
+  it('is false for an empty deck and true only when every card is reviewed', () => {
+    expect(isDeckCompleted([])).toBe(false)
+    expect(isDeckCompleted([reviewed, fresh])).toBe(false)
+    expect(isDeckCompleted([reviewed, reviewed])).toBe(true)
   })
 })
 
 describe('computeTrainingTotals', () => {
-  const rooms = [{ id: 'r1' }, { id: 'r2' }, { id: 'r3' }]
-  // r1: every locus reviewed → complete. r2: one fresh → incomplete. r3: no loci → incomplete.
-  const loci = [
-    { roomId: 'r1', ...reviewed },
-    { roomId: 'r1', ...reviewed },
-    { roomId: 'r2', ...reviewed },
-    { roomId: 'r2', ...fresh },
+  const decks = [{ id: 'd1' }, { id: 'd2' }, { id: 'd3' }]
+  // d1: every card reviewed → complete. d2: one fresh → incomplete. d3: no cards → incomplete.
+  const cards = [
+    { deckId: 'd1', ...reviewed },
+    { deckId: 'd1', ...reviewed },
+    { deckId: 'd2', ...reviewed },
+    { deckId: 'd2', ...fresh },
   ]
 
-  it('reports total rooms and total cards', () => {
-    const totals = computeTrainingTotals(rooms, loci)
-    expect(totals.totalRooms).toBe(3)
+  it('reports total decks and total cards', () => {
+    const totals = computeTrainingTotals(decks, cards)
+    expect(totals.totalDecks).toBe(3)
     expect(totals.totalCards).toBe(4)
   })
 
-  it('counts only rooms whose every locus is reviewed; empty rooms never count', () => {
-    expect(computeTrainingTotals(rooms, loci).roomsCompleted).toBe(1)
+  it('counts only decks whose every card is reviewed; empty decks never count', () => {
+    expect(computeTrainingTotals(decks, cards).decksCompleted).toBe(1)
   })
 
-  it('is all-zero with no rooms or loci', () => {
+  it('is all-zero with no decks or cards', () => {
     expect(computeTrainingTotals([], [])).toEqual({
-      roomsCompleted: 0,
-      totalRooms: 0,
+      decksCompleted: 0,
+      totalDecks: 0,
       totalCards: 0,
     })
   })

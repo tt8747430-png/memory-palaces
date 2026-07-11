@@ -4,8 +4,8 @@ import { type BadgeInput, computeBadges, milestoneProgress, nextMilestone } from
 const ZERO: BadgeInput = {
   xp: 0,
   longestStreak: 0,
-  roomsCompleted: 0,
-  palaceCount: 0,
+  decksCompleted: 0,
+  deckCount: 0,
   totalCards: 0,
   trainingDayCount: 0,
 }
@@ -63,8 +63,8 @@ describe('nextMilestone', () => {
     const maxed = computeBadges({
       xp: 1_000_000,
       longestStreak: 1000,
-      roomsCompleted: 1000,
-      palaceCount: 1000,
+      decksCompleted: 1000,
+      deckCount: 1000,
       totalCards: 10000,
       trainingDayCount: 1000,
     })

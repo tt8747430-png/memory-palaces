@@ -1,7 +1,0 @@
-export type { Locus, MakeLocusInput, LocusChanges } from './model/types'
-export { makeLocus, updateLocus } from './model/types'
-export { createLocusStore } from './model/store'
-export type { LocusState, LocusStatus, LocusStore } from './model/store'
-export { LocusStoreContext, useLocusStore, useLocusStoreApi } from './model/context'
-export { selectLoci, selectIsReady, lociForRoom } from './model/selectors'
-export type { LocusRepository } from './api/locus-repository'

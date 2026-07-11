@@ -1,12 +1,12 @@
-import type { PalaceStore } from '@/entities/palace'
-import type { RoomStore } from '@/entities/room'
-import type { LocusStore } from '@/entities/locus'
+import type { FolderStore } from '@/entities/folder'
+import type { DeckStore } from '@/entities/deck'
+import type { CardStore } from '@/entities/card'
 import type { QuestionStore } from '@/entities/question'
 
 export interface ContentStores {
-  palaceStore: PalaceStore
-  roomStore: RoomStore
-  locusStore: LocusStore
+  folderStore: FolderStore
+  deckStore: DeckStore
+  cardStore: CardStore
   questionStore: QuestionStore
 }
 
@@ -14,12 +14,12 @@ async function removeEach(ids: string[], remove: (id: string) => Promise<void>):
   for (const id of ids) await remove(id)
 }
 
-/** Command — delete every palace and all of its rooms, loci, and questions. Children
- * are removed first because deleteRoom/deletePalace don't cascade. */
+/** Command — delete every folder and deck with all their cards and questions. Children are
+ * removed first so nothing is left pointing at a deleted parent. */
 export async function clearAllContent({
-  palaceStore,
-  roomStore,
-  locusStore,
+  folderStore,
+  deckStore,
+  cardStore,
   questionStore,
 }: ContentStores): Promise<void> {
   await removeEach(
@@ -27,15 +27,15 @@ export async function clearAllContent({
     (id) => questionStore.getState().remove(id),
   )
   await removeEach(
-    locusStore.getState().loci.map((l) => l.id),
-    (id) => locusStore.getState().remove(id),
+    cardStore.getState().cards.map((c) => c.id),
+    (id) => cardStore.getState().remove(id),
   )
   await removeEach(
-    roomStore.getState().rooms.map((r) => r.id),
-    (id) => roomStore.getState().remove(id),
+    deckStore.getState().decks.map((d) => d.id),
+    (id) => deckStore.getState().remove(id),
   )
   await removeEach(
-    palaceStore.getState().palaces.map((p) => p.id),
-    (id) => palaceStore.getState().remove(id),
+    folderStore.getState().folders.map((f) => f.id),
+    (id) => folderStore.getState().remove(id),
   )
 }

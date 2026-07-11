@@ -30,7 +30,7 @@ import { QuickActionsSheet } from './QuickActionsSheet'
 import type { QuickActionsModel } from './QuickActionRows'
 import { InStudyEditor } from './InStudyEditor'
 import { CompletionOverlay } from './CompletionOverlay'
-import type { Grade, LocusChanges, SessionSummary, StudyCard, StudyPrefs } from '../model/types'
+import type { Grade, CardChanges, SessionSummary, StudyCard, StudyPrefs } from '../model/types'
 
 export interface FlashcardsPanelProps {
   cards: StudyCard[]
@@ -53,11 +53,11 @@ export interface FlashcardsPanelProps {
   onWordSpacesChange?: (value: boolean) => void
   /** Persist the shake-to-undo toggle (global preference). */
   onShakeToUndoChange?: (value: boolean) => void
-  onGrade: (locusId: string, grade: Grade) => void
+  onGrade: (cardId: string, grade: Grade) => void
   /** Reverse a grade's SRS write on undo, restoring the card's prior schedule. */
-  onRestoreCard?: (locusId: string, srs: SrsState | undefined) => void
-  onToggleFlag?: (locusId: string) => void
-  onEditCard?: (locusId: string, changes: LocusChanges) => void
+  onRestoreCard?: (cardId: string, srs: SrsState | undefined) => void
+  onToggleFlag?: (cardId: string) => void
+  onEditCard?: (cardId: string, changes: CardChanges) => void
   onBack: () => void
   onComplete: (summary: SessionSummary) => void
   now?: number
@@ -69,7 +69,7 @@ const COMPLETE_DELAY_MS = 2200
 /** The undo trail parallel to the session machine's history — one entry per grade/skip. A
  * grade remembers the card's prior schedule so undo can reverse the SRS write; a skip has
  * nothing to reverse. Popped in lockstep with the machine's `undo`. */
-type UndoEntry = { locusId: string; prevSrs: SrsState | undefined } | null
+type UndoEntry = { cardId: string; prevSrs: SrsState | undefined } | null
 
 /** The study surface (ADR-0005): a spaced-review session over a scope's cards. Opens in review
  * (due cards lead); grading runs through the four-grade SM-2 control and the host's `gradeCard`
@@ -112,13 +112,13 @@ export function FlashcardsPanel({
 
   const activeSwipe: FlashcardSwipeConfig = swipeByMode[mode]
 
-  const loci = useMemo(() => cards.map((card) => card.locus), [cards])
-  const byId = useMemo(() => new Map(cards.map((card) => [card.locus.id, card])), [cards])
-  const counts = useMemo(() => computeScopeCounts(loci, now), [loci, now])
+  const cardEntities = useMemo(() => cards.map((card) => card.card), [cards])
+  const byId = useMemo(() => new Map(cards.map((card) => [card.card.id, card])), [cards])
+  const counts = useMemo(() => computeScopeCounts(cardEntities, now), [cardEntities, now])
 
   // Build the review id list for a scope — due cards lead, optionally shuffled.
   const buildIds = (activeScope: Scope): string[] =>
-    shuffleFirstDue(applyScope(loci, activeScope, now), now, prefs.shuffle)
+    shuffleFirstDue(applyScope(cardEntities, activeScope, now), now, prefs.shuffle)
 
   const [state, dispatch] = useReducer(sessionReducer, undefined, () =>
     initSession({ ids: buildIds({ kind: 'all' }) }),
@@ -160,8 +160,8 @@ export function FlashcardsPanel({
 
   const canEdit = Boolean(onEditCard || onToggleFlag)
 
-  const prompt = card ? (prefs.direction === 'front' ? card.locus.front : card.locus.back) : ''
-  const answer = card ? (prefs.direction === 'front' ? card.locus.back : card.locus.front) : ''
+  const prompt = card ? (prefs.direction === 'front' ? card.card.front : card.card.back) : ''
+  const answer = card ? (prefs.direction === 'front' ? card.card.back : card.card.front) : ''
 
   // Auto-speak the visible face when text-to-speech is on: the prompt as the card arrives, the
   // answer when it flips. Deliberately keyed on `id`/`flipped` only.
@@ -176,7 +176,7 @@ export function FlashcardsPanel({
 
   const applyGrade = (grade: Grade) => {
     if (!id || !card) return
-    undoTrail.current.push({ locusId: id, prevSrs: card.locus.srs })
+    undoTrail.current.push({ cardId: id, prevSrs: card.card.srs })
     onGrade(id, grade)
     dispatch({ type: 'grade', grade })
   }
@@ -191,7 +191,7 @@ export function FlashcardsPanel({
     if (!canUndo(state)) return
     const entry = undoTrail.current.pop() ?? null
     dispatch({ type: 'undo' })
-    if (entry) onRestoreCard?.(entry.locusId, entry.prevSrs)
+    if (entry) onRestoreCard?.(entry.cardId, entry.prevSrs)
     tick()
   }
 
@@ -241,13 +241,13 @@ export function FlashcardsPanel({
     if (state.status !== 'review') return tally
     for (const queuedId of state.queue) {
       const queued = byId.get(queuedId)
-      if (queued) tally[srsStatus(queued.locus.srs)] += 1
+      if (queued) tally[srsStatus(queued.card.srs)] += 1
     }
     return tally
   }, [state, byId])
 
   const quick: QuickActionsModel = {
-    flagged: Boolean(card?.locus.flagged),
+    flagged: Boolean(card?.card.flagged),
     canEdit,
     canSpeak,
     canUndo: canUndo(state),
@@ -265,7 +265,7 @@ export function FlashcardsPanel({
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-5 py-3">
         {card ? (
           <StudyDeck
-            key={`${mode}-${card.locus.id}`}
+            key={`${mode}-${card.card.id}`}
             card={card}
             nextCard={nextCard}
             mode={mode}
@@ -312,7 +312,7 @@ export function FlashcardsPanel({
                 >
                   <GradeButtons
                     className="h-full"
-                    srs={card.locus.srs}
+                    srs={card.card.srs}
                     now={now}
                     onGrade={applyGrade}
                   />
@@ -326,7 +326,7 @@ export function FlashcardsPanel({
                   transition={crossfade}
                   className="flex h-full items-center justify-center"
                 >
-                  <RemainingCounts remaining={remaining} current={srsStatus(card.locus.srs)} />
+                  <RemainingCounts remaining={remaining} current={srsStatus(card.card.srs)} />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -338,9 +338,9 @@ export function FlashcardsPanel({
       {canEdit && onEditCard && card ? (
         <InStudyEditor
           open={editing}
-          locus={card.locus}
+          card={card.card}
           onClose={() => setEditing(false)}
-          onSave={(changes) => onEditCard(card.locus.id, changes)}
+          onSave={(changes) => onEditCard(card.card.id, changes)}
         />
       ) : null}
 
@@ -379,7 +379,9 @@ export function FlashcardsPanel({
         onMode={(nextMode) => onModeChange?.(nextMode)}
       />
 
-      {card ? <QuickActionsSheet open={quickOpen} onClose={() => setQuickOpen(false)} {...quick} /> : null}
+      {card ? (
+        <QuickActionsSheet open={quickOpen} onClose={() => setQuickOpen(false)} {...quick} />
+      ) : null}
 
       <AnimatePresence>
         {completed ? <CompletionOverlay summary={summaryNow} onDone={handoff} /> : null}

@@ -2,26 +2,20 @@ import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronLeft, Layers } from 'lucide-react'
 import {
-  lociForRoom,
-  selectIsReady as selectLociReady,
-  selectLoci,
-  useLocusStore,
-  useLocusStoreApi,
-} from '@/entities/locus'
+  selectCards,
+  selectIsReady as selectCardsReady,
+  useCardStore,
+  useCardStoreApi,
+} from '@/entities/card'
 import {
-  roomsForPalace,
-  selectIsReady as selectRoomsReady,
-  selectRooms,
-  useRoomStore,
-  useRoomStoreApi,
-} from '@/entities/room'
-import {
-  type Palace,
-  type PalaceSettings,
-  selectIsReady as selectPalacesReady,
-  usePalaceStore,
-  usePalaceStoreApi,
-} from '@/entities/palace'
+  type Deck,
+  type DeckSettings,
+  DEFAULT_DECK_SETTINGS,
+  selectDecks,
+  selectIsReady as selectDecksReady,
+  useDeckStore,
+  useDeckStoreApi,
+} from '@/entities/deck'
 import {
   type FlashcardSwipeByMode,
   resolveStudyMode,
@@ -31,17 +25,18 @@ import {
   usePreferencesStore,
   usePreferencesStoreApi,
 } from '@/entities/preferences'
+import { cardsInSubtree, deckPath, resolveDeckSettings } from '@/shared/lib'
 import { normalizeFlashcardSwipe } from '@/shared/config/flashcard-swipe'
-import { editLocus } from '@/features/locus'
-import { editPalace } from '@/features/palace'
+import { editCard } from '@/features/card'
+import { editDeck } from '@/features/deck'
 import { gradeCard, restoreSchedule } from '@/features/review'
 import { setPreferences } from '@/features/preferences'
 import { type StudyCard, type StudyPrefs, FlashcardsPanel } from '@/widgets/study-session'
 import { useSessionReward } from '@/widgets/session-reward'
 import { AppScreen, Button, IconButton, ScreenHeader } from '@/shared/ui'
 
-/** Study a single room's cards, or a whole palace's cards aggregated across its rooms. */
-export type StudyScope = { kind: 'room'; roomId: string } | { kind: 'palace'; palaceId: string }
+/** Study a deck's whole subtree: its own cards plus every descendant subdeck's (ADR-0003). */
+export type StudyScope = { kind: 'deck'; deckId: string }
 
 export interface StudyCardsPageProps {
   scope: StudyScope
@@ -49,7 +44,7 @@ export interface StudyCardsPageProps {
   onBack?: () => void
 }
 
-function studyPrefsFromSettings(settings: PalaceSettings): StudyPrefs {
+function studyPrefsFromSettings(settings: DeckSettings): StudyPrefs {
   return {
     direction: settings.studyDirection,
     shuffle: settings.shuffleCards,
@@ -57,87 +52,68 @@ function studyPrefsFromSettings(settings: PalaceSettings): StudyPrefs {
   }
 }
 
-/** The one study surface (ADR-0005): a scope's loci worked as a single spaced-review deck.
- * Opens in the last-used mode (persisted globally); every mode grades through `gradeCard`,
- * so SRS schedules survive offline. Flashcard orientation/shuffle/speech seed from and persist
- * to the palace; mode and shake-to-undo are recorded to global preferences. The Type keyboard
- * simply overlays the bottom — the card's own body scrolls to keep the input in view. */
+/** The one study surface: a deck subtree's cards worked as a single spaced-review session.
+ * Opens in the last-used mode (persisted globally); every mode grades through `gradeCard`, so
+ * SRS schedules survive offline. Orientation/shuffle/speech seed from and persist to the deck's
+ * resolved settings; mode and shake-to-undo are recorded to global preferences. */
 export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
   const { t } = useTranslation()
-  const locusStore = useLocusStoreApi()
-  const roomStore = useRoomStoreApi()
-  const palaceStore = usePalaceStoreApi()
+  const deckStore = useDeckStoreApi()
+  const cardStore = useCardStoreApi()
   const preferencesStore = usePreferencesStoreApi()
   const reward = useSessionReward()
 
   useEffect(() => {
-    locusStore.getState().start()
-    roomStore.getState().start()
-    palaceStore.getState().start()
+    deckStore.getState().start()
+    cardStore.getState().start()
     preferencesStore.getState().start()
-  }, [locusStore, roomStore, palaceStore, preferencesStore])
+  }, [deckStore, cardStore, preferencesStore])
 
-  const allLoci = useLocusStore(selectLoci)
-  const allRooms = useRoomStore(selectRooms)
-  const palaces = usePalaceStore((state) => state.palaces)
+  const decks = useDeckStore(selectDecks)
+  const allCards = useCardStore(selectCards)
   const preferences = usePreferencesStore(selectEffectivePreferences)
-  const lociReady = useLocusStore(selectLociReady)
-  const roomsReady = useRoomStore(selectRoomsReady)
-  const palacesReady = usePalaceStore(selectPalacesReady)
+  const decksReady = useDeckStore(selectDecksReady)
+  const cardsReady = useCardStore(selectCardsReady)
   const prefsReady = usePreferencesStore(selectPrefsReady)
-  // Wait on preferences too, so the surface opens straight into the persisted mode.
-  const ready = lociReady && roomsReady && palacesReady && prefsReady
+  const ready = decksReady && cardsReady && prefsReady
 
-  // The mode IS the persisted preference — last-used, resumed on open, clamped in case a
-  // retired value survived in storage.
   const mode: StudyMode = resolveStudyMode(preferences.studyMode)
-  // Normalize the stored map to the per-mode shape so an indexed lookup is always safe.
   const swipeByMode = useMemo(
     () => normalizeFlashcardSwipe(preferences.flashcardSwipe),
     [preferences.flashcardSwipe],
   )
 
-  const room = useMemo(
-    () =>
-      scope.kind === 'room'
-        ? allRooms.find((candidate) => candidate.id === scope.roomId)
-        : undefined,
-    [allRooms, scope],
+  const deck = useMemo(
+    () => decks.find((candidate) => candidate.id === scope.deckId),
+    [decks, scope.deckId],
   )
-  const palaceId = scope.kind === 'palace' ? scope.palaceId : room?.palaceId
-  const palace = useMemo(
-    () => palaces.find((candidate) => candidate.id === palaceId),
-    [palaces, palaceId],
+
+  const settings = useMemo(
+    () => resolveDeckSettings(decks, scope.deckId, DEFAULT_DECK_SETTINGS),
+    [decks, scope.deckId],
   )
 
   const cards = useMemo<StudyCard[]>(() => {
-    if (!palace) return []
-    if (scope.kind === 'room') {
-      const roomTitle = room?.title ?? ''
-      return lociForRoom(allLoci, scope.roomId).map((locus) => ({
-        locus,
-        palaceName: palace.name,
-        roomTitle,
-      }))
-    }
-    return roomsForPalace(allRooms, scope.palaceId).flatMap((each) =>
-      lociForRoom(allLoci, each.id).map((locus) => ({
-        locus,
-        palaceName: palace.name,
-        roomTitle: each.title,
-      })),
-    )
-  }, [palace, room, allRooms, allLoci, scope])
+    if (!deck) return []
+    const subtree = cardsInSubtree(decks, allCards, scope.deckId)
+    return subtree.map((card) => ({
+      card,
+      deckName: deck.name,
+      deckPath: deckPath(decks, card.deckId)
+        .map((each) => each.name)
+        .join(' › '),
+    }))
+  }, [deck, decks, allCards, scope.deckId])
 
   const handleGrade = (id: string, grade: Parameters<typeof gradeCard>[2]) => {
-    void gradeCard(locusStore, id, grade)
+    void gradeCard(cardStore, id, grade)
   }
   const handleToggleFlag = (id: string) => {
-    const locus = locusStore.getState().loci.find((candidate) => candidate.id === id)
-    if (locus) void editLocus(locusStore, id, { flagged: !locus.flagged })
+    const card = cardStore.getState().cards.find((candidate) => candidate.id === id)
+    if (card) void editCard(cardStore, id, { flagged: !card.flagged })
   }
-  const persistStudyPrefs = (target: Palace) => (prefs: StudyPrefs) => {
-    void editPalace(palaceStore, target.id, {
+  const persistStudyPrefs = (target: Deck) => (prefs: StudyPrefs) => {
+    void editDeck(deckStore, target.id, {
       settings: {
         ...target.settings,
         studyDirection: prefs.direction,
@@ -162,8 +138,7 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
     )
   }
 
-  const missing = scope.kind === 'room' ? !room : !palace
-  if (missing || !palace) {
+  if (!deck) {
     return (
       <AppScreen
         header={
@@ -173,12 +148,14 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
     )
   }
 
-  const title = scope.kind === 'room' ? (room?.title ?? palace.name) : palace.name
-  const subtitle = scope.kind === 'room' ? palace.name : t('study.palaceScope')
-  const scopeKey = scope.kind === 'room' ? scope.roomId : scope.palaceId
+  const title = deck.name
+  const subtitle = deckPath(decks, deck.id)
+    .slice(0, -1)
+    .map((each) => each.name)
+    .join(' › ')
   const back = onBack ?? (() => {})
 
-  // A scope with no authored cards: a real empty state, not a deck over nothing.
+  // A deck with no authored cards anywhere in its subtree: a real empty state.
   if (cards.length === 0) {
     return (
       <div className="relative mx-auto flex h-full w-full max-w-[430px] flex-col items-center justify-center gap-5 px-6 text-center">
@@ -213,20 +190,19 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
               <p className="truncate text-[length:var(--p-text-label)]">{subtitle}</p>
             ) : null}
           </div>
-          {/* Options moved onto the card's footer gear; a spacer keeps the title centered. */}
           <div className="size-10 shrink-0" aria-hidden />
         </div>
       </div>
 
       <FlashcardsPanel
-        key={`flashcards-${scopeKey}`}
+        key={`flashcards-${scope.deckId}`}
         cards={cards}
-        prefs={studyPrefsFromSettings(palace.settings)}
+        prefs={studyPrefsFromSettings(settings)}
         mode={mode}
         wordSpaces={preferences.studyWordSpaces}
         shakeToUndo={preferences.shakeToUndo}
         swipeByMode={swipeByMode}
-        onPrefsChange={persistStudyPrefs(palace)}
+        onPrefsChange={persistStudyPrefs(deck)}
         onSwipeByModeChange={persistSwipe}
         onModeChange={changeMode}
         onWordSpacesChange={persistWordSpaces}
@@ -234,9 +210,9 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
           void setPreferences(preferencesStore, { shakeToUndo: value })
         }
         onGrade={handleGrade}
-        onRestoreCard={(id, srs) => void restoreSchedule(locusStore, id, srs)}
+        onRestoreCard={(id, srs) => void restoreSchedule(cardStore, id, srs)}
         onToggleFlag={handleToggleFlag}
-        onEditCard={(id, changes) => void editLocus(locusStore, id, changes)}
+        onEditCard={(id, changes) => void editCard(cardStore, id, changes)}
         onBack={back}
         onComplete={(summary) => {
           void reward({ kind: 'study', graded: summary.graded })

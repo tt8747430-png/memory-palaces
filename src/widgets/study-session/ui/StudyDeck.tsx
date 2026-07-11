@@ -144,9 +144,9 @@ export function StudyDeck({
   const holdTimer = useRef<number | undefined>(undefined)
   const heldRef = useRef(false)
 
-  const locus = card.locus
-  const prompt = direction === 'front' ? locus.front : locus.back
-  const answer = recallAnswer(prompt, direction === 'front' ? locus.back : locus.front)
+  const cardEntity = card.card
+  const prompt = direction === 'front' ? cardEntity.front : cardEntity.back
+  const answer = recallAnswer(prompt, direction === 'front' ? cardEntity.back : cardEntity.front)
 
   // A solved Type/Rebuild reveals the grades without turning the card, so the reconstruction
   // stays in view; tapping then peeks the answer face. Both reset when the card or mode changes.
@@ -155,7 +155,7 @@ export function StudyDeck({
   useEffect(() => {
     setSolved(false)
     setPeek(false)
-  }, [locus.id, mode])
+  }, [cardEntity.id, mode])
   const showBack = solved ? peek : flipped
 
   // Mode-specific swipe mechanics published by the active face (Blur hide, Type next word, …).
@@ -375,7 +375,7 @@ export function StudyDeck({
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
-            key={locus.id}
+            key={cardEntity.id}
             initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.95 }}

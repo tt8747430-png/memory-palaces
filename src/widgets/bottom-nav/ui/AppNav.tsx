@@ -7,12 +7,12 @@ import { type RoutePath, ROUTES } from '@/shared/config/routes'
 import { cn } from '@/shared/lib'
 
 interface Tab {
-  to: RoutePath
+  to: typeof ROUTES.home | typeof ROUTES.profile
   Icon: ComponentType<{ className?: string }>
   labelKey: 'nav.home' | 'nav.profile'
 }
 
-// Home is the palaces library now, so the nav is two destinations: the library and you.
+// Home is the deck library now, so the nav is two destinations: the library and you.
 const TABS: Tab[] = [
   { to: ROUTES.home, Icon: House, labelKey: 'nav.home' },
   { to: ROUTES.profile, Icon: User, labelKey: 'nav.profile' },

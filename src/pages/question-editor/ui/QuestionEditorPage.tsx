@@ -2,42 +2,48 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Check } from 'lucide-react'
-import {
-  selectQuestions,
-  useQuestionStore,
-  useQuestionStoreApi,
-} from '@/entities/question'
-import { selectRooms, useRoomStore, useRoomStoreApi } from '@/entities/room'
+import { selectQuestions, useQuestionStore, useQuestionStoreApi } from '@/entities/question'
+import { selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
 import { createQuestion, editQuestion } from '@/features/question'
 import { AppScreen, Button, ScreenHeader } from '@/shared/ui'
-import { buildQuestionData, isQuestionValid, MAX_OPTIONS, QuestionFields } from '@/widgets/loci-editor'
+import {
+  buildQuestionData,
+  isQuestionValid,
+  MAX_OPTIONS,
+  QuestionFields,
+} from '@/widgets/content-editor'
 
 export interface QuestionEditorPageProps {
-  roomId: string
+  deckId: string
   /** Present in edit mode; omit to create. */
   questionId?: string
   onBack: () => void
-  /** Return to the room after a save commits. */
+  /** Return to the deck after a save commits. */
   onDone: () => void
 }
 
 /** Full-screen create/edit for a multiple-choice question — prompt, 2–6 options with a
  * correct marker, and an optional explanation. The primary path for adding questions (the
  * in-editor sheet stays only as a standalone fallback). */
-export function QuestionEditorPage({ roomId, questionId, onBack, onDone }: QuestionEditorPageProps) {
+export function QuestionEditorPage({
+  deckId,
+  questionId,
+  onBack,
+  onDone,
+}: QuestionEditorPageProps) {
   const { t } = useTranslation()
   const questionStore = useQuestionStoreApi()
-  const roomStore = useRoomStoreApi()
+  const deckStore = useDeckStoreApi()
   const questions = useQuestionStore(selectQuestions)
-  const rooms = useRoomStore(selectRooms)
+  const decks = useDeckStore(selectDecks)
 
   useEffect(() => {
     questionStore.getState().start()
-    roomStore.getState().start()
-  }, [questionStore, roomStore])
+    deckStore.getState().start()
+  }, [questionStore, deckStore])
 
   const editing = questionId ? (questions.find((q) => q.id === questionId) ?? null) : null
-  const room = rooms.find((r) => r.id === roomId)
+  const deck = decks.find((d) => d.id === deckId)
 
   const [prompt, setPrompt] = useState('')
   const [options, setOptions] = useState<string[]>(['', ''])
@@ -59,8 +65,7 @@ export function QuestionEditorPage({ roomId, questionId, onBack, onDone }: Quest
 
   const setOption = (i: number, value: string) =>
     setOptions((prev) => prev.map((o, idx) => (idx === i ? value : o)))
-  const addOption = () =>
-    setOptions((prev) => (prev.length < MAX_OPTIONS ? [...prev, ''] : prev))
+  const addOption = () => setOptions((prev) => (prev.length < MAX_OPTIONS ? [...prev, ''] : prev))
   const removeOption = (i: number) => {
     setOptions((prev) => prev.filter((_, idx) => idx !== i))
     setCorrect((prev) => (i === prev ? 0 : i < prev ? prev - 1 : prev))
@@ -73,7 +78,7 @@ export function QuestionEditorPage({ roomId, questionId, onBack, onDone }: Quest
       await editQuestion(questionStore, editing.id, data)
       toast.success(t('questions.editor.updated'))
     } else {
-      await createQuestion(questionStore, roomId, data)
+      await createQuestion(questionStore, deckId, data)
       toast.success(t('questions.editor.added'))
     }
     onDone()
@@ -85,9 +90,9 @@ export function QuestionEditorPage({ roomId, questionId, onBack, onDone }: Quest
       header={
         <ScreenHeader
           title={editing ? t('questions.editor.editTitle') : t('questions.editor.newTitle')}
-          subtitle={room?.title}
+          subtitle={deck?.name}
           onBack={onBack}
-          backLabel={t('roomHub.back')}
+          backLabel={t('common.back')}
         />
       }
     >

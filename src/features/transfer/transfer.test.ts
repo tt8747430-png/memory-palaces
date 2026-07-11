@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@/shared/api'
-import { createLocusStore, type Locus, makeLocus } from '@/entities/locus'
+import { createCardStore, type Card, makeCard } from '@/entities/card'
 import { jsonStrategy } from './json-strategy'
 import { csvStrategy } from './csv-strategy'
-import { exportLoci } from './export-content'
-import { importLoci } from './import-content'
+import { exportCards } from './export-content'
+import { importCards } from './import-content'
 
 const card = (front: string, back: string, hint?: string) => ({ front, back, hint })
 
@@ -38,36 +38,36 @@ describe('csvStrategy', () => {
   })
 })
 
-describe('exportLoci', () => {
+describe('exportCards', () => {
   it('serializes a room’s loci as portable cards', () => {
-    const loci: Locus[] = [
-      makeLocus({
+    const loci: Card[] = [
+      makeCard({
         id: 'l1',
         createdAt: new Date(0).toISOString(),
-        roomId: 'r1',
+        deckId: 'd1',
         front: 'A',
         back: 'B',
       }),
     ]
-    const text = exportLoci(loci, jsonStrategy)
+    const text = exportCards(loci, jsonStrategy)
     expect(jsonStrategy.parse(text)).toEqual([
       { front: 'A', back: 'B', hint: undefined, tip: undefined },
     ])
   })
 })
 
-describe('importLoci', () => {
+describe('importCards', () => {
   it('creates a locus per parsed card, scoped to the room and persisted', async () => {
-    const repo = new InMemoryRepository<Locus>()
-    const store = createLocusStore(repo)
+    const repo = new InMemoryRepository<Card>()
+    const store = createCardStore(repo)
     store.getState().start()
 
-    const created = await importLoci(store, 'r1', 'Mihi,to me\nTibi,to you', csvStrategy)
+    const created = await importCards(store, 'd1', 'Mihi,to me\nTibi,to you', csvStrategy)
 
     expect(created).toHaveLength(2)
-    expect(store.getState().loci.map((l) => [l.front, l.back, l.roomId])).toEqual([
-      ['Mihi', 'to me', 'r1'],
-      ['Tibi', 'to you', 'r1'],
+    expect(store.getState().cards.map((l) => [l.front, l.back, l.deckId])).toEqual([
+      ['Mihi', 'to me', 'd1'],
+      ['Tibi', 'to you', 'd1'],
     ])
     expect(await repo.getAll()).toHaveLength(2)
   })

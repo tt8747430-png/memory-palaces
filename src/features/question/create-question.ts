@@ -1,7 +1,7 @@
 import {
   makeQuestion,
   type Question,
-  questionsForRoom,
+  questionsForDeck,
   type QuestionStore,
   selectQuestions,
 } from '@/entities/question'
@@ -14,19 +14,19 @@ export interface CreateQuestionInput {
   explanation?: string
 }
 
-/** Command — add a question to a room. The single write-path (UI + future Tutor); new
- * questions append to the end of the room's order. */
+/** Command — add a question to a deck. The single write-path (UI + future Tutor); new
+ * questions append to the end of the deck's order. */
 export async function createQuestion(
   store: QuestionStore,
-  roomId: string,
+  deckId: string,
   input: CreateQuestionInput,
 ): Promise<Question> {
-  const order = nextOrder(questionsForRoom(selectQuestions(store.getState()), roomId))
+  const order = nextOrder(questionsForDeck(selectQuestions(store.getState()), deckId))
   const question = makeQuestion({
     ...input,
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
-    roomId,
+    deckId,
     order,
   })
   await store.getState().save(question)

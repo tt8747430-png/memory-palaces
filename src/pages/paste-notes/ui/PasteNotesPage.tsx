@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { BookOpen, List, Sparkles } from 'lucide-react'
 import { cn, parseDelimitedNotes, parseVerses } from '@/shared/lib'
 import { AppScreen, Button, ScreenHeader, TextField, Textarea } from '@/shared/ui'
-import { useImportDraft } from '@/widgets/loci-editor'
+import { useImportDraft } from '@/widgets/content-editor'
 
 export interface PasteNotesPageProps {
   onBack: () => void
@@ -54,7 +54,9 @@ export function PasteNotesPage({ onBack, onReview }: PasteNotesPageProps) {
   return (
     <AppScreen
       fill
-      header={<ScreenHeader title={t('loci.paste.title')} onBack={onBack} backLabel={t('roomHub.back')} />}
+      header={
+        <ScreenHeader title={t('loci.paste.title')} onBack={onBack} backLabel={t('roomHub.back')} />
+      }
       footer={
         <div className="bg-glass shrink-0 border-t border-white/40 px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-10px_30px_oklch(var(--p-tint-navy)/0.1)]">
           <Button size="lg" className="w-full" disabled={cards.length === 0} onClick={create}>
@@ -95,7 +97,9 @@ export function PasteNotesPage({ onBack, onReview }: PasteNotesPageProps) {
           <Textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder={kind === 'bible' ? t('loci.paste.biblePlaceholder') : t('loci.paste.notesPlaceholder')}
+            placeholder={
+              kind === 'bible' ? t('loci.paste.biblePlaceholder') : t('loci.paste.notesPlaceholder')
+            }
             rows={8}
             className="min-h-[184px] font-mono text-[length:var(--p-text-label)] leading-relaxed"
             autoFocus

@@ -74,12 +74,9 @@ export {
 } from './streak'
 export {
   levelFromXp,
-  isLocusReviewed,
-  roomProgress,
-  isRoomCompleted,
+  isCardReviewed,
+  isDeckCompleted,
   computeTrainingTotals,
-  palaceProgress,
-  isRoomUnlocked,
   cardMaturityCounts,
   type LevelInfo,
   type TrainingTotals,
@@ -111,13 +108,20 @@ export {
   type TypedWordStatus,
   type RecallTypingResult,
 } from './recall'
-export {
-  getDueLoci,
-  countDueLoci,
-  countDuePerPalace,
-  type DueCard,
-  type DuePalace,
-  type DueRoom,
-  type DueLocus,
-} from './dueCards'
 export { studyOverview, type StudyOverview } from './study-overview'
+export {
+  childDecks,
+  rootDecks,
+  decksInFolder,
+  subtreeDeckIds,
+  subtreeDecks,
+  deckPath,
+  isDescendantOrSelf,
+  canReparent,
+  resolveDeckSettings,
+  cardsInSubtree,
+  countDueInSubtree,
+  dueCountsPerDeck,
+  type TreeDeck,
+  type TreeCard,
+} from './deck-tree'

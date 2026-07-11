@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@/shared/api'
-import { createPalaceStore, makePalace, type Palace } from '@/entities/palace'
-import { createRoomStore, makeRoom, type Room } from '@/entities/room'
-import { createLocusStore, type Locus, makeLocus } from '@/entities/locus'
+import { createFolderStore, makeFolder, type Folder } from '@/entities/folder'
+import { createDeckStore, makeDeck, type Deck } from '@/entities/deck'
+import { createCardStore, type Card, makeCard } from '@/entities/card'
 import { createQuestionStore, makeQuestion, type Question } from '@/entities/question'
 import { createProgressStore, makeProgress, type Progress } from '@/entities/progress'
 import { createPreferencesStore, makePreferences, type Preferences } from '@/entities/preferences'
@@ -17,9 +17,9 @@ import { exportProgress, importProgress, InvalidImportError, type TransferStores
 const at = (ms: number) => new Date(ms).toISOString()
 
 interface Seed {
-  palaces?: Palace[]
-  rooms?: Room[]
-  loci?: Locus[]
+  folders?: Folder[]
+  decks?: Deck[]
+  cards?: Card[]
   questions?: Question[]
   progress?: Progress[]
   preferences?: Preferences[]
@@ -29,9 +29,9 @@ interface Seed {
 
 function buildStores(seed: Seed = {}): TransferStores {
   const stores: TransferStores = {
-    palaceStore: createPalaceStore(new InMemoryRepository<Palace>(seed.palaces ?? [])),
-    roomStore: createRoomStore(new InMemoryRepository<Room>(seed.rooms ?? [])),
-    locusStore: createLocusStore(new InMemoryRepository<Locus>(seed.loci ?? [])),
+    folderStore: createFolderStore(new InMemoryRepository<Folder>(seed.folders ?? [])),
+    deckStore: createDeckStore(new InMemoryRepository<Deck>(seed.decks ?? [])),
+    cardStore: createCardStore(new InMemoryRepository<Card>(seed.cards ?? [])),
     questionStore: createQuestionStore(new InMemoryRepository<Question>(seed.questions ?? [])),
     progressStore: createProgressStore(new InMemoryRepository<Progress>(seed.progress ?? [])),
     preferencesStore: createPreferencesStore(
@@ -49,14 +49,14 @@ function buildStores(seed: Seed = {}): TransferStores {
 describe('exportProgress / importProgress', () => {
   it('round-trips all data into fresh stores', async () => {
     const source = buildStores({
-      palaces: [makePalace({ id: 'p1', createdAt: at(0), name: 'Home' })],
-      rooms: [makeRoom({ id: 'r1', createdAt: at(0), palaceId: 'p1', title: 'Hall', order: 0 })],
-      loci: [makeLocus({ id: 'l1', createdAt: at(0), roomId: 'r1', front: 'a', back: 'b' })],
+      folders: [makeFolder({ id: 'f1', createdAt: at(0), name: 'Bible', color: '', icon: '📁' })],
+      decks: [makeDeck({ id: 'd1', createdAt: at(0), name: 'Home' })],
+      cards: [makeCard({ id: 'c1', createdAt: at(0), deckId: 'd1', front: 'a', back: 'b' })],
       questions: [
         makeQuestion({
           id: 'q1',
           createdAt: at(0),
-          roomId: 'r1',
+          deckId: 'd1',
           prompt: '?',
           options: ['a', 'b'],
           correctAnswer: 0,
@@ -72,8 +72,9 @@ describe('exportProgress / importProgress', () => {
     const target = buildStores()
     await importProgress(json, target)
 
-    expect(target.palaceStore.getState().palaces).toHaveLength(1)
-    expect(target.locusStore.getState().loci[0]?.front).toBe('a')
+    expect(target.deckStore.getState().decks).toHaveLength(1)
+    expect(target.folderStore.getState().folders).toHaveLength(1)
+    expect(target.cardStore.getState().cards[0]?.front).toBe('a')
     expect(target.questionStore.getState().questions).toHaveLength(1)
     expect(target.progressStore.getState().progress?.xp).toBe(120)
     expect(target.profileStore.getState().profile?.name).toBe('Ada')

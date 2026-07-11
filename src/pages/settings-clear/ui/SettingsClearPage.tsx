@@ -16,7 +16,7 @@ type Target = 'palaces' | 'stats' | 'notifications' | 'all'
  * apart so the heaviest action is never a mis-tap away from the lighter ones. */
 export function SettingsClearPage({ onBack }: SettingsClearPageProps) {
   const { t } = useTranslation()
-  const { counts, clearPalaces, resetStats, clearNotificationHistory, resetEverything } =
+  const { counts, clearDecks, resetStats, clearNotificationHistory, resetEverything } =
     useClearData()
   const [pending, setPending] = useState<Target | null>(null)
 
@@ -34,12 +34,12 @@ export function SettingsClearPage({ onBack }: SettingsClearPageProps) {
       label: t('settings.clearScreen.palaces'),
       hint: t('settings.clearScreen.palacesHint'),
       value: t(
-        counts.palaces === 1
+        counts.decks === 1
           ? 'settings.clearScreen.palacesCountOne'
           : 'settings.clearScreen.palacesCountOther',
-        { count: counts.palaces },
+        { count: counts.decks },
       ),
-      disabled: counts.palaces === 0,
+      disabled: counts.decks === 0,
     },
     {
       id: 'stats',
@@ -70,7 +70,7 @@ export function SettingsClearPage({ onBack }: SettingsClearPageProps) {
   ]
 
   const allEmpty =
-    counts.palaces === 0 && counts.days === 0 && counts.xp === 0 && counts.notifications === 0
+    counts.decks === 0 && counts.days === 0 && counts.xp === 0 && counts.notifications === 0
 
   const targetLabel: Record<Target, string> = {
     palaces: t('settings.clearScreen.palaces'),
@@ -81,7 +81,7 @@ export function SettingsClearPage({ onBack }: SettingsClearPageProps) {
 
   const run = (target: Target) => {
     const actions: Record<Target, () => Promise<void>> = {
-      palaces: clearPalaces,
+      palaces: clearDecks,
       stats: resetStats,
       notifications: clearNotificationHistory,
       all: resetEverything,

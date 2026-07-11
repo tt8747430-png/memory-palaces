@@ -23,73 +23,52 @@ export function levelFromXp(xp: number): LevelInfo {
 
 type Reviewable = { srs?: SrsState }
 
-/** A locus counts as reviewed once it has left the "new" state. */
-export function isLocusReviewed(locus: Reviewable): boolean {
-  return (locus.srs?.reps ?? 0) > 0
+/** A card counts as reviewed once it has left the "new" state. */
+export function isCardReviewed(card: Reviewable): boolean {
+  return (card.srs?.reps ?? 0) > 0
 }
 
-export function roomProgress(loci: ReadonlyArray<Reviewable>): number {
-  if (loci.length === 0) return 0
-  const reviewed = loci.filter(isLocusReviewed).length
-  return Math.round((reviewed / loci.length) * 100)
-}
-
-export function isRoomCompleted(loci: ReadonlyArray<Reviewable>): boolean {
-  return loci.length > 0 && loci.every(isLocusReviewed)
+export function isDeckCompleted(cards: ReadonlyArray<Reviewable>): boolean {
+  return cards.length > 0 && cards.every(isCardReviewed)
 }
 
 export interface TrainingTotals {
-  roomsCompleted: number
-  totalRooms: number
+  decksCompleted: number
+  totalDecks: number
   totalCards: number
 }
 
 /**
- * Roll up training progress across a whole library. Takes minimal structural shapes —
- * rooms as `{ id }`, loci as `{ roomId, srs? }` — so it stays below the entity layer.
- * A room counts as completed only when every one of its loci is reviewed; empty rooms
- * never count (via `isRoomCompleted`).
+ * Roll up training progress across the whole library. Takes minimal structural shapes —
+ * decks as `{ id }`, cards as `{ deckId, srs? }` — so it stays below the entity layer.
+ * A deck counts as completed only when every one of its own cards is reviewed; empty decks
+ * never count (via `isDeckCompleted`).
  */
 export function computeTrainingTotals(
-  rooms: ReadonlyArray<{ id: string }>,
-  loci: ReadonlyArray<Reviewable & { roomId: string }>,
+  decks: ReadonlyArray<{ id: string }>,
+  cards: ReadonlyArray<Reviewable & { deckId: string }>,
 ): TrainingTotals {
-  const lociByRoom = new Map<string, Reviewable[]>()
-  for (const locus of loci) {
-    const group = lociByRoom.get(locus.roomId)
-    if (group) group.push(locus)
-    else lociByRoom.set(locus.roomId, [locus])
+  const cardsByDeck = new Map<string, Reviewable[]>()
+  for (const card of cards) {
+    const group = cardsByDeck.get(card.deckId)
+    if (group) group.push(card)
+    else cardsByDeck.set(card.deckId, [card])
   }
 
-  const roomsCompleted = rooms.filter((room) =>
-    isRoomCompleted(lociByRoom.get(room.id) ?? []),
+  const decksCompleted = decks.filter((deck) =>
+    isDeckCompleted(cardsByDeck.get(deck.id) ?? []),
   ).length
 
-  return { roomsCompleted, totalRooms: rooms.length, totalCards: loci.length }
-}
-
-export function palaceProgress(roomCompletions: ReadonlyArray<boolean>): number {
-  if (roomCompletions.length === 0) return 0
-  const done = roomCompletions.filter(Boolean).length
-  return Math.round((done / roomCompletions.length) * 100)
-}
-
-/**
- * Rooms unlock sequentially: the first is always open; each later room opens
- * once the previous one is complete. `roomCompletions` is ordered by room order.
- */
-export function isRoomUnlocked(index: number, roomCompletions: ReadonlyArray<boolean>): boolean {
-  if (index <= 0) return true
-  return roomCompletions[index - 1] === true
+  return { decksCompleted, totalDecks: decks.length, totalCards: cards.length }
 }
 
 /** Tally a card set by maturity bucket (independent of due-ness). */
-export function cardMaturityCounts(loci: ReadonlyArray<{ srs?: SrsState }>): {
+export function cardMaturityCounts(cards: ReadonlyArray<{ srs?: SrsState }>): {
   new: number
   learning: number
   known: number
 } {
   const counts = { new: 0, learning: 0, known: 0 }
-  for (const locus of loci) counts[srsStatus(locus.srs)] += 1
+  for (const card of cards) counts[srsStatus(card.srs)] += 1
   return counts
 }

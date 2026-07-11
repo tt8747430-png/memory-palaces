@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@/shared/api'
-import { createPalaceStore, makePalace, type Palace } from '@/entities/palace'
-import { createRoomStore, makeRoom, type Room } from '@/entities/room'
-import { createLocusStore, type Locus, makeLocus } from '@/entities/locus'
+import { createFolderStore, makeFolder, type Folder } from '@/entities/folder'
+import { createDeckStore, makeDeck, type Deck } from '@/entities/deck'
+import { createCardStore, type Card, makeCard } from '@/entities/card'
 import { createQuestionStore, makeQuestion, type Question } from '@/entities/question'
 import { createProgressStore, makeProgress, type Progress } from '@/entities/progress'
 import {
@@ -17,17 +17,17 @@ const at = (ms: number) => new Date(ms).toISOString()
 const NOW = Date.UTC(2026, 0, 1)
 
 function contentStores() {
-  const palaceStore = createPalaceStore(
-    new InMemoryRepository<Palace>([makePalace({ id: 'p1', createdAt: at(0), name: 'Home' })]),
-  )
-  const roomStore = createRoomStore(
-    new InMemoryRepository<Room>([
-      makeRoom({ id: 'r1', createdAt: at(0), palaceId: 'p1', title: 'Hall', order: 0 }),
+  const folderStore = createFolderStore(
+    new InMemoryRepository<Folder>([
+      makeFolder({ id: 'f1', createdAt: at(0), name: 'Bible', color: '', icon: '📁' }),
     ]),
   )
-  const locusStore = createLocusStore(
-    new InMemoryRepository<Locus>([
-      makeLocus({ id: 'l1', createdAt: at(0), roomId: 'r1', front: 'a', back: 'b' }),
+  const deckStore = createDeckStore(
+    new InMemoryRepository<Deck>([makeDeck({ id: 'd1', createdAt: at(0), name: 'Home' })]),
+  )
+  const cardStore = createCardStore(
+    new InMemoryRepository<Card>([
+      makeCard({ id: 'c1', createdAt: at(0), deckId: 'd1', front: 'a', back: 'b' }),
     ]),
   )
   const questionStore = createQuestionStore(
@@ -35,24 +35,24 @@ function contentStores() {
       makeQuestion({
         id: 'q1',
         createdAt: at(0),
-        roomId: 'r1',
+        deckId: 'd1',
         prompt: '?',
         options: ['a', 'b'],
         correctAnswer: 0,
       }),
     ]),
   )
-  for (const store of [palaceStore, roomStore, locusStore, questionStore]) store.getState().start()
-  return { palaceStore, roomStore, locusStore, questionStore }
+  for (const store of [folderStore, deckStore, cardStore, questionStore]) store.getState().start()
+  return { folderStore, deckStore, cardStore, questionStore }
 }
 
 describe('clearAllContent', () => {
-  it('removes every palace, room, locus, and question', async () => {
+  it('removes every folder, deck, card, and question', async () => {
     const stores = contentStores()
     await clearAllContent(stores)
-    expect(stores.palaceStore.getState().palaces).toEqual([])
-    expect(stores.roomStore.getState().rooms).toEqual([])
-    expect(stores.locusStore.getState().loci).toEqual([])
+    expect(stores.folderStore.getState().folders).toEqual([])
+    expect(stores.deckStore.getState().decks).toEqual([])
+    expect(stores.cardStore.getState().cards).toEqual([])
     expect(stores.questionStore.getState().questions).toEqual([])
   })
 })
@@ -103,7 +103,7 @@ describe('resetEverything', () => {
 
     await resetEverything({ ...content, progressStore, notificationStore }, NOW)
 
-    expect(content.palaceStore.getState().palaces).toEqual([])
+    expect(content.deckStore.getState().decks).toEqual([])
     expect(progressStore.getState().progress?.xp).toBe(0)
     expect(notificationStore.getState().notifications).toEqual([])
   })

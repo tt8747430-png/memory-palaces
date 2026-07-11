@@ -1,8 +1,7 @@
 import type { RxJsonSchema } from 'rxdb'
 import type { Folder } from '@/entities/folder'
-import type { Palace } from '@/entities/palace'
-import type { Room } from '@/entities/room'
-import type { Locus } from '@/entities/locus'
+import type { Deck } from '@/entities/deck'
+import type { Card } from '@/entities/card'
 import type { Question } from '@/entities/question'
 import type { Progress } from '@/entities/progress'
 import type { Preferences } from '@/entities/preferences'
@@ -10,12 +9,12 @@ import type { Profile } from '@/entities/profile'
 import type { AppNotification } from '@/entities/notification'
 
 /**
- * RxDB JSON schemas for the persisted entities. They live at the composition layer
- * (not in `entities` or `shared`) so the dependency rule holds: this is the one
- * place that couples the entity shape to the concrete RxDB adapter. `RxJsonSchema<T>`
- * type-checks each schema against its entity, so drift is a compile error.
+ * A deck is a self-referential tree node: `parentId` points at its parent deck (subdeck) or is
+ * null (top-level, optionally filed via `folderId`). `settings` holds only overrides — every
+ * inner field is optional and inherits up the tree (ADR-0002). No secondary indexes: like the
+ * other collections, the store observes the whole set and filters in memory.
  */
-export const palaceSchema: RxJsonSchema<Palace> = {
+export const deckSchema: RxJsonSchema<Deck> = {
   version: 0,
   primaryKey: 'id',
   type: 'object',
@@ -28,7 +27,11 @@ export const palaceSchema: RxJsonSchema<Palace> = {
     icon: { type: 'string' },
     color: { type: 'string' },
     image: { type: 'string' },
-    category: { type: 'string' },
+    folderId: { type: ['string', 'null'] },
+    parentId: { type: ['string', 'null'] },
+    order: { type: 'number' },
+    favorite: { type: 'boolean' },
+    archived: { type: 'boolean' },
     settings: {
       type: 'object',
       properties: {
@@ -38,13 +41,8 @@ export const palaceSchema: RxJsonSchema<Palace> = {
         shuffleCards: { type: 'boolean' },
         textToSpeech: { type: 'boolean' },
       },
-      required: ['quizTimer', 'studyDirection', 'shuffleQuestions', 'shuffleCards', 'textToSpeech'],
       additionalProperties: false,
     },
-    folderId: { type: ['string', 'null'] },
-    order: { type: 'number' },
-    favorite: { type: 'boolean' },
-    archived: { type: 'boolean' },
   },
   required: [
     'id',
@@ -54,16 +52,16 @@ export const palaceSchema: RxJsonSchema<Palace> = {
     'description',
     'icon',
     'color',
-    'category',
-    'settings',
     'folderId',
+    'parentId',
     'order',
     'favorite',
     'archived',
+    'settings',
   ],
 }
 
-export const folderSchema: RxJsonSchema<Folder> = {
+export const cardSchema: RxJsonSchema<Card> = {
   version: 0,
   primaryKey: 'id',
   type: 'object',
@@ -71,39 +69,7 @@ export const folderSchema: RxJsonSchema<Folder> = {
     id: { type: 'string', maxLength: 100 },
     createdAt: { type: 'string' },
     updatedAt: { type: 'string' },
-    name: { type: 'string' },
-    color: { type: 'string' },
-    icon: { type: 'string' },
-    order: { type: 'number' },
-  },
-  required: ['id', 'createdAt', 'updatedAt', 'name', 'color', 'icon', 'order'],
-}
-
-export const roomSchema: RxJsonSchema<Room> = {
-  version: 0,
-  primaryKey: 'id',
-  type: 'object',
-  properties: {
-    id: { type: 'string', maxLength: 100 },
-    createdAt: { type: 'string' },
-    updatedAt: { type: 'string' },
-    palaceId: { type: 'string', maxLength: 100 },
-    title: { type: 'string' },
-    description: { type: 'string' },
-    order: { type: 'number' },
-  },
-  required: ['id', 'createdAt', 'updatedAt', 'palaceId', 'title', 'description', 'order'],
-}
-
-export const locusSchema: RxJsonSchema<Locus> = {
-  version: 0,
-  primaryKey: 'id',
-  type: 'object',
-  properties: {
-    id: { type: 'string', maxLength: 100 },
-    createdAt: { type: 'string' },
-    updatedAt: { type: 'string' },
-    roomId: { type: 'string', maxLength: 100 },
+    deckId: { type: 'string', maxLength: 100 },
     front: { type: 'string' },
     back: { type: 'string' },
     hint: { type: 'string' },
@@ -129,13 +95,29 @@ export const locusSchema: RxJsonSchema<Locus> = {
     'id',
     'createdAt',
     'updatedAt',
-    'roomId',
+    'deckId',
     'front',
     'back',
     'flagged',
     'memorized',
     'order',
   ],
+}
+
+export const folderSchema: RxJsonSchema<Folder> = {
+  version: 0,
+  primaryKey: 'id',
+  type: 'object',
+  properties: {
+    id: { type: 'string', maxLength: 100 },
+    createdAt: { type: 'string' },
+    updatedAt: { type: 'string' },
+    name: { type: 'string' },
+    color: { type: 'string' },
+    icon: { type: 'string' },
+    order: { type: 'number' },
+  },
+  required: ['id', 'createdAt', 'updatedAt', 'name', 'color', 'icon', 'order'],
 }
 
 export const questionSchema: RxJsonSchema<Question> = {
@@ -146,7 +128,7 @@ export const questionSchema: RxJsonSchema<Question> = {
     id: { type: 'string', maxLength: 100 },
     createdAt: { type: 'string' },
     updatedAt: { type: 'string' },
-    roomId: { type: 'string', maxLength: 100 },
+    deckId: { type: 'string', maxLength: 100 },
     prompt: { type: 'string' },
     options: { type: 'array', items: { type: 'string' } },
     correctAnswer: { type: 'number' },
@@ -157,7 +139,7 @@ export const questionSchema: RxJsonSchema<Question> = {
     'id',
     'createdAt',
     'updatedAt',
-    'roomId',
+    'deckId',
     'prompt',
     'options',
     'correctAnswer',

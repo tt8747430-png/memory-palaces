@@ -11,9 +11,9 @@ import {
   type Profile,
   ProfileStoreContext,
 } from '@/entities/profile'
-import { createPalaceStore, makePalace, type Palace, PalaceStoreContext } from '@/entities/palace'
-import { createRoomStore, type Room, RoomStoreContext } from '@/entities/room'
-import { createLocusStore, type Locus, LocusStoreContext } from '@/entities/locus'
+import { createDeckStore, makeDeck, type Deck, DeckStoreContext } from '@/entities/deck'
+import { CardStoreContext, createCardStore, type Card } from '@/entities/card'
+import { createFolderStore, type Folder, FolderStoreContext } from '@/entities/folder'
 import { createQuestionStore, type Question, QuestionStoreContext } from '@/entities/question'
 import { createProgressStore, type Progress, ProgressStoreContext } from '@/entities/progress'
 import {
@@ -33,9 +33,9 @@ const seeded = makeProfile({
   email: 'ada@x.io',
 })
 
-function renderPage(opts: { profile?: Profile; palaces?: Palace[] } = {}) {
+function renderPage(opts: { profile?: Profile; decks?: Deck[] } = {}) {
   const profileRepo = new InMemoryRepository<Profile>(opts.profile ? [opts.profile] : [])
-  const palaceRepo = new InMemoryRepository<Palace>(opts.palaces ?? [])
+  const deckRepo = new InMemoryRepository<Deck>(opts.decks ?? [])
   const handlers = {
     onBack: vi.fn(),
     onChangePassword: vi.fn(),
@@ -44,9 +44,9 @@ function renderPage(opts: { profile?: Profile; palaces?: Palace[] } = {}) {
   const wrap = (children: ReactNode) => (
     <I18nextProvider i18n={i18n}>
       <ProfileStoreContext value={createProfileStore(profileRepo)}>
-        <PalaceStoreContext value={createPalaceStore(palaceRepo)}>
-          <RoomStoreContext value={createRoomStore(new InMemoryRepository<Room>())}>
-            <LocusStoreContext value={createLocusStore(new InMemoryRepository<Locus>())}>
+        <DeckStoreContext value={createDeckStore(deckRepo)}>
+          <CardStoreContext value={createCardStore(new InMemoryRepository<Card>())}>
+            <FolderStoreContext value={createFolderStore(new InMemoryRepository<Folder>())}>
               <QuestionStoreContext value={createQuestionStore(new InMemoryRepository<Question>())}>
                 <ProgressStoreContext
                   value={createProgressStore(new InMemoryRepository<Progress>())}
@@ -58,14 +58,14 @@ function renderPage(opts: { profile?: Profile; palaces?: Palace[] } = {}) {
                   </NotificationStoreContext>
                 </ProgressStoreContext>
               </QuestionStoreContext>
-            </LocusStoreContext>
-          </RoomStoreContext>
-        </PalaceStoreContext>
+            </FolderStoreContext>
+          </CardStoreContext>
+        </DeckStoreContext>
       </ProfileStoreContext>
     </I18nextProvider>
   )
   render(wrap(<SettingsProfilePage {...handlers} />))
-  return { profileRepo, palaceRepo, ...handlers }
+  return { profileRepo, deckRepo, ...handlers }
 }
 
 describe('SettingsProfilePage', () => {
@@ -112,19 +112,19 @@ describe('SettingsProfilePage', () => {
     expect(screen.queryByRole('button', { name: /log out/i })).not.toBeInTheDocument()
   })
 
-  it('deletes the account only after confirming — wiping palaces and signing out', async () => {
+  it('deletes the account only after confirming — wiping decks and signing out', async () => {
     const user = userEvent.setup()
-    const palace = makePalace({ id: 'p1', createdAt: new Date(0).toISOString(), name: 'Home' })
-    const { palaceRepo, onDeleteAccount } = renderPage({ profile: seeded, palaces: [palace] })
+    const deck = makeDeck({ id: 'd1', createdAt: new Date(0).toISOString(), name: 'Home' })
+    const { deckRepo, onDeleteAccount } = renderPage({ profile: seeded, decks: [deck] })
 
     await user.click(await screen.findByRole('button', { name: /delete account/i }))
     expect(onDeleteAccount).not.toHaveBeenCalled()
-    expect(await palaceRepo.getAll()).toHaveLength(1)
+    expect(await deckRepo.getAll()).toHaveLength(1)
 
     const sheet = await screen.findByRole('dialog')
     await user.click(within(sheet).getByRole('button', { name: /delete account/i }))
 
-    await waitFor(async () => expect(await palaceRepo.getAll()).toEqual([]))
+    await waitFor(async () => expect(await deckRepo.getAll()).toEqual([]))
     expect(onDeleteAccount).toHaveBeenCalled()
   })
 })

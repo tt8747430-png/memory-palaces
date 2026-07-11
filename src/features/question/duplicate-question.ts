@@ -1,21 +1,21 @@
 import {
   makeQuestion,
   type Question,
-  questionsForRoom,
+  questionsForDeck,
   type QuestionStore,
   selectQuestions,
 } from '@/entities/question'
 import { nextOrder } from '@/shared/lib'
 import { requireQuestion } from './require-question'
 
-/** Command — copy a question into a fresh one appended to the room. */
+/** Command — copy a question into a fresh one appended to the deck. */
 export async function duplicateQuestion(store: QuestionStore, id: string): Promise<Question> {
   const original = requireQuestion(store, id)
-  const order = nextOrder(questionsForRoom(selectQuestions(store.getState()), original.roomId))
+  const order = nextOrder(questionsForDeck(selectQuestions(store.getState()), original.deckId))
   const copy = makeQuestion({
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
-    roomId: original.roomId,
+    deckId: original.deckId,
     prompt: original.prompt,
     options: original.options,
     correctAnswer: original.correctAnswer,

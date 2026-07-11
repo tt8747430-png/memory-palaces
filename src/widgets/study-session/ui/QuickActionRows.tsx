@@ -28,8 +28,18 @@ export function QuickActionRows({
   after?: () => void
 }) {
   const { t } = useTranslation()
-  const { flagged, canEdit, canSpeak, canUndo, onUndo, onFlag, onEdit, onSpeak, onSkip, onRestart } =
-    model
+  const {
+    flagged,
+    canEdit,
+    canSpeak,
+    canUndo,
+    onUndo,
+    onFlag,
+    onEdit,
+    onSpeak,
+    onSkip,
+    onRestart,
+  } = model
   const run = (action: () => void) => () => {
     action()
     after?.()

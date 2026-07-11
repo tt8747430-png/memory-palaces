@@ -3,14 +3,14 @@ import { useTranslation } from 'react-i18next'
 import { Check } from 'lucide-react'
 import { cn } from '@/shared/lib'
 import { Button, Sheet, TextField } from '@/shared/ui'
-import type { Locus } from '@/entities/locus'
-import type { LocusChanges } from '../model/types'
+import type { Card } from '@/entities/card'
+import type { CardChanges } from '../model/types'
 
 export interface InStudyEditorProps {
   open: boolean
-  locus: Locus
+  card: Card
   onClose: () => void
-  onSave: (changes: LocusChanges) => void
+  onSave: (changes: CardChanges) => void
 }
 
 const fieldClass =
@@ -18,7 +18,7 @@ const fieldClass =
 
 /** Edit the active card without leaving the session. Saves front/back/place/tip
  * through the host's `onEditCard` command (the same write-path as the editor page). */
-export function InStudyEditor({ open, locus, onClose, onSave }: InStudyEditorProps) {
+export function InStudyEditor({ open, card, onClose, onSave }: InStudyEditorProps) {
   const { t } = useTranslation()
   const [front, setFront] = useState('')
   const [back, setBack] = useState('')
@@ -27,11 +27,11 @@ export function InStudyEditor({ open, locus, onClose, onSave }: InStudyEditorPro
 
   useEffect(() => {
     if (!open) return
-    setFront(locus.front)
-    setBack(locus.back)
-    setHint(locus.hint ?? '')
-    setTip(locus.tip ?? '')
-  }, [open, locus])
+    setFront(card.front)
+    setBack(card.back)
+    setHint(card.hint ?? '')
+    setTip(card.tip ?? '')
+  }, [open, card])
 
   const valid = front.trim().length > 0 && back.trim().length > 0
   const save = () => {

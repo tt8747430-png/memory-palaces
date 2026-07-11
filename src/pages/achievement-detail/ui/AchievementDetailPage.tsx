@@ -5,13 +5,13 @@ import { Check, Lock } from 'lucide-react'
 import {
   type AchievementId,
   computeAchievements,
+  cardsInSubtree,
   computeTrainingTotals,
-  isRoomCompleted,
+  isDeckCompleted,
 } from '@/shared/lib'
 import { selectProgress, useProgressStore, useProgressStoreApi } from '@/entities/progress'
-import { selectPalaces, usePalaceStore, usePalaceStoreApi } from '@/entities/palace'
-import { roomsForPalace, selectRooms, useRoomStore, useRoomStoreApi } from '@/entities/room'
-import { lociForRoom, selectLoci, useLocusStore, useLocusStoreApi } from '@/entities/locus'
+import { selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
+import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
 import { ACHIEVEMENT_META } from '@/widgets/achievement-list'
 import { AppScreen, BadgeMedallion, cardSurface, ScreenHeader } from '@/shared/ui'
 
@@ -37,44 +37,35 @@ export interface AchievementDetailPageProps {
 export function AchievementDetailPage({ achievementId, onBack }: AchievementDetailPageProps) {
   const { t } = useTranslation()
   const progressStore = useProgressStoreApi()
-  const palaceStore = usePalaceStoreApi()
-  const roomStore = useRoomStoreApi()
-  const locusStore = useLocusStoreApi()
+  const deckStore = useDeckStoreApi()
+  const cardStore = useCardStoreApi()
   const progress = useProgressStore(selectProgress)
-  const palaces = usePalaceStore(selectPalaces)
-  const rooms = useRoomStore(selectRooms)
-  const loci = useLocusStore(selectLoci)
+  const decks = useDeckStore(selectDecks)
+  const cards = useCardStore(selectCards)
 
   useEffect(() => {
     progressStore.getState().start()
-    palaceStore.getState().start()
-    roomStore.getState().start()
-    locusStore.getState().start()
-  }, [progressStore, palaceStore, roomStore, locusStore])
+    deckStore.getState().start()
+    cardStore.getState().start()
+  }, [progressStore, deckStore, cardStore])
 
-  const totals = useMemo(() => computeTrainingTotals(rooms, loci), [rooms, loci])
-  const anyPalaceCompleted = useMemo(
-    () =>
-      palaces.some((palace) => {
-        const palaceRooms = roomsForPalace(rooms, palace.id)
-        return (
-          palaceRooms.length > 0 &&
-          palaceRooms.every((room) => isRoomCompleted(lociForRoom(loci, room.id)))
-        )
-      }),
-    [palaces, rooms, loci],
+  const totals = useMemo(() => computeTrainingTotals(decks, cards), [decks, cards])
+  const topLevelDecks = useMemo(() => decks.filter((deck) => deck.parentId === null), [decks])
+  const anyDeckCompleted = useMemo(
+    () => topLevelDecks.some((deck) => isDeckCompleted(cardsInSubtree(decks, cards, deck.id))),
+    [topLevelDecks, decks, cards],
   )
   const achievements = useMemo(
     () =>
       computeAchievements({
-        palaceCount: palaces.length,
+        deckCount: topLevelDecks.length,
         streakCount: progress?.streakCount ?? 0,
         xp: progress?.xp ?? 0,
         bestQuizAccuracy: progress?.bestQuizAccuracy ?? 0,
-        roomsCompleted: totals.roomsCompleted,
-        anyPalaceCompleted,
+        decksCompleted: totals.decksCompleted,
+        anyDeckCompleted,
       }),
-    [palaces.length, progress, totals.roomsCompleted, anyPalaceCompleted],
+    [topLevelDecks.length, progress, totals.decksCompleted, anyDeckCompleted],
   )
 
   const achievement = isAchievementId(achievementId)

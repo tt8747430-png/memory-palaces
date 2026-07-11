@@ -5,7 +5,7 @@ import { authRedirect } from './auth-guard'
 describe('authRedirect', () => {
   it('sends a sessionless user from an app route to login', () => {
     expect(authRedirect(ROUTES.home, null)).toBe(ROUTES.login)
-    expect(authRedirect(ROUTES.palaces, null)).toBe(ROUTES.login)
+    expect(authRedirect(ROUTES.home, null)).toBe(ROUTES.login)
   })
 
   it('lets a sessionless user stay on auth routes', () => {

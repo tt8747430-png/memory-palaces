@@ -1,10 +1,10 @@
+export { readContentFile, readMindscapeFile, readAnkiFile, readPalaceFile } from './import-content'
+export { applyDeckContent, type AppliedContent } from './apply-content'
+export { importDecks, type ImportDecksResult } from './import-decks'
+export { ImportDecksSheet, type ImportDecksSheetProps } from './ui/ImportDecksSheet'
 export {
-  readContentFile,
-  readMindscapeFile,
-  readAnkiFile,
-  readPalaceFile,
-} from './import-content'
-export { applyRoomContent, type AppliedContent } from './apply-content'
-export { importRooms, type ImportRoomsResult } from './import-rooms'
-export { ImportRoomsSheet, type ImportRoomsSheetProps } from './ui/ImportRoomsSheet'
-export { exportRoomJson, exportLociCsv, exportQuestionsCsv, exportLociAnki } from './export-content'
+  exportDeckJson,
+  exportCardsCsv,
+  exportQuestionsCsv,
+  exportCardsAnki,
+} from './export-content'

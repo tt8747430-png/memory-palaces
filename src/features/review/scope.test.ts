@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import type { SrsState } from '@/shared/lib'
-import { type Locus, makeLocus } from '@/entities/locus'
+import { type Card, makeCard } from '@/entities/card'
 import { applyScope, scopeCounts, scopesEqual } from './scope'
 
 const NOW = Date.UTC(2026, 0, 10)
 const DAY = 86_400_000
 
-function card(id: string, srs?: SrsState, flagged = false): Locus {
+function card(id: string, srs?: SrsState, flagged = false): Card {
   return {
-    ...makeLocus({ id, createdAt: new Date(0).toISOString(), roomId: 'r1', front: id, back: 'b' }),
+    ...makeCard({ id, createdAt: new Date(0).toISOString(), deckId: 'd1', front: id, back: 'b' }),
     srs,
     flagged,
   }

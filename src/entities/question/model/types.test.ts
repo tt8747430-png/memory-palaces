@@ -9,7 +9,7 @@ describe('makeQuestion', () => {
     const question = makeQuestion({
       id: 'q1',
       createdAt: T0,
-      roomId: 'r1',
+      deckId: 'r1',
       prompt: 'P?',
       options,
       correctAnswer: 1,
@@ -17,7 +17,7 @@ describe('makeQuestion', () => {
     expect(question).toMatchObject({
       id: 'q1',
       updatedAt: T0,
-      roomId: 'r1',
+      deckId: 'r1',
       prompt: 'P?',
       correctAnswer: 1,
     })
@@ -30,7 +30,7 @@ describe('makeQuestion', () => {
       makeQuestion({
         id: 'q1',
         createdAt: T0,
-        roomId: 'r1',
+        deckId: 'r1',
         prompt: 'P',
         options: ['a'],
         correctAnswer: 0,
@@ -40,7 +40,7 @@ describe('makeQuestion', () => {
       makeQuestion({
         id: 'q1',
         createdAt: T0,
-        roomId: 'r1',
+        deckId: 'r1',
         prompt: 'P',
         options: ['a', 'b'],
         correctAnswer: 2,
@@ -50,7 +50,7 @@ describe('makeQuestion', () => {
       makeQuestion({
         id: 'q1',
         createdAt: T0,
-        roomId: 'r1',
+        deckId: 'r1',
         prompt: 'P',
         options: ['a', 'b'],
         correctAnswer: -1,

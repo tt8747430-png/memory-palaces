@@ -1,9 +1,8 @@
 import type { RxCollection, RxStorage } from 'rxdb'
 import { createRxDatabase } from 'rxdb'
 import type { Folder } from '@/entities/folder'
-import type { Palace } from '@/entities/palace'
-import type { Room } from '@/entities/room'
-import type { Locus } from '@/entities/locus'
+import type { Deck } from '@/entities/deck'
+import type { Card } from '@/entities/card'
 import type { Question } from '@/entities/question'
 import type { Progress } from '@/entities/progress'
 import type { Preferences } from '@/entities/preferences'
@@ -11,22 +10,20 @@ import type { Profile } from '@/entities/profile'
 import type { AppNotification } from '@/entities/notification'
 import { STORAGE_PREFIX } from '@/shared/config/constants'
 import {
+  cardSchema,
+  deckSchema,
   folderSchema,
-  locusSchema,
   notificationSchema,
-  palaceSchema,
   preferencesSchema,
   profileSchema,
   progressSchema,
   questionSchema,
-  roomSchema,
 } from './schemas'
 
 export interface AppCollections {
-  palaces: RxCollection<Palace>
+  decks: RxCollection<Deck>
+  cards: RxCollection<Card>
   folders: RxCollection<Folder>
-  rooms: RxCollection<Room>
-  loci: RxCollection<Locus>
   questions: RxCollection<Question>
   progress: RxCollection<Progress>
   preferences: RxCollection<Preferences>
@@ -45,10 +42,9 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
 ): Promise<AppCollections> {
   const database = await createRxDatabase({ name: STORAGE_PREFIX, storage })
   const collections = await database.addCollections({
-    palaces: { schema: palaceSchema },
+    decks: { schema: deckSchema },
+    cards: { schema: cardSchema },
     folders: { schema: folderSchema },
-    rooms: { schema: roomSchema },
-    loci: { schema: locusSchema },
     questions: { schema: questionSchema },
     progress: { schema: progressSchema },
     preferences: { schema: preferencesSchema },
@@ -56,10 +52,9 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
     notifications: { schema: notificationSchema },
   })
   return {
-    palaces: collections.palaces,
+    decks: collections.decks,
+    cards: collections.cards,
     folders: collections.folders,
-    rooms: collections.rooms,
-    loci: collections.loci,
     questions: collections.questions,
     progress: collections.progress,
     preferences: collections.preferences,

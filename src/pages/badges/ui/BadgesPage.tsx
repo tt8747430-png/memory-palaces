@@ -14,23 +14,17 @@ import {
   useProgressStoreApi,
 } from '@/entities/progress'
 import {
-  selectIsReady as selectPalacesReady,
-  selectPalaces,
-  usePalaceStore,
-  usePalaceStoreApi,
-} from '@/entities/palace'
+  selectDecks,
+  selectIsReady as selectDecksReady,
+  useDeckStore,
+  useDeckStoreApi,
+} from '@/entities/deck'
 import {
-  selectIsReady as selectRoomsReady,
-  selectRooms,
-  useRoomStore,
-  useRoomStoreApi,
-} from '@/entities/room'
-import {
-  selectIsReady as selectLociReady,
-  selectLoci,
-  useLocusStore,
-  useLocusStoreApi,
-} from '@/entities/locus'
+  selectCards,
+  selectIsReady as selectCardsReady,
+  useCardStore,
+  useCardStoreApi,
+} from '@/entities/card'
 import { BadgeGrid, NextMilestoneCard } from '@/widgets/badge-list'
 import { AppScreen, ScreenHeader } from '@/shared/ui'
 
@@ -47,39 +41,36 @@ export interface BadgesPageProps {
 export function BadgesPage({ onBack, onOpenBadge }: BadgesPageProps = {}) {
   const { t } = useTranslation()
   const progressStore = useProgressStoreApi()
-  const palaceStore = usePalaceStoreApi()
-  const roomStore = useRoomStoreApi()
-  const locusStore = useLocusStoreApi()
+  const deckStore = useDeckStoreApi()
+  const cardStore = useCardStoreApi()
   const progress = useProgressStore(selectProgress)
-  const palaces = usePalaceStore(selectPalaces)
-  const rooms = useRoomStore(selectRooms)
-  const loci = useLocusStore(selectLoci)
+  const decks = useDeckStore(selectDecks)
+  const cards = useCardStore(selectCards)
   // Each store hook must run unconditionally (Rules of Hooks); combine after.
   const progressReady = useProgressStore(selectProgressReady)
-  const palacesReady = usePalaceStore(selectPalacesReady)
-  const roomsReady = useRoomStore(selectRoomsReady)
-  const lociReady = useLocusStore(selectLociReady)
-  const dataReady = progressReady && palacesReady && roomsReady && lociReady
+  const decksReady = useDeckStore(selectDecksReady)
+  const cardsReady = useCardStore(selectCardsReady)
+  const dataReady = progressReady && decksReady && cardsReady
 
   useEffect(() => {
     progressStore.getState().start()
-    palaceStore.getState().start()
-    roomStore.getState().start()
-    locusStore.getState().start()
-  }, [progressStore, palaceStore, roomStore, locusStore])
+    deckStore.getState().start()
+    cardStore.getState().start()
+  }, [progressStore, deckStore, cardStore])
 
-  const totals = useMemo(() => computeTrainingTotals(rooms, loci), [rooms, loci])
+  const totals = useMemo(() => computeTrainingTotals(decks, cards), [decks, cards])
+  const topLevelDecks = useMemo(() => decks.filter((deck) => deck.parentId === null), [decks])
   const badges = useMemo(
     () =>
       computeBadges({
         xp: progress?.xp ?? 0,
         longestStreak: progress?.longestStreak ?? 0,
-        roomsCompleted: totals.roomsCompleted,
-        palaceCount: palaces.length,
+        decksCompleted: totals.decksCompleted,
+        deckCount: topLevelDecks.length,
         totalCards: totals.totalCards,
         trainingDayCount: totalTrainingDays(progress?.trainingDays ?? []),
       }),
-    [progress, totals, palaces.length],
+    [progress, totals, topLevelDecks.length],
   )
   const milestone = useMemo(() => nextMilestone(badges), [badges])
 

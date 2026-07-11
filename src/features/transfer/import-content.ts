@@ -1,19 +1,19 @@
-import type { Locus, LocusStore } from '@/entities/locus'
-import { createLocus } from '@/features/locus'
+import type { Card, CardStore } from '@/entities/card'
+import { createCard } from '@/features/card'
 import type { TransferStrategy } from './model'
 
-/** Command — parse text in the given format and create a locus per card in the room.
- * Reuses the single-locus write-path, so the same invariants apply. */
-export async function importLoci(
-  store: LocusStore,
-  roomId: string,
+/** Command — parse text in the given format and create a card per row in the deck.
+ * Reuses the single-card write-path, so the same invariants apply. */
+export async function importCards(
+  store: CardStore,
+  deckId: string,
   text: string,
   strategy: TransferStrategy,
-): Promise<Locus[]> {
+): Promise<Card[]> {
   const drafts = strategy.parse(text)
-  const created: Locus[] = []
+  const created: Card[] = []
   for (const draft of drafts) {
-    created.push(await createLocus(store, roomId, draft))
+    created.push(await createCard(store, deckId, draft))
   }
   return created
 }

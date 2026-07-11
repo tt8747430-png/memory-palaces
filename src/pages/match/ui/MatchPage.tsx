@@ -1,15 +1,20 @@
 import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { lociForRoom, selectIsReady, selectLoci, useLocusStore, useLocusStoreApi, } from '@/entities/locus'
-import { roomsForPalace, selectRooms, useRoomStore, useRoomStoreApi } from '@/entities/room'
-import { usePalaceStore, usePalaceStoreApi } from '@/entities/palace'
+import {
+  selectCards,
+  selectIsReady as selectCardsReady,
+  useCardStore,
+  useCardStoreApi,
+} from '@/entities/card'
+import { selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
+import { cardsInSubtree, deckPath } from '@/shared/lib'
 import { MatchBoard } from '@/widgets/match'
 import { type MatchLocus } from '@/features/match'
 import { useSessionReward } from '@/widgets/session-reward'
 import { AppScreen, ScreenHeader } from '@/shared/ui'
 
-/** Match a single room's cards, or a whole palace's cards aggregated across its rooms. */
-export type MatchScope = { kind: 'room'; roomId: string } | { kind: 'palace'; palaceId: string }
+/** Match runs over a deck's whole subtree — its own cards plus every subdeck's (ADR-0003). */
+export type MatchScope = { kind: 'deck'; deckId: string }
 
 export interface MatchPageProps {
   scope: MatchScope
@@ -17,46 +22,37 @@ export interface MatchPageProps {
   onBack?: () => void
 }
 
-/** Match game over a scope's loci — tap term/definition pairs to clear the board.
+/** Match game over a deck subtree's cards — tap term/definition pairs to clear the board.
  * Read-only: it never grades or schedules, so no command is needed. */
 export function MatchPage({ scope, onBack }: MatchPageProps) {
   const { t } = useTranslation()
-  const locusStore = useLocusStoreApi()
-  const roomStore = useRoomStoreApi()
-  const palaceStore = usePalaceStoreApi()
+  const cardStore = useCardStoreApi()
+  const deckStore = useDeckStoreApi()
   const reward = useSessionReward()
 
   useEffect(() => {
-    locusStore.getState().start()
-    roomStore.getState().start()
-    palaceStore.getState().start()
-  }, [locusStore, roomStore, palaceStore])
+    cardStore.getState().start()
+    deckStore.getState().start()
+  }, [cardStore, deckStore])
 
-  const allRooms = useRoomStore(selectRooms)
-  const room = useMemo(
+  const decks = useDeckStore(selectDecks)
+  const allCards = useCardStore(selectCards)
+  const ready = useCardStore(selectCardsReady)
+
+  const deck = useMemo(
+    () => decks.find((candidate) => candidate.id === scope.deckId),
+    [decks, scope.deckId],
+  )
+
+  const cards = useMemo<MatchLocus[]>(
     () =>
-      scope.kind === 'room'
-        ? allRooms.find((candidate) => candidate.id === scope.roomId)
-        : undefined,
-    [allRooms, scope],
+      cardsInSubtree(decks, allCards, scope.deckId).map((card) => ({
+        id: card.id,
+        front: card.front,
+        back: card.back,
+      })),
+    [decks, allCards, scope.deckId],
   )
-  const palaceId = scope.kind === 'palace' ? scope.palaceId : room?.palaceId
-  const palace = usePalaceStore((state) =>
-    state.palaces.find((candidate) => candidate.id === palaceId),
-  )
-  const allLoci = useLocusStore(selectLoci)
-  const ready = useLocusStore(selectIsReady)
-
-  const loci = useMemo<MatchLocus[]>(() => {
-    const toMatch = (id: string) =>
-      lociForRoom(allLoci, id).map((locus) => ({
-        id: locus.id,
-        front: locus.front,
-        back: locus.back,
-      }))
-    if (scope.kind === 'room') return toMatch(scope.roomId)
-    return roomsForPalace(allRooms, scope.palaceId).flatMap((each) => toMatch(each.id))
-  }, [allLoci, allRooms, scope])
 
   if (!ready) {
     return (
@@ -66,8 +62,7 @@ export function MatchPage({ scope, onBack }: MatchPageProps) {
     )
   }
 
-  const missing = scope.kind === 'room' ? !room : !palace
-  if (missing) {
+  if (!deck) {
     return (
       <AppScreen
         header={
@@ -77,21 +72,18 @@ export function MatchPage({ scope, onBack }: MatchPageProps) {
     )
   }
 
-  const subtitle =
-    scope.kind === 'room'
-      ? palace
-        ? `${room?.title} · ${palace.name}`
-        : (room?.title ?? '')
-      : (palace?.name ?? '')
+  const subtitle = deckPath(decks, deck.id)
+    .map((each) => each.name)
+    .join(' · ')
 
   return (
     <MatchBoard
-      key={scope.kind === 'room' ? scope.roomId : scope.palaceId}
-      loci={loci}
+      key={scope.deckId}
+      loci={cards}
       subtitle={subtitle}
       onBack={onBack ?? (() => {})}
       onComplete={() => {
-        void reward({ kind: 'match', pairs: loci.length })
+        void reward({ kind: 'match', pairs: cards.length })
         onBack?.()
       }}
     />
