@@ -21,62 +21,46 @@ later" comments unless explicitly requested.
 
 📋 Task:
 
-yes  1. /impeccable craft and refactor and polish and harden the select mode and fix its bugs. also make a more reasonable and usefull actions when i select something
-when i click save it the button will say that the card is saved. the peek hint button doesnt work. when dragging the item it is not elevated as it should but is elevated without the drag and select button  and  the animation is not very smooth and good. 
 
-yes  2. /impeccable refactor the swipe actions room and their styles improve harderden bolden typography and polish
-
- yes 3. /impeccable for the language choosing make better a combobox rather than this drawer
-  
-
- yes 4. /impeccable  make the questions in the Questions page and merge with the tests page so that i enter the questions in this page and i can start them from there
-and after that make the header for the locies be Cards in this room with its overview. and the sorting put at the the left and at the right make a filter control like here  /Users/kristianbraila/Downloads/bugs_fixed/IMG_2161.PNG  /Users/kristianbraila/Downloads/bugs_fixed/IMG_2191.PNG
-
-yes  5.  /impeccable improve the swipe actions make the styles better and improve the swipe. make sure that the actions have enough place and pading from the card for their texts. 
-make the swipe action like this animations also this also when there are two look at these animations /Users/kristianbraila/Downloads/bugs_fixed/IMG_2193.PNG /Users/kristianbraila/Downloads/bugs_fixed/IMG_2194.PNG
-
-also there is a bug when i slowly swipe to the right the card gets swiped to the left, but it doesnt always happen and when i quickly swipe to the right it works but also not very reliable. 
-
-yes 6. /impeccable  improve the locies overview when i click the locie and their styles like this glassy styles and also the position and stylel /Users/kristianbraila/Downloads/bugs_fixed/IMG_2172.PNG
-
-yes 7. /impeccable when clicking on the name on the card it should get editable and so that i can change the name and when i want to edit more i click on the right menu 
+1. bugfix: the tab bar is shown whne the splashscreen is shown in dark mode. 
+no 2. when clicking on the folder name in the header i except it to look like it is clickable and when clicking on it will open the edit folder settings and after that remove teh edit button on the right. this should be done across the app. 
+3. improve the archive functionality and what the archive should actualy do because for now it is just like  a separate folder. it should have real behaviour and be like actual archive. like in an zip archive or so. i can see but not edit or something like that. 
+4. remove the finish button from the settings.
 
 
 
+1. we need to refactor the whole structure of the app. now we will have three types and this will be: 
 
-1. /impeccable improve the move palace to something drawer and add proper icons. 
+folders: that can have decks inside them i gave you also the photos how a folder looks like this is the Biblia folder and how its three dots on the right top header look like.  /Users/kristianbraila/Downloads/IMG_2460.PNG /Users/kristianbraila/Downloads/IMG_2461.PNG /Users/kristianbraila/Downloads/IMG_2462.PNG
 
-1. /impeccable improve the styles of the import drawer so that it has more meaningfull actions and what can be consolidated and colirize and harden and icons and polish and etc. /Users/kristianbraila/Downloads/bugs_fixed/IMG_2196.PNG and maybe you should separate the import with export.
+decks: this will be the holders of the flashcards and the whole learning system they will have settings as whole page in the top right three dots click with such  looks /Users/kristianbraila/Downloads/IMG_2500.PNG /Users/kristianbraila/Downloads/IMG_2501.PNG /Users/kristianbraila/Downloads/IMG_2502.PNG
 
-1. add room settings instead of this drawer 
 
-8. /impeccable refactor and polish and harden and use superpowers to improve the edit loci card page and improve the styles and typography and bolden and remove the memory aids header but leave the controls and improve the controls at the bottom, they should stick to the bottom also when the user scrolls to top they should not move and improve the styles and they shouldbe have this white background make proper background and styles. 
+subdecks: each deck can have as many subdecks as the user wants and also this subdecks can have as many subdecks as the user wants and so on and and a deck without any subdecks or a subdeck withou any subdecks will look like the Bible Questions deck or like the Bible Memory subdeck. and the deck with other subdecks will be like the Versetele Talantul with this plus sign and tree overview. 
+
+and when the user click on the deck that has many subdecks it will open all the cards that are inside this deck but when the user click on subdeck it will open all the cards that are in this subdeck and other subdecks that this subdeck has
+
+
+
+/Users/kristianbraila/Downloads/IMG_2457.PNG /Users/kristianbraila/Downloads/IMG_2458.PNG /Users/kristianbraila/Downloads/IMG_2459.PNG /Users/kristianbraila/Downloads/IMG_2460.PNG /Users/kristianbraila/Downloads/IMG_2461.PNG /Users/kristianbraila/Downloads/IMG_2462.PNG /Users/kristianbraila/Downloads/IMG_2463.PNG /Users/kristianbraila/Downloads/IMG_2464.PNG
+
+
  
- here the bug:
-/Users/kristianbraila/Downloads/bugs_fixed/IMG_2177.PNG
+BUGS:
 
-
-9. /impeccable improve the add new loci page. and when adding the new card by default it behaves like save and add another so we dont need the options at all and improve the whole page by using icons rather than text whenever possible. 
- 
-
- 10. /impeccable and superpowers fix the bug when i click the right menu it also opens the locies overview  and improve the styles and finetune the functionality
-
-/Users/kristianbraila/Downloads/bugs_fixed/IMG_2179.PNG
-
+1. StatusBar gets white when a notification animations gets close to the StatusBar
+2. The app native SplashScreen features are not reliable and not working. 
+3. Remove the Form Accessory Bar with Capacitor 
 
  11. superpowers and /impeccable the status bar background is not very reliable at all, whenever something happens in the app like notification comes and it toches the status bar by hiding the status bar gets recolored. fix and debug this so that we can it stays also colored in our background and we in our app log or know whenever something weird happens and the status bar gets white
    
    /Users/kristianbraila/Downloads/bugs_fixed/IMG_2152.PNG /Users/kristianbraila/Downloads/bugs_fixed/IMG_2153.PNG
 
 
+
 <!--
+
 /impeccable craft create something like this in our app. this should be all capable ai tutor, i can ask it to create rooms to create palaces to edit or search settings to edit the profile and more and more. for this it will have an interface for how to interact with our app. it will be able to do anything in our app that i will ask it to do, but first before executing it should promt me for permission for this specific action to take. it also can generate locies and quizes and so on.
- /Users/kristianbraila/Downloads/AITutorScreen.tsx -->
-
-
-
-BUGS:
-
-1. StatusBar gets white when a notification animations gets close to the StatusBar
-2. The app native SplashScreen features are not reliable and not working. 
-3. Remove the Form Accessory Bar
+ /Users/kristianbraila/Downloads/AITutorScreen.tsx 
+ 
+ -->

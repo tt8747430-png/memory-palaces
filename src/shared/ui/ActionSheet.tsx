@@ -1,8 +1,13 @@
-import { type ReactNode } from 'react'
+import { type ReactNode, useEffect, useRef } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
 import { motion } from 'motion/react'
 import { cn } from '@/shared/lib'
 import { useDragToDismiss } from './use-drag-to-dismiss'
+
+/** Window after opening in which an outside-press / focus-out is treated as the tail of the
+ * gesture that opened the sheet — a long-press whose finger releases onto the backdrop that
+ * just mounted under it — rather than a deliberate dismiss. */
+const OPEN_GUARD_MS = 500
 
 export interface SheetAction {
   id: string
@@ -49,6 +54,16 @@ export function ActionSheet({
     open,
     onDismiss: () => onOpenChange(false),
   })
+
+  // A long-press opens this sheet while the finger is still down; the release then lands on the
+  // backdrop that just mounted under it, which Base UI reports as an outside-press dismiss. Swallow
+  // only that first release — every intentional dismiss (a later tap-away, Escape, drag-down, or
+  // choosing an action) still closes the sheet.
+  const openedAt = useRef(0)
+  useEffect(() => {
+    if (open) openedAt.current = Date.now()
+  }, [open])
+
   const select = (action: SheetAction) => {
     onOpenChange(false)
     action.onSelect()
@@ -58,7 +73,20 @@ export function ActionSheet({
     // `trap-focus` (not full modal): the shell never scrolls the body, so Base UI's
     // body scroll lock is unnecessary and, if a sheet unmounts mid-navigation, can
     // leave the page unscrollable. Focus trap + dismiss are kept.
-    <Dialog.Root open={open} onOpenChange={onOpenChange} modal="trap-focus">
+    <Dialog.Root
+      open={open}
+      onOpenChange={(next, details) => {
+        if (
+          !next &&
+          (details.reason === 'outside-press' || details.reason === 'focus-out') &&
+          Date.now() - openedAt.current < OPEN_GUARD_MS
+        ) {
+          return
+        }
+        onOpenChange(next)
+      }}
+      modal="trap-focus"
+    >
       <Dialog.Portal>
         <Dialog.Backdrop
           className={cn(

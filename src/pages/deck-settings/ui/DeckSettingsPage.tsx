@@ -1,5 +1,18 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
+import {
+  Archive,
+  ArchiveRestore,
+  Copy,
+  Download,
+  FileJson,
+  FileText,
+  MapPin,
+  Pencil,
+  RotateCcw,
+  Trash2,
+} from 'lucide-react'
 import {
   DEFAULT_DECK_SETTINGS,
   selectDecks,
@@ -7,11 +20,21 @@ import {
   useDeckStore,
   useDeckStoreApi,
 } from '@/entities/deck'
-import { useCardStoreApi } from '@/entities/card'
-import { resolveDeckSettings } from '@/shared/lib'
-import { deleteDeck, editDeck } from '@/features/deck'
+import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
+import { cardsInSubtree, resolveDeckSettings } from '@/shared/lib'
+import { deleteDeck, duplicateDeck, editDeck, setDeckArchived } from '@/features/deck'
 import { resetDeckSrs } from '@/features/card'
-import { AppScreen, Button, ScreenHeader, Switch, TextField } from '@/shared/ui'
+import { exportCardsAnki, exportCardsCsv, exportDeckJson } from '@/features/content'
+import {
+  ActionSheet,
+  AppScreen,
+  ConfirmDialog,
+  DeckCover,
+  ScreenHeader,
+  SettingsRow,
+  SettingsSection,
+} from '@/shared/ui'
+import { DeckAppearanceSheet } from './DeckAppearanceSheet'
 
 export interface DeckSettingsPageProps {
   deckId: string
@@ -20,9 +43,10 @@ export interface DeckSettingsPageProps {
   onDeleted?: () => void
 }
 
-/** The full-page settings for one deck (route `/decks/:deckId/settings`). Each study field
- * resolves from the parent chain and can be overridden here (ADR-0002); reset clears the whole
- * subtree's schedule; delete removes the deck and its subtree. */
+/** The full-page settings for one deck (route `/decks/:deckId/settings`): a tappable identity
+ * header (name/icon/colour), study behaviour that resolves from the parent chain and can be
+ * overridden here (ADR-0002), a Manage section (duplicate / export / reset / archive), and
+ * delete. Every change persists through the deck command layer. */
 export function DeckSettingsPage({ deckId, onBack, onDeleted }: DeckSettingsPageProps) {
   const { t } = useTranslation()
   const deckStore = useDeckStoreApi()
@@ -34,12 +58,19 @@ export function DeckSettingsPage({ deckId, onBack, onDeleted }: DeckSettingsPage
   }, [deckStore, cardStore])
 
   const decks = useDeckStore(selectDecks)
+  const allCards = useCardStore(selectCards)
   const ready = useDeckStore(selectDecksReady)
   const deck = useMemo(() => decks.find((d) => d.id === deckId), [decks, deckId])
   const settings = useMemo(
     () => resolveDeckSettings(decks, deckId, DEFAULT_DECK_SETTINGS),
     [decks, deckId],
   )
+  const cards = useMemo(() => cardsInSubtree(decks, allCards, deckId), [decks, allCards, deckId])
+
+  const [appearanceOpen, setAppearanceOpen] = useState(false)
+  const [exportOpen, setExportOpen] = useState(false)
+  const [resetOpen, setResetOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   if (!ready || !deck) {
     return (
@@ -54,84 +85,186 @@ export function DeckSettingsPage({ deckId, onBack, onDeleted }: DeckSettingsPage
   const override = (patch: Partial<typeof settings>) =>
     void editDeck(deckStore, deckId, { settings: { ...deck.settings, ...patch } })
 
+  const runExport = (run: () => void) => {
+    setExportOpen(false)
+    run()
+    toast.success(t('deckSettings.toast.exported'))
+  }
+
   return (
     <AppScreen
+      fill
+      className="pb-nav"
       header={
-        <ScreenHeader title={t('deck.settings')} onBack={onBack} backLabel={t('common.back')} />
+        <ScreenHeader
+          title={t('deck.settings')}
+          subtitle={deck.name}
+          onBack={onBack}
+          backLabel={t('common.back')}
+        />
       }
     >
-      <div className="space-y-6 py-4">
-        <section className="rounded-card bg-card p-3">
-          <label
-            htmlFor="deck-name"
-            className="mb-1.5 block text-[length:var(--p-text-label)] font-semibold text-heading"
-          >
-            {t('deckSettings.name', { defaultValue: 'Name' })}
-          </label>
-          <TextField
-            id="deck-name"
-            key={deck.id}
-            defaultValue={deck.name}
-            onBlur={(event) => {
-              const value = event.target.value.trim()
-              if (value && value !== deck.name) void editDeck(deckStore, deckId, { name: value })
+      <div className="mt-4 flex flex-col gap-6 pb-8">
+        {/* Identity — tap the cover (or the pencil) to edit name, icon & colour. */}
+        <button
+          type="button"
+          onClick={() => setAppearanceOpen(true)}
+          aria-label={t('deckSettings.editAppearance')}
+          className="flex items-center gap-3.5 rounded-card bg-card p-4 text-left shadow-rest transition-transform active:scale-[0.99]"
+        >
+          <DeckCover
+            icon={deck.icon || '🗂️'}
+            color={deck.color}
+            image={deck.image}
+            className="size-16 shrink-0 rounded-card shadow-rest"
+            iconClassName="text-3xl"
+          />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[length:var(--p-text-title)] font-bold tracking-tight text-heading">
+              {deck.name}
+            </p>
+            <p className="mt-0.5 text-[length:var(--p-text-label)] text-muted-foreground">
+              {t('deckSettings.editAppearanceHint')}
+            </p>
+          </div>
+          <Pencil className="size-5 shrink-0 text-muted-foreground" aria-hidden />
+        </button>
+
+        <SettingsSection title={t('deckSettings.study')}>
+          <SettingsRow
+            kind="toggle"
+            icon={<RotateCcw />}
+            label={t('deckSettings.shuffle')}
+            checked={settings.shuffleCards}
+            onCheckedChange={(v) => override({ shuffleCards: v })}
+          />
+          <SettingsRow
+            kind="toggle"
+            icon={<FileText />}
+            label={t('deckSettings.textToSpeech')}
+            checked={settings.textToSpeech}
+            onCheckedChange={(v) => override({ textToSpeech: v })}
+          />
+          <SettingsRow
+            kind="toggle"
+            icon={<Copy />}
+            label={t('deckSettings.studyBack')}
+            checked={settings.studyDirection === 'back'}
+            onCheckedChange={(v) => override({ studyDirection: v ? 'back' : 'front' })}
+          />
+        </SettingsSection>
+
+        <SettingsSection title={t('deckSettings.manage')}>
+          <SettingsRow
+            kind="nav"
+            icon={<Copy />}
+            label={t('deckSettings.duplicate')}
+            description={t('deckSettings.duplicateHint')}
+            onClick={() => {
+              void duplicateDeck(deckStore, deckId)
+              toast.success(t('deckSettings.toast.duplicated'))
             }}
           />
-        </section>
-
-        <section className="space-y-1 rounded-card bg-card p-1">
-          <Row label={t('deckSettings.shuffle')}>
-            <Switch
-              label={t('deckSettings.shuffle')}
-              checked={settings.shuffleCards}
-              onCheckedChange={(v) => override({ shuffleCards: v })}
-            />
-          </Row>
-          <Row label={t('deckSettings.textToSpeech')}>
-            <Switch
-              label={t('deckSettings.textToSpeech')}
-              checked={settings.textToSpeech}
-              onCheckedChange={(v) => override({ textToSpeech: v })}
-            />
-          </Row>
-          <Row label={t('deckSettings.studyBack')}>
-            <Switch
-              label={t('deckSettings.studyBack')}
-              checked={settings.studyDirection === 'back'}
-              onCheckedChange={(v) => override({ studyDirection: v ? 'back' : 'front' })}
-            />
-          </Row>
-        </section>
-
-        <section className="space-y-2">
-          <Button
-            variant="secondary"
-            className="w-full"
-            onClick={() => void resetDeckSrs(deckStore, cardStore, deckId)}
-          >
-            {t('deckSettings.reset')}
-          </Button>
-          <Button
-            variant="destructive"
-            className="w-full"
+          <SettingsRow
+            kind="nav"
+            icon={<Download />}
+            label={t('deckSettings.export')}
+            description={t('deckSettings.exportHint')}
+            disabled={cards.length === 0}
+            onClick={() => setExportOpen(true)}
+          />
+          <SettingsRow
+            kind="nav"
+            icon={<RotateCcw />}
+            label={t('deckSettings.reset')}
+            description={t('deckSettings.resetHint')}
+            onClick={() => setResetOpen(true)}
+          />
+          <SettingsRow
+            kind="nav"
+            icon={deck.archived ? <ArchiveRestore /> : <Archive />}
+            label={deck.archived ? t('deckSettings.unarchive') : t('deckSettings.archive')}
+            description={t('deckSettings.archiveHint')}
             onClick={() => {
-              void deleteDeck(deckStore, cardStore, deckId)
-              onDeleted?.()
+              const archiving = !deck.archived
+              void setDeckArchived(deckStore, deckId, archiving)
+              toast.success(
+                archiving ? t('deckSettings.toast.archived') : t('deckSettings.toast.unarchived'),
+              )
             }}
-          >
-            {t('common.delete')}
-          </Button>
-        </section>
-      </div>
-    </AppScreen>
-  )
-}
+          />
+        </SettingsSection>
 
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex items-center justify-between px-3 py-3">
-      <span className="text-[length:var(--p-text-body)] text-heading">{label}</span>
-      {children}
-    </div>
+        <SettingsSection>
+          <SettingsRow
+            kind="nav"
+            tone="danger"
+            icon={<Trash2 />}
+            label={t('deckSettings.delete')}
+            description={t('deckSettings.deleteHint')}
+            onClick={() => setDeleteOpen(true)}
+          />
+        </SettingsSection>
+      </div>
+
+      <DeckAppearanceSheet open={appearanceOpen} onOpenChange={setAppearanceOpen} deck={deck} />
+
+      <ActionSheet
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        title={t('deckSettings.exportSheetTitle')}
+        description={t('deckSettings.exportSheetDescription')}
+        cancelLabel={t('common.cancel')}
+        actions={[
+          {
+            id: 'json',
+            label: t('deckSettings.exportJson'),
+            icon: <FileJson className="size-5" aria-hidden />,
+            onSelect: () => runExport(() => exportDeckJson(deck.name, cards, [])),
+          },
+          {
+            id: 'csv',
+            label: t('deckSettings.exportCsv'),
+            icon: <MapPin className="size-5" aria-hidden />,
+            onSelect: () => runExport(() => exportCardsCsv(deck.name, cards)),
+          },
+          {
+            id: 'anki',
+            label: t('deckSettings.exportAnki'),
+            icon: <FileText className="size-5" aria-hidden />,
+            onSelect: () => runExport(() => exportCardsAnki(deck.name, cards)),
+          },
+        ]}
+      />
+
+      <ConfirmDialog
+        open={resetOpen}
+        onOpenChange={setResetOpen}
+        icon={<RotateCcw className="size-6" aria-hidden />}
+        title={t('deckSettings.resetConfirm.title')}
+        description={t('deckSettings.resetConfirm.body')}
+        confirmLabel={t('deckSettings.resetConfirm.confirm')}
+        cancelLabel={t('common.cancel')}
+        onConfirm={() => {
+          void resetDeckSrs(deckStore, cardStore, deckId)
+          toast.success(t('deckSettings.toast.reset'))
+        }}
+      />
+
+      <ConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        destructive
+        icon={<Trash2 className="size-6" aria-hidden />}
+        title={t('deckSettings.deleteConfirm.title', { name: deck.name })}
+        description={t('deckSettings.deleteConfirm.body')}
+        confirmLabel={t('deckSettings.deleteConfirm.confirm')}
+        cancelLabel={t('common.cancel')}
+        onConfirm={() => {
+          void deleteDeck(deckStore, cardStore, deckId)
+          onDeleted?.()
+        }}
+      />
+    </AppScreen>
   )
 }

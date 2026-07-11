@@ -32,6 +32,11 @@ export function SpeedDial({ label, actions, className }: SpeedDialProps) {
   const triggerRef = useRef<HTMLButtonElement>(null)
   const firstActionRef = useRef<HTMLButtonElement>(null)
 
+  // One action needs no stack: the trigger fires it directly, skipping the scrim, the reveal,
+  // and the +→× rotation. Keeps the toolbar honest per surface — a folder's dial is just
+  // "Add deck", not a menu that also offers things the surface can't do.
+  const soleAction = actions.length === 1 ? actions[0]! : null
+
   useEffect(() => {
     if (!open) return
     const onKey = (event: KeyboardEvent) => {
@@ -114,15 +119,15 @@ export function SpeedDial({ label, actions, className }: SpeedDialProps) {
         <motion.button
           ref={triggerRef}
           type="button"
-          aria-label={label}
-          aria-expanded={open}
-          aria-haspopup="menu"
+          aria-label={soleAction ? soleAction.label : label}
+          aria-expanded={soleAction ? undefined : open}
+          aria-haspopup={soleAction ? undefined : 'menu'}
           whileTap={{ scale: 0.92 }}
-          onClick={() => setOpen((value) => !value)}
+          onClick={() => (soleAction ? soleAction.onSelect() : setOpen((value) => !value))}
           className="grid size-14 place-items-center rounded-full bg-primary text-primary-foreground shadow-interactive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--surface)]"
         >
           <motion.span
-            animate={{ rotate: open ? 45 : 0 }}
+            animate={{ rotate: soleAction ? 0 : open ? 45 : 0 }}
             transition={{ duration: 0.22, ease: EASE_OUT }}
             className="grid place-items-center"
           >

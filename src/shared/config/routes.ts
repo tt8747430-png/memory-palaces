@@ -17,6 +17,7 @@ export const ROUTES = {
   deckQuestions: '/decks/$deckId/questions',
   deckQuestionNew: '/decks/$deckId/questions/new',
   deckQuestionEdit: '/decks/$deckId/questions/$questionId',
+  archived: '/archived',
   profile: '/profile',
   streak: '/streak',
   badges: '/badges',

@@ -389,7 +389,7 @@ export function DeckContentEditor({
       {/* Cards list */}
       <div className="flex flex-col gap-3">
         {total === 0 ? (
-          <EmptyCards onAdd={onAddCard} />
+          <EmptyCards onAdd={onAddCard} onImport={() => setImportOpen(true)} />
         ) : visibleCards.length === 0 ? (
           needle ? (
             <NoResults onClear={() => onClearSearch?.()} />
@@ -645,8 +645,9 @@ export function DeckContentEditor({
       />
 
       {/* The add/import affordance. Hidden while selecting, where the bulk bar owns the bottom
-          of the screen (otherwise the dial overlaps the bar's trailing action). */}
-      {!selectMode ? (
+          of the screen (otherwise the dial overlaps the bar's trailing action), and while the
+          deck is empty, where the empty state carries its own Add / Import actions. */}
+      {!selectMode && total > 0 ? (
         <SpeedDial
           label={t('cards.quickActions')}
           className="bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+0.75rem)]"
@@ -727,7 +728,7 @@ function sortCards(cards: Card[], sort: ContentSort): Card[] {
   }
 }
 
-function EmptyCards({ onAdd }: { onAdd: () => void }) {
+function EmptyCards({ onAdd, onImport }: { onAdd: () => void; onImport: () => void }) {
   const { t } = useTranslation()
   return (
     <div className="flex flex-col items-center px-6 py-10 text-center">
@@ -740,10 +741,16 @@ function EmptyCards({ onAdd }: { onAdd: () => void }) {
       <p className="max-w-[34ch] text-pretty text-(length:--p-text-body) text-muted-foreground">
         {t('cards.emptyHint')}
       </p>
-      <Button className="mt-5" onClick={onAdd}>
-        <Plus className="size-[18px]" aria-hidden />
-        {t('cards.addCard')}
-      </Button>
+      <div className="mt-5 flex w-full max-w-60 flex-col gap-2">
+        <Button onClick={onAdd}>
+          <Plus className="size-[18px]" aria-hidden />
+          {t('cards.addCard')}
+        </Button>
+        <Button variant="secondary" onClick={onImport}>
+          <Upload className="size-[18px]" aria-hidden />
+          {t('cards.transfer.importShort')}
+        </Button>
+      </div>
     </div>
   )
 }

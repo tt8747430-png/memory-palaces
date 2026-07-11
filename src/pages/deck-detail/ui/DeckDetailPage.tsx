@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Plus, Settings2 } from 'lucide-react'
+import { Settings2 } from 'lucide-react'
 import {
   selectDecks,
   selectIsReady as selectDecksReady,
@@ -27,10 +27,9 @@ import {
 } from '@/entities/preferences'
 import { setPreferences } from '@/features/preferences'
 import { cardsInSubtree, studyOverview } from '@/shared/lib'
-import { createSubdeck } from '@/features/deck'
 import { DeckContentEditor } from '@/widgets/content-editor'
 import { PracticeModes } from '@/widgets/practice-modes'
-import { AppScreen, Button, IconButton, ScreenHeader, StudyOverviewCard } from '@/shared/ui'
+import { AppScreen, IconButton, ScreenHeader, StudyOverviewCard } from '@/shared/ui'
 
 export interface DeckDetailPageProps {
   deckId: string
@@ -156,17 +155,6 @@ export function DeckDetailPage({
             alwaysEnableTest
           />
         ) : null}
-
-        <div className="flex justify-end">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => void createSubdeck(deckStore, deckId, { name: t('deck.newSubdeck') })}
-          >
-            <Plus className="size-4" aria-hidden />
-            {t('deck.addSubdeck')}
-          </Button>
-        </div>
 
         <section aria-label={t('deck.cards')} className="space-y-3 pt-1">
           <DeckContentEditor

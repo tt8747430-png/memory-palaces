@@ -12,6 +12,7 @@ import { SignupPage } from '@/pages/signup'
 import { ForgotPasswordPage } from '@/pages/forgot-password'
 import { WelcomePage } from '@/pages/welcome'
 import { DeckLibraryPage } from '@/pages/deck-library'
+import { ArchivedDecksPage } from '@/pages/archived-decks'
 import { DeckDetailPage } from '@/pages/deck-detail'
 import { DeckSettingsPage } from '@/pages/deck-settings'
 import { DeckQuestionsPage } from '@/pages/deck-questions'
@@ -133,6 +134,11 @@ function HomeRoute() {
   return (
     <DeckLibraryPage
       onOpenDeck={(deckId) => navigate({ to: ROUTES.deckDetail, params: { deckId } })}
+      onOpenDeckSettings={(deckId) => navigate({ to: ROUTES.deckSettings, params: { deckId } })}
+      onOpenProfile={() => navigate({ to: ROUTES.profile })}
+      onOpenNotifications={() => navigate({ to: ROUTES.notifications })}
+      onOpenStreak={() => navigate({ to: ROUTES.streak })}
+      onOpenArchived={() => navigate({ to: ROUTES.archived })}
     />
   )
 }
@@ -582,6 +588,18 @@ const settingsAboutRoute = createRoute({
   component: SettingsAboutRoute,
 })
 
+function ArchivedDecksRoute() {
+  const navigate = useNavigate()
+  const back = useBack(() => navigate({ to: ROUTES.home }))
+  return <ArchivedDecksPage onBack={back} />
+}
+
+const archivedRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.archived,
+  component: ArchivedDecksRoute,
+})
+
 function NotificationsRoute() {
   const navigate = useNavigate()
   const back = useBack(() => navigate({ to: ROUTES.home }))
@@ -600,6 +618,7 @@ const routeTree = rootRoute.addChildren([
   forgotRoute,
   welcomeRoute,
   homeRoute,
+  archivedRoute,
   deckDetailRoute,
   deckSettingsRoute,
   deckStudyRoute,
