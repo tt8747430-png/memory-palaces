@@ -1,13 +1,30 @@
-import { type ChangeEvent, type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  type ChangeEvent,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { useTranslation } from 'react-i18next'
 import {
+  closestCenter,
+  type CollisionDetection,
   DndContext,
   type DragEndEvent,
   DragOverlay,
   type DragStartEvent,
-  pointerWithin,
-  useDroppable,
 } from '@dnd-kit/core'
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import { motion } from 'motion/react'
 import { toast } from 'sonner'
 import {
   Archive,
@@ -61,10 +78,11 @@ import {
   deleteDeck,
   duplicateDeck,
   moveDeck,
+  reorderDecks,
   setDeckArchived,
   toggleDeckFavorite,
 } from '@/features/deck'
-import { createFolder, deleteFolder, editFolder } from '@/features/folder'
+import { createFolder, deleteFolder, editFolder, reorderFolders } from '@/features/folder'
 import { readAnkiFile } from '@/features/content'
 import { DeckTree } from '@/widgets/deck-tree'
 import { HomeHeader } from '@/widgets/home-header'
@@ -88,6 +106,7 @@ import {
   buildSwipeActions,
   Button,
   ConfirmDialog,
+  DeckCover,
   EmptyState,
   FolderGlyph,
   IconButton,
@@ -171,12 +190,19 @@ export function DeckLibraryPage({
     notificationStore,
   ])
 
-  const folders = useFolderStore(selectFolders)
-  const decks = useDeckStore(selectDecks)
+  const storeFolders = useFolderStore(selectFolders)
+  const storeDecks = useDeckStore(selectDecks)
   const cards = useCardStore(selectCards)
   const foldersReady = useFolderStore(selectFoldersReady)
   const decksReady = useDeckStore(selectDecksReady)
   const ready = foldersReady && decksReady
+
+  // Optimistic order: a reorder applies to this local copy immediately and is
+  // reconciled when the persisted order flows back, killing the drop flicker.
+  const [folders, setFolders] = useState(storeFolders)
+  const [decks, setDecks] = useState(storeDecks)
+  useEffect(() => setFolders(storeFolders), [storeFolders])
+  useEffect(() => setDecks(storeDecks), [storeDecks])
 
   const session = useSessionStore((state) => state.session)
   const profile = useProfileStore(selectEffectiveProfile)
@@ -476,20 +502,55 @@ export function DeckLibraryPage({
     exitSelect()
   }
 
-  // ---- Drag-to-reparent (select mode) ----
+  // ---- Drag: reorder + reparent (select mode) ----
   const dndSensors = useSortableSensors()
+  // A dragged folder only targets folders (it can't nest into a deck), so a
+  // folder reorder never gets hijacked by a nearby deck's center.
+  const collisionDetection = useCallback<CollisionDetection>(
+    (args) => {
+      const activeId = String(args.active.id)
+      if (folders.some((f) => f.id === activeId)) {
+        const folderOnly = args.droppableContainers.filter((c) =>
+          folders.some((f) => f.id === c.id),
+        )
+        return closestCenter({ ...args, droppableContainers: folderOnly })
+      }
+      return closestCenter(args)
+    },
+    [folders],
+  )
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
   const activeDragDeck = activeDragId ? deckById(activeDragId) : undefined
+  const activeDragFolder = activeDragId ? folders.find((f) => f.id === activeDragId) : undefined
+  const activeKind: 'deck' | 'folder' | null =
+    activeDragId == null ? null : activeDragFolder ? 'folder' : 'deck'
 
-  const reparentOnDrop = (event: DragEndEvent) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     setActiveDragId(null)
     const { active, over } = event
     if (!over) return
     const draggedId = String(active.id)
     const targetId = String(over.id)
     if (draggedId === targetId) return
+
+    // Folder drag → reorder among folders (folders don't nest).
+    if (folders.some((f) => f.id === draggedId)) {
+      if (!folders.some((f) => f.id === targetId)) return
+      const from = sortedFolders.findIndex((f) => f.id === draggedId)
+      const to = sortedFolders.findIndex((f) => f.id === targetId)
+      if (from < 0 || to < 0) return
+      const next = arrayMove(sortedFolders, from, to).map((f, i) => ({ ...f, order: i }))
+      setFolders(next) // optimistic
+      void reorderFolders(
+        folderStore,
+        next.map((f) => f.id),
+      )
+      return
+    }
+
     const dragged = deckById(draggedId)
     if (!dragged) return
+
     // Onto a folder → move in as a root deck of that folder.
     if (folders.some((f) => f.id === targetId)) {
       if (dragged.parentId === null && (dragged.folderId ?? null) === targetId) return
@@ -499,17 +560,43 @@ export function DeckLibraryPage({
       )
       return
     }
-    // Onto a deck → become its subdeck.
-    if (decks.some((d) => d.id === targetId)) {
-      if (dragged.parentId === targetId) return
-      if (!canReparent(decks, draggedId, targetId)) {
-        toast.error(t('deck.cantMoveIntoSelf'))
-        return
-      }
-      void moveDeck(deckStore, draggedId, targetId, null)
-      setExpanded((prev) => new Set(prev).add(targetId))
-      toast.success(t('deck.movedIntoToast', { name: deckById(targetId)?.name ?? '' }))
+
+    const target = deckById(targetId)
+    if (!target) return
+
+    // Same sibling group → reorder within the group (manual sort).
+    const sameGroup =
+      dragged.parentId === target.parentId &&
+      (dragged.folderId ?? null) === (target.folderId ?? null)
+    if (sameGroup) {
+      const siblings = decks
+        .filter(
+          (d) =>
+            d.parentId === dragged.parentId &&
+            (d.folderId ?? null) === (dragged.folderId ?? null) &&
+            !d.archived,
+        )
+        .sort((a, b) => a.order - b.order || a.id.localeCompare(b.id))
+      const from = siblings.findIndex((d) => d.id === draggedId)
+      const to = siblings.findIndex((d) => d.id === targetId)
+      if (from < 0 || to < 0) return
+      const reorderedIds = arrayMove(siblings, from, to).map((d) => d.id)
+      const orderById = new Map(reorderedIds.map((id, i) => [id, i]))
+      setDecks((prev) =>
+        prev.map((d) => (orderById.has(d.id) ? { ...d, order: orderById.get(d.id)! } : d)),
+      ) // optimistic
+      void reorderDecks(deckStore, reorderedIds)
+      return
     }
+
+    // Onto a deck in another group → become its subdeck.
+    if (!canReparent(decks, draggedId, targetId)) {
+      toast.error(t('deck.cantMoveIntoSelf'))
+      return
+    }
+    void moveDeck(deckStore, draggedId, targetId, null)
+    setExpanded((prev) => new Set(prev).add(targetId))
+    toast.success(t('deck.movedIntoToast', { name: target.name }))
   }
 
   const deckSwipeHandlers = (deck: Deck): SwipeActionHandlers => ({
@@ -566,20 +653,20 @@ export function DeckLibraryPage({
             <div className="flex items-center justify-between gap-2 px-3 py-3">
               <button
                 type="button"
-                onClick={exitSelect}
+                onClick={toggleSelectAll}
                 className="-mx-2 inline-flex min-h-11 items-center rounded-control px-2 text-[length:var(--p-text-body)] font-semibold text-accent"
               >
-                {t('common.cancel')}
+                {allSelected ? t('library.select.clearAll') : t('library.select.selectAll')}
               </button>
               <span className="text-[length:var(--p-text-body)] font-semibold tabular-nums text-heading">
                 {t('library.select.count', { count: selectedCount })}
               </span>
               <button
                 type="button"
-                onClick={toggleSelectAll}
+                onClick={exitSelect}
                 className="-mx-2 inline-flex min-h-11 items-center rounded-control px-2 text-[length:var(--p-text-body)] font-semibold text-accent"
               >
-                {allSelected ? t('library.select.clearAll') : t('library.select.selectAll')}
+                {t('common.cancel')}
               </button>
             </div>
           </header>
@@ -654,28 +741,35 @@ export function DeckLibraryPage({
       ) : (
         <DndContext
           sensors={dndSensors}
-          collisionDetection={pointerWithin}
+          collisionDetection={collisionDetection}
+          modifiers={[restrictToVerticalAxis]}
           onDragStart={(e: DragStartEvent) => setActiveDragId(String(e.active.id))}
-          onDragEnd={reparentOnDrop}
+          onDragEnd={handleDragEnd}
           onDragCancel={() => setActiveDragId(null)}
         >
           <div className="flex flex-col gap-2 pt-2">
-            {!inFolder
-              ? sortedFolders.map((folder) => (
+            {!inFolder ? (
+              <SortableContext
+                items={sortedFolders.map((f) => f.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {sortedFolders.map((folder) => (
                   <FolderRow
                     key={folder.id}
                     folder={folder}
                     deckCount={folderDeckCounts.get(folder.id) ?? 0}
                     selectMode={selectMode}
                     selected={selectedIds.has(folder.id)}
+                    activeKind={activeKind}
                     onOpen={() => setFolderId(folder.id)}
                     onRequestSelect={() => requestSelect(folder.id)}
                     onToggleSelect={() => toggleSelect(folder.id)}
                     swipe={prefs.swipe.folder}
                     swipeHandlers={folderSwipeHandlers(folder)}
                   />
-                ))
-              : null}
+                ))}
+              </SortableContext>
+            ) : null}
 
             <DeckTree
               decks={decks}
@@ -694,17 +788,29 @@ export function DeckLibraryPage({
             />
           </div>
 
-          <DragOverlay dropAnimation={{ duration: 200, easing: 'cubic-bezier(0.22,1,0.36,1)' }}>
+          <DragOverlay dropAnimation={{ duration: 220, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }}>
             {activeDragDeck ? (
-              <div className="flex items-center gap-3 rounded-card bg-card px-2.5 py-2 shadow-elevated ring-1 ring-accent">
-                <FolderGlyph
-                  color={activeDragDeck.color || DEFAULT_DECK_COLOR}
+              <div className="flex scale-[1.02] items-center gap-3 rounded-card bg-card px-2.5 py-2 shadow-elevated ring-1 ring-accent">
+                <DeckCover
                   icon={activeDragDeck.icon || DEFAULT_DECK_ICON}
-                  className="size-9"
+                  color={activeDragDeck.color || DEFAULT_DECK_COLOR}
+                  className="size-9 rounded-2xl ring-1 ring-black/5"
                   iconClassName="text-base leading-none"
                 />
                 <span className="truncate text-[length:var(--p-text-body)] font-semibold text-heading">
                   {activeDragDeck.name}
+                </span>
+              </div>
+            ) : activeDragFolder ? (
+              <div className="flex scale-[1.02] items-center gap-3 rounded-card bg-card px-2.5 py-2.5 shadow-elevated ring-1 ring-accent">
+                <FolderGlyph
+                  color={activeDragFolder.color}
+                  icon={activeDragFolder.icon || DEFAULT_FOLDER_ICON}
+                  className="size-11 rounded-2xl"
+                  iconClassName="text-xl leading-none"
+                />
+                <span className="truncate text-[length:var(--p-text-title)] font-semibold text-heading">
+                  {activeDragFolder.name}
                 </span>
               </div>
             ) : null}
@@ -925,6 +1031,7 @@ interface FolderRowProps {
   deckCount: number
   selectMode: boolean
   selected: boolean
+  activeKind: 'deck' | 'folder' | null
   onOpen: () => void
   onRequestSelect: () => void
   onToggleSelect: () => void
@@ -937,6 +1044,7 @@ function FolderRow({
   deckCount,
   selectMode,
   selected,
+  activeKind,
   onOpen,
   onRequestSelect,
   onToggleSelect,
@@ -945,37 +1053,53 @@ function FolderRow({
 }: FolderRowProps) {
   const { t } = useTranslation()
   const longPress = useLongPress({
-    onLongPress: () => {
-      if (!selectMode) onRequestSelect()
-    },
+    onLongPress: onRequestSelect,
     onTap: () => (selectMode ? onToggleSelect() : onOpen()),
   })
   const { leading, trailing } = buildSwipeActions(swipe, swipeHandlers, t)
   const swipeEnabled = !selectMode && (leading.length > 0 || trailing.length > 0)
 
-  // A folder is a drop target in select mode — dropping a deck moves it inside.
-  const drop = useDroppable({ id: folder.id, disabled: !selectMode })
+  // Folders reorder among themselves; a dragged deck drops in to nest.
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+    isOver,
+  } = useSortable({ id: folder.id, disabled: !selectMode })
+  const isNestTarget = isOver && activeKind === 'deck'
 
   const row = (
     <div
-      ref={drop.setNodeRef}
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
-        'relative flex w-full items-center gap-3.5 rounded-card bg-card py-2.5 pl-2.5 pr-2 shadow-rest transition-shadow',
+        'relative flex w-full items-center gap-3.5 rounded-card bg-card py-2.5 pl-2.5 pr-2 shadow-card transition-[box-shadow,background-color]',
         selected && 'ring-2 ring-inset ring-accent',
-        drop.isOver && 'ring-2 ring-accent ring-offset-2 ring-offset-background',
+        isNestTarget && 'bg-accent/[0.08] ring-2 ring-accent ring-offset-2 ring-offset-background',
+        isDragging && 'relative z-50 opacity-40',
       )}
     >
-      {/* Whole-card press target — taps fall through the content to here. */}
+      {/* Whole-card activator — tap toggles / opens; press-and-hold drags. */}
       <button
         type="button"
-        {...longPress}
+        ref={selectMode ? setActivatorNodeRef : undefined}
+        {...(selectMode
+          ? { onClick: () => onToggleSelect(), ...attributes, ...listeners }
+          : longPress)}
         aria-label={
           selectMode
             ? t('library.select.toggle', { name: folder.name })
             : t('folder.rowOpen', { name: folder.name })
         }
         aria-pressed={selectMode ? selected : undefined}
-        className="absolute inset-0 rounded-card transition-colors active:bg-primary/[0.06]"
+        className={cn(
+          'absolute inset-0 rounded-card transition-colors active:bg-primary/[0.06]',
+          selectMode && 'touch-pan-y',
+        )}
       />
 
       {selectMode ? (
@@ -987,7 +1111,11 @@ function FolderRow({
       <div className="pointer-events-none relative z-10 flex min-w-0 flex-1 items-center gap-3.5">
         {/* A folder is a container: the glyph carries pale "sheets" stacked
             behind it, so folders read as holding decks — not as another deck. */}
-        <span className="relative size-12 shrink-0">
+        <motion.span
+          className="relative size-12 shrink-0"
+          animate={{ scale: isNestTarget ? 1.08 : 1 }}
+          transition={{ type: 'spring', stiffness: 420, damping: 20 }}
+        >
           <span
             aria-hidden
             className="absolute inset-0 translate-x-[5px] translate-y-[-4px] rounded-2xl bg-secondary/40 ring-1 ring-inset ring-border/60"
@@ -1002,7 +1130,7 @@ function FolderRow({
             className="relative size-12 rounded-2xl"
             iconClassName="text-xl leading-none"
           />
-        </span>
+        </motion.span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[length:var(--p-text-title)] font-semibold text-heading">
             {folder.name}

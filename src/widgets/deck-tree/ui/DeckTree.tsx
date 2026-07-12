@@ -1,6 +1,7 @@
-import { useCallback, useMemo } from 'react'
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useDraggable, useDroppable } from '@dnd-kit/core'
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { ChevronRight, Minus, Plus } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import {
@@ -78,29 +79,33 @@ export function DeckTree({
     [decks, parentId, folderId],
   )
 
+  // Each sibling group is its own sortable list, so a grip-drag reorders within
+  // the group (smooth slide) while dropping onto another deck/folder reparents.
   return (
     <ul className="flex flex-col gap-2">
-      {roots.map((deck, index) => (
-        <DeckTreeNode
-          key={deck.id}
-          deck={deck}
-          index={index}
-          depth={0}
-          decks={decks}
-          cards={cards}
-          due={dueCounts.get(deck.id) ?? 0}
-          dueCounts={dueCounts}
-          expanded={expanded}
-          onToggle={onToggle}
-          onOpen={onOpen}
-          selectMode={selectMode}
-          selectedIds={selectedIds}
-          onRequestSelect={onRequestSelect}
-          onToggleSelect={onToggleSelect}
-          swipe={swipe}
-          swipeHandlers={swipeHandlers}
-        />
-      ))}
+      <SortableContext items={roots.map((d) => d.id)} strategy={verticalListSortingStrategy}>
+        {roots.map((deck, index) => (
+          <DeckTreeNode
+            key={deck.id}
+            deck={deck}
+            index={index}
+            depth={0}
+            decks={decks}
+            cards={cards}
+            due={dueCounts.get(deck.id) ?? 0}
+            dueCounts={dueCounts}
+            expanded={expanded}
+            onToggle={onToggle}
+            onOpen={onOpen}
+            selectMode={selectMode}
+            selectedIds={selectedIds}
+            onRequestSelect={onRequestSelect}
+            onToggleSelect={onToggleSelect}
+            swipe={swipe}
+            swipeHandlers={swipeHandlers}
+          />
+        ))}
+      </SortableContext>
     </ul>
   )
 }
@@ -154,25 +159,32 @@ function DeckTreeNode({
   const selected = selectedIds.has(deck.id)
 
   const longPress = useLongPress({
-    // In select mode the hold gesture is owned by drag-and-drop, not selection.
-    onLongPress: () => {
-      if (!selectMode) onRequestSelect(deck.id)
-    },
-    onTap: () => (selectMode ? onToggleSelect(deck.id) : onOpen(deck.id)),
+    onLongPress: () => onRequestSelect(deck.id),
+    onTap: () => onOpen(deck.id),
   })
 
-  // Select mode turns every deck into a drag source and a drop target: drop a
-  // deck onto another deck to make it a subdeck (reparenting handled by the page).
-  const drag = useDraggable({ id: deck.id, disabled: !selectMode })
-  const drop = useDroppable({ id: deck.id, disabled: !selectMode })
-  const setRefs = useCallback(
-    (node: HTMLElement | null) => {
-      drag.setNodeRef(node)
-      drop.setNodeRef(node)
-    },
-    [drag, drop],
-  )
-  const isDropTarget = drop.isOver && drag.active?.id !== deck.id
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+    isOver,
+    active,
+  } = useSortable({ id: deck.id, disabled: !selectMode })
+
+  // A drop onto a sibling reorders (the sortable slide is the feedback); a drop
+  // onto any other deck nests, so only that case grows the "nest here" ring.
+  // Only a dragged *deck* can nest (a folder over a deck is a no-op).
+  const activeDeck = active ? decks.find((d) => d.id === active.id) : null
+  const sameGroup =
+    activeDeck != null &&
+    activeDeck.parentId === deck.parentId &&
+    (activeDeck.folderId ?? null) === (deck.folderId ?? null)
+  const isNestTarget = isOver && activeDeck != null && active?.id !== deck.id && !sameGroup
+  const dragActive = active != null
 
   const { leading, trailing } =
     swipe && swipeHandlers
@@ -183,47 +195,53 @@ function DeckTreeNode({
   const toggleSize = isSub ? 'size-6' : 'size-7'
   const coverSize = isSub ? 'size-8' : 'size-9'
 
+  // Every row is a lifted card; subdecks stay legible as children through indent,
+  // the spine, and a smaller cover rather than by sitting flat.
   const surface = selected
-    ? cn('bg-card ring-2 ring-inset ring-accent', !isSub && 'shadow-rest')
-    : isSub
-      ? 'bg-card ring-1 ring-inset ring-border'
-      : 'bg-card shadow-rest'
+    ? 'bg-card shadow-card ring-2 ring-inset ring-accent'
+    : 'bg-card shadow-card'
 
   const row = (
     <div
-      ref={setRefs}
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
-        'relative flex items-center gap-1.5 rounded-card py-2 pl-1.5 pr-2 transition-[box-shadow,opacity]',
+        'relative flex items-center gap-1.5 rounded-card py-2 pl-1.5 pr-2 transition-[box-shadow,background-color]',
         surface,
-        isDropTarget && 'ring-2 ring-accent ring-offset-2 ring-offset-background',
-        drag.isDragging && 'opacity-40',
+        isNestTarget && 'bg-accent/[0.08] ring-2 ring-accent ring-offset-2 ring-offset-background',
+        // Faint ghost in the source slot while the DragOverlay clone is in hand.
+        isDragging && 'relative z-50 opacity-40',
       )}
     >
-      {/* Whole-card press target — taps on the content fall through to this, so
-          pressing anywhere opens (or toggles selection), not just the inner row.
-          In select mode it also carries the drag-to-reparent listeners. */}
+      {/* Whole-card activator: a tap opens (or toggles selection); a press-and-hold
+          starts the drag; `touch-pan-y` keeps the list scrollable until that hold. */}
       <button
         type="button"
-        {...longPress}
-        {...drag.attributes}
-        {...drag.listeners}
+        ref={selectMode ? setActivatorNodeRef : undefined}
+        {...(selectMode
+          ? { onClick: () => onToggleSelect(deck.id), ...attributes, ...listeners }
+          : longPress)}
         aria-label={
           selectMode
             ? t('library.select.toggle', { name: deck.name })
             : t('deck.rowOpen', { name: deck.name })
         }
         aria-pressed={selectMode ? selected : undefined}
-        className="absolute inset-0 rounded-card transition-colors active:bg-primary/[0.06]"
+        className={cn(
+          'absolute inset-0 rounded-card transition-colors active:bg-primary/[0.06]',
+          selectMode && 'touch-pan-y',
+        )}
       />
 
+      {/* Select checkbox sits alongside the expand toggle so a deck can still be
+          expanded while selecting. */}
       {selectMode ? (
-        <span
-          className="pointer-events-none relative z-20 grid shrink-0 place-items-center"
-          style={{ width: 28 }}
-        >
+        <span className="pointer-events-none relative z-20 grid size-6 shrink-0 place-items-center">
           <SelectDot selected={selected} />
         </span>
-      ) : hasChildren ? (
+      ) : null}
+
+      {hasChildren ? (
         <motion.button
           type="button"
           whileTap={{ scale: 0.8 }}
@@ -255,7 +273,11 @@ function DeckTreeNode({
       )}
 
       <div className="pointer-events-none relative z-10 flex min-w-0 flex-1 items-center gap-3">
-        <span className="relative shrink-0">
+        <motion.span
+          className="relative shrink-0"
+          animate={{ scale: isNestTarget ? 1.14 : 1 }}
+          transition={{ type: 'spring', stiffness: 420, damping: 20 }}
+        >
           <DeckCover
             icon={deck.icon || DEFAULT_DECK_ICON}
             color={deckColor(deck)}
@@ -270,7 +292,7 @@ function DeckTreeNode({
               {due > 99 ? '99+' : due}
             </span>
           ) : null}
-        </span>
+        </motion.span>
 
         <span className="min-w-0 flex-1">
           <span
@@ -302,7 +324,12 @@ function DeckTreeNode({
     <motion.li
       initial={isSub && !reduce ? { opacity: 0, y: -6 } : false}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.24, ease: EASE_OUT, delay: isSub ? Math.min(index, 6) * 0.03 : 0 }}
+      transition={{
+        duration: 0.24,
+        ease: EASE_OUT,
+        // Pause the entrance stagger during a drag so reordered rows settle straight.
+        delay: dragActive || !isSub ? 0 : Math.min(index, 6) * 0.03,
+      }}
     >
       {swipeEnabled ? (
         <SwipeRow leading={leading} trailing={trailing} bleed>
@@ -328,27 +355,32 @@ function DeckTreeNode({
               className="pointer-events-none absolute bottom-2 top-3 w-[2px] rounded-full bg-primary/[0.12]"
               style={{ left: INDENT / 2 - 1 }}
             />
-            {children.map((child, childIndex) => (
-              <DeckTreeNode
-                key={child.id}
-                deck={child}
-                index={childIndex}
-                depth={depth + 1}
-                decks={decks}
-                cards={cards}
-                due={dueCounts.get(child.id) ?? 0}
-                dueCounts={dueCounts}
-                expanded={expanded}
-                onToggle={onToggle}
-                onOpen={onOpen}
-                selectMode={selectMode}
-                selectedIds={selectedIds}
-                onRequestSelect={onRequestSelect}
-                onToggleSelect={onToggleSelect}
-                swipe={swipe}
-                swipeHandlers={swipeHandlers}
-              />
-            ))}
+            <SortableContext
+              items={children.map((c) => c.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {children.map((child, childIndex) => (
+                <DeckTreeNode
+                  key={child.id}
+                  deck={child}
+                  index={childIndex}
+                  depth={depth + 1}
+                  decks={decks}
+                  cards={cards}
+                  due={dueCounts.get(child.id) ?? 0}
+                  dueCounts={dueCounts}
+                  expanded={expanded}
+                  onToggle={onToggle}
+                  onOpen={onOpen}
+                  selectMode={selectMode}
+                  selectedIds={selectedIds}
+                  onRequestSelect={onRequestSelect}
+                  onToggleSelect={onToggleSelect}
+                  swipe={swipe}
+                  swipeHandlers={swipeHandlers}
+                />
+              ))}
+            </SortableContext>
           </motion.ul>
         ) : null}
       </AnimatePresence>

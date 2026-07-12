@@ -155,6 +155,10 @@
   --shadow-featured: var(--p-shadow-featured);
   --shadow-interactive: var(--p-shadow-interactive);
   --shadow-elevated: var(--p-shadow-elevated);
+  /* Lifted list card — clearly raised off the daylight bg, tight footprint so
+     stacked rows don't muddy each other. */
+  --shadow-card:
+    0 2px 4px -1px oklch(var(--p-tint-navy) / 0.1), 0 8px 20px -4px oklch(var(--p-tint-navy) / 0.2);
 
   --radius-control: var(--p-radius-sm);
   --radius-card: var(--p-radius-md);
@@ -226,6 +230,7 @@
   --divider: oklch(100% 0 0 / 0.1);
   --ring: var(--p-blue-300);
   --input-bg: oklch(100% 0 0 / 0.06);
+  --shadow-card: 0 2px 4px -1px oklch(0% 0 0 / 0.3), 0 8px 22px -4px oklch(0% 0 0 / 0.5);
 }
 
 @media (prefers-reduced-motion: reduce) {

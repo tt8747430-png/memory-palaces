@@ -155,6 +155,10 @@
     box-shadow: var(--shadow-rest);
   }
 
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+
   .shadow-featured {
     box-shadow: var(--shadow-featured);
   }

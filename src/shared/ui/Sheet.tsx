@@ -83,7 +83,9 @@ export function Sheet({
                 </Dialog.Close>
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto px-5 pb-3 pt-1.5">{children}</div>
+            {/* `min-h-0` lets this flex child shrink below its content so
+                `overflow-y-auto` actually scrolls (e.g. a long move-target tree). */}
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-3 pt-1.5">{children}</div>
             {footer ? (
               <div className="shrink-0 border-t border-border px-5 pt-3 pb-2">{footer}</div>
             ) : null}
