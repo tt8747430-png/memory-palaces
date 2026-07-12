@@ -5,9 +5,6 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import boundaries from 'eslint-plugin-boundaries'
 import globals from 'globals'
 
-// Feature-Sliced Design layers, highest → lowest. A module may import only from
-// layers at or below its own — enforced by `boundaries/dependencies`. Expressed
-// once here as v6 object selectors.
 const FSD_LAYERS = ['app', 'pages', 'widgets', 'features', 'entities', 'shared']
 const fsdDependencyRules = FSD_LAYERS.map((from) => ({
   from: { type: from },
@@ -56,8 +53,6 @@ export default tseslint.config(
     },
   },
   {
-    // The code-based router defines route objects alongside their components in one
-    // file by design; Fast Refresh's component-only-export rule does not apply here.
     files: ['src/app/router.tsx'],
     rules: { 'react-refresh/only-export-components': 'off' },
   },
