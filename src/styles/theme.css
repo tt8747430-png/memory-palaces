@@ -1,7 +1,3 @@
-/* Tailwind v4 bridge — maps the semantic role tokens (tokens.css) onto Tailwind's
-   color/font/radius namespaces, so utilities (bg-primary, text-foreground,
-   border-border, rounded-card…) resolve THROUGH the semantic layer. Components use
-   these utilities; no component ever references a primitive or a raw hex. */
 @theme inline {
     --font-sans: var(--p-font-sans);
 
@@ -31,7 +27,6 @@
     --color-input: var(--input-bg);
     --color-ring: var(--ring);
 
-    /* Direct-access roles for utilities */
     --color-heading: var(--text-heading);
     --color-surface-sky: var(--surface-sky);
     --color-info-surface: var(--info-surface);
@@ -39,10 +34,6 @@
     --color-rating: var(--rating);
     --color-favorite: var(--favorite);
 
-    /* Radius scale (keys reference primitives to avoid name collisions). Every role a
-       `rounded-*` utility references must be registered here — `@theme` is what generates the
-       utility; a role defined only in tokens.css sets the variable but no class (that omission
-       left `rounded-pill` producing square corners on every pill, tag, and chip). */
     --radius-control: var(--p-radius-sm);
     --radius-card: var(--p-radius-md);
     --radius-card-featured: var(--p-radius-xl);
@@ -61,7 +52,6 @@
         height: 100%;
         -webkit-text-size-adjust: 100%;
         text-size-adjust: 100%;
-        /* No grey/blue flash on tap (inherited); the app provides its own press feedback. */
         -webkit-tap-highlight-color: transparent;
     }
 
@@ -74,19 +64,11 @@
         overscroll-behavior: none;
         -webkit-font-smoothing: antialiased;
         text-rendering: optimizeLegibility;
-        /* Native-app feel: app chrome isn't selectable and long-press doesn't pop the
-           browser callout. Form fields and `.allow-select` content opt back in below. */
         -webkit-user-select: none;
         user-select: none;
         -webkit-touch-callout: none;
     }
 
-    /* The app shell: a fixed, non-scrolling layer sized to the viewport (each screen owns its
-       own inner scroller). It carries the Daylight ground — one lit-room gradient shared by
-       every screen — so the ground always covers the viewport and never overscrolls into white.
-       Note: the intermittent white strip at the BOTTOM of the installed PWA was not a height
-       bug here — it was iOS offsetting the standalone viewport under a translucent status bar;
-       that's fixed at the meta layer (apple-mobile-web-app-status-bar-style in index.html). */
     #root {
         position: fixed;
         inset: 0;
@@ -125,13 +107,11 @@
         color: var(--text-secondary);
     }
 
-    /* One soft navy focus ring everywhere (never a harsh outline). */
     :focus-visible {
         outline: none;
         box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 50%, transparent);
     }
 
-    /* Form fields stay selectable/editable despite the global chrome lock. */
     input,
     textarea,
     [contenteditable] {
@@ -140,13 +120,11 @@
         -webkit-touch-callout: default;
     }
 
-    /* Images don't ghost-drag or pop the long-press save sheet. */
     img {
         -webkit-user-drag: none;
         -webkit-touch-callout: none;
     }
 
-    /* Interactive controls skip the legacy double-tap delay. */
     button,
     a,
     label,
@@ -189,13 +167,10 @@
         box-shadow: var(--shadow-elevated);
     }
 
-    /* Navy-tinted drop-shadow for free-floating glyphs (the spatial palace icons),
-       so a transparent emoji lifts off the surface like the rest of the elevation. */
     .drop-shadow-float {
         filter: drop-shadow(0 6px 14px oklch(var(--p-tint-navy) / 0.28));
     }
 
-    /* Hide the scrollbar on overflow areas (card faces) while keeping them scrollable. */
     .scrollbar-hide {
         scrollbar-width: none;
         -ms-overflow-style: none;
@@ -205,8 +180,6 @@
         display: none;
     }
 
-    /* Opt readable content (and its children) back into selection + copy after the
-       global native-app lock — e.g. verse text or a locus the user may want to copy. */
     .allow-select,
     .allow-select * {
         -webkit-user-select: text;
@@ -214,7 +187,6 @@
         -webkit-touch-callout: default;
     }
 
-    /* Safe-area (iOS notch / home indicator); resolve to 0 in the browser. */
     .pt-safe {
         padding-top: env(safe-area-inset-top);
     }
@@ -223,9 +195,6 @@
         padding-bottom: env(safe-area-inset-bottom);
     }
 
-    /* Tab screens sit above the floating bottom nav (64px tall + 12px inset); reserve
-       room so trailing content clears it. Declared after .pb-safe so it wins when both
-       land on one element — tailwind-merge can't dedupe the custom safe-area utility. */
     .pb-nav {
         padding-bottom: calc(7rem + env(safe-area-inset-bottom));
     }
