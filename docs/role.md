@@ -24,39 +24,35 @@ later" comments unless explicitly requested.
 
 1. bugfix: the tab bar is shown whne the splashscreen is shown in dark mode. 
 no 2. when clicking on the folder name in the header i except it to look like it is clickable and when clicking on it will open the edit folder settings and after that remove teh edit button on the right. this should be done across the app. 
-3. improve the archive functionality and what the archive should actualy do because for now it is just like  a separate folder. it should have real behaviour and be like actual archive. like in an zip archive or so. i can see but not edit or something like that. 
-4. remove the finish button from the settings.
+2. remove the finish button from the settings.
 
 
 
-1. we need to refactor the whole structure of the app. now we will have three types and this will be: 
+1. /impeccable improve the styles of the folder decks and subdeck controls harden polish colorize animate improve the actions
+2. refactor the swipe actions page from the app settings and make more compact 
+3. /impeccable fix the swipe actions colors  and make more calm and not so bad like i dont like the orange color and so on 
+4. it still doensnt work and i still dont have rounded corners for the folder card for the decks and for the subdecks '/Users/kristianbraila/Desktop/Screenshot 2026-07-12 at 14.37.15.png'
+5. reorder the actiosn in the empty states and the add new folder shouldnt be in the empty state, only in the toolbar. 
+6. when i click on the import and i am in the main home page without any decks i dont get the more options for import sheet only the paste notes. and when i click the paste notes and i am in none of the decks, the deck names should be provided in the inline in the paste notes editor and not as separate sheets, but when i am inside a deck this will be hidded so that i just paste import the notes and not also creating a new name. 
 
-folders: that can have decks inside them i gave you also the photos how a folder looks like this is the Biblia folder and how its three dots on the right top header look like.  /Users/kristianbraila/Downloads/IMG_2460.PNG /Users/kristianbraila/Downloads/IMG_2461.PNG /Users/kristianbraila/Downloads/IMG_2462.PNG
-
-decks: this will be the holders of the flashcards and the whole learning system they will have settings as whole page in the top right three dots click with such  looks /Users/kristianbraila/Downloads/IMG_2500.PNG /Users/kristianbraila/Downloads/IMG_2501.PNG /Users/kristianbraila/Downloads/IMG_2502.PNG
-
-
-subdecks: each deck can have as many subdecks as the user wants and also this subdecks can have as many subdecks as the user wants and so on and and a deck without any subdecks or a subdeck withou any subdecks will look like the Bible Questions deck or like the Bible Memory subdeck. and the deck with other subdecks will be like the Versetele Talantul with this plus sign and tree overview. 
-
-and when the user click on the deck that has many subdecks it will open all the cards that are inside this deck but when the user click on subdeck it will open all the cards that are in this subdeck and other subdecks that this subdeck has
-
-
-
-/Users/kristianbraila/Downloads/IMG_2457.PNG /Users/kristianbraila/Downloads/IMG_2458.PNG /Users/kristianbraila/Downloads/IMG_2459.PNG /Users/kristianbraila/Downloads/IMG_2460.PNG /Users/kristianbraila/Downloads/IMG_2461.PNG /Users/kristianbraila/Downloads/IMG_2462.PNG /Users/kristianbraila/Downloads/IMG_2463.PNG /Users/kristianbraila/Downloads/IMG_2464.PNG
+7. for all the forms and creation sheets and pages should be provided default already filled in so like the New deck New Deck 1 if already present and so on across the app. 
 
 
  
+ 1. long tap not breakes or long tap to select 
+
+ 2. we dont have onboarding and guest account lacks customizabilityx
+
+
 BUGS:
 
-1. StatusBar gets white when a notification animations gets close to the StatusBar
-2. The app native SplashScreen features are not reliable and not working. 
-3. Remove the Form Accessory Bar with Capacitor 
+ 1. StatusBar gets white when a notification animations gets close to the StatusBar
+ 2. The app native SplashScreen features are not reliable and not working. 
+ 3. Remove the Form Accessory Bar with Capacitor 
 
- 11. superpowers and /impeccable the status bar background is not very reliable at all, whenever something happens in the app like notification comes and it toches the status bar by hiding the status bar gets recolored. fix and debug this so that we can it stays also colored in our background and we in our app log or know whenever something weird happens and the status bar gets white
+ 4. superpowers and /impeccable the status bar background is not very reliable at all, whenever something happens in the app like notification comes and it toches the status bar by hiding the status bar gets recolored. fix and debug this so that we can it stays also colored in our background and we in our app log or know whenever something weird happens and the status bar gets white
    
    /Users/kristianbraila/Downloads/bugs_fixed/IMG_2152.PNG /Users/kristianbraila/Downloads/bugs_fixed/IMG_2153.PNG
-
-
 
 <!--
 
