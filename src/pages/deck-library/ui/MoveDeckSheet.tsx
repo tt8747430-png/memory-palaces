@@ -1,109 +1,296 @@
-import { type ReactNode } from 'react'
+import { type ReactNode, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Check, FolderPlus, Home } from 'lucide-react'
-import type { Folder } from '@/entities/folder'
-import { cn } from '@/shared/lib'
-import { Button, FolderGlyph, Sheet } from '@/shared/ui'
+import { Archive, Check, FolderPlus, Home, Minus, Plus } from 'lucide-react'
+import { type Deck, DEFAULT_DECK_COLOR, DEFAULT_DECK_ICON } from '@/entities/deck'
+import { DEFAULT_FOLDER_ICON, type Folder } from '@/entities/folder'
+import { childDecks, cn, decksInFolder, rootDecks } from '@/shared/lib'
+import { Button, DeckCover, FolderGlyph, Sheet } from '@/shared/ui'
+
+export type MoveDestination =
+  | { kind: 'home' }
+  | { kind: 'archive' }
+  | { kind: 'folder'; folderId: string }
+  | { kind: 'deck'; deckId: string }
+
+function destKey(d: MoveDestination): string {
+  if (d.kind === 'folder') return `folder:${d.folderId}`
+  if (d.kind === 'deck') return `deck:${d.deckId}`
+  return d.kind
+}
+
+interface DeckNode {
+  deck: Deck
+  children: DeckNode[]
+}
 
 export interface MoveDeckSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  deckName: string
-  currentFolderId: string | null
+  subtitle: string
+  decks: Deck[]
   folders: Folder[]
-  onPick: (folderId: string | null) => void
+  /** Decks that can't be a destination (the moved decks + their subtrees). */
+  excludeIds: ReadonlySet<string>
+  onPick: (dest: MoveDestination) => void
   onNewFolder: () => void
 }
+
+const INDENT = 20
 
 export function MoveDeckSheet({
   open,
   onOpenChange,
-  deckName,
-  currentFolderId,
+  subtitle,
+  decks,
   folders,
+  excludeIds,
   onPick,
   onNewFolder,
 }: MoveDeckSheetProps) {
   const { t } = useTranslation()
+
+  const buildDeckNode = (deck: Deck): DeckNode => ({
+    deck,
+    children: childDecks(decks, deck.id)
+      .filter((d) => !d.archived)
+      .map(buildDeckNode),
+  })
+  const folderNodes = folders.map((folder) => ({
+    folder,
+    children: decksInFolder(decks, folder.id)
+      .filter((d) => !d.archived)
+      .map(buildDeckNode),
+  }))
+  const homeDeckNodes = rootDecks(decks)
+    .filter((d) => !d.archived)
+    .map(buildDeckNode)
+
+  const allExpandable = useMemo(() => {
+    const ids = new Set<string>()
+    for (const f of folders) ids.add(`folder:${f.id}`)
+    for (const d of decks) {
+      if (decks.some((c) => c.parentId === d.id && !c.archived)) ids.add(`deck:${d.id}`)
+    }
+    return ids
+  }, [folders, decks])
+
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set(allExpandable))
+  const [selected, setSelected] = useState<MoveDestination | null>(null)
+
+  // Re-open on a fresh structure: expand everything, clear the pick.
+  useEffect(() => {
+    if (open) {
+      setExpanded(new Set(allExpandable))
+      setSelected(null)
+    }
+  }, [open, allExpandable])
+
+  const toggle = (key: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+
+  const selectedKey = selected ? destKey(selected) : null
+  const selectedName =
+    selected == null
+      ? ''
+      : selected.kind === 'home'
+        ? t('move.home')
+        : selected.kind === 'archive'
+          ? t('move.archive')
+          : selected.kind === 'folder'
+            ? (folders.find((f) => f.id === selected.folderId)?.name ?? '')
+            : (decks.find((d) => d.id === selected.deckId)?.name ?? '')
+
+  const renderDeck = (node: DeckNode, depth: number): ReactNode => {
+    const key = `deck:${node.deck.id}`
+    const disabled = excludeIds.has(node.deck.id)
+    const hasChildren = node.children.length > 0
+    const isOpen = expanded.has(key)
+    return (
+      <div key={key}>
+        <Row
+          depth={depth}
+          hasChildren={hasChildren}
+          isOpen={isOpen}
+          onToggle={() => toggle(key)}
+          glyph={
+            <DeckCover
+              icon={node.deck.icon || DEFAULT_DECK_ICON}
+              color={node.deck.color || DEFAULT_DECK_COLOR}
+              className="size-8 rounded-xl ring-1 ring-black/5"
+              iconClassName="text-[0.85rem] leading-none"
+            />
+          }
+          label={node.deck.name}
+          selected={selectedKey === key}
+          disabled={disabled}
+          onSelect={() => setSelected({ kind: 'deck', deckId: node.deck.id })}
+        />
+        {hasChildren && isOpen ? node.children.map((child) => renderDeck(child, depth + 1)) : null}
+      </div>
+    )
+  }
+
   return (
     <Sheet
       open={open}
       onOpenChange={onOpenChange}
-      title={t('move.title')}
-      description={deckName}
+      title={t('move.selectLocation')}
+      description={subtitle}
       footer={
-        <Button variant="secondary" size="lg" className="w-full" onClick={onNewFolder}>
-          <FolderPlus className="size-[18px]" aria-hidden />
-          {t('move.newFolder')}
+        <Button
+          size="lg"
+          className="w-full"
+          disabled={selected == null}
+          onClick={() => selected && onPick(selected)}
+        >
+          {selected == null ? t('move.pickPrompt') : t('move.moveTo', { name: selectedName })}
         </Button>
       }
     >
-      <div className="flex flex-col gap-2 pb-2">
-        <FolderOption
-          label={t('move.none')}
+      <div className="-mx-1 flex flex-col">
+        <Row
+          depth={0}
           glyph={
-            <span className="grid size-10 shrink-0 place-items-center rounded-control bg-primary/10 text-primary">
+            <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-secondary/40 text-muted-foreground">
+              <Archive className="size-[18px]" aria-hidden />
+            </span>
+          }
+          label={t('move.archive')}
+          selected={selectedKey === 'archive'}
+          onSelect={() => setSelected({ kind: 'archive' })}
+        />
+        <Row
+          depth={0}
+          glyph={
+            <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
               <Home className="size-[18px]" aria-hidden />
             </span>
           }
-          selected={currentFolderId === null}
-          onClick={() => onPick(null)}
+          label={t('move.home')}
+          selected={selectedKey === 'home'}
+          onSelect={() => setSelected({ kind: 'home' })}
         />
-        {folders.map((folder) => (
-          <FolderOption
-            key={folder.id}
-            label={folder.name}
-            glyph={
-              <FolderGlyph
-                color={folder.color}
-                icon={folder.icon}
-                className="size-10"
-                iconClassName="text-lg leading-none"
+
+        {folderNodes.map(({ folder, children }) => {
+          const key = `folder:${folder.id}`
+          const hasChildren = children.length > 0
+          const isOpen = expanded.has(key)
+          return (
+            <div key={key}>
+              <Row
+                depth={1}
+                hasChildren={hasChildren}
+                isOpen={isOpen}
+                onToggle={() => toggle(key)}
+                glyph={
+                  <FolderGlyph
+                    color={folder.color}
+                    icon={folder.icon || DEFAULT_FOLDER_ICON}
+                    className="size-8"
+                    iconClassName="text-[0.95rem] leading-none"
+                  />
+                }
+                label={folder.name}
+                selected={selectedKey === key}
+                onSelect={() => setSelected({ kind: 'folder', folderId: folder.id })}
               />
-            }
-            selected={currentFolderId === folder.id}
-            onClick={() => onPick(folder.id)}
-          />
-        ))}
+              {hasChildren && isOpen ? children.map((child) => renderDeck(child, 2)) : null}
+            </div>
+          )
+        })}
+
+        {homeDeckNodes.map((node) => renderDeck(node, 1))}
       </div>
+
+      <button
+        type="button"
+        onClick={onNewFolder}
+        className="mt-1 flex w-full items-center gap-2.5 rounded-card px-2 py-3 text-left text-accent transition-colors active:bg-primary/[0.05]"
+      >
+        <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-info-surface">
+          <FolderPlus className="size-[18px]" aria-hidden />
+        </span>
+        <span className="text-[length:var(--p-text-body)] font-semibold">
+          {t('move.newFolder')}
+        </span>
+      </button>
     </Sheet>
   )
 }
 
-function FolderOption({
-  label,
+function Row({
+  depth,
+  hasChildren = false,
+  isOpen = false,
+  onToggle,
   glyph,
+  label,
   selected,
-  onClick,
+  disabled = false,
+  onSelect,
 }: {
-  label: string
+  depth: number
+  hasChildren?: boolean
+  isOpen?: boolean
+  onToggle?: () => void
   glyph: ReactNode
+  label: string
   selected: boolean
-  onClick: () => void
+  disabled?: boolean
+  onSelect: () => void
 }) {
-  const { t } = useTranslation()
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={selected}
-      className={cn(
-        'flex w-full items-center gap-3 rounded-card px-3 py-2.5 text-left transition-[background-color,box-shadow] duration-150 active:scale-[0.99]',
-        selected
-          ? 'bg-primary text-primary-foreground shadow-interactive'
-          : 'bg-card text-heading shadow-rest ring-1 ring-inset ring-border active:bg-secondary/15',
-      )}
+    <div
+      className="relative flex items-center border-b border-border/50"
+      style={{ paddingLeft: depth * INDENT }}
     >
-      {glyph}
-      <span className="min-w-0 flex-1 truncate text-[length:var(--p-text-body)] font-semibold">
-        {label}
-      </span>
-      {selected ? (
-        <span className="inline-flex shrink-0 items-center gap-1 rounded-pill bg-primary-foreground/15 py-0.5 pl-1.5 pr-2 text-[length:var(--p-text-tiny)] font-bold">
-          <Check className="size-3.5" strokeWidth={3} aria-hidden />
-          {t('move.current')}
+      {hasChildren ? (
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-label={isOpen ? 'Collapse' : 'Expand'}
+          aria-expanded={isOpen}
+          className="relative z-10 ml-1 grid size-6 shrink-0 place-items-center rounded-full bg-secondary/30 text-primary transition-colors active:bg-secondary/50"
+        >
+          {isOpen ? (
+            <Minus className="size-3.5" aria-hidden />
+          ) : (
+            <Plus className="size-3.5" aria-hidden />
+          )}
+        </button>
+      ) : (
+        <span className="ml-1 size-6 shrink-0" aria-hidden />
+      )}
+
+      <button
+        type="button"
+        onClick={onSelect}
+        disabled={disabled}
+        aria-pressed={selected}
+        className={cn(
+          'flex min-w-0 flex-1 items-center gap-2.5 rounded-control py-2.5 pl-1.5 pr-2 text-left transition-colors',
+          disabled ? 'opacity-40' : 'active:bg-primary/[0.04]',
+          selected && 'bg-primary/[0.06]',
+        )}
+      >
+        {glyph}
+        <span
+          className={cn(
+            'min-w-0 flex-1 truncate text-[length:var(--p-text-body)] font-semibold',
+            selected ? 'text-primary' : 'text-heading',
+          )}
+        >
+          {label}
         </span>
-      ) : null}
-    </button>
+        {selected ? (
+          <Check className="size-5 shrink-0 text-accent" strokeWidth={2.5} aria-hidden />
+        ) : null}
+      </button>
+    </div>
   )
 }

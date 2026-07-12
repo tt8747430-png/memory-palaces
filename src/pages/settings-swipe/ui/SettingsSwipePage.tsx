@@ -1,9 +1,10 @@
-import { type ReactNode, useEffect } from 'react'
+import { type CSSProperties, type ReactNode, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   ArrowLeft,
   ArrowLeftRight,
   ArrowRight,
+  ChevronRight,
   Folder,
   Layers,
   RotateCcw,
@@ -18,29 +19,35 @@ import { setPreferences } from '@/features/preferences'
 import {
   DEFAULT_SWIPE,
   normalizeSwipeConfig,
+  SWIPE_ACCENT,
   SWIPE_ACTION_META,
   SWIPE_ACTIONS,
   SWIPE_ITEM_TYPES,
+  SWIPE_SIDE_MAX,
   type SwipeActionId,
   type SwipeConfig,
   type SwipeItemType,
-  type SwipeTone,
 } from '@/shared/config/swipe'
-import { AppScreen, Button, cardSurface, ScreenHeader, swipeActionIcon } from '@/shared/ui'
+import {
+  AppScreen,
+  Button,
+  cardSurface,
+  ScreenHeader,
+  SegmentedControl,
+  swipeActionIcon,
+} from '@/shared/ui'
 import { cn } from '@/shared/lib'
-
-const TONE_CHIP: Record<SwipeTone, string> = {
-  danger: 'bg-[var(--danger-surface)] text-[var(--danger-on-surface)]',
-  success: 'bg-[var(--success-surface)] text-[var(--success-on-surface)]',
-  warning: 'bg-info-surface text-info-foreground',
-  accent: 'bg-info-surface text-info-foreground',
-  neutral: 'bg-secondary/80 text-heading ring-1 ring-inset ring-primary/15',
-}
 
 const TYPE_ICON: Record<SwipeItemType, typeof Layers> = {
   deck: Layers,
   folder: Folder,
   card: WalletCards,
+}
+
+/** Resolved accent for a swipe action — the shared source of truth for its
+ *  solid fill (preview caps) and its tinted chip (`--sw` custom property). */
+function accentOf(id: SwipeActionId) {
+  return SWIPE_ACCENT[SWIPE_ACTION_META[id].accent]
 }
 
 export interface SettingsSwipePageProps {
@@ -51,24 +58,27 @@ export function SettingsSwipePage({ onBack }: SettingsSwipePageProps) {
   const { t } = useTranslation()
   const store = usePreferencesStoreApi()
   const prefs = usePreferencesStore(selectEffectivePreferences)
+  const [type, setType] = useState<SwipeItemType>('deck')
 
   useEffect(() => {
     store.getState().start()
   }, [store])
 
-  const save = (type: SwipeItemType, next: SwipeConfig) =>
+  const save = (next: SwipeConfig) =>
     void setPreferences(store, {
       swipe: { ...prefs.swipe, [type]: normalizeSwipeConfig(type, next) },
     })
 
-  const toggle = (type: SwipeItemType, side: keyof SwipeConfig, id: SwipeActionId) => {
+  const toggle = (side: keyof SwipeConfig, id: SwipeActionId) => {
     const current = prefs.swipe[type]
     const list = current[side]
     const next = list.includes(id) ? list.filter((x) => x !== id) : [...list, id]
-    save(type, { ...current, [side]: next })
+    save({ ...current, [side]: next })
   }
 
   const resetAll = () => void setPreferences(store, { swipe: DEFAULT_SWIPE })
+
+  const config = prefs.swipe[type]
 
   return (
     <AppScreen
@@ -77,41 +87,52 @@ export function SettingsSwipePage({ onBack }: SettingsSwipePageProps) {
         <ScreenHeader title={t('swipe.title')} onBack={onBack} backLabel={t('settings.back')} />
       }
     >
-      <div className="mt-3 flex flex-col gap-3 pb-24">
+      <div className="mt-3 flex flex-col gap-4 pb-24">
         <p className="flex items-start gap-2 px-1 text-[length:var(--p-text-label)] leading-relaxed text-muted-foreground">
           <ArrowLeftRight className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
           {t('swipe.subtitle')}
         </p>
 
-        {SWIPE_ITEM_TYPES.map((type) => {
-          const TypeIcon = TYPE_ICON[type]
-          return (
-            <section key={type} className={cn(cardSurface, 'p-3.5')}>
-              <h2 className="flex items-center gap-2 text-[length:var(--p-text-sub)] font-bold text-heading">
-                <span className="grid size-7 shrink-0 place-items-center rounded-control bg-info-surface text-primary">
-                  <TypeIcon className="size-4" aria-hidden />
+        <SegmentedControl
+          aria-label={t('swipe.title')}
+          value={type}
+          onChange={setType}
+          size="sm"
+          options={SWIPE_ITEM_TYPES.map((value) => {
+            const Icon = TYPE_ICON[value]
+            return {
+              value,
+              ariaLabel: t(`swipe.types.${value}` as never),
+              label: (
+                <span className="flex items-center gap-1.5">
+                  <Icon className="size-4" aria-hidden />
+                  {t(`swipe.types.${value}` as never)}
                 </span>
-                {t(`swipe.types.${type}` as never)}
-              </h2>
-              <SideGroup
-                icon={<ArrowRight className="size-3.5" aria-hidden />}
-                label={t('swipe.leading')}
-                type={type}
-                side="leading"
-                selected={prefs.swipe[type].leading}
-                onToggle={(id) => toggle(type, 'leading', id)}
-              />
-              <SideGroup
-                icon={<ArrowLeft className="size-3.5" aria-hidden />}
-                label={t('swipe.trailing')}
-                type={type}
-                side="trailing"
-                selected={prefs.swipe[type].trailing}
-                onToggle={(id) => toggle(type, 'trailing', id)}
-              />
-            </section>
-          )
-        })}
+              ),
+            }
+          })}
+        />
+
+        <SwipePreview type={type} config={config} />
+
+        <section className={cn(cardSurface, 'divide-y divide-border/60 p-0')}>
+          <SideGroup
+            icon={<ArrowRight className="size-3.5" aria-hidden />}
+            label={t('swipe.leading')}
+            side="leading"
+            type={type}
+            selected={config.leading}
+            onToggle={(id) => toggle('leading', id)}
+          />
+          <SideGroup
+            icon={<ArrowLeft className="size-3.5" aria-hidden />}
+            label={t('swipe.trailing')}
+            side="trailing"
+            type={type}
+            selected={config.trailing}
+            onToggle={(id) => toggle('trailing', id)}
+          />
+        </section>
 
         <Button variant="ghost" onClick={resetAll} className="self-start">
           <RotateCcw className="size-[18px]" aria-hidden />
@@ -122,29 +143,78 @@ export function SettingsSwipePage({ onBack }: SettingsSwipePageProps) {
   )
 }
 
+function SwipePreview({ type, config }: { type: SwipeItemType; config: SwipeConfig }) {
+  const { t } = useTranslation()
+  const TypeIcon = TYPE_ICON[type]
+  return (
+    <div className="flex items-center gap-1" aria-hidden>
+      <PreviewCaps ids={config.leading} side="leading" />
+      <div className="flex min-w-0 flex-1 items-center gap-2.5 rounded-card bg-card px-3 py-2.5 shadow-rest">
+        <span className="grid size-8 shrink-0 place-items-center rounded-control bg-info-surface text-primary">
+          <TypeIcon className="size-4" />
+        </span>
+        <span className="min-w-0 flex-1 truncate text-[length:var(--p-text-body)] font-semibold text-heading">
+          {t(`swipe.sample.${type}` as never)}
+        </span>
+        <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+      </div>
+      <PreviewCaps ids={config.trailing} side="trailing" />
+    </div>
+  )
+}
+
+function PreviewCaps({ ids, side }: { ids: SwipeActionId[]; side: keyof SwipeConfig }) {
+  if (ids.length === 0) return null
+  const ordered = side === 'leading' ? ids : [...ids].reverse()
+  return (
+    <div
+      className={cn('flex shrink-0 gap-1', side === 'leading' ? 'flex-row' : 'flex-row-reverse')}
+    >
+      {ordered.map((id) => {
+        const accent = accentOf(id)
+        return (
+          <span
+            key={id}
+            style={{ backgroundColor: accent.fill }}
+            className={cn(
+              'grid size-9 shrink-0 place-items-center rounded-[14px] [&_svg]:size-4',
+              accent.ink === 'dark' ? 'text-(--p-navy-900)' : 'text-white',
+            )}
+          >
+            {swipeActionIcon(id)}
+          </span>
+        )
+      })}
+    </div>
+  )
+}
+
 function SideGroup({
   icon,
   label,
-  type,
   side,
+  type,
   selected,
   onToggle,
 }: {
   icon: ReactNode
   label: string
-  type: SwipeItemType
   side: keyof SwipeConfig
+  type: SwipeItemType
   selected: SwipeActionId[]
   onToggle: (id: SwipeActionId) => void
 }) {
   const { t } = useTranslation()
-  const atCap = selected.length >= 2
+  const max = SWIPE_SIDE_MAX[side]
+  const atCap = selected.length >= max
 
   return (
-    <div className="mt-3 border-t border-border/50 pt-3 first:border-t-0 first:pt-0">
+    <div className="p-3.5">
       <div className="flex items-center justify-between gap-2">
         <span className="inline-flex items-center gap-1.5 text-[length:var(--p-text-label)] font-bold text-heading">
-          <span className="text-muted-foreground">{icon}</span>
+          <span className="grid size-5 place-items-center rounded-md bg-primary/[0.07] text-primary">
+            {icon}
+          </span>
           {label}
         </span>
         <span
@@ -155,14 +225,14 @@ function SideGroup({
               : 'bg-secondary/50 text-muted-foreground',
           )}
         >
-          {t('swipe.sideCount', { count: selected.length })}
+          {t('swipe.sideCount', { count: selected.length, max })}
         </span>
       </div>
 
-      <div className="mt-2 flex flex-wrap gap-1.5">
+      <div className="mt-2.5 flex flex-wrap gap-1.5">
         {SWIPE_ACTIONS[type].map((id) => {
           const on = selected.includes(id)
-          const meta = SWIPE_ACTION_META[id]
+          const accent = accentOf(id)
           const disabled = !on && atCap
           return (
             <button
@@ -171,10 +241,11 @@ function SideGroup({
               aria-pressed={on}
               disabled={disabled}
               onClick={() => onToggle(id)}
+              style={on ? ({ '--sw': accent.fill } as CSSProperties) : undefined}
               className={cn(
-                'inline-flex items-center gap-1.5 rounded-pill px-2.5 py-1.5 text-[length:var(--p-text-label)] font-semibold transition-[transform,background-color] active:scale-[0.97]',
+                'inline-flex items-center gap-1.5 rounded-pill px-2.5 py-1.5 text-[length:var(--p-text-label)] font-semibold transition-[transform,background-color,color] active:scale-[0.96]',
                 'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/30',
-                on ? TONE_CHIP[meta.tone] : 'bg-secondary/40 text-muted-foreground',
+                on ? 'sw-tint' : 'bg-secondary/40 text-muted-foreground',
                 disabled && 'opacity-40',
               )}
               data-swipe-side={side}
@@ -182,7 +253,7 @@ function SideGroup({
               <span className="grid size-4 place-items-center [&_svg]:size-3.5">
                 {swipeActionIcon(id)}
               </span>
-              {t(meta.labelKey as never)}
+              {t(SWIPE_ACTION_META[id].labelKey as never)}
             </button>
           )
         })}

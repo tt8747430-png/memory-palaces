@@ -15,24 +15,16 @@ import {
   useReducedMotion,
   useTransform,
 } from 'motion/react'
-import type { SwipeTone } from '@/shared/config/swipe'
+import { type SwipeAccent, SWIPE_ACCENT } from '@/shared/config/swipe'
 import { cn, impact } from '@/shared/lib'
 
-export type { SwipeTone }
-
-const TONE_FILL: Record<SwipeTone, string> = {
-  danger: 'bg-[var(--danger)] text-white',
-  warning: 'bg-[var(--warning)] text-[var(--p-navy-900)]',
-  success: 'bg-[var(--success)] text-white',
-  accent: 'bg-[var(--accent)] text-white',
-  neutral: 'bg-secondary text-primary',
-}
+export type { SwipeAccent }
 
 export interface SwipeAction {
   id: string
   icon: ReactNode
   label: string
-  tone?: SwipeTone
+  accent?: SwipeAccent
   onAction: () => void
 }
 
@@ -42,6 +34,9 @@ export interface SwipeRowProps {
   trailing?: SwipeAction[]
   disabled?: boolean
   className?: string
+  /** Break out of the app's `px-5` column so the action tray runs edge-to-edge.
+   *  The resting row content is padded back in, so only the swipe reveal bleeds. */
+  bleed?: boolean
 }
 
 const AXIS_LOCK = 8
@@ -59,6 +54,7 @@ export function SwipeRow({
   trailing = [],
   disabled = false,
   className,
+  bleed = false,
 }: SwipeRowProps) {
   const reduce = useReducedMotion()
   const x = useMotionValue(0)
@@ -263,7 +259,11 @@ export function SwipeRow({
   return (
     <div
       ref={rootRef}
-      className={cn('relative isolate overflow-x-clip [overflow-clip-margin:16px]', className)}
+      className={cn(
+        'relative isolate overflow-x-clip [overflow-clip-margin:16px]',
+        bleed && '-mx-5',
+        className,
+      )}
     >
       {hasLeading ? (
         <motion.div
@@ -319,6 +319,7 @@ export function SwipeRow({
 
       <motion.div
         style={{ x, touchAction: 'pan-y' }}
+        className={cn(bleed && 'px-5')}
         onPointerDown={disabled ? undefined : onPointerDown}
         onPointerMove={disabled ? undefined : onPointerMove}
         onPointerUp={disabled ? undefined : finish}
@@ -344,6 +345,7 @@ function TrayButton({
 }) {
   const reduce = useReducedMotion()
   const isEdge = fillWidth !== undefined
+  const accent = SWIPE_ACCENT[action.accent ?? 'slate']
   return (
     <motion.button
       type="button"
@@ -359,17 +361,17 @@ function TrayButton({
       transition={reduce ? { duration: 0 } : ARM_SPRING}
       className="h-full max-w-full shrink-0 overflow-hidden p-1"
     >
+      {/* Icon-only: the accent + glyph carry the meaning; the label lives on
+          aria-label, so the tray stays calm and uncluttered. */}
       <span
         className={cn(
-          'flex size-full flex-col items-center justify-center gap-1 rounded-[20px] px-2',
+          'grid size-full place-items-center rounded-[20px] px-2 [&_svg]:size-6',
           'transition-[filter] active:brightness-95',
-          TONE_FILL[action.tone ?? 'neutral'],
+          accent.ink === 'dark' ? 'text-(--p-navy-900)' : 'text-white',
         )}
+        style={{ backgroundColor: accent.fill }}
       >
-        <span className="grid shrink-0 place-items-center">{action.icon}</span>
-        <span className="whitespace-nowrap text-(length:--p-text-tiny) font-semibold leading-none">
-          {action.label}
-        </span>
+        {action.icon}
       </span>
     </motion.button>
   )

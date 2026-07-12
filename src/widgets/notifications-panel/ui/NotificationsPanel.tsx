@@ -93,7 +93,7 @@ export function NotificationsPanel({
                           id: 'dismiss',
                           icon: <Trash2 className="size-5" aria-hidden />,
                           label: t('common.delete'),
-                          tone: 'danger',
+                          accent: 'red',
                           onAction: () => onRemove(notification.id),
                         },
                       ]}

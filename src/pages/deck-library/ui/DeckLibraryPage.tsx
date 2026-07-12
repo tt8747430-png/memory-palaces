@@ -1,16 +1,22 @@
-import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { type ChangeEvent, type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import {
+  DndContext,
+  type DragEndEvent,
+  DragOverlay,
+  type DragStartEvent,
+  pointerWithin,
+  useDroppable,
+} from '@dnd-kit/core'
 import { toast } from 'sonner'
 import {
   Archive,
   ChevronLeft,
   ChevronRight,
   ClipboardPaste,
-  Copy,
   FileText,
   FolderInput,
   FolderPlus,
-  Heart,
   Layers,
   MoreVertical,
   Plus,
@@ -20,6 +26,8 @@ import {
 import type { Deck } from '@/entities/deck'
 import {
   DECK_COLOR_OPTIONS,
+  DEFAULT_DECK_COLOR,
+  DEFAULT_DECK_ICON,
   selectDecks,
   selectIsReady as selectDecksReady,
   useDeckStore,
@@ -62,11 +70,15 @@ import { DeckTree } from '@/widgets/deck-tree'
 import { HomeHeader } from '@/widgets/home-header'
 import { useImportDraft } from '@/widgets/content-editor'
 import {
+  canReparent,
   cn,
   ContentImportError,
   dayKey,
+  impact,
   nextDefaultName,
+  subtreeDeckIds,
   useLongPress,
+  useSortableSensors,
   useStickyHeader,
 } from '@/shared/lib'
 import type { SwipeConfig } from '@/shared/config/swipe'
@@ -81,12 +93,14 @@ import {
   IconButton,
   ImportRow,
   PromptSheet,
+  SelectDot,
   Sheet,
   type SheetAction,
   SpeedDial,
   type SwipeActionHandlers,
   SwipeRow,
 } from '@/shared/ui'
+import type { MoveDestination } from './MoveDeckSheet'
 import { FolderSheet } from './FolderSheet'
 import { MoveDeckSheet } from './MoveDeckSheet'
 
@@ -191,6 +205,17 @@ export function DeckLibraryPage({
   const [moveTarget, setMoveTarget] = useState<string | null>(null)
   const [pendingDeleteDeck, setPendingDeleteDeck] = useState<string | null>(null)
   const [pendingDeleteFolder, setPendingDeleteFolder] = useState<string | null>(null)
+
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(() => new Set())
+  const [bulkMoveOpen, setBulkMoveOpen] = useState(false)
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
+
+  // Leaving or entering a folder ends any in-progress selection.
+  useEffect(() => {
+    setSelectMode(false)
+    setSelectedIds(new Set())
+  }, [folderId])
 
   const openFolder = useMemo(() => folders.find((f) => f.id === folderId), [folders, folderId])
   const sortedFolders = useMemo(() => [...folders].sort((a, b) => a.order - b.order), [folders])
@@ -305,24 +330,35 @@ export function DeckLibraryPage({
     toast.success(t('deck.duplicatedToast', { name: deck.name }))
   }
 
-  const moveDeckTo = (targetFolderId: string | null) => {
+  const moveDeckTo = (dest: MoveDestination) => {
     const deck = movingDeck
     setMoveTarget(null)
     if (!deck) return
-    const previous = deck.folderId ?? null
-    if (targetFolderId === previous && deck.parentId === null) return
+    if (dest.kind === 'archive') {
+      archiveDeck(deck)
+      return
+    }
+    const previous = { parentId: deck.parentId, folderId: deck.folderId ?? null }
+    const undo = {
+      label: t('common.undo'),
+      onClick: () => void moveDeck(deckStore, deck.id, previous.parentId, previous.folderId),
+    }
+    if (dest.kind === 'deck') {
+      if (!canReparent(decks, deck.id, dest.deckId)) return
+      void moveDeck(deckStore, deck.id, dest.deckId, null)
+      toast.success(t('deck.movedIntoToast', { name: deckById(dest.deckId)?.name ?? '' }), {
+        action: undo,
+      })
+      return
+    }
+    const targetFolderId = dest.kind === 'folder' ? dest.folderId : null
     void moveDeck(deckStore, deck.id, null, targetFolderId)
     const folderName = targetFolderId
       ? folders.find((f) => f.id === targetFolderId)?.name
       : undefined
     toast.success(
       folderName ? t('deck.movedToast', { folder: folderName }) : t('deck.unfiledToast'),
-      {
-        action: {
-          label: t('common.undo'),
-          onClick: () => void moveDeck(deckStore, deck.id, null, previous),
-        },
-      },
+      { action: undo },
     )
   }
 
@@ -339,57 +375,142 @@ export function DeckLibraryPage({
     setPendingDeleteFolder(null)
   }
 
-  const deckActions = (deck: Deck): SheetAction[] => [
-    {
-      id: 'add-subdeck',
-      label: t('deck.addSubdeck'),
-      icon: <Plus className="size-5" aria-hidden />,
-      onSelect: () =>
-        setCreatePrompt({ kind: 'subdeck', parentId: deck.id, parentName: deck.name }),
-    },
-    {
-      id: 'favorite',
-      label: deck.favorite ? t('deck.unfavorite') : t('deck.favorite'),
-      icon: (
-        <Heart
-          className={cn('size-5', deck.favorite && 'fill-current text-favorite')}
-          aria-hidden
-        />
-      ),
-      onSelect: () => void toggleDeckFavorite(deckStore, deck.id),
-    },
-    {
-      id: 'move',
-      label: t('deck.move'),
-      icon: <FolderInput className="size-5" aria-hidden />,
-      onSelect: () => setMoveTarget(deck.id),
-    },
-    {
-      id: 'settings',
-      label: t('deck.settings'),
-      icon: <Settings2 className="size-5" aria-hidden />,
-      onSelect: () => onOpenDeckSettings?.(deck.id),
-    },
-    {
-      id: 'duplicate',
-      label: t('deck.duplicate'),
-      icon: <Copy className="size-5" aria-hidden />,
-      onSelect: () => duplicate(deck),
-    },
-    {
-      id: 'archive',
-      label: t('deck.archive'),
-      icon: <Archive className="size-5" aria-hidden />,
-      onSelect: () => archiveDeck(deck),
-    },
-    {
-      id: 'delete',
-      label: t('common.delete'),
-      icon: <Trash2 className="size-5" aria-hidden />,
-      destructive: true,
-      onSelect: () => setPendingDeleteDeck(deck.id),
-    },
-  ]
+  // ---- Multi-select (long-press) ----
+  const requestSelect = (id: string) => {
+    impact()
+    setSelectMode(true)
+    setSelectedIds(new Set([id]))
+  }
+  const toggleSelect = (id: string) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  const exitSelect = () => {
+    setSelectMode(false)
+    setSelectedIds(new Set())
+  }
+
+  // Every selectable id in the current view (folders at root + the whole deck tree).
+  const selectableIds = useMemo(() => {
+    const ids = new Set<string>()
+    if (!inFolder) for (const f of sortedFolders) ids.add(f.id)
+    const stack = decks
+      .filter(
+        (d) => d.parentId === null && (d.folderId ?? null) === (folderId ?? null) && !d.archived,
+      )
+      .map((d) => d.id)
+    while (stack.length) {
+      const id = stack.pop()!
+      ids.add(id)
+      for (const c of decks) if (c.parentId === id) stack.push(c.id)
+    }
+    return ids
+  }, [decks, folderId, inFolder, sortedFolders])
+
+  const selectedCount = selectedIds.size
+  const selectedDeckIds = useMemo(
+    () => [...selectedIds].filter((id) => decks.some((d) => d.id === id)),
+    [selectedIds, decks],
+  )
+
+  // A deck can't be moved into itself or any of its own descendants.
+  const moveExcludeIds = useMemo(() => {
+    const ids = new Set<string>()
+    const targets = bulkMoveOpen ? selectedDeckIds : moveTarget ? [moveTarget] : []
+    for (const id of targets) for (const sub of subtreeDeckIds(decks, id)) ids.add(sub)
+    return ids
+  }, [bulkMoveOpen, selectedDeckIds, moveTarget, decks])
+  const allSelected =
+    selectableIds.size > 0 && [...selectableIds].every((id) => selectedIds.has(id))
+  const toggleSelectAll = () => setSelectedIds(allSelected ? new Set() : new Set(selectableIds))
+
+  const bulkArchive = () => {
+    const ids = selectedDeckIds
+    ids.forEach((id) => void setDeckArchived(deckStore, id, true))
+    toast.success(t('library.select.archivedToast', { count: ids.length }))
+    exitSelect()
+  }
+  const bulkMoveTo = (dest: MoveDestination) => {
+    const ids = selectedDeckIds
+    setBulkMoveOpen(false)
+    if (dest.kind === 'archive') {
+      ids.forEach((id) => void setDeckArchived(deckStore, id, true))
+      toast.success(t('library.select.archivedToast', { count: ids.length }))
+      exitSelect()
+      return
+    }
+    if (dest.kind === 'deck') {
+      const valid = ids.filter((id) => canReparent(decks, id, dest.deckId))
+      valid.forEach((id) => void moveDeck(deckStore, id, dest.deckId, null))
+      toast.success(
+        t('library.select.movedIntoToast', {
+          count: valid.length,
+          name: deckById(dest.deckId)?.name ?? '',
+        }),
+      )
+      exitSelect()
+      return
+    }
+    const targetFolderId = dest.kind === 'folder' ? dest.folderId : null
+    ids.forEach((id) => void moveDeck(deckStore, id, null, targetFolderId))
+    const folderName = targetFolderId
+      ? folders.find((f) => f.id === targetFolderId)?.name
+      : undefined
+    toast.success(
+      folderName
+        ? t('library.select.movedToast', { count: ids.length, folder: folderName })
+        : t('library.select.unfiledToast', { count: ids.length }),
+    )
+    exitSelect()
+  }
+  const confirmBulkDelete = () => {
+    const folderIds = [...selectedIds].filter((id) => folders.some((f) => f.id === id))
+    const deckIds = [...selectedIds].filter((id) => decks.some((d) => d.id === id))
+    folderIds.forEach((id) => void deleteFolder(folderStore, deckStore, id))
+    deckIds.forEach((id) => void deleteDeck(deckStore, cardStore, id))
+    if (folderId && folderIds.includes(folderId)) setFolderId(null)
+    setBulkDeleteOpen(false)
+    exitSelect()
+  }
+
+  // ---- Drag-to-reparent (select mode) ----
+  const dndSensors = useSortableSensors()
+  const [activeDragId, setActiveDragId] = useState<string | null>(null)
+  const activeDragDeck = activeDragId ? deckById(activeDragId) : undefined
+
+  const reparentOnDrop = (event: DragEndEvent) => {
+    setActiveDragId(null)
+    const { active, over } = event
+    if (!over) return
+    const draggedId = String(active.id)
+    const targetId = String(over.id)
+    if (draggedId === targetId) return
+    const dragged = deckById(draggedId)
+    if (!dragged) return
+    // Onto a folder → move in as a root deck of that folder.
+    if (folders.some((f) => f.id === targetId)) {
+      if (dragged.parentId === null && (dragged.folderId ?? null) === targetId) return
+      void moveDeck(deckStore, draggedId, null, targetId)
+      toast.success(
+        t('deck.movedToast', { folder: folders.find((f) => f.id === targetId)?.name ?? '' }),
+      )
+      return
+    }
+    // Onto a deck → become its subdeck.
+    if (decks.some((d) => d.id === targetId)) {
+      if (dragged.parentId === targetId) return
+      if (!canReparent(decks, draggedId, targetId)) {
+        toast.error(t('deck.cantMoveIntoSelf'))
+        return
+      }
+      void moveDeck(deckStore, draggedId, targetId, null)
+      setExpanded((prev) => new Set(prev).add(targetId))
+      toast.success(t('deck.movedIntoToast', { name: deckById(targetId)?.name ?? '' }))
+    }
+  }
 
   const deckSwipeHandlers = (deck: Deck): SwipeActionHandlers => ({
     favorite: {
@@ -398,6 +519,10 @@ export function DeckLibraryPage({
     },
     move: { onAction: () => setMoveTarget(deck.id) },
     settings: { onAction: () => onOpenDeckSettings?.(deck.id) },
+    addSubdeck: {
+      onAction: () =>
+        setCreatePrompt({ kind: 'subdeck', parentId: deck.id, parentName: deck.name }),
+    },
     duplicate: { onAction: () => duplicate(deck) },
     archive: { onAction: () => archiveDeck(deck) },
     delete: { onAction: () => setPendingDeleteDeck(deck.id) },
@@ -427,6 +552,7 @@ export function DeckLibraryPage({
 
   const folderSwipeHandlers = (folder: Folder): SwipeActionHandlers => ({
     edit: { onAction: () => openEditFolder(folder) },
+    addDeck: { onAction: () => setCreatePrompt({ kind: 'deck', folderId: folder.id }) },
     delete: { onAction: () => setPendingDeleteFolder(folder.id) },
   })
 
@@ -435,7 +561,29 @@ export function DeckLibraryPage({
       className="pb-nav"
       scrollRef={stickyHeader.ref}
       header={
-        inFolder ? (
+        selectMode ? (
+          <header className="bg-glass pt-safe">
+            <div className="flex items-center justify-between gap-2 px-3 py-3">
+              <button
+                type="button"
+                onClick={exitSelect}
+                className="-mx-2 inline-flex min-h-11 items-center rounded-control px-2 text-[length:var(--p-text-body)] font-semibold text-accent"
+              >
+                {t('common.cancel')}
+              </button>
+              <span className="text-[length:var(--p-text-body)] font-semibold tabular-nums text-heading">
+                {t('library.select.count', { count: selectedCount })}
+              </span>
+              <button
+                type="button"
+                onClick={toggleSelectAll}
+                className="-mx-2 inline-flex min-h-11 items-center rounded-control px-2 text-[length:var(--p-text-body)] font-semibold text-accent"
+              >
+                {allSelected ? t('library.select.clearAll') : t('library.select.selectAll')}
+              </button>
+            </div>
+          </header>
+        ) : inFolder ? (
           <header className="bg-glass pt-safe">
             <div className="flex items-center gap-2 px-2 py-2">
               <IconButton
@@ -504,37 +652,93 @@ export function DeckLibraryPage({
           }
         />
       ) : (
-        <div className="flex flex-col gap-2 pt-2">
-          {!inFolder
-            ? sortedFolders.map((folder) => (
-                <FolderRow
-                  key={folder.id}
-                  folder={folder}
-                  deckCount={folderDeckCounts.get(folder.id) ?? 0}
-                  onOpen={() => setFolderId(folder.id)}
-                  actions={folderActions(folder)}
-                  swipe={prefs.swipe.folder}
-                  swipeHandlers={folderSwipeHandlers(folder)}
-                />
-              ))
-            : null}
+        <DndContext
+          sensors={dndSensors}
+          collisionDetection={pointerWithin}
+          onDragStart={(e: DragStartEvent) => setActiveDragId(String(e.active.id))}
+          onDragEnd={reparentOnDrop}
+          onDragCancel={() => setActiveDragId(null)}
+        >
+          <div className="flex flex-col gap-2 pt-2">
+            {!inFolder
+              ? sortedFolders.map((folder) => (
+                  <FolderRow
+                    key={folder.id}
+                    folder={folder}
+                    deckCount={folderDeckCounts.get(folder.id) ?? 0}
+                    selectMode={selectMode}
+                    selected={selectedIds.has(folder.id)}
+                    onOpen={() => setFolderId(folder.id)}
+                    onRequestSelect={() => requestSelect(folder.id)}
+                    onToggleSelect={() => toggleSelect(folder.id)}
+                    swipe={prefs.swipe.folder}
+                    swipeHandlers={folderSwipeHandlers(folder)}
+                  />
+                ))
+              : null}
 
-          <DeckTree
-            decks={decks}
-            cards={cards}
-            expanded={expanded}
-            onToggle={toggle}
-            onOpen={onOpenDeck}
-            parentId={null}
-            folderId={inFolder ? (folderId as string) : null}
-            deckActions={deckActions}
-            swipe={prefs.swipe.deck}
-            swipeHandlers={deckSwipeHandlers}
-          />
-        </div>
+            <DeckTree
+              decks={decks}
+              cards={cards}
+              expanded={expanded}
+              onToggle={toggle}
+              onOpen={onOpenDeck}
+              selectMode={selectMode}
+              selectedIds={selectedIds}
+              onRequestSelect={requestSelect}
+              onToggleSelect={toggleSelect}
+              parentId={null}
+              folderId={inFolder ? (folderId as string) : null}
+              swipe={prefs.swipe.deck}
+              swipeHandlers={deckSwipeHandlers}
+            />
+          </div>
+
+          <DragOverlay dropAnimation={{ duration: 200, easing: 'cubic-bezier(0.22,1,0.36,1)' }}>
+            {activeDragDeck ? (
+              <div className="flex items-center gap-3 rounded-card bg-card px-2.5 py-2 shadow-elevated ring-1 ring-accent">
+                <FolderGlyph
+                  color={activeDragDeck.color || DEFAULT_DECK_COLOR}
+                  icon={activeDragDeck.icon || DEFAULT_DECK_ICON}
+                  className="size-9"
+                  iconClassName="text-base leading-none"
+                />
+                <span className="truncate text-[length:var(--p-text-body)] font-semibold text-heading">
+                  {activeDragDeck.name}
+                </span>
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
       )}
 
-      {!isEmpty ? (
+      {selectMode ? (
+        <div className="fixed inset-x-0 bottom-0 z-[300] mx-auto w-full max-w-[430px] px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-2">
+          <div className="flex items-center gap-2 rounded-card-featured bg-card/95 p-2.5 shadow-elevated backdrop-blur-xl">
+            <BulkButton
+              disabled={selectedDeckIds.length === 0}
+              icon={<FolderInput className="size-[17px]" aria-hidden />}
+              label={t('deck.move')}
+              onClick={() => setBulkMoveOpen(true)}
+            />
+            <BulkButton
+              disabled={selectedDeckIds.length === 0}
+              icon={<Archive className="size-[17px]" aria-hidden />}
+              label={t('deck.archive')}
+              onClick={bulkArchive}
+            />
+            <BulkButton
+              tone="danger"
+              disabled={selectedCount === 0}
+              icon={<Trash2 className="size-[17px]" aria-hidden />}
+              label={t('common.delete')}
+              onClick={() => setBulkDeleteOpen(true)}
+            />
+          </div>
+        </div>
+      ) : null}
+
+      {!isEmpty && !selectMode ? (
         <SpeedDial
           label={t('deck.create')}
           actions={[
@@ -648,16 +852,25 @@ export function DeckLibraryPage({
       />
 
       <MoveDeckSheet
-        open={moveTarget !== null}
+        open={moveTarget !== null || bulkMoveOpen}
         onOpenChange={(open) => {
-          if (!open) setMoveTarget(null)
+          if (!open) {
+            setMoveTarget(null)
+            setBulkMoveOpen(false)
+          }
         }}
-        deckName={movingDeck?.name ?? ''}
-        currentFolderId={movingDeck?.folderId ?? null}
+        subtitle={
+          bulkMoveOpen
+            ? t('library.select.count', { count: selectedDeckIds.length })
+            : (movingDeck?.name ?? '')
+        }
+        decks={decks}
         folders={sortedFolders}
-        onPick={moveDeckTo}
+        excludeIds={moveExcludeIds}
+        onPick={bulkMoveOpen ? bulkMoveTo : moveDeckTo}
         onNewFolder={() => {
           setMoveTarget(null)
+          setBulkMoveOpen(false)
           openCreateFolder()
         }}
       />
@@ -689,6 +902,20 @@ export function DeckLibraryPage({
         destructive
         onConfirm={confirmDeleteFolder}
       />
+
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        onOpenChange={(open) => {
+          if (!open) setBulkDeleteOpen(false)
+        }}
+        icon={<Trash2 className="size-6" aria-hidden />}
+        title={t('library.select.deleteTitle', { count: selectedCount })}
+        description={t('library.select.deleteBody')}
+        confirmLabel={t('deck.confirmDelete')}
+        cancelLabel={t('common.cancel')}
+        destructive
+        onConfirm={confirmBulkDelete}
+      />
     </AppScreen>
   )
 }
@@ -696,68 +923,146 @@ export function DeckLibraryPage({
 interface FolderRowProps {
   folder: Folder
   deckCount: number
+  selectMode: boolean
+  selected: boolean
   onOpen: () => void
-  actions: SheetAction[]
+  onRequestSelect: () => void
+  onToggleSelect: () => void
   swipe: SwipeConfig
   swipeHandlers: SwipeActionHandlers
 }
 
-function FolderRow({ folder, deckCount, onOpen, actions, swipe, swipeHandlers }: FolderRowProps) {
+function FolderRow({
+  folder,
+  deckCount,
+  selectMode,
+  selected,
+  onOpen,
+  onRequestSelect,
+  onToggleSelect,
+  swipe,
+  swipeHandlers,
+}: FolderRowProps) {
   const { t } = useTranslation()
-  const [menuOpen, setMenuOpen] = useState(false)
   const longPress = useLongPress({
-    onLongPress: () => setMenuOpen(true),
-    onTap: onOpen,
+    onLongPress: () => {
+      if (!selectMode) onRequestSelect()
+    },
+    onTap: () => (selectMode ? onToggleSelect() : onOpen()),
   })
   const { leading, trailing } = buildSwipeActions(swipe, swipeHandlers, t)
-  const swipeEnabled = leading.length > 0 || trailing.length > 0
+  const swipeEnabled = !selectMode && (leading.length > 0 || trailing.length > 0)
+
+  // A folder is a drop target in select mode — dropping a deck moves it inside.
+  const drop = useDroppable({ id: folder.id, disabled: !selectMode })
 
   const row = (
-    <div className="flex w-full items-center gap-1 rounded-card bg-card py-2 pl-2 pr-2 shadow-rest">
+    <div
+      ref={drop.setNodeRef}
+      className={cn(
+        'relative flex w-full items-center gap-3.5 rounded-card bg-card py-2.5 pl-2.5 pr-2 shadow-rest transition-shadow',
+        selected && 'ring-2 ring-inset ring-accent',
+        drop.isOver && 'ring-2 ring-accent ring-offset-2 ring-offset-background',
+      )}
+    >
+      {/* Whole-card press target — taps fall through the content to here. */}
       <button
         type="button"
         {...longPress}
-        className="group/folder flex min-w-0 flex-1 items-center gap-3 rounded-control py-0.5 text-left transition-colors active:bg-primary/[0.04]"
-      >
-        <FolderGlyph
-          color={folder.color}
-          icon={folder.icon || DEFAULT_FOLDER_ICON}
-          className="size-11 transition-transform duration-200 ease-out group-active/folder:scale-[0.94]"
-          iconClassName="text-xl leading-none"
-        />
+        aria-label={
+          selectMode
+            ? t('library.select.toggle', { name: folder.name })
+            : t('folder.rowOpen', { name: folder.name })
+        }
+        aria-pressed={selectMode ? selected : undefined}
+        className="absolute inset-0 rounded-card transition-colors active:bg-primary/[0.06]"
+      />
+
+      {selectMode ? (
+        <span className="pointer-events-none relative z-20 grid shrink-0 place-items-center">
+          <SelectDot selected={selected} />
+        </span>
+      ) : null}
+
+      <div className="pointer-events-none relative z-10 flex min-w-0 flex-1 items-center gap-3.5">
+        {/* A folder is a container: the glyph carries pale "sheets" stacked
+            behind it, so folders read as holding decks — not as another deck. */}
+        <span className="relative size-12 shrink-0">
+          <span
+            aria-hidden
+            className="absolute inset-0 translate-x-[5px] translate-y-[-4px] rounded-2xl bg-secondary/40 ring-1 ring-inset ring-border/60"
+          />
+          <span
+            aria-hidden
+            className="absolute inset-0 translate-x-[2.5px] translate-y-[-2px] rounded-2xl bg-secondary/70 ring-1 ring-inset ring-border/70"
+          />
+          <FolderGlyph
+            color={folder.color}
+            icon={folder.icon || DEFAULT_FOLDER_ICON}
+            className="relative size-12 rounded-2xl"
+            iconClassName="text-xl leading-none"
+          />
+        </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[length:var(--p-text-body)] font-semibold text-heading">
+          <span className="block truncate text-[length:var(--p-text-title)] font-semibold text-heading">
             {folder.name}
           </span>
-          <span className="block truncate text-[length:var(--p-text-label)] text-muted-foreground">
+          <span
+            className={cn(
+              'mt-1 inline-flex items-center gap-1 rounded-pill px-2 py-0.5 text-[length:var(--p-text-tiny)] font-semibold',
+              deckCount > 0
+                ? 'bg-primary/[0.07] text-primary/80'
+                : 'bg-secondary/40 text-muted-foreground',
+            )}
+          >
+            <Layers className="size-3" aria-hidden />
             {deckCount > 0 ? t('folder.deckCount', { count: deckCount }) : t('folder.empty')}
           </span>
         </span>
-        <ChevronRight
-          className="size-5 shrink-0 text-muted-foreground transition-transform duration-200 ease-out group-active/folder:translate-x-0.5"
-          aria-hidden
-        />
-      </button>
+        {selectMode ? null : (
+          <ChevronRight className="size-5 shrink-0 text-muted-foreground/70" aria-hidden />
+        )}
+      </div>
     </div>
   )
 
+  if (!swipeEnabled) return row
   return (
-    <>
-      {swipeEnabled ? (
-        <SwipeRow leading={leading} trailing={trailing}>
-          {row}
-        </SwipeRow>
-      ) : (
-        row
+    <SwipeRow leading={leading} trailing={trailing} bleed>
+      {row}
+    </SwipeRow>
+  )
+}
+
+function BulkButton({
+  icon,
+  label,
+  onClick,
+  disabled,
+  tone = 'default',
+}: {
+  icon: ReactNode
+  label: string
+  onClick: () => void
+  disabled?: boolean
+  tone?: 'default' | 'danger'
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        'flex h-11 flex-1 items-center justify-center gap-1.5 rounded-control text-[length:var(--p-text-label)] font-semibold',
+        'transition-transform active:scale-[0.97] disabled:opacity-40',
+        tone === 'danger'
+          ? 'bg-[var(--danger-surface)] text-[var(--danger-on-surface)]'
+          : 'bg-info-surface text-heading',
       )}
-      <ActionSheet
-        open={menuOpen}
-        onOpenChange={setMenuOpen}
-        title={folder.name}
-        actions={actions}
-        cancelLabel={t('common.cancel')}
-      />
-    </>
+    >
+      {icon}
+      {label}
+    </button>
   )
 }
 
