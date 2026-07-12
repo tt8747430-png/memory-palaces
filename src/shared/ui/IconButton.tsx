@@ -17,7 +17,6 @@ const variantStyles: Record<IconButtonVariant, string> = {
   danger: 'text-[var(--danger-on-surface)] hover:bg-[var(--danger-surface)]',
 }
 
-// md clears the 44px touch target; sm (36px) is for dense action rows.
 const sizeStyles: Record<IconButtonSize, string> = {
   sm: 'size-9',
   md: 'size-11',
@@ -26,9 +25,7 @@ const sizeStyles: Record<IconButtonSize, string> = {
 export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: IconButtonVariant
   size?: IconButtonSize
-  /** Required: the button shows only an icon, so it needs an accessible name. */
   'aria-label': string
-  /** Forwarded to the underlying button — lets popover/menu triggers anchor to it. */
   ref?: Ref<HTMLButtonElement>
 }
 

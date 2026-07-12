@@ -1,16 +1,9 @@
 import { type PointerEvent as ReactPointerEvent, useEffect } from 'react'
 import { animate, type PanInfo, useDragControls, useMotionValue, useReducedMotion, } from 'motion/react'
 
-/** Distance (px) or downward velocity past which a flick/drag dismisses the sheet. */
 const DISMISS_OFFSET = 130
 const DISMISS_VELOCITY = 650
 
-/**
- * Drag-to-dismiss for a bottom sheet. The returned `y` drives a `motion.div` that the user
- * can pull down by the header (`startDrag` on the header's pointer-down); release past a
- * threshold (or a fast flick) calls `onDismiss`, otherwise it springs back to rest. Dragging
- * up is pinned at 0. `y` resets whenever the sheet opens so a prior drag never lingers.
- */
 export function useDragToDismiss({ open, onDismiss }: { open: boolean; onDismiss: () => void }) {
   const y = useMotionValue(0)
   const controls = useDragControls()

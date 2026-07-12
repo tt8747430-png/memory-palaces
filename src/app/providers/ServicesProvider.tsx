@@ -11,7 +11,6 @@ import { NotificationStoreContext } from '@/entities/notification'
 import { AuthGatewayContext, EventBusContext } from '@/shared/lib'
 import type { Services } from '../composition-root'
 
-/** Injects composition-root services into the React tree (entity store contexts). */
 export function ServicesProvider({
   services,
   children,

@@ -49,7 +49,6 @@ describe('QuizSession', () => {
     const { onComplete } = renderQuiz()
 
     expect(screen.getByText('Capital of France?')).toBeInTheDocument()
-    // Submitting is blocked until an option is chosen.
     expect(screen.getByRole('button', { name: /select an answer/i })).toBeDisabled()
 
     await user.click(screen.getByRole('button', { name: /paris/i }))

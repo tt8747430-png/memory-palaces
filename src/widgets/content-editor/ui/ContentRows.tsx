@@ -23,10 +23,6 @@ import {
   SwipeRow,
 } from '@/shared/ui'
 
-/** Props that wire a row to dnd-kit's drag activator. Present only while selecting (reorder
- * mode); absent otherwise. The whole card is the activator — there is no visible grip. Typed
- * as an open record (dnd-kit's attributes + listeners) so spreading onto a motion element
- * never collides with motion's own gesture props. */
 export interface RowDragHandle {
   ref: (node: HTMLElement | null) => void
   props: Record<string, unknown>
@@ -37,18 +33,12 @@ export interface CardRowProps {
   index: number
   selectMode: boolean
   selected: boolean
-  /** Select mode is active — show the grip and let the row be hand-dragged (reorder). */
   reorderable: boolean
-  /** The grip's dnd-kit activator wiring; only supplied while `reorderable`. */
   dragHandle?: RowDragHandle
-  /** The lifted clone shown in the drag overlay — drops the swipe/menu chrome. */
   dragging?: boolean
-  /** The user's swipe-gesture mapping for card rows (leading/trailing action trays). */
   swipe: SwipeConfig
   onToggleSelect: () => void
-  /** Long-press the row to enter select mode with this card picked. */
   onRequestSelect: () => void
-  /** Tap the row at rest to open the full-screen card browser at this card. */
   onOpen: () => void
   onEdit: () => void
   onDuplicate: () => void
@@ -58,8 +48,6 @@ export interface CardRowProps {
   onResetSrs: () => void
 }
 
-// Shadow is applied conditionally by the row (rest vs the lifted drag clone) — baking
-// `shadow-rest` in here would beat `shadow-elevated` in the cascade and the clone would never lift.
 const rowSurface = 'rounded-card border bg-card p-4 transition-colors'
 
 function SelectDot({ selected }: { selected: boolean }) {
@@ -116,8 +104,6 @@ export function CardRow({
     },
     t,
   )
-  // Swipe is the at-rest gesture only: it stands down while selecting (reorder lives there
-  // too) or riding in the drag overlay, so the gestures never fight.
   const swipeEnabled = !selectMode && !dragging
 
   const actions: SheetAction[] = [
@@ -160,9 +146,6 @@ export function CardRow({
     },
   ]
 
-  // In reorder mode the whole card is the drag activator (no visible grip): a tap toggles the
-  // pick, a press-and-hold starts the drag (the touch sensor's delay), and `touch-pan-y` keeps
-  // the list scrollable until that hold — so a swipe scrolls instead of grabbing the card.
   const interaction = dragging
     ? {}
     : reorderable && dragHandle
@@ -252,17 +235,11 @@ export interface QuestionRowProps {
   index: number
   selectMode: boolean
   selected: boolean
-  /** Select mode is active — show the grip and let the row be hand-dragged (reorder). */
   reorderable: boolean
-  /** The grip's dnd-kit activator wiring; only supplied while `reorderable`. */
   dragHandle?: RowDragHandle
-  /** The lifted clone shown in the drag overlay — drops the swipe/menu chrome. */
   dragging?: boolean
-  /** The user's swipe-gesture mapping for card rows; questions honour the duplicate/delete
-   * actions in it and ignore the card-only ones. */
   swipe: SwipeConfig
   onToggleSelect: () => void
-  /** Long-press the row to enter select mode with this question picked. */
   onRequestSelect: () => void
   onEdit: () => void
   onDuplicate: () => void
@@ -318,8 +295,6 @@ export function QuestionRow({
     },
   ]
 
-  // Whole-card drag activator in reorder mode — mirrors CardRow (no visible grip): tap toggles,
-  // press-and-hold drags, `touch-pan-y` keeps the list scrollable until the hold.
   const interaction = dragging
     ? {}
     : reorderable && dragHandle

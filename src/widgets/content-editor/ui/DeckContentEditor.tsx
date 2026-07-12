@@ -53,37 +53,21 @@ import { BulkButton, SelectModeBar } from './SelectModeBar'
 
 export interface DeckContentEditorProps {
   deckId: string
-  /** Filters the cards list. Driven by the room header's search; empty = not searching. */
   searchQuery?: string
-  /** Whether the room-header search is open, regardless of the query — so the sort control
-   * steps aside the moment search takes over, not only once something is typed. */
   searching?: boolean
-  /** Clears + closes the room-header search (wired to the "clear" affordance on no results). */
   onClearSearch?: () => void
-  /** Multi-select, entered by a long-press on a row. */
   selectMode: boolean
   onSelectModeChange: (on: boolean) => void
-  /** Content ordering, persisted by the host page. */
   sort: ContentSort
   onSortChange: (sort: ContentSort) => void
-  /** Open the full-screen card editor (add / edit). */
   onAddCard: () => void
   onEditCard: (cardId: string) => void
-  /** Open the paste-notes page. */
   onPasteNotes: () => void
-  /** Go to the shared import-review page (a file pick has seeded the import draft). */
   onReviewImport: () => void
 }
 
-/** Card maturity buckets the filter can narrow to — mirrors `srsStatus`. */
 type MaturityKey = 'new' | 'learning' | 'known'
 
-/**
- * The deck's card-management surface: "Cards in this deck" with its maturity overview, search,
- * sort + filter, multi-select bulk actions, card import/export, and drag-reorder. Rendered inline
- * in the room hub; add/edit open the full-screen editor. Import/export here is cards-only —
- * questions have their own import/export on the Questions page.
- */
 export function DeckContentEditor({
   deckId,
   searchQuery,
@@ -118,11 +102,8 @@ export function DeckContentEditor({
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
-  // The card the full-screen browser is open on (null = closed). Tapping a card row opens it.
   const [browserCardId, setBrowserCardId] = useState<string | null>(null)
 
-  // Card filters: narrow by maturity and/or flagged. Empty = show everything. The applied
-  // filter drives the list; the sheet edits a draft that only commits on Apply.
   const [filterOpen, setFilterOpen] = useState(false)
   const [maturityFilter, setMaturityFilter] = useState<Set<MaturityKey>>(new Set())
   const [flaggedOnly, setFlaggedOnly] = useState(false)
@@ -131,7 +112,6 @@ export function DeckContentEditor({
   const cardFilterCount = maturityFilter.size + (flaggedOnly ? 1 : 0)
   const draftFilterCount = draftMaturity.size + (draftFlagged ? 1 : 0)
 
-  // Opening seeds the draft from what's applied, so the sheet reflects the live filter.
   const openFilter = () => {
     setDraftMaturity(new Set(maturityFilter))
     setDraftFlagged(flaggedOnly)
@@ -146,7 +126,6 @@ export function DeckContentEditor({
     setFlaggedOnly(draftFlagged)
     setFilterOpen(false)
   }
-  // The one-tap reset on the filter-empty state clears the applied filter immediately.
   const clearCardFilter = () => {
     setMaturityFilter(new Set())
     setFlaggedOnly(false)
@@ -161,8 +140,6 @@ export function DeckContentEditor({
 
   const maturity = useMemo(() => cardMaturityCounts(cards), [cards])
 
-  // Leaving select mode clears the picks so the next long-press starts empty — needed now that
-  // the flag can be flipped off from outside the editor (search opening).
   useEffect(() => {
     if (!selectMode) setSelectedIds(new Set())
   }, [selectMode])
@@ -190,9 +167,6 @@ export function DeckContentEditor({
   const allVisibleSelected =
     visibleCards.length > 0 && visibleCards.every((item) => selectedIds.has(item.id))
 
-  // Hand-arranging lives in select mode (long-press → grip-drag), mirroring the library; it's
-  // off while searching, since you reorder the whole list, not a filtered subset. A drop
-  // forces manual sort — a hand-arranged order only reads against the manual rule.
   const reorderable = selectMode && !needle
   const reorderTo = (commit: () => void) => {
     commit()
@@ -246,7 +220,6 @@ export function DeckContentEditor({
       return next
     })
 
-  // Long-press enters select mode with the pressed item already picked.
   const requestSelect = (id: string) => {
     setSelectMode(true)
     setSelectedIds((prev) => new Set(prev).add(id))
@@ -274,9 +247,6 @@ export function DeckContentEditor({
     input.click()
   }
 
-  // A file pick parses the Anki/CSV file, then hands the cards to the shared review page —
-  // nothing is written to the deck until the user confirms there. Cards-only: questions in a
-  // file are dropped (they're imported from the Questions page instead).
   const onFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
@@ -324,16 +294,12 @@ export function DeckContentEditor({
         tabIndex={-1}
       />
 
-      {/* "Cards in this deck (N)" header with its maturity overview (the overview owns the
-          heading). Steps aside while searching or selecting so the list owns the screen. */}
       {!searching && !selectMode && cards.length > 0 ? (
         <div className="mb-3">
           <CardMaturityOverview total={cards.length} counts={maturity} />
         </div>
       ) : null}
 
-      {/* Toolbar: sort on the left, a filter control on the right. Both step aside the moment
-          search or select takes over; sort needs 2+ items to be meaningful. */}
       {!selectMode && !searching && total > 0 ? (
         <div className="mb-3 flex items-center justify-between gap-2">
           {total > 1 ? (
@@ -354,8 +320,6 @@ export function DeckContentEditor({
         </div>
       ) : null}
 
-      {/* Select mode is entered by a long-press on a row; this bar appears only while selecting
-          (the rows carry their own checkboxes, and a grip-drag reorders). */}
       {selectMode ? (
         <div className="pb-2">
           <SelectModeBar
@@ -367,7 +331,6 @@ export function DeckContentEditor({
         </div>
       ) : null}
 
-      {/* Cards list */}
       <div className="flex flex-col gap-3">
         {total === 0 ? (
           <EmptyCards onAdd={onAddCard} onImport={() => setImportOpen(true)} />
@@ -387,7 +350,6 @@ export function DeckContentEditor({
         )}
       </div>
 
-      {/* Bottom bar: bulk actions in select mode */}
       {selectMode ? (
         <div className="sticky bottom-2 z-20 mt-3 flex items-center gap-2 rounded-card-featured bg-card/95 p-2.5 shadow-elevated backdrop-blur-xl">
           <BulkButton
@@ -431,7 +393,6 @@ export function DeckContentEditor({
         </div>
       ) : null}
 
-      {/* Import sheet — a delimited/Anki file or free-text paste. Export lives in deck settings. */}
       <Sheet
         open={importOpen}
         onOpenChange={setImportOpen}
@@ -457,7 +418,6 @@ export function DeckContentEditor({
         </div>
       </Sheet>
 
-      {/* Card filter sheet — narrow the cards list by maturity and/or flagged. */}
       <Sheet
         open={filterOpen}
         onOpenChange={setFilterOpen}
@@ -552,7 +512,6 @@ export function DeckContentEditor({
         </div>
       </Sheet>
 
-      {/* Delete confirms */}
       <ConfirmDialog
         open={pendingDeleteId !== null}
         onOpenChange={(open) => !open && setPendingDeleteId(null)}
@@ -576,9 +535,6 @@ export function DeckContentEditor({
         onConfirm={confirmBulkDelete}
       />
 
-      {/* The add/import affordance. Hidden while selecting, where the bulk bar owns the bottom
-          of the screen (otherwise the dial overlaps the bar's trailing action), and while the
-          deck is empty, where the empty state carries its own Add / Import actions. */}
       {!selectMode && total > 0 ? (
         <SpeedDial
           label={t('cards.quickActions')}
@@ -600,9 +556,6 @@ export function DeckContentEditor({
         />
       ) : null}
 
-      {/* Full-screen card browser — opened by tapping a card row; swipe/flip through the
-          (currently visible) deck. Edit closes it and opens the editor; delete routes through
-          the same confirm the list uses. */}
       <CardBrowser
         open={browserCardId !== null}
         cards={visibleCards}
@@ -634,11 +587,8 @@ export function DeckContentEditor({
   )
 }
 
-/** New cards (no schedule yet) are effectively due now, so they sort to the front. */
 const dueKey = (card: Card) => card.srs?.due ?? ''
 
-/** Cards in the chosen order. `manual` is the stored order (the list arrives pre-sorted by
- * it); the rest are derived. JS sort is stable, so equal keys keep the manual sequence. */
 function sortCards(cards: Card[], sort: ContentSort): Card[] {
   switch (sort) {
     case 'name':
@@ -697,8 +647,6 @@ function NoResults({ onClear }: { onClear: () => void }) {
   )
 }
 
-/** The filter trigger — a pill mirroring the {@link SortControl} trigger, with a count badge
- * when filters are active. Opens the card filter sheet. */
 function FilterButton({
   label,
   count,
@@ -729,7 +677,6 @@ function FilterButton({
   )
 }
 
-/** Shown when active filters hide every card — offers a one-tap reset. */
 function FilterEmpty({ onClear }: { onClear: () => void }) {
   const { t } = useTranslation()
   return (

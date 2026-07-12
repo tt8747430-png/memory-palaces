@@ -5,19 +5,13 @@ import { IconButton } from './IconButton'
 
 export interface ScreenHeaderProps {
   title: ReactNode
-  /** Optional short line under the title. */
   subtitle?: ReactNode
-  /** Renders a frosted back control when provided. */
   onBack?: () => void
   backLabel?: string
-  /** Optional trailing control (e.g. an action button). */
   action?: ReactNode
   className?: string
 }
 
-/** Frosted top bar for sub-screens (no collapsible hero). Designed to be passed to
- * `AppScreen`'s `header` slot, so it sits above the scroll container and stays put while
- * the content scrolls and bounces beneath it. Owns the top safe-area inset. */
 export function ScreenHeader({
   title,
   subtitle,

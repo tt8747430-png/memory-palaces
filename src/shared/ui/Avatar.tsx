@@ -7,8 +7,6 @@ function initials(name: string): string {
   return (words[0]![0]! + words[words.length - 1]![0]!).toUpperCase()
 }
 
-/** Navy-gradient circle with initials, or the user's photo when `src` is set. The
- * image is decorative (`alt=""`) — the name is always shown as adjacent text. */
 export function Avatar({
   name,
   src,

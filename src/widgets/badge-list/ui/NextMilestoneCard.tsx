@@ -6,18 +6,13 @@ import { BadgeMedallion, cardSurface } from '@/shared/ui'
 import { BADGE_META, compactNumber } from './meta'
 
 export interface NextMilestoneCardProps {
-  /** The badge the user is closest to leveling up — never a maxed one. */
   badge: Badge
-  /** Open the full Badges grid. */
   onOpen?: () => void
   className?: string
 }
 
 const EASE_OUT = [0.22, 1, 0.36, 1] as const
 
-/** A calm "almost there" nudge: the badge the user is nearest to earning, with how far
- * is left and a live progress bar. Earned, not promotional — it points at a reachable
- * target instead of selling anything. Taps through to the full Badges grid. */
 export function NextMilestoneCard({ badge, onOpen, className }: NextMilestoneCardProps) {
   const { t } = useTranslation()
   const meta = BADGE_META[badge.id]

@@ -35,26 +35,16 @@ const CARD_EASE = [0.16, 1, 0.3, 1] as const
 export interface CardBrowserProps {
   open: boolean
   cards: Card[]
-  /** The card the browser opens on; falls back to the first card. */
   startId: string | null
   onClose: () => void
-  /** Open the full editor for a card (the host closes the browser and navigates). */
   onEdit: (id: string) => void
   onToggleFlag: (id: string) => void
   onDuplicate: (id: string) => void
   onMarkKnown: (id: string) => void
   onResetSrs: (id: string) => void
-  /** Request deletion (the host closes the browser and runs its confirm). */
   onDelete: (id: string) => void
 }
 
-/**
- * A full-screen card browser: swipe (or arrow) through the room's whole deck from the card
- * the user tapped, tap to flip front/back, and act on the current card (edit / flag /
- * duplicate / delete). Built on the same Base UI Dialog as {@link Sheet} (focus-trapped,
- * Escape- and backdrop-dismissible) over a navy scrim, so it reads as a focused lightbox on
- * the daylight ground. Replaces the always-on preview carousel — the deck is now on demand.
- */
 export function CardBrowser({
   open,
   cards,
@@ -75,19 +65,15 @@ export function CardBrowser({
   const rotate = useTransform(x, [-240, 0, 240], [-6, 0, 6])
   const count = cards.length
 
-  // Open on the tapped card; reset the flip + drag each time.
   useEffect(() => {
     if (!open) return
     const at = startId ? cards.findIndex((l) => l.id === startId) : 0
     setIndex(at < 0 ? 0 : at)
     setFlipped(false)
     x.set(0)
-    // Seed only on open / target change, not on every deck mutation.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, startId])
 
-  // Keep the pointer in range if the deck shrinks (e.g. the current card is deleted), and
-  // close once the deck empties out so the browser never lingers over nothing.
   useEffect(() => {
     if (!open) return
     if (count === 0) onClose()
@@ -126,8 +112,6 @@ export function CardBrowser({
 
   const current = count > 0 ? cards[Math.min(index, count - 1)]! : null
 
-  // The overview's action set mirrors the list row (minus Edit, which owns the primary button
-  // below): quick toggles first, then the two SRS actions, then destructive Delete last.
   const menuActions: SheetAction[] = current
     ? [
         {

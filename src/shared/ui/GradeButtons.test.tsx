@@ -24,7 +24,6 @@ describe('GradeButtons', () => {
     renderButtons()
     expect(screen.getByRole('button', { name: /again/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /good/i })).toBeInTheDocument()
-    // A brand-new card: Again schedules "now", Easy schedules "2d".
     expect(screen.getByText('now')).toBeInTheDocument()
     expect(screen.getByText('2d')).toBeInTheDocument()
   })

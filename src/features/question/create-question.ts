@@ -14,8 +14,6 @@ export interface CreateQuestionInput {
   explanation?: string
 }
 
-/** Command — add a question to a deck. The single write-path (UI + future Tutor); new
- * questions append to the end of the deck's order. */
 export async function createQuestion(
   store: QuestionStore,
   deckId: string,

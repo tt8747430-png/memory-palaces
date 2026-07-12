@@ -9,17 +9,12 @@ export interface SheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   title: ReactNode
-  /** Optional supporting line under the title. */
   description?: ReactNode
-  /** Pinned action row at the foot of the sheet (e.g. Save / Finish). */
   footer?: ReactNode
   children: ReactNode
   className?: string
 }
 
-/** Bottom sheet built on Base UI's Dialog (focus-trapped, escape / backdrop dismissible).
- * Slides up via Base UI's transition data-attributes; the surface is also draggable — pull
- * the header down to dismiss it, the way a native sheet behaves. */
 export function Sheet({
   open,
   onOpenChange,
@@ -34,9 +29,6 @@ export function Sheet({
     onDismiss: () => onOpenChange(false),
   })
   return (
-    // `trap-focus` (not full modal): the shell never scrolls the body, so Base UI's
-    // body scroll lock is unnecessary and, if a sheet unmounts mid-navigation, can
-    // leave the page unscrollable. Focus trap + dismiss are kept.
     <Dialog.Root open={open} onOpenChange={onOpenChange} modal="trap-focus">
       <Dialog.Portal>
         <Dialog.Backdrop
@@ -46,8 +38,6 @@ export function Sheet({
             'data-[starting-style]:opacity-0 data-[ending-style]:opacity-0',
           )}
         />
-        {/* The Popup is the positioning + open/close-slide shell; the inner motion surface owns
-            the drag transform, so the two transforms never fight. */}
         <Dialog.Popup
           className={cn(
             'fixed inset-x-0 bottom-0 z-[310] mx-auto w-full max-w-[430px] outline-none',
@@ -93,7 +83,6 @@ export function Sheet({
                 </Dialog.Close>
               </div>
             </div>
-            {/* `pt-1.5` keeps a focused field's ring from being clipped by the scroll edge. */}
             <div className="flex-1 overflow-y-auto px-5 pb-3 pt-1.5">{children}</div>
             {footer ? (
               <div className="shrink-0 border-t border-border px-5 pt-3 pb-2">{footer}</div>

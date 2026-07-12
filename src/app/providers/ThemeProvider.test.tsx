@@ -8,7 +8,6 @@ afterEach(() => {
   delete document.documentElement.dataset.theme
 })
 
-/** jsdom doesn't implement matchMedia; stub it so `system` can resolve and emit. */
 function mockMatchMedia(matches: boolean) {
   const listeners = new Set<() => void>()
   const mql = {

@@ -4,19 +4,14 @@ import { motion } from 'motion/react'
 import { cn } from '@/shared/lib'
 import { useDragToDismiss } from './use-drag-to-dismiss'
 
-/** Window after opening in which an outside-press / focus-out is treated as the tail of the
- * gesture that opened the sheet — a long-press whose finger releases onto the backdrop that
- * just mounted under it — rather than a deliberate dismiss. */
 const OPEN_GUARD_MS = 500
 
 export interface SheetAction {
   id: string
   label: string
   icon?: ReactNode
-  /** Tints the row as destructive (delete, clear all). */
   destructive?: boolean
   disabled?: boolean
-  /** Marks the current choice in a single-select menu (e.g. the active sort): trailing check + accent. */
   selected?: boolean
   onSelect: () => void
 }
@@ -25,23 +20,11 @@ export interface ActionSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   title: ReactNode
-  /** Optional supporting line under the title. */
   description?: ReactNode
   actions: SheetAction[]
   cancelLabel: string
 }
 
-/**
- * A bottom action sheet: a titled list of large, labelled actions. Both the kebab (⋮)
- * overflow menus and the long-press quick actions use it, so secondary actions live in
- * one native, thumb-reachable surface instead of crowding the chrome. Built on Base
- * UI's Dialog (focus-trapped, escape/backdrop dismissible, slides via data-attributes).
- *
- * Selecting an action closes this sheet and runs the action. An action that opens a
- * follow-up sheet (e.g. a delete confirmation) just toggles that sheet's own state;
- * the two are independent Dialog roots, so the follow-up still mounts as this one
- * closes.
- */
 export function ActionSheet({
   open,
   onOpenChange,
@@ -55,10 +38,6 @@ export function ActionSheet({
     onDismiss: () => onOpenChange(false),
   })
 
-  // A long-press opens this sheet while the finger is still down; the release then lands on the
-  // backdrop that just mounted under it, which Base UI reports as an outside-press dismiss. Swallow
-  // only that first release — every intentional dismiss (a later tap-away, Escape, drag-down, or
-  // choosing an action) still closes the sheet.
   const openedAt = useRef(0)
   useEffect(() => {
     if (open) openedAt.current = Date.now()
@@ -70,9 +49,6 @@ export function ActionSheet({
   }
 
   return (
-    // `trap-focus` (not full modal): the shell never scrolls the body, so Base UI's
-    // body scroll lock is unnecessary and, if a sheet unmounts mid-navigation, can
-    // leave the page unscrollable. Focus trap + dismiss are kept.
     <Dialog.Root
       open={open}
       onOpenChange={(next, details) => {

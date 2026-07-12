@@ -1,9 +1,6 @@
 import { isDue, shuffle, srsStatus } from '@/shared/lib'
 import type { Card } from '@/entities/card'
 
-/** Build a review queue from a scoped set of cards: lead with the cards due now (or the
- * whole set if none are due yet), optionally shuffled. The id order the session machine
- * starts from. `random` is injectable for deterministic tests. */
 export function shuffleFirstDue(
   cards: Card[],
   now: number,
@@ -15,7 +12,6 @@ export function shuffleFirstDue(
   return shuffleCards ? shuffle(base, random) : base
 }
 
-/** Which subset of a deck's cards a session studies. */
 export type Scope =
   | { kind: 'all' }
   | { kind: 'due' }
@@ -23,7 +19,6 @@ export type Scope =
   | { kind: 'learning' }
   | { kind: 'flagged' }
 
-/** Filter a set of cards down to the active scope, preserving card order. */
 export function applyScope(cards: Card[], scope: Scope, now: number): Card[] {
   switch (scope.kind) {
     case 'due':
@@ -47,7 +42,6 @@ export interface ScopeCounts {
   flagged: number
 }
 
-/** Live counts per filter, for the "Cards to study" chips. */
 export function scopeCounts(cards: Card[], now: number): ScopeCounts {
   return {
     all: cards.length,

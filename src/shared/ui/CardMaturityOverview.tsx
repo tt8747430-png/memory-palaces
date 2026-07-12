@@ -2,10 +2,8 @@ import { useTranslation } from 'react-i18next'
 import { cn } from '@/shared/lib'
 
 export interface CardMaturityOverviewProps {
-  /** Total cards in the set. */
   total: number
   counts: { new: number; learning: number; known: number }
-  /** Heading copy variant. */
 }
 
 const ORDER: Array<'new' | 'learning' | 'known'> = ['new', 'learning', 'known']
@@ -20,8 +18,6 @@ const DOT: Record<'new' | 'learning' | 'known', string> = {
   known: 'bg-success',
 }
 
-/** Whole-set maturity overview: "Cards in this room (N)" + a New/Learning/Known bar and
- * legend. Reads no stores — counts are passed in. */
 export function CardMaturityOverview({ total, counts }: CardMaturityOverviewProps) {
   const { t } = useTranslation()
   return (

@@ -13,7 +13,6 @@ export interface ForgotPasswordPageProps {
 
 const RESEND_SECONDS = 30
 
-/** Keep the first two characters, mask the rest of the local part. */
 function maskEmail(email: string): string {
   const [local, domain] = email.split('@')
   if (!domain || !local) return email
@@ -21,8 +20,6 @@ function maskEmail(email: string): string {
   return `${head}${'•'.repeat(Math.max(3, local.length - head.length))}@${domain}`
 }
 
-/** Password recovery. No backend: sending is simulated, then a "check your inbox"
- * confirmation with a rate-limited resend. Shares the auth visual language. */
 export function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) {
   const { t } = useTranslation()
   const gateway = useAuthGateway()

@@ -3,11 +3,6 @@ import { selectCards, type CardStore } from '@/entities/card'
 import { cardsInSubtree } from '@/shared/lib'
 import { resetCardsSrs } from './reset-cards-srs'
 
-/**
- * Command — clear the spaced-repetition schedule for every card in a deck's whole subtree,
- * returning it all to "new" while keeping the content. Backs the deck-settings "Reset progress"
- * action (a deck's identity spans its subtree; ADR-0003).
- */
 export async function resetDeckSrs(
   deckStore: DeckStore,
   cardStore: CardStore,

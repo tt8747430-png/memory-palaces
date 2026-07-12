@@ -54,7 +54,6 @@ describe('wordInitial', () => {
   it('keeps intra-word hyphens and cues the first letter of each part', () => {
     expect(wordInitial('s-a')).toEqual({ lead: '', initial: 's-a', hidden: 0, trail: '' })
     expect(wordInitial('M-ati')).toEqual({ lead: '', initial: 'M-a', hidden: 2, trail: '' })
-    // Surrounding punctuation is still peeled off, connectors inside are not.
     expect(wordInitial('„L-a.”')).toEqual({ lead: '„', initial: 'L-a', hidden: 0, trail: '.”' })
   })
 
@@ -81,11 +80,11 @@ describe('normalizeWord', () => {
 describe('scramble', () => {
   it('is deterministic under an injected rng and preserves every element', () => {
     const input = [1, 2, 3, 4, 5]
-    const rng = () => 0 // always picks index 0 in Fisher–Yates
+    const rng = () => 0
     const out = scramble(input, rng)
     expect([...out].sort((a, b) => a - b)).toEqual(input)
-    expect(input).toEqual([1, 2, 3, 4, 5]) // input not mutated
-    expect(scramble(input, rng)).toEqual(out) // deterministic
+    expect(input).toEqual([1, 2, 3, 4, 5])
+    expect(scramble(input, rng)).toEqual(out)
   })
 })
 

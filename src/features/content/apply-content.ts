@@ -9,11 +9,6 @@ export interface AppliedContent {
   questions: number
 }
 
-/**
- * Command — write parsed import content into a deck through the create commands, so imported
- * cards/questions get fresh ids, timestamps, and appended order like any other. Sequential by
- * design: each create reads the running order off the store.
- */
 export async function applyDeckContent(
   cardStore: CardStore,
   questionStore: QuestionStore,

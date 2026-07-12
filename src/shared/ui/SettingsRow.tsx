@@ -70,10 +70,6 @@ const trailingValue = (value: string) => (
   <span className="shrink-0 text-[length:var(--p-text-label)] text-muted-foreground">{value}</span>
 )
 
-/** One row in a grouped settings list: a tinted icon, a label (+optional description),
- * and a trailing control chosen by `kind` — a toggle, a navigation chevron, a chevron-less
- * action (fires in place instead of navigating), a static value, or a "coming soon" badge
- * (inert/disabled). */
 export function SettingsRow(props: SettingsRowProps) {
   const { icon, label, description, tone } = props
   const body = <RowBody icon={icon} label={label} description={description} tone={tone} />

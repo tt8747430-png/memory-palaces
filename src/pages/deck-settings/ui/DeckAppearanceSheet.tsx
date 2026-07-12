@@ -12,9 +12,6 @@ export interface DeckAppearanceSheetProps {
   deck: Deck
 }
 
-/** The deck's identity editor — name, a tap-for-any-emoji icon, and a brand colour, in one
- * bottom sheet. Persists through the deck command layer; seeds from the live deck each time it
- * opens so it never shows a stale draft. */
 export function DeckAppearanceSheet({ open, onOpenChange, deck }: DeckAppearanceSheetProps) {
   const { t } = useTranslation()
   const deckStore = useDeckStoreApi()

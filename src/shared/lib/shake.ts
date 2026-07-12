@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react'
 
-/** iOS 13+ gates DeviceMotion behind a permission prompt exposed as a static method. */
 interface MotionPermissionCtor {
   requestPermission?: () => Promise<'granted' | 'denied' | 'default'>
 }
@@ -12,16 +11,10 @@ function motionCtor(): (typeof globalThis.DeviceMotionEvent & MotionPermissionCt
   return window.DeviceMotionEvent as typeof globalThis.DeviceMotionEvent & MotionPermissionCtor
 }
 
-/** Whether this platform can report device motion at all (false on desktop browsers). */
 export function motionSupported(): boolean {
   return motionCtor() !== undefined
 }
 
-/**
- * Ask for device-motion permission. On iOS Safari this MUST be called from a user gesture
- * (e.g. flipping a settings toggle) or it rejects; elsewhere no prompt exists and it resolves
- * `true` when motion is supported. Returns whether shake input is now allowed.
- */
 export async function requestMotionPermission(): Promise<boolean> {
   const ctor = motionCtor()
   if (!ctor) return false
@@ -37,12 +30,6 @@ const SHAKE_THRESHOLD = 16
 const SHAKE_COOLDOWN_MS = 900
 const SAMPLE_MIN_MS = 40
 
-/**
- * Fire `onShake` when the device is shaken, while `enabled`. A jerk (frame-to-frame change in
- * acceleration) past a threshold triggers it, rate-limited by a cooldown so one shake is one
- * call. Ignored while a text field is focused so typing can't trip it. No-op where motion is
- * unsupported or permission was never granted.
- */
 export function useShake(enabled: boolean, onShake: () => void): void {
   const callback = useRef(onShake)
   callback.current = onShake

@@ -10,7 +10,6 @@ const LEGAL_LINKS = [
   { key: 'licenses', icon: <ScrollText />, url: LEGAL_URLS.licenses },
 ] as const
 
-/** About — app identity, version/build/license, legal links, and credits. */
 export function SettingsAboutPage({ onBack }: { onBack?: () => void }) {
   const { t } = useTranslation()
   const openLink = (url: string) => window.open(url, '_blank', 'noopener,noreferrer')

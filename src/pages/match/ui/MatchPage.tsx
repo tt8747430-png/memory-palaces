@@ -13,17 +13,13 @@ import { type MatchCard } from '@/features/match'
 import { useSessionReward } from '@/widgets/session-reward'
 import { AppScreen, ScreenHeader } from '@/shared/ui'
 
-/** Match runs over a deck's whole subtree — its own cards plus every subdeck's (ADR-0003). */
 export type MatchScope = { kind: 'deck'; deckId: string }
 
 export interface MatchPageProps {
   scope: MatchScope
-  /** Provided by the route wrapper so the page stays router-free. */
   onBack?: () => void
 }
 
-/** Match game over a deck subtree's cards — tap term/definition pairs to clear the board.
- * Read-only: it never grades or schedules, so no command is needed. */
 export function MatchPage({ scope, onBack }: MatchPageProps) {
   const { t } = useTranslation()
   const cardStore = useCardStoreApi()

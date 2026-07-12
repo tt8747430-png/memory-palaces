@@ -6,30 +6,16 @@ import { IconButton, type IconButtonSize, type IconButtonVariant } from './IconB
 import type { SheetAction } from './ActionSheet'
 
 export interface FlyoutMenuProps {
-  /** Accessible name for the default ⋮ trigger (ignored when a custom `trigger` is given). */
   label: string
   actions: SheetAction[]
-  /** A fully custom trigger element (must accept a ref). Defaults to a kebab IconButton. */
   trigger?: ReactElement
   variant?: IconButtonVariant
   size?: IconButtonSize
-  /** Which side of the trigger the panel opens on. */
   side?: 'top' | 'bottom' | 'left' | 'right'
-  /** How the panel aligns to the trigger along that side. */
   align?: 'start' | 'center' | 'end'
   className?: string
 }
 
-/**
- * An anchored flyout of actions — the in-place, popover-style alternative to a bottom
- * {@link ActionSheet} drawer. Built on Base UI's Menu (floating-anchored, focus-managed,
- * dismiss on outside press / Escape) so the panel springs from the control under the thumb
- * instead of sliding the whole sheet up. Same {@link SheetAction} shape as the action sheet.
- *
- * Defaults to a kebab (⋮) trigger; pass `trigger` for a custom control (e.g. a labelled
- * sort pill). Non-modal: it never locks body scroll, and repositions as the page scrolls.
- * A `selected` action renders a trailing check + accent, for single-select menus like sort.
- */
 export function FlyoutMenu({
   label,
   actions,
@@ -46,9 +32,6 @@ export function FlyoutMenu({
       size={size}
       aria-label={label}
       className={className}
-      // Shield the trigger from any gesture/tap ancestor so opening the menu never also starts a
-      // drag (pointerdown) or fires the row's tap-to-open (click) — the kebab lives inside
-      // tappable, long-pressable list rows.
       onPointerDown={(event) => event.stopPropagation()}
       onClick={(event) => event.stopPropagation()}
     >

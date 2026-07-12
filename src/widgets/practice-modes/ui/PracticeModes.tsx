@@ -5,21 +5,13 @@ import { Brain, ChevronRight, Puzzle } from 'lucide-react'
 import { cn } from '@/shared/lib'
 
 export interface PracticeModesProps {
-  /** Cards in scope — Match needs at least two. */
   cardCount: number
-  /** Authored questions in scope — Test needs at least one. */
   questionCount: number
   onMatch?: () => void
   onTest?: () => void
-  /** Keep the Test tile enabled even with no questions — used where it opens the questions
-   * page (author + start) rather than launching the quiz directly. */
   alwaysEnableTest?: boolean
 }
 
-/** The practice rows (Match / Questions & Test) rendered on deck detail.
- * The Study-cards session is the headline above; its study modes (flip, type, initials,
- * blur, rebuild) all live inside the session behind the header mode button. These rows are
- * the alternate games over the same set, scoped to whichever surface renders them. */
 export function PracticeModes({
   cardCount,
   questionCount,

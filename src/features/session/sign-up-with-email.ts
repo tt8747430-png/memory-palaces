@@ -11,12 +11,6 @@ export interface SessionCommandDeps {
   sessionStore: SessionStore
 }
 
-/**
- * Command — create a (mock) account and make it the current session. The gateway
- * persists the identity; no password is stored or checked. Capturing name/email into
- * the profile is a separate concern composed in {@link useAuthActions}. `now` is
- * injected for deterministic tests. Phase 9 swaps the gateway adapter, not this.
- */
 export async function signUpWithEmail(
   deps: SessionCommandDeps,
   input: SignUpWithEmailInput,

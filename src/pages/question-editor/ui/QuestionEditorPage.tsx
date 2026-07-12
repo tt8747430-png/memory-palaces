@@ -15,16 +15,11 @@ import {
 
 export interface QuestionEditorPageProps {
   deckId: string
-  /** Present in edit mode; omit to create. */
   questionId?: string
   onBack: () => void
-  /** Return to the deck after a save commits. */
   onDone: () => void
 }
 
-/** Full-screen create/edit for a multiple-choice question — prompt, 2–6 options with a
- * correct marker, and an optional explanation. The primary path for adding questions (the
- * in-editor sheet stays only as a standalone fallback). */
 export function QuestionEditorPage({
   deckId,
   questionId,
@@ -50,14 +45,11 @@ export function QuestionEditorPage({
   const [correct, setCorrect] = useState(0)
   const [explanation, setExplanation] = useState('')
 
-  // Seed from the question once it resolves from the store (edit mode); a create starts blank.
   useEffect(() => {
     setPrompt(editing?.prompt ?? '')
     setOptions(editing?.options ?? ['', ''])
     setCorrect(editing?.correctAnswer ?? 0)
     setExplanation(editing?.explanation ?? '')
-    // Seed only when the target question changes — not on every field, or the form would reset
-    // mid-edit each time the store re-emits.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editing?.id])
 

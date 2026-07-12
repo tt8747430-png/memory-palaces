@@ -2,9 +2,6 @@ import { cardsForDeck, type Card, type CardStore, makeCard, selectCards } from '
 import { nextOrder } from '@/shared/lib'
 import { requireCard } from './require-card'
 
-/** Command — copy a card's content (front/back/hint/tip) into a fresh card appended to the
- * deck. The copy starts with a clean schedule, unflagged — it's a new card to edit, not a
- * clone of the original's progress. */
 export async function duplicateCard(store: CardStore, id: string): Promise<Card> {
   const original = requireCard(store, id)
   const order = nextOrder(cardsForDeck(selectCards(store.getState()), original.deckId))

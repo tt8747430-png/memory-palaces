@@ -17,14 +17,8 @@ import { CSS } from '@dnd-kit/utilities'
 import { cn, useSortableSensors } from '@/shared/lib'
 import type { RowDragHandle } from './ContentRows'
 
-/** A non-interactive grip binding for the lifted overlay clone: it renders the same grip and
- * select chrome as the row it stands in for (dnd-kit owns the real drag on the source), so the
- * card in hand reads as the whole row rising — not a stripped-down duplicate. */
 const STATIC_DRAG_HANDLE: RowDragHandle = { ref: () => {}, props: {} }
 
-/** Wraps a row as a dnd-kit sortable: the wrapper carries the transform/transition and
- * ghosts the source while its overlay clone is in hand; the row gets the grip's activator
- * wiring through the render prop. */
 function SortableContentRow({
   id,
   children,
@@ -52,9 +46,6 @@ function SortableContentRow({
   )
 }
 
-/** Renders a list of rows, drag-reorderable when `reorderable`. Off, it's a plain map; on,
- * it lifts a clone into a {@link DragOverlay} and commits the new id order on drop. Shared by
- * the cards editor and the questions manager. */
 export function ReorderableList<T extends { id: string }>({
   items,
   reorderable,
@@ -67,10 +58,6 @@ export function ReorderableList<T extends { id: string }>({
   renderItem: (item: T, dragHandle?: RowDragHandle, dragging?: boolean) => ReactNode
 }) {
   const [activeId, setActiveId] = useState<string | null>(null)
-  // Optimistic order: seeded from props, reordered in place on drop, reconciled when the
-  // persisted order flows back — mirrors the library and rooms lists. Without it the row snaps
-  // back to the stale prop order for a frame between the drop and the async store write (the
-  // flicker); rendering the dropped order right away lets the card settle straight into place.
   const [ordered, setOrdered] = useState(items)
   useEffect(() => setOrdered(items), [items])
   const sensors = useSortableSensors()
@@ -112,9 +99,6 @@ export function ReorderableList<T extends { id: string }>({
       </SortableContext>
       <DragOverlay dropAnimation={{ duration: 220, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }}>
         {active ? (
-          // Lift the clone off the list: it keeps the row's own grip + select chrome (via the
-          // static handle) and the elevated shadow, plus a small level scale so the whole row
-          // clearly reads as "in hand" (no tilt, no scale under reduced motion).
           <div className="origin-center cursor-grabbing motion-safe:scale-[1.03]">
             {renderItem(active, STATIC_DRAG_HANDLE, true)}
           </div>

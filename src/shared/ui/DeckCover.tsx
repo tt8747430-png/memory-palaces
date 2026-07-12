@@ -3,32 +3,14 @@ import { cn } from '@/shared/lib'
 
 export interface DeckCoverProps {
   icon: string
-  /** A preset Tailwind gradient (`from-… to-…`) or a custom hex (`#7C3AED`). */
   color: string
-  /** When set, a downscaled photo data URL shown as the cover. */
   image?: string
-  /**
-   * No-photo backdrop. `identity` paints the deck's own color; `brand` keeps the
-   * calm daylight gradient (large card covers, per the Cool-Daylight Rule). A photo
-   * overrides both.
-   */
   variant?: 'identity' | 'brand'
-  /** Box geometry: size + radius (e.g. "size-11 rounded-control"). */
   className?: string
-  /** Emoji size class (e.g. "text-2xl"). */
   iconClassName?: string
-  /** Hide the emoji entirely (tiny avatars where it would just be noise). */
   hideIcon?: boolean
 }
 
-/**
- * The one place that knows how a deck cover renders, so custom photos and free
- * colors work everywhere a deck is shown (cards, list rows, the create preview).
- * Three cases:
- * - `image` → the photo under a navy scrim so an overlaid title stays legible.
- * - preset `color` (`from-… to-…`) → a Tailwind gradient + emoji.
- * - custom `color` (hex) → an inline gradient derived from the hex + emoji.
- */
 export function DeckCover({
   icon,
   color,

@@ -9,18 +9,12 @@ export interface StreakSummaryProps {
   xp: number
   streakCount: number
   longestStreak: number
-  /** `YYYY-MM-DD` UTC keys of every day trained. */
   trainingDays: readonly string[]
   now?: number
   className?: string
-  /** Show the level + XP-to-next block. Off on Home, where the header owns XP, so the
-   * two surfaces don't repeat the same numbers; on by default (Profile). */
   showProgress?: boolean
 }
 
-/** The progress glance: current level + XP-to-next bar, current vs longest streak,
- * and a real last-seven-days strip (computed from `trainingDays`, never faked).
- * Presentational — the page reads the progress store and passes the numbers. */
 export function StreakSummary({
   xp,
   streakCount,

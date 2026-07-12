@@ -6,7 +6,6 @@ import type { Profile } from './types'
 export type ProfileStatus = 'idle' | 'loading' | 'ready'
 
 export interface ProfileState {
-  /** The single profile record, or null until one is created. */
   profile: Profile | null
   status: ProfileStatus
   start: () => void
@@ -16,7 +15,6 @@ export interface ProfileState {
 
 export type ProfileStore = StoreApi<ProfileState>
 
-/** Store FACTORY (repository INJECTED), reactive single-doc like the preferences store. */
 export function createProfileStore(repo: ProfileRepository): ProfileStore {
   let unsubscribe: Unsubscribe | null = null
   return createStore<ProfileState>((set) => ({

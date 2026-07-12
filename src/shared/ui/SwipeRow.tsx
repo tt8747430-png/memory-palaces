@@ -20,9 +20,6 @@ import { cn, impact } from '@/shared/lib'
 
 export type { SwipeTone }
 
-/** The filled action button per tone (iOS-Mail register): a saturated rounded rectangle
- * carrying the glyph + label stacked inside it. Amber needs ink text (white fails on it);
- * the on-brand neutral carries navy. */
 const TONE_FILL: Record<SwipeTone, string> = {
   danger: 'bg-[var(--danger)] text-white',
   warning: 'bg-[var(--warning)] text-[var(--p-navy-900)]',
@@ -31,61 +28,31 @@ const TONE_FILL: Record<SwipeTone, string> = {
   neutral: 'bg-secondary text-primary',
 }
 
-/** One button in a swipe tray. */
 export interface SwipeAction {
   id: string
-  /** Glyph shown in the tray button. */
   icon: ReactNode
-  /** Caption under the glyph, and the button's accessible name. */
   label: string
-  /** Tints the button; defaults to `neutral`. */
   tone?: SwipeTone
   onAction: () => void
 }
 
 export interface SwipeRowProps {
   children: ReactNode
-  /** Revealed by swiping the row RIGHT (tray on the left edge). Index 0 is the edge-most
-   * action — the one a full swipe auto-fires. */
   leading?: SwipeAction[]
-  /** Revealed by swiping the row LEFT (tray on the right edge). The LAST action is the
-   * edge-most — the one a full swipe auto-fires. */
   trailing?: SwipeAction[]
-  /** Disable the gesture (children still render and stay tappable). */
   disabled?: boolean
   className?: string
 }
 
-/** Movement (px) before the gesture locks to an axis — below this it's still a tap. */
 const AXIS_LOCK = 8
-/** Width (px) of each resting tray button (slot). The coloured pill sits inside with a margin,
- * so this doubles as the reveal width per action. */
 const ACTION_WIDTH = 88
-/** Pull (px) PAST the open tray that arms the edge-most action's auto-fire. Anchored to the
- * tray width (not the row width) so left and right fire with the same extra pull, however many
- * actions a side holds. */
 const COMMIT_GAP = 72
 
-/** Closing / resting spring — quick and well-damped so the row never wobbles. */
 const SETTLE_SPRING = { type: 'spring', stiffness: 540, damping: 40 } as const
-/** The arm (expand / collapse) spring — a touch looser so the fill reads as a deliberate swell. */
 const ARM_SPRING = { type: 'spring', stiffness: 460, damping: 34 } as const
 
 type Side = 'leading' | 'trailing'
 
-/**
- * Wraps a list row with the iOS-Mail swipe pattern. A short swipe rests the row open over a
- * tray of filled action buttons (the user taps one); a longer swipe past the tray arms the
- * edge-most action of that side, expanding it to fill the tray, and releasing auto-fires it.
- *
- * Built on plain pointer events so a tap is never swallowed. The **live x offset is the single
- * source of truth**: the drag starts from wherever the row currently sits, tracks the finger
- * 1:1 into `x`, and both the visuals and the release decision read from `x` — never a re-read
- * pointer coordinate — so what you see is always what commits. Tracking locks to the horizontal
- * axis only once horizontal movement wins; a vertical drag falls through to native scroll
- * (`touch-action: pan-y`). The trays are `aria-hidden`; the row keeps its own menu as the
- * keyboard/assistive path.
- */
 export function SwipeRow({
   children,
   leading = [],
@@ -110,9 +77,6 @@ export function SwipeRow({
   const leadingOpacity = useTransform(x, (v) => (v > 0 ? 1 : 0))
   const trailingOpacity = useTransform(x, (v) => (v < 0 ? 1 : 0))
 
-  // Arm progress per side (0 → the secondary actions are still parked on the card side; 1 → they
-  // have collapsed and the edge action owns the whole tray). Springs on the commit so the edge
-  // swells smoothly into the freed space, in step with the secondaries folding away.
   const leadingArm = useMotionValue(0)
   const trailingArm = useMotionValue(0)
   useEffect(() => {
@@ -134,9 +98,6 @@ export function SwipeRow({
     return () => controls.stop()
   }, [armed, reduce, trailingArm])
 
-  // The edge action stays flush with the card: it fills the revealed strip minus whatever width
-  // the (not-yet-collapsed) secondary actions still occupy on the card side. So it begins
-  // stretching the instant a gap would open past the resting tray — not only at the commit point.
   const leadingEdgeFill = useTransform([x, leadingArm], ([v, arm]: number[]) => {
     const siblings = Math.max(0, leading.length - 1) * ACTION_WIDTH
     return Math.max(ACTION_WIDTH, Math.max(0, v!) - siblings * (1 - arm!))
@@ -146,8 +107,6 @@ export function SwipeRow({
     return Math.max(ACTION_WIDTH, Math.max(0, -v!) - siblings * (1 - arm!))
   })
 
-  // The gesture's start point plus the row's offset at press — so tracking continues from
-  // wherever the row already rests, without a separate `base`/open bookkeeping that can desync.
   const drag = useRef<{
     startX: number
     startY: number
@@ -171,7 +130,6 @@ export function SwipeRow({
     settle(0)
   }, [settle])
 
-  // A disabled row (drag in flight, select mode) can't be left resting open.
   useEffect(() => {
     if (disabled && (open || x.get() !== 0)) {
       setOpen(null)
@@ -181,10 +139,6 @@ export function SwipeRow({
     }
   }, [disabled, open, x])
 
-  // A row left resting open snaps shut the moment the user touches anything outside it — a tap
-  // elsewhere, another row, the toolbar — so an opened tray never lingers behind unrelated
-  // interaction. Only armed while actually open, and it never blocks the outside gesture (no
-  // preventDefault): it just closes in the capture phase.
   useEffect(() => {
     if (!open) return
     const closeOnOutside = (event: PointerEvent) => {
@@ -195,9 +149,6 @@ export function SwipeRow({
     return () => document.removeEventListener('pointerdown', closeOnOutside, true)
   }, [open, close])
 
-  // 1:1 reveal out to the commit point (tray + a short over-pull), then a soft rubber-band so
-  // a hard fling can't run the row off-screen. Pulling the wrong way (no actions that side)
-  // barely gives, signalling "nothing here".
   const clampOffset = (raw: number) => {
     if (raw > 0) {
       if (!hasLeading) return raw * 0.12
@@ -229,9 +180,6 @@ export function SwipeRow({
     const dy = event.clientY - state.startY
     if (state.axis === null) {
       if (Math.abs(dx) < AXIS_LOCK && Math.abs(dy) < AXIS_LOCK) return
-      // Lock horizontal as soon as it wins; a clearly-vertical intent is a scroll and falls
-      // through. A tie waits for more travel instead of discarding the gesture — that "drop on
-      // the first ambiguous sample" is what made a slow, slightly-diagonal swipe unreliable.
       if (Math.abs(dx) > Math.abs(dy)) {
         state.axis = 'h'
         event.currentTarget.setPointerCapture?.(state.id)
@@ -266,12 +214,8 @@ export function SwipeRow({
     wasArmed.current = null
     setArmed(null)
 
-    // Decide from the offset the user actually SEES (the tracked motion value), never a re-read
-    // pointer coordinate — that re-derivation was the source of the wrong-side commits.
     const offset = x.get()
 
-    // Full swipe: auto-fire the edge-most action, then return to rest. A destructive action
-    // unmounts the row before the spring shows; a reversible one springs back.
     if (offset <= -trailingCommit && hasTrailing) {
       impact()
       trailing[trailing.length - 1]!.onAction()
@@ -284,7 +228,6 @@ export function SwipeRow({
       close()
       return
     }
-    // Short swipe: rest open over the tray if past half its width, else snap shut.
     if (offset <= -trailingWidth * 0.5 && hasTrailing) {
       setOpen('trailing')
       settle(-trailingWidth)
@@ -296,8 +239,6 @@ export function SwipeRow({
     }
   }
 
-  // The synthetic click a mouse drag trails must not fall through to the row's own tap;
-  // swallow exactly one after any horizontal drag, and a tap while open closes instead.
   const suppressClick = useRef(false)
   const onClickCapture = (event: ReactMouseEvent) => {
     if (suppressClick.current) {
@@ -323,9 +264,6 @@ export function SwipeRow({
     <div
       ref={rootRef}
       className={cn(
-        // Clip the row horizontally so a card dragged past its edge can't widen the scroll
-        // container (which made the whole page pannable and let a slow swipe get hijacked by
-        // the native pan). A clip-margin keeps the resting card's soft side shadow intact.
         'relative isolate overflow-x-clip [overflow-clip-margin:16px]',
         className,
       )}
@@ -396,15 +334,6 @@ export function SwipeRow({
   )
 }
 
-/**
- * One tray action, iOS-Mail style: a saturated rounded-rectangle button with the glyph and its
- * label stacked and centred inside it, inset from the card so the fills read as floating pills.
- *
- * The EDGE action (the one a full swipe fires) is given a live `fillWidth`: it tracks the reveal
- * and stays flush against the card the instant a gap would open past the resting tray, right
- * through the commit — capped at the tray via `max-w-full`. A SECONDARY action instead takes
- * `collapsed`, folding away behind the card once the edge action arms.
- */
 function TrayButton({
   action,
   fillWidth,
@@ -412,9 +341,7 @@ function TrayButton({
   onFire,
 }: {
   action: SwipeAction
-  /** Given to the edge action only: its live flush-fill width (rest → stretch → armed-full). */
   fillWidth?: MotionValue<number>
-  /** Secondary actions collapse behind the card once the edge action arms. */
   collapsed?: boolean
   onFire: () => void
 }) {

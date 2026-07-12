@@ -1,9 +1,3 @@
-/**
- * Achievements are derived live from existing progress — there is no achievement entity
- * or stored "earned" flag, so a badge can never drift from the truth behind it. This
- * module is pure: it owns the canonical badge order and the earn thresholds; icons and
- * copy live in the widget that renders them.
- */
 
 export type AchievementId =
   | 'first-deck'
@@ -32,7 +26,6 @@ const XP_CHAMPION_XP = 2000
 const PERFECT_ACCURACY = 100
 const DEDICATED_LEARNER_DECKS = 10
 
-/** The six badges in canonical display order, each marked earned from live progress. */
 export function computeAchievements(input: AchievementInput): Achievement[] {
   return [
     { id: 'first-deck', earned: input.deckCount >= 1 },

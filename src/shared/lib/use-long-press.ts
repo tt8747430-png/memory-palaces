@@ -7,9 +7,7 @@ import {
 } from 'react'
 
 export interface LongPressOptions {
-  /** Hold duration (ms) before the long press fires. */
   delay?: number
-  /** Movement (px) that cancels the press (treated as a scroll/drag instead). */
   moveTolerance?: number
 }
 
@@ -23,13 +21,6 @@ export interface LongPressHandlers {
   onClick: (event: ReactMouseEvent) => void
 }
 
-/**
- * Press-and-hold detection for touch surfaces. Fires `onLongPress` after `delay`, and
- * suppresses the trailing click so a long press never also triggers the element's tap
- * action. Movement past `moveTolerance` cancels the press (it was a scroll/drag). The
- * returned handlers spread onto any element; pair with a visible affordance for the
- * keyboard/assistive path (long-press is additive, never the only way in).
- */
 export function useLongPress(
   { onLongPress, onTap }: { onLongPress: () => void; onTap?: () => void },
   { delay = 450, moveTolerance = 10 }: LongPressOptions = {},
@@ -75,7 +66,6 @@ export function useLongPress(
   )
 
   const onContextMenu = useCallback((event: ReactMouseEvent) => {
-    // Suppress the OS context menu the browser raises on a touch long-press.
     if (fired.current) event.preventDefault()
   }, [])
 

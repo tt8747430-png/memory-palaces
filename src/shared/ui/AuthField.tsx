@@ -9,22 +9,12 @@ export interface AuthFieldProps extends NativeProps {
   label: string
   value: string
   onValueChange: (value: string) => void
-  /** Leading glyph; tints to the action color while the field has focus. */
   icon?: ReactNode
-  /** Trailing control (e.g. a password visibility toggle). Wins over the valid mark. */
   rightSlot?: ReactNode
-  /** Shows the success check when true and no rightSlot is present. */
   valid?: boolean
-  /** Validation message; presence flips the field to its error styling. */
   error?: string
 }
 
-/**
- * Auth form field — label + glass input with a leading icon that lifts to the action
- * color on focus (CSS focus-within, no state prop drilling). Surfaces a success check
- * or an inline error, wired to the input via aria-invalid/aria-describedby. The navy
- * focus ring comes from the global :focus-visible.
- */
 export function AuthField({
   id,
   label,

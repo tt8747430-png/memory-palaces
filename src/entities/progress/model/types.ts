@@ -1,23 +1,14 @@
 import type { Entity } from '@/shared/lib'
 
-/**
- * The learner's single progress record. Holds only source-of-truth values; the
- * level, overall percentage, and room counts are derived in `shared/lib/stats`.
- * Its streak fields satisfy `StreakState` structurally, so `recordTrainingDay`
- * operates on it directly.
- */
 export interface Progress extends Entity {
   xp: number
   streakCount: number
   longestStreak: number
   lastTrainingDate: string | null
   streakFreezes: number
-  /** Highest quiz accuracy ever achieved (0–100). */
   bestQuizAccuracy: number
   trainingDays: string[]
-  /** UTC day key the running practice tally belongs to; null before any practice. */
   activeDayKey: string | null
-  /** Items practised during `activeDayKey` (resets when the day rolls over). */
   activeDayCount: number
 }
 

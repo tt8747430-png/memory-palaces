@@ -17,11 +17,6 @@ export interface AuthActions {
   requestPasswordReset: (email: string) => Promise<void>
 }
 
-/**
- * Composition seam — binds the session commands to the injected gateway + stores so
- * screens stay free of wiring. Sign-up additionally seeds the profile (name/email)
- * so the greeting and settings reflect the real identity.
- */
 export function useAuthActions(): AuthActions {
   const gateway = useAuthGateway()
   const sessionStore = useSessionStoreApi()

@@ -12,10 +12,6 @@ export interface ModeSheetProps {
   onMode: (mode: StudyMode) => void
 }
 
-/** The study-mode picker: one row per mode (icon + name + one-line hint) in the recall-order
- * of `STUDY_MODES` (Blur → Rebuild → Initials → Type), the active one filled navy and checked.
- * Every mode shares the same tap-to-flip / swipe-to-grade card; the rows only change how the
- * back tests the answer. Picking one switches the live session and closes the sheet. */
 export function ModeSheet({ open, onClose, mode, onMode }: ModeSheetProps) {
   const { t } = useTranslation()
 

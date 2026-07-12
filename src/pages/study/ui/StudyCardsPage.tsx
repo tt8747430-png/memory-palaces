@@ -35,12 +35,10 @@ import { type StudyCard, type StudyPrefs, FlashcardsPanel } from '@/widgets/stud
 import { useSessionReward } from '@/widgets/session-reward'
 import { AppScreen, Button, IconButton, ScreenHeader } from '@/shared/ui'
 
-/** Study a deck's whole subtree: its own cards plus every descendant subdeck's (ADR-0003). */
 export type StudyScope = { kind: 'deck'; deckId: string }
 
 export interface StudyCardsPageProps {
   scope: StudyScope
-  /** Provided by the route wrapper so the page stays router-free. */
   onBack?: () => void
 }
 
@@ -52,10 +50,6 @@ function studyPrefsFromSettings(settings: DeckSettings): StudyPrefs {
   }
 }
 
-/** The one study surface: a deck subtree's cards worked as a single spaced-review session.
- * Opens in the last-used mode (persisted globally); every mode grades through `gradeCard`, so
- * SRS schedules survive offline. Orientation/shuffle/speech seed from and persist to the deck's
- * resolved settings; mode and shake-to-undo are recorded to global preferences. */
 export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
   const { t } = useTranslation()
   const deckStore = useDeckStoreApi()
@@ -155,7 +149,6 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
     .join(' › ')
   const back = onBack ?? (() => {})
 
-  // A deck with no authored cards anywhere in its subtree: a real empty state.
   if (cards.length === 0) {
     return (
       <div className="relative mx-auto flex h-full w-full max-w-[430px] flex-col items-center justify-center gap-5 px-6 text-center">

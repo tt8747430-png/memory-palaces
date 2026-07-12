@@ -31,12 +31,6 @@ export interface AppCollections {
   notifications: RxCollection<AppNotification>
 }
 
-/**
- * Create the on-device RxDB database and its entity collections. Storage is injected
- * (Dexie/IndexedDB in the browser); the composition root calls this once and wires the
- * collections into `RxdbRepository` adapters behind the entity ports. Every schema is at
- * version 0 — the app has no shipped data to migrate, so a schema change is a plain edit.
- */
 export async function createAppDatabase<Internals, InstanceCreationOptions>(
   storage: RxStorage<Internals, InstanceCreationOptions>,
 ): Promise<AppCollections> {

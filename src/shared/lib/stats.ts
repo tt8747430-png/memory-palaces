@@ -1,10 +1,5 @@
 import { type SrsState, srsStatus } from './srs'
 
-/**
- * Derived progress numbers. None of these are stored on entities — they are
- * computed from source-of-truth state so counts can never drift. Functions take
- * minimal structural shapes, keeping `shared/lib` below the entity layer.
- */
 const XP_PER_LEVEL = 250
 
 export interface LevelInfo {
@@ -23,7 +18,6 @@ export function levelFromXp(xp: number): LevelInfo {
 
 type Reviewable = { srs?: SrsState }
 
-/** A card counts as reviewed once it has left the "new" state. */
 export function isCardReviewed(card: Reviewable): boolean {
   return (card.srs?.reps ?? 0) > 0
 }
@@ -38,12 +32,6 @@ export interface TrainingTotals {
   totalCards: number
 }
 
-/**
- * Roll up training progress across the whole library. Takes minimal structural shapes —
- * decks as `{ id }`, cards as `{ deckId, srs? }` — so it stays below the entity layer.
- * A deck counts as completed only when every one of its own cards is reviewed; empty decks
- * never count (via `isDeckCompleted`).
- */
 export function computeTrainingTotals(
   decks: ReadonlyArray<{ id: string }>,
   cards: ReadonlyArray<Reviewable & { deckId: string }>,
@@ -62,7 +50,6 @@ export function computeTrainingTotals(
   return { decksCompleted, totalDecks: decks.length, totalCards: cards.length }
 }
 
-/** Tally a card set by maturity bucket (independent of due-ness). */
 export function cardMaturityCounts(cards: ReadonlyArray<{ srs?: SrsState }>): {
   new: number
   learning: number

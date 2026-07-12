@@ -48,11 +48,6 @@ import { RootLayout } from './RootLayout'
 import { authRedirect } from './auth-guard'
 import { services } from './composition-root'
 
-/**
- * Back handler that returns to the actual previous screen via history when there is one, so a
- * screen reached from different places goes back to wherever the user came from. The `fallback`
- * only runs on a fresh load / deep link with no in-app history.
- */
 function useBack(fallback: () => void): () => void {
   const router = useRouter()
   const canGoBack = useCanGoBack()
@@ -131,7 +126,6 @@ const welcomeRoute = createRoute({
   component: WelcomeRoute,
 })
 
-// The deck library is the home: `/` renders it directly.
 function HomeRoute() {
   const navigate = useNavigate()
   return (
@@ -232,7 +226,6 @@ const deckQuestionsRoute = createRoute({
 function DeckQuestionNewRoute() {
   const { deckId } = deckQuestionNewRoute.useParams()
   const navigate = useNavigate()
-  // Add/edit return to the Questions page (where authoring lives), not deck detail.
   const toQuestions = () => navigate({ to: ROUTES.deckQuestions, params: { deckId } })
   const back = useBack(toQuestions)
   return <QuestionEditorPage deckId={deckId} onBack={back} onDone={toQuestions} />
@@ -273,7 +266,6 @@ function DeckPasteRoute() {
   return (
     <PasteNotesPage
       onBack={back}
-      // `replace` so Back from the review page lands on the deck, not the paste form.
       onReview={() => navigate({ to: ROUTES.deckImport, params: { deckId }, replace: true })}
     />
   )
@@ -285,7 +277,6 @@ const deckPasteRoute = createRoute({
   component: DeckPasteRoute,
 })
 
-// Library "Import → Paste": a paste screen that names + creates a NEW deck, then reviews into it.
 function NewPasteRoute() {
   const navigate = useNavigate()
   const deckStore = useDeckStoreApi()

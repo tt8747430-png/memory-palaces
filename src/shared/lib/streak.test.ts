@@ -10,7 +10,7 @@ import {
 } from './streak'
 
 const DAY_MS = 86_400_000
-const NOW = Date.UTC(2026, 0, 10) // 2026-01-10
+const NOW = Date.UTC(2026, 0, 10)
 
 const empty: StreakState = {
   streakCount: 0,
@@ -73,7 +73,6 @@ describe('recordTrainingDay', () => {
     const { state, usedFreeze } = recordTrainingDay(gapWithFreeze, NOW)
     expect(usedFreeze).toBe(true)
     expect(state.streakCount).toBe(7)
-    // one freeze spent, but a 7-day milestone restocks one
     expect(state.streakFreezes).toBe(1)
   })
 
@@ -204,7 +203,6 @@ describe('buildDayCells', () => {
   })
 
   it('exposes a three-letter weekday and its initial', () => {
-    // 2026-01-10 is a Saturday.
     const today = buildDayCells([], 1, NOW)[0]
     expect(today?.weekdayShort).toBe('Sat')
     expect(today?.weekdayInitial).toBe('S')

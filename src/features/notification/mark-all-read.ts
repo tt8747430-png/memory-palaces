@@ -1,6 +1,5 @@
 import type { NotificationStore } from '@/entities/notification'
 
-/** Command — mark every unread notification read (clock injected to stay testable). */
 export async function markAllNotificationsRead(
   store: NotificationStore,
   now: number = Date.now(),

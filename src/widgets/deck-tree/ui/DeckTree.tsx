@@ -15,11 +15,8 @@ import {
   type SwipeActionHandlers,
 } from '@/shared/ui'
 
-/** Soft ease-out; matches the SpeedDial's reveal curve so motion reads as one system. */
 const EASE_OUT = [0.22, 1, 0.36, 1] as const
 
-/** A deck's cover colour — its own if set, else a stable palette pick from its id, so a
- * colourless deck still reads distinct from its siblings instead of a wall of one blue. */
 function deckColor(deck: Deck): string {
   if (deck.color) return deck.color
   let hash = 0
@@ -28,33 +25,19 @@ function deckColor(deck: Deck): string {
 }
 
 export interface DeckTreeProps {
-  /** Every deck in the library (the tree filters to the container it renders). */
   decks: Deck[]
-  /** Every card, for the per-node subtree due-count badge. */
   cards: Card[]
-  /** Ids of decks whose subdecks are shown; toggled by the row's +/− control. */
   expanded: ReadonlySet<string>
   onToggle: (deckId: string) => void
   onOpen: (deckId: string) => void
-  /** Long-press action-sheet actions for a deck row; omit to hide the sheet. */
   deckActions?: (deck: Deck) => SheetAction[]
-  /** The user's swipe-gesture mapping for deck rows (leading/trailing action trays). */
   swipe?: SwipeConfig
-  /** Per-deck handlers bound to the swipe action ids the config uses. */
   swipeHandlers?: (deck: Deck) => SwipeActionHandlers
-  /** Which container to render: a parent deck's id, or `null` + `folderId` for the root. */
   parentId?: string | null
   folderId?: string | null
   now?: number
 }
 
-/**
- * The recursive deck tree: inline rows carrying the deck's own colour + icon, a `+`/`−`
- * disclosure, connector rails for depth, a "cards for today" badge on the glyph, and a
- * chevron to open the deck. Tapping the row opens the deck (its whole subtree); tapping
- * `+`/`−` springs its subdecks open in place. Each row carries its gesture kit off one
- * action set — swipe for the quick actions, long-press for the full action sheet.
- */
 export function DeckTree({
   decks,
   cards,
@@ -101,7 +84,6 @@ export function DeckTree({
   )
 }
 
-/** Each nesting level steps its subdeck cards in by this much; the nested layout compounds it. */
 const INDENT = 16
 
 interface NodeProps {
@@ -151,7 +133,6 @@ function DeckTreeNode({
       : { leading: [], trailing: [] }
   const swipeEnabled = leading.length > 0 || trailing.length > 0
 
-  // Each row is its own rounded control card; the daylight ground shows through the gaps.
   const row = (
     <div className="flex items-center gap-1.5 rounded-card bg-card py-2 pl-1.5 pr-2 shadow-rest">
       {hasChildren ? (
@@ -192,7 +173,6 @@ function DeckTreeNode({
             className="size-9 rounded-card shadow-rest ring-1 ring-black/5 transition-transform duration-200 ease-out group-active/row:scale-[0.94]"
             iconClassName="text-base leading-none"
           />
-          {/* Due badge — self-evident "this deck has cards to review", reinforced by shape. */}
           {due > 0 ? (
             <span
               className="absolute -right-1.5 -top-1.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-primary px-1 text-[length:var(--p-text-tiny)] font-bold tabular-nums text-primary-foreground shadow-interactive ring-2 ring-card"

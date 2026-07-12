@@ -9,13 +9,9 @@ const EASE_OUT = [0.22, 1, 0.36, 1] as const
 
 export interface BadgeGridProps {
   badges: ReadonlyArray<Badge>
-  /** Tap a badge to open its "how to earn it" detail. Omit for a display-only wall. */
   onOpenBadge?: (id: BadgeId) => void
 }
 
-/** The full badge wall: a 3-up grid of tiered medallions, each with its title, the
- * "tier of total" progress, and a thin bar toward the next threshold. With `onOpenBadge`
- * each tile is a button into the badge's detail screen. */
 export function BadgeGrid({ badges, onOpenBadge }: BadgeGridProps) {
   const { t } = useTranslation()
   return (
@@ -64,8 +60,6 @@ export function BadgeGrid({ badges, onOpenBadge }: BadgeGridProps) {
   )
 }
 
-/** Tile shell: a button into the detail screen when `onOpen` is set (press + focus
- * feedback, the medallion dips under the press), else a plain static stack. */
 function BadgeTile({
   onOpen,
   ariaLabel,

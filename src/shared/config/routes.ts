@@ -1,4 +1,3 @@
-/** Canonical route paths. The router (app/) and any navigation read from here. */
 export const ROUTES = {
   home: '/',
   login: '/login',

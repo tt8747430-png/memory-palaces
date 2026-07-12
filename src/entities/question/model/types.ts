@@ -1,14 +1,11 @@
 import type { Entity } from '@/shared/lib'
 
-/** A multiple-choice recall question scoped to a deck. */
 export interface Question extends Entity {
   deckId: string
   prompt: string
   options: string[]
-  /** Index into `options` of the correct choice. */
   correctAnswer: number
   explanation?: string
-  /** Position within the deck; questions read and reorder in this order. */
   order: number
 }
 
@@ -20,8 +17,6 @@ export interface MakeQuestionInput {
   options: string[]
   correctAnswer: number
   explanation?: string
-  /** Defaults to 0 — legacy and test data sort by `createdAt` as the tiebreak; the
-   * createQuestion command assigns the real next position. */
   order?: number
 }
 
@@ -48,11 +43,8 @@ export function makeQuestion(input: MakeQuestionInput): Question {
   }
 }
 
-/** Editable fields of a question — identity, timestamps, and deck are owned elsewhere. */
 export type QuestionChanges = Partial<Omit<Question, 'id' | 'createdAt' | 'updatedAt' | 'deckId'>>
 
-/** Apply an edit, enforcing the same invariants as {@link makeQuestion}. `updatedAt`
- * is set by the caller (clock injected) so the function stays pure. */
 export function updateQuestion(
   question: Question,
   changes: QuestionChanges,

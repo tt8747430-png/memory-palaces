@@ -20,8 +20,6 @@ const thingSchema: RxJsonSchema<Thing> = {
   required: ['id', 'value'],
 }
 
-// The RxDB adapter must pass the exact same contract as the in-memory adapter
-// (Liskov) — proven here on the memory storage so the suite stays fast and isolated.
 runRepositoryContract<Thing>(
   'RxdbRepository (memory storage)',
   () =>

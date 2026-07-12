@@ -1,7 +1,5 @@
 import '@testing-library/jest-dom/vitest'
 
-// This toolchain's jsdom doesn't expose Web Storage, so provide a minimal in-memory
-// localStorage. Adapters/components persist through it under test exactly as in the browser.
 if (typeof globalThis.localStorage === 'undefined') {
   const store = new Map<string, string>()
   const memoryStorage = {

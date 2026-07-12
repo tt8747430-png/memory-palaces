@@ -1,11 +1,3 @@
-/**
- * Deck appearance presets — the icon and colour choices a deck can wear. They live in the
- * entity (deck-domain knowledge) so the create sheet and the deck settings screen render
- * identical options and never drift.
- *
- * The colour values are Tailwind gradient class pairs; {@link DeckCover} renders them (or a
- * custom hex), leading with cool, daylight-adjacent hues per the brand.
- */
 export const DECK_ICON_OPTIONS = [
   '🗂️',
   '📚',
@@ -40,9 +32,7 @@ export const DECK_ICON_OPTIONS = [
 ] as const
 
 export interface DeckColorOption {
-  /** Translation key suffix under `decks.colors`, e.g. `skyBlue`. */
   id: string
-  /** Tailwind gradient class pair consumed by `DeckCover`. */
   value: string
 }
 

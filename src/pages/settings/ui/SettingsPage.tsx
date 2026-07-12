@@ -44,26 +44,17 @@ import {
 } from '@/shared/ui'
 
 export interface SettingsPageProps {
-  /** All provided by the route wrapper so the page stays router-free. */
   onBack?: () => void
   onEditProfile?: () => void
   onPrivacy?: () => void
-  /** Open the swipe-actions screen (re-map list-row swipe gestures). */
   onSwipe?: () => void
   onHelp?: () => void
   onAbout?: () => void
   onSignIn?: () => void
-  /** Sign out and return to login (the route owns auth + navigation). Confirmed here. */
   onLogout?: () => void
-  /** A guest sees a sign-in CTA; account editing lives on the Profile screen. */
   sessionKind?: SessionKind
 }
 
-/** Settings hub — a profile hero (which opens the consolidated Profile screen) over
- * grouped sections: preferences, privacy, and support, then Log out at the bottom.
- * Preference toggles persist immediately; navigation is handled by the route wrapper.
- * Guests get a sign-in CTA instead of logout; account editing (email, password, phone,
- * delete) lives on the Profile screen. */
 export function SettingsPage({
   onBack,
   onEditProfile,

@@ -6,17 +6,12 @@ import { Sheet, Switch } from '@/shared/ui'
 export interface QuizOptionsSheetProps {
   open: boolean
   onClose: () => void
-  /** Auto-advance to the next question after the answer is revealed. */
   quizTimer: boolean
-  /** Ask the questions in a random order (applies to the next quiz). */
   shuffleQuestions: boolean
   onQuizTimer: (value: boolean) => void
   onShuffleQuestions: (value: boolean) => void
 }
 
-/** The quiz's own options sheet — auto-advance and shuffle. They belong with the quiz that
- * uses them; persisted to the deck
- * by the host, so the choice is remembered. */
 export function QuizOptionsSheet({
   open,
   onClose,

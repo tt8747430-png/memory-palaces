@@ -1,4 +1,3 @@
-/** English source-of-truth strings. Structure is i18n-ready from day one (v1 = en). */
 export const en = {
   common: {
     appName: 'Mindscape',

@@ -14,8 +14,6 @@ export interface SettingsPrivacyPageProps {
   onBack?: () => void
 }
 
-/** Privacy & security — the five privacy switches, persisted onto preferences.privacy.
- * The switches are honoured as the features that read them ship; the banner says so. */
 export function SettingsPrivacyPage({ onBack }: SettingsPrivacyPageProps) {
   const { t } = useTranslation()
   const store = usePreferencesStoreApi()

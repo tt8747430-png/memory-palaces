@@ -1,7 +1,5 @@
 import { cn } from '@/shared/lib'
 
-/** The toggle pill visual (presentational only) — shared by `Switch` and the toggle
- * variant of `SettingsRow`, which is itself the interactive element. */
 export function SwitchTrack({ checked }: { checked: boolean }) {
   return (
     <span
@@ -23,12 +21,10 @@ export function SwitchTrack({ checked }: { checked: boolean }) {
 export interface SwitchProps {
   checked: boolean
   onCheckedChange: (value: boolean) => void
-  /** Accessible name — required since the control has no visible text of its own. */
   label: string
   className?: string
 }
 
-/** Accessible toggle for use where the label sits elsewhere (e.g. a labelled row). */
 export function Switch({ checked, onCheckedChange, label, className }: SwitchProps) {
   return (
     <button

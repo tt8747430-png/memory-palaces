@@ -6,8 +6,6 @@ const MINUTE = 60_000
 const HOUR = 3_600_000
 const DAY = 86_400_000
 
-/** Which day-section a notification belongs to (UTC day keys, matching the streak
- * logic). The panel renders sections in today → yesterday → earlier order. */
 export function bucketOf(iso: string, now: number): DayBucket {
   const at = dayKey(new Date(iso).getTime())
   if (at === dayKey(now)) return 'today'
@@ -15,8 +13,6 @@ export function bucketOf(iso: string, now: number): DayBucket {
   return 'earlier'
 }
 
-/** A structured (language-neutral) relative timestamp; the panel renders it via i18n
- * so copy stays translatable. Beyond a week it falls back to an absolute date. */
 export type RelativeTime =
   | { unit: 'now' }
   | { unit: 'minutes'; value: number }

@@ -51,7 +51,6 @@ describe('deleteFolder', () => {
     expect(folders.getState().folders).toHaveLength(0)
     expect(decks.getState().decks.find((p) => p.id === 'p1')?.folderId).toBeNull()
     expect(decks.getState().decks.find((p) => p.id === 'p2')?.folderId).toBeNull()
-    // A deck that was never in the folder is untouched.
     expect(decks.getState().decks.find((p) => p.id === 'p3')?.folderId).toBeNull()
   })
 

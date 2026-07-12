@@ -38,14 +38,9 @@ import { DeckAppearanceSheet } from './DeckAppearanceSheet'
 export interface DeckSettingsPageProps {
   deckId: string
   onBack?: () => void
-  /** After delete, leave the settings (and the deck) — the route wrapper goes home. */
   onDeleted?: () => void
 }
 
-/** The full-page settings for one deck (route `/decks/:deckId/settings`): a tappable identity
- * header (name/icon/colour), study behaviour that resolves from the parent chain and can be
- * overridden here (ADR-0002), a Manage section (duplicate / export / reset / archive), and
- * delete. Every change persists through the deck command layer. */
 export function DeckSettingsPage({ deckId, onBack, onDeleted }: DeckSettingsPageProps) {
   const { t } = useTranslation()
   const deckStore = useDeckStoreApi()
@@ -104,7 +99,6 @@ export function DeckSettingsPage({ deckId, onBack, onDeleted }: DeckSettingsPage
       }
     >
       <div className="mt-4 flex flex-col gap-6 pb-8">
-        {/* Identity — tap the cover (or the pencil) to edit name, icon & colour. */}
         <button
           type="button"
           onClick={() => setAppearanceOpen(true)}

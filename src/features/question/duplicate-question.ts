@@ -8,7 +8,6 @@ import {
 import { nextOrder } from '@/shared/lib'
 import { requireQuestion } from './require-question'
 
-/** Command — copy a question into a fresh one appended to the deck. */
 export async function duplicateQuestion(store: QuestionStore, id: string): Promise<Question> {
   const original = requireQuestion(store, id)
   const order = nextOrder(questionsForDeck(selectQuestions(store.getState()), original.deckId))

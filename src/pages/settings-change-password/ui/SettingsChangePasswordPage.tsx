@@ -9,16 +9,12 @@ export interface SettingsChangePasswordPageProps {
   onBack?: () => void
 }
 
-/** Change password — mock for now (no verification): it validates shape, confirms the
- * match, and reports success. Real credential security lands with the auth backend. */
 export function SettingsChangePasswordPage({ onBack }: SettingsChangePasswordPageProps) {
   const { t } = useTranslation()
   const [current, setCurrent] = useState('')
   const [next, setNext] = useState('')
   const [confirm, setConfirm] = useState('')
 
-  // Validate live so the eye-toggle fields guide as you type and Save only lights up
-  // once the change is actually valid.
   const nextError =
     next.length > 0 && next.length < MIN_PASSWORD
       ? t('settings.changePasswordScreen.short')

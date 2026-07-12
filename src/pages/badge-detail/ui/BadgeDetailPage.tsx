@@ -28,9 +28,6 @@ export interface BadgeDetailPageProps {
   onBack?: () => void
 }
 
-/** A single tiered badge, end to end: a colored hero medallion at its current tier, the
- * live value, what the badge tracks, and the full tier ladder showing every threshold,
- * which are reached, and how far the in-progress one has to go. */
 export function BadgeDetailPage({ badgeId, onBack }: BadgeDetailPageProps) {
   const { t } = useTranslation()
   const progressStore = useProgressStoreApi()
@@ -126,7 +123,6 @@ function Hero({
   const meta = BADGE_META[badge.id]
   return (
     <section className="relative flex flex-col items-center pt-3 text-center">
-      {/* Tier-colored halo: the medallion lifts off the daylight ground in its own light. */}
       <span
         aria-hidden
         className="pointer-events-none absolute left-1/2 top-0 size-40 -translate-x-1/2 -translate-y-4 rounded-full opacity-35 blur-3xl"
@@ -161,7 +157,6 @@ function Hero({
 
 function TierLadder({ badge }: { badge: Badge }) {
   const { t } = useTranslation()
-  // The first unreached tier is the one in progress; show its live bar + remaining.
   const currentIndex = badge.tier < badge.tiers.length ? badge.tier : -1
   const pct = Math.round(milestoneProgress(badge) * 100)
 
@@ -273,8 +268,6 @@ function TierStatus({
   )
 }
 
-/** Counts a number up from zero on mount; respects reduced motion by jumping to the
- * final value. `format` runs every frame so the caller controls units and grouping. */
 function CountUp({ to, format }: { to: number; format: (n: number) => string }) {
   const reduce = useReducedMotion()
   const [n, setN] = useState(reduce ? to : 0)

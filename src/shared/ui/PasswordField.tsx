@@ -8,7 +8,6 @@ export type PasswordFieldProps = Omit<AuthFieldProps, 'type' | 'rightSlot' | 'ic
   icon?: ReactNode
 }
 
-/** AuthField specialized for secrets: a lock icon and a built-in show/hide toggle. */
 export function PasswordField({ icon, ...props }: PasswordFieldProps) {
   const { t } = useTranslation()
   const [visible, setVisible] = useState(false)

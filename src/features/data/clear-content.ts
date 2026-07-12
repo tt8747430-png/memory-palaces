@@ -14,8 +14,6 @@ async function removeEach(ids: string[], remove: (id: string) => Promise<void>):
   for (const id of ids) await remove(id)
 }
 
-/** Command — delete every folder and deck with all their cards and questions. Children are
- * removed first so nothing is left pointing at a deleted parent. */
 export async function clearAllContent({
   folderStore,
   deckStore,

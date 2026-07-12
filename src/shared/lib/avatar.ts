@@ -4,7 +4,6 @@ export interface CropRect {
   size: number
 }
 
-/** The largest centered square within the source — the region to draw from. */
 export function coverSquare(width: number, height: number): CropRect {
   const size = Math.min(width, height)
   return { sx: (width - size) / 2, sy: (height - size) / 2, size }
@@ -13,8 +12,6 @@ export function coverSquare(width: number, height: number): CropRect {
 const AVATAR_PX = 256
 const AVATAR_QUALITY = 0.82
 
-/** Read an image file, center-crop to a square, downscale to 256px, and return a JPEG
- * data-URL. Browser-only (canvas); the geometry lives in coverSquare for unit tests. */
 export function fileToAvatar(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()

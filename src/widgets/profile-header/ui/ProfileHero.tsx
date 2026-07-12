@@ -7,29 +7,18 @@ import { Avatar } from '@/shared/ui'
 
 export interface ProfileHeroProps {
   name: string
-  /** Handle shown under the avatar (no leading @). */
   username: string
-  /** The user's photo, or null/undefined to fall back to gradient initials. */
   avatar?: string | null
-  /** Raw XP — shown in the stat triple and the level meter. */
   xp: number
-  /** Current day streak — the streak stat taps through to the Streak screen. */
   streakCount: number
-  /** How many palaces the user has built. */
   palaceCount: number
-  /** Year the account was created, or null when unknown. */
   joinedYear: number | null
-  /** Tap the avatar to edit the profile photo. */
   onEditProfile: () => void
-  /** Open the Streak screen from the streak stat. */
   onOpenStreak: () => void
 }
 
 const EASE_OUT = [0.22, 1, 0.36, 1] as const
 
-/** The centered profile hero that scrolls beneath the fixed bar: a circular avatar that
- * taps to edit the photo, the @handle · joined line, a three-stat headline (streak · XP ·
- * palaces), and the level / XP-to-next meter. */
 export function ProfileHero({
   name,
   username,
@@ -65,19 +54,15 @@ export function ProfileHero({
         transition={{ type: 'spring', stiffness: 380, damping: 26 }}
         className="relative rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
       >
-        {/* Ambient navy/action-blue glow — the avatar lifts off the daylight ground. */}
         <span
           aria-hidden
           className="absolute inset-0 -z-10 translate-y-2.5 scale-95 rounded-full opacity-30 blur-2xl"
           style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))' }}
         />
-        {/* Frosted glass halo framing the avatar (a signature surface, not decoration:
-            it's the one hero on the Profile tab). */}
         <span
           aria-hidden
           className="absolute -inset-[7px] rounded-full bg-card-glass shadow-featured ring-1 ring-[var(--border-glass)]"
         />
-        {/* Daylit specular sheen across the glass rim. */}
         <span
           aria-hidden
           className="pointer-events-none absolute -inset-[7px] rounded-full bg-gradient-to-br from-white/55 via-white/10 to-transparent"

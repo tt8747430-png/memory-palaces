@@ -48,7 +48,6 @@ describe('MatchBoard', () => {
     await user.click(screen.getByRole('button', { name: 'Alpha' }))
     await user.click(screen.getByRole('button', { name: 'Beta' }))
 
-    // A term/term pick is wrong, so neither tile is cleared.
     expect(screen.getByRole('button', { name: 'Alpha' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Beta' })).toBeInTheDocument()
   })

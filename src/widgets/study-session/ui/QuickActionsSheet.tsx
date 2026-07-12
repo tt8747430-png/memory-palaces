@@ -7,8 +7,6 @@ export interface QuickActionsSheetProps extends QuickActionsModel {
   onClose: () => void
 }
 
-/** Press-and-hold quick actions for the active card — the fast path (the merged gear sheet
- * carries the same actions for discoverability). Each choice dismisses the sheet. */
 export function QuickActionsSheet({ open, onClose, ...model }: QuickActionsSheetProps) {
   const { t } = useTranslation()
   return (

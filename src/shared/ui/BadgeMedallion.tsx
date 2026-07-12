@@ -3,11 +3,6 @@ import { Check, Lock } from 'lucide-react'
 import { motion } from 'motion/react'
 import { cn } from '@/shared/lib'
 
-/**
- * Tier color ramp, brand-aligned (sky → action → navy → gold → gold+navy) so a badge's
- * prestige reads through color while staying inside the daylight palette — no metallic
- * bronze/silver that would clash with the system. Tiers cap at 5.
- */
 const TIER_BG: Record<number, string> = {
   1: 'linear-gradient(135deg, var(--secondary), var(--accent))',
   2: 'linear-gradient(135deg, var(--accent), var(--primary))',
@@ -18,30 +13,15 @@ const TIER_BG: Record<number, string> = {
 
 export interface BadgeMedallionProps {
   icon: LucideIcon
-  /** Bold number stacked under the icon (a tier threshold or milestone count). */
   value?: string | number
-  /** Locked badges render greyscale with a faded target; earned ones get the tier color. */
   locked?: boolean
-  /** 1-based tier; selects the color ramp. Ignored when locked. Defaults to 3 (the brand pairing). */
   tier?: number
-  /** Show a small lock glyph on a locked medallion (used on full grids, not previews). */
   showLock?: boolean
-  /** Show a success check on an earned medallion — the binary "done" mark that sets a
-   * one-shot achievement apart from a tiered badge. Earned only. */
   showCheck?: boolean
-  /** Hero treatment: a single specular highlight sweeps across the disc on entry. Earned
-   * only; reserved for the detail-screen hero, never the dense grids. */
   shine?: boolean
-  /** Size the disc here (default `size-20`); the icon and number scale with it. */
   className?: string
 }
 
-/**
- * A circular, glossy achievement/badge medallion: a tier-colored disc with a top
- * highlight, a centered icon, and an optional bold number. Locked medallions go
- * greyscale (icon faded, optional lock). Shared by the profile preview rows and the
- * full Badges / Achievements grids so a medallion looks identical everywhere.
- */
 export function BadgeMedallion({
   icon: Icon,
   value,
@@ -63,13 +43,9 @@ export function BadgeMedallion({
         className,
       )}
     >
-      {/* Top gloss — only on earned medallions, where it catches the light. */}
       {locked ? null : (
         <span className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-full bg-gradient-to-b from-white/35 to-transparent" />
       )}
-      {/* Specular sweep for the hero, clipped to the disc so it never overruns the lock
-          badge. MotionConfig holds the transform still under reduced motion, leaving the
-          static gloss above. */}
       {shine && !locked ? (
         <span className="pointer-events-none absolute inset-0 overflow-hidden rounded-full">
           <motion.span

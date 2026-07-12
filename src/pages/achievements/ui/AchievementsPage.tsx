@@ -34,13 +34,9 @@ import { AppScreen, cardSurface, ScreenHeader } from '@/shared/ui'
 
 export interface AchievementsPageProps {
   onBack?: () => void
-  /** Open a milestone's "how to earn it" detail; wired by the route wrapper. */
   onOpenAchievement?: (id: AchievementId) => void
 }
 
-/** The Achievements screen: a compact grid of personal records (best-ever figures) over
- * the full milestone wall. Records and earned states derive live from the stores. Each
- * milestone taps through to its detail. Reached from the Profile "Achievements / See all". */
 export function AchievementsPage({ onBack, onOpenAchievement }: AchievementsPageProps = {}) {
   const { t } = useTranslation()
   const progressStore = useProgressStoreApi()
@@ -49,7 +45,6 @@ export function AchievementsPage({ onBack, onOpenAchievement }: AchievementsPage
   const progress = useProgressStore(selectProgress)
   const decks = useDeckStore(selectDecks)
   const cards = useCardStore(selectCards)
-  // Each store hook must run unconditionally (Rules of Hooks); combine after.
   const progressReady = useProgressStore(selectProgressReady)
   const decksReady = useDeckStore(selectDecksReady)
   const cardsReady = useCardStore(selectCardsReady)

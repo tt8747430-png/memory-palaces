@@ -6,20 +6,11 @@ const EASE_OUT_EXPO = [0.16, 1, 0.3, 1] as const
 export interface WordRevealProps {
   text: string
   className?: string
-  /** Seconds before the first word begins. */
   delay?: number
-  /** Per-word stagger, in seconds. */
   stagger?: number
-  /** Wrapper element — use `h1`/`h2`/`p` to keep the line semantic. */
   as?: 'span' | 'p' | 'h1' | 'h2'
 }
 
-/**
- * Brand-moment text: reveals a line one word at a time, each word rising and
- * unblurring into place. i18n-safe — it splits the already-translated string on
- * whitespace, so word count and order follow the active locale. Reduced motion
- * collapses to a single crossfade of the whole line.
- */
 export function WordReveal({
   text,
   className,

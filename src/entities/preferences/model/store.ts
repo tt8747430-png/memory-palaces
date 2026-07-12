@@ -6,7 +6,6 @@ import type { Preferences } from './types'
 export type PreferencesStatus = 'idle' | 'loading' | 'ready'
 
 export interface PreferencesState {
-  /** The single preferences record, or null until one is created. */
   preferences: Preferences | null
   status: PreferencesStatus
   start: () => void
@@ -16,7 +15,6 @@ export interface PreferencesState {
 
 export type PreferencesStore = StoreApi<PreferencesState>
 
-/** Store FACTORY (repository INJECTED), reactive single-doc like the progress store. */
 export function createPreferencesStore(repo: PreferencesRepository): PreferencesStore {
   let unsubscribe: Unsubscribe | null = null
   return createStore<PreferencesState>((set) => ({

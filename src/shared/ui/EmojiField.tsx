@@ -5,13 +5,10 @@ import { cn } from '@/shared/lib'
 export interface EmojiFieldProps {
   value: string
   onChange: (emoji: string) => void
-  /** Accessible name for the field (e.g. "Icon"). */
   'aria-label': string
   className?: string
 }
 
-/** The last grapheme cluster of a string (so multi-codepoint emoji — ZWJ sequences, skin
- * tones, flags — count as one). Falls back to codepoint split where Intl.Segmenter is absent. */
 function lastGrapheme(input: string): string {
   if (!input) return ''
   if (typeof Intl !== 'undefined' && 'Segmenter' in Intl) {
@@ -21,12 +18,6 @@ function lastGrapheme(input: string): string {
   return [...input].at(-1) ?? ''
 }
 
-/**
- * Icon picker as a single tile: tap it and the device's own keyboard / emoji picker opens,
- * so the user can choose *any* emoji rather than a curated grid. We keep only the last emoji
- * grapheme they enter and ignore non-emoji input, so the value is always one symbol. The
- * tile doubles as the live preview.
- */
 export function EmojiField({ value, onChange, className, ...rest }: EmojiFieldProps) {
   const ref = useRef<HTMLInputElement>(null)
   const commit = (raw: string) => {
@@ -48,7 +39,6 @@ export function EmojiField({ value, onChange, className, ...rest }: EmojiFieldPr
       ) : (
         <Smile aria-hidden className="size-6 text-muted-foreground" />
       )}
-      {/* The real input sits transparent over the tile: focusing it raises the emoji keyboard. */}
       <input
         ref={ref}
         value={value}

@@ -1,12 +1,6 @@
 import { makeAccountSession, makeGuestSession } from '@/entities/session'
 import type { SessionCommandDeps } from './sign-up-with-email'
 
-/**
- * Command — rehydrate the in-memory session from the gateway on boot. The session
- * store is in-memory and does not survive reload, so the gateway (localStorage) is
- * the source of truth for "who is signed in". When nothing is persisted the session
- * stays null and the route guard sends the user to login.
- */
 export async function restoreSession(
   deps: SessionCommandDeps,
   now: number = Date.now(),

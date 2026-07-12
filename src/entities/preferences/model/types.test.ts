@@ -31,7 +31,6 @@ describe('makePreferences — extended defaults', () => {
     const prefs = makePreferences({
       id: 'preferences',
       createdAt: at(0),
-      // A record persisted before Classic was removed.
       studyMode: 'flip' as never,
     })
     expect(prefs.studyMode).toBe('blur')

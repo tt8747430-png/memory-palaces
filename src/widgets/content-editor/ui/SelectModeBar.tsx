@@ -2,9 +2,6 @@ import { type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/shared/lib'
 
-/** The select-mode header shared by the cards and questions lists: toggle-all on the left,
- * the live count in the middle, Done on the right. Text buttons carry an invisible 44px
- * hit area (negative margins) so the visual stays a quiet toolbar. */
 export function SelectModeBar({
   allSelected,
   count,
@@ -40,8 +37,6 @@ export function SelectModeBar({
   )
 }
 
-/** One action in the floating bulk tray beneath a selection, shared by the cards and
- * questions lists — info tint by default, danger surface for delete. */
 export function BulkButton({
   icon,
   label,

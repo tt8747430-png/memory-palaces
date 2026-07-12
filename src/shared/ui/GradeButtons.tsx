@@ -2,12 +2,9 @@ import { useTranslation } from 'react-i18next'
 import { cn, type Grade, nextIntervalLabel, type SrsState } from '@/shared/lib'
 
 export interface GradeButtonsProps {
-  /** The card's current schedule (absent = brand new). */
   srs?: SrsState
-  /** Injected clock (epoch ms) so the interval previews are deterministic. */
   now?: number
   onGrade: (grade: Grade) => void
-  /** Merged on the grid so a host can stretch the control (e.g. a fixed-height footer). */
   className?: string
 }
 
@@ -30,8 +27,6 @@ const GRADES: { grade: Grade; key: `grade.${Grade}`; tone: string }[] = [
   },
 ]
 
-/** The four-grade review control (SM-2), each button previewing the interval the
- * grade would schedule (`nextIntervalLabel`). The single way to grade a card. */
 export function GradeButtons({ srs, now = Date.now(), onGrade, className }: GradeButtonsProps) {
   const { t } = useTranslation()
   return (

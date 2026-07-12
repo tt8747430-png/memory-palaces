@@ -44,7 +44,6 @@ describe('useSessionReward — EventBus emission', () => {
       quiz = payload
     })
 
-    // 13 correct × 20 xp = 260 → crosses into level 2; 90% sets a new best quiz.
     await reward()({ kind: 'quiz', correct: 13, total: 13, accuracy: 90 })
 
     expect(levelUp?.level).toBeGreaterThanOrEqual(2)
@@ -65,8 +64,6 @@ describe('useSessionReward — EventBus emission', () => {
     const streak = vi.fn()
     bus.on('streak', streak)
 
-    // 5 graded cards reaches the default daily goal → the day goes active and the
-    // streak advances 6 → 7, a milestone.
     await reward()({ kind: 'study', graded: 5 })
 
     expect(streak).toHaveBeenCalledWith({ count: 7 })

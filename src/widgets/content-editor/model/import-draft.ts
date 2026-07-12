@@ -1,12 +1,8 @@
 import { create } from 'zustand'
 import type { ParsedCard, SrsState } from '@/shared/lib'
 
-/** Where a pending import came from — drives the review page's options (restore toggles are
- * Mindscape-only) and the confirmation copy. */
 export type ImportSource = 'paste' | 'mindscape' | 'anki'
 
-/** One reviewable card before it is written to the deck. Carries a local id for list keys and
- * edits; the create command mints the persisted id on import. */
 export interface DraftCard {
   id: string
   front: string
@@ -23,24 +19,16 @@ export interface ImportDraft {
   cards: DraftCard[]
 }
 
-/** Editable text fields of a draft card (identity/schedule stay fixed while reviewing). */
 export type DraftCardEdit = Partial<Pick<DraftCard, 'front' | 'back' | 'hint' | 'tip'>>
 
 interface ImportDraftState {
   draft: ImportDraft | null
-  /** Seed the review with freshly parsed cards; assigns local ids. */
   setDraft: (source: ImportSource, cards: ParsedCard[]) => void
   editCard: (id: string, changes: DraftCardEdit) => void
   removeCard: (id: string) => void
   clear: () => void
 }
 
-/**
- * Ephemeral, in-memory hand-off between an import entry point (paste "Create", or a file
- * pick) and the shared review page. Not persisted: a refresh drops the pending draft, which
- * is fine — nothing has been written to the deck yet. A module singleton so it survives the
- * route change from the entry point to `/import`.
- */
 export const useImportDraft = create<ImportDraftState>((set) => ({
   draft: null,
   setDraft: (source, cards) =>

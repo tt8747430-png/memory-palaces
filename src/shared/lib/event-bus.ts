@@ -1,11 +1,5 @@
 export type EventHandler<T> = (payload: T) => void
 
-/**
- * Minimal typed pub/sub — the app's cross-cutting Observer / Mediator. Features and
- * widgets publish domain events (xp-gain, level-up, sync-status…) without importing
- * one another; the composition root owns the single instance. Generic over an event
- * map shaped `{ [type]: payload }`.
- */
 export class EventBus<Events extends Record<string, unknown>> {
   private readonly handlers = new Map<keyof Events, Set<EventHandler<never>>>()
 

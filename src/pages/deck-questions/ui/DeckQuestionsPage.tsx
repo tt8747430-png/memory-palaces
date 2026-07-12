@@ -55,20 +55,13 @@ import {
 export interface DeckQuestionsPageProps {
   deckId: string
   onBack?: () => void
-  /** Open the full-screen question editor (add / edit). */
   onAddQuestion: () => void
   onEditQuestion: (questionId: string) => void
-  /** Start the deck's Test (quiz) with the authored questions. */
   onStartTest: () => void
 }
 
 type QuestionSort = 'manual' | 'recent' | 'name'
 
-/**
- * The deck's Questions & Test page: author the multiple-choice questions and launch the Test
- * from one screen. A hero card starts the quiz; below it the questions list supports edit,
- * duplicate, delete, multi-select bulk delete, and drag-reorder (in select mode).
- */
 export function DeckQuestionsPage({
   deckId,
   onBack,
@@ -79,8 +72,6 @@ export function DeckQuestionsPage({
   const { t } = useTranslation()
   const questionStore = useQuestionStoreApi()
   const deckStore = useDeckStoreApi()
-  // The card store is only here to satisfy the shared `applyDeckContent` signature; question
-  // import never writes cards (it applies `{ cards: [], questions }`).
   const cardStore = useCardStoreApi()
 
   useEffect(() => {
@@ -106,8 +97,6 @@ export function DeckQuestionsPage({
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
-  // Parsed but not yet applied — a picked file waits behind a count-confirm, mirroring the
-  // review step card imports get, so a wrong file never writes straight into the deck.
   const [pendingImport, setPendingImport] = useState<DeckContentData['questions'] | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -193,8 +182,6 @@ export function DeckQuestionsPage({
     input.click()
   }
 
-  // Questions only — any cards in the file are dropped (they import from the Cards page).
-  // Parsing never writes; the count-confirm below does.
   const onFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
@@ -238,8 +225,6 @@ export function DeckQuestionsPage({
 
   const hasQuestions = questions.length > 0
 
-  // Pinned as the screen footer (not a sticky child) so the bulk bar sits at the bottom even
-  // when a single short question wouldn't scroll the list far enough to pin a sticky element.
   const selectionBar = (
     <div className="px-4 pb-[calc(max(0.75rem,env(safe-area-inset-bottom)))] pt-2">
       <div className="flex items-center gap-2 rounded-card-featured bg-card/95 p-2.5 shadow-elevated backdrop-blur-xl">
@@ -267,7 +252,6 @@ export function DeckQuestionsPage({
       footer={selectMode ? selectionBar : undefined}
     >
       <div className="mt-2 space-y-4 pb-24">
-        {/* Start-test hero — author below, launch from here. */}
         <div className="rounded-card-featured bg-card p-4 shadow-featured">
           <div className="flex items-center gap-3">
             <span
@@ -365,7 +349,6 @@ export function DeckQuestionsPage({
         onConfirm={confirmBulkDelete}
       />
 
-      {/* A picked file is parsed, then held here until the count is confirmed. */}
       <ConfirmDialog
         open={pendingImport !== null}
         onOpenChange={(open) => !open && setPendingImport(null)}
@@ -391,7 +374,6 @@ export function DeckQuestionsPage({
         tabIndex={-1}
       />
 
-      {/* Import sheet — add questions from a file. Cards are imported from the Cards page. */}
       <Sheet
         open={importOpen}
         onOpenChange={setImportOpen}
@@ -410,7 +392,6 @@ export function DeckQuestionsPage({
         </div>
       </Sheet>
 
-      {/* Export sheet — save this deck's questions. */}
       <Sheet
         open={exportOpen}
         onOpenChange={setExportOpen}
@@ -431,8 +412,6 @@ export function DeckQuestionsPage({
         </div>
       </Sheet>
 
-      {/* Hidden while selecting, where the bulk bar owns the bottom of the screen (otherwise
-          the dial overlaps the bar's trailing action). */}
       {!selectMode ? (
         <SpeedDial
           label={t('questions.quickActions')}

@@ -5,7 +5,6 @@ import { cn } from '@/shared/lib'
 export interface SegmentedOption<T extends string> {
   value: T
   label: ReactNode
-  /** Accessible name for icon-only segments (where `label` carries no text). */
   ariaLabel?: string
 }
 
@@ -13,9 +12,7 @@ export interface SegmentedControlProps<T extends string> {
   options: ReadonlyArray<SegmentedOption<T>>
   value: T
   onChange: (value: T) => void
-  /** Shared-layout id for the sliding pill; auto-generated per instance if omitted. */
   layoutId?: string
-  /** `md` (default) is the full-height toggle; `sm` is the compact in-toolbar variant. */
   size?: 'sm' | 'md'
   className?: string
   'aria-label'?: string
@@ -28,11 +25,6 @@ const SEGMENT_PADDING = {
   sm: 'py-2',
 } as const
 
-/** A 2+ segment toggle. A white pill springs under the active segment via shared-layout
- * animation (the bottom-nav `layoutId` idiom); reduced motion drops the slide to an
- * instant move. Track is a faint navy tint, active text the navy primary, inactive a
- * muted navy. Segments take text or icon labels (`ariaLabel` names the icon-only ones).
- * `aria-pressed` marks the active segment for assistive tech. */
 export function SegmentedControl<T extends string>({
   options,
   value,

@@ -3,28 +3,14 @@ import { cn } from '@/shared/lib'
 
 export interface EditableTitleProps {
   value: string
-  /** Commit a new, non-empty, changed name. */
   onRename: (name: string) => void
-  /** Accessible name for the rename trigger, e.g. "Rename Garden Room". */
   editLabel: string
-  /** Shared typography/layout classes applied to the title, trigger, and input so the three
-   * states line up pixel-for-pixel. */
   className?: string
-  /** Select mode / dragging: the title goes inert (plain text) so the card's own tap wins. */
   disabled?: boolean
 }
 
-/** Window within which two taps count as a double-tap (ms). */
 const DOUBLE_TAP_MS = 300
 
-/**
- * A title that renames in place: double-tapping it swaps the text for an input (Enter / blur
- * saves, Esc / empty cancels). A single tap is deliberately inert, so a stray tap while reading
- * never drops the title into an editor. Stops its own pointer + click from bubbling so the host
- * card's open/swipe/drag gestures never fire from the title — the card opens from everywhere
- * else. Rendered as a real control (button ↔ input), so the host card must be a non-button
- * clickable element (a `role="button"` div), never a native `<button>`.
- */
 export function EditableTitle({
   value,
   onRename,
@@ -38,12 +24,10 @@ export function EditableTitle({
   const lastTapRef = useRef(0)
   const keyActivatedRef = useRef(false)
 
-  // Reseed the draft from upstream whenever we're not mid-edit.
   useEffect(() => {
     if (!editing) setDraft(value)
   }, [value, editing])
 
-  // Focus + select the whole name the moment editing opens.
   useLayoutEffect(() => {
     if (editing) {
       inputRef.current?.focus()
@@ -51,7 +35,6 @@ export function EditableTitle({
     }
   }, [editing])
 
-  // Entering select mode / a drag cancels any in-flight rename.
   useEffect(() => {
     if (disabled) setEditing(false)
   }, [disabled])
@@ -81,7 +64,6 @@ export function EditableTitle({
         onClick={stop}
         onPointerDown={stop}
         onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
-          // Keep Enter/Escape from reaching the host card (which would open it).
           event.stopPropagation()
           if (event.key === 'Enter') {
             event.preventDefault()
@@ -109,7 +91,6 @@ export function EditableTitle({
       onPointerDown={stop}
       onKeyDown={(event) => {
         stop(event)
-        // Keyboard activates in one press — a double-key isn't a natural affordance.
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault()
           keyActivatedRef.current = true
@@ -122,7 +103,6 @@ export function EditableTitle({
           keyActivatedRef.current = false
           return
         }
-        // Pointer / touch: only a double-tap opens the editor; a lone tap does nothing.
         const now = Date.now()
         if (now - lastTapRef.current < DOUBLE_TAP_MS) {
           lastTapRef.current = 0

@@ -12,7 +12,6 @@ interface Tab {
   labelKey: 'nav.home' | 'nav.profile'
 }
 
-// Home is the deck library now, so the nav is two destinations: the library and you.
 const TABS: Tab[] = [
   { to: ROUTES.home, Icon: House, labelKey: 'nav.home' },
   { to: ROUTES.profile, Icon: User, labelKey: 'nav.profile' },
@@ -22,18 +21,11 @@ const TAB_PATHS = TABS.map((tab) => tab.to) as RoutePath[]
 
 const navySpring = { type: 'spring', stiffness: 500, damping: 40, mass: 0.6 } as const
 
-/**
- * Liquid Glass bottom nav (signature). A frosted navy bar floating over an ambient
- * navy/action-blue glow; the active tab is a white pill that springs between items
- * (shared-layout `layoutId`, so it slides on its own — reduced-motion handled by the
- * global MotionConfig). Self-hides on detail/content routes that own a back control.
- */
 export function AppNav() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const pathname = useRouterState({ select: (state) => state.location.pathname })
 
-  // Only the three top-level tab routes show the nav.
   if (!TAB_PATHS.includes(pathname as RoutePath)) return null
 
   return (

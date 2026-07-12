@@ -15,9 +15,6 @@ export interface MoveDeckSheetProps {
   onNewFolder: () => void
 }
 
-/** Bottom sheet for filing a deck into a folder (or moving it back to the library root).
- * Each folder shows its own colour-and-emoji glyph, so the choice matches its row in the
- * library. The footer jumps to creating a new folder. */
 export function MoveDeckSheet({
   open,
   onOpenChange,

@@ -30,14 +30,9 @@ import { AppScreen, ScreenHeader } from '@/shared/ui'
 
 export interface BadgesPageProps {
   onBack?: () => void
-  /** Open a badge's "how to earn it" detail; wired by the route wrapper. */
   onOpenBadge?: (id: BadgeId) => void
 }
 
-/** The full badge wall: every tiered badge resolved against live progress, earned tiers
- * in their color and not-yet-started ones dim. Leads with the nearest reachable target
- * so a new user sees a goal to chase, not a count of zeros. Each medallion taps through
- * to its detail. Reached from the Profile "Badges / See all". */
 export function BadgesPage({ onBack, onOpenBadge }: BadgesPageProps = {}) {
   const { t } = useTranslation()
   const progressStore = useProgressStoreApi()
@@ -46,7 +41,6 @@ export function BadgesPage({ onBack, onOpenBadge }: BadgesPageProps = {}) {
   const progress = useProgressStore(selectProgress)
   const decks = useDeckStore(selectDecks)
   const cards = useCardStore(selectCards)
-  // Each store hook must run unconditionally (Rules of Hooks); combine after.
   const progressReady = useProgressStore(selectProgressReady)
   const decksReady = useDeckStore(selectDecksReady)
   const cardsReady = useCardStore(selectCardsReady)

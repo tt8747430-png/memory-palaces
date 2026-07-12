@@ -26,13 +26,8 @@ import { useImportDraft } from '@/widgets/content-editor'
 
 export interface PasteNotesPageProps {
   onBack: () => void
-  /** New-deck mode (library "Import"): show an inline deck-name field, pre-filled with
-   * `defaultDeckName`, and pass the chosen name up on commit. Omit when pasting into an
-   * existing deck — then no name is asked. */
   newDeck?: boolean
   defaultDeckName?: string
-  /** Seed committed — go to the shared review page. In new-deck mode `deckName` carries the
-   * name to create the deck with; otherwise it's undefined. The draft is already seeded. */
   onReview: (deckName?: string) => void
 }
 
@@ -46,13 +41,6 @@ const displaySep = (value: string) => SEP_GLYPH[value] ?? value
 
 const PREVIEW_LIMIT = 6
 
-/**
- * The Paste screen: paste any text and it becomes cards. The format (a Bible chapter vs.
- * delimited notes) is auto-detected and overridable; the separators auto-guess but can be
- * tuned, with swap-sides and skip-header options and a live preview of what will be created.
- * "Create" seeds the draft and hands off to the shared review page — nothing is written to
- * the deck until the user confirms there.
- */
 export function PasteNotesPage({
   onBack,
   onReview,
@@ -128,8 +116,6 @@ export function PasteNotesPage({
       }
     >
       <div className="mt-4 flex flex-col gap-5 pb-6">
-        {/* New-deck name — only when creating a deck from the library import; hidden when
-            pasting into a deck that already exists. */}
         {newDeck ? (
           <div>
             <span className="mb-2 block text-[length:var(--p-text-sub)] font-bold text-heading">
@@ -145,7 +131,6 @@ export function PasteNotesPage({
           </div>
         ) : null}
 
-        {/* Paste box */}
         <div>
           <div className="mb-2 flex items-baseline justify-between gap-2">
             <span className="text-[length:var(--p-text-sub)] font-bold text-heading">
@@ -183,7 +168,6 @@ export function PasteNotesPage({
           </div>
         </div>
 
-        {/* Format — auto-detected, overridable */}
         <FormatToggle
           value={format}
           auto={override === null}
@@ -269,7 +253,6 @@ export function PasteNotesPage({
           </div>
         )}
 
-        {/* Live preview */}
         {text.trim() ? (
           cards.length > 0 ? (
             <PreviewList cards={cards} />
@@ -462,15 +445,9 @@ interface Option<T extends string> {
   value: T
   label: string
   description?: string
-  /** A right-aligned monospace chip showing the literal this option stands for (e.g. `,`). */
   hint?: string
 }
 
-/**
- * A single-select list of rows, each with a radio indicator — the clearer alternative to a
- * segmented toggle for a set of options. Rows sit in one bordered card; an optional `footer`
- * (e.g. a custom-value field) drops in under the last row.
- */
 function OptionGroup<T extends string>({
   label,
   value,

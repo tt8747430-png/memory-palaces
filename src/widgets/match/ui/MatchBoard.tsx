@@ -14,13 +14,11 @@ import {
 
 export interface MatchBoardProps {
   cards: MatchCard[]
-  /** Context line under the "Match" title (e.g. "Atrium · Forum"). */
   subtitle?: string
   onBack: () => void
   onComplete: () => void
 }
 
-/** How long a mismatched pair flashes before clearing. */
 const WRONG_MS = 640
 
 function formatTime(seconds: number): string {
@@ -29,9 +27,6 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
-/** Match game: a shuffled board of term/definition tiles; tap a term then its
- * definition to clear the pair. Driven by the pure `matchReducer`; the widget owns
- * the count-up timer and the mismatch-flash timeout. */
 export function MatchBoard({ cards, subtitle, onBack, onComplete }: MatchBoardProps) {
   const { t } = useTranslation()
   const reduce = useReducedMotion()
@@ -41,14 +36,12 @@ export function MatchBoard({ cards, subtitle, onBack, onComplete }: MatchBoardPr
   const won = state.status === 'won'
   const hasWrong = state.wrong.length > 0
 
-  // Count-up timer, stopped once solved.
   useEffect(() => {
     if (won) return
     const id = window.setInterval(() => setElapsed((value) => value + 1), 1000)
     return () => window.clearInterval(id)
   }, [won])
 
-  // Flash a mismatched pair, then clear it.
   useEffect(() => {
     if (!hasWrong) return
     const id = window.setTimeout(() => dispatch({ type: 'clearWrong' }), WRONG_MS)

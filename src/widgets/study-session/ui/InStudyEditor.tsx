@@ -16,8 +16,6 @@ export interface InStudyEditorProps {
 const fieldClass =
   'w-full rounded-control border border-border bg-card px-3.5 py-3 text-[length:var(--p-text-body)] text-foreground placeholder:text-muted-foreground'
 
-/** Edit the active card without leaving the session. Saves front/back/place/tip
- * through the host's `onEditCard` command (the same write-path as the editor page). */
 export function InStudyEditor({ open, card, onClose, onSave }: InStudyEditorProps) {
   const { t } = useTranslation()
   const [front, setFront] = useState('')

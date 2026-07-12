@@ -36,15 +36,11 @@ export interface GearSheetProps {
   onClose: () => void
   mode: StudyMode
   canSpeak: boolean
-  /** The card's quick actions (Undo / Flag / Edit / Listen / Skip / Restart). */
   quick: QuickActionsModel
-  /** Type: recall by first letters only. */
   typeInitialsOnly: boolean
   onTypeInitialsOnly: (value: boolean) => void
-  /** Initials: mark a blank for each hidden letter. */
   wordSpaces: boolean
   onWordSpaces: (value: boolean) => void
-  /** The active mode's four-direction swipe map. */
   swipeConfig: FlashcardSwipeConfig
   onSwipe: (direction: SwipeDirection, action: FlashcardSwipeAction) => void
   scope: Scope
@@ -80,9 +76,6 @@ const DIRECTION_META: { direction: SwipeDirection; icon: ReactNode; labelKey: st
   },
 ]
 
-/** The one merged study sheet behind the footer gear: the card's quick actions, this mode's
- * options and per-direction swipe map, and the session-wide settings — one place, thumb-
- * reachable. Every option persists back through the host. */
 export function GearSheet({
   open,
   onClose,
@@ -110,8 +103,6 @@ export function GearSheet({
 }: GearSheetProps) {
   const { t } = useTranslation()
 
-  // Enabling shake requests device-motion permission (iOS demands the gesture); it only sticks
-  // if the OS grants it, so a denied prompt leaves the toggle honestly off.
   const handleShakeToUndo = async (value: boolean) => {
     if (!value) {
       onShakeToUndo(false)
@@ -273,7 +264,6 @@ export function GearSheet({
   )
 }
 
-/** A labelled row whose trailing edge holds an inline control (a bare combobox). */
 function PickerRow({
   icon,
   label,

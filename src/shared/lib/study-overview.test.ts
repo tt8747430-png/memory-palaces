@@ -4,11 +4,8 @@ import { studyOverview } from './study-overview'
 
 const NOW = Date.UTC(2026, 0, 10)
 
-/** A card scheduled `good` from new is due in 1 day — not due now. */
 const notDue = (): { srs: SrsState } => ({ srs: schedule(undefined, 'good', NOW) })
-/** A brand-new card (no srs) counts as due. */
 const newDue = (): { srs?: SrsState } => ({})
-/** A card graded `again` is due again today. */
 const dueAgain = (): { srs: SrsState } => ({ srs: schedule(undefined, 'again', NOW) })
 
 describe('studyOverview', () => {

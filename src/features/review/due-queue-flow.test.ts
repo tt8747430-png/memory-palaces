@@ -4,12 +4,6 @@ import { createCardStore, type Card, makeCard } from '@/entities/card'
 import { countDueInSubtree, type TreeDeck } from '@/shared/lib'
 import { gradeCard } from './grade-card'
 
-/**
- * Binds the write path (gradeCard → SRS schedule) to the read path (countDueInSubtree, the
- * deck-subtree due roll-up). Each is unit-tested in isolation; this asserts the contract that
- * joins them — a card graded `again` stays in today's queue, a card graded `good` drops out —
- * so a drift in either side is caught.
- */
 const NOW = Date.UTC(2026, 0, 10)
 const decks: TreeDeck[] = [{ id: 'd1', parentId: null }]
 

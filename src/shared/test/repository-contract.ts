@@ -1,11 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { Identifiable, Repository } from '@/shared/api'
 
-/**
- * The behavioral contract every `Repository<T>` adapter must satisfy. Run it
- * against each adapter (in-memory now, RxDB/Supabase later) so they stay
- * interchangeable — Liskov enforced by a shared suite rather than by hope.
- */
 export function runRepositoryContract<T extends Identifiable>(
   name: string,
   createRepository: () => Repository<T>,
@@ -58,7 +53,6 @@ export function runRepositoryContract<T extends Identifiable>(
       const emissions: T[][] = []
       const unsubscribe = repo.observe((entities) => emissions.push(entities))
 
-      // RxDB emits asynchronously; the in-memory adapter synchronously — wait either way.
       await vi.waitFor(() => expect(emissions.at(-1)).toEqual([]))
 
       await repo.save(makeEntity('a'))

@@ -8,14 +8,9 @@ import { StreakCalendar } from '@/widgets/streak-calendar'
 import { AppScreen, Card, ScreenHeader } from '@/shared/ui'
 
 export interface StreakPageProps {
-  /** Return to where you came from (Home or Profile); wired by the route wrapper. */
   onBack?: () => void
 }
 
-/** The Streak screen: a warm streak hero (gold is Mindscape's earned-reward color) over
- * two honest figures — days practiced this month and the longest streak — and the full
- * month calendar. Every number derives live from the progress store; no freezes or
- * society to fake. Reached from the Home streak chip and the Profile overview. */
 export function StreakPage({ onBack }: StreakPageProps = {}) {
   const { t } = useTranslation()
   const reduce = useReducedMotion()
@@ -32,7 +27,7 @@ export function StreakPage({ onBack }: StreakPageProps = {}) {
   const trainingDays = useMemo(() => progress?.trainingDays ?? [], [progress])
 
   const daysThisMonth = useMemo(() => {
-    const prefix = dayKey(now).slice(0, 7) // YYYY-MM
+    const prefix = dayKey(now).slice(0, 7)
     return trainingDays.filter((day) => day.startsWith(prefix)).length
   }, [trainingDays, now])
 

@@ -9,7 +9,7 @@ import { signOut } from './sign-out'
 import { restoreSession } from './restore-session'
 import { requestPasswordReset } from './request-password-reset'
 
-const AT = 0 // fixed clock
+const AT = 0
 
 function setup() {
   let n = 0
@@ -52,7 +52,7 @@ describe('session commands', () => {
 
   it('restoreSession rehydrates a persisted account', async () => {
     const { gateway, deps } = setup()
-    await gateway.signUp({ name: 'Ada', email: 'a@b.com' }) // persist only, no session
+    await gateway.signUp({ name: 'Ada', email: 'a@b.com' })
     await restoreSession(deps, AT)
     expect(deps.sessionStore.getState().session).toMatchObject({
       kind: 'account',

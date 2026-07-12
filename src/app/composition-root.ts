@@ -36,16 +36,10 @@ export interface Services {
   eventBus: EventBus<AppEvents>
 }
 
-/**
- * Composition root — the ONE place concrete adapters are chosen and injected into
- * ports. Content persists to RxDB (IndexedDB via Dexie); the database is created
- * eagerly and its collection promise handed to the adapter, so construction stays
- * synchronous. `createServices()` keeps it all reconstructable for tests.
- */
 export function createServices(): Services {
   const collections = createAppDatabase(getRxStorageDexie())
-  const authGateway = new LocalAuthGateway() // → SupabaseAuthGateway in Phase 9
-  const sessionRepo = new InMemoryRepository<Session>() // → RxDB in a later slice
+  const authGateway = new LocalAuthGateway()
+  const sessionRepo = new InMemoryRepository<Session>()
   const deckRepo = new RxdbRepository<Deck>(collections.then((c) => c.decks))
   const cardRepo = new RxdbRepository<Card>(collections.then((c) => c.cards))
   const folderRepo = new RxdbRepository<Folder>(collections.then((c) => c.folders))
@@ -71,5 +65,4 @@ export function createServices(): Services {
   }
 }
 
-/** App-wide singleton. Tests build isolated instances via `createServices()`. */
 export const services: Services = createServices()

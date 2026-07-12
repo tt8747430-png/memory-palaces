@@ -15,26 +15,15 @@ import {
 export type { SwipePreferences } from '@/shared/config/swipe'
 export type { FlashcardSwipeConfig, FlashcardSwipeByMode } from '@/shared/config/flashcard-swipe'
 
-/** How a deck's cards/questions are ordered in the content editor. `manual` is the
- * hand-dragged order; `due` and `flagged` apply to cards only (questions fall back to
- * `manual` for them). Shared across both tabs and persisted so the choice survives. */
 export type ContentSort = 'manual' | 'recent' | 'name' | 'due' | 'flagged'
 
 const CONTENT_SORTS: readonly ContentSort[] = ['manual', 'recent', 'name', 'due', 'flagged']
 
-/** How a flashcard's answer is recalled in a study session. Every mode is a two-faced
- * card that flips on tap and grades on swipe; they differ only in how the back tests the
- * answer, ordered by how hard they push recall (Blur → Rebuild → Initials → Type). Blur
- * opens fully visible, so it's the gentlest on-ramp and the default. The study surface
- * always resumes this last-used mode, whatever its entry point. */
 export const STUDY_MODES = ['blur', 'words', 'initials', 'type'] as const
 export type StudyMode = (typeof STUDY_MODES)[number]
 
-/** App appearance: an explicit light/dark choice, or `system` to follow the OS. */
 export type Theme = 'light' | 'dark' | 'system'
 
-/** Privacy & security switches. Cosmetic placeholders for now (no feature reads them
- * yet) but persisted so the choices survive once the features that honour them land. */
 export interface PrivacySettings {
   profileVisibility: boolean
   activitySharing: boolean
@@ -51,38 +40,19 @@ export const DEFAULT_PRIVACY: PrivacySettings = {
   dataEncryption: true,
 }
 
-/**
- * App-wide user preferences — one singleton record. Behaviour-driving switches
- * (haptics, reduced-motion, sound, in-app notifications) the user can turn off.
- * Applying them to the running app (motion config, haptics flag, toast gating,
- * theme) is wired at the composition root; this is the persisted source of truth.
- */
 export interface Preferences extends Entity {
-  /** Play short confirmation tones on answers and session completion. */
   soundEffects: boolean
-  /** Vibrate on swipe commits and milestones (supported devices only). */
   haptics: boolean
-  /** Force reduced motion app-wide, regardless of the OS setting. */
   reducedMotion: boolean
-  /** Show in-app milestone toasts (level-ups, streaks, completions). */
   notifications: boolean
-  /** Appearance: light, dark, or follow the OS. Applied via the `[data-theme]` root. */
   theme: Theme
-  /** BCP-47 language tag; only 'en' is shipped today. */
   language: string
-  /** Items to practise per day to keep the streak (the daily goal). */
   dailyGoal: number
-  /** Content editor: how a deck's cards/questions are ordered. */
   contentSort: ContentSort
-  /** Study surface: how each card's answer is recalled (blur / words / initials / type). */
   studyMode: StudyMode
-  /** Study surface: mark a blank for each hidden letter so length is felt (Initials mode). */
   studyWordSpaces: boolean
-  /** Study surface: shake the device to undo the last graded card (supported devices only). */
   shakeToUndo: boolean
-  /** Per-item-type swipe-gesture mapping for list rows (leading/trailing action trays). */
   swipe: SwipePreferences
-  /** Which grade/gesture each of the four flashcard fling directions commits, per study mode. */
   flashcardSwipe: FlashcardSwipeByMode
   privacy: PrivacySettings
 }
@@ -104,8 +74,6 @@ export const DEFAULT_PREFERENCES = {
   privacy: DEFAULT_PRIVACY,
 } as const satisfies Omit<Preferences, keyof Entity>
 
-/** Clamp a possibly-stale persisted study mode (e.g. the retired `flip`) to a supported one.
- * Shared by record creation and by the study surface, which reads the raw persisted value. */
 export function resolveStudyMode(value: string | undefined): StudyMode {
   return value && (STUDY_MODES as readonly string[]).includes(value)
     ? (value as StudyMode)
@@ -131,8 +99,6 @@ export interface MakePreferencesInput {
   privacy?: PrivacySettings
 }
 
-/** Merge a (possibly partial / stale) stored swipe map onto the defaults, normalizing each
- * type so a retired action id or an over-long tray can never reach the gesture layer. */
 function resolveSwipe(input?: SwipePreferences): SwipePreferences {
   const out = {} as SwipePreferences
   for (const type of SWIPE_ITEM_TYPES) {
@@ -166,7 +132,6 @@ export function makePreferences(input: MakePreferencesInput): Preferences {
   }
 }
 
-/** The switchable fields — identity and timestamps are owned elsewhere. */
 export type PreferencesChanges = Partial<
   Pick<
     Preferences,
@@ -187,7 +152,6 @@ export type PreferencesChanges = Partial<
   >
 >
 
-/** Apply a change. `updatedAt` is set by the caller (clock injected) so it stays pure. */
 export function updatePreferences(
   preferences: Preferences,
   changes: PreferencesChanges,

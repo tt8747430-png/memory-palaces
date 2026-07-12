@@ -43,7 +43,6 @@ describe('SettingsPage', () => {
     const user = userEvent.setup()
     const { prefsRepo } = renderSettings()
 
-    // Appearance is an inline combobox row: open it, then pick Dark.
     await user.click(screen.getByRole('button', { name: 'Appearance' }))
     await user.click(await screen.findByRole('menuitem', { name: 'Dark' }))
 

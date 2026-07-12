@@ -47,7 +47,7 @@ describe('ProfileHero', () => {
   })
 
   it('shows the level and the XP-to-next meter', () => {
-    renderHero({ xp: 600 }) // level 3, 100 into the level → 150 remaining
+    renderHero({ xp: 600 })
     expect(screen.getByText('Level 3')).toBeInTheDocument()
     expect(screen.getByText('150 XP to level 4')).toBeInTheDocument()
   })

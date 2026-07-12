@@ -2,11 +2,9 @@ import type { ReactNode } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { cn } from '@/shared/lib'
 
-/** One large, softly breathing sky wash that deepens the daylight ground. */
 const AURA_BG =
   'radial-gradient(circle at center, oklch(var(--p-tint-sky) / 0.22), transparent 60%)'
 
-/** Deterministic ambient accents (fixed so they don't re-randomize each render). */
 const ACCENTS = [
   { left: '14%', top: '20%', dx: 50, dy: 38, delay: 0 },
   { left: '80%', top: '16%', dx: -44, dy: 52, delay: 1.4 },
@@ -21,8 +19,6 @@ function AuthAtmosphere() {
       aria-hidden
       className="pointer-events-none absolute inset-0 overflow-hidden"
     >
-      {/* Slow gradient aura — opacity-breathe + drift only (no scale on the heavy
-          blur, so it composites cheaply at 60fps on a phone). */}
       {reduce ? (
         <span
           className="absolute left-1/2 top-1/3 size-[140%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl"
@@ -38,7 +34,6 @@ function AuthAtmosphere() {
         />
       )}
 
-      {/* 2–3 drifting accents that catch the light over the aura. */}
       {ACCENTS.map((accent, i) =>
         reduce ? (
           <span
@@ -66,17 +61,10 @@ function AuthAtmosphere() {
   )
 }
 
-/**
- * Full-height auth shell — the "Lucid Atrium" atmosphere (daylight ground, one slow
- * gradient aura, a few drifting accents) behind a centered phone column. Shared by
- * login, signup and forgot so the entry flow reads as one lit room.
- */
 export function AuthScreen({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <main className="relative h-full overflow-hidden bg-daylight">
       <AuthAtmosphere />
-      {/* Scroll layer over the fixed atmosphere; the column grows past the viewport
-          (min-h-full) so tall forms scroll instead of clipping. */}
       <div className="relative h-full overflow-y-auto overscroll-none scrollbar-hide">
         <div
           className={cn(

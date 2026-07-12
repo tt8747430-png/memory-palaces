@@ -50,7 +50,6 @@ describe('isDeckCompleted', () => {
 
 describe('computeTrainingTotals', () => {
   const decks = [{ id: 'd1' }, { id: 'd2' }, { id: 'd3' }]
-  // d1: every card reviewed → complete. d2: one fresh → incomplete. d3: no cards → incomplete.
   const cards = [
     { deckId: 'd1', ...reviewed },
     { deckId: 'd1', ...reviewed },

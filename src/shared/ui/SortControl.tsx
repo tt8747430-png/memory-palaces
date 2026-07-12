@@ -11,7 +11,6 @@ export interface SortControlOption<T extends string> {
 }
 
 export interface SortControlProps<T extends string> {
-  /** Accessible name for the menu trigger (e.g. "Sort rooms"). */
   label: string
   value: T
   options: SortControlOption<T>[]
@@ -19,10 +18,6 @@ export interface SortControlProps<T extends string> {
   className?: string
 }
 
-/** A labelled sort menu: a compact pill showing the active option (glyph + name + caret)
- * that opens an anchored flyout of the choices, the active one checked. The app's one
- * sort affordance — the Palaces, rooms, and content lists all wear it so sorting reads the
- * same everywhere. */
 export function SortControl<T extends string>({
   label,
   value,

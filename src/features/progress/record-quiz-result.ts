@@ -1,7 +1,6 @@
 import type { Progress, ProgressStore } from '@/entities/progress'
 import { currentProgress } from './current-progress'
 
-/** Command — record a quiz's accuracy, keeping only the best ever achieved (0–100). */
 export async function recordQuizResult(
   store: ProgressStore,
   accuracy: number,

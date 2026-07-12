@@ -6,31 +6,20 @@ import { cn } from '@/shared/lib'
 export interface ComboboxOption<T extends string> {
   value: T
   label: string
-  /** Optional leading glyph shown in both the trigger and the option row. */
   icon?: ReactNode
 }
 
 export interface ComboboxProps<T extends string> {
-  /** Accessible name for the trigger. */
   label: string
   value: T
   options: ComboboxOption<T>[]
   onChange: (value: T) => void
   placeholder?: string
   disabled?: boolean
-  /** `field` (default) is the full-width input-shaped trigger; `bare` is a borderless,
-   * content-width value+chevron for the trailing edge of a settings/option row. */
   variant?: 'field' | 'bare'
   className?: string
 }
 
-/**
- * A compact single-select combobox: an input-shaped trigger that opens an anchored dropdown of
- * options under the thumb — the in-place alternative to a full-height {@link ActionSheet}
- * drawer for picking one value. Built on Base UI's Menu (floating-anchored, focus-managed,
- * dismiss on outside press / Escape), so it never slides the whole sheet up. The current value
- * carries a trailing check; the trigger mirrors its icon + label.
- */
 export function Combobox<T extends string>({
   label,
   value,

@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next'
 export type SocialProvider = 'google' | 'apple'
 
 export interface SocialButtonsProps {
-  /** Defaults to a "coming soon" toast; Phase 9 passes real OAuth handlers. */
   onSelect?: (provider: SocialProvider) => void
 }
 

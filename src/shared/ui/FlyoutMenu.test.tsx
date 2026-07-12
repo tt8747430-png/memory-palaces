@@ -46,7 +46,6 @@ describe('FlyoutMenu', () => {
     )
 
     await user.click(screen.getByRole('button', { name: 'Sort' }))
-    // The selected option carries a trailing check; the other does not.
     expect(
       (await screen.findByRole('menuitem', { name: /recent/i })).querySelector('svg'),
     ).not.toBeNull()
@@ -54,8 +53,6 @@ describe('FlyoutMenu', () => {
   })
 
   it('does not bubble the trigger tap to an interactive ancestor', async () => {
-    // The kebab lives inside tappable list rows (tap-to-open). Opening the menu must not also
-    // fire the row's tap handler, or the row target opens behind the menu.
     const user = userEvent.setup()
     const onRowTap = vi.fn()
     render(
@@ -69,9 +66,7 @@ describe('FlyoutMenu', () => {
 
     await user.click(screen.getByRole('button', { name: /more options/i }))
 
-    // The menu opened...
     expect(await screen.findByRole('menuitem', { name: 'Edit' })).toBeTruthy()
-    // ...but the surrounding row tap never fired.
     expect(onRowTap).not.toHaveBeenCalled()
   })
 

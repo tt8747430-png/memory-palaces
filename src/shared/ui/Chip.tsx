@@ -1,8 +1,6 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/shared/lib'
 
-/** Info chip: chip-blue surface with navy text (13:1) — for counts, meta, and small
- * stats. Navy text, never bright-blue (which fails contrast on the tint). */
 export function Chip({
   children,
   icon,

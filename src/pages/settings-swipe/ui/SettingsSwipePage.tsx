@@ -29,13 +29,6 @@ import {
 import { AppScreen, Button, cardSurface, ScreenHeader, swipeActionIcon } from '@/shared/ui'
 import { cn } from '@/shared/lib'
 
-/**
- * Selected-chip surfaces — deliberately calm. Only the two universally-meaningful semantics
- * keep a (soft) colour: red for delete, green for "known". Everything else — including the
- * former amber "warning" actions — sits on a quiet navy tint so the screen never shouts
- * (no orange). The action's icon + label still tell the chips apart; the real solid tray
- * colour lives on the swipe itself.
- */
 const TONE_CHIP: Record<SwipeTone, string> = {
   danger: 'bg-[var(--danger-surface)] text-[var(--danger-on-surface)]',
   success: 'bg-[var(--success-surface)] text-[var(--success-on-surface)]',
@@ -44,7 +37,6 @@ const TONE_CHIP: Record<SwipeTone, string> = {
   neutral: 'bg-secondary/80 text-heading ring-1 ring-inset ring-primary/15',
 }
 
-/** One glyph per row type, so each section reads at a glance instead of by heading alone. */
 const TYPE_ICON: Record<SwipeItemType, typeof Layers> = {
   deck: Layers,
   folder: Folder,
@@ -55,11 +47,6 @@ export interface SettingsSwipePageProps {
   onBack?: () => void
 }
 
-/**
- * Swipe actions — re-map what a left or right swipe does on each kind of list row. Each side
- * holds up to two actions; the edge-most one is what a full swipe auto-fires. Persisted onto
- * `preferences.swipe`, normalized so a side can never exceed two or hold a retired action.
- */
 export function SettingsSwipePage({ onBack }: SettingsSwipePageProps) {
   const { t } = useTranslation()
   const store = usePreferencesStoreApi()
@@ -74,9 +61,6 @@ export function SettingsSwipePage({ onBack }: SettingsSwipePageProps) {
       swipe: { ...prefs.swipe, [type]: normalizeSwipeConfig(type, next) },
     })
 
-  // Toggle an action on a side: remove it if already there, else append (the array's order
-  // is the tray's left→right order, so a newly added action lands at the edge). The cap to two
-  // happens on save via `normalizeSwipeConfig`.
   const toggle = (type: SwipeItemType, side: keyof SwipeConfig, id: SwipeActionId) => {
     const current = prefs.swipe[type]
     const list = current[side]
@@ -177,7 +161,6 @@ function SideGroup({
         {SWIPE_ACTIONS[type].map((id) => {
           const on = selected.includes(id)
           const meta = SWIPE_ACTION_META[id]
-          // An off chip when both slots are full is disabled — you swap by clearing one first.
           const disabled = !on && atCap
           return (
             <button

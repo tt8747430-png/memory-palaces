@@ -11,13 +11,9 @@ export interface SplashOverlayProps {
 const FULL_MS = 2400
 const REDUCED_MS = 500
 
-/** Soft light bloom behind the mark — a single navy-ground aura, not a loop. */
 const AURA_BG =
   'radial-gradient(circle at center, oklch(var(--p-tint-sky) / 0.45), transparent 60%)'
 
-/** First-paint brand moment: a light aura blooms, the threshold draws itself
- * over a deep-navy ground, then the wordmark reveals a word at a time before handing
- * off to the app. Self-dismisses (shorter under reduced motion) and is skippable. */
 export function SplashOverlay({ onDone }: SplashOverlayProps) {
   const { t } = useTranslation()
   const reduce = useReducedMotion()

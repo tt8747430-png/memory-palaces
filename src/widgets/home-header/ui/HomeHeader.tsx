@@ -5,38 +5,26 @@ import { cn, levelFromXp, type StickyHeader } from '@/shared/lib'
 import { Avatar, IconButton, StickyBar } from '@/shared/ui'
 
 export interface HomeHeaderProps {
-  /** Elevation state, owned by the page so its scroll container drives it. */
   header: StickyHeader
   name: string
-  /** The user's photo, or null/undefined to fall back to gradient initials. */
   avatar?: string | null
-  /** Raw XP — the bar derives the level + progress from it. */
   xp: number
   unreadCount: number
   onOpenProfile: () => void
   onOpenNotifications: () => void
-  /** Jump to the archived-decks view; omit to hide the archive control. */
   onOpenArchived?: () => void
-  /** Live streak count + today's progress toward the goal; omit to hide the flame. */
   streak?: { count: number; dayCount: number; dailyGoal: number }
   onOpenStreak?: () => void
 }
 
 const EASE_OUT = [0.22, 1, 0.36, 1] as const
 
-/** Time-of-day greeting key. Short, fixed strings that never elide — the home bar leads with
- * this instead of the user's (arbitrarily long) name, which the avatar + aria-label still carry. */
 function greetingKey(hour: number): 'greetingMorning' | 'greetingAfternoon' | 'greetingEvening' {
   if (hour >= 5 && hour < 12) return 'greetingMorning'
   if (hour >= 12 && hour < 18) return 'greetingAfternoon'
   return 'greetingEvening'
 }
 
-/** The home's chrome: one slim, calm bar of a fixed height. A time-of-day greeting sits over a
- * `Level N` line and a thin XP-to-next progress bar; the glassy framed avatar taps through to
- * the profile. The right cluster carries the day's quick chrome — streak, archive,
- * notifications. The bar is transparent at the top (merging into the daylight ground) and gains
- * a glass edge as the page scrolls under it. */
 export function HomeHeader({
   header,
   name,
@@ -109,10 +97,6 @@ export function HomeHeader({
   )
 }
 
-/** The streak flame: amber + filled once today's goal is met (active), muted outline
- * otherwise, with the running day-streak count. The daily-goal fraction is deliberately
- * dropped — the streak length is the motivating number, and the fill already signals
- * whether today counts. */
 function StreakButton({
   streak,
   onOpenStreak,

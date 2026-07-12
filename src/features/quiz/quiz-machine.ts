@@ -1,15 +1,7 @@
-/**
- * The multiple-choice quiz State machine (pure, no IO). It owns the run — the
- * cursor, the selection, the reveal, the running score/streak — never the
- * questions themselves; the widget holds those and tells the machine, on
- * `submit`, only whether the choice was correct. Scoring lives here so it stays
- * testable and the AI Tutor can reuse it later.
- */
 export interface QuizQuestion {
   id: string
   prompt: string
   options: string[]
-  /** Index into `options` of the correct choice. */
   correctAnswer: number
   deckName: string
   explanation?: string
@@ -19,12 +11,9 @@ export interface AnsweringState {
   status: 'answering'
   index: number
   total: number
-  /** The chosen option, or null before a choice is made. */
   selected: number | null
-  /** True once submitted/timed-out — the reveal is showing. */
   answered: boolean
   score: number
-  /** Consecutive correct answers, for the "on a roll" cue. */
   streak: number
 }
 
@@ -57,7 +46,6 @@ export function initQuiz(total: number): QuizState {
   }
 }
 
-/** Move past the current question — to the next, or to completion at the end. */
 function advance(state: AnsweringState, score: number): QuizState {
   if (state.index >= state.total - 1) {
     return { status: 'complete', score, total: state.total }
@@ -112,7 +100,6 @@ export function quizReducer(state: QuizState, action: QuizAction): QuizState {
   }
 }
 
-/** Rounded percentage of correct answers; 0 for an empty quiz. */
 export function quizAccuracy(score: number, total: number): number {
   if (total <= 0) return 0
   return Math.round((score / total) * 100)

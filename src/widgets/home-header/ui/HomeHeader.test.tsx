@@ -12,7 +12,6 @@ function renderHeader(props: Partial<Parameters<typeof HomeHeader>[0]> = {}) {
   const handlers = { onOpenProfile: vi.fn(), onOpenNotifications: vi.fn() }
   render(
     <I18nextProvider i18n={i18n}>
-      {/* 500 XP → level 3 (250 XP per level). */}
       <HomeHeader
         header={fakeStickyHeader()}
         name="Sam"
@@ -31,14 +30,12 @@ describe('HomeHeader', () => {
     renderHeader()
     expect(screen.getByText(/good (morning|afternoon|evening)/i)).toBeTruthy()
     expect(screen.getByText('Level 3')).toBeTruthy()
-    // The name no longer renders as a visible label (it used to elide); it lives in the
-    // avatar/profile control's accessible name instead.
     expect(screen.queryByText('Sam')).toBeNull()
     expect(screen.getByRole('button', { name: /sam/i })).toBeTruthy()
   })
 
   it('surfaces the XP-to-next progress on the profile control', () => {
-    renderHeader({ xp: 600 }) // level 3, 100 into the level → 150 remaining
+    renderHeader({ xp: 600 })
     expect(screen.getByRole('button', { name: /150 XP to level 4/ })).toBeTruthy()
   })
 

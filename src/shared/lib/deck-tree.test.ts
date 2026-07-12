@@ -16,12 +16,6 @@ import {
   type TreeCard,
 } from './deck-tree'
 
-/**
- * A small forest used across the tests:
- *   root deck A (folder f1) ── B ── C
- *                            └─ D
- *   root deck E (no folder)
- */
 const deck = (id: string, parentId: string | null, extra: Partial<TreeDeck> = {}): TreeDeck => ({
   id,
   parentId,
@@ -83,10 +77,10 @@ describe('isDescendantOrSelf / canReparent', () => {
     expect(isDescendantOrSelf(forest, 'B', 'D')).toBe(false)
   })
   it('blocks re-parenting a deck under itself or a descendant', () => {
-    expect(canReparent(forest, 'A', 'C')).toBe(false) // would create a cycle
+    expect(canReparent(forest, 'A', 'C')).toBe(false)
     expect(canReparent(forest, 'A', 'A')).toBe(false)
-    expect(canReparent(forest, 'A', null)).toBe(true) // move to root
-    expect(canReparent(forest, 'D', 'B')).toBe(true) // valid re-home
+    expect(canReparent(forest, 'A', null)).toBe(true)
+    expect(canReparent(forest, 'D', 'B')).toBe(true)
   })
 })
 
@@ -122,7 +116,7 @@ describe('resolveDeckSettings', () => {
   })
 })
 
-const due: TreeCard = { deckId: 'C' } // no srs → due
+const due: TreeCard = { deckId: 'C' }
 const notDue: TreeCard = {
   deckId: 'C',
   srs: {
@@ -138,17 +132,17 @@ const notDue: TreeCard = {
 describe('cardsInSubtree / countDueInSubtree', () => {
   const cards: TreeCard[] = [{ deckId: 'A' }, { deckId: 'B' }, due, notDue, { deckId: 'E' }]
   it('gathers cards attached anywhere in the subtree', () => {
-    expect(cardsInSubtree(forest, cards, 'A')).toHaveLength(4) // A, B, C, C — not E
+    expect(cardsInSubtree(forest, cards, 'A')).toHaveLength(4)
     expect(cardsInSubtree(forest, cards, 'E')).toHaveLength(1)
   })
   it('counts only due cards in the subtree', () => {
-    expect(countDueInSubtree(forest, cards, 'A', Date.now())).toBe(3) // A, B, due C (not notDue C)
+    expect(countDueInSubtree(forest, cards, 'A', Date.now())).toBe(3)
   })
 })
 
 describe('dueCountsPerDeck', () => {
   it('rolls a due card up to every ancestor', () => {
-    const cards: TreeCard[] = [due] // one due card on C
+    const cards: TreeCard[] = [due]
     const counts = dueCountsPerDeck(forest, cards, Date.now())
     expect(counts.get('C')).toBe(1)
     expect(counts.get('B')).toBe(1)

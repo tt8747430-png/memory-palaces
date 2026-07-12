@@ -43,21 +43,13 @@ import { AchievementsSection } from '@/widgets/achievement-list'
 import { AppScreen } from '@/shared/ui'
 
 export interface ProfilePageProps {
-  /** Open the settings screen; wired by the route wrapper. */
   onOpenSettings?: () => void
-  /** Open the notification history; wired by the route wrapper. */
   onOpenNotifications?: () => void
-  /** Edit the profile photo (avatar tap); wired by the route wrapper. */
   onEditProfile?: () => void
-  /** Open the Streak screen (from the avatar-edit and the Streak overview stat). */
   onOpenStreak?: () => void
-  /** Open the full Badges page; wired by the route wrapper. */
   onOpenBadges?: () => void
-  /** Open a single badge's detail (milestone nudge + preview medallions). */
   onOpenBadge?: (id: BadgeId) => void
-  /** Open the full Achievements page; wired by the route wrapper. */
   onOpenAchievements?: () => void
-  /** Open a single milestone's detail (preview medallions). */
   onOpenAchievement?: (id: AchievementId) => void
 }
 
@@ -66,11 +58,6 @@ function joinedYearOf(createdAt: string): number | null {
   return Number.isFinite(year) ? year : null
 }
 
-/** Profile tab. A guest identity today (account claim is Phase 9). One persistent bar
- * (name + notifications + settings) over a centered hero — circular avatar, @handle ·
- * joined, and a streak/XP/decks headline. Below: the closest-milestone nudge, then the
- * Badges and Achievements preview rows. Everything derives live from the
- * progress/deck/card stores — a glance, never stored or faked. */
 export function ProfilePage({
   onOpenSettings,
   onOpenNotifications,
@@ -93,8 +80,6 @@ export function ProfilePage({
   const decks = useDeckStore(selectDecks)
   const cards = useCardStore(selectCards)
   const unreadCount = useNotificationStore(selectUnreadCount)
-  // Gate the progress-derived hero/badges/achievements on hydration so a returning user
-  // never sees a flash of zeros and locked medallions before RxDB resolves.
   const progressReady = useProgressStore(selectProgressReady)
   const decksReady = useDeckStore(selectDecksReady)
   const cardsReady = useCardStore(selectCardsReady)
@@ -187,8 +172,6 @@ export function ProfilePage({
             onOpenStreak={() => onOpenStreak?.()}
           />
 
-          {/* Fill at least a screen so a short profile still scrolls (gives the native
-              pull-to-bounce something to overflow). Taller content scrolls normally. */}
           <div className="mt-8 flex min-h-[calc(100dvh-20rem)] flex-col gap-8">
             {milestone ? (
               <NextMilestoneCard badge={milestone} onOpen={() => onOpenBadge?.(milestone.id)} />
@@ -210,8 +193,6 @@ export function ProfilePage({
   )
 }
 
-/** Calm placeholder shown until the progress stores hydrate, so the hero stats and the
- * badge/achievement rows never flash zeros or a wall of locks for a returning user. */
 function ProfileSkeleton() {
   return (
     <div aria-hidden className="flex flex-col items-center pt-5">

@@ -37,8 +37,8 @@ describe('recordNotification', () => {
 
     const counts = store.getState().notifications.map((n) => n.count)
     expect(counts).toHaveLength(NOTIFICATION_CAP)
-    expect(counts).not.toContain(0) // the very first one is pruned
-    expect(counts[0]).toBe(NOTIFICATION_CAP) // newest-first
+    expect(counts).not.toContain(0)
+    expect(counts[0]).toBe(NOTIFICATION_CAP)
   })
 })
 

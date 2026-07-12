@@ -28,18 +28,12 @@ export interface QuizSessionProps {
   title: string
   onBack: () => void
   onComplete: (result: QuizResult) => void
-  /** Auto-advance to the next question after the reveal; off waits for Continue. */
   autoAdvance?: boolean
-  /** Open the quiz options sheet; renders the options button when provided. */
   onOpenOptions?: () => void
 }
 
-/** Auto-advance delay after the answer is revealed; a Continue tap skips the wait. */
 const FEEDBACK_MS = 2200
 
-/** Multiple-choice quiz session: one question at a time, select → submit → reveal →
- * continue, driven by the pure `quizReducer`. The widget owns the questions and tells
- * the machine only whether each choice was correct. */
 export function QuizSession({
   questions,
   title,
@@ -51,8 +45,6 @@ export function QuizSession({
   const { t } = useTranslation()
   const [state, dispatch] = useReducer(quizReducer, questions.length, initQuiz)
 
-  // After the reveal, drift to the next question; a Continue tap pre-empts the timer.
-  // With auto-advance off, the reveal waits for the learner to tap Continue.
   const answered = state.status === 'answering' && state.answered
   const answeringIndex = state.status === 'answering' ? state.index : -1
   useEffect(() => {
@@ -61,7 +53,6 @@ export function QuizSession({
     return () => window.clearTimeout(handle)
   }, [answered, autoAdvance, answeringIndex])
 
-  // Hand back the result once the run completes.
   const done = state.status === 'complete'
   useEffect(() => {
     if (!done) return

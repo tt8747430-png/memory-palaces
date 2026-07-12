@@ -13,9 +13,7 @@ function FieldLabel({
 }: {
   children: ReactNode
   count?: number
-  /** Optional leading glyph, tinted by the caller — ties a field to how it reads on the card. */
   icon?: ReactNode
-  /** Primary fields (front/back) read one step up: larger and heavier than the optional cues. */
   emphasis?: boolean
 }) {
   return (
@@ -44,11 +42,6 @@ function FieldLabel({
   )
 }
 
-/** The card's editable fields: the required front/back pair, then an optional group of cues
- * (place/image cue + peek hint) set off only by a hairline and softer labels — no heading.
- * State lives in the host page so the fields stay presentational. Every label carries a glyph
- * that mirrors how the field reads on the card row (front = prompt, back = answer, place = map
- * pin, peek = lightbulb) so the editor and the list read as one. */
 export function CardFields({
   front,
   back,
@@ -137,8 +130,6 @@ export function CardFields({
   )
 }
 
-/** The multiple-choice question's editable fields — prompt, 2–6 options with a correct
- * marker, and an optional explanation. State lives in the container. */
 export function QuestionFields({
   prompt,
   options,

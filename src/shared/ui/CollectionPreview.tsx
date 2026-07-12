@@ -3,21 +3,12 @@ import { ChevronRight } from 'lucide-react'
 
 export interface CollectionPreviewProps {
   title: string
-  /** Visible "See all" affordance text. */
   seeAllLabel: string
-  /** Specific accessible name for the whole block (e.g. "See all badges"). */
   ariaLabel: string
   onSeeAll: () => void
-  /** The preview row (a few medallion stacks). Decorative; the section itself navigates. */
   children: ReactNode
 }
 
-/**
- * A profile section that previews a collection (badges, achievements). The "See all"
- * control opens the full page; each previewed medallion is its own tap target into its
- * detail, so a medallion behaves the same here as it does on the full wall. The header
- * and the row are siblings (no nested buttons).
- */
 export function CollectionPreview({
   title,
   seeAllLabel,

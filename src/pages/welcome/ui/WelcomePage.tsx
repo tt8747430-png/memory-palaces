@@ -11,17 +11,12 @@ export interface WelcomePageProps {
 const AURA_BG =
   'radial-gradient(circle at center, oklch(var(--p-tint-sky) / 0.45), transparent 60%)'
 
-/** Slow embers drifting up past the threshold — the spark igniting, carried into the
- * room. Fixed positions so they don't re-randomize per render; dropped under reduced motion. */
 const EMBERS = [
   { left: '32%', top: '62%', dx: 10, dy: -44, delay: 0.4, duration: 7 },
   { left: '66%', top: '56%', dx: -14, dy: -56, delay: 1.6, duration: 8 },
   { left: '50%', top: '70%', dx: 4, dy: -38, delay: 2.8, duration: 6.5 },
 ] as const
 
-/** Post-signup arrival. The threshold settles "open" over a navy ground lit by one
- * soft aura, the new member is greeted by name a word at a time, then the CTA
- * choreographs in beneath. Reduced motion drops the delays to a plain crossfade. */
 export function WelcomePage({ onContinue }: WelcomePageProps) {
   const { t } = useTranslation()
   const reduce = useReducedMotion()

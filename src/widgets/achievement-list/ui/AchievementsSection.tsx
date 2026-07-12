@@ -6,15 +6,11 @@ import { ACHIEVEMENT_META } from './meta'
 export interface AchievementsSectionProps {
   achievements: ReadonlyArray<Achievement>
   onSeeAll: () => void
-  /** Open a single milestone's detail; medallions are tappable, matching the full wall. */
   onOpenAchievement: (id: AchievementId) => void
 }
 
 const PREVIEW_COUNT = 4
 
-/** Profile preview: the "Achievements / See all" row with the first four milestone
- * medallions. Earned ones carry a success check (the one-shot "done" mark), locked ones
- * stay dim — no tier pips, the visible difference from the tiered badges. */
 export function AchievementsSection({
   achievements,
   onSeeAll,

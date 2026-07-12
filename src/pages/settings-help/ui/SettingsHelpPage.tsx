@@ -2,7 +2,6 @@ import { useTranslation } from 'react-i18next'
 import { BookOpen, ChevronDown, Mail } from 'lucide-react'
 import { AppScreen, ScreenHeader, SettingsSection } from '@/shared/ui'
 
-/** FAQ categories and how many Q&A each holds; the copy lives in i18n. */
 const CATEGORIES = [
   { key: 'gettingStarted', items: ['1', '2', '3'] },
   { key: 'learning', items: ['1', '2', '3'] },
@@ -12,8 +11,6 @@ const CATEGORIES = [
 
 const DOCS_URL = 'https://docs.mindscape.app'
 
-/** Help center — grouped FAQ (native disclosure rows) plus email and docs contacts.
- * Static content; copy lives in i18n. */
 export function SettingsHelpPage({ onBack }: { onBack?: () => void }) {
   const { t } = useTranslation()
 

@@ -2,10 +2,6 @@ import { selectDecks, type DeckStore } from '@/entities/deck'
 import { selectCards, type CardStore } from '@/entities/card'
 import { subtreeDeckIds } from '@/shared/lib'
 
-/**
- * Command — delete a deck and its whole subtree: every descendant subdeck and all their cards.
- * Idempotent. (Questions cascade once re-homed to decks.)
- */
 export async function deleteDeck(
   deckStore: DeckStore,
   cardStore: CardStore,

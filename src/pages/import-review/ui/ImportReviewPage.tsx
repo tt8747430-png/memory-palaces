@@ -21,7 +21,6 @@ import { CardFields, type DraftCard, useImportDraft } from '@/widgets/content-ed
 export interface ImportReviewPageProps {
   deckId: string
   onBack: () => void
-  /** Import committed (or draft abandoned) — return to the room. */
   onDone: () => void
 }
 
@@ -32,12 +31,6 @@ interface RestoreOptions {
   schedule: boolean
 }
 
-/**
- * The shared review step for every import (paste / Mindscape / Anki). Shows the parsed cards,
- * lets the user edit or delete them (or clear the lot), and — for a Mindscape backup — toggle
- * which restorable fields to keep. "Import cards" writes them into the room. Fed by the
- * ephemeral `importDraft` store; a deep-link with no pending draft bounces back to the room.
- */
 export function ImportReviewPage({ deckId, onBack, onDone }: ImportReviewPageProps) {
   const { t } = useTranslation()
   const draft = useImportDraft((s) => s.draft)
@@ -48,8 +41,6 @@ export function ImportReviewPage({ deckId, onBack, onDone }: ImportReviewPagePro
   const cardStore = useCardStoreApi()
   const questionStore = useQuestionStoreApi()
 
-  // The review always arrives from the room (store already warm), but starting is idempotent
-  // and guarantees appended order reads correctly even on a deep link.
   useEffect(() => {
     cardStore.getState().start()
   }, [cardStore])
@@ -64,7 +55,6 @@ export function ImportReviewPage({ deckId, onBack, onDone }: ImportReviewPagePro
   const [clearOpen, setClearOpen] = useState(false)
   const [busy, setBusy] = useState(false)
 
-  // Nothing to review (fresh load / deep link, or the draft was cleared) — leave.
   useEffect(() => {
     if (!draft) onDone()
   }, [draft, onDone])
@@ -249,7 +239,6 @@ function RestoreToggle({
   )
 }
 
-/** A compact draft-card row: front + back preview, with an overflow menu to edit or delete. */
 function ReviewRow({
   card,
   onEdit,
@@ -316,7 +305,6 @@ function EditCardSheet({
       setHint(card.hint ?? '')
       setTip(card.tip ?? '')
     }
-    // Seed only when the target card changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [card?.id])
 

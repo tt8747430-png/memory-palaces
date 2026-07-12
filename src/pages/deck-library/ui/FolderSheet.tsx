@@ -8,19 +8,12 @@ import { Button, Sheet } from '@/shared/ui'
 export interface FolderSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  /** The folder being edited; `null`/undefined puts the sheet in create mode. */
   folder?: Folder | null
-  /** Seed colour for a brand-new folder (the page cycles the palette so folders differ). */
   defaultColor: string
-  /** Seed name for a brand-new folder (e.g. "New Folder 1"), so it's never blank. */
   defaultName?: string
   onSubmit: (changes: { name: string; color: string; icon: string }) => void
 }
 
-/** One bottom sheet for the whole folder lifecycle — create and "Folder settings" (edit).
- * Name, a tap-for-any-emoji icon, and a brand colour, so a folder gets a real identity in one
- * pass. Naming alone is enough on create — the emoji and colour come pre-chosen. (Deleting a
- * folder lives in its row menu, not here.) */
 export function FolderSheet({
   open,
   onOpenChange,
@@ -35,7 +28,6 @@ export function FolderSheet({
   const [color, setColor] = useState(defaultColor)
   const [icon, setIcon] = useState(DEFAULT_FOLDER_ICON)
 
-  // Seed each time the sheet opens: from the folder when editing, fresh defaults when creating.
   useEffect(() => {
     if (!open) return
     setName(folder?.name ?? defaultName)

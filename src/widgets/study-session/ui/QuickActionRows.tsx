@@ -5,7 +5,6 @@ export interface QuickActionsModel {
   flagged: boolean
   canEdit: boolean
   canSpeak: boolean
-  /** There is graded/skipped history to step back to. */
   canUndo: boolean
   onUndo: () => void
   onFlag: () => void
@@ -18,8 +17,6 @@ export interface QuickActionsModel {
 const ROW =
   'flex w-full items-center gap-3.5 rounded-card bg-info-surface px-4 py-3.5 text-[length:var(--p-text-body)] font-semibold text-heading transition-transform active:scale-[0.99] disabled:opacity-50'
 
-/** The card's quick actions as tappable rows — shared by the fast long-press sheet and the
- * merged gear sheet. `after` runs after any choice (e.g. close the sheet). */
 export function QuickActionRows({
   model,
   after,

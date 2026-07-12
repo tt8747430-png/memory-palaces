@@ -31,9 +31,6 @@ export interface AchievementDetailPageProps {
   onBack?: () => void
 }
 
-/** A single milestone, end to end: the medallion in its earned or locked state, what it
- * takes to earn it, and the exact condition behind it. One-shot (no tiers), so the page
- * is a clear "here's the goal and how to reach it". */
 export function AchievementDetailPage({ achievementId, onBack }: AchievementDetailPageProps) {
   const { t } = useTranslation()
   const progressStore = useProgressStoreApi()

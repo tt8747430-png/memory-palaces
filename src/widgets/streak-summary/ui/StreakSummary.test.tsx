@@ -45,7 +45,6 @@ describe('StreakSummary', () => {
     renderSummary({ showProgress: false })
     expect(screen.queryByText('Level 2')).not.toBeInTheDocument()
     expect(screen.queryByText('300 XP')).not.toBeInTheDocument()
-    // Streak figures still render.
     expect(screen.getByText('Current streak')).toBeInTheDocument()
   })
 })

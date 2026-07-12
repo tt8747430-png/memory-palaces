@@ -8,9 +8,7 @@ export type DeckStatus = 'idle' | 'loading' | 'ready'
 export interface DeckState {
   decks: Deck[]
   status: DeckStatus
-  /** Subscribe to the repository's reactive stream (idempotent); keeps `decks` live. */
   start: () => void
-  /** End the reactive subscription. */
   stop: () => void
   save: (deck: Deck) => Promise<Deck>
   remove: (id: string) => Promise<void>
@@ -20,12 +18,6 @@ export type DeckStore = StoreApi<DeckState>
 
 const byNewestFirst = (a: Deck, b: Deck): number => b.createdAt.localeCompare(a.createdAt)
 
-/**
- * Store FACTORY (repository INJECTED — Dependency Inversion). The list is RxDB-reactive:
- * `start()` subscribes to the repository stream, so saves, removes, and (Phase 9) sync writes
- * flow into `decks` without a manual reload. The raw list is stable-sorted newest-first;
- * tree ordering (by `order`, per parent) is applied by `@/shared/lib` deck-tree helpers.
- */
 export function createDeckStore(repo: DeckRepository): DeckStore {
   let unsubscribe: Unsubscribe | null = null
   return createStore<DeckState>((set) => ({

@@ -22,13 +22,9 @@ import { AppScreen, ScreenHeader } from '@/shared/ui'
 
 export interface QuizPageProps {
   deckId: string
-  /** Provided by the route wrapper so the page stays router-free. */
   onBack?: () => void
 }
 
-/** Deck test — recall over every authored question across the deck's subtree. Questions
- * optionally shuffle per the deck's resolved settings; toggles write overrides back to this
- * deck. Result handling (XP/accuracy history) rides the session reward. */
 export function QuizPage({ deckId, onBack }: QuizPageProps) {
   const { t } = useTranslation()
   const deckStore = useDeckStoreApi()
@@ -73,8 +69,6 @@ export function QuizPage({ deckId, onBack }: QuizPageProps) {
     return settings.shuffleQuestions ? shuffle(built) : built
   }, [allQuestions, decks, deckId, settings.shuffleQuestions])
 
-  // Freeze the question set for the active run so toggling shuffle from the options sheet
-  // re-orders the next quiz, not the one in progress.
   const frozenRef = useRef<QuizQuestion[] | null>(null)
   if (ready && frozenRef.current === null) frozenRef.current = questions
   const runQuestions = frozenRef.current ?? questions
@@ -102,7 +96,6 @@ export function QuizPage({ deckId, onBack }: QuizPageProps) {
   }
 
   const handleComplete = (result: QuizResult) => {
-    // Every answered question counts toward the daily goal; XP scales with correct answers.
     void reward({
       kind: 'quiz',
       correct: result.score,

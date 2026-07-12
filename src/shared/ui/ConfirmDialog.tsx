@@ -7,30 +7,14 @@ export interface ConfirmDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   title: ReactNode
-  /** Supporting line under the title — the consequence the user is confirming. */
   description?: ReactNode
-  /** Leading glyph in the medallion. Omit for a text-only dialog. */
   icon?: ReactNode
   confirmLabel: string
   cancelLabel: string
-  /** Tints the medallion and confirm button as a destructive (irreversible) choice. */
   destructive?: boolean
   onConfirm: () => void
 }
 
-/**
- * A centered confirmation dialog for the few decisions that deserve a deliberate,
- * focused stop: irreversible or session-ending choices (log out, delete account) where
- * a bottom sheet's lean-back list of options understates the weight. Routine contextual
- * choices (the kebab `⋮` menus, long-press quick actions) stay on the bottom
- * `ActionSheet` — this is reserved for the moments that warrant the interruption.
- *
- * Built on Base UI's Dialog with `modal="trap-focus"` (matching `Sheet`/`ActionSheet`):
- * the shell never scrolls the body, so the full scroll lock is unnecessary and, if the
- * dialog unmounts mid-navigation (exactly the log-out case), can't strand the next page
- * unscrollable. A grid-centered viewport carries the springy scale-in so the popup's own
- * transform stays free for the animation; reduced motion is handled globally.
- */
 export function ConfirmDialog({
   open,
   onOpenChange,
@@ -57,8 +41,6 @@ export function ConfirmDialog({
             'data-[starting-style]:opacity-0 data-[ending-style]:opacity-0',
           )}
         />
-        {/* Pointer-events pass through the empty area to the backdrop so an outside tap
-            still dismisses; only the popup itself catches presses. */}
         <div className="pointer-events-none fixed inset-0 z-[500] grid place-items-center p-6">
           <Dialog.Popup
             className={cn(

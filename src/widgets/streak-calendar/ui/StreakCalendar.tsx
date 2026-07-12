@@ -5,14 +5,13 @@ import { cn, dayKey } from '@/shared/lib'
 import { GlassCard, IconButton } from '@/shared/ui'
 
 export interface StreakCalendarProps {
-  /** `YYYY-MM-DD` UTC keys of every day trained. */
   trainingDays: readonly string[]
   now?: number
 }
 
 const WEEKDAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 const DAY_MS = 86_400_000
-const GRID_CELLS = 42 // 6 weeks
+const GRID_CELLS = 42
 
 interface MonthCell {
   key: string
@@ -22,8 +21,6 @@ interface MonthCell {
   trained: boolean
 }
 
-/** Build a 6-week UTC grid for `year`/`month`. UTC throughout so the cell keys
- * line up with how training days are stored (`YYYY-MM-DD` UTC). */
 function monthGrid(
   year: number,
   month: number,
@@ -45,8 +42,6 @@ function monthGrid(
   })
 }
 
-/** Month calendar of trained days, navigable by month. The fuller view that pairs
- * with the home week strip; presentational, fed the training days. */
 export function StreakCalendar({ trainingDays, now = Date.now() }: StreakCalendarProps) {
   const { t } = useTranslation()
   const todayKey = dayKey(now)
@@ -110,7 +105,6 @@ export function StreakCalendar({ trainingDays, now = Date.now() }: StreakCalenda
               !cell.inMonth && 'text-transparent',
               cell.inMonth && cell.trained && 'bg-[var(--warning)] text-[var(--warning-on-fill)]',
               cell.inMonth && !cell.trained && 'bg-info-surface text-muted-foreground',
-              // Today keeps a navy ring even when trained, so "where you are" never relies on fill alone.
               cell.inMonth && cell.isToday && 'ring-2 ring-inset ring-[color:var(--primary)]',
               cell.inMonth && cell.isToday && !cell.trained && 'text-heading',
             )}

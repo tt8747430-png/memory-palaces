@@ -2,13 +2,6 @@ import type { AuthGateway, PersistedAuth, SignInInput, SignUpInput } from '@/sha
 
 const STORAGE_KEY = 'mindscape:auth'
 
-/**
- * Mock auth adapter. Persists the entry choice (account or guest) to localStorage
- * with NO credential validation — sign-in/sign-up just save and succeed. It stores
- * email + name only, never a raw password (nothing checks it, so keeping it would be
- * a plaintext footgun). Phase 9 replaces this with a Supabase adapter; the port and
- * every feature stay the same.
- */
 export class LocalAuthGateway implements AuthGateway {
   constructor(private readonly genId: () => string = () => crypto.randomUUID()) {}
 
@@ -22,9 +15,6 @@ export class LocalAuthGateway implements AuthGateway {
   }
 
   async signIn(input: SignInInput): Promise<PersistedAuth> {
-    // No verification and no account registry: sign-in simply mints an account
-    // from the email. The session derives a display name from the email's local
-    // part. A real registry + credential check arrives with the Supabase adapter.
     return this.write({ id: this.genId(), kind: 'account', email: input.email, name: '' })
   }
 
@@ -39,7 +29,6 @@ export class LocalAuthGateway implements AuthGateway {
   }
 
   async requestPasswordReset(_email: string): Promise<void> {
-    // No backend: recovery is simulated entirely in the UI.
   }
 
   getPersisted(): PersistedAuth | null {

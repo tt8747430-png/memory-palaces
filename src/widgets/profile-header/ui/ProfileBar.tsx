@@ -4,18 +4,13 @@ import type { StickyHeader } from '@/shared/lib'
 import { IconButton, StickyBar } from '@/shared/ui'
 
 export interface ProfileBarProps {
-  /** Elevation state, owned by the page so its scroll container drives it. */
   header: StickyHeader
-  /** The profile name — the page heading, carried by the fixed bar. */
   name: string
   unreadCount: number
   onOpenNotifications: () => void
   onOpenSettings: () => void
 }
 
-/** The profile's fixed header bar (passed to `AppScreen`'s header slot): the name on the
- * left, notifications + settings on the right. Stays put while the hero and the rest of
- * the profile scroll beneath it. */
 export function ProfileBar({
   header,
   name,

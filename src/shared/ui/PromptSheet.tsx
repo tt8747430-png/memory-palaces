@@ -7,21 +7,14 @@ export interface PromptSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   title: string
-  /** Optional supporting line under the title (e.g. "Subdeck of Biblia"). */
   description?: string
-  /** Accessible name for the single input. */
   fieldLabel: string
   placeholder?: string
-  /** Seed value (edit/rename flows); defaults to empty. */
   initialValue?: string
   confirmLabel: string
   onSubmit: (value: string) => void
 }
 
-/** A one-field bottom sheet: a name input plus a primary confirm. The single write-path for
- * "give it a name" flows — create a deck, a subdeck, rename — so those never fire with a
- * placeholder name and the user always gets a keyboard. Trims on submit; the confirm stays
- * disabled until there's a non-empty name. Re-seeds each time it opens. */
 export function PromptSheet({
   open,
   onOpenChange,

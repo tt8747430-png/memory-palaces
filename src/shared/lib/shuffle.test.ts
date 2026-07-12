@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { shuffle } from './shuffle'
 
-/** A deterministic RNG that replays a fixed sequence (looping), so a shuffle is
- * reproducible under test. */
 function rngFrom(values: number[]): () => number {
   let i = 0
   return () => values[i++ % values.length] ?? 0

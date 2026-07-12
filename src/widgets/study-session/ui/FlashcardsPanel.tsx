@@ -35,26 +35,16 @@ import type { Grade, CardChanges, SessionSummary, StudyCard, StudyPrefs } from '
 export interface FlashcardsPanelProps {
   cards: StudyCard[]
   prefs: StudyPrefs
-  /** How each card's answer is recalled. Global preference, resumed across sessions. */
   mode: StudyMode
-  /** Mark blanks for each hidden letter in Initials mode. Global preference. */
   wordSpaces: boolean
-  /** Shake the device to undo the last graded card. Global preference. */
   shakeToUndo: boolean
-  /** Per-mode swipe maps. Global preference. */
   swipeByMode: FlashcardSwipeByMode
-  /** Persist study-preference changes (the host mirrors them to deck settings). */
   onPrefsChange?: (prefs: StudyPrefs) => void
-  /** Persist the per-mode swipe maps (the host mirrors them to global preferences). */
   onSwipeByModeChange?: (config: FlashcardSwipeByMode) => void
-  /** Persist the recall mode (global preference). */
   onModeChange?: (mode: StudyMode) => void
-  /** Persist the Initials word-spaces toggle (global preference). */
   onWordSpacesChange?: (value: boolean) => void
-  /** Persist the shake-to-undo toggle (global preference). */
   onShakeToUndoChange?: (value: boolean) => void
   onGrade: (cardId: string, grade: Grade) => void
-  /** Reverse a grade's SRS write on undo, restoring the card's prior schedule. */
   onRestoreCard?: (cardId: string, srs: SrsState | undefined) => void
   onToggleFlag?: (cardId: string) => void
   onEditCard?: (cardId: string, changes: CardChanges) => void
@@ -63,19 +53,10 @@ export interface FlashcardsPanelProps {
   now?: number
 }
 
-/** Linger on the completion overlay before handing back to the host. */
 const COMPLETE_DELAY_MS = 2200
 
-/** The undo trail parallel to the session machine's history — one entry per grade/skip. A
- * grade remembers the card's prior schedule so undo can reverse the SRS write; a skip has
- * nothing to reverse. Popped in lockstep with the machine's `undo`. */
 type UndoEntry = { cardId: string; prevSrs: SrsState | undefined } | null
 
-/** The study surface (ADR-0005): a spaced-review session over a scope's cards. Opens in review
- * (due cards lead); grading runs through the four-grade SM-2 control and the host's `gradeCard`
- * command so schedules survive offline. Every mode is the same two-faced `StudyDeck` — tap to
- * flip, swipe to grade/act — differing only in how its back tests the answer. Headerless: the
- * page owns the title; the footer gear owns the merged options sheet. */
 export function FlashcardsPanel({
   cards,
   prefs,
@@ -98,7 +79,6 @@ export function FlashcardsPanel({
 }: FlashcardsPanelProps) {
   const canSpeak = speechAvailable()
   const reduce = useReducedMotion()
-  // The footer's grade↔overview crossfade; instant under reduced motion (a valid alternative).
   const crossfade = { duration: reduce ? 0 : 0.12 }
 
   const [scope, setScope] = useState<Scope>({ kind: 'all' })
@@ -106,8 +86,6 @@ export function FlashcardsPanel({
   const [modeOpen, setModeOpen] = useState(false)
   const [quickOpen, setQuickOpen] = useState(false)
   const [editing, setEditing] = useState(false)
-  // Type mode's aid (full text vs first letters). Session-scoped on purpose: it's a way of
-  // working a card, not a lasting preference.
   const [typeInitialsOnly, setTypeInitialsOnly] = useState(false)
 
   const activeSwipe: FlashcardSwipeConfig = swipeByMode[mode]
@@ -116,7 +94,6 @@ export function FlashcardsPanel({
   const byId = useMemo(() => new Map(cards.map((card) => [card.card.id, card])), [cards])
   const counts = useMemo(() => computeScopeCounts(cardEntities, now), [cardEntities, now])
 
-  // Build the review id list for a scope — due cards lead, optionally shuffled.
   const buildIds = (activeScope: Scope): string[] =>
     shuffleFirstDue(applyScope(cardEntities, activeScope, now), now, prefs.shuffle)
 
@@ -124,7 +101,6 @@ export function FlashcardsPanel({
     initSession({ ids: buildIds({ kind: 'all' }) }),
   )
 
-  // The undo trail (card + prior schedule per grade), reset whenever the queue is rebuilt.
   const undoTrail = useRef<UndoEntry[]>([])
 
   const rebuild = (activeScope: Scope) => {
@@ -132,8 +108,6 @@ export function FlashcardsPanel({
     dispatch({ type: 'reset', state: initSession({ ids: buildIds(activeScope) }) })
   }
 
-  // Hand back to the host exactly once — whether the overlay auto-advances or the user taps
-  // Done — so navigation can't fire twice.
   const completed = state.status === 'complete'
   const handedOff = useRef(false)
   const handoff = () => {
@@ -163,8 +137,6 @@ export function FlashcardsPanel({
   const prompt = card ? (prefs.direction === 'front' ? card.card.front : card.card.back) : ''
   const answer = card ? (prefs.direction === 'front' ? card.card.back : card.card.front) : ''
 
-  // Auto-speak the visible face when text-to-speech is on: the prompt as the card arrives, the
-  // answer when it flips. Deliberately keyed on `id`/`flipped` only.
   useEffect(() => {
     if (prefs.textToSpeech && card && !flipped) speak(prompt)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -199,8 +171,6 @@ export function FlashcardsPanel({
     if (id && canEdit) onToggleFlag?.(id)
   }
 
-  // Map a committed swipe direction through the active mode's config. Mode-specific actions are
-  // handled in the deck; only grades, flag, and skip reach here.
   const handleCommit = (dir: SwipeDirection) => {
     const action = activeSwipe[dir]
     if (action === 'flag') handleFlag()
@@ -208,8 +178,6 @@ export function FlashcardsPanel({
     else if (isGradeAction(action)) applyGrade(action)
   }
 
-  // Shake to undo — only while it's on and there's history to reverse (and never on desktop,
-  // where the hook is inert). The visible Undo in quick actions is always the reliable path.
   useShake(shakeToUndo && canUndo(state), handleUndo)
 
   const speakFace = () => {
@@ -234,8 +202,6 @@ export function FlashcardsPanel({
       ? { graded: state.graded, learning: state.piles.learning, known: state.piles.known }
       : { graded: 0, learning: 0, known: 0 }
 
-  // How many new / learning / known cards are still ahead in this session (the head of the
-  // queue is the active card) — the footer's at-a-glance overview before a reveal.
   const remaining = useMemo(() => {
     const tally = { new: 0, learning: 0, known: 0 }
     if (state.status !== 'review') return tally
@@ -261,7 +227,6 @@ export function FlashcardsPanel({
 
   return (
     <>
-      {/* The study deck, or the empty-scope state */}
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-5 py-3">
         {card ? (
           <StudyDeck
@@ -294,9 +259,6 @@ export function FlashcardsPanel({
         ) : null}
       </div>
 
-      {/* The controls bar. Fixed-height by design: before the reveal it stacks the
-          remaining-queue overview over the current status; after it, the grade control takes
-          the whole slot. The two states crossfade in place — the bar never grows or jumps. */}
       {card ? (
         <div className="shrink-0 border-t border-border/60 bg-card-glass px-5 pb-[max(0.875rem,env(safe-area-inset-bottom))] pt-2.5">
           <div className="h-14">
@@ -334,7 +296,6 @@ export function FlashcardsPanel({
         </div>
       ) : null}
 
-      {/* In-study editor */}
       {canEdit && onEditCard && card ? (
         <InStudyEditor
           open={editing}
@@ -429,9 +390,6 @@ function EmptyScope({
   )
 }
 
-/** The remaining-queue overview shown before a reveal: how many new / learning / known
- * cards are still ahead in this session, the current card's bucket ringed. Uses the same
- * tint vocabulary as the SRS status chips so color never means two things. */
 const COUNT_CHIP: Record<'new' | 'learning' | 'known', string> = {
   new: 'bg-info-surface text-info-foreground',
   learning: 'bg-secondary text-secondary-foreground',

@@ -1,8 +1,6 @@
 import { Calendar, Crown, type LucideIcon, Star, Target, Trophy, Zap } from 'lucide-react'
 import type { AchievementId } from '@/shared/lib'
 
-/** Icon + literal i18n keys per milestone achievement. `as const satisfies` keeps the
- * key strings literal for the typed t() while checking every id is covered. */
 export const ACHIEVEMENT_META = {
   'first-deck': {
     icon: Crown,

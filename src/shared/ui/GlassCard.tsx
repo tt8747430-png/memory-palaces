@@ -4,7 +4,6 @@ import { cn } from '@/shared/lib'
 export type GlassTone = 'card' | 'sky'
 
 export interface GlassCardProps extends HTMLAttributes<HTMLDivElement> {
-  /** `card` = frosted white (hero/floating), `sky` = frosted sky tint. */
   tone?: GlassTone
 }
 
@@ -13,8 +12,6 @@ const toneStyles: Record<GlassTone, string> = {
   sky: 'bg-glass',
 }
 
-/** Frosted glass surface — reserved for hero/featured/floating chrome, never the
- * default card (glass is purposeful, not decoration). */
 export function GlassCard({ tone = 'card', className, ...props }: GlassCardProps) {
   return (
     <div

@@ -15,8 +15,6 @@ export interface QuestionData {
 export const MAX_OPTIONS = 6
 export const MIN_OPTIONS = 2
 
-/** Trim option strings, drop the empties, and re-point `correctAnswer` at the kept option —
- * shared by the sheet and page so the persisted shape is identical from either entry point. */
 export function buildQuestionData(
   prompt: string,
   options: string[],
@@ -39,7 +37,6 @@ export function buildQuestionData(
   }
 }
 
-/** Whether the current option set + prompt + correct pick is a valid question. */
 export function isQuestionValid(prompt: string, options: string[], correct: number): boolean {
   const filled = options.map((o) => o.trim())
   return (

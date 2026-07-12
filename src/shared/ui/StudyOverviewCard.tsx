@@ -5,20 +5,12 @@ import { Button } from './button'
 import { GlassCard } from './GlassCard'
 
 export interface StudyOverviewCardProps {
-  /** Cards due today in this scope. */
   count: number
-  /** Maturity split of the due set. */
   breakdown: { new: number; learning: number; known: number }
-  /** Drill the due queue (only meaningful when count > 0). */
   onStudy: () => void
-  /** Practise the whole set when nothing is due. */
   onStudyAhead?: () => void
 }
 
-/** The "cards for today" study panel (see the reference screenshots): a big due count,
- * a New/Learning/Known split of that queue, and the Study action. Sits apart from the
- * card carousel. When nothing is due it becomes a calm caught-up state with an optional
- * "Study ahead" to practise the whole set early. */
 export function StudyOverviewCard({
   count,
   breakdown,

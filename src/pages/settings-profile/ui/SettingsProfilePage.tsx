@@ -45,19 +45,10 @@ interface Form {
 
 export interface SettingsProfilePageProps {
   onBack?: () => void
-  /** Navigate to the change-password screen (from the masked password field). */
   onChangePassword: () => void
-  /** Sign out and return to login, called after this screen has wiped local data. */
   onDeleteAccount: () => void | Promise<void>
 }
 
-/**
- * The consolidated Profile screen: edit identity (avatar, name, username, bio, email,
- * phone), change the password from a masked field, and the irreversible delete that
- * wipes every local trace before signing out (log out itself lives on the Settings
- * hub). Delete goes through a confirmation sheet and clears all content, progress, and
- * the saved profile on this device.
- */
 export function SettingsProfilePage({
   onBack,
   onChangePassword,
@@ -86,7 +77,6 @@ export function SettingsProfilePage({
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
-  // Start the data stores so the delete-account wipe sees the on-device records.
   useEffect(() => {
     store.getState().start()
     deckStore.getState().start()
@@ -178,8 +168,6 @@ export function SettingsProfilePage({
         className="mt-4 flex flex-col gap-6 pb-28"
       >
         <div className="flex flex-col items-center gap-4">
-          {/* The avatar itself is just a portrait — only the camera badge changes the
-              photo, so a stray tap on the picture never opens the file picker. */}
           <div className="relative">
             <span
               aria-hidden

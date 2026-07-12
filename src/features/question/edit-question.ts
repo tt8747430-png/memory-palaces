@@ -1,8 +1,6 @@
 import { type Question, type QuestionChanges, type QuestionStore, updateQuestion, } from '@/entities/question'
 import { requireQuestion } from './require-question'
 
-/** Command — edit a question. Runs through the entity's invariant check and persists;
- * the reactive store reflects the result. */
 export async function editQuestion(
   store: QuestionStore,
   id: string,

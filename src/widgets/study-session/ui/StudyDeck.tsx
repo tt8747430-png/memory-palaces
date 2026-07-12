@@ -42,26 +42,19 @@ export interface StudyDeckProps {
   direction: StudyDirection
   wordSpaces: boolean
   typeInitialsOnly: boolean
-  /** The session machine's flip flag (grades in the footer). A solved card keeps its working
-   * surface up (see `solved`/`peek`); a normal flip turns it to the back. */
   flipped: boolean
   swipeConfig: FlashcardSwipeConfig
   canSpeak: boolean
   onFlip: () => void
   onReveal: () => void
-  /** Undo an in-place reveal (Rebuild reset, Type hide) — returns the card to its front. */
   onUnflip: () => void
   onCommit: (direction: SwipeDirection) => void
   onSpeak: (text: string) => void
-  /** Open the study-mode picker — the footer's left control. */
   onChangeMode: () => void
-  /** Open the merged gear sheet — the footer's right control. */
   onOpenGear: () => void
   onLongPress?: () => void
 }
 
-/** Text tint per swipe action, matching the grade-button palette. Mode-specific actions read in
- * the neutral heading tint (they act on the card, not the schedule). `none` renders no chip. */
 const ACTION_TINT: Record<Exclude<FlashcardSwipeAction, 'none'>, string> = {
   again: 'text-[var(--danger-on-surface)]',
   hard: 'text-[var(--warning-foreground)]',
@@ -76,13 +69,10 @@ const ACTION_TINT: Record<Exclude<FlashcardSwipeAction, 'none'>, string> = {
   nextWord: 'text-heading',
 }
 
-/** Actions that leave the current card (grades + skip). Flag/none/mode-specific keep it. */
 function actionAdvances(action: FlashcardSwipeAction): boolean {
   return isGradeAction(action) || action === 'skip'
 }
 
-/** The interactive element a gesture began on, if any. `data-card-control` covers surfaces that
- * are controls without a native control tag (the first-letters input area). */
 function controlOf(target: EventTarget | null): HTMLElement | null {
   return (
     (target as HTMLElement | null)?.closest<HTMLElement>(
@@ -91,34 +81,23 @@ function controlOf(target: EventTarget | null): HTMLElement | null {
   )
 }
 
-/** A tap on any interactive element runs that element, not a card flip. */
 function isControl(target: EventTarget | null): boolean {
   return controlOf(target) !== null
 }
 
-/** A gesture that begins inside a scrolling body pans it to read; swipe stays out of the way. */
 function isScroller(target: EventTarget | null): boolean {
   return Boolean((target as HTMLElement | null)?.closest('[data-card-scroll]'))
 }
 
-/** Whether a fling may start here: anywhere except a real control (an input, a word chip) or a
- * scrolling body. The full-card flip button is marked `data-flip`, so swipe passes through it. */
 function swipeAllowed(target: EventTarget | null): boolean {
   if (isScroller(target)) return false
   const control = controlOf(target)
   return control === null || control.hasAttribute('data-flip')
 }
 
-/** How long a still press must hold before it opens quick actions. */
 const LONG_PRESS_MS = 450
-/** Finger drift allowed during the hold before it's read as a swipe, not a press. */
 const LONG_PRESS_SLOP = 12
 
-/** The unified study deck: one swipeable, two-faced card behind every mode. Tap a
- * non-interactive area to flip (or, once solved in place, to peek the answer and back), fling to
- * grade/skip/flag or run this mode's own action, press-and-hold for quick actions. The parent
- * maps `onCommit(direction)` through the active mode's swipe config; mode-specific actions are
- * dispatched to the active face's registered mechanic. */
 export function StudyDeck({
   card,
   nextCard,
@@ -148,8 +127,6 @@ export function StudyDeck({
   const prompt = direction === 'front' ? cardEntity.front : cardEntity.back
   const answer = recallAnswer(prompt, direction === 'front' ? cardEntity.back : cardEntity.front)
 
-  // A solved Type/Rebuild reveals the grades without turning the card, so the reconstruction
-  // stays in view; tapping then peeks the answer face. Both reset when the card or mode changes.
   const [solved, setSolved] = useState(false)
   const [peek, setPeek] = useState(false)
   useEffect(() => {
@@ -158,14 +135,11 @@ export function StudyDeck({
   }, [cardEntity.id, mode])
   const showBack = solved ? peek : flipped
 
-  // Mode-specific swipe mechanics published by the active face (Blur hide, Type next word, …).
   const mechanicRef = useRef<MechanicHandlers>({})
   const registerMechanic = useCallback((handlers: MechanicHandlers | null) => {
     mechanicRef.current = handlers ?? {}
   }, [])
 
-  // Tap / FlipZone / BackPrompt all route here so flipping respects the solved state: a solved
-  // card peeks the answer instead of un-revealing.
   const handleFlip = useCallback(() => {
     if (solved) setPeek((prev) => !prev)
     else onFlip()
@@ -196,14 +170,12 @@ export function StudyDeck({
       snapBack()
       return
     }
-    // A mode-specific action runs the active face's mechanic in place — a tick, then spring back.
     if (isModeAction(action)) {
       mechanicRef.current[action]?.()
       tick()
       snapBack()
       return
     }
-    // Flag keeps the card in place — a quick haptic tick, then spring back.
     if (!actionAdvances(action)) {
       onCommit(dir)
       tick()
@@ -237,7 +209,6 @@ export function StudyDeck({
         armedRef.current = swipeAllowed(event.target)
         heldRef.current = false
         clearHold()
-        // Long-press opens quick actions — only where a swipe could have started.
         if (armedRef.current) {
           holdTimer.current = window.setTimeout(() => {
             heldRef.current = true
@@ -252,13 +223,10 @@ export function StudyDeck({
           heldRef.current = false
           return
         }
-        // Tap any non-interactive area to flip (or peek, once solved).
         if (!isControl(event.target)) handleFlip()
         return
       }
       if (!armedRef.current) return
-      // Cancel the pending long-press only once the finger has clearly moved (a real drag),
-      // so a still thumb with minor jitter still opens quick actions.
       if (Math.abs(mx) > LONG_PRESS_SLOP || Math.abs(my) > LONG_PRESS_SLOP) clearHold()
       if (down) {
         x.set(mx)
@@ -398,8 +366,6 @@ export function StudyDeck({
   )
 }
 
-/** One direction's swipe chip. Its opacity is driven so only the dominant direction shows —
- * a diagonal drag never lights two chips at once. */
 function DirectionChip({
   action,
   x,
@@ -418,7 +384,6 @@ function DirectionChip({
     const ax = Math.abs(px)
     const ay = Math.abs(py)
     const horizontal = ax >= ay
-    // Light only for the drag's dominant axis and its direction, so a diagonal never shows two.
     const lit =
       dir === 'right'
         ? horizontal && px > 0

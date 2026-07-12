@@ -3,23 +3,16 @@ import { motion } from 'motion/react'
 import { cn } from '@/shared/lib'
 
 export interface EmptyStateProps {
-  /** A lucide icon (or any node). Falls back to `emoji` when omitted. */
   icon?: ReactNode
   emoji?: string
   title: string
   description: string
-  /** Primary call to action, e.g. a "Create deck" button. */
   action?: ReactNode
   className?: string
 }
 
 const EASE_OUT = [0.16, 1, 0.3, 1] as const
 
-/**
- * First-run / no-content state. An empty list is an onboarding moment: it names what
- * will live here, why it matters, and the one action to get started. Entrance motion
- * runs through Motion, so it honours reduced motion globally.
- */
 export function EmptyState({
   icon,
   emoji,

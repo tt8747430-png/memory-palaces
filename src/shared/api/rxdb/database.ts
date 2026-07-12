@@ -10,16 +10,9 @@ export interface OpenRxdbCollectionConfig<
   databaseName: string
   collectionName: string
   schema: RxJsonSchema<T>
-  /** Injected so the same adapter runs on Dexie/IndexedDB (browser) or memory (tests). */
   storage: RxStorage<Internals, InstanceCreationOptions>
 }
 
-/**
- * Open (or create) an RxDB database holding a single collection and hand back the
- * collection plus the database handle (the caller closes/removes it on teardown).
- * Entity-shaped `T` is inferred from `schema`, so this stays generic and the
- * composition root remains the only place that names concrete collections.
- */
 export async function openRxdbCollection<
   T extends Identifiable,
   Internals,

@@ -1,11 +1,5 @@
 import { shuffle } from '@/shared/lib'
 
-/**
- * The match-game State machine (pure, no IO). The board is term/definition tiles;
- * the player taps two and the reducer matches them or flags a mismatch. The
- * 640ms "wrong" flash is a UI timing detail — the widget dispatches `clearWrong`
- * after the delay — so the machine itself stays deterministic and testable.
- */
 export interface Tile {
   id: string
   cardId: string
@@ -13,8 +7,6 @@ export interface Tile {
   text: string
 }
 
-/** The minimal card shape the board needs (front/back), kept structural so this
- * stays a feature over the entity, not a dependency on its full type. */
 export interface MatchCard {
   id: string
   front: string
@@ -23,10 +15,8 @@ export interface MatchCard {
 
 export interface MatchState {
   tiles: Tile[]
-  /** The 0–2 currently picked tile ids. */
   selected: string[]
   matched: string[]
-  /** A mismatched pair awaiting its flash-clear; the board is locked meanwhile. */
   wrong: string[]
   moves: number
   status: 'playing' | 'won'
@@ -37,11 +27,8 @@ export type MatchAction =
   | { type: 'clearWrong' }
   | { type: 'reset'; tiles: Tile[] }
 
-/** Tiles never exceed this many pairs, so the board stays a single phone screen. */
 export const MAX_PAIRS = 6
 
-/** Build a shuffled board of term/def tiles from cards (capped at MAX_PAIRS pairs).
- * `random` is injectable for deterministic tests. */
 export function buildTiles(cards: MatchCard[], random: () => number = Math.random): Tile[] {
   const chosen = shuffle(cards, random).slice(0, Math.min(MAX_PAIRS, cards.length))
   const tiles = chosen.flatMap((card): Tile[] => [
@@ -99,7 +86,6 @@ export function matchReducer(state: MatchState, action: MatchAction): MatchState
   }
 }
 
-/** Pairs still to match — half the unmatched tiles. */
 export function remainingPairs(state: MatchState): number {
   return (state.tiles.length - state.matched.length) / 2
 }

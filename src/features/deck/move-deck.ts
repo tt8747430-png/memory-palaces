@@ -2,12 +2,6 @@ import { selectDecks, type Deck, type DeckStore } from '@/entities/deck'
 import { canReparent } from '@/shared/lib'
 import { editDeck } from './edit-deck'
 
-/**
- * Command — move a deck under a new parent deck, or to the root with `null`. Guards against
- * cycles (a deck can never become its own descendant) and appends it to the end of the target
- * container. Landing at the root optionally files it into `folderId`; landing under a deck
- * clears any folder (a subdeck belongs to its parent, not a folder).
- */
 export async function moveDeck(
   store: DeckStore,
   id: string,

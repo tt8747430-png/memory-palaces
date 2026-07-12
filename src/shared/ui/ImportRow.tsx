@@ -2,8 +2,6 @@ import { type ReactNode } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { cn } from '@/shared/lib'
 
-/** Icon-chip tone. Colorizes the leading glyph so each source/target reads distinctly while
- * staying inside the navy-anchored palette (no ad-hoc brand colors). */
 export type ImportRowTone = 'brand' | 'accent' | 'positive' | 'warning' | 'danger' | 'neutral'
 
 const TONE_CHIP: Record<ImportRowTone, string> = {
@@ -21,17 +19,11 @@ export interface ImportRowProps {
   subtitle: string
   onClick: () => void
   disabled?: boolean
-  /** Colorizes the icon chip; defaults to the navy brand tone. */
   tone?: ImportRowTone
-  /** Small trailing hint (e.g. a file-type pill) shown before the chevron. */
   badge?: ReactNode
-  /** Replaces the chevron when the row isn't a drill-in (e.g. an export action). */
   trailing?: ReactNode
 }
 
-/** A tappable import/export option: a tonal icon chip, a title + subtitle, and a trailing
- * affordance, on a soft card. Shared by the deck import sheet and the content transfer sheet so
- * both read as one family. */
 export function ImportRow({
   icon,
   title,

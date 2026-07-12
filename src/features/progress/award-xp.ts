@@ -1,9 +1,6 @@
 import type { Progress, ProgressStore } from '@/entities/progress'
 import { currentProgress } from './current-progress'
 
-/** Command — add XP to the learner's progress (creating the record on first use).
- * Non-positive amounts are ignored. The single write-path for XP (study/quiz/match/
- * verse completions, and later the AI Tutor). `now` is injected for determinism. */
 export async function awardXp(
   store: ProgressStore,
   amount: number,

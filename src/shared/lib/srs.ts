@@ -1,23 +1,11 @@
-/**
- * Spaced-repetition scheduler (an SM-2 variant) for cards. A card with no
- * `SrsState` is "new" and always due. Grading advances the schedule. Kept small:
- * four grades, one ease factor, day intervals. `now` is injected (epoch ms) so
- * scheduling is pure and deterministic.
- */
 export type Grade = 'again' | 'hard' | 'good' | 'easy'
 
 export interface SrsState {
-  /** ISO date the card is next due. */
   due: string
-  /** Current interval in days. */
   interval: number
-  /** Ease factor (>= MIN_EASE). */
   ease: number
-  /** Consecutive successful reviews. */
   reps: number
-  /** Times the card was forgotten. */
   lapses: number
-  /** ISO timestamp of the last review. */
   lastReviewed: string
 }
 
@@ -26,20 +14,17 @@ export type SrsStatus = 'new' | 'learning' | 'known'
 const DAY_MS = 86_400_000
 const MIN_EASE = 1.3
 const DEFAULT_EASE = 2.5
-/** Interval (days) at/above which a card counts as mastered. */
 const MATURE_INTERVAL = 21
 
 function isoInDays(now: number, days: number): string {
   return new Date(now + days * DAY_MS).toISOString()
 }
 
-/** A card with no SRS state is brand new and therefore due. */
 export function isDue(srs: SrsState | undefined, now: number): boolean {
   if (!srs) return true
   return new Date(srs.due).getTime() <= now
 }
 
-/** Apply a grade to a card's prior state and return its next schedule. */
 export function schedule(prev: SrsState | undefined, grade: Grade, now: number): SrsState {
   let ease = prev?.ease ?? DEFAULT_EASE
   let reps = prev?.reps ?? 0
@@ -50,7 +35,7 @@ export function schedule(prev: SrsState | undefined, grade: Grade, now: number):
     ease = Math.max(MIN_EASE, ease - 0.2)
     lapses += 1
     reps = 0
-    interval = 0 // due again today
+    interval = 0
   } else {
     if (grade === 'hard') {
       ease = Math.max(MIN_EASE, ease - 0.15)
@@ -74,15 +59,11 @@ export function schedule(prev: SrsState | undefined, grade: Grade, now: number):
   }
 }
 
-/** A card's maturity bucket, independent of whether it is due: New (never
- * successfully reviewed) → Learning (reviewed, interval still short) → Known
- * (interval matured). Due-ness is a separate, temporal concern — see `isDue`. */
 export function srsStatus(srs: SrsState | undefined): SrsStatus {
   if (!srs || srs.reps === 0) return 'new'
   return srs.interval >= MATURE_INTERVAL ? 'known' : 'learning'
 }
 
-/** Force a card into a long-interval "known" schedule (manual mastery). */
 export function markKnown(prev: SrsState | undefined, now: number): SrsState {
   const interval = 180
   return {
@@ -95,7 +76,6 @@ export function markKnown(prev: SrsState | undefined, now: number): SrsState {
   }
 }
 
-/** Human-friendly preview of when a grade would schedule the card next. */
 export function nextIntervalLabel(prev: SrsState | undefined, grade: Grade, now: number): string {
   const next = schedule(prev, grade, now)
   if (next.interval <= 0) return 'now'

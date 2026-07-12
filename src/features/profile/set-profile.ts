@@ -1,6 +1,5 @@
 import { makeProfile, type Profile, type ProfileChanges, type ProfileStore, updateProfile, } from '@/entities/profile'
 
-/** The one profile record's id — singleton, so a fixed key prevents duplicates. */
 export const PROFILE_ID = 'profile'
 
 function currentProfile(store: ProfileStore, now: number): Profile {
@@ -10,8 +9,6 @@ function currentProfile(store: ProfileStore, now: number): Profile {
   )
 }
 
-/** Command — edit one or more profile fields, creating the singleton record on first
- * use. The single write-path the settings UI uses; `now` is injected for determinism. */
 export async function setProfile(
   store: ProfileStore,
   changes: ProfileChanges,

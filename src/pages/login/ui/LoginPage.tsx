@@ -16,8 +16,6 @@ export interface LoginPageProps {
 
 const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1]
 
-/** Entry flow choreography: groups settle in sequence, each a short rise + fade.
- * Reduced motion is handled globally by MotionConfig, so no per-use fallback. */
 const stagger: Variants = {
   initial: {},
   animate: { transition: { staggerChildren: 0.07, delayChildren: 0.04 } },
@@ -27,8 +25,6 @@ const rise: Variants = {
   animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: EASE } },
 }
 
-/** Sign-in screen. Mock auth (no credential check); also offers a guest door and a
- * route to sign-up / password recovery. Identity persists through the gateway. */
 export function LoginPage({ onAuthed, onGuest, onSignup, onForgot }: LoginPageProps) {
   const { t } = useTranslation()
   const actions = useAuthActions()

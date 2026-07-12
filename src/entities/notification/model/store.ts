@@ -8,9 +8,7 @@ export type NotificationStatus = 'idle' | 'loading' | 'ready'
 export interface NotificationState {
   notifications: AppNotification[]
   status: NotificationStatus
-  /** Subscribe to the repository's reactive stream (idempotent); keeps the list live. */
   start: () => void
-  /** End the reactive subscription. */
   stop: () => void
   save: (notification: AppNotification) => Promise<AppNotification>
   remove: (id: string) => Promise<void>
@@ -21,9 +19,6 @@ export type NotificationStore = StoreApi<NotificationState>
 const byNewestFirst = (a: AppNotification, b: AppNotification): number =>
   b.createdAt.localeCompare(a.createdAt)
 
-/** Store FACTORY (repository INJECTED — Dependency Inversion). RxDB-reactive list,
- * mirroring the deck store; mutations persist through the port and the subscription
- * updates state. */
 export function createNotificationStore(repo: NotificationRepository): NotificationStore {
   let unsubscribe: Unsubscribe | null = null
   return createStore<NotificationState>((set) => ({

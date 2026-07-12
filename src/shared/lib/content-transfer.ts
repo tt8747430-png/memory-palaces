@@ -1,18 +1,6 @@
-/**
- * Pure import/export for a deck's study content (cards + questions). Parsers turn text
- * (CSV / pasted lines / Anki notes / verse paste) into plain content data; the serializers
- * turn content back into CSV / Anki TSV strings. No DOM, no IO, no entity imports — the
- * `features/content` slice handles file reads, downloads, and mapping this data onto the
- * create commands.
- */
 
 import type { SrsState } from './srs'
 
-/**
- * A card's importable content. Text + cues are the common case; the schedule/status fields
- * stay absent for the lighter sources (CSV / Anki / paste) and are assigned by the create
- * command.
- */
 export interface ParsedCard {
   front: string
   back: string
@@ -23,7 +11,6 @@ export interface ParsedCard {
   srs?: SrsState
 }
 
-/** A question's importable content. */
 export interface ParsedQuestion {
   prompt: string
   options: string[]
@@ -36,7 +23,6 @@ export interface DeckContentData {
   questions: ParsedQuestion[]
 }
 
-/** Minimal shapes the serializers read — structural, so no entity dependency. */
 type CardLike = { front: string; back: string; hint?: string }
 type QuestionLike = {
   prompt: string
@@ -45,10 +31,8 @@ type QuestionLike = {
   explanation?: string
 }
 
-/** A user-facing import failure; the UI shows `.message` verbatim. */
 export class ContentImportError extends Error {}
 
-/** Filesystem-safe slug for a download name. */
 export function contentSlug(name: string): string {
   return (
     name
@@ -59,15 +43,12 @@ export function contentSlug(name: string): string {
   )
 }
 
-// --- CSV plumbing -----------------------------------------------------------
 
-/** Wrap a single CSV cell, escaping quotes and quoting only when needed. */
 function csvCell(value: string): string {
   const v = value ?? ''
   return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
 }
 
-/** Parse a CSV document into rows of string cells (RFC-4180-ish). */
 function parseCsv(text: string): string[][] {
   const rows: string[][] = []
   let row: string[] = []
@@ -109,7 +90,6 @@ function parseCsv(text: string): string[][] {
   return rows.filter((r) => r.some((c) => c.trim() !== ''))
 }
 
-// --- Serialize (export) -----------------------------------------------------
 
 export function cardsToCsv(cards: ReadonlyArray<CardLike>): string {
   const header = 'front,back,hint'
@@ -126,14 +106,13 @@ export function questionsToCsv(questions: ReadonlyArray<QuestionLike>): string {
   const lines = questions.map((q) => {
     const cells = [csvCell(q.prompt)]
     for (let i = 0; i < maxOptions; i++) cells.push(csvCell(q.options[i] ?? ''))
-    cells.push(String(q.correctAnswer + 1)) // 1-based reads naturally in a spreadsheet
+    cells.push(String(q.correctAnswer + 1))
     cells.push(csvCell(q.explanation ?? ''))
     return cells.join(',')
   })
   return [header, ...lines].join('\n')
 }
 
-/** Escape one field for Anki's tab-separated "Notes in Plain Text" import. */
 function ankiField(value: string): string {
   return (value ?? '')
     .replace(/&/g, '&amp;')
@@ -143,17 +122,13 @@ function ankiField(value: string): string {
     .replace(/\r?\n/g, '<br>')
 }
 
-/** Cards as Anki "Notes in Plain Text" (tab-separated Front/Back); drops in via Anki's
- * File → Import. */
 export function cardsToAnkiTsv(cards: ReadonlyArray<CardLike>): string {
   const header = '#separator:tab\n#html:true\n#columns:Front\tBack'
   const lines = cards.map((c) => `${ankiField(c.front)}\t${ankiField(c.back)}`)
   return [header, ...lines].join('\n')
 }
 
-// --- Coerce / parse (import) ------------------------------------------------
 
-/** Map CSV rows (with a header) onto cards or questions by their columns. */
 function contentFromCsv(rows: string[][]): DeckContentData {
   const header = rows[0]
   if (!header) return { cards: [], questions: [] }
@@ -176,7 +151,7 @@ function contentFromCsv(rows: string[][]): DeckContentData {
       if (!prompt || options.length < 2) return []
       let answer = answerIdx >= 0 ? Number(cells[answerIdx]) : 1
       if (!Number.isFinite(answer)) answer = 1
-      answer = Math.max(1, Math.min(options.length, answer)) - 1 // CSV answer is 1-based
+      answer = Math.max(1, Math.min(options.length, answer)) - 1
       const explanation = explIdx >= 0 ? (cells[explIdx] ?? '').trim() : ''
       return [{ prompt, options, correctAnswer: answer, ...(explanation ? { explanation } : {}) }]
     })
@@ -200,10 +175,6 @@ function contentFromCsv(rows: string[][]): DeckContentData {
   return { cards, questions: [] }
 }
 
-/**
- * Parse pasted text into cards. Each non-empty line is one card, split on the first tab,
- * semicolon, or comma into `front` then `back`. Lines without a separator are skipped.
- */
 export function parsePastedCards(text: string): ParsedCard[] {
   return text.split(/\r?\n/).flatMap((line) => {
     const trimmed = line.trim()
@@ -218,22 +189,12 @@ export function parsePastedCards(text: string): ParsedCard[] {
 }
 
 export interface NoteDelimiters {
-  /** Separator between a card's front and back — only the FIRST occurrence per card splits,
-   * so a comma-separated back keeps its commas. */
   field: string
-  /** Separator between cards. `'\n'` treats any newline (CRLF or LF) as a break. */
   card: string
-  /** Flip which side is the front — for `answer, prompt` pastes. */
   swap?: boolean
-  /** Drop the first non-empty row — for spreadsheet pastes that lead with a header line. */
   skipHeader?: boolean
 }
 
-/**
- * Parse pasted text into cards using explicit delimiters (the Paste screen's "Notes" flow).
- * Each card chunk splits once on `field` into front/back; blank chunks and chunks without
- * the separator are skipped. `swap` flips the two sides; `skipHeader` drops the first row.
- */
 export function parseDelimitedNotes(
   text: string,
   { field, card, swap = false, skipHeader = false }: NoteDelimiters,
@@ -255,14 +216,8 @@ export function parseDelimitedNotes(
   })
 }
 
-/** The two shapes the Paste screen understands. */
 export type PasteFormat = 'bible' | 'notes'
 
-/**
- * Guess whether pasted text is a Bible chapter (verse-reference lines like `(1:1) …`) or
- * plain delimited notes. Bible wins when verse lines are present and dominate; anything
- * else parses as notes. The user can always override the guess.
- */
 export function detectPasteFormat(text: string): PasteFormat {
   const lines = text
     .split(/\r?\n/)
@@ -273,15 +228,12 @@ export function detectPasteFormat(text: string): PasteFormat {
   return verseLines >= 2 && verseLines >= lines.length * 0.4 ? 'bible' : 'notes'
 }
 
-/** Guess the front/back separator from the first non-empty line — tab and comma are the
- * common spreadsheet/CSV pastes; pipe and semicolon are the fallbacks. Defaults to tab. */
 export function guessFieldSeparator(text: string): string {
   const first = text.split(/\r?\n/).find((l) => l.trim() !== '') ?? ''
   for (const sep of ['\t', ',', ';', '|']) if (first.includes(sep)) return sep
   return '\t'
 }
 
-/** Strip HTML (and entities/`<br>`) to plain text — Anki notes store rich-text fields. */
 export function stripHtml(input: string): string {
   return input
     .replace(/<br\s*\/?>/gi, '\n')
@@ -307,8 +259,6 @@ const ANKI_SEPARATORS: Record<string, string> = {
   colon: ':',
 }
 
-/** Parse Anki's "Notes in Plain Text" export (tab/`#separator`-delimited, `#`-directives
- * skipped) into cards — field 0 → front, field 1 → back, HTML stripped. */
 export function parseAnkiText(text: string): ParsedCard[] {
   let separator = '\t'
   const cards: ParsedCard[] = []
@@ -329,18 +279,11 @@ export function parseAnkiText(text: string): ParsedCard[] {
   return cards
 }
 
-/** One chapter from a verse paste: a title and its verse cards. */
 export interface VerseChapter {
   title: string
   cards: ParsedCard[]
 }
 
-/**
- * Parse the eBiblia verse format, grouped by chapter. A header line ("Book Chapter")
- * opens a chapter; each `(chapter:verse) text` line becomes a card with
- * `front = "Book chapter:verse"` and `back = "Book chapter:verse text"`. Wrapped lines
- * append to the previous verse.
- */
 export function parseVerseChapters(text: string): VerseChapter[] {
   const verseRe = /^\((\d+):(\d+)\)\s*(.*)$/
   const headerRe = /^(.*\p{L})\s+\d+(?:\s*[-–:]\s*\d+)*\.?$/u
@@ -387,13 +330,10 @@ export function parseVerseChapters(text: string): VerseChapter[] {
   return chapters.filter((c) => c.cards.length > 0)
 }
 
-/** Flatten a verse paste into one card per verse (chapter-agnostic). */
 export function parseVerses(text: string): ParsedCard[] {
   return parseVerseChapters(text).flatMap((c) => c.cards)
 }
 
-/** Parse a `.csv` file's text into deck content, mapping columns onto cards or questions.
- * Throws {@link ContentImportError} when nothing usable is found. */
 export function parseDeckContent(text: string): DeckContentData {
   let content: DeckContentData
   try {

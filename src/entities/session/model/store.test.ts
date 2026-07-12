@@ -18,7 +18,6 @@ describe('session store — Dependency Injection', () => {
     await store.getState().set(guest)
 
     expect(store.getState().session).toEqual(guest)
-    // persisted through the port, not just held in memory by the store
     expect(await repo.getById('g1')).toEqual(guest)
   })
 

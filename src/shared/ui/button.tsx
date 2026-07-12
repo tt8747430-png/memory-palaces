@@ -16,7 +16,6 @@ const variantStyles: Record<ButtonVariant, string> = {
   destructive: 'bg-[var(--danger-surface)] text-[var(--danger-on-surface)]',
 }
 
-// `md`+ clear the 44px minimum touch target.
 const sizeStyles: Record<ButtonSize, string> = {
   sm: 'h-9 px-3 text-[length:var(--p-text-label)]',
   md: 'h-11 px-5 text-[length:var(--p-text-body)]',

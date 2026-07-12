@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { isDue, markKnown, nextIntervalLabel, schedule, type SrsState, srsStatus } from './srs'
 
 const DAY_MS = 86_400_000
-const NOW = Date.UTC(2026, 0, 1) // fixed instant injected everywhere
+const NOW = Date.UTC(2026, 0, 1)
 
 describe('isDue', () => {
   it('treats a card with no state as due (brand new)', () => {
@@ -10,7 +10,7 @@ describe('isDue', () => {
   })
 
   it('is due when the due date is at or before now', () => {
-    const srs = schedule(undefined, 'good', NOW) // interval 1 → due tomorrow
+    const srs = schedule(undefined, 'good', NOW)
     expect(isDue(srs, NOW)).toBe(false)
     expect(isDue(srs, NOW + DAY_MS)).toBe(true)
   })
@@ -31,7 +31,7 @@ describe('schedule', () => {
     expect(next.interval).toBe(0)
     expect(next.lapses).toBe(1)
     expect(next.ease).toBeCloseTo(2.3)
-    expect(next.due).toBe(new Date(NOW).toISOString()) // due again today
+    expect(next.due).toBe(new Date(NOW).toISOString())
   })
 
   it('"good" steps 1 → 3 → interval*ease', () => {
@@ -60,7 +60,7 @@ describe('schedule', () => {
   })
 
   it('computes the due date from the injected now, not the wall clock', () => {
-    const next = schedule(undefined, 'easy', NOW) // interval 2
+    const next = schedule(undefined, 'easy', NOW)
     expect(next.due).toBe(new Date(NOW + 2 * DAY_MS).toISOString())
     expect(next.lastReviewed).toBe(new Date(NOW).toISOString())
   })
@@ -72,7 +72,7 @@ describe('srsStatus (maturity)', () => {
   })
 
   it('reports maturity regardless of due date', () => {
-    const card = schedule(undefined, 'good', NOW) // reps 1, interval 1
+    const card = schedule(undefined, 'good', NOW)
     expect(srsStatus(card)).toBe('learning')
     const pastDue: SrsState = { ...card, due: new Date(NOW - DAY_MS).toISOString() }
     expect(srsStatus(pastDue)).toBe('learning')

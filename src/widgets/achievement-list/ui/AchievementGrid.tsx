@@ -9,13 +9,9 @@ const EASE_OUT = [0.22, 1, 0.36, 1] as const
 
 export interface AchievementGridProps {
   achievements: ReadonlyArray<Achievement>
-  /** Tap a milestone to open its "how to earn it" detail. Omit for a display-only wall. */
   onOpenAchievement?: (id: AchievementId) => void
 }
 
-/** The full milestone wall: a 3-up grid of medallions with their title and a one-line
- * earned/locked status. With `onOpenAchievement` each tile is a button into the
- * milestone's detail screen. */
 export function AchievementGrid({ achievements, onOpenAchievement }: AchievementGridProps) {
   const { t } = useTranslation()
   return (

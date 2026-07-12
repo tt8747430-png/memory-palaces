@@ -11,7 +11,6 @@ export interface SpeedDialAction {
 }
 
 export interface SpeedDialProps {
-  /** Accessible name for the closed trigger, e.g. "Quick actions". */
   label: string
   actions: SpeedDialAction[]
   className?: string
@@ -19,22 +18,12 @@ export interface SpeedDialProps {
 
 const EASE_OUT = [0.22, 1, 0.36, 1] as const
 
-/**
- * Floating speed-dial (signature action affordance). A navy `+` pinned bottom-right above
- * the liquid-glass nav; pressing it rotates to a × and springs a short stack of labelled
- * circular actions up over a soft navy scrim. Built for thumbs: 56px trigger, 48px actions,
- * Esc to close, focus moves into the dial and returns to the trigger on close. Motion is
- * staggered top-down and degrades to a crossfade under reduced-motion.
- */
 export function SpeedDial({ label, actions, className }: SpeedDialProps) {
   const [open, setOpen] = useState(false)
   const reduce = useReducedMotion()
   const triggerRef = useRef<HTMLButtonElement>(null)
   const firstActionRef = useRef<HTMLButtonElement>(null)
 
-  // One action needs no stack: the trigger fires it directly, skipping the scrim, the reveal,
-  // and the +→× rotation. Keeps the toolbar honest per surface — a folder's dial is just
-  // "Add deck", not a menu that also offers things the surface can't do.
   const soleAction = actions.length === 1 ? actions[0]! : null
 
   useEffect(() => {
@@ -46,7 +35,6 @@ export function SpeedDial({ label, actions, className }: SpeedDialProps) {
       }
     }
     window.addEventListener('keydown', onKey)
-    // Move focus into the revealed dial so keyboard users land on the actions.
     firstActionRef.current?.focus()
     return () => window.removeEventListener('keydown', onKey)
   }, [open])
@@ -95,7 +83,6 @@ export function SpeedDial({ label, actions, className }: SpeedDialProps) {
                   }}
                   className="flex items-center"
                 >
-                  {/* The whole pill is one target — label text and icon both fire the action. */}
                   <button
                     ref={index === 0 ? firstActionRef : undefined}
                     type="button"

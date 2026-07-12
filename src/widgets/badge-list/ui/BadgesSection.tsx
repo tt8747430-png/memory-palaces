@@ -6,15 +6,11 @@ import { BADGE_META, compactNumber } from './meta'
 export interface BadgesSectionProps {
   badges: ReadonlyArray<Badge>
   onSeeAll: () => void
-  /** Open a single badge's detail; medallions are tappable, matching the full wall. */
   onOpenBadge: (id: BadgeId) => void
 }
 
 const PREVIEW_COUNT = 4
 
-/** Profile preview: the "Badges / See all" row with the first four tiered medallions,
- * each showing its highest reached threshold and a pip row for its tiers. Pips are the
- * signal that these *level up*, the visible difference from one-shot achievements. */
 export function BadgesSection({ badges, onSeeAll, onOpenBadge }: BadgesSectionProps) {
   const { t } = useTranslation()
   return (

@@ -7,16 +7,11 @@ export interface StatTileProps {
   icon: ReactNode
   value: string
   label: string
-  /** Stagger delay (seconds) when rendered in a grid. */
   delay?: number
 }
 
-// Matches --p-ease-out-quart; reduced motion is handled globally by MotionConfig.
 const EASE_OUT_QUART = [0.25, 1, 0.5, 1] as const
 
-/** A metric tile: a tinted icon box, a big tabular value, and a muted label. Animates in
- * with a stagger `delay` so grids of tiles cascade. Shared by the Profile glance and the
- * Stats screen so the same metric looks and animates identically wherever it appears. */
 export function StatTile({ icon, value, label, delay = 0 }: StatTileProps) {
   return (
     <motion.div

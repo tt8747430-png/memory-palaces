@@ -24,8 +24,7 @@ const srs = (over: Partial<SrsState>): SrsState => ({
   ...over,
 })
 
-// One card of each status, plus a flagged one.
-const fresh = card('new') // srs undefined → new + due
+const fresh = card('new')
 const due = card('due', srs({ due: new Date(NOW - DAY).toISOString() }))
 const learning = card('learning', srs({ due: new Date(NOW + DAY).toISOString(), interval: 3 }))
 const known = card('known', srs({ due: new Date(NOW + 30 * DAY).toISOString(), interval: 40 }))

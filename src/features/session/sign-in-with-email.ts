@@ -1,11 +1,6 @@
 import { makeAccountSession } from '@/entities/session'
 import type { SessionCommandDeps } from './sign-up-with-email'
 
-/**
- * Command — sign in to a (mock) account. Credentials are NOT verified; the session
- * derives its display name from the email's local part. Password stays in the form,
- * never persisted. Real verification arrives with the Supabase adapter (Phase 9).
- */
 export async function signInWithEmail(
   deps: SessionCommandDeps,
   email: string,

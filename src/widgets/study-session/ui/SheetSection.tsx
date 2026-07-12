@@ -1,6 +1,5 @@
 import { type ReactNode } from 'react'
 
-/** A titled group inside the study sheets — one label, one cluster of controls. */
 export function SheetSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="space-y-2">

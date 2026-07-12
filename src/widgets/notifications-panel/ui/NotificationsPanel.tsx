@@ -10,15 +10,11 @@ import { bucketOf, type DayBucket, relativeTime, type RelativeTime } from '../li
 
 interface Visual {
   icon: LucideIcon
-  /** Accessible icon color + its surface tint — both semantic tokens, never a raw
-   * fill color (amber/green fills fail contrast as a foreground on their own tint). */
   fg: string
   tint: string
 }
 
 const VISUALS: Record<NotificationType, Visual> = {
-  // Distinct, on-brand tiles (gold reward / amber streak / blue quiz), each with an
-  // accessible foreground — the fill colors themselves fail as a foreground on tint.
   'level-up': {
     icon: Trophy,
     fg: 'var(--rating-edge)',
@@ -45,9 +41,6 @@ export interface NotificationsPanelProps {
   now?: number
 }
 
-/** Presentational notification history: per-type badge, milestone copy, relative time,
- * and per-item remove, grouped into today/yesterday/earlier. The page owns the store
- * and passes the list + handlers. */
 export function NotificationsPanel({
   notifications,
   onRemove,
@@ -136,7 +129,6 @@ function NotificationRow({
       className={cn(
         cardSurface,
         'relative flex items-start gap-3 p-3.5',
-        // Unread rows lift with a soft sky ring (before the page marks them read).
         !notification.read && 'ring-1 ring-[color-mix(in_oklch,var(--secondary)_55%,transparent)]',
       )}
     >

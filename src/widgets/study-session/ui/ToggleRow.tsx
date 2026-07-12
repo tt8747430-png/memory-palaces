@@ -1,7 +1,6 @@
 import { type ReactNode } from 'react'
 import { cn } from '@/shared/lib'
 
-/** A labelled switch row on an info-surface card, shared by the study sheets. */
 export function ToggleRow({
   icon,
   label,

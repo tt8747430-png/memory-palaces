@@ -29,9 +29,6 @@ export interface ArchivedDecksPageProps {
   onBack: () => void
 }
 
-/** The archive: top-level decks the user has set aside. Each keeps its whole subtree, cards,
- * and progress; a tap on Restore brings it straight back to the home list. Reached from the
- * home header's archive control. */
 export function ArchivedDecksPage({ onBack }: ArchivedDecksPageProps) {
   const { t } = useTranslation()
   const deckStore = useDeckStoreApi()
@@ -48,7 +45,6 @@ export function ArchivedDecksPage({ onBack }: ArchivedDecksPageProps) {
   const cardsReady = useCardStore(selectCardsReady)
   const ready = decksReady && cardsReady
 
-  // Only top-level archived decks surface here — a subdeck rides with its (restorable) parent.
   const archived = useMemo(
     () =>
       decks

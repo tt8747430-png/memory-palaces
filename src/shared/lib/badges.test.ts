@@ -16,12 +16,11 @@ describe('computeBadges', () => {
     expect(badges.map((b) => b.id)).toEqual(['xp', 'streak', 'decks', 'library', 'cards', 'days'])
     expect(badges.every((b) => b.tier === 0)).toBe(true)
     expect(badges.every((b) => b.current === null)).toBe(true)
-    // The next target is the first threshold while locked.
     expect(badges[0]!.next).toBe(1000)
   })
 
   it('counts reached tiers and tracks current/next thresholds', () => {
-    const [xp] = computeBadges({ ...ZERO, xp: 6000 }) // passes 1000, 2500, 5000
+    const [xp] = computeBadges({ ...ZERO, xp: 6000 })
     expect(xp!.tier).toBe(3)
     expect(xp!.current).toBe(5000)
     expect(xp!.next).toBe(10000)
@@ -37,7 +36,7 @@ describe('computeBadges', () => {
 
 describe('milestoneProgress', () => {
   it('measures the fraction from the last reached tier to the next', () => {
-    const xp = computeBadges({ ...ZERO, xp: 500 })[0]! // 0 → 1000, halfway
+    const xp = computeBadges({ ...ZERO, xp: 500 })[0]!
     expect(milestoneProgress(xp)).toBeCloseTo(0.5)
   })
 
@@ -49,7 +48,6 @@ describe('milestoneProgress', () => {
 
 describe('nextMilestone', () => {
   it('picks the badge with the most progress toward its next tier', () => {
-    // streak 6/7 (0.857) beats xp 500/1000 (0.5).
     const badges = computeBadges({ ...ZERO, xp: 500, longestStreak: 6 })
     expect(nextMilestone(badges)?.id).toBe('streak')
   })

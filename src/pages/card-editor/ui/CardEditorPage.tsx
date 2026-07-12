@@ -11,20 +11,11 @@ import { type CardData, CardFields } from '@/widgets/content-editor'
 
 export interface CardEditorPageProps {
   deckId: string
-  /** Present in edit mode; omit to create. */
   cardId?: string
   onBack: () => void
-  /** Edit mode: jump to another card in the deck (prev/next) without leaving the editor. The
-   * route navigates with replace, so browsing cards never stacks the back history. */
   onNavigateCard?: (cardId: string) => void
 }
 
-/** Full-screen create/edit for a flashcard — the required front/back pair plus the optional
- * place and peek cues. Creating always saves-and-adds-another (one primary button); the deck
- * grows without leaving the screen, and Back returns to the deck. Editing saves *in place*
- * (the button confirms with "Saved" and you stay), with a pinned prev/next footer to walk the
- * deck's own cards — moving auto-saves a valid change so edits are never lost. `createCard`/
- * `editCard` are the shared write commands the Tutor reuses. */
 export function CardEditorPage({ deckId, cardId, onBack, onNavigateCard }: CardEditorPageProps) {
   const { t } = useTranslation()
   const cardStore = useCardStoreApi()
@@ -40,7 +31,6 @@ export function CardEditorPage({ deckId, cardId, onBack, onNavigateCard }: CardE
   const editing = cardId ? (allCards.find((c) => c.id === cardId) ?? null) : null
   const deck = decks.find((d) => d.id === deckId)
 
-  // The deck's own cards in order — drives the prev/next position.
   const deckCards = useMemo(() => cardsForDeck(allCards, deckId), [allCards, deckId])
   const position = editing ? deckCards.findIndex((c) => c.id === editing.id) : -1
   const prevCard = position > 0 ? deckCards[position - 1] : undefined
@@ -164,8 +154,6 @@ export function CardEditorPage({ deckId, cardId, onBack, onNavigateCard }: CardE
   )
 }
 
-/** The header save button — one shape for both modes. A primary pill that flips green and
- * reads "Saved" for a beat after a write. */
 function SaveButton({
   adding,
   saved,
@@ -203,7 +191,6 @@ function SaveButton({
   )
 }
 
-/** The pinned edit-mode footer: walk the deck's own cards without leaving the editor. */
 function DeckNav({
   position,
   total,

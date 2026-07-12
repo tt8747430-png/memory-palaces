@@ -40,18 +40,10 @@ export interface DeckDetailPageProps {
   onTest?: () => void
   onAddCard: () => void
   onEditCard: (cardId: string) => void
-  /** Open the paste-notes page. */
   onPasteNotes: () => void
-  /** Go to the shared import-review page (after a file has seeded the draft). */
   onReviewImport: () => void
 }
 
-/**
- * The one screen for a deck (route `/decks/:deckId`): a subtree study overview, the practice
- * rows, then **every card in the deck's subtree** in the full content editor (search, sort,
- * filter, select, import/export). Subdecks are navigated from the library tree's `+`
- * disclosure, not from this screen.
- */
 export function DeckDetailPage({
   deckId,
   onBack,

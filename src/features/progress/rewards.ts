@@ -1,7 +1,5 @@
 import type { CompleteSessionOptions } from './complete-session'
 
-/** XP reward tuning, in one place. Study/review scale with effort (clamped so a
- * session can't be farmed); quiz pays per correct answer; match is a flat win. */
 const STUDY_XP_PER_CARD = 6
 const STUDY_XP_MIN = 20
 const STUDY_XP_MAX = 150
@@ -11,28 +9,19 @@ export const XP_MATCH = 60
 
 const clamp = (value: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, value))
 
-/** XP for a finished study/review session, by cards graded. */
 export function studyXp(graded: number): number {
   return clamp(graded * STUDY_XP_PER_CARD, STUDY_XP_MIN, STUDY_XP_MAX)
 }
 
-/** XP for a finished quiz, by correct answers. */
 export function quizXp(score: number): number {
   return Math.max(0, score) * XP_PER_CORRECT
 }
 
-/**
- * What a finished practice session yields, by mode — the single input the reward seam
- * takes. Each surface reports only its own raw result; the xp/items/accuracy math lives
- * in {@link outcomeToReward}, never in the pages.
- */
 export type SessionOutcome =
   | { kind: 'study'; graded: number }
   | { kind: 'quiz'; correct: number; total: number; accuracy: number }
   | { kind: 'match'; pairs: number }
 
-/** Pure map from a finished session to the XP / items / accuracy a reward applies.
- * Exhaustive over `SessionOutcome.kind` — a new mode won't compile until it's handled. */
 export function outcomeToReward(
   outcome: SessionOutcome,
 ): Omit<CompleteSessionOptions, 'dailyGoal'> {

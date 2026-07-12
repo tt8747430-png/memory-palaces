@@ -85,11 +85,8 @@ import { MoveDeckSheet } from './MoveDeckSheet'
 
 export interface DeckLibraryPageProps {
   onOpenDeck: (deckId: string) => void
-  /** Open a deck's settings (from its swipe/kebab menu). */
   onOpenDeckSettings?: (deckId: string) => void
-  /** Library "Import" → paste: open the new-deck paste screen (names the deck inline). */
   onImportPaste?: () => void
-  /** Library "Import" → file: after a file is parsed into a new deck, go to its review page. */
   onReviewDeck?: (deckId: string) => void
   onOpenProfile?: () => void
   onOpenNotifications?: () => void
@@ -99,21 +96,14 @@ export interface DeckLibraryPageProps {
 
 const noop = () => {}
 
-/** Tidy a picked file's name into a deck name: drop the extension, soften separators. */
 function deckNameFromFile(name: string): string {
   return name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').trim() || 'Imported'
 }
 
-/** Which named-create sheet is open, and its target container. */
 type CreatePrompt =
   | { kind: 'deck'; folderId: string | null }
   | { kind: 'subdeck'; parentId: string; parentName: string }
 
-/** The Home library (route `/`): the home header — greeting, level + XP, streak, notifications,
- * archive — over a browse of the root: folder rows and top-level decks together, or a single
- * folder's decks when one is open. Every row carries swipe + long-press actions (no kebab); the
- * create toolbar adapts to the surface and hides on an empty view; creating a deck, subdeck, or
- * folder opens a named sheet; destructive actions confirm. */
 export function DeckLibraryPage({
   onOpenDeck,
   onOpenDeckSettings,
@@ -182,7 +172,6 @@ export function DeckLibraryPage({
       return next
     })
 
-  // Sheets + dialogs.
   const [createPrompt, setCreatePrompt] = useState<CreatePrompt | null>(null)
   const [importOpen, setImportOpen] = useState(false)
   const [folderSheetTarget, setFolderSheetTarget] = useState<Folder | null | undefined>(undefined)
@@ -209,7 +198,6 @@ export function DeckLibraryPage({
     : undefined
   const movingDeck = moveTarget ? deckById(moveTarget) : undefined
 
-  // Content presence, per view — drives the empty state.
   const rootDeckCount = useMemo(
     () => decks.filter((d) => d.parentId === null && d.folderId === null && !d.archived).length,
     [decks],
@@ -218,7 +206,6 @@ export function DeckLibraryPage({
     () => decks.filter((d) => d.parentId === null && d.folderId === folderId && !d.archived).length,
     [decks, folderId],
   )
-  // Top-level deck count per folder, for the folder row's "N decks" meta line.
   const folderDeckCounts = useMemo(() => {
     const counts = new Map<string, number>()
     for (const d of decks) {
@@ -231,7 +218,6 @@ export function DeckLibraryPage({
   const rootEmpty = sortedFolders.length === 0 && rootDeckCount === 0
   const isEmpty = inFolder ? folderDeckCount === 0 : rootEmpty
 
-  // Pre-fill the create sheet with the next free "New Deck N" / "New Subdeck N" for its container.
   const defaultCreateName = useMemo(() => {
     if (!createPrompt) return ''
     if (createPrompt.kind === 'subdeck') {
@@ -244,7 +230,6 @@ export function DeckLibraryPage({
     return nextDefaultName(t('deck.baseDeckName'), siblings)
   }, [createPrompt, decks, t])
 
-  // Commands.
   const submitCreate = (value: string) => {
     if (!createPrompt) return
     if (createPrompt.kind === 'subdeck') {
@@ -255,8 +240,6 @@ export function DeckLibraryPage({
     void createDeck(deckStore, { name: value, folderId: createPrompt.folderId })
   }
 
-  // A picked Anki/CSV file becomes a brand-new deck (named from the file), then its cards go
-  // to the shared review page — nothing is written until the user confirms there.
   const onImportFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     event.target.value = ''
@@ -285,7 +268,7 @@ export function DeckLibraryPage({
       void editFolder(folderStore, folderSheetTarget, changes)
     } else {
       void createFolder(folderStore, changes)
-      if (inFolder) setFolderId(null) // folders live at root; reveal the new one
+      if (inFolder) setFolderId(null)
     }
     setFolderSheetTarget(undefined)
   }
@@ -339,7 +322,6 @@ export function DeckLibraryPage({
     setPendingDeleteFolder(null)
   }
 
-  // The one action set a deck row offers, shared by its kebab, long-press sheet, and swipe.
   const deckActions = (deck: Deck): SheetAction[] => [
     {
       id: 'add-subdeck',
@@ -534,9 +516,6 @@ export function DeckLibraryPage({
         </div>
       )}
 
-      {/* The create toolbar adapts to the surface: hidden on an empty view (the empty state owns
-          the create action), a single "Add deck" inside a folder (no misleading "New folder"
-          there), and the full deck-or-folder dial at the root. */}
       {!isEmpty ? (
         <SpeedDial
           label={t('deck.create')}
@@ -571,7 +550,6 @@ export function DeckLibraryPage({
         />
       ) : null}
 
-      {/* The open folder's own menu, from the header ⋮ — settings, add a deck, delete. */}
       <ActionSheet
         open={folderMenuOpen}
         onOpenChange={setFolderMenuOpen}
@@ -598,7 +576,6 @@ export function DeckLibraryPage({
         onSubmit={submitCreate}
       />
 
-      {/* Library import: bring content in as a new deck — paste (names it inline) or a file. */}
       <Sheet
         open={importOpen}
         onOpenChange={setImportOpen}
@@ -699,7 +676,6 @@ export function DeckLibraryPage({
 
 interface FolderRowProps {
   folder: Folder
-  /** Top-level decks filed in this folder, for the "N decks" meta line. */
   deckCount: number
   onOpen: () => void
   actions: SheetAction[]
@@ -707,8 +683,6 @@ interface FolderRowProps {
   swipeHandlers: SwipeActionHandlers
 }
 
-/** A folder row on the library root: its coloured glyph, name, and deck count, a chevron to
- * drill in, and its gesture kit — swipe (edit/delete) and long-press (the full action sheet). */
 function FolderRow({ folder, deckCount, onOpen, actions, swipe, swipeHandlers }: FolderRowProps) {
   const { t } = useTranslation()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -768,8 +742,6 @@ function FolderRow({ folder, deckCount, onOpen, actions, swipe, swipeHandlers }:
   )
 }
 
-/** Hydration skeleton: a few pulsing rows so the list has structure before RxDB resolves,
- * instead of a bare spinner. */
 function LibrarySkeleton() {
   return (
     <div className="space-y-1 pt-2" aria-hidden>

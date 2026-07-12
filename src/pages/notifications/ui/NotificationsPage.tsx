@@ -16,13 +16,9 @@ import { NotificationsPanel } from '@/widgets/notifications-panel'
 import { AppScreen, OverflowMenuButton, ScreenHeader, type SheetAction } from '@/shared/ui'
 
 export interface NotificationsPageProps {
-  /** Provided by the route wrapper so the page stays router-free. */
   onBack?: () => void
 }
 
-/** Notification history — the in-app log of milestones (level-ups, streaks, best
- * quizzes), distinct from the transient toasts. Opening the page counts as seeing
- * them, so the unread badge clears once they've loaded. */
 export function NotificationsPage({ onBack }: NotificationsPageProps = {}) {
   const { t } = useTranslation()
   const store = useNotificationStoreApi()

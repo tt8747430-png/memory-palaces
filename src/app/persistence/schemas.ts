@@ -8,12 +8,6 @@ import type { Preferences } from '@/entities/preferences'
 import type { Profile } from '@/entities/profile'
 import type { AppNotification } from '@/entities/notification'
 
-/**
- * A deck is a self-referential tree node: `parentId` points at its parent deck (subdeck) or is
- * null (top-level, optionally filed via `folderId`). `settings` holds only overrides — every
- * inner field is optional and inherits up the tree (ADR-0002). No secondary indexes: like the
- * other collections, the store observes the whole set and filters in memory.
- */
 export const deckSchema: RxJsonSchema<Deck> = {
   version: 0,
   primaryKey: 'id',
@@ -211,8 +205,6 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
       additionalProperties: false,
     },
     flashcardSwipe: {
-      // One four-direction map per study mode. Inner shape validated at the entity layer
-      // (`normalizeFlashcardSwipe`), like the list-row `swipe` field above.
       type: 'object',
       properties: {
         blur: { type: 'object' },

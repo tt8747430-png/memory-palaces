@@ -1,11 +1,5 @@
 import type { Identifiable, Repository, Unsubscribe } from './base-repository'
 
-/**
- * In-memory adapter for the generic {@link Repository} port. Map-backed, fully
- * synchronous under the hood but Promise-returning to match the async ports the
- * RxDB/Supabase adapters will expose (Liskov: it must pass the same contract).
- * Backs unit tests and the offline-first walking skeleton until RxDB lands (Phase 3).
- */
 export class InMemoryRepository<T extends Identifiable> implements Repository<T> {
   private readonly store = new Map<string, T>()
   private readonly listeners = new Set<(entities: T[]) => void>()

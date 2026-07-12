@@ -9,7 +9,6 @@ export interface ResetEverythingStores extends ContentStores {
   notificationStore: NotificationStore
 }
 
-/** Command — the full wipe: all content, progress, and notification history. */
 export async function resetEverything(
   stores: ResetEverythingStores,
   now: number = Date.now(),

@@ -9,13 +9,9 @@ export interface FolderFormProps {
   onNameChange: (value: string) => void
   onColorChange: (value: string) => void
   onIconChange: (value: string) => void
-  /** Autofocus the name field on mount (create flow only). */
   autoFocusName?: boolean
 }
 
-/** A folder's identity fields — name plus the shared icon-and-colour row. Stateless: the
- * caller owns the values and persistence, so the create sheet and the settings sheet share
- * one form. The icon comes from the device keyboard, the colour from the shared brand palette. */
 export function FolderForm({
   name,
   color,
