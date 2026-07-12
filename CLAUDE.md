@@ -11,6 +11,12 @@ Installed skills carry detailed, version-aware guidance — apply the relevant o
 - **`vercel-react-view-transitions`** — native route/shared-element transitions; optional, needs `react@canary` → §9.
 - **Not applicable — this is a web PWA, not React Native:** `react-native-best-practices`, `vercel-react-native-skills`, and the RN/Flutter parts of `mobile-design`.
 
+**Before building anything non-trivial, stress-test the plan/design** with a grilling skill (suggest it; the user runs it):
+
+- **`/grill-me`** — a relentless interview to sharpen a plan or design before writing code.
+- **`/grill-with-docs`** — same relentless interview, but captures decisions as ADRs and updates the glossary ([`docs/UBIQUITOUS_LANGUAGE.md`](docs/UBIQUITOUS_LANGUAGE.md)) as it goes.
+- **`grilling`** — the auto-invocable variant; triggers on "grill" phrases when the user wants to pressure-test a plan.
+
 More generally: when a task matches an installed skill (deploy, testing, debugging, design/UX review…), invoke it rather than guessing.
 
 ## Commands
@@ -62,6 +68,7 @@ Domain logic lives here (all unit-tested), not in components: `srs.ts` (spaced r
 
 - **Code-level style rules live in [`docs/CODE_STYLE.md`](docs/CODE_STYLE.md)** — read it before writing UI: small single-responsibility components, logic in hooks, complex state as reducers/machines, composition over boolean props, `cn()` for classes, semantic tokens only (no raw hex / no per-component `dark:`), narrow store subscriptions + `Promise.all` for independent async, and React performance/build rules.
 - **Mobile & PWA behavior rules live in [`docs/MOBILE_DESIGN.md`](docs/MOBILE_DESIGN.md)** — responsive 430px-column layout, touch targets/thumb-zone, gestures + haptics, sheets/menus/overlays (`@base-ui`), animation feel, interactivity, visual hierarchy, safe areas, offline-first, and install/service-worker-update caveats.
+- **Domain vocabulary lives in [`docs/UBIQUITOUS_LANGUAGE.md`](docs/UBIQUITOUS_LANGUAGE.md)** — use these canonical terms (Deck, Card, Question, Review, Study session, Learner…) in code, UI copy, and commits. It flags overloaded terms: "session" = auth (Guest/Account), never a study pass; `known` (SRS status) ≠ Memorized (manual flag); no "palace/room/locus" (we ship Deck/Card/Question).
 - Strict TS with `noUncheckedIndexedAccess`, `noUnusedLocals/Parameters`, `verbatimModuleSyntax` + `isolatedModules` → use `import type` for type-only imports.
 - Tests are colocated as `*.test.ts(x)`; Vitest + jsdom, **`globals: false`** (import `describe/it/expect` from `vitest`), `fake-indexeddb` and setup at `src/shared/test/setup.ts`.
 - Prettier: no semicolons, single quotes, trailing-comma `all`, printWidth 100.
