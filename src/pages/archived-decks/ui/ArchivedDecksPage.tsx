@@ -45,13 +45,17 @@ export function ArchivedDecksPage({ onBack }: ArchivedDecksPageProps) {
   const cardsReady = useCardStore(selectCardsReady)
   const ready = decksReady && cardsReady
 
-  const archived = useMemo(
-    () =>
-      decks
-        .filter((deck) => deck.archived && deck.parentId === null)
-        .sort((a, b) => a.order - b.order),
-    [decks],
-  )
+  // The top of each archived branch: an archived deck whose parent isn't also
+  // archived (a whole subtree archives together, so only its root shows here).
+  const archived = useMemo(() => {
+    const archivedIds = new Set(decks.filter((d) => d.archived).map((d) => d.id))
+    return decks
+      .filter(
+        (deck) =>
+          deck.archived && (deck.parentId === null || !archivedIds.has(deck.parentId)),
+      )
+      .sort((a, b) => a.order - b.order)
+  }, [decks])
 
   const [pendingDelete, setPendingDelete] = useState<string | null>(null)
   const pendingDeck = archived.find((deck) => deck.id === pendingDelete)

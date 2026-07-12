@@ -7,14 +7,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import {
-  animate,
-  motion,
-  type MotionValue,
-  useMotionValue,
-  useReducedMotion,
-  useTransform,
-} from 'motion/react'
+import { animate, motion, useMotionValue, useReducedMotion, useTransform } from 'motion/react'
 import { type SwipeAccent, SWIPE_ACCENT } from '@/shared/config/swipe'
 import { cn, impact } from '@/shared/lib'
 
@@ -34,14 +27,20 @@ export interface SwipeRowProps {
   trailing?: SwipeAction[]
   disabled?: boolean
   className?: string
-  /** Break out of the app's `px-5` column so the action tray runs edge-to-edge.
-   *  The resting row content is padded back in, so only the swipe reveal bleeds. */
+  /** Break out of the app's `px-5` column so the tray can sit against the row's
+   *  resting edge. The reveal bleeds; the circular actions are padded back in by
+   *  `EDGE_INSET` so they line up with where the row content was. */
   bleed?: boolean
 }
 
 const AXIS_LOCK = 8
-const ACTION_WIDTH = 88
-const COMMIT_GAP = 72
+/** Horizontal space each circular action reveals. */
+const ACTION_WIDTH = 60
+/** Extra swipe past the tray width before a release commits the edge action. */
+const COMMIT_GAP = 64
+/** Matches the app column's `px-5`, so the tray's outer circle lands where the
+ *  row content sat before the swipe (only meaningful when `bleed`). */
+const EDGE_INSET = 20
 
 const SETTLE_SPRING = { type: 'spring', stiffness: 540, damping: 40 } as const
 const ARM_SPRING = { type: 'spring', stiffness: 460, damping: 34 } as const
@@ -65,43 +64,14 @@ export function SwipeRow({
 
   const hasLeading = leading.length > 0
   const hasTrailing = trailing.length > 0
-  const leadingWidth = leading.length * ACTION_WIDTH
-  const trailingWidth = trailing.length * ACTION_WIDTH
+  const inset = bleed ? EDGE_INSET : 0
+  const leadingWidth = hasLeading ? leading.length * ACTION_WIDTH + inset : 0
+  const trailingWidth = hasTrailing ? trailing.length * ACTION_WIDTH + inset : 0
   const leadingCommit = leadingWidth + COMMIT_GAP
   const trailingCommit = trailingWidth + COMMIT_GAP
 
   const leadingOpacity = useTransform(x, (v) => (v > 0 ? 1 : 0))
   const trailingOpacity = useTransform(x, (v) => (v < 0 ? 1 : 0))
-
-  const leadingArm = useMotionValue(0)
-  const trailingArm = useMotionValue(0)
-  useEffect(() => {
-    const target = armed === 'leading' ? 1 : 0
-    if (reduce) {
-      leadingArm.set(target)
-      return
-    }
-    const controls = animate(leadingArm, target, ARM_SPRING)
-    return () => controls.stop()
-  }, [armed, reduce, leadingArm])
-  useEffect(() => {
-    const target = armed === 'trailing' ? 1 : 0
-    if (reduce) {
-      trailingArm.set(target)
-      return
-    }
-    const controls = animate(trailingArm, target, ARM_SPRING)
-    return () => controls.stop()
-  }, [armed, reduce, trailingArm])
-
-  const leadingEdgeFill = useTransform([x, leadingArm], ([v, arm]: number[]) => {
-    const siblings = Math.max(0, leading.length - 1) * ACTION_WIDTH
-    return Math.max(ACTION_WIDTH, Math.max(0, v!) - siblings * (1 - arm!))
-  })
-  const trailingEdgeFill = useTransform([x, trailingArm], ([v, arm]: number[]) => {
-    const siblings = Math.max(0, trailing.length - 1) * ACTION_WIDTH
-    return Math.max(ACTION_WIDTH, Math.max(0, -v!) - siblings * (1 - arm!))
-  })
 
   const drag = useRef<{
     startX: number
@@ -260,7 +230,7 @@ export function SwipeRow({
     <div
       ref={rootRef}
       className={cn(
-        'relative isolate overflow-x-clip [overflow-clip-margin:16px]',
+        'relative isolate overflow-x-clip [overflow-clip-margin:24px]',
         bleed && '-mx-5',
         className,
       )}
@@ -269,25 +239,19 @@ export function SwipeRow({
         <motion.div
           aria-hidden
           style={{ opacity: leadingOpacity }}
-          className="absolute inset-y-0 left-0 -z-10 flex w-full justify-start overflow-hidden"
-        >
-          {leading.map((action, index) =>
-            index === 0 ? (
-              <TrayButton
-                key={action.id}
-                action={action}
-                fillWidth={leadingEdgeFill}
-                onFire={() => fireFromTray(action)}
-              />
-            ) : (
-              <TrayButton
-                key={action.id}
-                action={action}
-                collapsed={armed === 'leading'}
-                onFire={() => fireFromTray(action)}
-              />
-            ),
+          className={cn(
+            'absolute inset-y-0 left-0 -z-10 flex w-full items-center justify-start',
+            bleed && 'pl-5',
           )}
+        >
+          {leading.map((action, index) => (
+            <TrayButton
+              key={action.id}
+              action={action}
+              armed={armed === 'leading' && index === 0}
+              onFire={() => fireFromTray(action)}
+            />
+          ))}
         </motion.div>
       ) : null}
 
@@ -295,25 +259,19 @@ export function SwipeRow({
         <motion.div
           aria-hidden
           style={{ opacity: trailingOpacity }}
-          className="absolute inset-y-0 right-0 -z-10 flex w-full justify-end overflow-hidden"
-        >
-          {trailing.map((action, index) =>
-            index === trailing.length - 1 ? (
-              <TrayButton
-                key={action.id}
-                action={action}
-                fillWidth={trailingEdgeFill}
-                onFire={() => fireFromTray(action)}
-              />
-            ) : (
-              <TrayButton
-                key={action.id}
-                action={action}
-                collapsed={armed === 'trailing'}
-                onFire={() => fireFromTray(action)}
-              />
-            ),
+          className={cn(
+            'absolute inset-y-0 right-0 -z-10 flex w-full items-center justify-end',
+            bleed && 'pr-5',
           )}
+        >
+          {trailing.map((action, index) => (
+            <TrayButton
+              key={action.id}
+              action={action}
+              armed={armed === 'trailing' && index === trailing.length - 1}
+              onFire={() => fireFromTray(action)}
+            />
+          ))}
         </motion.div>
       ) : null}
 
@@ -334,45 +292,38 @@ export function SwipeRow({
 
 function TrayButton({
   action,
-  fillWidth,
-  collapsed = false,
+  armed = false,
   onFire,
 }: {
   action: SwipeAction
-  fillWidth?: MotionValue<number>
-  collapsed?: boolean
+  armed?: boolean
   onFire: () => void
 }) {
   const reduce = useReducedMotion()
-  const isEdge = fillWidth !== undefined
   const accent = SWIPE_ACCENT[action.accent ?? 'slate']
   return (
-    <motion.button
+    <button
       type="button"
       tabIndex={-1}
       aria-label={action.label}
       onClick={onFire}
-      style={isEdge ? { width: fillWidth } : undefined}
-      animate={
-        isEdge
-          ? { opacity: 1 }
-          : { width: collapsed ? 0 : ACTION_WIDTH, opacity: collapsed ? 0 : 1 }
-      }
-      transition={reduce ? { duration: 0 } : ARM_SPRING}
-      className="h-full max-w-full shrink-0 overflow-hidden p-1"
+      style={{ width: ACTION_WIDTH }}
+      className="grid h-full shrink-0 place-items-center"
     >
-      {/* Icon-only: the accent + glyph carry the meaning; the label lives on
-          aria-label, so the tray stays calm and uncluttered. */}
-      <span
+      {/* A small floating circle — the accent + glyph carry the meaning; the
+          label lives on aria-label so the tray stays compact and calm. */}
+      <motion.span
+        animate={{ scale: armed ? 1.14 : 1 }}
+        transition={reduce ? { duration: 0 } : ARM_SPRING}
+        style={{ backgroundColor: accent.fill }}
         className={cn(
-          'grid size-full place-items-center rounded-[20px] px-2 [&_svg]:size-6',
+          'grid size-11 place-items-center rounded-full shadow-interactive [&_svg]:size-5',
           'transition-[filter] active:brightness-95',
           accent.ink === 'dark' ? 'text-(--p-navy-900)' : 'text-white',
         )}
-        style={{ backgroundColor: accent.fill }}
       >
         {action.icon}
-      </span>
-    </motion.button>
+      </motion.span>
+    </button>
   )
 }

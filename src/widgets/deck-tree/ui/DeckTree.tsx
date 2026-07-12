@@ -152,7 +152,8 @@ function DeckTreeNode({
 }: NodeProps) {
   const { t } = useTranslation()
   const reduce = useReducedMotion()
-  const children = childDecks(decks, deck.id)
+  // Archived subdecks live in the Archive, not the tree.
+  const children = childDecks(decks, deck.id).filter((d) => !d.archived)
   const hasChildren = children.length > 0
   const isOpen = expanded.has(deck.id)
   const isSub = depth > 0

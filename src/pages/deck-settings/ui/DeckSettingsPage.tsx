@@ -154,7 +154,7 @@ export function DeckSettingsPage({ deckId, onBack, onDeleted }: DeckSettingsPage
             label={t('deckSettings.duplicate')}
             description={t('deckSettings.duplicateHint')}
             onClick={() => {
-              void duplicateDeck(deckStore, deckId)
+              void duplicateDeck(deckStore, cardStore, deckId)
               toast.success(t('deckSettings.toast.duplicated'))
             }}
           />

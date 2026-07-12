@@ -352,7 +352,7 @@ export function DeckLibraryPage({
   }
 
   const duplicate = (deck: Deck) => {
-    void duplicateDeck(deckStore, deck.id)
+    void duplicateDeck(deckStore, cardStore, deck.id)
     toast.success(t('deck.duplicatedToast', { name: deck.name }))
   }
 
