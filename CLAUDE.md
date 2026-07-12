@@ -19,6 +19,20 @@ Installed skills carry detailed, version-aware guidance — apply the relevant o
 
 More generally: when a task matches an installed skill (deploy, testing, debugging, design/UX review…), invoke it rather than guessing.
 
+## How to approach each kind of change
+
+Build elegant, high-performance, deeply intuitive solutions. Two principles govern every change:
+
+- **Zero legacy — no backwards compatibility in _code_.** Target modern runtimes and the latest stable versions of our deps (React 19, Vite, Tailwind v4, TanStack Router). Don't add polyfills, fallback branches, or deprecated APIs; don't keep dead compatibility shims alive. **The one exception is persisted data:** RxDB schemas and anything already written to a user's device _do_ need real backwards compatibility — evolve them with RxDB schema migrations (`app/persistence/schemas.ts`), never a silent breaking change that orphans stored decks/cards/reviews.
+- **Optimal over overengineered.** Prefer the simplest execution that scales. Clean, readable, maintainable beats clever. Avoid premature abstraction, deep nesting, and unnecessary third-party deps. A lone toggle stays a `useState`; reach for a reducer/machine only when state actually earns it (`docs/CODE_STYLE.md` §3).
+
+Then apply the rule for the kind of work:
+
+- **Refactoring — ruthless, but behavior-preserving.** Rip out legacy patterns, unused boilerplate, and outdated infrastructure; adapt everything to the current architecture (FSD layers, entity stores, feature commands). Decompose monoliths into single-responsibility pieces (§1) rather than leaving 500-line components. Constraints: keep tests green, don't silently widen scope, and don't touch persisted schemas/data without a migration. Confirm before large deletions you didn't author.
+- **Writing new code — match the slice shape, don't invent one.** Place code by FSD layer (`app → pages → widgets → features → entities → shared`); copy the shape of the nearest existing slice. **Writes** go through a feature command, **reads** through selectors/hooks, **pure logic** into `shared/lib` or `entities/*/model` with colocated tests. Cross-slice imports only through `index.ts` barrels.
+- **Design quality — make it feel premium and intentional.** Every surface handles all its states — loading, error, empty, **and offline** — not just the happy path. Micro-interactions, spacing, and motion communicate state/relationship, never decorate; honor `prefers-reduced-motion` and safe areas. Semantic tokens only (no raw hex, no per-component `dark:`). Follow `docs/CODE_STYLE.md` §5 (Tailwind) & §9 (animation) and `docs/MOBILE_DESIGN.md`.
+- **Completeness — ship fully realized code.** No placeholders, no truncated `// ...`, no "implement later" stubs unless explicitly requested. Wire the whole path end-to-end: feature command + store, i18n keys in `shared/i18n/locales/en.ts`, barrel exports, and the states above. Then verify — `npm run typecheck && npm run lint && npm run test` — before claiming it's done.
+
 ## Commands
 
 - `npm run dev` — Vite dev server
@@ -72,3 +86,17 @@ Domain logic lives here (all unit-tested), not in components: `srs.ts` (spaced r
 - Strict TS with `noUncheckedIndexedAccess`, `noUnusedLocals/Parameters`, `verbatimModuleSyntax` + `isolatedModules` → use `import type` for type-only imports.
 - Tests are colocated as `*.test.ts(x)`; Vitest + jsdom, **`globals: false`** (import `describe/it/expect` from `vitest`), `fake-indexeddb` and setup at `src/shared/test/setup.ts`.
 - Prettier: no semicolons, single quotes, trailing-comma `all`, printWidth 100.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs live as local markdown under `.scratch/<feature-slug>/`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default canonical labels — `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context — `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.

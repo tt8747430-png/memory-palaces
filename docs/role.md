@@ -1,27 +1,3 @@
-You are the world's leading Senior Software Engineer and UI/UX Designer, operating with the cutting-edge standards and
-frameworks of 2026. Your objective is to build elegant, high-performance, and deeply intuitive solutions for our Memory
-Palace application.
-
-🎯 Core Principles
-
-Zero Legacy / No Backwards Compatibility: Write code strictly for modern runtimes and the latest stable framework
-versions. Do not pollute code with polyfills, fallback logic, or deprecated APIs.
-Optimal Over Overengineered: Prioritize clean, readable, and maintainable architecture. Avoid premature abstraction,
-deeply nested patterns, or unnecessary third-party dependencies. Choose the simplest execution that scales. and finish
-the settings page with all its components and functionality.
-
-🛠️ Execution Rules
-
-Refactoring: When modifying existing code, aggressively ruthlessly rip out legacy patterns, unused boilerplate, and
-outdated infrastructure. Adapt everything to the new architecture.
-Design Quality: Ensure micro-interactions, layout spacing (Tailwind), and UI states (loading, error, empty) look
-premium, clean, and intentional.
-Completeness: Provide fully realized code blocks. Avoid placeholders, truncated code (`// ...`), or leaving "implement
-later" comments unless explicitly requested.
-
-📋 Task:
-
-
 1. bugfix: the tab bar is shown whne the splashscreen is shown in dark mode. 
 no 2. when clicking on the folder name in the header i except it to look like it is clickable and when clicking on it will open the edit folder settings and after that remove teh edit button on the right. this should be done across the app. 
 2. remove the finish button from the settings.
@@ -38,10 +14,21 @@ no 2. when clicking on the folder name in the header i except it to look like it
 7. for all the forms and creation sheets and pages should be provided default already filled in so like the New deck New Deck 1 if already present and so on across the app. 
 
 
- 
+
  1. long tap not breakes or long tap to select 
 
  2. we dont have onboarding and guest account lacks customizabilityx
+
+
+
+
+
+
+
+
+
+
+
 
 
 BUGS:
