@@ -17,7 +17,6 @@ export { nextOrder, resequence } from './order'
 export {
   ContentImportError,
   contentSlug,
-  deckContentToJson,
   cardsToCsv,
   questionsToCsv,
   cardsToAnkiTsv,
@@ -27,17 +26,14 @@ export {
   parseVerses,
   parseVerseChapters,
   parseDeckContent,
-  parseMindscapeDeck,
-  deckTreeToJson,
-  parseDeckTreeContent,
+  detectPasteFormat,
+  guessFieldSeparator,
   stripHtml,
   type ParsedCard,
   type ParsedQuestion,
   type NoteDelimiters,
+  type PasteFormat,
   type DeckContentData,
-  type ImportedDeck,
-  type DeckTreeMeta,
-  type DeckTreeContentData,
   type VerseChapter,
 } from './content-transfer'
 export { speak, cancelSpeech, speechAvailable } from './speech'
@@ -109,6 +105,7 @@ export {
   type RecallTypingResult,
 } from './recall'
 export { studyOverview, type StudyOverview } from './study-overview'
+export { nextDefaultName } from './naming'
 export {
   childDecks,
   rootDecks,

@@ -38,7 +38,6 @@ function renderEditor({
               >
                 <DeckContentEditor
                   deckId="d1"
-                  deckName="Garden"
                   selectMode={false}
                   onSelectModeChange={() => {}}
                   sort="manual"

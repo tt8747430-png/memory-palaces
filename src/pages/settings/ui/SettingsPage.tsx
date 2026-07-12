@@ -1,10 +1,9 @@
-import { type ChangeEvent, useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   ArrowLeftRight,
   Bell,
   ChevronRight,
-  Download,
   Globe,
   HelpCircle,
   Info,
@@ -17,8 +16,6 @@ import {
   Sparkles,
   Sun,
   Target,
-  Trash2,
-  Upload,
   Vibrate,
   Volume2,
 } from 'lucide-react'
@@ -53,12 +50,8 @@ export interface SettingsPageProps {
   onPrivacy?: () => void
   /** Open the swipe-actions screen (re-map list-row swipe gestures). */
   onSwipe?: () => void
-  /** Open the destructive Clear data screen. */
-  onClearData?: () => void
   onHelp?: () => void
   onAbout?: () => void
-  onExport?: () => void
-  onImportFile?: (file: File) => void
   onSignIn?: () => void
   /** Sign out and return to login (the route owns auth + navigation). Confirmed here. */
   onLogout?: () => void
@@ -67,20 +60,17 @@ export interface SettingsPageProps {
 }
 
 /** Settings hub — a profile hero (which opens the consolidated Profile screen) over
- * grouped sections: preferences, privacy, data, and support, then Log out at the
- * bottom. Preference toggles persist immediately; navigation, export, and import are
- * handled by the route wrapper. Guests get a sign-in CTA instead of logout; account
- * editing (email, password, phone, delete) lives on the Profile screen. */
+ * grouped sections: preferences, privacy, and support, then Log out at the bottom.
+ * Preference toggles persist immediately; navigation is handled by the route wrapper.
+ * Guests get a sign-in CTA instead of logout; account editing (email, password, phone,
+ * delete) lives on the Profile screen. */
 export function SettingsPage({
   onBack,
   onEditProfile,
   onPrivacy,
   onSwipe,
-  onClearData,
   onHelp,
   onAbout,
-  onExport,
-  onImportFile,
   onSignIn,
   onLogout,
   sessionKind = 'account',
@@ -90,7 +80,6 @@ export function SettingsPage({
   const prefs = usePreferencesStore(selectEffectivePreferences)
   const profileStore = useProfileStoreApi()
   const profile = useProfileStore(selectEffectiveProfile)
-  const importInputRef = useRef<HTMLInputElement>(null)
   const [logoutOpen, setLogoutOpen] = useState(false)
 
   useEffect(() => {
@@ -133,12 +122,6 @@ export function SettingsPage({
     label: language.label,
     icon: <Globe className="size-[18px]" aria-hidden />,
   }))
-
-  const handleImport = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) onImportFile?.(file)
-    event.target.value = ''
-  }
 
   return (
     <AppScreen
@@ -265,31 +248,6 @@ export function SettingsPage({
           />
         </SettingsSection>
 
-        <SettingsSection title={t('settings.dataSection')}>
-          <SettingsRow
-            kind="nav"
-            icon={<Download />}
-            label={t('settings.exportProgress')}
-            description={t('settings.exportProgressHint')}
-            onClick={() => onExport?.()}
-          />
-          <SettingsRow
-            kind="nav"
-            icon={<Upload />}
-            label={t('settings.importProgress')}
-            description={t('settings.importProgressHint')}
-            onClick={() => importInputRef.current?.click()}
-          />
-          <SettingsRow
-            kind="nav"
-            tone="danger"
-            icon={<Trash2 />}
-            label={t('settings.clearData')}
-            description={t('settings.clearDataHint')}
-            onClick={() => onClearData?.()}
-          />
-        </SettingsSection>
-
         <SettingsSection title={t('settings.supportSection')}>
           <SettingsRow
             kind="nav"
@@ -317,14 +275,6 @@ export function SettingsPage({
           </SettingsSection>
         )}
       </div>
-
-      <input
-        ref={importInputRef}
-        type="file"
-        accept="application/json,.json"
-        className="hidden"
-        onChange={handleImport}
-      />
 
       <ConfirmDialog
         open={logoutOpen}

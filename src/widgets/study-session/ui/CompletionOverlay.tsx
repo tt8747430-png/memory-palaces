@@ -4,8 +4,6 @@ import { Check, RotateCcw, Sparkles } from 'lucide-react'
 import { Button } from '@/shared/ui'
 import type { SessionSummary } from '../model/types'
 
-/** Shown when the queue empties: a calm confirmation with the session tally. XP and
- * streak land in Phase 8 (the progress entity); for now it celebrates the finish. */
 export function CompletionOverlay({
   summary,
   onDone,
@@ -23,13 +21,13 @@ export function CompletionOverlay({
       exit={{ opacity: 0 }}
       className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-card-glass px-6 text-center"
     >
-      <div className="mb-3 grid size-24 place-items-center rounded-full bg-[var(--success-surface)]">
-        <Check className="size-12 text-[var(--success-on-surface)]" aria-hidden />
+      <div className="mb-3 grid size-24 place-items-center rounded-full bg-(--success-surface)">
+        <Check className="size-12 text-(--success-on-surface)" aria-hidden />
       </div>
-      <h2 className="text-[length:var(--p-text-headline)] font-bold text-heading">
+      <h2 className="text-(length:--p-text-headline) font-bold text-heading">
         {t('study.complete')}
       </h2>
-      <p className="inline-flex items-center gap-2 text-[length:var(--p-text-sub)] font-semibold text-[var(--success-foreground)]">
+      <p className="inline-flex items-center gap-2 text-(length:--p-text-sub) font-semibold text-(--success-foreground)">
         <Sparkles className="size-4" aria-hidden />
         {t(summary.graded === 1 ? 'study.cardsReviewedOne' : 'study.cardsReviewedOther', {
           count: summary.graded,
@@ -37,11 +35,11 @@ export function CompletionOverlay({
       </p>
       {total > 0 && (
         <div className="mt-2 flex items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--success-surface)] px-3 py-1.5 text-[length:var(--p-text-label)] font-semibold text-[var(--success-on-surface)]">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-(--success-surface) px-3 py-1.5 text-(length:--p-text-label) font-semibold text-(--success-on-surface)">
             <Check className="size-4" aria-hidden />
             {summary.known} {t('study.known')}
           </span>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--warning-surface)] px-3 py-1.5 text-[length:var(--p-text-label)] font-semibold text-[var(--warning-foreground)]">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-(--warning-surface) px-3 py-1.5 text-(length:--p-text-label) font-semibold text-(--warning-foreground)">
             <RotateCcw className="size-4" aria-hidden />
             {summary.learning} {t('study.stillLearning')}
           </span>

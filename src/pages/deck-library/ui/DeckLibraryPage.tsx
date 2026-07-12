@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
+import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import {
   Archive,
   ChevronLeft,
   ChevronRight,
+  ClipboardPaste,
   Copy,
+  FileText,
   FolderInput,
   FolderPlus,
   Heart,
@@ -55,9 +57,11 @@ import {
   toggleDeckFavorite,
 } from '@/features/deck'
 import { createFolder, deleteFolder, editFolder } from '@/features/folder'
+import { readAnkiFile } from '@/features/content'
 import { DeckTree } from '@/widgets/deck-tree'
 import { HomeHeader } from '@/widgets/home-header'
-import { cn, dayKey, useLongPress, useStickyHeader } from '@/shared/lib'
+import { useImportDraft } from '@/widgets/content-editor'
+import { cn, ContentImportError, dayKey, nextDefaultName, useLongPress, useStickyHeader } from '@/shared/lib'
 import type { SwipeConfig } from '@/shared/config/swipe'
 import {
   ActionSheet,
@@ -68,7 +72,9 @@ import {
   EmptyState,
   FolderGlyph,
   IconButton,
+  ImportRow,
   PromptSheet,
+  Sheet,
   type SheetAction,
   type SwipeActionHandlers,
   SpeedDial,
@@ -81,6 +87,10 @@ export interface DeckLibraryPageProps {
   onOpenDeck: (deckId: string) => void
   /** Open a deck's settings (from its swipe/kebab menu). */
   onOpenDeckSettings?: (deckId: string) => void
+  /** Library "Import" → paste: open the new-deck paste screen (names the deck inline). */
+  onImportPaste?: () => void
+  /** Library "Import" → file: after a file is parsed into a new deck, go to its review page. */
+  onReviewDeck?: (deckId: string) => void
   onOpenProfile?: () => void
   onOpenNotifications?: () => void
   onOpenStreak?: () => void
@@ -88,6 +98,11 @@ export interface DeckLibraryPageProps {
 }
 
 const noop = () => {}
+
+/** Tidy a picked file's name into a deck name: drop the extension, soften separators. */
+function deckNameFromFile(name: string): string {
+  return name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').trim() || 'Imported'
+}
 
 /** Which named-create sheet is open, and its target container. */
 type CreatePrompt =
@@ -102,6 +117,8 @@ type CreatePrompt =
 export function DeckLibraryPage({
   onOpenDeck,
   onOpenDeckSettings,
+  onImportPaste,
+  onReviewDeck,
   onOpenProfile,
   onOpenNotifications,
   onOpenStreak,
@@ -112,6 +129,9 @@ export function DeckLibraryPage({
   const folderStore = useFolderStoreApi()
   const deckStore = useDeckStoreApi()
   const cardStore = useCardStoreApi()
+  const setImportDraft = useImportDraft((s) => s.setDraft)
+  const importFileRef = useRef<HTMLInputElement>(null)
+  const canImport = Boolean(onImportPaste)
   const profileStore = useProfileStoreApi()
   const progressStore = useProgressStoreApi()
   const preferencesStore = usePreferencesStoreApi()
@@ -164,6 +184,7 @@ export function DeckLibraryPage({
 
   // Sheets + dialogs.
   const [createPrompt, setCreatePrompt] = useState<CreatePrompt | null>(null)
+  const [importOpen, setImportOpen] = useState(false)
   const [folderSheetTarget, setFolderSheetTarget] = useState<Folder | null | undefined>(undefined)
   const [folderMenuOpen, setFolderMenuOpen] = useState(false)
   const [moveTarget, setMoveTarget] = useState<string | null>(null)
@@ -176,6 +197,10 @@ export function DeckLibraryPage({
 
   const nextFolderColor =
     DECK_COLOR_OPTIONS[folders.length % DECK_COLOR_OPTIONS.length]!.value
+  const defaultFolderName = useMemo(
+    () => nextDefaultName(t('folder.baseName'), folders.map((f) => f.name)),
+    [folders, t],
+  )
 
   const deckById = (id: string) => decks.find((d) => d.id === id)
   const deletingDeck = pendingDeleteDeck ? deckById(pendingDeleteDeck) : undefined
@@ -193,17 +218,62 @@ export function DeckLibraryPage({
     () => decks.filter((d) => d.parentId === null && d.folderId === folderId && !d.archived).length,
     [decks, folderId],
   )
+  // Top-level deck count per folder, for the folder row's "N decks" meta line.
+  const folderDeckCounts = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const d of decks) {
+      if (d.parentId === null && d.folderId && !d.archived) {
+        counts.set(d.folderId, (counts.get(d.folderId) ?? 0) + 1)
+      }
+    }
+    return counts
+  }, [decks])
   const rootEmpty = sortedFolders.length === 0 && rootDeckCount === 0
   const isEmpty = inFolder ? folderDeckCount === 0 : rootEmpty
+
+  // Pre-fill the create sheet with the next free "New Deck N" / "New Subdeck N" for its container.
+  const defaultCreateName = useMemo(() => {
+    if (!createPrompt) return ''
+    if (createPrompt.kind === 'subdeck') {
+      const siblings = decks.filter((d) => d.parentId === createPrompt.parentId).map((d) => d.name)
+      return nextDefaultName(t('deck.baseSubdeckName'), siblings)
+    }
+    const siblings = decks
+      .filter((d) => d.parentId === null && (d.folderId ?? null) === (createPrompt.folderId ?? null))
+      .map((d) => d.name)
+    return nextDefaultName(t('deck.baseDeckName'), siblings)
+  }, [createPrompt, decks, t])
 
   // Commands.
   const submitCreate = (value: string) => {
     if (!createPrompt) return
-    if (createPrompt.kind === 'deck') {
-      void createDeck(deckStore, { name: value, folderId: createPrompt.folderId })
-    } else {
+    if (createPrompt.kind === 'subdeck') {
       void createSubdeck(deckStore, createPrompt.parentId, { name: value })
       setExpanded((prev) => new Set(prev).add(createPrompt.parentId))
+      return
+    }
+    void createDeck(deckStore, { name: value, folderId: createPrompt.folderId })
+  }
+
+  // A picked Anki/CSV file becomes a brand-new deck (named from the file), then its cards go
+  // to the shared review page — nothing is written until the user confirms there.
+  const onImportFile = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    try {
+      const data = await readAnkiFile(file)
+      if (data.cards.length === 0) {
+        toast.error(t('cards.transfer.noCardsFound'))
+        return
+      }
+      const deck = await createDeck(deckStore, { name: deckNameFromFile(file.name) })
+      setImportDraft('anki', data.cards)
+      onReviewDeck?.(deck.id)
+    } catch (error) {
+      toast.error(
+        error instanceof ContentImportError ? error.message : t('cards.transfer.importFailed'),
+      )
     }
   }
 
@@ -424,22 +494,23 @@ export function DeckLibraryPage({
                 <Plus className="size-[18px]" aria-hidden />
                 {inFolder ? t('folder.addDeck') : t('deck.newDeck')}
               </Button>
-              {!inFolder ? (
-                <Button variant="secondary" onClick={openCreateFolder}>
-                  <FolderPlus className="size-[18px]" aria-hidden />
-                  {t('deck.newFolder')}
+              {canImport ? (
+                <Button variant="secondary" onClick={() => setImportOpen(true)}>
+                  <ClipboardPaste className="size-[18px]" aria-hidden />
+                  {t('deck.importCards')}
                 </Button>
               ) : null}
             </div>
           }
         />
       ) : (
-        <div className="pt-2">
+        <div className="flex flex-col gap-2 pt-2">
           {!inFolder
             ? sortedFolders.map((folder) => (
                 <FolderRow
                   key={folder.id}
                   folder={folder}
+                  deckCount={folderDeckCounts.get(folder.id) ?? 0}
                   onOpen={() => setFolderId(folder.id)}
                   actions={folderActions(folder)}
                   swipe={prefs.swipe.folder}
@@ -469,31 +540,34 @@ export function DeckLibraryPage({
       {!isEmpty ? (
         <SpeedDial
           label={t('deck.create')}
-          actions={
-            inFolder
+          actions={[
+            {
+              id: 'new-deck',
+              label: inFolder ? t('folder.addDeck') : t('deck.newDeck'),
+              icon: <Layers className="size-5" aria-hidden />,
+              onSelect: () => setCreatePrompt({ kind: 'deck', folderId: inFolder ? folderId : null }),
+            },
+            ...(canImport
               ? [
                   {
-                    id: 'new-deck',
-                    label: t('folder.addDeck'),
-                    icon: <Layers className="size-5" aria-hidden />,
-                    onSelect: () => setCreatePrompt({ kind: 'deck', folderId }),
+                    id: 'import',
+                    label: t('deck.importCards'),
+                    icon: <ClipboardPaste className="size-5" aria-hidden />,
+                    onSelect: () => setImportOpen(true),
                   },
                 ]
+              : []),
+            ...(inFolder
+              ? []
               : [
-                  {
-                    id: 'new-deck',
-                    label: t('deck.newDeck'),
-                    icon: <Layers className="size-5" aria-hidden />,
-                    onSelect: () => setCreatePrompt({ kind: 'deck', folderId: null }),
-                  },
                   {
                     id: 'new-folder',
                     label: t('deck.newFolder'),
                     icon: <FolderPlus className="size-5" aria-hidden />,
                     onSelect: openCreateFolder,
                   },
-                ]
-          }
+                ]),
+          ]}
         />
       ) : null}
 
@@ -519,8 +593,51 @@ export function DeckLibraryPage({
         }
         fieldLabel={t('deck.nameLabel')}
         placeholder={t('deck.namePlaceholder')}
+        initialValue={defaultCreateName}
         confirmLabel={t('deck.create')}
         onSubmit={submitCreate}
+      />
+
+      {/* Library import: bring content in as a new deck — paste (names it inline) or a file. */}
+      <Sheet
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        title={t('deck.importTitle')}
+        description={t('deck.importSheetHint')}
+      >
+        <div className="flex flex-col gap-2.5 pb-2">
+          <ImportRow
+            icon={<ClipboardPaste className="size-5" aria-hidden />}
+            tone="accent"
+            title={t('cards.transfer.pasteNotes')}
+            subtitle={t('cards.transfer.pasteNotesSub')}
+            onClick={() => {
+              setImportOpen(false)
+              onImportPaste?.()
+            }}
+          />
+          <ImportRow
+            icon={<FileText className="size-5" aria-hidden />}
+            tone="warning"
+            badge="CSV · TSV · TXT"
+            title={t('cards.transfer.importAnki')}
+            subtitle={t('cards.transfer.importAnkiSub')}
+            onClick={() => {
+              setImportOpen(false)
+              importFileRef.current?.click()
+            }}
+          />
+        </div>
+      </Sheet>
+
+      <input
+        ref={importFileRef}
+        type="file"
+        accept=".csv,.tsv,.txt"
+        className="hidden"
+        onChange={onImportFile}
+        aria-hidden
+        tabIndex={-1}
       />
 
       <FolderSheet
@@ -530,6 +647,7 @@ export function DeckLibraryPage({
         }}
         folder={folderSheetTarget}
         defaultColor={nextFolderColor}
+        defaultName={defaultFolderName}
         onSubmit={submitFolder}
       />
 
@@ -581,15 +699,17 @@ export function DeckLibraryPage({
 
 interface FolderRowProps {
   folder: Folder
+  /** Top-level decks filed in this folder, for the "N decks" meta line. */
+  deckCount: number
   onOpen: () => void
   actions: SheetAction[]
   swipe: SwipeConfig
   swipeHandlers: SwipeActionHandlers
 }
 
-/** A folder row on the library root: its coloured glyph + name, a chevron to drill in, and its
- * gesture kit — swipe (edit/delete) and long-press (the full action sheet). */
-function FolderRow({ folder, onOpen, actions, swipe, swipeHandlers }: FolderRowProps) {
+/** A folder row on the library root: its coloured glyph, name, and deck count, a chevron to
+ * drill in, and its gesture kit — swipe (edit/delete) and long-press (the full action sheet). */
+function FolderRow({ folder, deckCount, onOpen, actions, swipe, swipeHandlers }: FolderRowProps) {
   const { t } = useTranslation()
   const [menuOpen, setMenuOpen] = useState(false)
   const longPress = useLongPress({
@@ -600,22 +720,30 @@ function FolderRow({ folder, onOpen, actions, swipe, swipeHandlers }: FolderRowP
   const swipeEnabled = leading.length > 0 || trailing.length > 0
 
   const row = (
-    <div className="flex w-full items-center gap-1 border-b border-border bg-card py-3 pr-1">
+    <div className="flex w-full items-center gap-1 rounded-card bg-card py-2 pl-2 pr-2 shadow-rest">
       <button
         type="button"
         {...longPress}
-        className="flex min-w-0 flex-1 items-center gap-3 text-left"
+        className="group/folder flex min-w-0 flex-1 items-center gap-3 rounded-control py-0.5 text-left transition-colors active:bg-primary/[0.04]"
       >
         <FolderGlyph
           color={folder.color}
           icon={folder.icon || DEFAULT_FOLDER_ICON}
-          className="size-11"
+          className="size-11 transition-transform duration-200 ease-out group-active/folder:scale-[0.94]"
           iconClassName="text-xl leading-none"
         />
-        <span className="min-w-0 flex-1 truncate text-[length:var(--p-text-body)] font-semibold text-heading">
-          {folder.name}
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[length:var(--p-text-body)] font-semibold text-heading">
+            {folder.name}
+          </span>
+          <span className="block truncate text-[length:var(--p-text-label)] text-muted-foreground">
+            {deckCount > 0 ? t('folder.deckCount', { count: deckCount }) : t('folder.empty')}
+          </span>
         </span>
-        <ChevronRight className="size-5 shrink-0 text-muted-foreground" aria-hidden />
+        <ChevronRight
+          className="size-5 shrink-0 text-muted-foreground transition-transform duration-200 ease-out group-active/folder:translate-x-0.5"
+          aria-hidden
+        />
       </button>
     </div>
   )

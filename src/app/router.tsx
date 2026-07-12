@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import {
   createRootRoute,
   createRoute,
@@ -29,17 +30,19 @@ import { BadgesPage } from '@/pages/badges'
 import { BadgeDetailPage } from '@/pages/badge-detail'
 import { AchievementsPage } from '@/pages/achievements'
 import { AchievementDetailPage } from '@/pages/achievement-detail'
-import { SettingsPage, useProgressTransfer } from '@/pages/settings'
+import { SettingsPage } from '@/pages/settings'
 import { SettingsProfilePage } from '@/pages/settings-profile'
 import { SettingsChangePasswordPage } from '@/pages/settings-change-password'
 import { SettingsPrivacyPage } from '@/pages/settings-privacy'
 import { SettingsSwipePage } from '@/pages/settings-swipe'
-import { SettingsClearPage } from '@/pages/settings-clear'
 import { SettingsHelpPage } from '@/pages/settings-help'
 import { SettingsAboutPage } from '@/pages/settings-about'
 import { NotificationsPage } from '@/pages/notifications'
 import { useSessionStore } from '@/entities/session'
+import { selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
 import { useAuthActions } from '@/features/session'
+import { createDeck } from '@/features/deck'
+import { nextDefaultName } from '@/shared/lib'
 import { ROUTES } from '@/shared/config/routes'
 import { RootLayout } from './RootLayout'
 import { authRedirect } from './auth-guard'
@@ -135,6 +138,8 @@ function HomeRoute() {
     <DeckLibraryPage
       onOpenDeck={(deckId) => navigate({ to: ROUTES.deckDetail, params: { deckId } })}
       onOpenDeckSettings={(deckId) => navigate({ to: ROUTES.deckSettings, params: { deckId } })}
+      onImportPaste={() => navigate({ to: ROUTES.newPaste })}
+      onReviewDeck={(deckId) => navigate({ to: ROUTES.deckImport, params: { deckId } })}
       onOpenProfile={() => navigate({ to: ROUTES.profile })}
       onOpenNotifications={() => navigate({ to: ROUTES.notifications })}
       onOpenStreak={() => navigate({ to: ROUTES.streak })}
@@ -278,6 +283,39 @@ const deckPasteRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.deckPaste,
   component: DeckPasteRoute,
+})
+
+// Library "Import → Paste": a paste screen that names + creates a NEW deck, then reviews into it.
+function NewPasteRoute() {
+  const navigate = useNavigate()
+  const deckStore = useDeckStoreApi()
+  useEffect(() => {
+    deckStore.getState().start()
+  }, [deckStore])
+  const decks = useDeckStore(selectDecks)
+  const back = useBack(() => navigate({ to: ROUTES.home }))
+  const defaultName = nextDefaultName(
+    'New Deck',
+    decks.filter((d) => d.parentId === null && d.folderId === null).map((d) => d.name),
+  )
+  return (
+    <PasteNotesPage
+      newDeck
+      defaultDeckName={defaultName}
+      onBack={back}
+      onReview={(name) =>
+        void createDeck(deckStore, { name: name ?? defaultName }).then((deck) =>
+          navigate({ to: ROUTES.deckImport, params: { deckId: deck.id }, replace: true }),
+        )
+      }
+    />
+  )
+}
+
+const newPasteRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.newPaste,
+  component: NewPasteRoute,
 })
 
 function DeckImportRoute() {
@@ -461,7 +499,6 @@ const achievementDetailRoute = createRoute({
 
 function SettingsRoute() {
   const navigate = useNavigate()
-  const transfer = useProgressTransfer()
   const { signOut } = useAuthActions()
   const sessionKind = useSessionStore((state) => state.session?.kind ?? 'guest')
   const back = useBack(() => navigate({ to: ROUTES.profile }))
@@ -475,11 +512,8 @@ function SettingsRoute() {
       onEditProfile={() => navigate({ to: ROUTES.settingsProfile })}
       onPrivacy={() => navigate({ to: ROUTES.settingsPrivacy })}
       onSwipe={() => navigate({ to: ROUTES.settingsSwipe })}
-      onClearData={() => navigate({ to: ROUTES.settingsClear })}
       onHelp={() => navigate({ to: ROUTES.settingsHelp })}
       onAbout={() => navigate({ to: ROUTES.settingsAbout })}
-      onExport={transfer.exportNow}
-      onImportFile={transfer.importFile}
       onSignIn={() => navigate({ to: ROUTES.login })}
       onLogout={logout}
       sessionKind={sessionKind}
@@ -552,18 +586,6 @@ const settingsSwipeRoute = createRoute({
   component: SettingsSwipeRoute,
 })
 
-function SettingsClearRoute() {
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.settings }))
-  return <SettingsClearPage onBack={back} />
-}
-
-const settingsClearRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: ROUTES.settingsClear,
-  component: SettingsClearRoute,
-})
-
 function SettingsHelpRoute() {
   const navigate = useNavigate()
   const back = useBack(() => navigate({ to: ROUTES.settings }))
@@ -628,6 +650,7 @@ const routeTree = rootRoute.addChildren([
   deckQuestionNewRoute,
   deckQuestionEditRoute,
   deckPasteRoute,
+  newPasteRoute,
   deckImportRoute,
   deckCardNewRoute,
   deckCardEditRoute,
@@ -642,7 +665,6 @@ const routeTree = rootRoute.addChildren([
   settingsChangePasswordRoute,
   settingsPrivacyRoute,
   settingsSwipeRoute,
-  settingsClearRoute,
   settingsHelpRoute,
   settingsAboutRoute,
   notificationsRoute,

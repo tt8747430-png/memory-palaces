@@ -3,14 +3,14 @@ import {
   ContentImportError,
   cardsToAnkiTsv,
   cardsToCsv,
+  detectPasteFormat,
+  guessFieldSeparator,
   parseAnkiText,
   parseDelimitedNotes,
-  parseMindscapeDeck,
   parsePastedCards,
   parseDeckContent,
   parseVerses,
   questionsToCsv,
-  deckContentToJson,
 } from './content-transfer'
 
 describe('parsePastedCards', () => {
@@ -74,64 +74,68 @@ describe('parseDelimitedNotes', () => {
       { front: 'b', back: '2' },
     ])
   })
-})
 
-describe('parseMindscapeDeck', () => {
-  it('round-trips every card field (cues, flag, known status, schedule)', () => {
-    const srs = {
-      due: '2026-01-01T00:00:00.000Z',
-      interval: 4,
-      ease: 2.5,
-      reps: 3,
-      lapses: 1,
-      lastReviewed: '2025-12-28T00:00:00.000Z',
-    }
-    const json = deckContentToJson(
-      'Room',
-      [{ front: 'a', back: 'A', hint: 'h', tip: 't', flagged: true, memorized: true, srs }],
-      [],
-    )
-    const content = parseMindscapeDeck(json)
-    expect(content.cards).toEqual([
-      { front: 'a', back: 'A', hint: 'h', tip: 't', flagged: true, memorized: true, srs },
-    ])
+  it('swaps front and back when asked', () => {
+    const cards = parseDelimitedNotes('King,Zeus', { field: ',', card: '\n', swap: true })
+    expect(cards).toEqual([{ front: 'Zeus', back: 'King' }])
   })
 
-  it('rejects a file that is not Mindscape JSON', () => {
-    expect(() => parseMindscapeDeck('front,back\na,b')).toThrow(ContentImportError)
+  it('drops the first non-empty row when skipHeader is set', () => {
+    const cards = parseDelimitedNotes('front,back\nZeus,King', {
+      field: ',',
+      card: '\n',
+      skipHeader: true,
+    })
+    expect(cards).toEqual([{ front: 'Zeus', back: 'King' }])
+  })
+})
+
+describe('detectPasteFormat', () => {
+  it('reads a dominant verse paste as bible', () => {
+    expect(detectPasteFormat('John 3\n(3:16) For God so loved…\n(3:17) For God sent…')).toBe(
+      'bible',
+    )
+  })
+
+  it('reads delimited pairs as notes', () => {
+    expect(detectPasteFormat('Zeus, King\nHera, Queen')).toBe('notes')
+  })
+
+  it('falls back to notes on empty text', () => {
+    expect(detectPasteFormat('   ')).toBe('notes')
+  })
+})
+
+describe('guessFieldSeparator', () => {
+  it('prefers a tab over a comma', () => {
+    expect(guessFieldSeparator('a\tb,c')).toBe('\t')
+  })
+
+  it('picks the comma when there is no tab', () => {
+    expect(guessFieldSeparator('a,b')).toBe(',')
+  })
+
+  it('defaults to tab when the line has no known separator', () => {
+    expect(guessFieldSeparator('plainline')).toBe('\t')
   })
 })
 
 describe('parseDeckContent', () => {
   it('reads a cards CSV (front,back,hint)', () => {
-    const content = parseDeckContent('front,back,hint\nZeus,King,On a throne', 'deck.csv')
+    const content = parseDeckContent('front,back,hint\nZeus,King,On a throne')
     expect(content.cards).toEqual([{ front: 'Zeus', back: 'King', hint: 'On a throne' }])
     expect(content.questions).toEqual([])
   })
 
   it('reads a questions CSV with a 1-based answer column', () => {
-    const content = parseDeckContent(
-      'prompt,option1,option2,answer\nClosest planet?,Mercury,Venus,1',
-      'q.csv',
-    )
+    const content = parseDeckContent('prompt,option1,option2,answer\nClosest planet?,Mercury,Venus,1')
     expect(content.questions).toEqual([
       { prompt: 'Closest planet?', options: ['Mercury', 'Venus'], correctAnswer: 0 },
     ])
   })
 
-  it('round-trips JSON exported by the app', () => {
-    const json = deckContentToJson(
-      'Room',
-      [{ front: 'a', back: 'A' }],
-      [{ prompt: 'p?', options: ['x', 'y'], correctAnswer: 1 }],
-    )
-    const content = parseDeckContent(json, 'room.json')
-    expect(content.cards).toEqual([{ front: 'a', back: 'A' }])
-    expect(content.questions).toEqual([{ prompt: 'p?', options: ['x', 'y'], correctAnswer: 1 }])
-  })
-
   it('throws a ContentImportError when nothing usable is found', () => {
-    expect(() => parseDeckContent('not, a, deck\n', 'junk.csv')).toThrow(ContentImportError)
+    expect(() => parseDeckContent('not, a, deck\n')).toThrow(ContentImportError)
   })
 })
 

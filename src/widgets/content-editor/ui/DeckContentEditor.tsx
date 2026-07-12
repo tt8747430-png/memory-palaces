@@ -5,8 +5,6 @@ import {
   ArrowDownAZ,
   ClipboardPaste,
   Clock,
-  Download,
-  FileJson,
   Flag,
   GraduationCap,
   GripVertical,
@@ -34,13 +32,7 @@ import {
   selectEffectivePreferences,
   usePreferencesStore,
 } from '@/entities/preferences'
-import {
-  exportCardsAnki,
-  exportCardsCsv,
-  exportDeckJson,
-  readAnkiFile,
-  readMindscapeFile,
-} from '@/features/content'
+import { readAnkiFile } from '@/features/content'
 import { cardMaturityCounts, cardsInSubtree, cn, ContentImportError, srsStatus } from '@/shared/lib'
 import {
   Button,
@@ -61,8 +53,6 @@ import { BulkButton, SelectModeBar } from './SelectModeBar'
 
 export interface DeckContentEditorProps {
   deckId: string
-  /** Used for export filenames. */
-  deckName: string
   /** Filters the cards list. Driven by the room header's search; empty = not searching. */
   searchQuery?: string
   /** Whether the room-header search is open, regardless of the query — so the sort control
@@ -96,7 +86,6 @@ type MaturityKey = 'new' | 'learning' | 'known'
  */
 export function DeckContentEditor({
   deckId,
-  deckName,
   searchQuery,
   searching = false,
   onClearSearch,
@@ -129,7 +118,6 @@ export function DeckContentEditor({
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
-  const [exportOpen, setExportOpen] = useState(false)
   // The card the full-screen browser is open on (null = closed). Tapping a card row opens it.
   const [browserCardId, setBrowserCardId] = useState<string | null>(null)
 
@@ -180,7 +168,6 @@ export function DeckContentEditor({
   }, [selectMode])
 
   const fileRef = useRef<HTMLInputElement>(null)
-  const importKind = useRef<'mindscape' | 'anki'>('mindscape')
 
   const sortedCards = useMemo(() => sortCards(cards, sort), [cards, sort])
 
@@ -278,9 +265,8 @@ export function DeckContentEditor({
     setSelectedIds(new Set())
   }
 
-  const pickFile = (accept: string, kind: 'mindscape' | 'anki') => {
+  const pickFile = (accept: string) => {
     setImportOpen(false)
-    importKind.current = kind
     const input = fileRef.current
     if (!input) return
     input.value = ''
@@ -288,20 +274,19 @@ export function DeckContentEditor({
     input.click()
   }
 
-  // A file pick parses the deck, then hands the cards to the shared review page — nothing is
-  // written to the deck until the user confirms there. Cards-only: questions in a file are
-  // dropped (they're imported from the Questions page instead).
+  // A file pick parses the Anki/CSV file, then hands the cards to the shared review page —
+  // nothing is written to the deck until the user confirms there. Cards-only: questions in a
+  // file are dropped (they're imported from the Questions page instead).
   const onFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
     try {
-      const kind = importKind.current
-      const data = kind === 'anki' ? await readAnkiFile(file) : await readMindscapeFile(file)
+      const data = await readAnkiFile(file)
       if (data.cards.length === 0) {
         toast.error(t('cards.transfer.noCardsFound'))
         return
       }
-      setImportDraft(kind, data.cards)
+      setImportDraft('anki', data.cards)
       onReviewImport()
     } catch (error) {
       toast.error(
@@ -312,10 +297,6 @@ export function DeckContentEditor({
 
   const closeImport = (run: () => void) => {
     setImportOpen(false)
-    run()
-  }
-  const closeExport = (run: () => void) => {
-    setExportOpen(false)
     run()
   }
 
@@ -450,7 +431,7 @@ export function DeckContentEditor({
         </div>
       ) : null}
 
-      {/* Import sheet — a native Mindscape restore, a delimited/Anki file, or free-text paste. */}
+      {/* Import sheet — a delimited/Anki file or free-text paste. Export lives in deck settings. */}
       <Sheet
         open={importOpen}
         onOpenChange={setImportOpen}
@@ -459,20 +440,12 @@ export function DeckContentEditor({
       >
         <div className="flex flex-col gap-2.5 pb-2">
           <ImportRow
-            icon={<FileJson className="size-5" aria-hidden />}
-            tone="brand"
-            badge="JSON"
-            title={t('cards.transfer.importMindscape')}
-            subtitle={t('cards.transfer.importMindscapeSub')}
-            onClick={() => pickFile('.json', 'mindscape')}
-          />
-          <ImportRow
             icon={<Layers className="size-5" aria-hidden />}
             tone="warning"
             badge="CSV · TSV · TXT"
             title={t('cards.transfer.importAnki')}
             subtitle={t('cards.transfer.importAnkiSub')}
-            onClick={() => pickFile('.csv,.tsv,.txt', 'anki')}
+            onClick={() => pickFile('.csv,.tsv,.txt')}
           />
           <ImportRow
             icon={<ClipboardPaste className="size-5" aria-hidden />}
@@ -480,47 +453,6 @@ export function DeckContentEditor({
             title={t('cards.transfer.pasteNotes')}
             subtitle={t('cards.transfer.pasteNotesSub')}
             onClick={() => closeImport(onPasteNotes)}
-          />
-        </div>
-      </Sheet>
-
-      {/* Export sheet — save the deck's cards & questions in a portable format. */}
-      <Sheet
-        open={exportOpen}
-        onOpenChange={setExportOpen}
-        title={t('cards.transfer.exportTitle')}
-        description={t('cards.transfer.exportSubtitle')}
-      >
-        <div className="flex flex-col gap-2.5 pb-2">
-          <ImportRow
-            icon={<FileJson className="size-5" aria-hidden />}
-            tone="brand"
-            badge="JSON"
-            trailing={<Download className="size-5 shrink-0 text-faint" aria-hidden />}
-            title={t('cards.transfer.exportJson')}
-            subtitle={t('cards.transfer.exportJsonSub')}
-            disabled={cards.length === 0}
-            onClick={() => closeExport(() => exportDeckJson(deckName, cards, []))}
-          />
-          <ImportRow
-            icon={<MapPin className="size-5" aria-hidden />}
-            tone="accent"
-            badge="CSV"
-            trailing={<Download className="size-5 shrink-0 text-faint" aria-hidden />}
-            title={t('cards.transfer.exportCards')}
-            subtitle={t('cards.transfer.exportCardsSub')}
-            disabled={cards.length === 0}
-            onClick={() => closeExport(() => exportCardsCsv(deckName, cards))}
-          />
-          <ImportRow
-            icon={<Layers className="size-5" aria-hidden />}
-            tone="warning"
-            badge="TXT"
-            trailing={<Download className="size-5 shrink-0 text-faint" aria-hidden />}
-            title={t('cards.transfer.exportAnki')}
-            subtitle={t('cards.transfer.exportAnkiSub')}
-            disabled={cards.length === 0}
-            onClick={() => closeExport(() => exportCardsAnki(deckName, cards))}
           />
         </div>
       </Sheet>
@@ -663,12 +595,6 @@ export function DeckContentEditor({
               label: t('cards.transfer.importShort'),
               icon: <Upload className="size-5" aria-hidden />,
               onSelect: () => setImportOpen(true),
-            },
-            {
-              id: 'export',
-              label: t('cards.transfer.exportShort'),
-              icon: <Download className="size-5" aria-hidden />,
-              onSelect: () => setExportOpen(true),
             },
           ]}
         />

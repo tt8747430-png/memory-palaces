@@ -1,18 +1,31 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronRight, Minus, Plus } from 'lucide-react'
-import { motion } from 'motion/react'
-import type { Deck } from '@/entities/deck'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { DECK_COLOR_OPTIONS, DEFAULT_DECK_COLOR, DEFAULT_DECK_ICON, type Deck } from '@/entities/deck'
 import type { Card } from '@/entities/card'
 import type { SwipeConfig } from '@/shared/config/swipe'
-import { childDecks, dueCountsPerDeck, useLongPress } from '@/shared/lib'
+import { childDecks, cn, dueCountsPerDeck, useLongPress } from '@/shared/lib'
 import {
   ActionSheet,
   buildSwipeActions,
+  DeckCover,
   type SheetAction,
   SwipeRow,
   type SwipeActionHandlers,
 } from '@/shared/ui'
+
+/** Soft ease-out; matches the SpeedDial's reveal curve so motion reads as one system. */
+const EASE_OUT = [0.22, 1, 0.36, 1] as const
+
+/** A deck's cover colour — its own if set, else a stable palette pick from its id, so a
+ * colourless deck still reads distinct from its siblings instead of a wall of one blue. */
+function deckColor(deck: Deck): string {
+  if (deck.color) return deck.color
+  let hash = 0
+  for (let i = 0; i < deck.id.length; i++) hash = (hash * 31 + deck.id.charCodeAt(i)) | 0
+  return DECK_COLOR_OPTIONS[Math.abs(hash) % DECK_COLOR_OPTIONS.length]?.value ?? DEFAULT_DECK_COLOR
+}
 
 export interface DeckTreeProps {
   /** Every deck in the library (the tree filters to the container it renders). */
@@ -36,11 +49,11 @@ export interface DeckTreeProps {
 }
 
 /**
- * The recursive deck tree: inline rows with a `+`/`−` disclosure, connector lines for depth, a
- * subtree "cards for today" badge, and a chevron to open the deck. Tapping the row opens the
- * deck (its whole subtree); tapping `+`/`−` expands its subdecks in place. Each row carries its
- * gesture kit off one action set — swipe for the quick actions, long-press for the full action
- * sheet.
+ * The recursive deck tree: inline rows carrying the deck's own colour + icon, a `+`/`−`
+ * disclosure, connector rails for depth, a "cards for today" badge on the glyph, and a
+ * chevron to open the deck. Tapping the row opens the deck (its whole subtree); tapping
+ * `+`/`−` springs its subdecks open in place. Each row carries its gesture kit off one
+ * action set — swipe for the quick actions, long-press for the full action sheet.
  */
 export function DeckTree({
   decks,
@@ -67,14 +80,13 @@ export function DeckTree({
   )
 
   return (
-    <ul className="flex flex-col">
+    <ul className="flex flex-col gap-2">
       {roots.map((deck) => (
         <DeckTreeNode
           key={deck.id}
           deck={deck}
           decks={decks}
           cards={cards}
-          depth={0}
           due={dueCounts.get(deck.id) ?? 0}
           dueCounts={dueCounts}
           expanded={expanded}
@@ -89,11 +101,13 @@ export function DeckTree({
   )
 }
 
+/** Each nesting level steps its subdeck cards in by this much; the nested layout compounds it. */
+const INDENT = 16
+
 interface NodeProps {
   deck: Deck
   decks: Deck[]
   cards: Card[]
-  depth: number
   due: number
   dueCounts: Map<string, number>
   expanded: ReadonlySet<string>
@@ -108,7 +122,6 @@ function DeckTreeNode({
   deck,
   decks,
   cards,
-  depth,
   due,
   dueCounts,
   expanded,
@@ -119,6 +132,7 @@ function DeckTreeNode({
   swipeHandlers,
 }: NodeProps) {
   const { t } = useTranslation()
+  const reduce = useReducedMotion()
   const children = childDecks(decks, deck.id)
   const hasChildren = children.length > 0
   const isOpen = expanded.has(deck.id)
@@ -137,29 +151,30 @@ function DeckTreeNode({
       : { leading: [], trailing: [] }
   const swipeEnabled = leading.length > 0 || trailing.length > 0
 
+  // Each row is its own rounded control card; the daylight ground shows through the gaps.
   const row = (
-    <div className="relative flex items-center gap-3 border-b border-border bg-card py-3 pr-1">
-      {/* Depth connector rails. */}
-      {depth > 0 ? (
-        <span aria-hidden className="absolute inset-y-0 left-0 flex" style={{ width: depth * 20 }}>
-          {Array.from({ length: depth }).map((_, i) => (
-            <span key={i} className="w-5 border-l border-border/70" />
-          ))}
-        </span>
-      ) : null}
-
-      <div style={{ width: depth * 20 }} className="shrink-0" aria-hidden />
-
+    <div className="flex items-center gap-1.5 rounded-card bg-card py-2 pl-1.5 pr-2 shadow-rest">
       {hasChildren ? (
         <motion.button
           type="button"
-          whileTap={{ scale: 0.9 }}
+          whileTap={{ scale: 0.82 }}
+          transition={{ duration: 0.15, ease: EASE_OUT }}
           onClick={() => onToggle(deck.id)}
           aria-label={isOpen ? t('deck.collapse') : t('deck.expand')}
           aria-expanded={isOpen}
-          className="grid size-7 shrink-0 place-items-center rounded-full bg-secondary text-muted-foreground"
+          className={cn(
+            'grid size-7 shrink-0 place-items-center rounded-full ring-1 transition-colors',
+            'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/40',
+            isOpen
+              ? 'bg-primary/10 text-primary ring-primary/15'
+              : 'bg-info-surface text-primary ring-primary/10',
+          )}
         >
-          {isOpen ? <Minus className="size-4" aria-hidden /> : <Plus className="size-4" aria-hidden />}
+          {isOpen ? (
+            <Minus className="size-4" aria-hidden />
+          ) : (
+            <Plus className="size-4" aria-hidden />
+          )}
         </motion.button>
       ) : (
         <span className="size-7 shrink-0" aria-hidden />
@@ -168,17 +183,43 @@ function DeckTreeNode({
       <button
         type="button"
         {...longPress}
-        className="flex min-w-0 flex-1 items-center gap-3 text-left"
+        className="group/row flex min-w-0 flex-1 items-center gap-3 rounded-control py-0.5 pr-1 text-left transition-colors active:bg-primary/[0.04]"
       >
+        <span className="relative shrink-0">
+          <DeckCover
+            icon={deck.icon || DEFAULT_DECK_ICON}
+            color={deckColor(deck)}
+            className="size-9 rounded-card shadow-rest ring-1 ring-black/5 transition-transform duration-200 ease-out group-active/row:scale-[0.94]"
+            iconClassName="text-base leading-none"
+          />
+          {/* Due badge — self-evident "this deck has cards to review", reinforced by shape. */}
+          {due > 0 ? (
+            <span
+              className="absolute -right-1.5 -top-1.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-primary px-1 text-[length:var(--p-text-tiny)] font-bold tabular-nums text-primary-foreground shadow-interactive ring-2 ring-card"
+              aria-hidden
+            >
+              {due > 99 ? '99+' : due}
+            </span>
+          ) : null}
+        </span>
+
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[length:var(--p-text-body)] font-semibold text-heading">
             {deck.name}
           </span>
-          <span className="block truncate text-[length:var(--p-text-label)] text-muted-foreground">
+          <span
+            className={cn(
+              'block truncate text-[length:var(--p-text-label)]',
+              due > 0 ? 'font-medium text-primary/80' : 'text-muted-foreground',
+            )}
+          >
             {due > 0 ? t('deck.dueToday', { count: due }) : t('deck.noCards')}
           </span>
         </span>
-        <ChevronRight className="size-5 shrink-0 text-muted-foreground" aria-hidden />
+        <ChevronRight
+          className="size-5 shrink-0 text-muted-foreground transition-transform duration-200 ease-out group-active/row:translate-x-0.5"
+          aria-hidden
+        />
       </button>
     </div>
   )
@@ -203,27 +244,35 @@ function DeckTreeNode({
         />
       ) : null}
 
-      {hasChildren && isOpen ? (
-        <ul className="flex flex-col">
-          {children.map((child) => (
-            <DeckTreeNode
-              key={child.id}
-              deck={child}
-              decks={decks}
-              cards={cards}
-              depth={depth + 1}
-              due={dueCounts.get(child.id) ?? 0}
-              dueCounts={dueCounts}
-              expanded={expanded}
-              onToggle={onToggle}
-              onOpen={onOpen}
-              deckActions={deckActions}
-              swipe={swipe}
-              swipeHandlers={swipeHandlers}
-            />
-          ))}
-        </ul>
-      ) : null}
+      <AnimatePresence initial={false}>
+        {hasChildren && isOpen ? (
+          <motion.ul
+            className="flex flex-col gap-2 overflow-hidden pt-2"
+            style={{ marginLeft: INDENT }}
+            initial={reduce ? false : { height: 0, opacity: 0 }}
+            animate={reduce ? { opacity: 1 } : { height: 'auto', opacity: 1 }}
+            exit={reduce ? { opacity: 0 } : { height: 0, opacity: 0 }}
+            transition={{ duration: 0.26, ease: EASE_OUT }}
+          >
+            {children.map((child) => (
+              <DeckTreeNode
+                key={child.id}
+                deck={child}
+                decks={decks}
+                cards={cards}
+                due={dueCounts.get(child.id) ?? 0}
+                dueCounts={dueCounts}
+                expanded={expanded}
+                onToggle={onToggle}
+                onOpen={onOpen}
+                deckActions={deckActions}
+                swipe={swipe}
+                swipeHandlers={swipeHandlers}
+              />
+            ))}
+          </motion.ul>
+        ) : null}
+      </AnimatePresence>
     </li>
   )
 }

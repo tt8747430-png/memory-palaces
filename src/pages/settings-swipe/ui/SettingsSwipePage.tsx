@@ -6,7 +6,6 @@ import {
   ArrowRight,
   Folder,
   Layers,
-  Landmark,
   WalletCards,
   RotateCcw,
 } from 'lucide-react'
@@ -30,25 +29,30 @@ import {
 import { AppScreen, Button, cardSurface, ScreenHeader, swipeActionIcon } from '@/shared/ui'
 import { cn } from '@/shared/lib'
 
-export interface SettingsSwipePageProps {
-  onBack?: () => void
-}
-
-/** Selected-chip surfaces — the same solid, saturated registers the swipe trays use, so the
- * chip a user picks looks exactly like the action they'll feel. */
+/**
+ * Selected-chip surfaces — deliberately calm. Only the two universally-meaningful semantics
+ * keep a (soft) colour: red for delete, green for "known". Everything else — including the
+ * former amber "warning" actions — sits on a quiet navy tint so the screen never shouts
+ * (no orange). The action's icon + label still tell the chips apart; the real solid tray
+ * colour lives on the swipe itself.
+ */
 const TONE_CHIP: Record<SwipeTone, string> = {
-  danger: 'bg-[var(--danger)] text-white',
-  warning: 'bg-[var(--warning)] text-[var(--p-navy-900)]',
-  success: 'bg-[var(--success)] text-white',
-  accent: 'bg-[var(--accent)] text-white',
-  neutral: 'bg-[var(--p-gray-500)] text-white',
+  danger: 'bg-[var(--danger-surface)] text-[var(--danger-on-surface)]',
+  success: 'bg-[var(--success-surface)] text-[var(--success-on-surface)]',
+  warning: 'bg-info-surface text-info-foreground',
+  accent: 'bg-info-surface text-info-foreground',
+  neutral: 'bg-secondary/80 text-heading ring-1 ring-inset ring-primary/15',
 }
 
 /** One glyph per row type, so each section reads at a glance instead of by heading alone. */
-const TYPE_ICON: Record<SwipeItemType, typeof Landmark> = {
+const TYPE_ICON: Record<SwipeItemType, typeof Layers> = {
   deck: Layers,
   folder: Folder,
   card: WalletCards,
+}
+
+export interface SettingsSwipePageProps {
+  onBack?: () => void
 }
 
 /**
@@ -89,31 +93,24 @@ export function SettingsSwipePage({ onBack }: SettingsSwipePageProps) {
         <ScreenHeader title={t('swipe.title')} onBack={onBack} backLabel={t('settings.back')} />
       }
     >
-      <div className="mt-4 flex flex-col gap-5 pb-28">
-        <div className="rounded-card bg-info-surface p-4">
-          <p className="flex items-center gap-2 text-[length:var(--p-text-title)] font-bold tracking-tight text-info-foreground">
-            <span className="grid size-8 shrink-0 place-items-center rounded-control bg-card/70 text-primary">
-              <ArrowLeftRight className="size-4" aria-hidden />
-            </span>
-            {t('swipe.title')}
-          </p>
-          <p className="mt-2 text-[length:var(--p-text-label)] leading-relaxed text-info-foreground/80">
-            {t('swipe.subtitle')}
-          </p>
-        </div>
+      <div className="mt-3 flex flex-col gap-3 pb-24">
+        <p className="flex items-start gap-2 px-1 text-[length:var(--p-text-label)] leading-relaxed text-muted-foreground">
+          <ArrowLeftRight className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+          {t('swipe.subtitle')}
+        </p>
 
         {SWIPE_ITEM_TYPES.map((type) => {
           const TypeIcon = TYPE_ICON[type]
           return (
-            <section key={type} className={cn(cardSurface, 'p-4')}>
-              <h2 className="flex items-center gap-2.5 text-[length:var(--p-text-title)] font-bold tracking-tight text-heading">
-                <span className="grid size-8 shrink-0 place-items-center rounded-control bg-info-surface text-primary">
-                  <TypeIcon className="size-[18px]" aria-hidden />
+            <section key={type} className={cn(cardSurface, 'p-3.5')}>
+              <h2 className="flex items-center gap-2 text-[length:var(--p-text-sub)] font-bold text-heading">
+                <span className="grid size-7 shrink-0 place-items-center rounded-control bg-info-surface text-primary">
+                  <TypeIcon className="size-4" aria-hidden />
                 </span>
                 {t(`swipe.types.${type}` as never)}
               </h2>
               <SideGroup
-                icon={<ArrowRight className="size-4" aria-hidden />}
+                icon={<ArrowRight className="size-3.5" aria-hidden />}
                 label={t('swipe.leading')}
                 type={type}
                 side="leading"
@@ -121,7 +118,7 @@ export function SettingsSwipePage({ onBack }: SettingsSwipePageProps) {
                 onToggle={(id) => toggle(type, 'leading', id)}
               />
               <SideGroup
-                icon={<ArrowLeft className="size-4" aria-hidden />}
+                icon={<ArrowLeft className="size-3.5" aria-hidden />}
                 label={t('swipe.trailing')}
                 type={type}
                 side="trailing"
@@ -160,23 +157,23 @@ function SideGroup({
   const atCap = selected.length >= 2
 
   return (
-    <div className="mt-4 border-t border-border/60 pt-4 first:border-t-0 first:pt-0">
+    <div className="mt-3 border-t border-border/50 pt-3 first:border-t-0 first:pt-0">
       <div className="flex items-center justify-between gap-2">
-        <span className="inline-flex items-center gap-1.5 text-[length:var(--p-text-sub)] font-bold text-heading">
+        <span className="inline-flex items-center gap-1.5 text-[length:var(--p-text-label)] font-bold text-heading">
           <span className="text-muted-foreground">{icon}</span>
           {label}
         </span>
         <span
           className={cn(
             'rounded-pill px-2 py-0.5 text-[length:var(--p-text-tiny)] font-bold tabular-nums',
-            atCap ? 'bg-info-surface text-info-foreground' : 'bg-secondary/40 text-heading',
+            atCap ? 'bg-info-surface text-info-foreground' : 'bg-secondary/50 text-muted-foreground',
           )}
         >
           {t('swipe.sideCount', { count: selected.length })}
         </span>
       </div>
 
-      <div className="mt-2.5 flex flex-wrap gap-2">
+      <div className="mt-2 flex flex-wrap gap-1.5">
         {SWIPE_ACTIONS[type].map((id) => {
           const on = selected.includes(id)
           const meta = SWIPE_ACTION_META[id]
@@ -190,14 +187,14 @@ function SideGroup({
               disabled={disabled}
               onClick={() => onToggle(id)}
               className={cn(
-                'inline-flex items-center gap-1.5 rounded-pill px-3 py-2 text-[length:var(--p-text-label)] font-bold transition-[transform,background-color,box-shadow] active:scale-[0.97]',
-                'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40',
-                on ? TONE_CHIP[meta.tone] : 'bg-secondary/50 text-heading',
+                'inline-flex items-center gap-1.5 rounded-pill px-2.5 py-1.5 text-[length:var(--p-text-label)] font-semibold transition-[transform,background-color] active:scale-[0.97]',
+                'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/30',
+                on ? TONE_CHIP[meta.tone] : 'bg-secondary/40 text-muted-foreground',
                 disabled && 'opacity-40',
               )}
               data-swipe-side={side}
             >
-              <span className="grid size-4 place-items-center [&_svg]:size-4">
+              <span className="grid size-4 place-items-center [&_svg]:size-3.5">
                 {swipeActionIcon(id)}
               </span>
               {t(meta.labelKey as never)}

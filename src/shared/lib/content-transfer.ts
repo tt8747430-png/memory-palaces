@@ -1,20 +1,17 @@
 /**
  * Pure import/export for a deck's study content (cards + questions). Parsers turn text
- * (CSV / JSON / pasted lines / Anki notes / verse paste) into plain content data; the
- * serializers turn content back into CSV / JSON / Anki TSV strings. No DOM, no IO, no
- * entity imports — the `features/content` slice handles file reads, downloads, and
- * mapping this data onto the create commands.
- *
- * Wire compatibility: parsers accept both the current deck-era field names and the legacy
- * palace-era ones (`room`/`loci`/`rooms`), so exports from the old app still import.
+ * (CSV / pasted lines / Anki notes / verse paste) into plain content data; the serializers
+ * turn content back into CSV / Anki TSV strings. No DOM, no IO, no entity imports — the
+ * `features/content` slice handles file reads, downloads, and mapping this data onto the
+ * create commands.
  */
 
 import type { SrsState } from './srs'
 
 /**
- * A card's importable content. Text + cues are the common case; the extra fields carry the
- * full-fidelity Mindscape round-trip (flag, known status, schedule) and stay absent for the
- * lighter sources (CSV / Anki / paste). Identity and order are assigned by the create command.
+ * A card's importable content. Text + cues are the common case; the schedule/status fields
+ * stay absent for the lighter sources (CSV / Anki / paste) and are assigned by the create
+ * command.
  */
 export interface ParsedCard {
   front: string
@@ -47,9 +44,6 @@ type QuestionLike = {
   correctAnswer: number
   explanation?: string
 }
-
-const JSON_TYPE = 'mindscape-deck-content'
-const JSON_VERSION = 3
 
 /** A user-facing import failure; the UI shows `.message` verbatim. */
 export class ContentImportError extends Error {}
@@ -117,39 +111,6 @@ function parseCsv(text: string): string[][] {
 
 // --- Serialize (export) -----------------------------------------------------
 
-/** The full card shape the Mindscape JSON export writes — the mirror of what
- * {@link parseMindscapeDeck} restores. Undefined fields are dropped so the file stays lean. */
-function toMindscapeCard(c: ParsedCard): ParsedCard {
-  return {
-    front: c.front,
-    back: c.back,
-    ...(c.hint ? { hint: c.hint } : {}),
-    ...(c.tip ? { tip: c.tip } : {}),
-    ...(c.flagged ? { flagged: true } : {}),
-    ...(c.memorized ? { memorized: true } : {}),
-    ...(c.srs ? { srs: c.srs } : {}),
-  }
-}
-
-export function deckContentToJson(
-  deckName: string,
-  cards: ReadonlyArray<ParsedCard>,
-  questions: ReadonlyArray<QuestionLike>,
-): string {
-  return JSON.stringify(
-    {
-      type: JSON_TYPE,
-      version: JSON_VERSION,
-      deck: deckName,
-      exportedAt: new Date().toISOString(),
-      cards: cards.map(toMindscapeCard),
-      questions,
-    },
-    null,
-    2,
-  )
-}
-
 export function cardsToCsv(cards: ReadonlyArray<CardLike>): string {
   const header = 'front,back,hint'
   const lines = cards.map((c) =>
@@ -191,79 +152,6 @@ export function cardsToAnkiTsv(cards: ReadonlyArray<CardLike>): string {
 }
 
 // --- Coerce / parse (import) ------------------------------------------------
-
-/** Coerce a raw `srs` object into a valid {@link SrsState}, or drop it. A schedule is only
- * meaningful with a `due` date; the rest fall back to a "new"-card default so a partial or
- * lightly-malformed export never yields a broken schedule. */
-function coerceSrs(raw: unknown): SrsState | undefined {
-  if (!raw || typeof raw !== 'object') return undefined
-  const o = raw as Record<string, unknown>
-  if (typeof o.due !== 'string' || !o.due) return undefined
-  const num = (value: unknown, fallback: number) =>
-    Number.isFinite(Number(value)) ? Number(value) : fallback
-  return {
-    due: o.due,
-    interval: num(o.interval, 0),
-    ease: num(o.ease, 2.5),
-    reps: num(o.reps, 0),
-    lapses: num(o.lapses, 0),
-    lastReviewed: typeof o.lastReviewed === 'string' ? o.lastReviewed : o.due,
-  }
-}
-
-function coerceCards(raw: unknown): ParsedCard[] {
-  if (!Array.isArray(raw)) return []
-  return raw.flatMap((item) => {
-    if (!item || typeof item !== 'object') return []
-    const o = item as Record<string, unknown>
-    const front = String(o.front ?? o.term ?? o.question ?? '').trim()
-    const back = String(o.back ?? o.definition ?? o.answer ?? '').trim()
-    if (!front || !back) return []
-    const hint = o.hint ?? o.cue ?? o.note ?? o.place
-    const srs = coerceSrs(o.srs)
-    return [
-      {
-        front,
-        back,
-        ...(hint ? { hint: String(hint).trim() } : {}),
-        ...(o.tip ? { tip: String(o.tip).trim() } : {}),
-        ...(o.flagged === true ? { flagged: true } : {}),
-        ...(o.memorized === true ? { memorized: true } : {}),
-        ...(srs ? { srs } : {}),
-      },
-    ]
-  })
-}
-
-function coerceQuestions(raw: unknown): ParsedQuestion[] {
-  if (!Array.isArray(raw)) return []
-  return raw.flatMap((item) => {
-    if (!item || typeof item !== 'object') return []
-    const o = item as Record<string, unknown>
-    const prompt = String(o.prompt ?? o.question ?? '').trim()
-    const options = Array.isArray(o.options)
-      ? o.options.map((x) => String(x).trim()).filter(Boolean)
-      : []
-    if (!prompt || options.length < 2) return []
-    let correct = Number(o.correctAnswer ?? o.answer ?? 0)
-    if (!Number.isFinite(correct)) correct = 0
-    correct = Math.max(0, Math.min(options.length - 1, correct))
-    const explanation = o.explanation
-    return [
-      {
-        prompt,
-        options,
-        correctAnswer: correct,
-        ...(explanation ? { explanation: String(explanation).trim() } : {}),
-      },
-    ]
-  })
-}
-
-/** Cards from any wire shape: current `cards`, legacy `loci`, or ad-hoc `flashcards`. */
-function coerceCardsField(root: Record<string, unknown>): ParsedCard[] {
-  return coerceCards(root.cards ?? root.loci ?? root.flashcards)
-}
 
 /** Map CSV rows (with a header) onto cards or questions by their columns. */
 function contentFromCsv(rows: string[][]): DeckContentData {
@@ -335,25 +223,62 @@ export interface NoteDelimiters {
   field: string
   /** Separator between cards. `'\n'` treats any newline (CRLF or LF) as a break. */
   card: string
+  /** Flip which side is the front — for `answer, prompt` pastes. */
+  swap?: boolean
+  /** Drop the first non-empty row — for spreadsheet pastes that lead with a header line. */
+  skipHeader?: boolean
 }
 
 /**
- * Parse pasted text into cards using explicit delimiters (the "Paste notes → Notes" flow).
+ * Parse pasted text into cards using explicit delimiters (the Paste screen's "Notes" flow).
  * Each card chunk splits once on `field` into front/back; blank chunks and chunks without
- * the separator are skipped.
+ * the separator are skipped. `swap` flips the two sides; `skipHeader` drops the first row.
  */
-export function parseDelimitedNotes(text: string, { field, card }: NoteDelimiters): ParsedCard[] {
-  const chunks = card === '\n' ? text.split(/\r?\n/) : text.split(card)
+export function parseDelimitedNotes(
+  text: string,
+  { field, card, swap = false, skipHeader = false }: NoteDelimiters,
+): ParsedCard[] {
+  let chunks = card === '\n' ? text.split(/\r?\n/) : text.split(card)
+  if (skipHeader) {
+    const first = chunks.findIndex((c) => c.trim() !== '')
+    if (first >= 0) chunks = chunks.slice(first + 1)
+  }
   return chunks.flatMap((chunk) => {
     const trimmed = chunk.trim()
     if (!trimmed || !field) return []
     const at = trimmed.indexOf(field)
     if (at < 0) return []
-    const front = trimmed.slice(0, at).trim()
-    const back = trimmed.slice(at + field.length).trim()
-    if (!front || !back) return []
-    return [{ front, back }]
+    const a = trimmed.slice(0, at).trim()
+    const b = trimmed.slice(at + field.length).trim()
+    if (!a || !b) return []
+    return [swap ? { front: b, back: a } : { front: a, back: b }]
   })
+}
+
+/** The two shapes the Paste screen understands. */
+export type PasteFormat = 'bible' | 'notes'
+
+/**
+ * Guess whether pasted text is a Bible chapter (verse-reference lines like `(1:1) …`) or
+ * plain delimited notes. Bible wins when verse lines are present and dominate; anything
+ * else parses as notes. The user can always override the guess.
+ */
+export function detectPasteFormat(text: string): PasteFormat {
+  const lines = text
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean)
+  if (lines.length === 0) return 'notes'
+  const verseLines = lines.filter((l) => /^\(\d+:\d+\)/.test(l)).length
+  return verseLines >= 2 && verseLines >= lines.length * 0.4 ? 'bible' : 'notes'
+}
+
+/** Guess the front/back separator from the first non-empty line — tab and comma are the
+ * common spreadsheet/CSV pastes; pipe and semicolon are the fallbacks. Defaults to tab. */
+export function guessFieldSeparator(text: string): string {
+  const first = text.split(/\r?\n/).find((l) => l.trim() !== '') ?? ''
+  for (const sep of ['\t', ',', ';', '|']) if (first.includes(sep)) return sep
+  return '\t'
 }
 
 /** Strip HTML (and entities/`<br>`) to plain text — Anki notes store rich-text fields. */
@@ -467,169 +392,17 @@ export function parseVerses(text: string): ParsedCard[] {
   return parseVerseChapters(text).flatMap((c) => c.cards)
 }
 
-/** Parse a `.json` or `.csv` file's text into deck content, choosing the format by
- * extension/shape. Throws {@link ContentImportError} when nothing usable is found. */
-export function parseDeckContent(text: string, fileName: string): DeckContentData {
-  const lower = fileName.toLowerCase()
-  const isCsv =
-    lower.endsWith('.csv') || (!lower.endsWith('.json') && !text.trimStart().startsWith('{'))
+/** Parse a `.csv` file's text into deck content, mapping columns onto cards or questions.
+ * Throws {@link ContentImportError} when nothing usable is found. */
+export function parseDeckContent(text: string): DeckContentData {
   let content: DeckContentData
   try {
-    if (isCsv) {
-      content = contentFromCsv(parseCsv(text))
-    } else {
-      const data = JSON.parse(text) as Record<string, unknown>
-      content = {
-        cards: coerceCardsField(data),
-        questions: coerceQuestions(data.questions),
-      }
-    }
+    content = contentFromCsv(parseCsv(text))
   } catch {
-    throw new ContentImportError("That file isn't a valid Mindscape export (.json or .csv).")
+    throw new ContentImportError("That file isn't a valid CSV.")
   }
   if (content.cards.length === 0 && content.questions.length === 0) {
     throw new ContentImportError('No cards or questions found in that file.')
   }
   return content
-}
-
-/**
- * Parse a Mindscape deck export (`.json`, type `mindscape-deck-content`, or the legacy
- * `mindscape-room-content`) at full fidelity — cards keep their cues, flag, known status,
- * and schedule. JSON only; a `.csv`/`.tsv` file belongs to the Anki import. Throws
- * {@link ContentImportError} on a bad or empty file.
- */
-export function parseMindscapeDeck(text: string): DeckContentData {
-  let data: unknown
-  try {
-    data = JSON.parse(text)
-  } catch {
-    throw new ContentImportError('That file isn’t a valid Mindscape export (.json).')
-  }
-  if (!data || typeof data !== 'object') {
-    throw new ContentImportError('That file isn’t a Mindscape export.')
-  }
-  const root = data as Record<string, unknown>
-  const content: DeckContentData = {
-    cards: coerceCardsField(root),
-    questions: coerceQuestions(root.questions),
-  }
-  if (content.cards.length === 0 && content.questions.length === 0) {
-    throw new ContentImportError('No cards found in that Mindscape file.')
-  }
-  return content
-}
-
-// --- Deck-tree transfer ------------------------------------------------------
-
-const TREE_JSON_TYPE = 'mindscape.decks'
-/** Legacy type written by the palace-era app; still accepted on import. */
-const TREE_JSON_TYPE_LEGACY = 'mindscape.palace'
-const TREE_JSON_VERSION = 2
-
-/** One deck's importable content: a name/description plus its cards and questions. */
-export interface ImportedDeck {
-  title: string
-  description?: string
-  cards: ParsedCard[]
-  questions: ParsedQuestion[]
-}
-
-/** The export's top-level identity as it travels in a file — no ids or timestamps. */
-export interface DeckTreeMeta {
-  name: string
-  description?: string
-  icon?: string
-  color?: string
-}
-
-export interface DeckTreeContentData {
-  meta: DeckTreeMeta
-  decks: ImportedDeck[]
-}
-
-/**
- * Serialize a deck and its subdecks' content as a Mindscape decks file. Structural inputs
- * (no entity dependency); the mirror of {@link parseDeckTreeContent}, so export and import
- * can never drift out of one format.
- */
-export function deckTreeToJson(
-  meta: DeckTreeMeta,
-  decks: ReadonlyArray<{
-    title: string
-    description?: string
-    cards: ReadonlyArray<CardLike & { tip?: string }>
-    questions: ReadonlyArray<QuestionLike>
-  }>,
-): string {
-  return JSON.stringify(
-    {
-      type: TREE_JSON_TYPE,
-      version: TREE_JSON_VERSION,
-      exportedAt: new Date().toISOString(),
-      deck: meta,
-      decks: decks.map((deck) => ({
-        title: deck.title,
-        description: deck.description,
-        cards: deck.cards.map((c) => ({ front: c.front, back: c.back, hint: c.hint, tip: c.tip })),
-        questions: deck.questions.map((q) => ({
-          prompt: q.prompt,
-          options: q.options,
-          correctAnswer: q.correctAnswer,
-          explanation: q.explanation,
-        })),
-      })),
-    },
-    null,
-    2,
-  )
-}
-
-/**
- * Parse a Mindscape decks file (or a legacy palace file) into its identity and decks,
- * tolerating missing fields. Throws {@link ContentImportError} with a user-facing message
- * on a bad file.
- */
-export function parseDeckTreeContent(text: string, fileName?: string): DeckTreeContentData {
-  let data: unknown
-  try {
-    data = JSON.parse(text)
-  } catch {
-    throw new ContentImportError('That file isn’t a valid Mindscape decks file.')
-  }
-  const type = data && typeof data === 'object' ? (data as Record<string, unknown>).type : undefined
-  if (type !== TREE_JSON_TYPE && type !== TREE_JSON_TYPE_LEGACY) {
-    throw new ContentImportError('That file isn’t a Mindscape decks export.')
-  }
-  const root = data as Record<string, unknown>
-  const meta = (root.deck ?? root.palace ?? {}) as Record<string, unknown>
-  const fallback = fileName ? fileName.replace(/\.[^.]+$/, '').trim() : ''
-  const name = (String(meta.name ?? '').trim() || fallback || 'Imported deck').slice(0, 60)
-  const decksRaw = Array.isArray(root.decks ?? root.rooms) ? (root.decks ?? root.rooms) : []
-  const decks = (decksRaw as unknown[]).flatMap((entry): ImportedDeck[] => {
-    if (!entry || typeof entry !== 'object') return []
-    const deck = entry as Record<string, unknown>
-    const title = String(deck.title ?? '').trim()
-    if (!title) return []
-    return [
-      {
-        title,
-        description: deck.description ? String(deck.description).trim() : undefined,
-        cards: coerceCardsField(deck),
-        questions: coerceQuestions(deck.questions),
-      },
-    ]
-  })
-  if (decks.length === 0) {
-    throw new ContentImportError('No decks found in that file.')
-  }
-  return {
-    meta: {
-      name,
-      description: meta.description ? String(meta.description).trim() : undefined,
-      icon: meta.icon ? String(meta.icon) : undefined,
-      color: meta.color ? String(meta.color) : undefined,
-    },
-    decks,
-  }
 }

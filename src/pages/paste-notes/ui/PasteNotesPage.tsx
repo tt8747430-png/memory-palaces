@@ -1,54 +1,115 @@
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { BookOpen, List, Sparkles } from 'lucide-react'
-import { cn, parseDelimitedNotes, parseVerses } from '@/shared/lib'
-import { AppScreen, Button, ScreenHeader, TextField, Textarea } from '@/shared/ui'
+import { toast } from 'sonner'
+import {
+  ArrowRight,
+  ArrowUpDown,
+  BookOpen,
+  ClipboardPaste,
+  Eraser,
+  List,
+  Sparkles,
+  Table,
+  Wand2,
+} from 'lucide-react'
+import {
+  cn,
+  detectPasteFormat,
+  guessFieldSeparator,
+  type PasteFormat,
+  type ParsedCard,
+  parseDelimitedNotes,
+  parseVerses,
+} from '@/shared/lib'
+import { AppScreen, Button, ScreenHeader, Switch, TextField, Textarea } from '@/shared/ui'
 import { useImportDraft } from '@/widgets/content-editor'
 
 export interface PasteNotesPageProps {
   onBack: () => void
-  /** Seed committed — go to the shared review page. */
-  onReview: () => void
+  /** New-deck mode (library "Import"): show an inline deck-name field, pre-filled with
+   * `defaultDeckName`, and pass the chosen name up on commit. Omit when pasting into an
+   * existing deck — then no name is asked. */
+  newDeck?: boolean
+  defaultDeckName?: string
+  /** Seed committed — go to the shared review page. In new-deck mode `deckName` carries the
+   * name to create the deck with; otherwise it's undefined. The draft is already seeded. */
+  onReview: (deckName?: string) => void
 }
 
-type Kind = 'notes' | 'bible'
-type FieldSep = 'tab' | 'comma' | 'custom'
+type FieldSep = 'auto' | 'tab' | 'comma' | 'custom'
 type CardSep = 'newline' | 'semicolon' | 'custom'
 
-const FIELD_VALUE: Record<Exclude<FieldSep, 'custom'>, string> = { tab: '\t', comma: ',' }
+const FIELD_VALUE: Record<'tab' | 'comma', string> = { tab: '\t', comma: ',' }
 const CARD_VALUE: Record<Exclude<CardSep, 'custom'>, string> = { newline: '\n', semicolon: ';' }
+const SEP_GLYPH: Record<string, string> = { '\t': '⇥', ',': ',', ';': ';', '|': '|', ' ': '␣' }
+const displaySep = (value: string) => SEP_GLYPH[value] ?? value
+
+const PREVIEW_LIMIT = 6
 
 /**
- * Step one of the paste import: choose the kind (delimited Notes or a Bible chapter), paste
- * the text, and tune the separators, with a live "N cards found" count. "Create" parses the
- * text into a draft and hands off to the shared review page — nothing is written to the room
- * until the user confirms there.
+ * The Paste screen: paste any text and it becomes cards. The format (a Bible chapter vs.
+ * delimited notes) is auto-detected and overridable; the separators auto-guess but can be
+ * tuned, with swap-sides and skip-header options and a live preview of what will be created.
+ * "Create" seeds the draft and hands off to the shared review page — nothing is written to
+ * the deck until the user confirms there.
  */
-export function PasteNotesPage({ onBack, onReview }: PasteNotesPageProps) {
+export function PasteNotesPage({
+  onBack,
+  onReview,
+  newDeck = false,
+  defaultDeckName = '',
+}: PasteNotesPageProps) {
   const { t } = useTranslation()
   const setDraft = useImportDraft((s) => s.setDraft)
 
-  const [kind, setKind] = useState<Kind>('notes')
+  const [deckName, setDeckName] = useState(defaultDeckName)
   const [text, setText] = useState('')
-  const [fieldSep, setFieldSep] = useState<FieldSep>('comma')
+  const [override, setOverride] = useState<PasteFormat | null>(null)
+  const [fieldSep, setFieldSep] = useState<FieldSep>('auto')
   const [cardSep, setCardSep] = useState<CardSep>('newline')
   const [customField, setCustomField] = useState('')
   const [customCard, setCustomCard] = useState('')
+  const [swap, setSwap] = useState(false)
+  const [skipHeader, setSkipHeader] = useState(false)
 
-  const field = fieldSep === 'custom' ? customField : FIELD_VALUE[fieldSep]
+  const detected = useMemo(() => detectPasteFormat(text), [text])
+  const format = override ?? detected
+
+  const guessedField = useMemo(() => guessFieldSeparator(text), [text])
+  const field =
+    fieldSep === 'auto'
+      ? guessedField
+      : fieldSep === 'custom'
+        ? customField
+        : FIELD_VALUE[fieldSep]
   const card = cardSep === 'custom' ? customCard || '\n' : CARD_VALUE[cardSep]
 
   const cards = useMemo(() => {
     if (!text.trim()) return []
-    if (kind === 'bible') return parseVerses(text)
+    if (format === 'bible') return parseVerses(text)
     if (!field) return []
-    return parseDelimitedNotes(text, { field, card })
-  }, [text, kind, field, card])
+    return parseDelimitedNotes(text, { field, card, swap, skipHeader })
+  }, [text, format, field, card, swap, skipHeader])
+
+  const canReadClipboard =
+    typeof navigator !== 'undefined' && typeof navigator.clipboard?.readText === 'function'
+
+  const pasteFromClipboard = async () => {
+    try {
+      const clip = await navigator.clipboard.readText()
+      if (clip.trim()) setText(clip)
+    } catch {
+      toast.error(t('cards.paste.clipboardError'))
+    }
+  }
+
+  const namedOk = !newDeck || deckName.trim().length > 0
+  const canCreate = cards.length > 0 && namedOk
 
   const create = () => {
-    if (cards.length === 0) return
+    if (!canCreate) return
     setDraft('paste', cards)
-    onReview()
+    onReview(newDeck ? deckName.trim() : undefined)
   }
 
   return (
@@ -59,34 +120,32 @@ export function PasteNotesPage({ onBack, onReview }: PasteNotesPageProps) {
       }
       footer={
         <div className="bg-glass shrink-0 border-t border-white/40 px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-10px_30px_oklch(var(--p-tint-navy)/0.1)]">
-          <Button size="lg" className="w-full" disabled={cards.length === 0} onClick={create}>
+          <Button size="lg" className="w-full" disabled={!canCreate} onClick={create}>
             <Sparkles className="size-[18px]" aria-hidden />
-            {t('cards.paste.create')}
+            {cards.length > 0 ? t('cards.paste.createCount', { count: cards.length }) : t('cards.paste.create')}
           </Button>
         </div>
       }
     >
-      <div className="mt-4 flex flex-col gap-6 pb-6">
-        <OptionGroup<Kind>
-          label={t('cards.paste.kindLabel')}
-          value={kind}
-          onChange={setKind}
-          options={[
-            {
-              value: 'notes',
-              label: t('cards.paste.kindNotes'),
-              description: t('cards.paste.kindNotesSub'),
-              icon: <List className="size-[18px]" aria-hidden />,
-            },
-            {
-              value: 'bible',
-              label: t('cards.paste.kindBible'),
-              description: t('cards.paste.kindBibleSub'),
-              icon: <BookOpen className="size-[18px]" aria-hidden />,
-            },
-          ]}
-        />
+      <div className="mt-4 flex flex-col gap-5 pb-6">
+        {/* New-deck name — only when creating a deck from the library import; hidden when
+            pasting into a deck that already exists. */}
+        {newDeck ? (
+          <div>
+            <span className="mb-2 block text-[length:var(--p-text-sub)] font-bold text-heading">
+              {t('cards.paste.deckNameLabel')}
+            </span>
+            <TextField
+              aria-label={t('cards.paste.deckNameLabel')}
+              value={deckName}
+              onChange={(e) => setDeckName(e.target.value)}
+              placeholder={t('deck.namePlaceholder')}
+              maxLength={60}
+            />
+          </div>
+        ) : null}
 
+        {/* Paste box */}
         <div>
           <div className="mb-2 flex items-baseline justify-between gap-2">
             <span className="text-[length:var(--p-text-sub)] font-bold text-heading">
@@ -98,7 +157,7 @@ export function PasteNotesPage({ onBack, onReview }: PasteNotesPageProps) {
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder={
-              kind === 'bible'
+              format === 'bible'
                 ? t('cards.paste.biblePlaceholder')
                 : t('cards.paste.notesPlaceholder')
             }
@@ -106,9 +165,33 @@ export function PasteNotesPage({ onBack, onReview }: PasteNotesPageProps) {
             className="min-h-[184px] font-mono text-[length:var(--p-text-label)] leading-relaxed"
             autoFocus
           />
+          <div className="mt-2 flex items-center gap-4">
+            {canReadClipboard ? (
+              <TextButton icon={<ClipboardPaste className="size-4" aria-hidden />} onClick={pasteFromClipboard}>
+                {t('cards.paste.pasteFromClipboard')}
+              </TextButton>
+            ) : null}
+            {text ? (
+              <TextButton
+                icon={<Eraser className="size-4" aria-hidden />}
+                tone="muted"
+                onClick={() => setText('')}
+              >
+                {t('cards.paste.clear')}
+              </TextButton>
+            ) : null}
+          </div>
         </div>
 
-        {kind === 'bible' ? (
+        {/* Format — auto-detected, overridable */}
+        <FormatToggle
+          value={format}
+          auto={override === null}
+          onChange={(next) => setOverride(next)}
+          onReset={() => setOverride(null)}
+        />
+
+        {format === 'bible' ? (
           <div className="flex items-start gap-3 rounded-card bg-info-surface p-4">
             <BookOpen className="mt-0.5 size-5 shrink-0 text-accent" aria-hidden />
             <div>
@@ -127,6 +210,11 @@ export function PasteNotesPage({ onBack, onReview }: PasteNotesPageProps) {
               value={fieldSep}
               onChange={setFieldSep}
               options={[
+                {
+                  value: 'auto',
+                  label: t('cards.paste.sepAuto'),
+                  hint: text.trim() ? displaySep(guessedField) : undefined,
+                },
                 { value: 'tab', label: t('cards.paste.sepTab'), hint: '⇥' },
                 { value: 'comma', label: t('cards.paste.sepComma'), hint: ',' },
                 { value: 'custom', label: t('cards.paste.sepCustom') },
@@ -160,10 +248,203 @@ export function PasteNotesPage({ onBack, onReview }: PasteNotesPageProps) {
                 ) : undefined
               }
             />
+
+            <div className="overflow-hidden rounded-card border border-border bg-card shadow-rest">
+              <ToggleRow
+                icon={<ArrowUpDown className="size-[18px]" aria-hidden />}
+                label={t('cards.paste.swapLabel')}
+                hint={t('cards.paste.swapHint')}
+                checked={swap}
+                onCheckedChange={setSwap}
+              />
+              <ToggleRow
+                icon={<Table className="size-[18px]" aria-hidden />}
+                label={t('cards.paste.skipHeaderLabel')}
+                hint={t('cards.paste.skipHeaderHint')}
+                checked={skipHeader}
+                onCheckedChange={setSkipHeader}
+                divide
+              />
+            </div>
           </div>
         )}
+
+        {/* Live preview */}
+        {text.trim() ? (
+          cards.length > 0 ? (
+            <PreviewList cards={cards} />
+          ) : (
+            <p className="rounded-card bg-secondary/40 px-4 py-3 text-[length:var(--p-text-label)] text-muted-foreground">
+              {t('cards.paste.noneParsed')}
+            </p>
+          )
+        ) : null}
       </div>
     </AppScreen>
+  )
+}
+
+function FormatToggle({
+  value,
+  auto,
+  onChange,
+  onReset,
+}: {
+  value: PasteFormat
+  auto: boolean
+  onChange: (value: PasteFormat) => void
+  onReset: () => void
+}) {
+  const { t } = useTranslation()
+  const options = [
+    { value: 'notes' as const, label: t('cards.paste.kindNotes'), icon: List },
+    { value: 'bible' as const, label: t('cards.paste.kindBible'), icon: BookOpen },
+  ]
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <span className="text-[length:var(--p-text-label)] font-semibold text-heading">
+          {t('cards.paste.formatLabel')}
+        </span>
+        {auto ? (
+          <span className="inline-flex items-center gap-1 text-[length:var(--p-text-tiny)] font-semibold text-muted-foreground">
+            <Wand2 className="size-3.5" aria-hidden />
+            {t('cards.paste.autoDetected')}
+          </span>
+        ) : (
+          <button
+            type="button"
+            onClick={onReset}
+            className="text-[length:var(--p-text-tiny)] font-bold text-primary"
+          >
+            {t('cards.paste.resetAuto')}
+          </button>
+        )}
+      </div>
+      <div role="radiogroup" aria-label={t('cards.paste.formatLabel')} className="grid grid-cols-2 gap-2">
+        {options.map(({ value: v, label, icon: Icon }) => {
+          const selected = v === value
+          return (
+            <button
+              key={v}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              onClick={() => onChange(v)}
+              className={cn(
+                'flex items-center justify-center gap-2 rounded-control py-2.5 text-[length:var(--p-text-sub)] font-semibold transition-[background-color,box-shadow,transform] active:scale-[0.98]',
+                selected
+                  ? 'bg-info-surface text-heading ring-1 ring-inset ring-primary/20 shadow-rest'
+                  : 'bg-secondary/40 text-muted-foreground',
+              )}
+            >
+              <Icon className="size-[18px]" aria-hidden />
+              {label}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function PreviewList({ cards }: { cards: ParsedCard[] }) {
+  const { t } = useTranslation()
+  const shown = cards.slice(0, PREVIEW_LIMIT)
+  const rest = cards.length - shown.length
+  return (
+    <div>
+      <span className="mb-2 block text-[length:var(--p-text-label)] font-semibold text-heading">
+        {t('cards.paste.previewLabel')}
+      </span>
+      <ul className="divide-y divide-border overflow-hidden rounded-card border border-border bg-card shadow-rest">
+        {shown.map((c, i) => (
+          <li key={i} className="flex items-center gap-2.5 px-3.5 py-2.5">
+            <span className="min-w-0 flex-1 truncate text-[length:var(--p-text-label)] font-semibold text-heading">
+              {c.front}
+            </span>
+            <ArrowRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+            <span className="min-w-0 flex-1 truncate text-[length:var(--p-text-label)] text-muted-foreground">
+              {c.back}
+            </span>
+          </li>
+        ))}
+      </ul>
+      {rest > 0 ? (
+        <p className="mt-1.5 px-1 text-[length:var(--p-text-label)] text-muted-foreground">
+          {t('cards.paste.moreCards', { count: rest })}
+        </p>
+      ) : null}
+    </div>
+  )
+}
+
+function TextButton({
+  icon,
+  children,
+  tone = 'primary',
+  onClick,
+}: {
+  icon: ReactNode
+  children: ReactNode
+  tone?: 'primary' | 'muted'
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'inline-flex items-center gap-1.5 text-[length:var(--p-text-label)] font-semibold transition-colors active:opacity-70',
+        tone === 'primary' ? 'text-primary' : 'text-muted-foreground',
+      )}
+    >
+      {icon}
+      {children}
+    </button>
+  )
+}
+
+function ToggleRow({
+  icon,
+  label,
+  hint,
+  checked,
+  onCheckedChange,
+  divide = false,
+}: {
+  icon: ReactNode
+  label: string
+  hint: string
+  checked: boolean
+  onCheckedChange: (value: boolean) => void
+  divide?: boolean
+}) {
+  return (
+    <label
+      className={cn(
+        'flex items-center justify-between gap-3 px-3.5 py-3',
+        divide && 'border-t border-border',
+      )}
+    >
+      <span className="flex min-w-0 items-center gap-3">
+        <span
+          aria-hidden
+          className="grid size-8 shrink-0 place-items-center rounded-control bg-info-surface text-primary"
+        >
+          {icon}
+        </span>
+        <span className="min-w-0">
+          <span className="block text-[length:var(--p-text-body)] font-semibold text-heading">
+            {label}
+          </span>
+          <span className="block truncate text-[length:var(--p-text-label)] text-muted-foreground">
+            {hint}
+          </span>
+        </span>
+      </span>
+      <Switch label={label} checked={checked} onCheckedChange={onCheckedChange} />
+    </label>
   )
 }
 
@@ -181,8 +462,6 @@ interface Option<T extends string> {
   value: T
   label: string
   description?: string
-  /** Leading glyph, tinted accent when the row is selected. */
-  icon?: ReactNode
   /** A right-aligned monospace chip showing the literal this option stands for (e.g. `,`). */
   hint?: string
 }
@@ -232,14 +511,6 @@ function OptionGroup<T extends string>({
               )}
             >
               <RadioDot selected={selected} />
-              {option.icon ? (
-                <span
-                  className={cn('shrink-0', selected ? 'text-accent' : 'text-muted-foreground')}
-                  aria-hidden
-                >
-                  {option.icon}
-                </span>
-              ) : null}
               <span className="min-w-0 flex-1">
                 <span
                   className={cn(
@@ -257,7 +528,7 @@ function OptionGroup<T extends string>({
               </span>
               {option.hint ? (
                 <span
-                  className="shrink-0 rounded-md bg-primary/[0.06] px-1.5 py-0.5 font-mono text-[length:var(--p-text-label)] text-muted-foreground"
+                  className="shrink-0 rounded-control bg-primary/[0.06] px-1.5 py-0.5 font-mono text-[length:var(--p-text-label)] text-muted-foreground"
                   aria-hidden
                 >
                   {option.hint}

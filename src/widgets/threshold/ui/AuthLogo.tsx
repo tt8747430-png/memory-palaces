@@ -4,11 +4,6 @@ import { Threshold } from './Threshold'
 
 const GLOW = 'radial-gradient(circle, oklch(var(--p-tint-sky) / 0.6), transparent 70%)'
 
-/**
- * The Mindscape mark for in-task auth surfaces (login / signup / forgot): the static
- * light threshold over a softly breathing sky glow. Reduced motion holds the glow
- * still. Size the mark via `className` (e.g. `size-16`); the glow scales to match.
- */
 export function AuthLogo({ className }: { className?: string }) {
   const reduce = useReducedMotion()
   return (

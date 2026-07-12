@@ -49,8 +49,7 @@ the details.
 - **Not a generic SaaS template.** No cream/beige body background, identical icon-card grids,
   tiny tracked uppercase eyebrows, or the rest of the AI-slop default kit.
 - Loud, gamified energy is _not_ on the avoid list: celebration and play are wanted. The
-  guardrail is that they stay earned and tasteful (no confetti spam, no streak-guilt
-  nagging), in service of the calm ground rather than fighting it.
+  guardrail is that they stay earned and tasteful (no confetti spam), in service of the calm ground rather than fighting it.
 
 ## Design Principles
 
@@ -62,8 +61,6 @@ the details.
 3. **One thing at a time, thumb-first.** Phone-only, one primary task per screen, reachable
    and forgiving for touch. Guide the user to the calmest sensible next step instead of
    surfacing every option at once.
-4. **Motivate without nagging.** Streaks, XP, and reminders reward coming back; they never
-   shame the user or manufacture guilt for a missed day.
 5. **Guest-first, no walls.** Deliver value before any signup. An account is an upgrade that
    claims and protects existing local progress, never a gate in front of the product.
 6. **Self-evident, not explained.** The interface teaches itself: one accent family that

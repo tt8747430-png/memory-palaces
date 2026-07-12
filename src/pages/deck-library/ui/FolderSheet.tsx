@@ -12,6 +12,8 @@ export interface FolderSheetProps {
   folder?: Folder | null
   /** Seed colour for a brand-new folder (the page cycles the palette so folders differ). */
   defaultColor: string
+  /** Seed name for a brand-new folder (e.g. "New Folder 1"), so it's never blank. */
+  defaultName?: string
   onSubmit: (changes: { name: string; color: string; icon: string }) => void
 }
 
@@ -19,7 +21,14 @@ export interface FolderSheetProps {
  * Name, a tap-for-any-emoji icon, and a brand colour, so a folder gets a real identity in one
  * pass. Naming alone is enough on create — the emoji and colour come pre-chosen. (Deleting a
  * folder lives in its row menu, not here.) */
-export function FolderSheet({ open, onOpenChange, folder, defaultColor, onSubmit }: FolderSheetProps) {
+export function FolderSheet({
+  open,
+  onOpenChange,
+  folder,
+  defaultColor,
+  defaultName = '',
+  onSubmit,
+}: FolderSheetProps) {
   const { t } = useTranslation()
   const isEdit = folder != null
   const [name, setName] = useState('')
@@ -29,10 +38,10 @@ export function FolderSheet({ open, onOpenChange, folder, defaultColor, onSubmit
   // Seed each time the sheet opens: from the folder when editing, fresh defaults when creating.
   useEffect(() => {
     if (!open) return
-    setName(folder?.name ?? '')
+    setName(folder?.name ?? defaultName)
     setColor(folder?.color || defaultColor)
     setIcon(folder?.icon || DEFAULT_FOLDER_ICON)
-  }, [open, folder, defaultColor])
+  }, [open, folder, defaultColor, defaultName])
 
   const valid = name.trim().length > 0
   const submit = (event?: SyntheticEvent) => {

@@ -159,7 +159,6 @@ export function DeckDetailPage({
         <section aria-label={t('deck.cards')} className="space-y-3 pt-1">
           <DeckContentEditor
             deckId={deckId}
-            deckName={deck.name}
             selectMode={selectMode}
             onSelectModeChange={setSelectMode}
             sort={prefs.contentSort}

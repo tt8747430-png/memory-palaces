@@ -6,7 +6,6 @@ import {
   ArchiveRestore,
   Copy,
   Download,
-  FileJson,
   FileText,
   MapPin,
   Pencil,
@@ -24,7 +23,7 @@ import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
 import { cardsInSubtree, resolveDeckSettings } from '@/shared/lib'
 import { deleteDeck, duplicateDeck, editDeck, setDeckArchived } from '@/features/deck'
 import { resetDeckSrs } from '@/features/card'
-import { exportCardsAnki, exportCardsCsv, exportDeckJson } from '@/features/content'
+import { exportCardsAnki, exportCardsCsv } from '@/features/content'
 import {
   ActionSheet,
   AppScreen,
@@ -216,12 +215,6 @@ export function DeckSettingsPage({ deckId, onBack, onDeleted }: DeckSettingsPage
         description={t('deckSettings.exportSheetDescription')}
         cancelLabel={t('common.cancel')}
         actions={[
-          {
-            id: 'json',
-            label: t('deckSettings.exportJson'),
-            icon: <FileJson className="size-5" aria-hidden />,
-            onSelect: () => runExport(() => exportDeckJson(deck.name, cards, [])),
-          },
           {
             id: 'csv',
             label: t('deckSettings.exportCsv'),

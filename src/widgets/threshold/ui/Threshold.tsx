@@ -28,25 +28,10 @@ const GLOW = 'drop-shadow(0 0 12px oklch(83.2% 0.083 264.3 / 0.55))'
 
 export interface PalaceThresholdProps {
   className?: string
-  /**
-   * `dark` — drenched-navy brand moments (light-blue lines, white spark, glow).
-   * `light` — in-task daylight surfaces (navy lines + spark, no glow).
-   */
   tone?: 'dark' | 'light'
-  /**
-   * When false (or under reduced motion) the mark renders its final frame with no
-   * draw sequence — the form for in-task auth surfaces, which carry their own entrance.
-   */
   animated?: boolean
 }
 
-/**
- * The single Mindscape mark: blueprint lines draw a temple/threshold, then a lone
- * spark ignites at its heart — the brand's doorway moment. Pure SVG
- * pathLength + motion (60fps, no deps). Drenched `tone="dark"` + `animated` for the
- * splash/welcome brand moments; static `tone="light"` for login/signup/forgot.
- * Reduced motion renders the final frame.
- */
 export function Threshold({ className, tone = 'dark', animated = true }: PalaceThresholdProps) {
   const reduce = useReducedMotion()
   const isStatic = !animated || !!reduce
@@ -62,19 +47,13 @@ export function Threshold({ className, tone = 'dark', animated = true }: PalaceT
       initial={isStatic ? 'show' : 'hidden'}
       animate="show"
     >
-      {/* pediment / roof */}
       <motion.path variants={draw} d="M40 64 L100 24 L160 64" {...stroke} />
-      {/* lintel */}
       <motion.line variants={draw} x1="46" y1="64" x2="154" y2="64" {...stroke} />
-      {/* columns */}
       <motion.line variants={draw} x1="64" y1="64" x2="64" y2="166" {...stroke} />
       <motion.line variants={draw} x1="136" y1="64" x2="136" y2="166" {...stroke} />
-      {/* arched doorway */}
       <motion.path variants={draw} d="M86 166 L86 126 A14 14 0 0 1 114 126 L114 166" {...stroke} />
-      {/* steps */}
       <motion.line variants={draw} x1="40" y1="166" x2="160" y2="166" {...stroke} />
       <motion.line variants={draw} x1="28" y1="178" x2="172" y2="178" {...stroke} />
-      {/* the spark igniting in the doorway */}
       <motion.circle
         variants={spark}
         cx="100"

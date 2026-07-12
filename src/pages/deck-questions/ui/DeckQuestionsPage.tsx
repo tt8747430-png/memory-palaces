@@ -6,7 +6,6 @@ import {
   Brain,
   Clock,
   Download,
-  FileJson,
   FileText,
   GripVertical,
   HelpCircle,
@@ -32,12 +31,7 @@ import {
 } from '@/entities/deck'
 import { selectEffectivePreferences, usePreferencesStore } from '@/entities/preferences'
 import { deleteQuestion, duplicateQuestion, reorderQuestions } from '@/features/question'
-import {
-  applyDeckContent,
-  exportQuestionsCsv,
-  exportDeckJson,
-  readContentFile,
-} from '@/features/content'
+import { applyDeckContent, exportQuestionsCsv, readContentFile } from '@/features/content'
 import { ContentImportError, type DeckContentData } from '@/shared/lib'
 import {
   AppScreen,
@@ -408,10 +402,10 @@ export function DeckQuestionsPage({
           <ImportRow
             icon={<Upload className="size-5" aria-hidden />}
             tone="accent"
-            badge="CSV · JSON"
+            badge="CSV"
             title={t('questions.transfer.importFile')}
             subtitle={t('questions.transfer.importFileSub')}
-            onClick={() => pickFile('.csv,.json')}
+            onClick={() => pickFile('.csv')}
           />
         </div>
       </Sheet>
@@ -424,16 +418,6 @@ export function DeckQuestionsPage({
         description={t('questions.transfer.exportSubtitle')}
       >
         <div className="flex flex-col gap-2.5 pb-2">
-          <ImportRow
-            icon={<FileJson className="size-5" aria-hidden />}
-            tone="brand"
-            badge="JSON"
-            trailing={<Download className="size-5 shrink-0 text-faint" aria-hidden />}
-            title={t('questions.transfer.exportJson')}
-            subtitle={t('questions.transfer.exportJsonSub')}
-            disabled={!hasQuestions}
-            onClick={() => closeExport(() => exportDeckJson(deckName, [], questions))}
-          />
           <ImportRow
             icon={<FileText className="size-5" aria-hidden />}
             tone="positive"

@@ -92,15 +92,6 @@ describe('SettingsPage', () => {
     expect(screen.queryByRole('button', { name: /change password/i })).not.toBeInTheDocument()
   })
 
-  it('opens the Clear data screen from the data section', async () => {
-    const user = userEvent.setup()
-    const onClearData = vi.fn()
-    renderSettings({ onClearData })
-
-    await user.click(screen.getByRole('button', { name: /clear data/i }))
-    expect(onClearData).toHaveBeenCalledOnce()
-  })
-
   it('persists the chosen language from the picker', async () => {
     const user = userEvent.setup()
     const { prefsRepo } = renderSettings()

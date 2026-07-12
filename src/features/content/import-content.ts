@@ -1,22 +1,14 @@
 import {
   ContentImportError,
-  type DeckTreeContentData,
   parseAnkiText,
-  parseMindscapeDeck,
-  parseDeckTreeContent,
   parseDeckContent,
   type DeckContentData,
 } from '@/shared/lib'
 
-/** Read a `.json` / `.csv` Mindscape export into room content (the file-IO boundary). Used by
- * the deck-tree and questions imports; the per-deck card import uses the split readers below. */
+/** Read a `.csv` file into deck content (the file-IO boundary). Used by the questions
+ * import; the per-deck card import uses {@link readAnkiFile}. */
 export function readContentFile(file: File): Promise<DeckContentData> {
-  return readText(file).then((text) => parseDeckContent(text, file.name))
-}
-
-/** Read a Mindscape room export (`.json`) at full card fidelity (cues, flag, known, schedule). */
-export function readMindscapeFile(file: File): Promise<DeckContentData> {
-  return readText(file).then((text) => parseMindscapeDeck(text))
+  return readText(file).then((text) => parseDeckContent(text))
 }
 
 /**
@@ -33,15 +25,10 @@ export async function readAnkiFile(file: File): Promise<DeckContentData> {
     )
   }
   const text = await file.text()
-  if (name.endsWith('.csv')) return parseDeckContent(text, file.name)
+  if (name.endsWith('.csv')) return parseDeckContent(text)
   const cards = parseAnkiText(text)
   if (cards.length === 0) throw new ContentImportError('No cards found in that file.')
   return { cards, questions: [] }
-}
-
-/** Read a Mindscape decks export (`.json`, legacy palace files included) into its decks. */
-export function readDeckTreeFile(file: File): Promise<DeckTreeContentData> {
-  return readText(file).then((text) => parseDeckTreeContent(text, file.name))
 }
 
 function readText(file: File): Promise<string> {
