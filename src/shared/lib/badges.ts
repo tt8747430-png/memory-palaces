@@ -1,4 +1,3 @@
-
 export type BadgeId = 'xp' | 'streak' | 'decks' | 'library' | 'cards' | 'days'
 
 export interface BadgeInput {

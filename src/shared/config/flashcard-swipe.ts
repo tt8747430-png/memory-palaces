@@ -1,4 +1,3 @@
-
 export type SwipeDirection = 'up' | 'down' | 'left' | 'right'
 
 export const SWIPE_DIRECTIONS: readonly SwipeDirection[] = ['up', 'down', 'left', 'right']

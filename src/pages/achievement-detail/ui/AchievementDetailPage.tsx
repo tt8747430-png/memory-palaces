@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next'
 import { Check, Lock } from 'lucide-react'
 import {
   type AchievementId,
-  computeAchievements,
   cardsInSubtree,
+  computeAchievements,
   computeTrainingTotals,
   isDeckCompleted,
 } from '@/shared/lib'

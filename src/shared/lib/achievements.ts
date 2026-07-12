@@ -1,4 +1,3 @@
-
 export type AchievementId =
   | 'first-deck'
   | 'week-warrior'

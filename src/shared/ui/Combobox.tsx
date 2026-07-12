@@ -64,7 +64,10 @@ export function Combobox<T extends string>({
           {selected?.label ?? placeholder ?? ''}
         </span>
         <ChevronsUpDown
-          className={cn('size-4 shrink-0', bare ? 'text-muted-foreground/70' : 'text-muted-foreground')}
+          className={cn(
+            'size-4 shrink-0',
+            bare ? 'text-muted-foreground/70' : 'text-muted-foreground',
+          )}
           aria-hidden
         />
       </Menu.Trigger>

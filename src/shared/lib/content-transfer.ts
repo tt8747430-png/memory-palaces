@@ -1,4 +1,3 @@
-
 import type { SrsState } from './srs'
 
 export interface ParsedCard {
@@ -42,7 +41,6 @@ export function contentSlug(name: string): string {
       .slice(0, 40) || 'deck'
   )
 }
-
 
 function csvCell(value: string): string {
   const v = value ?? ''
@@ -90,7 +88,6 @@ function parseCsv(text: string): string[][] {
   return rows.filter((r) => r.some((c) => c.trim() !== ''))
 }
 
-
 export function cardsToCsv(cards: ReadonlyArray<CardLike>): string {
   const header = 'front,back,hint'
   const lines = cards.map((c) =>
@@ -127,7 +124,6 @@ export function cardsToAnkiTsv(cards: ReadonlyArray<CardLike>): string {
   const lines = cards.map((c) => `${ankiField(c.front)}\t${ankiField(c.back)}`)
   return [header, ...lines].join('\n')
 }
-
 
 function contentFromCsv(rows: string[][]): DeckContentData {
   const header = rows[0]

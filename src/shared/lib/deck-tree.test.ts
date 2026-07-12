@@ -1,19 +1,19 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
+  canReparent,
+  cardsInSubtree,
   childDecks,
-  rootDecks,
+  countDueInSubtree,
+  deckPath,
   decksInFolder,
+  dueCountsPerDeck,
+  isDescendantOrSelf,
+  resolveDeckSettings,
+  rootDecks,
   subtreeDeckIds,
   subtreeDecks,
-  deckPath,
-  isDescendantOrSelf,
-  canReparent,
-  resolveDeckSettings,
-  cardsInSubtree,
-  countDueInSubtree,
-  dueCountsPerDeck,
-  type TreeDeck,
   type TreeCard,
+  type TreeDeck,
 } from './deck-tree'
 
 const deck = (id: string, parentId: string | null, extra: Partial<TreeDeck> = {}): TreeDeck => ({

@@ -6,8 +6,8 @@ import {
   ArrowRight,
   Folder,
   Layers,
-  WalletCards,
   RotateCcw,
+  WalletCards,
 } from 'lucide-react'
 import {
   selectEffectivePreferences,
@@ -150,7 +150,9 @@ function SideGroup({
         <span
           className={cn(
             'rounded-pill px-2 py-0.5 text-[length:var(--p-text-tiny)] font-bold tabular-nums',
-            atCap ? 'bg-info-surface text-info-foreground' : 'bg-secondary/50 text-muted-foreground',
+            atCap
+              ? 'bg-info-surface text-info-foreground'
+              : 'bg-secondary/50 text-muted-foreground',
           )}
         >
           {t('swipe.sideCount', { count: selected.length })}

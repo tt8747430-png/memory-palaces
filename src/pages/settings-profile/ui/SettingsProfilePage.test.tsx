@@ -11,8 +11,8 @@ import {
   type Profile,
   ProfileStoreContext,
 } from '@/entities/profile'
-import { createDeckStore, makeDeck, type Deck, DeckStoreContext } from '@/entities/deck'
-import { CardStoreContext, createCardStore, type Card } from '@/entities/card'
+import { createDeckStore, type Deck, DeckStoreContext, makeDeck } from '@/entities/deck'
+import { type Card, CardStoreContext, createCardStore } from '@/entities/card'
 import { createFolderStore, type Folder, FolderStoreContext } from '@/entities/folder'
 import { createQuestionStore, type Question, QuestionStoreContext } from '@/entities/question'
 import { createProgressStore, type Progress, ProgressStoreContext } from '@/entities/progress'

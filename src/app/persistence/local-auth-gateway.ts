@@ -28,8 +28,7 @@ export class LocalAuthGateway implements AuthGateway {
     localStorage.removeItem(STORAGE_KEY)
   }
 
-  async requestPasswordReset(_email: string): Promise<void> {
-  }
+  async requestPasswordReset(_email: string): Promise<void> {}
 
   getPersisted(): PersistedAuth | null {
     const raw = localStorage.getItem(STORAGE_KEY)

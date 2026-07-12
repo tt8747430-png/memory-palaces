@@ -93,8 +93,8 @@
     --bg: linear-gradient(
             to bottom right,
             oklch(83.2% 0.083 264.3) 0%,
-                /* light-blue */ oklch(95.7% 0.021 254.9) 50%,
-                /* surface-sky */ oklch(100% 0 0) 100%
+                oklch(95.7% 0.021 254.9) 50%,
+                oklch(100% 0 0) 100%
     );
     --bg-daylight: radial-gradient(circle at 20% 30%, oklch(var(--p-tint-sky) / 0.2) 0%, transparent 50%),
     radial-gradient(circle at 80% 70%, oklch(var(--p-tint-sky) / 0.15) 0%, transparent 40%),
@@ -157,7 +157,7 @@
     --nav-glow: radial-gradient(
             ellipse at center,
             oklch(66.1% 0.18 261.1 / 0.35) 0%,
-                /* action-blue glow */ transparent 70%
+                transparent 70%
     );
 }
 

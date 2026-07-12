@@ -17,6 +17,7 @@ import {
   Settings2,
   Trash2,
 } from 'lucide-react'
+import type { Deck } from '@/entities/deck'
 import {
   DECK_COLOR_OPTIONS,
   selectDecks,
@@ -24,7 +25,6 @@ import {
   useDeckStore,
   useDeckStoreApi,
 } from '@/entities/deck'
-import type { Deck } from '@/entities/deck'
 import {
   DEFAULT_FOLDER_ICON,
   type Folder,
@@ -61,13 +61,20 @@ import { readAnkiFile } from '@/features/content'
 import { DeckTree } from '@/widgets/deck-tree'
 import { HomeHeader } from '@/widgets/home-header'
 import { useImportDraft } from '@/widgets/content-editor'
-import { cn, ContentImportError, dayKey, nextDefaultName, useLongPress, useStickyHeader } from '@/shared/lib'
+import {
+  cn,
+  ContentImportError,
+  dayKey,
+  nextDefaultName,
+  useLongPress,
+  useStickyHeader,
+} from '@/shared/lib'
 import type { SwipeConfig } from '@/shared/config/swipe'
 import {
   ActionSheet,
   AppScreen,
-  Button,
   buildSwipeActions,
+  Button,
   ConfirmDialog,
   EmptyState,
   FolderGlyph,
@@ -76,8 +83,8 @@ import {
   PromptSheet,
   Sheet,
   type SheetAction,
-  type SwipeActionHandlers,
   SpeedDial,
+  type SwipeActionHandlers,
   SwipeRow,
 } from '@/shared/ui'
 import { FolderSheet } from './FolderSheet'
@@ -97,7 +104,12 @@ export interface DeckLibraryPageProps {
 const noop = () => {}
 
 function deckNameFromFile(name: string): string {
-  return name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').trim() || 'Imported'
+  return (
+    name
+      .replace(/\.[^.]+$/, '')
+      .replace(/[_-]+/g, ' ')
+      .trim() || 'Imported'
+  )
 }
 
 type CreatePrompt =
@@ -184,10 +196,13 @@ export function DeckLibraryPage({
   const sortedFolders = useMemo(() => [...folders].sort((a, b) => a.order - b.order), [folders])
   const inFolder = openFolder != null
 
-  const nextFolderColor =
-    DECK_COLOR_OPTIONS[folders.length % DECK_COLOR_OPTIONS.length]!.value
+  const nextFolderColor = DECK_COLOR_OPTIONS[folders.length % DECK_COLOR_OPTIONS.length]!.value
   const defaultFolderName = useMemo(
-    () => nextDefaultName(t('folder.baseName'), folders.map((f) => f.name)),
+    () =>
+      nextDefaultName(
+        t('folder.baseName'),
+        folders.map((f) => f.name),
+      ),
     [folders, t],
   )
 
@@ -225,7 +240,9 @@ export function DeckLibraryPage({
       return nextDefaultName(t('deck.baseSubdeckName'), siblings)
     }
     const siblings = decks
-      .filter((d) => d.parentId === null && (d.folderId ?? null) === (createPrompt.folderId ?? null))
+      .filter(
+        (d) => d.parentId === null && (d.folderId ?? null) === (createPrompt.folderId ?? null),
+      )
       .map((d) => d.name)
     return nextDefaultName(t('deck.baseDeckName'), siblings)
   }, [createPrompt, decks, t])
@@ -327,7 +344,8 @@ export function DeckLibraryPage({
       id: 'add-subdeck',
       label: t('deck.addSubdeck'),
       icon: <Plus className="size-5" aria-hidden />,
-      onSelect: () => setCreatePrompt({ kind: 'subdeck', parentId: deck.id, parentName: deck.name }),
+      onSelect: () =>
+        setCreatePrompt({ kind: 'subdeck', parentId: deck.id, parentName: deck.name }),
     },
     {
       id: 'favorite',
@@ -524,7 +542,8 @@ export function DeckLibraryPage({
               id: 'new-deck',
               label: inFolder ? t('folder.addDeck') : t('deck.newDeck'),
               icon: <Layers className="size-5" aria-hidden />,
-              onSelect: () => setCreatePrompt({ kind: 'deck', folderId: inFolder ? folderId : null }),
+              onSelect: () =>
+                setCreatePrompt({ kind: 'deck', folderId: inFolder ? folderId : null }),
             },
             ...(canImport
               ? [

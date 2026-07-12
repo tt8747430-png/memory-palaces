@@ -2,7 +2,11 @@ import { type ReactNode, useEffect } from 'react'
 import { MotionConfig } from 'motion/react'
 import { setHapticsEnabled } from '@/shared/lib'
 import { i18n } from '@/shared/i18n'
-import { selectEffectivePreferences, usePreferencesStore, usePreferencesStoreApi, } from '@/entities/preferences'
+import {
+  selectEffectivePreferences,
+  usePreferencesStore,
+  usePreferencesStoreApi,
+} from '@/entities/preferences'
 import { ThemeProvider } from './ThemeProvider'
 
 export function PreferencesProvider({ children }: { children: ReactNode }) {

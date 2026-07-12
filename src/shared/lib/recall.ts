@@ -1,4 +1,3 @@
-
 export function tokenizeWords(text: string): string[] {
   return text.split(/\s+/).filter(Boolean)
 }

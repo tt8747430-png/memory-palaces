@@ -1,4 +1,3 @@
-
 export type SwipeItemType = 'deck' | 'folder' | 'card'
 
 export const SWIPE_ITEM_TYPES: readonly SwipeItemType[] = ['deck', 'folder', 'card']

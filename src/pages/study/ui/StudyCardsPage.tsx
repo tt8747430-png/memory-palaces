@@ -31,7 +31,7 @@ import { editCard } from '@/features/card'
 import { editDeck } from '@/features/deck'
 import { gradeCard, restoreSchedule } from '@/features/review'
 import { setPreferences } from '@/features/preferences'
-import { type StudyCard, type StudyPrefs, FlashcardsPanel } from '@/widgets/study-session'
+import { FlashcardsPanel, type StudyCard, type StudyPrefs } from '@/widgets/study-session'
 import { useSessionReward } from '@/widgets/session-reward'
 import { AppScreen, Button, IconButton, ScreenHeader } from '@/shared/ui'
 

@@ -64,7 +64,9 @@ export function ArchivedDecksPage({ onBack }: ArchivedDecksPageProps) {
   return (
     <AppScreen
       className="pb-nav"
-      header={<ScreenHeader title={t('archived.title')} onBack={onBack} backLabel={t('common.back')} />}
+      header={
+        <ScreenHeader title={t('archived.title')} onBack={onBack} backLabel={t('common.back')} />
+      }
     >
       {!ready ? (
         <div className="grid flex-1 place-items-center py-16">
@@ -99,11 +101,7 @@ export function ArchivedDecksPage({ onBack }: ArchivedDecksPageProps) {
                     {count > 0 ? t('archived.cardCount', { count }) : t('archived.noCards')}
                   </span>
                 </span>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => restore(deck.id, deck.name)}
-                >
+                <Button variant="secondary" size="sm" onClick={() => restore(deck.id, deck.name)}>
                   <ArchiveRestore className="size-4" aria-hidden />
                   {t('archived.restore')}
                 </Button>

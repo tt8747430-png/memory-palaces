@@ -1,5 +1,11 @@
 import { type PointerEvent as ReactPointerEvent, useEffect } from 'react'
-import { animate, type PanInfo, useDragControls, useMotionValue, useReducedMotion, } from 'motion/react'
+import {
+  animate,
+  type PanInfo,
+  useDragControls,
+  useMotionValue,
+  useReducedMotion,
+} from 'motion/react'
 
 const DISMISS_OFFSET = 130
 const DISMISS_VELOCITY = 650

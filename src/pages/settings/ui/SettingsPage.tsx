@@ -210,7 +210,9 @@ export function SettingsPage({
               label: option.label,
               icon: option.icon,
             }))}
-            onValueChange={(value) => update({ theme: value as (typeof themeOptions)[number]['value'] })}
+            onValueChange={(value) =>
+              update({ theme: value as (typeof themeOptions)[number]['value'] })
+            }
           />
           <SettingsRow
             kind="select"

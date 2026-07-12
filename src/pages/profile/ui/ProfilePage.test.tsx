@@ -5,7 +5,7 @@ import { i18n } from '@/shared/i18n'
 import { InMemoryRepository } from '@/shared/api'
 import { createProgressStore, type Progress, ProgressStoreContext } from '@/entities/progress'
 import { createDeckStore, type Deck, DeckStoreContext } from '@/entities/deck'
-import { CardStoreContext, createCardStore, type Card } from '@/entities/card'
+import { type Card, CardStoreContext, createCardStore } from '@/entities/card'
 import { createFolderStore, type Folder, FolderStoreContext } from '@/entities/folder'
 import { createSessionStore, type Session, SessionStoreContext } from '@/entities/session'
 import {

@@ -1,4 +1,3 @@
-
 export function nextOrder(items: ReadonlyArray<{ order: number }>): number {
   return items.reduce((max, item) => Math.max(max, item.order), -1) + 1
 }

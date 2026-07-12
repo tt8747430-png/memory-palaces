@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import {
-  ContentImportError,
   cardsToAnkiTsv,
   cardsToCsv,
+  ContentImportError,
   detectPasteFormat,
   guessFieldSeparator,
   parseAnkiText,
+  parseDeckContent,
   parseDelimitedNotes,
   parsePastedCards,
-  parseDeckContent,
   parseVerses,
   questionsToCsv,
 } from './content-transfer'
@@ -128,7 +128,9 @@ describe('parseDeckContent', () => {
   })
 
   it('reads a questions CSV with a 1-based answer column', () => {
-    const content = parseDeckContent('prompt,option1,option2,answer\nClosest planet?,Mercury,Venus,1')
+    const content = parseDeckContent(
+      'prompt,option1,option2,answer\nClosest planet?,Mercury,Venus,1',
+    )
     expect(content.questions).toEqual([
       { prompt: 'Closest planet?', options: ['Mercury', 'Venus'], correctAnswer: 0 },
     ])

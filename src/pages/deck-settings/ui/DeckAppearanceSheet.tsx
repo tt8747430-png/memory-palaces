@@ -1,9 +1,14 @@
 import { type SyntheticEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Check } from 'lucide-react'
-import { DECK_COLOR_OPTIONS, DEFAULT_DECK_COLOR, DEFAULT_DECK_ICON, type Deck } from '@/entities/deck'
+import {
+  type Deck,
+  DECK_COLOR_OPTIONS,
+  DEFAULT_DECK_COLOR,
+  DEFAULT_DECK_ICON,
+  useDeckStoreApi,
+} from '@/entities/deck'
 import { editDeck } from '@/features/deck'
-import { useDeckStoreApi } from '@/entities/deck'
 import { Button, IconColorRow, Sheet, TextField } from '@/shared/ui'
 
 export interface DeckAppearanceSheetProps {

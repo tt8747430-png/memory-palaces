@@ -263,10 +263,7 @@ export function SwipeRow({
   return (
     <div
       ref={rootRef}
-      className={cn(
-        'relative isolate overflow-x-clip [overflow-clip-margin:16px]',
-        className,
-      )}
+      className={cn('relative isolate overflow-x-clip [overflow-clip-margin:16px]', className)}
     >
       {hasLeading ? (
         <motion.div

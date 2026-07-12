@@ -3,9 +3,9 @@ import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import {
   type AchievementId,
+  cardsInSubtree,
   cn,
   computeAchievements,
-  cardsInSubtree,
   computeTrainingTotals,
   isDeckCompleted,
   levelFromXp,

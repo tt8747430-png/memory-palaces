@@ -16,12 +16,12 @@ import {
   cn,
   detectPasteFormat,
   guessFieldSeparator,
-  type PasteFormat,
   type ParsedCard,
   parseDelimitedNotes,
   parseVerses,
+  type PasteFormat,
 } from '@/shared/lib'
-import { AppScreen, Button, ScreenHeader, Switch, TextField, Textarea } from '@/shared/ui'
+import { AppScreen, Button, ScreenHeader, Switch, Textarea, TextField } from '@/shared/ui'
 import { useImportDraft } from '@/widgets/content-editor'
 
 export interface PasteNotesPageProps {
@@ -65,11 +65,7 @@ export function PasteNotesPage({
 
   const guessedField = useMemo(() => guessFieldSeparator(text), [text])
   const field =
-    fieldSep === 'auto'
-      ? guessedField
-      : fieldSep === 'custom'
-        ? customField
-        : FIELD_VALUE[fieldSep]
+    fieldSep === 'auto' ? guessedField : fieldSep === 'custom' ? customField : FIELD_VALUE[fieldSep]
   const card = cardSep === 'custom' ? customCard || '\n' : CARD_VALUE[cardSep]
 
   const cards = useMemo(() => {
@@ -110,7 +106,9 @@ export function PasteNotesPage({
         <div className="bg-glass shrink-0 border-t border-white/40 px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-10px_30px_oklch(var(--p-tint-navy)/0.1)]">
           <Button size="lg" className="w-full" disabled={!canCreate} onClick={create}>
             <Sparkles className="size-[18px]" aria-hidden />
-            {cards.length > 0 ? t('cards.paste.createCount', { count: cards.length }) : t('cards.paste.create')}
+            {cards.length > 0
+              ? t('cards.paste.createCount', { count: cards.length })
+              : t('cards.paste.create')}
           </Button>
         </div>
       }
@@ -152,7 +150,10 @@ export function PasteNotesPage({
           />
           <div className="mt-2 flex items-center gap-4">
             {canReadClipboard ? (
-              <TextButton icon={<ClipboardPaste className="size-4" aria-hidden />} onClick={pasteFromClipboard}>
+              <TextButton
+                icon={<ClipboardPaste className="size-4" aria-hidden />}
+                onClick={pasteFromClipboard}
+              >
                 {t('cards.paste.pasteFromClipboard')}
               </TextButton>
             ) : null}
@@ -304,7 +305,11 @@ function FormatToggle({
           </button>
         )}
       </div>
-      <div role="radiogroup" aria-label={t('cards.paste.formatLabel')} className="grid grid-cols-2 gap-2">
+      <div
+        role="radiogroup"
+        aria-label={t('cards.paste.formatLabel')}
+        className="grid grid-cols-2 gap-2"
+      >
         {options.map(({ value: v, label, icon: Icon }) => {
           const selected = v === value
           return (

@@ -2,7 +2,12 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronRight, Minus, Plus } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { DECK_COLOR_OPTIONS, DEFAULT_DECK_COLOR, DEFAULT_DECK_ICON, type Deck } from '@/entities/deck'
+import {
+  type Deck,
+  DECK_COLOR_OPTIONS,
+  DEFAULT_DECK_COLOR,
+  DEFAULT_DECK_ICON,
+} from '@/entities/deck'
 import type { Card } from '@/entities/card'
 import type { SwipeConfig } from '@/shared/config/swipe'
 import { childDecks, cn, dueCountsPerDeck, useLongPress } from '@/shared/lib'
@@ -11,8 +16,8 @@ import {
   buildSwipeActions,
   DeckCover,
   type SheetAction,
-  SwipeRow,
   type SwipeActionHandlers,
+  SwipeRow,
 } from '@/shared/ui'
 
 const EASE_OUT = [0.22, 1, 0.36, 1] as const
@@ -57,7 +62,8 @@ export function DeckTree({
       childDecks(decks, parentId as string).length || parentId !== null
         ? childDecks(decks, parentId as string)
         : decks.filter(
-            (d) => d.parentId === null && (d.folderId ?? null) === (folderId ?? null) && !d.archived,
+            (d) =>
+              d.parentId === null && (d.folderId ?? null) === (folderId ?? null) && !d.archived,
           ),
     [decks, parentId, folderId],
   )

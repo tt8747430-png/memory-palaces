@@ -1,4 +1,3 @@
-
 export const SWIPE_DELETE_THRESHOLD = 96
 export const SWIPE_DELETE_MAX = 124
 export const SWIPE_FLING_SPEED = 0.5

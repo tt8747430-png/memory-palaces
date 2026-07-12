@@ -155,7 +155,8 @@ export const en = {
   archived: {
     title: 'Archived decks',
     empty: 'Nothing archived',
-    emptyBody: 'Decks you archive land here. Restore one anytime — its cards and progress stay intact.',
+    emptyBody:
+      'Decks you archive land here. Restore one anytime — its cards and progress stay intact.',
     restore: 'Restore',
     restored: '{{name}} restored',
     noCards: 'No cards yet',

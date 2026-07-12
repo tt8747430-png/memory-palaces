@@ -5,7 +5,7 @@ import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
 import { InMemoryRepository } from '@/shared/api'
 import { createDeckStore, type Deck, DeckStoreContext, makeDeck } from '@/entities/deck'
-import { CardStoreContext, createCardStore, type Card, makeCard } from '@/entities/card'
+import { type Card, CardStoreContext, createCardStore, makeCard } from '@/entities/card'
 import { MatchPage } from './MatchPage'
 
 afterEach(cleanup)

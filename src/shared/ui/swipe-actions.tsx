@@ -3,6 +3,7 @@ import type { TFunction } from 'i18next'
 import {
   Archive,
   Copy,
+  Flag,
   FolderInput,
   GraduationCap,
   Heart,
@@ -10,13 +11,8 @@ import {
   RotateCcw,
   Settings2,
   Trash2,
-  Flag,
 } from 'lucide-react'
-import {
-  type SwipeActionId,
-  SWIPE_ACTION_META,
-  type SwipeConfig,
-} from '@/shared/config/swipe'
+import { SWIPE_ACTION_META, type SwipeActionId, type SwipeConfig } from '@/shared/config/swipe'
 import type { SwipeAction } from './SwipeRow'
 
 const SWIPE_ACTION_ICON: Record<SwipeActionId, ReactNode> = {
