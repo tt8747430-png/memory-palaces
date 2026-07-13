@@ -106,8 +106,11 @@ export {
 } from './recall'
 export { studyOverview, type StudyOverview } from './study-overview'
 export { nextDefaultName } from './naming'
+export { useOptimisticPatch, orderPatch } from './use-optimistic-patch'
+export { dropZone, type DropZone, type DropIntent, type ZoneRect } from './drop-zone'
 export {
   childDecks,
+  siblingDecks,
   rootDecks,
   decksInFolder,
   subtreeDeckIds,

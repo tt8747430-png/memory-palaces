@@ -20,6 +20,28 @@ export function childDecks<T extends TreeDeck>(decks: readonly T[], parentId: st
   return decks.filter((d) => d.parentId === parentId).sort(byOrder)
 }
 
+/**
+ * One sibling group of the tree, in manual order: the children of `parentId`,
+ * or — when `parentId` is null — the top-level decks of `folderId` (null being
+ * the unfiled root). This is the unit a drag reorders, so the tree, the drop
+ * handler and the persisted order all read the group through here. Archived
+ * decks live in the Archive, never in the tree.
+ */
+export function siblingDecks<T extends TreeDeck>(
+  decks: readonly T[],
+  parentId: string | null,
+  folderId: string | null = null,
+): T[] {
+  return decks
+    .filter(
+      (d) =>
+        !d.archived &&
+        d.parentId === parentId &&
+        (parentId !== null || (d.folderId ?? null) === folderId),
+    )
+    .sort(byOrder)
+}
+
 export function rootDecks<T extends TreeDeck>(decks: readonly T[]): T[] {
   return decks.filter((d) => d.parentId === null && (d.folderId ?? null) === null).sort(byOrder)
 }

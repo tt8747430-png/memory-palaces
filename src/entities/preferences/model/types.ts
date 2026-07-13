@@ -11,8 +11,15 @@ import {
   type FlashcardSwipeByMode,
   normalizeFlashcardSwipe,
 } from '@/shared/config/flashcard-swipe'
+import {
+  DEFAULT_SELECT_TOOLBAR,
+  normalizeSelectToolbar,
+  SELECT_SURFACES,
+  type SelectToolbarPreferences,
+} from '@/shared/config/select-toolbar'
 
 export type { SwipePreferences } from '@/shared/config/swipe'
+export type { SelectToolbarPreferences } from '@/shared/config/select-toolbar'
 export type { FlashcardSwipeConfig, FlashcardSwipeByMode } from '@/shared/config/flashcard-swipe'
 
 export type ContentSort = 'manual' | 'recent' | 'name' | 'due' | 'flagged'
@@ -54,6 +61,7 @@ export interface Preferences extends Entity {
   shakeToUndo: boolean
   swipe: SwipePreferences
   flashcardSwipe: FlashcardSwipeByMode
+  selectToolbar: SelectToolbarPreferences
   privacy: PrivacySettings
 }
 
@@ -71,6 +79,7 @@ export const DEFAULT_PREFERENCES = {
   shakeToUndo: true,
   swipe: DEFAULT_SWIPE,
   flashcardSwipe: DEFAULT_FLASHCARD_SWIPE_BY_MODE,
+  selectToolbar: DEFAULT_SELECT_TOOLBAR,
   privacy: DEFAULT_PRIVACY,
 } as const satisfies Omit<Preferences, keyof Entity>
 
@@ -96,6 +105,7 @@ export interface MakePreferencesInput {
   shakeToUndo?: boolean
   swipe?: SwipePreferences
   flashcardSwipe?: FlashcardSwipeByMode
+  selectToolbar?: SelectToolbarPreferences
   privacy?: PrivacySettings
 }
 
@@ -103,6 +113,14 @@ function resolveSwipe(input?: SwipePreferences): SwipePreferences {
   const out = {} as SwipePreferences
   for (const type of SWIPE_ITEM_TYPES) {
     out[type] = normalizeSwipeConfig(type, input?.[type] ?? DEFAULT_SWIPE[type])
+  }
+  return out
+}
+
+function resolveSelectToolbar(input?: SelectToolbarPreferences): SelectToolbarPreferences {
+  const out = {} as SelectToolbarPreferences
+  for (const surface of SELECT_SURFACES) {
+    out[surface] = normalizeSelectToolbar(surface, input?.[surface] ?? DEFAULT_SELECT_TOOLBAR[surface])
   }
   return out
 }
@@ -128,6 +146,7 @@ export function makePreferences(input: MakePreferencesInput): Preferences {
     shakeToUndo: input.shakeToUndo ?? DEFAULT_PREFERENCES.shakeToUndo,
     swipe: resolveSwipe(input.swipe),
     flashcardSwipe: normalizeFlashcardSwipe(input.flashcardSwipe),
+    selectToolbar: resolveSelectToolbar(input.selectToolbar),
     privacy: input.privacy ?? { ...DEFAULT_PRIVACY },
   }
 }
@@ -148,6 +167,7 @@ export type PreferencesChanges = Partial<
     | 'shakeToUndo'
     | 'swipe'
     | 'flashcardSwipe'
+    | 'selectToolbar'
     | 'privacy'
   >
 >

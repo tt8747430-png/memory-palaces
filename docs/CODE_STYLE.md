@@ -15,9 +15,9 @@ Split a screen into single-responsibility parts: a container that wires data, th
 **Where each piece lives (FSD placement):**
 
 | Reusable across the app, purely presentational | `shared/ui/` (e.g. `Sheet`, `GlassCard`, `Button`) |
-| Composite UI tied to one domain/screen area    | `widgets/<x>/ui/` |
-| Screen root                                     | `pages/<x>/ui/` |
-| A subpart used only by one parent               | next to that parent in the same `ui/` folder |
+| Composite UI tied to one domain/screen area | `widgets/<x>/ui/` |
+| Screen root | `pages/<x>/ui/` |
+| A subpart used only by one parent | next to that parent in the same `ui/` folder |
 
 **Good example — [`widgets/study-session/ui/`](../src/widgets/study-session/ui/):** the widget is split into `StudyDeck`, `CompletionOverlay`, `GearSheet`, `ModeSheet`, `QuickActionRows`, `ToggleRow`, `SheetSection`, `card-faces` — each focused, composed by the panel, with shared types in `model/` and a public `index.ts` barrel.
 
@@ -76,7 +76,7 @@ From the `vite-react-best-practices` skill (React-core rules), grounded in this 
 - **Subscribe narrowly.** Entity stores expose selectors — read the smallest slice you need via `useXStore(selector)`, and prefer a **derived boolean** (`selectIsReady`) over a raw array when you only need readiness. Don't subscribe to state you only use inside a callback; read it from `useXStoreApi().getState()` at call time instead.
 - **Memoize deliberately.** `useMemo` for expensive derivations is already common (~25 files) — keep it for real work, not trivial values. `React.memo` is currently unused; reach for it to wrap an expensive child when a hot parent (a list, a study session) re-renders frequently.
 - **Split routes with `React.lazy` + `Suspense`.** `app/router.tsx` currently imports all ~30 page components eagerly — lazy-load them so each route is its own chunk (the `lazy()` + `Suspense` pattern already exists in `app/RootLayout.tsx`); Vite emits the split automatically. Do the same for heavy, rarely-opened widgets.
-- **Barrels — the one deliberate exception to the "avoid barrel imports" rule.** FSD slice `index.ts` barrels are our required public API; **keep them.** The tree-shaking caveat applies to *third-party* barrels: import large libs by name (`import { X } from 'lucide-react'` — already done), and don't add re-export chains inside a slice that pull in unrelated heavy modules.
+- **Barrels — the one deliberate exception to the "avoid barrel imports" rule.** FSD slice `index.ts` barrels are our required public API; **keep them.** The tree-shaking caveat applies to _third-party_ barrels: import large libs by name (`import { X } from 'lucide-react'` — already done), and don't add re-export chains inside a slice that pull in unrelated heavy modules.
 - **Reserve space for images (CLS).** Set explicit `width`/`height` or an `aspect-ratio` on `<img>` so late-loading images don't shift layout — applies to `shared/ui/Avatar` (the app's only `<img>`) and any palace/cover art added later.
 - **Don't define components inside components.** A component declared in another's render body remounts every render (state loss + churn) — hoist it to module scope, or pass it via `children`.
 - **Derive during render; don't mirror state with effects.** Compute values from props/state inline or with `useMemo`. Reserve `useEffect` for syncing with the outside world, and put interaction logic in event handlers, not effects.
@@ -101,3 +101,17 @@ From the `vite-react-best-practices` skill's Vite-SPA rules. This is a client-ro
 - **`motion` is the animation library** (used in ~58 files) — reach for it, don't hand-roll. Animate GPU-friendly properties (`transform`, `opacity`), not layout props (`width`, `height`, `top`, `margin`), which force reflow and drop frames.
 - **Every animation should mean something** — communicate a spatial relationship or a state change, not decorate. Honor `prefers-reduced-motion`.
 - **View Transitions API (`<ViewTransition>`) — optional/future, not adopted.** It gives native route and shared-element morphs, but needs `react@canary` (we ship stable React 19) and would overlap `motion`. If route/shared-element transitions are wanted, adopt it deliberately per the `vercel-react-view-transitions` skill (`default="none"`, type-keyed directional transitions) — don't run it alongside `motion` ad hoc.
+
+## 10. Drag & drop (`@dnd-kit`) — the four causes of drop flicker
+
+Every flicker we have shipped in a drag came from one of these. Check all four before adding a new drag surface (`widgets/deck-tree`, `pages/deck-library`, `pages/settings-select` are the worked examples).
+
+- **The dropped state must be true on screen the instant the finger lifts.** Our writes round-trip through RxDB, and a reorder is _one write per row_, so the store re-emits half-applied states on the way. Render those and the dropped row snaps back, then jumps. Hold the drop over the store's emissions until the persisted rows agree with it — `useOptimisticPatch` (`shared/lib`) does this for entities (it covers `order` **and** a reparent's `parentId`/`folderId`; a reparent left un-held flicks the row back to its old group for a frame). A local surface with no entity store does the same thing with a working copy synced from props (`SettingsSelectPage`, `SettingsSwipePage`).
+- **Render the list in a deterministic order, not the store's.** RxDB returns rows by primary key, so a list that doesn't sort by `order` will _silently ignore_ the reorder it just persisted and snap back. Sibling groups go through `siblingDecks()`; folders through their `order`.
+- **The card in hand must be the row it came from.** A `DragOverlay` whose child has a different size, padding, or missing control (a select checkbox, a fixed `w-24` where the real tile is `flex-1`) morphs into the real row on drop, which reads as a flicker. Share the row's frame and body between the live row and the overlay (`DeckDragPreview`, `FolderDragPreview`, `Tile`), and carry the lift with **shadow, not `scale`** — a scaled overlay pops at the end of the drop animation.
+- **Nothing may animate `opacity` on the landing row while the overlay is still flying to it.** dnd-kit hides the drop source with an inline `opacity: 0` for the duration of the drop animation, but a reparented row _unmounts and remounts_ in its new group, and a `motion` mount-entrance will overwrite that inline style — the row fades up underneath the card still in flight and you see the same deck twice. Suppress entrance animations while a drag is active **and** for the length of the drop animation after it (`quiet`/`settling` in `DeckTree`).
+
+Two rules that are design, not bugs, and that the above depends on:
+
+- **Don't let the sortable shift rows in a tree.** Sortable's "rows make room" animation is a promise that the drop is a _reorder_; in a tree half of them are a _nest_, so it lies before the user even releases. Use a no-op `SortingStrategy` and say what the drop will do explicitly: a `DropIndicator` line in the seam for a reorder, a ring on the row for a nest.
+- **Read the drop intent from the pointer, not from the drag delta or rect centres.** `dropZone()` (`shared/lib`) splits the hovered row into edges (reorder) and a middle band (nest). Pair it with `pointerWithin` collision so the zone is measured against the row the finger is actually inside, and track the pointer from real events — a delta-derived pointer drifts away from the finger as soon as the list auto-scrolls.

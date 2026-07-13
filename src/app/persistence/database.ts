@@ -1,5 +1,6 @@
 import type { RxCollection, RxStorage } from 'rxdb'
-import { createRxDatabase } from 'rxdb'
+import { addRxPlugin, createRxDatabase } from 'rxdb'
+import { RxDBMigrationSchemaPlugin } from 'rxdb/plugins/migration-schema'
 import type { Folder } from '@/entities/folder'
 import type { Deck } from '@/entities/deck'
 import type { Card } from '@/entities/card'
@@ -9,6 +10,7 @@ import type { Preferences } from '@/entities/preferences'
 import type { Profile } from '@/entities/profile'
 import type { AppNotification } from '@/entities/notification'
 import { STORAGE_PREFIX } from '@/shared/config/constants'
+import { DEFAULT_SELECT_TOOLBAR } from '@/shared/config/select-toolbar'
 import {
   cardSchema,
   deckSchema,
@@ -31,6 +33,15 @@ export interface AppCollections {
   notifications: RxCollection<AppNotification>
 }
 
+// Stored preferences outlive any release, so a schema bump migrates them.
+addRxPlugin(RxDBMigrationSchemaPlugin)
+
+/** v0 → v1: learners stored before the select toolbar was configurable get the
+ *  bar they have been using all along. */
+const preferencesMigrations = {
+  1: (doc: Preferences) => ({ ...doc, selectToolbar: DEFAULT_SELECT_TOOLBAR }),
+}
+
 export async function createAppDatabase<Internals, InstanceCreationOptions>(
   storage: RxStorage<Internals, InstanceCreationOptions>,
 ): Promise<AppCollections> {
@@ -41,7 +52,7 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
     folders: { schema: folderSchema },
     questions: { schema: questionSchema },
     progress: { schema: progressSchema },
-    preferences: { schema: preferencesSchema },
+    preferences: { schema: preferencesSchema, migrationStrategies: preferencesMigrations },
     profiles: { schema: profileSchema },
     notifications: { schema: notificationSchema },
   })

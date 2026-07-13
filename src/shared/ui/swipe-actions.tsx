@@ -11,7 +11,7 @@ import {
   Pencil,
   Plus,
   RotateCcw,
-  Settings2,
+  Settings,
   Trash2,
 } from 'lucide-react'
 import { SWIPE_ACTION_META, type SwipeActionId, type SwipeConfig } from '@/shared/config/swipe'
@@ -21,7 +21,7 @@ const SWIPE_ACTION_ICON: Record<SwipeActionId, ReactNode> = {
   favorite: <Heart className="size-5" aria-hidden />,
   move: <FolderInput className="size-5" aria-hidden />,
   archive: <Archive className="size-5" aria-hidden />,
-  settings: <Settings2 className="size-5" aria-hidden />,
+  settings: <Settings className="size-5" aria-hidden />,
   edit: <Pencil className="size-5" aria-hidden />,
   addSubdeck: <Plus className="size-5" aria-hidden />,
   addDeck: <FolderPlus className="size-5" aria-hidden />,

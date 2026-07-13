@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   ArrowLeftRight,
+  CheckSquare,
   Bell,
   ChevronRight,
   Globe,
@@ -48,6 +49,7 @@ export interface SettingsPageProps {
   onEditProfile?: () => void
   onPrivacy?: () => void
   onSwipe?: () => void
+  onSelectToolbar?: () => void
   onHelp?: () => void
   onAbout?: () => void
   onSignIn?: () => void
@@ -60,6 +62,7 @@ export function SettingsPage({
   onEditProfile,
   onPrivacy,
   onSwipe,
+  onSelectToolbar,
   onHelp,
   onAbout,
   onSignIn,
@@ -229,6 +232,13 @@ export function SettingsPage({
             label={t('settings.swipeActions')}
             description={t('settings.swipeActionsHint')}
             onClick={() => onSwipe?.()}
+          />
+          <SettingsRow
+            kind="nav"
+            icon={<CheckSquare />}
+            label={t('settings.selectToolbar')}
+            description={t('settings.selectToolbarHint')}
+            onClick={() => onSelectToolbar?.()}
           />
         </SettingsSection>
 

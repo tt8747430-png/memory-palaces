@@ -6,12 +6,10 @@ import {
   ClipboardPaste,
   Clock,
   Flag,
-  GraduationCap,
   GripVertical,
   Layers,
   MapPin,
   Plus,
-  RotateCcw,
   SlidersHorizontal,
   Sparkles,
   Trash2,
@@ -39,6 +37,8 @@ import {
   CardMaturityOverview,
   ConfirmDialog,
   ImportRow,
+  type SelectActionHandlers,
+  SelectToolbar,
   Sheet,
   SortControl,
   type SortControlOption,
@@ -49,7 +49,7 @@ import { useImportDraft } from '../model/import-draft'
 import { CardBrowser } from './CardBrowser'
 import { CardRow, type RowDragHandle } from './ContentRows'
 import { ReorderableList } from './ReorderableList'
-import { BulkButton, SelectModeBar } from './SelectModeBar'
+import { SelectModeBar } from './SelectModeBar'
 
 export interface DeckContentEditorProps {
   deckId: string
@@ -91,7 +91,8 @@ export function DeckContentEditor({
     cardStore.getState().start()
   }, [cardStore])
 
-  const cardSwipe = usePreferencesStore(selectEffectivePreferences).swipe.card
+  const prefs = usePreferencesStore(selectEffectivePreferences)
+  const cardSwipe = prefs.swipe.card
 
   const decks = useDeckStore(selectDecks)
   const cards = useMemo(() => cardsInSubtree(decks, allCards, deckId), [decks, allCards, deckId])
@@ -283,6 +284,46 @@ export function DeckContentEditor({
     exitSelect()
   }
 
+  // The bar the learner configured (Settings → Select toolbar) for cards.
+  const noSelection = selectedCount === 0
+  const selectHandlers: SelectActionHandlers = {
+    flag: {
+      disabled: noSelection,
+      onAction: () => {
+        const toFlag = cards.filter((card) => selectedIds.has(card.id) && !card.flagged)
+        toFlag.forEach((card) => void toggleCardFlag(cardStore, card.id))
+        toast.success(t('cards.bulk.flagged', { count: toFlag.length }))
+        exitSelect()
+      },
+    },
+    known: {
+      disabled: noSelection,
+      onAction: () => {
+        void markCardsKnown(cardStore, [...selectedIds])
+        toast.success(t('cards.row.markedKnown'))
+        exitSelect()
+      },
+    },
+    reset: {
+      disabled: noSelection,
+      onAction: () => {
+        void resetCardsSrs(cardStore, [...selectedIds])
+        toast.success(t('cards.row.scheduleReset'))
+        exitSelect()
+      },
+    },
+    duplicate: {
+      disabled: noSelection,
+      onAction: () => {
+        const ids = [...selectedIds]
+        void Promise.all(ids.map((id) => duplicateCard(cardStore, id)))
+        toast.success(t('cards.bulk.duplicated', { count: ids.length }))
+        exitSelect()
+      },
+    },
+    delete: { disabled: noSelection, onAction: () => setBulkDeleteOpen(true) },
+  }
+
   return (
     <div>
       <input
@@ -351,46 +392,11 @@ export function DeckContentEditor({
       </div>
 
       {selectMode ? (
-        <div className="sticky bottom-2 z-20 mt-3 flex items-center gap-2 rounded-card-featured bg-card/95 p-2.5 shadow-elevated backdrop-blur-xl">
-          <BulkButton
-            disabled={selectedCount === 0}
-            icon={<Flag className="size-[17px]" aria-hidden />}
-            label={t('cards.bulk.flag')}
-            onClick={() => {
-              const toFlag = cards.filter((l) => selectedIds.has(l.id) && !l.flagged)
-              toFlag.forEach((l) => void toggleCardFlag(cardStore, l.id))
-              toast.success(t('cards.bulk.flagged', { count: toFlag.length }))
-              exitSelect()
-            }}
-          />
-          <BulkButton
-            disabled={selectedCount === 0}
-            icon={<GraduationCap className="size-[17px]" aria-hidden />}
-            label={t('cards.bulk.known')}
-            onClick={() => {
-              void markCardsKnown(cardStore, [...selectedIds])
-              toast.success(t('cards.row.markedKnown'))
-              exitSelect()
-            }}
-          />
-          <BulkButton
-            disabled={selectedCount === 0}
-            icon={<RotateCcw className="size-[17px]" aria-hidden />}
-            label={t('cards.bulk.reset')}
-            onClick={() => {
-              void resetCardsSrs(cardStore, [...selectedIds])
-              toast.success(t('cards.row.scheduleReset'))
-              exitSelect()
-            }}
-          />
-          <BulkButton
-            disabled={selectedCount === 0}
-            tone="danger"
-            icon={<Trash2 className="size-[17px]" aria-hidden />}
-            label={t('common.delete')}
-            onClick={() => setBulkDeleteOpen(true)}
-          />
-        </div>
+        <SelectToolbar
+          actions={prefs.selectToolbar.card}
+          handlers={selectHandlers}
+          className="sticky bottom-2 z-20 mt-3"
+        />
       ) : null}
 
       <Sheet

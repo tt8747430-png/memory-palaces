@@ -35,6 +35,7 @@ import { SettingsProfilePage } from '@/pages/settings-profile'
 import { SettingsChangePasswordPage } from '@/pages/settings-change-password'
 import { SettingsPrivacyPage } from '@/pages/settings-privacy'
 import { SettingsSwipePage } from '@/pages/settings-swipe'
+import { SettingsSelectPage } from '@/pages/settings-select'
 import { SettingsHelpPage } from '@/pages/settings-help'
 import { SettingsAboutPage } from '@/pages/settings-about'
 import { NotificationsPage } from '@/pages/notifications'
@@ -503,6 +504,7 @@ function SettingsRoute() {
       onEditProfile={() => navigate({ to: ROUTES.settingsProfile })}
       onPrivacy={() => navigate({ to: ROUTES.settingsPrivacy })}
       onSwipe={() => navigate({ to: ROUTES.settingsSwipe })}
+      onSelectToolbar={() => navigate({ to: ROUTES.settingsSelect })}
       onHelp={() => navigate({ to: ROUTES.settingsHelp })}
       onAbout={() => navigate({ to: ROUTES.settingsAbout })}
       onSignIn={() => navigate({ to: ROUTES.login })}
@@ -575,6 +577,18 @@ const settingsSwipeRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.settingsSwipe,
   component: SettingsSwipeRoute,
+})
+
+function SettingsSelectRoute() {
+  const navigate = useNavigate()
+  const back = useBack(() => navigate({ to: ROUTES.settings }))
+  return <SettingsSelectPage onBack={back} />
+}
+
+const settingsSelectRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.settingsSelect,
+  component: SettingsSelectRoute,
 })
 
 function SettingsHelpRoute() {
@@ -656,6 +670,7 @@ const routeTree = rootRoute.addChildren([
   settingsChangePasswordRoute,
   settingsPrivacyRoute,
   settingsSwipeRoute,
+  settingsSelectRoute,
   settingsHelpRoute,
   settingsAboutRoute,
   notificationsRoute,

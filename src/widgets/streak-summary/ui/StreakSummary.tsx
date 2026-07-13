@@ -3,7 +3,7 @@ import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Flame } from 'lucide-react'
 import { buildDayCells, cn, levelFromXp } from '@/shared/lib'
-import { Card } from '@/shared/ui'
+import { Card, ProgressBar } from '@/shared/ui'
 
 export interface StreakSummaryProps {
   xp: number
@@ -47,13 +47,7 @@ export function StreakSummary({
               {t('progress.xpTotal', { xp })}
             </span>
           </div>
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-secondary/30">
-            <motion.div
-              className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
-              animate={{ width: `${fill}%` }}
-              transition={{ duration: 0.4 }}
-            />
-          </div>
+          <ProgressBar value={fill} className="mt-2 bg-secondary/30" />
         </>
       ) : null}
 

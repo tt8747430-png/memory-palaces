@@ -3,7 +3,7 @@ import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Building2, Flame, Zap } from 'lucide-react'
 import { levelFromXp } from '@/shared/lib'
-import { Avatar } from '@/shared/ui'
+import { Avatar, ProgressBar } from '@/shared/ui'
 
 export interface ProfileHeroProps {
   name: string
@@ -118,14 +118,7 @@ export function ProfileHero({
           <span className="text-primary">{levelLabel}</span>
           <span className="text-muted-foreground">{xpToNext}</span>
         </div>
-        <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-primary/[0.08]">
-          <motion.div
-            className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
-            initial={{ width: 0 }}
-            animate={{ width: `${fill}%` }}
-            transition={{ delay: 0.2, duration: 0.7, ease: EASE_OUT }}
-          />
-        </div>
+        <ProgressBar value={fill} className="mt-2 h-2.5" label={xpToNext} />
       </motion.div>
     </div>
   )

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Settings2 } from 'lucide-react'
+import { Settings } from 'lucide-react'
 import {
   selectDecks,
   selectIsReady as selectDecksReady,
@@ -121,7 +121,7 @@ export function DeckDetailPage({
           action={
             onOpenSettings ? (
               <IconButton variant="glass" aria-label={t('deck.settings')} onClick={onOpenSettings}>
-                <Settings2 className="size-5" aria-hidden />
+                <Settings className="size-5" aria-hidden />
               </IconButton>
             ) : null
           }

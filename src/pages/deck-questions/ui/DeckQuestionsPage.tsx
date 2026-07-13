@@ -39,13 +39,14 @@ import {
   ConfirmDialog,
   ImportRow,
   ScreenHeader,
+  type SelectActionHandlers,
+  SelectToolbar,
   Sheet,
   SortControl,
   type SortControlOption,
   SpeedDial,
 } from '@/shared/ui'
 import {
-  BulkButton,
   QuestionRow,
   ReorderableList,
   type RowDragHandle,
@@ -84,7 +85,8 @@ export function DeckQuestionsPage({
   const questionsReady = useQuestionStore(selectQuestionsReady)
   const decksReady = useDeckStore(selectDecksReady)
   const ready = questionsReady && decksReady
-  const swipe = usePreferencesStore(selectEffectivePreferences).swipe.card
+  const prefs = usePreferencesStore(selectEffectivePreferences)
+  const swipe = prefs.swipe.card
 
   const deck = decks.find((candidate) => candidate.id === deckId)
   const deckName = deck?.name ?? ''
@@ -225,17 +227,23 @@ export function DeckQuestionsPage({
 
   const hasQuestions = questions.length > 0
 
+  // The bar the learner configured (Settings → Select toolbar) for questions.
+  const selectHandlers: SelectActionHandlers = {
+    duplicate: {
+      disabled: selectedCount === 0,
+      onAction: () => {
+        const ids = [...selectedIds]
+        void Promise.all(ids.map((id) => duplicateQuestion(questionStore, id)))
+        toast.success(t('questions.bulk.duplicated', { count: ids.length }))
+        exitSelect()
+      },
+    },
+    delete: { disabled: selectedCount === 0, onAction: () => setBulkDeleteOpen(true) },
+  }
+
   const selectionBar = (
     <div className="px-4 pb-[calc(max(0.75rem,env(safe-area-inset-bottom)))] pt-2">
-      <div className="flex items-center gap-2 rounded-card-featured bg-card/95 p-2.5 shadow-elevated backdrop-blur-xl">
-        <BulkButton
-          disabled={selectedCount === 0}
-          tone="danger"
-          icon={<Trash2 className="size-[17px]" aria-hidden />}
-          label={t('common.delete')}
-          onClick={() => setBulkDeleteOpen(true)}
-        />
-      </div>
+      <SelectToolbar actions={prefs.selectToolbar.question} handlers={selectHandlers} />
     </div>
   )
 

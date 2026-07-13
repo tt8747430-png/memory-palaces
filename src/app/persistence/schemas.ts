@@ -176,7 +176,8 @@ export const progressSchema: RxJsonSchema<Progress> = {
 }
 
 export const preferencesSchema: RxJsonSchema<Preferences> = {
-  version: 0,
+  // v1 added `selectToolbar` — see `preferencesMigrations` in ./database.ts.
+  version: 1,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -215,6 +216,16 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
       required: ['blur', 'words', 'initials', 'type'],
       additionalProperties: false,
     },
+    selectToolbar: {
+      type: 'object',
+      properties: {
+        library: { type: 'array', items: { type: 'string' } },
+        card: { type: 'array', items: { type: 'string' } },
+        question: { type: 'array', items: { type: 'string' } },
+      },
+      required: ['library', 'card', 'question'],
+      additionalProperties: false,
+    },
     privacy: {
       type: 'object',
       properties: {
@@ -251,6 +262,7 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
     'shakeToUndo',
     'swipe',
     'flashcardSwipe',
+    'selectToolbar',
     'privacy',
   ],
 }

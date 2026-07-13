@@ -1,6 +1,4 @@
-import { type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { cn } from '@/shared/lib'
 
 export function SelectModeBar({
   allSelected,
@@ -34,37 +32,5 @@ export function SelectModeBar({
         {t('cards.select.done')}
       </button>
     </div>
-  )
-}
-
-export function BulkButton({
-  icon,
-  label,
-  onClick,
-  disabled,
-  tone = 'default',
-}: {
-  icon: ReactNode
-  label: string
-  onClick: () => void
-  disabled?: boolean
-  tone?: 'default' | 'danger'
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={cn(
-        'flex h-11 flex-1 items-center justify-center gap-1.5 rounded-control text-(length:--p-text-label) font-semibold',
-        'transition-transform active:scale-[0.97] disabled:opacity-40',
-        tone === 'danger'
-          ? 'bg-[var(--danger-surface)] text-[var(--danger-on-surface)]'
-          : 'bg-info-surface text-heading',
-      )}
-    >
-      {icon}
-      {label}
-    </button>
   )
 }

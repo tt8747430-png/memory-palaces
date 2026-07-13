@@ -1,8 +1,7 @@
-import { motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Archive, Bell, BellRing, Flame } from 'lucide-react'
 import { cn, levelFromXp, type StickyHeader } from '@/shared/lib'
-import { Avatar, IconButton, StickyBar } from '@/shared/ui'
+import { Avatar, IconButton, ProgressBar, StickyBar } from '@/shared/ui'
 
 export interface HomeHeaderProps {
   header: StickyHeader
@@ -16,8 +15,6 @@ export interface HomeHeaderProps {
   streak?: { count: number; dayCount: number; dailyGoal: number }
   onOpenStreak?: () => void
 }
-
-const EASE_OUT = [0.22, 1, 0.36, 1] as const
 
 function greetingKey(hour: number): 'greetingMorning' | 'greetingAfternoon' | 'greetingEvening' {
   if (hour >= 5 && hour < 12) return 'greetingMorning'
@@ -38,7 +35,6 @@ export function HomeHeader({
   onOpenStreak,
 }: HomeHeaderProps) {
   const { t } = useTranslation()
-  const reduce = useReducedMotion()
   const { level, xpInLevel, xpForNextLevel } = levelFromXp(xp)
   const fill = Math.round(Math.max(0, Math.min(1, xpInLevel / xpForNextLevel)) * 100)
   const xpToNext = t('home.xpToNext', { remaining: xpForNextLevel - xpInLevel, next: level + 1 })
@@ -62,18 +58,11 @@ export function HomeHeader({
             <span className="shrink-0 text-[length:var(--p-text-label)] font-semibold text-primary">
               {t('home.level', { level })}
             </span>
-            <span
-              className="h-1.5 w-full max-w-[140px] overflow-hidden rounded-full bg-secondary/40"
-              role="img"
-              aria-label={xpToNext}
-            >
-              <motion.span
-                className="block h-full rounded-full bg-gradient-to-r from-primary to-accent"
-                initial={reduce ? false : { width: 0 }}
-                animate={{ width: `${fill}%` }}
-                transition={{ delay: 0.12, duration: 0.6, ease: EASE_OUT }}
-              />
-            </span>
+            <ProgressBar
+              value={fill}
+              className="h-1.5 w-full max-w-[140px] bg-secondary/40"
+              label={xpToNext}
+            />
           </span>
         </span>
       </button>
