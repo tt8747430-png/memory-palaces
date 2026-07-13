@@ -7,6 +7,7 @@ import {
   scramble,
   tokenizeWords,
   typedRecallStatus,
+  withNextWord,
   wordInitial,
 } from './recall'
 
@@ -90,37 +91,102 @@ describe('scramble', () => {
 
 describe('typedRecallStatus', () => {
   const answer = 'For God so loved the world'
+  const kinds = (input: string) => typedRecallStatus(answer, input).slots.map((slot) => slot.kind)
 
   it('marks every word pending before anything is typed', () => {
     const result = typedRecallStatus(answer, '')
-    expect(result.statuses).toEqual([
-      'pending',
-      'pending',
-      'pending',
-      'pending',
-      'pending',
-      'pending',
-    ])
+    expect(result.slots.map((slot) => slot.kind)).toEqual(Array<string>(6).fill('pending'))
     expect(result.correct).toBe(0)
     expect(result.total).toBe(6)
+    expect(result.next).toBe('For')
     expect(result.complete).toBe(false)
   })
 
   it('greens each word that matches in order, ignoring case and punctuation', () => {
-    const result = typedRecallStatus(answer, 'for GOD, so')
-    expect(result.statuses.slice(0, 3)).toEqual(['correct', 'correct', 'correct'])
-    expect(result.statuses.slice(3)).toEqual(['pending', 'pending', 'pending'])
+    const result = typedRecallStatus(answer, 'for GOD, so ')
+    expect(result.slots.map((slot) => slot.kind)).toEqual([
+      'correct',
+      'correct',
+      'correct',
+      'pending',
+      'pending',
+      'pending',
+    ])
     expect(result.correct).toBe(3)
+    expect(result.next).toBe('loved')
   })
 
-  it('flags a wrong word at its position', () => {
-    const result = typedRecallStatus(answer, 'for cat so')
-    expect(result.statuses.slice(0, 3)).toEqual(['correct', 'wrong', 'correct'])
+  it('flags a wrong word at its position without disturbing the rest', () => {
+    const result = typedRecallStatus(answer, 'for cat so ')
+    expect(result.slots.slice(0, 3)).toEqual([
+      { kind: 'correct', expected: 'For', typed: 'for' },
+      { kind: 'wrong', expected: 'God', typed: 'cat' },
+      { kind: 'correct', expected: 'so', typed: 'so' },
+    ])
     expect(result.correct).toBe(2)
+  })
+
+  it('reports a skipped word as missing instead of cascading every word after it', () => {
+    const result = typedRecallStatus(answer, 'for so loved the world')
+    expect(result.slots.map((slot) => slot.kind)).toEqual([
+      'correct',
+      'missing',
+      'correct',
+      'correct',
+      'correct',
+      'correct',
+    ])
+    expect(result.slots[1]).toEqual({ kind: 'missing', expected: 'God' })
+    expect(result.complete).toBe(false)
+  })
+
+  it('reports an interjected word as extra, keeping the answer aligned', () => {
+    const result = typedRecallStatus(answer, 'for God truly so ')
+    expect(result.slots.map((slot) => slot.kind)).toEqual([
+      'correct',
+      'correct',
+      'extra',
+      'correct',
+      'pending',
+      'pending',
+      'pending',
+    ])
+    expect(result.slots[2]).toEqual({ kind: 'extra', typed: 'truly' })
+    expect(result.next).toBe('loved')
+  })
+
+  it('leaves a half-typed word pending until it can no longer become the next word', () => {
+    expect(kinds('for God so lov')).toEqual([
+      'correct',
+      'correct',
+      'correct',
+      'pending',
+      'pending',
+      'pending',
+    ])
+    expect(kinds('for God so lox')[3]).toBe('wrong')
   })
 
   it('is complete only when the whole answer is reproduced', () => {
     expect(typedRecallStatus(answer, 'For God so loved the world.').complete).toBe(true)
     expect(typedRecallStatus(answer, 'For God so loved the').complete).toBe(false)
+    expect(typedRecallStatus(answer, 'For God so loved the world today').complete).toBe(false)
+  })
+})
+
+describe('withNextWord', () => {
+  const answer = 'For God so loved the world'
+
+  it('appends the next word the learner has not reached', () => {
+    expect(withNextWord(answer, '')).toBe('For ')
+    expect(withNextWord(answer, 'For God ')).toBe('For God so ')
+  })
+
+  it('replaces a half-typed word rather than doubling it', () => {
+    expect(withNextWord(answer, 'For God lo')).toBe('For God so ')
+  })
+
+  it('leaves a finished answer untouched', () => {
+    expect(withNextWord(answer, 'For God so loved the world')).toBe('For God so loved the world')
   })
 })

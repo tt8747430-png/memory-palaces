@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -8,7 +9,7 @@ import { makeCard } from '@/entities/card'
 import { DEFAULT_FLASHCARD_SWIPE_BY_MODE } from '@/shared/config/flashcard-swipe'
 import type { StudyMode } from '@/entities/preferences'
 import { FlashcardsPanel } from './FlashcardsPanel'
-import type { StudyCard, StudyPrefs } from '../model/types'
+import type { Grade, StudyCard, StudyPrefs } from '../model/types'
 
 afterEach(cleanup)
 
@@ -37,7 +38,7 @@ function studyCard(id: string): StudyCard {
 function renderPanel(
   cards: StudyCard[],
   overrides: Partial<{
-    onGrade: (id: string, grade: string) => void
+    onGrade: (id: string, grade: Grade) => void
     onComplete: () => void
     prefs: Partial<StudyPrefs>
     mode: StudyMode
@@ -46,22 +47,35 @@ function renderPanel(
   const onGrade = vi.fn(overrides.onGrade)
   const onComplete = vi.fn(overrides.onComplete)
   const onModeChange = vi.fn()
+
+  // Mirror the real page: `mode` is controlled, so a change has to flow back in as a prop for
+  // the panel to actually switch faces.
+  function Harness() {
+    const [mode, setMode] = useState<StudyMode>(overrides.mode ?? 'blur')
+    return (
+      <FlashcardsPanel
+        cards={cards}
+        prefs={{ ...DEFAULT_PREFS, ...overrides.prefs }}
+        mode={mode}
+        wordSpaces
+        shakeToUndo={false}
+        swipeByMode={DEFAULT_FLASHCARD_SWIPE_BY_MODE}
+        onGrade={onGrade}
+        onModeChange={(next) => {
+          onModeChange(next)
+          setMode(next)
+        }}
+        onBack={() => {}}
+        onComplete={onComplete}
+        now={NOW}
+      />
+    )
+  }
+
   render(
     <I18nextProvider i18n={i18n}>
       <MotionConfig reducedMotion="always">
-        <FlashcardsPanel
-          cards={cards}
-          prefs={{ ...DEFAULT_PREFS, ...overrides.prefs }}
-          mode={overrides.mode ?? 'blur'}
-          wordSpaces
-          shakeToUndo={false}
-          swipeByMode={DEFAULT_FLASHCARD_SWIPE_BY_MODE}
-          onGrade={onGrade}
-          onModeChange={onModeChange}
-          onBack={() => {}}
-          onComplete={onComplete}
-          now={NOW}
-        />
+        <Harness />
       </MotionConfig>
     </I18nextProvider>,
   )
@@ -161,5 +175,33 @@ describe('FlashcardsPanel', () => {
     fireEvent.click(screen.getAllByRole('button', { name: /change study mode/i })[0]!)
     await user.click(await screen.findByRole('button', { name: /rebuild/i }))
     expect(onModeChange).toHaveBeenCalledWith('words')
+  })
+
+  it('lands the new mode on its front face when switched from a flipped card', async () => {
+    const user = userEvent.setup()
+    renderPanel([studyCard('a')], { mode: 'blur' })
+
+    // Flip the Blur card to its answer, then switch to Type through the mode sheet.
+    await tap(/show answer/i)
+    expect(await screen.findByRole('button', { name: /good/i })).toBeInTheDocument()
+
+    fireEvent.click(screen.getAllByRole('button', { name: /change study mode/i })[0]!)
+    await user.click(await screen.findByRole('button', { name: /type the answer from memory/i }))
+
+    // Type opens on its front: the answer input is present and grading is not offered yet.
+    expect(await screen.findByPlaceholderText(/type the answer/i)).toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByRole('button', { name: /good/i })).toBeNull())
+  })
+
+  it('shows no "tap to see" affordance once a card is solved — the front is terminal', async () => {
+    renderPanel([studyCard('a')], { mode: 'words' })
+
+    await tap('Back')
+    await tap('a')
+
+    // Grading is offered, but the "Solved — tap to see the answer" badge is gone: the
+    // assembled answer is the answer, and there is nothing behind it to reveal.
+    expect(await screen.findByRole('button', { name: /good/i })).toBeInTheDocument()
+    expect(screen.queryByText(/tap to see/i)).toBeNull()
   })
 })

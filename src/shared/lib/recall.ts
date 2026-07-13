@@ -55,27 +55,118 @@ export function normalizeInitial(char: string): string {
   return char.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
 }
 
-export type TypedWordStatus = 'correct' | 'wrong' | 'pending'
+export type RecallSlotKind = 'correct' | 'wrong' | 'missing' | 'extra' | 'pending'
+
+export interface RecallSlot {
+  kind: RecallSlotKind
+  expected?: string
+  typed?: string
+}
 
 export interface RecallTypingResult {
-  statuses: TypedWordStatus[]
-  typed: string[]
+  slots: RecallSlot[]
   correct: number
   total: number
+  next?: string
   complete: boolean
+}
+
+function alignWords(expected: string[], typed: string[]): RecallSlot[] {
+  const n = expected.length
+  const m = typed.length
+  const left = expected.map(normalizeWord)
+  const right = typed.map(normalizeWord)
+
+  const cost: number[][] = Array.from({ length: n + 1 }, () => new Array<number>(m + 1).fill(0))
+  for (let i = n - 1; i >= 0; i--) cost[i]![m] = cost[i + 1]![m]! + 1
+  for (let j = m - 1; j >= 0; j--) cost[n]![j] = cost[n]![j + 1]! + 1
+  for (let i = n - 1; i >= 0; i--) {
+    for (let j = m - 1; j >= 0; j--) {
+      const swap = cost[i + 1]![j + 1]! + (left[i] === right[j] ? 0 : 1)
+      cost[i]![j] = Math.min(swap, cost[i + 1]![j]! + 1, cost[i]![j + 1]! + 1)
+    }
+  }
+
+  // Ties are broken towards the reading a learner recognises: an exact match first, then a
+  // stray word, then a skipped one. Only when nothing else explains the cost is a word wrong.
+  const slots: RecallSlot[] = []
+  let i = 0
+  let j = 0
+  while (i < n || j < m) {
+    const paired = i < n && j < m
+    if (paired && left[i] === right[j] && cost[i]![j] === cost[i + 1]![j + 1]!) {
+      slots.push({ kind: 'correct', expected: expected[i]!, typed: typed[j]! })
+      i += 1
+      j += 1
+    } else if (i >= n || (j < m && cost[i]![j] === cost[i]![j + 1]! + 1)) {
+      slots.push({ kind: 'extra', typed: typed[j]! })
+      j += 1
+    } else if (j >= m || cost[i]![j] === cost[i + 1]![j]! + 1) {
+      slots.push({ kind: 'missing', expected: expected[i]! })
+      i += 1
+    } else {
+      slots.push({ kind: 'wrong', expected: expected[i]!, typed: typed[j]! })
+      i += 1
+      j += 1
+    }
+  }
+  return slots
+}
+
+/**
+ * Words the learner has not reached yet are `pending`, not mistakes — so an answer typed
+ * halfway through reads as unfinished rather than half wrong.
+ */
+function softenTail(slots: RecallSlot[]): RecallSlot[] {
+  const out = [...slots]
+  for (let k = out.length - 1; k >= 0; k--) {
+    const slot = out[k]!
+    if (slot.kind !== 'missing') break
+    out[k] = { kind: 'pending', expected: slot.expected }
+  }
+  return out
 }
 
 export function typedRecallStatus(answer: string, input: string): RecallTypingResult {
   const expected = tokenizeWords(answer)
-  const typed = tokenizeWords(input)
-  const statuses: TypedWordStatus[] = expected.map((word, i) => {
-    if (i >= typed.length) return 'pending'
-    return normalizeWord(typed[i]!) === normalizeWord(word) ? 'correct' : 'wrong'
-  })
-  const correct = statuses.filter((status) => status === 'correct').length
-  const complete =
-    typed.length >= expected.length && statuses.every((status) => status === 'correct')
-  return { statuses, typed, correct, total: expected.length, complete }
+  const words = tokenizeWords(input)
+  const open = words.length > 0 && !/\s$/u.test(input)
+  const draft = open ? words[words.length - 1]! : undefined
+  const committed = open ? words.slice(0, -1) : words
+
+  const slots = softenTail(alignWords(expected, committed))
+  const at = slots.findIndex((slot) => slot.kind === 'pending')
+  const next = at === -1 ? undefined : slots[at]!.expected
+
+  // A half-typed word is not a mistake yet: it only turns red once it can no longer become
+  // the word we are waiting for.
+  if (draft !== undefined) {
+    if (next === undefined) {
+      slots.push({ kind: 'extra', typed: draft })
+    } else {
+      const word = normalizeWord(draft)
+      const goal = normalizeWord(next)
+      if (word === goal) slots[at] = { kind: 'correct', expected: next, typed: draft }
+      else if (!goal.startsWith(word)) slots[at] = { kind: 'wrong', expected: next, typed: draft }
+    }
+  }
+
+  return {
+    slots,
+    correct: slots.filter((slot) => slot.kind === 'correct').length,
+    total: expected.length,
+    next,
+    complete: expected.length > 0 && slots.every((slot) => slot.kind === 'correct'),
+  }
+}
+
+/**
+ * Fills in the next word the learner has not reached, replacing any half-typed word.
+ */
+export function withNextWord(answer: string, input: string): string {
+  const { next, complete } = typedRecallStatus(answer, input)
+  if (complete || next === undefined) return input
+  return `${input.replace(/\S+$/u, '')}${next} `
 }
 
 export function scramble<T>(input: readonly T[], rng: () => number = Math.random): T[] {

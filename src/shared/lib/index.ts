@@ -100,8 +100,10 @@ export {
   normalizeInitial,
   scramble,
   typedRecallStatus,
+  withNextWord,
   type WordInitial,
-  type TypedWordStatus,
+  type RecallSlot,
+  type RecallSlotKind,
   type RecallTypingResult,
 } from './recall'
 export { studyOverview, type StudyOverview } from './study-overview'

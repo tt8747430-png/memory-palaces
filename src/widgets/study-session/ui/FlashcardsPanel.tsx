@@ -193,6 +193,13 @@ export function FlashcardsPanel({
     rebuild(nextScope)
   }
 
+  // Each mode presents the card its own way, so it opens on its own face — a flip carried over
+  // from the mode you left would land Type or Rebuild on the answer.
+  const changeMode = (nextMode: StudyMode) => {
+    dispatch({ type: 'unflip' })
+    onModeChange?.(nextMode)
+  }
+
   const setSwipe = (dir: SwipeDirection, action: FlashcardSwipeConfig[SwipeDirection]) => {
     onSwipeByModeChange?.({ ...swipeByMode, [mode]: { ...activeSwipe, [dir]: action } })
   }
@@ -337,7 +344,7 @@ export function FlashcardsPanel({
         open={modeOpen}
         onClose={() => setModeOpen(false)}
         mode={mode}
-        onMode={(nextMode) => onModeChange?.(nextMode)}
+        onMode={changeMode}
       />
 
       {card ? (

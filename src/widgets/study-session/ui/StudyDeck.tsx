@@ -30,7 +30,7 @@ import {
   PromptFace,
   RebuildFace,
   TypeFace,
-} from './card-faces'
+} from './faces'
 import type { StudyCard, StudyDirection } from '../model/types'
 
 export type { SwipeDirection }
@@ -85,12 +85,12 @@ function isControl(target: EventTarget | null): boolean {
   return controlOf(target) !== null
 }
 
+/** True when the press landed in the card's scrolling body, which owns vertical movement. */
 function isScroller(target: EventTarget | null): boolean {
   return Boolean((target as HTMLElement | null)?.closest('[data-card-scroll]'))
 }
 
 function swipeAllowed(target: EventTarget | null): boolean {
-  if (isScroller(target)) return false
   const control = controlOf(target)
   return control === null || control.hasAttribute('data-flip')
 }
@@ -120,6 +120,7 @@ export function StudyDeck({
   const reduce = useReducedMotion()
   const [locked, setLocked] = useState(false)
   const armedRef = useRef(true)
+  const horizontalOnlyRef = useRef(false)
   const holdTimer = useRef<number | undefined>(undefined)
   const heldRef = useRef(false)
 
@@ -128,12 +129,11 @@ export function StudyDeck({
   const answer = recallAnswer(prompt, direction === 'front' ? cardEntity.back : cardEntity.front)
 
   const [solved, setSolved] = useState(false)
-  const [peek, setPeek] = useState(false)
-  useEffect(() => {
-    setSolved(false)
-    setPeek(false)
-  }, [cardEntity.id, mode])
-  const showBack = solved ? peek : flipped
+  useEffect(() => setSolved(false), [cardEntity.id, mode])
+
+  // Solving is terminal: the front already holds the whole answer, so there is nothing behind
+  // it worth turning to. Only a reset reopens the card.
+  const showBack = !solved && flipped
 
   const mechanicRef = useRef<MechanicHandlers>({})
   const registerMechanic = useCallback((handlers: MechanicHandlers | null) => {
@@ -141,8 +141,7 @@ export function StudyDeck({
   }, [])
 
   const handleFlip = useCallback(() => {
-    if (solved) setPeek((prev) => !prev)
-    else onFlip()
+    if (!solved) onFlip()
   }, [solved, onFlip])
 
   const x = useMotionValue(0)
@@ -207,6 +206,9 @@ export function StudyDeck({
       if (locked) return
       if (first) {
         armedRef.current = swipeAllowed(event.target)
+        // A press inside the scrolling body still swipes sideways, but its vertical movement
+        // belongs to the browser — otherwise a long answer costs the learner every swipe.
+        horizontalOnlyRef.current = isScroller(event.target)
         heldRef.current = false
         clearHold()
         if (armedRef.current) {
@@ -227,10 +229,14 @@ export function StudyDeck({
         return
       }
       if (!armedRef.current) return
-      if (Math.abs(mx) > LONG_PRESS_SLOP || Math.abs(my) > LONG_PRESS_SLOP) clearHold()
+
+      const horizontalOnly = horizontalOnlyRef.current
+      const ax = Math.abs(mx)
+      const ay = Math.abs(my)
+      if (ax > LONG_PRESS_SLOP || ay > LONG_PRESS_SLOP) clearHold()
       if (down) {
         x.set(mx)
-        y.set(my)
+        if (!horizontalOnly) y.set(my)
         return
       }
       clearHold()
@@ -239,10 +245,12 @@ export function StudyDeck({
         snapBack()
         return
       }
-      const ax = Math.abs(mx)
-      const ay = Math.abs(my)
-      const fling = Math.max(vx, vy) > 0.5
-      if (ax < 80 && ay < 80 && !fling) {
+      const fling = (horizontalOnly ? vx : Math.max(vx, vy)) > 0.5
+      if (ax < 80 && (horizontalOnly || ay < 80) && !fling) {
+        snapBack()
+        return
+      }
+      if (horizontalOnly && ax < ay) {
         snapBack()
         return
       }
@@ -266,12 +274,10 @@ export function StudyDeck({
     onFlip: handleFlip,
     onRevealInPlace: () => {
       setSolved(true)
-      setPeek(false)
       onReveal()
     },
     onHideInPlace: () => {
       setSolved(false)
-      setPeek(false)
       onUnflip()
     },
     onChangeMode,
