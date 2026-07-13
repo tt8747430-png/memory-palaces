@@ -1,24 +1,73 @@
-1. bugfix: the tab bar is shown whne the splashscreen is shown in dark mode. 
-no 2. when clicking on the folder name in the header i except it to look like it is clickable and when clicking on it will open the edit folder settings and after that remove teh edit button on the right. this should be done across the app. 
-2. remove the finish button from the settings.
+SETTINGS:
+3. remove the finish button from the settings.
 
 
 
-1. /impeccable improve the styles of the folder decks and subdeck controls harden polish colorize animate improve the actions
-2. refactor the swipe actions page from the app settings and make more compact 
-3. /impeccable fix the swipe actions colors  and make more calm and not so bad like i dont like the orange color and so on 
-4. it still doensnt work and i still dont have rounded corners for the folder card for the decks and for the subdecks '/Users/kristianbraila/Desktop/Screenshot 2026-07-12 at 14.37.15.png'
-5. reorder the actiosn in the empty states and the add new folder shouldnt be in the empty state, only in the toolbar. 
-6. when i click on the import and i am in the main home page without any decks i dont get the more options for import sheet only the paste notes. and when i click the paste notes and i am in none of the decks, the deck names should be provided in the inline in the paste notes editor and not as separate sheets, but when i am inside a deck this will be hidded so that i just paste import the notes and not also creating a new name. 
-
-7. for all the forms and creation sheets and pages should be provided default already filled in so like the New deck New Deck 1 if already present and so on across the app. 
+GENERAL:
 
 
 
- 1. long tap not breakes or long tap to select 
 
- 2. we dont have onboarding and guest account lacks customizabilityx
 
+REFACTORINGS:
+1. We need to refactor the whole flashcards settings and algorithms using this example: 
+1. We dont need ai features now as well as deck publishing or sharing and  
+
+
+
+
+FEATURES:
+8. we dont have onboarding and guest account lacks customizability
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+fixed: 
+
+SELECTMODE:
+1. the select mode toolbar should also be customizable and have more features. 
+
+ANIMATIONS:
+2. the select mode doesnt correctly elevate the controls. they should be elevated as they are also with the select checbox and so on. and i want also to be able to drag and drop a real deck onto a real deck and this deck will become its subdeck and so on. also the decks reordering is flickerring animatinons.  fix this bug 
+5. bug: the progressbars are reloaded animation anytime i change the page and this is anoying. this should maybe only be when suitable e.g. in the badges progress animtations and so on
+6. add to claude fix of the drag animation flickering and fix after that the flickering in the toolbar actions reorder settings 
+
+FLASHCARDS:
+3. the type and rebuild flashcard modes should start in the initial state and no in the flipped state e.g. if i change the mode from the blur flipped mode. and also when the flashcards was solved in the rebuilt mode it shouldnt be flippable again and only the reset button will reset the flip action and other actions. and after it is rebuild the overview -solved tap to see the answer also will be removed. and the same with the type initials mode.  and the type words flashcard mode also should be somehow refactored to improve the user interactions. conslut me on these issue if it is a good proposal
+4. inside a feedback text box control in the type flashcard mode i cant fully and reliable scroll whne the content is too high and it triggers the flashcard swipe mode. and also the page shouldnt be scrollable in none of the modes and only the contents between the flashcard headers and flashcard footers should be scrollabel like a real page when it is needed and there is too much text, therefore it should be flexible and adaptable to all types of contents 
+
+GENERAL:
+1. bugfix: the tab bar and toolbar at the right  is shown whne the splashscreen is shown in dark mode. 
+4. the default filled in forms should open already with text selected 
+5. the sheet that access the keyboard e.g  create new deck or create new folder should not elevate the whole app above the keyboard but just the sheet should be elevated and this is true for all widgets and controls of any kind across the app  that access the keyboard  
+6. when selecting a deck of a folder or a subdeck, it gets little smaller like not so wide but this shouldnt happen, it should only be like a good animation when i hover over the folder or deck to drop to folder or deck but not when i reorder. 
 
 
 
@@ -47,3 +96,4 @@ BUGS:
  /Users/kristianbraila/Downloads/AITutorScreen.tsx 
  
  -->
+
