@@ -51,8 +51,7 @@ export function ArchivedDecksPage({ onBack }: ArchivedDecksPageProps) {
     const archivedIds = new Set(decks.filter((d) => d.archived).map((d) => d.id))
     return decks
       .filter(
-        (deck) =>
-          deck.archived && (deck.parentId === null || !archivedIds.has(deck.parentId)),
+        (deck) => deck.archived && (deck.parentId === null || !archivedIds.has(deck.parentId)),
       )
       .sort((a, b) => a.order - b.order)
   }, [decks])
