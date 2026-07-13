@@ -1284,7 +1284,8 @@ function FolderRow({
         selected && 'ring-2 ring-inset ring-accent',
         isNestTarget &&
           'scale-[1.015] bg-accent/[0.08] ring-2 ring-accent ring-offset-2 ring-offset-background',
-        isDragging && 'z-50 scale-[0.98] opacity-40',
+        // The lifted slot only fades — scaling belongs to a nest hover, not a reorder.
+        isDragging && 'z-50 opacity-40',
       )}
     >
       {/* Whole-card activator — tap toggles / opens; press-and-hold drags. */}

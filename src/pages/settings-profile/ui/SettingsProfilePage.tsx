@@ -153,6 +153,7 @@ export function SettingsProfilePage({
 
   return (
     <AppScreen
+      keyboard
       header={
         <ScreenHeader
           title={t('settings.profileEdit.title')}

@@ -106,6 +106,7 @@ export function CardEditorPage({ deckId, cardId, onBack, onNavigateCard }: CardE
   return (
     <AppScreen
       fill
+      keyboard
       header={
         <ScreenHeader
           title={editing ? t('cards.editor.editTitle') : t('cards.editor.newTitle')}

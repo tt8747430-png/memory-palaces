@@ -387,8 +387,9 @@ function DeckTreeNode({
         selected && 'ring-2 ring-inset ring-accent',
         isNestTarget &&
           'scale-[1.015] bg-accent/[0.08] ring-2 ring-accent ring-offset-2 ring-offset-background',
-        // The slot the card came out of, held open while it is in hand.
-        isDragging && 'z-50 scale-[0.98] opacity-40',
+        // The slot the card came out of, held open while it is in hand — it only
+        // fades; scaling is reserved for a nest hover so a reorder doesn't shrink.
+        isDragging && 'z-50 opacity-40',
       )}
     >
       {/* Whole-card activator: a tap opens (or toggles selection); a press-and-hold

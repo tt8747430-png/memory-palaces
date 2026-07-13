@@ -14,6 +14,13 @@ const REDUCED_MS = 500
 const AURA_BG =
   'radial-gradient(circle at center, oklch(var(--p-tint-sky) / 0.45), transparent 60%)'
 
+// The splash is a fixed brand moment, so it uses opaque palette hues directly
+// rather than semantic tokens: in dark mode `--secondary` is a translucent
+// surface tint, which would leave the bottom of the gradient see-through and let
+// the tab bar + FAB show through the overlay.
+const SPLASH_BG =
+  'linear-gradient(to bottom, var(--p-navy-900), var(--p-blue-500) 55%, var(--p-blue-300))'
+
 export function SplashOverlay({ onDone }: SplashOverlayProps) {
   const { t } = useTranslation()
   const reduce = useReducedMotion()
@@ -25,7 +32,8 @@ export function SplashOverlay({ onDone }: SplashOverlayProps) {
 
   return (
     <motion.div
-      className="fixed inset-0 z-[300] flex flex-col items-center justify-center gap-6 overflow-hidden bg-gradient-to-b from-primary via-accent to-secondary px-6 text-center"
+      className="fixed inset-0 z-[300] flex flex-col items-center justify-center gap-6 overflow-hidden px-6 text-center"
+      style={{ background: SPLASH_BG }}
       initial={{ opacity: 1 }}
       exit={{ opacity: 0, transition: { duration: 0.4, ease: 'easeOut' } }}
     >

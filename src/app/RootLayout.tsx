@@ -1,6 +1,7 @@
 import { lazy, Suspense, useState } from 'react'
 import { Outlet } from '@tanstack/react-router'
 import { AnimatePresence } from 'motion/react'
+import { useKeyboardInset } from '@/shared/lib'
 import { AppNav } from '@/widgets/bottom-nav'
 import { SplashOverlay } from '@/widgets/splash'
 
@@ -14,6 +15,7 @@ const Devtools = import.meta.env.DEV
 
 export function RootLayout() {
   const [showSplash, setShowSplash] = useState(true)
+  useKeyboardInset()
   return (
     <>
       <div

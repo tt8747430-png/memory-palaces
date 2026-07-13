@@ -12,6 +12,7 @@ export function AppScreen({
   header,
   footer,
   fill,
+  keyboard,
 }: {
   children?: ReactNode
   className?: string
@@ -19,6 +20,12 @@ export function AppScreen({
   header?: ReactNode
   footer?: ReactNode
   fill?: boolean
+  /**
+   * Full-page editors set this so the screen shrinks to sit above the on-screen
+   * keyboard (the action bar stays reachable). Overlay-host pages leave it off —
+   * their sheets lift themselves, and the page behind must not move.
+   */
+  keyboard?: boolean
 }) {
   const innerRef = useRef<HTMLElement | null>(null)
 
@@ -40,11 +47,16 @@ export function AppScreen({
 
   const content = fill ? <div className={FILL}>{children}</div> : children
 
+  // In keyboard mode the shell shrinks to sit above the keyboard (`.kb-fit`);
+  // otherwise it fills its parent. `.kb-fit` is a no-op when `--kb` is 0 and
+  // steps aside while a sheet overlay is open (see `useOverlayLock`).
+  const fit = keyboard ? 'kb-fit' : 'h-full'
+
   if (!header && !footer) {
     return (
       <main
         ref={setRef}
-        className={cn('mx-auto flex h-full w-full max-w-[430px] flex-col', SCROLL, className)}
+        className={cn('mx-auto flex w-full max-w-[430px] flex-col', fit, SCROLL, className)}
       >
         {content}
       </main>
@@ -52,7 +64,7 @@ export function AppScreen({
   }
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-[430px] flex-col">
+    <div className={cn('mx-auto flex w-full max-w-[430px] flex-col', fit)}>
       {header}
       <main ref={setRef} className={cn('min-h-0 flex-1', SCROLL, className)}>
         {content}

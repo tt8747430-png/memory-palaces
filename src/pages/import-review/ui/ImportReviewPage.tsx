@@ -94,6 +94,7 @@ export function ImportReviewPage({ deckId, onBack, onDone }: ImportReviewPagePro
   return (
     <AppScreen
       fill
+      keyboard
       header={
         <ScreenHeader
           title={t('cards.review.title')}

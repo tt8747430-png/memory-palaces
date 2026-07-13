@@ -1,4 +1,5 @@
 import { type SyntheticEvent, useEffect, useState } from 'react'
+import { useAutoSelect } from '@/shared/lib'
 import { Sheet } from './Sheet'
 import { TextField } from './TextField'
 import { Button } from './button'
@@ -27,6 +28,7 @@ export function PromptSheet({
   onSubmit,
 }: PromptSheetProps) {
   const [value, setValue] = useState(initialValue)
+  const autoSelect = useAutoSelect<HTMLInputElement>(open)
 
   useEffect(() => {
     if (open) setValue(initialValue)
@@ -57,6 +59,7 @@ export function PromptSheet({
           aria-label={fieldLabel}
           value={value}
           onChange={(event) => setValue(event.target.value)}
+          onFocus={autoSelect}
           placeholder={placeholder}
           autoFocus
           enterKeyHint="done"

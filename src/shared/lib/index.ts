@@ -11,6 +11,9 @@ export {
   SWIPE_FLING_SPEED,
 } from './gestures'
 export { useLongPress, type LongPressHandlers, type LongPressOptions } from './use-long-press'
+export { useAutoSelect } from './use-auto-select'
+export { useKeyboardInset } from './use-keyboard-inset'
+export { useOverlayLock } from './use-overlay-lock'
 export { useSortableSensors } from './use-sortable-sensors'
 export { shuffle } from './shuffle'
 export { nextOrder, resequence } from './order'

@@ -99,6 +99,7 @@ export function PasteNotesPage({
   return (
     <AppScreen
       fill
+      keyboard
       header={
         <ScreenHeader title={t('cards.paste.title')} onBack={onBack} backLabel={t('common.back')} />
       }

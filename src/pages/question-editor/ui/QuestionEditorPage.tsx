@@ -79,6 +79,7 @@ export function QuestionEditorPage({
   return (
     <AppScreen
       fill
+      keyboard
       header={
         <ScreenHeader
           title={editing ? t('questions.editor.editTitle') : t('questions.editor.newTitle')}
