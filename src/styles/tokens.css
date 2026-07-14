@@ -84,10 +84,6 @@
   --p-z-tooltip: 700;
 
   --p-container-app: 430px;
-  /* On-screen keyboard overlap, kept live by `useKeyboardInset`. Surfaces that
-     sit above the keyboard (sheets, editor footers) offset by this instead of
-     resizing the whole viewport. Stays 0 when no keyboard is up. */
-  --kb: 0px;
   --bg: linear-gradient(
     to bottom right,
     oklch(83.2% 0.083 264.3) 0%,

@@ -12,7 +12,7 @@ export {
 } from './gestures'
 export { useLongPress, type LongPressHandlers, type LongPressOptions } from './use-long-press'
 export { useAutoSelect } from './use-auto-select'
-export { useKeyboardInset } from './use-keyboard-inset'
+export { useKeyboardPin } from './use-keyboard-pin'
 export { useSortableSensors } from './use-sortable-sensors'
 export { shuffle } from './shuffle'
 export { nextOrder, resequence } from './order'
