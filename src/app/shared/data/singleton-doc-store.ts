@@ -7,7 +7,7 @@ import type { StoreStatus } from './collection-store'
  * progress): mirrors the first document — or null — into a signal.
  */
 export abstract class SingletonDocStore<T extends Identifiable> {
-  protected abstract readonly repo: Repository<T>
+  constructor(protected readonly repo: Repository<T>) {}
 
   private readonly _value = signal<T | null>(null)
   private readonly _status = signal<StoreStatus>('idle')

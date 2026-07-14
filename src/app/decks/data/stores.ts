@@ -1,4 +1,4 @@
-import { Injectable, InjectionToken, inject } from '@angular/core'
+import { Inject, Injectable, InjectionToken } from '@angular/core'
 import { CollectionStore } from '@app/shared/data/collection-store'
 import type { Repository } from '@app/shared/data'
 import type { Deck } from '../model/deck'
@@ -15,30 +15,46 @@ const byOrder = (a: { order: number }, b: { order: number }): number => a.order 
 
 @Injectable({ providedIn: 'root' })
 export class DeckStore extends CollectionStore<Deck> {
-  protected readonly repo = inject(DECK_REPOSITORY)
   protected override readonly compare = (a: Deck, b: Deck): number =>
     b.createdAt.localeCompare(a.createdAt)
   readonly decks = this.entities
+
+  // eslint-disable-next-line @angular-eslint/prefer-inject -- constructor param keeps the store directly constructible in unit tests (new XStore(repo))
+  constructor(@Inject(DECK_REPOSITORY) repo: Repository<Deck>) {
+    super(repo)
+  }
 }
 
 @Injectable({ providedIn: 'root' })
 export class CardStore extends CollectionStore<Card> {
-  protected readonly repo = inject(CARD_REPOSITORY)
   protected override readonly compare = byOrder
   readonly cards = this.entities
+
+  // eslint-disable-next-line @angular-eslint/prefer-inject -- constructor param keeps the store directly constructible in unit tests (new XStore(repo))
+  constructor(@Inject(CARD_REPOSITORY) repo: Repository<Card>) {
+    super(repo)
+  }
 }
 
 @Injectable({ providedIn: 'root' })
 export class QuestionStore extends CollectionStore<Question> {
-  protected readonly repo = inject(QUESTION_REPOSITORY)
   protected override readonly compare = byOrder
   readonly questions = this.entities
+
+  // eslint-disable-next-line @angular-eslint/prefer-inject -- constructor param keeps the store directly constructible in unit tests (new XStore(repo))
+  constructor(@Inject(QUESTION_REPOSITORY) repo: Repository<Question>) {
+    super(repo)
+  }
 }
 
 @Injectable({ providedIn: 'root' })
 export class FolderStore extends CollectionStore<Folder> {
-  protected readonly repo = inject(FOLDER_REPOSITORY)
   protected override readonly compare = (a: Folder, b: Folder): number =>
     a.createdAt.localeCompare(b.createdAt)
   readonly folders = this.entities
+
+  // eslint-disable-next-line @angular-eslint/prefer-inject -- constructor param keeps the store directly constructible in unit tests (new XStore(repo))
+  constructor(@Inject(FOLDER_REPOSITORY) repo: Repository<Folder>) {
+    super(repo)
+  }
 }

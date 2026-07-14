@@ -1,4 +1,4 @@
-import { Injectable, InjectionToken, computed, inject } from '@angular/core'
+import { Inject, Injectable, InjectionToken, computed } from '@angular/core'
 import { CollectionStore } from '@app/shared/data/collection-store'
 import type { Repository } from '@app/shared/data'
 import type { AppNotification } from '../model/notification'
@@ -10,13 +10,17 @@ export const NOTIFICATION_REPOSITORY = new InjectionToken<Repository<AppNotifica
 
 @Injectable({ providedIn: 'root' })
 export class NotificationStore extends CollectionStore<AppNotification> {
-  protected readonly repo = inject(NOTIFICATION_REPOSITORY)
   protected override readonly compare = (a: AppNotification, b: AppNotification): number =>
     b.createdAt.localeCompare(a.createdAt)
   readonly notifications = this.entities
   readonly unreadCount = computed(() =>
     this.entities().reduce((count, n) => (n.read ? count : count + 1), 0),
   )
+
+  // eslint-disable-next-line @angular-eslint/prefer-inject -- constructor param keeps the store directly constructible in unit tests (new XStore(repo))
+  constructor(@Inject(NOTIFICATION_REPOSITORY) repo: Repository<AppNotification>) {
+    super(repo)
+  }
 }
 
 export const notificationSchema: RxJsonSchema<AppNotification> = {

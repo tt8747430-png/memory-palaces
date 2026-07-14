@@ -9,9 +9,10 @@ export type StoreStatus = 'idle' | 'loading' | 'ready'
  * repository and flow back through the subscription.
  */
 export abstract class CollectionStore<T extends Identifiable> {
-  protected abstract readonly repo: Repository<T>
   /** Sort applied to every emission; source order when null. */
   protected readonly compare: ((a: T, b: T) => number) | null = null
+
+  constructor(protected readonly repo: Repository<T>) {}
 
   private readonly _entities = signal<T[]>([])
   private readonly _status = signal<StoreStatus>('idle')

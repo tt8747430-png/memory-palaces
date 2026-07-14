@@ -7,7 +7,7 @@ export async function signInWithEmail(
   now: number = Date.now(),
 ): Promise<void> {
   const auth = await deps.gateway.signIn({ email })
-  await deps.sessionStore
-    
-    .set(makeAccountSession(auth.id, { email, name: '' }, new Date(now).toISOString()))
+  await deps.sessionStore.set(
+    makeAccountSession(auth.id, { email, name: '' }, new Date(now).toISOString()),
+  )
 }

@@ -1,4 +1,4 @@
-import { Injectable, InjectionToken, computed, inject, signal } from '@angular/core'
+import { Inject, Injectable, InjectionToken, computed, signal } from '@angular/core'
 import { SingletonDocStore } from '@app/shared/data/singleton-doc-store'
 import type { StoreStatus } from '@app/shared/data/collection-store'
 import type { Repository } from '@app/shared/data'
@@ -15,7 +15,8 @@ export const AUTH_GATEWAY = new InjectionToken<AuthGateway>('AUTH_GATEWAY')
 /** Auth session (Guest/Account) — live in memory, loaded once per app start. */
 @Injectable({ providedIn: 'root' })
 export class SessionStore {
-  private readonly repo = inject(SESSION_REPOSITORY)
+  // eslint-disable-next-line @angular-eslint/prefer-inject -- constructor param keeps the store directly constructible in unit tests (new XStore(repo))
+  constructor(@Inject(SESSION_REPOSITORY) private readonly repo: Repository<Session>) {}
 
   private readonly _session = signal<Session | null>(null)
   private readonly _status = signal<StoreStatus>('idle')
@@ -45,10 +46,14 @@ export class SessionStore {
 
 @Injectable({ providedIn: 'root' })
 export class ProfileStore extends SingletonDocStore<Profile> {
-  protected readonly repo = inject(PROFILE_REPOSITORY)
   readonly profile = this.value
   /** Stored profile, falling back to defaults before the first save. */
   readonly effective = computed(() => this.value() ?? DEFAULT_PROFILE)
+
+  // eslint-disable-next-line @angular-eslint/prefer-inject -- constructor param keeps the store directly constructible in unit tests (new XStore(repo))
+  constructor(@Inject(PROFILE_REPOSITORY) repo: Repository<Profile>) {
+    super(repo)
+  }
 }
 
 export const profileSchema: RxJsonSchema<Profile> = {

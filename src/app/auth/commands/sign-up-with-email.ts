@@ -18,13 +18,11 @@ export async function signUpWithEmail(
   now: number = Date.now(),
 ): Promise<void> {
   const auth = await deps.gateway.signUp({ email: input.email, name: input.name })
-  await deps.sessionStore
-    
-    .set(
-      makeAccountSession(
-        auth.id,
-        { email: input.email, name: input.name },
-        new Date(now).toISOString(),
-      ),
-    )
+  await deps.sessionStore.set(
+    makeAccountSession(
+      auth.id,
+      { email: input.email, name: input.name },
+      new Date(now).toISOString(),
+    ),
+  )
 }

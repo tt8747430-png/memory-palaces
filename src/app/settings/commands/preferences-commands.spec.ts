@@ -1,0 +1,58 @@
+import { describe, expect, it } from 'vitest'
+import { InMemoryRepository } from '@app/shared/data'
+import type { Preferences } from '@app/settings/model/preferences'
+import { setPreferences } from './preferences-index'
+import { PreferencesStore } from '@app/settings/data/preferences-store'
+
+const NOW = Date.UTC(2026, 0, 10)
+
+function startedStore(seed: Preferences[] = []) {
+  const store = new PreferencesStore(new InMemoryRepository<Preferences>(seed))
+  store.start()
+  return store
+}
+
+describe('setPreferences', () => {
+  it('creates the singleton and applies a change, keeping other defaults', async () => {
+    const store = startedStore()
+    const prefs = await setPreferences(store, { haptics: false }, NOW)
+    expect(prefs.haptics).toBe(false)
+    expect(prefs.soundEffects).toBe(true)
+    expect(store.preferences()?.haptics).toBe(false)
+  })
+
+  it('merges successive changes into the one record', async () => {
+    const store = startedStore()
+    await setPreferences(store, { haptics: false }, NOW)
+    const prefs = await setPreferences(store, { reducedMotion: true }, NOW)
+    expect(prefs.haptics).toBe(false)
+    expect(prefs.reducedMotion).toBe(true)
+  })
+
+  it('bumps updatedAt to the injected clock', async () => {
+    const store = startedStore()
+    const prefs = await setPreferences(store, { soundEffects: false }, NOW)
+    expect(prefs.updatedAt).toBe(new Date(NOW).toISOString())
+  })
+
+  it('persists the chosen theme while keeping the other defaults', async () => {
+    const store = startedStore()
+    const prefs = await setPreferences(store, { theme: 'dark' }, NOW)
+    expect(prefs.theme).toBe('dark')
+    expect(prefs.language).toBe('en')
+    expect(prefs.soundEffects).toBe(true)
+  })
+
+  it('merges a nested privacy change without dropping the other flags', async () => {
+    const store = startedStore()
+    const seeded = await setPreferences(store, {}, NOW)
+    const prefs = await setPreferences(
+      store,
+      { privacy: { ...seeded.privacy, activitySharing: true } },
+      NOW,
+    )
+    expect(prefs.privacy.activitySharing).toBe(true)
+    expect(prefs.privacy.profileVisibility).toBe(true)
+    expect(prefs.privacy.dataEncryption).toBe(true)
+  })
+})

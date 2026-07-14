@@ -1,4 +1,4 @@
-import { Injectable, InjectionToken, computed, inject } from '@angular/core'
+import { Inject, Injectable, InjectionToken, computed } from '@angular/core'
 import { SingletonDocStore } from '@app/shared/data/singleton-doc-store'
 import type { Repository } from '@app/shared/data'
 import { DEFAULT_PREFERENCES } from '../model/preferences'
@@ -11,10 +11,14 @@ export const PREFERENCES_REPOSITORY = new InjectionToken<Repository<Preferences>
 
 @Injectable({ providedIn: 'root' })
 export class PreferencesStore extends SingletonDocStore<Preferences> {
-  protected readonly repo = inject(PREFERENCES_REPOSITORY)
   readonly preferences = this.value
   /** Stored preferences, falling back to defaults before the first save. */
   readonly effective = computed(() => this.value() ?? DEFAULT_PREFERENCES)
+
+  // eslint-disable-next-line @angular-eslint/prefer-inject -- constructor param keeps the store directly constructible in unit tests (new XStore(repo))
+  constructor(@Inject(PREFERENCES_REPOSITORY) repo: Repository<Preferences>) {
+    super(repo)
+  }
 }
 
 // Fresh start at version 0 (ADR-0005): the RxDB layer shipped preview-only, so

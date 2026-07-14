@@ -3,7 +3,7 @@
 Protocol (ADR-0003/0006): a file may be deleted from `legacy-react/` only after every export,
 behavior, UI state, i18n key, and test it carries has a verified Angular equivalent.
 
-**Files remaining: 336** — parity when this list is empty and `legacy-react/` is deleted.
+**Files remaining: 256** — parity when this list is empty and `legacy-react/` is deleted.
 
 Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` verified & deleted
 
@@ -201,68 +201,68 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 
 ## src/features/card
 
-- [ ] `create-card.ts`
-- [ ] `delete-card.ts`
-- [ ] `duplicate-card.ts`
-- [ ] `edit-card.ts`
+- [x] `create-card.ts`
+- [x] `delete-card.ts`
+- [x] `duplicate-card.ts`
+- [x] `edit-card.ts`
 - [x] `index.ts`
-- [ ] `mark-cards-known.ts`
-- [ ] `mark-deck-known.ts`
-- [ ] `reorder-cards.ts`
-- [ ] `require-card.ts`
-- [ ] `reset-cards-srs.ts`
-- [ ] `reset-deck-srs.ts`
-- [ ] `toggle-card-flag.ts`
+- [x] `mark-cards-known.ts`
+- [x] `mark-deck-known.ts`
+- [x] `reorder-cards.ts`
+- [x] `require-card.ts`
+- [x] `reset-cards-srs.ts`
+- [x] `reset-deck-srs.ts`
+- [x] `toggle-card-flag.ts`
 
 ## src/features/content
 
-- [ ] `apply-content.ts`
-- [ ] `content.test.ts`
-- [ ] `export-content.ts`
-- [ ] `import-content.ts`
+- [x] `apply-content.ts`
+- [x] `content.test.ts`
+- [x] `export-content.ts`
+- [x] `import-content.ts`
 - [x] `index.ts`
 
 ## src/features/data
 
-- [ ] `clear-content.ts`
-- [ ] `clear-notifications.ts`
-- [ ] `data-commands.test.ts`
+- [x] `clear-content.ts`
+- [x] `clear-notifications.ts`
+- [x] `data-commands.test.ts`
 - [x] `index.ts`
-- [ ] `reset-everything.ts`
-- [ ] `reset-progress.ts`
+- [x] `reset-everything.ts`
+- [x] `reset-progress.ts`
 
 ## src/features/deck
 
-- [ ] `create-deck.ts`
-- [ ] `delete-deck.ts`
-- [ ] `duplicate-deck.ts`
-- [ ] `edit-deck.ts`
+- [x] `create-deck.ts`
+- [x] `delete-deck.ts`
+- [x] `duplicate-deck.ts`
+- [x] `edit-deck.ts`
 - [x] `index.ts`
-- [ ] `move-deck.ts`
-- [ ] `reorder-decks.ts`
-- [ ] `require-deck.ts`
-- [ ] `set-archived.ts`
-- [ ] `set-folder.ts`
-- [ ] `toggle-favorite.ts`
+- [x] `move-deck.ts`
+- [x] `reorder-decks.ts`
+- [x] `require-deck.ts`
+- [x] `set-archived.ts`
+- [x] `set-folder.ts`
+- [x] `toggle-favorite.ts`
 
 ## src/features/folder
 
-- [ ] `create-folder.ts`
-- [ ] `delete-folder.ts`
-- [ ] `edit-folder.ts`
-- [ ] `folder-commands.test.ts`
+- [x] `create-folder.ts`
+- [x] `delete-folder.ts`
+- [x] `edit-folder.ts`
+- [x] `folder-commands.test.ts`
 - [x] `index.ts`
-- [ ] `reorder-folders.ts`
+- [x] `reorder-folders.ts`
 
 ## src/features/match
 
 - [x] `index.ts`
-- [ ] `match-machine.test.ts`
-- [ ] `match-machine.ts`
+- [x] `match-machine.test.ts`
+- [x] `match-machine.ts`
 
 ## src/features/notification
 
-- [ ] `index.ts`
+- [x] `index.ts`
 - [x] `mark-all-read.ts`
 - [x] `notification-commands.test.ts`
 - [x] `record-notification.ts`
@@ -270,62 +270,62 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 
 ## src/features/preferences
 
-- [ ] `index.ts`
-- [ ] `preferences-commands.test.ts`
-- [ ] `set-preferences.ts`
+- [x] `index.ts`
+- [x] `preferences-commands.test.ts`
+- [x] `set-preferences.ts`
 
 ## src/features/profile
 
-- [ ] `index.ts`
-- [ ] `profile-commands.test.ts`
-- [ ] `set-profile.ts`
+- [x] `index.ts`
+- [x] `profile-commands.test.ts`
+- [x] `set-profile.ts`
 
 ## src/features/progress
 
-- [ ] `award-xp.ts`
-- [ ] `complete-session.test.ts`
-- [ ] `complete-session.ts`
-- [ ] `current-progress.ts`
-- [ ] `index.ts`
-- [ ] `progress-commands.test.ts`
-- [ ] `record-quiz-result.ts`
-- [ ] `record-training-day.ts`
-- [ ] `rewards.test.ts`
-- [ ] `rewards.ts`
+- [x] `award-xp.ts`
+- [x] `complete-session.test.ts`
+- [x] `complete-session.ts`
+- [x] `current-progress.ts`
+- [x] `index.ts`
+- [x] `progress-commands.test.ts`
+- [x] `record-quiz-result.ts`
+- [x] `record-training-day.ts`
+- [x] `rewards.test.ts`
+- [x] `rewards.ts`
 
 ## src/features/question
 
-- [ ] `create-question.ts`
-- [ ] `delete-question.ts`
-- [ ] `duplicate-question.ts`
-- [ ] `edit-question.ts`
-- [ ] `index.ts`
-- [ ] `question-commands.test.ts`
-- [ ] `reorder-questions.ts`
-- [ ] `require-question.ts`
+- [x] `create-question.ts`
+- [x] `delete-question.ts`
+- [x] `duplicate-question.ts`
+- [x] `edit-question.ts`
+- [x] `index.ts`
+- [x] `question-commands.test.ts`
+- [x] `reorder-questions.ts`
+- [x] `require-question.ts`
 
 ## src/features/quiz
 
-- [ ] `index.ts`
-- [ ] `quiz-machine.test.ts`
-- [ ] `quiz-machine.ts`
+- [x] `index.ts`
+- [x] `quiz-machine.test.ts`
+- [x] `quiz-machine.ts`
 
 ## src/features/review
 
-- [ ] `due-queue-flow.test.ts`
-- [ ] `grade-card.ts`
-- [ ] `index.ts`
-- [ ] `restore-schedule.ts`
-- [ ] `review-commands.test.ts`
-- [ ] `scope.test.ts`
-- [ ] `scope.ts`
-- [ ] `session-machine.test.ts`
-- [ ] `session-machine.ts`
+- [x] `due-queue-flow.test.ts`
+- [x] `grade-card.ts`
+- [x] `index.ts`
+- [x] `restore-schedule.ts`
+- [x] `review-commands.test.ts`
+- [x] `scope.test.ts`
+- [x] `scope.ts`
+- [x] `session-machine.test.ts`
+- [x] `session-machine.ts`
 
 ## src/features/session
 
 - [x] `continue-as-guest.ts`
-- [ ] `index.ts`
+- [x] `index.ts`
 - [x] `request-password-reset.ts`
 - [x] `restore-session.ts`
 - [x] `session-commands.test.ts`
@@ -336,7 +336,7 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 
 ## src/pages/achievement-detail
 
-- [ ] `index.ts`
+- [x] `index.ts`
 
 ## src/pages/achievement-detail/ui
 
@@ -344,7 +344,7 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 
 ## src/pages/achievements
 
-- [ ] `index.ts`
+- [x] `index.ts`
 
 ## src/pages/achievements/ui
 
@@ -352,7 +352,7 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 
 ## src/pages/archived-decks
 
-- [ ] `index.ts`
+- [x] `index.ts`
 
 ## src/pages/archived-decks/ui
 
@@ -360,7 +360,7 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 
 ## src/pages/badge-detail
 
-- [ ] `index.ts`
+- [x] `index.ts`
 
 ## src/pages/badge-detail/ui
 
@@ -368,7 +368,7 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 
 ## src/pages/badges
 
-- [ ] `index.ts`
+- [x] `index.ts`
 
 ## src/pages/badges/ui
 

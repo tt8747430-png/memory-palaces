@@ -1,4 +1,4 @@
-import { Injectable, InjectionToken, computed, inject } from '@angular/core'
+import { Inject, Injectable, InjectionToken, computed } from '@angular/core'
 import { SingletonDocStore } from '@app/shared/data/singleton-doc-store'
 import type { Repository } from '@app/shared/data'
 import { levelFromXp, totalTrainingDays } from '@app/shared/domain'
@@ -9,10 +9,14 @@ export const PROGRESS_REPOSITORY = new InjectionToken<Repository<Progress>>('PRO
 
 @Injectable({ providedIn: 'root' })
 export class ProgressStore extends SingletonDocStore<Progress> {
-  protected readonly repo = inject(PROGRESS_REPOSITORY)
   readonly progress = this.value
   readonly level = computed(() => levelFromXp(this.value()?.xp ?? 0))
   readonly trainingDayCount = computed(() => totalTrainingDays(this.value()?.trainingDays ?? []))
+
+  // eslint-disable-next-line @angular-eslint/prefer-inject -- constructor param keeps the store directly constructible in unit tests (new XStore(repo))
+  constructor(@Inject(PROGRESS_REPOSITORY) repo: Repository<Progress>) {
+    super(repo)
+  }
 }
 
 export const progressSchema: RxJsonSchema<Progress> = {
