@@ -94,26 +94,22 @@ export function ImportReviewPage({ deckId, onBack, onDone }: ImportReviewPagePro
   return (
     <AppScreen
       fill
-      keyboard
       header={
         <ScreenHeader
           title={t('cards.review.title')}
           onBack={onBack}
           backLabel={t('common.back')}
+          action={
+            <Button
+              size="md"
+              disabled={cards.length === 0 || busy}
+              onClick={() => void doImport()}
+            >
+              <Download className="size-[18px]" aria-hidden />
+              {t('cards.review.importCards', { count: cards.length })}
+            </Button>
+          }
         />
-      }
-      footer={
-        <div className="bg-glass shrink-0 border-t border-white/40 px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-10px_30px_oklch(var(--p-tint-navy)/0.1)]">
-          <Button
-            size="lg"
-            className="w-full"
-            disabled={cards.length === 0 || busy}
-            onClick={() => void doImport()}
-          >
-            <Download className="size-[18px]" aria-hidden />
-            {t('cards.review.importCards', { count: cards.length })}
-          </Button>
-        </div>
       }
     >
       <div className="mt-4 flex flex-col gap-5 pb-6">

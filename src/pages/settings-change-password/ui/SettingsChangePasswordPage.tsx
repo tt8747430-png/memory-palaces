@@ -35,7 +35,6 @@ export function SettingsChangePasswordPage({ onBack }: SettingsChangePasswordPag
 
   return (
     <AppScreen
-      keyboard
       header={
         <ScreenHeader
           title={t('settings.changePasswordScreen.title')}
