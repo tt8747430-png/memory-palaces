@@ -100,11 +100,7 @@ export function ImportReviewPage({ deckId, onBack, onDone }: ImportReviewPagePro
           onBack={onBack}
           backLabel={t('common.back')}
           action={
-            <Button
-              size="md"
-              disabled={cards.length === 0 || busy}
-              onClick={() => void doImport()}
-            >
+            <Button size="md" disabled={cards.length === 0 || busy} onClick={() => void doImport()}>
               <Download className="size-[18px]" aria-hidden />
               {t('cards.review.importCards', { count: cards.length })}
             </Button>

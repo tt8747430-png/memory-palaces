@@ -41,7 +41,11 @@ export function BlurFace(props: FaceProps) {
   const footer = (
     <div className="inline-grid grid-flow-col auto-cols-fr gap-2">
       <AidButton className="w-full" label={t('study.blur')} onClick={hideMore} />
-      <AidButton className="w-full" label={t('study.showAll')} onClick={() => setHidden(new Set())} />
+      <AidButton
+        className="w-full"
+        label={t('study.showAll')}
+        onClick={() => setHidden(new Set())}
+      />
     </div>
   )
 
