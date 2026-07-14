@@ -38,8 +38,8 @@
               }
             ],
             "styles": [
+              "src/styles/tokens.css",
               "node_modules/@taiga-ui/styles/taiga-ui-theme.less",
-              "node_modules/@taiga-ui/styles/taiga-ui-fonts.less",
               "src/tailwind.css",
               "src/styles.scss"
             ]

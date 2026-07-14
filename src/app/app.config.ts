@@ -2,7 +2,7 @@ import { provideTaiga } from '@taiga-ui/core'
 import { ApplicationConfig, provideBrowserGlobalErrorListeners, isDevMode } from '@angular/core'
 import { provideRouter } from '@angular/router'
 import { providePrimeNG } from 'primeng/config'
-import Aura from '@primeuix/themes/aura'
+import { MindscapePreset } from './shared/ui/prime-preset'
 
 import { routes } from './app.routes'
 import { provideServiceWorker } from '@angular/service-worker'
@@ -20,8 +20,10 @@ export const appConfig: ApplicationConfig = {
     }),
     provideTaiga(),
     providePrimeNG({
-      // Placeholder preset — Phase 2 replaces it with the custom --sw-* token preset (ADR-0001).
-      theme: { preset: Aura, options: { darkModeSelector: '[data-theme="dark"]' } },
+      theme: { preset: MindscapePreset, options: { darkModeSelector: '[data-theme="dark"]' } },
+      // Overlay stacking contract (ADR-0002): CDK overlays sit at 1000, so
+      // PrimeNG menus/popovers/toasts opened from dialogs stack above them.
+      zIndex: { modal: 1300, overlay: 1200, menu: 1200, tooltip: 1400 },
     }),
     provideHttpClient(),
     provideTransloco({

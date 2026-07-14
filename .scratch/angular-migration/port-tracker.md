@@ -3,14 +3,14 @@
 Protocol (ADR-0003/0006): a file may be deleted from `legacy-react/` only after every export,
 behavior, UI state, i18n key, and test it carries has a verified Angular equivalent.
 
-**Files remaining: 506** — parity when this list is empty and `legacy-react/` is deleted.
+**Files remaining: 502** — parity when this list is empty and `legacy-react/` is deleted.
 
 Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` verified & deleted
 
 ## .
 
 - [ ] `eslint.config.js`
-- [ ] `index.html`
+- [x] `index.html`
 - [ ] `package-lock.json`
 - [ ] `package.json`
 - [ ] `tsconfig.json`
@@ -775,9 +775,9 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 
 ## src/styles
 
-- [ ] `index.css`
-- [ ] `theme.css`
-- [ ] `tokens.css`
+- [x] `index.css`
+- [x] `theme.css`
+- [x] `tokens.css`
 
 ## src/widgets/achievement-list
 
