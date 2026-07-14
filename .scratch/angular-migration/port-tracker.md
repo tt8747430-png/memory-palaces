@@ -3,7 +3,7 @@
 Protocol (ADR-0003/0006): a file may be deleted from `legacy-react/` only after every export,
 behavior, UI state, i18n key, and test it carries has a verified Angular equivalent.
 
-**Files remaining: 370** — parity when this list is empty and `legacy-react/` is deleted.
+**Files remaining: 336** — parity when this list is empty and `legacy-react/` is deleted.
 
 Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` verified & deleted
 
@@ -24,9 +24,9 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 ## src/app
 
 - [ ] `App.tsx`
-- [ ] `RootLayout.tsx`
-- [ ] `auth-guard.test.ts`
-- [ ] `auth-guard.ts`
+- [x] `RootLayout.tsx`
+- [x] `auth-guard.test.ts`
+- [x] `auth-guard.ts`
 - [x] `composition-root.ts`
 - [ ] `router.tsx`
 
@@ -40,15 +40,15 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 
 ## src/app/providers
 
-- [ ] `AppProviders.tsx`
-- [ ] `AuthProvider.tsx`
-- [ ] `NotificationBridge.test.tsx`
-- [ ] `NotificationBridge.tsx`
-- [ ] `PreferencesProvider.tsx`
-- [ ] `ServicesProvider.tsx`
-- [ ] `ThemeProvider.test.tsx`
-- [ ] `ThemeProvider.tsx`
-- [ ] `UpdatePrompt.tsx`
+- [x] `AppProviders.tsx`
+- [x] `AuthProvider.tsx`
+- [x] `NotificationBridge.test.tsx`
+- [x] `NotificationBridge.tsx`
+- [x] `PreferencesProvider.tsx`
+- [x] `ServicesProvider.tsx`
+- [x] `ThemeProvider.test.tsx`
+- [x] `ThemeProvider.tsx`
+- [x] `UpdatePrompt.tsx`
 
 ## src/entities/card
 
@@ -227,7 +227,7 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 - [ ] `clear-content.ts`
 - [ ] `clear-notifications.ts`
 - [ ] `data-commands.test.ts`
-- [ ] `index.ts`
+- [x] `index.ts`
 - [ ] `reset-everything.ts`
 - [ ] `reset-progress.ts`
 
@@ -237,7 +237,7 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 - [ ] `delete-deck.ts`
 - [ ] `duplicate-deck.ts`
 - [ ] `edit-deck.ts`
-- [ ] `index.ts`
+- [x] `index.ts`
 - [ ] `move-deck.ts`
 - [ ] `reorder-decks.ts`
 - [ ] `require-deck.ts`
@@ -251,22 +251,22 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 - [ ] `delete-folder.ts`
 - [ ] `edit-folder.ts`
 - [ ] `folder-commands.test.ts`
-- [ ] `index.ts`
+- [x] `index.ts`
 - [ ] `reorder-folders.ts`
 
 ## src/features/match
 
-- [ ] `index.ts`
+- [x] `index.ts`
 - [ ] `match-machine.test.ts`
 - [ ] `match-machine.ts`
 
 ## src/features/notification
 
 - [ ] `index.ts`
-- [ ] `mark-all-read.ts`
-- [ ] `notification-commands.test.ts`
-- [ ] `record-notification.ts`
-- [ ] `remove-notification.ts`
+- [x] `mark-all-read.ts`
+- [x] `notification-commands.test.ts`
+- [x] `record-notification.ts`
+- [x] `remove-notification.ts`
 
 ## src/features/preferences
 
@@ -324,14 +324,14 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 
 ## src/features/session
 
-- [ ] `continue-as-guest.ts`
+- [x] `continue-as-guest.ts`
 - [ ] `index.ts`
-- [ ] `request-password-reset.ts`
-- [ ] `restore-session.ts`
-- [ ] `session-commands.test.ts`
-- [ ] `sign-in-with-email.ts`
-- [ ] `sign-out.ts`
-- [ ] `sign-up-with-email.ts`
+- [x] `request-password-reset.ts`
+- [x] `restore-session.ts`
+- [x] `session-commands.test.ts`
+- [x] `sign-in-with-email.ts`
+- [x] `sign-out.ts`
+- [x] `sign-up-with-email.ts`
 - [ ] `use-auth-actions.ts`
 
 ## src/pages/achievement-detail
@@ -626,12 +626,12 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 
 ## src/shared/i18n
 
-- [ ] `i18next.d.ts`
+- [x] `i18next.d.ts`
 - [ ] `index.ts`
 
 ## src/shared/i18n/locales
 
-- [ ] `en.ts`
+- [x] `en.ts`
 
 ## src/shared/lib
 
@@ -683,7 +683,7 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 - [x] `study-overview.test.ts`
 - [x] `study-overview.ts`
 - [ ] `use-auto-select.ts`
-- [ ] `use-keyboard-pin.ts`
+- [x] `use-keyboard-pin.ts`
 - [ ] `use-long-press.test.tsx`
 - [ ] `use-long-press.ts`
 - [ ] `use-optimistic-patch.test.ts`
@@ -806,7 +806,7 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 
 ## src/widgets/bottom-nav/ui
 
-- [ ] `AppNav.tsx`
+- [x] `AppNav.tsx`
 
 ## src/widgets/content-editor
 
@@ -918,8 +918,8 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 
 ## src/widgets/splash/ui
 
-- [ ] `SplashOverlay.test.tsx`
-- [ ] `SplashOverlay.tsx`
+- [x] `SplashOverlay.test.tsx`
+- [x] `SplashOverlay.tsx`
 
 ## src/widgets/streak-calendar
 
@@ -982,5 +982,5 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 ## src/widgets/threshold/ui
 
 - [ ] `AuthLogo.tsx`
-- [ ] `Threshold.tsx`
+- [x] `Threshold.tsx`
 

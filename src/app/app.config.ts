@@ -3,6 +3,7 @@ import { provideBrowserGlobalErrorListeners, isDevMode } from '@angular/core'
 import type { ApplicationConfig } from '@angular/core'
 import { provideRouter } from '@angular/router'
 import { providePrimeNG } from 'primeng/config'
+import { MessageService } from 'primeng/api'
 import { MindscapePreset } from './shared/ui/prime-preset'
 
 import { routes } from './app.routes'
@@ -29,6 +30,7 @@ export const appConfig: ApplicationConfig = {
       zIndex: { modal: 1300, overlay: 1200, menu: 1200, tooltip: 1400 },
     }),
     provideHttpClient(),
+    MessageService,
     provideTransloco({
       config: {
         availableLangs: ['en'],
