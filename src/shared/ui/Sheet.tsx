@@ -39,12 +39,10 @@ export function Sheet({
           )}
         />
         <Dialog.Popup
-          // Rides the sheet up over the on-screen keyboard while the page behind holds still —
-          // only the sheet lifts. `--kb` (innerHeight − visualViewport height) overshoots the
-          // keyboard's top on iOS by the bottom safe-area inset, which left a translucent gap
-          // between the sheet and the keyboard; subtracting it back sits the sheet flush. The
-          // clamp keeps this a no-op with the keyboard down (--kb 0) and on Android (inset ~0).
-          style={{ bottom: 'max(0px, calc(var(--kb) - env(safe-area-inset-bottom)))' }}
+          // Rides the sheet up over the on-screen keyboard. `useKeyboardInset` pins the app so
+          // the page behind holds still, which also keeps `--kb` (the keyboard's overlap) an
+          // honest measure of the keyboard's top edge — so the sheet sits flush against it.
+          style={{ bottom: 'var(--kb)' }}
           className={cn(
             'fixed inset-x-0 bottom-0 z-[310] mx-auto w-full max-w-[430px] outline-none',
             'transition-[transform,bottom] duration-300 ease-out',

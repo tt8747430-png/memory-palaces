@@ -50,6 +50,9 @@
 
   html {
     height: 100%;
+    /* No document-level scroll surface: the app scrolls inside `<main>` / sheet bodies, and
+       the fixed shell must not slide when iOS scrolls the page for a focused field. */
+    overflow: hidden;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
