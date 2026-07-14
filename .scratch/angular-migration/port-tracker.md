@@ -3,7 +3,7 @@
 Protocol (ADR-0003/0006): a file may be deleted from `legacy-react/` only after every export,
 behavior, UI state, i18n key, and test it carries has a verified Angular equivalent.
 
-**Files remaining: 502** — parity when this list is empty and `legacy-react/` is deleted.
+**Files remaining: 432** — parity when this list is empty and `legacy-react/` is deleted.
 
 Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` verified & deleted
 
@@ -63,8 +63,8 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 - [ ] `context.ts`
 - [ ] `selectors.ts`
 - [ ] `store.ts`
-- [ ] `types.test.ts`
-- [ ] `types.ts`
+- [x] `types.test.ts`
+- [x] `types.ts`
 
 ## src/entities/deck
 
@@ -76,12 +76,12 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 
 ## src/entities/deck/model
 
-- [ ] `appearance.ts`
+- [x] `appearance.ts`
 - [ ] `context.ts`
 - [ ] `selectors.ts`
 - [ ] `store.ts`
-- [ ] `types.test.ts`
-- [ ] `types.ts`
+- [x] `types.test.ts`
+- [x] `types.ts`
 
 ## src/entities/folder
 
@@ -93,13 +93,13 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 
 ## src/entities/folder/model
 
-- [ ] `appearance.ts`
+- [x] `appearance.ts`
 - [ ] `context.ts`
 - [ ] `selectors.ts`
 - [ ] `store.test.ts`
 - [ ] `store.ts`
-- [ ] `types.test.ts`
-- [ ] `types.ts`
+- [x] `types.test.ts`
+- [x] `types.ts`
 
 ## src/entities/notification
 
@@ -115,8 +115,8 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 - [ ] `selectors.ts`
 - [ ] `store.test.ts`
 - [ ] `store.ts`
-- [ ] `types.test.ts`
-- [ ] `types.ts`
+- [x] `types.test.ts`
+- [x] `types.ts`
 
 ## src/entities/preferences
 
@@ -131,8 +131,8 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 - [ ] `context.ts`
 - [ ] `selectors.ts`
 - [ ] `store.ts`
-- [ ] `types.test.ts`
-- [ ] `types.ts`
+- [x] `types.test.ts`
+- [x] `types.ts`
 
 ## src/entities/profile
 
@@ -148,8 +148,8 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 - [ ] `selectors.ts`
 - [ ] `store.test.ts`
 - [ ] `store.ts`
-- [ ] `types.test.ts`
-- [ ] `types.ts`
+- [x] `types.test.ts`
+- [x] `types.ts`
 
 ## src/entities/progress
 
@@ -164,8 +164,8 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 - [ ] `context.ts`
 - [ ] `selectors.ts`
 - [ ] `store.ts`
-- [ ] `types.test.ts`
-- [ ] `types.ts`
+- [x] `types.test.ts`
+- [x] `types.ts`
 
 ## src/entities/question
 
@@ -181,8 +181,8 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 - [ ] `selectors.ts`
 - [ ] `store.test.ts`
 - [ ] `store.ts`
-- [ ] `types.test.ts`
-- [ ] `types.ts`
+- [x] `types.test.ts`
+- [x] `types.ts`
 
 ## src/entities/session
 
@@ -197,7 +197,7 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 - [ ] `context.ts`
 - [ ] `store.test.ts`
 - [ ] `store.ts`
-- [ ] `types.ts`
+- [x] `types.ts`
 
 ## src/features/card
 
@@ -602,9 +602,9 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 ## src/shared/api
 
 - [ ] `auth-gateway.ts`
-- [ ] `base-repository.ts`
-- [ ] `in-memory-repository.test.ts`
-- [ ] `in-memory-repository.ts`
+- [x] `base-repository.ts`
+- [x] `in-memory-repository.test.ts`
+- [x] `in-memory-repository.ts`
 - [ ] `index.ts`
 
 ## src/shared/api/rxdb
@@ -617,12 +617,12 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 
 ## src/shared/config
 
-- [ ] `constants.ts`
-- [ ] `flashcard-swipe.ts`
-- [ ] `routes.ts`
-- [ ] `select-toolbar.test.ts`
-- [ ] `select-toolbar.ts`
-- [ ] `swipe.ts`
+- [x] `constants.ts`
+- [x] `flashcard-swipe.ts`
+- [x] `routes.ts`
+- [x] `select-toolbar.test.ts`
+- [x] `select-toolbar.ts`
+- [x] `swipe.ts`
 
 ## src/shared/i18n
 
@@ -635,53 +635,53 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 
 ## src/shared/lib
 
-- [ ] `achievements.test.ts`
-- [ ] `achievements.ts`
+- [x] `achievements.test.ts`
+- [x] `achievements.ts`
 - [ ] `auth-gateway-context.tsx`
-- [ ] `avatar.test.ts`
-- [ ] `avatar.ts`
-- [ ] `badges.test.ts`
-- [ ] `badges.ts`
-- [ ] `clock.test.ts`
-- [ ] `clock.ts`
+- [x] `avatar.test.ts`
+- [x] `avatar.ts`
+- [x] `badges.test.ts`
+- [x] `badges.ts`
+- [x] `clock.test.ts`
+- [x] `clock.ts`
 - [ ] `cn.ts`
-- [ ] `content-transfer.test.ts`
-- [ ] `content-transfer.ts`
-- [ ] `deck-tree.test.ts`
-- [ ] `deck-tree.ts`
-- [ ] `download.ts`
-- [ ] `drop-zone.test.ts`
-- [ ] `drop-zone.ts`
-- [ ] `entity.test.ts`
-- [ ] `entity.ts`
+- [x] `content-transfer.test.ts`
+- [x] `content-transfer.ts`
+- [x] `deck-tree.test.ts`
+- [x] `deck-tree.ts`
+- [x] `download.ts`
+- [x] `drop-zone.test.ts`
+- [x] `drop-zone.ts`
+- [x] `entity.test.ts`
+- [x] `entity.ts`
 - [ ] `event-bus-context.test.tsx`
 - [ ] `event-bus-context.tsx`
-- [ ] `event-bus.ts`
-- [ ] `events.ts`
-- [ ] `gestures.test.ts`
-- [ ] `gestures.ts`
-- [ ] `haptics.test.ts`
-- [ ] `haptics.ts`
+- [x] `event-bus.ts`
+- [x] `events.ts`
+- [x] `gestures.test.ts`
+- [x] `gestures.ts`
+- [x] `haptics.test.ts`
+- [x] `haptics.ts`
 - [ ] `index.ts`
 - [ ] `motion.ts`
-- [ ] `naming.test.ts`
-- [ ] `naming.ts`
-- [ ] `order.test.ts`
-- [ ] `order.ts`
-- [ ] `recall.test.ts`
-- [ ] `recall.ts`
+- [x] `naming.test.ts`
+- [x] `naming.ts`
+- [x] `order.test.ts`
+- [x] `order.ts`
+- [x] `recall.test.ts`
+- [x] `recall.ts`
 - [ ] `shake.ts`
-- [ ] `shuffle.test.ts`
-- [ ] `shuffle.ts`
-- [ ] `speech.ts`
-- [ ] `srs.test.ts`
-- [ ] `srs.ts`
-- [ ] `stats.test.ts`
-- [ ] `stats.ts`
-- [ ] `streak.test.ts`
-- [ ] `streak.ts`
-- [ ] `study-overview.test.ts`
-- [ ] `study-overview.ts`
+- [x] `shuffle.test.ts`
+- [x] `shuffle.ts`
+- [x] `speech.ts`
+- [x] `srs.test.ts`
+- [x] `srs.ts`
+- [x] `stats.test.ts`
+- [x] `stats.ts`
+- [x] `streak.test.ts`
+- [x] `streak.ts`
+- [x] `study-overview.test.ts`
+- [x] `study-overview.ts`
 - [ ] `use-auto-select.ts`
 - [ ] `use-keyboard-pin.ts`
 - [ ] `use-long-press.test.tsx`
@@ -689,7 +689,7 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 - [ ] `use-optimistic-patch.test.ts`
 - [ ] `use-optimistic-patch.ts`
 - [ ] `use-sortable-sensors.ts`
-- [ ] `validation.ts`
+- [x] `validation.ts`
 
 ## src/shared/lib/sticky-header
 
@@ -699,7 +699,7 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 
 ## src/shared/test
 
-- [ ] `repository-contract.ts`
+- [x] `repository-contract.ts`
 - [ ] `setup.ts`
 - [ ] `sticky-header.ts`
 
