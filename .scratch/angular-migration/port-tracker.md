@@ -3,7 +3,7 @@
 Protocol (ADR-0003/0006): a file may be deleted from `legacy-react/` only after every export,
 behavior, UI state, i18n key, and test it carries has a verified Angular equivalent.
 
-**Files remaining: 432** — parity when this list is empty and `legacy-react/` is deleted.
+**Files remaining: 370** — parity when this list is empty and `legacy-react/` is deleted.
 
 Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` verified & deleted
 
@@ -27,16 +27,16 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 - [ ] `RootLayout.tsx`
 - [ ] `auth-guard.test.ts`
 - [ ] `auth-guard.ts`
-- [ ] `composition-root.ts`
+- [x] `composition-root.ts`
 - [ ] `router.tsx`
 
 ## src/app/persistence
 
-- [ ] `database.test.ts`
-- [ ] `database.ts`
-- [ ] `local-auth-gateway.test.ts`
-- [ ] `local-auth-gateway.ts`
-- [ ] `schemas.ts`
+- [x] `database.test.ts`
+- [x] `database.ts`
+- [x] `local-auth-gateway.test.ts`
+- [x] `local-auth-gateway.ts`
+- [x] `schemas.ts`
 
 ## src/app/providers
 
@@ -52,151 +52,151 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 
 ## src/entities/card
 
-- [ ] `index.ts`
+- [x] `index.ts`
 
 ## src/entities/card/api
 
-- [ ] `card-repository.ts`
+- [x] `card-repository.ts`
 
 ## src/entities/card/model
 
-- [ ] `context.ts`
-- [ ] `selectors.ts`
-- [ ] `store.ts`
+- [x] `context.ts`
+- [x] `selectors.ts`
+- [x] `store.ts`
 - [x] `types.test.ts`
 - [x] `types.ts`
 
 ## src/entities/deck
 
-- [ ] `index.ts`
+- [x] `index.ts`
 
 ## src/entities/deck/api
 
-- [ ] `deck-repository.ts`
+- [x] `deck-repository.ts`
 
 ## src/entities/deck/model
 
 - [x] `appearance.ts`
-- [ ] `context.ts`
-- [ ] `selectors.ts`
-- [ ] `store.ts`
+- [x] `context.ts`
+- [x] `selectors.ts`
+- [x] `store.ts`
 - [x] `types.test.ts`
 - [x] `types.ts`
 
 ## src/entities/folder
 
-- [ ] `index.ts`
+- [x] `index.ts`
 
 ## src/entities/folder/api
 
-- [ ] `folder-repository.ts`
+- [x] `folder-repository.ts`
 
 ## src/entities/folder/model
 
 - [x] `appearance.ts`
-- [ ] `context.ts`
-- [ ] `selectors.ts`
-- [ ] `store.test.ts`
-- [ ] `store.ts`
+- [x] `context.ts`
+- [x] `selectors.ts`
+- [x] `store.test.ts`
+- [x] `store.ts`
 - [x] `types.test.ts`
 - [x] `types.ts`
 
 ## src/entities/notification
 
-- [ ] `index.ts`
+- [x] `index.ts`
 
 ## src/entities/notification/api
 
-- [ ] `notification-repository.ts`
+- [x] `notification-repository.ts`
 
 ## src/entities/notification/model
 
-- [ ] `context.ts`
-- [ ] `selectors.ts`
-- [ ] `store.test.ts`
-- [ ] `store.ts`
+- [x] `context.ts`
+- [x] `selectors.ts`
+- [x] `store.test.ts`
+- [x] `store.ts`
 - [x] `types.test.ts`
 - [x] `types.ts`
 
 ## src/entities/preferences
 
-- [ ] `index.ts`
+- [x] `index.ts`
 
 ## src/entities/preferences/api
 
-- [ ] `preferences-repository.ts`
+- [x] `preferences-repository.ts`
 
 ## src/entities/preferences/model
 
-- [ ] `context.ts`
-- [ ] `selectors.ts`
-- [ ] `store.ts`
+- [x] `context.ts`
+- [x] `selectors.ts`
+- [x] `store.ts`
 - [x] `types.test.ts`
 - [x] `types.ts`
 
 ## src/entities/profile
 
-- [ ] `index.ts`
+- [x] `index.ts`
 
 ## src/entities/profile/api
 
-- [ ] `profile-repository.ts`
+- [x] `profile-repository.ts`
 
 ## src/entities/profile/model
 
-- [ ] `context.ts`
-- [ ] `selectors.ts`
-- [ ] `store.test.ts`
-- [ ] `store.ts`
+- [x] `context.ts`
+- [x] `selectors.ts`
+- [x] `store.test.ts`
+- [x] `store.ts`
 - [x] `types.test.ts`
 - [x] `types.ts`
 
 ## src/entities/progress
 
-- [ ] `index.ts`
+- [x] `index.ts`
 
 ## src/entities/progress/api
 
-- [ ] `progress-repository.ts`
+- [x] `progress-repository.ts`
 
 ## src/entities/progress/model
 
-- [ ] `context.ts`
-- [ ] `selectors.ts`
-- [ ] `store.ts`
+- [x] `context.ts`
+- [x] `selectors.ts`
+- [x] `store.ts`
 - [x] `types.test.ts`
 - [x] `types.ts`
 
 ## src/entities/question
 
-- [ ] `index.ts`
+- [x] `index.ts`
 
 ## src/entities/question/api
 
-- [ ] `question-repository.ts`
+- [x] `question-repository.ts`
 
 ## src/entities/question/model
 
-- [ ] `context.ts`
-- [ ] `selectors.ts`
-- [ ] `store.test.ts`
-- [ ] `store.ts`
+- [x] `context.ts`
+- [x] `selectors.ts`
+- [x] `store.test.ts`
+- [x] `store.ts`
 - [x] `types.test.ts`
 - [x] `types.ts`
 
 ## src/entities/session
 
-- [ ] `index.ts`
+- [x] `index.ts`
 
 ## src/entities/session/api
 
-- [ ] `session-repository.ts`
+- [x] `session-repository.ts`
 
 ## src/entities/session/model
 
-- [ ] `context.ts`
-- [ ] `store.test.ts`
-- [ ] `store.ts`
+- [x] `context.ts`
+- [x] `store.test.ts`
+- [x] `store.ts`
 - [x] `types.ts`
 
 ## src/features/card
@@ -205,7 +205,7 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 - [ ] `delete-card.ts`
 - [ ] `duplicate-card.ts`
 - [ ] `edit-card.ts`
-- [ ] `index.ts`
+- [x] `index.ts`
 - [ ] `mark-cards-known.ts`
 - [ ] `mark-deck-known.ts`
 - [ ] `reorder-cards.ts`
@@ -220,7 +220,7 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 - [ ] `content.test.ts`
 - [ ] `export-content.ts`
 - [ ] `import-content.ts`
-- [ ] `index.ts`
+- [x] `index.ts`
 
 ## src/features/data
 
@@ -601,7 +601,7 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 
 ## src/shared/api
 
-- [ ] `auth-gateway.ts`
+- [x] `auth-gateway.ts`
 - [x] `base-repository.ts`
 - [x] `in-memory-repository.test.ts`
 - [x] `in-memory-repository.ts`
@@ -609,11 +609,11 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 
 ## src/shared/api/rxdb
 
-- [ ] `database.ts`
+- [x] `database.ts`
 - [ ] `index.ts`
-- [ ] `rxdb-persistence.test.ts`
-- [ ] `rxdb-repository.test.ts`
-- [ ] `rxdb-repository.ts`
+- [x] `rxdb-persistence.test.ts`
+- [x] `rxdb-repository.test.ts`
+- [x] `rxdb-repository.ts`
 
 ## src/shared/config
 

@@ -60,3 +60,6 @@ export function updateQuestion(
   if (next.order < 0) throw new Error('Question order must be >= 0')
   return { ...next, prompt, options: [...next.options] }
 }
+
+export const questionsForDeck = (questions: Question[], deckId: string): Question[] =>
+  questions.filter((question) => question.deckId === deckId)

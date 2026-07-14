@@ -61,3 +61,6 @@ export function updateCard(card: Card, changes: CardChanges, updatedAt: string):
   if (next.order < 0) throw new Error('Card order must be >= 0')
   return { ...next, front, back }
 }
+
+export const cardsForDeck = (cards: Card[], deckId: string): Card[] =>
+  cards.filter((card) => card.deckId === deckId)

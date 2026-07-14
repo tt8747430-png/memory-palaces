@@ -6,6 +6,7 @@ import { providePrimeNG } from 'primeng/config'
 import { MindscapePreset } from './shared/ui/prime-preset'
 
 import { routes } from './app.routes'
+import { provideAppData } from './data.providers'
 import { provideServiceWorker } from '@angular/service-worker'
 import { provideHttpClient } from '@angular/common/http'
 import { TranslocoHttpLoader } from './transloco-loader'
@@ -15,6 +16,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
+    provideAppData(),
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode(),
       registrationStrategy: 'registerWhenStable:30000',
