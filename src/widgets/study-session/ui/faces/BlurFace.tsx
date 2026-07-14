@@ -36,11 +36,13 @@ export function BlurFace(props: FaceProps) {
     showAll: () => setHidden(new Set()),
   })
 
+  // A content-sized grid with equal `fr` columns sizes both buttons to the wider label, so the
+  // pair reads as one balanced control instead of two mismatched pills.
   const footer = (
-    <>
-      <AidButton label={t('study.blur')} onClick={hideMore} />
-      <AidButton label={t('study.showAll')} onClick={() => setHidden(new Set())} />
-    </>
+    <div className="inline-grid grid-flow-col auto-cols-fr gap-2">
+      <AidButton className="w-full" label={t('study.blur')} onClick={hideMore} />
+      <AidButton className="w-full" label={t('study.showAll')} onClick={() => setHidden(new Set())} />
+    </div>
   )
 
   return (

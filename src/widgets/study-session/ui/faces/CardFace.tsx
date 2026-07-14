@@ -123,10 +123,12 @@ export function AidButton({
   label,
   onClick,
   tone = 'solid',
+  className,
 }: {
   label: string
   onClick: () => void
   tone?: 'solid' | 'quiet'
+  className?: string
 }) {
   return (
     <button
@@ -134,10 +136,11 @@ export function AidButton({
       onPointerDown={stopPress}
       onClick={onClick}
       className={cn(
-        'inline-flex min-h-11 items-center rounded-control px-4 text-(length:--p-text-label) font-semibold transition-transform active:scale-[0.97]',
+        'inline-flex min-h-11 items-center justify-center rounded-control px-4 text-(length:--p-text-label) font-semibold transition-transform active:scale-[0.97]',
         tone === 'solid'
           ? 'bg-info-surface text-heading'
           : 'text-muted-foreground active:bg-info-surface',
+        className,
       )}
     >
       {label}

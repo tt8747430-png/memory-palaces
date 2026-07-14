@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
 import { motion } from 'motion/react'
 import { X } from 'lucide-react'
-import { cn, useOverlayLock } from '@/shared/lib'
+import { cn } from '@/shared/lib'
 import { useDragToDismiss } from './use-drag-to-dismiss'
 
 export interface SheetProps {
@@ -28,7 +28,6 @@ export function Sheet({
     open,
     onDismiss: () => onOpenChange(false),
   })
-  useOverlayLock(open)
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange} modal="trap-focus">
       <Dialog.Portal>
@@ -40,10 +39,12 @@ export function Sheet({
           )}
         />
         <Dialog.Popup
-          // `bottom: var(--kb)` rides the sheet up over the on-screen keyboard
-          // while the app behind (a separate fixed root) holds still — only the
-          // sheet lifts, not the whole page.
-          style={{ bottom: 'var(--kb)' }}
+          // Rides the sheet up over the on-screen keyboard while the page behind holds still —
+          // only the sheet lifts. `--kb` (innerHeight − visualViewport height) overshoots the
+          // keyboard's top on iOS by the bottom safe-area inset, which left a translucent gap
+          // between the sheet and the keyboard; subtracting it back sits the sheet flush. The
+          // clamp keeps this a no-op with the keyboard down (--kb 0) and on Android (inset ~0).
+          style={{ bottom: 'max(0px, calc(var(--kb) - env(safe-area-inset-bottom)))' }}
           className={cn(
             'fixed inset-x-0 bottom-0 z-[310] mx-auto w-full max-w-[430px] outline-none',
             'transition-[transform,bottom] duration-300 ease-out',

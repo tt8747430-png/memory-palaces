@@ -146,6 +146,13 @@ export function FlashcardsPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [flipped])
 
+  // Every mode presents the card on its own front face, so a flip inherited from the mode you
+  // left would land Type or Rebuild on the answer. Clearing it whenever the effective mode
+  // changes holds even across the persisted-preference round-trip — not only the sheet handler.
+  useEffect(() => {
+    dispatch({ type: 'unflip' })
+  }, [mode])
+
   const applyGrade = (grade: Grade) => {
     if (!id || !card) return
     undoTrail.current.push({ cardId: id, prevSrs: card.card.srs })

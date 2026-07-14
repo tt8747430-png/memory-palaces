@@ -2,10 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Check, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
-import { cardsForDeck, selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
+import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
 import { selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
 import { createCard, editCard } from '@/features/card'
-import { cn } from '@/shared/lib'
+import { cardsInSubtree, cn } from '@/shared/lib'
 import { AppScreen, ScreenHeader } from '@/shared/ui'
 import { type CardData, CardFields } from '@/widgets/content-editor'
 
@@ -31,7 +31,12 @@ export function CardEditorPage({ deckId, cardId, onBack, onNavigateCard }: CardE
   const editing = cardId ? (allCards.find((c) => c.id === cardId) ?? null) : null
   const deck = decks.find((d) => d.id === deckId)
 
-  const deckCards = useMemo(() => cardsForDeck(allCards, deckId), [allCards, deckId])
+  // The prev/next tour spans the deck's whole subtree — matching the card list on the deck
+  // page — so opening a card from a parent deck still shows the neighbours in its subdecks.
+  const deckCards = useMemo(
+    () => cardsInSubtree(decks, allCards, deckId),
+    [decks, allCards, deckId],
+  )
   const position = editing ? deckCards.findIndex((c) => c.id === editing.id) : -1
   const prevCard = position > 0 ? deckCards[position - 1] : undefined
   const nextCard =
@@ -106,7 +111,6 @@ export function CardEditorPage({ deckId, cardId, onBack, onNavigateCard }: CardE
   return (
     <AppScreen
       fill
-      keyboard
       header={
         <ScreenHeader
           title={editing ? t('cards.editor.editTitle') : t('cards.editor.newTitle')}

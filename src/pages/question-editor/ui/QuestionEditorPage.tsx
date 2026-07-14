@@ -79,17 +79,22 @@ export function QuestionEditorPage({
   return (
     <AppScreen
       fill
-      keyboard
       header={
         <ScreenHeader
           title={editing ? t('questions.editor.editTitle') : t('questions.editor.newTitle')}
           subtitle={deck?.name}
           onBack={onBack}
           backLabel={t('common.back')}
+          action={
+            <Button size="md" disabled={!valid} onClick={() => void submit()}>
+              <Check className="size-[18px]" aria-hidden />
+              {editing ? t('common.saveChanges') : t('questions.editor.save')}
+            </Button>
+          }
         />
       }
     >
-      <div className="mt-4 pb-40">
+      <div className="mt-4 pb-8">
         <QuestionFields
           prompt={prompt}
           options={options}
@@ -102,13 +107,6 @@ export function QuestionEditorPage({
           onCorrect={setCorrect}
           onExplanation={setExplanation}
         />
-      </div>
-
-      <div className="sticky inset-x-0 bottom-0 z-20 -mx-4 border-t border-border/60 bg-card/90 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl">
-        <Button size="lg" className="w-full" disabled={!valid} onClick={() => void submit()}>
-          <Check className="size-[18px]" aria-hidden />
-          {editing ? t('common.saveChanges') : t('questions.editor.save')}
-        </Button>
       </div>
     </AppScreen>
   )

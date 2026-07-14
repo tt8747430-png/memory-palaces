@@ -99,19 +99,20 @@ export function PasteNotesPage({
   return (
     <AppScreen
       fill
-      keyboard
       header={
-        <ScreenHeader title={t('cards.paste.title')} onBack={onBack} backLabel={t('common.back')} />
-      }
-      footer={
-        <div className="bg-glass shrink-0 border-t border-white/40 px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-10px_30px_oklch(var(--p-tint-navy)/0.1)]">
-          <Button size="lg" className="w-full" disabled={!canCreate} onClick={create}>
-            <Sparkles className="size-[18px]" aria-hidden />
-            {cards.length > 0
-              ? t('cards.paste.createCount', { count: cards.length })
-              : t('cards.paste.create')}
-          </Button>
-        </div>
+        <ScreenHeader
+          title={t('cards.paste.title')}
+          onBack={onBack}
+          backLabel={t('common.back')}
+          action={
+            <Button size="md" disabled={!canCreate} onClick={create}>
+              <Sparkles className="size-[18px]" aria-hidden />
+              {cards.length > 0
+                ? t('cards.paste.createCount', { count: cards.length })
+                : t('cards.paste.create')}
+            </Button>
+          }
+        />
       }
     >
       <div className="mt-4 flex flex-col gap-5 pb-6">

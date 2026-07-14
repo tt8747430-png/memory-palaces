@@ -55,6 +55,36 @@ export function normalizeInitial(char: string): string {
   return char.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
 }
 
+/** Character-level edit distance — used only to tell a typo apart from a different word. */
+function charDistance(a: string, b: string): number {
+  const n = a.length
+  const m = b.length
+  if (n === 0) return m
+  if (m === 0) return n
+  let prev = Array.from({ length: m + 1 }, (_, j) => j)
+  let curr = new Array<number>(m + 1)
+  for (let i = 1; i <= n; i++) {
+    curr[0] = i
+    for (let j = 1; j <= m; j++) {
+      const sub = prev[j - 1]! + (a[i - 1] === b[j - 1] ? 0 : 1)
+      curr[j] = Math.min(sub, prev[j]! + 1, curr[j - 1]! + 1)
+    }
+    ;[prev, curr] = [curr, prev]
+  }
+  return prev[m]!
+}
+
+/**
+ * Two normalized words are "near" when one is a small typo of the other — at most two
+ * character edits apart and sharing more than they differ. It keeps a mistyped word paired
+ * with the word it was aiming at instead of skipping a run of expected words to reach a
+ * distant same-cost match.
+ */
+function nearWord(a: string, b: string): boolean {
+  const dist = charDistance(a, b)
+  return dist <= 2 && dist < Math.max(a.length, b.length)
+}
+
 export type RecallSlotKind = 'correct' | 'wrong' | 'missing' | 'extra' | 'pending'
 
 export interface RecallSlot {
@@ -88,7 +118,8 @@ function alignWords(expected: string[], typed: string[]): RecallSlot[] {
   }
 
   // Ties are broken towards the reading a learner recognises: an exact match first, then a
-  // stray word, then a skipped one. Only when nothing else explains the cost is a word wrong.
+  // near-miss kept in place (a typo of the word we are waiting for), then a stray word, then
+  // a skipped one. Only when nothing else explains the cost is a word wrong.
   const slots: RecallSlot[] = []
   let i = 0
   let j = 0
@@ -96,6 +127,16 @@ function alignWords(expected: string[], typed: string[]): RecallSlot[] {
     const paired = i < n && j < m
     if (paired && left[i] === right[j] && cost[i]![j] === cost[i + 1]![j + 1]!) {
       slots.push({ kind: 'correct', expected: expected[i]!, typed: typed[j]! })
+      i += 1
+      j += 1
+    } else if (
+      paired &&
+      cost[i]![j] === cost[i + 1]![j + 1]! + 1 &&
+      nearWord(left[i]!, right[j]!)
+    ) {
+      // Substituting here is optimal and the words are near — a typo, not a skip. Keep it
+      // paired so the mistake shows at its own spot and the next word can still be correct.
+      slots.push({ kind: 'wrong', expected: expected[i]!, typed: typed[j]! })
       i += 1
       j += 1
     } else if (i >= n || (j < m && cost[i]![j] === cost[i]![j + 1]! + 1)) {

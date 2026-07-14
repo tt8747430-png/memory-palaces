@@ -155,6 +155,35 @@ describe('typedRecallStatus', () => {
     expect(result.next).toBe('loved')
   })
 
+  it('keeps a typo in place instead of cascading the words after it to missing', () => {
+    // `loced` is a one-letter typo of `loved`; the words after it are correct. Without the
+    // near-word tie-break the aligner would skip `loved the world` as missing and pair the
+    // typo with a distant same-cost match.
+    const result = typedRecallStatus(answer, 'For God so loced the world')
+    expect(result.slots.map((slot) => slot.kind)).toEqual([
+      'correct',
+      'correct',
+      'correct',
+      'wrong',
+      'correct',
+      'correct',
+    ])
+    expect(result.slots[3]).toEqual({ kind: 'wrong', expected: 'loved', typed: 'loced' })
+  })
+
+  it('reads a transposition as a single wrong word, not a skip', () => {
+    const result = typedRecallStatus(answer, 'For God so loved teh world')
+    expect(result.slots.map((slot) => slot.kind)).toEqual([
+      'correct',
+      'correct',
+      'correct',
+      'correct',
+      'wrong',
+      'correct',
+    ])
+    expect(result.slots[4]).toEqual({ kind: 'wrong', expected: 'the', typed: 'teh' })
+  })
+
   it('leaves a half-typed word pending until it can no longer become the next word', () => {
     expect(kinds('for God so lov')).toEqual([
       'correct',

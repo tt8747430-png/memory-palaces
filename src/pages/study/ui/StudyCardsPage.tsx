@@ -169,7 +169,7 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
   }
 
   return (
-    <div className="kb-fit relative mx-auto flex w-full max-w-[430px] flex-col overflow-hidden">
+    <div className="relative mx-auto flex h-full w-full max-w-[430px] flex-col overflow-hidden">
       <div className="px-5 pt-safe">
         <div className="flex items-center justify-between pt-3">
           <IconButton variant="glass" aria-label={t('study.goBack')} onClick={back}>
