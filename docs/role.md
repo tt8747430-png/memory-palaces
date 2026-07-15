@@ -1,3 +1,7 @@
+1. when validating the type words flashcard mode i expect it to validate like this: 
+Text: i love pizza. the user types "1asdf        f.      asdf "  i expect it to recognize only 3 words and to validate against each in the order and the spaces are kinda ignored when they are more that we need to recognize whether this is a separate word. 
+2. the swipe actions for the flashcards must be blocked while the keyboard is active
+
 1. When i type a wrong letter in the type initials mode and type many wrong letter one after another, the wrong letter popup animatios is flickering but it should just replace the previous letter with new letter in this popup and the animation should be more smooth
 2. when i type words, the feedback box should be like the wrong letter popup but persistent and also scrollable so that i can scroll it there is lot of text and therefore it should have a fixed height, after i close the keyboard, the feedback should be inlined back. 
 
