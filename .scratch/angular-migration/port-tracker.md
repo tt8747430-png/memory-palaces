@@ -415,7 +415,7 @@ Known gaps in the decks-area `[~]` rows (deck library, deck tree, shared overlay
 
 ## src/pages/deck-questions/ui
 
-- [ ] `DeckQuestionsPage.tsx`
+- [~] `DeckQuestionsPage.tsx`
 
 ## src/pages/deck-settings
 
@@ -493,7 +493,7 @@ Known gaps in the decks-area `[~]` rows (deck library, deck tree, shared overlay
 
 ## src/pages/question-editor/ui
 
-- [ ] `QuestionEditorPage.tsx`
+- [~] `QuestionEditorPage.tsx`
 
 ## src/pages/quiz
 

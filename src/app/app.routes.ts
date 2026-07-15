@@ -36,6 +36,24 @@ export const routes: Routes = [
     loadComponent: () => import('./decks/pages/card-editor-page').then((m) => m.CardEditorPage),
   },
   {
+    path: 'decks/:deckId/questions',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./decks/pages/deck-questions-page').then((m) => m.DeckQuestionsPage),
+  },
+  {
+    path: 'decks/:deckId/questions/new',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./decks/pages/question-editor-page').then((m) => m.QuestionEditorPage),
+  },
+  {
+    path: 'decks/:deckId/questions/:questionId',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./decks/pages/question-editor-page').then((m) => m.QuestionEditorPage),
+  },
+  {
     path: 'login',
     canActivate: [authGuard],
     loadComponent: () => import('./auth/pages/login-page').then((m) => m.LoginPage),
