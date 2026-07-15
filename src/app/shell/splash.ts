@@ -1,6 +1,6 @@
 import { Component, output, signal } from '@angular/core'
 import { TranslocoPipe } from '@jsverse/transloco'
-import { Threshold } from './threshold'
+import { Threshold } from '../shared/ui/threshold'
 import { WordReveal } from './word-reveal'
 
 const FULL_MS = 2400

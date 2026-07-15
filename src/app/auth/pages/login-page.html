@@ -1,0 +1,90 @@
+<ms-auth-screen>
+  <div class="flex flex-1 flex-col justify-center gap-8 py-10">
+    <header class="t-rise flex flex-col items-center gap-4 text-center" style="--i: 0">
+      <ms-auth-logo class="size-16" />
+      <div class="flex flex-col gap-1.5">
+        <h1 class="text-balance text-[length:var(--ms-text-headline)] font-bold tracking-tight text-heading">
+          {{ 'auth.login.title' | transloco }}
+        </h1>
+        <p class="text-pretty text-muted-foreground">{{ 'auth.login.subtitle' | transloco }}</p>
+      </div>
+    </header>
+
+    <form
+      class="t-rise flex flex-col gap-2"
+      style="--i: 1"
+      [formGroup]="form"
+      (ngSubmit)="submit()"
+      novalidate
+    >
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'auth.emailLabel' | transloco }}</mat-label>
+        <lucide-icon matPrefix [img]="icons.mail" class="mx-2 size-5" aria-hidden="true" />
+        <input
+          matInput
+          formControlName="email"
+          type="email"
+          inputmode="email"
+          autocomplete="email"
+          [placeholder]="'auth.emailPlaceholder' | transloco"
+        />
+        @if (form.controls.email.hasError('required')) {
+          <mat-error>{{ 'auth.errors.emailRequired' | transloco }}</mat-error>
+        } @else if (form.controls.email.hasError('email')) {
+          <mat-error>{{ 'auth.errors.emailInvalid' | transloco }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'auth.passwordLabel' | transloco }}</mat-label>
+        <lucide-icon matPrefix [img]="icons.lock" class="mx-2 size-5" aria-hidden="true" />
+        <input
+          matInput
+          formControlName="password"
+          [type]="showPassword() ? 'text' : 'password'"
+          autocomplete="current-password"
+          [placeholder]="'auth.passwordPlaceholder' | transloco"
+        />
+        <button
+          matIconButton
+          matSuffix
+          type="button"
+          (click)="showPassword.set(!showPassword())"
+          [attr.aria-label]="(showPassword() ? 'auth.hidePassword' : 'auth.showPassword') | transloco"
+        >
+          <lucide-icon [img]="showPassword() ? icons.eyeOff : icons.eye" class="size-5" aria-hidden="true" />
+        </button>
+        @if (form.controls.password.hasError('required')) {
+          <mat-error>{{ 'auth.errors.passwordRequired' | transloco }}</mat-error>
+        }
+      </mat-form-field>
+
+      <div class="flex justify-end">
+        <button
+          type="button"
+          class="text-[length:var(--ms-text-label)] font-medium text-heading"
+          (click)="go(forgotPath)"
+        >
+          {{ 'auth.login.forgot' | transloco }}
+        </button>
+      </div>
+
+      <button matButton="filled" type="submit" class="t-cta" [disabled]="busy()">
+        {{ (busy() ? 'auth.login.submitting' : 'auth.login.submit') | transloco }}
+      </button>
+    </form>
+
+    <button matButton type="button" class="t-rise t-cta" style="--i: 2" (click)="guest()">
+      {{ 'auth.continueAsGuest' | transloco }}
+    </button>
+
+    <ms-social-buttons class="t-rise" style="--i: 3" />
+
+    <p class="t-rise text-center text-[length:var(--ms-text-label)] text-muted-foreground" style="--i: 4">
+      {{ 'auth.login.noAccount' | transloco }}
+      <button type="button" class="font-semibold text-heading" (click)="go(signupPath)">
+        {{ 'auth.login.createAccount' | transloco }}
+      </button>
+    </p>
+  </div>
+</ms-auth-screen>
