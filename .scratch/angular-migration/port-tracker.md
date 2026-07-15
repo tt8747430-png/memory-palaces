@@ -389,7 +389,7 @@ Known gaps in the decks-area `[~]` rows (deck library, deck tree, shared overlay
 
 ## src/pages/card-editor/ui
 
-- [ ] `CardEditorPage.tsx`
+- [~] `CardEditorPage.tsx`
 
 ## src/pages/deck-detail
 
@@ -397,7 +397,7 @@ Known gaps in the decks-area `[~]` rows (deck library, deck tree, shared overlay
 
 ## src/pages/deck-detail/ui
 
-- [ ] `DeckDetailPage.tsx`
+- [~] `DeckDetailPage.tsx`
 
 ## src/pages/deck-library
 
@@ -423,8 +423,8 @@ Known gaps in the decks-area `[~]` rows (deck library, deck tree, shared overlay
 
 ## src/pages/deck-settings/ui
 
-- [ ] `DeckAppearanceSheet.tsx`
-- [ ] `DeckSettingsPage.tsx`
+- [~] `DeckAppearanceSheet.tsx`
+- [~] `DeckSettingsPage.tsx`
 
 ## src/pages/forgot-password
 
@@ -724,7 +724,7 @@ Known gaps in the decks-area `[~]` rows (deck library, deck tree, shared overlay
 - [~] `Avatar.tsx`
 - [ ] `BadgeMedallion.tsx`
 - [ ] `Card.tsx`
-- [ ] `CardMaturityOverview.tsx`
+- [~] `CardMaturityOverview.tsx`
 - [ ] `Chip.tsx`
 - [ ] `CollectionPreview.tsx`
 - [ ] `Combobox.tsx`
@@ -738,7 +738,7 @@ Known gaps in the decks-area `[~]` rows (deck library, deck tree, shared overlay
 - [ ] `FlyoutMenu.test.tsx`
 - [ ] `FlyoutMenu.tsx`
 - [~] `FolderGlyph.tsx`
-- [ ] `GlassCard.tsx`
+- [~] `GlassCard.tsx`
 - [ ] `GradeButtons.test.tsx`
 - [ ] `GradeButtons.tsx`
 - [ ] `IconButton.tsx`
@@ -754,23 +754,23 @@ Known gaps in the decks-area `[~]` rows (deck library, deck tree, shared overlay
 - [ ] `SelectDot.tsx`
 - [ ] `SelectToolbar.tsx`
 - [ ] `SettingsRow.test.tsx`
-- [ ] `SettingsRow.tsx`
-- [ ] `SettingsSection.tsx`
+- [~] `SettingsRow.tsx`
+- [~] `SettingsSection.tsx`
 - [~] `Sheet.tsx`
 - [ ] `SocialButtons.test.tsx`
 - [ ] `SocialButtons.tsx`
-- [ ] `SortControl.tsx`
+- [~] `SortControl.tsx`
 - [~] `SpeedDial.tsx`
 - [ ] `SrsStatusChip.test.tsx`
-- [ ] `SrsStatusChip.tsx`
+- [~] `SrsStatusChip.tsx`
 - [ ] `StatTile.test.tsx`
 - [ ] `StatTile.tsx`
 - [~] `StickyBar.tsx`
 - [ ] `StudyOverviewCard.test.tsx`
-- [ ] `StudyOverviewCard.tsx`
+- [~] `StudyOverviewCard.tsx`
 - [ ] `SwipeRow.tsx`
 - [ ] `Switch.test.tsx`
-- [ ] `Switch.tsx`
+- [~] `Switch.tsx`
 - [ ] `TextField.tsx`
 - [ ] `Textarea.tsx`
 - [ ] `TierPips.tsx`
@@ -829,13 +829,13 @@ Known gaps in the decks-area `[~]` rows (deck library, deck tree, shared overlay
 ## src/widgets/content-editor/ui
 
 - [ ] `CardBrowser.tsx`
-- [ ] `ContentRows.tsx`
+- [~] `ContentRows.tsx`
 - [ ] `DeckContentEditor.test.tsx`
-- [ ] `DeckContentEditor.tsx`
+- [~] `DeckContentEditor.tsx`
 - [ ] `ReorderableList.tsx`
 - [ ] `SelectModeBar.tsx`
-- [ ] `editor-fields.tsx`
-- [ ] `editor-helpers.ts`
+- [~] `editor-fields.tsx`
+- [~] `editor-helpers.ts`
 
 ## src/widgets/deck-tree
 
@@ -892,7 +892,7 @@ Known gaps in the decks-area `[~]` rows (deck library, deck tree, shared overlay
 ## src/widgets/practice-modes/ui
 
 - [ ] `PracticeModes.test.tsx`
-- [ ] `PracticeModes.tsx`
+- [~] `PracticeModes.tsx`
 
 ## src/widgets/profile-header
 

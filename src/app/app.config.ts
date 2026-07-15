@@ -1,7 +1,7 @@
 import { provideTaiga } from '@taiga-ui/core'
 import { provideBrowserGlobalErrorListeners, isDevMode } from '@angular/core'
 import type { ApplicationConfig } from '@angular/core'
-import { provideRouter } from '@angular/router'
+import { provideRouter, withComponentInputBinding } from '@angular/router'
 import { providePrimeNG } from 'primeng/config'
 import { MessageService } from 'primeng/api'
 import { MindscapePreset } from './shared/ui/prime-preset'
@@ -16,7 +16,7 @@ import { provideTransloco } from '@jsverse/transloco'
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes),
+    provideRouter(routes, withComponentInputBinding()),
     provideAppData(),
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode(),

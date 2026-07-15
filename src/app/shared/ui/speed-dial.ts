@@ -29,7 +29,12 @@ export interface SpeedDialAction {
     }
 
     <div
-      class="fixed right-5 bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+5rem)] flex flex-col items-end gap-3"
+      class="fixed right-5 flex flex-col items-end gap-3"
+      [class]="
+        dock() === 'above-nav'
+          ? 'bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+5rem)]'
+          : 'bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+0.75rem)]'
+      "
       style="z-index: calc(var(--ms-z-nav) + 20)"
     >
       @if (open()) {
@@ -126,6 +131,8 @@ export interface SpeedDialAction {
 export class SpeedDial {
   readonly label = input.required<string>()
   readonly actions = input.required<SpeedDialAction[]>()
+  /** Where the dial floats: above the bottom nav (default) or at the screen edge. */
+  readonly dock = input<'above-nav' | 'edge'>('above-nav')
 
   protected readonly plus = Plus
   protected readonly open = signal(false)

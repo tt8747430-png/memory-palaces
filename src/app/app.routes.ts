@@ -16,6 +16,26 @@ export const routes: Routes = [
       import('./decks/pages/archived-decks-page').then((m) => m.ArchivedDecksPage),
   },
   {
+    path: 'decks/:deckId',
+    canActivate: [authGuard],
+    loadComponent: () => import('./decks/pages/deck-detail-page').then((m) => m.DeckDetailPage),
+  },
+  {
+    path: 'decks/:deckId/settings',
+    canActivate: [authGuard],
+    loadComponent: () => import('./decks/pages/deck-settings-page').then((m) => m.DeckSettingsPage),
+  },
+  {
+    path: 'decks/:deckId/cards/new',
+    canActivate: [authGuard],
+    loadComponent: () => import('./decks/pages/card-editor-page').then((m) => m.CardEditorPage),
+  },
+  {
+    path: 'decks/:deckId/cards/:cardId',
+    canActivate: [authGuard],
+    loadComponent: () => import('./decks/pages/card-editor-page').then((m) => m.CardEditorPage),
+  },
+  {
     path: 'login',
     canActivate: [authGuard],
     loadComponent: () => import('./auth/pages/login-page').then((m) => m.LoginPage),
