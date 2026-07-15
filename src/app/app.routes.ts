@@ -4,6 +4,18 @@ import { authGuard } from './auth/auth.guard'
 /** Feature-area pages register here as their port lands (ADR-0006, Phase 6). */
 export const routes: Routes = [
   {
+    path: '',
+    pathMatch: 'full',
+    canActivate: [authGuard],
+    loadComponent: () => import('./decks/pages/deck-library-page').then((m) => m.DeckLibraryPage),
+  },
+  {
+    path: 'archived',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./decks/pages/archived-decks-page').then((m) => m.ArchivedDecksPage),
+  },
+  {
     path: 'login',
     canActivate: [authGuard],
     loadComponent: () => import('./auth/pages/login-page').then((m) => m.LoginPage),
@@ -24,4 +36,6 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./auth/pages/welcome-page').then((m) => m.WelcomePage),
   },
+  // Unported legacy destinations land home until their area's port arrives (ADR-0006).
+  { path: '**', redirectTo: '' },
 ]

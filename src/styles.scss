@@ -85,3 +85,43 @@ html {
 .cdk-overlay-container {
   z-index: 1000;
 }
+
+// ── Overlay panels ──────────────────────────────────────────────────────────
+// Bottom sheets: the app's 430px column, rounded top, no default padding — the
+// sheet components own their chrome (handle, header, footer).
+.ms-sheet-panel {
+  --mat-bottom-sheet-container-background-color: var(--surface);
+  --mat-bottom-sheet-container-text-color: var(--text-primary);
+  border-radius: var(--radius-card-featured) var(--radius-card-featured) 0 0;
+  padding: 0;
+  max-height: 88dvh;
+  max-width: 430px;
+  min-width: min(100vw, 430px);
+  box-shadow: var(--shadow-elevated);
+}
+
+.ms-dialog-panel {
+  --mat-dialog-container-shape: var(--radius-card-featured);
+  --mat-dialog-container-color: var(--surface);
+}
+
+// Destructive PrimeNG menu items (menus are PrimeNG's, ADR-0002).
+.ms-menu-danger {
+  .p-menu-item-link,
+  .p-menuitem-link {
+    color: var(--danger-on-surface);
+  }
+}
+
+// XP meter (PrimeNG ProgressBar, ADR-0002): a hairline pill with the brand fill.
+.ms-xp-bar.p-progressbar {
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklch, var(--primary) 8%, transparent);
+
+  .p-progressbar-value {
+    border-radius: var(--radius-pill);
+    background: linear-gradient(to right, var(--primary), var(--accent));
+    transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}

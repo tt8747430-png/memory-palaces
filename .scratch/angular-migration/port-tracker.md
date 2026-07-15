@@ -7,6 +7,15 @@ behavior, UI state, i18n key, and test it carries has a verified Angular equival
 
 Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` verified & deleted
 
+Known gaps in the decks-area `[~]` rows (deck library, deck tree, shared overlay primitives):
+
+- **Drag-and-drop reorder/reparent** (decks, folders) not yet ported — PrimeNG Tree adoption (ADR-0002) pending.
+- **Swipe actions + multi-select mode** not yet ported; interim affordance: press-and-hold opens the row's action sheet.
+- **Import flows** (paste notes, Anki file) gated off until the import area ports.
+- Sticky-header elevation simplified to a boolean + CSS transition (React ramped 0–1 over 16px).
+- Deck row "settings" action omitted until deck-settings ports; `/decks/:id` and other unported routes wildcard-redirect home.
+- React component tests (`*.test.tsx`) for these files still need Angular spec equivalents.
+
 ## .
 
 - [ ] `eslint.config.js`
@@ -356,7 +365,7 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 
 ## src/pages/archived-decks/ui
 
-- [ ] `ArchivedDecksPage.tsx`
+- [~] `ArchivedDecksPage.tsx`
 
 ## src/pages/badge-detail
 
@@ -396,9 +405,9 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 
 ## src/pages/deck-library/ui
 
-- [ ] `DeckLibraryPage.tsx`
-- [ ] `FolderSheet.tsx`
-- [ ] `MoveDeckSheet.tsx`
+- [~] `DeckLibraryPage.tsx`
+- [~] `FolderSheet.tsx`
+- [~] `MoveDeckSheet.tsx`
 
 ## src/pages/deck-questions
 
@@ -685,7 +694,7 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 - [ ] `use-auto-select.ts`
 - [x] `use-keyboard-pin.ts`
 - [ ] `use-long-press.test.tsx`
-- [ ] `use-long-press.ts`
+- [~] `use-long-press.ts`
 - [ ] `use-optimistic-patch.test.ts`
 - [ ] `use-optimistic-patch.ts`
 - [ ] `use-sortable-sensors.ts`
@@ -705,41 +714,41 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 
 ## src/shared/ui
 
-- [ ] `ActionSheet.tsx`
+- [~] `ActionSheet.tsx`
 - [ ] `AppScreen.tsx`
 - [ ] `AuthField.test.tsx`
 - [ ] `AuthField.tsx`
 - [ ] `AuthScreen.test.tsx`
 - [ ] `AuthScreen.tsx`
 - [ ] `Avatar.test.tsx`
-- [ ] `Avatar.tsx`
+- [~] `Avatar.tsx`
 - [ ] `BadgeMedallion.tsx`
 - [ ] `Card.tsx`
 - [ ] `CardMaturityOverview.tsx`
 - [ ] `Chip.tsx`
 - [ ] `CollectionPreview.tsx`
 - [ ] `Combobox.tsx`
-- [ ] `ConfirmDialog.tsx`
-- [ ] `DeckCover.tsx`
+- [~] `ConfirmDialog.tsx`
+- [~] `DeckCover.tsx`
 - [ ] `DropIndicator.tsx`
 - [ ] `EditableTitle.tsx`
 - [ ] `EmojiField.test.tsx`
-- [ ] `EmojiField.tsx`
-- [ ] `EmptyState.tsx`
+- [~] `EmojiField.tsx`
+- [~] `EmptyState.tsx`
 - [ ] `FlyoutMenu.test.tsx`
 - [ ] `FlyoutMenu.tsx`
-- [ ] `FolderGlyph.tsx`
+- [~] `FolderGlyph.tsx`
 - [ ] `GlassCard.tsx`
 - [ ] `GradeButtons.test.tsx`
 - [ ] `GradeButtons.tsx`
 - [ ] `IconButton.tsx`
-- [ ] `IconColorRow.tsx`
+- [~] `IconColorRow.tsx`
 - [ ] `ImportRow.tsx`
 - [ ] `OverflowMenuButton.tsx`
 - [ ] `PasswordField.tsx`
-- [ ] `ProgressBar.tsx`
-- [ ] `PromptSheet.tsx`
-- [ ] `ScreenHeader.tsx`
+- [~] `ProgressBar.tsx`
+- [~] `PromptSheet.tsx`
+- [~] `ScreenHeader.tsx`
 - [ ] `SegmentedControl.test.tsx`
 - [ ] `SegmentedControl.tsx`
 - [ ] `SelectDot.tsx`
@@ -747,16 +756,16 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 - [ ] `SettingsRow.test.tsx`
 - [ ] `SettingsRow.tsx`
 - [ ] `SettingsSection.tsx`
-- [ ] `Sheet.tsx`
+- [~] `Sheet.tsx`
 - [ ] `SocialButtons.test.tsx`
 - [ ] `SocialButtons.tsx`
 - [ ] `SortControl.tsx`
-- [ ] `SpeedDial.tsx`
+- [~] `SpeedDial.tsx`
 - [ ] `SrsStatusChip.test.tsx`
 - [ ] `SrsStatusChip.tsx`
 - [ ] `StatTile.test.tsx`
 - [ ] `StatTile.tsx`
-- [ ] `StickyBar.tsx`
+- [~] `StickyBar.tsx`
 - [ ] `StudyOverviewCard.test.tsx`
 - [ ] `StudyOverviewCard.tsx`
 - [ ] `SwipeRow.tsx`
@@ -834,7 +843,7 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 
 ## src/widgets/deck-tree/ui
 
-- [ ] `DeckTree.tsx`
+- [~] `DeckTree.tsx`
 
 ## src/widgets/folder-form
 
@@ -842,7 +851,7 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 
 ## src/widgets/folder-form/ui
 
-- [ ] `FolderForm.tsx`
+- [~] `FolderForm.tsx`
 
 ## src/widgets/home-header
 
@@ -851,7 +860,7 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 ## src/widgets/home-header/ui
 
 - [ ] `HomeHeader.test.tsx`
-- [ ] `HomeHeader.tsx`
+- [~] `HomeHeader.tsx`
 
 ## src/widgets/match
 

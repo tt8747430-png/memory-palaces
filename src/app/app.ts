@@ -2,7 +2,10 @@ import { Component, inject, signal } from '@angular/core'
 import { RouterOutlet } from '@angular/router'
 import { TuiRoot } from '@taiga-ui/core'
 import { Toast } from 'primeng/toast'
+import type { ToastMessageOptions } from 'primeng/api'
 import { MatButton } from '@angular/material/button'
+import { ToastService } from '@app/shared/ui/toast'
+import type { UndoAction } from '@app/shared/ui/toast'
 import { TranslocoPipe } from '@jsverse/transloco'
 import { AUTH_GATEWAY, SessionStore } from '@app/auth/data/stores'
 import { restoreSession } from '@app/auth/commands/restore-session'
@@ -22,6 +25,7 @@ import { KeyboardPin } from './shell/keyboard-pin'
 export class App {
   protected readonly updatePrompt = inject(UpdatePrompt)
   protected readonly showSplash = signal(true)
+  private readonly toast = inject(ToastService)
 
   constructor() {
     inject(PreferencesEffects).init()
@@ -32,5 +36,11 @@ export class App {
     const gateway = inject(AUTH_GATEWAY)
     const sessionStore = inject(SessionStore)
     void restoreSession({ gateway, sessionStore })
+  }
+
+  protected runUndo(message: ToastMessageOptions): void {
+    const undo = message.data as UndoAction
+    this.toast.dismissUndo()
+    undo.run()
   }
 }

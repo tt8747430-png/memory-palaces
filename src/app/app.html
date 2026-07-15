@@ -13,6 +13,16 @@
   }
 
   <p-toast position="top-center" />
+  <p-toast key="undo" position="top-center">
+    <ng-template let-message #message>
+      <div class="flex w-full items-center gap-3">
+        <span class="min-w-0 flex-1">{{ message.detail }}</span>
+        <button matButton type="button" (click)="runUndo(message)">
+          {{ message.data.label }}
+        </button>
+      </div>
+    </ng-template>
+  </p-toast>
   <p-toast key="update" position="top-center">
     <ng-template let-message #message>
       <div class="flex w-full flex-col gap-2">

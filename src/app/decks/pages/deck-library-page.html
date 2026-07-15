@@ -1,0 +1,105 @@
+@if (inFolder()) {
+  <header class="shrink-0 bg-glass pt-safe">
+    <div class="flex items-center gap-2 px-2 py-2">
+      <button
+        matIconButton
+        type="button"
+        class="bg-card-glass shadow-rest"
+        [attr.aria-label]="'common.back' | transloco"
+        (click)="closeFolder()"
+      >
+        <lucide-icon [img]="icons.chevronLeft" class="size-5" aria-hidden="true" />
+      </button>
+      <h1
+        class="min-w-0 flex-1 truncate text-center text-[length:var(--ms-text-title)] font-semibold text-heading"
+      >
+        {{ openFolder()?.name }}
+      </h1>
+      <button
+        matIconButton
+        type="button"
+        class="bg-card-glass shadow-rest"
+        [attr.aria-label]="'folder.rowActions' | transloco: { name: openFolder()?.name ?? '' }"
+        (click)="openFolderMenu()"
+      >
+        <lucide-icon [img]="icons.moreVertical" class="size-5" aria-hidden="true" />
+      </button>
+    </div>
+  </header>
+} @else {
+  <ms-home-header
+    [name]="displayName()"
+    [avatar]="avatar()"
+    [xp]="xp()"
+    [unreadCount]="unreadCount()"
+    [streak]="streak()"
+    [elevated]="elevated()"
+    (openProfile)="go(routes.profile)"
+    (openNotifications)="go(routes.notifications)"
+    (openArchived)="go(routes.archived)"
+    (openStreak)="go(routes.streak)"
+  />
+}
+
+<main
+  #scroller
+  (scroll)="onScroll(scroller)"
+  class="min-h-0 flex-1 overflow-y-auto px-5 pb-nav overscroll-contain scrollbar-hide"
+>
+  @if (!ready()) {
+    <div class="space-y-1 pt-2" aria-hidden="true">
+      @for (row of [0, 1, 2, 3, 4]; track row) {
+        <div class="flex items-center gap-3 border-b border-border py-3.5">
+          <span class="size-11 shrink-0 animate-pulse rounded-card bg-secondary/50"></span>
+          <span class="flex min-w-0 flex-1 flex-col gap-1.5">
+            <span class="h-3.5 w-1/2 animate-pulse rounded-full bg-secondary/50"></span>
+            <span class="h-3 w-1/3 animate-pulse rounded-full bg-secondary/40"></span>
+          </span>
+        </div>
+      }
+    </div>
+  } @else if (isEmpty()) {
+    <ms-empty-state
+      [emoji]="inFolder() ? '📂' : '🗂️'"
+      [title]="(inFolder() ? 'library.emptyFolderTitle' : 'library.emptyTitle') | transloco"
+      [description]="(inFolder() ? 'library.emptyFolderHint' : 'library.emptyHint') | transloco"
+    >
+      <button
+        matButton="filled"
+        type="button"
+        class="w-full max-w-60"
+        (click)="promptCreateDeck(openFolderId())"
+      >
+        <lucide-icon [img]="icons.plus" class="size-[18px]" aria-hidden="true" />
+        {{ (inFolder() ? 'folder.addDeck' : 'deck.newDeck') | transloco }}
+      </button>
+    </ms-empty-state>
+  } @else {
+    <div class="flex flex-col gap-2 pt-2">
+      @if (!inFolder()) {
+        @for (folder of sortedFolders(); track folder.id) {
+          <ms-folder-row
+            [folder]="folder"
+            [deckCount]="folderDeckCounts().get(folder.id) ?? 0"
+            (open)="openFolderId.set(folder.id)"
+            (more)="folderActions(folder)"
+          />
+        }
+      }
+
+      <ms-deck-tree
+        [decks]="decks()"
+        [dueCounts]="dueCounts()"
+        [expanded]="expanded()"
+        [folderId]="openFolderId()"
+        (toggleExpand)="toggleExpanded($event)"
+        (open)="openDeck($event)"
+        (more)="deckActions($event)"
+      />
+    </div>
+  }
+</main>
+
+@if (ready() && !isEmpty()) {
+  <ms-speed-dial [label]="'deck.create' | transloco" [actions]="dialActions()" />
+}
