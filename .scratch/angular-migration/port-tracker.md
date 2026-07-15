@@ -468,7 +468,7 @@ Known gaps in the decks-area `[~]` rows (deck library, deck tree, shared overlay
 ## src/pages/notifications/ui
 
 - [ ] `NotificationsPage.test.tsx`
-- [ ] `NotificationsPage.tsx`
+- [~] `NotificationsPage.tsx`
 
 ## src/pages/paste-notes
 
@@ -725,7 +725,7 @@ Known gaps in the decks-area `[~]` rows (deck library, deck tree, shared overlay
 - [ ] `BadgeMedallion.tsx`
 - [ ] `Card.tsx`
 - [~] `CardMaturityOverview.tsx`
-- [ ] `Chip.tsx`
+- [~] `Chip.tsx`
 - [ ] `CollectionPreview.tsx`
 - [ ] `Combobox.tsx`
 - [~] `ConfirmDialog.tsx`
@@ -877,13 +877,13 @@ Known gaps in the decks-area `[~]` rows (deck library, deck tree, shared overlay
 
 ## src/widgets/notifications-panel/lib
 
-- [ ] `group.test.ts`
-- [ ] `group.ts`
+- [~] `group.test.ts`
+- [~] `group.ts`
 
 ## src/widgets/notifications-panel/ui
 
 - [ ] `NotificationsPanel.test.tsx`
-- [ ] `NotificationsPanel.tsx`
+- [~] `NotificationsPanel.tsx`
 
 ## src/widgets/practice-modes
 

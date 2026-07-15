@@ -54,6 +54,12 @@ export const routes: Routes = [
       import('./decks/pages/question-editor-page').then((m) => m.QuestionEditorPage),
   },
   {
+    path: 'notifications',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./notifications/pages/notifications-page').then((m) => m.NotificationsPage),
+  },
+  {
     path: 'login',
     canActivate: [authGuard],
     loadComponent: () => import('./auth/pages/login-page').then((m) => m.LoginPage),
