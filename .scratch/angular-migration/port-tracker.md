@@ -459,7 +459,7 @@ Known gaps in the decks-area `[~]` rows (deck library, deck tree, shared overlay
 ## src/pages/match/ui
 
 - [ ] `MatchPage.test.tsx`
-- [ ] `MatchPage.tsx`
+- [~] `MatchPage.tsx`
 
 ## src/pages/notifications
 
@@ -502,7 +502,7 @@ Known gaps in the decks-area `[~]` rows (deck library, deck tree, shared overlay
 ## src/pages/quiz/ui
 
 - [ ] `QuizPage.test.tsx`
-- [ ] `QuizPage.tsx`
+- [~] `QuizPage.tsx`
 
 ## src/pages/settings
 
@@ -869,7 +869,7 @@ Known gaps in the decks-area `[~]` rows (deck library, deck tree, shared overlay
 ## src/widgets/match/ui
 
 - [ ] `MatchBoard.test.tsx`
-- [ ] `MatchBoard.tsx`
+- [~] `MatchBoard.tsx`
 
 ## src/widgets/notifications-panel
 
@@ -911,15 +911,15 @@ Known gaps in the decks-area `[~]` rows (deck library, deck tree, shared overlay
 
 ## src/widgets/quiz/ui
 
-- [ ] `QuizOptionsSheet.tsx`
+- [~] `QuizOptionsSheet.tsx`
 - [ ] `QuizSession.test.tsx`
-- [ ] `QuizSession.tsx`
+- [~] `QuizSession.tsx`
 
 ## src/widgets/session-reward
 
 - [ ] `index.ts`
 - [ ] `use-session-reward.test.tsx`
-- [ ] `use-session-reward.ts`
+- [~] `use-session-reward.ts`
 
 ## src/widgets/splash
 

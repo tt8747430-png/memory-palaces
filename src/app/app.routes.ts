@@ -36,6 +36,16 @@ export const routes: Routes = [
     loadComponent: () => import('./decks/pages/card-editor-page').then((m) => m.CardEditorPage),
   },
   {
+    path: 'decks/:deckId/quiz',
+    canActivate: [authGuard],
+    loadComponent: () => import('./practice/pages/quiz-page').then((m) => m.QuizPage),
+  },
+  {
+    path: 'decks/:deckId/match',
+    canActivate: [authGuard],
+    loadComponent: () => import('./practice/pages/match-page').then((m) => m.MatchPage),
+  },
+  {
     path: 'decks/:deckId/questions',
     canActivate: [authGuard],
     loadComponent: () =>
