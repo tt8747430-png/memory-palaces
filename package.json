@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "test": "ng test",
     "lint": "ng lint",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "prepare": "husky"
   },
   "private": true,
   "packageManager": "npm@11.16.0",
@@ -43,9 +44,12 @@
     "angular-eslint": "22.1.0",
     "eslint": "^10.6.0",
     "fake-indexeddb": "^6.2.5",
+    "husky": "^9.1.7",
     "jsdom": "^28.0.0",
+    "lint-staged": "^17.0.8",
     "postcss": "^8.5.3",
     "prettier": "^3.8.1",
+    "shadcn": "^4.13.0",
     "tailwindcss": "^4.1.12",
     "typescript": "~6.0.2",
     "typescript-eslint": "8.62.1",
