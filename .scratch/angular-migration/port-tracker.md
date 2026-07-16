@@ -10,10 +10,12 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 Known gaps in the decks-area `[~]` rows (deck library, deck tree, shared overlay primitives):
 
 - **Drag-and-drop reorder/reparent** (decks, folders) not yet ported — PrimeNG Tree adoption (ADR-0002) pending.
-- **Swipe actions + multi-select mode** not yet ported; interim affordance: press-and-hold opens the row's action sheet.
+- **Swipe actions ported** (`shared/ui/swipe-row.ts` + `swipe-actions.ts`; wired into deck tree, folder rows, card rows, question rows, notifications panel).
+- **Multi-select mode ported** (`shared/ui/select-dot.ts`, `select-actions.ts`, `select-toolbar.ts`; `decks/ui/select-mode-bar.ts`; wired into deck library, deck detail cards, deck questions with bulk move/favorite/duplicate/archive/unfile/flag/known/reset/delete). Long-press now enters select mode (React behavior); the interim long-press action sheet on deck/folder/card rows is gone — per-row actions live on swipe and the overflow button. Select-mode drag-reorder (dnd) still pending with the drag-and-drop port.
+- **Settings area started**: hub (`settings/pages/settings-page.ts`), swipe editor, and select-toolbar editor ported and routed; both editors' previews drag with CDK drag-drop (ADR-0002 assigns dnd to PrimeNG Tree only for the deck tree). Remaining settings subpages (profile, change-password, privacy, help, about) still wildcard-redirect home.
 - **Import flows** (paste notes, Anki file) gated off until the import area ports.
 - Sticky-header elevation simplified to a boolean + CSS transition (React ramped 0–1 over 16px).
-- Deck row "settings" action omitted until deck-settings ports; `/decks/:id` and other unported routes wildcard-redirect home.
+- Deck row "settings" action now reachable via swipe (deck-settings has ported); remaining unported routes wildcard-redirect home.
 - React component tests (`*.test.tsx`) for these files still need Angular spec equivalents.
 
 ## .
@@ -511,7 +513,7 @@ Known gaps in the decks-area `[~]` rows (deck library, deck tree, shared overlay
 ## src/pages/settings/ui
 
 - [ ] `SettingsPage.test.tsx`
-- [ ] `SettingsPage.tsx`
+- [~] `SettingsPage.tsx`
 
 ## src/pages/settings-about
 
@@ -564,7 +566,7 @@ Known gaps in the decks-area `[~]` rows (deck library, deck tree, shared overlay
 
 ## src/pages/settings-select/ui
 
-- [ ] `SettingsSelectPage.tsx`
+- [~] `SettingsSelectPage.tsx`
 
 ## src/pages/settings-swipe
 
@@ -572,7 +574,7 @@ Known gaps in the decks-area `[~]` rows (deck library, deck tree, shared overlay
 
 ## src/pages/settings-swipe/ui
 
-- [ ] `SettingsSwipePage.tsx`
+- [~] `SettingsSwipePage.tsx`
 
 ## src/pages/signup
 
@@ -750,9 +752,9 @@ Known gaps in the decks-area `[~]` rows (deck library, deck tree, shared overlay
 - [~] `PromptSheet.tsx`
 - [~] `ScreenHeader.tsx`
 - [ ] `SegmentedControl.test.tsx`
-- [ ] `SegmentedControl.tsx`
-- [ ] `SelectDot.tsx`
-- [ ] `SelectToolbar.tsx`
+- [~] `SegmentedControl.tsx`
+- [~] `SelectDot.tsx`
+- [~] `SelectToolbar.tsx`
 - [ ] `SettingsRow.test.tsx`
 - [~] `SettingsRow.tsx`
 - [~] `SettingsSection.tsx`
@@ -768,7 +770,7 @@ Known gaps in the decks-area `[~]` rows (deck library, deck tree, shared overlay
 - [~] `StickyBar.tsx`
 - [ ] `StudyOverviewCard.test.tsx`
 - [~] `StudyOverviewCard.tsx`
-- [ ] `SwipeRow.tsx`
+- [~] `SwipeRow.tsx`
 - [ ] `Switch.test.tsx`
 - [~] `Switch.tsx`
 - [ ] `TextField.tsx`
@@ -778,8 +780,8 @@ Known gaps in the decks-area `[~]` rows (deck library, deck tree, shared overlay
 - [ ] `WordReveal.tsx`
 - [ ] `button.tsx`
 - [ ] `index.ts`
-- [ ] `select-actions.tsx`
-- [ ] `swipe-actions.tsx`
+- [~] `select-actions.tsx`
+- [~] `swipe-actions.tsx`
 - [ ] `use-drag-to-dismiss.ts`
 
 ## src/styles
@@ -833,7 +835,7 @@ Known gaps in the decks-area `[~]` rows (deck library, deck tree, shared overlay
 - [ ] `DeckContentEditor.test.tsx`
 - [~] `DeckContentEditor.tsx`
 - [ ] `ReorderableList.tsx`
-- [ ] `SelectModeBar.tsx`
+- [~] `SelectModeBar.tsx`
 - [~] `editor-fields.tsx`
 - [~] `editor-helpers.ts`
 

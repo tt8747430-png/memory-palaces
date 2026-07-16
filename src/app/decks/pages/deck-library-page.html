@@ -1,4 +1,26 @@
-@if (inFolder()) {
+@if (selectMode()) {
+  <header class="shrink-0 bg-glass pt-safe">
+    <div class="flex items-center justify-between gap-2 px-3 py-3">
+      <button
+        type="button"
+        (click)="toggleSelectAll()"
+        class="-mx-2 inline-flex min-h-11 items-center rounded-control px-2 text-[length:var(--ms-text-body)] font-semibold text-accent"
+      >
+        {{ (allSelected() ? 'library.select.clearAll' : 'library.select.selectAll') | transloco }}
+      </button>
+      <span class="text-[length:var(--ms-text-body)] font-semibold text-heading tabular-nums">
+        {{ 'library.select.count' | transloco: { count: selectedCount() } }}
+      </span>
+      <button
+        type="button"
+        (click)="exitSelect()"
+        class="-mx-2 inline-flex min-h-11 items-center rounded-control px-2 text-[length:var(--ms-text-body)] font-semibold text-accent"
+      >
+        {{ 'common.cancel' | transloco }}
+      </button>
+    </div>
+  </header>
+} @else if (inFolder()) {
   <header class="shrink-0 bg-glass pt-safe">
     <div class="flex items-center gap-2 px-2 py-2">
       <button
@@ -75,14 +97,20 @@
       </button>
     </ms-empty-state>
   } @else {
-    <div class="flex flex-col gap-2 pt-2">
+    <!-- The bar clears the toolbar that select mode floats over the list. -->
+    <div class="flex flex-col gap-2 pt-2" [class]="selectMode() ? 'pb-24' : ''">
       @if (!inFolder()) {
         @for (folder of sortedFolders(); track folder.id) {
           <ms-folder-row
             [folder]="folder"
             [deckCount]="folderDeckCounts().get(folder.id) ?? 0"
+            [swipe]="folderSwipe()"
+            [selectMode]="selectMode()"
+            [selected]="selectedIds().has(folder.id)"
             (open)="openFolderId.set(folder.id)"
-            (more)="folderActions(folder)"
+            (requestSelect)="requestSelect(folder.id)"
+            (toggleSelect)="toggleSelect(folder.id)"
+            (swipeAction)="onFolderSwipe(folder, $event)"
           />
         }
       }
@@ -92,14 +120,27 @@
         [dueCounts]="dueCounts()"
         [expanded]="expanded()"
         [folderId]="openFolderId()"
+        [swipe]="deckSwipe()"
+        [selectMode]="selectMode()"
+        [selectedIds]="selectedIds()"
         (toggleExpand)="toggleExpanded($event)"
         (open)="openDeck($event)"
-        (more)="deckActions($event)"
+        (requestSelect)="requestSelect($event)"
+        (toggleSelect)="toggleSelect($event)"
+        (swipeAction)="onDeckSwipe($event)"
       />
     </div>
   }
 </main>
 
-@if (ready() && !isEmpty()) {
+@if (selectMode()) {
+  <div
+    class="fixed inset-x-0 bottom-0 z-[300] mx-auto w-full max-w-[430px] px-3 pt-2 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]"
+  >
+    <ms-select-toolbar [actions]="selectToolbarConfig()" [handlers]="selectHandlers()" />
+  </div>
+}
+
+@if (ready() && !isEmpty() && !selectMode()) {
   <ms-speed-dial [label]="'deck.create' | transloco" [actions]="dialActions()" />
 }

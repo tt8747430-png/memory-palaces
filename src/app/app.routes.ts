@@ -70,6 +70,23 @@ export const routes: Routes = [
       import('./notifications/pages/notifications-page').then((m) => m.NotificationsPage),
   },
   {
+    path: 'settings',
+    canActivate: [authGuard],
+    loadComponent: () => import('./settings/pages/settings-page').then((m) => m.SettingsPage),
+  },
+  {
+    path: 'settings/swipe',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./settings/pages/settings-swipe-page').then((m) => m.SettingsSwipePage),
+  },
+  {
+    path: 'settings/select-toolbar',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./settings/pages/settings-select-page').then((m) => m.SettingsSelectPage),
+  },
+  {
     path: 'login',
     canActivate: [authGuard],
     loadComponent: () => import('./auth/pages/login-page').then((m) => m.LoginPage),

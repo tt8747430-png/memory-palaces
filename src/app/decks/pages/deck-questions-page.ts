@@ -20,10 +20,13 @@ import {
 } from 'lucide-angular'
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco'
 import { ROUTES } from '@app/shared/config/routes'
+import type { SwipeActionId } from '@app/shared/config/swipe'
 import { ContentImportError } from '@app/shared/domain'
 import { ActionSheet } from '@app/shared/ui/action-sheet'
 import { ConfirmDialog } from '@app/shared/ui/confirm-dialog'
 import { ScreenHeader } from '@app/shared/ui/screen-header'
+import type { SelectActionHandlers } from '@app/shared/ui/select-actions'
+import { SelectToolbar } from '@app/shared/ui/select-toolbar'
 import { SpeedDial } from '@app/shared/ui/speed-dial'
 import { ToastService } from '@app/shared/ui/toast'
 import {
@@ -31,11 +34,13 @@ import {
   exportQuestionsCsv,
   readContentFile,
 } from '@app/import/commands/content-index'
+import { PreferencesStore } from '@app/settings/data/preferences-store'
 import { CardStore, DeckStore, QuestionStore } from '../data/stores'
 import { deleteQuestion, duplicateQuestion } from '../commands/question-index'
 import { questionsForDeck } from '../model/question'
 import type { Question } from '../model/question'
 import { QuestionRow } from '../ui/question-row'
+import { SelectModeBar } from '../ui/select-mode-bar'
 import { SortControl } from '../ui/sort-control'
 import type { SortOption } from '../ui/sort-control'
 
@@ -61,6 +66,8 @@ function sortQuestions(questions: Question[], sort: QuestionSort): Question[] {
   imports: [
     ScreenHeader,
     QuestionRow,
+    SelectModeBar,
+    SelectToolbar,
     SortControl,
     SpeedDial,
     MatButton,
@@ -121,7 +128,7 @@ function sortQuestions(questions: Question[], sort: QuestionSort): Question[] {
           </div>
 
           <section [attr.aria-label]="'questions.inDeck' | transloco" class="space-y-3">
-            @if (questions().length > 1) {
+            @if (!selectMode() && questions().length > 1) {
               <div class="flex justify-end">
                 <ms-sort-control
                   [label]="'cards.sortLabel' | transloco"
@@ -130,6 +137,15 @@ function sortQuestions(questions: Question[], sort: QuestionSort): Question[] {
                   (valueChange)="sort.set($event)"
                 />
               </div>
+            }
+
+            @if (selectMode()) {
+              <ms-select-mode-bar
+                [allSelected]="allSelected()"
+                [count]="selectedCount()"
+                (toggleAll)="toggleSelectAll()"
+                (done)="exitSelect()"
+              />
             }
 
             @if (questions().length === 0) {
@@ -160,8 +176,13 @@ function sortQuestions(questions: Question[], sort: QuestionSort): Question[] {
                   <ms-question-row
                     [question]="question"
                     [index]="sortedQuestions().indexOf(question)"
-                    (open)="editQuestion(question.id)"
+                    [swipe]="swipe()"
+                    [selectMode]="selectMode()"
+                    [selected]="selectedIds().has(question.id)"
                     (more)="questionActions(question)"
+                    (requestSelect)="requestSelect(question.id)"
+                    (toggleSelect)="toggleSelect(question.id)"
+                    (swipeAction)="onQuestionSwipe(question, $event)"
                   />
                 }
               </div>
@@ -180,11 +201,17 @@ function sortQuestions(questions: Question[], sort: QuestionSort): Question[] {
         tabindex="-1"
       />
 
-      <ms-speed-dial
-        [label]="'questions.quickActions' | transloco"
-        [actions]="dialActions()"
-        dock="edge"
-      />
+      @if (selectMode()) {
+        <div class="px-4 pt-2 pb-[calc(max(0.75rem,env(safe-area-inset-bottom)))]">
+          <ms-select-toolbar [actions]="selectToolbarConfig()" [handlers]="selectHandlers()" />
+        </div>
+      } @else {
+        <ms-speed-dial
+          [label]="'questions.quickActions' | transloco"
+          [actions]="dialActions()"
+          dock="edge"
+        />
+      }
     }
   `,
   host: { class: 'mx-auto flex h-full w-full max-w-[430px] flex-col' },
@@ -201,6 +228,7 @@ export class DeckQuestionsPage {
   private readonly questionStore = inject(QuestionStore)
   private readonly deckStore = inject(DeckStore)
   private readonly cardStore = inject(CardStore)
+  private readonly preferencesStore = inject(PreferencesStore)
 
   protected readonly icons = { brain: Brain, play: Play, help: HelpCircle, plus: Plus }
 
@@ -208,6 +236,7 @@ export class DeckQuestionsPage {
     this.questionStore.start()
     this.deckStore.start()
     this.cardStore.start()
+    this.preferencesStore.start()
   }
 
   protected readonly sort = signal<QuestionSort>('manual')
@@ -225,6 +254,87 @@ export class DeckQuestionsPage {
   )
 
   protected readonly sortedQuestions = computed(() => sortQuestions(this.questions(), this.sort()))
+
+  /** Questions share the card swipe config — same list surface, same gestures. */
+  protected readonly swipe = computed(() => this.preferencesStore.effective().swipe.card)
+
+  // ---- Multi-select (long-press) ----
+  protected readonly selectMode = signal(false)
+  protected readonly selectedIds = signal<ReadonlySet<string>>(new Set())
+  protected readonly selectedCount = computed(() => this.selectedIds().size)
+
+  protected readonly allSelected = computed(() => {
+    const questions = this.sortedQuestions()
+    const selected = this.selectedIds()
+    return questions.length > 0 && questions.every((q) => selected.has(q.id))
+  })
+
+  protected requestSelect(id: string): void {
+    this.selectMode.set(true)
+    this.selectedIds.update((prev) => new Set(prev).add(id))
+  }
+
+  protected toggleSelect(id: string): void {
+    this.selectedIds.update((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  protected toggleSelectAll(): void {
+    const all = this.allSelected()
+    this.selectedIds.update((prev) => {
+      const next = new Set(prev)
+      for (const question of this.sortedQuestions()) {
+        if (all) next.delete(question.id)
+        else next.add(question.id)
+      }
+      return next
+    })
+  }
+
+  protected exitSelect(): void {
+    this.selectMode.set(false)
+    this.selectedIds.set(new Set())
+  }
+
+  protected readonly selectToolbarConfig = computed(
+    () => this.preferencesStore.effective().selectToolbar.question,
+  )
+
+  // The bar the learner configured (Settings → Select toolbar) for questions.
+  protected readonly selectHandlers = computed<SelectActionHandlers>(() => {
+    const none = this.selectedIds().size === 0
+    return {
+      duplicate: { disabled: none, onAction: () => this.bulkDuplicate() },
+      delete: { disabled: none, onAction: () => void this.confirmBulkDelete() },
+    }
+  })
+
+  private bulkDuplicate(): void {
+    const ids = [...this.selectedIds()]
+    void Promise.all(ids.map((id) => duplicateQuestion(this.questionStore, id)))
+    this.toast.success(this.t('questions.bulk.duplicated', { count: ids.length }))
+    this.exitSelect()
+  }
+
+  private async confirmBulkDelete(): Promise<void> {
+    const confirmed = await this.confirmDialog.confirm({
+      icon: Trash2,
+      title: this.t('cards.delete.bulkTitle', { count: this.selectedIds().size }),
+      description: this.t('cards.delete.body'),
+      confirmLabel: this.t('common.delete'),
+      cancelLabel: this.t('common.cancel'),
+      destructive: true,
+    })
+    if (!confirmed) return
+    const ids = [...this.selectedIds()]
+    void Promise.all(ids.map((id) => deleteQuestion(this.questionStore, id)))
+    this.toast.success(this.t('cards.transfer.deletedMany', { count: ids.length }))
+    this.exitSelect()
+  }
 
   protected readonly sortOptions = computed<SortOption<QuestionSort>[]>(() => [
     { value: 'manual', label: this.t('cards.sort.manual'), icon: GripVertical },
@@ -293,10 +403,7 @@ export class DeckQuestionsPage {
           id: 'duplicate',
           label: this.t('cards.row.duplicate'),
           icon: Copy,
-          onSelect: () => {
-            void duplicateQuestion(this.questionStore, question.id)
-            this.toast.success(this.t('cards.row.duplicated'))
-          },
+          onSelect: () => this.duplicate(question),
         },
         {
           id: 'delete',
@@ -307,6 +414,22 @@ export class DeckQuestionsPage {
         },
       ],
     })
+  }
+
+  protected onQuestionSwipe(question: Question, id: SwipeActionId): void {
+    switch (id) {
+      case 'duplicate':
+        this.duplicate(question)
+        break
+      case 'delete':
+        void this.confirmDelete(question)
+        break
+    }
+  }
+
+  private duplicate(question: Question): void {
+    void duplicateQuestion(this.questionStore, question.id)
+    this.toast.success(this.t('cards.row.duplicated'))
   }
 
   private async confirmDelete(question: Question): Promise<void> {

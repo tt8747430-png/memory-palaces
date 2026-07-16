@@ -18,9 +18,12 @@ import {
   Trash2,
 } from 'lucide-angular'
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco'
+import type { SwipeActionId } from '@app/shared/config/swipe'
 import { cardMaturityCounts, cardsInSubtree, srsStatus } from '@app/shared/domain'
 import { ActionSheet } from '@app/shared/ui/action-sheet'
 import { ConfirmDialog } from '@app/shared/ui/confirm-dialog'
+import type { SelectActionHandlers } from '@app/shared/ui/select-actions'
+import { SelectToolbar } from '@app/shared/ui/select-toolbar'
 import { SpeedDial } from '@app/shared/ui/speed-dial'
 import { ToastService } from '@app/shared/ui/toast'
 import { PreferencesStore } from '@app/settings/data/preferences-store'
@@ -39,6 +42,7 @@ import { CardMaturityOverview } from './card-maturity-overview'
 import { CardRow } from './card-row'
 import { CardFilterSheet } from './card-filter-sheet'
 import type { CardFilter, CardFilterSheetData } from './card-filter-sheet'
+import { SelectModeBar } from './select-mode-bar'
 import { SortControl } from './sort-control'
 import type { SortOption } from './sort-control'
 
@@ -70,6 +74,8 @@ function sortCards(cards: Card[], sort: ContentSort): Card[] {
   imports: [
     CardMaturityOverview,
     CardRow,
+    SelectModeBar,
+    SelectToolbar,
     SortControl,
     SpeedDial,
     MatButton,
@@ -77,7 +83,7 @@ function sortCards(cards: Card[], sort: ContentSort): Card[] {
     TranslocoPipe,
   ],
   template: `
-    @if (cards().length > 0) {
+    @if (cards().length > 0 && !selectMode()) {
       <div class="mb-3">
         <ms-card-maturity-overview [total]="cards().length" [counts]="maturity()" />
       </div>
@@ -116,6 +122,17 @@ function sortCards(cards: Card[], sort: ContentSort): Card[] {
             </span>
           }
         </button>
+      </div>
+    }
+
+    @if (selectMode()) {
+      <div class="pb-2">
+        <ms-select-mode-bar
+          [allSelected]="allVisibleSelected()"
+          [count]="selectedCount()"
+          (toggleAll)="toggleSelectAll()"
+          (done)="exitSelect()"
+        />
       </div>
     }
 
@@ -162,14 +179,28 @@ function sortCards(cards: Card[], sort: ContentSort): Card[] {
           <ms-card-row
             [card]="card"
             [index]="sortedCards().indexOf(card)"
+            [swipe]="swipe()"
+            [selectMode]="selectMode()"
+            [selected]="selectedIds().has(card.id)"
             (open)="editCard.emit(card.id)"
             (more)="cardActions(card)"
+            (requestSelect)="requestSelect(card.id)"
+            (toggleSelect)="toggleSelect(card.id)"
+            (swipeAction)="onCardSwipe(card, $event)"
           />
         }
       }
     </div>
 
-    @if (cards().length > 0) {
+    @if (selectMode()) {
+      <ms-select-toolbar
+        class="sticky bottom-2 z-20 mt-3"
+        [actions]="selectToolbarConfig()"
+        [handlers]="selectHandlers()"
+      />
+    }
+
+    @if (cards().length > 0 && !selectMode()) {
       <ms-speed-dial
         [label]="'cards.quickActions' | transloco"
         [actions]="dialActions()"
@@ -205,6 +236,7 @@ export class DeckContentEditor {
   )
   protected readonly maturity = computed(() => cardMaturityCounts(this.cards()))
   protected readonly sort = computed(() => this.preferencesStore.effective().contentSort)
+  protected readonly swipe = computed(() => this.preferencesStore.effective().swipe.card)
   protected readonly sortedCards = computed(() => sortCards(this.cards(), this.sort()))
 
   protected readonly visibleCards = computed(() => {
@@ -231,6 +263,107 @@ export class DeckContentEditor {
       onSelect: () => this.addCard.emit(),
     },
   ])
+
+  // ---- Multi-select (long-press) ----
+  protected readonly selectMode = signal(false)
+  protected readonly selectedIds = signal<ReadonlySet<string>>(new Set())
+  protected readonly selectedCount = computed(() => this.selectedIds().size)
+
+  protected readonly allVisibleSelected = computed(() => {
+    const visible = this.visibleCards()
+    const selected = this.selectedIds()
+    return visible.length > 0 && visible.every((card) => selected.has(card.id))
+  })
+
+  protected requestSelect(id: string): void {
+    this.selectMode.set(true)
+    this.selectedIds.update((prev) => new Set(prev).add(id))
+  }
+
+  protected toggleSelect(id: string): void {
+    this.selectedIds.update((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  protected toggleSelectAll(): void {
+    const all = this.allVisibleSelected()
+    this.selectedIds.update((prev) => {
+      const next = new Set(prev)
+      for (const card of this.visibleCards()) {
+        if (all) next.delete(card.id)
+        else next.add(card.id)
+      }
+      return next
+    })
+  }
+
+  protected exitSelect(): void {
+    this.selectMode.set(false)
+    this.selectedIds.set(new Set())
+  }
+
+  protected readonly selectToolbarConfig = computed(
+    () => this.preferencesStore.effective().selectToolbar.card,
+  )
+
+  // The bar the learner configured (Settings → Select toolbar) for cards.
+  protected readonly selectHandlers = computed<SelectActionHandlers>(() => {
+    const none = this.selectedIds().size === 0
+    return {
+      flag: { disabled: none, onAction: () => this.bulkFlag() },
+      known: { disabled: none, onAction: () => this.bulkKnown() },
+      reset: { disabled: none, onAction: () => this.bulkReset() },
+      duplicate: { disabled: none, onAction: () => this.bulkDuplicate() },
+      delete: { disabled: none, onAction: () => void this.confirmBulkDelete() },
+    }
+  })
+
+  private bulkFlag(): void {
+    const selected = this.selectedIds()
+    const toFlag = this.cards().filter((card) => selected.has(card.id) && !card.flagged)
+    toFlag.forEach((card) => void toggleCardFlag(this.cardStore, card.id))
+    this.toast.success(this.t('cards.bulk.flagged', { count: toFlag.length }))
+    this.exitSelect()
+  }
+
+  private bulkKnown(): void {
+    void markCardsKnown(this.cardStore, [...this.selectedIds()])
+    this.toast.success(this.t('cards.row.markedKnown'))
+    this.exitSelect()
+  }
+
+  private bulkReset(): void {
+    void resetCardsSrs(this.cardStore, [...this.selectedIds()])
+    this.toast.success(this.t('cards.row.scheduleReset'))
+    this.exitSelect()
+  }
+
+  private bulkDuplicate(): void {
+    const ids = [...this.selectedIds()]
+    void Promise.all(ids.map((id) => duplicateCard(this.cardStore, id)))
+    this.toast.success(this.t('cards.bulk.duplicated', { count: ids.length }))
+    this.exitSelect()
+  }
+
+  private async confirmBulkDelete(): Promise<void> {
+    const confirmed = await this.confirmDialog.confirm({
+      icon: Trash2,
+      title: this.t('cards.delete.bulkTitle', { count: this.selectedIds().size }),
+      description: this.t('cards.delete.body'),
+      confirmLabel: this.t('common.delete'),
+      cancelLabel: this.t('common.cancel'),
+      destructive: true,
+    })
+    if (!confirmed) return
+    const ids = [...this.selectedIds()]
+    void Promise.all(ids.map((id) => deleteCard(this.cardStore, id)))
+    this.toast.success(this.t('cards.transfer.deletedMany', { count: ids.length }))
+    this.exitSelect()
+  }
 
   protected setSort(sort: ContentSort): void {
     void setPreferences(this.preferencesStore, { contentSort: sort })
@@ -266,10 +399,7 @@ export class DeckContentEditor {
           id: 'duplicate',
           label: this.t('cards.row.duplicate'),
           icon: Copy,
-          onSelect: () => {
-            void duplicateCard(this.cardStore, card.id)
-            this.toast.success(this.t('cards.row.duplicated'))
-          },
+          onSelect: () => this.duplicate(card),
         },
         {
           id: 'flag',
@@ -281,19 +411,13 @@ export class DeckContentEditor {
           id: 'known',
           label: this.t('cards.row.markKnown'),
           icon: GraduationCap,
-          onSelect: () => {
-            void markCardsKnown(this.cardStore, [card.id])
-            this.toast.success(this.t('cards.row.markedKnown'))
-          },
+          onSelect: () => this.markKnown(card),
         },
         {
           id: 'reset',
           label: this.t('cards.row.resetSchedule'),
           icon: RotateCcw,
-          onSelect: () => {
-            void resetCardsSrs(this.cardStore, [card.id])
-            this.toast.success(this.t('cards.row.scheduleReset'))
-          },
+          onSelect: () => this.resetSchedule(card),
         },
         {
           id: 'delete',
@@ -304,6 +428,41 @@ export class DeckContentEditor {
         },
       ],
     })
+  }
+
+  protected onCardSwipe(card: Card, id: SwipeActionId): void {
+    switch (id) {
+      case 'flag':
+        void toggleCardFlag(this.cardStore, card.id)
+        break
+      case 'known':
+        this.markKnown(card)
+        break
+      case 'reset':
+        this.resetSchedule(card)
+        break
+      case 'duplicate':
+        this.duplicate(card)
+        break
+      case 'delete':
+        void this.confirmDelete(card)
+        break
+    }
+  }
+
+  private duplicate(card: Card): void {
+    void duplicateCard(this.cardStore, card.id)
+    this.toast.success(this.t('cards.row.duplicated'))
+  }
+
+  private markKnown(card: Card): void {
+    void markCardsKnown(this.cardStore, [card.id])
+    this.toast.success(this.t('cards.row.markedKnown'))
+  }
+
+  private resetSchedule(card: Card): void {
+    void resetCardsSrs(this.cardStore, [card.id])
+    this.toast.success(this.t('cards.row.scheduleReset'))
   }
 
   private async confirmDelete(card: Card): Promise<void> {

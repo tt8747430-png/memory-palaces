@@ -1,8 +1,10 @@
 import { Component, computed, inject, input, output } from '@angular/core'
 import { MatIconButton } from '@angular/material/button'
-import { BellOff, Flame, LucideAngularModule, Star, Trophy, X, Zap } from 'lucide-angular'
+import { BellOff, Flame, LucideAngularModule, Star, Trash2, Trophy, X, Zap } from 'lucide-angular'
 import type { LucideIconData } from 'lucide-angular'
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco'
+import { SwipeRow } from '@app/shared/ui/swipe-row'
+import type { SwipeAction } from '@app/shared/ui/swipe-row'
 import type { AppNotification, NotificationType } from '../model/notification'
 import { bucketOf, relativeTime } from '../model/group'
 import type { DayBucket } from '../model/group'
@@ -39,13 +41,15 @@ interface NotificationView {
   title: string
   subtitle: string
   when: string
+  /** Swipe-left tray: a single red dismiss. */
+  dismiss: SwipeAction[]
 }
 
 /** Notifications grouped by day (today / yesterday / earlier); each row carries its
- *  reward context and an inline dismiss. */
+ *  reward context and an inline dismiss — tap the ✕ or swipe left. */
 @Component({
   selector: 'ms-notifications-panel',
-  imports: [MatIconButton, LucideAngularModule, TranslocoPipe],
+  imports: [MatIconButton, LucideAngularModule, TranslocoPipe, SwipeRow],
   template: `
     @if (notifications().length === 0) {
       <div class="flex flex-col items-center gap-4 px-6 pt-24 text-center">
@@ -76,64 +80,68 @@ interface NotificationView {
             </h2>
             <ul class="m-0 flex list-none flex-col gap-2 p-0">
               @for (item of section.items; track item.notification.id) {
-                <li
-                  class="relative flex items-start gap-3 rounded-card bg-card p-3.5 shadow-rest"
-                  [class]="
-                    item.notification.read
-                      ? ''
-                      : 'ring-1 ring-[color-mix(in_oklch,var(--secondary)_55%,transparent)]'
-                  "
-                >
-                  @if (!item.notification.read) {
-                    <span
-                      class="absolute top-1/2 left-1 size-1.5 -translate-y-1/2 rounded-full bg-primary"
-                      aria-hidden="true"
-                    ></span>
-                  }
-                  <span
-                    class="grid size-10 shrink-0 place-items-center rounded-control"
-                    [style.color]="item.visual.fg"
-                    [style.background-color]="item.visual.tint"
-                  >
-                    <lucide-icon [img]="item.visual.icon" class="size-5" aria-hidden="true" />
-                  </span>
-                  <div class="min-w-0 flex-1">
-                    <div class="flex items-center gap-2">
-                      <p
-                        class="truncate text-[length:var(--ms-text-label)] font-semibold text-heading"
-                      >
-                        {{ item.title }}
-                      </p>
-                      @if (item.notification.xpGain; as xp) {
+                <li>
+                  <ms-swipe-row [trailing]="item.dismiss">
+                    <div
+                      class="relative flex items-start gap-3 rounded-card bg-card p-3.5 shadow-rest"
+                      [class]="
+                        item.notification.read
+                          ? ''
+                          : 'ring-1 ring-[color-mix(in_oklch,var(--secondary)_55%,transparent)]'
+                      "
+                    >
+                      @if (!item.notification.read) {
                         <span
-                          class="inline-flex shrink-0 items-center gap-1 rounded-pill bg-info-surface px-1.5 py-0.5 text-[length:var(--ms-text-tiny)] font-semibold text-info-foreground"
-                        >
-                          <lucide-icon
-                            [img]="icons.zap"
-                            class="size-3"
-                            fill="currentColor"
-                            aria-hidden="true"
-                          />
-                          {{ '+' + xp }}
-                        </span>
+                          class="absolute top-1/2 left-1 size-1.5 -translate-y-1/2 rounded-full bg-primary"
+                          aria-hidden="true"
+                        ></span>
                       }
+                      <span
+                        class="grid size-10 shrink-0 place-items-center rounded-control"
+                        [style.color]="item.visual.fg"
+                        [style.background-color]="item.visual.tint"
+                      >
+                        <lucide-icon [img]="item.visual.icon" class="size-5" aria-hidden="true" />
+                      </span>
+                      <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-2">
+                          <p
+                            class="truncate text-[length:var(--ms-text-label)] font-semibold text-heading"
+                          >
+                            {{ item.title }}
+                          </p>
+                          @if (item.notification.xpGain; as xp) {
+                            <span
+                              class="inline-flex shrink-0 items-center gap-1 rounded-pill bg-info-surface px-1.5 py-0.5 text-[length:var(--ms-text-tiny)] font-semibold text-info-foreground"
+                            >
+                              <lucide-icon
+                                [img]="icons.zap"
+                                class="size-3"
+                                fill="currentColor"
+                                aria-hidden="true"
+                              />
+                              {{ '+' + xp }}
+                            </span>
+                          }
+                        </div>
+                        <p class="mt-0.5 text-[length:var(--ms-text-label)] text-muted-foreground">
+                          {{ item.subtitle }}
+                        </p>
+                        <p class="mt-1 text-[length:var(--ms-text-tiny)] text-muted-foreground">
+                          {{ item.when }}
+                        </p>
+                      </div>
+                      <button
+                        matIconButton
+                        type="button"
+                        class="ms-dismiss shrink-0"
+                        [attr.aria-label]="'notifications.removeLabel' | transloco"
+                        (click)="remove.emit(item.notification.id)"
+                      >
+                        <lucide-icon [img]="icons.x" class="size-4" aria-hidden="true" />
+                      </button>
                     </div>
-                    <p class="mt-0.5 text-[length:var(--ms-text-label)] text-muted-foreground">
-                      {{ item.subtitle }}
-                    </p>
-                    <p class="mt-1 text-[length:var(--ms-text-tiny)] text-muted-foreground">
-                      {{ item.when }}
-                    </p>
-                  </div>
-                  <button
-                    matIconButton
-                    type="button"
-                    class="ms-dismiss shrink-0"
-                    [attr.aria-label]="'notifications.removeLabel' | transloco"
-                    (click)="remove.emit(item.notification.id)"
-                  >
-                    <lucide-icon [img]="icons.x" class="size-4" aria-hidden="true" />
-                  </button>
+                  </ms-swipe-row>
                 </li>
               }
             </ul>
@@ -161,6 +169,18 @@ export class NotificationsPanel {
 
   protected readonly icons = { bellOff: BellOff, zap: Zap, x: X }
 
+  private dismissActions(id: string): SwipeAction[] {
+    return [
+      {
+        id: 'dismiss',
+        icon: Trash2,
+        labelKey: 'common.delete',
+        accent: 'red',
+        onAction: () => this.remove.emit(id),
+      },
+    ]
+  }
+
   protected readonly sections = computed(() => {
     const now = this.now()
     const buckets: Record<DayBucket, NotificationView[]> = {
@@ -184,6 +204,7 @@ export class NotificationsPanel {
       title: this.titleOf(notification),
       subtitle: this.subtitleOf(notification),
       when: this.formatRelative(notification.createdAt, now),
+      dismiss: this.dismissActions(notification.id),
     }
   }
 
