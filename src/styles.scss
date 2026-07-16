@@ -1,8 +1,8 @@
-// Global theme wiring (ADR-0001/0002): Angular Material M3, PrimeNG, and Taiga UI
-// all read the app's semantic tokens (src/styles/tokens.css). Dark mode is one
-// attribute — data-theme="dark" on <html> — and every system flips with it,
-// because the semantic tokens themselves flip and the bridges below only
-// reference tokens, never raw values.
+// Global theme wiring (ADR-0001/0002): Angular Material M3 and PrimeNG both read
+// the app's semantic tokens (src/styles/tokens.css). Dark mode is one attribute —
+// data-theme="dark" on <html> — and every system flips with it, because the
+// semantic tokens themselves flip and the bridges below only reference tokens,
+// never raw values.
 @use '@angular/material' as mat;
 
 html {
@@ -36,6 +36,11 @@ html {
   --mat-sys-on-primary: var(--primary-foreground);
   --mat-sys-secondary: var(--secondary);
   --mat-sys-on-secondary: var(--secondary-foreground);
+  // The M3 navigation bar's active indicator reads secondary-container (ADR-0007).
+  // Pinned so it never falls through to mat.theme()'s generated azure long tail —
+  // --secondary is already a tinted container with its own ink, and flips with the theme.
+  --mat-sys-secondary-container: var(--secondary);
+  --mat-sys-on-secondary-container: var(--secondary-foreground);
   --mat-sys-tertiary: var(--accent);
   --mat-sys-on-tertiary: var(--accent-foreground);
 
@@ -60,21 +65,6 @@ html {
   --mat-sys-corner-large: var(--radius-card);
   --mat-sys-corner-extra-large: var(--radius-card-featured);
   --mat-sys-corner-full: var(--radius-pill);
-}
-
-// ── Taiga UI tokens → semantic tokens ───────────────────────────────────────
-html {
-  --tui-font-text: var(--ms-font-sans);
-  --tui-font-heading: var(--ms-font-sans);
-  --tui-background-base: var(--surface);
-  --tui-background-base-alt: var(--surface-sky);
-  --tui-background-neutral-1: var(--surface-sky);
-  --tui-text-primary: var(--text-primary);
-  --tui-text-secondary: var(--text-secondary);
-  --tui-text-tertiary: var(--text-muted);
-  --tui-text-action: var(--accent);
-  --tui-background-accent-1: var(--primary);
-  --tui-border-normal: var(--border);
 }
 
 // ── Overlay stacking contract (ADR-0002) ────────────────────────────────────

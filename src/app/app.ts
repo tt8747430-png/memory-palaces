@@ -1,6 +1,5 @@
 import { Component, inject, signal } from '@angular/core'
 import { RouterOutlet } from '@angular/router'
-import { TuiRoot } from '@taiga-ui/core'
 import { Toast } from 'primeng/toast'
 import type { ToastMessageOptions } from 'primeng/api'
 import { MatButton } from '@angular/material/button'
@@ -18,7 +17,7 @@ import { KeyboardPin } from './shell/keyboard-pin'
 
 @Component({
   selector: 'ms-root',
-  imports: [RouterOutlet, TuiRoot, AppNav, Splash, Toast, MatButton, TranslocoPipe],
+  imports: [RouterOutlet, AppNav, Splash, Toast, MatButton, TranslocoPipe],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })

@@ -1,37 +1,35 @@
-<tui-root>
-  <div
-    aria-hidden="true"
-    class="pointer-events-none fixed inset-x-0 top-0 z-[1000] bg-primary"
-    style="height: env(safe-area-inset-top)"
-  ></div>
+<div
+  aria-hidden="true"
+  class="pointer-events-none fixed inset-x-0 top-0 z-[1000] bg-primary"
+  style="height: env(safe-area-inset-top)"
+></div>
 
-  <router-outlet />
-  <ms-app-nav />
+<router-outlet />
+<ms-app-nav />
 
-  @if (showSplash()) {
-    <ms-splash (done)="showSplash.set(false)" />
-  }
+@if (showSplash()) {
+  <ms-splash (done)="showSplash.set(false)" />
+}
 
-  <p-toast position="top-center" />
-  <p-toast key="undo" position="top-center">
-    <ng-template let-message #message>
-      <div class="flex w-full items-center gap-3">
-        <span class="min-w-0 flex-1">{{ message.detail }}</span>
-        <button matButton type="button" (click)="runUndo(message)">
-          {{ message.data.label }}
-        </button>
-      </div>
-    </ng-template>
-  </p-toast>
-  <p-toast key="update" position="top-center">
-    <ng-template let-message #message>
-      <div class="flex w-full flex-col gap-2">
-        <strong>{{ message.summary }}</strong>
-        <p>{{ message.detail }}</p>
-        <button matButton="filled" (click)="updatePrompt.reload()">
-          {{ 'update.reload' | transloco }}
-        </button>
-      </div>
-    </ng-template>
-  </p-toast>
-</tui-root>
+<p-toast position="top-center" />
+<p-toast key="undo" position="top-center">
+  <ng-template let-message #message>
+    <div class="flex w-full items-center gap-3">
+      <span class="min-w-0 flex-1">{{ message.detail }}</span>
+      <button matButton type="button" (click)="runUndo(message)">
+        {{ message.data.label }}
+      </button>
+    </div>
+  </ng-template>
+</p-toast>
+<p-toast key="update" position="top-center">
+  <ng-template let-message #message>
+    <div class="flex w-full flex-col gap-2">
+      <strong>{{ message.summary }}</strong>
+      <p>{{ message.detail }}</p>
+      <button matButton="filled" (click)="updatePrompt.reload()">
+        {{ 'update.reload' | transloco }}
+      </button>
+    </div>
+  </ng-template>
+</p-toast>

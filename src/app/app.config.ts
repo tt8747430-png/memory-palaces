@@ -1,4 +1,3 @@
-import { provideTaiga } from '@taiga-ui/core'
 import { provideBrowserGlobalErrorListeners, isDevMode } from '@angular/core'
 import type { ApplicationConfig } from '@angular/core'
 import { provideRouter, withComponentInputBinding } from '@angular/router'
@@ -22,7 +21,6 @@ export const appConfig: ApplicationConfig = {
       enabled: !isDevMode(),
       registrationStrategy: 'registerWhenStable:30000',
     }),
-    provideTaiga(),
     providePrimeNG({
       theme: { preset: MindscapePreset, options: { darkModeSelector: '[data-theme="dark"]' } },
       // Overlay stacking contract (ADR-0002): CDK overlays sit at 1000, so

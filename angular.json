@@ -3,9 +3,7 @@
   "version": 1,
   "cli": {
     "packageManager": "npm",
-    "schematicCollections": [
-      "angular-eslint"
-    ],
+    "schematicCollections": ["angular-eslint"],
     "analytics": false
   },
   "newProjectRoot": "projects",
@@ -31,19 +29,9 @@
               {
                 "glob": "**/*",
                 "input": "public"
-              },
-              {
-                "glob": "**/*",
-                "input": "node_modules/@taiga-ui/icons/src",
-                "output": "assets/taiga-ui/icons"
               }
             ],
-            "styles": [
-              "src/styles/tokens.css",
-              "node_modules/@taiga-ui/styles/taiga-ui-theme.less",
-              "src/tailwind.css",
-              "src/styles.scss"
-            ]
+            "styles": ["src/styles/tokens.css", "src/tailwind.css", "src/styles.scss"]
           },
           "configurations": {
             "production": {
@@ -85,18 +73,13 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {
-            "setupFiles": [
-              "src/test-setup.ts"
-            ]
+            "setupFiles": ["src/test-setup.ts"]
           }
         },
         "lint": {
           "builder": "@angular-eslint/builder:lint",
           "options": {
-            "lintFilePatterns": [
-              "src/**/*.ts",
-              "src/**/*.html"
-            ]
+            "lintFilePatterns": ["src/**/*.ts", "src/**/*.html"]
           }
         }
       }

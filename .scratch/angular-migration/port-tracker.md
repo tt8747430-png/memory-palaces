@@ -9,6 +9,7 @@ Status legend: `[ ]` not started · `[~]` ported, verification pending · `[x]` 
 
 Known gaps in the decks-area `[~]` rows (deck library, deck tree, shared overlay primitives):
 
+- **Bottom nav rebuilt to the M3 spec** (`shell/app-nav.ts`, ADR-0007) — Taiga UI removed entirely (12 packages), along with `@maskito` (4) and `@ng-web-apis` (6), which were Taiga's own dependency footprint, and the `less` devDep. 22 packages total.
 - **Drag-and-drop reorder/reparent** (decks, folders) not yet ported — PrimeNG Tree adoption (ADR-0002) pending.
 - **Swipe actions ported** (`shared/ui/swipe-row.ts` + `swipe-actions.ts`; wired into deck tree, folder rows, card rows, question rows, notifications panel).
 - **Multi-select mode ported** (`shared/ui/select-dot.ts`, `select-actions.ts`, `select-toolbar.ts`; `decks/ui/select-mode-bar.ts`; wired into deck library, deck detail cards, deck questions with bulk move/favorite/duplicate/archive/unfile/flag/known/reset/delete). Long-press now enters select mode (React behavior); the interim long-press action sheet on deck/folder/card rows is gone — per-row actions live on swipe and the overflow button. Select-mode drag-reorder (dnd) still pending with the drag-and-drop port.
@@ -994,4 +995,3 @@ Known gaps in the decks-area `[~]` rows (deck library, deck tree, shared overlay
 
 - [ ] `AuthLogo.tsx`
 - [x] `Threshold.tsx`
-
