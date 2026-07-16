@@ -1,22 +1,21 @@
 import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@app/shared/data'
-import { makeFolder } from '@app/decks/model/folder'
-import type { Folder } from '@app/decks/model/folder'
-import { makeDeck } from '@app/decks/model/deck'
-import type { Deck } from '@app/decks/model/deck'
-import { makeCard } from '@app/decks/model/card'
-import type { Card } from '@app/decks/model/card'
-import { makeQuestion } from '@app/decks/model/question'
-import type { Question } from '@app/decks/model/question'
-import { makeProgress } from '@app/study/model/progress'
-import type { Progress } from '@app/study/model/progress'
-import { makeNotification } from '@app/notifications/model/notification'
-import type { AppNotification } from '@app/notifications/model/notification'
-import { PROGRESS_ID } from '@app/study/commands/progress-index'
+import {
+  makeFolder,
+  makeDeck,
+  makeCard,
+  makeQuestion,
+  CardStore,
+  DeckStore,
+  FolderStore,
+  QuestionStore,
+} from '@app/decks'
+import type { Folder, Deck, Card, Question } from '@app/decks'
+import { makeProgress, PROGRESS_ID, ProgressStore } from '@app/study'
+import type { Progress } from '@app/study'
+import { makeNotification, NotificationStore } from '@app/notifications'
+import type { AppNotification } from '@app/notifications'
 import { clearAllContent, clearNotifications, resetEverything, resetProgress } from './data-index'
-import { CardStore, DeckStore, FolderStore, QuestionStore } from '@app/decks/data/stores'
-import { NotificationStore } from '@app/notifications/data/notification-store'
-import { ProgressStore } from '@app/study/data/progress-store'
 
 const at = (ms: number) => new Date(ms).toISOString()
 const NOW = Date.UTC(2026, 0, 1)

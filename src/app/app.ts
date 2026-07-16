@@ -6,8 +6,7 @@ import { MatButton } from '@angular/material/button'
 import { ToastService } from '@app/shared/ui/toast'
 import type { UndoAction } from '@app/shared/ui/toast'
 import { TranslocoPipe } from '@jsverse/transloco'
-import { AUTH_GATEWAY, SessionStore } from '@app/auth/data/stores'
-import { restoreSession } from '@app/auth/commands/restore-session'
+import { AUTH_GATEWAY, SessionStore, restoreSession } from '@app/auth'
 import { AppNav } from './shell/app-nav'
 import { Splash } from './shell/splash'
 import { PreferencesEffects } from './shell/preferences-effects'
@@ -27,7 +26,8 @@ export class App {
   private readonly toast = inject(ToastService)
 
   constructor() {
-    inject(PreferencesEffects).init()
+    // Constructing this wires its preference effects; it has no init().
+    inject(PreferencesEffects)
     inject(NotificationBridge).init()
     inject(KeyboardPin).init()
     this.updatePrompt.init()

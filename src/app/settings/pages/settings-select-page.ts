@@ -226,10 +226,6 @@ export class SettingsSelectPage {
 
   protected readonly maxSlots = SELECT_TOOLBAR_MAX
 
-  constructor() {
-    this.preferencesStore.start()
-  }
-
   protected readonly surface = signal<SelectSurface>('library')
   protected readonly config = computed(
     () => this.preferencesStore.effective().selectToolbar[this.surface()],

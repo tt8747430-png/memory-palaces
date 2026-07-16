@@ -123,9 +123,6 @@ export class CardEditorPage {
   }
 
   constructor() {
-    this.cardStore.start()
-    this.deckStore.start()
-
     // Arriving on a card (including via prev/next) loads its fields fresh. Keyed to
     // the card *id* — store emissions for the same card must not wipe live edits.
     effect(() => {

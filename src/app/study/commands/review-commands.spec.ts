@@ -1,11 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@app/shared/data'
-import { makeCard } from '@app/decks/model/card'
-import type { Card } from '@app/decks/model/card'
+import { makeCard, CardStore } from '@app/decks'
+import type { Card } from '@app/decks'
 import { isDue, schedule } from '@app/shared/domain'
 import { gradeCard } from './grade-card'
 import { restoreSchedule } from './restore-schedule'
-import { CardStore } from '@app/decks/data/stores'
 
 const NOW = Date.UTC(2026, 0, 10)
 

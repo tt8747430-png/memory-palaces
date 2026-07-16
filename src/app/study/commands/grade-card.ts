@@ -1,6 +1,5 @@
 import { type Grade, schedule } from '@app/shared/domain'
-import type { Card } from '@app/decks/model/card'
-import type { CardStore } from '@app/decks/data/stores'
+import type { Card, CardStore } from '@app/decks'
 
 export async function gradeCard(
   store: CardStore,

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core'
-import type { Theme } from '@app/settings/model/preferences'
+import type { Theme } from '@app/settings'
 
 const DARK_QUERY = '(prefers-color-scheme: dark)'
 

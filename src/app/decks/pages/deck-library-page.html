@@ -1,26 +1,28 @@
-@if (selectMode()) {
+@if (vm.selectMode()) {
   <header class="shrink-0 bg-glass pt-safe">
     <div class="flex items-center justify-between gap-2 px-3 py-3">
       <button
         type="button"
-        (click)="toggleSelectAll()"
+        (click)="vm.toggleSelectAll()"
         class="-mx-2 inline-flex min-h-11 items-center rounded-control px-2 text-[length:var(--ms-text-body)] font-semibold text-accent"
       >
-        {{ (allSelected() ? 'library.select.clearAll' : 'library.select.selectAll') | transloco }}
+        {{
+          (vm.allSelected() ? 'library.select.clearAll' : 'library.select.selectAll') | transloco
+        }}
       </button>
       <span class="text-[length:var(--ms-text-body)] font-semibold text-heading tabular-nums">
-        {{ 'library.select.count' | transloco: { count: selectedCount() } }}
+        {{ 'library.select.count' | transloco: { count: vm.selectedCount() } }}
       </span>
       <button
         type="button"
-        (click)="exitSelect()"
+        (click)="vm.exitSelect()"
         class="-mx-2 inline-flex min-h-11 items-center rounded-control px-2 text-[length:var(--ms-text-body)] font-semibold text-accent"
       >
         {{ 'common.cancel' | transloco }}
       </button>
     </div>
   </header>
-} @else if (inFolder()) {
+} @else if (vm.inFolder()) {
   <header class="shrink-0 bg-glass pt-safe">
     <div class="flex items-center gap-2 px-2 py-2">
       <button
@@ -28,21 +30,21 @@
         type="button"
         class="bg-card-glass shadow-rest"
         [attr.aria-label]="'common.back' | transloco"
-        (click)="closeFolder()"
+        (click)="vm.closeFolder()"
       >
         <lucide-icon [img]="icons.chevronLeft" class="size-5" aria-hidden="true" />
       </button>
       <h1
         class="min-w-0 flex-1 truncate text-center text-[length:var(--ms-text-title)] font-semibold text-heading"
       >
-        {{ openFolder()?.name }}
+        {{ vm.openFolder()?.name }}
       </h1>
       <button
         matIconButton
         type="button"
         class="bg-card-glass shadow-rest"
-        [attr.aria-label]="'folder.rowActions' | transloco: { name: openFolder()?.name ?? '' }"
-        (click)="openFolderMenu()"
+        [attr.aria-label]="'folder.rowActions' | transloco: { name: vm.openFolder()?.name ?? '' }"
+        (click)="vm.openFolderMenu()"
       >
         <lucide-icon [img]="icons.moreVertical" class="size-5" aria-hidden="true" />
       </button>
@@ -50,16 +52,16 @@
   </header>
 } @else {
   <ms-home-header
-    [name]="displayName()"
-    [avatar]="avatar()"
-    [xp]="xp()"
-    [unreadCount]="unreadCount()"
-    [streak]="streak()"
+    [name]="vm.displayName()"
+    [avatar]="vm.avatar()"
+    [xp]="vm.xp()"
+    [unreadCount]="vm.unreadCount()"
+    [streak]="vm.streak()"
     [elevated]="elevated()"
-    (openProfile)="go(routes.profile)"
-    (openNotifications)="go(routes.notifications)"
-    (openArchived)="go(routes.archived)"
-    (openStreak)="go(routes.streak)"
+    (openProfile)="vm.openProfile()"
+    (openNotifications)="vm.openNotifications()"
+    (openArchived)="vm.openArchived()"
+    (openStreak)="vm.openStreak()"
   />
 }
 
@@ -68,7 +70,7 @@
   (scroll)="onScroll(scroller)"
   class="min-h-0 flex-1 overflow-y-auto px-5 pb-nav overscroll-contain scrollbar-hide"
 >
-  @if (!ready()) {
+  @if (!vm.ready()) {
     <div class="space-y-1 pt-2" aria-hidden="true">
       @for (row of [0, 1, 2, 3, 4]; track row) {
         <div class="flex items-center gap-3 border-b border-border py-3.5">
@@ -80,67 +82,67 @@
         </div>
       }
     </div>
-  } @else if (isEmpty()) {
+  } @else if (vm.isEmpty()) {
     <ms-empty-state
-      [emoji]="inFolder() ? '📂' : '🗂️'"
-      [title]="(inFolder() ? 'library.emptyFolderTitle' : 'library.emptyTitle') | transloco"
-      [description]="(inFolder() ? 'library.emptyFolderHint' : 'library.emptyHint') | transloco"
+      [emoji]="vm.inFolder() ? '📂' : '🗂️'"
+      [title]="(vm.inFolder() ? 'library.emptyFolderTitle' : 'library.emptyTitle') | transloco"
+      [description]="(vm.inFolder() ? 'library.emptyFolderHint' : 'library.emptyHint') | transloco"
     >
       <button
         matButton="filled"
         type="button"
         class="w-full max-w-60"
-        (click)="promptCreateDeck(openFolderId())"
+        (click)="vm.createDeckHere()"
       >
         <lucide-icon [img]="icons.plus" class="size-[18px]" aria-hidden="true" />
-        {{ (inFolder() ? 'folder.addDeck' : 'deck.newDeck') | transloco }}
+        {{ (vm.inFolder() ? 'folder.addDeck' : 'deck.newDeck') | transloco }}
       </button>
     </ms-empty-state>
   } @else {
     <!-- The bar clears the toolbar that select mode floats over the list. -->
-    <div class="flex flex-col gap-2 pt-2" [class]="selectMode() ? 'pb-24' : ''">
-      @if (!inFolder()) {
-        @for (folder of sortedFolders(); track folder.id) {
+    <div class="flex flex-col gap-2 pt-2" [class]="vm.selectMode() ? 'pb-24' : ''">
+      @if (!vm.inFolder()) {
+        @for (folder of vm.sortedFolders(); track folder.id) {
           <ms-folder-row
             [folder]="folder"
-            [deckCount]="folderDeckCounts().get(folder.id) ?? 0"
-            [swipe]="folderSwipe()"
-            [selectMode]="selectMode()"
-            [selected]="selectedIds().has(folder.id)"
-            (open)="openFolderId.set(folder.id)"
-            (requestSelect)="requestSelect(folder.id)"
-            (toggleSelect)="toggleSelect(folder.id)"
-            (swipeAction)="onFolderSwipe(folder, $event)"
+            [deckCount]="vm.folderDeckCounts().get(folder.id) ?? 0"
+            [swipe]="vm.folderSwipe()"
+            [selectMode]="vm.selectMode()"
+            [selected]="vm.selectedIds().has(folder.id)"
+            (open)="vm.enterFolder(folder.id)"
+            (requestSelect)="vm.requestSelect(folder.id)"
+            (toggleSelect)="vm.toggleSelect(folder.id)"
+            (swipeAction)="vm.onFolderSwipe(folder, $event)"
           />
         }
       }
 
       <ms-deck-tree
-        [decks]="decks()"
-        [dueCounts]="dueCounts()"
-        [expanded]="expanded()"
-        [folderId]="openFolderId()"
-        [swipe]="deckSwipe()"
-        [selectMode]="selectMode()"
-        [selectedIds]="selectedIds()"
-        (toggleExpand)="toggleExpanded($event)"
-        (open)="openDeck($event)"
-        (requestSelect)="requestSelect($event)"
-        (toggleSelect)="toggleSelect($event)"
-        (swipeAction)="onDeckSwipe($event)"
+        [decks]="vm.decks()"
+        [dueCounts]="vm.dueCounts()"
+        [expanded]="vm.expanded()"
+        [folderId]="vm.openFolderId()"
+        [swipe]="vm.deckSwipe()"
+        [selectMode]="vm.selectMode()"
+        [selectedIds]="vm.selectedIds()"
+        (toggleExpand)="vm.toggleExpanded($event)"
+        (open)="vm.openDeck($event)"
+        (requestSelect)="vm.requestSelect($event)"
+        (toggleSelect)="vm.toggleSelect($event)"
+        (swipeAction)="vm.onDeckSwipe($event)"
       />
     </div>
   }
 </main>
 
-@if (selectMode()) {
+@if (vm.selectMode()) {
   <div
     class="fixed inset-x-0 bottom-0 z-[300] mx-auto w-full max-w-[430px] px-3 pt-2 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]"
   >
-    <ms-select-toolbar [actions]="selectToolbarConfig()" [handlers]="selectHandlers()" />
+    <ms-select-toolbar [actions]="vm.selectToolbarConfig()" [handlers]="vm.selectHandlers()" />
   </div>
 }
 
-@if (ready() && !isEmpty() && !selectMode()) {
-  <ms-speed-dial [label]="'deck.create' | transloco" [actions]="dialActions()" />
+@if (vm.ready() && !vm.isEmpty() && !vm.selectMode()) {
+  <ms-speed-dial [label]="'deck.create' | transloco" [actions]="vm.dialActions()" />
 }

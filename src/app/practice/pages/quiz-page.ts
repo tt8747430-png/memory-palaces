@@ -4,9 +4,7 @@ import { MatBottomSheet } from '@angular/material/bottom-sheet'
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco'
 import { resolveDeckSettings, shuffle, subtreeDeckIds } from '@app/shared/domain'
 import { ScreenHeader } from '@app/shared/ui/screen-header'
-import { DeckStore, QuestionStore } from '@app/decks/data/stores'
-import { editDeck } from '@app/decks/commands/deck-index'
-import { DEFAULT_DECK_SETTINGS } from '@app/decks/model/deck'
+import { DeckStore, QuestionStore, editDeck, DEFAULT_DECK_SETTINGS } from '@app/decks'
 import { SessionReward } from '@app/study/ui/session-reward'
 import type { QuizQuestion } from '../commands/quiz-index'
 import { QuizSession } from '../ui/quiz-session'
@@ -57,9 +55,6 @@ export class QuizPage {
   private readonly questionStore = inject(QuestionStore)
 
   constructor() {
-    this.deckStore.start()
-    this.questionStore.start()
-
     // Freeze the question order at first readiness — a mid-run store emission
     // (or the shuffle setting) must not rebuild the running quiz.
     effect(() => {

@@ -1,11 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@app/shared/data'
-import { cardsForDeck } from '@app/decks/model/card'
-import type { Card } from '@app/decks/model/card'
-import { questionsForDeck } from '@app/decks/model/question'
-import type { Question } from '@app/decks/model/question'
+import { cardsForDeck, questionsForDeck, CardStore, QuestionStore } from '@app/decks'
+import type { Card, Question } from '@app/decks'
 import { applyDeckContent } from './apply-content'
-import { CardStore, QuestionStore } from '@app/decks/data/stores'
 
 describe('applyDeckContent', () => {
   it('writes parsed cards and questions into a deck in order', async () => {

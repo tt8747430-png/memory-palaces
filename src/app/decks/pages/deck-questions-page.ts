@@ -29,12 +29,8 @@ import type { SelectActionHandlers } from '@app/shared/ui/select-actions'
 import { SelectToolbar } from '@app/shared/ui/select-toolbar'
 import { SpeedDial } from '@app/shared/ui/speed-dial'
 import { ToastService } from '@app/shared/ui/toast'
-import {
-  applyDeckContent,
-  exportQuestionsCsv,
-  readContentFile,
-} from '@app/import/commands/content-index'
-import { PreferencesStore } from '@app/settings/data/preferences-store'
+import { applyDeckContent, exportQuestionsCsv, readContentFile } from '@app/import'
+import { PreferencesStore } from '@app/settings'
 import { CardStore, DeckStore, QuestionStore } from '../data/stores'
 import { deleteQuestion, duplicateQuestion } from '../commands/question-index'
 import { questionsForDeck } from '../model/question'
@@ -231,13 +227,6 @@ export class DeckQuestionsPage {
   private readonly preferencesStore = inject(PreferencesStore)
 
   protected readonly icons = { brain: Brain, play: Play, help: HelpCircle, plus: Plus }
-
-  constructor() {
-    this.questionStore.start()
-    this.deckStore.start()
-    this.cardStore.start()
-    this.preferencesStore.start()
-  }
 
   protected readonly sort = signal<QuestionSort>('manual')
 

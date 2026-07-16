@@ -3,7 +3,7 @@ import { Location } from '@angular/common'
 import { TranslocoPipe } from '@jsverse/transloco'
 import { cardsInSubtree, deckPath } from '@app/shared/domain'
 import { ScreenHeader } from '@app/shared/ui/screen-header'
-import { CardStore, DeckStore } from '@app/decks/data/stores'
+import { CardStore, DeckStore } from '@app/decks'
 import { SessionReward } from '@app/study/ui/session-reward'
 import type { MatchCard } from '../commands/match-index'
 import { MatchBoard } from '../ui/match-board'
@@ -41,11 +41,6 @@ export class MatchPage {
   private readonly reward = inject(SessionReward)
   private readonly cardStore = inject(CardStore)
   private readonly deckStore = inject(DeckStore)
-
-  constructor() {
-    this.cardStore.start()
-    this.deckStore.start()
-  }
 
   protected readonly ready = computed(() => this.cardStore.status() === 'ready')
 

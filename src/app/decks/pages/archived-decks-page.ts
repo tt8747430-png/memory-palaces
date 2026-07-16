@@ -117,11 +117,6 @@ export class ArchivedDecksPage {
     trash: Trash2,
   }
 
-  constructor() {
-    this.deckStore.start()
-    this.cardStore.start()
-  }
-
   protected readonly ready = computed(
     () => this.deckStore.status() === 'ready' && this.cardStore.status() === 'ready',
   )

@@ -52,7 +52,6 @@ export class NotificationsPage {
   protected readonly moreVertical = MoreVertical
 
   constructor() {
-    this.store.start()
     // Landing here reads everything: the badge clears as soon as the list is seen.
     effect(() => {
       if (this.store.unreadCount() > 0) {

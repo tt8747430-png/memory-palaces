@@ -1,4 +1,4 @@
-import { makeEnvironmentProviders } from '@angular/core'
+import { inject, makeEnvironmentProviders, provideEnvironmentInitializer } from '@angular/core'
 import type { EnvironmentProviders } from '@angular/core'
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie'
 import { InMemoryRepository } from '@app/shared/data'
@@ -8,14 +8,45 @@ import {
   CARD_REPOSITORY,
   QUESTION_REPOSITORY,
   FOLDER_REPOSITORY,
-} from '@app/decks/data/stores'
-import { PROGRESS_REPOSITORY } from '@app/study/data/progress-store'
-import { PREFERENCES_REPOSITORY } from '@app/settings/data/preferences-store'
-import { NOTIFICATION_REPOSITORY } from '@app/notifications/data/notification-store'
-import { SESSION_REPOSITORY, PROFILE_REPOSITORY, AUTH_GATEWAY } from '@app/auth/data/stores'
-import { LocalAuthGateway } from '@app/auth/data/local-auth-gateway'
-import type { Session } from '@app/auth/model/session'
+  DeckStore,
+  CardStore,
+  QuestionStore,
+  FolderStore,
+} from '@app/decks'
+import { PROGRESS_REPOSITORY, ProgressStore } from '@app/study'
+import { PREFERENCES_REPOSITORY, PreferencesStore } from '@app/settings'
+import { NOTIFICATION_REPOSITORY, NotificationStore } from '@app/notifications'
+import {
+  SESSION_REPOSITORY,
+  PROFILE_REPOSITORY,
+  AUTH_GATEWAY,
+  ProfileStore,
+  LocalAuthGateway,
+} from '@app/auth'
+import type { Session } from '@app/auth'
 import { createAppDatabase } from './app-database'
+
+/**
+ * Every reactive store subscribes to its repository once, here, at bootstrap —
+ * so a page can read a store without first remembering to start it. `start()`
+ * is idempotent, so ordering never matters.
+ *
+ * SessionStore is absent by design: auth state is loaded once by `restoreSession`
+ * in the app shell, not mirrored from a live query.
+ */
+function startReactiveStores(): void {
+  const stores = [
+    inject(DeckStore),
+    inject(CardStore),
+    inject(QuestionStore),
+    inject(FolderStore),
+    inject(NotificationStore),
+    inject(ProfileStore),
+    inject(PreferencesStore),
+    inject(ProgressStore),
+  ]
+  for (const store of stores) store.start()
+}
 
 /**
  * Composition root: one on-device RxDB database (Dexie/IndexedDB) provides
@@ -53,5 +84,6 @@ export function provideAppData(): EnvironmentProviders {
       provide: NOTIFICATION_REPOSITORY,
       useValue: new RxdbRepository(collections.then((c) => c.notifications)),
     },
+    provideEnvironmentInitializer(startReactiveStores),
   ])
 }

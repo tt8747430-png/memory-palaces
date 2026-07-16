@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { TestBed } from '@angular/core/testing'
 import { InMemoryRepository } from '@app/shared/data'
 import { EVENT_BUS } from '@app/shared/data/event-bus.token'
-import { NOTIFICATION_REPOSITORY, NotificationStore } from '@app/notifications/data/notification-store'
-import type { AppNotification } from '@app/notifications/model/notification'
+import { NOTIFICATION_REPOSITORY, NotificationStore } from '@app/notifications'
+import type { AppNotification } from '@app/notifications'
 import { NotificationBridge } from './notification-bridge'
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
@@ -15,7 +15,11 @@ function setup() {
     ],
   })
   TestBed.inject(NotificationBridge).init()
-  return { bus: TestBed.inject(EVENT_BUS), store: TestBed.inject(NotificationStore) }
+  // The app starts every reactive store at the composition root (data.providers.ts);
+  // a unit test arranges that precondition itself.
+  const store = TestBed.inject(NotificationStore)
+  store.start()
+  return { bus: TestBed.inject(EVENT_BUS), store }
 }
 
 describe('NotificationBridge', () => {

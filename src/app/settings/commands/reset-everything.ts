@@ -1,5 +1,5 @@
-import type { ProgressStore } from '@app/study/data/progress-store'
-import type { NotificationStore } from '@app/notifications/data/notification-store'
+import type { ProgressStore } from '@app/study'
+import type { NotificationStore } from '@app/notifications'
 import { clearAllContent, type ContentStores } from './clear-content'
 import { resetProgress } from './reset-progress'
 import { clearNotifications } from './clear-notifications'

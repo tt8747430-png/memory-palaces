@@ -31,8 +31,7 @@ import { ScreenHeader } from '@app/shared/ui/screen-header'
 import { SettingsRow } from '@app/shared/ui/settings-row'
 import type { SettingsSelectOption } from '@app/shared/ui/settings-row'
 import { SettingsSection } from '@app/shared/ui/settings-section'
-import { ProfileStore, SessionStore } from '@app/auth/data/stores'
-import { profileHandle } from '@app/auth/model/profile'
+import { ProfileStore, SessionStore, profileHandle } from '@app/auth'
 import { AuthActions } from '@app/auth/ui/auth-actions'
 import { PreferencesStore } from '../data/preferences-store'
 import { setPreferences } from '../commands/set-preferences'
@@ -241,11 +240,6 @@ export class SettingsPage {
   protected readonly routes = ROUTES
   protected readonly String = String
   protected readonly Number = Number
-
-  constructor() {
-    this.preferencesStore.start()
-    this.profileStore.start()
-  }
 
   protected readonly prefs = computed(() => this.preferencesStore.effective())
   protected readonly profile = computed(() => this.profileStore.effective())

@@ -24,7 +24,7 @@ import { ScreenHeader } from '@app/shared/ui/screen-header'
 import { SettingsRow } from '@app/shared/ui/settings-row'
 import { SettingsSection } from '@app/shared/ui/settings-section'
 import { ToastService } from '@app/shared/ui/toast'
-import { exportCardsAnki, exportCardsCsv } from '@app/import/commands/content-index'
+import { exportCardsAnki, exportCardsCsv } from '@app/import'
 import { CardStore, DeckStore } from '../data/stores'
 import { deleteDeck, duplicateDeck, editDeck, setDeckArchived } from '../commands/deck-index'
 import { resetDeckSrs } from '../commands/card-index'
@@ -185,11 +185,6 @@ export class DeckSettingsPage {
     archive: Archive,
     restore: ArchiveRestore,
     trash: Trash2,
-  }
-
-  constructor() {
-    this.deckStore.start()
-    this.cardStore.start()
   }
 
   protected readonly deck = computed(

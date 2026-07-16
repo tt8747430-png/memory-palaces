@@ -1,13 +1,16 @@
 import { Injectable, effect, inject } from '@angular/core'
 import { TranslocoService } from '@jsverse/transloco'
 import { setHapticsEnabled } from '@app/shared/domain'
-import { PreferencesStore } from '@app/settings/data/preferences-store'
+import { PreferencesStore } from '@app/settings'
 import { ThemeService } from './theme'
 
 /**
  * Applies stored preferences to app-wide surfaces: theme attribute, haptics
  * switch, active language, and the reduced-motion override (CSS keys off
  * <html data-reduce-motion> exactly like prefers-reduced-motion).
+ *
+ * Constructing it is what wires the effects — there is no `init()` to call.
+ * The store it reads is already started at the composition root (ADR-0008).
  */
 @Injectable({ providedIn: 'root' })
 export class PreferencesEffects {
@@ -27,9 +30,5 @@ export class PreferencesEffects {
       if (this.store.effective().reducedMotion) root.dataset['reduceMotion'] = 'true'
       else delete root.dataset['reduceMotion']
     })
-  }
-
-  init(): void {
-    this.store.start()
   }
 }

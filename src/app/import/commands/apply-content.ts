@@ -1,7 +1,5 @@
-import type { CardStore } from '@app/decks/data/stores'
-import type { QuestionStore } from '@app/decks/data/stores'
-import { createCard } from '@app/decks/commands/card-index'
-import { createQuestion } from '@app/decks/commands/question-index'
+import type { CardStore, QuestionStore } from '@app/decks'
+import { createCard, createQuestion } from '@app/decks'
 import type { DeckContentData } from '@app/shared/domain'
 
 export interface AppliedContent {

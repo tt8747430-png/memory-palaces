@@ -2,8 +2,8 @@ import 'fake-indexeddb/auto'
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie'
 import { describe, expect, it } from 'vitest'
 import { RxdbRepository } from '@app/shared/data/rxdb-repository'
-import { makeProfile } from '@app/auth/model/profile'
-import type { Profile } from '@app/auth/model/profile'
+import { makeProfile } from '@app/auth'
+import type { Profile } from '@app/auth'
 import { createAppDatabase } from './app-database'
 
 describe('createAppDatabase', () => {

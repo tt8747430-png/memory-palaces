@@ -26,9 +26,8 @@ import type { SelectActionHandlers } from '@app/shared/ui/select-actions'
 import { SelectToolbar } from '@app/shared/ui/select-toolbar'
 import { SpeedDial } from '@app/shared/ui/speed-dial'
 import { ToastService } from '@app/shared/ui/toast'
-import { PreferencesStore } from '@app/settings/data/preferences-store'
-import { setPreferences } from '@app/settings/commands/set-preferences'
-import type { ContentSort } from '@app/settings/model/preferences'
+import { PreferencesStore, setPreferences } from '@app/settings'
+import type { ContentSort } from '@app/settings'
 import { CardStore, DeckStore } from '../data/stores'
 import {
   deleteCard,

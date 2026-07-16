@@ -1,5 +1,5 @@
 import { isDue, shuffle, srsStatus } from '@app/shared/domain'
-import type { Card } from '@app/decks/model/card'
+import type { Card } from '@app/decks'
 
 export function shuffleFirstDue(
   cards: Card[],

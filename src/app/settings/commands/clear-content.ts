@@ -1,7 +1,4 @@
-import type { FolderStore } from '@app/decks/data/stores'
-import type { DeckStore } from '@app/decks/data/stores'
-import type { CardStore } from '@app/decks/data/stores'
-import type { QuestionStore } from '@app/decks/data/stores'
+import type { FolderStore, DeckStore, CardStore, QuestionStore } from '@app/decks'
 
 export interface ContentStores {
   folderStore: FolderStore

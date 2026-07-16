@@ -65,9 +65,6 @@ export class QuestionEditorPage {
   protected readonly check = Check
 
   constructor() {
-    this.questionStore.start()
-    this.deckStore.start()
-
     // Load fields when the edited question's identity changes, never on plain
     // store emissions — those must not wipe live edits.
     effect(() => {

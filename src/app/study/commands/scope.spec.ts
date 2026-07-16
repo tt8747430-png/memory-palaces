@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { SrsState } from '@app/shared/domain'
-import { makeCard } from '@app/decks/model/card'
-import type { Card } from '@app/decks/model/card'
+import { makeCard } from '@app/decks'
+import type { Card } from '@app/decks'
 import { applyScope, scopeCounts, scopesEqual } from './scope'
 
 const NOW = Date.UTC(2026, 0, 10)

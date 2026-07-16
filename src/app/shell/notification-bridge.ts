@@ -1,7 +1,6 @@
 import { Injectable, inject } from '@angular/core'
 import { EVENT_BUS } from '@app/shared/data/event-bus.token'
-import { NotificationStore } from '@app/notifications/data/notification-store'
-import { recordNotification } from '@app/notifications/commands/record-notification'
+import { NotificationStore, recordNotification } from '@app/notifications'
 
 /** Turns gamification events (level-up, streak, quiz) into stored notifications. */
 @Injectable({ providedIn: 'root' })
@@ -13,7 +12,6 @@ export class NotificationBridge {
   init(): void {
     if (this.started) return
     this.started = true
-    this.store.start()
     this.bus.on('level-up', ({ level }) => {
       void recordNotification(this.store, { type: 'level-up', level })
     })

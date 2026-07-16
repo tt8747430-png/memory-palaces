@@ -272,10 +272,6 @@ export class SettingsSwipePage {
   protected readonly leadingSide: CapSide = 'leading'
   protected readonly trailingSide: CapSide = 'trailing'
 
-  constructor() {
-    this.preferencesStore.start()
-  }
-
   protected readonly type = signal<SwipeItemType>('deck')
   protected readonly config = computed(() => this.preferencesStore.effective().swipe[this.type()])
 

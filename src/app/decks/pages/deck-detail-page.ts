@@ -8,7 +8,6 @@ import { ROUTES } from '@app/shared/config/routes'
 import { cardsInSubtree, studyOverview } from '@app/shared/domain'
 import { ScreenHeader } from '@app/shared/ui/screen-header'
 import { CardStore, DeckStore, QuestionStore } from '../data/stores'
-import { PreferencesStore } from '@app/settings/data/preferences-store'
 import { questionsForDeck } from '../model/question'
 import { DeckContentEditor } from '../ui/deck-content-editor'
 import { PracticeModes } from '../ui/practice-modes'
@@ -95,19 +94,11 @@ export class DeckDetailPage {
   private readonly deckStore = inject(DeckStore)
   private readonly cardStore = inject(CardStore)
   private readonly questionStore = inject(QuestionStore)
-  private readonly preferencesStore = inject(PreferencesStore)
 
   protected readonly settingsIcon = Settings
   protected readonly path = ROUTES
 
   private readonly now = signal(Date.now())
-
-  constructor() {
-    this.deckStore.start()
-    this.cardStore.start()
-    this.questionStore.start()
-    this.preferencesStore.start()
-  }
 
   protected readonly ready = computed(
     () => this.deckStore.status() === 'ready' && this.cardStore.status() === 'ready',

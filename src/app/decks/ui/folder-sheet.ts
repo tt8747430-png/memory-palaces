@@ -1,6 +1,11 @@
 import { afterNextRender, Component, computed, inject, signal, viewChild } from '@angular/core'
 import type { ElementRef } from '@angular/core'
-import { MAT_BOTTOM_SHEET_DATA, MatBottomSheetRef } from '@angular/material/bottom-sheet'
+import {
+  MAT_BOTTOM_SHEET_DATA,
+  MatBottomSheet,
+  MatBottomSheetRef,
+} from '@angular/material/bottom-sheet'
+import { firstValueFrom } from 'rxjs'
 import { MatButton } from '@angular/material/button'
 import { MatFormFieldModule } from '@angular/material/form-field'
 import { MatInput } from '@angular/material/input'
@@ -117,4 +122,19 @@ export class FolderSheet {
     if (!this.valid()) return
     this.ref.dismiss({ name: this.name().trim(), color: this.color(), icon: this.icon() })
   }
+}
+
+/**
+ * The sheet's own public API — the same promise-returning shape `ConfirmDialog`
+ * and `PromptSheet` already offer. Resolves undefined when cancelled.
+ */
+export function openFolderSheet(
+  sheets: MatBottomSheet,
+  data: FolderSheetData,
+): Promise<FolderChanges | undefined> {
+  const ref = sheets.open<FolderSheet, FolderSheetData, FolderChanges>(FolderSheet, {
+    data,
+    panelClass: 'ms-sheet-panel',
+  })
+  return firstValueFrom(ref.afterDismissed())
 }

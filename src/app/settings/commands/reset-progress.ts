@@ -1,7 +1,5 @@
-import { makeProgress } from '@app/study/model/progress'
-import type { Progress } from '@app/study/model/progress'
-import type { ProgressStore } from '@app/study/data/progress-store'
-import { PROGRESS_ID } from '@app/study/commands/progress-index'
+import { makeProgress, PROGRESS_ID } from '@app/study'
+import type { Progress, ProgressStore } from '@app/study'
 
 export async function resetProgress(
   store: ProgressStore,
