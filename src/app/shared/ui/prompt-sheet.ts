@@ -1,11 +1,6 @@
 import { afterNextRender, Component, inject, Injectable, signal, viewChild } from '@angular/core'
 import type { ElementRef } from '@angular/core'
-import { firstValueFrom } from 'rxjs'
-import {
-  MAT_BOTTOM_SHEET_DATA,
-  MatBottomSheet,
-  MatBottomSheetRef,
-} from '@angular/material/bottom-sheet'
+import { SHEET_DATA, SheetRef, SheetService } from './sheet'
 import { MatButton } from '@angular/material/button'
 import { MatFormFieldModule } from '@angular/material/form-field'
 import { MatInput } from '@angular/material/input'
@@ -60,8 +55,8 @@ export interface PromptSheetConfig {
   host: { class: 'flex max-h-full min-h-0 flex-col' },
 })
 export class PromptSheetComponent {
-  protected readonly config = inject<PromptSheetConfig>(MAT_BOTTOM_SHEET_DATA)
-  protected readonly ref = inject(MatBottomSheetRef<PromptSheetComponent, string>)
+  protected readonly config = inject<PromptSheetConfig>(SHEET_DATA)
+  protected readonly ref = inject(SheetRef<string>)
 
   protected readonly value = signal(this.config.initialValue ?? '')
   protected readonly valid = (): boolean => this.value().trim().length > 0
@@ -88,13 +83,13 @@ export class PromptSheetComponent {
  *  dismissed without submitting. */
 @Injectable({ providedIn: 'root' })
 export class PromptSheet {
-  private readonly sheets = inject(MatBottomSheet)
+  private readonly sheets = inject(SheetService)
 
   async prompt(config: PromptSheetConfig): Promise<string | null> {
     const ref = this.sheets.open<PromptSheetComponent, PromptSheetConfig, string>(
       PromptSheetComponent,
-      { data: config, panelClass: 'ms-sheet-panel' },
+      { data: config },
     )
-    return (await firstValueFrom(ref.afterDismissed())) ?? null
+    return (await ref.closed) ?? null
   }
 }

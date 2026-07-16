@@ -71,6 +71,27 @@ callback nesting and keeps the VM from naming a View component.
 A blanket VM-per-page would manufacture the exact smell being avoided. Most pages stay plain
 components.
 
+**Judge by class body and by whether the logic is real — never by file size.** Applying the rule to
+this codebase, six components looked like candidates by file length; only three earned a VM:
+
+| Component              | File | Class body | VM?                |
+| ---------------------- | ---- | ---------- | ------------------ |
+| `deck-library-page`    | 688  | ~580       | **yes** → 53 lines |
+| `deck-questions-page`  | 500  | ~275       | **yes**            |
+| `deck-content-editor`  | 484  | 273        | **yes**            |
+| `quiz-session`         | 473  | 146        | no                 |
+| `settings-swipe-page`  | 385  | 129        | no                 |
+| `settings-select-page` | 328  | 114        | no                 |
+
+The rejections show the rule doing work. `quiz-session` injects no store and dispatches no command:
+its state already lives in the unit-tested `quizReducer`, and what remains is projection over
+`state()` plus presentation. The two settings editors are the same — their real rules
+(`normalizeSwipeConfig`, `normalizeSelectToolbar`) already live tested in `shared/config/`, leaving a
+working copy, constant lookups, and one `save()`. Their class bodies are also _smaller_ than
+`deck-settings-page` (135), which stays plain; extracting them would be symmetry, not design.
+
+**If the domain logic is already extracted and tested, a ViewModel has nothing to hold.**
+
 ### Domain rules belong in commands
 
 Rules the page was deciding moved into bulk use-cases — `setDecksArchived`, `setDecksFavorite`,

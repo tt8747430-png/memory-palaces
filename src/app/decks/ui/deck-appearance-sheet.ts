@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core'
-import { MAT_BOTTOM_SHEET_DATA, MatBottomSheetRef } from '@angular/material/bottom-sheet'
+import { SHEET_DATA, SheetRef } from '@app/shared/ui/sheet'
 import { MatButton } from '@angular/material/button'
 import { MatFormFieldModule } from '@angular/material/form-field'
 import { MatInput } from '@angular/material/input'
@@ -76,8 +76,8 @@ export interface DeckAppearanceChanges {
   host: { class: 'flex max-h-full min-h-0 flex-col' },
 })
 export class DeckAppearanceSheet {
-  private readonly data = inject<DeckAppearanceSheetData>(MAT_BOTTOM_SHEET_DATA)
-  protected readonly ref = inject(MatBottomSheetRef<DeckAppearanceSheet, DeckAppearanceChanges>)
+  private readonly data = inject<DeckAppearanceSheetData>(SHEET_DATA)
+  protected readonly ref = inject(SheetRef<DeckAppearanceChanges>)
 
   protected readonly check = Check
   protected readonly colorOptions = DECK_COLOR_OPTIONS

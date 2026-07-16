@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core'
 import { Location } from '@angular/common'
-import { MatBottomSheet } from '@angular/material/bottom-sheet'
+import { SheetService } from '@app/shared/ui/sheet'
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco'
 import { resolveDeckSettings, shuffle, subtreeDeckIds } from '@app/shared/domain'
 import { ScreenHeader } from '@app/shared/ui/screen-header'
@@ -49,7 +49,7 @@ export class QuizPage {
 
   private readonly location = inject(Location)
   private readonly transloco = inject(TranslocoService)
-  private readonly sheets = inject(MatBottomSheet)
+  private readonly sheets = inject(SheetService)
   private readonly reward = inject(SessionReward)
   private readonly deckStore = inject(DeckStore)
   private readonly questionStore = inject(QuestionStore)
@@ -112,7 +112,7 @@ export class QuizPage {
       onQuizTimer: (value) => this.setSetting({ quizTimer: value }),
       onShuffleQuestions: (value) => this.setSetting({ shuffleQuestions: value }),
     }
-    this.sheets.open(QuizOptionsSheet, { data, panelClass: 'ms-sheet-panel' })
+    this.sheets.open(QuizOptionsSheet, { data })
   }
 
   private setSetting(changes: Partial<{ quizTimer: boolean; shuffleQuestions: boolean }>): void {

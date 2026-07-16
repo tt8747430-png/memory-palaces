@@ -1,6 +1,5 @@
 import { Component, inject, Injectable } from '@angular/core'
-import { firstValueFrom } from 'rxjs'
-import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog'
+import { DIALOG_DATA, DialogRef, DialogService } from './dialog'
 import { MatButton } from '@angular/material/button'
 import { LucideAngularModule } from 'lucide-angular'
 import type { LucideIconData } from 'lucide-angular'
@@ -52,7 +51,7 @@ export interface ConfirmDialogConfig {
         type="button"
         class="w-full"
         [class.ms-destructive]="config.destructive"
-        (click)="ref.close(true)"
+        (click)="ref.dismiss(true)"
       >
         {{ config.confirmLabel }}
       </button>
@@ -60,7 +59,7 @@ export interface ConfirmDialogConfig {
         matButton
         type="button"
         class="w-full text-[length:var(--ms-text-sub)] font-semibold text-heading"
-        (click)="ref.close(false)"
+        (click)="ref.dismiss(false)"
       >
         {{ config.cancelLabel }}
       </button>
@@ -75,21 +74,21 @@ export interface ConfirmDialogConfig {
   `,
 })
 export class ConfirmDialogComponent {
-  protected readonly config = inject<ConfirmDialogConfig>(MAT_DIALOG_DATA)
-  protected readonly ref = inject(MatDialogRef<ConfirmDialogComponent, boolean>)
+  protected readonly config = inject<ConfirmDialogConfig>(DIALOG_DATA)
+  protected readonly ref = inject(DialogRef<boolean>)
 }
 
-/** Confirmation dialog (MatDialog owns dialogs, ADR-0002); resolves true only on
- *  explicit confirm — backdrop and cancel both resolve false. */
+/** Confirmation dialog (PrimeNG headless dialogs own dialogs, ADR-0002); resolves
+ *  true only on explicit confirm — scrim and cancel both resolve false. */
 @Injectable({ providedIn: 'root' })
 export class ConfirmDialog {
-  private readonly dialogs = inject(MatDialog)
+  private readonly dialogs = inject(DialogService)
 
   async confirm(config: ConfirmDialogConfig): Promise<boolean> {
     const ref = this.dialogs.open<ConfirmDialogComponent, ConfirmDialogConfig, boolean>(
       ConfirmDialogComponent,
-      { data: config, panelClass: 'ms-dialog-panel', maxWidth: '340px', width: '100%' },
+      { data: config },
     )
-    return (await firstValueFrom(ref.afterClosed())) === true
+    return (await ref.closed) === true
   }
 }

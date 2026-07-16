@@ -10,3 +10,9 @@ export { resetCardsSrs } from './reset-cards-srs'
 export { markDeckKnown } from './mark-deck-known'
 export { resetDeckSrs } from './reset-deck-srs'
 export { requireCard } from './require-card'
+
+// Bulk use-cases: one command per selection, rather than a loop at the caller.
+// (markCardsKnown and resetCardsSrs above already take a selection.)
+export { setCardsFlagged } from './set-cards-flagged'
+export { duplicateCards } from './duplicate-cards'
+export { deleteCards } from './delete-cards'

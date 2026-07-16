@@ -68,31 +68,51 @@ html {
 }
 
 // ── Overlay stacking contract (ADR-0002) ────────────────────────────────────
-// App chrome uses --ms-z-* (max 700). CDK overlays (MatDialog/MatBottomSheet)
-// keep their default container at z-index 1000. PrimeNG overlays are configured
-// in app.config.ts to start at 1200 so a Menu/Popover/Toast opened from inside
-// a dialog or sheet always stacks above it.
-.cdk-overlay-container {
-  z-index: 1000;
-}
+// App chrome uses --ms-z-* (max 700); every overlay is now PrimeNG's, stacked by
+// the zIndex config in app.config.ts (overlay/menu 1200 < modal 1300 < tooltip
+// 1400) so a Menu/Popover/Toast opened from inside a dialog or sheet stacks
+// above it. Nothing renders on CDK's overlay stack any more — Material is left
+// with buttons and form inputs, which don't use it.
 
 // ── Overlay panels ──────────────────────────────────────────────────────────
-// Bottom sheets: the app's 430px column, rounded top, no default padding — the
-// sheet components own their chrome (handle, header, footer).
-.ms-sheet-panel {
-  --mat-bottom-sheet-container-background-color: var(--surface);
-  --mat-bottom-sheet-container-text-color: var(--text-primary);
-  border-radius: var(--radius-card-featured) var(--radius-card-featured) 0 0;
-  padding: 0;
-  max-height: 88dvh;
+// Bottom sheets (PrimeNG headless drawer, ADR-0002): the app's 430px column,
+// rounded top, no default chrome — the sheet component owns handle/header/footer.
+.p-drawer.ms-sheet {
+  inset-inline: 0;
+  margin-inline: auto;
+  width: 100%;
   max-width: 430px;
-  min-width: min(100vw, 430px);
+  height: auto;
+  max-height: 88dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-card-featured) var(--radius-card-featured) 0 0;
+  background: var(--surface);
+  color: var(--text-primary);
   box-shadow: var(--shadow-elevated);
+
+  // Keep in step with SHEET_MOTION_MS in shared/ui/sheet.ts. PrimeNG ships 0.5s
+  // here, but the host settles its promise on that constant, so the two must
+  // agree or the sheet is torn out mid-animation.
+  &.p-drawer-enter-bottom,
+  &.p-drawer-leave-bottom {
+    animation-duration: 300ms;
+  }
 }
 
-.ms-dialog-panel {
-  --mat-dialog-container-shape: var(--radius-card-featured);
-  --mat-dialog-container-color: var(--surface);
+// Dialogs (PrimeNG headless dialog, ADR-0002): a narrow centered card — the
+// dialog component owns everything inside it. PrimeNG's own motion is already
+// 300ms, matching DIALOG_MOTION_MS, so it needs no duration override.
+.p-dialog.ms-dialog {
+  width: 100%;
+  max-width: 340px;
+  border: 0;
+  border-radius: var(--radius-card-featured);
+  background: var(--surface);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-elevated);
 }
 
 // Destructive PrimeNG menu items (menus are PrimeNG's, ADR-0002).

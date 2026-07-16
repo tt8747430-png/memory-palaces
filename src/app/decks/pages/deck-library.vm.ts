@@ -1,6 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core'
 import { Router } from '@angular/router'
-import { MatBottomSheet } from '@angular/material/bottom-sheet'
+import { SheetService } from '@app/shared/ui/sheet'
 import { FolderPlus, Layers, Plus, Settings, Trash2 } from 'lucide-angular'
 import { TranslocoService } from '@jsverse/transloco'
 import { ROUTES } from '@app/shared/config/routes'
@@ -61,7 +61,7 @@ import type { MoveDeckSheetData, MoveDestination } from '../ui/move-deck-sheet'
 export class DeckLibraryVm {
   private readonly router = inject(Router)
   private readonly transloco = inject(TranslocoService)
-  private readonly sheets = inject(MatBottomSheet)
+  private readonly sheets = inject(SheetService)
   private readonly actionSheet = inject(ActionSheet)
   private readonly confirmDialog = inject(ConfirmDialog)
   private readonly promptSheet = inject(PromptSheet)

@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core'
-import { MAT_BOTTOM_SHEET_DATA, MatBottomSheetRef } from '@angular/material/bottom-sheet'
+import { SHEET_DATA, SheetRef } from '@app/shared/ui/sheet'
 import { Shuffle, Timer } from 'lucide-angular'
 import { TranslocoPipe } from '@jsverse/transloco'
 import { SheetShell } from '@app/shared/ui/sheet-shell'
@@ -46,8 +46,8 @@ export interface QuizOptionsSheetData {
   host: { class: 'flex max-h-full min-h-0 flex-col' },
 })
 export class QuizOptionsSheet {
-  protected readonly data = inject<QuizOptionsSheetData>(MAT_BOTTOM_SHEET_DATA)
-  protected readonly ref = inject(MatBottomSheetRef<QuizOptionsSheet>)
+  protected readonly data = inject<QuizOptionsSheetData>(SHEET_DATA)
+  protected readonly ref = inject(SheetRef)
 
   protected readonly timer = Timer
   protected readonly shuffle = Shuffle

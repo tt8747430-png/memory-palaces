@@ -1,7 +1,7 @@
 import { Component, computed, inject, input } from '@angular/core'
 import { Router } from '@angular/router'
 import { Location } from '@angular/common'
-import { MatBottomSheet } from '@angular/material/bottom-sheet'
+import { SheetService } from '@app/shared/ui/sheet'
 import {
   Archive,
   ArchiveRestore,
@@ -169,7 +169,7 @@ export class DeckSettingsPage {
   private readonly router = inject(Router)
   private readonly location = inject(Location)
   private readonly transloco = inject(TranslocoService)
-  private readonly sheets = inject(MatBottomSheet)
+  private readonly sheets = inject(SheetService)
   private readonly actionSheet = inject(ActionSheet)
   private readonly confirmDialog = inject(ConfirmDialog)
   private readonly toast = inject(ToastService)
@@ -216,8 +216,8 @@ export class DeckSettingsPage {
       DeckAppearanceSheet,
       DeckAppearanceSheetData,
       DeckAppearanceChanges
-    >(DeckAppearanceSheet, { data: { deck }, panelClass: 'ms-sheet-panel' })
-    ref.afterDismissed().subscribe((changes) => {
+    >(DeckAppearanceSheet, { data: { deck } })
+    void ref.closed.then((changes) => {
       if (changes) void editDeck(this.deckStore, deck.id, changes)
     })
   }

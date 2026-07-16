@@ -1,64 +1,24 @@
-import { Component, computed, inject, input, signal, viewChild } from '@angular/core'
-import type { ElementRef } from '@angular/core'
-import { Router } from '@angular/router'
-import { Location } from '@angular/common'
+import { Component, effect, inject, input } from '@angular/core'
 import { MatButton } from '@angular/material/button'
-import {
-  ArrowDownAZ,
-  Brain,
-  Clock,
-  Copy,
-  Download,
-  GripVertical,
-  HelpCircle,
-  LucideAngularModule,
-  Pencil,
-  Play,
-  Plus,
-  Trash2,
-  Upload,
-} from 'lucide-angular'
-import { TranslocoPipe, TranslocoService } from '@jsverse/transloco'
-import { ROUTES } from '@app/shared/config/routes'
-import type { SwipeActionId } from '@app/shared/config/swipe'
-import { ContentImportError } from '@app/shared/domain'
-import { ActionSheet } from '@app/shared/ui/action-sheet'
-import { ConfirmDialog } from '@app/shared/ui/confirm-dialog'
+import { Brain, HelpCircle, LucideAngularModule, Play, Plus } from 'lucide-angular'
+import { TranslocoPipe } from '@jsverse/transloco'
 import { ScreenHeader } from '@app/shared/ui/screen-header'
-import type { SelectActionHandlers } from '@app/shared/ui/select-actions'
 import { SelectToolbar } from '@app/shared/ui/select-toolbar'
 import { SpeedDial } from '@app/shared/ui/speed-dial'
-import { ToastService } from '@app/shared/ui/toast'
-import { applyDeckContent, exportQuestionsCsv, readContentFile } from '@app/import'
-import { PreferencesStore } from '@app/settings'
-import { CardStore, DeckStore, QuestionStore } from '../data/stores'
-import { deleteQuestion, duplicateQuestion } from '../commands/question-index'
-import { questionsForDeck } from '../model/question'
-import type { Question } from '../model/question'
 import { QuestionRow } from '../ui/question-row'
 import { SelectModeBar } from '../ui/select-mode-bar'
 import { SortControl } from '../ui/sort-control'
-import type { SortOption } from '../ui/sort-control'
-
-type QuestionSort = 'manual' | 'recent' | 'name'
-
-function sortQuestions(questions: Question[], sort: QuestionSort): Question[] {
-  switch (sort) {
-    case 'name':
-      return [...questions].sort((a, b) => a.prompt.localeCompare(b.prompt))
-    case 'recent':
-      return [...questions].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-    default:
-      return questions
-  }
-}
+import { DeckQuestionsVm } from './deck-questions.vm'
 
 /**
  * A deck's quiz questions: the start-test lead, the sortable question list with
  * per-row actions, and CSV import (confirmed before applying) and export.
+ *
+ * The view. Everything reactive lives on DeckQuestionsVm (ADR-0008).
  */
 @Component({
   selector: 'ms-deck-questions-page',
+  providers: [DeckQuestionsVm],
   imports: [
     ScreenHeader,
     QuestionRow,
@@ -73,12 +33,12 @@ function sortQuestions(questions: Question[], sort: QuestionSort): Question[] {
   template: `
     <ms-screen-header
       [title]="'questions.title' | transloco"
-      [subtitle]="deck()?.name ?? ''"
+      [subtitle]="vm.deck()?.name ?? ''"
       [backLabel]="'common.back' | transloco"
-      (back)="goBack()"
+      (back)="vm.goBack()"
     />
 
-    @if (!ready()) {
+    @if (!vm.ready()) {
       <div class="grid flex-1 place-items-center">
         <span class="size-8 animate-pulse rounded-full bg-secondary" aria-hidden="true"></span>
       </div>
@@ -98,12 +58,12 @@ function sortQuestions(questions: Question[], sort: QuestionSort): Question[] {
                   {{ 'questions.testLead' | transloco }}
                 </p>
                 <p class="text-[length:var(--ms-text-label)] text-muted-foreground">
-                  @if (questions().length > 0) {
+                  @if (vm.questions().length > 0) {
                     {{
-                      (questions().length === 1
+                      (vm.questions().length === 1
                         ? 'questions.testReadyOne'
                         : 'questions.testReadyOther'
-                      ) | transloco: { count: questions().length }
+                      ) | transloco: { count: vm.questions().length }
                     }}
                   } @else {
                     {{ 'questions.testNone' | transloco }}
@@ -115,8 +75,8 @@ function sortQuestions(questions: Question[], sort: QuestionSort): Question[] {
               matButton="filled"
               type="button"
               class="mt-3.5 w-full"
-              [disabled]="questions().length === 0"
-              (click)="startTest()"
+              [disabled]="vm.questions().length === 0"
+              (click)="vm.startTest()"
             >
               <lucide-icon [img]="icons.play" class="size-[18px]" aria-hidden="true" />
               {{ 'questions.startTest' | transloco }}
@@ -124,27 +84,27 @@ function sortQuestions(questions: Question[], sort: QuestionSort): Question[] {
           </div>
 
           <section [attr.aria-label]="'questions.inDeck' | transloco" class="space-y-3">
-            @if (!selectMode() && questions().length > 1) {
+            @if (!vm.selectMode() && vm.questions().length > 1) {
               <div class="flex justify-end">
                 <ms-sort-control
                   [label]="'cards.sortLabel' | transloco"
-                  [value]="sort()"
-                  [options]="sortOptions()"
-                  (valueChange)="sort.set($event)"
+                  [value]="vm.sort()"
+                  [options]="vm.sortOptions()"
+                  (valueChange)="vm.sort.set($event)"
                 />
               </div>
             }
 
-            @if (selectMode()) {
+            @if (vm.selectMode()) {
               <ms-select-mode-bar
-                [allSelected]="allSelected()"
-                [count]="selectedCount()"
-                (toggleAll)="toggleSelectAll()"
-                (done)="exitSelect()"
+                [allSelected]="vm.allSelected()"
+                [count]="vm.selectedCount()"
+                (toggleAll)="vm.toggleSelectAll()"
+                (done)="vm.exitSelect()"
               />
             }
 
-            @if (questions().length === 0) {
+            @if (vm.questions().length === 0) {
               <div class="flex flex-col items-center px-6 py-10 text-center">
                 <div
                   class="mb-4 grid size-14 place-items-center rounded-card-featured bg-info-surface text-accent"
@@ -161,24 +121,24 @@ function sortQuestions(questions: Question[], sort: QuestionSort): Question[] {
                 >
                   {{ 'questions.emptyHint' | transloco }}
                 </p>
-                <button matButton="filled" type="button" class="mt-5" (click)="addQuestion()">
+                <button matButton="filled" type="button" class="mt-5" (click)="vm.addQuestion()">
                   <lucide-icon [img]="icons.plus" class="size-[18px]" aria-hidden="true" />
                   {{ 'questions.addQuestion' | transloco }}
                 </button>
               </div>
             } @else {
               <div class="flex flex-col gap-3">
-                @for (question of sortedQuestions(); track question.id) {
+                @for (question of vm.sortedQuestions(); track question.id) {
                   <ms-question-row
                     [question]="question"
-                    [index]="sortedQuestions().indexOf(question)"
-                    [swipe]="swipe()"
-                    [selectMode]="selectMode()"
-                    [selected]="selectedIds().has(question.id)"
-                    (more)="questionActions(question)"
-                    (requestSelect)="requestSelect(question.id)"
-                    (toggleSelect)="toggleSelect(question.id)"
-                    (swipeAction)="onQuestionSwipe(question, $event)"
+                    [index]="$index"
+                    [swipe]="vm.swipe()"
+                    [selectMode]="vm.selectMode()"
+                    [selected]="vm.selectedIds().has(question.id)"
+                    (more)="vm.questionActions(question)"
+                    (requestSelect)="vm.requestSelect(question.id)"
+                    (toggleSelect)="vm.toggleSelect(question.id)"
+                    (swipeAction)="vm.onQuestionSwipe(question, $event)"
                   />
                 }
               </div>
@@ -187,24 +147,17 @@ function sortQuestions(questions: Question[], sort: QuestionSort): Question[] {
         </div>
       </main>
 
-      <input
-        #fileInput
-        type="file"
-        accept=".csv"
-        class="hidden"
-        (change)="onFile(fileInput)"
-        aria-hidden="true"
-        tabindex="-1"
-      />
-
-      @if (selectMode()) {
+      @if (vm.selectMode()) {
         <div class="px-4 pt-2 pb-[calc(max(0.75rem,env(safe-area-inset-bottom)))]">
-          <ms-select-toolbar [actions]="selectToolbarConfig()" [handlers]="selectHandlers()" />
+          <ms-select-toolbar
+            [actions]="vm.selectToolbarConfig()"
+            [handlers]="vm.selectHandlers()"
+          />
         </div>
       } @else {
         <ms-speed-dial
           [label]="'questions.quickActions' | transloco"
-          [actions]="dialActions()"
+          [actions]="vm.dialActions()"
           dock="edge"
         />
       }
@@ -215,275 +168,12 @@ function sortQuestions(questions: Question[], sort: QuestionSort): Question[] {
 export class DeckQuestionsPage {
   readonly deckId = input.required<string>()
 
-  private readonly router = inject(Router)
-  private readonly location = inject(Location)
-  private readonly transloco = inject(TranslocoService)
-  private readonly actionSheet = inject(ActionSheet)
-  private readonly confirmDialog = inject(ConfirmDialog)
-  private readonly toast = inject(ToastService)
-  private readonly questionStore = inject(QuestionStore)
-  private readonly deckStore = inject(DeckStore)
-  private readonly cardStore = inject(CardStore)
-  private readonly preferencesStore = inject(PreferencesStore)
+  protected readonly vm = inject(DeckQuestionsVm)
 
   protected readonly icons = { brain: Brain, play: Play, help: HelpCircle, plus: Plus }
 
-  protected readonly sort = signal<QuestionSort>('manual')
-
-  protected readonly ready = computed(
-    () => this.questionStore.status() === 'ready' && this.deckStore.status() === 'ready',
-  )
-
-  protected readonly deck = computed(
-    () => this.deckStore.decks().find((d) => d.id === this.deckId()) ?? null,
-  )
-
-  protected readonly questions = computed(() =>
-    questionsForDeck(this.questionStore.questions(), this.deckId()),
-  )
-
-  protected readonly sortedQuestions = computed(() => sortQuestions(this.questions(), this.sort()))
-
-  /** Questions share the card swipe config — same list surface, same gestures. */
-  protected readonly swipe = computed(() => this.preferencesStore.effective().swipe.card)
-
-  // ---- Multi-select (long-press) ----
-  protected readonly selectMode = signal(false)
-  protected readonly selectedIds = signal<ReadonlySet<string>>(new Set())
-  protected readonly selectedCount = computed(() => this.selectedIds().size)
-
-  protected readonly allSelected = computed(() => {
-    const questions = this.sortedQuestions()
-    const selected = this.selectedIds()
-    return questions.length > 0 && questions.every((q) => selected.has(q.id))
-  })
-
-  protected requestSelect(id: string): void {
-    this.selectMode.set(true)
-    this.selectedIds.update((prev) => new Set(prev).add(id))
-  }
-
-  protected toggleSelect(id: string): void {
-    this.selectedIds.update((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
-
-  protected toggleSelectAll(): void {
-    const all = this.allSelected()
-    this.selectedIds.update((prev) => {
-      const next = new Set(prev)
-      for (const question of this.sortedQuestions()) {
-        if (all) next.delete(question.id)
-        else next.add(question.id)
-      }
-      return next
-    })
-  }
-
-  protected exitSelect(): void {
-    this.selectMode.set(false)
-    this.selectedIds.set(new Set())
-  }
-
-  protected readonly selectToolbarConfig = computed(
-    () => this.preferencesStore.effective().selectToolbar.question,
-  )
-
-  // The bar the learner configured (Settings → Select toolbar) for questions.
-  protected readonly selectHandlers = computed<SelectActionHandlers>(() => {
-    const none = this.selectedIds().size === 0
-    return {
-      duplicate: { disabled: none, onAction: () => this.bulkDuplicate() },
-      delete: { disabled: none, onAction: () => void this.confirmBulkDelete() },
-    }
-  })
-
-  private bulkDuplicate(): void {
-    const ids = [...this.selectedIds()]
-    void Promise.all(ids.map((id) => duplicateQuestion(this.questionStore, id)))
-    this.toast.success(this.t('questions.bulk.duplicated', { count: ids.length }))
-    this.exitSelect()
-  }
-
-  private async confirmBulkDelete(): Promise<void> {
-    const confirmed = await this.confirmDialog.confirm({
-      icon: Trash2,
-      title: this.t('cards.delete.bulkTitle', { count: this.selectedIds().size }),
-      description: this.t('cards.delete.body'),
-      confirmLabel: this.t('common.delete'),
-      cancelLabel: this.t('common.cancel'),
-      destructive: true,
-    })
-    if (!confirmed) return
-    const ids = [...this.selectedIds()]
-    void Promise.all(ids.map((id) => deleteQuestion(this.questionStore, id)))
-    this.toast.success(this.t('cards.transfer.deletedMany', { count: ids.length }))
-    this.exitSelect()
-  }
-
-  protected readonly sortOptions = computed<SortOption<QuestionSort>[]>(() => [
-    { value: 'manual', label: this.t('cards.sort.manual'), icon: GripVertical },
-    { value: 'recent', label: this.t('cards.sort.recent'), icon: Clock },
-    { value: 'name', label: this.t('cards.sort.name'), icon: ArrowDownAZ },
-  ])
-
-  private readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput')
-
-  protected readonly dialActions = computed(() => {
-    const actions = [
-      {
-        id: 'question',
-        label: this.t('questions.addQuestion'),
-        icon: Plus,
-        onSelect: () => this.addQuestion(),
-      },
-      {
-        id: 'import',
-        label: this.t('questions.transfer.importShort'),
-        icon: Upload,
-        onSelect: () => this.pickFile(),
-      },
-    ]
-    if (this.questions().length > 0) {
-      actions.push({
-        id: 'export',
-        label: this.t('questions.transfer.exportShort'),
-        icon: Download,
-        onSelect: () => this.exportCsv(),
-      })
-    }
-    return actions
-  })
-
-  protected goBack(): void {
-    this.location.back()
-  }
-
-  protected startTest(): void {
-    void this.router.navigateByUrl(ROUTES.deckQuiz.replace(':deckId', this.deckId()))
-  }
-
-  protected addQuestion(): void {
-    void this.router.navigateByUrl(ROUTES.deckQuestionNew.replace(':deckId', this.deckId()))
-  }
-
-  protected editQuestion(questionId: string): void {
-    void this.router.navigateByUrl(
-      ROUTES.deckQuestionEdit.replace(':deckId', this.deckId()).replace(':questionId', questionId),
-    )
-  }
-
-  protected questionActions(question: Question): void {
-    this.actionSheet.open({
-      title: question.prompt,
-      cancelLabel: this.t('common.cancel'),
-      actions: [
-        {
-          id: 'edit',
-          label: this.t('common.edit'),
-          icon: Pencil,
-          onSelect: () => this.editQuestion(question.id),
-        },
-        {
-          id: 'duplicate',
-          label: this.t('cards.row.duplicate'),
-          icon: Copy,
-          onSelect: () => this.duplicate(question),
-        },
-        {
-          id: 'delete',
-          label: this.t('common.delete'),
-          icon: Trash2,
-          destructive: true,
-          onSelect: () => void this.confirmDelete(question),
-        },
-      ],
-    })
-  }
-
-  protected onQuestionSwipe(question: Question, id: SwipeActionId): void {
-    switch (id) {
-      case 'duplicate':
-        this.duplicate(question)
-        break
-      case 'delete':
-        void this.confirmDelete(question)
-        break
-    }
-  }
-
-  private duplicate(question: Question): void {
-    void duplicateQuestion(this.questionStore, question.id)
-    this.toast.success(this.t('cards.row.duplicated'))
-  }
-
-  private async confirmDelete(question: Question): Promise<void> {
-    const confirmed = await this.confirmDialog.confirm({
-      icon: Trash2,
-      title: this.t('cards.delete.questionTitle'),
-      description: this.t('cards.delete.body'),
-      confirmLabel: this.t('common.delete'),
-      cancelLabel: this.t('common.cancel'),
-      destructive: true,
-    })
-    if (!confirmed) return
-    await deleteQuestion(this.questionStore, question.id)
-    this.toast.success(this.t('cards.transfer.deleted'))
-  }
-
-  private pickFile(): void {
-    const input = this.fileInput()?.nativeElement
-    if (!input) return
-    input.value = ''
-    input.click()
-  }
-
-  protected async onFile(input: HTMLInputElement): Promise<void> {
-    const file = input.files?.[0]
-    if (!file) return
-    try {
-      const data = await readContentFile(file)
-      if (data.questions.length === 0) {
-        this.toast.error(this.t('questions.transfer.noneFound'))
-        return
-      }
-      const confirmed = await this.confirmDialog.confirm({
-        icon: Upload,
-        title: this.t(
-          data.questions.length === 1
-            ? 'questions.transfer.importConfirmTitleOne'
-            : 'questions.transfer.importConfirmTitleOther',
-          { count: data.questions.length },
-        ),
-        description: this.t('questions.transfer.importConfirmBody'),
-        confirmLabel: this.t('questions.transfer.importConfirm'),
-        cancelLabel: this.t('common.cancel'),
-      })
-      if (!confirmed) return
-      const applied = await applyDeckContent(this.cardStore, this.questionStore, this.deckId(), {
-        cards: [],
-        questions: data.questions,
-      })
-      this.toast.success(this.t('questions.transfer.imported', { count: applied.questions }))
-    } catch (error) {
-      this.toast.error(
-        error instanceof ContentImportError
-          ? error.message
-          : this.t('questions.transfer.importFailed'),
-      )
-    }
-  }
-
-  private exportCsv(): void {
-    exportQuestionsCsv(this.deck()?.name ?? '', this.questions())
-    this.toast.success(this.t('questions.transfer.exported'))
-  }
-
-  private t(key: string, params?: Record<string, unknown>): string {
-    return this.transloco.translate(key, params)
+  constructor() {
+    // The route input is the view's; the view model reads it as plain state.
+    effect(() => this.vm.deckId.set(this.deckId()))
   }
 }

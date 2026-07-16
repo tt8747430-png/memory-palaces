@@ -1,9 +1,5 @@
 import { Component, inject, Injectable } from '@angular/core'
-import {
-  MAT_BOTTOM_SHEET_DATA,
-  MatBottomSheet,
-  MatBottomSheetRef,
-} from '@angular/material/bottom-sheet'
+import { SHEET_DATA, SheetRef, SheetService } from './sheet'
 import { LucideAngularModule } from 'lucide-angular'
 import type { LucideIconData } from 'lucide-angular'
 
@@ -71,8 +67,8 @@ export interface ActionSheetConfig {
   host: { class: 'flex flex-col px-4 pb-safe pt-2' },
 })
 export class ActionSheetComponent {
-  protected readonly config = inject<ActionSheetConfig>(MAT_BOTTOM_SHEET_DATA)
-  protected readonly ref = inject(MatBottomSheetRef<ActionSheetComponent>)
+  protected readonly config = inject<ActionSheetConfig>(SHEET_DATA)
+  protected readonly ref = inject(SheetRef)
 
   protected select(action: SheetAction): void {
     this.ref.dismiss()
@@ -80,13 +76,13 @@ export class ActionSheetComponent {
   }
 }
 
-/** Action sheet (MatBottomSheet owns bottom sheets, ADR-0002): a titled list of
- *  actions with a cancel affordance; selecting dismisses, then runs. */
+/** Action sheet (PrimeNG headless drawers own bottom sheets, ADR-0002): a titled
+ *  list of actions with a cancel affordance; selecting dismisses, then runs. */
 @Injectable({ providedIn: 'root' })
 export class ActionSheet {
-  private readonly sheets = inject(MatBottomSheet)
+  private readonly sheets = inject(SheetService)
 
   open(config: ActionSheetConfig): void {
-    this.sheets.open(ActionSheetComponent, { data: config, panelClass: 'ms-sheet-panel' })
+    this.sheets.open(ActionSheetComponent, { data: config })
   }
 }

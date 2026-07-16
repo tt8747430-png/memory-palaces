@@ -1,10 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core'
-import {
-  MAT_BOTTOM_SHEET_DATA,
-  MatBottomSheet,
-  MatBottomSheetRef,
-} from '@angular/material/bottom-sheet'
-import { firstValueFrom } from 'rxjs'
+import { SHEET_DATA, SheetRef, SheetService } from '@app/shared/ui/sheet'
 import { MatButton } from '@angular/material/button'
 import { Archive, Check, FolderPlus, Home, LucideAngularModule, Minus, Plus } from 'lucide-angular'
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco'
@@ -174,8 +169,8 @@ function destKey(dest: MoveDestination): string {
   host: { class: 'flex max-h-full min-h-0 flex-col' },
 })
 export class MoveDeckSheet {
-  protected readonly data = inject<MoveDeckSheetData>(MAT_BOTTOM_SHEET_DATA)
-  protected readonly ref = inject(MatBottomSheetRef<MoveDeckSheet, MoveDeckResult>)
+  protected readonly data = inject<MoveDeckSheetData>(SHEET_DATA)
+  protected readonly ref = inject(SheetRef<MoveDeckResult>)
   private readonly transloco = inject(TranslocoService)
 
   protected readonly icons = {
@@ -304,16 +299,13 @@ export class MoveDeckSheet {
 /**
  * The sheet's own public API — the same promise-returning shape `ConfirmDialog`
  * and `PromptSheet` already offer. Callers get a destination without wiring
- * MatBottomSheet or naming this component. Resolves undefined when dismissed
+ * SheetService or naming this component. Resolves undefined when dismissed
  * without a choice.
  */
 export function openMoveDeckSheet(
-  sheets: MatBottomSheet,
+  sheets: SheetService,
   data: MoveDeckSheetData,
 ): Promise<MoveDeckResult | undefined> {
-  const ref = sheets.open<MoveDeckSheet, MoveDeckSheetData, MoveDeckResult>(MoveDeckSheet, {
-    data,
-    panelClass: 'ms-sheet-panel',
-  })
-  return firstValueFrom(ref.afterDismissed())
+  return sheets.open<MoveDeckSheet, MoveDeckSheetData, MoveDeckResult>(MoveDeckSheet, { data })
+    .closed
 }

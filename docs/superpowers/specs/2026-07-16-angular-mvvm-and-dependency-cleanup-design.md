@@ -242,18 +242,36 @@ stores and commands. The rule:
 > A class that merely forwards to stores and commands is a Middle Man — delete it and let the
 > component read the store directly.
 
-Pages that earn a VM (real derived state + orchestration):
+**Correction, found during implementation.** This list originally named six candidates, ranked by
+**file** size. That was the wrong measure: most of those lines are template. Ranked by class body —
+and then judged on whether the logic is real — only three earn a ViewModel:
 
-- `decks/pages/deck-library-page.ts` (688)
-- `decks/pages/deck-questions-page.ts` (500)
-- `decks/ui/deck-content-editor.ts` (485)
-- `practice/ui/quiz-session.ts` (473)
-- `settings/pages/settings-swipe-page.ts` (389)
-- `settings/pages/settings-select-page.ts` (332)
+| Component                                | File | Class body | Earns a VM?        |
+| ---------------------------------------- | ---- | ---------- | ------------------ |
+| `decks/pages/deck-library-page.ts`       | 688  | ~580       | **yes** → 53 lines |
+| `decks/pages/deck-questions-page.ts`     | 500  | ~275       | **yes**            |
+| `decks/ui/deck-content-editor.ts`        | 484  | 273        | **yes**            |
+| `practice/ui/quiz-session.ts`            | 473  | 146        | no                 |
+| `settings/pages/settings-swipe-page.ts`  | 385  | 129        | no                 |
+| `settings/pages/settings-select-page.ts` | 328  | 114        | no                 |
 
-Pages that stay plain components: `archived-decks-page`, `card-editor-page`, `deck-settings-page`,
-`question-editor-page`, `settings-page`, `notifications-page`, and the auth pages. Each is re-checked
-against the rule during implementation rather than assumed.
+The three rejections are the rule working, not laziness:
+
+- **`quiz-session`** injects no store and dispatches no command. Its state already lives in
+  `quizReducer`/`initQuiz` (`practice/commands/quiz-machine.ts`), which is **already unit-tested**.
+  What remains is thin projection over `state()` (`current`, `isLast`, `progressPercent`, `result`),
+  presentation (`optionTone`, `letter`), and two view timers with `ngOnDestroy`. A VM would forward
+  to an already-tested machine — a Middle Man.
+- **`settings-swipe-page` / `settings-select-page`** are the same story. Their real rules —
+  `normalizeSwipeConfig`, `normalizeSelectToolbar` — already live in `shared/config/` and are already
+  tested. What remains is a `linkedSignal` working copy, constant lookups (`palette`, `typeIcon`),
+  i18n label mapping, and a single `save()`. Also decisive: their class bodies (129, 114) are
+  _smaller_ than `deck-settings-page` (135), which this spec already said stays plain. Extracting
+  them while leaving that alone would be arbitrary.
+
+Everything else stays a plain component: `archived-decks-page`, `card-editor-page`,
+`deck-settings-page`, `question-editor-page`, `settings-page`, `notifications-page`, the auth pages,
+and the three above.
 
 ### Decision: domain rules move into commands
 

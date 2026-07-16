@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core'
-import { MAT_BOTTOM_SHEET_DATA, MatBottomSheetRef } from '@angular/material/bottom-sheet'
+import { SHEET_DATA, SheetRef, SheetService } from '@app/shared/ui/sheet'
 import { MatButton } from '@angular/material/button'
 import { MatSlideToggle } from '@angular/material/slide-toggle'
 import { Flag, LucideAngularModule } from 'lucide-angular'
@@ -124,8 +124,8 @@ const MATURITY_DOT: Record<SrsStatus, string> = {
   host: { class: 'flex max-h-full min-h-0 flex-col' },
 })
 export class CardFilterSheet {
-  protected readonly data = inject<CardFilterSheetData>(MAT_BOTTOM_SHEET_DATA)
-  protected readonly ref = inject(MatBottomSheetRef<CardFilterSheet, CardFilter>)
+  protected readonly data = inject<CardFilterSheetData>(SHEET_DATA)
+  protected readonly ref = inject(SheetRef<CardFilter>)
 
   protected readonly flag = Flag
   protected readonly maturityKeys: readonly SrsStatus[] = ['new', 'learning', 'known']
@@ -153,4 +153,17 @@ export class CardFilterSheet {
   protected apply(): void {
     this.ref.dismiss({ maturity: [...this.maturity()], flagged: this.flagged() })
   }
+}
+
+/**
+ * The sheet's own public API — the same promise-returning shape `ConfirmDialog`
+ * and `PromptSheet` offer (ADR-0008). Resolves undefined when dismissed without
+ * applying, so the caller keeps the filter it had.
+ */
+export function openCardFilterSheet(
+  sheets: SheetService,
+  data: CardFilterSheetData,
+): Promise<CardFilter | undefined> {
+  return sheets.open<CardFilterSheet, CardFilterSheetData, CardFilter>(CardFilterSheet, { data })
+    .closed
 }

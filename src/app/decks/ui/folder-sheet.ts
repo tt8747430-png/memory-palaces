@@ -1,11 +1,6 @@
 import { afterNextRender, Component, computed, inject, signal, viewChild } from '@angular/core'
 import type { ElementRef } from '@angular/core'
-import {
-  MAT_BOTTOM_SHEET_DATA,
-  MatBottomSheet,
-  MatBottomSheetRef,
-} from '@angular/material/bottom-sheet'
-import { firstValueFrom } from 'rxjs'
+import { SHEET_DATA, SheetRef, SheetService } from '@app/shared/ui/sheet'
 import { MatButton } from '@angular/material/button'
 import { MatFormFieldModule } from '@angular/material/form-field'
 import { MatInput } from '@angular/material/input'
@@ -93,8 +88,8 @@ export interface FolderChanges {
   host: { class: 'flex max-h-full min-h-0 flex-col' },
 })
 export class FolderSheet {
-  private readonly data = inject<FolderSheetData>(MAT_BOTTOM_SHEET_DATA)
-  protected readonly ref = inject(MatBottomSheetRef<FolderSheet, FolderChanges>)
+  private readonly data = inject<FolderSheetData>(SHEET_DATA)
+  protected readonly ref = inject(SheetRef<FolderChanges>)
 
   protected readonly icons = { check: Check, folderPlus: FolderPlus }
   protected readonly colorOptions = DECK_COLOR_OPTIONS
@@ -129,12 +124,8 @@ export class FolderSheet {
  * and `PromptSheet` already offer. Resolves undefined when cancelled.
  */
 export function openFolderSheet(
-  sheets: MatBottomSheet,
+  sheets: SheetService,
   data: FolderSheetData,
 ): Promise<FolderChanges | undefined> {
-  const ref = sheets.open<FolderSheet, FolderSheetData, FolderChanges>(FolderSheet, {
-    data,
-    panelClass: 'ms-sheet-panel',
-  })
-  return firstValueFrom(ref.afterDismissed())
+  return sheets.open<FolderSheet, FolderSheetData, FolderChanges>(FolderSheet, { data }).closed
 }

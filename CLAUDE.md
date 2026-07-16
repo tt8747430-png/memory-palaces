@@ -100,7 +100,11 @@ Navigation is exposed as VM intents (`openProfile()`, `openDeck(id)`) — templa
 
 > **Extract a ViewModel only when a page owns real derived state or multi-step orchestration. A class that merely forwards to stores and commands is a Middle Man — delete it and let the component read the store directly.**
 
-VMs are **earned, not automatic**. Most pages stay plain components; that asymmetry is intentional. The same rule governs everything else:
+VMs are **earned, not automatic**. Most pages stay plain components; that asymmetry is intentional. Today exactly three exist (`deck-library`, `deck-questions`, `deck-content`) — everything else reads its store directly.
+
+**Judge by class body and by whether the logic is real — never by file size** (most of a big component is template). **If the domain logic is already extracted and tested, a VM has nothing to hold:** `quiz-session` is 473 lines but injects no store, because its state lives in the unit-tested `quizReducer`; the settings editors delegate their rules to the tested `normalize*` functions in `shared/config/`. All three correctly stay plain. See ADR-0008 for the worked table.
+
+The same rule governs everything else:
 
 - **Never write a pass-through wrapper service.** A `MoveDeckSheetService` that only forwards to `MatBottomSheet.open()` is a Middle Man. The VM injects **real** services — `ToastService`, `ConfirmDialog`, `PromptSheet`, `ActionSheet` — which do real work.
 - **A sheet that returns data exposes its own promise-returning `open*()` function, co-located in the sheet's file** (see `openMoveDeckSheet`, `openFolderSheet`). That's the component's public API, not a new layer — and it keeps the VM from naming a View component.
