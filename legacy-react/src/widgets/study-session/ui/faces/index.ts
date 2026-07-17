@@ -1,7 +1,0 @@
-export { AnswerFace } from './AnswerFace'
-export { BlurFace } from './BlurFace'
-export { InitialsFace } from './InitialsFace'
-export { PromptFace } from './PromptFace'
-export { RebuildFace } from './RebuildFace'
-export { TypeFace } from './TypeFace'
-export type { FaceProps, MechanicHandlers } from './types'
