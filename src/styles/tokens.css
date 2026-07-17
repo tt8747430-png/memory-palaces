@@ -31,12 +31,12 @@
   --ms-tint-sky: 83.2% 0.083 264.3;
   --ms-font-sans: 'Lexend', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
-  --ms-text-headline: 20px;
-  --ms-text-title: 16px;
-  --ms-text-sub: 14px;
-  --ms-text-body: 14px;
-  --ms-text-label: 12px;
-  --ms-text-tiny: 10px;
+  --ms-text-headline: 1.25rem;
+  --ms-text-title: 1rem;
+  --ms-text-sub: 0.875rem;
+  --ms-text-body: 0.875rem;
+  --ms-text-label: 0.75rem;
+  --ms-text-tiny: 0.625rem;
   --ms-weight-regular: 400;
   --ms-weight-medium: 500;
   --ms-weight-semibold: 600;
@@ -44,21 +44,21 @@
   --ms-leading-tight: 1.4;
   --ms-leading-body: 1.5;
 
-  --ms-space-1: 4px;
-  --ms-space-2: 8px;
-  --ms-space-3: 12px;
-  --ms-space-4: 16px;
-  --ms-space-5: 20px;
-  --ms-space-6: 24px;
-  --ms-space-8: 32px;
-  --ms-space-10: 40px;
-  --ms-space-12: 48px;
+  --ms-space-1: 0.25rem;
+  --ms-space-2: 0.5rem;
+  --ms-space-3: 0.75rem;
+  --ms-space-4: 1rem;
+  --ms-space-5: 1.25rem;
+  --ms-space-6: 1.5rem;
+  --ms-space-8: 2rem;
+  --ms-space-10: 2.5rem;
+  --ms-space-12: 3rem;
 
-  --ms-radius-sm: 12px;
-  --ms-radius-md: 16px;
-  --ms-radius-lg: 20px;
-  --ms-radius-xl: 24px;
-  --ms-radius-nav: 40px;
+  --ms-radius-sm: 0.75rem;
+  --ms-radius-md: 1rem;
+  --ms-radius-lg: 1.25rem;
+  --ms-radius-xl: 1.5rem;
+  --ms-radius-nav: 2.5rem;
   --ms-radius-pill: 9999px;
   --ms-shadow-rest: 0 6px 16px oklch(var(--ms-tint-steel) / 0.06);
   --ms-shadow-featured: 0 10px 28px oklch(var(--ms-tint-steel) / 0.08);
@@ -83,7 +83,7 @@
   --ms-z-toast: 600;
   --ms-z-tooltip: 700;
 
-  --ms-container-app: 430px;
+  --ms-container-app: 26.875rem;
   --bg: linear-gradient(
     to bottom right,
     oklch(83.2% 0.083 264.3) 0%,
@@ -119,8 +119,8 @@
   --success-foreground: var(--ms-green-700);
   --success-surface: var(--ms-green-50);
   --success-on-surface: var(--ms-green-800);
-  --warning: var(--ms-amber-500);
-  --warning-foreground: var(--ms-amber-700);
+  --warning: oklch(76.9% 0.148 84);
+  --warning-foreground: oklch(55.5% 0.132 84);
   --warning-surface: var(--ms-amber-50);
   --warning-on-fill: var(--ms-ink-900);
   --danger: var(--ms-red-600);
@@ -158,7 +158,8 @@
   /* Lifted list card — clearly raised off the daylight bg, tight footprint so
      stacked rows don't muddy each other. */
   --shadow-card:
-    0 2px 4px -1px oklch(var(--ms-tint-navy) / 0.1), 0 8px 20px -4px oklch(var(--ms-tint-navy) / 0.2);
+    0 2px 4px -1px oklch(var(--ms-tint-navy) / 0.1),
+    0 8px 20px -4px oklch(var(--ms-tint-navy) / 0.2);
 
   --radius-control: var(--ms-radius-sm);
   --radius-card: var(--ms-radius-md);
@@ -212,9 +213,9 @@
   --success-surface: oklch(69.6% 0.149 162.5 / 0.16);
   --success-on-surface: oklch(86% 0.11 165);
 
-  --warning: var(--ms-amber-500);
-  --warning-foreground: oklch(86% 0.13 80);
-  --warning-surface: oklch(76.9% 0.165 70.1 / 0.16);
+  --warning: oklch(76.9% 0.165 84);
+  --warning-foreground: oklch(86% 0.13 84);
+  --warning-surface: oklch(76.9% 0.165 84 / 0.16);
   --warning-on-fill: var(--ms-ink-900);
 
   --danger: var(--ms-red-500);
