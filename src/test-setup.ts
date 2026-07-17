@@ -1,5 +1,12 @@
 import '@testing-library/jest-dom/vitest'
 import 'fake-indexeddb/auto'
+import { afterEach } from 'vitest'
+import { cleanup } from '@testing-library/react'
+
+// With `globals: false`, @testing-library/react does not auto-register its
+// afterEach cleanup (it hooks a global afterEach that does not exist here), so
+// rendered trees would leak across tests in a file. Register it explicitly.
+afterEach(() => cleanup())
 
 if (typeof globalThis.localStorage === 'undefined') {
   const store = new Map<string, string>()
