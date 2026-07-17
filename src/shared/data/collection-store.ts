@@ -1,11 +1,11 @@
-import { signal } from '@angular/core'
+import { Observable } from './observable'
 import type { Identifiable, Repository, Unsubscribe } from './base-repository'
 
 export type StoreStatus = 'idle' | 'loading' | 'ready'
 
 /**
  * Reactive collection store over a Repository<T>: `start()` subscribes to the
- * repository's live query and mirrors it into signals; writes delegate to the
+ * repository's live query and mirrors it into observables; writes delegate to the
  * repository and flow back through the subscription.
  */
 export abstract class CollectionStore<T extends Identifiable> {
@@ -14,8 +14,8 @@ export abstract class CollectionStore<T extends Identifiable> {
 
   constructor(protected readonly repo: Repository<T>) {}
 
-  private readonly _entities = signal<T[]>([])
-  private readonly _status = signal<StoreStatus>('idle')
+  private readonly _entities = new Observable<T[]>([])
+  private readonly _status = new Observable<StoreStatus>('idle')
   readonly entities = this._entities.asReadonly()
   readonly status = this._status.asReadonly()
 

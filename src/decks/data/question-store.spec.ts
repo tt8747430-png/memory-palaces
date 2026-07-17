@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { TestBed } from '@angular/core/testing'
-import { InMemoryRepository } from '@app/shared/data'
-import { QUESTION_REPOSITORY, QuestionStore } from './stores'
+import { InMemoryRepository } from '@/shared/data'
+import { QuestionStore } from './stores'
 import { makeQuestion } from '../model/question'
 import type { Question } from '../model/question'
 
@@ -11,8 +10,7 @@ const question = (id: string, deckId: string, createdAt: string): Question =>
 
 function setup(seed: Question[] = []) {
   const repo = new InMemoryRepository<Question>(seed)
-  TestBed.configureTestingModule({ providers: [{ provide: QUESTION_REPOSITORY, useValue: repo }] })
-  return { repo, store: TestBed.inject(QuestionStore) }
+  return { repo, store: new QuestionStore(repo) }
 }
 
 describe('question store — reactive, Dependency Injection', () => {

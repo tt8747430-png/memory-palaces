@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { TestBed } from '@angular/core/testing'
-import { InMemoryRepository } from '@app/shared/data'
-import { NOTIFICATION_REPOSITORY, NotificationStore } from './notification-store'
+import { InMemoryRepository } from '@/shared/data'
+import { NotificationStore } from './notification-store'
 import { makeNotification } from '../model/notification'
 import type { AppNotification } from '../model/notification'
 
@@ -11,10 +10,7 @@ const notif = (id: string, createdAt: string) =>
 
 function setup(seed: AppNotification[] = []) {
   const repo = new InMemoryRepository<AppNotification>(seed)
-  TestBed.configureTestingModule({
-    providers: [{ provide: NOTIFICATION_REPOSITORY, useValue: repo }],
-  })
-  return { repo, store: TestBed.inject(NotificationStore) }
+  return { repo, store: new NotificationStore(repo) }
 }
 
 describe('notification store — reactive, Dependency Injection', () => {

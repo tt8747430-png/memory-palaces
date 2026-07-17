@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { TestBed } from '@angular/core/testing'
-import { InMemoryRepository } from '@app/shared/data'
-import { SESSION_REPOSITORY, SessionStore } from './stores'
+import { InMemoryRepository } from '@/shared/data'
+import { SessionStore } from './stores'
 import { makeGuestSession } from '../model/session'
 import type { Session } from '../model/session'
 
@@ -9,8 +8,7 @@ const at = (ms: number) => new Date(ms).toISOString()
 
 function setup(seed: Session[] = []) {
   const repo = new InMemoryRepository<Session>(seed)
-  TestBed.configureTestingModule({ providers: [{ provide: SESSION_REPOSITORY, useValue: repo }] })
-  return { repo, store: TestBed.inject(SessionStore) }
+  return { repo, store: new SessionStore(repo) }
 }
 
 describe('session store — Dependency Injection', () => {

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { TestBed } from '@angular/core/testing'
-import { InMemoryRepository } from '@app/shared/data'
-import { PROFILE_REPOSITORY, ProfileStore } from './stores'
+import { InMemoryRepository } from '@/shared/data'
+import { ProfileStore } from './stores'
 import { makeProfile } from '../model/profile'
 import type { Profile } from '../model/profile'
 
@@ -9,8 +8,7 @@ const at = (ms: number) => new Date(ms).toISOString()
 
 function setup(seed: Profile[] = []) {
   const repo = new InMemoryRepository<Profile>(seed)
-  TestBed.configureTestingModule({ providers: [{ provide: PROFILE_REPOSITORY, useValue: repo }] })
-  return { repo, store: TestBed.inject(ProfileStore) }
+  return { repo, store: new ProfileStore(repo) }
 }
 
 describe('profile store — Dependency Injection', () => {

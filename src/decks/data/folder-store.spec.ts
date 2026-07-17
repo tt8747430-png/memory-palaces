@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { TestBed } from '@angular/core/testing'
-import { InMemoryRepository } from '@app/shared/data'
-import { FOLDER_REPOSITORY, FolderStore } from './stores'
+import { InMemoryRepository } from '@/shared/data'
+import { FolderStore } from './stores'
 import { makeFolder } from '../model/folder'
 import type { Folder } from '../model/folder'
 
@@ -11,8 +10,7 @@ const folder = (id: string, createdAt: string, name = id): Folder =>
 
 function setup(seed: Folder[] = []) {
   const repo = new InMemoryRepository<Folder>(seed)
-  TestBed.configureTestingModule({ providers: [{ provide: FOLDER_REPOSITORY, useValue: repo }] })
-  return { repo, store: TestBed.inject(FolderStore) }
+  return { repo, store: new FolderStore(repo) }
 }
 
 describe('folder store — reactive, Dependency Injection', () => {

@@ -1,16 +1,16 @@
-import { signal } from '@angular/core'
+import { Observable } from './observable'
 import type { Identifiable, Repository, Unsubscribe } from './base-repository'
 import type { StoreStatus } from './collection-store'
 
 /**
  * Store for collections that hold at most one document (preferences, profile,
- * progress): mirrors the first document — or null — into a signal.
+ * progress): mirrors the first document — or null — into an observable.
  */
 export abstract class SingletonDocStore<T extends Identifiable> {
   constructor(protected readonly repo: Repository<T>) {}
 
-  private readonly _value = signal<T | null>(null)
-  private readonly _status = signal<StoreStatus>('idle')
+  private readonly _value = new Observable<T | null>(null)
+  private readonly _status = new Observable<StoreStatus>('idle')
   readonly value = this._value.asReadonly()
   readonly status = this._status.asReadonly()
 

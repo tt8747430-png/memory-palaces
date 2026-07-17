@@ -1,25 +1,18 @@
-import { Inject, Injectable, InjectionToken, computed, signal } from '@angular/core'
-import { SingletonDocStore } from '@app/shared/data/singleton-doc-store'
-import type { StoreStatus } from '@app/shared/data/collection-store'
-import type { Repository } from '@app/shared/data'
-import type { AuthGateway } from './auth-gateway'
+import { SingletonDocStore } from '@/shared/data/singleton-doc-store'
+import { Observable, derived } from '@/shared/data/observable'
+import type { StoreStatus } from '@/shared/data/collection-store'
+import type { Repository } from '@/shared/data'
 import type { Session } from '../model/session'
 import { DEFAULT_PROFILE } from '../model/profile'
 import type { Profile } from '../model/profile'
 import type { RxJsonSchema } from 'rxdb'
 
-export const SESSION_REPOSITORY = new InjectionToken<Repository<Session>>('SESSION_REPOSITORY')
-export const PROFILE_REPOSITORY = new InjectionToken<Repository<Profile>>('PROFILE_REPOSITORY')
-export const AUTH_GATEWAY = new InjectionToken<AuthGateway>('AUTH_GATEWAY')
-
 /** Auth session (Guest/Account) — live in memory, loaded once per app start. */
-@Injectable({ providedIn: 'root' })
 export class SessionStore {
-  // eslint-disable-next-line @angular-eslint/prefer-inject -- constructor param keeps the store directly constructible in unit tests (new XStore(repo))
-  constructor(@Inject(SESSION_REPOSITORY) private readonly repo: Repository<Session>) {}
+  constructor(private readonly repo: Repository<Session>) {}
 
-  private readonly _session = signal<Session | null>(null)
-  private readonly _status = signal<StoreStatus>('idle')
+  private readonly _session = new Observable<Session | null>(null)
+  private readonly _status = new Observable<StoreStatus>('idle')
   readonly session = this._session.asReadonly()
   readonly status = this._status.asReadonly()
 
@@ -37,21 +30,19 @@ export class SessionStore {
   }
 
   async clear(): Promise<void> {
-    const current = this._session()
+    const current = this._session.get()
     if (current) await this.repo.remove(current.id)
     this._session.set(null)
     this._status.set('ready')
   }
 }
 
-@Injectable({ providedIn: 'root' })
 export class ProfileStore extends SingletonDocStore<Profile> {
   readonly profile = this.value
   /** Stored profile, falling back to defaults before the first save. */
-  readonly effective = computed(() => this.value() ?? DEFAULT_PROFILE)
+  readonly effective = derived(this.value, (profile) => profile ?? DEFAULT_PROFILE)
 
-  // eslint-disable-next-line @angular-eslint/prefer-inject -- constructor param keeps the store directly constructible in unit tests (new XStore(repo))
-  constructor(@Inject(PROFILE_REPOSITORY) repo: Repository<Profile>) {
+  constructor(repo: Repository<Profile>) {
     super(repo)
   }
 }
