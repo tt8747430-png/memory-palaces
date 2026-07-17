@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { openOverlay } from './overlay-host'
+import { openOverlay, useOverlayController, type OverlayResolver } from './overlay-host'
 import {
   Drawer,
   DrawerClose,
@@ -25,17 +25,29 @@ export interface ActionDrawerOptions {
 /**
  * Opens a controlled Drawer listing `actions` as rows plus a Cancel row, starting open and
  * resolving the chosen action's `id` on select, or `null` on cancel/dismiss (backdrop click,
- * swipe, Escape).
+ * swipe, Escape). The overlay entry unmounts only after Base UI's close transition finishes
+ * (see `useOverlayController`), so dismissals animate instead of cutting instantly.
  */
 export function openActionDrawer(options: ActionDrawerOptions): Promise<string | null> {
-  const { title, actions } = options
-
   return openOverlay<string | null>((resolve) => (
+    <ActionDrawerBody {...options} resolve={resolve} />
+  ))
+}
+
+function ActionDrawerBody({
+  title,
+  actions,
+  resolve,
+}: ActionDrawerOptions & { resolve: OverlayResolver<string | null> }) {
+  const { open, close, onOpenChangeComplete } = useOverlayController(resolve)
+
+  return (
     <Drawer
-      open
-      onOpenChange={(open) => {
-        if (!open) resolve(null)
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) close(null)
       }}
+      onOpenChangeComplete={onOpenChangeComplete}
     >
       <DrawerContent>
         {title ? (
@@ -48,7 +60,7 @@ export function openActionDrawer(options: ActionDrawerOptions): Promise<string |
             <button
               key={action.id}
               type="button"
-              onClick={() => resolve(action.id)}
+              onClick={() => close(action.id)}
               className={cn(
                 'flex h-12 items-center gap-3 rounded-control px-3 text-left',
                 'text-[length:var(--ms-text-body)] font-medium transition-transform duration-150 ease-out active:scale-[0.99]',
@@ -79,5 +91,5 @@ export function openActionDrawer(options: ActionDrawerOptions): Promise<string |
         </DrawerFooter>
       </DrawerContent>
     </Drawer>
-  ))
+  )
 }

@@ -1,4 +1,4 @@
-import { type ReactNode, useSyncExternalStore } from 'react'
+import { type ReactNode, useCallback, useRef, useState, useSyncExternalStore } from 'react'
 
 export type OverlayResolver<R> = (value: R) => void
 
@@ -31,6 +31,58 @@ export function openOverlay<R>(render: (resolve: OverlayResolver<R>) => ReactNod
     entries = [...entries, { id, node: render(resolve) }]
     emit()
   })
+}
+
+export interface OverlayController<R> {
+  /** Whether the overlay should render open. Starts `true`; an action flips it via `close`. */
+  open: boolean
+  /**
+   * Records `value` as the eventual result and starts the primitive's closing transition
+   * (by flipping `open` to `false`). Idempotent — a second call while already closing is a no-op,
+   * so a click that starts closing followed by an Escape keypress can't overwrite the result.
+   */
+  close: (value: R) => void
+  /**
+   * Wire directly to the primitive's `onOpenChangeComplete`. Once Base UI reports the closing
+   * transition finished (`open === false`), this calls the overlay's `resolve` exactly once.
+   */
+  onOpenChangeComplete: (open: boolean) => void
+}
+
+/**
+ * Two-phase close for overlays mounted via `openOverlay`: an action (confirm/cancel/pick/
+ * backdrop-dismiss/escape) calls `close(value)`, which flips `open` to `false` so Base UI plays
+ * its exit transition; `resolve` only runs once that transition completes and Base UI calls
+ * `onOpenChangeComplete(false)`. This keeps dismissals from cutting instantly — the overlay
+ * unmounts (via `openOverlay`'s `resolve`) only after it has finished animating away.
+ *
+ * Every `*Dialog`/`*Drawer` service built on `openOverlay` should consume this instead of calling
+ * `resolve` directly, so the close-animation timing is centralized here rather than reimplemented
+ * per overlay.
+ */
+export function useOverlayController<R>(resolve: OverlayResolver<R>): OverlayController<R> {
+  const [open, setOpen] = useState(true)
+  const valueRef = useRef<R | undefined>(undefined)
+  const closingRef = useRef(false)
+  const resolvedRef = useRef(false)
+
+  const close = useCallback((value: R) => {
+    if (closingRef.current) return
+    closingRef.current = true
+    valueRef.current = value
+    setOpen(false)
+  }, [])
+
+  const onOpenChangeComplete = useCallback(
+    (nextOpen: boolean) => {
+      if (nextOpen || resolvedRef.current) return
+      resolvedRef.current = true
+      resolve(valueRef.current as R)
+    },
+    [resolve],
+  )
+
+  return { open, close, onOpenChangeComplete }
 }
 
 export function OverlayHost() {

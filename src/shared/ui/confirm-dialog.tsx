@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { openOverlay } from './overlay-host'
+import { openOverlay, useOverlayController, type OverlayResolver } from './overlay-host'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,24 +21,31 @@ export interface ConfirmDialogOptions {
 
 /**
  * Opens a controlled shadcn AlertDialog that starts open and resolves `true` on confirm,
- * `false` on cancel or any dismiss (backdrop click, Escape). The dialog is not itself
- * animated closed — resolving unmounts the overlay entry immediately.
+ * `false` on cancel or any dismiss (backdrop click, Escape). The overlay entry unmounts only
+ * after Base UI's close transition finishes (see `useOverlayController`), so dismissals animate
+ * instead of cutting instantly.
  */
 export function openConfirmDialog(options: ConfirmDialogOptions): Promise<boolean> {
-  const {
-    title,
-    description,
-    confirmLabel = 'Confirm',
-    cancelLabel = 'Cancel',
-    tone = 'default',
-  } = options
+  return openOverlay<boolean>((resolve) => <ConfirmDialogBody {...options} resolve={resolve} />)
+}
 
-  return openOverlay<boolean>((resolve) => (
+function ConfirmDialogBody({
+  title,
+  description,
+  confirmLabel = 'Confirm',
+  cancelLabel = 'Cancel',
+  tone = 'default',
+  resolve,
+}: ConfirmDialogOptions & { resolve: OverlayResolver<boolean> }) {
+  const { open, close, onOpenChangeComplete } = useOverlayController(resolve)
+
+  return (
     <AlertDialog
-      open
-      onOpenChange={(open) => {
-        if (!open) resolve(false)
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) close(false)
       }}
+      onOpenChangeComplete={onOpenChangeComplete}
     >
       <AlertDialogContent>
         <AlertDialogHeader>
@@ -49,12 +56,12 @@ export function openConfirmDialog(options: ConfirmDialogOptions): Promise<boolea
           <AlertDialogCancel>{cancelLabel}</AlertDialogCancel>
           <AlertDialogAction
             variant={tone === 'danger' ? 'destructive' : 'default'}
-            onClick={() => resolve(true)}
+            onClick={() => close(true)}
           >
             {confirmLabel}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  ))
+  )
 }

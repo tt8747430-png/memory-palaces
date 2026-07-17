@@ -1,5 +1,5 @@
 import { type FormEvent, type ReactNode, useState } from 'react'
-import { openOverlay, type OverlayResolver } from './overlay-host'
+import { openOverlay, useOverlayController, type OverlayResolver } from './overlay-host'
 import { Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle } from './drawer'
 import { Button } from './button'
 import { cn } from '@/shared/lib'
@@ -37,6 +37,7 @@ function PromptDrawerBody({
 }: PromptDrawerOptions & { resolve: OverlayResolver<string | null> }) {
   const [value, setValue] = useState(initialValue)
   const [error, setError] = useState<string | null>(null)
+  const { open, close, onOpenChangeComplete } = useOverlayController(resolve)
 
   const submit = (event?: FormEvent) => {
     event?.preventDefault()
@@ -47,17 +48,18 @@ function PromptDrawerBody({
       setError(validationError)
       return
     }
-    resolve(trimmed)
+    close(trimmed)
   }
 
   const valid = value.trim().length > 0
 
   return (
     <Drawer
-      open
-      onOpenChange={(open) => {
-        if (!open) resolve(null)
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) close(null)
       }}
+      onOpenChangeComplete={onOpenChangeComplete}
     >
       <DrawerContent>
         <DrawerHeader>
