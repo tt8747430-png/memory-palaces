@@ -1,4 +1,4 @@
-import type { Identifiable } from '@app/shared/data'
+import type { Identifiable } from '@/shared/data'
 
 export interface Entity extends Identifiable {
   createdAt: string
