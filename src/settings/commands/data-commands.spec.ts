@@ -11,8 +11,8 @@ import {
   QuestionStore,
 } from '@/decks'
 import type { Folder, Deck, Card, Question } from '@/decks'
-import { makeProgress, PROGRESS_ID, ProgressStore } from '@/study'
-import type { Progress } from '@/study'
+import { makeProgress, PROGRESS_ID, ProgressStore } from '@/progress'
+import type { Progress } from '@/progress'
 import { makeNotification, NotificationStore } from '@/notifications'
 import type { AppNotification } from '@/notifications'
 import { clearAllContent, clearNotifications, resetEverything, resetProgress } from './data-index'

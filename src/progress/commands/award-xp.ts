@@ -1,17 +1,17 @@
-import type { Progress } from '@/study/model/progress'
-import type { ProgressStore } from '@/study/data/progress-store'
+import type { Progress } from '../model/progress'
+import type { ProgressStore } from '../data/progress-store'
 import { currentProgress } from './current-progress'
 
-export async function recordQuizResult(
+export async function awardXp(
   store: ProgressStore,
-  accuracy: number,
+  amount: number,
   now: number = Date.now(),
 ): Promise<Progress> {
   const base = currentProgress(store, now)
-  const best = Math.max(base.bestQuizAccuracy, Math.round(accuracy))
+  const gained = Math.max(0, Math.round(amount))
   const updated: Progress = {
     ...base,
-    bestQuizAccuracy: best,
+    xp: base.xp + gained,
     updatedAt: new Date(now).toISOString(),
   }
   await store.save(updated)

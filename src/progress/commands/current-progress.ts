@@ -1,6 +1,6 @@
-import { makeProgress } from '@/study/model/progress'
-import type { Progress } from '@/study/model/progress'
-import type { ProgressStore } from '@/study/data/progress-store'
+import { makeProgress } from '../model/progress'
+import type { Progress } from '../model/progress'
+import type { ProgressStore } from '../data/progress-store'
 
 export const PROGRESS_ID = 'progress'
 

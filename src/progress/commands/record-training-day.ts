@@ -1,6 +1,6 @@
 import { recordTrainingDay as advanceStreak, type StreakResult } from '@/shared/domain'
-import type { Progress } from '@/study/model/progress'
-import type { ProgressStore } from '@/study/data/progress-store'
+import type { Progress } from '../model/progress'
+import type { ProgressStore } from '../data/progress-store'
 import { currentProgress } from './current-progress'
 
 export interface RecordTrainingDayOutcome {

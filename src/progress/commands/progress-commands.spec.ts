@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@/shared/data'
-import type { Progress } from '@/study/model/progress'
+import type { Progress } from '../model/progress'
 import { awardXp, recordQuizResult, recordTrainingDay } from './progress-index'
-import { ProgressStore } from '@/study/data/progress-store'
+import { ProgressStore } from '../data/progress-store'
 
 const NOW = Date.UTC(2026, 0, 10)
 const DAY = 86_400_000

@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { dayKey } from '@/shared/domain'
 import { InMemoryRepository } from '@/shared/data'
-import { makeProgress } from '@/study/model/progress'
-import type { Progress } from '@/study/model/progress'
+import { makeProgress } from '../model/progress'
+import type { Progress } from '../model/progress'
 import { completeSession, quizXp, studyXp, XP_MATCH } from './progress-index'
-import { ProgressStore } from '@/study/data/progress-store'
+import { ProgressStore } from '../data/progress-store'
 
 const NOW = Date.UTC(2026, 0, 10)
 const DAY = 86_400_000

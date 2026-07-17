@@ -1,15 +1,8 @@
 /**
- * The study area's public API — model types, the progress store and its
- * commands, and the progress/review commands (ADR-0008).
+ * The study area's public API — the SRS engine: session machine, grading, and
+ * scheduling. This area has no pages.
  *
- * This area has no pages: it is the SRS engine (session machine, grading,
- * scheduling, XP). `ui/session-reward` is imported directly by the lazy pages
- * that render it, for the reason given in `decks/index.ts`.
- *
- * NOTE: progress (store, model, XP/reward commands) moves to `@/progress` in
- * Task 9; this barrel is trimmed to the SRS engine there.
+ * Progress (XP, streak, rewards) is NOT here — it lives in `@/progress`
+ * (ADR-0004).
  */
-export * from './model/progress'
-export * from './data/progress-store'
-export * from './commands/progress-index'
 export * from './commands/review-index'
