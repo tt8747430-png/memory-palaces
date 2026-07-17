@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Drawer as DrawerPrimitive } from '@base-ui/react/drawer'
 
-import { cn } from '@/shared/lib/utils'
+import { cn } from '@/shared/lib'
 
 type DrawerContextProps = {
   hasSnapPoints: boolean
@@ -27,9 +27,11 @@ function Drawer({
   showSwipeHandle = false,
   snapPoints,
   swipeDirection = 'down',
+  children,
   ...props
-}: DrawerPrimitive.Root.Props & {
+}: Omit<DrawerPrimitive.Root.Props, 'children'> & {
   showSwipeHandle?: boolean
+  children?: React.ReactNode
 }) {
   const hasSnapPoints = snapPoints != null && snapPoints.length > 0
   const contextValue = React.useMemo(
@@ -37,6 +39,10 @@ function Drawer({
     [hasSnapPoints, modal, showSwipeHandle, swipeDirection],
   )
 
+  // `VirtualKeyboardProvider` reads Drawer's dialog-root context (it calls
+  // `useDialogRootContext()` internally to align focused fields with the software
+  // keyboard), so it must be a descendant of `Root`, not an ancestor — see the Base UI
+  // Drawer docs' "Virtual keyboard aware" examples, which always nest it inside `Root`.
   return (
     <DrawerContext.Provider value={contextValue}>
       <DrawerPrimitive.Root
@@ -45,7 +51,11 @@ function Drawer({
         snapPoints={snapPoints}
         swipeDirection={swipeDirection}
         {...props}
-      />
+      >
+        <DrawerPrimitive.VirtualKeyboardProvider>
+          {children}
+        </DrawerPrimitive.VirtualKeyboardProvider>
+      </DrawerPrimitive.Root>
     </DrawerContext.Provider>
   )
 }
