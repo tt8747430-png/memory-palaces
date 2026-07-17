@@ -1,2 +1,5 @@
 export { cn } from './utils'
 export { useKeyboardPin } from './use-keyboard-pin'
+export { useOptimisticPatch, orderPatch } from './use-optimistic-patch'
+export { useLongPress } from './use-long-press'
+export type { LongPressOptions, LongPressHandlers } from './use-long-press'
