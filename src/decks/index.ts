@@ -11,9 +11,11 @@
  * composition root wires, not something another area should reach for.
  */
 export * from './model/deck'
+export * from './model/deck-appearance'
 export * from './model/card'
 export * from './model/question'
 export * from './model/folder'
+export * from './model/folder-appearance'
 export * from './data/stores'
 export * from './commands/deck-index'
 export * from './commands/card-index'
