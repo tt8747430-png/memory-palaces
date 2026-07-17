@@ -248,3 +248,39 @@
     padding-right: env(safe-area-inset-right);
   }
 }
+
+/* Route transitions (ADR-0012): the View Transitions API animates between pages; `motion`
+   stays for everything a gesture drives. Reduced-motion users get the browser's default
+   instant swap — no rule is defined for that query, so nothing here overrides it. */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.22s;
+    animation-timing-function: ease-out;
+  }
+
+  ::view-transition-old(root) {
+    animation-name: ms-vt-fade-out;
+  }
+
+  ::view-transition-new(root) {
+    animation-name: ms-vt-fade-in;
+  }
+
+  @keyframes ms-vt-fade-out {
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes ms-vt-fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+}
+
+/* Shared-element convention (wired in P1c): a deck's cover tile carries
+   `view-transition-name: deck-cover-<id>` on both the library tile and the detail-page
+   header so the browser morphs one into the other across the route change. The name must
+   be unique per deck and present on exactly one element per document at a time. */
