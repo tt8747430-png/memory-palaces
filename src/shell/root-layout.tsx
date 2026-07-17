@@ -1,13 +1,27 @@
+import { useState } from 'react'
 import { Outlet } from 'react-router'
+import { AnimatePresence } from 'motion/react'
+import { useKeyboardPin } from '@/shared/lib'
+import { AppNav } from './app-nav'
+import { SplashOverlay } from './splash-overlay'
 import { UpdatePrompt } from './update-prompt'
 
 export function RootLayout() {
+  const [showSplash, setShowSplash] = useState(true)
+  useKeyboardPin()
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col">
-      <main className="flex-1">
-        <Outlet />
-      </main>
+    <>
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-x-0 top-0 bg-primary"
+        style={{ height: 'env(safe-area-inset-top)', zIndex: 'var(--ms-z-nav)' }}
+      />
+      <Outlet />
+      <AppNav />
       <UpdatePrompt />
-    </div>
+      <AnimatePresence>
+        {showSplash ? <SplashOverlay onDone={() => setShowSplash(false)} /> : null}
+      </AnimatePresence>
+    </>
   )
 }
