@@ -20,9 +20,10 @@
     <!-- `black`, never `black-translucent`: the translucent value routes standalone WebKit
          through a legacy path that leaves the layout viewport short at the bottom (a permanent
          strip, observed on device). Recent iOS ignores this meta's value and runs the app
-         edge-to-edge with the bar tint derived from page pixels — there the shell's painted
-         status-bar cap and body's navy background own the color; older iOS honors `black` plus
-         the bare theme-color above. -->
+         edge-to-edge with the bar tint sampled from the fixed element hit-tested at the top
+         edge — there the shell's status-bar cap (hit-testable, topmost) owns the color, with
+         body's navy background as fallback; older iOS honors `black` plus the bare
+         theme-color above. -->
     <meta content="black" name="apple-mobile-web-app-status-bar-style" />
     <meta content="Mindscape" name="apple-mobile-web-app-title" />
     <meta

@@ -16,8 +16,9 @@ export function App({ services }: { services: Services }) {
           <RouterProvider router={router} />
           <OverlayHost />
           {/* Sonner defaults to z-index 999999999 — bring it into the token scale so the
-              status-bar cap (z-statusbar) can stay above toasts that slide through the
-              forehead. */}
+              status-bar cap (z-statusbar) stays the topmost element at the top edge: iOS
+              samples the bar tint from a hit test there, so a toast sliding through the
+              forehead must sit under the cap for the bar to stay navy. */}
           <Toaster
             position="top-center"
             richColors

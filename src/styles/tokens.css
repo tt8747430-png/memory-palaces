@@ -82,8 +82,9 @@
   --ms-z-modal: 500;
   --ms-z-toast: 600;
   --ms-z-tooltip: 700;
-  /* The status-bar cap outranks every in-app layer: iOS derives the standalone status-bar
-     tint from the topmost pixels, so nothing (toasts included) may repaint the forehead.
+  /* The status-bar cap outranks every in-app layer: iOS 26 tints the standalone status bar
+     from the element a WebKit hit test finds at the top edge (fixed-container edge sampling),
+     so the cap must be the topmost hit — nothing (toasts included) may claim the forehead.
      Only the splash sits higher — its gradient legitimately owns the forehead at boot. */
   --ms-z-statusbar: 800;
   --ms-z-splash: 900;
