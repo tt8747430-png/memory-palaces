@@ -63,6 +63,10 @@
 
   html {
     height: 100%;
+    /* Paints the whole web-view canvas — including the area standalone iOS can leave beyond
+       the layout viewport under `black-translucent`, where a fixed `#root` never reaches.
+       Without this, that slack renders as a white strip at the bottom edge (see --canvas). */
+    background-color: var(--canvas);
     /* No document-level scroll surface: the app scrolls inside `<main>` / sheet bodies, and
        the fixed shell must not slide when iOS scrolls the page for a focused field. */
     overflow: hidden;

@@ -95,6 +95,12 @@
     radial-gradient(circle at 80% 70%, oklch(var(--ms-tint-sky) / 0.15) 0%, transparent 40%),
     radial-gradient(ellipse at center, oklch(var(--ms-tint-sky) / 0.1) 0%, transparent 60%),
     var(--bg);
+  /* The canvas behind/beyond the app — `html`'s background. Solid on purpose: a root
+     background-color is the one paint the browser guarantees across the entire web view,
+     including the layout-viewport slack standalone iOS leaves at the bottom edge under
+     `black-translucent` (otherwise a white strip). Matches each theme's --bg bottom stop
+     so the seam is invisible. */
+  --canvas: var(--ms-white);
   --surface: var(--ms-white);
   --surface-sky: var(--ms-sky-100);
   --surface-glass: oklch(100% 0 0 / 0.9);
@@ -185,6 +191,7 @@
     oklch(19.9% 0.089 267.7) 100%
   );
   --bg-daylight: var(--bg);
+  --canvas: oklch(19.9% 0.089 267.7);
   --surface: oklch(27.3% 0.131 267.1);
   --surface-sky: oklch(30.4% 0.128 267.2);
   --surface-glass: oklch(27.3% 0.131 267.1 / 0.72);
