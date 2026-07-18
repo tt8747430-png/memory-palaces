@@ -4,6 +4,11 @@
 @import '@fontsource/lexend/600.css';
 @import '@fontsource/lexend/700.css';
 @import 'tailwindcss';
+
+/* Plans and ADRs quote utility strings in prose — including tokens from the pre-revert
+   `--p-*` scale — which Tailwind's automatic source detection happily compiles into dead
+   rules (and one malformed `var(--p-text-*)`). Docs are prose, not source. */
+@source not "../../docs";
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 @import './tokens.css';
