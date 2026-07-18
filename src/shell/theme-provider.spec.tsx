@@ -24,7 +24,7 @@ function mockMatchMedia(matches: boolean) {
 }
 
 describe('ThemeProvider', () => {
-  it('resolves the default (system) preference to light and syncs both theme-color metas', () => {
+  it('resolves the default (system) preference to light and syncs all three theme-color metas', () => {
     mockMatchMedia(false)
     const services = createTestServices()
 
@@ -37,7 +37,8 @@ describe('ThemeProvider', () => {
     expect(document.documentElement.dataset['theme']).toBe('light')
 
     const metas = document.head.querySelectorAll('meta[name="theme-color"]')
-    expect(metas).toHaveLength(2)
+    expect(metas).toHaveLength(3)
+    expect(document.head.querySelector('meta[name="theme-color"]:not([media])')).not.toBeNull()
     const contents = new Set(Array.from(metas).map((meta) => meta.getAttribute('content')))
     expect(contents.size).toBe(1)
   })

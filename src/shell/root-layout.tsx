@@ -9,11 +9,6 @@ export function RootLayout() {
   const [showSplash, setShowSplash] = useState(true)
   return (
     <>
-      <div
-        aria-hidden
-        className="pointer-events-none fixed inset-x-0 top-0 bg-primary"
-        style={{ height: 'env(safe-area-inset-top)', zIndex: 'var(--ms-z-nav)' }}
-      />
       <Outlet />
       <AppNav />
       <UpdatePrompt />

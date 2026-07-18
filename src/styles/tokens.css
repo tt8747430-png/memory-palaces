@@ -97,9 +97,8 @@
     var(--bg);
   /* The canvas behind/beyond the app — `html`'s background. Solid on purpose: a root
      background-color is the one paint the browser guarantees across the entire web view,
-     including the layout-viewport slack standalone iOS leaves at the bottom edge under
-     `black-translucent` (otherwise a white strip). Matches each theme's --bg bottom stop
-     so the seam is invisible. */
+     including any slack standalone iOS leaves beyond the layout viewport (which otherwise
+     renders default-white). Matches each theme's --bg bottom stop so the seam is invisible. */
   --canvas: var(--ms-white);
   --surface: var(--ms-white);
   --surface-sky: var(--ms-sky-100);
