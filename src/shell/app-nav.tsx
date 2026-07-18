@@ -4,7 +4,9 @@ import { useTranslation } from 'react-i18next'
 import { motion, useReducedMotion } from 'motion/react'
 import { House, User } from 'lucide-react'
 import { type RoutePath, ROUTES } from '@/shared/config/routes'
+import { useStore } from '@/shared/data/use-store'
 import { cn } from '@/shared/lib'
+import { tabNavHidden } from './tab-nav-visibility'
 
 interface Tab {
   to: typeof ROUTES.home | typeof ROUTES.profile
@@ -27,8 +29,11 @@ export function AppNav() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const reducedMotion = useReducedMotion()
+  const hidden = useStore(tabNavHidden)
 
   if (!TAB_PATHS.includes(pathname as RoutePath)) return null
+  // Drill-downs that are state rather than a route (an open folder) ask for this.
+  if (hidden) return null
 
   return (
     <nav

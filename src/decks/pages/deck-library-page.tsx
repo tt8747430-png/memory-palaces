@@ -36,6 +36,7 @@ import {
   SwipeRow,
   type SwipeActionHandlers,
 } from '@/shared/ui'
+import { useHideTabNav } from '@/shell/tab-nav-visibility'
 import { type DeckLibraryPageProps, DROP_MS, useDeckLibrary } from './use-deck-library'
 
 export type { DeckLibraryPageProps }
@@ -49,6 +50,8 @@ const NO_SHIFT: SortingStrategy = () => null
 export function DeckLibraryPage(props: DeckLibraryPageProps) {
   const { t } = useTranslation()
   const vm = useDeckLibrary(props)
+  // An open folder is a drill-down that never changes the route, so the nav has to be told.
+  useHideTabNav(vm.inFolder)
 
   return (
     <AppScreen
