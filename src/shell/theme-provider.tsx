@@ -21,7 +21,8 @@ function resolve(theme: Theme): 'light' | 'dark' {
  * status bar only repaints if the node is removed and a fresh one appended. Both media-attributed
  * metas get the same app-resolved color so the app's theme wins over the OS scheme (a single
  * un-attributed tag is otherwise ignored by dark-mode Chromium). iOS standalone ignores
- * theme-color entirely — there the painted status-bar cap is the only control.
+ * theme-color entirely — there the status bar is the opaque `black` of
+ * `apple-mobile-web-app-status-bar-style` in index.html.
  */
 function syncThemeColor(resolved: 'light' | 'dark') {
   const color = THEME_COLOR[resolved]
