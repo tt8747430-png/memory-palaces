@@ -1,4 +1,4 @@
-import { type ReactNode, useMemo, useState } from 'react'
+import { type ReactNode, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { SortableContext, type SortingStrategy } from '@dnd-kit/sortable'
 import { useSortable } from '@dnd-kit/sortable'
@@ -58,7 +58,10 @@ export interface DeckTreeProps {
   swipeHandlers?: (deck: Deck) => SwipeActionHandlers
   parentId?: string | null
   folderId?: string | null
-  now?: number
+  /** Sampled by the caller, not here: `main` re-evaluates `Date.now()` every render so
+   *  due badges stay fresh, which `react-hooks/purity` forbids inside this component.
+   *  Making it required pushes the one sample up to the page that owns the re-renders. */
+  now: number
 }
 
 export function DeckTree({
@@ -77,15 +80,8 @@ export function DeckTree({
   swipeHandlers,
   parentId = null,
   folderId = null,
-  now: nowProp,
+  now,
 }: DeckTreeProps) {
-  // `Date.now()` can't be called inline during render (react-hooks/purity) — main's
-  // default parameter re-samples it on every render, which our stricter lint config
-  // (react-hooks recommended, not part of main's) disallows. Sampling once at mount
-  // via lazy `useState` init is the same idiom main itself uses for this exact need
-  // in `StreakPage`/`DeckDetailPage`; callers may still override with an explicit `now`.
-  const [mountedAt] = useState(() => Date.now())
-  const now = nowProp ?? mountedAt
   const dueCounts = useMemo(() => dueCountsPerDeck(decks, cards, now), [decks, cards, now])
   // The top level is scoped to the open folder; deeper levels resolve by parent.
   const roots = useMemo(
