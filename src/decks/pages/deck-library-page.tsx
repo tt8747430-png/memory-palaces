@@ -243,8 +243,10 @@ export function DeckLibraryPage(props: DeckLibraryPageProps) {
       )}
 
       {vm.selectMode ? (
+        // Rides above the tab nav rather than over it: the nav pill is 4rem tall at
+        // `bottom-[max(0.75rem,safe)]`, so +5rem clears it — the same offset SpeedDial uses.
         <div
-          className="fixed inset-x-0 bottom-0 mx-auto w-full max-w-[26.875rem] px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-2"
+          className="fixed inset-x-0 bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+5rem)] mx-auto w-full max-w-[26.875rem] px-3"
           style={{ zIndex: 'var(--ms-z-overlay)' }}
         >
           <SelectToolbar actions={vm.selectToolbarConfig} handlers={selectHandlersFor(vm)} />

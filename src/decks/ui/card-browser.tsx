@@ -215,16 +215,18 @@ export function CardBrowser({
                 <motion.div
                   drag="x"
                   dragMomentum={false}
+                  // Cleared at the start of every gesture, not inside the tap handler: motion
+                  // cancels the tap once a drag passes its threshold, so a flag cleared on tap
+                  // would still be set when the *next* gesture began and swallow that flip.
+                  onPointerDown={() => {
+                    dragged.current = false
+                  }}
                   onDragStart={() => {
                     dragged.current = true
                   }}
                   onDragEnd={onDragEnd}
                   onTap={() => {
-                    if (dragged.current) {
-                      dragged.current = false
-                      return
-                    }
-                    setFlipped((value) => !value)
+                    if (!dragged.current) setFlipped((value) => !value)
                   }}
                   style={{ x, rotate }}
                   className="relative z-10 w-full touch-pan-y"
