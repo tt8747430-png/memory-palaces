@@ -7,6 +7,12 @@ export { HomeHeader, type HomeHeaderProps } from './home-header'
 export { FolderForm, type FolderFormProps } from './folder-form'
 export { openFolderDrawer, type FolderDraft, type OpenFolderDrawerOptions } from './folder-drawer'
 export {
+  DeckTree,
+  DeckDragPreview,
+  type DeckTreeProps,
+  type DeckDragPreviewProps,
+} from './deck-tree'
+export {
   openMoveDeckDrawer,
   type MoveDestination,
   type OpenMoveDeckDrawerOptions,
