@@ -22,11 +22,13 @@ function resolve(theme: Theme): 'light' | 'dark' {
 }
 
 /**
- * iOS Safari ignores in-place `content` mutation on a `<meta name="theme-color">` node — the
- * status bar only repaints if the node is removed and a fresh one appended. All three metas
- * (bare + both media-attributed, see THEME_COLOR_MEDIA) get the same app-resolved color so the
- * app's theme wins over the OS scheme everywhere: the bare tag drives the iOS standalone status
- * bar, the attributed pair drives dark-mode Chromium.
+ * Idempotent by design: a meta that already carries the right color is left completely alone,
+ * so the parse-time tags from index.html survive every mount — iOS standalone samples
+ * theme-color unreliably after DOM churn, and the color is identical in both themes, so the
+ * common path must touch nothing. When a color really changes, the node is removed and a fresh
+ * one appended (never mutated in place — iOS Safari browser mode ignores in-place `content`
+ * mutation). Three metas (see THEME_COLOR_MEDIA): the bare tag is what iOS honors, the
+ * media-attributed pair is for dark-mode Chromium, which ignores a lone bare tag.
  */
 function syncThemeColor(resolved: 'light' | 'dark') {
   const color = THEME_COLOR[resolved]
@@ -34,10 +36,12 @@ function syncThemeColor(resolved: 'light' | 'dark') {
     const selector = media
       ? `meta[name="theme-color"][media="${media}"]`
       : 'meta[name="theme-color"]:not([media])'
-    document.head.querySelector(selector)?.remove()
+    const existing = document.head.querySelector<HTMLMetaElement>(selector)
+    if (existing?.content === color) continue
+    existing?.remove()
     const meta = document.createElement('meta')
     meta.name = 'theme-color'
-    if (media) meta.media = media
+    if (media) meta.setAttribute('media', media)
     meta.content = color
     document.head.appendChild(meta)
   }

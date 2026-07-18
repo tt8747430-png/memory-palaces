@@ -78,6 +78,10 @@
   body {
     margin: 0;
     height: 100%;
+    /* Never visible (#root covers it) — this is a hint for recent iOS, which ignores
+       theme-color in standalone and derives the status-bar tint from page pixels, body
+       background first (WebKit 300965). Navy here steers the derivation to the brand color. */
+    background-color: var(--primary);
     overflow: hidden;
     font-family: var(--ms-font-sans), sans-serif;
     color: var(--text-primary);

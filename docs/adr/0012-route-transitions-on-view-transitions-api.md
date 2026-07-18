@@ -36,8 +36,7 @@ it tracks a pointer or lives inside one surface, it's `motion`.
   CSS only.
 - `prefers-reduced-motion` collapses view transitions to a cut via one media query, preserving the
   token-layer guarantee.
-- Fixed shell elements (the bottom nav pill; originally also a status-bar cap, since removed with
-  the `black-translucent` revert) get their own `view-transition-name` so page snapshots don't drag
-  them along.
+- Fixed shell elements (bottom nav pill, status-bar cap) get their own `view-transition-name` so
+  page snapshots don't drag them along.
 - Browsers without same-document support get instant swaps — a graceful no-op, acceptable under the
   zero-legacy rule.

@@ -17,10 +17,12 @@
     <meta content="#091A7A" media="(prefers-color-scheme: dark)" name="theme-color" />
     <meta content="yes" name="mobile-web-app-capable" />
     <meta content="yes" name="apple-mobile-web-app-capable" />
-    <!-- `black`, never `black-translucent`: translucent full-bleed triggers a WebKit standalone
-         bug that leaves the layout viewport short at the bottom (a permanent strip, observed on
-         device). With `black`, iOS paints the status bar itself from the bare theme-color above
-         and the web view runs from below it to the true bottom edge. -->
+    <!-- `black`, never `black-translucent`: the translucent value routes standalone WebKit
+         through a legacy path that leaves the layout viewport short at the bottom (a permanent
+         strip, observed on device). Recent iOS ignores this meta's value and runs the app
+         edge-to-edge with the bar tint derived from page pixels — there the shell's painted
+         status-bar cap and body's navy background own the color; older iOS honors `black` plus
+         the bare theme-color above. -->
     <meta content="black" name="apple-mobile-web-app-status-bar-style" />
     <meta content="Mindscape" name="apple-mobile-web-app-title" />
     <meta

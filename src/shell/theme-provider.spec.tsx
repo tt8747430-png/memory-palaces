@@ -42,4 +42,22 @@ describe('ThemeProvider', () => {
     const contents = new Set(Array.from(metas).map((meta) => meta.getAttribute('content')))
     expect(contents.size).toBe(1)
   })
+
+  it('leaves metas that already carry the right color untouched on re-sync', () => {
+    const { emit } = mockMatchMedia(false)
+    const services = createTestServices()
+
+    render(
+      <ServicesProvider services={services}>
+        <ThemeProvider>x</ThemeProvider>
+      </ServicesProvider>,
+    )
+
+    const before = Array.from(document.head.querySelectorAll('meta[name="theme-color"]'))
+    emit()
+    const after = Array.from(document.head.querySelectorAll('meta[name="theme-color"]'))
+
+    expect(after).toHaveLength(before.length)
+    after.forEach((meta, i) => expect(meta).toBe(before[i]))
+  })
 })
