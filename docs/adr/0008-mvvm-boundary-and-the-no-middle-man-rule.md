@@ -2,93 +2,85 @@
 
 **Status:** Accepted
 **Date:** 2026-07-16
+**Amended:** 2026-07-18 — re-expressed in React terms after ADR-0013 (the Angular revert). The
+boundary and the no-middle-man rule are unchanged; only the ViewModel's _mechanism_ changed, from an
+`@Injectable()` class to a hook.
+
 **Context:** ADR-0004 settled the folder architecture (feature areas over FSD) and the Clean
 Architecture layering — domain core, repository ports, adapters, a composition root, CQRS-lite
 commands. An audit found the code obeys all of it: zero dependency-rule violations, `shared/` imports
 nothing from feature areas, RxDB never leaks past the data layer, no component touches a repository.
 
-The defect was one layer down. `deck-library-page.ts` had grown to **688 lines**: a View that was also
-its own ViewModel and a controller. It injected 8 stores, owned view state, derived read models
+The defect was one layer down. The deck library page had grown to **688 lines**: a View that was also
+its own ViewModel and a controller. It read 8 stores, owned view state, derived read models
 (`selectableIds`, `allFavorited`, `filedDecks`, `isEmpty`), and orchestrated bulk
-archive/favourite/duplicate/unfile/move/delete with toasts, undo, dialogs, and navigation interleaved.
-None of it was reachable in a test without mounting a component and 8 stores.
+archive/favourite/duplicate/unfile/move/delete with toasts, undo, dialogs, and navigation
+interleaved. None of it was reachable in a test without mounting a component and 8 stores.
 
 ## Decision
 
 ### The ViewModel
 
-A ViewModel is an `@Injectable()` class provided **by the component**:
+A ViewModel is a **hook**, co-located with its page and named `use<Page>`:
 
-```ts
-@Component({ providers: [DeckLibraryVm], templateUrl: './deck-library-page.html' })
-export class DeckLibraryPage {
-  protected readonly vm = inject(DeckLibraryVm)
+```tsx
+// deck-library-page.tsx
+export function DeckLibraryPage() {
+  const vm = useDeckLibrary()
+  // …template only
 }
 ```
 
-It keeps DI (the VM injects stores, router, and real services), scopes one instance per component,
-and is reachable through `TestBed` without rendering.
+It reaches the model layer through `useServices()` (`shell/services-provider.tsx`) and binds store
+observables with `useStore()`. It is testable with `renderHook` — no page render, no DOM.
 
-- **The ViewModel owns:** view state signals, derived read models (`computed`), and orchestration —
-  command dispatch, toast/undo composition, confirm flows, navigation intents.
-- **The View owns:** the template. Plus presentation that never leaves it — the icon set, and state
-  like scroll-driven header elevation that no other layer can observe.
+- **The ViewModel owns:** view state, derived read models (`useMemo`), and orchestration — command
+  dispatch, toast/undo composition, confirm flows, navigation intents.
+- **The View owns:** the JSX. Plus presentation that never leaves it — the icon set, and state like
+  scroll-driven header elevation that no other layer can observe.
 
-Navigation is exposed as intents (`openProfile()`, `openDeck(id)`), so templates never carry route
+Navigation is exposed as intents (`openProfile()`, `openDeck(id)`), so JSX never carries route
 strings.
 
 ### No middle men
 
 Two rules, both load-bearing.
 
-**1. The ViewModel injects real services, never pass-through wrappers.**
+**1. The ViewModel calls real services, never pass-through wrappers.**
 
-`ToastService`, `ConfirmDialog`, `PromptSheet`, and `ActionSheet` are promise-returning services that
-do real work; injecting them into a VM is correct, not indirection. A per-sheet wrapper class — e.g.
-a `MoveDeckSheetService` forwarding to `MatBottomSheet.open()` — is a textbook Middle Man and is
+`toast` (sonner), `openConfirmDialog`, `openPromptDrawer`, and `openActionDrawer` do real work;
+calling them from a VM is correct, not indirection. A per-drawer wrapper module — e.g. a
+`moveDeckDrawerService` that only forwards to the overlay host — is a textbook Middle Man and is
 rejected.
 
-Sheets that return data expose **their own promise-returning open function, co-located in their own
-file**, matching the shape `ConfirmDialog.confirm()` and `PromptSheet.prompt()` already had:
+Drawers that return data expose **their own promise-returning open function, co-located in the
+drawer's own file**:
 
 ```ts
-// move-deck-sheet.ts, beside the component it opens
-export function openMoveDeckSheet(
-  sheets: MatBottomSheet,
-  data: MoveDeckSheetData,
-): Promise<MoveDeckResult | undefined>
+// move-deck-drawer.tsx, beside the component it opens
+export function openMoveDeckDrawer(data: MoveDeckDrawerData): Promise<MoveDestination | undefined>
 ```
 
-This is not a new layer — it is the sheet's public API. It removed the `.afterDismissed().subscribe()`
-callback nesting and keeps the VM from naming a View component.
+This is not a new layer — it is the drawer's public API. It keeps callback nesting out of the VM and
+keeps the VM from naming a View component.
 
 **2. ViewModels are earned, not automatic.**
 
 > Extract a ViewModel only when a page owns **real** derived state or multi-step orchestration.
-> A class that merely forwards to stores and commands is a Middle Man — delete it and let the
+> A hook that merely forwards to stores and commands is a Middle Man — delete it and let the
 > component read the store directly.
 
 A blanket VM-per-page would manufacture the exact smell being avoided. Most pages stay plain
-components.
+components that call `useStore()` directly.
 
-**Judge by class body and by whether the logic is real — never by file size.** Applying the rule to
-this codebase, six components looked like candidates by file length; only three earned a VM:
+**Judge by the logic, not by file size.** Most of a large page file is JSX. The rule's real test is
+whether the orchestration exists at all:
 
-| Component              | File | Class body | VM?                |
-| ---------------------- | ---- | ---------- | ------------------ |
-| `deck-library-page`    | 688  | ~580       | **yes** → 53 lines |
-| `deck-questions-page`  | 500  | ~275       | **yes**            |
-| `deck-content-editor`  | 484  | 273        | **yes**            |
-| `quiz-session`         | 473  | 146        | no                 |
-| `settings-swipe-page`  | 385  | 129        | no                 |
-| `settings-select-page` | 328  | 114        | no                 |
-
-The rejections show the rule doing work. `quiz-session` injects no store and dispatches no command:
-its state already lives in the unit-tested `quizReducer`, and what remains is projection over
-`state()` plus presentation. The two settings editors are the same — their real rules
-(`normalizeSwipeConfig`, `normalizeSelectToolbar`) already live tested in `shared/config/`, leaving a
-working copy, constant lookups, and one `save()`. Their class bodies are also _smaller_ than
-`deck-settings-page` (135), which stays plain; extracting them would be symmetry, not design.
+| Shape                                                                                                                    | Verdict                                                        |
+| ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------- |
+| Page owns bulk flows over multiple stores, with toasts/undo/confirms                                                     | **VM** — `use-deck-library` (878 lines) behind a 521-line View |
+| Page projects one already-tested reducer and renders it                                                                  | no VM — the state lives in the tested reducer                  |
+| Page delegates its rules to tested pure functions (`normalizeSwipeConfig`, `normalizeSelectToolbar` in `shared/config/`) | no VM — a working copy and one `save()` is not orchestration   |
 
 **If the domain logic is already extracted and tested, a ViewModel has nothing to hold.**
 
@@ -98,8 +90,8 @@ Rules the page was deciding moved into bulk use-cases — `setDecksArchived`, `s
 `moveDecks`, `duplicateDecks`, `deleteDecks`, `deleteFolders`:
 
 - "Favourite is a set, not a flip" (a mixed selection favourites everything; only an all-favourited
-  selection clears) now lives in `setDecksFavorite`, which returns the value it applied so callers
-  report the outcome without re-deriving the rule.
+  selection clears) lives in `setDecksFavorite`, which returns the value it applied so callers report
+  the outcome without re-deriving the rule.
 - `canReparent` filtering lives in `moveDecks`, which skips impossible destinations rather than
   throwing and abandoning the rest of a selection, and returns the ids actually moved.
 
@@ -115,28 +107,28 @@ siblings.
 
 ### Store bootstrap belongs at the composition root
 
-Pages were calling `.start()` on `providedIn: 'root'` stores from their constructors — 34 calls across
-13 pages. Every page had to remember; forgetting one meant reads silently returned empty, and one
-store (`PreferencesStore` in `deck-detail-page`) was injected _solely_ to be started.
+Pages were calling `.start()` on stores from their own lifecycles — 34 calls across 13 pages. Every
+page had to remember; forgetting one meant reads silently returned empty, and one store was mounted
+_solely_ to be started.
 
-Stores now subscribe once via `provideEnvironmentInitializer` in `data.providers.ts` — the composition
-root, where wiring already lives. `start()` was already idempotent, so this was behaviour-neutral.
-`SessionStore` is excluded by design: auth state is loaded once by `restoreSession`, not mirrored from
-a live query.
+Stores now subscribe once in `composition-root.ts`'s `startAll()`, where wiring already lives.
+`start()` is idempotent, so this was behaviour-neutral. `SessionStore` is excluded by design: auth
+state is loaded once by `restoreSession`, not mirrored from a live query.
 
-Unit tests arrange the precondition themselves (`store.start()`), since they do not boot the app.
+**Never call `start()` from a component.** Unit tests arrange the precondition themselves
+(`createTestServices()` deliberately does not start stores).
 
 ### Cross-area imports go through barrels
 
 Each feature area exposes an `index.ts` — its public API. Cross-area imports use it; intra-area
-imports stay relative. Barrels export only what other areas actually consume; a barrel re-exporting an
-area's internals is its own kind of middle man.
+imports stay relative. Barrels export only what other areas actually consume; a barrel re-exporting
+an area's internals is its own kind of middle man.
 
 ## Consequences
 
-- `deck-library-page.ts`: **688 lines → 53**. Its read models and bulk flows are unit-testable without
-  rendering — the payoff, since the bulk flows were the least-covered code in the app.
-- One more indirection to traverse when reading a page: template → VM → command. Accepted; the
-  alternative was a 688-line class that was three things at once.
+- The deck library's read models and bulk flows are unit-testable without rendering — the payoff,
+  since the bulk flows were the least-covered code in the app.
+- One more indirection to traverse when reading a page: JSX → VM hook → command. Accepted; the
+  alternative was one component that was three things at once.
 - The extraction threshold means the codebase has **both** shapes — pages with VMs and pages without.
   That is intentional. Uniformity here would mean manufacturing middle men for the sake of symmetry.

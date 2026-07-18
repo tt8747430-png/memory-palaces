@@ -4,7 +4,7 @@ How Mindscape should behave and feel on a phone and as an installed app. Code-le
 
 **What this is:** a **portrait, touch-first, offline-first, installable PWA** — `index.html` sets `viewport-fit=cover` and `interactive-widget=resizes-visual`; the manifest (`vite.config.ts`) is `display: standalone`, `orientation: portrait`. Pinch-zoom is locked **only in the installed app** (a boot snippet appends `maximum-scale=1` when `(display-mode: standalone)` matches — ADR-0010); the browser tab stays zoomable for WCAG 1.4.4.
 
-> File paths in this doc reference `main`'s layout; they are refreshed in the React rebuild's P9 doc pass. The _rules_ bind throughout.
+> Paths below point at the current tree. Where a surface is named but not yet ported (§ the rebuild is View-layer only — see CLAUDE.md), the rule still binds: implement it that way when the surface lands.
 >
 > This is a **web PWA, not React Native**. The "Mobile Design System" template's RN/Flutter APIs (FlatList, SecureStore, `useNativeDriver`, const constructors) **do not apply** — the UX _principles_ below do.
 
@@ -12,7 +12,7 @@ How Mindscape should behave and feel on a phone and as an installed app. Code-le
 
 ## 1. Responsive layout & screen adaptation
 
-The app is **phone-first**, not a breakpoint grid. It renders as a **single centered column capped at `max-w-[430px]`** (see `shared/ui/AppScreen`, and every `Sheet`/overlay). Breakpoints (`sm:`/`md:`/`lg:`) are used in only a handful of places by design.
+The app is **phone-first**, not a breakpoint grid. It renders as a **single centered column capped at `max-w-[430px]`** (see `shared/ui/app-screen.tsx`, and every `Drawer`/overlay). Breakpoints (`sm:`/`md:`/`lg:`) are used in only a handful of places by design.
 
 - **Design at ~390–430px width.** Content adapts _within_ the column (wrap, stack, resize), not across desktop breakpoints. On tablet/desktop or a maximized PWA window, the column stays centered — never stretch UI edge-to-edge on a big screen.
 - **Use `dvh`, never `vh`, for full-height regions.** Dynamic viewport units account for the mobile URL bar and on-screen keyboard (the `Sheet` caps at `max-h-[88dvh]`; page shells use `dvh`). `100vh` overflows on mobile Safari.
@@ -25,14 +25,14 @@ The app is **phone-first**, not a breakpoint grid. It renders as a **single cent
 ## 2. Safe areas, viewport & keyboard
 
 - `viewport-fit=cover` lets content render under the notch and home indicator — you **must** pad for insets.
-- **Use the safe-area utilities in `theme.css`** (`env(safe-area-inset-*)` for all four sides, plus a bottom-nav offset `calc(7rem + env(safe-area-inset-bottom))` and `pb-safe`). Compose the primitives that already apply them — `AppScreen`, `Sheet`, `StickyBar`, `SpeedDial` — instead of hand-rolling padding.
+- **Use the safe-area utilities in `theme.css`** (`env(safe-area-inset-*)` for all four sides, plus a bottom-nav offset `calc(7rem + env(safe-area-inset-bottom))` and `pb-safe`). Compose the primitives that already apply them — `app-screen.tsx`, `drawer.tsx`, `sticky-bar.tsx`, `speed-dial.tsx` — instead of hand-rolling padding.
 - **Keyboard (ADR-0010):** `interactive-widget=resizes-visual` — full pages hold still and the keyboard overlays their lower edge; **only Drawers lift** (spec 07-14). Lifting is owned by the primitive: the shared `Drawer` bakes Base UI's `Drawer.VirtualKeyboardProvider` into its anatomy, so every drawer is keyboard-aware by construction. **Hand-made drawers are banned** — one built outside the shared component misses the keyboard handling by definition. Never hand-roll a `visualViewport`-driven **lift** (the old `--kb` transform raced iOS's caret-reveal pan and flickered). **Full pages gain scroll capacity instead (ADR-0010 amendment):** the shell `KeyboardInsetProvider` publishes `--kb-inset`, and `AppScreen`'s scroll region consumes it as `padding-bottom` + `scroll-padding-bottom` — while the keyboard is open, every page can scroll exactly far enough to reach any control (WebKit never shipped `interactive-widget`, so this JS inset is the only cross-platform fix). **Form layout rules:** top-align form content where the design allows; a centered form must center overflow-safely (`margin-block: auto` spacers — bare `justify-content: center` clips its top when it overflows and becomes unscrollable, which is exactly the login-page trap).
 - **Prevent overscroll chaining** on scroll regions (`overscroll-behavior: contain`) so an inner scroll doesn't bounce the whole app or trigger the browser's pull-to-refresh in standalone.
 
 ## 3. Touch targets & spacing
 
-- **≥ 44px hit area on anything tappable.** `Button` `md`/`lg` (`h-11`/`h-12`) comply; `sm` (`h-9` ≈ 36px) does **not** — only use it where padding brings the tap area to ≥44px. In the React rebuild, shadcn's generated size variants are **retuned once at the source** (default → 44px, `lg` → 48px) so pages inherit compliance instead of opting into it.
-- **Icon-only controls** need a ≥44px hit area **and** an `sr-only` label (`shared/ui/IconButton`, `OverflowMenuButton`). Expand a small glyph's tappable area with padding, not a bigger icon.
+- **≥ 44px hit area on anything tappable.** `Button` `md`/`lg` (`h-11`/`h-12`) comply; `sm` (`h-9` ≈ 36px) does **not** — only use it where padding brings the tap area to ≥44px. shadcn's generated size variants are **retuned once at the source** (default → 44px, `lg` → 48px) so pages inherit compliance instead of opting into it.
+- **Icon-only controls** need a ≥44px hit area **and** an `sr-only` label (`shared/ui/icon-button.tsx`). Expand a small glyph's tappable area with padding, not a bigger icon.
 - **≥ 8px between adjacent targets** so a ~7mm fingertip can't hit two at once. Dense rows (`SettingsRow`, `SwipeRow`) must still keep separable hit areas.
 - **Kill accidental double-taps:** `touch-action` on draggables (`touch-none` on the sheet grab handle), and disable the tap-highlight flash (`-webkit-tap-highlight-color: transparent`) in favor of explicit `active:` states.
 
@@ -40,14 +40,14 @@ The app is **phone-first**, not a breakpoint grid. It renders as a **single cent
 
 One-handed use: the bottom third is easy, the top is a stretch.
 
-- **Primary nav and CTAs live at the bottom** — `widgets/bottom-nav` (`AppNav`), `shared/ui/SpeedDial`, and sheets that rise from the bottom (`Sheet`, `ActionSheet`, `PromptSheet`).
-- **Keep destructive actions out of the resting thumb arc** and behind confirmation — route them through `shared/ui/ConfirmDialog`.
+- **Primary nav and CTAs live at the bottom** — `shell/app-nav.tsx`, `shared/ui/speed-dial.tsx`, and drawers that rise from the bottom (`drawer.tsx`, `action-drawer.tsx`, `prompt-drawer.tsx`).
+- **Keep destructive actions out of the resting thumb arc** and behind confirmation — route them through `shared/ui/confirm-dialog.tsx`.
 - Top-of-screen controls (back, overflow) are acceptable for **low-frequency** actions only.
 
 ## 5. Gestures, feedback & haptics
 
 - **Never rely on hover** — there is none on touch. Anything exposed on hover on desktop must be reachable by tap.
-- **Every gesture needs a visible alternative.** Swipe (`shared/ui/SwipeRow`, `swipe-actions`) and long-press (`shared/lib/use-long-press`) are accelerators, not the only path — provide a button too.
+- **Every gesture needs a visible alternative.** Swipe (`shared/ui/swipe-row.tsx`, `swipe-actions.tsx`) and long-press (`shared/lib/use-long-press.ts`) are accelerators, not the only path — provide a button too.
 - **Make gestures discoverable and forgiving:** show affordances (the sheet grab handle, swipe action colors), give an elastic/rubber-band boundary (the `Sheet` uses `dragElastic` bottom `0.18`), and require a deliberate threshold before committing a destructive swipe.
 - **Give immediate press feedback:** `active:scale-[0.97]` (see `Button`) + haptics on commit.
 - **Haptics** (`shared/lib/haptics`): `tick()` (8ms), `impact()` (16ms), `success([12,40,24])`, gated by a user preference (`setHapticsEnabled`). **Caveat:** these use `navigator.vibrate`, which works on Android/Chromium but is **ignored by iOS Safari** — treat haptics as progressive enhancement, never as the only feedback.
@@ -63,9 +63,9 @@ One-handed use: the bottom third is easy, the top is a stretch.
 
 ## 7. Menus, Drawers & overlays
 
-All overlays are built on **`@base-ui/react`** headless primitives (e.g. `Dialog` in `shared/ui/Sheet`), which provide focus-trap, portal, and `Escape`/backdrop dismissal. Prefer these primitives over hand-rolled overlays.
+All overlays are built on **`@base-ui/react`** headless primitives (e.g. `Dialog` in `shared/ui/drawer.tsx`), which provide focus-trap, portal, and `Escape`/backdrop dismissal. Prefer these primitives over hand-rolled overlays.
 
-- **Prefer Drawers (bottom sheets) over centered dialogs on mobile.** They land in the thumb zone and feel native. The Drawer is the canonical pattern: rises from the bottom (`data-[starting-style]:translate-y-full` slide + backdrop fade), has a **grab handle**, **drag-to-dismiss**, caps at **`max-h-[88dvh]`** so the context behind stays visible, pads `pb-safe`, and rounds only the top (`rounded-t-card-featured`). In the React rebuild it is built on Base UI `Drawer` with `VirtualKeyboardProvider` baked in (ADR-0010), **is named `Drawer`** (the glossary term — `main` called it `Sheet`; ported symbols rename mechanically), and is **the only way to build one**.
+- **Prefer Drawers (bottom sheets) over centered dialogs on mobile.** They land in the thumb zone and feel native. The Drawer is the canonical pattern: rises from the bottom (`data-[starting-style]:translate-y-full` slide + backdrop fade), has a **grab handle**, **drag-to-dismiss**, caps at **`max-h-[88dvh]`** so the context behind stays visible, pads `pb-safe`, and rounds only the top (`rounded-t-card-featured`). It is built on Base UI `Drawer` with `VirtualKeyboardProvider` baked in (ADR-0010), **is named `Drawer`** (the glossary term), and is **the only way to build one**.
 - **Snap points are first-class (ADR-0010):** Drawers whose content exceeds ~60dvh (content editor, in-study editor, card filter) ship a **half ↔ full detent pair** via Base UI `snapPoints`; short Drawers (action drawers, confirms, single-input prompts) stay at content height — a half detent on a three-item list would clip it. Every detent is a real UI state and is designed and verified as one.
 - **Pick the right component for the job:**
   - `Sheet` / `PromptSheet` — a form or a single input in context.
@@ -104,9 +104,9 @@ Code-level animation rules (which library, which properties) are in [CODE_STYLE.
 
 Every async surface must handle all four — a missing state reads as a crash on mobile.
 
-- **Loading** — skeleton/spinner, never a blank screen (`widgets/splash` for first paint); but skip it for instant local writes (§6).
+- **Loading** — skeleton/spinner, never a blank screen (`shell/splash-overlay.tsx` for first paint, `shared/ui/skeleton.tsx` thereafter); but skip it for instant local writes (§6).
 - **Error** — show the problem **with a retry path**, not a dead end.
-- **Empty** — use `shared/ui/EmptyState`; put the primary "create" action in the toolbar, not only in the empty state.
+- **Empty** — use `shared/ui/empty.tsx`; put the primary "create" action in the toolbar, not only in the empty state.
 - **Offline** — see §11.
 
 ## 11. Offline-first behavior
@@ -123,7 +123,7 @@ Every async surface must handle all four — a missing state reads as a crash on
 
 ## 13. Service-worker updates
 
-- `registerType: 'prompt'` — **updates are never auto-applied.** `app/providers/UpdatePrompt.tsx` uses `virtual:pwa-register/react`, checks for a new SW hourly **and** on `visibilitychange`, and when one is waiting shows a **persistent `sonner` toast** (`update.*` i18n keys) with a **Reload** action that calls `updateServiceWorker(true)`.
+- `registerType: 'prompt'` — **updates are never auto-applied.** `shell/update-prompt.tsx` uses `virtual:pwa-register/react`, checks for a new SW hourly **and** on `visibilitychange`, and when one is waiting shows a **persistent `sonner` toast** (`update.*` i18n keys) with a **Reload** action that calls `updateServiceWorker(true)`.
 - **Don't switch to `autoUpdate`** — a silent reload mid-study would lose the user's place. Keep the confirm step.
 - `devOptions.enabled: false` — the SW is **off in dev**; verify PWA/offline/update behavior against `npm run build && npm run preview`, not `npm run dev`.
 

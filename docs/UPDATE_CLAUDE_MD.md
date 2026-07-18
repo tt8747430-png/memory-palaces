@@ -1,9 +1,9 @@
-Update the existing AGENTS.md in the project root for guiding AI coding agents.
+Update the existing CLAUDE.md in the project root for guiding AI coding agents.
 
-Read the existing AGENTS.md in full BEFORE doing anything else. Understand its structure, sections, and content
+Read the existing CLAUDE.md in full BEFORE doing anything else. Understand its structure, sections, and content
 thoroughly. This is your baseline — everything here is assumed correct unless proven otherwise.
 
-Analyze the codebase to identify ONLY what has changed or is missing compared to the existing AGENTS.md. Focus on the
+Analyze the codebase to identify ONLY what has changed or is missing compared to the existing CLAUDE.md. Focus on the
 essential aspects that would help AI agents be immediately productive in this codebase, e.g.,:
 
 Architecture changes: new/removed components, altered service boundaries or data flows
@@ -27,5 +27,5 @@ Avoid generic advice ("write tests", "handle errors") - focus on THIS project's 
 
 Document only discoverable patterns, not aspirational practices
 Reference key files/directories that exemplify important patterns
-Apply the updates to AGENTS.md. After updating, summarize what was added, modified, or removed so the user is aware of
+Apply the updates to CLAUDE.md. After updating, summarize what was added, modified, or removed so the user is aware of
 the changes.

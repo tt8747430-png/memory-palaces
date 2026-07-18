@@ -1,5 +1,24 @@
 # Plan: New Architecture for Mindscape — React + Vite **PWA**, **Feature-Sliced Design + Clean Architecture**
 
+> **Status: forward-looking roadmap, partly superseded. Not a description of the current codebase.**
+>
+> This is the original architecture plan. Its **cloud and AI phases are still unbuilt and still the
+> plan** — Supabase auth/replication/storage, the Claude proxy Edge Function, the AI Tutor and its
+> command registry, background sync. Read it for those.
+>
+> Three things in it have been **decided differently** since, and the current code follows the
+> decision, not this document:
+>
+> | This doc says                                                       | Actually                                                                                                                                                           |
+> | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+> | FSD layers (`app → pages → widgets → features → entities → shared`) | **Feature areas** — `src/<area>/{model,data,commands,pages,ui}` (ADR-0004). No `widgets/`, `features/`, or `entities/` folders exist.                              |
+> | Zustand stores                                                      | **App-owned `Observable<T>`** + `CollectionStore<T>` (`shared/data/`), bound to React by `useStore()`. Zustand was never installed.                                |
+> | `shared/api` for ports and adapters                                 | **`shared/data`** — `Repository<T>`, `RxdbRepository`, `InMemoryRepository`. Pure algorithms live in **`shared/domain`**, not `shared/lib` (which is React hooks). |
+>
+> Everything else — offline-first, RxDB as the on-device source of truth, ports/adapters with a
+> composition root, CQRS-lite commands, the dependency rule — was built as described. See
+> [`CLAUDE.md`](../CLAUDE.md) for the architecture as it exists today.
+
 ### Cross-cutting engineering defaults (applied in every relevant phase)
 
 - **Offline UX:**
@@ -22,8 +41,6 @@ app/      → pages/ → widgets/ → features/ → entities/ → shared/
 - **Dependency rule:** outer layers depend on inner; adapters depend on ports, never the reverse → the core is portable + unit-testable.
 
 **CQRS-lite:** `features/*` are the **commands** (writes; one use-case each), shared by the UI _and_ the AI Tutor through the command registry; **reads** are reactive selectors over entity Zustand stores + RxDB reactive queries.
-
-
 
 ### Persistence, cloud & "always in sync"
 
