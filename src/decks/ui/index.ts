@@ -19,3 +19,16 @@ export {
 } from './move-deck-drawer'
 export { StudyOverviewCard, type StudyOverviewCardProps } from './study-overview-card'
 export { CardMaturityOverview, type CardMaturityOverviewProps } from './card-maturity-overview'
+export { DeckContentEditor, type DeckContentEditorProps } from './deck-content-editor'
+export { useDeckContent, type DeckContentVm, type UseDeckContentOptions } from './use-deck-content'
+// CardRow/QuestionRow and ReorderableList are shared with the questions page (1c.4); the
+// browser, filter/import drawers and select bar stay internal to the editor.
+export {
+  CardRow,
+  QuestionRow,
+  type CardRowProps,
+  type QuestionRowProps,
+  type RowDragHandle,
+} from './content-rows'
+export { ReorderableList, type ReorderableListProps } from './reorderable-list'
+export { SelectModeBar, type SelectModeBarProps } from './select-mode-bar'

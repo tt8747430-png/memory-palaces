@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
 import { SELECT_ACTION_META, type SelectToolbarConfig } from '@/shared/config/select-toolbar'
 import { cn } from '@/shared/lib'
@@ -8,6 +9,8 @@ export interface SelectToolbarProps {
   actions: SelectToolbarConfig
   handlers: SelectActionHandlers
   className?: string
+  /** For the caller's stacking value — surfaces place this bar differently (sticky vs fixed). */
+  style?: CSSProperties
 }
 
 /**
@@ -16,13 +19,14 @@ export interface SelectToolbarProps {
  * a four-action bar reads as one calm surface, with only a destructive action
  * allowed to raise its voice.
  */
-export function SelectToolbar({ actions, handlers, className }: SelectToolbarProps) {
+export function SelectToolbar({ actions, handlers, className, style }: SelectToolbarProps) {
   const { t } = useTranslation()
   const shown = actions.filter((id) => handlers[id] != null)
   if (shown.length === 0) return null
 
   return (
     <div
+      style={style}
       className={cn(
         'flex items-stretch gap-1.5 rounded-card-featured bg-card/95 p-2 shadow-elevated backdrop-blur-xl',
         className,
