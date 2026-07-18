@@ -15,10 +15,14 @@ export function App({ services }: { services: Services }) {
         <ThemeProvider>
           <RouterProvider router={router} />
           <OverlayHost />
+          {/* Sonner defaults to z-index 999999999 — bring it into the token scale so the
+              status-bar cap (z-statusbar) can stay above toasts that slide through the
+              forehead. */}
           <Toaster
             position="top-center"
             richColors
             mobileOffset={{ top: 'calc(env(safe-area-inset-top) + 1rem)' }}
+            style={{ zIndex: 'var(--ms-z-toast)' }}
           />
         </ThemeProvider>
       </ServicesProvider>

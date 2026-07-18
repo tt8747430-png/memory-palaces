@@ -18,6 +18,7 @@
   --color-muted: var(--surface-sky);
   --color-muted-foreground: var(--text-muted);
   --color-faint: var(--text-faint);
+  --color-status-bar: var(--status-bar);
 
   --color-destructive: var(--danger);
   --color-destructive-foreground: var(--danger-foreground);
@@ -80,8 +81,8 @@
     height: 100%;
     /* Never visible (#root covers it) — this is a hint for recent iOS, which ignores
        theme-color in standalone and derives the status-bar tint from page pixels, body
-       background first (WebKit 300965). Navy here steers the derivation to the brand color. */
-    background-color: var(--primary);
+       background first (WebKit 300965). Steers the derivation to the status-bar tone. */
+    background-color: var(--status-bar);
     overflow: hidden;
     font-family: var(--ms-font-sans), sans-serif;
     color: var(--text-primary);

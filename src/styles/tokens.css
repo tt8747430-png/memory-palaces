@@ -82,6 +82,11 @@
   --ms-z-modal: 500;
   --ms-z-toast: 600;
   --ms-z-tooltip: 700;
+  /* The status-bar cap outranks every in-app layer: iOS derives the standalone status-bar
+     tint from the topmost pixels, so nothing (toasts included) may repaint the forehead.
+     Only the splash sits higher — its gradient legitimately owns the forehead at boot. */
+  --ms-z-statusbar: 800;
+  --ms-z-splash: 900;
 
   --ms-container-app: 26.875rem;
   --bg: linear-gradient(
@@ -100,6 +105,10 @@
      including any slack standalone iOS leaves beyond the layout viewport (which otherwise
      renders default-white). Matches each theme's --bg bottom stop so the seam is invisible. */
   --canvas: var(--ms-white);
+  /* The pixels behind the iOS status text — the shell's cap and body's derivation hint.
+     Navy in light; the dark --bg TOP stop in dark, so the forehead reads as the app's own
+     background, not a branded band. */
+  --status-bar: var(--ms-navy-900);
   --surface: var(--ms-white);
   --surface-sky: var(--ms-sky-100);
   --surface-glass: oklch(100% 0 0 / 0.9);
@@ -191,6 +200,7 @@
   );
   --bg-daylight: var(--bg);
   --canvas: oklch(19.9% 0.089 267.7);
+  --status-bar: oklch(24.2% 0.113 267.7);
   --surface: oklch(27.3% 0.131 267.1);
   --surface-sky: oklch(30.4% 0.128 267.2);
   --surface-glass: oklch(27.3% 0.131 267.1 / 0.72);

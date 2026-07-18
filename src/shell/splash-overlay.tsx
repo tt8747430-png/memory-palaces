@@ -32,7 +32,7 @@ export function SplashOverlay({ onDone }: SplashOverlayProps) {
   return (
     <motion.div
       className="fixed inset-0 flex flex-col items-center justify-center gap-6 overflow-hidden px-6 text-center"
-      style={{ background: SPLASH_BG, zIndex: 'var(--ms-z-overlay)' }}
+      style={{ background: SPLASH_BG, zIndex: 'var(--ms-z-splash)' }}
       initial={{ opacity: 1 }}
       exit={{ opacity: 0, transition: { duration: 0.4, ease: 'easeOut' } }}
     >
