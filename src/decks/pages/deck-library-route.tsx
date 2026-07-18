@@ -13,7 +13,9 @@ export default function DeckLibraryRoute() {
 
   return (
     <DeckLibraryPage
-      onOpenDeck={(deckId) => void navigate(generatePath(ROUTES.deckDetail, { deckId }))}
+      onOpenDeck={(deckId) =>
+        void navigate(generatePath(ROUTES.deckDetail, { deckId }), { viewTransition: true })
+      }
       onOpenArchived={() => void navigate(ROUTES.archived)}
     />
   )

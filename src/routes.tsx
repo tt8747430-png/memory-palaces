@@ -1,7 +1,24 @@
-import { createBrowserRouter, redirect } from 'react-router'
+import { createBrowserRouter, redirect, type RouteObject } from 'react-router'
 import { ROUTES } from '@/shared/config/routes'
 import { RootLayout } from '@/shell/root-layout'
 import { RouteErrorBoundary } from '@/shell/route-error-boundary'
+
+/**
+ * Destinations the deck hub links to that later phases build (P2 practice, P8 import). Wiring the
+ * paths now keeps every intent a real navigation; until the page exists it lands back home rather
+ * than on the 404 boundary. Each entry is deleted as its page lands.
+ */
+const PLACEHOLDER_ROUTES: RouteObject[] = [
+  ROUTES.archived,
+  ROUTES.deckSettings,
+  ROUTES.deckQuestions,
+  ROUTES.deckStudy,
+  ROUTES.deckMatch,
+  ROUTES.deckCardNew,
+  ROUTES.deckCardEdit,
+  ROUTES.deckPaste,
+  ROUTES.deckImport,
+].map((path) => ({ path, loader: () => redirect(ROUTES.home) }))
 
 export const router = createBrowserRouter([
   {
@@ -17,11 +34,13 @@ export const router = createBrowserRouter([
         },
       },
       {
-        // Placeholder until the archived-decks page lands (P1c) — keeps the
-        // header's archive shortcut from hitting the 404 error boundary.
-        path: ROUTES.archived,
-        loader: () => redirect(ROUTES.home),
+        path: ROUTES.deckDetail,
+        lazy: async () => {
+          const { default: DeckDetailRoute } = await import('@/decks/pages/deck-detail-route')
+          return { Component: DeckDetailRoute }
+        },
       },
+      ...PLACEHOLDER_ROUTES,
     ],
   },
 ])
