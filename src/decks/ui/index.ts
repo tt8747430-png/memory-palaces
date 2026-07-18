@@ -31,4 +31,5 @@ export {
   type RowDragHandle,
 } from './content-rows'
 export { ReorderableList, type ReorderableListProps } from './reorderable-list'
+export { openQuestionImportDrawer, openQuestionExportDrawer } from './question-transfer-drawers'
 export { SelectModeBar, type SelectModeBarProps } from './select-mode-bar'

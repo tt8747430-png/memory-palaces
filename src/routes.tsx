@@ -11,11 +11,13 @@ import { RouteErrorBoundary } from '@/shell/route-error-boundary'
 const PLACEHOLDER_ROUTES: RouteObject[] = [
   ROUTES.archived,
   ROUTES.deckSettings,
-  ROUTES.deckQuestions,
   ROUTES.deckStudy,
   ROUTES.deckMatch,
+  ROUTES.deckQuiz,
   ROUTES.deckCardNew,
   ROUTES.deckCardEdit,
+  ROUTES.deckQuestionNew,
+  ROUTES.deckQuestionEdit,
   ROUTES.deckPaste,
   ROUTES.deckImport,
 ].map((path) => ({ path, loader: () => redirect(ROUTES.home) }))
@@ -38,6 +40,13 @@ export const router = createBrowserRouter([
         lazy: async () => {
           const { default: DeckDetailRoute } = await import('@/decks/pages/deck-detail-route')
           return { Component: DeckDetailRoute }
+        },
+      },
+      {
+        path: ROUTES.deckQuestions,
+        lazy: async () => {
+          const { default: DeckQuestionsRoute } = await import('@/decks/pages/deck-questions-route')
+          return { Component: DeckQuestionsRoute }
         },
       },
       ...PLACEHOLDER_ROUTES,
