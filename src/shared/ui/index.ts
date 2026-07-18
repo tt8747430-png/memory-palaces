@@ -1,5 +1,6 @@
 export * from './button'
 export * from './card'
+export * from './glass-card'
 export * from './empty'
 export * from './skeleton'
 export * from './dialog'
