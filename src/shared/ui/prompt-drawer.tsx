@@ -1,11 +1,20 @@
 import { type FormEvent, type ReactNode, useState } from 'react'
 import { openOverlay, useOverlayController, type OverlayResolver } from './overlay-host'
-import { Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle } from './drawer'
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from './drawer'
 import { Button } from './button'
 import { cn } from '@/shared/lib'
 
 export interface PromptDrawerOptions {
   title: ReactNode
+  /** Context under the title — e.g. "Subdeck of {{name}}" when creating inside a parent. */
+  description?: ReactNode
   label?: string
   initialValue?: string
   placeholder?: string
@@ -28,6 +37,7 @@ export function openPromptDrawer(options: PromptDrawerOptions): Promise<string |
 
 function PromptDrawerBody({
   title,
+  description,
   label,
   initialValue = '',
   placeholder,
@@ -64,6 +74,7 @@ function PromptDrawerBody({
       <DrawerContent>
         <DrawerHeader>
           <DrawerTitle>{title}</DrawerTitle>
+          {description ? <DrawerDescription>{description}</DrawerDescription> : null}
         </DrawerHeader>
         <form onSubmit={submit} className="px-4 pt-1.5 pb-2">
           <label className="sr-only" htmlFor="prompt-drawer-field">
