@@ -17,6 +17,7 @@
 
   --color-muted: var(--surface-sky);
   --color-muted-foreground: var(--text-muted);
+  --color-faint: var(--text-faint);
 
   --color-destructive: var(--danger);
   --color-destructive-foreground: var(--danger-foreground);
