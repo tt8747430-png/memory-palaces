@@ -33,7 +33,7 @@ Split a screen into single-responsibility parts: a container that wires data, th
 
 Stateful/effectful logic (subscriptions, gestures, timers, DOM measurement) belongs in a hook, not inline in JSX. The component reads the hook's result and renders.
 
-- **Reusable** hooks live in `shared/lib`: [`use-long-press`](../src/shared/lib/use-long-press.ts), [`sticky-header/use-sticky-header`](../src/shared/lib/sticky-header/use-sticky-header.ts), [`use-optimistic-patch`](../src/shared/lib/use-optimistic-patch.ts), `use-sortable-sensors`, `use-keyboard-pin`, `use-now`. One-off hooks colocate with their component.
+- **Reusable** hooks live in `shared/lib`: [`use-long-press`](../src/shared/lib/use-long-press.ts), [`sticky-header/use-sticky-header`](../src/shared/lib/sticky-header/use-sticky-header.ts), [`use-optimistic-patch`](../src/shared/lib/use-optimistic-patch.ts), `use-sortable-sensors`, `use-now`. One-off hooks colocate with their component.
 - **Pure domain logic never goes in a component or hook** — it lives in [`shared/domain`](../src/shared/domain/) (`srs`, `streak`, `stats`, `deck-tree`, `order`, `naming`, `gestures`, `haptics`, `drop-zone`) or an area's `model/`, where it is unit-tested independently of React. The split is the point: `shared/lib` is React (hooks), `shared/domain` is not (pure TS).
 
 ## 3. Complex local state → reducer / state machine, not a pile of `useState`

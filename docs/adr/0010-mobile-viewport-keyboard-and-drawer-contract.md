@@ -78,6 +78,41 @@ position undecided as of 2026), so on iOS the meta value is inert and the browse
   for the provider** — same measurement, new (passive) consumer. The ban in Decision 4 stands:
   the inset feeds padding on a scroll container, never a transform.
 
+## Amendment 2 (2026-07-18): on-device verification failed both mechanisms — reverted
+
+The Fallback section below made on-device behaviour the deciding test. That test has now run on a
+real iPhone in installed (standalone) mode, and **both app-code keyboard mechanisms were wrong**.
+Two bugs, one root:
+
+1. **Drawers did not lift.** Focusing a field in an open Drawer raised the keyboard over it; the
+   Drawer stayed pinned to the bottom. `useKeyboardPin` listens to `visualViewport` `resize` and
+   `scroll` and forces the document back to `scrollTo(0, 0)` on every one of them — the same
+   events, and the same scroll offset, Base UI's `VirtualKeyboardProvider` uses to align a focused
+   field. The pin cancelled the lift.
+2. **A permanent white strip at the bottom in standalone mode.** `KeyboardInsetProvider` computed
+   `--kb-inset` as `innerHeight - visualViewport.height - offsetTop`. Installed on iOS with
+   `viewport-fit=cover`, the layout viewport already exceeds the visual viewport by the
+   home-indicator area with **no keyboard present**, so `--kb-inset` sat at ~34px permanently.
+   `AppScreen`'s `pb-[max(env(safe-area-inset-bottom),var(--kb-inset,0px))]` turned that into
+   standing bottom padding — the app looked lifted off the bottom edge, as if the Safari toolbar
+   were still there. The measurement is only valid when a keyboard is actually up, and nothing
+   established that precondition.
+
+**Decision:** delete both. `useKeyboardPin` and `KeyboardInsetProvider` are removed, and
+`AppScreen` returns to plain `pb-safe` (`main`'s formula). Keyboard handling for Drawers is
+Base UI's `VirtualKeyboardProvider` alone — the primitive-owned lift this ADR preferred in the
+first place, now running unopposed.
+
+This reopens the hole Amendment 1 was written to close: a **non-scrollable full page with centered
+controls** can still put a control under the keyboard on iOS. That hole is real but hypothetical
+today — the login form is not ported yet. It is reopened deliberately rather than closed by code
+that demonstrably broke two working surfaces. When a full-page form lands, fix it with the
+**layout rules** from Amendment 1 (top-aligned fields, overflow-safe centering), which cost
+nothing and cannot fight the primitive. Reach for a measured inset only if layout proves
+insufficient, and scope it to a real keyboard-open signal.
+
+`main`'s `useKeyboardInset` returns to **confirmed deletion**.
+
 ## Fallback
 
 If P1's on-device verification still shows keyboard jank with the primitive-owned lift, the tested

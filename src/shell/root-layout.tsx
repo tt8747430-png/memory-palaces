@@ -1,14 +1,12 @@
 import { useState } from 'react'
 import { Outlet } from 'react-router'
 import { AnimatePresence } from 'motion/react'
-import { useKeyboardPin } from '@/shared/lib'
 import { AppNav } from './app-nav'
 import { SplashOverlay } from './splash-overlay'
 import { UpdatePrompt } from './update-prompt'
 
 export function RootLayout() {
   const [showSplash, setShowSplash] = useState(true)
-  useKeyboardPin()
   return (
     <>
       <div
