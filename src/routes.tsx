@@ -9,7 +9,6 @@ import { RouteErrorBoundary } from '@/shell/route-error-boundary'
  * than on the 404 boundary. Each entry is deleted as its page lands.
  */
 const PLACEHOLDER_ROUTES: RouteObject[] = [
-  ROUTES.archived,
   ROUTES.deckStudy,
   ROUTES.deckMatch,
   ROUTES.deckQuiz,
@@ -46,6 +45,13 @@ export const router = createBrowserRouter([
         lazy: async () => {
           const { default: DeckQuestionsRoute } = await import('@/decks/pages/deck-questions-route')
           return { Component: DeckQuestionsRoute }
+        },
+      },
+      {
+        path: ROUTES.archived,
+        lazy: async () => {
+          const { default: ArchivedDecksRoute } = await import('@/decks/pages/archived-decks-route')
+          return { Component: ArchivedDecksRoute }
         },
       },
       {
