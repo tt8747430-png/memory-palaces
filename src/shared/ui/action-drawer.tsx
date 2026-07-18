@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { openOverlay, useOverlayController, type OverlayResolver } from './overlay-host'
 import {
   Drawer,
   DrawerClose,
   DrawerContent,
+  DrawerDescription,
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
@@ -19,6 +21,7 @@ export interface ActionDrawerAction {
 
 export interface ActionDrawerOptions {
   title?: ReactNode
+  description?: ReactNode
   actions: ActionDrawerAction[]
 }
 
@@ -36,9 +39,11 @@ export function openActionDrawer(options: ActionDrawerOptions): Promise<string |
 
 function ActionDrawerBody({
   title,
+  description,
   actions,
   resolve,
 }: ActionDrawerOptions & { resolve: OverlayResolver<string | null> }) {
+  const { t } = useTranslation()
   const { open, close, onOpenChangeComplete } = useOverlayController(resolve)
 
   return (
@@ -53,6 +58,7 @@ function ActionDrawerBody({
         {title ? (
           <DrawerHeader>
             <DrawerTitle>{title}</DrawerTitle>
+            {description ? <DrawerDescription>{description}</DrawerDescription> : null}
           </DrawerHeader>
         ) : null}
         <div className="flex flex-col gap-0.5 px-2 pt-1 pb-2">
@@ -86,7 +92,7 @@ function ActionDrawerBody({
               'transition-transform duration-150 ease-out active:scale-[0.99]',
             )}
           >
-            Cancel
+            {t('common.cancel')}
           </DrawerClose>
         </DrawerFooter>
       </DrawerContent>

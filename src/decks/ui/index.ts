@@ -32,4 +32,5 @@ export {
 } from './content-rows'
 export { ReorderableList, type ReorderableListProps } from './reorderable-list'
 export { openQuestionImportDrawer, openQuestionExportDrawer } from './question-transfer-drawers'
+export { openDeckAppearanceDrawer, type DeckAppearanceDraft } from './deck-appearance-drawer'
 export { SelectModeBar, type SelectModeBarProps } from './select-mode-bar'
