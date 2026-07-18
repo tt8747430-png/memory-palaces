@@ -49,7 +49,13 @@ import {
   subtreeDeckIds,
   tick,
 } from '@/shared/domain'
-import { orderPatch, useOptimisticPatch, useSortableSensors, useStickyHeader } from '@/shared/lib'
+import {
+  orderPatch,
+  useNow,
+  useOptimisticPatch,
+  useSortableSensors,
+  useStickyHeader,
+} from '@/shared/lib'
 import { openActionDrawer, openConfirmDialog, openPromptDrawer } from '@/shared/ui'
 import type { SwipeActionHandlers } from '@/shared/ui'
 
@@ -63,13 +69,6 @@ export interface DeckLibraryPageProps {
   onOpenStreak?: () => void
   onOpenArchived?: () => void
 }
-
-/**
- * Rows hold still while a card is in hand. Sortable's shifting would promise a
- * reorder on every hover, and in a tree half of them are a nest — the drop
- * indicator and the target ring say which, and a still list lets them.
- */
-export const NO_SHIFT = () => null
 
 /** How long the drag overlay takes to land on the row it was dropped onto. */
 export const DROP_MS = 220
@@ -147,13 +146,10 @@ export function useDeckLibrary(props: DeckLibraryPageProps) {
   const prefs = useStore(preferencesStore.effective)
   const unreadCount = useStore(notificationStore.unreadCount)
 
-  // Sampled once per page visit, not per render: `main` re-evaluates `Date.now()` on every
-  // re-render of this (very re-render-heavy) page, which `react-hooks/purity` forbids here. A page
-  // remount (e.g. navigating away to Study and back) resamples it — the same idiom `StreakPage`/
-  // `DeckDetailPage` already use for a page-owned clock. This is a deliberate, bounded trade: due
-  // badges stay correct for the whole visit except a review becoming due mid-visit, which is not
-  // main's real feature so much as a side effect of how often its parent happens to re-render.
-  const [now] = useState(() => Date.now())
+  // `main` re-reads `Date.now()` every render so due badges and the streak ring self-heal.
+  // `react-hooks/purity` forbids that here, so the clock ticks instead — freezing it at mount
+  // would leave a backgrounded PWA (which never unmounts) stale indefinitely.
+  const now = useNow()
 
   const name = profile.name.trim() || session?.displayName || t('profile.guest')
   const today = dayKey(now)

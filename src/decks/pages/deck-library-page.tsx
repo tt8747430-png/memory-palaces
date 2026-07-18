@@ -243,7 +243,10 @@ export function DeckLibraryPage(props: DeckLibraryPageProps) {
       )}
 
       {vm.selectMode ? (
-        <div className="fixed inset-x-0 bottom-0 z-[300] mx-auto w-full max-w-[26.875rem] px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-2">
+        <div
+          className="fixed inset-x-0 bottom-0 mx-auto w-full max-w-[26.875rem] px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-2"
+          style={{ zIndex: 'var(--ms-z-overlay)' }}
+        >
           <SelectToolbar actions={vm.selectToolbarConfig} handlers={selectHandlersFor(vm)} />
         </div>
       ) : null}
