@@ -11,6 +11,7 @@ import type { AuthGateway } from '@/auth/data/auth-gateway'
 import { ProgressStore } from '@/progress/data/progress-store'
 import { PreferencesStore } from '@/settings/data/preferences-store'
 import { NotificationStore } from '@/notifications/data/notification-store'
+import { ImportDraftStore } from '@/import/data/import-draft-store'
 
 export interface Services {
   deckStore: DeckStore
@@ -22,6 +23,7 @@ export interface Services {
   progressStore: ProgressStore
   preferencesStore: PreferencesStore
   notificationStore: NotificationStore
+  importDraftStore: ImportDraftStore
   /** The second port beside Repository<T>. LocalAuthGateway is its adapter. */
   authGateway: AuthGateway
   eventBus: EventBus<AppEvents>
@@ -60,6 +62,7 @@ export async function createServices(): Promise<Services> {
     progressStore: new ProgressStore(new RxdbRepository(db.progress)),
     preferencesStore: new PreferencesStore(new RxdbRepository(db.preferences)),
     notificationStore: new NotificationStore(new RxdbRepository(db.notifications)),
+    importDraftStore: new ImportDraftStore(),
     authGateway: new LocalAuthGateway(),
     eventBus: new EventBus<AppEvents>(),
   }
@@ -82,6 +85,7 @@ export function createTestServices(): Services {
     progressStore: new ProgressStore(new InMemoryRepository()),
     preferencesStore: new PreferencesStore(new InMemoryRepository()),
     notificationStore: new NotificationStore(new InMemoryRepository()),
+    importDraftStore: new ImportDraftStore(),
     authGateway: new LocalAuthGateway(),
     eventBus: new EventBus<AppEvents>(),
   }
