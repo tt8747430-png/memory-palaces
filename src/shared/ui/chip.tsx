@@ -14,7 +14,7 @@ export function Chip({
     <span
       className={cn(
         'inline-flex items-center gap-1 rounded-control bg-info-surface px-2.5 py-1',
-        'text-(length:--ms-text-label) font-medium text-info-foreground',
+        'text-[length:var(--ms-text-label)] font-medium text-info-foreground',
         className,
       )}
     >
