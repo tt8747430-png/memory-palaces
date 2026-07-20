@@ -1,16 +1,29 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
     <link href="/apple-touch-icon.png" rel="apple-touch-icon" />
     <meta
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-visual"
       name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-visual"
     />
+    <!-- The bare (no-media) theme-color paints the iOS standalone status bar — iOS ignores the
+         media-attributed pair there (verified on device). The attributed pair exists for
+         dark-mode Chromium, which ignores a lone bare tag. All three stay in sync
+         (theme-provider.tsx). -->
     <meta content="#091A7A" name="theme-color" />
+    <meta content="#091A7A" media="(prefers-color-scheme: light)" name="theme-color" />
+    <meta content="#091A7A" media="(prefers-color-scheme: dark)" name="theme-color" />
     <meta content="yes" name="mobile-web-app-capable" />
     <meta content="yes" name="apple-mobile-web-app-capable" />
+    <!-- `black`, never `black-translucent`: the translucent value routes standalone WebKit
+         through a legacy path that leaves the layout viewport short at the bottom (a permanent
+         strip, observed on device). Recent iOS ignores this meta's value and runs the app
+         edge-to-edge with the bar tint sampled from the fixed element hit-tested at the top
+         edge — there the shell's status-bar cap (hit-testable, topmost) owns the color, with
+         body's navy background as fallback; older iOS honors `black` plus the bare
+         theme-color above. -->
     <meta content="black" name="apple-mobile-web-app-status-bar-style" />
     <meta content="Mindscape" name="apple-mobile-web-app-title" />
     <meta
@@ -21,6 +34,6 @@
   </head>
   <body>
     <div id="root"></div>
-    <script src="/src/main.tsx" type="module"></script>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

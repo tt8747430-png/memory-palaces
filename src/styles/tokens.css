@@ -1,89 +1,95 @@
 :root {
-  --p-navy-900: oklch(29.4% 0.16 266.1);
-  --p-blue-500: oklch(66.1% 0.18 261.1);
-  --p-blue-450: oklch(64.7% 0.164 254.5);
-  --p-blue-300: oklch(83.2% 0.083 264.3);
-  --p-sky-100: oklch(95.7% 0.021 254.9);
-  --p-sky-50: oklch(96.3% 0.018 250.6);
-  --p-ink-900: oklch(29.3% 0 0);
-  --p-gray-600: oklch(44.6% 0.026 256.8);
-  --p-gray-500: oklch(55.1% 0.023 264.4);
-  --p-gray-400: oklch(64% 0 0);
-  --p-gray-300: oklch(75.1% 0 0);
-  --p-gray-100: oklch(96.1% 0 0);
-  --p-white: oklch(100% 0 0);
-  --p-gold-400: oklch(85.6% 0.17 87.3);
-  --p-gold-700: oklch(65.2% 0.132 81.6);
-  --p-coral-400: oklch(67.2% 0.216 25.1);
-  --p-green-500: oklch(69.6% 0.149 162.5);
-  --p-green-700: oklch(50.8% 0.105 165.6);
-  --p-green-800: oklch(43.2% 0.087 166.9);
-  --p-green-50: oklch(97.9% 0.021 166.1);
-  --p-amber-500: oklch(76.9% 0.165 70.1);
-  --p-amber-700: oklch(55.5% 0.146 49);
-  --p-amber-50: oklch(98.7% 0.021 95.3);
-  --p-red-500: oklch(63.7% 0.208 25.3);
-  --p-red-600: oklch(57.7% 0.215 27.3);
-  --p-red-700: oklch(50.5% 0.19 27.5);
-  --p-red-50: oklch(97.1% 0.013 17.4);
-  --p-tint-navy: 29.4% 0.16 266.1;
-  --p-tint-steel: 29% 0.063 254.3;
-  --p-tint-sky: 83.2% 0.083 264.3;
-  --p-font-sans: 'Lexend', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --ms-navy-900: oklch(29.4% 0.16 266.1);
+  --ms-blue-500: oklch(66.1% 0.18 261.1);
+  --ms-blue-450: oklch(64.7% 0.164 254.5);
+  --ms-blue-300: oklch(83.2% 0.083 264.3);
+  --ms-sky-100: oklch(95.7% 0.021 254.9);
+  --ms-sky-50: oklch(96.3% 0.018 250.6);
+  --ms-ink-900: oklch(29.3% 0 0);
+  --ms-gray-600: oklch(44.6% 0.026 256.8);
+  --ms-gray-500: oklch(55.1% 0.023 264.4);
+  --ms-gray-400: oklch(64% 0 0);
+  --ms-gray-300: oklch(75.1% 0 0);
+  --ms-gray-100: oklch(96.1% 0 0);
+  --ms-white: oklch(100% 0 0);
+  --ms-gold-400: oklch(85.6% 0.17 87.3);
+  --ms-gold-700: oklch(65.2% 0.132 81.6);
+  --ms-coral-400: oklch(67.2% 0.216 25.1);
+  --ms-green-500: oklch(69.6% 0.149 162.5);
+  --ms-green-700: oklch(50.8% 0.105 165.6);
+  --ms-green-800: oklch(43.2% 0.087 166.9);
+  --ms-green-50: oklch(97.9% 0.021 166.1);
+  --ms-amber-500: oklch(76.9% 0.165 70.1);
+  --ms-amber-700: oklch(55.5% 0.146 49);
+  --ms-amber-50: oklch(98.7% 0.021 95.3);
+  --ms-red-500: oklch(63.7% 0.208 25.3);
+  --ms-red-600: oklch(57.7% 0.215 27.3);
+  --ms-red-700: oklch(50.5% 0.19 27.5);
+  --ms-red-50: oklch(97.1% 0.013 17.4);
+  --ms-tint-navy: 29.4% 0.16 266.1;
+  --ms-tint-steel: 29% 0.063 254.3;
+  --ms-tint-sky: 83.2% 0.083 264.3;
+  --ms-font-sans: 'Lexend', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
-  --p-text-headline: 20px;
-  --p-text-title: 16px;
-  --p-text-sub: 14px;
-  --p-text-body: 14px;
-  --p-text-label: 12px;
-  --p-text-tiny: 10px;
-  --p-weight-regular: 400;
-  --p-weight-medium: 500;
-  --p-weight-semibold: 600;
+  --ms-text-headline: 1.25rem;
+  --ms-text-title: 1rem;
+  --ms-text-sub: 0.875rem;
+  --ms-text-body: 0.875rem;
+  --ms-text-label: 0.75rem;
+  --ms-text-tiny: 0.625rem;
+  --ms-weight-regular: 400;
+  --ms-weight-medium: 500;
+  --ms-weight-semibold: 600;
 
-  --p-leading-tight: 1.4;
-  --p-leading-body: 1.5;
+  --ms-leading-tight: 1.4;
+  --ms-leading-body: 1.5;
 
-  --p-space-1: 4px;
-  --p-space-2: 8px;
-  --p-space-3: 12px;
-  --p-space-4: 16px;
-  --p-space-5: 20px;
-  --p-space-6: 24px;
-  --p-space-8: 32px;
-  --p-space-10: 40px;
-  --p-space-12: 48px;
+  --ms-space-1: 0.25rem;
+  --ms-space-2: 0.5rem;
+  --ms-space-3: 0.75rem;
+  --ms-space-4: 1rem;
+  --ms-space-5: 1.25rem;
+  --ms-space-6: 1.5rem;
+  --ms-space-8: 2rem;
+  --ms-space-10: 2.5rem;
+  --ms-space-12: 3rem;
 
-  --p-radius-sm: 12px;
-  --p-radius-md: 16px;
-  --p-radius-lg: 20px;
-  --p-radius-xl: 24px;
-  --p-radius-nav: 40px;
-  --p-radius-pill: 9999px;
-  --p-shadow-rest: 0 6px 16px oklch(var(--p-tint-steel) / 0.06);
-  --p-shadow-featured: 0 10px 28px oklch(var(--p-tint-steel) / 0.08);
-  --p-shadow-interactive: 0 8px 25px oklch(var(--p-tint-navy) / 0.2);
-  --p-shadow-elevated: 0 20px 40px oklch(var(--p-tint-navy) / 0.25);
+  --ms-radius-sm: 0.75rem;
+  --ms-radius-md: 1rem;
+  --ms-radius-lg: 1.25rem;
+  --ms-radius-xl: 1.5rem;
+  --ms-radius-nav: 2.5rem;
+  --ms-radius-pill: 9999px;
+  --ms-shadow-rest: 0 6px 16px oklch(var(--ms-tint-steel) / 0.06);
+  --ms-shadow-featured: 0 10px 28px oklch(var(--ms-tint-steel) / 0.08);
+  --ms-shadow-interactive: 0 8px 25px oklch(var(--ms-tint-navy) / 0.2);
+  --ms-shadow-elevated: 0 20px 40px oklch(var(--ms-tint-navy) / 0.25);
 
-  --p-blur-glass: 12px;
-  --p-blur-card: 20px;
-  --p-dur-fast: 150ms;
-  --p-dur-base: 200ms;
-  --p-dur-slow: 250ms;
-  --p-ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
-  --p-ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  --p-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ms-blur-glass: 12px;
+  --ms-blur-card: 20px;
+  --ms-dur-fast: 150ms;
+  --ms-dur-base: 200ms;
+  --ms-dur-slow: 250ms;
+  --ms-ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ms-ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ms-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
 
-  --p-z-base: 0;
-  --p-z-sticky: 100;
-  --p-z-nav: 200;
-  --p-z-overlay: 300;
-  --p-z-backdrop: 400;
-  --p-z-modal: 500;
-  --p-z-toast: 600;
-  --p-z-tooltip: 700;
+  --ms-z-base: 0;
+  --ms-z-sticky: 100;
+  --ms-z-nav: 200;
+  --ms-z-overlay: 300;
+  --ms-z-backdrop: 400;
+  --ms-z-modal: 500;
+  --ms-z-toast: 600;
+  --ms-z-tooltip: 700;
+  /* The status-bar cap outranks every in-app layer: iOS 26 tints the standalone status bar
+     from the element a WebKit hit test finds at the top edge (fixed-container edge sampling),
+     so the cap must be the topmost hit — nothing (toasts included) may claim the forehead.
+     Only the splash sits higher — its gradient legitimately owns the forehead at boot. */
+  --ms-z-statusbar: 800;
+  --ms-z-splash: 900;
 
-  --p-container-app: 430px;
+  --ms-container-app: 26.875rem;
   --bg: linear-gradient(
     to bottom right,
     oklch(83.2% 0.083 264.3) 0%,
@@ -91,45 +97,54 @@
     oklch(100% 0 0) 100%
   );
   --bg-daylight:
-    radial-gradient(circle at 20% 30%, oklch(var(--p-tint-sky) / 0.2) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, oklch(var(--p-tint-sky) / 0.15) 0%, transparent 40%),
-    radial-gradient(ellipse at center, oklch(var(--p-tint-sky) / 0.1) 0%, transparent 60%),
+    radial-gradient(circle at 20% 30%, oklch(var(--ms-tint-sky) / 0.2) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, oklch(var(--ms-tint-sky) / 0.15) 0%, transparent 40%),
+    radial-gradient(ellipse at center, oklch(var(--ms-tint-sky) / 0.1) 0%, transparent 60%),
     var(--bg);
-  --surface: var(--p-white);
-  --surface-sky: var(--p-sky-100);
+  /* The canvas behind/beyond the app — `html`'s background. Solid on purpose: a root
+     background-color is the one paint the browser guarantees across the entire web view,
+     including any slack standalone iOS leaves beyond the layout viewport (which otherwise
+     renders default-white). Matches each theme's --bg bottom stop so the seam is invisible. */
+  --canvas: var(--ms-white);
+  /* The pixels behind the iOS status text — the shell's cap and body's derivation hint.
+     Navy in light; the dark --bg TOP stop in dark, so the forehead reads as the app's own
+     background, not a branded band. */
+  --status-bar: var(--ms-navy-900);
+  --surface: var(--ms-white);
+  --surface-sky: var(--ms-sky-100);
   --surface-glass: oklch(100% 0 0 / 0.9);
-  --surface-glass-sky: oklch(var(--p-tint-sky) / 0.3);
-  --text-primary: var(--p-ink-900);
-  --text-heading: var(--p-navy-900);
-  --text-secondary: var(--p-gray-600);
-  --text-muted: var(--p-gray-500);
-  --text-faint: var(--p-gray-400);
-  --text-on-primary: var(--p-white);
-  --text-on-accent: var(--p-navy-900);
-  --primary: var(--p-navy-900);
-  --primary-foreground: var(--p-white);
-  --secondary: var(--p-blue-300);
-  --secondary-foreground: var(--p-navy-900);
-  --accent: var(--p-blue-500);
-  --accent-foreground: var(--p-white);
+  --surface-glass-sky: oklch(var(--ms-tint-sky) / 0.3);
+  --text-primary: var(--ms-ink-900);
+  --text-heading: var(--ms-navy-900);
+  --text-secondary: var(--ms-gray-600);
+  --text-muted: var(--ms-gray-500);
+  --text-faint: var(--ms-gray-400);
+  --text-on-primary: var(--ms-white);
+  --text-on-accent: var(--ms-navy-900);
+  --primary: var(--ms-navy-900);
+  --primary-foreground: var(--ms-white);
+  --secondary: var(--ms-blue-300);
+  --secondary-foreground: var(--ms-navy-900);
+  --accent: var(--ms-blue-500);
+  --accent-foreground: var(--ms-white);
 
-  --info-surface: var(--p-sky-50);
-  --info-foreground: var(--p-navy-900);
-  --success: var(--p-green-500);
-  --success-foreground: var(--p-green-700);
-  --success-surface: var(--p-green-50);
-  --success-on-surface: var(--p-green-800);
-  --warning: var(--p-amber-500);
-  --warning-foreground: var(--p-amber-700);
-  --warning-surface: var(--p-amber-50);
-  --warning-on-fill: var(--p-ink-900);
-  --danger: var(--p-red-600);
-  --danger-foreground: var(--p-white);
-  --danger-surface: var(--p-red-50);
-  --danger-on-surface: var(--p-red-700);
-  --rating: var(--p-gold-400);
-  --rating-edge: var(--p-gold-700);
-  --favorite: var(--p-coral-400);
+  --info-surface: var(--ms-sky-50);
+  --info-foreground: var(--ms-navy-900);
+  --success: var(--ms-green-500);
+  --success-foreground: var(--ms-green-700);
+  --success-surface: var(--ms-green-50);
+  --success-on-surface: var(--ms-green-800);
+  --warning: oklch(76.9% 0.148 84);
+  --warning-foreground: oklch(55.5% 0.132 84);
+  --warning-surface: var(--ms-amber-50);
+  --warning-on-fill: var(--ms-ink-900);
+  --danger: var(--ms-red-600);
+  --danger-foreground: var(--ms-white);
+  --danger-surface: var(--ms-red-50);
+  --danger-on-surface: var(--ms-red-700);
+  --rating: var(--ms-gold-400);
+  --rating-edge: var(--ms-gold-700);
+  --favorite: var(--ms-coral-400);
 
   /* Swipe-action accents — one distinct, contrast-safe hue per action.
        Solid fills carry white ink (navy on --sw-gold); settings chips derive
@@ -142,32 +157,33 @@
   --sw-teal: oklch(53% 0.108 210);
   --sw-emerald: oklch(56% 0.132 162);
   --sw-gold: oklch(77% 0.148 82);
-  --sw-red: var(--p-red-600);
+  --sw-red: var(--ms-red-600);
   --sw-slate: oklch(50% 0.036 255);
 
-  --border: oklch(var(--p-tint-navy) / 0.08);
+  --border: oklch(var(--ms-tint-navy) / 0.08);
   --border-glass: oklch(100% 0 0 / 0.3);
-  --divider: var(--p-gray-100);
-  --ring: var(--p-navy-900);
-  --input-bg: var(--p-white);
+  --divider: var(--ms-gray-100);
+  --ring: var(--ms-navy-900);
+  --input-bg: var(--ms-white);
 
-  --shadow-rest: var(--p-shadow-rest);
-  --shadow-featured: var(--p-shadow-featured);
-  --shadow-interactive: var(--p-shadow-interactive);
-  --shadow-elevated: var(--p-shadow-elevated);
+  --shadow-rest: var(--ms-shadow-rest);
+  --shadow-featured: var(--ms-shadow-featured);
+  --shadow-interactive: var(--ms-shadow-interactive);
+  --shadow-elevated: var(--ms-shadow-elevated);
   /* Lifted list card — clearly raised off the daylight bg, tight footprint so
      stacked rows don't muddy each other. */
   --shadow-card:
-    0 2px 4px -1px oklch(var(--p-tint-navy) / 0.1), 0 8px 20px -4px oklch(var(--p-tint-navy) / 0.2);
+    0 2px 4px -1px oklch(var(--ms-tint-navy) / 0.1),
+    0 8px 20px -4px oklch(var(--ms-tint-navy) / 0.2);
 
-  --radius-control: var(--p-radius-sm);
-  --radius-card: var(--p-radius-md);
-  --radius-card-featured: var(--p-radius-xl);
-  --radius-nav: var(--p-radius-nav);
-  --radius-pill: var(--p-radius-pill);
+  --radius-control: var(--ms-radius-sm);
+  --radius-card: var(--ms-radius-md);
+  --radius-card-featured: var(--ms-radius-xl);
+  --radius-nav: var(--ms-radius-nav);
+  --radius-pill: var(--ms-radius-pill);
 
-  --glass-blur: var(--p-blur-glass);
-  --glass-blur-card: var(--p-blur-card);
+  --glass-blur: var(--ms-blur-glass);
+  --glass-blur-card: var(--ms-blur-card);
   --nav-glow: radial-gradient(
     ellipse at center,
     oklch(66.1% 0.18 261.1 / 0.35) 0%,
@@ -184,51 +200,53 @@
     oklch(19.9% 0.089 267.7) 100%
   );
   --bg-daylight: var(--bg);
+  --canvas: oklch(19.9% 0.089 267.7);
+  --status-bar: oklch(24.2% 0.113 267.7);
   --surface: oklch(27.3% 0.131 267.1);
   --surface-sky: oklch(30.4% 0.128 267.2);
   --surface-glass: oklch(27.3% 0.131 267.1 / 0.72);
-  --surface-glass-sky: oklch(var(--p-tint-navy) / 0.45);
+  --surface-glass-sky: oklch(var(--ms-tint-navy) / 0.45);
 
   --text-primary: oklch(97.9% 0.01 267.4);
   --text-heading: oklch(100% 0 0);
   --text-secondary: oklch(86.7% 0.05 267.6);
   --text-muted: oklch(76.5% 0.07 267.2);
   --text-faint: oklch(60.5% 0.076 269);
-  --text-on-primary: var(--p-navy-900);
-  --text-on-accent: var(--p-navy-900);
+  --text-on-primary: var(--ms-navy-900);
+  --text-on-accent: var(--ms-navy-900);
 
-  --primary: var(--p-blue-300);
-  --primary-foreground: var(--p-navy-900);
-  --secondary: oklch(var(--p-tint-sky) / 0.16);
+  --primary: var(--ms-blue-300);
+  --primary-foreground: var(--ms-navy-900);
+  --secondary: oklch(var(--ms-tint-sky) / 0.16);
   --secondary-foreground: oklch(97.9% 0.01 267.4);
-  --accent: var(--p-blue-500);
-  --accent-foreground: var(--p-white);
+  --accent: var(--ms-blue-500);
+  --accent-foreground: var(--ms-white);
 
-  --info-surface: oklch(var(--p-tint-sky) / 0.14);
+  --info-surface: oklch(var(--ms-tint-sky) / 0.14);
   --info-foreground: oklch(89% 0.04 267);
 
-  --success: var(--p-green-500);
+  --success: var(--ms-green-500);
   --success-foreground: oklch(84% 0.13 165);
   --success-surface: oklch(69.6% 0.149 162.5 / 0.16);
   --success-on-surface: oklch(86% 0.11 165);
 
-  --warning: var(--p-amber-500);
-  --warning-foreground: oklch(86% 0.13 80);
-  --warning-surface: oklch(76.9% 0.165 70.1 / 0.16);
-  --warning-on-fill: var(--p-ink-900);
+  --warning: oklch(76.9% 0.165 84);
+  --warning-foreground: oklch(86% 0.13 84);
+  --warning-surface: oklch(76.9% 0.165 84 / 0.16);
+  --warning-on-fill: var(--ms-ink-900);
 
-  --danger: var(--p-red-500);
-  --danger-foreground: var(--p-white);
+  --danger: var(--ms-red-500);
+  --danger-foreground: var(--ms-white);
   --danger-surface: oklch(63.7% 0.208 25.3 / 0.18);
   --danger-on-surface: oklch(82% 0.12 22);
 
-  --rating: var(--p-gold-400);
-  --rating-edge: var(--p-gold-400);
+  --rating: var(--ms-gold-400);
+  --rating-edge: var(--ms-gold-400);
 
   --border: oklch(100% 0 0 / 0.1);
   --border-glass: oklch(100% 0 0 / 0.12);
   --divider: oklch(100% 0 0 / 0.1);
-  --ring: var(--p-blue-300);
+  --ring: var(--ms-blue-300);
   --input-bg: oklch(100% 0 0 / 0.06);
   --shadow-card: 0 2px 4px -1px oklch(0% 0 0 / 0.3), 0 8px 22px -4px oklch(0% 0 0 / 0.5);
 }

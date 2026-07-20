@@ -13,6 +13,7 @@ See [customization.md](../customization.md) for theming, CSS variables, and addi
 - No manual dark: color overrides
 - Use cn() for conditional classes
 - No manual z-index on overlay components
+- Use shimmer / scroll-fade utilities, not custom animations
 
 ---
 
@@ -38,8 +39,7 @@ See [customization.md](../customization.md) for theming, CSS variables, and addi
 
 ## No raw color values for status/state indicators
 
-For positive, negative, or status indicators, use Badge variants, semantic tokens like `text-destructive`, or define
-custom CSS variables — don't reach for raw Tailwind colors.
+For positive, negative, or status indicators, use Badge variants, semantic tokens like `text-destructive`, or define custom CSS variables — don't reach for raw Tailwind colors.
 
 **Incorrect:**
 
@@ -57,8 +57,7 @@ custom CSS variables — don't reach for raw Tailwind colors.
 <span className="text-destructive">-3.2%</span>
 ```
 
-If you need a success/positive color that doesn't exist as a semantic token, use a Badge variant or ask the user about
-adding a custom CSS variable to the theme (see [customization.md](../customization.md)).
+If you need a success/positive color that doesn't exist as a semantic token, use a Badge variant or ask the user about adding a custom CSS variable to the theme (see [customization.md](../customization.md)).
 
 ---
 
@@ -67,9 +66,7 @@ adding a custom CSS variable to the theme (see [customization.md](../customizati
 **Incorrect:**
 
 ```tsx
-<Button className="border border-input bg-transparent hover:bg-accent">
-  Click me
-</Button>
+<Button className="border border-input bg-transparent hover:bg-accent">Click me</Button>
 ```
 
 **Correct:**
@@ -82,8 +79,7 @@ adding a custom CSS variable to the theme (see [customization.md](../customizati
 
 ## className for layout only
 
-Use `className` for layout (e.g. `max-w-md`, `mx-auto`, `mt-4`), **not** for overriding component colors or typography.
-To change colors, use semantic tokens, built-in variants, or CSS variables.
+Use `className` for layout (e.g. `max-w-md`, `mx-auto`, `mt-4`), **not** for overriding component colors or typography. To change colors, use semantic tokens, built-in variants, or CSS variables.
 
 **Incorrect:**
 
@@ -137,15 +133,13 @@ Use `gap-*` instead. `space-y-4` → `flex flex-col gap-4`. `space-x-2` → `fle
 
 ## No manual dark: color overrides
 
-Use semantic tokens — they handle light/dark via CSS variables. `bg-background text-foreground` not
-`bg-white dark:bg-gray-950`.
+Use semantic tokens — they handle light/dark via CSS variables. `bg-background text-foreground` not `bg-white dark:bg-gray-950`.
 
 ---
 
 ## Use cn() for conditional classes
 
-Use the `cn()` utility from the project for conditional or merged class names. Don't write manual ternaries in className
-strings.
+Use the `cn()` utility from the project for conditional or merged class names. Don't write manual ternaries in className strings.
 
 **Incorrect:**
 
@@ -165,5 +159,26 @@ import { cn } from "@/lib/utils"
 
 ## No manual z-index on overlay components
 
-`Dialog`, `Sheet`, `Drawer`, `AlertDialog`, `DropdownMenu`, `Popover`, `Tooltip`, `HoverCard` handle their own stacking.
-Never add `z-50` or `z-[999]`.
+`Dialog`, `Sheet`, `Drawer`, `AlertDialog`, `DropdownMenu`, `Popover`, `Tooltip`, `HoverCard` handle their own stacking. Never add `z-50` or `z-[999]`.
+
+---
+
+## Use shimmer / scroll-fade utilities, not custom animations
+
+For a live "thinking…" or loading-text shimmer, apply the `shimmer` utility. Don't author a custom `@keyframes` or a `bg-clip-text` gradient sweep.
+
+For scroll-aware edge fading on a scroll container, use `scroll-fade` (and the axis variants `scroll-fade-x` / `scroll-fade-b`). Don't hand-roll mask gradients. The chat components already apply these internally: `Attachment` shimmers its title during upload, and `MessageScrollerViewport` fades its edges.
+
+**Incorrect:**
+
+```tsx
+<span className="animate-pulse bg-gradient-to-r from-muted-foreground/40 via-foreground/70 to-muted-foreground/40 bg-clip-text text-transparent [animation:shimmer_1.6s_infinite]">
+  Thinking…
+</span>
+```
+
+**Correct:**
+
+```tsx
+<span className="shimmer">Thinking…</span>
+```

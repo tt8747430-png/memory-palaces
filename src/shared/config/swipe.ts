@@ -20,16 +20,7 @@ export type SwipeActionId =
  *  so every action reads as its own thing instead of one of five muddy tones.
  *  Each maps to a `--sw-*` token; `ink` is the text color over the solid fill. */
 export type SwipeAccent =
-  | 'rose'
-  | 'plum'
-  | 'violet'
-  | 'indigo'
-  | 'blue'
-  | 'teal'
-  | 'emerald'
-  | 'gold'
-  | 'red'
-  | 'slate'
+  'rose' | 'plum' | 'violet' | 'indigo' | 'blue' | 'teal' | 'emerald' | 'gold' | 'red' | 'slate'
 
 export const SWIPE_ACCENT: Record<SwipeAccent, { fill: string; ink: 'light' | 'dark' }> = {
   rose: { fill: 'var(--sw-rose)', ink: 'light' },

@@ -27,6 +27,9 @@ export function useOptimisticPatch<T extends { id: string }>(
       if (!patch) return true
       return (Object.keys(patch) as (keyof T)[]).every((key) => same(item[key], patch[key]))
     })
+    // The reconcile step: releasing the patch is the whole point of the effect, and it can only
+    // run once the stored rows have caught up. Restructuring it away would reintroduce flicker.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (settled) setPending(null)
   }, [items, pending])
 

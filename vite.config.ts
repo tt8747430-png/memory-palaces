@@ -47,9 +47,9 @@ export default defineConfig({
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
   test: {
-    environment: 'jsdom',
     globals: false,
-    setupFiles: ['./src/shared/test/setup.ts'],
+    environment: 'jsdom',
+    setupFiles: ['./src/test-setup.ts'],
     css: false,
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
   },

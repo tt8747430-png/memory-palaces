@@ -1,5 +1,5 @@
 @theme inline {
-  --font-sans: var(--p-font-sans);
+  --font-sans: var(--ms-font-sans);
 
   --color-background: var(--surface);
   --color-foreground: var(--text-primary);
@@ -17,6 +17,8 @@
 
   --color-muted: var(--surface-sky);
   --color-muted-foreground: var(--text-muted);
+  --color-faint: var(--text-faint);
+  --color-status-bar: var(--status-bar);
 
   --color-destructive: var(--danger);
   --color-destructive-foreground: var(--danger-foreground);
@@ -34,11 +36,23 @@
   --color-rating: var(--rating);
   --color-favorite: var(--favorite);
 
-  --radius-control: var(--p-radius-sm);
-  --radius-card: var(--p-radius-md);
-  --radius-card-featured: var(--p-radius-xl);
-  --radius-nav: var(--p-radius-nav);
-  --radius-pill: var(--p-radius-pill);
+  --radius-control: var(--ms-radius-sm);
+  --radius-card: var(--ms-radius-md);
+  --radius-card-featured: var(--ms-radius-xl);
+  --radius-nav: var(--ms-radius-nav);
+  --radius-pill: var(--ms-radius-pill);
+  --radius: var(
+    --ms-radius-md
+  ); /* 16px — shadcn's base radius; generous corners are the app's look */
+  /* shadcn's radius scale, wired to our --radius so its components inherit the app's generous
+     corners (the nova preset's generated mapping, kept; its palette/font were dropped). */
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
 @layer base {
@@ -50,6 +64,10 @@
 
   html {
     height: 100%;
+    /* Paints the whole web-view canvas — including any area standalone iOS leaves beyond the
+       layout viewport, where a fixed `#root` never reaches. Without this, such slack renders
+       as a white strip at the screen edge (see --canvas). */
+    background-color: var(--canvas);
     /* No document-level scroll surface: the app scrolls inside `<main>` / sheet bodies, and
        the fixed shell must not slide when iOS scrolls the page for a focused field. */
     overflow: hidden;
@@ -61,8 +79,12 @@
   body {
     margin: 0;
     height: 100%;
+    /* Never visible (#root covers it) — this is a hint for recent iOS, which ignores
+       theme-color in standalone and derives the status-bar tint from page pixels, body
+       background first (WebKit 300965). Steers the derivation to the status-bar tone. */
+    background-color: var(--status-bar);
     overflow: hidden;
-    font-family: var(--p-font-sans), sans-serif;
+    font-family: var(--ms-font-sans), sans-serif;
     color: var(--text-primary);
     overscroll-behavior: none;
     -webkit-font-smoothing: antialiased;
@@ -85,28 +107,28 @@
   h4 {
     margin: 0;
     color: var(--text-heading);
-    line-height: var(--p-leading-tight);
+    line-height: var(--ms-leading-tight);
   }
 
   h1 {
-    font-size: var(--p-text-headline);
-    font-weight: var(--p-weight-semibold);
+    font-size: var(--ms-text-headline);
+    font-weight: var(--ms-weight-semibold);
   }
 
   h2 {
-    font-size: var(--p-text-title);
-    font-weight: var(--p-weight-semibold);
+    font-size: var(--ms-text-title);
+    font-weight: var(--ms-weight-semibold);
   }
 
   h3 {
-    font-size: var(--p-text-sub);
-    font-weight: var(--p-weight-medium);
+    font-size: var(--ms-text-sub);
+    font-weight: var(--ms-weight-medium);
   }
 
   p {
     margin: 0;
-    font-size: var(--p-text-body);
-    line-height: var(--p-leading-body);
+    font-size: var(--ms-text-body);
+    line-height: var(--ms-leading-body);
     color: var(--text-secondary);
   }
 
@@ -135,6 +157,15 @@
   [role='button'],
   [role='tab'] {
     touch-action: manipulation;
+  }
+
+  /* Thin, token-colored scrollbars on precise pointers only — coarse-pointer
+     (touch) UAs keep their overlay scrollbars. */
+  @media (pointer: fine) {
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
   }
 }
 
@@ -175,7 +206,7 @@
   }
 
   .drop-shadow-float {
-    filter: drop-shadow(0 6px 14px oklch(var(--p-tint-navy) / 0.28));
+    filter: drop-shadow(0 6px 14px oklch(var(--ms-tint-navy) / 0.28));
   }
 
   /* Swipe-action chip: a theme-aware tint of the accent set via `--sw`.
@@ -227,3 +258,49 @@
     padding-right: env(safe-area-inset-right);
   }
 }
+
+/* Route transitions (ADR-0012): the View Transitions API animates between pages; `motion`
+   stays for everything a gesture drives. The browser applies a default cross-fade to
+   ::view-transition-old/new(root) even without the custom animation below, and neither the
+   browser nor React Router skips that default for reduced motion on its own — the explicit
+   `reduce` override below is what collapses the transition to an instant cut. */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.22s;
+    animation-timing-function: ease-out;
+  }
+
+  ::view-transition-old(root) {
+    animation-name: ms-vt-fade-out;
+  }
+
+  ::view-transition-new(root) {
+    animation-name: ms-vt-fade-in;
+  }
+
+  @keyframes ms-vt-fade-out {
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes ms-vt-fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/* Shared-element convention (wired in P1c): a deck's cover tile carries
+   `view-transition-name: deck-cover-<id>` on both the library tile and the detail-page
+   header so the browser morphs one into the other across the route change. The name must
+   be unique per deck and present on exactly one element per document at a time. */

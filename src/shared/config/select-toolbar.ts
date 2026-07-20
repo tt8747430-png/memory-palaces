@@ -9,15 +9,7 @@ export type SelectSurface = 'library' | 'card' | 'question'
 export const SELECT_SURFACES: readonly SelectSurface[] = ['library', 'card', 'question']
 
 export type SelectActionId =
-  | 'move'
-  | 'favorite'
-  | 'duplicate'
-  | 'archive'
-  | 'unfile'
-  | 'flag'
-  | 'known'
-  | 'reset'
-  | 'delete'
+  'move' | 'favorite' | 'duplicate' | 'archive' | 'unfile' | 'flag' | 'known' | 'reset' | 'delete'
 
 export interface SelectActionMeta {
   id: SelectActionId

@@ -44,13 +44,19 @@ Never render items directly inside the content container.
 
 This applies to all group-based components:
 
-| Item                                                       | Group               |
-|------------------------------------------------------------|---------------------|
-| `SelectItem`, `SelectLabel`                                | `SelectGroup`       |
-| `DropdownMenuItem`, `DropdownMenuLabel`, `DropdownMenuSub` | `DropdownMenuGroup` |
-| `MenubarItem`                                              | `MenubarGroup`      |
-| `ContextMenuItem`                                          | `ContextMenuGroup`  |
-| `CommandItem`                                              | `CommandGroup`      |
+| Item                                                       | Group                    |
+| ---------------------------------------------------------- | ------------------------ |
+| `SelectItem`, `SelectLabel`                                | `SelectGroup`            |
+| `DropdownMenuItem`, `DropdownMenuLabel`, `DropdownMenuSub` | `DropdownMenuGroup`      |
+| `MenubarItem`                                              | `MenubarGroup`           |
+| `ContextMenuItem`                                          | `ContextMenuGroup`       |
+| `CommandItem`                                              | `CommandGroup`           |
+| `MessageScrollerItem`                                      | `MessageScrollerContent` |
+| `Message` (consecutive, same sender)                       | `MessageGroup`           |
+| `Bubble` (stacked)                                         | `BubbleGroup`            |
+| `Attachment` (in a row)                                    | `AttachmentGroup`        |
+
+Chat components nest in a fixed order (`MessageScrollerProvider` → `MessageScroller` → `MessageScrollerViewport` → `MessageScrollerContent` → `MessageScrollerItem`). See [chat.md](./chat.md).
 
 ---
 
@@ -70,7 +76,9 @@ This applies to all group-based components:
 ```tsx
 <Empty>
   <EmptyHeader>
-    <EmptyMedia variant="icon"><FolderIcon /></EmptyMedia>
+    <EmptyMedia variant="icon">
+      <FolderIcon />
+    </EmptyMedia>
     <EmptyTitle>No projects yet</EmptyTitle>
     <EmptyDescription>Get started by creating a new project.</EmptyDescription>
   </EmptyHeader>
@@ -85,12 +93,12 @@ This applies to all group-based components:
 ## Toast notifications use sonner
 
 ```tsx
-import { toast } from "sonner"
+import { toast } from 'sonner'
 
-toast.success("Changes saved.")
-toast.error("Something went wrong.")
-toast("File deleted.", {
-  action: { label: "Undo", onClick: () => undoDelete() },
+toast.success('Changes saved.')
+toast.error('Something went wrong.')
+toast('File deleted.', {
+  action: { label: 'Undo', onClick: () => undoDelete() },
 })
 ```
 
@@ -99,7 +107,7 @@ toast("File deleted.", {
 ## Choosing between overlay components
 
 | Use case                           | Component     |
-|------------------------------------|---------------|
+| ---------------------------------- | ------------- |
 | Focused task that requires input   | `Dialog`      |
 | Destructive action confirmation    | `AlertDialog` |
 | Side panel with details or filters | `Sheet`       |
@@ -189,7 +197,7 @@ Always include `AvatarFallback` for when the image fails to load:
 ## Use existing components instead of custom markup
 
 | Instead of                                         | Use                                  |
-|----------------------------------------------------|--------------------------------------|
+| -------------------------------------------------- | ------------------------------------ |
 | `<hr>` or `<div className="border-t">`             | `<Separator />`                      |
 | `<div className="animate-pulse">` with styled divs | `<Skeleton className="h-4 w-3/4" />` |
 | `<span className="rounded-full bg-green-100 ...">` | `<Badge variant="secondary">`        |

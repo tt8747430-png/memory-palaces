@@ -15,7 +15,7 @@ import {
   Trash2,
 } from 'lucide-react'
 import { SWIPE_ACTION_META, type SwipeActionId, type SwipeConfig } from '@/shared/config/swipe'
-import type { SwipeAction } from './SwipeRow'
+import type { SwipeAction } from './swipe-row'
 
 const SWIPE_ACTION_ICON: Record<SwipeActionId, ReactNode> = {
   favorite: <Heart className="size-5" aria-hidden />,

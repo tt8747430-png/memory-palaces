@@ -1,4 +1,15 @@
-@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap');
+@import '@fontsource/lexend/300.css';
+@import '@fontsource/lexend/400.css';
+@import '@fontsource/lexend/500.css';
+@import '@fontsource/lexend/600.css';
+@import '@fontsource/lexend/700.css';
 @import 'tailwindcss';
+
+/* Plans and ADRs quote utility strings in prose — including tokens from the pre-revert
+   `--p-*` scale — which Tailwind's automatic source detection happily compiles into dead
+   rules (and one malformed `var(--p-text-*)`). Docs are prose, not source. */
+@source not "../../docs";
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
 @import './tokens.css';
 @import './theme.css';

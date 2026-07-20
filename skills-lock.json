@@ -73,6 +73,12 @@
       "skillPath": "skills/personal/edit-article/SKILL.md",
       "computedHash": "8d7aec1987245a27e9c7d585b9f11d1129b8bd8ecb3a8596cdd3048974d9e302"
     },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "4eabc66183767153e404b39d1b839b1c37f2d82d86f0a0d7e880a579d8d62336"
+    },
     "git-guardrails-claude-code": {
       "source": "mattpocock/skills",
       "sourceType": "github",
@@ -83,7 +89,7 @@
       "source": "mattpocock/skills",
       "sourceType": "github",
       "skillPath": "skills/productivity/grill-me/SKILL.md",
-      "computedHash": "f321507f77702a54af1db66549ec1685fc625390d06c57d7949cdcda8eb1b5c7"
+      "computedHash": "f361db4e15e6bfd562a9282b1dccda513910a50061f9e838ce017be9c69dde3f"
     },
     "grill-with-docs": {
       "source": "mattpocock/skills",
@@ -193,6 +199,18 @@
       "skillPath": "skills/in-progress/setup-ts-deep-modules/SKILL.md",
       "computedHash": "609aee622bcb0f517b956a42cc9103ae7d76ecaab09fa0abdb54ad178b583198"
     },
+    "shadcn": {
+      "source": "shadcn/ui",
+      "sourceType": "github",
+      "skillPath": "skills/shadcn/SKILL.md",
+      "computedHash": "d81caa0f86aabab65b25e302d454f23a3328760386ed9078345584c0d5c8058e"
+    },
+    "tailwind-design-system": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-mobile-development/skills/tailwind-design-system/SKILL.md",
+      "computedHash": "cd61afd28f594e8b6712b61749209cbb4466e3eec4e4223793bbd97fc85c1b63"
+    },
     "tdd": {
       "source": "mattpocock/skills",
       "sourceType": "github",
@@ -234,6 +252,12 @@
       "sourceType": "github",
       "skillPath": "skills/engineering/triage/SKILL.md",
       "computedHash": "b77ea99c2e6e97815b373cc476ad4cc1835d3e736867b764602147be71f6c131"
+    },
+    "typescript-advanced-types": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "skillPath": "plugins/javascript-typescript/skills/typescript-advanced-types/SKILL.md",
+      "computedHash": "8cbf2bf600f392d7260e476e3202932a876e2281cda3b15a8b6a5a43f383252d"
     },
     "ubiquitous-language": {
       "source": "mattpocock/skills",
