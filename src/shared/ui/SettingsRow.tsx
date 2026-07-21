@@ -3,7 +3,7 @@ import { ChevronRight } from 'lucide-react'
 import { cn } from '@/shared/lib'
 import { Chip } from './Chip'
 import { Combobox, type ComboboxOption } from './Combobox'
-import { SwitchTrack } from './Switch'
+import { SwitchTrack } from './primitives/switch'
 
 type Tone = 'default' | 'danger'
 

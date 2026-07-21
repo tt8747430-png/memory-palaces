@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { ChevronLeft } from 'lucide-react'
 import { cn } from '@/shared/lib'
-import { IconButton } from './IconButton'
+import { IconButton } from './primitives/icon-button'
 
 export interface ScreenHeaderProps {
   title: ReactNode

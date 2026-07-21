@@ -2,7 +2,7 @@ import { type ReactNode, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BookOpen, Check, Lightbulb, MapPin, MessageSquareText, Plus, X } from 'lucide-react'
 import { cn } from '@/shared/lib'
-import { Textarea, TextField } from '@/shared/ui'
+import { Textarea, Input } from '@/shared/ui'
 import { MAX_OPTIONS, MIN_OPTIONS } from './editor-helpers'
 
 function FieldLabel({
@@ -75,7 +75,7 @@ export function CardFields({
           >
             {t('cards.editor.front')}
           </FieldLabel>
-          <TextField
+          <Input
             ref={frontRef}
             value={front}
             onChange={(e) => onFront(e.target.value)}
@@ -200,7 +200,7 @@ export function QuestionFields({
                     </span>
                   )}
                 </button>
-                <TextField
+                <Input
                   value={opt}
                   onChange={(e) => onOption(i, e.target.value)}
                   placeholder={t('questions.editor.optionPlaceholder', {

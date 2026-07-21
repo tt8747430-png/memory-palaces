@@ -2,7 +2,7 @@ import { type ReactNode, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Check } from 'lucide-react'
 import { cn } from '@/shared/lib'
-import { Button, Sheet, TextField } from '@/shared/ui'
+import { Button, Sheet, Input } from '@/shared/ui'
 import type { Card } from '@/entities/card'
 import type { CardChanges } from '../model/types'
 
@@ -57,7 +57,7 @@ export function InStudyEditor({ open, card, onClose, onSave }: InStudyEditorProp
     >
       <div className="flex flex-col gap-3 pb-2">
         <Field label={t('study.frontLabel')}>
-          <TextField
+          <Input
             value={front}
             onChange={(event) => setFront(event.target.value)}
             placeholder={t('study.frontPlaceholder')}

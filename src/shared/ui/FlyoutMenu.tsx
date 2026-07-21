@@ -2,7 +2,7 @@ import { type ReactElement } from 'react'
 import { Menu } from '@base-ui/react/menu'
 import { Check, MoreVertical } from 'lucide-react'
 import { cn } from '@/shared/lib'
-import { IconButton, type IconButtonSize, type IconButtonVariant } from './IconButton'
+import { IconButton, type IconButtonSize, type IconButtonVariant } from './primitives/icon-button'
 import type { SheetAction } from './ActionSheet'
 
 export interface FlyoutMenuProps {

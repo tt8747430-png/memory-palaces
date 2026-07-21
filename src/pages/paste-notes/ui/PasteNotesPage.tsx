@@ -21,7 +21,7 @@ import {
   parseVerses,
   type PasteFormat,
 } from '@/shared/lib'
-import { AppScreen, Button, ScreenHeader, Switch, Textarea, TextField } from '@/shared/ui'
+import { AppScreen, Button, ScreenHeader, Switch, Textarea, Input } from '@/shared/ui'
 import { useImportDraft } from '@/widgets/content-editor'
 
 export interface PasteNotesPageProps {
@@ -121,7 +121,7 @@ export function PasteNotesPage({
             <span className="mb-2 block text-[length:var(--p-text-sub)] font-bold text-heading">
               {t('cards.paste.deckNameLabel')}
             </span>
-            <TextField
+            <Input
               aria-label={t('cards.paste.deckNameLabel')}
               value={deckName}
               onChange={(e) => setDeckName(e.target.value)}
@@ -552,7 +552,7 @@ function CustomField({
 }) {
   return (
     <div className="p-3">
-      <TextField
+      <Input
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}

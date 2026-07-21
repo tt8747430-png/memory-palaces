@@ -1,6 +1,10 @@
 import type { ReactNode } from 'react'
-import { cn } from '@/shared/lib'
+import { Badge } from './primitives/badge'
 
+/**
+ * Domain affordance: a small info pill with an optional leading glyph.
+ * Composes the `Badge` primitive (`info` variant) so styling stays centralized.
+ */
 export function Chip({
   children,
   icon,
@@ -11,19 +15,13 @@ export function Chip({
   className?: string
 }) {
   return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1 rounded-control bg-info-surface px-2.5 py-1',
-        'text-[length:var(--p-text-label)] font-medium text-info-foreground',
-        className,
-      )}
-    >
+    <Badge variant="info" className={className}>
       {icon ? (
         <span className="grid place-items-center" aria-hidden>
           {icon}
         </span>
       ) : null}
       {children}
-    </span>
+    </Badge>
   )
 }

@@ -1,5 +1,5 @@
 import { FlyoutMenu } from './FlyoutMenu'
-import type { IconButtonSize, IconButtonVariant } from './IconButton'
+import type { IconButtonSize, IconButtonVariant } from './primitives/icon-button'
 import type { SheetAction } from './ActionSheet'
 
 export interface OverflowMenuButtonProps {

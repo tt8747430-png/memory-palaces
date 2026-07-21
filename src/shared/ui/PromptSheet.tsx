@@ -1,8 +1,8 @@
 import { type SyntheticEvent, useEffect, useState } from 'react'
 import { useAutoSelect } from '@/shared/lib'
 import { Sheet } from './Sheet'
-import { TextField } from './TextField'
-import { Button } from './button'
+import { Input } from './primitives/input'
+import { Button } from './primitives/button'
 
 export interface PromptSheetProps {
   open: boolean
@@ -55,7 +55,7 @@ export function PromptSheet({
       }
     >
       <form onSubmit={submit} className="pb-2">
-        <TextField
+        <Input
           aria-label={fieldLabel}
           value={value}
           onChange={(event) => setValue(event.target.value)}

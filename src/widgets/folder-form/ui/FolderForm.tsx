@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { DECK_COLOR_OPTIONS } from '@/entities/deck'
 import { useAutoSelect } from '@/shared/lib'
-import { IconColorRow, TextField } from '@/shared/ui'
+import { IconColorRow, Input } from '@/shared/ui'
 
 export interface FolderFormProps {
   name: string
@@ -26,7 +26,7 @@ export function FolderForm({
   const autoSelect = useAutoSelect<HTMLInputElement>(autoFocusName)
   return (
     <div className="flex flex-col gap-5">
-      <TextField
+      <Input
         aria-label={t('folder.nameLabel')}
         value={name}
         onChange={(event) => onNameChange(event.target.value)}

@@ -2,7 +2,7 @@ import { type ReactNode, useState } from 'react'
 import { Eye, EyeOff, Lock } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { AuthField, type AuthFieldProps } from './AuthField'
-import { IconButton } from './IconButton'
+import { IconButton } from './primitives/icon-button'
 
 export type PasswordFieldProps = Omit<AuthFieldProps, 'type' | 'rightSlot' | 'icon'> & {
   icon?: ReactNode

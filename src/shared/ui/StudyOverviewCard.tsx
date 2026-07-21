@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { motion } from 'motion/react'
 import { Check, GraduationCap } from 'lucide-react'
-import { Button } from './button'
+import { Button } from './primitives/button'
 import { GlassCard } from './GlassCard'
 
 export interface StudyOverviewCardProps {

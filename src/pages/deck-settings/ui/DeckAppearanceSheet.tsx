@@ -9,7 +9,7 @@ import {
   useDeckStoreApi,
 } from '@/entities/deck'
 import { editDeck } from '@/features/deck'
-import { Button, IconColorRow, Sheet, TextField } from '@/shared/ui'
+import { Button, IconColorRow, Sheet, Input } from '@/shared/ui'
 
 export interface DeckAppearanceSheetProps {
   open: boolean
@@ -52,7 +52,7 @@ export function DeckAppearanceSheet({ open, onOpenChange, deck }: DeckAppearance
       }
     >
       <form onSubmit={submit} className="flex flex-col gap-5 pb-2">
-        <TextField
+        <Input
           aria-label={t('deck.nameLabel')}
           value={name}
           onChange={(event) => setName(event.target.value)}

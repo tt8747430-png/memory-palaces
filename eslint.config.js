@@ -56,4 +56,10 @@ export default tseslint.config(
     files: ['src/app/router.tsx'],
     rules: { 'react-refresh/only-export-components': 'off' },
   },
+  {
+    // shadcn-on-Base-UI primitives intentionally co-export their `cva` variant
+    // helpers (e.g. `buttonVariants`) alongside the component, per the recipe shape.
+    files: ['src/shared/ui/primitives/**/*.{ts,tsx}'],
+    rules: { 'react-refresh/only-export-components': 'off' },
+  },
 )

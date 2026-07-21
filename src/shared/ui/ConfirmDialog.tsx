@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
 import { cn } from '@/shared/lib'
-import { Button } from './button'
+import { Button } from './primitives/button'
 
 export interface ConfirmDialogProps {
   open: boolean
@@ -81,7 +81,7 @@ export function ConfirmDialog({
 
             <div className="mt-6 flex flex-col gap-2.5">
               <Button
-                variant={destructive ? 'destructive' : 'primary'}
+                variant={destructive ? 'destructive' : 'default'}
                 size="lg"
                 className="w-full"
                 onClick={handleConfirm}

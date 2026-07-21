@@ -26,7 +26,7 @@ import {
   ScreenHeader,
   SettingsRow,
   SettingsSection,
-  TextField,
+  Input,
 } from '@/shared/ui'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -213,7 +213,7 @@ export function SettingsProfilePage({
             <span className="px-1 text-[length:var(--p-text-label)] font-medium text-muted-foreground">
               {t('settings.profileEdit.name')}
             </span>
-            <TextField
+            <Input
               value={form.name}
               onChange={(event) => set('name', event.target.value)}
               placeholder={t('settings.profileEdit.namePlaceholder')}
@@ -225,7 +225,7 @@ export function SettingsProfilePage({
             <span className="px-1 text-[length:var(--p-text-label)] font-medium text-muted-foreground">
               {t('settings.profileEdit.username')}
             </span>
-            <TextField
+            <Input
               value={form.username}
               onChange={(event) => set('username', event.target.value)}
               placeholder={t('settings.profileEdit.usernamePlaceholder')}
@@ -258,7 +258,7 @@ export function SettingsProfilePage({
             <span className="px-1 text-[length:var(--p-text-label)] font-medium text-muted-foreground">
               {t('settings.profileEdit.email')}
             </span>
-            <TextField
+            <Input
               type="email"
               value={form.email}
               onChange={(event) => set('email', event.target.value)}
@@ -277,7 +277,7 @@ export function SettingsProfilePage({
             <span className="px-1 text-[length:var(--p-text-label)] font-medium text-muted-foreground">
               {t('settings.profileEdit.phone')}
             </span>
-            <TextField
+            <Input
               type="tel"
               inputMode="tel"
               value={form.phone}
