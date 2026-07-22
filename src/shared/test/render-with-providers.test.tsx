@@ -7,14 +7,17 @@ afterEach(cleanup)
 
 function Probe() {
   const { t } = useTranslation()
-  // any real key works; assert the provider resolves translations, not a specific string
-  return <span>{typeof t('common.cancel') === 'string' ? 'i18n-ready' : 'no-i18n'}</span>
+  // Resolve a real key so the assertion fails if i18n isn't wired (a missing key
+  // returns the key string itself, not the English value).
+  return <span>{t('common.cancel')}</span>
 }
 
 describe('renderWithProviders', () => {
-  it('supplies i18n context to descendants', () => {
+  it('supplies working i18n context to descendants', () => {
     renderWithProviders(<Probe />)
-    expect(screen.getByText('i18n-ready')).toBeInTheDocument()
+    // 'common.cancel' resolves to its English value, proving translations are live.
+    expect(screen.getByText('Cancel')).toBeInTheDocument()
+    expect(screen.queryByText('common.cancel')).toBeNull()
   })
 
   it('renders arbitrary UI', () => {
