@@ -15,7 +15,7 @@ import { selectProgress, useProgressStore, useProgressStoreApi } from '@/entitie
 import { selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
 import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
 import { BADGE_META } from '@/widgets/badge-list'
-import { AppScreen, BadgeMedallion, cardSurface, ProgressBar, ScreenHeader } from '@/shared/ui'
+import { AppScreen, BadgeMedallion, cardSurface, Progress, ScreenHeader } from '@/shared/ui'
 
 const EASE_OUT = [0.22, 1, 0.36, 1] as const
 
@@ -194,7 +194,7 @@ function TierLadder({ badge }: { badge: Badge }) {
 
             {/* The tier a learner is climbing — here the fill *is* the moment,
                 so this bar (alone) still animates up from zero on arrival. */}
-            {isCurrent ? <ProgressBar value={pct} animateOnMount delay={0.3} /> : null}
+            {isCurrent ? <Progress value={pct} animateOnMount delay={0.3} /> : null}
           </motion.li>
         )
       })}

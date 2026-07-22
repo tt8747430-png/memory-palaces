@@ -3,7 +3,7 @@ import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Building2, Flame, Zap } from 'lucide-react'
 import { levelFromXp } from '@/shared/lib'
-import { Avatar, ProgressBar } from '@/shared/ui'
+import { Avatar, Progress } from '@/shared/ui'
 
 export interface ProfileHeroProps {
   name: string
@@ -118,7 +118,7 @@ export function ProfileHero({
           <span className="text-primary">{levelLabel}</span>
           <span className="text-muted-foreground">{xpToNext}</span>
         </div>
-        <ProgressBar value={fill} className="mt-2 h-2.5" label={xpToNext} />
+        <Progress value={fill} className="mt-2 h-2.5" label={xpToNext} />
       </motion.div>
     </div>
   )

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { motion } from 'motion/react'
 import { cn } from '@/shared/lib'
-import { cardSurface } from './Card'
+import { cardSurface } from './primitives/card'
 
 export interface StatTileProps {
   icon: ReactNode

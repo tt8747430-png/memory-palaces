@@ -2,7 +2,7 @@ import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { ChevronRight } from 'lucide-react'
 import { type Badge, cn, milestoneProgress } from '@/shared/lib'
-import { BadgeMedallion, cardSurface, ProgressBar } from '@/shared/ui'
+import { BadgeMedallion, cardSurface, Progress } from '@/shared/ui'
 import { BADGE_META, compactNumber } from './meta'
 
 export interface NextMilestoneCardProps {
@@ -54,7 +54,7 @@ export function NextMilestoneCard({ badge, onOpen, className }: NextMilestoneCar
         </span>
       </div>
 
-      <ProgressBar value={pct} />
+      <Progress value={pct} />
     </motion.button>
   )
 }

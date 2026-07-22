@@ -1,37 +1,66 @@
 import { describe, expect, it } from 'vitest'
 import {
+  armedSide,
   clampSwipeOffset,
-  shouldCommitSwipe,
-  SWIPE_DELETE_MAX,
-  SWIPE_DELETE_THRESHOLD,
+  resolveSwipeRelease,
+  type SwipeGeometry,
 } from './gestures'
 
+// A row with a one-action leading tray and a two-action trailing tray.
+// (ACTION_WIDTH 60, COMMIT_GAP 64 → commit = width + 64.)
+const geo: SwipeGeometry = {
+  hasLeading: true,
+  hasTrailing: true,
+  leadingWidth: 60,
+  trailingWidth: 120,
+  leadingCommit: 124,
+  trailingCommit: 184,
+}
+
+const trailingOnly: SwipeGeometry = { ...geo, hasLeading: false }
+
 describe('clampSwipeOffset', () => {
-  it('rubber-bands a rightward (wrong-way) drag', () => {
-    expect(clampSwipeOffset(100)).toBeCloseTo(18)
+  it('passes travel through up to each commit point', () => {
+    expect(clampSwipeOffset(80, geo)).toBe(80)
+    expect(clampSwipeOffset(-150, geo)).toBe(-150)
   })
 
-  it('passes a leftward drag through within the cap', () => {
-    expect(clampSwipeOffset(-50)).toBe(-50)
+  it('rubber-bands past the commit point (0.35 resistance)', () => {
+    expect(clampSwipeOffset(224, geo)).toBeCloseTo(124 + 100 * 0.35) // 159
+    expect(clampSwipeOffset(-284, geo)).toBeCloseTo(-(184 + 100 * 0.35)) // -219
   })
 
-  it('caps the leftward travel at the reveal width', () => {
-    expect(clampSwipeOffset(-400)).toBe(-SWIPE_DELETE_MAX)
+  it('softly damps a drag against an absent tray (0.12)', () => {
+    expect(clampSwipeOffset(100, trailingOnly)).toBeCloseTo(12)
   })
 })
 
-describe('shouldCommitSwipe', () => {
-  it('never commits a rightward drag', () => {
-    expect(shouldCommitSwipe(80, 2)).toBe(false)
+describe('armedSide', () => {
+  it('arms an edge only once its commit point is cleared', () => {
+    expect(armedSide(-183, geo)).toBeNull()
+    expect(armedSide(-184, geo)).toBe('trailing')
+    expect(armedSide(124, geo)).toBe('leading')
+    expect(armedSide(123, geo)).toBeNull()
   })
 
-  it('commits once the leftward drag clears the threshold', () => {
-    expect(shouldCommitSwipe(-SWIPE_DELETE_THRESHOLD, 0)).toBe(true)
-    expect(shouldCommitSwipe(-(SWIPE_DELETE_THRESHOLD - 1), 0)).toBe(false)
+  it('never arms a side that has no tray', () => {
+    expect(armedSide(200, trailingOnly)).toBeNull()
+  })
+})
+
+describe('resolveSwipeRelease', () => {
+  it('commits the edge action past the commit point', () => {
+    expect(resolveSwipeRelease(-184, geo)).toEqual({ kind: 'commit-trailing' })
+    expect(resolveSwipeRelease(124, geo)).toEqual({ kind: 'commit-leading' })
   })
 
-  it('commits a short but fast left fling', () => {
-    expect(shouldCommitSwipe(-20, 0.6)).toBe(true)
-    expect(shouldCommitSwipe(-20, 0.4)).toBe(false)
+  it('opens the tray past half its reveal width', () => {
+    expect(resolveSwipeRelease(-70, geo)).toEqual({ kind: 'open-trailing', settleTo: -120 })
+    expect(resolveSwipeRelease(40, geo)).toEqual({ kind: 'open-leading', settleTo: 60 })
+  })
+
+  it('snaps closed below the open threshold', () => {
+    expect(resolveSwipeRelease(-30, geo)).toEqual({ kind: 'close', settleTo: 0 })
+    expect(resolveSwipeRelease(20, geo)).toEqual({ kind: 'close', settleTo: 0 })
   })
 })

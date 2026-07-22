@@ -20,7 +20,7 @@ import {
   AppScreen,
   Button,
   ConfirmDialog,
-  EmptyState,
+  Empty,
   OverflowMenuButton,
   ScreenHeader,
 } from '@/shared/ui'
@@ -76,7 +76,7 @@ export function ArchivedDecksPage({ onBack }: ArchivedDecksPageProps) {
           <span className="size-8 animate-pulse rounded-full bg-secondary" aria-hidden />
         </div>
       ) : archived.length === 0 ? (
-        <EmptyState
+        <Empty
           icon={<Archive className="size-7" aria-hidden />}
           title={t('archived.empty')}
           description={t('archived.emptyBody')}

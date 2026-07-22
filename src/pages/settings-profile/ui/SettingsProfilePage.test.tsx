@@ -121,7 +121,7 @@ describe('SettingsProfilePage', () => {
     expect(onDeleteAccount).not.toHaveBeenCalled()
     expect(await deckRepo.getAll()).toHaveLength(1)
 
-    const sheet = await screen.findByRole('dialog')
+    const sheet = await screen.findByRole('alertdialog')
     await user.click(within(sheet).getByRole('button', { name: /delete account/i }))
 
     await waitFor(async () => expect(await deckRepo.getAll()).toEqual([]))

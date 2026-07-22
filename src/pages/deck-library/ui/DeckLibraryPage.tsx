@@ -100,7 +100,7 @@ import {
   Button,
   ConfirmDialog,
   DropIndicator,
-  EmptyState,
+  Empty,
   FolderGlyph,
   IconButton,
   ImportRow,
@@ -933,7 +933,7 @@ export function DeckLibraryPage({
       {!ready ? (
         <LibrarySkeleton />
       ) : isEmpty ? (
-        <EmptyState
+        <Empty
           emoji={inFolder ? '📂' : '🗂️'}
           title={inFolder ? t('library.emptyFolderTitle') : t('library.emptyTitle')}
           description={inFolder ? t('library.emptyFolderHint') : t('library.emptyHint')}

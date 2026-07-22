@@ -1,6 +1,8 @@
-import { type InputHTMLAttributes, type ReactNode, useId } from 'react'
+import { type InputHTMLAttributes, type ReactNode } from 'react'
 import { Check } from 'lucide-react'
 import { cn } from '@/shared/lib'
+import { Field, FieldControl, FieldError, FieldLabel } from './primitives/field'
+import { Input } from './primitives/input'
 
 type NativeProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'id' | 'value' | 'onChange'>
 
@@ -15,6 +17,11 @@ export interface AuthFieldProps extends NativeProps {
   error?: string
 }
 
+/**
+ * Labelled auth input on Base UI's `Field` — label↔control association, `aria-invalid`
+ * and error `aria-describedby` are wired by the primitive. Keeps the glass auth look plus
+ * the icon / right-slot / valid-check overlays.
+ */
 export function AuthField({
   id,
   label,
@@ -28,15 +35,12 @@ export function AuthField({
   type = 'text',
   ...props
 }: AuthFieldProps) {
-  const errorId = useId()
   const hasError = Boolean(error)
   const showCheck = valid && !rightSlot && !hasError
 
   return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-[length:var(--p-text-label)] font-medium text-heading">
-        {label}
-      </label>
+    <Field invalid={hasError}>
+      <FieldLabel>{label}</FieldLabel>
 
       <div className="group relative">
         {icon ? (
@@ -52,22 +56,23 @@ export function AuthField({
           </span>
         ) : null}
 
-        <input
+        <FieldControl
           id={id}
-          type={type}
-          value={value}
-          onChange={(event) => onValueChange(event.target.value)}
-          aria-invalid={hasError || undefined}
-          aria-describedby={hasError ? errorId : undefined}
-          className={cn(
-            'h-12 w-full rounded-control border bg-card-glass text-[length:var(--p-text-body)] text-foreground',
-            'placeholder:text-muted-foreground transition-shadow duration-200',
-            icon ? 'pl-11' : 'pl-3.5',
-            rightSlot || showCheck ? 'pr-11' : 'pr-3.5',
-            hasError ? 'border-[var(--danger)]' : 'border-[var(--border-glass)]',
-            className,
-          )}
-          {...props}
+          render={
+            <Input
+              type={type}
+              value={value}
+              onChange={(event) => onValueChange(event.target.value)}
+              aria-invalid={hasError || undefined}
+              className={cn(
+                'h-12 border-[var(--border-glass)] bg-card-glass transition-shadow duration-200',
+                icon ? 'pl-11' : 'pl-3.5',
+                rightSlot || showCheck ? 'pr-11' : 'pr-3.5',
+                className,
+              )}
+              {...props}
+            />
+          }
         />
 
         {rightSlot ? (
@@ -83,14 +88,10 @@ export function AuthField({
       </div>
 
       {hasError ? (
-        <p
-          id={errorId}
-          role="alert"
-          className="text-[length:var(--p-text-label)] text-[var(--danger-on-surface)]"
-        >
+        <FieldError match className="text-[var(--danger-on-surface)]">
           {error}
-        </p>
+        </FieldError>
       ) : null}
-    </div>
+    </Field>
   )
 }

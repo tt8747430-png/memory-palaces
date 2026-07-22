@@ -45,7 +45,7 @@ One-handed use: the bottom third is easy, the top is a stretch.
 
 - **Never rely on hover** — there is none on touch. Anything exposed on hover on desktop must be reachable by tap.
 - **Every gesture needs a visible alternative.** Swipe (`shared/ui/SwipeRow`, `swipe-actions`) and long-press (`shared/lib/use-long-press`) are accelerators, not the only path — provide a button too.
-- **Make gestures discoverable and forgiving:** show affordances (the sheet grab handle, swipe action colors), give an elastic/rubber-band boundary (the `Sheet` uses `dragElastic` bottom `0.18`), and require a deliberate threshold before committing a destructive swipe.
+- **Make gestures discoverable and forgiving:** show affordances (the sheet grab handle, swipe action colors), give an elastic/rubber-band boundary (`SwipeRow` rubber-bands past its commit point — see `shared/lib/gestures`), and require a deliberate threshold before committing a destructive swipe. `SwipeRow` and the study/browser card decks share one recognizer, **`@use-gesture`** (`useDrag`, `filterTaps` + velocity); the pure commit math lives in `shared/lib/gestures` (unit-tested).
 - **Give immediate press feedback:** `active:scale-[0.97]` (see `Button`) + haptics on commit.
 - **Haptics** (`shared/lib/haptics`): `tick()` (8ms), `impact()` (16ms), `success([12,40,24])`, gated by a user preference (`setHapticsEnabled`). **Caveat:** these use `navigator.vibrate`, which works on Android/Chromium but is **ignored by iOS Safari** — treat haptics as progressive enhancement, never as the only feedback.
 
@@ -60,9 +60,9 @@ One-handed use: the bottom third is easy, the top is a stretch.
 
 ## 7. Menus, sheets & overlays
 
-All overlays are built on **`@base-ui/react`** headless primitives (e.g. `Dialog` in `shared/ui/Sheet`), which provide focus-trap, portal, and `Escape`/backdrop dismissal. Prefer these primitives over hand-rolled overlays.
+All overlays are built on **`@base-ui/react`** headless primitives, wrapped as project primitives in `shared/ui/primitives/`: bottom sheets on **`Drawer`** (`shared/ui/Sheet`/`ActionSheet`/`PromptSheet`), blocking confirms on **`AlertDialog`** (`ConfirmDialog` → `role="alertdialog"`, no outside-press dismiss), and contextual menus on **`Menu`**/`DropdownMenu` (`FlyoutMenu`/`SortControl`/`OverflowMenuButton`). They provide focus-trap, portal, native swipe-to-dismiss, and `Escape`/backdrop dismissal. Prefer these primitives over hand-rolled overlays. (`CardBrowser` is the one deliberate exception — a full-screen card gallery on Base UI `Dialog`, not a bottom sheet.)
 
-- **Prefer bottom sheets over centered dialogs on mobile.** They land in the thumb zone and feel native. `Sheet` is the canonical pattern: rises from the bottom (`data-[starting-style]:translate-y-full` slide + backdrop fade), has a **grab handle**, **drag-to-dismiss** (`motion` `drag="y"`), caps at **`max-h-[88dvh]`** so the context behind stays visible, pads `pb-safe`, and rounds only the top (`rounded-t-card-featured`).
+- **Prefer bottom sheets over centered dialogs on mobile.** They land in the thumb zone and feel native. `Sheet` is the canonical pattern: rises from the bottom (transform from `--closed-transform` + backdrop fade), has a **grab handle**, **native swipe-to-dismiss** (Base UI `Drawer` `swipeDirection="down"` — no hand-rolled drag), caps at **`max-h-[88dvh]`** so the context behind stays visible, pads `pb-safe`, and rounds only the top (`rounded-t-card-featured`). On **iOS** the sheet lifts above the on-screen keyboard via **`Drawer.VirtualKeyboardProvider`** (Safari demotes `position: fixed` once the keyboard is up, so hand-rolled `bottom` offsets lose — the provider reads the visual viewport instead; it replaced vaul's `repositionInputs`). Pass `initialFocus` to land the caret in a specific field (see `PromptSheet`).
 - **Pick the right component for the job:**
   - `Sheet` / `PromptSheet` — a form or a single input in context.
   - `ActionSheet` — a short list of choices (the mobile equivalent of a menu).
@@ -83,7 +83,7 @@ Code-level animation rules (which library, which properties) are in [CODE_STYLE.
 - **Keep it quick:** ~150–300ms for most UI transitions. Longer feels sluggish on a device held in the hand.
 - **Direction encodes hierarchy:** sheets rise from the bottom and fall back down; forward navigation (list → detail) moves inward, back moves outward. Don't slide laterally between peers as if there were depth.
 - **Animate only `transform`/`opacity`** to hold 60fps (details in CODE_STYLE §9); never animate layout props.
-- **Interruptible & reversible:** a half-open sheet you swipe back down should return, not jump. Let gestures drive the value (`style={{ y }}`) rather than firing a fixed animation.
+- **Interruptible & reversible:** a half-open sheet you swipe back down should return, not jump. Base UI `Drawer` tracks the finger natively (`--drawer-swipe-movement-y`); for hand-driven surfaces let the gesture drive a `MotionValue` (e.g. `SwipeRow`'s `style={{ x }}`) rather than firing a fixed animation.
 - **Always honor `prefers-reduced-motion`** — replace slides/scales with a plain fade or cut.
 
 ## 9. Visual design & hierarchy

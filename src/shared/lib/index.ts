@@ -5,10 +5,10 @@ export { downloadText } from './download'
 export { useStickyHeader, type StickyHeader } from './sticky-header/use-sticky-header'
 export {
   clampSwipeOffset,
-  shouldCommitSwipe,
-  SWIPE_DELETE_THRESHOLD,
-  SWIPE_DELETE_MAX,
-  SWIPE_FLING_SPEED,
+  armedSide,
+  resolveSwipeRelease,
+  type SwipeGeometry,
+  type SwipeRelease,
 } from './gestures'
 export { useLongPress, type LongPressHandlers, type LongPressOptions } from './use-long-press'
 export { useAutoSelect } from './use-auto-select'

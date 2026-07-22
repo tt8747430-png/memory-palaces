@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Archive, Bell, BellRing, Flame } from 'lucide-react'
 import { cn, levelFromXp, type StickyHeader } from '@/shared/lib'
-import { Avatar, IconButton, ProgressBar, StickyBar } from '@/shared/ui'
+import { Avatar, IconButton, Progress, StickyBar } from '@/shared/ui'
 
 export interface HomeHeaderProps {
   header: StickyHeader
@@ -58,7 +58,7 @@ export function HomeHeader({
             <span className="shrink-0 text-[length:var(--p-text-label)] font-semibold text-primary">
               {t('home.level', { level })}
             </span>
-            <ProgressBar
+            <Progress
               value={fill}
               className="h-1.5 w-full max-w-[140px] bg-secondary/40"
               label={xpToNext}

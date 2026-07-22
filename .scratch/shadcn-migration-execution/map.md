@@ -67,6 +67,53 @@ new UI decisions** — it implements them.
   `field`(Base UI Field compound: Field/Label/Control/Description/Error), `switch`(Base UI, kept API +
   presentational `SwitchTrack` for SettingsRow), `badge`(cva). `Chip`→thin wrapper over Badge. Old
   4 files deleted; `Switch.test`→`primitives/switch.test`. **Unblocks 04.**
+- [03 — Primitives B](./issues/03-primitives-b.md) — **landed, gate green (538 tests).** Public:
+  `card`(+`cardSurface`), `avatar`(kept lightweight img/initials — Base UI Avatar defers `<img>`
+  past jsdom load), `Progress`(was ProgressBar — Base UI `Progress.Root` semantics + motion fill),
+  `Empty`(was EmptyState). Renamed consumers repointed; old 4 files + test moved/deleted. Compound
+  foundations built but **kept out of the barrel** (consumed same-slice by 04/05/07): `toggle-group`,
+  `dropdown-menu`(styled Base UI Menu, cva item variants), `alert-dialog`(always-modal), `drawer`
+  (Base UI native swipe + `VirtualKeyboardProvider` — **§4 drawer risk retired**, 05 drops
+  `use-drag-to-dismiss` + iOS offset). ⚠ Pre-existing `FlashcardsPanel` flake noted (not ours).
+  **Unblocks 04 (+ 05 for Drawer, 06 unaffected).**
+- [04 — Domain rebuilds](./issues/04-domain-rebuilds.md) — **landed, gate green (538 tests).** Six
+  rebuilt on ticket-03 foundations (same-slice deep imports): SegmentedControl→ToggleGroup+motion pill,
+  IconColorRow→ToggleGroup, SortControl→DropdownMenu RadioGroup, FlyoutMenu→DropdownMenu (OverflowMenu
+  unchanged), ConfirmDialog→AlertDialog (`role="alertdialog"`, no outside-dismiss — 2 consumer tests
+  `dialog`→`alertdialog`), AuthField→Field+Input (PasswordField unchanged). Component tests passed
+  unmodified (public APIs stable). **Unblocks 07 (+09).**
+- [05 — Overlays → Drawer](./issues/05-overlays-sheet-to-drawer.md) — **landed, gate green (538 tests).**
+  Sheet/ActionSheet/PromptSheet rebuilt on Base UI `Drawer`; `use-drag-to-dismiss` deleted; Sheet gains
+  `initialFocus` passthrough (PromptSheet targets its input). **Gotcha fixed:** `VirtualKeyboardProvider`
+  must sit *inside* `Drawer.Root` wrapping the Viewport (first pass wrapped Root → threw everywhere).
+  `vaul` still installed (removed in 11). ⚠ **iOS on-device verification still owed:** keyboard-lift
+  parity + swipe-dismiss not hijacking inner controls.
+- [06 — SwipeRow gesture rebuild](./issues/06-swiperow-gesture-rebuild.md) — **landed, gate green (540
+  tests).** `gestures.ts` generalized to bidirectional `SwipeGeometry` math (clamp/armedSide/
+  resolveSwipeRelease), tested; SwipeRow event layer moved to `@use-gesture` `useDrag` (via
+  `target` ref, `axis:'x'`+`pan-y`+`filterTaps`) — same recognizer as the decks. Added jsdom
+  Pointer-Capture stub to test setup. ⚠ **on-device swipe-feel verification owed.**
+- [07 — Widgets: Study](./issues/07-widgets-study.md) — **landed, gate green (540 tests).** Mostly
+  transitive: 4 study sheets already on Drawer (via 05), widget consumes only migrated primitives.
+  Real change: `ToggleRow` inline switch track → `SwitchTrack` primitive (dedup, 0 visual change).
+  StudyDeck `@use-gesture` / faces `motion` / session-reward kept per spec.
+- [08 — Widgets: Content](./issues/08-widgets-content.md) — **landed, gate green (540 tests).** No code
+  change — all transitive: DeckContentEditor sheets on Drawer (05, the real "5th sheet"), ContentRows
+  SwipeRow (06), FlyoutMenu/Input/Textarea/IconColorRow (04). **CardBrowser kept on Base UI Dialog +
+  `@use-gesture`** (full-screen gallery; ticket-body "→Drawer" over-reach corrected against handoff §3).
+  deck-tree §10 intact.
+- [09 — Widgets: Profile/Home](./issues/09-widgets-profile-home.md) — **landed, gate green (540
+  tests).** No code change — profile/home surfaces + kept glyphs consume only migrated primitives
+  (Progress rename done in 03, SwipeRow in 06). `cardSurface` reconciled to `primitives/card` (03).
+  Un-migrated-usage scan across the cluster: none.
+- [10 — Widgets: Shell](./issues/10-widgets-shell.md) — **landed, gate green (540 tests).** No code
+  change — bottom-nav/splash keep-domain (nav tabs + splash "Skip" ghost link intentionally bespoke),
+  WordReveal kept, no old Button/IconButton imports to repoint. **All widget clusters done → 11 clear.**
+- [11 — Docs, tests, dep cleanup](./issues/11-docs-tests-dep-cleanup.md) — **landed. MIGRATION CLOSED.**
+  `vaul` removed (pkg + lockfile, no residual imports); `shadcn` never installed. Docs updated
+  (MOBILE_DESIGN overlays/gestures, CODE_STYLE passive-listener rule, UBIQUITOUS_LANGUAGE Combobox=Select).
+  **Final gate: typecheck clean · lint 0 errors · 540/540 tests · `npm run build` succeeds.** Net deps:
+  +cva, base-ui ^1.5→^1.6, −vaul. ⚠ Owed: on-device iOS keyboard + swipe-feel verification (05/06).
 
 ## Not yet specified
 

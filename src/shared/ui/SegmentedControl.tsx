@@ -1,6 +1,7 @@
 import { type ReactNode, useId } from 'react'
 import { motion } from 'motion/react'
 import { cn } from '@/shared/lib'
+import { ToggleGroup, ToggleGroupItem } from './primitives/toggle-group'
 
 export interface SegmentedOption<T extends string> {
   value: T
@@ -38,24 +39,27 @@ export function SegmentedControl<T extends string>({
   const pillId = layoutId ?? `segmented-${autoId}`
 
   return (
-    <div
-      role="group"
+    <ToggleGroup
+      value={[value]}
+      // Single-select: keep exactly one segment active — ignore the empty array Base UI
+      // proposes when the active segment is tapped again.
+      onValueChange={(next) => {
+        const selected = next[0]
+        if (selected) onChange(selected)
+      }}
       aria-label={ariaLabel}
       className={cn('relative flex rounded-card bg-primary/[0.06] p-1', className)}
     >
       {options.map((option) => {
         const isActive = option.value === value
         return (
-          <button
+          <ToggleGroupItem
             key={option.value}
-            type="button"
-            onClick={() => onChange(option.value)}
-            aria-pressed={isActive}
+            value={option.value}
             aria-label={option.ariaLabel}
             className={cn(
-              'relative flex flex-1 items-center justify-center rounded-control text-[length:var(--p-text-sub)] font-semibold transition-colors',
+              'relative flex flex-1 items-center justify-center rounded-control text-[length:var(--p-text-sub)] font-semibold',
               SEGMENT_PADDING[size],
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
               isActive ? 'text-primary' : 'text-primary/50',
             )}
           >
@@ -68,9 +72,9 @@ export function SegmentedControl<T extends string>({
               />
             ) : null}
             <span className="relative z-10 flex items-center justify-center">{option.label}</span>
-          </button>
+          </ToggleGroupItem>
         )
       })}
-    </div>
+    </ToggleGroup>
   )
 }

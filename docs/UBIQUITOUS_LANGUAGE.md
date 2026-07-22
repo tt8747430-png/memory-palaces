@@ -87,3 +87,4 @@ The shared vocabulary for Mindscape. Use these canonical terms in code, UI copy,
 - **"settings"** — qualify it: **Deck settings** are per-Deck study options; **Preferences** are global app settings.
 - **"user / account"** — three distinct things: the **Account** (auth identity with email), the **Profile** (editable display data), and the **Learner** (the human). "User" alone is ambiguous — pick the precise one.
 - **"Card"** — in domain talk this always means the **flashcard**; the `shared/ui/Card` component is just a generic surface and doesn't carry the domain meaning.
+- **`Combobox`** — the `shared/ui/Combobox` component is really a **Select** (choose one from a fixed list), not a free-text-filtered combobox. The name is a known misnomer kept for now; a rename to `Select` is a possible future tidy-up (out of scope for the shadcn/Base-UI migration).

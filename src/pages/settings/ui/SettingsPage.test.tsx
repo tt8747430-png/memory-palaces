@@ -113,7 +113,7 @@ describe('SettingsPage', () => {
     await user.click(screen.getByRole('button', { name: /log out/i }))
     expect(onLogout).not.toHaveBeenCalled()
 
-    const sheet = await screen.findByRole('dialog')
+    const sheet = await screen.findByRole('alertdialog')
     await user.click(within(sheet).getByRole('button', { name: /log out/i }))
     expect(onLogout).toHaveBeenCalled()
   })

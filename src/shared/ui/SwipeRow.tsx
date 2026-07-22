@@ -1,6 +1,5 @@
 import {
   type MouseEvent as ReactMouseEvent,
-  type PointerEvent as ReactPointerEvent,
   type ReactNode,
   useCallback,
   useEffect,
@@ -8,8 +7,16 @@ import {
   useState,
 } from 'react'
 import { animate, motion, useMotionValue, useReducedMotion, useTransform } from 'motion/react'
+import { useDrag } from '@use-gesture/react'
 import { type SwipeAccent, SWIPE_ACCENT } from '@/shared/config/swipe'
-import { cn, impact } from '@/shared/lib'
+import {
+  armedSide,
+  clampSwipeOffset,
+  cn,
+  impact,
+  resolveSwipeRelease,
+  type SwipeGeometry,
+} from '@/shared/lib'
 
 export type { SwipeAccent }
 
@@ -33,7 +40,6 @@ export interface SwipeRowProps {
   bleed?: boolean
 }
 
-const AXIS_LOCK = 8
 /** Horizontal space each circular action reveals. */
 const ACTION_WIDTH = 60
 /** Extra swipe past the tray width before a release commits the edge action. */
@@ -61,25 +67,24 @@ export function SwipeRow({
   const [armed, setArmed] = useState<Side | null>(null)
   const wasArmed = useRef<Side | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
+  const dragRef = useRef<HTMLDivElement>(null)
 
   const hasLeading = leading.length > 0
   const hasTrailing = trailing.length > 0
   const inset = bleed ? EDGE_INSET : 0
   const leadingWidth = hasLeading ? leading.length * ACTION_WIDTH + inset : 0
   const trailingWidth = hasTrailing ? trailing.length * ACTION_WIDTH + inset : 0
-  const leadingCommit = leadingWidth + COMMIT_GAP
-  const trailingCommit = trailingWidth + COMMIT_GAP
+  const geo: SwipeGeometry = {
+    hasLeading,
+    hasTrailing,
+    leadingWidth,
+    trailingWidth,
+    leadingCommit: leadingWidth + COMMIT_GAP,
+    trailingCommit: trailingWidth + COMMIT_GAP,
+  }
 
   const leadingOpacity = useTransform(x, (v) => (v > 0 ? 1 : 0))
   const trailingOpacity = useTransform(x, (v) => (v < 0 ? 1 : 0))
-
-  const drag = useRef<{
-    startX: number
-    startY: number
-    startOffset: number
-    axis: 'h' | 'v' | null
-    id: number
-  } | null>(null)
 
   const settle = useCallback(
     (to: number) => {
@@ -115,97 +120,66 @@ export function SwipeRow({
     return () => document.removeEventListener('pointerdown', closeOnOutside, true)
   }, [open, close])
 
-  const clampOffset = (raw: number) => {
-    if (raw > 0) {
-      if (!hasLeading) return raw * 0.12
-      if (raw <= leadingCommit) return raw
-      return leadingCommit + (raw - leadingCommit) * 0.35
-    }
-    if (raw < 0) {
-      if (!hasTrailing) return raw * 0.12
-      if (raw >= -trailingCommit) return raw
-      return -(trailingCommit + (-raw - trailingCommit) * 0.35)
-    }
-    return 0
-  }
+  const suppressClick = useRef(false)
 
-  const onPointerDown = (event: ReactPointerEvent) => {
-    drag.current = {
-      startX: event.clientX,
-      startY: event.clientY,
-      startOffset: x.get(),
-      axis: null,
-      id: event.pointerId,
-    }
-  }
+  // One recognizer for the whole row (the same `@use-gesture` `useDrag` the study/browser decks use).
+  // Bound to the moving element via `target` (not a spread) so it composes with `motion.div`'s own
+  // drag props; `touch-action: pan-y` lets vertical scrolls through natively, `filterTaps` keeps a tap
+  // a tap.
+  useDrag(
+    (state) => {
+      const [ox] = state.offset
+      if (state.tap) return
 
-  const onPointerMove = (event: ReactPointerEvent) => {
-    const state = drag.current
-    if (!state) return
-    const dx = event.clientX - state.startX
-    const dy = event.clientY - state.startY
-    if (state.axis === null) {
-      if (Math.abs(dx) < AXIS_LOCK && Math.abs(dy) < AXIS_LOCK) return
-      if (Math.abs(dx) > Math.abs(dy)) {
-        state.axis = 'h'
-        event.currentTarget.setPointerCapture?.(state.id)
-      } else if (Math.abs(dy) > Math.abs(dx)) {
-        drag.current = null
-        return
-      } else {
+      if (state.last) {
+        suppressClick.current = true
+        wasArmed.current = null
+        setArmed(null)
+        const release = resolveSwipeRelease(x.get(), geo)
+        switch (release.kind) {
+          case 'commit-trailing':
+            impact()
+            trailing[trailing.length - 1]!.onAction()
+            close()
+            break
+          case 'commit-leading':
+            impact()
+            leading[0]!.onAction()
+            close()
+            break
+          case 'open-trailing':
+            setOpen('trailing')
+            settle(release.settleTo)
+            break
+          case 'open-leading':
+            setOpen('leading')
+            settle(release.settleTo)
+            break
+          case 'close':
+            close()
+            break
+        }
         return
       }
-    }
-    const next = clampOffset(state.startOffset + dx)
-    x.set(next)
 
-    const nextArmed: Side | null =
-      next <= -trailingCommit && hasTrailing
-        ? 'trailing'
-        : next >= leadingCommit && hasLeading
-          ? 'leading'
-          : null
-    if (nextArmed !== wasArmed.current) {
-      wasArmed.current = nextArmed
-      setArmed(nextArmed)
-      if (nextArmed) impact()
-    }
-  }
+      const next = clampSwipeOffset(ox, geo)
+      x.set(next)
+      const side = armedSide(next, geo)
+      if (side !== wasArmed.current) {
+        wasArmed.current = side
+        setArmed(side)
+        if (side) impact()
+      }
+    },
+    {
+      target: dragRef,
+      axis: 'x',
+      filterTaps: true,
+      from: (): [number, number] => [x.get(), 0],
+      enabled: !disabled,
+    },
+  )
 
-  const finish = () => {
-    const state = drag.current
-    drag.current = null
-    if (!state || state.axis !== 'h') return
-    suppressClick.current = true
-    wasArmed.current = null
-    setArmed(null)
-
-    const offset = x.get()
-
-    if (offset <= -trailingCommit && hasTrailing) {
-      impact()
-      trailing[trailing.length - 1]!.onAction()
-      close()
-      return
-    }
-    if (offset >= leadingCommit && hasLeading) {
-      impact()
-      leading[0]!.onAction()
-      close()
-      return
-    }
-    if (offset <= -trailingWidth * 0.5 && hasTrailing) {
-      setOpen('trailing')
-      settle(-trailingWidth)
-    } else if (offset >= leadingWidth * 0.5 && hasLeading) {
-      setOpen('leading')
-      settle(leadingWidth)
-    } else {
-      close()
-    }
-  }
-
-  const suppressClick = useRef(false)
   const onClickCapture = (event: ReactMouseEvent) => {
     if (suppressClick.current) {
       suppressClick.current = false
@@ -276,12 +250,9 @@ export function SwipeRow({
       ) : null}
 
       <motion.div
+        ref={dragRef}
         style={{ x, touchAction: 'pan-y' }}
         className={cn(bleed && 'px-5')}
-        onPointerDown={disabled ? undefined : onPointerDown}
-        onPointerMove={disabled ? undefined : onPointerMove}
-        onPointerUp={disabled ? undefined : finish}
-        onPointerCancel={disabled ? undefined : finish}
         onClickCapture={onClickCapture}
       >
         {children}

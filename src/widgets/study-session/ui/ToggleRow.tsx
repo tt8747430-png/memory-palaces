@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react'
 import { cn } from '@/shared/lib'
+import { SwitchTrack } from '@/shared/ui'
 
 export function ToggleRow({
   icon,
@@ -42,19 +43,7 @@ export function ToggleRow({
           )}
         </span>
       </span>
-      <span
-        className={cn(
-          'relative h-7 w-12 shrink-0 rounded-full transition-colors',
-          checked ? 'bg-primary' : 'bg-[color-mix(in_oklch,var(--text-muted)_32%,transparent)]',
-        )}
-      >
-        <span
-          className={cn(
-            'absolute top-0.5 block size-6 rounded-full bg-card shadow-rest transition-transform',
-            checked ? 'translate-x-[22px]' : 'translate-x-0.5',
-          )}
-        />
-      </span>
+      <SwitchTrack checked={checked} />
     </button>
   )
 }

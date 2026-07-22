@@ -1,4 +1,4 @@
-import { type SyntheticEvent, useEffect, useState } from 'react'
+import { type SyntheticEvent, useEffect, useRef, useState } from 'react'
 import { useAutoSelect } from '@/shared/lib'
 import { Sheet } from './Sheet'
 import { Input } from './primitives/input'
@@ -28,6 +28,7 @@ export function PromptSheet({
   onSubmit,
 }: PromptSheetProps) {
   const [value, setValue] = useState(initialValue)
+  const inputRef = useRef<HTMLInputElement>(null)
   const autoSelect = useAutoSelect<HTMLInputElement>(open)
 
   useEffect(() => {
@@ -48,6 +49,7 @@ export function PromptSheet({
       onOpenChange={onOpenChange}
       title={title}
       description={description}
+      initialFocus={inputRef}
       footer={
         <Button size="lg" className="w-full" disabled={!valid} onClick={() => submit()}>
           {confirmLabel}
@@ -56,12 +58,12 @@ export function PromptSheet({
     >
       <form onSubmit={submit} className="pb-2">
         <Input
+          ref={inputRef}
           aria-label={fieldLabel}
           value={value}
           onChange={(event) => setValue(event.target.value)}
           onFocus={autoSelect}
           placeholder={placeholder}
-          autoFocus
           enterKeyHint="done"
           maxLength={60}
         />

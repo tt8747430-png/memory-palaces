@@ -2,7 +2,7 @@ import { type ReactNode } from 'react'
 import { motion } from 'motion/react'
 import { cn } from '@/shared/lib'
 
-export interface EmptyStateProps {
+export interface EmptyProps {
   icon?: ReactNode
   emoji?: string
   title: string
@@ -13,16 +13,11 @@ export interface EmptyStateProps {
 
 const EASE_OUT = [0.16, 1, 0.3, 1] as const
 
-export function EmptyState({
-  icon,
-  emoji,
-  title,
-  description,
-  action,
-  className,
-}: EmptyStateProps) {
+/** Empty state — a centered icon/emoji medallion, title, description and optional action. */
+export function Empty({ icon, emoji, title, description, action, className }: EmptyProps) {
   return (
     <motion.div
+      data-slot="empty"
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: EASE_OUT }}
@@ -34,9 +29,7 @@ export function EmptyState({
       <h3 className="mb-2 text-balance text-[length:var(--p-text-sub)] font-semibold text-heading">
         {title}
       </h3>
-      <p className="mb-6 max-w-[34ch] text-pretty text-[length:var(--p-text-body)]">
-        {description}
-      </p>
+      <p className="mb-6 max-w-[34ch] text-pretty text-[length:var(--p-text-body)]">{description}</p>
       {action}
     </motion.div>
   )
