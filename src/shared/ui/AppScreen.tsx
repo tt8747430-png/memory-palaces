@@ -1,7 +1,8 @@
 import { type ReactNode, useCallback, useLayoutEffect, useRef } from 'react'
 import { cn } from '@/shared/lib'
+import { KeyboardSpacer } from './KeyboardSpacer'
 
-const SCROLL = 'overflow-y-auto overscroll-contain scrollbar-hide px-5 pb-safe-kb'
+const SCROLL = 'overflow-y-auto overscroll-contain scrollbar-hide px-5 pb-safe scroll-pb-kb'
 
 const FILL = 'min-h-[calc(100dvh_-_3.5rem)]'
 
@@ -40,8 +41,9 @@ export function AppScreen({
 
   const content = fill ? <div className={FILL}>{children}</div> : children
 
-  // The shell fills its parent; it never shrinks for the on-screen keyboard. Only sheets lift
-  // over the keyboard — a full page stays put and lets the keyboard overlay its lower edge.
+  // The shell never shrinks for the keyboard. Instead the scroll surface gains a `KeyboardSpacer`
+  // of slack at its foot so its lower rows can be scrolled up clear of the keyboard (the pinned
+  // header stays put), matching the app-wide keyboard model.
   if (!header && !footer) {
     return (
       <main
@@ -49,6 +51,7 @@ export function AppScreen({
         className={cn('mx-auto flex h-full w-full max-w-[430px] flex-col', SCROLL, className)}
       >
         {content}
+        <KeyboardSpacer />
       </main>
     )
   }
@@ -58,6 +61,7 @@ export function AppScreen({
       {header}
       <main ref={setRef} className={cn('min-h-0 flex-1', SCROLL, className)}>
         {content}
+        <KeyboardSpacer />
       </main>
       {footer}
     </div>

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { cn } from '@/shared/lib'
+import { KeyboardSpacer } from './KeyboardSpacer'
 
 const AURA_BG =
   'radial-gradient(circle at center, oklch(var(--p-tint-sky) / 0.22), transparent 60%)'
@@ -65,7 +66,7 @@ export function AuthScreen({ children, className }: { children: ReactNode; class
   return (
     <main className="relative h-full overflow-hidden bg-daylight">
       <AuthAtmosphere />
-      <div className="relative h-full overflow-y-auto overscroll-none scrollbar-hide [scroll-padding-bottom:var(--kb-inset,0px)]">
+      <div className="scroll-pb-kb relative h-full overflow-y-auto overscroll-none scrollbar-hide">
         <div
           className={cn(
             'mx-auto flex min-h-full w-full max-w-[430px] flex-col px-6 pt-safe pb-safe',
@@ -74,11 +75,9 @@ export function AuthScreen({ children, className }: { children: ReactNode; class
         >
           {children}
         </div>
-        {/* Keyboard slack. The content is vertically centered, so bottom-anchored rows (the
-            "continue with" block, the sign-up link) would sit behind the keyboard with no room to
-            scroll them up. This spacer grows the scroll surface by the keyboard's height — which,
-            from the visual viewport, already includes the native form accessory bar. */}
-        <div aria-hidden className="shrink-0" style={{ height: 'var(--kb-inset, 0px)' }} />
+        {/* The content is vertically centered, so bottom-anchored rows (the "continue with" block,
+            the sign-up link) would sit behind the keyboard with no room to scroll them up. */}
+        <KeyboardSpacer />
       </div>
     </main>
   )

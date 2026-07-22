@@ -216,11 +216,10 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 
-  /* Resting safe-area padding plus the on-screen keyboard's height (see `useKeyboardInset`), so a
-     scroll surface can scroll its lower content clear of the keyboard. `scroll-padding-bottom`
-     lands the browser's focus-into-view above the keyboard rather than right at its edge. */
-  .pb-safe-kb {
-    padding-bottom: calc(env(safe-area-inset-bottom) + var(--kb-inset, 0px));
+  /* Lands the browser's focus-into-view above the on-screen keyboard (see `useKeyboardInset`)
+     rather than right at its edge. Pair with a `KeyboardSpacer` at the end of the scroll content
+     so there is room to scroll a focused field — or the page's lower rows — up to clear it. */
+  .scroll-pb-kb {
     scroll-padding-bottom: calc(env(safe-area-inset-bottom) + var(--kb-inset, 0px));
   }
 

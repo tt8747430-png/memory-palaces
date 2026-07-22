@@ -2,8 +2,9 @@ import { useEffect } from 'react'
 
 /**
  * Publishes the on-screen keyboard's height as the `--kb-inset` CSS variable on the document
- * root. Scroll surfaces add matching bottom slack (`.pb-safe-kb`) so their lower content can be
- * scrolled up clear of the keyboard — a field or button pinned near the bottom stays reachable.
+ * root. Scroll surfaces end with a `KeyboardSpacer` of matching slack (and `.scroll-pb-kb` for
+ * focus-into-view) so their lower content can be scrolled up clear of the keyboard — a field or
+ * button pinned near the bottom stays reachable.
  *
  * iOS's `interactive-widget=resizes-visual` shrinks only the *visual* viewport; the fixed app
  * shell keeps its full layout height with its bottom edge hidden behind the keyboard. The gap
