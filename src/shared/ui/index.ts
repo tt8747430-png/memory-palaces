@@ -1,7 +1,6 @@
 export { Button, buttonVariants } from './primitives'
 export type { ButtonProps } from './primitives'
 export { AppScreen } from './AppScreen'
-export { KeyboardSpacer } from './KeyboardSpacer'
 export { Card, cardSurface } from './primitives'
 export { GlassCard } from './GlassCard'
 export type { GlassCardProps } from './GlassCard'

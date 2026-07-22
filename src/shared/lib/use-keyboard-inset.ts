@@ -1,18 +1,21 @@
 import { useEffect } from 'react'
 
 /**
- * Publishes the on-screen keyboard's height as the `--kb-inset` CSS variable on the document
- * root. Scroll surfaces end with a `KeyboardSpacer` of matching slack (and `.scroll-pb-kb` for
- * focus-into-view) so their lower content can be scrolled up clear of the keyboard — a field or
- * button pinned near the bottom stays reachable.
+ * Publishes the visible viewport as CSS variables on the document root so shells can fit
+ * themselves above the on-screen keyboard:
  *
- * iOS's `interactive-widget=resizes-visual` shrinks only the *visual* viewport; the fixed app
- * shell keeps its full layout height with its bottom edge hidden behind the keyboard. The gap
- * between the two viewports is the keyboard. This replaces the old scroll-pinning hook, which
- * froze the page against that scroll and left hidden fields unreachable (and broke the caret /
- * text-selection on autofocused inputs, because the page could never move to reveal them).
+ * - `--vvh` — the visual viewport height. Shells set their height to this, shrinking to the space
+ *   above the keyboard (like native `resizes-content`): the header stays pinned, the scroll area
+ *   shrinks, its lower rows scroll up clear of the keyboard, and nothing is left as excess. The
+ *   visual viewport already excludes the keyboard *and* its native form accessory bar, so no
+ *   guesswork about either.
+ * - `--kb-inset` — the height the keyboard+bar occupy, for elements that must sit just above it
+ *   (the study feedback panel, card scroll-padding).
  *
- * Mount once, high in the tree.
+ * iOS keeps the layout viewport at full height when the keyboard opens (only the visual viewport
+ * shrinks), which is why sizing to `--vvh` is what moves content; the document never scrolls, so
+ * `offsetTop` stays ~0 and is kept only as a guard. Replaces the old scroll-pinning hook. Mount
+ * once, high in the tree.
  */
 export function useKeyboardInset() {
   useEffect(() => {
@@ -23,14 +26,13 @@ export function useKeyboardInset() {
     let frame = 0
     const apply = () => {
       frame = 0
-      // The document itself never scrolls (fixed shell), so `offsetTop` stays ~0; it is kept in
-      // the sum only as a guard for hosts that do offset the visual viewport.
-      const inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop)
+      const visible = vv.height
+      const inset = Math.max(0, root.clientHeight - visible - vv.offsetTop)
+      root.style.setProperty('--vvh', `${Math.round(visible)}px`)
       root.style.setProperty('--kb-inset', `${Math.round(inset)}px`)
     }
     const schedule = () => {
-      if (frame) return
-      frame = window.requestAnimationFrame(apply)
+      if (!frame) frame = window.requestAnimationFrame(apply)
     }
 
     apply()
@@ -40,6 +42,7 @@ export function useKeyboardInset() {
       window.cancelAnimationFrame(frame)
       vv.removeEventListener('resize', schedule)
       vv.removeEventListener('scroll', schedule)
+      root.style.removeProperty('--vvh')
       root.style.removeProperty('--kb-inset')
     }
   }, [])

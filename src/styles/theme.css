@@ -48,11 +48,18 @@
     border-color: var(--border);
   }
 
+  :root {
+    /* Visible-viewport metrics, kept live by `useKeyboardInset`. Defaults mean "no keyboard": the
+       shell is full height and nothing is inset. */
+    --vvh: 100%;
+    --kb-inset: 0px;
+  }
+
   html {
     height: 100%;
     /* No document-level scroll surface: the app scrolls inside `<main>` / sheet bodies. When the
-       keyboard opens, those scrollers gain `--kb-inset` of bottom slack (see `useKeyboardInset`)
-       so iOS reveals a focused field by scrolling them — not by dragging the fixed shell. */
+       keyboard opens, shells shrink to `--vvh` (see `useKeyboardInset`) so their scroller fits
+       above it — the fixed shell never slides, and `#root` keeps painting the background behind. */
     overflow: hidden;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
@@ -214,13 +221,6 @@
 
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom);
-  }
-
-  /* Lands the browser's focus-into-view above the on-screen keyboard (see `useKeyboardInset`)
-     rather than right at its edge. Pair with a `KeyboardSpacer` at the end of the scroll content
-     so there is room to scroll a focused field — or the page's lower rows — up to clear it. */
-  .scroll-pb-kb {
-    scroll-padding-bottom: calc(env(safe-area-inset-bottom) + var(--kb-inset, 0px));
   }
 
   .pb-nav {

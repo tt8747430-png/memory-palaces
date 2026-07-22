@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { cn } from '@/shared/lib'
-import { KeyboardSpacer } from './KeyboardSpacer'
 
 const AURA_BG =
   'radial-gradient(circle at center, oklch(var(--p-tint-sky) / 0.22), transparent 60%)'
@@ -63,10 +62,13 @@ function AuthAtmosphere() {
 }
 
 export function AuthScreen({ children, className }: { children: ReactNode; className?: string }) {
+  // The shell fits the visible viewport (`--vvh`): when the keyboard opens it shrinks to the space
+  // above it and the centered content scrolls, so bottom-anchored rows (the "continue with" block,
+  // the sign-up link) stay reachable instead of hiding behind the keyboard.
   return (
-    <main className="relative h-full overflow-hidden bg-daylight">
+    <main className="relative h-[var(--vvh)] overflow-hidden bg-daylight">
       <AuthAtmosphere />
-      <div className="scroll-pb-kb relative h-full overflow-y-auto overscroll-none scrollbar-hide">
+      <div className="relative h-full overflow-y-auto overscroll-none scrollbar-hide">
         <div
           className={cn(
             'mx-auto flex min-h-full w-full max-w-[430px] flex-col px-6 pt-safe pb-safe',
@@ -75,9 +77,6 @@ export function AuthScreen({ children, className }: { children: ReactNode; class
         >
           {children}
         </div>
-        {/* The content is vertically centered, so bottom-anchored rows (the "continue with" block,
-            the sign-up link) would sit behind the keyboard with no room to scroll them up. */}
-        <KeyboardSpacer />
       </div>
     </main>
   )

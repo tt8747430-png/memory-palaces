@@ -24,7 +24,9 @@ export function useVirtualKeyboard(): VirtualKeyboard {
     let frame = 0
     const apply = () => {
       frame = 0
-      const gap = Math.max(0, window.innerHeight - vv.height - vv.offsetTop)
+      // Layout viewport height (stable under resizes-visual) minus the visible viewport is the
+      // keyboard plus its native accessory bar.
+      const gap = Math.max(0, document.documentElement.clientHeight - vv.height - vv.offsetTop)
       setHeight(gap >= KEYBOARD_MIN ? Math.round(gap) : 0)
     }
     const schedule = () => {
