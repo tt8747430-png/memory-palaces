@@ -26,3 +26,12 @@ if (typeof globalThis.localStorage === 'undefined') {
     Object.defineProperty(window, 'localStorage', { value: memoryStorage, configurable: true })
   }
 }
+
+// jsdom has no ResizeObserver; CardFace measures its layout with one (self-guarded in prod).
+if (typeof globalThis.ResizeObserver === 'undefined') {
+  globalThis.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  } as unknown as typeof ResizeObserver
+}
