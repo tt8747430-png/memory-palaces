@@ -29,4 +29,39 @@ describe('TypeFace', () => {
     }) as HTMLTextAreaElement
     expect(input.value).toContain('Carpe')
   })
+
+  it('keeps the typed text and its feedback in view once the answer is complete', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(
+      <TypeFace {...makeFaceProps({ mode: 'type', prompt: 'Ping', answer: 'Pong answer here' })} />,
+    )
+    const input = screen.getByRole('textbox', {
+      name: 'Type the answer from memory…',
+    }) as HTMLTextAreaElement
+    await user.click(input)
+    await user.type(input, 'Pong answer here')
+    // The input is not stripped, and the per-word feedback stays instead of collapsing away.
+    expect(input.value).toBe('Pong answer here')
+    expect(screen.getByLabelText('What you typed, checked against the answer')).toBeInTheDocument()
+    expect(screen.getByText('answer')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Reset' })).toBeInTheDocument()
+  })
+
+  it('signals completion once every initial is recalled', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(
+      <TypeFace
+        {...makeFaceProps({
+          mode: 'type',
+          typeInitialsOnly: true,
+          prompt: 'Ping',
+          answer: 'Pong answer here',
+        })}
+      />,
+    )
+    const input = screen.getByRole('textbox', { name: 'Type first letters…' })
+    await user.click(input)
+    await user.type(input, 'pah')
+    expect(screen.getByText('Recalled — every initial')).toBeInTheDocument()
+  })
 })

@@ -1,9 +1,13 @@
+# Problems
+
+1. the type words mode doesnt correctly evaluate wrong words. when i type a  letter and after that space and another wrong letter and space it gives such feedback and wrongly shows this /Users/kristianbraila/Downloads/IMG_2701.PNG,  and also when i finish typing the initials it should be visible to the use that it is finised  /Users/kristianbraila/Downloads/IMG_2700.PNG. also when i finish typing the words it should remain in this state with feedback and with text that i just typed and not that the type input removed see the images. /Users/kristianbraila/Downloads/IMG_2702.PNG /Users/kristianbraila/Downloads/IMG_2703.PNG
+
+
+
 1. When i type a wrong letter in the type initials mode and type many wrong letter one after another, the wrong letter popup animatios is flickering but it should just replace the previous letter with new letter in this popup and the animation should be more smooth
 2. when i type words, the feedback box should be like the wrong letter popup but persistent and also scrollable so that i can scroll it there is lot of text and therefore it should have a fixed height, after i close the keyboard, the feedback should be inlined back. 
 
-
 GENERAL:
-
 2. the shadows for the folders, decks subdecks, swipe actions section, and select mode and so on are not rendered correctly see here /Users/kristianbraila/Downloads/IMG_2604.PNG /Users/kristianbraila/Downloads/IMG_2602.PNG
 3. the select toolbar is not above the tabnavigation bar and you should fix its placement across the app for all the select actions /Users/kristianbraila/Downloads/IMG_2603.PNG 
 4. improve the animation for the swipe and next card in the preview mode of the app when clikcing on the flashcard in the deck because it is flickering /Users/kristianbraila/Downloads/IMG_2605.PNG

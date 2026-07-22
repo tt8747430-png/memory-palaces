@@ -184,6 +184,26 @@ describe('typedRecallStatus', () => {
     expect(result.slots[4]).toEqual({ kind: 'wrong', expected: 'the', typed: 'teh' })
   })
 
+  it('judges sparse wrong input in place and hides everything not yet reached', () => {
+    // Regression: short nonsense words used to be re-aligned against distant matches, marking
+    // the whole answer `missing`. They now sit wrong at their own position and the rest stays
+    // pending (hidden).
+    const result = typedRecallStatus(answer, 'xx yy zz')
+    expect(result.slots.map((slot) => slot.kind)).toEqual([
+      'wrong',
+      'wrong',
+      'wrong',
+      'pending',
+      'pending',
+      'pending',
+    ])
+    expect(result.slots.slice(0, 3)).toEqual([
+      { kind: 'wrong', expected: 'For', typed: 'xx' },
+      { kind: 'wrong', expected: 'God', typed: 'yy' },
+      { kind: 'wrong', expected: 'so', typed: 'zz' },
+    ])
+  })
+
   it('leaves a half-typed word pending until it can no longer become the next word', () => {
     expect(kinds('for God so lov')).toEqual([
       'correct',

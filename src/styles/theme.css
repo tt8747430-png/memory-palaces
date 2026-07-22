@@ -50,8 +50,9 @@
 
   html {
     height: 100%;
-    /* No document-level scroll surface: the app scrolls inside `<main>` / sheet bodies, and
-       the fixed shell must not slide when iOS scrolls the page for a focused field. */
+    /* No document-level scroll surface: the app scrolls inside `<main>` / sheet bodies. When the
+       keyboard opens, those scrollers gain `--kb-inset` of bottom slack (see `useKeyboardInset`)
+       so iOS reveals a focused field by scrolling them — not by dragging the fixed shell. */
     overflow: hidden;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
@@ -213,6 +214,14 @@
 
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Resting safe-area padding plus the on-screen keyboard's height (see `useKeyboardInset`), so a
+     scroll surface can scroll its lower content clear of the keyboard. `scroll-padding-bottom`
+     lands the browser's focus-into-view above the keyboard rather than right at its edge. */
+  .pb-safe-kb {
+    padding-bottom: calc(env(safe-area-inset-bottom) + var(--kb-inset, 0px));
+    scroll-padding-bottom: calc(env(safe-area-inset-bottom) + var(--kb-inset, 0px));
   }
 
   .pb-nav {

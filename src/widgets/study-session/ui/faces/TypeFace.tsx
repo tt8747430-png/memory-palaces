@@ -1,11 +1,14 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
+import { Check } from 'lucide-react'
 import {
   cn,
   isReferenceMarker,
   type RecallSlot,
   typedRecallStatus,
+  useVirtualKeyboard,
   withNextWord,
 } from '@/shared/lib'
 import { useInitialsRecall, type InitialsRecall } from '../../model/use-initials-recall'
@@ -75,7 +78,13 @@ export function TypeFace(props: FaceProps) {
       {typeInitialsOnly ? (
         <TypeInitials recall={initials} />
       ) : (
-        <TypeWords value={text} onChange={setText} slots={typed.slots} solved={solved} />
+        <TypeWords
+          value={text}
+          onChange={setText}
+          slots={typed.slots}
+          solved={solved}
+          active={active}
+        />
       )}
     </CardFace>
   )
@@ -96,20 +105,30 @@ function useAutoGrow(value: string) {
   return ref
 }
 
+const FEEDBACK_TEXT = 'text-(length:--p-text-body) font-medium leading-relaxed'
+
 function TypeWords({
   value,
   onChange,
   slots,
   solved,
+  active,
 }: {
   value: string
   onChange: (value: string) => void
   slots: RecallSlot[]
   solved: boolean
+  active: boolean
 }) {
   const { t } = useTranslation()
   const ref = useAutoGrow(value)
-  const marked = slots.filter((slot) => slot.kind !== 'pending')
+  const keyboard = useVirtualKeyboard()
+  const hasFeedback = slots.some((slot) => slot.kind !== 'pending')
+  // The feedback rides above the keyboard while typing and settles back inline once it closes —
+  // only ever mounted in one place, so scroll position and layout do not fight each other.
+  const floats = active && keyboard.open && hasFeedback
+
+  const body = <RecallTokens slots={slots} />
 
   return (
     <div className="flex flex-col gap-2.5">
@@ -131,19 +150,75 @@ function TypeWords({
         )}
       />
 
-      {marked.length > 0 && !solved ? (
+      {hasFeedback && !floats ? (
         <div
           aria-label={t('study.typeAid')}
-          className="rounded-card bg-info-surface px-4 py-3 text-(length:--p-text-body) font-medium leading-relaxed"
+          className={cn(
+            'rounded-card px-4 py-3',
+            FEEDBACK_TEXT,
+            solved ? 'bg-(--success-surface)' : 'bg-info-surface',
+          )}
         >
-          <p className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1.5">
-            {slots.map((slot, i) => (
-              <RecallToken key={i} slot={slot} />
-            ))}
-          </p>
+          {body}
         </div>
       ) : null}
+
+      {floats ? (
+        <FloatingFeedback height={keyboard.height} solved={solved} label={t('study.typeAid')}>
+          {body}
+        </FloatingFeedback>
+      ) : null}
     </div>
+  )
+}
+
+/**
+ * A fixed-height, scrollable feedback panel pinned just above the on-screen keyboard. Portalled
+ * to the body so it escapes the card's flip transform, which would otherwise trap `position:
+ * fixed` inside the rotated ancestor.
+ */
+function FloatingFeedback({
+  height,
+  solved,
+  label,
+  children,
+}: {
+  height: number
+  solved: boolean
+  label: string
+  children: ReactNode
+}) {
+  const reduce = useReducedMotion()
+  return createPortal(
+    <div
+      className="pointer-events-none fixed inset-x-0 z-[220] mx-auto flex max-w-[430px] px-5"
+      style={{ bottom: height }}
+    >
+      <motion.div
+        initial={reduce ? { opacity: 0 } : { opacity: 0, y: 14 }}
+        animate={reduce ? { opacity: 1 } : { opacity: 1, y: 0 }}
+        transition={{ type: 'spring', stiffness: 460, damping: 34 }}
+        aria-label={label}
+        className={cn(
+          'pointer-events-auto mb-2 max-h-[38vh] w-full overflow-y-auto overscroll-contain scrollbar-hide rounded-card px-4 py-3 shadow-elevated',
+          FEEDBACK_TEXT,
+          solved ? 'bg-(--success-surface)' : 'bg-info-surface',
+        )}
+      >
+        {children}
+      </motion.div>
+    </div>,
+    document.body,
+  )
+}
+
+function RecallTokens({ slots }: { slots: RecallSlot[] }) {
+  return (
+    <p className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1.5">
+      {slots.map((slot, i) => (
+        <RecallToken key={i} slot={slot} />
+      ))}
+    </p>
   )
 }
 
@@ -182,14 +257,17 @@ function TypeInitials({ recall }: { recall: InitialsRecall }) {
   const { t } = useTranslation()
   const reduce = useReducedMotion()
   const inputRef = useRef<HTMLInputElement>(null)
-  const { tokens, accepted, wrong, handleInput } = recall
+  const { tokens, accepted, wrong, complete, handleInput } = recall
 
   return (
     <div
       data-card-control
       onPointerDown={stopPress}
       onClick={() => inputRef.current?.focus()}
-      className="relative flex min-h-23 w-full cursor-text flex-col rounded-card bg-info-surface px-4 py-3 transition-shadow focus-within:ring-2 focus-within:ring-primary/30"
+      className={cn(
+        'relative flex min-h-23 w-full cursor-text flex-col rounded-card px-4 py-3 transition-colors focus-within:ring-2 focus-within:ring-primary/30',
+        complete ? 'bg-(--success-surface)' : 'bg-info-surface',
+      )}
     >
       <input
         ref={inputRef}
@@ -205,6 +283,15 @@ function TypeInitials({ recall }: { recall: InitialsRecall }) {
         className="sr-only text-base"
       />
 
+      {complete ? (
+        <div className="mb-2 flex items-center gap-1.5 text-(--success-on-surface)">
+          <Check className="size-4 shrink-0" aria-hidden />
+          <span className="text-(length:--p-text-label) font-semibold">
+            {t('study.initialsComplete')}
+          </span>
+        </div>
+      ) : null}
+
       {accepted === 0 ? (
         <p className="text-(length:--p-text-body) text-muted-foreground">
           {t('study.initialsPlaceholder')}
@@ -214,9 +301,13 @@ function TypeInitials({ recall }: { recall: InitialsRecall }) {
           {tokens.slice(0, accepted).map((token, i) => (
             <span
               key={i}
-              className={
-                isReferenceMarker(token) ? 'font-bold text-accent' : 'text-(--success-foreground)'
-              }
+              className={cn(
+                isReferenceMarker(token)
+                  ? 'font-bold text-accent'
+                  : complete
+                    ? 'text-(--success-on-surface)'
+                    : 'text-(--success-foreground)',
+              )}
             >
               {token}
             </span>
@@ -224,19 +315,31 @@ function TypeInitials({ recall }: { recall: InitialsRecall }) {
         </p>
       )}
 
+      {/* One bubble stays mounted while wrong letters keep arriving; only the letter inside swaps,
+          so a run of mistakes reads as a smooth replacement instead of a flicker of remounts. */}
       <div className="pointer-events-none absolute inset-0 z-20 grid place-items-center">
         <AnimatePresence>
           {wrong ? (
             <motion.div
-              key={wrong.seq}
-              initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.5, y: 12 }}
+              key="wrong-bubble"
+              initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.6, y: 10 }}
               animate={reduce ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, transition: { duration: 0.12 } }}
-              transition={{ type: 'spring', stiffness: 480, damping: 26 }}
+              exit={{ opacity: 0, scale: reduce ? 1 : 0.92, transition: { duration: 0.14 } }}
+              transition={{ type: 'spring', stiffness: 520, damping: 30 }}
               aria-hidden
-              className="grid h-16 w-14 place-items-center rounded-card bg-destructive text-[26px] font-bold text-white shadow-elevated"
+              className="grid h-16 w-14 place-items-center overflow-hidden rounded-card bg-destructive text-[26px] font-bold text-white shadow-elevated"
             >
-              {wrong.char}
+              <AnimatePresence mode="popLayout" initial={false}>
+                <motion.span
+                  key={wrong.seq}
+                  initial={reduce ? { opacity: 0 } : { opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={reduce ? { opacity: 0 } : { opacity: 0, y: -12 }}
+                  transition={{ duration: 0.13 }}
+                >
+                  {wrong.char}
+                </motion.span>
+              </AnimatePresence>
             </motion.div>
           ) : null}
         </AnimatePresence>

@@ -1,7 +1,7 @@
 import { type ReactNode, useCallback, useLayoutEffect, useRef } from 'react'
 import { cn } from '@/shared/lib'
 
-const SCROLL = 'overflow-y-auto overscroll-contain scrollbar-hide px-5 pb-safe'
+const SCROLL = 'overflow-y-auto overscroll-contain scrollbar-hide px-5 pb-safe-kb'
 
 const FILL = 'min-h-[calc(100dvh_-_3.5rem)]'
 

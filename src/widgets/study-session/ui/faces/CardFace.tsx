@@ -93,7 +93,7 @@ export function CardFace({
         ref={bodyRef}
         data-card-scroll={scrolls ? '' : undefined}
         style={{ touchAction: scrolls ? 'pan-y' : 'none' }}
-        className="relative flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain scrollbar-hide px-5"
+        className="relative flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain scrollbar-hide px-5 [scroll-padding-bottom:var(--kb-inset,0px)]"
       >
         {/* Auto margins centre short content but, unlike `justify-center`, never push tall
             content past the top edge where it could not be scrolled back to. */}
