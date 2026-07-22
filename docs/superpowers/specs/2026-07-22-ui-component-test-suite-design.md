@@ -55,20 +55,30 @@ for existing components (implement-first, tests-after) — not TDD.
 
 ### 2. New shared harness (`src/shared/test/`)
 
-- **`render-with-providers.tsx`** — `renderWithProviders(ui, opts?)` wrapping
-  `I18nextProvider i18n={i18n}` + `MotionConfig reducedMotion="always"` (opt-out via
-  `opts.reducedMotion`). Re-exports `screen`, `within`, `cleanup`, and a `user` factory
-  for ergonomics. Replaces the inlined wrapper across the new tests.
-- **`render-with-stores.tsx`** — `renderWithStores(ui, { stores })` layering entity
-  `StoreContext` providers built from `InMemoryRepository`, for the handful of
-  store-consuming widgets only. Mirrors the existing `SettingsPage.test.tsx` pattern.
-- **`fixtures.ts`** — small builders (`makeDeck`, `makeCard`, `makeReview`, …) delegating
-  to existing entity factories, so widget tests get valid domain objects cheaply.
-- **`setup.ts` addition** — a `ResizeObserver` stub so `CardFace`'s measured layout is
-  exercisable under jsdom.
+Two hard constraints discovered during planning shape this:
 
-Keep the harness minimal (CLAUDE.md: avoid premature abstraction) — two render helpers
-plus fixtures, nothing more.
+- **FSD boundaries exempt only test files** (`boundaries/ignore: ['**/*.{test,spec}.{ts,tsx}']`).
+  A `*.test.tsx` may import any layer, but a **non-test** helper under `shared/test/`
+  may not import upward (`@/entities/*`, `@/widgets/*`) — that fails lint. So shared
+  helpers stay shared-only; domain fixtures live in the layer that owns them.
+- **No untested component consumes an entity store** (only `DeckContentEditor`, already
+  tested). So `renderWithStores` is YAGNI and is **not** built.
+
+Deliverables:
+
+- **`src/shared/test/render-with-providers.tsx`** — `renderWithProviders(ui, opts?)`
+  wrapping `I18nextProvider i18n={i18n}` + `MotionConfig reducedMotion="always"`
+  (opt-out via `opts.reducedMotion`). Imports only `@/shared/*` + `motion/react`, so it
+  is boundary-legal as a non-test file. Replaces the inlined wrapper across new tests.
+- **`src/shared/test/setup.ts` addition** — a `ResizeObserver` stub so `CardFace`'s
+  measured layout is exercisable under jsdom.
+- **Colocated fixtures where needed** — e.g. a `makeFaceProps` builder for the study
+  faces lives at `src/widgets/study-session/ui/faces/face-fixtures.ts` (widget→entities
+  is allowed). Simple domain objects are built inline in the test, mirroring the existing
+  `studyCard()` helper in `FlashcardsPanel.test.tsx`.
+
+Keep the harness minimal (CLAUDE.md: avoid premature abstraction) — one render helper
+plus a stub; fixtures only where reused.
 
 ### 3. "Deep — all real states each"
 
@@ -143,7 +153,8 @@ a11y assertions. Format only touched files (`npx prettier --write <files>`).
 
 ## Deliverables
 
-- `src/shared/test/render-with-providers.tsx`, `render-with-stores.tsx`, `fixtures.ts`.
+- `src/shared/test/render-with-providers.tsx` (shared-only imports; boundary-legal).
 - `ResizeObserver` stub in `src/shared/test/setup.ts`.
+- `src/widgets/study-session/ui/faces/face-fixtures.ts` (`makeFaceProps`).
 - 75 new colocated `*.test.tsx` files.
 - Full suite green; no component behavior changed.
