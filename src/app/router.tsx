@@ -3,6 +3,7 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
+  lazyRouteComponent,
   redirect,
   useCanGoBack,
   useNavigate,
@@ -639,6 +640,18 @@ const notificationsRoute = createRoute({
   component: NotificationsRoute,
 })
 
+// Dev-only component gallery. Gated on `import.meta.env.DEV` so the whole branch — including the
+// dynamic import of the page — is dead-code-eliminated from the production build (see `pages/dev-preview`).
+const devRoutes = import.meta.env.DEV
+  ? [
+      createRoute({
+        getParentRoute: () => rootRoute,
+        path: '/dev/kitchen-sink',
+        component: lazyRouteComponent(() => import('@/pages/dev-preview'), 'DevPreviewPage'),
+      }),
+    ]
+  : []
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   signupRoute,
@@ -674,6 +687,7 @@ const routeTree = rootRoute.addChildren([
   settingsHelpRoute,
   settingsAboutRoute,
   notificationsRoute,
+  ...devRoutes,
 ])
 
 export const router = createRouter({

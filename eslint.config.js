@@ -62,4 +62,21 @@ export default tseslint.config(
     files: ['src/shared/ui/primitives/**/*.{ts,tsx}'],
     rules: { 'react-refresh/only-export-components': 'off' },
   },
+  {
+    // Native `autofocus` inside a bottom sheet scrolls the whole layout on iOS and skews the
+    // Drawer's keyboard-inset math (see docs/CODE_STYLE.md §11). Sheet bodies must focus their
+    // field through the Sheet's `initialFocus` ref instead. Full-page inputs (in `AppScreen`)
+    // are unaffected — this only covers the sheet/form surfaces.
+    files: ['**/*Sheet.tsx', '**/*Form.tsx'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "JSXAttribute[name.name='autoFocus']",
+          message:
+            'Do not use native autoFocus in a sheet/form — it scrolls the whole app on iOS. Focus the field via the Sheet `initialFocus` prop (a ref) instead. See docs/CODE_STYLE.md §11.',
+        },
+      ],
+    },
+  },
 )
