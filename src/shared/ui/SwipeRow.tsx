@@ -6,7 +6,14 @@ import {
   useRef,
   useState,
 } from 'react'
-import { animate, motion, useMotionValue, useReducedMotion, useTransform } from 'motion/react'
+import {
+  animate,
+  motion,
+  useMotionValue,
+  useMotionValueEvent,
+  useReducedMotion,
+  useTransform,
+} from 'motion/react'
 import { useDrag } from '@use-gesture/react'
 import { type SwipeAccent, SWIPE_ACCENT } from '@/shared/config/swipe'
 import {
@@ -65,6 +72,11 @@ export function SwipeRow({
   const x = useMotionValue(0)
   const [open, setOpen] = useState<Side | null>(null)
   const [armed, setArmed] = useState<Side | null>(null)
+  // True only while the row is actually shifted off its resting spot. The clip
+  // that hides a swipe's overshoot also shears the row's rounded shadow flat, so
+  // it must not be on at rest — see the root className. Setting the same boolean
+  // is a no-op re-render, so this fires at most twice per swipe (0 → offset → 0).
+  const [displaced, setDisplaced] = useState(false)
   const wasArmed = useRef<Side | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef<HTMLDivElement>(null)
@@ -85,6 +97,7 @@ export function SwipeRow({
 
   const leadingOpacity = useTransform(x, (v) => (v > 0 ? 1 : 0))
   const trailingOpacity = useTransform(x, (v) => (v < 0 ? 1 : 0))
+  useMotionValueEvent(x, 'change', (v) => setDisplaced(v !== 0))
 
   const settle = useCallback(
     (to: number) => {
@@ -204,7 +217,14 @@ export function SwipeRow({
     <div
       ref={rootRef}
       className={cn(
-        'relative isolate overflow-x-clip [overflow-clip-margin:24px]',
+        'relative isolate',
+        // The clip keeps a swiped row's overshoot from spilling past the column,
+        // but it also shears the row's rounded shadow into a flat line — iOS
+        // ignores `overflow-clip-margin`, so the 24px of promised breathing room
+        // never applies. At rest the trays are hidden (opacity 0) and there is
+        // nothing to clip, so only clip while the row is displaced and let the
+        // shadow render whole the rest of the time.
+        displaced && 'overflow-x-clip [overflow-clip-margin:24px]',
         bleed && '-mx-5',
         className,
       )}

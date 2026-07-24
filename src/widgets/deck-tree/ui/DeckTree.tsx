@@ -346,10 +346,12 @@ function DeckTreeNode({
   const isSub = depth > 0
   const selected = selectedIds.has(deck.id)
 
-  // The children list needs `overflow-hidden` to wipe cleanly while its height
-  // animates, but that same clip shears the subdeck rows' shadows flat. So clip
-  // only while animating and let it breathe at rest. Seeded from `isOpen` so a
-  // deck restored open on load (its enter is suppressed) starts settled.
+  // The reveal has to clip the vertical seam while its height animates open, but
+  // a four-sided clip shears the subdeck shadows flat and pops them back rounded
+  // at the end — that pop is the flicker. While animating we clip top/bottom only
+  // and let the sides bleed; at rest the clip is dropped so the last row's shadow
+  // is whole. Seeded from `isOpen` so a deck restored open on load (its enter is
+  // suppressed) starts settled.
   const [childrenSettled, setChildrenSettled] = useState(isOpen)
 
   const longPress = useLongPress({
@@ -492,11 +494,17 @@ function DeckTreeNode({
       <AnimatePresence initial={false}>
         {hasChildren && isOpen ? (
           <motion.ul
-            className={cn(
-              'relative flex flex-col gap-2 pt-2',
-              childrenSettled ? 'overflow-visible' : 'overflow-hidden',
-            )}
-            style={{ paddingLeft: INDENT }}
+            className="relative flex flex-col gap-2 pt-2"
+            style={{
+              paddingLeft: INDENT,
+              // Clip the wipe on the vertical axis only. Sides bleed 32px so the
+              // subdeck cards' rounded shadows stay whole through the reveal; the
+              // clip is dropped at rest (`childrenSettled`) so the last row's
+              // bottom shadow isn't shorn. `inset()` at full height clips nothing
+              // vertically, so this is inert once open and safe under reduced
+              // motion (no height animation runs).
+              clipPath: childrenSettled ? undefined : 'inset(0px -32px 0px -32px)',
+            }}
             initial={reduce ? false : { height: 0, opacity: 0 }}
             animate={reduce ? { opacity: 1 } : { height: 'auto', opacity: 1 }}
             exit={reduce ? { opacity: 0 } : { height: 0, opacity: 0 }}

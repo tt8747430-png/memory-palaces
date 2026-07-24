@@ -1,5 +1,9 @@
 # Problems
 
+1. the feedback popup above the keeyboard should have a fixed height and never changes the size, when i has too any words it jus tgets a scrollbar. and alos when i type more words than there are in the answer it stops writing feedback. 
+2. the wrong letter popup in hte type initials mode should be below the text box adn not inside the textbox
+
+
 GENERAL:
 2. the shadows for the folders, decks subdecks, swipe actions section, and select mode and so on are not rendered correctly see here /Users/kristianbraila/Downloads/IMG_2604.PNG /Users/kristianbraila/Downloads/IMG_2602.PNG
 3. the select toolbar is not above the tabnavigation bar and you should fix its placement across the app for all the select actions /Users/kristianbraila/Downloads/IMG_2603.PNG 
