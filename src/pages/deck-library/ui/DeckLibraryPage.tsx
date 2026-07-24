@@ -84,6 +84,7 @@ import {
   impact,
   nextDefaultName,
   orderPatch,
+  selectionRoots,
   siblingDecks,
   subtreeDeckIds,
   tick,
@@ -113,6 +114,7 @@ import {
   Sheet,
   type SheetAction,
   SpeedDial,
+  StackedDragPreview,
   type SwipeActionHandlers,
   SwipeRow,
 } from '@/shared/ui'
@@ -443,6 +445,25 @@ export function DeckLibraryPage({
     setSelectedIds(new Set())
   }
 
+  // Selecting a deck cascades to its whole (non-archived) subtree, so its checkbox always
+  // covers every subdeck under it — and a partial subtree reads as indeterminate. Long-pressing
+  // a deck to begin a selection grabs the subtree too. Folders stay single-select.
+  const deckSubtree = (id: string) =>
+    subtreeDeckIds(decks, id).filter((sid) => !decksById.get(sid)?.archived)
+  const requestDeckSelect = (id: string) => {
+    impact()
+    setSelectMode(true)
+    setSelectedIds(new Set(deckSubtree(id)))
+  }
+  const toggleDeckSelect = (id: string) =>
+    setSelectedIds((prev) => {
+      const subtree = deckSubtree(id)
+      const next = new Set(prev)
+      if (subtree.every((sid) => next.has(sid))) for (const sid of subtree) next.delete(sid)
+      else for (const sid of subtree) next.add(sid)
+      return next
+    })
+
   // Every selectable id in the current view (folders at root + the whole deck tree).
   const selectableIds = useMemo(() => {
     const ids = new Set<string>()
@@ -621,6 +642,9 @@ export function DeckLibraryPage({
     [folders],
   )
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
+  // The roots a drag is carrying: one row for a plain drag, or the whole selection (of the
+  // grabbed kind) for a multi-select drag. Set on drag start, cleared when it ends.
+  const [carriedRoots, setCarriedRoots] = useState<string[]>([])
   const [drop, setDrop] = useState<DropIntent | null>(null)
   const pointerY = useRef<number | null>(null)
 
@@ -653,6 +677,29 @@ export function DeckLibraryPage({
   }, [activeDragId])
   const activeDragDeck = activeDragId ? deckById(activeDragId) : undefined
   const activeDragFolder = activeDragId ? folders.find((f) => f.id === activeDragId) : undefined
+
+  // A multi-select drag carries every selected item of the grabbed row's kind: the top-most
+  // selected decks (their subtrees ride along), or the selected folders. Dragging an unselected
+  // row, or a lone selection, carries just that row.
+  const carriedFor = useCallback(
+    (id: string): string[] => {
+      if (!selectedIds.has(id) || selectedIds.size <= 1) return [id]
+      if (folders.some((f) => f.id === id)) {
+        return sortedFolders.filter((f) => selectedIds.has(f.id)).map((f) => f.id)
+      }
+      return selectionRoots(decks, selectedIds)
+    },
+    [selectedIds, folders, sortedFolders, decks],
+  )
+  // Every row that travels with the drag — dimmed in place while the stack is in hand.
+  const carriedVisualIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const id of carriedRoots) {
+      if (folders.some((f) => f.id === id)) ids.add(id)
+      else for (const sid of subtreeDeckIds(decks, id)) ids.add(sid)
+    }
+    return ids
+  }, [carriedRoots, decks, folders])
 
   /**
    * What the drop would do, read off where the finger actually is.
@@ -717,12 +764,125 @@ export function DeckLibraryPage({
     })
   }
 
+  /**
+   * A multi-select drag drops the whole carried block together. Folders reorder as a block;
+   * decks nest into a folder/deck or land at a seam, reparenting the ones that need it. Each
+   * root's descendants ride along (they were never in the carried set), and any root that can't
+   * legally land there — a deck onto its own descendant — is dropped from the batch.
+   */
+  const handleMultiDrop = (event: DragEndEvent, intent: DropIntent, roots: string[]) => {
+    const draggedId = String(event.active.id)
+    const { targetId, zone } = intent
+
+    if (folders.some((f) => f.id === draggedId)) {
+      const carried = sortedFolders.filter((f) => roots.includes(f.id)).map((f) => f.id)
+      const carriedSet = new Set(carried)
+      const rest = sortedFolders.filter((f) => !carriedSet.has(f.id))
+      const at = rest.findIndex((f) => f.id === targetId)
+      if (at < 0) return
+      const insertIndex = zone === 'after' ? at + 1 : at
+      const ids = [
+        ...rest.slice(0, insertIndex).map((f) => f.id),
+        ...carried,
+        ...rest.slice(insertIndex).map((f) => f.id),
+      ]
+      patchFolders(orderPatch(ids))
+      void reorderFolders(folderStore, ids)
+      return
+    }
+
+    if (zone === 'nest') {
+      const folder = folders.find((f) => f.id === targetId)
+      const parentId = folder ? null : targetId
+      const targetFolderId = folder ? folder.id : null
+      const valid = roots.filter((id) => canReparent(decks, id, parentId))
+      if (valid.length === 0) return
+      const base = siblingDecks(decks, parentId, targetFolderId).length
+      const patches = new Map<string, Partial<Deck>>()
+      valid.forEach((id, i) =>
+        patches.set(id, { parentId, folderId: targetFolderId, order: base + i }),
+      )
+      patchDecks(patches)
+      void (async () => {
+        for (const id of valid) await moveDeck(deckStore, id, parentId, targetFolderId)
+      })()
+      if (folder) {
+        toast.success(t('library.select.movedToast', { count: valid.length, folder: folder.name }))
+        return
+      }
+      setExpanded((prev) => new Set(prev).add(targetId))
+      toast.success(
+        t('library.select.movedIntoToast', {
+          count: valid.length,
+          name: deckById(targetId)?.name ?? '',
+        }),
+      )
+      return
+    }
+
+    // A seam: the carried block joins the target's group at that slot, reparenting as needed.
+    const target = deckById(targetId)
+    if (!target) return
+    const valid = roots.filter((id) => canReparent(decks, id, target.parentId))
+    if (valid.length === 0) return
+    const validSet = new Set(valid)
+    const group = siblingDecks(decks, target.parentId, target.folderId)
+    const rest = group.filter((d) => !validSet.has(d.id))
+    const at = rest.findIndex((d) => d.id === targetId)
+    if (at < 0) return
+    const insertIndex = zone === 'after' ? at + 1 : at
+    const ids = [
+      ...rest.slice(0, insertIndex).map((d) => d.id),
+      ...valid,
+      ...rest.slice(insertIndex).map((d) => d.id),
+    ]
+    const reparented = valid.filter((id) => {
+      const d = deckById(id)!
+      return d.parentId !== target.parentId || (d.folderId ?? null) !== (target.folderId ?? null)
+    })
+    const patches = orderPatch<Deck>(ids)
+    for (const id of reparented) {
+      patches.set(id, { ...patches.get(id), parentId: target.parentId, folderId: target.folderId })
+    }
+    patchDecks(patches)
+    void (async () => {
+      for (const id of reparented) await moveDeck(deckStore, id, target.parentId, target.folderId)
+      await reorderDecks(deckStore, ids)
+    })()
+    if (reparented.length === 0) return
+    if (target.parentId) {
+      setExpanded((prev) => new Set(prev).add(target.parentId as string))
+      toast.success(
+        t('library.select.movedIntoToast', {
+          count: reparented.length,
+          name: deckById(target.parentId)?.name ?? '',
+        }),
+      )
+      return
+    }
+    const folderName = target.folderId
+      ? folders.find((f) => f.id === target.folderId)?.name
+      : undefined
+    toast.success(
+      folderName
+        ? t('library.select.movedToast', { count: reparented.length, folder: folderName })
+        : t('library.select.unfiledToast', { count: reparented.length }),
+    )
+  }
+
   const handleDragEnd = (event: DragEndEvent) => {
     const intent = dropIntentFor(event)
+    const roots = carriedRoots
     setActiveDragId(null)
+    setCarriedRoots([])
     setDrop(null)
     settle()
     if (!intent) return
+
+    if (roots.length > 1) {
+      handleMultiDrop(event, intent, roots)
+      return
+    }
 
     const draggedId = String(event.active.id)
     const { targetId, zone } = intent
@@ -968,13 +1128,16 @@ export function DeckLibraryPage({
           modifiers={activeDragFolder ? [restrictToVerticalAxis] : undefined}
           onDragStart={(e: DragStartEvent) => {
             pointerY.current = pointerYFrom(e.activatorEvent)
-            setActiveDragId(String(e.active.id))
+            const id = String(e.active.id)
+            setActiveDragId(id)
+            setCarriedRoots(carriedFor(id))
           }}
           onDragOver={trackDropIntent}
           onDragMove={trackDropIntent}
           onDragEnd={handleDragEnd}
           onDragCancel={() => {
             setActiveDragId(null)
+            setCarriedRoots([])
             setDrop(null)
           }}
         >
@@ -990,6 +1153,7 @@ export function DeckLibraryPage({
                     deckCount={folderDeckCounts.get(folder.id) ?? 0}
                     selectMode={selectMode}
                     selected={selectedIds.has(folder.id)}
+                    carried={carriedVisualIds.has(folder.id)}
                     drop={drop?.targetId === folder.id ? drop.zone : null}
                     onOpen={() => setFolderId(folder.id)}
                     onRequestSelect={() => requestSelect(folder.id)}
@@ -1009,8 +1173,9 @@ export function DeckLibraryPage({
               onOpen={onOpenDeck}
               selectMode={selectMode}
               selectedIds={selectedIds}
-              onRequestSelect={requestSelect}
-              onToggleSelect={toggleSelect}
+              carriedIds={carriedVisualIds}
+              onRequestSelect={requestDeckSelect}
+              onToggleSelect={toggleDeckSelect}
               drop={drop}
               settling={settling}
               parentId={null}
@@ -1026,21 +1191,25 @@ export function DeckLibraryPage({
             dropAnimation={{ duration: DROP_MS, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }}
           >
             {activeDragDeck ? (
-              <DeckDragPreview
-                deck={activeDragDeck}
-                due={dragDueCounts.get(activeDragDeck.id) ?? 0}
-                isSub={activeDragDeck.parentId !== null}
-                selected={selectedIds.has(activeDragDeck.id)}
-                hasChildren={decks.some((d) => d.parentId === activeDragDeck.id && !d.archived)}
-                isOpen={expanded.has(activeDragDeck.id)}
-                nesting={drop?.zone === 'nest'}
-              />
+              <StackedDragPreview count={carriedRoots.length}>
+                <DeckDragPreview
+                  deck={activeDragDeck}
+                  due={dragDueCounts.get(activeDragDeck.id) ?? 0}
+                  isSub={activeDragDeck.parentId !== null}
+                  selected={selectedIds.has(activeDragDeck.id)}
+                  hasChildren={decks.some((d) => d.parentId === activeDragDeck.id && !d.archived)}
+                  isOpen={expanded.has(activeDragDeck.id)}
+                  nesting={drop?.zone === 'nest'}
+                />
+              </StackedDragPreview>
             ) : activeDragFolder ? (
-              <FolderDragPreview
-                folder={activeDragFolder}
-                deckCount={folderDeckCounts.get(activeDragFolder.id) ?? 0}
-                selected={selectedIds.has(activeDragFolder.id)}
-              />
+              <StackedDragPreview count={carriedRoots.length}>
+                <FolderDragPreview
+                  folder={activeDragFolder}
+                  deckCount={folderDeckCounts.get(activeDragFolder.id) ?? 0}
+                  selected={selectedIds.has(activeDragFolder.id)}
+                />
+              </StackedDragPreview>
             ) : null}
           </DragOverlay>
         </DndContext>
@@ -1242,6 +1411,8 @@ interface FolderRowProps {
   deckCount: number
   selectMode: boolean
   selected: boolean
+  /** Dimmed in place while it travels with a multi-select drag. */
+  carried: boolean
   /** Where the dragged card would land on this row, if anywhere. */
   drop: DropZone | null
   onOpen: () => void
@@ -1256,6 +1427,7 @@ function FolderRow({
   deckCount,
   selectMode,
   selected,
+  carried,
   drop,
   onOpen,
   onRequestSelect,
@@ -1289,7 +1461,8 @@ function FolderRow({
         isNestTarget &&
           'scale-[1.015] bg-accent/[0.08] ring-2 ring-accent ring-offset-2 ring-offset-background',
         // The lifted slot only fades — scaling belongs to a nest hover, not a reorder.
-        isDragging && 'z-50 opacity-40',
+        isDragging && 'z-50',
+        (isDragging || carried) && 'opacity-40',
       )}
     >
       {/* Whole-card activator — tap toggles / opens; press-and-hold drags. */}
@@ -1364,7 +1537,7 @@ function FolderRowBody({
     <>
       {selectMode ? (
         <span className="pointer-events-none relative z-20 grid shrink-0 place-items-center">
-          <SelectDot selected={selected} />
+          <SelectDot state={selected ? 'checked' : 'unchecked'} />
         </span>
       ) : null}
 

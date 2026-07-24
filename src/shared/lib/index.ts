@@ -121,6 +121,8 @@ export {
   decksInFolder,
   subtreeDeckIds,
   subtreeDecks,
+  deckSelectionStates,
+  selectionRoots,
   deckPath,
   isDescendantOrSelf,
   canReparent,
@@ -128,6 +130,7 @@ export {
   cardsInSubtree,
   countDueInSubtree,
   dueCountsPerDeck,
+  type SelectState,
   type TreeDeck,
   type TreeCard,
 } from './deck-tree'

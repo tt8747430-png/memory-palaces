@@ -639,13 +639,16 @@ export function DevPreviewPage() {
                 <Switch checked={false} onCheckedChange={() => {}} disabled label="Disabled" />
               </Case>
               <Case label="select dot">
-                <button
-                  type="button"
-                  onClick={() => setSelected((value) => !value)}
-                  aria-pressed={selected}
-                >
-                  <SelectDot selected={selected} />
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setSelected((value) => !value)}
+                    aria-pressed={selected}
+                  >
+                    <SelectDot state={selected ? 'checked' : 'unchecked'} />
+                  </button>
+                  <SelectDot state="indeterminate" />
+                </div>
               </Case>
             </Cases>
             <Cases>

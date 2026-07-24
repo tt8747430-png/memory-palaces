@@ -12,7 +12,15 @@ import {
 } from '@/entities/deck'
 import type { Card } from '@/entities/card'
 import type { SwipeConfig } from '@/shared/config/swipe'
-import { cn, type DropIntent, dueCountsPerDeck, siblingDecks, useLongPress } from '@/shared/lib'
+import {
+  cn,
+  deckSelectionStates,
+  type DropIntent,
+  dueCountsPerDeck,
+  type SelectState,
+  siblingDecks,
+  useLongPress,
+} from '@/shared/lib'
 import {
   buildSwipeActions,
   DeckCover,
@@ -32,6 +40,9 @@ const EASE_OUT = [0.22, 1, 0.36, 1] as const
  */
 const NO_SHIFT: SortingStrategy = () => null
 
+/** Stable empty set so an un-dragging tree never re-renders on a fresh identity. */
+const NO_CARRIED: ReadonlySet<string> = new Set()
+
 function deckColor(deck: Deck): string {
   if (deck.color) return deck.color
   let hash = 0
@@ -47,6 +58,8 @@ export interface DeckTreeProps {
   onOpen: (deckId: string) => void
   selectMode: boolean
   selectedIds: ReadonlySet<string>
+  /** Rows travelling with the current multi-select drag — dimmed in place. */
+  carriedIds?: ReadonlySet<string>
   onRequestSelect: (deckId: string) => void
   onToggleSelect: (deckId: string) => void
   /** Where the dragged card would land: a ring on a row, or a line in a seam. */
@@ -68,6 +81,7 @@ export function DeckTree({
   onOpen,
   selectMode,
   selectedIds,
+  carriedIds = NO_CARRIED,
   onRequestSelect,
   onToggleSelect,
   drop = null,
@@ -79,6 +93,8 @@ export function DeckTree({
   now = Date.now(),
 }: DeckTreeProps) {
   const dueCounts = useMemo(() => dueCountsPerDeck(decks, cards, now), [decks, cards, now])
+  // Each deck's checkbox reads the coverage of its whole subtree: checked, partial, or none.
+  const selectStates = useMemo(() => deckSelectionStates(decks, selectedIds), [decks, selectedIds])
   // The top level is scoped to the open folder; deeper levels resolve by parent.
   const roots = useMemo(
     () => siblingDecks(decks, parentId, folderId ?? null),
@@ -105,6 +121,8 @@ export function DeckTree({
             onOpen={onOpen}
             selectMode={selectMode}
             selectedIds={selectedIds}
+            selectStates={selectStates}
+            carriedIds={carriedIds}
             onRequestSelect={onRequestSelect}
             onToggleSelect={onToggleSelect}
             drop={drop}
@@ -136,7 +154,7 @@ interface RowBodyProps {
   due: number
   isSub: boolean
   selectMode: boolean
-  selected: boolean
+  selectState: SelectState
   /** The expand control — interactive in the tree, inert in the drag preview. */
   toggle: ReactNode
   isNestTarget?: boolean
@@ -148,7 +166,7 @@ function DeckRowBody({
   due,
   isSub,
   selectMode,
-  selected,
+  selectState,
   toggle,
   isNestTarget = false,
 }: RowBodyProps) {
@@ -160,7 +178,7 @@ function DeckRowBody({
           expanded while it is selected. */}
       {selectMode ? (
         <span className="pointer-events-none relative z-20 grid size-6 shrink-0 place-items-center">
-          <SelectDot selected={selected} />
+          <SelectDot state={selectState} />
         </span>
       ) : null}
 
@@ -258,7 +276,7 @@ export function DeckDragPreview({
         due={due}
         isSub={isSub}
         selectMode
-        selected={selected}
+        selectState={selected ? 'checked' : 'unchecked'}
         toggle={
           hasChildren ? (
             <span
@@ -310,6 +328,8 @@ interface NodeProps {
   onOpen: (deckId: string) => void
   selectMode: boolean
   selectedIds: ReadonlySet<string>
+  selectStates: ReadonlyMap<string, SelectState>
+  carriedIds: ReadonlySet<string>
   onRequestSelect: (deckId: string) => void
   onToggleSelect: (deckId: string) => void
   drop: DropIntent | null
@@ -331,6 +351,8 @@ function DeckTreeNode({
   onOpen,
   selectMode,
   selectedIds,
+  selectStates,
+  carriedIds,
   onRequestSelect,
   onToggleSelect,
   drop,
@@ -344,7 +366,11 @@ function DeckTreeNode({
   const hasChildren = children.length > 0
   const isOpen = expanded.has(deck.id)
   const isSub = depth > 0
+  // The row's own selection (ring, drag payload); the checkbox reads the subtree's coverage.
   const selected = selectedIds.has(deck.id)
+  const selectState = selectStates.get(deck.id) ?? 'unchecked'
+  // Dimmed in place while it (or its parent) travels with a multi-select drag.
+  const carried = carriedIds.has(deck.id)
 
   // The reveal has to clip the top seam while its height animates open, but a
   // four-sided clip shears the subdeck shadows flat and pops them back rounded at
@@ -397,7 +423,8 @@ function DeckTreeNode({
           'scale-[1.015] bg-accent/[0.08] ring-2 ring-accent ring-offset-2 ring-offset-background',
         // The slot the card came out of, held open while it is in hand — it only
         // fades; scaling is reserved for a nest hover so a reorder doesn't shrink.
-        isDragging && 'z-50 opacity-40',
+        isDragging && 'z-50',
+        (isDragging || carried) && 'opacity-40',
       )}
     >
       {/* Whole-card activator: a tap opens (or toggles selection); a press-and-hold
@@ -425,7 +452,7 @@ function DeckTreeNode({
         due={due}
         isSub={isSub}
         selectMode={selectMode}
-        selected={selected}
+        selectState={selectState}
         isNestTarget={isNestTarget}
         toggle={
           hasChildren ? (
@@ -536,6 +563,8 @@ function DeckTreeNode({
                   onOpen={onOpen}
                   selectMode={selectMode}
                   selectedIds={selectedIds}
+                  selectStates={selectStates}
+                  carriedIds={carriedIds}
                   onRequestSelect={onRequestSelect}
                   onToggleSelect={onToggleSelect}
                   drop={drop}

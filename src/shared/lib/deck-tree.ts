@@ -77,6 +77,103 @@ export function subtreeDecks<T extends TreeDeck>(decks: readonly T[], rootId: st
     .filter((d): d is T => d !== undefined)
 }
 
+/**
+ * The top-most selected decks — those with no selected ancestor — in pre-order (root-first,
+ * matching the tree top-to-bottom). These are the decks a multi-select drag actually moves:
+ * their descendants ride along, so also moving a selected child would tear it out of the parent
+ * that is already on its way. Archived decks are ignored.
+ */
+export function selectionRoots(
+  decks: readonly TreeDeck[],
+  selectedIds: ReadonlySet<string>,
+): string[] {
+  const active = decks.filter((d) => !d.archived)
+  const byId = new Map(active.map((d) => [d.id, d]))
+  const hasSelectedAncestor = (deck: TreeDeck): boolean => {
+    const seen = new Set<string>()
+    let cur = deck.parentId ? byId.get(deck.parentId) : undefined
+    while (cur && !seen.has(cur.id)) {
+      if (selectedIds.has(cur.id)) return true
+      seen.add(cur.id)
+      cur = cur.parentId ? byId.get(cur.parentId) : undefined
+    }
+    return false
+  }
+  const rootIds = new Set(
+    active.filter((d) => selectedIds.has(d.id) && !hasSelectedAncestor(d)).map((d) => d.id),
+  )
+
+  // Pre-order across every top-level group (unfiled root + each folder) gives a stable
+  // top-to-bottom order for the roots we keep.
+  const ordered: string[] = []
+  const folderIds = new Set<string | null>([null])
+  for (const d of active) if (d.parentId === null && d.folderId != null) folderIds.add(d.folderId)
+  const walk = (parentId: string | null, folderId: string | null) => {
+    for (const d of siblingDecks(active, parentId, folderId)) {
+      if (rootIds.has(d.id)) ordered.push(d.id)
+      walk(d.id, null)
+    }
+  }
+  for (const fid of folderIds) walk(null, fid)
+  return ordered
+}
+
+/** Tri-state of a select checkbox: none, all, or a partial mix of a subtree. */
+export type SelectState = 'unchecked' | 'checked' | 'indeterminate'
+
+/**
+ * The select-checkbox state of every (non-archived) deck, derived from which deck ids are
+ * selected. A deck is `checked` when it and all of its descendants are selected, `unchecked`
+ * when none of them are, and `indeterminate` in between — so selecting a single subdeck lights
+ * its ancestors as partial. Archived decks are excluded from both tally and result: they never
+ * appear in the tree, so counting them would keep a parent from ever reading as fully checked.
+ * Computed in one memoized post-order pass over the whole forest.
+ */
+export function deckSelectionStates(
+  decks: readonly TreeDeck[],
+  selectedIds: ReadonlySet<string>,
+): Map<string, SelectState> {
+  const active = decks.filter((d) => !d.archived)
+  const childrenByParent = new Map<string, TreeDeck[]>()
+  for (const d of active) {
+    if (d.parentId === null) continue
+    const bucket = childrenByParent.get(d.parentId)
+    if (bucket) bucket.push(d)
+    else childrenByParent.set(d.parentId, [d])
+  }
+
+  const states = new Map<string, SelectState>()
+  const tally = new Map<string, readonly [number, number]>()
+  const visiting = new Set<string>()
+
+  // Returns [selectedCount, total] over the deck's subtree; caches so shared ancestors are
+  // walked once, and guards against a malformed cycle rather than recursing forever.
+  const walk = (deck: TreeDeck): readonly [number, number] => {
+    const cached = tally.get(deck.id)
+    if (cached) return cached
+    if (visiting.has(deck.id)) return [selectedIds.has(deck.id) ? 1 : 0, 1]
+    visiting.add(deck.id)
+
+    let selected = selectedIds.has(deck.id) ? 1 : 0
+    let total = 1
+    for (const child of childrenByParent.get(deck.id) ?? []) {
+      const [cs, ct] = walk(child)
+      selected += cs
+      total += ct
+    }
+
+    const state: SelectState =
+      selected === 0 ? 'unchecked' : selected >= total ? 'checked' : 'indeterminate'
+    states.set(deck.id, state)
+    const result = [selected, total] as const
+    tally.set(deck.id, result)
+    return result
+  }
+
+  for (const d of active) walk(d)
+  return states
+}
+
 export function deckPath<T extends TreeDeck>(decks: readonly T[], deckId: string): T[] {
   const byId = new Map(decks.map((d) => [d.id, d]))
   const chain: T[] = []

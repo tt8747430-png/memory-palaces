@@ -164,7 +164,12 @@ function TypeWords({
       ) : null}
 
       {floats ? (
-        <FloatingFeedback height={keyboard.height} solved={solved} label={t('study.typeAid')}>
+        <FloatingFeedback
+          height={keyboard.height}
+          solved={solved}
+          label={t('study.typeAid')}
+          revision={value}
+        >
           {body}
         </FloatingFeedback>
       ) : null}
@@ -173,34 +178,49 @@ function TypeWords({
 }
 
 /**
- * A fixed-height, scrollable feedback panel pinned just above the on-screen keyboard. Portalled
- * to the body so it escapes the card's flip transform, which would otherwise trap `position:
- * fixed` inside the rotated ancestor.
+ * A fixed-height, scrollable feedback panel pinned just above the on-screen keyboard. Its height
+ * never tracks its content — a long answer scrolls inside the same box a short one fills, so the
+ * panel never grows or shrinks under the typing. Portalled to the body so it escapes the card's
+ * flip transform, which would otherwise trap `position: fixed` inside the rotated ancestor.
  */
 function FloatingFeedback({
   height,
   solved,
   label,
+  revision,
   children,
 }: {
   height: number
   solved: boolean
   label: string
+  /** Changes whenever the feedback content does, so the box can follow the newest tokens. */
+  revision: string
   children: ReactNode
 }) {
   const reduce = useReducedMotion()
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  // Keep the newest tokens in view as the learner types past the fold. Without this the box
+  // looks like it stops giving feedback once the answer overflows — the extra words are being
+  // written, just below the visible edge.
+  useLayoutEffect(() => {
+    const el = scrollRef.current
+    if (el) el.scrollTop = el.scrollHeight
+  }, [revision])
+
   return createPortal(
     <div
       className="pointer-events-none fixed inset-x-0 z-[220] mx-auto flex max-w-[430px] px-5"
       style={{ bottom: height }}
     >
       <motion.div
+        ref={scrollRef}
         initial={reduce ? { opacity: 0 } : { opacity: 0, y: 14 }}
         animate={reduce ? { opacity: 1 } : { opacity: 1, y: 0 }}
         transition={{ type: 'spring', stiffness: 460, damping: 34 }}
         aria-label={label}
         className={cn(
-          'pointer-events-auto mb-2 max-h-[38vh] w-full overflow-y-auto overscroll-contain scrollbar-hide rounded-card px-4 py-3 shadow-elevated',
+          'pointer-events-auto mb-2 h-44 w-full overflow-y-auto overscroll-contain scrollbar-hide rounded-card px-4 py-3 shadow-elevated',
           FEEDBACK_TEXT,
           solved ? 'bg-(--success-surface)' : 'bg-info-surface',
         )}
@@ -315,9 +335,10 @@ function TypeInitials({ recall }: { recall: InitialsRecall }) {
         </p>
       )}
 
-      {/* One bubble stays mounted while wrong letters keep arriving; only the letter inside swaps,
-          so a run of mistakes reads as a smooth replacement instead of a flicker of remounts. */}
-      <div className="pointer-events-none absolute inset-0 z-20 grid place-items-center">
+      {/* The wrong letter surfaces just below the box — not over the answer text. One bubble stays
+          mounted while mistakes keep arriving; only the letter inside swaps, so a run of mistakes
+          reads as a smooth replacement instead of a flicker of remounts. */}
+      <div className="pointer-events-none absolute left-1/2 top-full z-30 mt-2 -translate-x-1/2">
         <AnimatePresence>
           {wrong ? (
             <motion.div

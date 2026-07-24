@@ -18,6 +18,7 @@ import type { SwipeConfig } from '@/shared/config/swipe'
 import {
   buildSwipeActions,
   OverflowMenuButton,
+  SelectDot,
   type SheetAction,
   SrsStatusChip,
   SwipeRow,
@@ -49,22 +50,6 @@ export interface CardRowProps {
 }
 
 const rowSurface = 'rounded-card border bg-card p-4 transition-colors'
-
-function SelectDot({ selected }: { selected: boolean }) {
-  return (
-    <span
-      aria-hidden
-      className={cn(
-        'mt-0.5 grid size-6 shrink-0 place-items-center rounded-full border-2 transition-colors',
-        selected
-          ? 'border-accent bg-accent text-[color:var(--surface)]'
-          : 'border-border bg-card text-transparent',
-      )}
-    >
-      <Check className="size-3.5" strokeWidth={3} />
-    </span>
-  )
-}
 
 export function CardRow({
   card,
@@ -168,7 +153,9 @@ export function CardRow({
       )}
     >
       <div className="flex items-start gap-3">
-        {selectMode ? <SelectDot selected={selected} /> : null}
+        {selectMode ? (
+          <SelectDot state={selected ? 'checked' : 'unchecked'} className="mt-0.5" />
+        ) : null}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className="grid h-5 min-w-5 shrink-0 place-items-center rounded-full bg-info-surface px-1 text-[length:var(--p-text-tiny)] font-bold text-info-foreground">
@@ -317,7 +304,9 @@ export function QuestionRow({
       )}
     >
       <div className="flex items-start gap-3">
-        {selectMode ? <SelectDot selected={selected} /> : null}
+        {selectMode ? (
+          <SelectDot state={selected ? 'checked' : 'unchecked'} className="mt-0.5" />
+        ) : null}
         <div className="min-w-0 flex-1">
           <div className="mb-2 flex items-center gap-2">
             <span className="grid h-6 min-w-6 shrink-0 place-items-center rounded-full bg-primary px-1.5 text-[length:var(--p-text-label)] font-bold text-primary-foreground">

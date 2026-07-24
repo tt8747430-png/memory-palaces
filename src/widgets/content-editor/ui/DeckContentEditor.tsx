@@ -385,6 +385,7 @@ export function DeckContentEditor({
           <ReorderableList
             items={visibleCards}
             reorderable={reorderable}
+            selectedIds={selectedIds}
             onReorder={(ids) => reorderTo(() => void reorderCards(cardStore, ids))}
             renderItem={renderCard}
           />

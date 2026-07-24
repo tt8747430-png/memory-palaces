@@ -324,6 +324,7 @@ export function DeckQuestionsPage({
             <ReorderableList
               items={sortedQuestions}
               reorderable={reorderable}
+              selectedIds={selectedIds}
               onReorder={(ids) => {
                 if (sort !== 'manual') setSort('manual')
                 void reorderQuestions(questionStore, ids)
