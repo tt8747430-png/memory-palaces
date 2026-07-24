@@ -223,6 +223,15 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 
+  /* Bottom-sheet padding that also lifts pinned footer content above the on-screen keyboard.
+     Base UI publishes `--drawer-keyboard-inset` on the Drawer.Viewport while a field inside the
+     sheet is focused; it measures to the top of the keyboard's accessory bar, so the footer sits
+     right above it. `max()` (not `+`) keeps the home-indicator safe area and the keyboard inset
+     from stacking into a double gap. */
+  .pb-safe-keyboard {
+    padding-bottom: max(env(safe-area-inset-bottom), var(--drawer-keyboard-inset, 0px));
+  }
+
   .pb-nav {
     padding-bottom: calc(7rem + env(safe-area-inset-bottom));
   }

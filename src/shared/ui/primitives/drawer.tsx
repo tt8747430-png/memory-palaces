@@ -1,6 +1,30 @@
-import type { ComponentProps, ReactNode } from 'react'
+import type { ComponentProps, PointerEvent, ReactNode } from 'react'
 import { Drawer as DrawerPrimitive } from '@base-ui/react/drawer'
 import { cn } from '@/shared/lib'
+
+/**
+ * Collapse any lingering text selection when a finger grabs the sheet's drag chrome
+ * (handle/header). Base UI intentionally declines the swipe while text is selected in the
+ * drawer — so native selection handles stay draggable — but an auto-selected field
+ * (`useAutoSelect` opens prompts with the whole value selected) would then let the browser
+ * scroll the page instead of dragging the sheet. Clearing on pointer-down, before Base UI
+ * evaluates the gesture, restores the drag without stealing real text selections in the body
+ * (the chrome itself is `select-none`, so a gesture here is always a drag).
+ */
+function clearSelectionForDrag(event: PointerEvent<HTMLElement>) {
+  if (event.pointerType === 'mouse') return
+  const active = document.activeElement
+  if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) {
+    const caret = active.value.length
+    try {
+      active.setSelectionRange(caret, caret)
+    } catch {
+      // Inputs such as email/number don't support setSelectionRange — nothing to collapse.
+    }
+  }
+  const selection = document.getSelection()
+  if (selection && !selection.isCollapsed) selection.removeAllRanges()
+}
 
 /**
  * Bottom sheet on Base UI's Drawer. Base UI drives the slide + swipe-to-dismiss
@@ -17,7 +41,10 @@ const DrawerTrigger = DrawerPrimitive.Trigger
 const DrawerClose = DrawerPrimitive.Close
 const DrawerVirtualKeyboardProvider = DrawerPrimitive.VirtualKeyboardProvider
 
-interface DrawerContentProps extends Omit<ComponentProps<typeof DrawerPrimitive.Popup>, 'className'> {
+interface DrawerContentProps extends Omit<
+  ComponentProps<typeof DrawerPrimitive.Popup>,
+  'className'
+> {
   className?: string
   /** Style hook for the dimming backdrop behind the sheet. */
   backdropClassName?: string
@@ -45,13 +72,16 @@ function DrawerContent({ className, backdropClassName, children, ...props }: Dra
           data-slot="drawer-content"
           className={cn(
             'pointer-events-auto fixed inset-x-0 bottom-0 mx-auto flex w-full max-w-[430px] flex-col',
-            'max-h-[88dvh] rounded-t-card-featured bg-card pb-safe shadow-elevated outline-none',
+            // `touch-none` keeps the browser from treating a drag on the sheet chrome as a native
+            // page scroll (the scrollable body re-enables it with `touch-auto`); `pb-safe-keyboard`
+            // lifts the pinned footer above the on-screen keyboard via `--drawer-keyboard-inset`.
+            'max-h-[88dvh] touch-none rounded-t-card-featured bg-card pb-safe-keyboard shadow-elevated outline-none',
             'origin-bottom will-change-transform',
             '[--closed-transform:translate3d(0,calc(100%+2px),0)]',
             'transform-[translate3d(0,var(--drawer-swipe-movement-y,0px),0)]',
             'transition-transform duration-[450ms] ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none',
             'data-[starting-style]:transform-[var(--closed-transform)]',
-            'data-[ending-style]:transform-[var(--closed-transform)] data-[swiping]:duration-0',
+            'data-[ending-style]:transform-[var(--closed-transform)] data-[swiping]:duration-0 data-[swiping]:select-none',
             className,
           )}
           {...props}
@@ -71,7 +101,11 @@ function DrawerHandle({ className }: { className?: string }) {
     <div
       aria-hidden
       data-slot="drawer-handle"
-      className={cn('mx-auto mt-3 mb-1 h-1.5 w-10 shrink-0 rounded-full bg-border', className)}
+      onPointerDown={clearSelectionForDrag}
+      className={cn(
+        'mx-auto mt-3 mb-1 h-1.5 w-10 shrink-0 touch-none rounded-full bg-border select-none',
+        className,
+      )}
     />
   )
 }
@@ -80,8 +114,12 @@ function DrawerHeader({ className, ...props }: ComponentProps<'div'>) {
   return (
     <div
       data-slot="drawer-header"
-      className={cn('flex shrink-0 items-start justify-between gap-3 px-5 pt-2 pb-3', className)}
+      className={cn(
+        'flex shrink-0 touch-none items-start justify-between gap-3 px-5 pt-2 pb-3 select-none',
+        className,
+      )}
       {...props}
+      onPointerDown={clearSelectionForDrag}
     />
   )
 }
@@ -110,8 +148,10 @@ function DrawerTitle({ className, ...props }: DrawerTitleProps) {
   )
 }
 
-interface DrawerDescriptionProps
-  extends Omit<ComponentProps<typeof DrawerPrimitive.Description>, 'className'> {
+interface DrawerDescriptionProps extends Omit<
+  ComponentProps<typeof DrawerPrimitive.Description>,
+  'className'
+> {
   className?: string
 }
 

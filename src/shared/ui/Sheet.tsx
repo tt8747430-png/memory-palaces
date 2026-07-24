@@ -61,8 +61,12 @@ export function Sheet({
               <X className="size-5" aria-hidden />
             </DrawerClose>
           </DrawerHeader>
-          {/* `min-h-0` lets this flex child shrink below its content so `overflow-y-auto` scrolls. */}
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-3 pt-1.5">{children}</div>
+          {/* `min-h-0` lets this flex child shrink below its content so `overflow-y-auto` scrolls;
+              `touch-auto` re-enables native scrolling inside the `touch-none` popup and
+              `overscroll-contain` stops that scroll from chaining out to the page. */}
+          <div className="min-h-0 flex-1 touch-auto overflow-y-auto overscroll-contain px-5 pb-3 pt-1.5">
+            {children}
+          </div>
           {footer ? <DrawerFooter>{footer}</DrawerFooter> : null}
         </DrawerContent>
       </DrawerVirtualKeyboardProvider>
