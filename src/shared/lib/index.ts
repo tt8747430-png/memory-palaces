@@ -11,6 +11,7 @@ export {
   type SwipeRelease,
 } from './gestures'
 export { useLongPress, type LongPressHandlers, type LongPressOptions } from './use-long-press'
+export { usePersistedSet } from './use-persisted-set'
 export { useAutoSelect } from './use-auto-select'
 export { useKeyboardInset } from './use-keyboard-inset'
 export { useVirtualKeyboard, type VirtualKeyboard } from './use-virtual-keyboard'

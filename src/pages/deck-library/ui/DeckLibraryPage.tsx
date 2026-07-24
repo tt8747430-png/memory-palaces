@@ -89,6 +89,7 @@ import {
   tick,
   useLongPress,
   useOptimisticPatch,
+  usePersistedSet,
   useSortableSensors,
   useStickyHeader,
 } from '@/shared/lib'
@@ -108,6 +109,7 @@ import {
   type SelectActionHandlers,
   SelectDot,
   SelectToolbar,
+  SelectToolbarDock,
   Sheet,
   type SheetAction,
   SpeedDial,
@@ -233,7 +235,8 @@ export function DeckLibraryPage({
   const dayCount = progress?.activeDayKey === today ? progress.activeDayCount : 0
 
   const [folderId, setFolderId] = useState<string | null>(null)
-  const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set())
+  // Which decks are expanded persists across app restarts (view state, not domain).
+  const [expanded, setExpanded] = usePersistedSet('mindscape.library.expanded')
   const toggle = (id: string) =>
     setExpanded((prev) => {
       const next = new Set(prev)
@@ -975,8 +978,9 @@ export function DeckLibraryPage({
             setDrop(null)
           }}
         >
-          {/* The bar clears the toolbar that select mode floats over the list. */}
-          <div className={cn('flex flex-col gap-2 pt-2', selectMode && 'pb-24')}>
+          {/* Extra bottom room so the last rows scroll clear of the toolbar,
+              which now floats above the tab bar rather than over the list. */}
+          <div className={cn('flex flex-col gap-2 pt-2', selectMode && 'pb-28')}>
             {!inFolder ? (
               <SortableContext items={sortedFolders.map((f) => f.id)} strategy={NO_SHIFT}>
                 {sortedFolders.map((folder) => (
@@ -1043,9 +1047,9 @@ export function DeckLibraryPage({
       )}
 
       {selectMode ? (
-        <div className="fixed inset-x-0 bottom-0 z-[300] mx-auto w-full max-w-[430px] px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-2">
+        <SelectToolbarDock>
           <SelectToolbar actions={prefs.selectToolbar.library} handlers={selectHandlers} />
-        </div>
+        </SelectToolbarDock>
       ) : null}
 
       {!isEmpty && !selectMode ? (
@@ -1374,11 +1378,11 @@ function FolderRowBody({
         >
           <span
             aria-hidden
-            className="absolute inset-0 translate-x-[5px] translate-y-[-4px] rounded-2xl bg-secondary/40 ring-1 ring-inset ring-border/60"
+            className="absolute inset-0 translate-x-[5px] translate-y-[-5px] rounded-2xl bg-card shadow-rest ring-1 ring-border/40"
           />
           <span
             aria-hidden
-            className="absolute inset-0 translate-x-[2.5px] translate-y-[-2px] rounded-2xl bg-secondary/70 ring-1 ring-inset ring-border/70"
+            className="absolute inset-0 translate-x-[2.5px] translate-y-[-2.5px] rounded-2xl bg-card shadow-rest ring-1 ring-border/50"
           />
           <FolderGlyph
             color={folder.color}

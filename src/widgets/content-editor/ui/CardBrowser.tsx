@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialog } from '@base-ui/react/dialog'
 import {
   animate,
-  AnimatePresence,
   type HTMLMotionProps,
   motion,
   useMotionValue,
@@ -64,12 +63,17 @@ export function CardBrowser({
   const x = useMotionValue(0)
   const rotate = useTransform(x, [-240, 0, 240], [-6, 0, 6])
   const count = cards.length
+  const shellRef = useRef<HTMLDivElement>(null)
+  // True while a card is flying out and its successor is sliding in, so drags and
+  // repeat taps can't start a second transition mid-flight.
+  const animating = useRef(false)
 
   useEffect(() => {
     if (!open) return
     const at = startId ? cards.findIndex((l) => l.id === startId) : 0
     setIndex(at < 0 ? 0 : at)
     setFlipped(false)
+    animating.current = false
     x.set(0)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, startId])
@@ -80,20 +84,45 @@ export function CardBrowser({
     else if (index > count - 1) setIndex(count - 1)
   }, [open, count, index, onClose])
 
+  // The current card leaves in the swipe direction and its neighbour comes in
+  // from the opposite edge — one solid card always on screen, so the ghost
+  // beneath never flashes through (the old cross-fade-through-a-gap flicker).
   const go = (delta: number) => {
     const next = index + delta
-    if (next < 0 || next > count - 1) {
+    if (animating.current || next < 0 || next > count - 1) {
       animate(x, 0, SPRING)
       return
     }
-    setFlipped(false)
-    setIndex(next)
     tick()
-    x.set(0)
+    if (reduce) {
+      setFlipped(false)
+      setIndex(next)
+      x.set(0)
+      return
+    }
+    animating.current = true
+    const off = (shellRef.current?.offsetWidth ?? 430) + 48
+    const dir = delta > 0 ? -1 : 1 // next exits left, prev exits right
+    animate(x, dir * off, {
+      duration: 0.2,
+      ease: CARD_EASE,
+      onComplete: () => {
+        setFlipped(false)
+        setIndex(next)
+        x.set(-dir * off)
+        animate(x, 0, {
+          ...SPRING,
+          onComplete: () => {
+            animating.current = false
+          },
+        })
+      },
+    })
   }
 
   const bind = useDrag(
     ({ down, movement: [mx], velocity: [vx], direction: [dx], tap }) => {
+      if (animating.current) return
       if (tap) {
         setFlipped((value) => !value)
         return
@@ -201,7 +230,10 @@ export function CardBrowser({
                 />
               </div>
 
-              <div className="relative flex flex-1 items-center px-5 pb-2 [perspective:1400px]">
+              <div
+                ref={shellRef}
+                className="relative flex flex-1 items-center px-5 pb-2 [perspective:1400px]"
+              >
                 {count > 1 ? (
                   <div
                     aria-hidden
@@ -212,78 +244,67 @@ export function CardBrowser({
                 <motion.div
                   {...(bind() as unknown as HTMLMotionProps<'div'>)}
                   style={{ x, rotate }}
-                  className="relative z-10 w-full touch-pan-y"
+                  className="relative z-10 h-[clamp(340px,62vh,560px)] w-full touch-pan-y"
                 >
-                  <AnimatePresence mode="wait" initial={false}>
-                    <motion.div
-                      key={current.id}
-                      initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
-                      animate={reduce ? { opacity: 1 } : { opacity: 1, scale: 1 }}
-                      exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
-                      transition={{ duration: 0.22, ease: CARD_EASE }}
-                      className="h-[clamp(340px,62vh,560px)]"
+                  <motion.div
+                    animate={{ rotateY: flipped ? 180 : 0 }}
+                    transition={reduce ? { duration: 0 } : { duration: 0.45, ease: CARD_EASE }}
+                    style={{ transformStyle: 'preserve-3d' }}
+                    className="relative size-full cursor-pointer select-none"
+                  >
+                    <div
+                      style={{ backfaceVisibility: 'hidden' }}
+                      className="absolute inset-0 flex flex-col rounded-card-featured border border-border bg-card p-6 shadow-elevated"
                     >
-                      <motion.div
-                        animate={{ rotateY: flipped ? 180 : 0 }}
-                        transition={reduce ? { duration: 0 } : { duration: 0.45, ease: CARD_EASE }}
-                        style={{ transformStyle: 'preserve-3d' }}
-                        className="relative size-full cursor-pointer select-none"
-                      >
-                        <div
-                          style={{ backfaceVisibility: 'hidden' }}
-                          className="absolute inset-0 flex flex-col rounded-card-featured border border-border bg-card p-6 shadow-elevated"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="rounded-control bg-info-surface px-2.5 py-1 text-[length:var(--p-text-tiny)] font-semibold text-info-foreground">
-                              {t('cards.browser.front')}
-                            </span>
-                            {current.flagged ? (
-                              <Flag
-                                className="size-4 fill-[var(--rating)] text-[var(--rating-edge)]"
-                                aria-label={t('cards.row.flagged')}
-                              />
-                            ) : null}
-                          </div>
-                          <div className="flex flex-1 items-center justify-center overflow-y-auto px-1 py-3 text-center scrollbar-hide">
-                            <p className="text-balance break-words text-[clamp(24px,6.5vw,34px)] font-bold leading-tight text-heading">
-                              {current.front}
-                            </p>
-                          </div>
-                          <p className="text-center text-[length:var(--p-text-label)] font-medium text-muted-foreground">
-                            {t('cards.browser.flip')}
+                      <div className="flex items-center justify-between">
+                        <span className="rounded-control bg-info-surface px-2.5 py-1 text-[length:var(--p-text-tiny)] font-semibold text-info-foreground">
+                          {t('cards.browser.front')}
+                        </span>
+                        {current.flagged ? (
+                          <Flag
+                            className="size-4 fill-[var(--rating)] text-[var(--rating-edge)]"
+                            aria-label={t('cards.row.flagged')}
+                          />
+                        ) : null}
+                      </div>
+                      <div className="flex flex-1 items-center justify-center overflow-y-auto px-1 py-3 text-center scrollbar-hide">
+                        <p className="text-balance break-words text-[clamp(24px,6.5vw,34px)] font-bold leading-tight text-heading">
+                          {current.front}
+                        </p>
+                      </div>
+                      <p className="text-center text-[length:var(--p-text-label)] font-medium text-muted-foreground">
+                        {t('cards.browser.flip')}
+                      </p>
+                    </div>
+                    <div
+                      style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+                      className="absolute inset-0 flex flex-col rounded-card-featured border border-border bg-card p-6 shadow-elevated"
+                    >
+                      <span className="self-start rounded-control bg-info-surface px-2.5 py-1 text-[length:var(--p-text-tiny)] font-semibold text-info-foreground">
+                        {t('cards.browser.back')}
+                      </span>
+                      <div className="flex flex-1 flex-col items-center justify-center gap-4 overflow-y-auto py-3 text-center scrollbar-hide">
+                        <p className="text-balance break-words text-[clamp(18px,5vw,24px)] font-semibold leading-snug text-heading">
+                          {current.back}
+                        </p>
+                        {current.hint ? (
+                          <p className="flex max-w-[34ch] items-center gap-1.5 text-[length:var(--p-text-label)] italic leading-relaxed text-accent">
+                            <MapPin className="size-3.5 shrink-0" aria-hidden />
+                            {current.hint}
                           </p>
-                        </div>
-                        <div
-                          style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
-                          className="absolute inset-0 flex flex-col rounded-card-featured border border-border bg-card p-6 shadow-elevated"
-                        >
-                          <span className="self-start rounded-control bg-info-surface px-2.5 py-1 text-[length:var(--p-text-tiny)] font-semibold text-info-foreground">
-                            {t('cards.browser.back')}
-                          </span>
-                          <div className="flex flex-1 flex-col items-center justify-center gap-4 overflow-y-auto py-3 text-center scrollbar-hide">
-                            <p className="text-balance break-words text-[clamp(18px,5vw,24px)] font-semibold leading-snug text-heading">
-                              {current.back}
-                            </p>
-                            {current.hint ? (
-                              <p className="flex max-w-[34ch] items-center gap-1.5 text-[length:var(--p-text-label)] italic leading-relaxed text-accent">
-                                <MapPin className="size-3.5 shrink-0" aria-hidden />
-                                {current.hint}
-                              </p>
-                            ) : null}
-                            {current.tip ? (
-                              <p className="flex max-w-[34ch] items-center gap-1.5 rounded-control bg-[var(--warning-surface)] px-3 py-1.5 text-[length:var(--p-text-label)] italic leading-relaxed text-[var(--warning-foreground)]">
-                                <Lightbulb className="size-3.5 shrink-0" aria-hidden />
-                                {current.tip}
-                              </p>
-                            ) : null}
-                          </div>
-                          <p className="text-center text-[length:var(--p-text-label)] font-medium text-muted-foreground">
-                            {t('cards.browser.flipBack')}
+                        ) : null}
+                        {current.tip ? (
+                          <p className="flex max-w-[34ch] items-center gap-1.5 rounded-control bg-[var(--warning-surface)] px-3 py-1.5 text-[length:var(--p-text-label)] italic leading-relaxed text-[var(--warning-foreground)]">
+                            <Lightbulb className="size-3.5 shrink-0" aria-hidden />
+                            {current.tip}
                           </p>
-                        </div>
-                      </motion.div>
-                    </motion.div>
-                  </AnimatePresence>
+                        ) : null}
+                      </div>
+                      <p className="text-center text-[length:var(--p-text-label)] font-medium text-muted-foreground">
+                        {t('cards.browser.flipBack')}
+                      </p>
+                    </div>
+                  </motion.div>
                 </motion.div>
               </div>
 

@@ -1,4 +1,4 @@
-import type { ComponentType } from 'react'
+import { type ComponentType, useEffect } from 'react'
 import { useNavigate, useRouterState } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'motion/react'
@@ -25,8 +25,23 @@ export function AppNav() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const pathname = useRouterState({ select: (state) => state.location.pathname })
+  const showNav = TAB_PATHS.includes(pathname as RoutePath)
 
-  if (!TAB_PATHS.includes(pathname as RoutePath)) return null
+  // Publish the space the tab bar occupies so bottom-docked overlays (the select
+  // toolbar) can clear it instead of stacking on top. Present only while the nav is.
+  useEffect(() => {
+    if (!showNav) return
+    const root = document.documentElement
+    root.style.setProperty(
+      '--app-tab-inset',
+      'calc(max(0.75rem, env(safe-area-inset-bottom)) + 4rem)',
+    )
+    return () => {
+      root.style.removeProperty('--app-tab-inset')
+    }
+  }, [showNav])
+
+  if (!showNav) return null
 
   return (
     <nav
