@@ -346,12 +346,12 @@ function DeckTreeNode({
   const isSub = depth > 0
   const selected = selectedIds.has(deck.id)
 
-  // The reveal has to clip the vertical seam while its height animates open, but
-  // a four-sided clip shears the subdeck shadows flat and pops them back rounded
-  // at the end — that pop is the flicker. While animating we clip top/bottom only
-  // and let the sides bleed; at rest the clip is dropped so the last row's shadow
-  // is whole. Seeded from `isOpen` so a deck restored open on load (its enter is
-  // suppressed) starts settled.
+  // The reveal has to clip the top seam while its height animates open, but a
+  // four-sided clip shears the subdeck shadows flat and pops them back rounded at
+  // the end — that pop is the flicker. While animating we clip only the top and
+  // let the other edges bleed (see the `clipPath` below); at rest the clip is
+  // dropped so every shadow is whole. Seeded from `isOpen` so a deck restored
+  // open on load (its enter is suppressed) starts settled.
   const [childrenSettled, setChildrenSettled] = useState(isOpen)
 
   const longPress = useLongPress({
@@ -497,13 +497,15 @@ function DeckTreeNode({
             className="relative flex flex-col gap-2 pt-2"
             style={{
               paddingLeft: INDENT,
-              // Clip the wipe on the vertical axis only. Sides bleed 32px so the
-              // subdeck cards' rounded shadows stay whole through the reveal; the
-              // clip is dropped at rest (`childrenSettled`) so the last row's
-              // bottom shadow isn't shorn. `inset()` at full height clips nothing
-              // vertically, so this is inert once open and safe under reduced
-              // motion (no height animation runs).
-              clipPath: childrenSettled ? undefined : 'inset(0px -32px 0px -32px)',
+              // Clip the *top* seam of the wipe so rows can't spill above the
+              // parent, but let the other three edges bleed: the sides 32px so
+              // the cards' rounded shadows stay whole, and the bottom 24px past
+              // the reveal line so the last subdeck's shadow shows the instant
+              // the row does — instead of being shorn until the ease-out tail
+              // finishes. The bottom bleed would peek the next row early, but the
+              // rows' fade-in stagger tracks the wipe, so what peeks is still at
+              // ~zero opacity. Dropped entirely at rest (`childrenSettled`).
+              clipPath: childrenSettled ? undefined : 'inset(0px -32px -24px -32px)',
             }}
             initial={reduce ? false : { height: 0, opacity: 0 }}
             animate={reduce ? { opacity: 1 } : { height: 'auto', opacity: 1 }}
