@@ -40,6 +40,10 @@ export function IconColorRow({
             if (selected) onColorChange(selected)
           }}
           aria-label={label}
+          // Picking a colour must not blur the name field: a tap on a swatch would otherwise
+          // move focus off the input and dismiss the keyboard. Cancelling the pointer's default
+          // keeps focus put; the toggle still commits on click. Keyboard nav is unaffected.
+          onMouseDown={(event) => event.preventDefault()}
           className="-my-1.5 flex flex-1 items-center gap-2.5 overflow-x-auto py-1.5 scrollbar-hide"
         >
           {colorOptions.map((option) => {
