@@ -1,4 +1,4 @@
-import { type SyntheticEvent, useEffect, useState } from 'react'
+import { type SyntheticEvent, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Check, FolderPlus } from 'lucide-react'
 import { DEFAULT_FOLDER_ICON, type Folder } from '@/entities/folder'
@@ -24,6 +24,7 @@ export function FolderSheet({
 }: FolderSheetProps) {
   const { t } = useTranslation()
   const isEdit = folder != null
+  const nameRef = useRef<HTMLInputElement>(null)
   const [name, setName] = useState('')
   const [color, setColor] = useState(defaultColor)
   const [icon, setIcon] = useState(DEFAULT_FOLDER_ICON)
@@ -47,6 +48,9 @@ export function FolderSheet({
       open={open}
       onOpenChange={onOpenChange}
       title={isEdit ? t('folder.settingsTitle') : t('folder.newTitle')}
+      // Focus the name field through Base UI (scroll-safe) on create only; editing opens without
+      // grabbing focus so changing just the colour/icon doesn't raise the keyboard.
+      initialFocus={isEdit ? undefined : nameRef}
       footer={
         <Button size="lg" className="w-full" disabled={!valid} onClick={() => submit()}>
           {isEdit ? (
@@ -66,6 +70,7 @@ export function FolderSheet({
           onNameChange={setName}
           onColorChange={setColor}
           onIconChange={setIcon}
+          nameRef={nameRef}
           autoFocusName={!isEdit}
         />
       </form>

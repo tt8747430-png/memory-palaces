@@ -1,3 +1,4 @@
+import type { RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DECK_COLOR_OPTIONS } from '@/entities/deck'
 import { useAutoSelect } from '@/shared/lib'
@@ -10,6 +11,13 @@ export interface FolderFormProps {
   onNameChange: (value: string) => void
   onColorChange: (value: string) => void
   onIconChange: (value: string) => void
+  /**
+   * Ref to the name field so the hosting Sheet can focus it through Base UI's `initialFocus`
+   * (scroll-safe, keyboard-aware). Prefer this over the native `autofocus` attribute, which
+   * fires before the drawer is positioned and scrolls the whole page to reveal the field.
+   */
+  nameRef?: RefObject<HTMLInputElement | null>
+  /** Fresh create: select the suggested name on first focus so typing replaces it. */
   autoFocusName?: boolean
 }
 
@@ -20,6 +28,7 @@ export function FolderForm({
   onNameChange,
   onColorChange,
   onIconChange,
+  nameRef,
   autoFocusName = false,
 }: FolderFormProps) {
   const { t } = useTranslation()
@@ -27,12 +36,12 @@ export function FolderForm({
   return (
     <div className="flex flex-col gap-5">
       <Input
+        ref={nameRef}
         aria-label={t('folder.nameLabel')}
         value={name}
         onChange={(event) => onNameChange(event.target.value)}
         onFocus={autoSelect}
         placeholder={t('folder.namePlaceholder')}
-        autoFocus={autoFocusName}
         enterKeyHint="done"
         maxLength={40}
       />
