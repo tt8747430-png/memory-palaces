@@ -1,4 +1,4 @@
-import { type ReactNode, useMemo } from 'react'
+import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { SortableContext, type SortingStrategy } from '@dnd-kit/sortable'
 import { useSortable } from '@dnd-kit/sortable'
@@ -346,6 +346,12 @@ function DeckTreeNode({
   const isSub = depth > 0
   const selected = selectedIds.has(deck.id)
 
+  // The children list needs `overflow-hidden` to wipe cleanly while its height
+  // animates, but that same clip shears the subdeck rows' shadows flat. So clip
+  // only while animating and let it breathe at rest. Seeded from `isOpen` so a
+  // deck restored open on load (its enter is suppressed) starts settled.
+  const [childrenSettled, setChildrenSettled] = useState(isOpen)
+
   const longPress = useLongPress({
     onLongPress: () => onRequestSelect(deck.id),
     onTap: () => onOpen(deck.id),
@@ -486,12 +492,17 @@ function DeckTreeNode({
       <AnimatePresence initial={false}>
         {hasChildren && isOpen ? (
           <motion.ul
-            className="relative flex flex-col gap-2 overflow-hidden pt-2"
+            className={cn(
+              'relative flex flex-col gap-2 pt-2',
+              childrenSettled ? 'overflow-visible' : 'overflow-hidden',
+            )}
             style={{ paddingLeft: INDENT }}
             initial={reduce ? false : { height: 0, opacity: 0 }}
             animate={reduce ? { opacity: 1 } : { height: 'auto', opacity: 1 }}
             exit={reduce ? { opacity: 0 } : { height: 0, opacity: 0 }}
             transition={{ duration: 0.26, ease: EASE_OUT }}
+            onAnimationStart={() => setChildrenSettled(false)}
+            onAnimationComplete={() => setChildrenSettled(true)}
           >
             {/* Nesting spine — a soft vertical guide down the indent gutter. */}
             <span
