@@ -1,15 +1,13 @@
 # Problems
 
-1. the feedback popup above the keeyboard should have a fixed height and never changes the size, when i has too any words it jus tgets a scrollbar. and alos when i type more words than there are in the answer it stops writing feedback. 
-2. the wrong letter popup in hte type initials mode should be below the text box adn not inside the textbox
-
-
 GENERAL:
-2. the shadows for the folders, decks subdecks, swipe actions section, and select mode and so on are not rendered correctly see here /Users/kristianbraila/Downloads/IMG_2604.PNG /Users/kristianbraila/Downloads/IMG_2602.PNG
-3. the select toolbar is not above the tabnavigation bar and you should fix its placement across the app for all the select actions /Users/kristianbraila/Downloads/IMG_2603.PNG 
-4. improve the animation for the swipe and next card in the preview mode of the app when clikcing on the flashcard in the deck because it is flickering /Users/kristianbraila/Downloads/IMG_2605.PNG
-7. the opened subdecks state and other states should be saved so that when the user closes the app and so on it saves it state across the app /Users/kristianbraila/Downloads/IMG_2609.jpg
-8. you should refactor the interactions when i select multiple controls like multiple folders decks subdecksk, cards they should like be stacked and dragged and dropped together and not just one which is not correct. 
+
+1. the bottom bar should be present only in the main pages like home and profile page and not in the folder or deck or whatever page it is. 
+2.  we need to refactor this, now drag and drop will only be for reorder and if the user wants to move a deck to subdeck it should use the move sheet. and also the animations is not that smooth  and the multidrag animation is not that correct. we need to fix when it lifts it should have the look like in this image '/Users/kristianbraila/Desktop/Screenshot 2026-07-24 at 23.28.36.png', but when it drops it should look like here  '/Users/kristianbraila/Desktop/Screenshot 2026-07-24 at 23.28.51.png'. also the stack should a real items behind it and not just stub controls that looks the same with all the selected items. and on the top should always be the last selected item and no the item on which i began the drag. and also the milisecond i release the stacked items, the count number on the right should disapear and the items get to their places from the behind the stack because they are rendered live and improve the animation and smoothness
+
+3. the preview cards page also should render reald cards behind the card on the top and the next card should come from behind it and not just have a stub fake card behind it. 
+
+
 
 
 
@@ -125,8 +123,19 @@ GENERAL:
 
 
 
+2. the shadows for the folders, decks subdecks, swipe actions section, and select mode and so on are not rendered correctly see here /Users/kristianbraila/Downloads/IMG_2604.PNG /Users/kristianbraila/Downloads/IMG_2602.PNG
+3. the select toolbar is not above the tabnavigation bar and you should fix its placement across the app for all the select actions /Users/kristianbraila/Downloads/IMG_2603.PNG 
+4. improve the animation for the swipe and next card in the preview mode of the app when clikcing on the flashcard in the deck because it is flickering /Users/kristianbraila/Downloads/IMG_2605.PNG
+7. the opened subdecks state and other states should be saved so that when the user closes the app and so on it saves it state across the app /Users/kristianbraila/Downloads/IMG_2609.jpg
 
 
+1. the feedback popup above the keeyboard should have a fixed height and never changes the size, when i has too any words it jus tgets a scrollbar. and alos when i type more words than there are in the answer it stops writing feedback. 
+2. the wrong letter popup in hte type initials mode should be below the text box adn not inside the textbox
+
+
+7. when i click on the select checkbox in the deck it should also select all of its subdecks and when i select only one subdeck the select checkbox of the deck should turn into the three state checkbox. 
+8. you should refactor the interactions when i select multiple controls like multiple folders decks subdecksk, cards they should like be stacked and dragged and dropped together and not just one which is not correct.
+ 
 
 
 
