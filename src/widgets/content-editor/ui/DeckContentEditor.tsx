@@ -31,7 +31,14 @@ import {
   usePreferencesStore,
 } from '@/entities/preferences'
 import { readAnkiFile } from '@/features/content'
-import { cardMaturityCounts, cardsInSubtree, cn, ContentImportError, srsStatus } from '@/shared/lib'
+import {
+  cardMaturityCounts,
+  cardsInSubtree,
+  cn,
+  ContentImportError,
+  impact,
+  srsStatus,
+} from '@/shared/lib'
 import {
   Button,
   CardMaturityOverview,
@@ -222,6 +229,9 @@ export function DeckContentEditor({
     })
 
   const requestSelect = (id: string) => {
+    // Same confirmation the library gives a long press — a selection starting is a state change
+    // the finger should feel, not just see.
+    impact()
     setSelectMode(true)
     setSelectedIds((prev) => new Set(prev).add(id))
   }

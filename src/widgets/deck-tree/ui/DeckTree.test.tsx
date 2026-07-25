@@ -3,6 +3,7 @@ import { cleanup, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { makeDeck } from '@/entities/deck'
 import { makeCard } from '@/entities/card'
+import { flattenDecks } from '@/shared/lib'
 import { renderWithProviders } from '@/shared/test/render-with-providers'
 import { DeckTree } from './DeckTree'
 
@@ -13,17 +14,18 @@ const CREATED = new Date(0).toISOString()
 function baseProps(
   overrides: Partial<Parameters<typeof DeckTree>[0]> = {},
 ): Parameters<typeof DeckTree>[0] {
+  const decks = overrides.decks ?? []
+  const expanded = overrides.expanded ?? new Set<string>()
   return {
-    decks: [],
+    decks,
     cards: [],
-    expanded: new Set<string>(),
+    expanded,
     onToggle: vi.fn(),
     onOpen: vi.fn(),
-    selectMode: false,
-    selectedIds: new Set<string>(),
     onRequestSelect: vi.fn(),
-    onToggleSelect: vi.fn(),
     ...overrides,
+    // Derived from the resolved decks/expanded, so it always matches what the page would pass.
+    rows: flattenDecks(decks, expanded, null),
   }
 }
 
@@ -65,31 +67,5 @@ describe('DeckTree', () => {
     const cards = [makeCard({ id: 'c1', createdAt: CREATED, deckId: 'a', front: 'Q', back: 'A' })]
     renderWithProviders(<DeckTree {...baseProps({ decks, cards })} />)
     expect(screen.getByText('Cards for today: 1')).toBeInTheDocument()
-  })
-
-  it('routes taps to selection and reflects the selected state in select mode', async () => {
-    const user = userEvent.setup()
-    const onToggleSelect = vi.fn()
-    const decks = [
-      makeDeck({ id: 'a', createdAt: CREATED, name: 'First', order: 0 }),
-      makeDeck({ id: 'b', createdAt: CREATED, name: 'Second', order: 1 }),
-    ]
-    renderWithProviders(
-      <DeckTree
-        {...baseProps({
-          decks,
-          selectMode: true,
-          selectedIds: new Set(['a']),
-          onToggleSelect,
-        })}
-      />,
-    )
-
-    expect(screen.getByRole('button', { name: 'Select First' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    )
-    await user.click(screen.getByRole('button', { name: 'Select Second' }))
-    expect(onToggleSelect).toHaveBeenCalledWith('b')
   })
 })

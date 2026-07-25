@@ -1,4 +1,4 @@
-import { type ComponentType, useEffect } from 'react'
+import { type ComponentType, useLayoutEffect } from 'react'
 import { useNavigate, useRouterState } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'motion/react'
@@ -27,17 +27,19 @@ export function AppNav() {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
   const showNav = TAB_PATHS.includes(pathname as RoutePath)
 
-  // Publish the space the tab bar occupies so bottom-docked overlays (the select
-  // toolbar) can clear it instead of stacking on top. Present only while the nav is.
-  useEffect(() => {
+  // Raise the app's bottom inset by the tab bar's own height, so everything docked down there
+  // (select toolbar, speed dial, scroll padding) clears it instead of stacking on top. Written
+  // in a layout effect: an ordinary effect lands after paint, and the tab-bar routes would show
+  // one frame with the dial and toolbar sitting too low.
+  useLayoutEffect(() => {
     if (!showNav) return
     const root = document.documentElement
     root.style.setProperty(
-      '--app-tab-inset',
+      '--app-bottom-inset',
       'calc(max(0.75rem, env(safe-area-inset-bottom)) + 4rem)',
     )
     return () => {
-      root.style.removeProperty('--app-tab-inset')
+      root.style.removeProperty('--app-bottom-inset')
     }
   }, [showNav])
 

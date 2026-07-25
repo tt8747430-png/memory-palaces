@@ -128,10 +128,22 @@ const welcomeRoute = createRoute({
   component: WelcomeRoute,
 })
 
-function HomeRoute() {
+/**
+ * The library, scoped either to the unfiled root (home) or to one folder. A folder is its own
+ * route rather than a mode of home, so it behaves like the page it looks like: the tab bar steps
+ * aside, the back gesture leaves the folder instead of the app, and the folder survives a reload.
+ */
+function LibraryRoute({ folderId }: { folderId: string | null }) {
   const navigate = useNavigate()
+  const leaveFolder = useBack(() => navigate({ to: ROUTES.home }))
   return (
     <DeckLibraryPage
+      folderId={folderId}
+      onOpenFolder={(id) => navigate({ to: ROUTES.folder, params: { folderId: id } })}
+      onCloseFolder={leaveFolder}
+      // The folder this route names is gone (deleted from inside it, or a stale link). Replace
+      // rather than pop: there may be no history to pop back to.
+      onFolderGone={() => navigate({ to: ROUTES.home, replace: true })}
       onOpenDeck={(deckId) => navigate({ to: ROUTES.deckDetail, params: { deckId } })}
       onOpenDeckSettings={(deckId) => navigate({ to: ROUTES.deckSettings, params: { deckId } })}
       onImportPaste={() => navigate({ to: ROUTES.newPaste })}
@@ -144,10 +156,25 @@ function HomeRoute() {
   )
 }
 
+function HomeRoute() {
+  return <LibraryRoute folderId={null} />
+}
+
 const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.home,
   component: HomeRoute,
+})
+
+function FolderRoute() {
+  const { folderId } = folderRoute.useParams()
+  return <LibraryRoute folderId={folderId} />
+}
+
+const folderRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.folder,
+  component: FolderRoute,
 })
 
 function DeckDetailRoute() {
@@ -658,6 +685,7 @@ const routeTree = rootRoute.addChildren([
   forgotRoute,
   welcomeRoute,
   homeRoute,
+  folderRoute,
   archivedRoute,
   deckDetailRoute,
   deckSettingsRoute,

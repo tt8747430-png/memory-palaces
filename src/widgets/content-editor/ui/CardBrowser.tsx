@@ -31,6 +31,23 @@ import { FlyoutMenu, type SheetAction } from '@/shared/ui'
 const SPRING = { type: 'spring', stiffness: 500, damping: 36 } as const
 const CARD_EASE = [0.16, 1, 0.3, 1] as const
 
+/**
+ * Where each card in the stack sits. Depth 0 is the card in play; the rest step back and down so
+ * the deck has a readable edge. Going forward, the next card animates from depth 1 to depth 0 —
+ * it rises out of the stack it was already part of instead of sliding in from nowhere.
+ */
+const DEPTH_POSE = [
+  { scale: 1, y: 0, x: 0, opacity: 1 },
+  { scale: 0.94, y: 16, x: 0, opacity: 1 },
+  { scale: 0.88, y: 30, x: 0, opacity: 0.7 },
+] as const
+
+/** How many cards deep the stack is drawn. Beyond this nothing is visible anyway. */
+const STACK_DEPTH = 2
+
+/** Where the card in play enters from: out of the deck (forward) or back from the edge (back). */
+type EnterFrom = 'behind' | 'edge' | null
+
 export interface CardBrowserProps {
   open: boolean
   cards: Card[]
@@ -60,6 +77,7 @@ export function CardBrowser({
   const reduce = useReducedMotion()
   const [index, setIndex] = useState(0)
   const [flipped, setFlipped] = useState(false)
+  const [enterFrom, setEnterFrom] = useState<EnterFrom>(null)
   const x = useMotionValue(0)
   const rotate = useTransform(x, [-240, 0, 240], [-6, 0, 6])
   const count = cards.length
@@ -73,6 +91,7 @@ export function CardBrowser({
     const at = startId ? cards.findIndex((l) => l.id === startId) : 0
     setIndex(at < 0 ? 0 : at)
     setFlipped(false)
+    setEnterFrom(null)
     animating.current = false
     x.set(0)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -84,9 +103,12 @@ export function CardBrowser({
     else if (index > count - 1) setIndex(count - 1)
   }, [open, count, index, onClose])
 
-  // The current card leaves in the swipe direction and its neighbour comes in
-  // from the opposite edge — one solid card always on screen, so the ghost
-  // beneath never flashes through (the old cross-fade-through-a-gap flicker).
+  /**
+   * Forward, the card in play is thrown off and the card *behind* it is promoted into its place —
+   * it was already on screen, one layer down, so the move reads as the deck advancing. Backward
+   * has no deck to draw from (the stack only holds what is still ahead), so the card returns the
+   * way it left: out to the right, the previous one back in from the left.
+   */
   const go = (delta: number) => {
     const next = index + delta
     if (animating.current || next < 0 || next > count - 1) {
@@ -96,6 +118,7 @@ export function CardBrowser({
     tick()
     if (reduce) {
       setFlipped(false)
+      setEnterFrom(null)
       setIndex(next)
       x.set(0)
       return
@@ -108,14 +131,12 @@ export function CardBrowser({
       ease: CARD_EASE,
       onComplete: () => {
         setFlipped(false)
+        setEnterFrom(delta > 0 ? 'behind' : 'edge')
         setIndex(next)
-        x.set(-dir * off)
-        animate(x, 0, {
-          ...SPRING,
-          onComplete: () => {
-            animating.current = false
-          },
-        })
+        // The outgoing card has unmounted with its key; the slot is free to sit at rest again
+        // while the arriving card runs its own entrance.
+        x.set(0)
+        animating.current = false
       },
     })
   }
@@ -140,6 +161,8 @@ export function CardBrowser({
   )
 
   const current = count > 0 ? cards[Math.min(index, count - 1)]! : null
+  /** The cards still to come, nearest first — the deck drawn under the one in play. */
+  const ahead = cards.slice(index + 1, index + 1 + STACK_DEPTH)
 
   const menuActions: SheetAction[] = current
     ? [
@@ -234,78 +257,57 @@ export function CardBrowser({
                 ref={shellRef}
                 className="relative flex flex-1 items-center px-5 pb-2 [perspective:1400px]"
               >
-                {count > 1 ? (
-                  <div
-                    aria-hidden
-                    className="absolute left-1/2 top-1/2 h-[58%] w-[86%] rounded-card-featured border border-white/25 bg-card/30"
-                    style={{ transform: 'translate(-50%,-46%) scale(0.95)' }}
-                  />
-                ) : null}
-                <motion.div
-                  {...(bind() as unknown as HTMLMotionProps<'div'>)}
-                  style={{ x, rotate }}
-                  className="relative z-10 h-[clamp(340px,62vh,560px)] w-full touch-pan-y"
-                >
+                <div className="relative h-[clamp(340px,62vh,560px)] w-full">
+                  {/* The rest of the deck: the real next cards, showing their real fronts, so the
+                      card that arrives next is one you have already seen the edge of. */}
+                  {ahead.map((queued, i) => (
+                    <QueuedPreview
+                      key={queued.id}
+                      card={queued}
+                      // `ahead` is nearest-first, so depth counts up with the index. Inverting
+                      // this draws the *furthest* card in the visible slot: you peek at card 15
+                      // and then swipe up card 14.
+                      depth={i + 1}
+                      reduce={Boolean(reduce)}
+                    />
+                  ))}
+
                   <motion.div
-                    animate={{ rotateY: flipped ? 180 : 0 }}
-                    transition={reduce ? { duration: 0 } : { duration: 0.45, ease: CARD_EASE }}
-                    style={{ transformStyle: 'preserve-3d' }}
-                    className="relative size-full cursor-pointer select-none"
+                    {...(bind() as unknown as HTMLMotionProps<'div'>)}
+                    style={{ x, rotate }}
+                    className="absolute inset-0 z-10 touch-pan-y"
                   >
-                    <div
-                      style={{ backfaceVisibility: 'hidden' }}
-                      className="absolute inset-0 flex flex-col rounded-card-featured border border-border bg-card p-6 shadow-elevated"
+                    {/* Keyed by card: the one leaving is already off screen and simply goes. The
+                        one arriving enters from the pose it held one layer down (forward) or from
+                        the edge it was last seen at (backward). */}
+                    <motion.div
+                      key={current.id}
+                      initial={
+                        reduce || enterFrom === null
+                          ? false
+                          : enterFrom === 'behind'
+                            ? DEPTH_POSE[1]
+                            : {
+                                ...DEPTH_POSE[0],
+                                x: -((shellRef.current?.offsetWidth ?? 430) + 48),
+                              }
+                      }
+                      animate={DEPTH_POSE[0]}
+                      transition={reduce ? { duration: 0 } : { duration: 0.3, ease: CARD_EASE }}
+                      className="size-full"
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="rounded-control bg-info-surface px-2.5 py-1 text-[length:var(--p-text-tiny)] font-semibold text-info-foreground">
-                          {t('cards.browser.front')}
-                        </span>
-                        {current.flagged ? (
-                          <Flag
-                            className="size-4 fill-[var(--rating)] text-[var(--rating-edge)]"
-                            aria-label={t('cards.row.flagged')}
-                          />
-                        ) : null}
-                      </div>
-                      <div className="flex flex-1 items-center justify-center overflow-y-auto px-1 py-3 text-center scrollbar-hide">
-                        <p className="text-balance break-words text-[clamp(24px,6.5vw,34px)] font-bold leading-tight text-heading">
-                          {current.front}
-                        </p>
-                      </div>
-                      <p className="text-center text-[length:var(--p-text-label)] font-medium text-muted-foreground">
-                        {t('cards.browser.flip')}
-                      </p>
-                    </div>
-                    <div
-                      style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
-                      className="absolute inset-0 flex flex-col rounded-card-featured border border-border bg-card p-6 shadow-elevated"
-                    >
-                      <span className="self-start rounded-control bg-info-surface px-2.5 py-1 text-[length:var(--p-text-tiny)] font-semibold text-info-foreground">
-                        {t('cards.browser.back')}
-                      </span>
-                      <div className="flex flex-1 flex-col items-center justify-center gap-4 overflow-y-auto py-3 text-center scrollbar-hide">
-                        <p className="text-balance break-words text-[clamp(18px,5vw,24px)] font-semibold leading-snug text-heading">
-                          {current.back}
-                        </p>
-                        {current.hint ? (
-                          <p className="flex max-w-[34ch] items-center gap-1.5 text-[length:var(--p-text-label)] italic leading-relaxed text-accent">
-                            <MapPin className="size-3.5 shrink-0" aria-hidden />
-                            {current.hint}
-                          </p>
-                        ) : null}
-                        {current.tip ? (
-                          <p className="flex max-w-[34ch] items-center gap-1.5 rounded-control bg-[var(--warning-surface)] px-3 py-1.5 text-[length:var(--p-text-label)] italic leading-relaxed text-[var(--warning-foreground)]">
-                            <Lightbulb className="size-3.5 shrink-0" aria-hidden />
-                            {current.tip}
-                          </p>
-                        ) : null}
-                      </div>
-                      <p className="text-center text-[length:var(--p-text-label)] font-medium text-muted-foreground">
-                        {t('cards.browser.flipBack')}
-                      </p>
-                    </div>
+                      <motion.div
+                        animate={{ rotateY: flipped ? 180 : 0 }}
+                        transition={reduce ? { duration: 0 } : { duration: 0.45, ease: CARD_EASE }}
+                        style={{ transformStyle: 'preserve-3d' }}
+                        className="relative size-full cursor-pointer select-none"
+                      >
+                        <PreviewFace card={current} />
+                        <PreviewFace card={current} back />
+                      </motion.div>
+                    </motion.div>
                   </motion.div>
-                </motion.div>
+                </div>
               </div>
 
               <div className="flex items-center justify-between px-6 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2">
@@ -341,5 +343,92 @@ export function CardBrowser({
         </Dialog.Popup>
       </Dialog.Portal>
     </Dialog.Root>
+  )
+}
+
+const FACE_SURFACE =
+  'absolute inset-0 flex flex-col rounded-card-featured border border-border bg-card p-6 shadow-elevated'
+
+/**
+ * One side of a preview card. Shared by the card in play and by the cards waiting behind it, so a
+ * card that is promoted out of the deck is already exactly the thing it becomes — no cross-fade
+ * between a placeholder and the real face.
+ */
+function PreviewFace({ card, back = false }: { card: Card; back?: boolean }) {
+  const { t } = useTranslation()
+
+  if (!back) {
+    return (
+      <div style={{ backfaceVisibility: 'hidden' }} className={FACE_SURFACE}>
+        <div className="flex items-center justify-between">
+          <span className="rounded-control bg-info-surface px-2.5 py-1 text-[length:var(--p-text-tiny)] font-semibold text-info-foreground">
+            {t('cards.browser.front')}
+          </span>
+          {card.flagged ? (
+            <Flag
+              className="size-4 fill-[var(--rating)] text-[var(--rating-edge)]"
+              aria-label={t('cards.row.flagged')}
+            />
+          ) : null}
+        </div>
+        <div className="flex flex-1 items-center justify-center overflow-y-auto px-1 py-3 text-center scrollbar-hide">
+          <p className="text-balance break-words text-[clamp(24px,6.5vw,34px)] font-bold leading-tight text-heading">
+            {card.front}
+          </p>
+        </div>
+        <p className="text-center text-[length:var(--p-text-label)] font-medium text-muted-foreground">
+          {t('cards.browser.flip')}
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div
+      style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+      className={FACE_SURFACE}
+    >
+      <span className="self-start rounded-control bg-info-surface px-2.5 py-1 text-[length:var(--p-text-tiny)] font-semibold text-info-foreground">
+        {t('cards.browser.back')}
+      </span>
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 overflow-y-auto py-3 text-center scrollbar-hide">
+        <p className="text-balance break-words text-[clamp(18px,5vw,24px)] font-semibold leading-snug text-heading">
+          {card.back}
+        </p>
+        {card.hint ? (
+          <p className="flex max-w-[34ch] items-center gap-1.5 text-[length:var(--p-text-label)] italic leading-relaxed text-accent">
+            <MapPin className="size-3.5 shrink-0" aria-hidden />
+            {card.hint}
+          </p>
+        ) : null}
+        {card.tip ? (
+          <p className="flex max-w-[34ch] items-center gap-1.5 rounded-control bg-[var(--warning-surface)] px-3 py-1.5 text-[length:var(--p-text-label)] italic leading-relaxed text-[var(--warning-foreground)]">
+            <Lightbulb className="size-3.5 shrink-0" aria-hidden />
+            {card.tip}
+          </p>
+        ) : null}
+      </div>
+      <p className="text-center text-[length:var(--p-text-label)] font-medium text-muted-foreground">
+        {t('cards.browser.flipBack')}
+      </p>
+    </div>
+  )
+}
+
+/** A card waiting its turn: the real card, its real front, inert and one step further back. */
+function QueuedPreview({ card, depth, reduce }: { card: Card; depth: number; reduce: boolean }) {
+  const pose = DEPTH_POSE[Math.min(depth, DEPTH_POSE.length - 1)]!
+  return (
+    <motion.div
+      aria-hidden
+      inert
+      initial={reduce ? false : DEPTH_POSE[Math.min(depth + 1, DEPTH_POSE.length - 1)]}
+      animate={pose}
+      transition={reduce ? { duration: 0 } : { duration: 0.3, ease: CARD_EASE }}
+      style={{ zIndex: -depth }}
+      className="pointer-events-none absolute inset-0"
+    >
+      <PreviewFace card={card} />
+    </motion.div>
   )
 }

@@ -10,9 +10,9 @@ afterEach(cleanup)
 
 const CREATED = new Date(0).toISOString()
 
-function studyCard(front: string, back: string): StudyCard {
+function studyCard(front: string, back: string, id = 'c1'): StudyCard {
   return {
-    card: makeCard({ id: 'c1', createdAt: CREATED, deckId: 'd1', front, back }),
+    card: makeCard({ id, createdAt: CREATED, deckId: 'd1', front, back }),
     deckName: 'Deck',
     deckPath: 'Deck',
   }
@@ -53,5 +53,28 @@ describe('StudyDeck', () => {
       <StudyDeck {...baseProps({ card: studyCard('Term', 'Definition'), direction: 'back' })} />,
     )
     expect(screen.getAllByText('Definition').length).toBeGreaterThan(0)
+  })
+
+  // Regression: `upcoming` is nearest-first, so depth has to count *up* with that index.
+  // Inverting it drew the furthest card in the visible slot, so the card peeking out from behind
+  // was never the card the next swipe promoted.
+  it('peeks at the card the next swipe will actually promote', () => {
+    renderWithProviders(
+      <StudyDeck
+        {...baseProps({
+          upcoming: [studyCard('Next up', 'b', 'c2'), studyCard('After that', 'b', 'c3')],
+        })}
+      />,
+    )
+
+    const queued = [...document.querySelectorAll<HTMLElement>('[aria-hidden][inert]')].filter(
+      (node) => node.style.zIndex !== '',
+    )
+    const nearest = queued.reduce((a, b) =>
+      Number(a.style.zIndex) > Number(b.style.zIndex) ? a : b,
+    )
+
+    expect(nearest).toHaveTextContent('Next up')
+    expect(nearest).not.toHaveTextContent('After that')
   })
 })

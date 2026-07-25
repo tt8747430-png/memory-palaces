@@ -1,51 +1,18 @@
-import { type ReactNode, useEffect, useMemo, useState } from 'react'
-import {
-  closestCenter,
-  DndContext,
-  type DragEndEvent,
-  DragOverlay,
-  type DragStartEvent,
-} from '@dnd-kit/core'
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
+import { DndContext, type DragEndEvent, DragOverlay, type DragStartEvent } from '@dnd-kit/core'
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
-import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
-import { cn, useSortableSensors } from '@/shared/lib'
-import { StackedDragPreview } from '@/shared/ui'
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { cn, reconcileHeldOrder, useSortableBlock, useSortableSensors } from '@/shared/lib'
+import { SortableRow, StackedDragPreview } from '@/shared/ui'
 import type { RowDragHandle } from './ContentRows'
 
 const STATIC_DRAG_HANDLE: RowDragHandle = { ref: () => {}, props: {} }
-const NO_CARRIED: ReadonlySet<string> = new Set()
 
-function SortableContentRow({
-  id,
-  carried,
-  children,
-}: {
-  id: string
-  /** True while this row travels with a multi-select drag — dimmed in place. */
-  carried: boolean
-  children: (handle: RowDragHandle) => ReactNode
-}) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    setActivatorNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id })
-  return (
-    <div
-      ref={setNodeRef}
-      style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={cn(isDragging && 'relative z-10', (isDragging || carried) && 'opacity-40')}
-    >
-      {children({ ref: setActivatorNodeRef, props: { ...attributes, ...listeners } })}
-    </div>
-  )
-}
-
+/**
+ * A flat reorderable list of cards or questions. The drag itself is `useSortableBlock`, shared
+ * with the library — this adds only what is local to a list synced from props: holding the
+ * dropped order on screen until the store agrees with it.
+ */
 export function ReorderableList<T extends { id: string }>({
   items,
   reorderable,
@@ -60,74 +27,90 @@ export function ReorderableList<T extends { id: string }>({
   /** When set, dragging a selected row moves the whole selected block together. */
   selectedIds?: ReadonlySet<string>
 }) {
-  const [activeId, setActiveId] = useState<string | null>(null)
   const [ordered, setOrdered] = useState(items)
-  useEffect(() => setOrdered(items), [items])
-  const sensors = useSortableSensors()
-
-  // The block a drag carries: the whole selection when the grabbed row is part of a multi-
-  // selection, otherwise just the grabbed row. Kept in list order so it lands contiguously.
-  const carriedIds = useMemo<ReadonlySet<string>>(() => {
-    if (!activeId) return NO_CARRIED
-    if (selectedIds && selectedIds.has(activeId) && selectedIds.size > 1) {
-      return new Set(ordered.map((item) => item.id).filter((id) => selectedIds.has(id)))
+  // A just-dropped order, held on screen until the store agrees. A reorder is one write per row,
+  // so RxDB re-emits partial orders on the way to the final one; rendering those makes a multi-
+  // row drop settle row-by-row (4 → 3 → 2 → 1) instead of all at once. Keep the committed order
+  // until the incoming rows match it, then resume following the store — adds/removes still
+  // reconcile immediately, they just slot into the held order.
+  const [pendingIds, setPendingIds] = useState<string[] | null>(null)
+  useEffect(() => {
+    if (!pendingIds) {
+      setOrdered(items)
+      return
     }
-    return new Set([activeId])
-  }, [activeId, selectedIds, ordered])
+    const byId = new Map(items.map((item) => [item.id, item]))
+    const { order, settled } = reconcileHeldOrder(
+      pendingIds,
+      items.map((item) => item.id),
+    )
+    setOrdered(order.map((id) => byId.get(id)!))
+    if (settled) setPendingIds(null)
+  }, [items, pendingIds])
+
+  const sensors = useSortableSensors()
+  const orderedIds = useMemo(() => ordered.map((item) => item.id), [ordered])
+  const sectionOf = useCallback(() => orderedIds, [orderedIds])
+  const drag = useSortableBlock({ sectionOf, selectedIds })
+
+  const byId = useMemo(() => new Map(ordered.map((item) => [item.id, item])), [ordered])
+  const front = drag.stackIds[0] ? byId.get(drag.stackIds[0]) : undefined
+
+  // Carried rows other than the one dnd-kit is tracking leave the flow while dragging: the stack
+  // stands in for them, and only one gap opens — at the block's edge, never inside it.
+  const visible = useMemo(() => ordered.filter((item) => !drag.isHidden(item.id)), [ordered, drag])
 
   if (!reorderable) return <>{items.map((item) => renderItem(item))}</>
 
-  const active = activeId ? ordered.find((item) => item.id === activeId) : undefined
+  const handleDragEnd = (event: DragEndEvent) => {
+    const result = drag.drop(event)
+    if (!result) return
+    setOrdered(result.order.map((id) => byId.get(id)!).filter(Boolean) as T[])
+    setPendingIds(result.order)
+    onReorder(result.order)
+  }
 
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCenter}
+      collisionDetection={drag.collision}
       modifiers={[restrictToVerticalAxis]}
-      onDragStart={(event: DragStartEvent) => setActiveId(String(event.active.id))}
-      onDragEnd={(event: DragEndEvent) => {
-        setActiveId(null)
-        const { over } = event
-        if (!over) return
-        const overId = String(over.id)
-        if (carriedIds.has(overId)) return
-
-        const fullOrder = ordered.map((item) => item.id)
-        const carried = fullOrder.filter((id) => carriedIds.has(id))
-        if (carried.length === 0) return
-
-        // Land the block after the target when dragging down, before it when dragging up —
-        // the same rule dnd-kit's single-item move follows, generalized to a block.
-        const overIndex = fullOrder.indexOf(overId)
-        const firstCarried = fullOrder.findIndex((id) => carriedIds.has(id))
-        const rest = fullOrder.filter((id) => !carriedIds.has(id))
-        const at = rest.indexOf(overId) + (overIndex > firstCarried ? 1 : 0)
-        const nextIds = [...rest.slice(0, at), ...carried, ...rest.slice(at)]
-
-        const byId = new Map(ordered.map((item) => [item.id, item]))
-        setOrdered(nextIds.map((id) => byId.get(id)!).filter(Boolean) as T[])
-        onReorder(nextIds)
-      }}
-      onDragCancel={() => setActiveId(null)}
+      onDragStart={(event: DragStartEvent) => drag.start(String(event.active.id))}
+      onDragEnd={handleDragEnd}
+      onDragCancel={drag.cancel}
     >
       <SortableContext
-        items={ordered.map((item) => item.id)}
+        items={visible.map((item) => item.id)}
         strategy={verticalListSortingStrategy}
       >
         <div className="flex flex-col gap-3">
-          {ordered.map((item) => (
-            <SortableContentRow key={item.id} id={item.id} carried={carriedIds.has(item.id)}>
-              {(handle) => renderItem(item, handle)}
-            </SortableContentRow>
+          {visible.map((item) => (
+            <SortableRow key={item.id} id={item.id} landingRef={drag.landingRef(item.id)}>
+              {({ frameRef, handleRef, handleProps, isDragging }) => (
+                // The row's own frame belongs to `renderItem`, so the hidden-source state and the
+                // landing ride on a wrapper here instead — same two layers, same behaviour.
+                <div ref={frameRef} className={cn(isDragging && 'opacity-0')}>
+                  {renderItem(item, { ref: handleRef, props: handleProps })}
+                </div>
+              )}
+            </SortableRow>
           ))}
         </div>
       </SortableContext>
-      <DragOverlay dropAnimation={{ duration: 220, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }}>
-        {active ? (
-          <StackedDragPreview count={carriedIds.size}>
-            <div className="origin-center cursor-grabbing motion-safe:scale-[1.03]">
-              {renderItem(active, STATIC_DRAG_HANDLE, true)}
-            </div>
+
+      {/* Single drag: the row itself is in hand (the source is hidden), so it flies onto its slot.
+          Multi drag: the stack clears the instant the finger lifts — its count is a fact about a
+          drag that is over — and the rows it held travel to their slots on their own. */}
+      <DragOverlay dropAnimation={drag.dropAnimation}>
+        {front ? (
+          <StackedDragPreview
+            count={drag.carriedIds.size}
+            layers={drag.stackIds.slice(1).map((id) => {
+              const item = byId.get(id)
+              return item ? <div key={id}>{renderItem(item, STATIC_DRAG_HANDLE, true)}</div> : null
+            })}
+          >
+            <div className="cursor-grabbing">{renderItem(front, STATIC_DRAG_HANDLE, true)}</div>
           </StackedDragPreview>
         ) : null}
       </DragOverlay>

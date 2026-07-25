@@ -63,7 +63,9 @@ export function SpeedDial({ label, actions, className }: SpeedDialProps) {
       <div
         className={cn(
           'fixed right-5 z-[220] flex flex-col items-end gap-3',
-          'bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+5rem)]',
+          // Rides on whatever the bottom of the app is already using — the tab bar where there
+          // is one, the bare safe area where there isn't.
+          'bottom-[calc(var(--app-bottom-inset)+1rem)]',
           className,
         )}
       >

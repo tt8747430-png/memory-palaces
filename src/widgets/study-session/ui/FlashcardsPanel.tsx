@@ -11,7 +11,7 @@ import {
   canUndo,
   currentId,
   initSession,
-  nextId,
+  upcomingIds,
   type Scope,
   scopeCounts as computeScopeCounts,
   sessionReducer,
@@ -128,8 +128,11 @@ export function FlashcardsPanel({
 
   const id = currentId(state)
   const card = id ? byId.get(id) : undefined
-  const next = nextId(state)
-  const nextCard = next ? byId.get(next) : undefined
+  // The two cards queued behind this one, rendered for real under it so the deck has depth and
+  // the next card rises out of the stack instead of appearing on top of it.
+  const upcoming = upcomingIds(state, 2)
+    .map((cardId) => byId.get(cardId))
+    .filter((c): c is StudyCard => c !== undefined)
   const flipped = state.status !== 'complete' && state.flipped
 
   const canEdit = Boolean(onEditCard || onToggleFlag)
@@ -244,9 +247,11 @@ export function FlashcardsPanel({
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-5 py-3">
         {card ? (
           <StudyDeck
-            key={`${mode}-${card.card.id}`}
+            // Keyed by mode only: the card id changing is a *transition* the deck animates
+            // itself, not a reason to tear the whole stack down and build a new one.
+            key={mode}
             card={card}
-            nextCard={nextCard}
+            upcoming={upcoming}
             mode={mode}
             direction={prefs.direction}
             wordSpaces={wordSpaces}

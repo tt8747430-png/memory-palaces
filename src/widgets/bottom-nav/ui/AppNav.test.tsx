@@ -44,4 +44,24 @@ describe('AppNav', () => {
     const { container } = renderWithProviders(<AppNav />)
     expect(container).toBeEmptyDOMElement()
   })
+
+  it('stays out of the way inside a folder — a folder is a page, not a tab', () => {
+    nav.path = '/folders/abc123'
+    const { container } = renderWithProviders(<AppNav />)
+    expect(container).toBeEmptyDOMElement()
+  })
+
+  it('raises the app bottom inset only while it is mounted', () => {
+    const inset = () => document.documentElement.style.getPropertyValue('--app-bottom-inset')
+
+    nav.path = ROUTES.home
+    const { unmount } = renderWithProviders(<AppNav />)
+    expect(inset()).toContain('4rem')
+    unmount()
+    expect(inset()).toBe('')
+
+    nav.path = '/folders/abc123'
+    renderWithProviders(<AppNav />)
+    expect(inset()).toBe('')
+  })
 })

@@ -53,6 +53,13 @@
        shell is full height and nothing is inset. */
     --vvh: 100%;
     --kb-inset: 0px;
+
+    /* How much room the bottom of the screen is already spoken for. The default is the bare
+       safe area; `AppNav` raises it by the tab bar's height on the routes where it is mounted.
+       Everything docked to the bottom — the select toolbar, the speed dial, a screen's own
+       scroll padding (`.pb-nav`) — measures from this, so a page with no tab bar sits low
+       instead of floating over a gap. */
+    --app-bottom-inset: max(0.75rem, env(safe-area-inset-bottom));
   }
 
   html {
@@ -232,8 +239,10 @@
     padding-bottom: max(env(safe-area-inset-bottom), var(--drawer-keyboard-inset, 0px));
   }
 
+  /* Scroll room under a screen's last row: clears whatever is docked at the bottom (tab bar or
+     not, per `--app-bottom-inset`) plus the speed dial that floats above it. */
   .pb-nav {
-    padding-bottom: calc(7rem + env(safe-area-inset-bottom));
+    padding-bottom: calc(var(--app-bottom-inset) + 4.5rem);
   }
 
   .pl-safe {

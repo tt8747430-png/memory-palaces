@@ -118,61 +118,12 @@ export function selectionRoots(
   return ordered
 }
 
-/** Tri-state of a select checkbox: none, all, or a partial mix of a subtree. */
-export type SelectState = 'unchecked' | 'checked' | 'indeterminate'
-
 /**
- * The select-checkbox state of every (non-archived) deck, derived from which deck ids are
- * selected. A deck is `checked` when it and all of its descendants are selected, `unchecked`
- * when none of them are, and `indeterminate` in between — so selecting a single subdeck lights
- * its ancestors as partial. Archived decks are excluded from both tally and result: they never
- * appear in the tree, so counting them would keep a parent from ever reading as fully checked.
- * Computed in one memoized post-order pass over the whole forest.
+ * Tri-state of a select checkbox: none, all, or a partial mix. The library's select mode is flat
+ * — a deck's subdecks travel with it and are never shown — so its rows are only ever fully on or
+ * off; the middle state is for lists that select a subset of something.
  */
-export function deckSelectionStates(
-  decks: readonly TreeDeck[],
-  selectedIds: ReadonlySet<string>,
-): Map<string, SelectState> {
-  const active = decks.filter((d) => !d.archived)
-  const childrenByParent = new Map<string, TreeDeck[]>()
-  for (const d of active) {
-    if (d.parentId === null) continue
-    const bucket = childrenByParent.get(d.parentId)
-    if (bucket) bucket.push(d)
-    else childrenByParent.set(d.parentId, [d])
-  }
-
-  const states = new Map<string, SelectState>()
-  const tally = new Map<string, readonly [number, number]>()
-  const visiting = new Set<string>()
-
-  // Returns [selectedCount, total] over the deck's subtree; caches so shared ancestors are
-  // walked once, and guards against a malformed cycle rather than recursing forever.
-  const walk = (deck: TreeDeck): readonly [number, number] => {
-    const cached = tally.get(deck.id)
-    if (cached) return cached
-    if (visiting.has(deck.id)) return [selectedIds.has(deck.id) ? 1 : 0, 1]
-    visiting.add(deck.id)
-
-    let selected = selectedIds.has(deck.id) ? 1 : 0
-    let total = 1
-    for (const child of childrenByParent.get(deck.id) ?? []) {
-      const [cs, ct] = walk(child)
-      selected += cs
-      total += ct
-    }
-
-    const state: SelectState =
-      selected === 0 ? 'unchecked' : selected >= total ? 'checked' : 'indeterminate'
-    states.set(deck.id, state)
-    const result = [selected, total] as const
-    tally.set(deck.id, result)
-    return result
-  }
-
-  for (const d of active) walk(d)
-  return states
-}
+export type SelectState = 'unchecked' | 'checked' | 'indeterminate'
 
 export function deckPath<T extends TreeDeck>(decks: readonly T[], deckId: string): T[] {
   const byId = new Map(decks.map((d) => [d.id, d]))

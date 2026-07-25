@@ -140,9 +140,13 @@ export function CardRow({
   const row = (
     <motion.div
       ref={!dragging && reorderable && dragHandle ? dragHandle.ref : undefined}
-      initial={dragging ? false : { opacity: 0, y: 8 }}
+      // No mount entrance on a drag surface. A row carried in a stack is unmounted for the length
+      // of the drag and remounts when the block lands, so an entrance here would animate `opacity`
+      // on the landing row — the fourth cause of drop flicker (`docs/CODE_STYLE.md` §10) — and
+      // fight the travel `useStackLanding` is already running on it.
+      initial={dragging || reorderable ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.97 }}
+      exit={reorderable ? undefined : { opacity: 0, scale: 0.97 }}
       {...interaction}
       className={cn(
         rowSurface,
@@ -291,9 +295,13 @@ export function QuestionRow({
   const row = (
     <motion.div
       ref={!dragging && reorderable && dragHandle ? dragHandle.ref : undefined}
-      initial={dragging ? false : { opacity: 0, y: 8 }}
+      // No mount entrance on a drag surface. A row carried in a stack is unmounted for the length
+      // of the drag and remounts when the block lands, so an entrance here would animate `opacity`
+      // on the landing row — the fourth cause of drop flicker (`docs/CODE_STYLE.md` §10) — and
+      // fight the travel `useStackLanding` is already running on it.
+      initial={dragging || reorderable ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.97 }}
+      exit={reorderable ? undefined : { opacity: 0, scale: 0.97 }}
       {...interaction}
       className={cn(
         rowSurface,

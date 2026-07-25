@@ -24,6 +24,13 @@ const CARDS = [
     front: 'Second front',
     back: 'Second back',
   }),
+  makeCard({
+    id: 'c3',
+    createdAt: CREATED,
+    deckId: 'd1',
+    front: 'Third front',
+    back: 'Third back',
+  }),
 ]
 
 function setup(overrides: Partial<Parameters<typeof CardBrowser>[0]> = {}) {
@@ -44,7 +51,7 @@ describe('CardBrowser', () => {
   it('opens at the starting card and shows the position', async () => {
     setup()
     expect(await screen.findByText('First front')).toBeInTheDocument()
-    expect(screen.getByText('1 / 2 cards')).toBeInTheDocument()
+    expect(screen.getByText('1 / 3 cards')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Previous card' })).toBeDisabled()
   })
 
@@ -52,8 +59,26 @@ describe('CardBrowser', () => {
     const user = userEvent.setup()
     setup()
     await user.click(await screen.findByRole('button', { name: 'Next card' }))
-    expect(await screen.findByText('2 / 2 cards')).toBeInTheDocument()
+    expect(await screen.findByText('2 / 3 cards')).toBeInTheDocument()
     expect(await screen.findByText('Second front')).toBeInTheDocument()
+  })
+
+  // Regression: the queued cards are ordered nearest-first, and depth has to count *up* with that
+  // index. Inverting it drew the furthest card in the visible slot, so the card peeking out from
+  // behind was never the card the next swipe promoted.
+  it('peeks at the card the next swipe will actually promote', async () => {
+    setup()
+    await screen.findByText('First front')
+
+    const queued = [...document.querySelectorAll<HTMLElement>('[aria-hidden][inert]')].filter(
+      (node) => node.style.zIndex !== '',
+    )
+    const nearest = queued.reduce((a, b) =>
+      Number(a.style.zIndex) > Number(b.style.zIndex) ? a : b,
+    )
+
+    expect(nearest).toHaveTextContent('Second front')
+    expect(nearest).not.toHaveTextContent('Third front')
   })
 
   it('edits the current card', async () => {

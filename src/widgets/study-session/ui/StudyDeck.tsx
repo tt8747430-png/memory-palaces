@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   animate,
-  AnimatePresence,
   type HTMLMotionProps,
   motion,
   type MotionValue,
@@ -37,7 +36,8 @@ export type { SwipeDirection }
 
 export interface StudyDeckProps {
   card: StudyCard
-  nextCard?: StudyCard
+  /** The cards queued behind this one, nearest first — rendered for real, at most two deep. */
+  upcoming?: StudyCard[]
   mode: StudyMode
   direction: StudyDirection
   wordSpaces: boolean
@@ -100,7 +100,7 @@ const LONG_PRESS_SLOP = 12
 
 export function StudyDeck({
   card,
-  nextCard,
+  upcoming = [],
   mode,
   direction,
   wordSpaces,
@@ -128,8 +128,11 @@ export function StudyDeck({
   const prompt = direction === 'front' ? cardEntity.front : cardEntity.back
   const answer = recallAnswer(prompt, direction === 'front' ? cardEntity.back : cardEntity.front)
 
-  const [solved, setSolved] = useState(false)
-  useEffect(() => setSolved(false), [cardEntity.id, mode])
+  // Solved is a fact about *this* card. The deck no longer remounts between cards — it animates
+  // the change — so it is tracked by id rather than cleared by an effect, which would leave the
+  // newly promoted card reading as solved for a frame.
+  const [solvedId, setSolvedId] = useState<string | null>(null)
+  const solved = solvedId === cardEntity.id
 
   // Solving is terminal: the front already holds the whole answer, so there is nothing behind
   // it worth turning to. Only a reset reopens the card.
@@ -146,8 +149,11 @@ export function StudyDeck({
 
   const x = useMotionValue(0)
   const y = useMotionValue(0)
-  const scale = useMotionValue(1)
   const rotate = useTransform(x, [-260, 0, 260], [-10, 0, 10])
+
+  // Two cards of depth is all the stack can show and all it needs to: any more is hidden behind
+  // the two in front of it, and every one of them is a live subscription to a card.
+  const behind = upcoming.slice(0, 2)
 
   const clearHold = () => {
     if (holdTimer.current) {
@@ -191,13 +197,11 @@ export function StudyDeck({
       tx ? animate(x, tx, { duration: dur, ease: [0.4, 0, 1, 1] }).finished : Promise.resolve(),
       ty ? animate(y, ty, { duration: dur, ease: [0.4, 0, 1, 1] }).finished : Promise.resolve(),
     ])
+    // Hand the card over and drop the slot back to centre in the same tick: the card that flew
+    // away has already unmounted, and the one taking its place enters from the deck itself.
     onCommit(dir)
     x.jump(0)
     y.jump(0)
-    if (!reduce) {
-      scale.jump(0.96)
-      animate(scale, 1, { type: 'spring', stiffness: 540, damping: 32 })
-    }
     setLocked(false)
   }
 
@@ -273,11 +277,11 @@ export function StudyDeck({
     onSpeak,
     onFlip: handleFlip,
     onRevealInPlace: () => {
-      setSolved(true)
+      setSolvedId(cardEntity.id)
       onReveal()
     },
     onHideInPlace: () => {
-      setSolved(false)
+      setSolvedId(null)
       onUnflip()
     },
     onChangeMode,
@@ -305,13 +309,20 @@ export function StudyDeck({
 
   return (
     <div className="relative mx-auto h-full w-full max-w-md [perspective:1200px]">
-      {nextCard ? (
-        <div
-          aria-hidden
-          className="absolute inset-x-2 top-3 -z-0 h-full rounded-card-featured bg-card-glass shadow-rest"
-          style={{ transform: 'translateY(12px) scale(0.95)' }}
+      {/* The deck under the card in play: the real next cards, carrying their own prompts, so
+          advancing promotes something that was already there instead of dealing from nowhere.
+          Rendered deepest-first and inert — only the front card takes a touch. */}
+      {behind.map((queued, i) => (
+        <QueuedCard
+          key={queued.card.id}
+          card={queued}
+          direction={direction}
+          // `behind` is nearest-first, so depth counts up with the index. Inverting this draws
+          // the *furthest* card in the visible slot — you peek at one card and get another.
+          depth={i + 1}
+          reduce={Boolean(reduce)}
         />
-      ) : null}
+      ))}
 
       <DirectionChip
         action={swipeConfig.right}
@@ -344,31 +355,83 @@ export function StudyDeck({
 
       <motion.div
         {...(bind() as unknown as HTMLMotionProps<'div'>)}
-        style={{ x, y, rotate, scale, touchAction: 'pan-y' }}
+        style={{ x, y, rotate, touchAction: 'pan-y' }}
         className="relative z-10 h-full"
       >
-        <AnimatePresence mode="wait" initial={false}>
+        {/* Keyed by card, so advancing swaps the child outright — the one leaving has already
+            been flung off screen and has nothing left to say. The card arriving enters from the
+            pose it was just sitting in one layer down, which is what makes it read as rising out
+            of the deck rather than fading in over it. */}
+        <motion.div
+          key={cardEntity.id}
+          initial={reduce ? false : DEPTH_POSE[1]}
+          animate={DEPTH_POSE[0]}
+          transition={reduce ? { duration: 0 } : PROMOTION}
+          className="h-full"
+        >
           <motion.div
-            key={cardEntity.id}
-            initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="h-full"
+            animate={{ rotateY: showBack ? 180 : 0 }}
+            transition={reduce ? { duration: 0 } : { duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            style={{ transformStyle: 'preserve-3d' }}
+            className="relative h-full w-full"
           >
-            <motion.div
-              animate={{ rotateY: showBack ? 180 : 0 }}
-              transition={reduce ? { duration: 0 } : { duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              style={{ transformStyle: 'preserve-3d' }}
-              className="relative h-full w-full"
-            >
-              {front}
-              {back}
-            </motion.div>
+            {front}
+            {back}
           </motion.div>
-        </AnimatePresence>
+        </motion.div>
       </motion.div>
     </div>
+  )
+}
+
+/**
+ * Where each card in the deck sits. Depth 0 is the card in play; the rest are stepped back and
+ * down so the stack has a readable edge without the pile ever looking like a fan of paper.
+ */
+const DEPTH_POSE = [
+  { scale: 1, y: 0, opacity: 1 },
+  { scale: 0.95, y: 14, opacity: 1 },
+  { scale: 0.9, y: 26, opacity: 0.72 },
+] as const
+
+/** Fast enough to feel like the same gesture, slow enough to see the card arrive. */
+const PROMOTION = { duration: 0.3, ease: [0.16, 1, 0.3, 1] } as const
+
+/**
+ * A card waiting its turn: the real card, its real prompt, inert. It is only ever seen through
+ * the sliver the card above leaves — and, for a moment, in full while that card is flung away —
+ * so it shows the prompt alone. Whatever the mode is, its front face leads with that too.
+ */
+function QueuedCard({
+  card,
+  direction,
+  depth,
+  reduce,
+}: {
+  card: StudyCard
+  direction: StudyDirection
+  depth: number
+  reduce: boolean
+}) {
+  const prompt = direction === 'front' ? card.card.front : card.card.back
+  const pose = DEPTH_POSE[Math.min(depth, DEPTH_POSE.length - 1)]!
+
+  return (
+    <motion.div
+      aria-hidden
+      inert
+      initial={reduce ? false : DEPTH_POSE[Math.min(depth + 1, DEPTH_POSE.length - 1)]}
+      animate={pose}
+      transition={reduce ? { duration: 0 } : PROMOTION}
+      style={{ zIndex: -depth }}
+      className="pointer-events-none absolute inset-0 flex flex-col rounded-card-featured bg-card-glass shadow-rest"
+    >
+      <div className="flex min-h-0 flex-1 items-center px-5">
+        <h2 className="line-clamp-4 w-full text-balance wrap-break-word text-center text-[clamp(22px,6vw,28px)] font-bold leading-[1.15] tracking-[-0.01em] text-heading">
+          {prompt}
+        </h2>
+      </div>
+    </motion.div>
   )
 }
 

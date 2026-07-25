@@ -1,5 +1,11 @@
 # CLAUDE.md
 
+## Answer style — overrides everything below
+
+**Be extremely concise. Sacrifice grammar for the sake of concision.**
+
+Applies to replies to the user, not to committed code/docs (those stay grammatical). Fragments over sentences. Drop articles, hedges, preamble, recaps, closing summaries. No restating the request. Answer first; detail only if asked.
+
 Mindscape — an offline-first PWA for memory-palace / spaced-repetition study. React 19 + Vite + TypeScript, organized as **Feature-Sliced Design × Clean Architecture**. RxDB is the on-device source of truth.
 
 ## Skills — consult before writing code
@@ -81,6 +87,7 @@ Domain logic lives here (all unit-tested), not in components: `srs.ts` (spaced r
 ## Conventions
 
 - **Code-level style rules live in [`docs/CODE_STYLE.md`](docs/CODE_STYLE.md)** — read it before writing UI: small single-responsibility components, logic in hooks, complex state as reducers/machines, composition over boolean props, `cn()` for classes, semantic tokens only (no raw hex / no per-component `dark:`), narrow store subscriptions + `Promise.all` for independent async, and React performance/build rules.
+- **Touching drag & drop, a reorder, or a card stack? Read [`docs/adr/0001-drag-and-drop-and-card-stacks.md`](docs/adr/0001-drag-and-drop-and-card-stacks.md) first** — it is the decision record: a drag only reorders (re-parenting is the Move sheet), every reachable row must be a peer, one headless engine (`useSortableBlock`) backs every reorderable list, and a stack is always built from the real items. Then [`docs/CODE_STYLE.md`](docs/CODE_STYLE.md) §10 for the drop-flicker checklist.
 - **Touching a drag-and-drop surface? Read [`docs/CODE_STYLE.md`](docs/CODE_STYLE.md) §10 first.** It names the four causes of drop flicker we have actually shipped (un-held optimistic state across the RxDB round-trip, a list not sorted by `order`, a `DragOverlay` that isn't the row it came from, and a mount-entrance animating `opacity` on the landing row) plus the two design rules the fixes depend on. Reusable pieces already exist: `useOptimisticPatch`, `dropZone`, `siblingDecks` (`shared/lib`) and `DropIndicator` (`shared/ui`).
 - **Touching overflow/scroll, the on-screen keyboard, focus/autofocus, `env(safe-area-*)`, or gestures/`touch-action`? Read [`docs/CODE_STYLE.md`](docs/CODE_STYLE.md) §11 first.** It names the styling traps that are invisible on desktop and in jsdom but real on iOS — `overflow-*-auto` clipping a selection ring, a drawer footer that doesn't consume `--drawer-keyboard-inset`, native `autofocus` scrolling the whole app (lint-banned in `*Sheet.tsx`/`*Form.tsx`), a control tap stealing focus and dropping the keyboard, and text-selection hijacking a swipe — plus the on-device verification the change needs. Eyeball the edge states in the dev-only `/dev/kitchen-sink` route.
 - **Mobile & PWA behavior rules live in [`docs/MOBILE_DESIGN.md`](docs/MOBILE_DESIGN.md)** — responsive 430px-column layout, touch targets/thumb-zone, gestures + haptics, sheets/menus/overlays (`@base-ui`), animation feel, interactivity, visual hierarchy, safe areas, offline-first, and install/service-worker-update caveats.

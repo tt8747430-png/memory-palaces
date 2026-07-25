@@ -5,7 +5,6 @@ import {
   childDecks,
   countDueInSubtree,
   deckPath,
-  deckSelectionStates,
   decksInFolder,
   selectionRoots,
   dueCountsPerDeck,
@@ -47,49 +46,6 @@ describe('rootDecks / decksInFolder', () => {
   it('decksInFolder are top-level decks with that folderId', () => {
     expect(decksInFolder(forest, 'f1').map((d) => d.id)).toEqual(['A'])
     expect(decksInFolder(forest, 'nope')).toEqual([])
-  })
-})
-
-describe('deckSelectionStates', () => {
-  it('is all unchecked when nothing is selected', () => {
-    const states = deckSelectionStates(forest, new Set())
-    for (const id of ['A', 'B', 'C', 'D', 'E']) expect(states.get(id)).toBe('unchecked')
-  })
-
-  it('lights ancestors of a selected leaf as indeterminate', () => {
-    const states = deckSelectionStates(forest, new Set(['C']))
-    expect(states.get('C')).toBe('checked')
-    expect(states.get('B')).toBe('indeterminate') // subtree {B,C}, only C
-    expect(states.get('A')).toBe('indeterminate') // subtree {A,D,B,C}, only C
-    expect(states.get('D')).toBe('unchecked')
-    expect(states.get('E')).toBe('unchecked')
-  })
-
-  it('is checked when a deck and its whole subtree are selected', () => {
-    const states = deckSelectionStates(forest, new Set(['A', 'D', 'B', 'C']))
-    expect(states.get('A')).toBe('checked')
-    expect(states.get('B')).toBe('checked')
-    expect(states.get('C')).toBe('checked')
-    expect(states.get('D')).toBe('checked')
-    expect(states.get('E')).toBe('unchecked')
-  })
-
-  it('reads a deck selected without its subtree as indeterminate', () => {
-    const states = deckSelectionStates(forest, new Set(['A']))
-    expect(states.get('A')).toBe('indeterminate')
-    expect(states.get('B')).toBe('unchecked')
-  })
-
-  it('ignores archived descendants so a parent can still read as checked', () => {
-    const archivedForest: TreeDeck[] = [
-      deck('A', null, { order: 0 }),
-      deck('B', 'A', { order: 0 }),
-      deck('C', 'B', { archived: true }),
-    ]
-    const states = deckSelectionStates(archivedForest, new Set(['B']))
-    expect(states.get('B')).toBe('checked') // C is archived, excluded from the tally
-    expect(states.get('A')).toBe('indeterminate') // active subtree {A,B}, only B
-    expect(states.has('C')).toBe(false) // archived decks get no state
   })
 })
 

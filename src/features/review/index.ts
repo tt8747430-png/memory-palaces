@@ -13,6 +13,7 @@ export {
   sessionReducer,
   currentId,
   nextId,
+  upcomingIds,
   canUndo,
   type SessionState,
   type SessionAction,

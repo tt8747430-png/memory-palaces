@@ -101,6 +101,8 @@ export const en = {
       selectAll: 'Select all',
       clearAll: 'Clear all',
       count: '{{count}} selected',
+      folders: 'Folders',
+      decks: 'Decks',
       archivedToast: 'Archived {{count}} decks',
       movedToast: 'Moved {{count}} decks to {{folder}}',
       movedIntoToast: 'Moved {{count}} decks into {{name}}',

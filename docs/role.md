@@ -1,18 +1,13 @@
 # Problems
 
-GENERAL:
+4. "Be extremly consisse. Sacrifise grammar for the sake of consision." -  Put this on top of the CLAUDE.md and document it everywhere you can. 
 
-1. the bottom bar should be present only in the main pages like home and profile page and not in the folder or deck or whatever page it is. 
-2.  we need to refactor this, now drag and drop will only be for reorder and if the user wants to move a deck to subdeck it should use the move sheet. and also the animations is not that smooth  and the multidrag animation is not that correct. we need to fix when it lifts it should have the look like in this image '/Users/kristianbraila/Desktop/Screenshot 2026-07-24 at 23.28.36.png', but when it drops it should look like here  '/Users/kristianbraila/Desktop/Screenshot 2026-07-24 at 23.28.51.png'. also the stack should a real items behind it and not just stub controls that looks the same with all the selected items. and on the top should always be the last selected item and no the item on which i began the drag. and also the milisecond i release the stacked items, the count number on the right should disapear and the items get to their places from the behind the stack because they are rendered live and improve the animation and smoothness
-
-3. the preview cards page also should render reald cards behind the card on the top and the next card should come from behind it and not just have a stub fake card behind it. 
-
-
-
+ GENERAL:
 
 
 
 REFACTORINGS:
+
 SETTINGS:
 3. remove the finish button from the settings.
 
@@ -136,6 +131,10 @@ GENERAL:
 7. when i click on the select checkbox in the deck it should also select all of its subdecks and when i select only one subdeck the select checkbox of the deck should turn into the three state checkbox. 
 8. you should refactor the interactions when i select multiple controls like multiple folders decks subdecksk, cards they should like be stacked and dragged and dropped together and not just one which is not correct.
  
+1. the bottom bar should be present only in the main pages like home and profile page and not in the folder or deck or whatever page it is. 
+2.  we need to refactor this, now drag and drop will only be for reorder and if the user wants to move a deck to subdeck it should use the move sheet. and also the animations is not that smooth  and the multidrag animation is not that correct. we need to fix when it lifts it should have the look like in this image '/Users/kristianbraila/Desktop/Screenshot 2026-07-24 at 23.28.36.png', but when it drops it should look like here  '/Users/kristianbraila/Desktop/Screenshot 2026-07-24 at 23.28.51.png'. also the stack should a real items behind it and not just stub controls that looks the same with all the selected items. and on the top should always be the last selected item and no the item on which i began the drag. and also the milisecond i release the stacked items, the count number on the right should disapear and the items get to their places from the behind the stack because they are rendered live and improve the animation and smoothness
+
+3. the preview cards page also should render reald cards behind the card on the top and the next card should come from behind it and not just have a stub fake card behind it. 
 
 
 

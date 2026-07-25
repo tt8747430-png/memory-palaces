@@ -113,7 +113,16 @@ export {
 export { studyOverview, type StudyOverview } from './study-overview'
 export { nextDefaultName } from './naming'
 export { useOptimisticPatch, orderPatch } from './use-optimistic-patch'
-export { dropZone, type DropZone, type DropIntent, type ZoneRect } from './drop-zone'
+export { reconcileHeldOrder } from './reconcile-order'
+export { moveBlock } from './move-block'
+export { useStackLanding, type StackLanding, type StackOrigin } from './use-stack-landing'
+export {
+  useSortableBlock,
+  type SortableBlock,
+  type SortableBlockDrop,
+  type SortableBlockOptions,
+} from './use-sortable-block'
+export { flattenDecks, type FlatDeck } from './tree-flatten'
 export {
   childDecks,
   siblingDecks,
@@ -121,7 +130,6 @@ export {
   decksInFolder,
   subtreeDeckIds,
   subtreeDecks,
-  deckSelectionStates,
   selectionRoots,
   deckPath,
   isDescendantOrSelf,
