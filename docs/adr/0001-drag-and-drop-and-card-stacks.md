@@ -40,11 +40,13 @@ ancestor, because the subdeck itself is not a row select mode renders. The neste
 
 > **Consequence:** don't add a drag to a surface that renders a hierarchy. Flatten it first.
 
-### 3. One drag engine
+### 3. One drag engine, and the library is the reference
 
 `useSortableBlock()` (`shared/lib/use-sortable-block.ts`) is headless and owns everything about
 _behaviour_: which rows a drag carries, what the pile looks like, where a drop lands, how the rows
-get there. Surfaces differ in what they render, never in how a drag behaves.
+get there, plus the two settings a `DndContext` must not vary — `collision` and `dropAnimation`.
+`SortableRow` (`shared/ui`) owns the row's anatomy. Surfaces differ in what they render, never in
+how a drag behaves.
 
 | Surface                                         | Renders                              | Engine             |
 | ----------------------------------------------- | ------------------------------------ | ------------------ |
@@ -56,6 +58,36 @@ The settings pages are deliberately **not** folded in. They are not a reorder-am
 single-item assignment across two buckets with add/remove, horizontal, no multi-select. Sharing the
 sensors (`useSortableSensors`) is the whole overlap; forcing the rest would be abstraction for its
 own sake.
+
+> **`LibrarySelectList` is the reference implementation. Unifying means moving other surfaces
+> towards it, never moving it towards them.** It is the surface whose feel has been tuned against
+> real use; every other reorderable list is a copy that drifted. When two of them disagree, the
+> library is right by definition — change the other one. (Learned the hard way on 2026-07-26:
+> "unify these" was read as meet-in-the-middle, the library was given a drop animation it had
+> deliberately gone without, and a working surface regressed.)
+
+The four things the card list had drifted on, all resolved in the library's favour:
+
+|                | had been                           | now (the library's)               |
+| -------------- | ---------------------------------- | --------------------------------- |
+| collision      | `closestCenter`                    | `pointerWithin` → `closestCenter` |
+| drop           | 220ms fly-to-slot for a single row | `null`                            |
+| row anatomy    | its own inline `useSortable`       | `SortableRow`                     |
+| mount entrance | `opacity 0→1, y 8`                 | none while reorderable            |
+
+**Why `dropAnimation` is `null` and not a curve.** The dropped state is already true on screen the
+instant the finger lifts — the order is held optimistically — so an overlay still travelling toward
+a row that is already sitting in place is a duplicate of it, not a transition into it. A stack has
+the further problem of not being shaped like any single row, so it has nothing to fly _as_.
+
+**Why the entrance had to go.** A carried row is unmounted for the length of the drag and remounts
+when the block lands, so a mount entrance animates `opacity` on the landing row — the fourth cause
+of drop flicker — and fights the travel `useStackLanding` is already running on that same element.
+
+**Why `SortableRow` hands the frame back to the child** rather than wrapping one: a row's surface,
+ring and padding live on its own element, and that is what `opacity-0` and the landing have to
+apply to. Inserting a wrapper between them silently changes what is being hidden and what is being
+animated.
 
 ### 4. A stack is made of the real items
 
@@ -79,12 +111,17 @@ from — the stack reads as what you just gathered. `selectedIds` is a `Set` and
 insertion order, so the answer is its tail; deselecting and reselecting moves a row to the end,
 which is what "most recently" should mean.
 
-**Putting it down.** A multi-row drag gets `dropAnimation={null}`: the count is a fact about a drag
-that is over, so the stack and its badge clear the instant the finger lifts. The rows then _travel_
-from the pile to their slots — `useStackLanding()` FLIPs each one from the drag's translated rect
-through the Web Animations API, off the React render path, staggered top-to-bottom. Without it the
-rows simply blink into place several rows apart and the stack reads as a lie. A single-row drag
-keeps dnd-kit's own drop animation instead, because the row in hand _is_ the row that lands.
+**Putting it down.** The overlay is dismissed outright — `dropAnimation` is `null` for every drag,
+not just a multi-row one. The stack and its badge clear the instant the finger lifts, because the
+count is a fact about a drag that is over.
+
+A **single** row needs nothing more: the sortable has been showing it in its landing slot for the
+whole drag and the order is held optimistically, so it is already home.
+
+A **block** does, because its rows were gathered into one pile under the finger and their slots are
+rows apart. They _travel_ there — `useStackLanding()` FLIPs each one from the drag's translated
+rect through the Web Animations API, off the React render path, staggered top-to-bottom. Without
+it they simply blink into place and the stack reads as a lie.
 
 **Card decks.** Depth poses are constants (`DEPTH_POSE`): depth 0 in play, then stepped back and
 down. Advancing keys the front slot by card id — the outgoing card has already been flung away and
