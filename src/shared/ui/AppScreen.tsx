@@ -9,6 +9,8 @@ const SCROLL_KEYBOARD = 'pb-keyboard'
 
 const FILL = 'min-h-full'
 
+const FOOTER_DOCK = 'sticky bottom-0 z-10 -mx-5 mt-auto shrink-0'
+
 const SHELL = 'h-full'
 
 export function AppScreen({
@@ -48,7 +50,7 @@ export function AppScreen({
     }
   }, [])
 
-  const content = fill ? <div className={FILL}>{children}</div> : children
+  const content = fill ? <div className={footer ? 'flex-1' : FILL}>{children}</div> : children
 
   if (!header && !footer) {
     return (
@@ -76,13 +78,13 @@ export function AppScreen({
           className={cn(
             'min-h-0 flex-1',
             SCROLL,
-            footer ? SCROLL_KEYBOARD : SCROLL_SAFE,
+            footer ? `flex flex-col ${SCROLL_KEYBOARD}` : SCROLL_SAFE,
             className,
           )}
         >
           {content}
+          {footer ? <div className={FOOTER_DOCK}>{footer}</div> : null}
         </main>
-        {footer}
       </div>
     </HeaderElevationContext>
   )

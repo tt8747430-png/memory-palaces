@@ -41,6 +41,10 @@ function stubViewport({ height, offsetTop }: Viewport, layoutHeight: number) {
   })
 }
 
+function stubRect(node: Element, top: number, bottom: number) {
+  node.getBoundingClientRect = () => ({ top, bottom, height: bottom - top }) as DOMRect
+}
+
 const inset = () => document.documentElement.style.getPropertyValue('--kb-inset')
 
 let stop: (() => void) | undefined
@@ -95,6 +99,30 @@ describe('useKeyboardReveal', () => {
     act(() => button.focus())
 
     expect(inset()).toBe('0px')
+  })
+
+  it('lifts the field clear of a docked footer, not just of the keyboard', () => {
+    localStorage.setItem(STORAGE_KEY, '300')
+    stubViewport({ height: 800, offsetTop: 0 }, 800)
+    stop = startKeyboardViewport()
+
+    const scroll = document.createElement('div')
+    const field = document.createElement('input')
+    const dock = document.createElement('div')
+    dock.dataset.slot = 'footer-bar'
+    scroll.append(field, dock)
+    document.body.appendChild(scroll)
+
+    Object.defineProperty(scroll, 'scrollTop', { value: 0, writable: true })
+    stubRect(scroll, 64, 800)
+    stubRect(field, 400, 440)
+    stubRect(dock, 420, 500)
+
+    const { result } = renderHook(() => useKeyboardReveal())
+    act(() => result.current(scroll))
+    act(() => field.focus())
+
+    expect(scroll.scrollTop).toBe(36)
   })
 
   it('stops reserving when the scroll surface unmounts', () => {

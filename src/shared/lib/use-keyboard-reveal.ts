@@ -46,17 +46,23 @@ export function useKeyboardReveal(): (node: HTMLElement | null) => void {
     const reveal = (field: HTMLElement) => {
       const bounds = node.getBoundingClientRect()
       const rect = field.getBoundingClientRect()
-      const limit = document.documentElement.clientHeight - keyboardHeight()
-      const delta = revealOffset(
-        { top: bounds.top, bottom: Math.min(bounds.bottom, limit) },
-        { top: rect.top, bottom: rect.bottom },
+      const dock = node.querySelector('[data-slot="footer-bar"]')
+      const limit = Math.min(
+        document.documentElement.clientHeight - keyboardHeight(),
+        bounds.bottom,
+        dock?.getBoundingClientRect().top ?? Infinity,
       )
+      const delta = revealOffset({ top: bounds.top, bottom: limit }, rect)
       if (delta !== 0) node.scrollTop += delta
     }
 
+    let syncing = false
+
     const onFocusIn = (event: FocusEvent) => {
       if (!isTextField(event.target)) return
+      syncing = true
       expectKeyboard(true)
+      syncing = false
       reveal(event.target)
     }
 
@@ -66,6 +72,7 @@ export function useKeyboardReveal(): (node: HTMLElement | null) => void {
     }
 
     const unsubscribe = subscribeKeyboard(() => {
+      if (syncing) return
       const active = document.activeElement
       if (isTextField(active) && node.contains(active)) reveal(active)
     })

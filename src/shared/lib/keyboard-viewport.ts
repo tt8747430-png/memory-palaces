@@ -6,6 +6,7 @@ let measured = 0
 let expected = 0
 let expecting = false
 let published = -1
+let panned = -1
 
 const listeners = new Set<() => void>()
 
@@ -33,6 +34,12 @@ function publish() {
   listeners.forEach((listener) => listener())
 }
 
+function publishTop(top: number) {
+  if (top === panned) return
+  panned = top
+  document.documentElement.style.setProperty('--vv-top', `${top}px`)
+}
+
 export function keyboardHeight(): number {
   return Math.max(0, published)
 }
@@ -57,16 +64,21 @@ export function startKeyboardViewport(): () => void {
 
   if (!vv) {
     publish()
+    publishTop(0)
     return () => {
       published = -1
+      panned = -1
       root.style.removeProperty('--kb-inset')
+      root.style.removeProperty('--vv-top')
     }
   }
 
   let frame = 0
   const measure = () => {
     frame = 0
-    const gap = Math.max(0, root.clientHeight - vv.height - Math.max(0, vv.offsetTop))
+    const top = Math.max(0, Math.round(vv.offsetTop))
+    publishTop(top)
+    const gap = Math.max(0, root.clientHeight - vv.height - top)
     const next = gap >= KEYBOARD_MIN ? Math.round(gap) : 0
     if (next === measured) return
     measured = next
@@ -92,6 +104,8 @@ export function startKeyboardViewport(): () => void {
     measured = 0
     expecting = false
     published = -1
+    panned = -1
     root.style.removeProperty('--kb-inset')
+    root.style.removeProperty('--vv-top')
   }
 }

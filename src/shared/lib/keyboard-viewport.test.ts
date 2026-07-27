@@ -44,6 +44,8 @@ function stubViewport({ height, offsetTop }: Viewport, layoutHeight: number) {
 
 const inset = () => document.documentElement.style.getPropertyValue('--kb-inset')
 
+const panOffset = () => document.documentElement.style.getPropertyValue('--vv-top')
+
 let stop: (() => void) | undefined
 
 beforeEach(() => {
@@ -74,6 +76,17 @@ describe('keyboard viewport', () => {
 
     expect(inset()).toBe('277px')
     expect(keyboardHeight()).toBe(277)
+  })
+
+  it('publishes the pan offset so top chrome can ride back onto the screen', async () => {
+    const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
+    stop = startKeyboardViewport()
+
+    expect(panOffset()).toBe('0px')
+
+    await viewport.move({ height: 412, offsetTop: 113 })
+
+    expect(panOffset()).toBe('113px')
   })
 
   it('ignores a gap too small to be a keyboard', () => {
@@ -131,12 +144,13 @@ describe('keyboard viewport', () => {
     unsubscribe()
   })
 
-  it('clears the inset on stop so a keyboardless surface is not left padded', () => {
+  it('clears both variables on stop so a keyboardless surface is not left offset', () => {
     stubViewport({ height: 412, offsetTop: 113 }, 802)
 
     startKeyboardViewport()()
 
     expect(inset()).toBe('')
+    expect(panOffset()).toBe('')
     expect(keyboardHeight()).toBe(0)
   })
 })
