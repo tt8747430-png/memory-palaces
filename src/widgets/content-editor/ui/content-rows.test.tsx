@@ -5,7 +5,8 @@ import { makeCard } from '@/entities/card'
 import { makeQuestion } from '@/entities/question'
 import type { SwipeConfig } from '@/shared/config/swipe'
 import { renderWithProviders } from '@/shared/test/render-with-providers'
-import { CardRow, QuestionRow } from './ContentRows'
+import { CardRow } from './CardRow'
+import { QuestionRow } from './QuestionRow'
 
 afterEach(cleanup)
 

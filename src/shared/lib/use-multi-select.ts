@@ -16,9 +16,9 @@ export interface MultiSelect {
   exit: () => void
   /**
    * The rows the surface is showing right now — what "select all" covers. Sorting, searching
-   * and filtering all live in the list, so the list is what reports its own pool.
+   * and filtering all live in the list, so the list is what reports what is on screen.
    */
-  setPool: (ids: readonly string[]) => void
+  setVisibleIds: (ids: readonly string[]) => void
 }
 
 /**
@@ -29,15 +29,15 @@ export interface MultiSelect {
 export function useMultiSelect(): MultiSelect {
   const [active, setActive] = useState(false)
   const [ids, setIds] = useState<ReadonlySet<string>>(() => new Set())
-  const [pool, setPool] = useState<readonly string[]>([])
+  const [visible, setVisible] = useState<readonly string[]>([])
 
-  const setPoolIfChanged = useCallback((next: readonly string[]) => {
-    setPool((prev) =>
+  const setVisibleIds = useCallback((next: readonly string[]) => {
+    setVisible((prev) =>
       prev.length === next.length && prev.every((id, i) => id === next[i]) ? prev : next,
     )
   }, [])
 
-  const allSelected = pool.length > 0 && pool.every((id) => ids.has(id))
+  const allSelected = visible.length > 0 && visible.every((id) => ids.has(id))
 
   const begin = useCallback((id: string) => {
     impact()
@@ -57,14 +57,14 @@ export function useMultiSelect(): MultiSelect {
   const toggleAll = useCallback(() => {
     setIds((prev) => {
       const next = new Set(prev)
-      const everySelected = pool.length > 0 && pool.every((id) => next.has(id))
-      for (const id of pool) {
+      const everySelected = visible.length > 0 && visible.every((id) => next.has(id))
+      for (const id of visible) {
         if (everySelected) next.delete(id)
         else next.add(id)
       }
       return next
     })
-  }, [pool])
+  }, [visible])
 
   const exit = useCallback(() => {
     setActive(false)
@@ -84,8 +84,8 @@ export function useMultiSelect(): MultiSelect {
       toggle,
       toggleAll,
       exit,
-      setPool: setPoolIfChanged,
+      setVisibleIds,
     }),
-    [active, ids, allSelected, has, begin, toggle, toggleAll, exit, setPoolIfChanged],
+    [active, ids, allSelected, has, begin, toggle, toggleAll, exit, setVisibleIds],
   )
 }

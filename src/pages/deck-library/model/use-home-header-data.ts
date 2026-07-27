@@ -15,17 +15,13 @@ import {
 import { useSessionStore } from '@/entities/session'
 import { dayKey } from '@/shared/lib'
 
-/** What `selectEffectivePreferences` yields: stored values, or the defaults. */
-type EffectivePreferences = ReturnType<typeof selectEffectivePreferences>
-
 export interface HomeHeaderData {
   name: string
   avatar?: string | null
   xp: number
   unreadCount: number
+  /** The daily goal comes from Preferences, so the header can say how close today is. */
   streak: { count: number; dayCount: number; dailyGoal: number }
-  /** The library reads preferences for swipe and select-toolbar config too. */
-  prefs: EffectivePreferences
 }
 
 /** Everything the home header shows — learner, level, streak, unread — in one read. */
@@ -60,6 +56,5 @@ export function useHomeHeaderData(): HomeHeaderData {
       dayCount: progress?.activeDayKey === today ? progress.activeDayCount : 0,
       dailyGoal: prefs.dailyGoal,
     },
-    prefs,
   }
 }

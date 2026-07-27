@@ -18,16 +18,16 @@ import { toast } from 'sonner'
 import type { StudyMode } from '@/entities/preferences'
 import { cn, motionSupported, requestMotionPermission } from '@/shared/lib'
 import { Button, Combobox, type ComboboxOption, Sheet, ToggleRow } from '@/shared/ui'
-import { type Scope, type ScopeCounts, scopesEqual } from '@/features/review'
+import { type StudyFilter, studyFiltersEqual } from '@/features/review'
 import {
   actionsForMode,
   type FlashcardSwipeAction,
-  type FlashcardSwipeConfig,
   FLASHCARD_SWIPE_ACTION_META,
   type SwipeDirection,
 } from '@/shared/config/flashcard-swipe'
 import { QuickActionRows, type QuickActionsModel } from './QuickActionRows'
 import { SheetSection } from './SheetSection'
+import type { StudySettingsControl } from '../model/use-study-settings'
 import type { StudyDirection } from '../model/types'
 
 export interface GearSheetProps {
@@ -36,23 +36,8 @@ export interface GearSheetProps {
   mode: StudyMode
   canSpeak: boolean
   quick: QuickActionsModel
-  typeInitialsOnly: boolean
-  onTypeInitialsOnly: (value: boolean) => void
-  wordSpaces: boolean
-  onWordSpaces: (value: boolean) => void
-  swipeConfig: FlashcardSwipeConfig
-  onSwipe: (direction: SwipeDirection, action: FlashcardSwipeAction) => void
-  scope: Scope
-  scopeCounts: ScopeCounts
-  onScope: (scope: Scope) => void
-  shuffle: boolean
-  onShuffle: (value: boolean) => void
-  textToSpeech: boolean
-  onTextToSpeech: (value: boolean) => void
-  shakeToUndo: boolean
-  onShakeToUndo: (value: boolean) => void
-  direction: StudyDirection
-  onDirection: (direction: StudyDirection) => void
+  /** Every setting this sheet edits, and the one way to change any of them. */
+  settings: StudySettingsControl
   onFinish: () => void
 }
 
@@ -81,34 +66,21 @@ export function GearSheet({
   mode,
   canSpeak,
   quick,
-  typeInitialsOnly,
-  onTypeInitialsOnly,
-  wordSpaces,
-  onWordSpaces,
-  swipeConfig,
-  onSwipe,
-  scope,
-  scopeCounts,
-  onScope,
-  shuffle,
-  onShuffle,
-  textToSpeech,
-  onTextToSpeech,
-  shakeToUndo,
-  onShakeToUndo,
-  direction,
-  onDirection,
+  settings,
   onFinish,
 }: GearSheetProps) {
   const { t } = useTranslation()
+  const { value, filterCounts, set } = settings
 
-  const handleShakeToUndo = async (value: boolean) => {
-    if (!value) {
-      onShakeToUndo(false)
+  // Shake needs the device's permission before it can be switched on, so this one setting is
+  // asked for rather than simply set — and a refusal leaves the toggle off, honestly.
+  const handleShakeToUndo = async (next: boolean) => {
+    if (!next) {
+      set('shakeToUndo', false)
       return
     }
     const granted = await requestMotionPermission()
-    onShakeToUndo(granted)
+    set('shakeToUndo', granted)
     if (!granted) toast(t('study.shakeUnsupported'))
   }
 
@@ -124,13 +96,13 @@ export function GearSheet({
     { value: 'back', label: t('study.orientationDefinition') },
   ]
 
-  const filters: { scope: Scope; label: string; count: number }[] = [
-    { scope: { kind: 'all' }, label: t('study.filterAll'), count: scopeCounts.all },
-    { scope: { kind: 'due' }, label: t('study.filterDue'), count: scopeCounts.due },
-    { scope: { kind: 'new' }, label: t('study.filterNew'), count: scopeCounts.new },
-    { scope: { kind: 'learning' }, label: t('study.filterLearning'), count: scopeCounts.learning },
-    { scope: { kind: 'flagged' }, label: t('study.filterFlagged'), count: scopeCounts.flagged },
-  ]
+  const filters: { filter: StudyFilter; label: string; count: number }[] = (
+    ['all', 'due', 'new', 'learning', 'flagged'] as const
+  ).map((kind) => ({
+    filter: { kind },
+    label: t(`study.filter${kind[0]!.toUpperCase()}${kind.slice(1)}` as never),
+    count: filterCounts[kind],
+  }))
 
   return (
     <Sheet
@@ -161,8 +133,8 @@ export function GearSheet({
               icon={<Type className="size-[18px]" aria-hidden />}
               label={t('study.typeInitialsOnly')}
               description={t('study.typeInitialsHint')}
-              checked={typeInitialsOnly}
-              onChange={onTypeInitialsOnly}
+              checked={value.typeInitialsOnly}
+              onChange={(next) => set('typeInitialsOnly', next)}
             />
           ) : null}
           {mode === 'initials' ? (
@@ -170,8 +142,8 @@ export function GearSheet({
               icon={<WholeWord className="size-[18px]" aria-hidden />}
               label={t('study.wordSpaces')}
               description={t('study.wordSpacesHint')}
-              checked={wordSpaces}
-              onChange={onWordSpaces}
+              checked={value.wordSpaces}
+              onChange={(next) => set('wordSpaces', next)}
             />
           ) : null}
 
@@ -194,9 +166,9 @@ export function GearSheet({
                   <Combobox
                     variant="bare"
                     label={t(labelKey as never)}
-                    value={swipeConfig[dir]}
+                    value={value.swipe[dir]}
                     options={actionOptions}
-                    onChange={(action) => onSwipe(dir, action)}
+                    onChange={(action) => settings.setSwipe(dir, action)}
                   />
                 </div>
               ))}
@@ -207,14 +179,14 @@ export function GearSheet({
         <SheetSection title={t('study.session')}>
           <div className="flex flex-wrap gap-2">
             {filters.map(
-              ({ scope: candidate, label, count }) =>
+              ({ filter: candidate, label, count }) =>
                 (candidate.kind === 'all' || count > 0) && (
-                  <ScopeChip
+                  <FilterChip
                     key={candidate.kind}
                     label={label}
                     count={count}
-                    active={scopesEqual(scope, candidate)}
-                    onClick={() => onScope(candidate)}
+                    active={studyFiltersEqual(value.filter, candidate)}
+                    onClick={() => set('filter', candidate)}
                   />
                 ),
             )}
@@ -227,9 +199,9 @@ export function GearSheet({
             <Combobox
               variant="bare"
               label={t('study.orientation')}
-              value={direction}
+              value={value.direction}
               options={orientationOptions}
-              onChange={onDirection}
+              onChange={(next) => set('direction', next)}
             />
           </PickerRow>
 
@@ -237,15 +209,15 @@ export function GearSheet({
             icon={<Shuffle className="size-[18px]" aria-hidden />}
             label={t('study.shuffle')}
             description={t('study.shuffleHint')}
-            checked={shuffle}
-            onChange={onShuffle}
+            checked={value.shuffle}
+            onChange={(next) => set('shuffle', next)}
           />
           <ToggleRow
             icon={<Volume2 className="size-[18px]" aria-hidden />}
             label={t('study.textToSpeech')}
             description={canSpeak ? t('study.ttsHint') : t('study.ttsUnsupported')}
-            checked={textToSpeech}
-            onChange={onTextToSpeech}
+            checked={value.textToSpeech}
+            onChange={(next) => set('textToSpeech', next)}
             disabled={!canSpeak}
           />
           {motionSupported() ? (
@@ -253,7 +225,7 @@ export function GearSheet({
               icon={<Smartphone className="size-[18px]" aria-hidden />}
               label={t('study.shakeToUndo')}
               description={t('study.shakeToUndoHint')}
-              checked={shakeToUndo}
+              checked={value.shakeToUndo}
               onChange={handleShakeToUndo}
             />
           ) : null}
@@ -283,7 +255,7 @@ function PickerRow({
   )
 }
 
-function ScopeChip({
+function FilterChip({
   label,
   count,
   active,

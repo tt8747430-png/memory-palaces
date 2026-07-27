@@ -43,7 +43,8 @@ import { CardBrowser } from './CardBrowser'
 import { CardFilterSheet, FilterButton } from './CardFilterSheet'
 import { CardImportSheet } from './CardImportSheet'
 import { EmptyCards, FilterEmpty, NoResults } from './CardListStates'
-import { CardRow, type RowDragHandle } from './ContentRows'
+import { CardRow } from './CardRow'
+import type { RowDragHandle } from './ContentRow'
 import { ReorderableList } from './ReorderableList'
 
 export interface DeckContentEditorProps {
@@ -110,10 +111,10 @@ export function DeckContentEditor({
 
   // Sorting, searching and filtering all happen here, so this is the only place that knows what
   // "select all" means right now. The page's header reads the answer back off the selection.
-  const { setPool } = selection
+  const { setVisibleIds } = selection
   useEffect(() => {
-    setPool(visibleCards.map((card) => card.id))
-  }, [visibleCards, setPool])
+    setVisibleIds(visibleCards.map((card) => card.id))
+  }, [visibleCards, setVisibleIds])
 
   const total = cards.length
   const reorderable = selectMode && !needle

@@ -28,7 +28,7 @@ interface Args {
   sectionFolders: Folder[]
   sectionDecks: Deck[]
   /** Leaving or entering a folder ends any in-progress selection. */
-  scope: string | null
+  folderId: string | null
 }
 
 /**
@@ -41,7 +41,7 @@ export function useLibrarySelection({
   folderIds,
   sectionFolders,
   sectionDecks,
-  scope,
+  folderId,
 }: Args): LibrarySelection {
   const [active, setActive] = useState(false)
   const [ids, setIds] = useState<ReadonlySet<string>>(() => new Set())
@@ -49,7 +49,7 @@ export function useLibrarySelection({
   useEffect(() => {
     setActive(false)
     setIds(new Set())
-  }, [scope])
+  }, [folderId])
 
   const decksById = useMemo(() => new Map(decks.map((d) => [d.id, d])), [decks])
   const subtree = useCallback(

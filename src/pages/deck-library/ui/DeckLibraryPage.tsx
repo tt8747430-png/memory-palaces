@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Plus, Settings, Trash2 } from 'lucide-react'
@@ -6,6 +6,7 @@ import type { Deck } from '@/entities/deck'
 import { DECK_COLOR_OPTIONS, useDeckStoreApi } from '@/entities/deck'
 import type { Folder } from '@/entities/folder'
 import { useFolderStoreApi } from '@/entities/folder'
+import { selectEffectivePreferences, usePreferencesStore } from '@/entities/preferences'
 import { createDeck, createSubdeck } from '@/features/deck'
 import { createFolder, editFolder } from '@/features/folder'
 import { readAnkiFile } from '@/features/content'
@@ -23,10 +24,9 @@ import {
   type SheetAction,
   type SwipeActionHandlers,
 } from '@/shared/ui'
-import { moveExclusions, useLibraryActions } from '../model/use-library-actions'
+import { isMove, movingDeck } from '../model/pending-act'
 import { useHomeHeaderData } from '../model/use-home-header-data'
-import { useLibraryData } from '../model/use-library-data'
-import { useLibrarySelection } from '../model/use-library-selection'
+import { useLibrary } from '../model/use-library'
 import { FolderScopeHeader } from './FolderScopeHeader'
 import { FolderRow } from './FolderRow'
 import { FolderSheet } from './FolderSheet'
@@ -35,7 +35,6 @@ import { LibraryEmpty } from './LibraryEmpty'
 import { LibraryImportSheet } from './LibraryImportSheet'
 import { LibrarySkeleton } from './LibrarySkeleton'
 import { LibrarySpeedDial } from './LibrarySpeedDial'
-import type { MoveDestination } from './MoveDeckSheet'
 import { MoveDeckSheet } from './MoveDeckSheet'
 
 export interface DeckLibraryPageProps {
@@ -92,55 +91,18 @@ export function DeckLibraryPage({
   const canImport = Boolean(onImportPaste)
   const inFolder = folderId !== null
 
-  const data = useLibraryData(folderId)
+  const library = useLibrary(folderId, onFolderGone)
+  const { decks, folders, selection, act } = library
   const header = useHomeHeaderData()
-  const { decks, folders } = data
-  const prefs = header.prefs
+  const prefs = usePreferencesStore(selectEffectivePreferences)
 
   const [createPrompt, setCreatePrompt] = useState<CreatePrompt | null>(null)
   const [importOpen, setImportOpen] = useState(false)
   const [folderSheetTarget, setFolderSheetTarget] = useState<Folder | null | undefined>(undefined)
   const [folderMenuOpen, setFolderMenuOpen] = useState(false)
-  const [moveTarget, setMoveTarget] = useState<string | null>(null)
-  const [pendingDeleteDeck, setPendingDeleteDeck] = useState<string | null>(null)
-  const [pendingDeleteFolder, setPendingDeleteFolder] = useState<string | null>(null)
-  const [bulkMoveOpen, setBulkMoveOpen] = useState(false)
-  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
-
-  const selection = useLibrarySelection({
-    decks,
-    folderIds: data.folderIds,
-    sectionFolders: data.sectionFolders,
-    sectionDecks: data.sectionDecks,
-    scope: folderId,
-  })
-
-  const actions = useLibraryActions({
-    decks,
-    folders,
-    folderId,
-    selection,
-    patchDecks: data.patchDecks,
-    patchFolders: data.patchFolders,
-    onFolderGone,
-    onRequestBulkMove: () => setBulkMoveOpen(true),
-    onRequestBulkDelete: () => setBulkDeleteOpen(true),
-  })
 
   // The select toolbar docks exactly where the tab bar lives, so the bar steps aside for it.
   useHideAppNav(selection.active)
-
-  // Once the folders are in and this one isn't among them, the route is pointing at nothing.
-  useEffect(() => {
-    if (inFolder && data.foldersReady && !data.openFolder) onFolderGone()
-  }, [inFolder, data.foldersReady, data.openFolder, onFolderGone])
-
-  const deckById = (id: string) => decks.find((d) => d.id === id)
-  const movingDeck = moveTarget ? deckById(moveTarget) : undefined
-  const moveExcludeIds = useMemo(
-    () => moveExclusions(decks, bulkMoveOpen ? selection.deckIds : moveTarget ? [moveTarget] : []),
-    [decks, bulkMoveOpen, selection.deckIds, moveTarget],
-  )
 
   // ---- Create ----
   const defaultCreateName = useMemo(() => {
@@ -161,7 +123,7 @@ export function DeckLibraryPage({
     if (!createPrompt) return
     if (createPrompt.kind === 'subdeck') {
       void createSubdeck(deckStore, createPrompt.parentId, { name: value })
-      data.expand(createPrompt.parentId)
+      library.expand(createPrompt.parentId)
       return
     }
     void createDeck(deckStore, { name: value, folderId: createPrompt.folderId })
@@ -208,24 +170,24 @@ export function DeckLibraryPage({
   // ---- Row actions ----
   const deckSwipeHandlers = (deck: Deck): SwipeActionHandlers => ({
     favorite: {
-      onAction: () => void actions.toggleFavorite(deck),
+      onAction: () => act.toggleFavorite(deck),
       label: deck.favorite ? t('deck.unfavorite') : t('deck.favorite'),
     },
-    move: { onAction: () => setMoveTarget(deck.id) },
+    move: { onAction: () => library.request({ kind: 'move-deck', deck }) },
     settings: { onAction: () => onOpenDeckSettings?.(deck.id) },
     addSubdeck: {
       onAction: () =>
         setCreatePrompt({ kind: 'subdeck', parentId: deck.id, parentName: deck.name }),
     },
-    duplicate: { onAction: () => actions.duplicate(deck) },
-    archive: { onAction: () => actions.archiveDeck(deck) },
-    delete: { onAction: () => setPendingDeleteDeck(deck.id) },
+    duplicate: { onAction: () => act.duplicate(deck) },
+    archive: { onAction: () => act.archiveDeck(deck) },
+    delete: { onAction: () => library.request({ kind: 'delete-deck', deck }) },
   })
 
   const folderSwipeHandlers = (folder: Folder): SwipeActionHandlers => ({
     edit: { onAction: () => setFolderSheetTarget(folder) },
     addDeck: { onAction: () => setCreatePrompt({ kind: 'deck', folderId: folder.id }) },
-    delete: { onAction: () => setPendingDeleteFolder(folder.id) },
+    delete: { onAction: () => library.request({ kind: 'delete-folder', folder }) },
   })
 
   const folderActions = (folder: Folder): SheetAction[] => [
@@ -246,11 +208,12 @@ export function DeckLibraryPage({
       label: t('common.delete'),
       icon: <Trash2 className="size-5" aria-hidden />,
       destructive: true,
-      onSelect: () => setPendingDeleteFolder(folder.id),
+      onSelect: () => library.request({ kind: 'delete-folder', folder }),
     },
   ]
 
   const newDeckHere = () => setCreatePrompt({ kind: 'deck', folderId })
+  const moving = movingDeck(library.pending)
 
   return (
     <AppScreen
@@ -266,7 +229,7 @@ export function DeckLibraryPage({
           />
         ) : inFolder ? (
           <FolderScopeHeader
-            name={data.openFolder?.name ?? ''}
+            name={library.openFolder?.name ?? ''}
             onBack={onCloseFolder}
             onOpenMenu={() => setFolderMenuOpen(true)}
           />
@@ -286,9 +249,9 @@ export function DeckLibraryPage({
         )
       }
     >
-      {!data.ready ? (
+      {!library.ready ? (
         <LibrarySkeleton />
-      ) : data.isEmpty ? (
+      ) : library.isEmpty ? (
         <LibraryEmpty
           inFolder={inFolder}
           canImport={canImport}
@@ -300,24 +263,24 @@ export function DeckLibraryPage({
            is a peer of every other in its section, so the reorder the drag animates is the
            reorder the drop performs — and a deck released over a folder files itself there. */
         <LibrarySelectList
-          folders={data.sectionFolders}
-          decks={data.sectionDecks}
+          folders={library.sectionFolders}
+          decks={library.sectionDecks}
           allDecks={decks}
-          cards={data.cards}
-          folderDeckCounts={data.folderDeckCounts}
+          cards={library.cards}
+          folderDeckCounts={library.folderDeckCounts}
           selectedIds={selection.ids}
           onToggleSelect={selection.toggle}
-          onReorderFolders={actions.reorderFolderIds}
-          onReorderDecks={actions.reorderDeckIds}
-          onFileDecks={actions.fileDecksIntoFolder}
+          onReorderFolders={act.reorderFolderIds}
+          onReorderDecks={act.reorderDeckIds}
+          onFileDecks={act.fileDecksIntoFolder}
         />
       ) : (
         <div className="flex flex-col gap-2 pt-2">
-          {data.sectionFolders.map((folder) => (
+          {library.sectionFolders.map((folder) => (
             <FolderRow
               key={folder.id}
               folder={folder}
-              deckCount={data.folderDeckCounts.get(folder.id) ?? 0}
+              deckCount={library.folderDeckCounts.get(folder.id) ?? 0}
               onOpen={() => onOpenFolder(folder.id)}
               onRequestSelect={() => selection.beginFolder(folder.id)}
               swipe={prefs.swipe.folder}
@@ -326,11 +289,11 @@ export function DeckLibraryPage({
           ))}
 
           <DeckTree
-            rows={data.rows}
+            rows={library.rows}
             decks={decks}
-            cards={data.cards}
-            expanded={data.expanded}
-            onToggle={data.toggleExpanded}
+            cards={library.cards}
+            expanded={library.expanded}
+            onToggle={library.toggleExpanded}
             onOpen={onOpenDeck}
             onRequestSelect={selection.beginDeck}
             swipe={prefs.swipe.deck}
@@ -341,11 +304,11 @@ export function DeckLibraryPage({
 
       {selection.active ? (
         <SelectToolbarDock>
-          <SelectToolbar actions={prefs.selectToolbar.library} handlers={actions.selectHandlers} />
+          <SelectToolbar actions={prefs.selectToolbar.library} handlers={library.selectHandlers} />
         </SelectToolbarDock>
       ) : null}
 
-      {!data.isEmpty && !selection.active ? (
+      {!library.isEmpty && !selection.active ? (
         <LibrarySpeedDial
           inFolder={inFolder}
           canImport={canImport}
@@ -358,8 +321,8 @@ export function DeckLibraryPage({
       <ActionSheet
         open={folderMenuOpen}
         onOpenChange={setFolderMenuOpen}
-        title={data.openFolder?.name ?? ''}
-        actions={data.openFolder ? folderActions(data.openFolder) : []}
+        title={library.openFolder?.name ?? ''}
+        actions={library.openFolder ? folderActions(library.openFolder) : []}
         cancelLabel={t('common.cancel')}
       />
 
@@ -400,61 +363,26 @@ export function DeckLibraryPage({
       />
 
       <MoveDeckSheet
-        open={moveTarget !== null || bulkMoveOpen}
+        open={isMove(library.pending)}
         onOpenChange={(open) => {
-          if (!open) {
-            setMoveTarget(null)
-            setBulkMoveOpen(false)
-          }
+          if (!open) library.dismiss()
         }}
-        subtitle={
-          bulkMoveOpen
-            ? t('selection.count', { count: selection.deckIds.length })
-            : (movingDeck?.name ?? '')
-        }
+        subtitle={moving ? moving.name : t('selection.count', { count: selection.deckIds.length })}
         decks={decks}
-        folders={data.sortedFolders}
-        excludeIds={moveExcludeIds}
-        onPick={(dest: MoveDestination) => {
-          if (bulkMoveOpen) {
-            setBulkMoveOpen(false)
-            actions.bulkMoveTo(dest)
-            return
-          }
-          const deck = movingDeck
-          setMoveTarget(null)
-          if (deck) actions.moveDeckTo(deck, dest)
-        }}
+        folders={folders}
+        excludeIds={library.moveExcludeIds}
+        onPick={library.confirm}
         onNewFolder={() => {
-          setMoveTarget(null)
-          setBulkMoveOpen(false)
+          library.dismiss()
           setFolderSheetTarget(null)
         }}
       />
 
       <LibraryDialogs
-        deckName={pendingDeleteDeck ? (deckById(pendingDeleteDeck)?.name ?? '') : null}
-        onCloseDeck={() => setPendingDeleteDeck(null)}
-        onConfirmDeck={() => {
-          if (pendingDeleteDeck) actions.removeDeck(pendingDeleteDeck)
-          setPendingDeleteDeck(null)
-        }}
-        folderName={
-          pendingDeleteFolder
-            ? (folders.find((f) => f.id === pendingDeleteFolder)?.name ?? '')
-            : null
-        }
-        onCloseFolder={() => setPendingDeleteFolder(null)}
-        onConfirmFolder={() => {
-          if (pendingDeleteFolder) actions.removeFolder(pendingDeleteFolder)
-          setPendingDeleteFolder(null)
-        }}
-        bulkCount={bulkDeleteOpen ? selection.count : null}
-        onCloseBulk={() => setBulkDeleteOpen(false)}
-        onConfirmBulk={() => {
-          setBulkDeleteOpen(false)
-          actions.confirmBulkDelete()
-        }}
+        pending={library.pending}
+        count={selection.count}
+        onDismiss={library.dismiss}
+        onConfirm={library.confirm}
       />
     </AppScreen>
   )

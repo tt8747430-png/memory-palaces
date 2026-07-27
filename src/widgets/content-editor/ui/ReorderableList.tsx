@@ -4,7 +4,7 @@ import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { cn, reconcileHeldOrder, useSortableBlock, useSortableSensors } from '@/shared/lib'
 import { SortableRow, StackedDragPreview } from '@/shared/ui'
-import type { RowDragHandle } from './ContentRows'
+import type { RowDragHandle } from './ContentRow'
 
 const STATIC_DRAG_HANDLE: RowDragHandle = { ref: () => {}, props: {} }
 

@@ -1,31 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { toast } from 'sonner'
-import { ArrowDownAZ, Clock, Download, GripVertical, Plus, Trash2, Upload } from 'lucide-react'
-import {
-  type Question,
-  questionsForDeck,
-  selectIsReady as selectQuestionsReady,
-  selectQuestions,
-  useQuestionStore,
-  useQuestionStoreApi,
-} from '@/entities/question'
-import { useCardStoreApi } from '@/entities/card'
-import {
-  selectDecks,
-  selectIsReady as selectDecksReady,
-  useDeckStore,
-  useDeckStoreApi,
-} from '@/entities/deck'
+import { ArrowDownAZ, Clock, Download, GripVertical, Plus, Upload } from 'lucide-react'
+import type { Question } from '@/entities/question'
 import { selectEffectivePreferences, usePreferencesStore } from '@/entities/preferences'
-import { deleteQuestion, duplicateQuestion, reorderQuestions } from '@/features/question'
-import { applyDeckContent, exportQuestionsCsv, readContentFile } from '@/features/content'
-import { ContentImportError, type DeckContentData, useMultiSelect } from '@/shared/lib'
 import {
   AppScreen,
-  ConfirmDialog,
   ScreenHeader,
-  type SelectActionHandlers,
   SelectHeader,
   SelectToolbar,
   SelectToolbarDock,
@@ -34,8 +14,10 @@ import {
   SpeedDial,
 } from '@/shared/ui'
 import { QuestionRow, ReorderableList, type RowDragHandle } from '@/widgets/content-editor'
-import { type QuestionSort, sortQuestions } from '../model/sort-questions'
+import type { QuestionSort } from '../model/sort-questions'
+import { useDeckQuestions } from '../model/use-deck-questions'
 import { EmptyQuestions } from './EmptyQuestions'
+import { QuestionDialogs } from './QuestionDialogs'
 import { QuestionTransferSheets } from './QuestionTransferSheets'
 import { TestLaunchCard } from './TestLaunchCard'
 
@@ -55,39 +37,12 @@ export function DeckQuestionsPage({
   onStartTest,
 }: DeckQuestionsPageProps) {
   const { t } = useTranslation()
-  const questionStore = useQuestionStoreApi()
-  const deckStore = useDeckStoreApi()
-  const cardStore = useCardStoreApi()
-
-  useEffect(() => {
-    questionStore.getState().start()
-    deckStore.getState().start()
-  }, [questionStore, deckStore])
-
-  const allQuestions = useQuestionStore(selectQuestions)
-  const decks = useDeckStore(selectDecks)
-  const questionsReady = useQuestionStore(selectQuestionsReady)
-  const decksReady = useDeckStore(selectDecksReady)
-  const ready = questionsReady && decksReady
+  const page = useDeckQuestions(deckId)
+  const { questions, selection } = page
   const prefs = usePreferencesStore(selectEffectivePreferences)
 
-  const deck = decks.find((candidate) => candidate.id === deckId)
-  const questions = useMemo(() => questionsForDeck(allQuestions, deckId), [allQuestions, deckId])
-
-  const [sort, setSort] = useState<QuestionSort>('manual')
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
-  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
-  const [pendingImport, setPendingImport] = useState<DeckContentData['questions'] | null>(null)
-
-  // Same selection model as the deck library and the card list: the page header carries it.
-  const selection = useMultiSelect()
-  const sortedQuestions = useMemo(() => sortQuestions(questions, sort), [questions, sort])
-  const { setPool } = selection
-  useEffect(() => {
-    setPool(sortedQuestions.map((question) => question.id))
-  }, [sortedQuestions, setPool])
 
   const sortOptions: SortControlOption<QuestionSort>[] = [
     { value: 'manual', label: t('cards.sort.manual'), icon: <GripVertical className="size-4" /> },
@@ -99,7 +54,7 @@ export function DeckQuestionsPage({
     <QuestionRow
       key={question.id}
       question={question}
-      index={sortedQuestions.indexOf(question)}
+      index={questions.indexOf(question)}
       selectMode={selection.active}
       selected={selection.has(question.id)}
       reorderable={selection.active}
@@ -109,53 +64,12 @@ export function DeckQuestionsPage({
       onToggleSelect={() => selection.toggle(question.id)}
       onRequestSelect={() => selection.begin(question.id)}
       onEdit={() => onEditQuestion(question.id)}
-      onDuplicate={() => {
-        void duplicateQuestion(questionStore, question.id)
-        toast.success(t('cards.row.duplicated'))
-      }}
-      onDelete={() => setPendingDeleteId(question.id)}
+      onDuplicate={() => page.duplicate(question.id)}
+      onDelete={() => page.request({ kind: 'delete-question', question })}
     />
   )
 
-  const importFile = async (file: File) => {
-    try {
-      const data = await readContentFile(file)
-      if (data.questions.length === 0) {
-        toast.error(t('questions.transfer.noneFound'))
-        return
-      }
-      setPendingImport(data.questions)
-    } catch (error) {
-      toast.error(
-        error instanceof ContentImportError ? error.message : t('questions.transfer.importFailed'),
-      )
-    }
-  }
-
-  const confirmImport = async () => {
-    if (!pendingImport) return
-    const applied = await applyDeckContent(cardStore, questionStore, deckId, {
-      cards: [],
-      questions: pendingImport,
-    })
-    setPendingImport(null)
-    toast.success(t('questions.transfer.imported', { count: applied.questions }))
-  }
-
-  const selectHandlers: SelectActionHandlers = {
-    duplicate: {
-      disabled: selection.count === 0,
-      onAction: () => {
-        const ids = [...selection.ids]
-        void Promise.all(ids.map((id) => duplicateQuestion(questionStore, id)))
-        toast.success(t('questions.bulk.duplicated', { count: ids.length }))
-        selection.exit()
-      },
-    },
-    delete: { disabled: selection.count === 0, onAction: () => setBulkDeleteOpen(true) },
-  }
-
-  if (!ready) {
+  if (!page.ready) {
     return (
       <AppScreen className="items-center justify-center">
         <span className="size-8 animate-pulse rounded-full bg-secondary" aria-hidden />
@@ -176,7 +90,7 @@ export function DeckQuestionsPage({
         ) : (
           <ScreenHeader
             title={t('questions.title')}
-            subtitle={deck?.name}
+            subtitle={page.deckName}
             onBack={onBack}
             backLabel={t('common.back')}
           />
@@ -195,9 +109,9 @@ export function DeckQuestionsPage({
             <div className="flex justify-end">
               <SortControl
                 label={t('cards.sortLabel')}
-                value={sort}
+                value={page.sort}
                 options={sortOptions}
-                onChange={setSort}
+                onChange={page.setSort}
               />
             </div>
           ) : null}
@@ -206,13 +120,10 @@ export function DeckQuestionsPage({
             <EmptyQuestions onAdd={onAddQuestion} />
           ) : (
             <ReorderableList
-              items={sortedQuestions}
+              items={questions}
               reorderable={selection.active}
               selectedIds={selection.ids}
-              onReorder={(ids) => {
-                if (sort !== 'manual') setSort('manual')
-                void reorderQuestions(questionStore, ids)
-              }}
+              onReorder={page.reorder}
               renderItem={renderQuestion}
             />
           )}
@@ -221,68 +132,25 @@ export function DeckQuestionsPage({
 
       {selection.active ? (
         <SelectToolbarDock>
-          <SelectToolbar actions={prefs.selectToolbar.question} handlers={selectHandlers} />
+          <SelectToolbar actions={prefs.selectToolbar.question} handlers={page.selectHandlers} />
         </SelectToolbarDock>
       ) : null}
 
-      <ConfirmDialog
-        open={pendingDeleteId !== null}
-        onOpenChange={(open) => !open && setPendingDeleteId(null)}
-        destructive
-        icon={<Trash2 className="size-6" aria-hidden />}
-        title={t('cards.delete.questionTitle')}
-        description={t('cards.delete.body')}
-        confirmLabel={t('common.delete')}
-        cancelLabel={t('common.cancel')}
-        onConfirm={() => {
-          if (!pendingDeleteId) return
-          void deleteQuestion(questionStore, pendingDeleteId)
-          toast.success(t('cards.transfer.deleted'))
-        }}
-      />
-      <ConfirmDialog
-        open={bulkDeleteOpen}
-        onOpenChange={setBulkDeleteOpen}
-        destructive
-        icon={<Trash2 className="size-6" aria-hidden />}
-        title={t('cards.delete.bulkTitle', { count: selection.count })}
-        description={t('cards.delete.body')}
-        confirmLabel={t('common.delete')}
-        cancelLabel={t('common.cancel')}
-        onConfirm={() => {
-          const ids = [...selection.ids]
-          void Promise.all(ids.map((id) => deleteQuestion(questionStore, id)))
-          toast.success(t('cards.transfer.deletedMany', { count: ids.length }))
-          selection.exit()
-        }}
-      />
-      <ConfirmDialog
-        open={pendingImport !== null}
-        onOpenChange={(open) => !open && setPendingImport(null)}
-        icon={<Upload className="size-6" aria-hidden />}
-        title={t(
-          pendingImport?.length === 1
-            ? 'questions.transfer.importConfirmTitleOne'
-            : 'questions.transfer.importConfirmTitleOther',
-          { count: pendingImport?.length ?? 0 },
-        )}
-        description={t('questions.transfer.importConfirmBody')}
-        confirmLabel={t('questions.transfer.importConfirm')}
-        cancelLabel={t('common.cancel')}
-        onConfirm={() => void confirmImport()}
+      <QuestionDialogs
+        pending={page.pending}
+        selectedCount={selection.count}
+        onDismiss={page.dismiss}
+        onConfirm={page.confirm}
       />
 
       <QuestionTransferSheets
         importOpen={importOpen}
         onImportOpenChange={setImportOpen}
-        onPickFile={(file) => void importFile(file)}
+        onPickFile={(file) => void page.importFile(file)}
         exportOpen={exportOpen}
         onExportOpenChange={setExportOpen}
         canExport={questions.length > 0}
-        onExportCsv={() => {
-          exportQuestionsCsv(deck?.name ?? '', questions)
-          toast.success(t('questions.transfer.exported'))
-        }}
+        onExportCsv={page.exportCsv}
       />
 
       {!selection.active ? (

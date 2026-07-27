@@ -3,6 +3,7 @@ import { cleanup, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { DEFAULT_FLASHCARD_SWIPE } from '@/shared/config/flashcard-swipe'
 import { renderWithProviders } from '@/shared/test/render-with-providers'
+import type { StudySettingsControl } from '../model/use-study-settings'
 import { GearSheet } from './GearSheet'
 import type { QuickActionsModel } from './QuickActionRows'
 
@@ -21,6 +22,24 @@ const quick: QuickActionsModel = {
   onRestart: vi.fn(),
 }
 
+function settingsControl(): StudySettingsControl {
+  return {
+    value: {
+      direction: 'front',
+      shuffle: false,
+      textToSpeech: false,
+      wordSpaces: false,
+      typeInitialsOnly: false,
+      shakeToUndo: false,
+      swipe: DEFAULT_FLASHCARD_SWIPE,
+      filter: { kind: 'all' },
+    },
+    filterCounts: { all: 10, due: 5, new: 3, learning: 2, flagged: 1 },
+    set: vi.fn(),
+    setSwipe: vi.fn(),
+  }
+}
+
 function setup(overrides: Partial<Parameters<typeof GearSheet>[0]> = {}) {
   const props: Parameters<typeof GearSheet>[0] = {
     open: true,
@@ -28,23 +47,7 @@ function setup(overrides: Partial<Parameters<typeof GearSheet>[0]> = {}) {
     mode: 'blur',
     canSpeak: false,
     quick,
-    typeInitialsOnly: false,
-    onTypeInitialsOnly: vi.fn(),
-    wordSpaces: false,
-    onWordSpaces: vi.fn(),
-    swipeConfig: DEFAULT_FLASHCARD_SWIPE,
-    onSwipe: vi.fn(),
-    scope: { kind: 'all' },
-    scopeCounts: { all: 10, due: 5, new: 3, learning: 2, flagged: 1 },
-    onScope: vi.fn(),
-    shuffle: false,
-    onShuffle: vi.fn(),
-    textToSpeech: false,
-    onTextToSpeech: vi.fn(),
-    shakeToUndo: false,
-    onShakeToUndo: vi.fn(),
-    direction: 'front',
-    onDirection: vi.fn(),
+    settings: settingsControl(),
     onFinish: vi.fn(),
     ...overrides,
   }
@@ -58,11 +61,18 @@ describe('GearSheet', () => {
     expect(await screen.findByText('Study options')).toBeInTheDocument()
   })
 
-  it('toggles the shuffle setting', async () => {
+  it('names the setting it is changing, rather than calling a setting-specific handler', async () => {
     const user = userEvent.setup()
     const props = setup()
     await user.click(await screen.findByRole('switch', { name: 'Shuffle cards' }))
-    expect(props.onShuffle).toHaveBeenCalledWith(true)
+    expect(props.settings.set).toHaveBeenCalledWith('shuffle', true)
+  })
+
+  it('picks a Study filter through the same one setter', async () => {
+    const user = userEvent.setup()
+    const props = setup()
+    await user.click(await screen.findByRole('button', { name: /due/i }))
+    expect(props.settings.set).toHaveBeenCalledWith('filter', { kind: 'due' })
   })
 
   it('finishes the session from the footer action', async () => {

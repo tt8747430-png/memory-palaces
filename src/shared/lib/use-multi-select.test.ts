@@ -33,26 +33,26 @@ describe('useMultiSelect', () => {
 
   it('reports "all selected" against the rows currently on screen', () => {
     const { result } = renderHook(() => useMultiSelect())
-    act(() => result.current.setPool(['a', 'b']))
+    act(() => result.current.setVisibleIds(['a', 'b']))
     act(() => result.current.begin('a'))
     expect(result.current.allSelected).toBe(false)
     act(() => result.current.toggle('b'))
     expect(result.current.allSelected).toBe(true)
   })
 
-  it('select-all covers the pool, and flips to clearing it once it is full', () => {
+  it('select-all covers what is on screen, and flips to clearing it once it is full', () => {
     const { result } = renderHook(() => useMultiSelect())
-    act(() => result.current.setPool(['a', 'b', 'c']))
+    act(() => result.current.setVisibleIds(['a', 'b', 'c']))
     act(() => result.current.toggleAll())
     expect(result.current.count).toBe(3)
     act(() => result.current.toggleAll())
     expect(result.current.count).toBe(0)
   })
 
-  it('leaves rows outside the pool alone when clearing', () => {
+  it('leaves rows that are off screen alone when clearing', () => {
     const { result } = renderHook(() => useMultiSelect())
     act(() => result.current.begin('filtered-out'))
-    act(() => result.current.setPool(['a']))
+    act(() => result.current.setVisibleIds(['a']))
     act(() => result.current.toggleAll())
     act(() => result.current.toggleAll())
     expect(result.current.has('filtered-out')).toBe(true)
@@ -66,11 +66,11 @@ describe('useMultiSelect', () => {
     expect(result.current.count).toBe(0)
   })
 
-  it('keeps the same pool reference when the list reports identical rows', () => {
+  it('keeps the same object when the list reports identical rows', () => {
     const { result } = renderHook(() => useMultiSelect())
-    act(() => result.current.setPool(['a', 'b']))
+    act(() => result.current.setVisibleIds(['a', 'b']))
     const before = result.current
-    act(() => result.current.setPool(['a', 'b']))
+    act(() => result.current.setVisibleIds(['a', 'b']))
     expect(result.current).toBe(before)
   })
 })

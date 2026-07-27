@@ -35,6 +35,17 @@ The shared vocabulary for Mindscape. Use these canonical terms in code, UI copy,
 | **Quiz**          | The mode that presents Questions to answer                                | test                 |
 | **Match**         | The mode that pairs Cards in a matching game                              | pairs                |
 | **Review**        | The mode that surfaces Due Cards for SRS grading (see above)              | practice             |
+| **Study scope**   | *Which Deck* a Study session runs over                                    | scope                |
+| **Study filter**  | *Which of that Deck's Cards* the session draws from: all / due / new / learning / flagged | scope, selection |
+
+## Organising & selecting
+
+| Term            | Definition                                                                                  | Aliases to avoid            |
+| --------------- | -------------------------------------------------------------------------------------------- | --------------------------- |
+| **Library**     | The learner's whole set of Folders and Decks, and the home screen that browses it            | home, list                  |
+| **Selection**   | The set of rows a learner has picked with select mode, to act on together                    | multi-select, checked items |
+| **Select mode** | The state a surface enters on press-and-hold: the header becomes the Selection's header and the select toolbar takes the bottom edge | edit mode, bulk mode |
+| **Card filter** | Which of a Deck's Cards its card *list* shows: by Card status, or Flagged only               | filter, scope               |
 
 ## Progress & gamification
 
@@ -69,7 +80,8 @@ The shared vocabulary for Mindscape. Use these canonical terms in code, UI copy,
 - A **Deck** contains zero-or-more **Cards** and zero-or-more **Questions**.
 - A **Card** or **Question** belongs to exactly one **Deck**.
 - A **Review** advances exactly one **Card**'s SRS schedule.
-- A **Study session** runs one **Deck** in one **Practice mode**.
+- A **Study session** runs one **Deck** in one **Practice mode**, narrowed by one **Study filter**.
+- A **Selection** holds rows of one kind of surface at a time — Folders and Decks in the **Library**, Cards in a Deck, Questions in a Deck. Selecting a **Deck** takes its **Subdecks** with it, because select mode is flat and a Subdeck is never on screen there.
 - A **Learner** has one **Progress** record and one active **Session** (Guest or Account).
 
 ## Example dialogue
@@ -84,6 +96,8 @@ The shared vocabulary for Mindscape. Use these canonical terms in code, UI copy,
 - **"session"** is overloaded. The **Session** entity is the **auth** context (Guest/Account). A **Study session** is a pass through a Deck. Never abbreviate the study pass to "session" — say **Study session**; reserve **Session** for auth.
 - **"palace / room / locus"** — the product is *themed* as a memory palace (method of loci), but the shipped model is **Deck / Card / Question**. Don't use palace/room/locus in code, UI copy, or discussion; they're legacy design-doc vocabulary.
 - **`known` vs Memorized** — `known` is an SRS-derived **Card status** (interval-based); **Memorized** is a manual boolean the learner sets. Distinct — don't conflate.
+- **"scope"** was three different things, and the code and the UI disagreed. Resolved: **Study scope** is *which Deck* a Study session runs (`StudyScope`, `MatchScope`); **Study filter** is *which Cards of it* the session draws from (`StudyFilter` in `features/review` — the UI already called these "filters"); and the Folder the Library is browsing is just that — a **Folder**, not a scope. Don't reintroduce a bare `Scope`.
+- **"filter"** — qualify it: a **Study filter** narrows a Study session's queue; a **Card filter** narrows what a Deck's card list displays. Different surfaces, different types.
 - **"settings"** — qualify it: **Deck settings** are per-Deck study options; **Preferences** are global app settings.
 - **"user / account"** — three distinct things: the **Account** (auth identity with email), the **Profile** (editable display data), and the **Learner** (the human). "User" alone is ambiguous — pick the precise one.
 - **"Card"** — in domain talk this always means the **flashcard**; the `shared/ui/Card` component is just a generic surface and doesn't carry the domain meaning.

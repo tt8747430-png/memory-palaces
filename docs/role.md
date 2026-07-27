@@ -5,6 +5,8 @@
  GENERAL:
 
 
+1. the keyboard inset doesnt work correctly 
+2. improve the paste notes, and the edit cards sheet
 
 REFACTORINGS:
 
@@ -136,6 +138,13 @@ GENERAL:
 
 3. the preview cards page also should render reald cards behind the card on the top and the next card should come from behind it and not just have a stub fake card behind it. 
 
+
+
+ 1. We must not have any notifications and no passwordbox or username box focused before the splashscreen is finished
+ 2. When selecting cards in the deck it should work like in the homepage e.g. the header changes to select all and cancel  and so on , and the headers should be unified so that we dont have duplicate information and so on 
+ 3. Flashcards behind the current flashcard should alos render all controls like buttons, labels, and so on 
+ 4. refactor the toolbar in the homepage to hide the bottom bar nav when using select mode
+ 5. we need to make the header and the footer of the drawers smaller to maximize the content area 
 
 
 BUGS:

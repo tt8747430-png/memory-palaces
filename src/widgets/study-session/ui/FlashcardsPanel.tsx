@@ -4,24 +4,24 @@ import type { StudyMode } from '@/entities/preferences'
 import { speak, speechAvailable, srsStatus, success, tick, useShake } from '@/shared/lib'
 import type { SrsState } from '@/shared/lib'
 import {
-  applyScope,
+  applyStudyFilter,
   canUndo,
   currentId,
   initSession,
   upcomingIds,
-  type Scope,
-  scopeCounts as computeScopeCounts,
+  type StudyFilter,
+  studyFilterCounts as computeFilterCounts,
   sessionReducer,
   shuffleFirstDue,
 } from '@/features/review'
 import {
   type FlashcardSwipeByMode,
-  type FlashcardSwipeConfig,
   isGradeAction,
   type SwipeDirection,
 } from '@/shared/config/flashcard-swipe'
+import { useStudySettings } from '../model/use-study-settings'
 import { StudyDeck } from './StudyDeck'
-import { EmptyScope } from './EmptyScope'
+import { EmptyQueue } from './EmptyQueue'
 import { type RemainingTally, SessionFooter } from './SessionFooter'
 import { GearSheet } from './GearSheet'
 import { ModeSheet } from './ModeSheet'
@@ -78,21 +78,39 @@ export function FlashcardsPanel({
 }: FlashcardsPanelProps) {
   const canSpeak = speechAvailable()
 
-  const [scope, setScope] = useState<Scope>({ kind: 'all' })
+  const [filter, setStudyFilter] = useState<StudyFilter>({ kind: 'all' })
   const [gearOpen, setGearOpen] = useState(false)
   const [modeOpen, setModeOpen] = useState(false)
   const [quickOpen, setQuickOpen] = useState(false)
   const [editing, setEditing] = useState(false)
-  const [typeInitialsOnly, setTypeInitialsOnly] = useState(false)
-
-  const activeSwipe: FlashcardSwipeConfig = swipeByMode[mode]
 
   const cardEntities = useMemo(() => cards.map((card) => card.card), [cards])
   const byId = useMemo(() => new Map(cards.map((card) => [card.card.id, card])), [cards])
-  const counts = useMemo(() => computeScopeCounts(cardEntities, now), [cardEntities, now])
+  const filterCounts = useMemo(() => computeFilterCounts(cardEntities, now), [cardEntities, now])
 
-  const buildIds = (activeScope: Scope): string[] =>
-    shuffleFirstDue(applyScope(cardEntities, activeScope, now), now, prefs.shuffle)
+  // Every setting the gear sheet offers, wherever each one is stored. Changing the Study filter
+  // is the one that rebuilds the queue, so it comes back here rather than going straight out.
+  const settings = useStudySettings({
+    mode,
+    prefs,
+    onPrefsChange,
+    wordSpaces,
+    onWordSpacesChange,
+    shakeToUndo,
+    onShakeToUndoChange,
+    swipeByMode,
+    onSwipeByModeChange,
+    filter,
+    filterCounts,
+    onFilterChange: (next) => {
+      setStudyFilter(next)
+      rebuild(next)
+    },
+  })
+  const activeSwipe = settings.value.swipe
+
+  const buildIds = (activeFilter: StudyFilter): string[] =>
+    shuffleFirstDue(applyStudyFilter(cardEntities, activeFilter, now), now, prefs.shuffle)
 
   const [state, dispatch] = useReducer(sessionReducer, undefined, () =>
     initSession({ ids: buildIds({ kind: 'all' }) }),
@@ -100,9 +118,9 @@ export function FlashcardsPanel({
 
   const undoTrail = useRef<UndoEntry[]>([])
 
-  const rebuild = (activeScope: Scope) => {
+  const rebuild = (activeFilter: StudyFilter) => {
     undoTrail.current = []
-    dispatch({ type: 'reset', state: initSession({ ids: buildIds(activeScope) }) })
+    dispatch({ type: 'reset', state: initSession({ ids: buildIds(activeFilter) }) })
   }
 
   const completed = state.status === 'complete'
@@ -191,24 +209,11 @@ export function FlashcardsPanel({
     if (card) speak(flipped ? answer : prompt)
   }
 
-  const updatePrefs = (partial: Partial<StudyPrefs>) => {
-    onPrefsChange?.({ ...prefs, ...partial })
-  }
-
-  const changeScope = (nextScope: Scope) => {
-    setScope(nextScope)
-    rebuild(nextScope)
-  }
-
   // Each mode presents the card its own way, so it opens on its own face — a flip carried over
   // from the mode you left would land Type or Rebuild on the answer.
   const changeMode = (nextMode: StudyMode) => {
     dispatch({ type: 'unflip' })
     onModeChange?.(nextMode)
-  }
-
-  const setSwipe = (dir: SwipeDirection, action: FlashcardSwipeConfig[SwipeDirection]) => {
-    onSwipeByModeChange?.({ ...swipeByMode, [mode]: { ...activeSwipe, [dir]: action } })
   }
 
   const summaryNow: SessionSummary =
@@ -236,7 +241,7 @@ export function FlashcardsPanel({
     onEdit: () => setEditing(true),
     onSpeak: speakFace,
     onSkip: applySkip,
-    onRestart: () => rebuild(scope),
+    onRestart: () => rebuild(filter),
   }
 
   return (
@@ -252,7 +257,7 @@ export function FlashcardsPanel({
             mode={mode}
             direction={prefs.direction}
             wordSpaces={wordSpaces}
-            typeInitialsOnly={typeInitialsOnly}
+            typeInitialsOnly={settings.value.typeInitialsOnly}
             flipped={flipped}
             swipeConfig={activeSwipe}
             canSpeak={canSpeak}
@@ -266,10 +271,10 @@ export function FlashcardsPanel({
             onLongPress={() => setQuickOpen(true)}
           />
         ) : !completed ? (
-          <EmptyScope
-            emptyScope={scope.kind !== 'all'}
+          <EmptyQueue
+            filtered={filter.kind !== 'all'}
             onChangeSelection={() => setGearOpen(true)}
-            onStudyAll={() => changeScope({ kind: 'all' })}
+            onStudyAll={() => settings.set('filter', { kind: 'all' })}
             onDone={onBack}
           />
         ) : null}
@@ -301,23 +306,7 @@ export function FlashcardsPanel({
           mode={mode}
           canSpeak={canSpeak}
           quick={quick}
-          typeInitialsOnly={typeInitialsOnly}
-          onTypeInitialsOnly={setTypeInitialsOnly}
-          wordSpaces={wordSpaces}
-          onWordSpaces={(value) => onWordSpacesChange?.(value)}
-          swipeConfig={activeSwipe}
-          onSwipe={setSwipe}
-          scope={scope}
-          scopeCounts={counts}
-          onScope={changeScope}
-          shuffle={prefs.shuffle}
-          onShuffle={(value) => updatePrefs({ shuffle: value })}
-          textToSpeech={prefs.textToSpeech}
-          onTextToSpeech={(value) => updatePrefs({ textToSpeech: value })}
-          shakeToUndo={shakeToUndo}
-          onShakeToUndo={(value) => onShakeToUndoChange?.(value)}
-          direction={prefs.direction}
-          onDirection={(direction) => updatePrefs({ direction })}
+          settings={settings}
           onFinish={() => dispatch({ type: 'finish' })}
         />
       ) : null}

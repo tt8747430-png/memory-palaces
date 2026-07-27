@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { SrsState } from '@/shared/lib'
 import { type Card, makeCard } from '@/entities/card'
-import { applyScope, scopeCounts, scopesEqual } from './scope'
+import { applyStudyFilter, studyFilterCounts, studyFiltersEqual } from './study-filter'
 
 const NOW = Date.UTC(2026, 0, 10)
 const DAY = 86_400_000
@@ -35,9 +35,9 @@ const flagged = card(
 )
 const deck = [fresh, due, learning, known, flagged]
 
-describe('applyScope', () => {
+describe('applyStudyFilter', () => {
   it('all → the whole deck in order', () => {
-    expect(applyScope(deck, { kind: 'all' }, NOW).map((c) => c.id)).toEqual([
+    expect(applyStudyFilter(deck, { kind: 'all' }, NOW).map((c) => c.id)).toEqual([
       'new',
       'due',
       'learning',
@@ -47,35 +47,41 @@ describe('applyScope', () => {
   })
 
   it('due → only cards due now (including brand-new)', () => {
-    expect(applyScope(deck, { kind: 'due' }, NOW).map((c) => c.id)).toEqual(['new', 'due'])
+    expect(applyStudyFilter(deck, { kind: 'due' }, NOW).map((c) => c.id)).toEqual(['new', 'due'])
   })
 
   it('new → only never-reviewed cards', () => {
-    expect(applyScope(deck, { kind: 'new' }, NOW).map((c) => c.id)).toEqual(['new'])
+    expect(applyStudyFilter(deck, { kind: 'new' }, NOW).map((c) => c.id)).toEqual(['new'])
   })
 
   it('learning → reviewed but not yet mature, due or not', () => {
-    expect(applyScope(deck, { kind: 'learning' }, NOW).map((c) => c.id)).toEqual([
+    expect(applyStudyFilter(deck, { kind: 'learning' }, NOW).map((c) => c.id)).toEqual([
       'due',
       'learning',
     ])
   })
 
   it('flagged → only flagged cards', () => {
-    expect(applyScope(deck, { kind: 'flagged' }, NOW).map((c) => c.id)).toEqual(['flag'])
+    expect(applyStudyFilter(deck, { kind: 'flagged' }, NOW).map((c) => c.id)).toEqual(['flag'])
   })
 })
 
-describe('scopeCounts', () => {
+describe('studyFilterCounts', () => {
   it('counts each filter live', () => {
-    expect(scopeCounts(deck, NOW)).toEqual({ all: 5, due: 2, new: 1, learning: 2, flagged: 1 })
+    expect(studyFilterCounts(deck, NOW)).toEqual({
+      all: 5,
+      due: 2,
+      new: 1,
+      learning: 2,
+      flagged: 1,
+    })
   })
 })
 
-describe('scopesEqual', () => {
-  it('compares the scope kind', () => {
-    expect(scopesEqual({ kind: 'all' }, { kind: 'all' })).toBe(true)
-    expect(scopesEqual({ kind: 'all' }, { kind: 'due' })).toBe(false)
-    expect(scopesEqual({ kind: 'flagged' }, { kind: 'flagged' })).toBe(true)
+describe('studyFiltersEqual', () => {
+  it('compares the filter kind', () => {
+    expect(studyFiltersEqual({ kind: 'all' }, { kind: 'all' })).toBe(true)
+    expect(studyFiltersEqual({ kind: 'all' }, { kind: 'due' })).toBe(false)
+    expect(studyFiltersEqual({ kind: 'flagged' }, { kind: 'flagged' })).toBe(true)
   })
 })

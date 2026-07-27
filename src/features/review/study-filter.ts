@@ -12,15 +12,15 @@ export function shuffleFirstDue(
   return shuffleCards ? shuffle(base, random) : base
 }
 
-export type Scope =
+export type StudyFilter =
   | { kind: 'all' }
   | { kind: 'due' }
   | { kind: 'new' }
   | { kind: 'learning' }
   | { kind: 'flagged' }
 
-export function applyScope(cards: Card[], scope: Scope, now: number): Card[] {
-  switch (scope.kind) {
+export function applyStudyFilter(cards: Card[], filter: StudyFilter, now: number): Card[] {
+  switch (filter.kind) {
     case 'due':
       return cards.filter((card) => isDue(card.srs, now))
     case 'new':
@@ -34,7 +34,7 @@ export function applyScope(cards: Card[], scope: Scope, now: number): Card[] {
   }
 }
 
-export interface ScopeCounts {
+export interface StudyFilterCounts {
   all: number
   due: number
   new: number
@@ -42,7 +42,7 @@ export interface ScopeCounts {
   flagged: number
 }
 
-export function scopeCounts(cards: Card[], now: number): ScopeCounts {
+export function studyFilterCounts(cards: Card[], now: number): StudyFilterCounts {
   return {
     all: cards.length,
     due: cards.filter((card) => isDue(card.srs, now)).length,
@@ -52,6 +52,6 @@ export function scopeCounts(cards: Card[], now: number): ScopeCounts {
   }
 }
 
-export function scopesEqual(a: Scope, b: Scope): boolean {
+export function studyFiltersEqual(a: StudyFilter, b: StudyFilter): boolean {
   return a.kind === b.kind
 }

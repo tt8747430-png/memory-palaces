@@ -19,11 +19,12 @@ Split a screen into single-responsibility parts: a container that wires data, th
 | Screen root | `pages/<x>/ui/` |
 | A subpart used only by one parent | next to that parent in the same `ui/` folder |
 
-**Good example — [`widgets/study-session/ui/`](../src/widgets/study-session/ui/):** the widget is split into `StudyDeck`, `CompletionOverlay`, `GearSheet`, `ModeSheet`, `QuickActionRows`, `ToggleRow`, `SheetSection`, `card-faces` — each focused, composed by the panel, with shared types in `model/` and a public `index.ts` barrel.
+**Good example — [`widgets/study-session/ui/`](../src/widgets/study-session/ui/):** the widget is split into `StudyDeck`, `QueuedCard`, `DirectionChip`, `SessionFooter`, `EmptyQueue`, `CompletionOverlay`, `GearSheet`, `ModeSheet`, `QuickActionRows`, `SheetSection`, and one file per `faces/` — each focused, composed by the panel, with the gesture engine and settings in `model/` and a public `index.ts` barrel.
 
 **Rules of thumb:**
 
-- Soft budget ~200 lines per component file. When a file passes that, extract children. Current worst offenders to decompose when you touch them: `widgets/study-session/ui/card-faces.tsx` (~1000 lines), `pages/deck-library/ui/DeckLibraryPage.tsx`, `widgets/content-editor/ui/DeckContentEditor.tsx`.
+- Soft budget ~200 lines per component file. When a file passes that, extract children — and check whether the excess is really *state* that belongs in a `model/` module (§3a) rather than markup.
+- **One exported component per file, named for the file.** A file exporting two peer components (the old `ContentRows.tsx` held `CardRow` *and* `QuestionRow`) hides the duplication between them; splitting it surfaced a shared `ContentRow` frame. Small private helpers used by that one component stay in the file.
 - A page composes widgets and `shared/ui`; it should not hold much presentational markup itself.
 - Extract a component to `shared/ui` **only when it's genuinely app-wide and presentational** — don't hoist a one-off. A subpart reused within a single widget/page stays local.
 
@@ -41,6 +42,30 @@ When several pieces of state change together or a feature has distinct phases, m
 - Keep the machine **pure and outside the component**, in the feature/model layer: [`features/review/session-machine.ts`](../src/features/review/session-machine.ts), [`features/quiz/quiz-machine.ts`](../src/features/quiz/quiz-machine.ts) (each with its own `*.test.ts`). The component just dispatches.
 - `useReducer` is the right call for multi-field, interdependent UI state — see [`widgets/quiz/ui/QuizSession.tsx`](../src/widgets/quiz/ui/QuizSession.tsx), `widgets/match/ui/MatchBoard.tsx`, `widgets/study-session/ui/FlashcardsPanel.tsx`.
 - A lone toggle or a single value is still fine as `useState` — don't over-engineer.
+
+## 3a. A page's state and commands live in one module, not scattered across the page
+
+A page that reads several stores, holds a Selection, and can perform a dozen acts should present
+**one** interface to its own JSX — not fifteen `useState`s and three hooks the page has to wire
+together. Put it in `pages/<page>/model/use-<thing>.ts` and have the page read that and nothing
+else. Reference: [`pages/deck-library/model/use-library.ts`](../src/pages/deck-library/model/use-library.ts),
+[`pages/deck-questions/model/use-deck-questions.ts`](../src/pages/deck-questions/model/use-deck-questions.ts).
+
+- **Compose internally, expose one surface.** `useLibrary` is built from `useLibraryData`,
+  `useLibrarySelection` and `useLibraryActions`. Those are seams for the module's own tests; the
+  page never sees them. Anything the page can't act on — the optimistic overlay that holds a drop
+  on screen, which store a setting is written to — stays inside.
+- **The interface is the test surface.** These modules are tested with `renderHook` over
+  in-memory repositories (`use-library.test.tsx`), not by rendering the page. If a test wants to
+  reach past the interface, the module is the wrong shape.
+- **Confirmations are one `pending` value, never a flag each.** A page with a delete dialog, a
+  bulk-delete dialog and a move sheet has *one* `PendingAct` discriminated union plus
+  `request` / `dismiss` / `confirm`. Separate `useState` booleans make "delete dialog open over
+  the move sheet" reachable; a single union makes it unrepresentable.
+- **Name the setting, don't ship a setter per setting.** When a sheet edits many values, take one
+  `set(key, value)` rather than twelve `value` + `onValue` pairs — see
+  [`widgets/study-session/model/use-study-settings.ts`](../src/widgets/study-session/model/use-study-settings.ts),
+  which cut `GearSheet` from 27 props to 7 and hid *which store each setting lands in*.
 
 ## 4. Composition over configuration
 

@@ -1,13 +1,13 @@
 export { gradeCard } from './grade-card'
 export { restoreSchedule } from './restore-schedule'
 export {
-  applyScope,
-  scopeCounts,
-  scopesEqual,
+  applyStudyFilter,
+  studyFilterCounts,
+  studyFiltersEqual,
   shuffleFirstDue,
-  type Scope,
-  type ScopeCounts,
-} from './scope'
+  type StudyFilter,
+  type StudyFilterCounts,
+} from './study-filter'
 export {
   initSession,
   sessionReducer,

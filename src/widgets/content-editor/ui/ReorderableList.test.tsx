@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, screen } from '@testing-library/react'
 import { renderWithProviders } from '@/shared/test/render-with-providers'
 import { ReorderableList } from './ReorderableList'
-import type { RowDragHandle } from './ContentRows'
+import type { RowDragHandle } from './ContentRow'
 
 afterEach(cleanup)
 
