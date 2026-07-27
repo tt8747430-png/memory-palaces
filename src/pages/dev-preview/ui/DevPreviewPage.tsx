@@ -2,6 +2,7 @@ import { type ReactNode, useEffect, useRef, useState } from 'react'
 import {
   ArrowUpDown,
   Bell,
+  ChevronLeft,
   Clock,
   Copy,
   Flame,
@@ -402,7 +403,7 @@ function EditableTitleDemo({ initial }: { initial: string }) {
   return <EditableTitle value={value} onRename={setValue} editLabel="Rename" />
 }
 
-export function DevPreviewPage() {
+export function DevPreviewPage({ onBack }: { onBack?: () => void }) {
   const [theme, setTheme] = useState<ThemeMode>('system')
   const [scrollNode, setScrollNode] = useState<HTMLElement | null>(null)
   const [activeId, setActiveId] = useState<string>(SECTIONS[0]?.id ?? '')
@@ -453,7 +454,12 @@ export function DevPreviewPage() {
         <header className="border-b border-border bg-card/80 backdrop-blur-md">
           <div className="mx-auto w-full max-w-[430px] px-5 pt-safe">
             <div className="flex items-start justify-between gap-3 pt-3">
-              <div className="flex min-w-0 flex-col">
+              {onBack ? (
+                <IconButton variant="glass" aria-label="Back" onClick={onBack} className="shrink-0">
+                  <ChevronLeft className="size-5" aria-hidden />
+                </IconButton>
+              ) : null}
+              <div className="flex min-w-0 flex-1 flex-col">
                 <span className="text-[length:var(--p-text-title)] font-bold text-heading">
                   Kitchen sink
                 </span>

@@ -5,6 +5,7 @@ import {
   CheckSquare,
   Bell,
   ChevronRight,
+  FlaskConical,
   Globe,
   HelpCircle,
   Info,
@@ -19,6 +20,7 @@ import {
   Target,
   Vibrate,
   Volume2,
+  Wrench,
 } from 'lucide-react'
 import {
   type PreferencesChanges,
@@ -35,6 +37,7 @@ import {
 import type { SessionKind } from '@/entities/session'
 import { setPreferences } from '@/features/preferences'
 import { AVAILABLE_LANGUAGES, DAILY_GOAL_OPTIONS } from '@/shared/config/constants'
+import { setDevMode, useDevMode } from '@/shared/lib'
 import {
   AppScreen,
   Avatar,
@@ -54,6 +57,7 @@ export interface SettingsPageProps {
   onAbout?: () => void
   onSignIn?: () => void
   onLogout?: () => void
+  onKitchenSink?: () => void
   sessionKind?: SessionKind
 }
 
@@ -67,9 +71,11 @@ export function SettingsPage({
   onAbout,
   onSignIn,
   onLogout,
+  onKitchenSink,
   sessionKind = 'account',
 }: SettingsPageProps) {
   const { t, i18n } = useTranslation()
+  const devMode = useDevMode()
   const prefsStore = usePreferencesStoreApi()
   const prefs = usePreferencesStore(selectEffectivePreferences)
   const profileStore = useProfileStoreApi()
@@ -263,6 +269,24 @@ export function SettingsPage({
             icon={<Info />}
             label={t('settings.about')}
             onClick={() => onAbout?.()}
+          />
+        </SettingsSection>
+
+        <SettingsSection title={t('settings.developerSection')}>
+          <SettingsRow
+            kind="nav"
+            icon={<FlaskConical />}
+            label={t('settings.kitchenSink')}
+            description={t('settings.kitchenSinkHint')}
+            onClick={() => onKitchenSink?.()}
+          />
+          <SettingsRow
+            kind="toggle"
+            icon={<Wrench />}
+            label={t('settings.devMode')}
+            description={t('settings.devModeHint')}
+            checked={devMode}
+            onCheckedChange={setDevMode}
           />
         </SettingsSection>
 

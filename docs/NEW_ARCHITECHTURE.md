@@ -65,7 +65,9 @@ Facade `features/*` · Observer (Zustand + RxDB queries + EventBus; flush-on-lea
 ### 11 — Hardening & launch
 
 A11y pass (WCAG AA, focus traps, SR labels) · Lighthouse PWA/perf (lazy routes, virtualization, bundle budget) · import from the old app · deploy to Vercel + Supabase · dead-code removal.
-**Checkpoint:** acceptance criteria met, Lighthouse installable + green, deployed.
+
+- **T11.G — Guard the developer surface before 1.0.** The Settings → **Developer** section and the `/dev/kitchen-sink` route (`ROUTES.devKitchenSink`) are deliberately built into **every** build, production included, because the iOS keyboard bugs behind [ADR 0002](adr/0002-keyboard-covers-the-app.md) are only reproducible in the installed PWA over HTTPS — a `import.meta.env.DEV` gate put the one diagnostic we needed out of reach of the one environment that shows the bug. **That trade expires at 1.0.** Ship it guarded: gate the Settings section on `useDevMode()` (`shared/lib/dev-mode.ts`) and give dev mode an unadvertised way in (the convention is tapping the version on Settings → About seven times), leaving the route reachable but unlisted. Do _not_ simply delete the route — the probe is the reason three keyboard fixes stopped being guesswork.
+- **Checkpoint:** acceptance criteria met, Lighthouse installable + green, deployed, **no developer surface reachable from a first-run install**.
 
 ### 13 — AI Tutor (last)
 

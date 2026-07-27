@@ -57,7 +57,8 @@ One file: `npx vitest run src/shared/lib/srs.test.ts` · one test: `npx vitest r
 
 - **Any UI** → [CODE_STYLE](docs/CODE_STYLE.md).
 - **Drag, reorder, card stack** → [ADR 0001](docs/adr/0001-drag-and-drop-and-card-stacks.md) (a drag only reorders; every reachable row is a peer; one engine `useSortableBlock`; stacks built from real items), then CODE_STYLE §10 (four causes of drop flicker).
-- **Overflow/scroll, keyboard, focus/autofocus, `env(safe-area-*)`, `touch-action`** → CODE_STYLE §11. Invisible on desktop and in jsdom, real on iOS. Preview at dev-only `/dev/kitchen-sink`; verify on device.
+- **Keyboard, viewport, anything bottom-pinned** → [ADR 0002](docs/adr/0002-keyboard-covers-the-app.md) (iOS pans, never resizes; the shell is anchored to `--app-height`; only `transform`ed chrome may ride `--vv-top`), then CODE_STYLE §11.
+- **Overflow/scroll, focus/autofocus, `env(safe-area-*)`, `touch-action`** → CODE_STYLE §11. Invisible on desktop and in jsdom, real on iOS. Check `/dev/kitchen-sink`'s viewport probe **before theorising**; verify on device. That route and Settings → Developer ship in **all** builds on purpose — guard, don't delete, before 1.0 (`NEW_ARCHITECHTURE.md` T11.G).
 - **Mobile/PWA behavior** → [MOBILE_DESIGN](docs/MOBILE_DESIGN.md).
 - **Naming anything** → [UBIQUITOUS_LANGUAGE](docs/UBIQUITOUS_LANGUAGE.md). "Session" = auth, never a study pass; `known` ≠ Memorized; no palace/room/locus.
 

@@ -26,6 +26,7 @@ export function SettingsScreen() {
       onHelp={() => navigate({ to: ROUTES.settingsHelp })}
       onAbout={() => navigate({ to: ROUTES.settingsAbout })}
       onSignIn={() => navigate({ to: ROUTES.login })}
+      onKitchenSink={() => navigate({ to: ROUTES.devKitchenSink })}
       onLogout={async () => {
         await signOut()
         await navigate({ to: ROUTES.login })

@@ -284,14 +284,11 @@ const settingsAboutRoute = createRoute({
   component: SettingsAboutScreen,
 })
 
-const devRoutes =  [
-      createRoute({
-        getParentRoute: () => rootRoute,
-        path: '/dev/kitchen-sink',
-        component: lazyRouteComponent(() => import('@/pages/dev-preview'), 'DevPreviewPage'),
-      }),
-    ]
-
+const kitchenSinkRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.devKitchenSink,
+  component: lazyRouteComponent(() => import('./routes/kitchen-sink-screen'), 'KitchenSinkScreen'),
+})
 
 const routeTree = rootRoute.addChildren([
   loginRoute,
@@ -329,7 +326,7 @@ const routeTree = rootRoute.addChildren([
   settingsHelpRoute,
   settingsAboutRoute,
   notificationsRoute,
-  ...devRoutes,
+  kitchenSinkRoute,
 ])
 
 export const router = createRouter({

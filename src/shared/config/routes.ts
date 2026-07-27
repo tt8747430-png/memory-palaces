@@ -34,6 +34,7 @@ export const ROUTES = {
   settingsHelp: '/settings/help',
   settingsAbout: '/settings/about',
   notifications: '/notifications',
+  devKitchenSink: '/dev/kitchen-sink',
 } as const
 
 export type RoutePath = (typeof ROUTES)[keyof typeof ROUTES]
