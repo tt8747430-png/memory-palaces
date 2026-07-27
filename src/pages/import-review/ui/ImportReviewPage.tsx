@@ -6,7 +6,7 @@ import { useCardStoreApi } from '@/entities/card'
 import { useQuestionStoreApi } from '@/entities/question'
 import { applyDeckContent } from '@/features/content'
 import type { ParsedCard } from '@/shared/lib'
-import { AppScreen, Button, ConfirmDialog, IconButton, ScreenHeader } from '@/shared/ui'
+import { AppScreen, Button, ConfirmDialog, FooterBar, IconButton, ScreenHeader } from '@/shared/ui'
 import { type DraftCard, useImportDraft } from '@/widgets/content-editor'
 import { EditDraftSheet } from './EditDraftSheet'
 import { RestoreToggle, ReviewRow } from './ReviewRow'
@@ -92,13 +92,20 @@ export function ImportReviewPage({ deckId, onBack, onDone }: ImportReviewPagePro
           title={t('cards.review.title')}
           onBack={onBack}
           backLabel={t('common.back')}
-          action={
-            <Button size="md" disabled={cards.length === 0 || busy} onClick={() => void doImport()}>
-              <Download className="size-[18px]" aria-hidden />
-              {t('cards.review.importCards', { count: cards.length })}
-            </Button>
-          }
         />
+      }
+      footer={
+        <FooterBar>
+          <Button
+            size="lg"
+            className="w-full"
+            disabled={cards.length === 0 || busy}
+            onClick={() => void doImport()}
+          >
+            <Download className="size-[18px]" aria-hidden />
+            {t('cards.review.importCards', { count: cards.length })}
+          </Button>
+        </FooterBar>
       }
     >
       <div className="mt-4 flex flex-col gap-5 pb-6">
