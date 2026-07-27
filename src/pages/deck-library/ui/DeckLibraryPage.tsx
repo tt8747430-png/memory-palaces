@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { Plus, Settings, Trash2 } from 'lucide-react'
+import { MoreVertical, Plus, Settings, Trash2 } from 'lucide-react'
 import type { Deck } from '@/entities/deck'
 import { DECK_COLOR_OPTIONS, useDeckStoreApi } from '@/entities/deck'
 import type { Folder } from '@/entities/folder'
@@ -13,11 +13,13 @@ import { readAnkiFile } from '@/features/content'
 import { DeckTree, LibrarySelectList } from '@/widgets/deck-tree'
 import { HomeHeader } from '@/widgets/home-header'
 import { useImportDraft } from '@/widgets/content-editor'
-import { ContentImportError, nextDefaultName, useHideAppNav, useStickyHeader } from '@/shared/lib'
+import { ContentImportError, nextDefaultName, useHideAppNav } from '@/shared/lib'
 import {
   ActionSheet,
   AppScreen,
+  IconButton,
   PromptSheet,
+  ScreenHeader,
   SelectHeader,
   SelectToolbar,
   SelectToolbarDock,
@@ -27,7 +29,6 @@ import {
 import { isMove, movingDeck } from '../model/pending-act'
 import { useHomeHeaderData } from '../model/use-home-header-data'
 import { useLibrary } from '../model/use-library'
-import { FolderScopeHeader } from './FolderScopeHeader'
 import { FolderRow } from './FolderRow'
 import { FolderSheet } from './FolderSheet'
 import { LibraryDialogs } from './LibraryDialogs'
@@ -84,7 +85,6 @@ export function DeckLibraryPage({
   onOpenArchived,
 }: DeckLibraryPageProps) {
   const { t } = useTranslation()
-  const stickyHeader = useStickyHeader()
   const deckStore = useDeckStoreApi()
   const folderStore = useFolderStoreApi()
   const setImportDraft = useImportDraft((s) => s.setDraft)
@@ -218,7 +218,6 @@ export function DeckLibraryPage({
   return (
     <AppScreen
       className="pb-nav"
-      scrollRef={stickyHeader.ref}
       header={
         selection.active ? (
           <SelectHeader
@@ -228,14 +227,24 @@ export function DeckLibraryPage({
             onCancel={selection.exit}
           />
         ) : inFolder ? (
-          <FolderScopeHeader
-            name={library.openFolder?.name ?? ''}
+          /* A folder is a place, not a mode of home, so it wears the same header as any other
+             screen: back, its name, its actions. */
+          <ScreenHeader
+            title={library.openFolder?.name ?? ''}
             onBack={onCloseFolder}
-            onOpenMenu={() => setFolderMenuOpen(true)}
+            backLabel={t('common.back')}
+            action={
+              <IconButton
+                variant="glass"
+                aria-label={t('folder.rowActions', { name: library.openFolder?.name ?? '' })}
+                onClick={() => setFolderMenuOpen(true)}
+              >
+                <MoreVertical className="size-5" aria-hidden />
+              </IconButton>
+            }
           />
         ) : (
           <HomeHeader
-            header={stickyHeader}
             name={header.name}
             avatar={header.avatar}
             xp={header.xp}

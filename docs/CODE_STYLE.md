@@ -23,8 +23,8 @@ Split a screen into single-responsibility parts: a container that wires data, th
 
 **Rules of thumb:**
 
-- Soft budget ~200 lines per component file. When a file passes that, extract children — and check whether the excess is really *state* that belongs in a `model/` module (§3a) rather than markup.
-- **One exported component per file, named for the file.** A file exporting two peer components (the old `ContentRows.tsx` held `CardRow` *and* `QuestionRow`) hides the duplication between them; splitting it surfaced a shared `ContentRow` frame. Small private helpers used by that one component stay in the file.
+- Soft budget ~200 lines per component file. When a file passes that, extract children — and check whether the excess is really _state_ that belongs in a `model/` module (§3a) rather than markup.
+- **One exported component per file, named for the file.** A file exporting two peer components (the old `ContentRows.tsx` held `CardRow` _and_ `QuestionRow`) hides the duplication between them; splitting it surfaced a shared `ContentRow` frame. Small private helpers used by that one component stay in the file.
 - A page composes widgets and `shared/ui`; it should not hold much presentational markup itself.
 - Extract a component to `shared/ui` **only when it's genuinely app-wide and presentational** — don't hoist a one-off. A subpart reused within a single widget/page stays local.
 
@@ -59,13 +59,13 @@ else. Reference: [`pages/deck-library/model/use-library.ts`](../src/pages/deck-l
   in-memory repositories (`use-library.test.tsx`), not by rendering the page. If a test wants to
   reach past the interface, the module is the wrong shape.
 - **Confirmations are one `pending` value, never a flag each.** A page with a delete dialog, a
-  bulk-delete dialog and a move sheet has *one* `PendingAct` discriminated union plus
+  bulk-delete dialog and a move sheet has _one_ `PendingAct` discriminated union plus
   `request` / `dismiss` / `confirm`. Separate `useState` booleans make "delete dialog open over
   the move sheet" reachable; a single union makes it unrepresentable.
 - **Name the setting, don't ship a setter per setting.** When a sheet edits many values, take one
   `set(key, value)` rather than twelve `value` + `onValue` pairs — see
   [`widgets/study-session/model/use-study-settings.ts`](../src/widgets/study-session/model/use-study-settings.ts),
-  which cut `GearSheet` from 27 props to 7 and hid *which store each setting lands in*.
+  which cut `GearSheet` from 27 props to 7 and hid _which store each setting lands in_.
 
 ## 4. Composition over configuration
 
@@ -77,6 +77,15 @@ From the `vercel-composition-patterns` skill. Build flexible components by compo
 - **Prefer `children` over `renderX` props.** Pass composition through `children`/slots, not `renderHeader`/`renderItem` callbacks — reserve render props for when the parent must inject per-item data.
 - **Polymorphism for element changes.** When the same UI must render different elements (`<button>` vs `<a>` vs a router `Link`), add an `as` prop to one component rather than shipping `Button` + `LinkButton` + `IconButton`.
 - **React 19 conventions:** `ref` is a normal prop — **don't use `forwardRef`** (the repo has zero; keep it that way). Prefer `use(Context)` over `useContext(Context)` in new code (existing `context.ts` files use `useContext` — fine to leave, migrate opportunistically).
+
+## 4a. Every screen wears the same header
+
+There is one header chrome, [`shared/ui/HeaderBar`](../src/shared/ui/HeaderBar.tsx): safe-area inset, glass, **one fixed height (`h-16`)**, and a shadow that fades in as the screen scrolls. Four headers fill it and nothing else builds its own — `ScreenHeader` (back · title · action), `SelectHeader` (a selection's own bar), `HomeHeader`, `ProfileBar`.
+
+- **A screen never hand-rolls a `<header>`.** If a screen needs something the four don't cover, add a slot to the one that's closest — don't fork the chrome. A bespoke bar is how the heights drifted apart in the first place (each screen's title moved a few pixels as you navigated).
+- **Header controls are `IconButton variant="glass"` at the default `md` size (44px).** So are the text buttons beside them (`Button size="md"` is the same 44px). The back chevron and whatever sits opposite it must read as one family.
+- **Elevation comes from `AppScreen`, not from the page.** The screen owns the scroller, so it measures the scroll once and publishes it on `HeaderElevationContext`; `HeaderBar` reads it. A page passes no ref and calls no hook.
+- **A selection swaps the bar's contents, never its size** — same `HeaderBar`, so the list underneath doesn't jump as select mode comes and goes.
 
 ## 5. Tailwind
 
@@ -164,7 +173,7 @@ Every bug in this list shipped because it is **invisible where the code is writt
 - **`overflow-*-auto` clips _both_ axes — so a ring/shadow/outline inside a scroller gets cut off.** Setting overflow on one axis makes the browser compute the other as `auto` too, so a horizontal pill/swatch scroller clips the selected item's `ring`/`box-shadow` at every edge (the first and last items lose their outer ring entirely). Reserve room _inside_ the scrollport with a **net-zero negative-margin + padding pair** — `-m-1.5 p-1.5` gives the ring 6px on all four sides while `-m` cancels it so the row's outer size and alignment don't move (`IconColorRow`). Don't reach for `overflow-visible` — that kills the scroll.
 - **A bottom sheet's _pinned footer_ must consume `--drawer-keyboard-inset`; the body does not lift it.** Base UI's `Drawer.VirtualKeyboardProvider` only publishes `--drawer-keyboard-inset` on the Viewport and scrolls the focused field within the body — it never moves the sheet. A footer at the popup's `bottom-0` therefore stays behind the keyboard. Lift it by padding the popup with `.pb-safe-keyboard` (`= max(env(safe-area-inset-bottom), var(--drawer-keyboard-inset, 0px))`, `drawer.tsx` + `theme.css`). **Combine safe-area and keyboard insets with `max()`, never `+`** — the inset already measures to the top of the accessory bar, so adding the home-indicator safe area on top doubles the gap. Full-screen shells are a different mechanism: they size to `--vvh` (`useKeyboardInset`), no padding math.
 - **Focus a drawer field through the Sheet's `initialFocus`, never native `autofocus`.** Native `autofocus` fires before Base UI positions the sheet and without `preventScroll`, so iOS scrolls the _whole layout_ to reveal the field — and that page scroll skews `visualViewport.offsetTop`, which corrupts the keyboard-inset measurement (strange footer padding as a knock-on). Pass a ref to `Sheet`'s `initialFocus` instead (`PromptSheet`, `FolderSheet`); it routes through Base UI's scroll-safe `focusKeyboardInputWithoutPageScroll`. **Lint-enforced:** `autoFocus` is banned in `*Sheet.tsx` / `*Form.tsx` (`eslint.config.js`). Full-page inputs inside `AppScreen` may keep native `autofocus`.
-- **A control tapped while a field is focused must not steal focus, or the keyboard drops.** On iOS, tapping any non-input element (a color swatch, a toolbar button) blurs the focused field and dismisses the keyboard. Cancel the focus shift with `onMouseDown={(e) => e.preventDefault()}` on the control (or its container) — the `click`/toggle still fires, and keyboard navigation is unaffected because it uses `focus`, not `mousedown` (`IconColorRow` swatches). Only the submit button (which closes the sheet) and the drag handle should dismiss the keyboard.
-- **Swipe/drag surfaces need `touch-action`, and text selection will hijack the drag without it.** Base UI deliberately declines its swipe while any text is selected in the drawer (so native selection handles stay draggable); with no `touch-action: none` on the chrome the browser then treats the drag as a native page scroll. The sheet chrome is `touch-none select-none` (Popup/Header/Handle), the scroll body re-enables its own scroll with `touch-auto overscroll-contain`, and grabbing the handle collapses any lingering selection so the drag is claimed (`drawer.tsx`). An auto-selected field (`useAutoSelect`) is the usual source of that lingering selection.
+- **A control tapped while a field is focused must not steal focus, or the keyboard drops — and the first tap is then swallowed.** On iOS, tapping any non-input element (a color swatch, a toolbar button) blurs the focused field and dismisses the keyboard. In a sheet that also collapses `--drawer-keyboard-inset`, so the pinned footer slides down out from under the finger and the `click` lands on nothing: the tap looks like it only closed the keyboard, and you have to press again. Cancel the focus shift with `onMouseDown={(e) => e.preventDefault()}` on the control (or its container) — the `click`/toggle still fires, and keyboard navigation is unaffected because it uses `focus`, not `mousedown` (`IconColorRow` swatches). **`DrawerHeader` and `DrawerFooter` already do this** for everything inside them (`keepFieldFocused`, `drawer.tsx`), skipping the guard when the tap lands in another field so focus can still move between inputs. The keyboard goes away afterwards, when the submitting sheet closes and the field unmounts.
+- **Swipe/drag surfaces need `touch-action`, and text selection will hijack the drag without it.** Base UI deliberately declines its swipe while any text is selected in the drawer (so native selection handles stay draggable); with no `touch-action: none` on the chrome the browser then treats the drag as a native page scroll. The sheet chrome is `touch-none select-none` (Popup/Header/Handle) and the scroll body re-enables its own scroll with `touch-auto overscroll-contain`. Because the gesture is evaluated on the Popup, the selection has to be collapsed _before_ the touch reaches it: `DrawerContent` — the last element a touch bubbles through — clears it for the whole sheet interior, not just the handle, and leaves alone a touch that lands in a field or an `.allow-select` passage (`clearSelectionForDrag`, `drawer.tsx`). An auto-selected field (`useAutoSelect`) is the usual source of that lingering selection.
 
 **Verify on a real device (or Chrome device mode + a real iPhone) before calling it done whenever a change touches:** `overflow-*`/scroll containers · the on-screen keyboard · focus/autofocus · `env(safe-area-*)` · gestures / `touch-action`. These five are exactly the categories jsdom and desktop cannot show you.

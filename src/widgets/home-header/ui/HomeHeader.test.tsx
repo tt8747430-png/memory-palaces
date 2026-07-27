@@ -3,7 +3,6 @@ import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
-import { fakeStickyHeader } from '@/shared/test/sticky-header'
 import { HomeHeader } from './HomeHeader'
 
 afterEach(cleanup)
@@ -12,14 +11,7 @@ function renderHeader(props: Partial<Parameters<typeof HomeHeader>[0]> = {}) {
   const handlers = { onOpenProfile: vi.fn(), onOpenNotifications: vi.fn() }
   render(
     <I18nextProvider i18n={i18n}>
-      <HomeHeader
-        header={fakeStickyHeader()}
-        name="Sam"
-        xp={500}
-        unreadCount={0}
-        {...handlers}
-        {...props}
-      />
+      <HomeHeader name="Sam" xp={500} unreadCount={0} {...handlers} {...props} />
     </I18nextProvider>,
   )
   return handlers
@@ -67,7 +59,6 @@ describe('HomeHeader', () => {
     const { container } = render(
       <I18nextProvider i18n={i18n}>
         <HomeHeader
-          header={fakeStickyHeader()}
           name="Sam"
           avatar="data:image/jpeg;base64,zzz"
           xp={0}

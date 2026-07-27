@@ -10,7 +10,6 @@ import {
   isDeckCompleted,
   nextMilestone,
   totalTrainingDays,
-  useStickyHeader,
 } from '@/shared/lib'
 import { useSessionStore } from '@/entities/session'
 import { selectEffectiveProfile, useProfileStore, useProfileStoreApi } from '@/entities/profile'
@@ -68,7 +67,6 @@ export function ProfilePage({
   onOpenAchievements,
   onOpenAchievement,
 }: ProfilePageProps = {}) {
-  const header = useStickyHeader()
   const session = useSessionStore((state) => state.session)
   const profileStore = useProfileStoreApi()
   const profile = useProfileStore(selectEffectiveProfile)
@@ -145,10 +143,8 @@ export function ProfilePage({
   return (
     <AppScreen
       className="pb-nav"
-      scrollRef={header.ref}
       header={
         <ProfileBar
-          header={header}
           name={name}
           unreadCount={unreadCount}
           onOpenNotifications={() => onOpenNotifications?.()}

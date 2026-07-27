@@ -1,5 +1,5 @@
 import { type ReactNode, useCallback, useLayoutEffect, useRef } from 'react'
-import { cn } from '@/shared/lib'
+import { cn, HeaderElevationContext, useStickyHeader } from '@/shared/lib'
 
 const SCROLL = 'overflow-y-auto overscroll-contain scrollbar-hide px-5 pb-safe'
 
@@ -28,13 +28,17 @@ export function AppScreen({
   fill?: boolean
 }) {
   const innerRef = useRef<HTMLElement | null>(null)
+  // The screen owns its scroller, so it also owns how lifted the header looks. `HeaderBar` reads
+  // this through context — no page has to hand a ref from its header to its body.
+  const { ref: measureScroll, elevation } = useStickyHeader()
 
   const setRef = useCallback(
     (node: HTMLElement | null) => {
       innerRef.current = node
+      measureScroll(node)
       scrollRef?.(node)
     },
-    [scrollRef],
+    [measureScroll, scrollRef],
   )
 
   useLayoutEffect(() => {
@@ -59,12 +63,14 @@ export function AppScreen({
   }
 
   return (
-    <div className={cn('mx-auto flex w-full max-w-[430px] flex-col', SHELL)}>
-      {header}
-      <main ref={setRef} className={cn('min-h-0 flex-1', SCROLL, className)}>
-        {content}
-      </main>
-      {footer}
-    </div>
+    <HeaderElevationContext value={elevation}>
+      <div className={cn('mx-auto flex w-full max-w-[430px] flex-col', SHELL)}>
+        {header}
+        <main ref={setRef} className={cn('min-h-0 flex-1', SCROLL, className)}>
+          {content}
+        </main>
+        {footer}
+      </div>
+    </HeaderElevationContext>
   )
 }

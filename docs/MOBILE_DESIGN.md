@@ -4,7 +4,7 @@ How Mindscape should behave and feel on a phone and as an installed app. Code-le
 
 **What this is:** a **portrait, touch-first, offline-first, installable PWA** — `index.html` sets `viewport-fit=cover`, `maximum-scale=1`, `user-scalable=no`, `interactive-widget=resizes-content`; the manifest (`vite.config.ts`) is `display: standalone`, `orientation: portrait`.
 
-> This is a **web PWA, not React Native**. The "Mobile Design System" template's RN/Flutter APIs (FlatList, SecureStore, `useNativeDriver`, const constructors) **do not apply** — the UX *principles* below do.
+> This is a **web PWA, not React Native**. The "Mobile Design System" template's RN/Flutter APIs (FlatList, SecureStore, `useNativeDriver`, const constructors) **do not apply** — the UX _principles_ below do.
 
 ---
 
@@ -12,7 +12,7 @@ How Mindscape should behave and feel on a phone and as an installed app. Code-le
 
 The app is **phone-first**, not a breakpoint grid. It renders as a **single centered column capped at `max-w-[430px]`** (see `shared/ui/AppScreen`, and every `Sheet`/overlay). Breakpoints (`sm:`/`md:`/`lg:`) are used in only a handful of places by design.
 
-- **Design at ~390–430px width.** Content adapts *within* the column (wrap, stack, resize), not across desktop breakpoints. On tablet/desktop or a maximized PWA window, the column stays centered — never stretch UI edge-to-edge on a big screen.
+- **Design at ~390–430px width.** Content adapts _within_ the column (wrap, stack, resize), not across desktop breakpoints. On tablet/desktop or a maximized PWA window, the column stays centered — never stretch UI edge-to-edge on a big screen.
 - **Use `dvh`, never `vh`, for full-height regions.** Dynamic viewport units account for the mobile URL bar and on-screen keyboard (the `Sheet` caps at `max-h-[88dvh]`; page shells use `dvh`). `100vh` overflows on mobile Safari.
 - **Fluid inside the column:** relative units, `flex`/`grid` with wrap, `min-w-0` on flex children so text truncates instead of overflowing, `max-w-full` on media. Reserve `sm:`/`md:` for the rare case a wider phone genuinely benefits.
 - **PWA standalone ≠ browser tab.** In `display: standalone` there is no browser chrome (URL bar, back button) — the app must provide its own back affordance and never depend on browser UI. Test both modes.
@@ -22,7 +22,7 @@ The app is **phone-first**, not a breakpoint grid. It renders as a **single cent
 ## 2. Safe areas, viewport & keyboard
 
 - `viewport-fit=cover` lets content render under the notch and home indicator — you **must** pad for insets.
-- **Use the safe-area utilities in `theme.css`** (`env(safe-area-inset-*)` for all four sides, plus a bottom-nav offset `calc(7rem + env(safe-area-inset-bottom))` and `pb-safe`). Compose the primitives that already apply them — `AppScreen`, `Sheet`, `StickyBar`, `SpeedDial` — instead of hand-rolling padding.
+- **Use the safe-area utilities in `theme.css`** (`env(safe-area-inset-*)` for all four sides, plus a bottom-nav offset `calc(7rem + env(safe-area-inset-bottom))` and `pb-safe`). Compose the primitives that already apply them — `AppScreen`, `Sheet`, `HeaderBar`, `SpeedDial` — instead of hand-rolling padding.
 - **Keyboard:** `interactive-widget=resizes-content` shrinks the viewport when the keyboard opens; keep the focused input and its primary action visible above the keyboard (in-study editor, paste-notes, auth fields).
 - **Prevent overscroll chaining** on scroll regions (`overscroll-behavior: contain`) so an inner scroll doesn't bounce the whole app or trigger the browser's pull-to-refresh in standalone.
 
@@ -69,14 +69,14 @@ All overlays are built on **`@base-ui/react`** headless primitives, wrapped as p
   - `FlyoutMenu` / `OverflowMenuButton` — a compact contextual menu anchored to a control.
   - `ConfirmDialog` — a blocking yes/no, especially destructive confirms.
   - `SpeedDial` — a bottom-anchored primary-action cluster.
-- **Long content scrolls *inside* the sheet**, not the page: `shrink-0` header/footer, `flex-1 overflow-y-auto` body. The sheet must never grow taller than `88dvh`.
+- **Long content scrolls _inside_ the sheet**, not the page: `shrink-0` header/footer, `flex-1 overflow-y-auto` body. The sheet must never grow taller than `88dvh`.
 - **One overlay at a time.** Don't stack a sheet over a sheet; close the first or compose steps inside one. If layering is unavoidable, respect the z-scale (`Sheet` backdrop `z-300`, popup `z-310`).
 - **Dismissal must be obvious and cheap:** tap-outside on the backdrop, swipe-down, an always-visible close button (`aria-label`), and `Escape` for keyboard. Never trap the user in a sheet.
 - **Backdrop:** dim with the token-based scrim (`color-mix(... var(--primary) 28%)`), not opaque black; the user should sense the context behind.
 
 ## 8. Animation & motion feel
 
-Code-level animation rules (which library, which properties) are in [CODE_STYLE.md §9](CODE_STYLE.md). This is about *feel*.
+Code-level animation rules (which library, which properties) are in [CODE_STYLE.md §9](CODE_STYLE.md). This is about _feel_.
 
 - **Motion communicates, it doesn't decorate.** Every transition should convey a spatial relationship (where something came from / went) or a state change. If it says nothing, cut it.
 - **Prefer spring physics** (`motion`) for anything the finger drives — drag, dismiss, reorder — so it tracks and settles naturally. Use short eased tweens for enter/exit chrome (the `Sheet` slide is a `300ms ease-out`).

@@ -2,14 +2,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
-import { fakeStickyHeader } from '@/shared/test/sticky-header'
 import { ProfileBar, type ProfileBarProps } from './ProfileBar'
 
 afterEach(cleanup)
 
 function renderBar(props: Partial<ProfileBarProps> = {}) {
   const merged: ProfileBarProps = {
-    header: fakeStickyHeader(),
     name: 'Ada Lovelace',
     unreadCount: 0,
     onOpenNotifications: () => {},

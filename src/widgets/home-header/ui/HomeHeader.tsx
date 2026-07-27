@@ -1,10 +1,9 @@
 import { useTranslation } from 'react-i18next'
-import { Archive, Bell, BellRing, Flame } from 'lucide-react'
-import { cn, levelFromXp, type StickyHeader } from '@/shared/lib'
-import { Avatar, IconButton, Progress, StickyBar } from '@/shared/ui'
+import { Archive, Flame } from 'lucide-react'
+import { cn, levelFromXp } from '@/shared/lib'
+import { Avatar, HeaderBar, IconButton, NotificationBell, Progress } from '@/shared/ui'
 
 export interface HomeHeaderProps {
-  header: StickyHeader
   name: string
   avatar?: string | null
   xp: number
@@ -23,7 +22,6 @@ function greetingKey(hour: number): 'greetingMorning' | 'greetingAfternoon' | 'g
 }
 
 export function HomeHeader({
-  header,
   name,
   avatar,
   xp,
@@ -40,7 +38,7 @@ export function HomeHeader({
   const xpToNext = t('home.xpToNext', { remaining: xpForNextLevel - xpInLevel, next: level + 1 })
 
   return (
-    <StickyBar elevation={header.elevation} className="min-h-12">
+    <HeaderBar>
       <button
         type="button"
         onClick={onOpenProfile}
@@ -67,22 +65,22 @@ export function HomeHeader({
         </span>
       </button>
 
-      <div className="flex shrink-0 items-center gap-0.5">
+      <div className="flex shrink-0 items-center gap-1">
         {streak && onOpenStreak ? (
           <StreakButton streak={streak} onOpenStreak={onOpenStreak} />
         ) : null}
-        <NotificationButton
+        <NotificationBell
           unreadCount={unreadCount}
           label={t('notifications.openLabel')}
           onClick={onOpenNotifications}
         />
         {onOpenArchived ? (
-          <IconButton variant="ghost" aria-label={t('home.archive')} onClick={onOpenArchived}>
+          <IconButton variant="glass" aria-label={t('home.archive')} onClick={onOpenArchived}>
             <Archive className="size-5" aria-hidden />
           </IconButton>
         ) : null}
       </div>
-    </StickyBar>
+    </HeaderBar>
   )
 }
 
@@ -104,7 +102,7 @@ function StreakButton({
         done: streak.dayCount,
         goal: streak.dailyGoal,
       })}
-      className="inline-flex shrink-0 items-center gap-1 rounded-full bg-card px-2.5 py-1 text-[length:var(--p-text-label)] font-semibold text-heading shadow-rest transition-transform active:scale-95"
+      className="inline-flex h-11 shrink-0 items-center gap-1 rounded-control bg-card-glass px-2.5 text-[length:var(--p-text-label)] font-semibold text-heading shadow-rest transition-transform active:scale-95"
     >
       <Flame
         className={cn('size-4', active ? 'text-[var(--warning)]' : 'text-muted-foreground')}
@@ -113,29 +111,5 @@ function StreakButton({
       />
       <span className="tabular-nums">{streak.count}</span>
     </button>
-  )
-}
-
-function NotificationButton({
-  unreadCount,
-  label,
-  onClick,
-}: {
-  unreadCount: number
-  label: string
-  onClick: () => void
-}) {
-  const Icon = unreadCount > 0 ? BellRing : Bell
-  return (
-    <div className="relative shrink-0">
-      <IconButton variant="ghost" aria-label={label} onClick={onClick}>
-        <Icon className="size-5" aria-hidden />
-      </IconButton>
-      {unreadCount > 0 ? (
-        <span className="absolute -right-0.5 -top-0.5 grid min-w-[18px] place-items-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-none text-destructive-foreground ring-2 ring-[color:var(--surface)]">
-          {unreadCount > 9 ? '9+' : unreadCount}
-        </span>
-      ) : null}
-    </div>
   )
 }

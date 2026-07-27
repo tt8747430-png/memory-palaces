@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/shared/lib'
+import { HeaderBar } from './HeaderBar'
 
 export interface SelectHeaderProps {
   count: number
@@ -18,7 +19,10 @@ const ACTION =
  * the *only* place a selection reports itself — a list must not print its own count underneath.
  *
  * A three-column grid rather than `justify-between`, so the count stays optically centred while
- * the two labels change width ("Select all" ⇄ "Clear all").
+ * the two labels change width ("Select all" ⇄ "Clear all"). It rides the same `HeaderBar` as
+ * `ScreenHeader`, so entering a selection swaps the contents of the bar without resizing it —
+ * the list underneath never moves. Its labels sit at the content margin instead of the bar's
+ * icon-button margin, so they line up with the rows they act on.
  */
 export function SelectHeader({
   count,
@@ -29,18 +33,16 @@ export function SelectHeader({
 }: SelectHeaderProps) {
   const { t } = useTranslation()
   return (
-    <header className={cn('shrink-0 bg-glass px-4 pt-safe', className)}>
-      <div className="grid min-h-14 grid-cols-[1fr_auto_1fr] items-center gap-2 pt-3 pb-2">
-        <button type="button" onClick={onToggleAll} className={cn(ACTION, 'justify-self-start')}>
-          {allSelected ? t('selection.clearAll') : t('selection.selectAll')}
-        </button>
-        <span className="text-(length:--p-text-body) font-semibold tabular-nums text-heading">
-          {t('selection.count', { count })}
-        </span>
-        <button type="button" onClick={onCancel} className={cn(ACTION, 'justify-self-end')}>
-          {t('common.cancel')}
-        </button>
-      </div>
-    </header>
+    <HeaderBar className={cn('grid grid-cols-[1fr_auto_1fr] gap-2 px-5', className)}>
+      <button type="button" onClick={onToggleAll} className={cn(ACTION, 'justify-self-start')}>
+        {allSelected ? t('selection.clearAll') : t('selection.selectAll')}
+      </button>
+      <span className="text-(length:--p-text-body) font-semibold tabular-nums text-heading">
+        {t('selection.count', { count })}
+      </span>
+      <button type="button" onClick={onCancel} className={cn(ACTION, 'justify-self-end')}>
+        {t('common.cancel')}
+      </button>
+    </HeaderBar>
   )
 }
