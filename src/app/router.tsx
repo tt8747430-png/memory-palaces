@@ -284,15 +284,14 @@ const settingsAboutRoute = createRoute({
   component: SettingsAboutScreen,
 })
 
-const devRoutes = import.meta.env.DEV
-  ? [
+const devRoutes =  [
       createRoute({
         getParentRoute: () => rootRoute,
         path: '/dev/kitchen-sink',
         component: lazyRouteComponent(() => import('@/pages/dev-preview'), 'DevPreviewPage'),
       }),
     ]
-  : []
+
 
 const routeTree = rootRoute.addChildren([
   loginRoute,
