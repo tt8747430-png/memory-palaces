@@ -50,7 +50,8 @@
 
   :root {
     /* Visible-viewport metrics, kept live by `useKeyboardInset`. Defaults mean "no keyboard": the
-       shell is full height and nothing is inset. */
+       app is full height, flush with the top, and nothing is inset. */
+    --vv-top: 0px;
     --vvh: 100%;
     --kb-inset: 0px;
 
@@ -65,8 +66,8 @@
   html {
     height: 100%;
     /* No document-level scroll surface: the app scrolls inside `<main>` / sheet bodies. When the
-       keyboard opens, shells shrink to `--vvh` (see `useKeyboardInset`) so their scroller fits
-       above it — the fixed shell never slides, and `#root` keeps painting the background behind. */
+       keyboard opens, `#root` shrinks to `--vvh` (see `useKeyboardInset`) so every scroller fits
+       above it — nothing here ever slides. */
     overflow: hidden;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
@@ -77,6 +78,11 @@
     margin: 0;
     height: 100%;
     overflow: hidden;
+    /* The page backdrop lives here, on the full layout viewport, rather than on `#root` — `#root`
+       shrinks to the space above the keyboard, and the strip it gives up must stay painted while
+       the keyboard slides in and out. */
+    background: var(--bg-daylight);
+    background-repeat: no-repeat;
     font-family: var(--p-font-sans), sans-serif;
     color: var(--text-primary);
     overscroll-behavior: none;
@@ -87,11 +93,16 @@
     -webkit-touch-callout: none;
   }
 
+  /* The app fills the *visible* viewport, not the layout viewport. iOS leaves the layout viewport
+     at full height when the keyboard opens and instead slides the visual viewport down to reveal
+     the focused field, which drags every `position: fixed` box up off the top of the screen.
+     Sizing to `--vvh` alone would then strand the app `--vv-top` px above the keyboard (a band of
+     bare backdrop) and clip the same amount — the sticky header — off the top; offsetting by
+     `--vv-top` puts it back. Both are kept live by `useKeyboardInset`. */
   #root {
     position: fixed;
-    inset: 0;
-    background: var(--bg-daylight);
-    background-repeat: no-repeat;
+    inset: var(--vv-top) 0 auto 0;
+    height: var(--vvh);
   }
 
   h1,

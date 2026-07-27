@@ -31,9 +31,12 @@ export function RootLayout() {
 
   return (
     <>
+      {/* `position: fixed` anchors to the layout viewport, which iOS leaves behind when the
+          keyboard slides the visual viewport down — so this rides the same `--vv-top` offset as
+          `#root` and stays capping the status area. */}
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-x-0 top-0 z-1000000000 bg-primary"
+        className="pointer-events-none fixed inset-x-0 top-[var(--vv-top)] z-1000000000 bg-primary"
         style={{ height: 'env(safe-area-inset-top)' }}
       />
       <div inert={!splashDone} className="contents">
