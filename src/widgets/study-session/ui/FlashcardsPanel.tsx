@@ -1,11 +1,8 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { useTranslation } from 'react-i18next'
-import { Sparkles } from 'lucide-react'
+import { AnimatePresence } from 'motion/react'
 import type { StudyMode } from '@/entities/preferences'
-import { cn, speak, speechAvailable, srsStatus, success, tick, useShake } from '@/shared/lib'
+import { speak, speechAvailable, srsStatus, success, tick, useShake } from '@/shared/lib'
 import type { SrsState } from '@/shared/lib'
-import { Button, GradeButtons } from '@/shared/ui'
 import {
   applyScope,
   canUndo,
@@ -24,6 +21,8 @@ import {
   type SwipeDirection,
 } from '@/shared/config/flashcard-swipe'
 import { StudyDeck } from './StudyDeck'
+import { EmptyScope } from './EmptyScope'
+import { type RemainingTally, SessionFooter } from './SessionFooter'
 import { GearSheet } from './GearSheet'
 import { ModeSheet } from './ModeSheet'
 import { QuickActionsSheet } from './QuickActionsSheet'
@@ -78,8 +77,6 @@ export function FlashcardsPanel({
   now = Date.now(),
 }: FlashcardsPanelProps) {
   const canSpeak = speechAvailable()
-  const reduce = useReducedMotion()
-  const crossfade = { duration: reduce ? 0 : 0.12 }
 
   const [scope, setScope] = useState<Scope>({ kind: 'all' })
   const [gearOpen, setGearOpen] = useState(false)
@@ -219,8 +216,8 @@ export function FlashcardsPanel({
       ? { graded: state.graded, learning: state.piles.learning, known: state.piles.known }
       : { graded: 0, learning: 0, known: 0 }
 
-  const remaining = useMemo(() => {
-    const tally = { new: 0, learning: 0, known: 0 }
+  const remaining = useMemo<RemainingTally>(() => {
+    const tally: RemainingTally = { new: 0, learning: 0, known: 0 }
     if (state.status !== 'review') return tally
     for (const queuedId of state.queue) {
       const queued = byId.get(queuedId)
@@ -279,40 +276,13 @@ export function FlashcardsPanel({
       </div>
 
       {card ? (
-        <div className="shrink-0 border-t border-border/60 bg-card-glass px-5 pb-[max(0.875rem,env(safe-area-inset-bottom))] pt-2.5">
-          <div className="h-14">
-            <AnimatePresence initial={false} mode="wait">
-              {flipped ? (
-                <motion.div
-                  key="grade"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={crossfade}
-                  className="h-full"
-                >
-                  <GradeButtons
-                    className="h-full"
-                    srs={card.card.srs}
-                    now={now}
-                    onGrade={applyGrade}
-                  />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="preview"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={crossfade}
-                  className="flex h-full items-center justify-center"
-                >
-                  <RemainingCounts remaining={remaining} current={srsStatus(card.card.srs)} />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
+        <SessionFooter
+          flipped={flipped}
+          srs={card.card.srs}
+          now={now}
+          remaining={remaining}
+          onGrade={applyGrade}
+        />
       ) : null}
 
       {canEdit && onEditCard && card ? (
@@ -367,77 +337,5 @@ export function FlashcardsPanel({
         {completed ? <CompletionOverlay summary={summaryNow} onDone={handoff} /> : null}
       </AnimatePresence>
     </>
-  )
-}
-
-function EmptyScope({
-  emptyScope,
-  onChangeSelection,
-  onStudyAll,
-  onDone,
-}: {
-  emptyScope: boolean
-  onChangeSelection: () => void
-  onStudyAll: () => void
-  onDone: () => void
-}) {
-  const { t } = useTranslation()
-  return (
-    <div className="flex flex-col items-center gap-5 px-1 text-center">
-      <div className="grid size-16 place-items-center rounded-card-featured bg-info-surface">
-        <Sparkles className="size-8 text-[var(--rating)]" aria-hidden />
-      </div>
-      <div>
-        <h2 className="mb-1 text-[length:var(--p-text-headline)] font-bold text-heading">
-          {emptyScope ? t('study.nothingSelected') : t('study.allCaughtUp')}
-        </h2>
-        <p className="mx-auto max-w-[34ch] text-[length:var(--p-text-body)]">
-          {emptyScope ? t('study.nothingSelectedHint') : t('study.allCaughtUpHint')}
-        </p>
-      </div>
-      {emptyScope ? (
-        <div className="flex gap-3">
-          <Button variant="secondary" onClick={onChangeSelection}>
-            {t('study.changeSelection')}
-          </Button>
-          <Button onClick={onStudyAll}>{t('study.studyAllCards')}</Button>
-        </div>
-      ) : (
-        <Button onClick={onDone}>{t('study.done')}</Button>
-      )}
-    </div>
-  )
-}
-
-const COUNT_CHIP: Record<'new' | 'learning' | 'known', string> = {
-  new: 'bg-info-surface text-info-foreground',
-  learning: 'bg-secondary text-secondary-foreground',
-  known: 'bg-[var(--success-surface)] text-[var(--success-on-surface)]',
-}
-
-function RemainingCounts({
-  remaining,
-  current,
-}: {
-  remaining: Record<'new' | 'learning' | 'known', number>
-  current?: 'new' | 'learning' | 'known'
-}) {
-  const { t } = useTranslation()
-  return (
-    <div className="flex items-center justify-center gap-2">
-      {(['new', 'learning', 'known'] as const).map((key) => (
-        <span
-          key={key}
-          className={cn(
-            'inline-flex items-baseline gap-1.5 rounded-pill px-3 py-1.5 text-(length:--p-text-label) font-bold tabular-nums',
-            COUNT_CHIP[key],
-            current === key && 'ring-2 ring-(--ring)/30',
-          )}
-        >
-          {remaining[key]}
-          <span className="font-medium">{t(`srs.${key}` as never)}</span>
-        </span>
-      ))}
-    </div>
   )
 }

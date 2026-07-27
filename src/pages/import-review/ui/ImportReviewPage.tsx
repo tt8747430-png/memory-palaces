@@ -1,22 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { Download, Pencil, Trash2 } from 'lucide-react'
+import { Download, Trash2 } from 'lucide-react'
 import { useCardStoreApi } from '@/entities/card'
 import { useQuestionStoreApi } from '@/entities/question'
 import { applyDeckContent } from '@/features/content'
 import type { ParsedCard } from '@/shared/lib'
-import {
-  AppScreen,
-  Button,
-  ConfirmDialog,
-  IconButton,
-  OverflowMenuButton,
-  ScreenHeader,
-  Sheet,
-  Switch,
-} from '@/shared/ui'
-import { CardFields, type DraftCard, useImportDraft } from '@/widgets/content-editor'
+import { AppScreen, Button, ConfirmDialog, IconButton, ScreenHeader } from '@/shared/ui'
+import { type DraftCard, useImportDraft } from '@/widgets/content-editor'
+import { EditDraftSheet } from './EditDraftSheet'
+import { RestoreToggle, ReviewRow } from './ReviewRow'
 
 export interface ImportReviewPageProps {
   deckId: string
@@ -187,7 +180,7 @@ export function ImportReviewPage({ deckId, onBack, onDone }: ImportReviewPagePro
         </section>
       </div>
 
-      <EditCardSheet
+      <EditDraftSheet
         card={editing}
         onSave={(id, edit) => editCard(id, edit)}
         onClose={() => setEditingId(null)}
@@ -208,132 +201,5 @@ export function ImportReviewPage({ deckId, onBack, onDone }: ImportReviewPagePro
         }}
       />
     </AppScreen>
-  )
-}
-
-function RestoreToggle({
-  label,
-  checked,
-  onChange,
-  last = false,
-}: {
-  label: string
-  checked: boolean
-  onChange: (value: boolean) => void
-  last?: boolean
-}) {
-  return (
-    <label
-      className={`flex items-center justify-between gap-3 px-4 py-3 ${last ? '' : 'border-b border-border'}`}
-    >
-      <span className="text-[length:var(--p-text-body)] font-medium text-heading">{label}</span>
-      <Switch label={label} checked={checked} onCheckedChange={onChange} />
-    </label>
-  )
-}
-
-function ReviewRow({
-  card,
-  onEdit,
-  onDelete,
-}: {
-  card: DraftCard
-  onEdit: () => void
-  onDelete: () => void
-}) {
-  const { t } = useTranslation()
-  return (
-    <div className="flex items-center gap-2 rounded-card border border-border bg-card p-4 shadow-rest">
-      <button type="button" onClick={onEdit} className="min-w-0 flex-1 text-left">
-        <p className="truncate text-[length:var(--p-text-sub)] font-semibold text-heading">
-          {card.front}
-        </p>
-        <p className="mt-0.5 truncate text-[length:var(--p-text-label)] text-muted-foreground">
-          {card.back}
-        </p>
-      </button>
-      <OverflowMenuButton
-        variant="tint"
-        size="sm"
-        label={t('cards.row.menuLabel')}
-        actions={[
-          {
-            id: 'edit',
-            label: t('common.edit'),
-            icon: <Pencil className="size-5" aria-hidden />,
-            onSelect: onEdit,
-          },
-          {
-            id: 'delete',
-            label: t('common.delete'),
-            icon: <Trash2 className="size-5" aria-hidden />,
-            destructive: true,
-            onSelect: onDelete,
-          },
-        ]}
-      />
-    </div>
-  )
-}
-
-function EditCardSheet({
-  card,
-  onSave,
-  onClose,
-}: {
-  card: DraftCard | null
-  onSave: (id: string, edit: { front: string; back: string; hint?: string; tip?: string }) => void
-  onClose: () => void
-}) {
-  const { t } = useTranslation()
-  const [front, setFront] = useState('')
-  const [back, setBack] = useState('')
-  const [hint, setHint] = useState('')
-  const [tip, setTip] = useState('')
-
-  useEffect(() => {
-    if (card) {
-      setFront(card.front)
-      setBack(card.back)
-      setHint(card.hint ?? '')
-      setTip(card.tip ?? '')
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [card?.id])
-
-  const valid = front.trim().length > 0 && back.trim().length > 0
-  const save = () => {
-    if (!card || !valid) return
-    onSave(card.id, {
-      front: front.trim(),
-      back: back.trim(),
-      hint: hint.trim() || undefined,
-      tip: tip.trim() || undefined,
-    })
-    onClose()
-  }
-
-  return (
-    <Sheet
-      open={card !== null}
-      onOpenChange={(open) => !open && onClose()}
-      title={t('cards.review.editTitle')}
-      footer={
-        <Button size="lg" className="w-full" disabled={!valid} onClick={save}>
-          {t('common.saveChanges')}
-        </Button>
-      }
-    >
-      <CardFields
-        front={front}
-        back={back}
-        hint={hint}
-        tip={tip}
-        onFront={setFront}
-        onBack={setBack}
-        onHint={setHint}
-        onTip={setTip}
-      />
-    </Sheet>
   )
 }

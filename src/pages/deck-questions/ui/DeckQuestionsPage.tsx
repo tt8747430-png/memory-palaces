@@ -1,19 +1,7 @@
-import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import {
-  ArrowDownAZ,
-  Brain,
-  Clock,
-  Download,
-  FileText,
-  GripVertical,
-  HelpCircle,
-  Play,
-  Plus,
-  Trash2,
-  Upload,
-} from 'lucide-react'
+import { ArrowDownAZ, Clock, Download, GripVertical, Plus, Trash2, Upload } from 'lucide-react'
 import {
   type Question,
   questionsForDeck,
@@ -35,20 +23,21 @@ import { applyDeckContent, exportQuestionsCsv, readContentFile } from '@/feature
 import { ContentImportError, type DeckContentData, useMultiSelect } from '@/shared/lib'
 import {
   AppScreen,
-  Button,
   ConfirmDialog,
-  ImportRow,
   ScreenHeader,
   type SelectActionHandlers,
   SelectHeader,
   SelectToolbar,
   SelectToolbarDock,
-  Sheet,
   SortControl,
   type SortControlOption,
   SpeedDial,
 } from '@/shared/ui'
 import { QuestionRow, ReorderableList, type RowDragHandle } from '@/widgets/content-editor'
+import { type QuestionSort, sortQuestions } from '../model/sort-questions'
+import { EmptyQuestions } from './EmptyQuestions'
+import { QuestionTransferSheets } from './QuestionTransferSheets'
+import { TestLaunchCard } from './TestLaunchCard'
 
 export interface DeckQuestionsPageProps {
   deckId: string
@@ -57,8 +46,6 @@ export interface DeckQuestionsPageProps {
   onEditQuestion: (questionId: string) => void
   onStartTest: () => void
 }
-
-type QuestionSort = 'manual' | 'recent' | 'name'
 
 export function DeckQuestionsPage({
   deckId,
@@ -83,10 +70,8 @@ export function DeckQuestionsPage({
   const decksReady = useDeckStore(selectDecksReady)
   const ready = questionsReady && decksReady
   const prefs = usePreferencesStore(selectEffectivePreferences)
-  const swipe = prefs.swipe.card
 
   const deck = decks.find((candidate) => candidate.id === deckId)
-  const deckName = deck?.name ?? ''
   const questions = useMemo(() => questionsForDeck(allQuestions, deckId), [allQuestions, deckId])
 
   const [sort, setSort] = useState<QuestionSort>('manual')
@@ -95,21 +80,14 @@ export function DeckQuestionsPage({
   const [importOpen, setImportOpen] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
   const [pendingImport, setPendingImport] = useState<DeckContentData['questions'] | null>(null)
-  const fileRef = useRef<HTMLInputElement>(null)
 
   // Same selection model as the deck library and the card list: the page header carries it.
   const selection = useMultiSelect()
-  const selectMode = selection.active
-  const selectedIds = selection.ids
-  const selectedCount = selection.count
-  const exitSelect = selection.exit
-
   const sortedQuestions = useMemo(() => sortQuestions(questions, sort), [questions, sort])
   const { setPool } = selection
   useEffect(() => {
     setPool(sortedQuestions.map((question) => question.id))
   }, [sortedQuestions, setPool])
-  const reorderable = selectMode
 
   const sortOptions: SortControlOption<QuestionSort>[] = [
     { value: 'manual', label: t('cards.sort.manual'), icon: <GripVertical className="size-4" /> },
@@ -122,12 +100,12 @@ export function DeckQuestionsPage({
       key={question.id}
       question={question}
       index={sortedQuestions.indexOf(question)}
-      selectMode={selectMode}
-      selected={selectedIds.has(question.id)}
-      reorderable={reorderable}
+      selectMode={selection.active}
+      selected={selection.has(question.id)}
+      reorderable={selection.active}
       dragHandle={dragHandle}
       dragging={dragging}
-      swipe={swipe}
+      swipe={prefs.swipe.card}
       onToggleSelect={() => selection.toggle(question.id)}
       onRequestSelect={() => selection.begin(question.id)}
       onEdit={() => onEditQuestion(question.id)}
@@ -139,30 +117,7 @@ export function DeckQuestionsPage({
     />
   )
 
-  const confirmSingleDelete = () => {
-    if (!pendingDeleteId) return
-    void deleteQuestion(questionStore, pendingDeleteId)
-    toast.success(t('cards.transfer.deleted'))
-  }
-  const confirmBulkDelete = () => {
-    const ids = [...selectedIds]
-    void Promise.all(ids.map((id) => deleteQuestion(questionStore, id)))
-    toast.success(t('cards.transfer.deletedMany', { count: ids.length }))
-    exitSelect()
-  }
-
-  const pickFile = (accept: string) => {
-    setImportOpen(false)
-    const input = fileRef.current
-    if (!input) return
-    input.value = ''
-    input.accept = accept
-    input.click()
-  }
-
-  const onFile = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
+  const importFile = async (file: File) => {
     try {
       const data = await readContentFile(file)
       if (data.questions.length === 0) {
@@ -187,10 +142,17 @@ export function DeckQuestionsPage({
     toast.success(t('questions.transfer.imported', { count: applied.questions }))
   }
 
-  const closeExport = (run: () => void) => {
-    setExportOpen(false)
-    run()
-    toast.success(t('questions.transfer.exported'))
+  const selectHandlers: SelectActionHandlers = {
+    duplicate: {
+      disabled: selection.count === 0,
+      onAction: () => {
+        const ids = [...selection.ids]
+        void Promise.all(ids.map((id) => duplicateQuestion(questionStore, id)))
+        toast.success(t('questions.bulk.duplicated', { count: ids.length }))
+        selection.exit()
+      },
+    },
+    delete: { disabled: selection.count === 0, onAction: () => setBulkDeleteOpen(true) },
   }
 
   if (!ready) {
@@ -201,31 +163,15 @@ export function DeckQuestionsPage({
     )
   }
 
-  const hasQuestions = questions.length > 0
-
-  // The bar the learner configured (Settings → Select toolbar) for questions.
-  const selectHandlers: SelectActionHandlers = {
-    duplicate: {
-      disabled: selectedCount === 0,
-      onAction: () => {
-        const ids = [...selectedIds]
-        void Promise.all(ids.map((id) => duplicateQuestion(questionStore, id)))
-        toast.success(t('questions.bulk.duplicated', { count: ids.length }))
-        exitSelect()
-      },
-    },
-    delete: { disabled: selectedCount === 0, onAction: () => setBulkDeleteOpen(true) },
-  }
-
   return (
     <AppScreen
       header={
-        selectMode ? (
+        selection.active ? (
           <SelectHeader
-            count={selectedCount}
+            count={selection.count}
             allSelected={selection.allSelected}
             onToggleAll={selection.toggleAll}
-            onCancel={exitSelect}
+            onCancel={selection.exit}
           />
         ) : (
           <ScreenHeader
@@ -240,47 +186,12 @@ export function DeckQuestionsPage({
       <div className="mt-2 space-y-4 pb-24">
         {/* A selection is about the rows, so the test call-to-action steps out of the way —
             the same way the home screen drops to bare rows while you are choosing decks. */}
-        {selectMode ? null : (
-          <div className="rounded-card-featured bg-card p-4 shadow-featured">
-            <div className="flex items-center gap-3">
-              <span
-                className="grid size-11 shrink-0 place-items-center rounded-control bg-primary text-primary-foreground"
-                aria-hidden
-              >
-                <Brain className="size-5" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-(length:--p-text-sub) font-bold text-heading">
-                  {t('questions.testLead')}
-                </p>
-                <p className="text-(length:--p-text-label) text-muted-foreground">
-                  {hasQuestions
-                    ? t(
-                        questions.length === 1
-                          ? 'questions.testReadyOne'
-                          : 'questions.testReadyOther',
-                        {
-                          count: questions.length,
-                        },
-                      )
-                    : t('questions.testNone')}
-                </p>
-              </div>
-            </div>
-            <Button
-              size="lg"
-              className="mt-3.5 w-full"
-              disabled={!hasQuestions}
-              onClick={onStartTest}
-            >
-              <Play className="size-[18px]" aria-hidden />
-              {t('questions.startTest')}
-            </Button>
-          </div>
+        {selection.active ? null : (
+          <TestLaunchCard questionCount={questions.length} onStartTest={onStartTest} />
         )}
 
         <section aria-label={t('questions.inDeck')} className="space-y-3">
-          {!selectMode && questions.length > 1 ? (
+          {!selection.active && questions.length > 1 ? (
             <div className="flex justify-end">
               <SortControl
                 label={t('cards.sortLabel')}
@@ -296,8 +207,8 @@ export function DeckQuestionsPage({
           ) : (
             <ReorderableList
               items={sortedQuestions}
-              reorderable={reorderable}
-              selectedIds={selectedIds}
+              reorderable={selection.active}
+              selectedIds={selection.ids}
               onReorder={(ids) => {
                 if (sort !== 'manual') setSort('manual')
                 void reorderQuestions(questionStore, ids)
@@ -308,7 +219,7 @@ export function DeckQuestionsPage({
         </section>
       </div>
 
-      {selectMode ? (
+      {selection.active ? (
         <SelectToolbarDock>
           <SelectToolbar actions={prefs.selectToolbar.question} handlers={selectHandlers} />
         </SelectToolbarDock>
@@ -323,20 +234,28 @@ export function DeckQuestionsPage({
         description={t('cards.delete.body')}
         confirmLabel={t('common.delete')}
         cancelLabel={t('common.cancel')}
-        onConfirm={confirmSingleDelete}
+        onConfirm={() => {
+          if (!pendingDeleteId) return
+          void deleteQuestion(questionStore, pendingDeleteId)
+          toast.success(t('cards.transfer.deleted'))
+        }}
       />
       <ConfirmDialog
         open={bulkDeleteOpen}
         onOpenChange={setBulkDeleteOpen}
         destructive
         icon={<Trash2 className="size-6" aria-hidden />}
-        title={t('cards.delete.bulkTitle', { count: selectedCount })}
+        title={t('cards.delete.bulkTitle', { count: selection.count })}
         description={t('cards.delete.body')}
         confirmLabel={t('common.delete')}
         cancelLabel={t('common.cancel')}
-        onConfirm={confirmBulkDelete}
+        onConfirm={() => {
+          const ids = [...selection.ids]
+          void Promise.all(ids.map((id) => deleteQuestion(questionStore, id)))
+          toast.success(t('cards.transfer.deletedMany', { count: ids.length }))
+          selection.exit()
+        }}
       />
-
       <ConfirmDialog
         open={pendingImport !== null}
         onOpenChange={(open) => !open && setPendingImport(null)}
@@ -353,54 +272,20 @@ export function DeckQuestionsPage({
         onConfirm={() => void confirmImport()}
       />
 
-      <input
-        ref={fileRef}
-        type="file"
-        className="hidden"
-        onChange={onFile}
-        aria-hidden
-        tabIndex={-1}
+      <QuestionTransferSheets
+        importOpen={importOpen}
+        onImportOpenChange={setImportOpen}
+        onPickFile={(file) => void importFile(file)}
+        exportOpen={exportOpen}
+        onExportOpenChange={setExportOpen}
+        canExport={questions.length > 0}
+        onExportCsv={() => {
+          exportQuestionsCsv(deck?.name ?? '', questions)
+          toast.success(t('questions.transfer.exported'))
+        }}
       />
 
-      <Sheet
-        open={importOpen}
-        onOpenChange={setImportOpen}
-        title={t('questions.transfer.importTitle')}
-        description={t('questions.transfer.importSubtitle')}
-      >
-        <div className="flex flex-col gap-2.5 pb-2">
-          <ImportRow
-            icon={<Upload className="size-5" aria-hidden />}
-            tone="accent"
-            badge="CSV"
-            title={t('questions.transfer.importFile')}
-            subtitle={t('questions.transfer.importFileSub')}
-            onClick={() => pickFile('.csv')}
-          />
-        </div>
-      </Sheet>
-
-      <Sheet
-        open={exportOpen}
-        onOpenChange={setExportOpen}
-        title={t('questions.transfer.exportTitle')}
-        description={t('questions.transfer.exportSubtitle')}
-      >
-        <div className="flex flex-col gap-2.5 pb-2">
-          <ImportRow
-            icon={<FileText className="size-5" aria-hidden />}
-            tone="positive"
-            badge="CSV"
-            trailing={<Download className="size-5 shrink-0 text-faint" aria-hidden />}
-            title={t('questions.transfer.exportCsv')}
-            subtitle={t('questions.transfer.exportCsvSub')}
-            disabled={!hasQuestions}
-            onClick={() => closeExport(() => exportQuestionsCsv(deckName, questions))}
-          />
-        </div>
-      </Sheet>
-
-      {!selectMode ? (
+      {!selection.active ? (
         <SpeedDial
           label={t('questions.quickActions')}
           className="bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+0.75rem)]"
@@ -427,37 +312,5 @@ export function DeckQuestionsPage({
         />
       ) : null}
     </AppScreen>
-  )
-}
-
-function sortQuestions(questions: Question[], sort: QuestionSort): Question[] {
-  switch (sort) {
-    case 'name':
-      return [...questions].sort((a, b) => a.prompt.localeCompare(b.prompt))
-    case 'recent':
-      return [...questions].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-    default:
-      return questions
-  }
-}
-
-function EmptyQuestions({ onAdd }: { onAdd: () => void }) {
-  const { t } = useTranslation()
-  return (
-    <div className="flex flex-col items-center px-6 py-10 text-center">
-      <div className="mb-4 grid size-14 place-items-center rounded-card-featured bg-info-surface text-accent">
-        <HelpCircle className="size-6" aria-hidden />
-      </div>
-      <h3 className="mb-1.5 text-balance text-(length:--p-text-sub) font-semibold text-heading">
-        {t('questions.emptyTitle')}
-      </h3>
-      <p className="max-w-[34ch] text-pretty text-(length:--p-text-body) text-muted-foreground">
-        {t('questions.emptyHint')}
-      </p>
-      <Button className="mt-5" onClick={onAdd}>
-        <Plus className="size-[18px]" aria-hidden />
-        {t('questions.addQuestion')}
-      </Button>
-    </div>
   )
 }

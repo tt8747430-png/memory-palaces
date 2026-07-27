@@ -1,63 +1,52 @@
-import { useEffect } from 'react'
 import {
   createRootRoute,
   createRoute,
   createRouter,
   lazyRouteComponent,
   redirect,
-  useCanGoBack,
-  useNavigate,
-  useRouter,
 } from '@tanstack/react-router'
-import { LoginPage } from '@/pages/login'
-import { SignupPage } from '@/pages/signup'
-import { ForgotPasswordPage } from '@/pages/forgot-password'
-import { WelcomePage } from '@/pages/welcome'
-import { DeckLibraryPage } from '@/pages/deck-library'
-import { ArchivedDecksPage } from '@/pages/archived-decks'
-import { DeckDetailPage } from '@/pages/deck-detail'
-import { DeckSettingsPage } from '@/pages/deck-settings'
-import { DeckQuestionsPage } from '@/pages/deck-questions'
-import { QuestionEditorPage } from '@/pages/question-editor'
-import { CardEditorPage } from '@/pages/card-editor'
-import { PasteNotesPage } from '@/pages/paste-notes'
-import { ImportReviewPage } from '@/pages/import-review'
-import { MatchPage } from '@/pages/match'
-import { QuizPage } from '@/pages/quiz'
-import { StudyCardsPage } from '@/pages/study'
-import { ProfilePage } from '@/pages/profile'
-import { StreakPage } from '@/pages/streak'
-import { BadgesPage } from '@/pages/badges'
-import { BadgeDetailPage } from '@/pages/badge-detail'
-import { AchievementsPage } from '@/pages/achievements'
-import { AchievementDetailPage } from '@/pages/achievement-detail'
-import { SettingsPage } from '@/pages/settings'
-import { SettingsProfilePage } from '@/pages/settings-profile'
-import { SettingsChangePasswordPage } from '@/pages/settings-change-password'
-import { SettingsPrivacyPage } from '@/pages/settings-privacy'
-import { SettingsSwipePage } from '@/pages/settings-swipe'
-import { SettingsSelectPage } from '@/pages/settings-select'
-import { SettingsHelpPage } from '@/pages/settings-help'
-import { SettingsAboutPage } from '@/pages/settings-about'
-import { NotificationsPage } from '@/pages/notifications'
-import { useSessionStore } from '@/entities/session'
-import { selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
-import { useAuthActions } from '@/features/session'
-import { createDeck } from '@/features/deck'
-import { nextDefaultName } from '@/shared/lib'
 import { ROUTES } from '@/shared/config/routes'
 import { RootLayout } from './RootLayout'
 import { authRedirect } from './auth-guard'
 import { services } from './composition-root'
-
-function useBack(fallback: () => void): () => void {
-  const router = useRouter()
-  const canGoBack = useCanGoBack()
-  return () => {
-    if (canGoBack) router.history.back()
-    else fallback()
-  }
-}
+import { ForgotScreen, LoginScreen, SignupScreen, WelcomeScreen } from './routes/auth-screens'
+import {
+  CardEditorScreen,
+  DeckDetailScreen,
+  DeckImportScreen,
+  DeckMatchScreen,
+  DeckPasteScreen,
+  DeckQuestionsScreen,
+  DeckQuizScreen,
+  DeckSettingsScreen,
+  DeckStudyScreen,
+  NewPasteScreen,
+  QuestionEditorScreen,
+} from './routes/deck-screens'
+import {
+  ArchivedScreen,
+  HomeScreen,
+  LibraryScreen,
+  NotificationsScreen,
+} from './routes/library-screens'
+import {
+  AchievementDetailScreen,
+  AchievementsScreen,
+  BadgeDetailScreen,
+  BadgesScreen,
+  ProfileScreen,
+  StreakScreen,
+} from './routes/profile-screens'
+import {
+  SettingsAboutScreen,
+  SettingsChangePasswordScreen,
+  SettingsHelpScreen,
+  SettingsPrivacyScreen,
+  SettingsProfileScreen,
+  SettingsScreen,
+  SettingsSelectScreen,
+  SettingsSwipeScreen,
+} from './routes/settings-screens'
 
 const rootRoute = createRootRoute({
   component: RootLayout,
@@ -70,605 +59,238 @@ const rootRoute = createRootRoute({
   },
 })
 
-function LoginRoute() {
-  const navigate = useNavigate()
-  return (
-    <LoginPage
-      onAuthed={() => navigate({ to: ROUTES.home })}
-      onGuest={() => navigate({ to: ROUTES.home })}
-      onSignup={() => navigate({ to: ROUTES.signup })}
-      onForgot={() => navigate({ to: ROUTES.forgot })}
-    />
-  )
-}
-
+// ---- Auth ----
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.login,
-  component: LoginRoute,
+  component: LoginScreen,
 })
-
-function SignupRoute() {
-  const navigate = useNavigate()
-  return (
-    <SignupPage
-      onSuccess={() => navigate({ to: ROUTES.welcome })}
-      onGuest={() => navigate({ to: ROUTES.home })}
-      onLogin={() => navigate({ to: ROUTES.login })}
-    />
-  )
-}
-
 const signupRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.signup,
-  component: SignupRoute,
+  component: SignupScreen,
 })
-
-function ForgotRoute() {
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.login }))
-  return <ForgotPasswordPage onBack={back} />
-}
-
 const forgotRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.forgot,
-  component: ForgotRoute,
+  component: ForgotScreen,
 })
-
-function WelcomeRoute() {
-  const navigate = useNavigate()
-  return <WelcomePage onContinue={() => navigate({ to: ROUTES.home })} />
-}
-
 const welcomeRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.welcome,
-  component: WelcomeRoute,
+  component: WelcomeScreen,
 })
 
-/**
- * The library, scoped either to the unfiled root (home) or to one folder. A folder is its own
- * route rather than a mode of home, so it behaves like the page it looks like: the tab bar steps
- * aside, the back gesture leaves the folder instead of the app, and the folder survives a reload.
- */
-function LibraryRoute({ folderId }: { folderId: string | null }) {
-  const navigate = useNavigate()
-  const leaveFolder = useBack(() => navigate({ to: ROUTES.home }))
-  return (
-    <DeckLibraryPage
-      folderId={folderId}
-      onOpenFolder={(id) => navigate({ to: ROUTES.folder, params: { folderId: id } })}
-      onCloseFolder={leaveFolder}
-      // The folder this route names is gone (deleted from inside it, or a stale link). Replace
-      // rather than pop: there may be no history to pop back to.
-      onFolderGone={() => navigate({ to: ROUTES.home, replace: true })}
-      onOpenDeck={(deckId) => navigate({ to: ROUTES.deckDetail, params: { deckId } })}
-      onOpenDeckSettings={(deckId) => navigate({ to: ROUTES.deckSettings, params: { deckId } })}
-      onImportPaste={() => navigate({ to: ROUTES.newPaste })}
-      onReviewDeck={(deckId) => navigate({ to: ROUTES.deckImport, params: { deckId } })}
-      onOpenProfile={() => navigate({ to: ROUTES.profile })}
-      onOpenNotifications={() => navigate({ to: ROUTES.notifications })}
-      onOpenStreak={() => navigate({ to: ROUTES.streak })}
-      onOpenArchived={() => navigate({ to: ROUTES.archived })}
-    />
-  )
-}
-
-function HomeRoute() {
-  return <LibraryRoute folderId={null} />
-}
-
+// ---- Library ----
 const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.home,
-  component: HomeRoute,
+  component: HomeScreen,
 })
-
-function FolderRoute() {
-  const { folderId } = folderRoute.useParams()
-  return <LibraryRoute folderId={folderId} />
-}
+const archivedRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.archived,
+  component: ArchivedScreen,
+})
+const notificationsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.notifications,
+  component: NotificationsScreen,
+})
 
 const folderRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.folder,
-  component: FolderRoute,
+  component: function Folder() {
+    return <LibraryScreen folderId={folderRoute.useParams().folderId} />
+  },
 })
 
-function DeckDetailRoute() {
-  const { deckId } = deckDetailRoute.useParams()
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.home }))
-  return (
-    <DeckDetailPage
-      deckId={deckId}
-      onBack={back}
-      onOpenSettings={() => navigate({ to: ROUTES.deckSettings, params: { deckId } })}
-      onStudy={() => navigate({ to: ROUTES.deckStudy, params: { deckId } })}
-      onMatch={() => navigate({ to: ROUTES.deckMatch, params: { deckId } })}
-      onTest={() => navigate({ to: ROUTES.deckQuestions, params: { deckId } })}
-      onAddCard={() => navigate({ to: ROUTES.deckCardNew, params: { deckId } })}
-      onEditCard={(cardId) => navigate({ to: ROUTES.deckCardEdit, params: { deckId, cardId } })}
-      onPasteNotes={() => navigate({ to: ROUTES.deckPaste, params: { deckId } })}
-      onReviewImport={() => navigate({ to: ROUTES.deckImport, params: { deckId } })}
-    />
-  )
-}
-
+// ---- Deck ----
 const deckDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.deckDetail,
-  component: DeckDetailRoute,
+  component: function DeckDetail() {
+    return <DeckDetailScreen {...deckDetailRoute.useParams()} />
+  },
 })
-
-function DeckMatchRoute() {
-  const { deckId } = deckMatchRoute.useParams()
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.deckDetail, params: { deckId } }))
-  return <MatchPage scope={{ kind: 'deck', deckId }} onBack={back} />
-}
-
-const deckMatchRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: ROUTES.deckMatch,
-  component: DeckMatchRoute,
-})
-
-function DeckQuizRoute() {
-  const { deckId } = deckQuizRoute.useParams()
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.deckDetail, params: { deckId } }))
-  return <QuizPage deckId={deckId} onBack={back} />
-}
-
-const deckQuizRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: ROUTES.deckQuiz,
-  component: DeckQuizRoute,
-})
-
-function DeckQuestionsRoute() {
-  const { deckId } = deckQuestionsRoute.useParams()
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.deckDetail, params: { deckId } }))
-  return (
-    <DeckQuestionsPage
-      deckId={deckId}
-      onBack={back}
-      onAddQuestion={() => navigate({ to: ROUTES.deckQuestionNew, params: { deckId } })}
-      onEditQuestion={(questionId) =>
-        navigate({ to: ROUTES.deckQuestionEdit, params: { deckId, questionId } })
-      }
-      onStartTest={() => navigate({ to: ROUTES.deckQuiz, params: { deckId } })}
-    />
-  )
-}
-
-const deckQuestionsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: ROUTES.deckQuestions,
-  component: DeckQuestionsRoute,
-})
-
-function DeckQuestionNewRoute() {
-  const { deckId } = deckQuestionNewRoute.useParams()
-  const navigate = useNavigate()
-  const toQuestions = () => navigate({ to: ROUTES.deckQuestions, params: { deckId } })
-  const back = useBack(toQuestions)
-  return <QuestionEditorPage deckId={deckId} onBack={back} onDone={toQuestions} />
-}
-
-const deckQuestionNewRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: ROUTES.deckQuestionNew,
-  component: DeckQuestionNewRoute,
-})
-
-function DeckQuestionEditRoute() {
-  const { deckId, questionId } = deckQuestionEditRoute.useParams()
-  const navigate = useNavigate()
-  const toQuestions = () => navigate({ to: ROUTES.deckQuestions, params: { deckId } })
-  const back = useBack(toQuestions)
-  return (
-    <QuestionEditorPage
-      deckId={deckId}
-      questionId={questionId}
-      onBack={back}
-      onDone={toQuestions}
-    />
-  )
-}
-
-const deckQuestionEditRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: ROUTES.deckQuestionEdit,
-  component: DeckQuestionEditRoute,
-})
-
-function DeckPasteRoute() {
-  const { deckId } = deckPasteRoute.useParams()
-  const navigate = useNavigate()
-  const toDeck = () => navigate({ to: ROUTES.deckDetail, params: { deckId } })
-  const back = useBack(toDeck)
-  return (
-    <PasteNotesPage
-      onBack={back}
-      onReview={() => navigate({ to: ROUTES.deckImport, params: { deckId }, replace: true })}
-    />
-  )
-}
-
-const deckPasteRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: ROUTES.deckPaste,
-  component: DeckPasteRoute,
-})
-
-function NewPasteRoute() {
-  const navigate = useNavigate()
-  const deckStore = useDeckStoreApi()
-  useEffect(() => {
-    deckStore.getState().start()
-  }, [deckStore])
-  const decks = useDeckStore(selectDecks)
-  const back = useBack(() => navigate({ to: ROUTES.home }))
-  const defaultName = nextDefaultName(
-    'New Deck',
-    decks.filter((d) => d.parentId === null && d.folderId === null).map((d) => d.name),
-  )
-  return (
-    <PasteNotesPage
-      newDeck
-      defaultDeckName={defaultName}
-      onBack={back}
-      onReview={(name) =>
-        void createDeck(deckStore, { name: name ?? defaultName }).then((deck) =>
-          navigate({ to: ROUTES.deckImport, params: { deckId: deck.id }, replace: true }),
-        )
-      }
-    />
-  )
-}
-
-const newPasteRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: ROUTES.newPaste,
-  component: NewPasteRoute,
-})
-
-function DeckImportRoute() {
-  const { deckId } = deckImportRoute.useParams()
-  const navigate = useNavigate()
-  const toDeck = () => navigate({ to: ROUTES.deckDetail, params: { deckId }, replace: true })
-  const back = useBack(toDeck)
-  return <ImportReviewPage deckId={deckId} onBack={back} onDone={toDeck} />
-}
-
-const deckImportRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: ROUTES.deckImport,
-  component: DeckImportRoute,
-})
-
-function DeckSettingsRoute() {
-  const { deckId } = deckSettingsRoute.useParams()
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.deckDetail, params: { deckId } }))
-  return (
-    <DeckSettingsPage
-      deckId={deckId}
-      onBack={back}
-      onDeleted={() => navigate({ to: ROUTES.home })}
-    />
-  )
-}
 
 const deckSettingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.deckSettings,
-  component: DeckSettingsRoute,
+  component: function DeckSettings() {
+    return <DeckSettingsScreen {...deckSettingsRoute.useParams()} />
+  },
 })
-
-function DeckStudyRoute() {
-  const { deckId } = deckStudyRoute.useParams()
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.deckDetail, params: { deckId } }))
-  return <StudyCardsPage scope={{ kind: 'deck', deckId }} onBack={back} />
-}
 
 const deckStudyRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.deckStudy,
-  component: DeckStudyRoute,
+  component: function DeckStudy() {
+    return <DeckStudyScreen {...deckStudyRoute.useParams()} />
+  },
 })
 
-function DeckCardNewRoute() {
-  const { deckId } = deckCardNewRoute.useParams()
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.deckDetail, params: { deckId } }))
-  return <CardEditorPage deckId={deckId} onBack={back} />
-}
+const deckMatchRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.deckMatch,
+  component: function DeckMatch() {
+    return <DeckMatchScreen {...deckMatchRoute.useParams()} />
+  },
+})
+
+const deckQuizRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.deckQuiz,
+  component: function DeckQuiz() {
+    return <DeckQuizScreen {...deckQuizRoute.useParams()} />
+  },
+})
+
+const deckQuestionsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.deckQuestions,
+  component: function DeckQuestions() {
+    return <DeckQuestionsScreen {...deckQuestionsRoute.useParams()} />
+  },
+})
+
+const deckQuestionNewRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.deckQuestionNew,
+  component: function DeckQuestionNew() {
+    return <QuestionEditorScreen {...deckQuestionNewRoute.useParams()} />
+  },
+})
+
+const deckQuestionEditRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.deckQuestionEdit,
+  component: function DeckQuestionEdit() {
+    return <QuestionEditorScreen {...deckQuestionEditRoute.useParams()} />
+  },
+})
+
+const deckPasteRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.deckPaste,
+  component: function DeckPaste() {
+    return <DeckPasteScreen {...deckPasteRoute.useParams()} />
+  },
+})
+
+const newPasteRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.newPaste,
+  component: NewPasteScreen,
+})
+
+const deckImportRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.deckImport,
+  component: function DeckImport() {
+    return <DeckImportScreen {...deckImportRoute.useParams()} />
+  },
+})
 
 const deckCardNewRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.deckCardNew,
-  component: DeckCardNewRoute,
+  component: function DeckCardNew() {
+    return <CardEditorScreen {...deckCardNewRoute.useParams()} />
+  },
 })
-
-function DeckCardEditRoute() {
-  const { deckId, cardId } = deckCardEditRoute.useParams()
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.deckDetail, params: { deckId } }))
-  return (
-    <CardEditorPage
-      deckId={deckId}
-      cardId={cardId}
-      onBack={back}
-      onNavigateCard={(id) =>
-        navigate({ to: ROUTES.deckCardEdit, params: { deckId, cardId: id }, replace: true })
-      }
-    />
-  )
-}
 
 const deckCardEditRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.deckCardEdit,
-  component: DeckCardEditRoute,
+  component: function DeckCardEdit() {
+    return <CardEditorScreen {...deckCardEditRoute.useParams()} />
+  },
 })
 
-function ProfileRoute() {
-  const navigate = useNavigate()
-  return (
-    <ProfilePage
-      onOpenSettings={() => navigate({ to: ROUTES.settings })}
-      onOpenNotifications={() => navigate({ to: ROUTES.notifications })}
-      onEditProfile={() => navigate({ to: ROUTES.settingsProfile })}
-      onOpenStreak={() => navigate({ to: ROUTES.streak })}
-      onOpenBadges={() => navigate({ to: ROUTES.badges })}
-      onOpenBadge={(badgeId) => navigate({ to: ROUTES.badgeDetail, params: { badgeId } })}
-      onOpenAchievements={() => navigate({ to: ROUTES.achievements })}
-      onOpenAchievement={(achievementId) =>
-        navigate({ to: ROUTES.achievementDetail, params: { achievementId } })
-      }
-    />
-  )
-}
-
+// ---- Profile ----
 const profileRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.profile,
-  component: ProfileRoute,
+  component: ProfileScreen,
 })
-
-function StreakRoute() {
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.profile }))
-  return <StreakPage onBack={back} />
-}
-
 const streakRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.streak,
-  component: StreakRoute,
+  component: StreakScreen,
 })
-
-function BadgesRoute() {
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.profile }))
-  return (
-    <BadgesPage
-      onBack={back}
-      onOpenBadge={(badgeId) => navigate({ to: ROUTES.badgeDetail, params: { badgeId } })}
-    />
-  )
-}
-
 const badgesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.badges,
-  component: BadgesRoute,
+  component: BadgesScreen,
 })
-
-function BadgeDetailRoute() {
-  const { badgeId } = badgeDetailRoute.useParams()
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.badges }))
-  return <BadgeDetailPage badgeId={badgeId} onBack={back} />
-}
+const achievementsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.achievements,
+  component: AchievementsScreen,
+})
 
 const badgeDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.badgeDetail,
-  component: BadgeDetailRoute,
+  component: function BadgeDetail() {
+    return <BadgeDetailScreen {...badgeDetailRoute.useParams()} />
+  },
 })
-
-function AchievementsRoute() {
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.profile }))
-  return (
-    <AchievementsPage
-      onBack={back}
-      onOpenAchievement={(achievementId) =>
-        navigate({ to: ROUTES.achievementDetail, params: { achievementId } })
-      }
-    />
-  )
-}
-
-const achievementsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: ROUTES.achievements,
-  component: AchievementsRoute,
-})
-
-function AchievementDetailRoute() {
-  const { achievementId } = achievementDetailRoute.useParams()
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.achievements }))
-  return <AchievementDetailPage achievementId={achievementId} onBack={back} />
-}
 
 const achievementDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.achievementDetail,
-  component: AchievementDetailRoute,
+  component: function AchievementDetail() {
+    return <AchievementDetailScreen {...achievementDetailRoute.useParams()} />
+  },
 })
 
-function SettingsRoute() {
-  const navigate = useNavigate()
-  const { signOut } = useAuthActions()
-  const sessionKind = useSessionStore((state) => state.session?.kind ?? 'guest')
-  const back = useBack(() => navigate({ to: ROUTES.profile }))
-  const logout = async () => {
-    await signOut()
-    await navigate({ to: ROUTES.login })
-  }
-  return (
-    <SettingsPage
-      onBack={back}
-      onEditProfile={() => navigate({ to: ROUTES.settingsProfile })}
-      onPrivacy={() => navigate({ to: ROUTES.settingsPrivacy })}
-      onSwipe={() => navigate({ to: ROUTES.settingsSwipe })}
-      onSelectToolbar={() => navigate({ to: ROUTES.settingsSelect })}
-      onHelp={() => navigate({ to: ROUTES.settingsHelp })}
-      onAbout={() => navigate({ to: ROUTES.settingsAbout })}
-      onSignIn={() => navigate({ to: ROUTES.login })}
-      onLogout={logout}
-      sessionKind={sessionKind}
-    />
-  )
-}
-
+// ---- Settings ----
 const settingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.settings,
-  component: SettingsRoute,
+  component: SettingsScreen,
 })
-
-function SettingsProfileRoute() {
-  const navigate = useNavigate()
-  const { signOut } = useAuthActions()
-  const back = useBack(() => navigate({ to: ROUTES.settings }))
-  const exitToLogin = async () => {
-    await signOut()
-    await navigate({ to: ROUTES.login })
-  }
-  return (
-    <SettingsProfilePage
-      onBack={back}
-      onChangePassword={() => navigate({ to: ROUTES.settingsChangePassword })}
-      onDeleteAccount={exitToLogin}
-    />
-  )
-}
-
-function SettingsChangePasswordRoute() {
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.settings }))
-  return <SettingsChangePasswordPage onBack={back} />
-}
-
-const settingsChangePasswordRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: ROUTES.settingsChangePassword,
-  component: SettingsChangePasswordRoute,
-})
-
 const settingsProfileRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.settingsProfile,
-  component: SettingsProfileRoute,
+  component: SettingsProfileScreen,
 })
-
-function SettingsPrivacyRoute() {
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.settings }))
-  return <SettingsPrivacyPage onBack={back} />
-}
-
+const settingsChangePasswordRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.settingsChangePassword,
+  component: SettingsChangePasswordScreen,
+})
 const settingsPrivacyRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.settingsPrivacy,
-  component: SettingsPrivacyRoute,
+  component: SettingsPrivacyScreen,
 })
-
-function SettingsSwipeRoute() {
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.settings }))
-  return <SettingsSwipePage onBack={back} />
-}
-
 const settingsSwipeRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.settingsSwipe,
-  component: SettingsSwipeRoute,
+  component: SettingsSwipeScreen,
 })
-
-function SettingsSelectRoute() {
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.settings }))
-  return <SettingsSelectPage onBack={back} />
-}
-
 const settingsSelectRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.settingsSelect,
-  component: SettingsSelectRoute,
+  component: SettingsSelectScreen,
 })
-
-function SettingsHelpRoute() {
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.settings }))
-  return <SettingsHelpPage onBack={back} />
-}
-
 const settingsHelpRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.settingsHelp,
-  component: SettingsHelpRoute,
+  component: SettingsHelpScreen,
 })
-
-function SettingsAboutRoute() {
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.settings }))
-  return <SettingsAboutPage onBack={back} />
-}
-
 const settingsAboutRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.settingsAbout,
-  component: SettingsAboutRoute,
-})
-
-function ArchivedDecksRoute() {
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.home }))
-  return <ArchivedDecksPage onBack={back} />
-}
-
-const archivedRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: ROUTES.archived,
-  component: ArchivedDecksRoute,
-})
-
-function NotificationsRoute() {
-  const navigate = useNavigate()
-  const back = useBack(() => navigate({ to: ROUTES.home }))
-  return <NotificationsPage onBack={back} />
-}
-
-const notificationsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: ROUTES.notifications,
-  component: NotificationsRoute,
+  component: SettingsAboutScreen,
 })
 
 // Dev-only component gallery. Gated on `import.meta.env.DEV` so the whole branch — including the
-// dynamic import of the page — is dead-code-eliminated from the production build (see `pages/dev-preview`).
+// dynamic import of the page — is dead-code-eliminated from the production build.
 const devRoutes = import.meta.env.DEV
   ? [
       createRoute({

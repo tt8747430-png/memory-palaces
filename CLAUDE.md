@@ -4,7 +4,7 @@
 
 **Be extremely concise. Sacrifice grammar for the sake of concision.**
 
-Applies to replies to the user, not to committed code/docs (those stay grammatical). Fragments over sentences. Drop articles, hedges, preamble, recaps, closing summaries. No restating the request. Answer first; detail only if asked.
+Applies to all. Fragments over sentences. Drop articles, hedges, preamble, recaps, closing summaries. No restating the request. Answer first; detail only if asked.
 
 Mindscape — an offline-first PWA for memory-palace / spaced-repetition study. React 19 + Vite + TypeScript, organized as **Feature-Sliced Design × Clean Architecture**. RxDB is the on-device source of truth.
 

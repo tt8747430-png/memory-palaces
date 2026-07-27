@@ -17,7 +17,7 @@ import {
 import { toast } from 'sonner'
 import type { StudyMode } from '@/entities/preferences'
 import { cn, motionSupported, requestMotionPermission } from '@/shared/lib'
-import { Button, Combobox, type ComboboxOption, Sheet } from '@/shared/ui'
+import { Button, Combobox, type ComboboxOption, Sheet, ToggleRow } from '@/shared/ui'
 import { type Scope, type ScopeCounts, scopesEqual } from '@/features/review'
 import {
   actionsForMode,
@@ -28,7 +28,6 @@ import {
 } from '@/shared/config/flashcard-swipe'
 import { QuickActionRows, type QuickActionsModel } from './QuickActionRows'
 import { SheetSection } from './SheetSection'
-import { ToggleRow } from './ToggleRow'
 import type { StudyDirection } from '../model/types'
 
 export interface GearSheetProps {

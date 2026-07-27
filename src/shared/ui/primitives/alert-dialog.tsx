@@ -6,8 +6,10 @@ const AlertDialog = AlertDialogPrimitive.Root
 const AlertDialogTrigger = AlertDialogPrimitive.Trigger
 const AlertDialogClose = AlertDialogPrimitive.Close
 
-interface AlertDialogContentProps
-  extends Omit<ComponentProps<typeof AlertDialogPrimitive.Popup>, 'className'> {
+interface AlertDialogContentProps extends Omit<
+  ComponentProps<typeof AlertDialogPrimitive.Popup>,
+  'className'
+> {
   className?: string
   /** Extra layer between backdrop and popup — e.g. a full-bleed decorative wash. */
   backdropClassName?: string
@@ -18,7 +20,12 @@ interface AlertDialogContentProps
  * Portal + backdrop + centered popup. Alert dialogs are always modal and never
  * dismiss on outside press or Escape — resolve them through their own actions.
  */
-function AlertDialogContent({ className, backdropClassName, children, ...props }: AlertDialogContentProps) {
+function AlertDialogContent({
+  className,
+  backdropClassName,
+  children,
+  ...props
+}: AlertDialogContentProps) {
   return (
     <AlertDialogPrimitive.Portal>
       <AlertDialogPrimitive.Backdrop
@@ -49,8 +56,10 @@ function AlertDialogContent({ className, backdropClassName, children, ...props }
   )
 }
 
-interface AlertDialogTitleProps
-  extends Omit<ComponentProps<typeof AlertDialogPrimitive.Title>, 'className'> {
+interface AlertDialogTitleProps extends Omit<
+  ComponentProps<typeof AlertDialogPrimitive.Title>,
+  'className'
+> {
   className?: string
 }
 
@@ -67,8 +76,10 @@ function AlertDialogTitle({ className, ...props }: AlertDialogTitleProps) {
   )
 }
 
-interface AlertDialogDescriptionProps
-  extends Omit<ComponentProps<typeof AlertDialogPrimitive.Description>, 'className'> {
+interface AlertDialogDescriptionProps extends Omit<
+  ComponentProps<typeof AlertDialogPrimitive.Description>,
+  'className'
+> {
   className?: string
 }
 

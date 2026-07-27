@@ -4,13 +4,23 @@ import { cn } from '@/shared/lib'
 
 type WithStringClass<T> = Omit<T, 'className'> & { className?: string }
 
-function Field({ className, ...props }: WithStringClass<ComponentProps<typeof FieldPrimitive.Root>>) {
+function Field({
+  className,
+  ...props
+}: WithStringClass<ComponentProps<typeof FieldPrimitive.Root>>) {
   return (
-    <FieldPrimitive.Root data-slot="field" className={cn('flex flex-col gap-1.5', className)} {...props} />
+    <FieldPrimitive.Root
+      data-slot="field"
+      className={cn('flex flex-col gap-1.5', className)}
+      {...props}
+    />
   )
 }
 
-function FieldLabel({ className, ...props }: WithStringClass<ComponentProps<typeof FieldPrimitive.Label>>) {
+function FieldLabel({
+  className,
+  ...props
+}: WithStringClass<ComponentProps<typeof FieldPrimitive.Label>>) {
   return (
     <FieldPrimitive.Label
       data-slot="field-label"
@@ -40,7 +50,10 @@ function FieldDescription({
   )
 }
 
-function FieldError({ className, ...props }: WithStringClass<ComponentProps<typeof FieldPrimitive.Error>>) {
+function FieldError({
+  className,
+  ...props
+}: WithStringClass<ComponentProps<typeof FieldPrimitive.Error>>) {
   return (
     <FieldPrimitive.Error
       data-slot="field-error"

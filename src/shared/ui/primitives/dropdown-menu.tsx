@@ -75,7 +75,8 @@ const menuItemVariants = cva(
 )
 
 interface DropdownMenuItemProps
-  extends Omit<ComponentProps<typeof Menu.Item>, 'className'>,
+  extends
+    Omit<ComponentProps<typeof Menu.Item>, 'className'>,
     VariantProps<typeof menuItemVariants> {
   className?: string
 }
@@ -101,7 +102,10 @@ function DropdownMenuItemIcon({ children }: { children: ReactNode }) {
 
 const DropdownMenuRadioGroup = Menu.RadioGroup
 
-interface DropdownMenuRadioItemProps extends Omit<ComponentProps<typeof Menu.RadioItem>, 'className'> {
+interface DropdownMenuRadioItemProps extends Omit<
+  ComponentProps<typeof Menu.RadioItem>,
+  'className'
+> {
   className?: string
 }
 
@@ -127,7 +131,10 @@ function DropdownMenuRadioItem({ className, children, ...props }: DropdownMenuRa
   )
 }
 
-interface DropdownMenuSeparatorProps extends Omit<ComponentProps<typeof Menu.Separator>, 'className'> {
+interface DropdownMenuSeparatorProps extends Omit<
+  ComponentProps<typeof Menu.Separator>,
+  'className'
+> {
   className?: string
 }
 

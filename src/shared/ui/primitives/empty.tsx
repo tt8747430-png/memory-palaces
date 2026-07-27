@@ -29,7 +29,9 @@ export function Empty({ icon, emoji, title, description, action, className }: Em
       <h3 className="mb-2 text-balance text-[length:var(--p-text-sub)] font-semibold text-heading">
         {title}
       </h3>
-      <p className="mb-6 max-w-[34ch] text-pretty text-[length:var(--p-text-body)]">{description}</p>
+      <p className="mb-6 max-w-[34ch] text-pretty text-[length:var(--p-text-body)]">
+        {description}
+      </p>
       {action}
     </motion.div>
   )

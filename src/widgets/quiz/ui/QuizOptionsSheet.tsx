@@ -1,7 +1,6 @@
-import { type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Shuffle, Timer } from 'lucide-react'
-import { Sheet, Switch } from '@/shared/ui'
+import { Sheet, ToggleRow } from '@/shared/ui'
 
 export interface QuizOptionsSheetProps {
   open: boolean
@@ -40,36 +39,5 @@ export function QuizOptionsSheet({
         />
       </div>
     </Sheet>
-  )
-}
-
-function ToggleRow({
-  icon,
-  label,
-  description,
-  checked,
-  onChange,
-}: {
-  icon: ReactNode
-  label: string
-  description: string
-  checked: boolean
-  onChange: (value: boolean) => void
-}) {
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-card bg-info-surface px-4 py-3">
-      <span className="flex min-w-0 items-center gap-3">
-        <span className="text-primary">{icon}</span>
-        <span className="min-w-0">
-          <span className="block text-[length:var(--p-text-sub)] font-semibold text-heading">
-            {label}
-          </span>
-          <span className="mt-0.5 block text-[length:var(--p-text-label)] leading-snug text-muted-foreground">
-            {description}
-          </span>
-        </span>
-      </span>
-      <Switch checked={checked} onCheckedChange={onChange} label={label} />
-    </div>
   )
 }

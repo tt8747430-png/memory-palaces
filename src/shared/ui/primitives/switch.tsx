@@ -3,7 +3,8 @@ import { cn } from '@/shared/lib'
 
 const trackBase = 'relative h-7 w-12 shrink-0 rounded-full transition-colors'
 const trackOff = 'bg-[color-mix(in_oklch,var(--text-muted)_32%,transparent)]'
-const thumbBase = 'absolute top-0.5 block size-6 rounded-full bg-card shadow-rest transition-transform'
+const thumbBase =
+  'absolute top-0.5 block size-6 rounded-full bg-card shadow-rest transition-transform'
 
 /**
  * Presentational track + thumb with no interaction of its own — used where the
@@ -40,7 +41,10 @@ export function Switch({ checked, onCheckedChange, label, disabled, className }:
       )}
     >
       <SwitchPrimitive.Thumb
-        className={cn(thumbBase, 'data-[unchecked]:translate-x-0.5 data-[checked]:translate-x-[22px]')}
+        className={cn(
+          thumbBase,
+          'data-[unchecked]:translate-x-0.5 data-[checked]:translate-x-[22px]',
+        )}
       />
     </SwitchPrimitive.Root>
   )
