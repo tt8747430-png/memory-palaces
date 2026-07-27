@@ -1,13 +1,15 @@
 import { type ReactNode, useCallback, useLayoutEffect, useRef } from 'react'
-import { cn, HeaderElevationContext, useStickyHeader } from '@/shared/lib'
+import { cn, HeaderElevationContext, useKeyboardReveal, useStickyHeader } from '@/shared/lib'
 
 const SCROLL = 'overflow-y-auto overscroll-contain scrollbar-hide px-5'
 
 const SCROLL_SAFE = 'pb-safe'
 
+const SCROLL_KEYBOARD = 'pb-keyboard'
+
 const FILL = 'min-h-full'
 
-const SHELL = 'h-[var(--vvh)]'
+const SHELL = 'h-full'
 
 export function AppScreen({
   children,
@@ -26,14 +28,16 @@ export function AppScreen({
 }) {
   const innerRef = useRef<HTMLElement | null>(null)
   const { ref: measureScroll, elevation } = useStickyHeader()
+  const revealScroll = useKeyboardReveal()
 
   const setRef = useCallback(
     (node: HTMLElement | null) => {
       innerRef.current = node
       measureScroll(node)
+      revealScroll(node)
       scrollRef?.(node)
     },
-    [measureScroll, scrollRef],
+    [measureScroll, revealScroll, scrollRef],
   )
 
   useLayoutEffect(() => {
@@ -69,7 +73,12 @@ export function AppScreen({
         {header}
         <main
           ref={setRef}
-          className={cn('min-h-0 flex-1', SCROLL, footer ? undefined : SCROLL_SAFE, className)}
+          className={cn(
+            'min-h-0 flex-1',
+            SCROLL,
+            footer ? SCROLL_KEYBOARD : SCROLL_SAFE,
+            className,
+          )}
         >
           {content}
         </main>

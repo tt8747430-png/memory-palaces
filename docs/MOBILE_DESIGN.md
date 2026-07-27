@@ -23,7 +23,7 @@ One centered column, `max-w-[430px]` (`shared/ui/AppScreen`, every overlay). Bre
 
 - `viewport-fit=cover` renders under the notch and home indicator — you **must** pad for insets.
 - **Use the `theme.css` safe-area utilities**; compose `AppScreen`/`Sheet`/`HeaderBar`/`SpeedDial` rather than hand-rolling padding.
-- **Keyboard:** keep the focused input and its primary action visible above it.
+- **Keyboard:** keep the **focused input** visible above it — the scroll body reveals it, the shell never resizes ([ADR 0002](adr/0002-keyboard-covers-the-app.md)). A page footer is _not_ lifted with it; the keyboard covers it, as on iOS. Put an action that must survive typing in the header (`CardEditorPage`'s Save), not the footer.
 - **`overscroll-behavior: contain`** on scroll regions — no app bounce, no pull-to-refresh in standalone.
 
 ## 3. Touch targets
@@ -53,7 +53,7 @@ One centered column, `max-w-[430px]` (`shared/ui/AppScreen`, every overlay). Bre
 - **Guard double-submit** — disable while pending and on success.
 - **Debounce high-frequency input**; cancel in-flight work on unmount.
 - **Don't hijack scroll.** Header/footer `shrink-0`, body `flex-1 overflow-y-auto`.
-- **Inputs:** correct `inputMode`/`type`/`autocomplete`/`enterKeyHint`; submit reachable above the keyboard.
+- **Inputs:** correct `inputMode`/`type`/`autocomplete`/`enterKeyHint`; `enterKeyHint="next"` between fields so the keyboard never has to be dismissed mid-form.
 - **`select-none` on interactive chrome.** Long-press = intentional action, not accidental selection.
 
 ## 7. Sheets, menus, overlays

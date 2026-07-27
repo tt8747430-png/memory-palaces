@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
-import { cn } from '@/shared/lib'
+import { cn, useKeyboardReveal } from '@/shared/lib'
 
 const AURA_BG =
   'radial-gradient(circle at center, oklch(var(--p-tint-sky) / 0.22), transparent 60%)'
@@ -62,10 +62,14 @@ function AuthAtmosphere() {
 }
 
 export function AuthScreen({ children, className }: { children: ReactNode; className?: string }) {
+  const revealScroll = useKeyboardReveal()
   return (
-    <main className="relative h-[var(--vvh)] overflow-hidden bg-daylight">
+    <main className="relative h-full overflow-hidden bg-daylight">
       <AuthAtmosphere />
-      <div className="relative h-full overflow-y-auto overscroll-none scrollbar-hide">
+      <div
+        ref={revealScroll}
+        className="relative h-full overflow-y-auto overscroll-none scrollbar-hide"
+      >
         <div
           className={cn(
             'mx-auto flex min-h-full w-full max-w-[430px] flex-col px-6 pt-safe pb-safe',

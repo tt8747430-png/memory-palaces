@@ -105,7 +105,6 @@ export function PasteNotesPage({
             }
             rows={8}
             className="min-h-[184px] font-mono text-(length:--p-text-label) leading-relaxed"
-            autoFocus
           />
           <div className="mt-2 flex items-center gap-4">
             {canReadClipboard ? (

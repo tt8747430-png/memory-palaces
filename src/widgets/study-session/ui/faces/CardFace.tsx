@@ -1,9 +1,9 @@
-import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { type ReactNode, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Flag, Lightbulb, MapPin, SlidersHorizontal, Volume2 } from 'lucide-react'
 import type { StudyMode } from '@/entities/preferences'
-import { cn } from '@/shared/lib'
+import { cn, useKeyboardReveal } from '@/shared/lib'
 import { STUDY_MODE_META } from '../mode-meta'
 import { stopPress } from './types'
 
@@ -35,9 +35,18 @@ export function CardFace({
   children: ReactNode
 }) {
   const { t } = useTranslation()
-  const bodyRef = useRef<HTMLDivElement>(null)
+  const bodyRef = useRef<HTMLDivElement | null>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const [scrolls, setScrolls] = useState(false)
+  const revealScroll = useKeyboardReveal()
+
+  const setBody = useCallback(
+    (node: HTMLDivElement | null) => {
+      bodyRef.current = node
+      revealScroll(node)
+    },
+    [revealScroll],
+  )
 
   useLayoutEffect(() => {
     const body = bodyRef.current
@@ -84,10 +93,10 @@ export function CardFace({
       </header>
 
       <div
-        ref={bodyRef}
+        ref={setBody}
         data-card-scroll={scrolls ? '' : undefined}
         style={{ touchAction: scrolls ? 'pan-y' : 'none' }}
-        className="relative flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain scrollbar-hide px-5 [scroll-padding-bottom:var(--kb-inset,0px)]"
+        className="relative flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain scrollbar-hide px-5 pb-keyboard"
       >
         <div
           ref={contentRef}

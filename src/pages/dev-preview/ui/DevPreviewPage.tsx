@@ -500,7 +500,7 @@ export function DevPreviewPage() {
         <Section
           id="overlays"
           title="Overlays & sheets"
-          note="Open on a phone: footers ride above the keyboard, tapping a colour keeps focus, the handle drags only the sheet."
+          note="Open on a phone: a sheet's footer rides above the keyboard (a page footer does not), tapping a colour keeps focus, the handle drags only the sheet."
         >
           <Cases>
             <Case label="PromptSheet">

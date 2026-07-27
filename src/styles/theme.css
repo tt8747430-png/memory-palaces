@@ -49,11 +49,9 @@
   }
 
   :root {
-    --vv-top: 0px;
-    --vvh: 100%;
     --kb-inset: 0px;
 
-    --app-bottom-inset: max(0.75rem, calc(env(safe-area-inset-bottom) - var(--kb-inset)));
+    --app-bottom-inset: max(0.75rem, env(safe-area-inset-bottom));
   }
 
   html {
@@ -81,8 +79,7 @@
 
   #root {
     position: fixed;
-    inset: var(--vv-top) 0 auto 0;
-    height: var(--vvh);
+    inset: 0;
     background: var(--bg-daylight);
     background-repeat: no-repeat;
   }
@@ -217,7 +214,13 @@
   }
 
   .pb-safe {
-    padding-bottom: max(0px, calc(env(safe-area-inset-bottom) - var(--kb-inset)));
+    padding-bottom: max(env(safe-area-inset-bottom), var(--kb-inset));
+    scroll-padding-bottom: var(--kb-inset);
+  }
+
+  .pb-keyboard {
+    padding-bottom: var(--kb-inset);
+    scroll-padding-bottom: var(--kb-inset);
   }
 
   .pb-safe-keyboard {
@@ -229,7 +232,7 @@
   }
 
   .pb-gutter {
-    padding-bottom: max(1rem, calc(7rem - var(--kb-inset)));
+    padding-bottom: 7rem;
   }
 
   .pl-safe {
