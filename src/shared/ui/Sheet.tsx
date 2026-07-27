@@ -56,15 +56,15 @@ export function Sheet({
             </div>
             <DrawerClose
               aria-label="Close"
-              className="grid size-9 shrink-0 place-items-center rounded-control text-heading hover:bg-info-surface"
+              className="-mr-1 grid size-8 shrink-0 place-items-center rounded-control text-heading hover:bg-info-surface"
             >
-              <X className="size-5" aria-hidden />
+              <X className="size-[18px]" aria-hidden />
             </DrawerClose>
           </DrawerHeader>
           {/* `min-h-0` lets this flex child shrink below its content so `overflow-y-auto` scrolls;
               `touch-auto` re-enables native scrolling inside the `touch-none` popup and
               `overscroll-contain` stops that scroll from chaining out to the page. */}
-          <div className="min-h-0 flex-1 touch-auto overflow-y-auto overscroll-contain px-5 pb-3 pt-1.5">
+          <div className="min-h-0 flex-1 touch-auto overflow-y-auto overscroll-contain px-5 pb-2 pt-1">
             {children}
           </div>
           {footer ? <DrawerFooter>{footer}</DrawerFooter> : null}

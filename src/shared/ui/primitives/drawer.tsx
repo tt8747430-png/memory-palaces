@@ -103,19 +103,23 @@ function DrawerHandle({ className }: { className?: string }) {
       data-slot="drawer-handle"
       onPointerDown={clearSelectionForDrag}
       className={cn(
-        'mx-auto mt-3 mb-1 h-1.5 w-10 shrink-0 touch-none rounded-full bg-border select-none',
+        'mx-auto mt-2 mb-0.5 h-1 w-9 shrink-0 touch-none rounded-full bg-border select-none',
         className,
       )}
     />
   )
 }
 
+/**
+ * The sheet's chrome is deliberately thin: a bottom sheet is capped at 88dvh, so every pixel
+ * spent on header and footer padding is a pixel the content cannot use.
+ */
 function DrawerHeader({ className, ...props }: ComponentProps<'div'>) {
   return (
     <div
       data-slot="drawer-header"
       className={cn(
-        'flex shrink-0 touch-none items-start justify-between gap-3 px-5 pt-2 pb-3 select-none',
+        'flex shrink-0 touch-none items-start justify-between gap-3 px-5 pt-1 pb-2 select-none',
         className,
       )}
       {...props}
@@ -128,7 +132,7 @@ function DrawerFooter({ className, ...props }: ComponentProps<'div'>) {
   return (
     <div
       data-slot="drawer-footer"
-      className={cn('shrink-0 border-t border-border px-5 pt-3 pb-2', className)}
+      className={cn('shrink-0 border-t border-border px-5 pt-2 pb-1.5', className)}
       {...props}
     />
   )

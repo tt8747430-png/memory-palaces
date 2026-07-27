@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MotionConfig } from 'motion/react'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
+import { useMultiSelect } from '@/shared/lib'
 import { InMemoryRepository } from '@/shared/api'
 import { CardStoreContext, createCardStore, type Card, makeCard } from '@/entities/card'
 import { createDeckStore, type Deck, DeckStoreContext, makeDeck } from '@/entities/deck'
@@ -18,6 +19,23 @@ import { DeckContentEditor } from './DeckContentEditor'
 afterEach(cleanup)
 
 const at = (ms: number) => new Date(ms).toISOString()
+
+/** The editor takes its selection from the page that owns it, so the harness owns one too. */
+function Editor({ onAddCard }: { onAddCard: () => void }) {
+  const selection = useMultiSelect()
+  return (
+    <DeckContentEditor
+      deckId="d1"
+      selection={selection}
+      sort="manual"
+      onSortChange={() => {}}
+      onAddCard={onAddCard}
+      onEditCard={() => {}}
+      onPasteNotes={() => {}}
+      onReviewImport={() => {}}
+    />
+  )
+}
 
 function renderEditor({
   cards = [] as Card[],
@@ -36,17 +54,7 @@ function renderEditor({
               <QuestionStoreContext
                 value={createQuestionStore(new InMemoryRepository<Question>(questions))}
               >
-                <DeckContentEditor
-                  deckId="d1"
-                  selectMode={false}
-                  onSelectModeChange={() => {}}
-                  sort="manual"
-                  onSortChange={() => {}}
-                  onAddCard={onAddCard}
-                  onEditCard={() => {}}
-                  onPasteNotes={() => {}}
-                  onReviewImport={() => {}}
-                />
+                <Editor onAddCard={onAddCard} />
               </QuestionStoreContext>
             </CardStoreContext>
           </DeckStoreContext>

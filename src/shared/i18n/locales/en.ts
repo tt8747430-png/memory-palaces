@@ -14,6 +14,12 @@ export const en = {
     delete: 'Delete',
     saveChanges: 'Save changes',
   },
+  // Shared by every select-mode header, whatever is being selected.
+  selection: {
+    selectAll: 'Select all',
+    clearAll: 'Clear all',
+    count: '{{count}} selected',
+  },
   deck: {
     notFound: 'Deck not found',
     settings: 'Settings',
@@ -98,9 +104,6 @@ export const en = {
     emptyFolderHint: 'Add a deck here, or move existing decks into it.',
     select: {
       toggle: 'Select {{name}}',
-      selectAll: 'Select all',
-      clearAll: 'Clear all',
-      count: '{{count}} selected',
       folders: 'Folders',
       decks: 'Decks',
       archivedToast: 'Archived {{count}} decks',
@@ -483,12 +486,6 @@ export const en = {
     emptyTitle: 'No cards yet',
     emptyHint:
       'Each card is one thing to recall in this deck: the prompt, its meaning, and an optional image to picture.',
-    select: {
-      selectAll: 'Select all',
-      clearAll: 'Clear all',
-      done: 'Done',
-      count: '{{count}} selected',
-    },
     bulk: {
       flag: 'Flag',
       flagged: 'Flagged {{count}} cards',

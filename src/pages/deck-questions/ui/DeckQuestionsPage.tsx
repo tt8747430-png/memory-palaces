@@ -32,7 +32,7 @@ import {
 import { selectEffectivePreferences, usePreferencesStore } from '@/entities/preferences'
 import { deleteQuestion, duplicateQuestion, reorderQuestions } from '@/features/question'
 import { applyDeckContent, exportQuestionsCsv, readContentFile } from '@/features/content'
-import { ContentImportError, type DeckContentData } from '@/shared/lib'
+import { ContentImportError, type DeckContentData, useMultiSelect } from '@/shared/lib'
 import {
   AppScreen,
   Button,
@@ -40,18 +40,15 @@ import {
   ImportRow,
   ScreenHeader,
   type SelectActionHandlers,
+  SelectHeader,
   SelectToolbar,
+  SelectToolbarDock,
   Sheet,
   SortControl,
   type SortControlOption,
   SpeedDial,
 } from '@/shared/ui'
-import {
-  QuestionRow,
-  ReorderableList,
-  type RowDragHandle,
-  SelectModeBar,
-} from '@/widgets/content-editor'
+import { QuestionRow, ReorderableList, type RowDragHandle } from '@/widgets/content-editor'
 
 export interface DeckQuestionsPageProps {
   deckId: string
@@ -93,8 +90,6 @@ export function DeckQuestionsPage({
   const questions = useMemo(() => questionsForDeck(allQuestions, deckId), [allQuestions, deckId])
 
   const [sort, setSort] = useState<QuestionSort>('manual')
-  const [selectMode, setSelectMode] = useState(false)
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
@@ -102,14 +97,18 @@ export function DeckQuestionsPage({
   const [pendingImport, setPendingImport] = useState<DeckContentData['questions'] | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    if (!selectMode) setSelectedIds(new Set())
-  }, [selectMode])
+  // Same selection model as the deck library and the card list: the page header carries it.
+  const selection = useMultiSelect()
+  const selectMode = selection.active
+  const selectedIds = selection.ids
+  const selectedCount = selection.count
+  const exitSelect = selection.exit
 
   const sortedQuestions = useMemo(() => sortQuestions(questions, sort), [questions, sort])
-  const selectedCount = selectedIds.size
-  const allSelected =
-    sortedQuestions.length > 0 && sortedQuestions.every((q) => selectedIds.has(q.id))
+  const { setPool } = selection
+  useEffect(() => {
+    setPool(sortedQuestions.map((question) => question.id))
+  }, [sortedQuestions, setPool])
   const reorderable = selectMode
 
   const sortOptions: SortControlOption<QuestionSort>[] = [
@@ -117,29 +116,6 @@ export function DeckQuestionsPage({
     { value: 'recent', label: t('cards.sort.recent'), icon: <Clock className="size-4" /> },
     { value: 'name', label: t('cards.sort.name'), icon: <ArrowDownAZ className="size-4" /> },
   ]
-
-  const toggleSelect = (id: string) =>
-    setSelectedIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  const requestSelect = (id: string) => {
-    setSelectMode(true)
-    setSelectedIds((prev) => new Set(prev).add(id))
-  }
-  const toggleSelectAll = () =>
-    setSelectedIds((prev) => {
-      const next = new Set(prev)
-      if (allSelected) sortedQuestions.forEach((q) => next.delete(q.id))
-      else sortedQuestions.forEach((q) => next.add(q.id))
-      return next
-    })
-  const exitSelect = () => {
-    setSelectMode(false)
-    setSelectedIds(new Set())
-  }
 
   const renderQuestion = (question: Question, dragHandle?: RowDragHandle, dragging = false) => (
     <QuestionRow
@@ -152,8 +128,8 @@ export function DeckQuestionsPage({
       dragHandle={dragHandle}
       dragging={dragging}
       swipe={swipe}
-      onToggleSelect={() => toggleSelect(question.id)}
-      onRequestSelect={() => requestSelect(question.id)}
+      onToggleSelect={() => selection.toggle(question.id)}
+      onRequestSelect={() => selection.begin(question.id)}
       onEdit={() => onEditQuestion(question.id)}
       onDuplicate={() => {
         void duplicateQuestion(questionStore, question.id)
@@ -241,61 +217,67 @@ export function DeckQuestionsPage({
     delete: { disabled: selectedCount === 0, onAction: () => setBulkDeleteOpen(true) },
   }
 
-  const selectionBar = (
-    <div className="px-4 pb-[calc(max(0.75rem,env(safe-area-inset-bottom)))] pt-2">
-      <SelectToolbar actions={prefs.selectToolbar.question} handlers={selectHandlers} />
-    </div>
-  )
-
   return (
     <AppScreen
       header={
-        <ScreenHeader
-          title={t('questions.title')}
-          subtitle={deck?.name}
-          onBack={onBack}
-          backLabel={t('common.back')}
-        />
+        selectMode ? (
+          <SelectHeader
+            count={selectedCount}
+            allSelected={selection.allSelected}
+            onToggleAll={selection.toggleAll}
+            onCancel={exitSelect}
+          />
+        ) : (
+          <ScreenHeader
+            title={t('questions.title')}
+            subtitle={deck?.name}
+            onBack={onBack}
+            backLabel={t('common.back')}
+          />
+        )
       }
-      footer={selectMode ? selectionBar : undefined}
     >
       <div className="mt-2 space-y-4 pb-24">
-        <div className="rounded-card-featured bg-card p-4 shadow-featured">
-          <div className="flex items-center gap-3">
-            <span
-              className="grid size-11 shrink-0 place-items-center rounded-control bg-primary text-primary-foreground"
-              aria-hidden
-            >
-              <Brain className="size-5" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-(length:--p-text-sub) font-bold text-heading">
-                {t('questions.testLead')}
-              </p>
-              <p className="text-(length:--p-text-label) text-muted-foreground">
-                {hasQuestions
-                  ? t(
-                      questions.length === 1
-                        ? 'questions.testReadyOne'
-                        : 'questions.testReadyOther',
-                      {
-                        count: questions.length,
-                      },
-                    )
-                  : t('questions.testNone')}
-              </p>
+        {/* A selection is about the rows, so the test call-to-action steps out of the way —
+            the same way the home screen drops to bare rows while you are choosing decks. */}
+        {selectMode ? null : (
+          <div className="rounded-card-featured bg-card p-4 shadow-featured">
+            <div className="flex items-center gap-3">
+              <span
+                className="grid size-11 shrink-0 place-items-center rounded-control bg-primary text-primary-foreground"
+                aria-hidden
+              >
+                <Brain className="size-5" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-(length:--p-text-sub) font-bold text-heading">
+                  {t('questions.testLead')}
+                </p>
+                <p className="text-(length:--p-text-label) text-muted-foreground">
+                  {hasQuestions
+                    ? t(
+                        questions.length === 1
+                          ? 'questions.testReadyOne'
+                          : 'questions.testReadyOther',
+                        {
+                          count: questions.length,
+                        },
+                      )
+                    : t('questions.testNone')}
+                </p>
+              </div>
             </div>
+            <Button
+              size="lg"
+              className="mt-3.5 w-full"
+              disabled={!hasQuestions}
+              onClick={onStartTest}
+            >
+              <Play className="size-[18px]" aria-hidden />
+              {t('questions.startTest')}
+            </Button>
           </div>
-          <Button
-            size="lg"
-            className="mt-3.5 w-full"
-            disabled={!hasQuestions}
-            onClick={onStartTest}
-          >
-            <Play className="size-[18px]" aria-hidden />
-            {t('questions.startTest')}
-          </Button>
-        </div>
+        )}
 
         <section aria-label={t('questions.inDeck')} className="space-y-3">
           {!selectMode && questions.length > 1 ? (
@@ -307,15 +289,6 @@ export function DeckQuestionsPage({
                 onChange={setSort}
               />
             </div>
-          ) : null}
-
-          {selectMode ? (
-            <SelectModeBar
-              allSelected={allSelected}
-              count={selectedCount}
-              onToggleAll={toggleSelectAll}
-              onDone={exitSelect}
-            />
           ) : null}
 
           {questions.length === 0 ? (
@@ -334,6 +307,12 @@ export function DeckQuestionsPage({
           )}
         </section>
       </div>
+
+      {selectMode ? (
+        <SelectToolbarDock>
+          <SelectToolbar actions={prefs.selectToolbar.question} handlers={selectHandlers} />
+        </SelectToolbarDock>
+      ) : null}
 
       <ConfirmDialog
         open={pendingDeleteId !== null}

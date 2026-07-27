@@ -36,7 +36,7 @@ import {
   cardsInSubtree,
   cn,
   ContentImportError,
-  impact,
+  type MultiSelect,
   srsStatus,
 } from '@/shared/lib'
 import {
@@ -46,6 +46,7 @@ import {
   ImportRow,
   type SelectActionHandlers,
   SelectToolbar,
+  SelectToolbarDock,
   Sheet,
   SortControl,
   type SortControlOption,
@@ -56,15 +57,17 @@ import { useImportDraft } from '../model/import-draft'
 import { CardBrowser } from './CardBrowser'
 import { CardRow, type RowDragHandle } from './ContentRows'
 import { ReorderableList } from './ReorderableList'
-import { SelectModeBar } from './SelectModeBar'
 
 export interface DeckContentEditorProps {
   deckId: string
   searchQuery?: string
   searching?: boolean
   onClearSearch?: () => void
-  selectMode: boolean
-  onSelectModeChange: (on: boolean) => void
+  /**
+   * The page's selection. It lives up there because the page header *is* the selection's
+   * header — the list only reports which rows are on screen and renders their checkboxes.
+   */
+  selection: MultiSelect
   sort: ContentSort
   onSortChange: (sort: ContentSort) => void
   onAddCard: () => void
@@ -80,8 +83,7 @@ export function DeckContentEditor({
   searchQuery,
   searching = false,
   onClearSearch,
-  selectMode,
-  onSelectModeChange,
+  selection,
   sort,
   onSortChange,
   onAddCard,
@@ -104,9 +106,10 @@ export function DeckContentEditor({
   const decks = useDeckStore(selectDecks)
   const cards = useMemo(() => cardsInSubtree(decks, allCards, deckId), [decks, allCards, deckId])
 
-  const setSelectMode = onSelectModeChange
+  const selectMode = selection.active
+  const selectedIds = selection.ids
+  const exitSelect = selection.exit
   const setSort = onSortChange
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
@@ -148,10 +151,6 @@ export function DeckContentEditor({
 
   const maturity = useMemo(() => cardMaturityCounts(cards), [cards])
 
-  useEffect(() => {
-    if (!selectMode) setSelectedIds(new Set())
-  }, [selectMode])
-
   const fileRef = useRef<HTMLInputElement>(null)
 
   const sortedCards = useMemo(() => sortCards(cards, sort), [cards, sort])
@@ -172,8 +171,13 @@ export function DeckContentEditor({
 
   const total = cards.length
   const selectedCount = selectedIds.size
-  const allVisibleSelected =
-    visibleCards.length > 0 && visibleCards.every((item) => selectedIds.has(item.id))
+
+  // Sorting, searching and filtering all happen here, so this is the only place that knows what
+  // "select all" means right now. The page's header reads the answer back off the selection.
+  const { setPool } = selection
+  useEffect(() => {
+    setPool(visibleCards.map((card) => card.id))
+  }, [visibleCards, setPool])
 
   const reorderable = selectMode && !needle
   const reorderTo = (commit: () => void) => {
@@ -199,8 +203,8 @@ export function DeckContentEditor({
       dragHandle={dragHandle}
       dragging={dragging}
       swipe={cardSwipe}
-      onToggleSelect={() => toggleSelect(card.id)}
-      onRequestSelect={() => requestSelect(card.id)}
+      onToggleSelect={() => selection.toggle(card.id)}
+      onRequestSelect={() => selection.begin(card.id)}
       onOpen={() => setBrowserCardId(card.id)}
       onEdit={() => onEditCard(card.id)}
       onDuplicate={() => {
@@ -219,35 +223,6 @@ export function DeckContentEditor({
       }}
     />
   )
-
-  const toggleSelect = (id: string) =>
-    setSelectedIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-
-  const requestSelect = (id: string) => {
-    // Same confirmation the library gives a long press — a selection starting is a state change
-    // the finger should feel, not just see.
-    impact()
-    setSelectMode(true)
-    setSelectedIds((prev) => new Set(prev).add(id))
-  }
-
-  const toggleSelectAll = () =>
-    setSelectedIds((prev) => {
-      const next = new Set(prev)
-      if (allVisibleSelected) visibleCards.forEach((item) => next.delete(item.id))
-      else visibleCards.forEach((item) => next.add(item.id))
-      return next
-    })
-
-  const exitSelect = () => {
-    setSelectMode(false)
-    setSelectedIds(new Set())
-  }
 
   const pickFile = (accept: string) => {
     setImportOpen(false)
@@ -371,17 +346,6 @@ export function DeckContentEditor({
         </div>
       ) : null}
 
-      {selectMode ? (
-        <div className="pb-2">
-          <SelectModeBar
-            allSelected={allVisibleSelected}
-            count={selectedCount}
-            onToggleAll={toggleSelectAll}
-            onDone={exitSelect}
-          />
-        </div>
-      ) : null}
-
       <div className="flex flex-col gap-3">
         {total === 0 ? (
           <EmptyCards onAdd={onAddCard} onImport={() => setImportOpen(true)} />
@@ -403,11 +367,9 @@ export function DeckContentEditor({
       </div>
 
       {selectMode ? (
-        <SelectToolbar
-          actions={prefs.selectToolbar.card}
-          handlers={selectHandlers}
-          className="sticky bottom-2 z-20 mt-3"
-        />
+        <SelectToolbarDock>
+          <SelectToolbar actions={prefs.selectToolbar.card} handlers={selectHandlers} />
+        </SelectToolbarDock>
       ) : null}
 
       <Sheet

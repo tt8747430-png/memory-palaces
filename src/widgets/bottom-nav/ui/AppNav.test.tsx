@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, screen } from '@testing-library/react'
+import { cleanup, screen, waitForElementToBeRemoved } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders } from '@/shared/test/render-with-providers'
 import { ROUTES } from '@/shared/config/routes'
+import { useHideAppNav } from '@/shared/lib'
 import { AppNav } from './AppNav'
 
 const { navigate, nav } = vi.hoisted(() => ({
@@ -49,6 +50,28 @@ describe('AppNav', () => {
     nav.path = '/folders/abc123'
     const { container } = renderWithProviders(<AppNav />)
     expect(container).toBeEmptyDOMElement()
+  })
+
+  it('steps aside — and gives its inset back — while a surface claims the bottom edge', async () => {
+    const inset = () => document.documentElement.style.getPropertyValue('--app-bottom-inset')
+    function Selecting({ on }: { on: boolean }) {
+      useHideAppNav(on)
+      return <AppNav />
+    }
+
+    nav.path = ROUTES.home
+    const { rerender } = renderWithProviders(<Selecting on={false} />)
+    expect(screen.getByRole('navigation', { name: 'Primary' })).toBeInTheDocument()
+
+    rerender(<Selecting on />)
+    // The inset is handed back at once, so the docked toolbar drops into the freed space while
+    // the bar itself is still animating out.
+    expect(inset()).toBe('')
+    await waitForElementToBeRemoved(() => screen.queryByRole('navigation', { name: 'Primary' }))
+
+    rerender(<Selecting on={false} />)
+    expect(screen.getByRole('navigation', { name: 'Primary' })).toBeInTheDocument()
+    expect(inset()).toContain('4rem')
   })
 
   it('raises the app bottom inset only while it is mounted', () => {

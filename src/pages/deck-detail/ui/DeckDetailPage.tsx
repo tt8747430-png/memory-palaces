@@ -26,10 +26,10 @@ import {
   usePreferencesStoreApi,
 } from '@/entities/preferences'
 import { setPreferences } from '@/features/preferences'
-import { cardsInSubtree, studyOverview } from '@/shared/lib'
+import { cardsInSubtree, studyOverview, useMultiSelect } from '@/shared/lib'
 import { DeckContentEditor } from '@/widgets/content-editor'
 import { PracticeModes } from '@/widgets/practice-modes'
-import { AppScreen, IconButton, ScreenHeader, StudyOverviewCard } from '@/shared/ui'
+import { AppScreen, IconButton, ScreenHeader, SelectHeader, StudyOverviewCard } from '@/shared/ui'
 
 export interface DeckDetailPageProps {
   deckId: string
@@ -89,7 +89,9 @@ export function DeckDetailPage({
   const prefs = usePreferencesStore(selectEffectivePreferences)
   const setContentSort = (value: ContentSort) =>
     void setPreferences(prefStore, { contentSort: value })
-  const [selectMode, setSelectMode] = useState(false)
+  // Selecting cards works exactly as selecting decks does on the home screen: the page header
+  // becomes the selection's header, so the count and its controls are stated once.
+  const selection = useMultiSelect()
 
   if (!ready) {
     return (
@@ -114,22 +116,35 @@ export function DeckDetailPage({
   return (
     <AppScreen
       header={
-        <ScreenHeader
-          title={deck.name}
-          onBack={onBack}
-          backLabel={t('common.back')}
-          action={
-            onOpenSettings ? (
-              <IconButton variant="glass" aria-label={t('deck.settings')} onClick={onOpenSettings}>
-                <Settings className="size-5" aria-hidden />
-              </IconButton>
-            ) : null
-          }
-        />
+        selection.active ? (
+          <SelectHeader
+            count={selection.count}
+            allSelected={selection.allSelected}
+            onToggleAll={selection.toggleAll}
+            onCancel={selection.exit}
+          />
+        ) : (
+          <ScreenHeader
+            title={deck.name}
+            onBack={onBack}
+            backLabel={t('common.back')}
+            action={
+              onOpenSettings ? (
+                <IconButton
+                  variant="glass"
+                  aria-label={t('deck.settings')}
+                  onClick={onOpenSettings}
+                >
+                  <Settings className="size-5" aria-hidden />
+                </IconButton>
+              ) : null
+            }
+          />
+        )
       }
     >
       <div className="mt-2 space-y-4 pb-24">
-        {hasContent ? (
+        {hasContent && !selection.active ? (
           <StudyOverviewCard
             count={overview.count}
             breakdown={overview.breakdown}
@@ -138,7 +153,7 @@ export function DeckDetailPage({
           />
         ) : null}
 
-        {hasContent || questions.length > 0 ? (
+        {(hasContent || questions.length > 0) && !selection.active ? (
           <PracticeModes
             cardCount={subtreeCards.length}
             questionCount={questions.length}
@@ -151,8 +166,7 @@ export function DeckDetailPage({
         <section aria-label={t('deck.cards')} className="space-y-3 pt-1">
           <DeckContentEditor
             deckId={deckId}
-            selectMode={selectMode}
-            onSelectModeChange={setSelectMode}
+            selection={selection}
             sort={prefs.contentSort}
             onSortChange={setContentSort}
             onAddCard={onAddCard}

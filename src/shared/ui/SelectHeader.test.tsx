@@ -2,36 +2,36 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders } from '@/shared/test/render-with-providers'
-import { SelectModeBar } from './SelectModeBar'
+import { SelectHeader } from './SelectHeader'
 
 afterEach(cleanup)
 
-describe('SelectModeBar', () => {
-  it('offers "select all" and the selected count when not all are selected', async () => {
+describe('SelectHeader', () => {
+  it('offers "select all" and states the count', async () => {
     const user = userEvent.setup()
     const onToggleAll = vi.fn()
     renderWithProviders(
-      <SelectModeBar allSelected={false} count={2} onToggleAll={onToggleAll} onDone={() => {}} />,
+      <SelectHeader count={2} allSelected={false} onToggleAll={onToggleAll} onCancel={() => {}} />,
     )
     expect(screen.getByText('2 selected')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Select all' }))
     expect(onToggleAll).toHaveBeenCalledTimes(1)
   })
 
-  it('offers "clear all" when everything is selected', () => {
+  it('offers "clear all" once everything on screen is selected', () => {
     renderWithProviders(
-      <SelectModeBar allSelected count={5} onToggleAll={() => {}} onDone={() => {}} />,
+      <SelectHeader count={5} allSelected onToggleAll={() => {}} onCancel={() => {}} />,
     )
     expect(screen.getByRole('button', { name: 'Clear all' })).toBeInTheDocument()
   })
 
-  it('finishes select mode from the done control', async () => {
+  it('ends the selection from cancel', async () => {
     const user = userEvent.setup()
-    const onDone = vi.fn()
+    const onCancel = vi.fn()
     renderWithProviders(
-      <SelectModeBar allSelected={false} count={0} onToggleAll={() => {}} onDone={onDone} />,
+      <SelectHeader count={0} allSelected={false} onToggleAll={() => {}} onCancel={onCancel} />,
     )
-    await user.click(screen.getByRole('button', { name: 'Done' }))
-    expect(onDone).toHaveBeenCalledTimes(1)
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(onCancel).toHaveBeenCalledTimes(1)
   })
 })

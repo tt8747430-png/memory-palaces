@@ -290,14 +290,7 @@ export function StudyDeck({
   }
   const backProps: FaceProps = { ...faceProps, active: showBack }
 
-  const front =
-    mode === 'type' ? (
-      <TypeFace {...faceProps} />
-    ) : mode === 'words' ? (
-      <RebuildFace {...faceProps} />
-    ) : (
-      <PromptFace {...faceProps} />
-    )
+  const front = <FrontFace {...faceProps} />
   const back =
     mode === 'blur' ? (
       <BlurFace {...backProps} />
@@ -316,7 +309,11 @@ export function StudyDeck({
         <QueuedCard
           key={queued.card.id}
           card={queued}
+          mode={mode}
           direction={direction}
+          canSpeak={canSpeak}
+          wordSpaces={wordSpaces}
+          typeInitialsOnly={typeInitialsOnly}
           // `behind` is nearest-first, so depth counts up with the index. Inverting this draws
           // the *furthest* card in the visible slot — you peek at one card and get another.
           depth={i + 1}
@@ -398,22 +395,46 @@ const DEPTH_POSE = [
 const PROMOTION = { duration: 0.3, ease: [0.16, 1, 0.3, 1] } as const
 
 /**
- * A card waiting its turn: the real card, its real prompt, inert. It is only ever seen through
- * the sliver the card above leaves — and, for a moment, in full while that card is flung away —
- * so it shows the prompt alone. Whatever the mode is, its front face leads with that too.
+ * The face a card leads with in the current mode. One function for the card in play and for the
+ * cards queued behind it, so promoting a card changes nothing about what is on screen except its
+ * pose — there is no placeholder to cross-fade out of.
+ */
+function FrontFace(props: FaceProps) {
+  if (props.mode === 'type') return <TypeFace {...props} />
+  if (props.mode === 'words') return <RebuildFace {...props} />
+  return <PromptFace {...props} />
+}
+
+const noop = () => {}
+
+/**
+ * A card waiting its turn: the real card, rendered as the same full face it will be when it
+ * reaches the top — header, footer, mode controls and all — just inert and one step further
+ * back. It is seen through the sliver the card above leaves and, for a moment, in full while
+ * that card is flung away, and in neither case should it look like a different kind of thing.
+ * Its handlers are no-ops: only the card in play may act.
  */
 function QueuedCard({
   card,
+  mode,
   direction,
+  canSpeak,
+  wordSpaces,
+  typeInitialsOnly,
   depth,
   reduce,
 }: {
   card: StudyCard
+  mode: StudyMode
   direction: StudyDirection
+  canSpeak: boolean
+  wordSpaces: boolean
+  typeInitialsOnly: boolean
   depth: number
   reduce: boolean
 }) {
   const prompt = direction === 'front' ? card.card.front : card.card.back
+  const answer = recallAnswer(prompt, direction === 'front' ? card.card.back : card.card.front)
   const pose = DEPTH_POSE[Math.min(depth, DEPTH_POSE.length - 1)]!
 
   return (
@@ -424,13 +445,24 @@ function QueuedCard({
       animate={pose}
       transition={reduce ? { duration: 0 } : PROMOTION}
       style={{ zIndex: -depth }}
-      className="pointer-events-none absolute inset-0 flex flex-col rounded-card-featured bg-card-glass shadow-rest"
+      className="pointer-events-none absolute inset-0"
     >
-      <div className="flex min-h-0 flex-1 items-center px-5">
-        <h2 className="line-clamp-4 w-full text-balance wrap-break-word text-center text-[clamp(22px,6vw,28px)] font-bold leading-[1.15] tracking-[-0.01em] text-heading">
-          {prompt}
-        </h2>
-      </div>
+      <FrontFace
+        card={card}
+        mode={mode}
+        prompt={prompt}
+        answer={answer}
+        canSpeak={canSpeak}
+        wordSpaces={wordSpaces}
+        typeInitialsOnly={typeInitialsOnly}
+        active={false}
+        onSpeak={noop}
+        onFlip={noop}
+        onRevealInPlace={noop}
+        onHideInPlace={noop}
+        onChangeMode={noop}
+        onOpenGear={noop}
+      />
     </motion.div>
   )
 }

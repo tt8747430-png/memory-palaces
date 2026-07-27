@@ -68,6 +68,7 @@ import {
   orderPatch,
   siblingDecks,
   subtreeDeckIds,
+  useHideAppNav,
   useLongPress,
   useOptimisticPatch,
   usePersistedSet,
@@ -85,6 +86,7 @@ import {
   ImportRow,
   PromptSheet,
   type SelectActionHandlers,
+  SelectHeader,
   SelectToolbar,
   SelectToolbarDock,
   Sheet,
@@ -218,6 +220,9 @@ export function DeckLibraryPage({
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(() => new Set())
   const [bulkMoveOpen, setBulkMoveOpen] = useState(false)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
+
+  // The select toolbar docks exactly where the tab bar lives, so the bar steps aside for it.
+  useHideAppNav(selectMode)
 
   // Leaving or entering a folder ends any in-progress selection.
   useEffect(() => {
@@ -677,27 +682,12 @@ export function DeckLibraryPage({
       scrollRef={stickyHeader.ref}
       header={
         selectMode ? (
-          <header className="bg-glass pt-safe">
-            <div className="flex items-center justify-between gap-2 px-3 py-3">
-              <button
-                type="button"
-                onClick={toggleSelectAll}
-                className="-mx-2 inline-flex min-h-11 items-center rounded-control px-2 text-[length:var(--p-text-body)] font-semibold text-accent"
-              >
-                {allSelected ? t('library.select.clearAll') : t('library.select.selectAll')}
-              </button>
-              <span className="text-[length:var(--p-text-body)] font-semibold tabular-nums text-heading">
-                {t('library.select.count', { count: selectedCount })}
-              </span>
-              <button
-                type="button"
-                onClick={exitSelect}
-                className="-mx-2 inline-flex min-h-11 items-center rounded-control px-2 text-[length:var(--p-text-body)] font-semibold text-accent"
-              >
-                {t('common.cancel')}
-              </button>
-            </div>
-          </header>
+          <SelectHeader
+            count={selectedCount}
+            allSelected={allSelected}
+            onToggleAll={toggleSelectAll}
+            onCancel={exitSelect}
+          />
         ) : inFolder ? (
           <header className="bg-glass pt-safe">
             <div className="flex items-center gap-2 px-2 py-2">
@@ -937,7 +927,7 @@ export function DeckLibraryPage({
         }}
         subtitle={
           bulkMoveOpen
-            ? t('library.select.count', { count: selectedDeckIds.length })
+            ? t('selection.count', { count: selectedDeckIds.length })
             : (movingDeck?.name ?? '')
         }
         decks={decks}

@@ -77,4 +77,40 @@ describe('StudyDeck', () => {
     expect(nearest).toHaveTextContent('Next up')
     expect(nearest).not.toHaveTextContent('After that')
   })
+
+  it('draws the queued cards as whole cards — the same face, controls and all', () => {
+    renderWithProviders(
+      <StudyDeck
+        {...baseProps({
+          canSpeak: true,
+          upcoming: [studyCard('Next up', 'b', 'c2')],
+        })}
+      />,
+    )
+
+    const queued = [...document.querySelectorAll<HTMLElement>('[aria-hidden][inert]')].find(
+      (node) => node.textContent?.includes('Next up'),
+    )
+    expect(queued).toBeDefined()
+    // The card in play has these too — a queued card must be the same thing, not a stub.
+    expect(queued!.querySelector('[aria-label="Change study mode"]')).not.toBeNull()
+    expect(queued!.querySelector('[aria-label="Study options"]')).not.toBeNull()
+    expect(queued!.querySelector('[aria-label="Read aloud"]')).not.toBeNull()
+    expect(queued).toHaveTextContent('Tap to reveal')
+  })
+
+  it('keeps queued cards out of reach — only the card in play can act', () => {
+    const modeButtons = () => screen.queryAllByRole('button', { name: 'Change study mode' }).length
+
+    const alone = renderWithProviders(<StudyDeck {...baseProps()} />)
+    const reachable = modeButtons()
+    alone.unmount()
+
+    renderWithProviders(
+      <StudyDeck {...baseProps({ upcoming: [studyCard('Next up', 'b', 'c2')] })} />,
+    )
+    // The queued card carries the same controls, but `inert` + `aria-hidden` keep every one of
+    // them out of the accessibility tree: the deck gains no new reachable buttons.
+    expect(modeButtons()).toBe(reachable)
+  })
 })
