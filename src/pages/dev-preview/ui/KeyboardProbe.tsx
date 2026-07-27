@@ -106,11 +106,11 @@ export function KeyboardProbe() {
         </dd>
       </dl>
       <p className="text-[length:var(--p-text-label)] leading-snug text-muted-foreground">
-        Focus the field. <b>visualViewport top</b> above 0 means iOS panned; <b>layout viewport h</b>{' '}
-        dropping means it resized instead. <b>html rect top</b> is the one that says which
-        coordinate space rects use — 0 means layout-relative, -(pan) means the pan is already baked
-        in. <b>focused bottom</b> must stay under <b>reveal band max</b>, and the last row must
-        balance.
+        Focus the field. <b>visualViewport top</b> above 0 means iOS panned;{' '}
+        <b>layout viewport h</b> dropping means it resized instead. <b>html rect top</b> is the one
+        that says which coordinate space rects use — 0 means layout-relative, -(pan) means the pan
+        is already baked in. <b>focused bottom</b> must stay under <b>reveal band max</b>, and the
+        last row must balance.
       </p>
     </div>
   )
