@@ -2,7 +2,15 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { BookOpen, ClipboardPaste, Eraser, Sparkles } from 'lucide-react'
-import { AppScreen, Button, Input, ScreenHeader, TextButton, Textarea } from '@/shared/ui'
+import {
+  AppScreen,
+  Button,
+  FooterBar,
+  Input,
+  ScreenHeader,
+  TextButton,
+  Textarea,
+} from '@/shared/ui'
 import { useImportDraft } from '@/widgets/content-editor'
 import { usePasteParsing } from '../model/use-paste-parsing'
 import { FormatToggle } from './FormatToggle'
@@ -51,19 +59,19 @@ export function PasteNotesPage({
     <AppScreen
       fill
       header={
-        <ScreenHeader
-          title={t('cards.paste.title')}
-          onBack={onBack}
-          backLabel={t('common.back')}
-          action={
-            <Button size="md" disabled={!canCreate} onClick={create}>
-              <Sparkles className="size-[18px]" aria-hidden />
-              {parsing.cards.length > 0
-                ? t('cards.paste.createCount', { count: parsing.cards.length })
-                : t('cards.paste.create')}
-            </Button>
-          }
-        />
+        <ScreenHeader title={t('cards.paste.title')} onBack={onBack} backLabel={t('common.back')} />
+      }
+      // The action sits at the foot, under the thumb and directly above the keyboard the learner
+      // is pasting with — the shell fits itself above it, so the bar never needs lifting.
+      footer={
+        <FooterBar>
+          <Button size="lg" className="w-full" disabled={!canCreate} onClick={create}>
+            <Sparkles className="size-[18px]" aria-hidden />
+            {parsing.cards.length > 0
+              ? t('cards.paste.createCount', { count: parsing.cards.length })
+              : t('cards.paste.create')}
+          </Button>
+        </FooterBar>
       }
     >
       <div className="mt-4 flex flex-col gap-5 pb-6">

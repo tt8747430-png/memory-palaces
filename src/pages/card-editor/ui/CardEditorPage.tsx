@@ -6,7 +6,7 @@ import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
 import { selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
 import { createCard, editCard } from '@/features/card'
 import { cardsInSubtree, cn } from '@/shared/lib'
-import { AppScreen, ScreenHeader } from '@/shared/ui'
+import { AppScreen, FooterBar, ScreenHeader } from '@/shared/ui'
 import { type CardData, CardFields } from '@/widgets/content-editor'
 
 export interface CardEditorPageProps {
@@ -217,10 +217,7 @@ function DeckNav({
 }) {
   const progress = total > 0 ? ((position + 1) / total) * 100 : 0
   return (
-    <nav
-      className="bg-glass shrink-0 border-t border-white/40 px-4 pt-3 pb-[max(0.85rem,env(safe-area-inset-bottom))] shadow-[0_-10px_30px_oklch(var(--p-tint-navy)/0.1)]"
-      aria-label={prevLabel}
-    >
+    <FooterBar role="navigation" aria-label={prevLabel}>
       <div className="flex items-center justify-between gap-2">
         <DeckNavButton side="prev" label={prevLabel} disabled={!hasPrev} onClick={onPrev} />
         <div className="flex flex-col items-center gap-1.5">
@@ -237,7 +234,7 @@ function DeckNav({
         </div>
         <DeckNavButton side="next" label={nextLabel} disabled={!hasNext} onClick={onNext} />
       </div>
-    </nav>
+    </FooterBar>
   )
 }
 

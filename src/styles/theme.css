@@ -57,10 +57,15 @@
 
     /* How much room the bottom of the screen is already spoken for. The default is the bare
        safe area; `AppNav` raises it by the tab bar's height on the routes where it is mounted.
-       Everything docked to the bottom — the select toolbar, the speed dial, a screen's own
-       scroll padding (`.pb-nav`) — measures from this, so a page with no tab bar sits low
-       instead of floating over a gap. */
-    --app-bottom-inset: max(0.75rem, env(safe-area-inset-bottom));
+       Everything docked to the bottom — the select toolbar, the speed dial, a footer bar, a
+       screen's own scroll padding (`.pb-nav`) — measures from this, so a page with no tab bar
+       sits low instead of floating over a gap.
+
+       While the keyboard is up it collapses to the floor: the shell already ends at the top of
+       the keyboard, which is itself covering the home indicator, so the safe area is no longer
+       spoken for and reserving it would only read as a gap above the keyboard. `--kb-inset` is
+       always ≥ the safe area when a keyboard is open, so the subtraction just trips the `max()`. */
+    --app-bottom-inset: max(0.75rem, calc(env(safe-area-inset-bottom) - var(--kb-inset)));
   }
 
   html {
