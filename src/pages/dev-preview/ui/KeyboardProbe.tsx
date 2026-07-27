@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { visibleBottom } from '@/shared/lib'
 import { Input } from '@/shared/ui'
 
 interface Sample {
@@ -10,6 +11,9 @@ interface Sample {
   kbInset: string
   vvTop: string
   scrollTop: number
+  htmlRectTop: number
+  rootRectTop: number
+  visibleBottom: number
   headerBottom: number
   footerTop: number
   focused: string
@@ -37,6 +41,9 @@ function read(): Sample {
     kbInset: style.getPropertyValue('--kb-inset') || '(unset)',
     vvTop: style.getPropertyValue('--vv-top') || '(unset)',
     scrollTop: Math.round(scroller?.scrollTop ?? -1),
+    htmlRectTop: Math.round(root.getBoundingClientRect().top),
+    rootRectTop: Math.round(document.getElementById('root')?.getBoundingClientRect().top ?? -1),
+    visibleBottom: Math.round(visibleBottom()),
     headerBottom: Math.round(header?.getBoundingClientRect().bottom ?? -1),
     footerTop: Math.round(footer?.getBoundingClientRect().top ?? -1),
     focused: active?.tagName.toLowerCase() ?? '(none)',
@@ -56,6 +63,9 @@ const ROWS: [keyof Sample, string][] = [
   ['kbInset', '--kb-inset'],
   ['vvTop', '--vv-top'],
   ['scrollTop', 'main scrollTop'],
+  ['htmlRectTop', 'html rect top'],
+  ['rootRectTop', '#root rect top'],
+  ['visibleBottom', 'reveal band max'],
   ['headerBottom', 'header bottom'],
   ['footerTop', 'footer top'],
   ['focused', 'focused element'],
@@ -96,9 +106,11 @@ export function KeyboardProbe() {
         </dd>
       </dl>
       <p className="text-[length:var(--p-text-label)] leading-snug text-muted-foreground">
-        Focus the field. If <b>visualViewport top</b> goes above 0, iOS panned. If{' '}
-        <b>layout viewport h</b> drops with the keyboard, the platform resizes instead. The last row
-        must balance, or --kb-inset is measuring against a stale height.
+        Focus the field. <b>visualViewport top</b> above 0 means iOS panned; <b>layout viewport h</b>{' '}
+        dropping means it resized instead. <b>html rect top</b> is the one that says which
+        coordinate space rects use — 0 means layout-relative, -(pan) means the pan is already baked
+        in. <b>focused bottom</b> must stay under <b>reveal band max</b>, and the last row must
+        balance.
       </p>
     </div>
   )

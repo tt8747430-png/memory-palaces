@@ -451,7 +451,10 @@ export function DevPreviewPage({ onBack }: { onBack?: () => void }) {
     <AppScreen
       scrollRef={setScrollNode}
       header={
-        <header className="border-b border-border bg-card/80 backdrop-blur-md">
+        <header
+          data-slot="header-bar"
+          className="border-b border-border bg-card/80 backdrop-blur-md"
+        >
           <div className="mx-auto w-full max-w-[430px] px-5 pt-safe">
             <div className="flex items-start justify-between gap-3 pt-3">
               {onBack ? (

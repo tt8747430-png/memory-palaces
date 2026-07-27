@@ -1,11 +1,5 @@
 import { useCallback, useRef } from 'react'
-import {
-  expectKeyboard,
-  keyboardHeight,
-  subscribeKeyboard,
-  viewportHeight,
-  viewportTop,
-} from './keyboard-viewport'
+import { expectKeyboard, subscribeKeyboard, visibleBottom } from './keyboard-viewport'
 
 const REVEAL_GAP = 16
 
@@ -54,10 +48,10 @@ export function useKeyboardReveal(): (node: HTMLElement | null) => void {
       const chrome = node.parentElement?.querySelector('[data-slot="header-bar"]')
       const dock = node.querySelector('[data-slot="footer-bar"]')
       const band = {
-        top: Math.max(bounds.top, viewportTop(), chrome?.getBoundingClientRect().bottom ?? 0),
+        top: Math.max(bounds.top, chrome?.getBoundingClientRect().bottom ?? 0),
         bottom: Math.min(
           bounds.bottom,
-          viewportHeight() - keyboardHeight(),
+          visibleBottom(),
           dock?.getBoundingClientRect().top ?? Infinity,
         ),
       }

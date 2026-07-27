@@ -58,6 +58,10 @@ export function viewportTop(): number {
   return Math.max(0, panned)
 }
 
+export function visibleBottom(): number {
+  return viewportHeight() - keyboardHeight() - viewportTop()
+}
+
 export function keyboardHeight(): number {
   return Math.max(0, published)
 }

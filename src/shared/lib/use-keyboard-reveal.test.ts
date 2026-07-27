@@ -169,7 +169,7 @@ describe('useKeyboardReveal', () => {
     expect(scroll.scrollTop).toBe(16)
   })
 
-  it('keeps the field clear of the header that rode the pan back onto the screen', () => {
+  it('keeps the field clear of the header', () => {
     localStorage.setItem(STORAGE_KEY, '300')
     stubViewport({ height: 800, offsetTop: 0 }, 800)
     stop = startKeyboardViewport()
@@ -185,14 +185,41 @@ describe('useKeyboardReveal', () => {
 
     Object.defineProperty(scroll, 'scrollTop', { value: 0, writable: true })
     stubRect(scroll, 0, 800)
-    stubRect(header, 113, 221)
-    stubRect(field, 130, 170)
+    stubRect(header, 0, 108)
+    stubRect(field, 90, 130)
 
     const { result } = renderHook(() => useKeyboardReveal())
     act(() => result.current(scroll))
     act(() => field.focus())
 
-    expect(scroll.scrollTop).toBe(-107)
+    expect(scroll.scrollTop).toBe(-34)
+  })
+
+  it('subtracts the pan from the band, because rects already carry it', async () => {
+    localStorage.setItem(STORAGE_KEY, '290')
+    const viewport = stubViewport({ height: 793, offsetTop: 0 }, 793)
+    stop = startKeyboardViewport()
+
+    const scroll = document.createElement('div')
+    const field = document.createElement('input')
+    scroll.appendChild(field)
+    document.body.appendChild(scroll)
+
+    Object.defineProperty(scroll, 'scrollTop', { value: 0, writable: true })
+    stubRect(scroll, 0, 793)
+    stubRect(field, 360, 400)
+
+    const { result } = renderHook(() => useKeyboardReveal())
+    act(() => result.current(scroll))
+    act(() => field.focus())
+    expect(scroll.scrollTop).toBe(0)
+
+    await act(async () => {
+      await viewport.move({ height: 390, offsetTop: 113 })
+    })
+
+    // Visible area is now 390 tall, not 503: a field at 400 sits under the keyboard.
+    expect(scroll.scrollTop).toBe(26)
   })
 
   it('stops reserving when the scroll surface unmounts', () => {
