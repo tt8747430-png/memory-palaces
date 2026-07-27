@@ -9,6 +9,7 @@ let published = -1
 
 let appHeight = 0
 let appWidth = 0
+let panned = -1
 
 const listeners = new Set<() => void>()
 
@@ -42,8 +43,19 @@ function publishHeight(next: number) {
   document.documentElement.style.setProperty('--app-height', `${next}px`)
 }
 
+function publishTop(next: number) {
+  if (next === panned) return
+  panned = next
+  document.documentElement.style.setProperty('--vv-top', `${next}px`)
+  listeners.forEach((listener) => listener())
+}
+
 export function viewportHeight(): number {
   return appHeight || document.documentElement.clientHeight
+}
+
+export function viewportTop(): number {
+  return Math.max(0, panned)
 }
 
 export function keyboardHeight(): number {
@@ -74,8 +86,10 @@ export function startKeyboardViewport(): () => void {
     published = -1
     appHeight = 0
     appWidth = 0
+    panned = -1
     root.style.removeProperty('--kb-inset')
     root.style.removeProperty('--app-height')
+    root.style.removeProperty('--vv-top')
   }
 
   const anchor = () => {
@@ -90,6 +104,7 @@ export function startKeyboardViewport(): () => void {
 
   if (!vv) {
     anchor()
+    publishTop(0)
     publish()
     return reset
   }
@@ -98,7 +113,9 @@ export function startKeyboardViewport(): () => void {
   const measure = () => {
     frame = 0
     anchor()
-    const gap = Math.max(0, appHeight - vv.height - Math.max(0, vv.offsetTop))
+    const top = Math.max(0, Math.round(vv.offsetTop))
+    publishTop(top)
+    const gap = Math.max(0, appHeight - vv.height - top)
     const next = gap >= KEYBOARD_MIN ? Math.round(gap) : 0
     if (next === measured) return
     measured = next

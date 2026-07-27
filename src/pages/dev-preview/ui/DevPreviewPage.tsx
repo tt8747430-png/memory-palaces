@@ -47,6 +47,7 @@ import {
   Switch,
   Textarea,
 } from '@/shared/ui'
+import { KeyboardProbe } from './KeyboardProbe'
 
 const FIRST_COLOR = DECK_COLOR_OPTIONS[0]?.value ?? ''
 const MID_COLOR = DECK_COLOR_OPTIONS[Math.floor(DECK_COLOR_OPTIONS.length / 2)]?.value ?? ''
@@ -66,6 +67,7 @@ const THEME_OPTIONS = [
 type ThemeMode = (typeof THEME_OPTIONS)[number]['value']
 
 const SECTIONS = [
+  { id: 'keyboard', label: 'Keyboard' },
   { id: 'overlays', label: 'Overlays' },
   { id: 'colour', label: 'Colour row' },
   { id: 'gestures', label: 'Swipe' },
@@ -497,6 +499,14 @@ export function DevPreviewPage() {
       }
     >
       <div className="flex flex-col gap-8 pt-4 pb-32">
+        <Section
+          id="keyboard"
+          title="Keyboard & viewport"
+          note="Open on a phone: focus the field and read the live numbers to see whether iOS pans the visual viewport or resizes the layout one."
+        >
+          <KeyboardProbe />
+        </Section>
+
         <Section
           id="overlays"
           title="Overlays & sheets"

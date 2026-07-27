@@ -51,7 +51,7 @@
   :root {
     --kb-inset: 0px;
 
-    --app-bottom-inset: max(0.75rem, env(safe-area-inset-bottom));
+    --app-bottom-inset: max(0.75rem, calc(env(safe-area-inset-bottom) - var(--kb-inset)));
   }
 
   html {

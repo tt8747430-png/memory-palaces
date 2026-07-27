@@ -169,6 +169,32 @@ describe('useKeyboardReveal', () => {
     expect(scroll.scrollTop).toBe(16)
   })
 
+  it('keeps the field clear of the header that rode the pan back onto the screen', () => {
+    localStorage.setItem(STORAGE_KEY, '300')
+    stubViewport({ height: 800, offsetTop: 0 }, 800)
+    stop = startKeyboardViewport()
+
+    const shell = document.createElement('div')
+    const header = document.createElement('header')
+    header.dataset.slot = 'header-bar'
+    const scroll = document.createElement('div')
+    const field = document.createElement('input')
+    scroll.appendChild(field)
+    shell.append(header, scroll)
+    document.body.appendChild(shell)
+
+    Object.defineProperty(scroll, 'scrollTop', { value: 0, writable: true })
+    stubRect(scroll, 0, 800)
+    stubRect(header, 113, 221)
+    stubRect(field, 130, 170)
+
+    const { result } = renderHook(() => useKeyboardReveal())
+    act(() => result.current(scroll))
+    act(() => field.focus())
+
+    expect(scroll.scrollTop).toBe(-107)
+  })
+
   it('stops reserving when the scroll surface unmounts', () => {
     localStorage.setItem(STORAGE_KEY, '336')
     stubViewport({ height: 802, offsetTop: 0 }, 802)

@@ -12,7 +12,10 @@ export interface HeaderBarProps {
 export function HeaderBar({ children, className }: HeaderBarProps) {
   const elevation = useHeaderElevation()
   return (
-    <header className="relative z-20 shrink-0 bg-glass pt-safe">
+    <header
+      data-slot="header-bar"
+      className="relative z-20 shrink-0 translate-y-[var(--vv-top,0px)] bg-glass pt-safe"
+    >
       <motion.span
         aria-hidden
         style={{ opacity: elevation }}

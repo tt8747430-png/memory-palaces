@@ -4,6 +4,7 @@ import {
   keyboardHeight,
   subscribeKeyboard,
   viewportHeight,
+  viewportTop,
 } from './keyboard-viewport'
 
 const REVEAL_GAP = 16
@@ -50,9 +51,17 @@ export function useKeyboardReveal(): (node: HTMLElement | null) => void {
 
     const reveal = (field: HTMLElement) => {
       const bounds = node.getBoundingClientRect()
-      const rect = field.getBoundingClientRect()
-      const limit = Math.min(viewportHeight() - keyboardHeight(), bounds.bottom)
-      const delta = revealOffset({ top: bounds.top, bottom: limit }, rect)
+      const chrome = node.parentElement?.querySelector('[data-slot="header-bar"]')
+      const dock = node.querySelector('[data-slot="footer-bar"]')
+      const band = {
+        top: Math.max(bounds.top, viewportTop(), chrome?.getBoundingClientRect().bottom ?? 0),
+        bottom: Math.min(
+          bounds.bottom,
+          viewportHeight() - keyboardHeight(),
+          dock?.getBoundingClientRect().top ?? Infinity,
+        ),
+      }
+      const delta = revealOffset(band, field.getBoundingClientRect())
       if (delta !== 0) node.scrollTop += delta
     }
 
