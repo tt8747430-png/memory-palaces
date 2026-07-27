@@ -23,7 +23,7 @@ One centered column, `max-w-[430px]` (`shared/ui/AppScreen`, every overlay). Bre
 
 - `viewport-fit=cover` renders under the notch and home indicator — you **must** pad for insets.
 - **Use the `theme.css` safe-area utilities**; compose `AppScreen`/`Sheet`/`HeaderBar`/`SpeedDial` rather than hand-rolling padding.
-- **Keyboard:** keep the **focused input and the header** visible above it — the scroll body reveals the field, the shell never resizes ([ADR 0002](adr/0002-keyboard-covers-the-app.md)). A page footer is _not_ lifted with it: it stays pinned to the scrollport bottom, behind the keyboard, and is reached by scrolling to the end. Put an action that must survive typing in the header (`CardEditorPage`'s Save), not the footer.
+- **Keyboard:** keep the **focused input and the header** visible above it — the scroll body reveals the field, the shell stays anchored to the screen ([ADR 0002](adr/0002-keyboard-covers-the-app.md)). **No bottom-pinned chrome on a surface with fields:** a page footer lives in the scroll flow and is reached by scrolling to the end. Put an action that must survive typing in the header (`CardEditorPage`'s Save), not the footer.
 - **`overscroll-behavior: contain`** on scroll regions — no app bounce, no pull-to-refresh in standalone.
 
 ## 3. Touch targets

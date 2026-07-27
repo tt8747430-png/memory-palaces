@@ -6,7 +6,9 @@ let measured = 0
 let expected = 0
 let expecting = false
 let published = -1
-let panned = -1
+
+let appHeight = 0
+let appWidth = 0
 
 const listeners = new Set<() => void>()
 
@@ -34,10 +36,14 @@ function publish() {
   listeners.forEach((listener) => listener())
 }
 
-function publishTop(top: number) {
-  if (top === panned) return
-  panned = top
-  document.documentElement.style.setProperty('--vv-top', `${top}px`)
+function publishHeight(next: number) {
+  if (next === appHeight) return
+  appHeight = next
+  document.documentElement.style.setProperty('--app-height', `${next}px`)
+}
+
+export function viewportHeight(): number {
+  return appHeight || document.documentElement.clientHeight
 }
 
 export function keyboardHeight(): number {
@@ -62,23 +68,37 @@ export function startKeyboardViewport(): () => void {
   const vv = window.visualViewport
   expected = readStored()
 
-  if (!vv) {
-    publish()
-    publishTop(0)
-    return () => {
-      published = -1
-      panned = -1
-      root.style.removeProperty('--kb-inset')
-      root.style.removeProperty('--vv-top')
+  const reset = () => {
+    measured = 0
+    expecting = false
+    published = -1
+    appHeight = 0
+    appWidth = 0
+    root.style.removeProperty('--kb-inset')
+    root.style.removeProperty('--app-height')
+  }
+
+  const anchor = () => {
+    const width = root.clientWidth
+    if (width !== appWidth) {
+      appWidth = width
+      publishHeight(root.clientHeight)
+      return
     }
+    if (!expecting && root.clientHeight > appHeight) publishHeight(root.clientHeight)
+  }
+
+  if (!vv) {
+    anchor()
+    publish()
+    return reset
   }
 
   let frame = 0
   const measure = () => {
     frame = 0
-    const top = Math.max(0, Math.round(vv.offsetTop))
-    publishTop(top)
-    const gap = Math.max(0, root.clientHeight - vv.height - top)
+    anchor()
+    const gap = Math.max(0, appHeight - vv.height - Math.max(0, vv.offsetTop))
     const next = gap >= KEYBOARD_MIN ? Math.round(gap) : 0
     if (next === measured) return
     measured = next
@@ -96,16 +116,13 @@ export function startKeyboardViewport(): () => void {
   publish()
   vv.addEventListener('resize', schedule)
   vv.addEventListener('scroll', schedule)
+  window.addEventListener('orientationchange', schedule)
 
   return () => {
     window.cancelAnimationFrame(frame)
     vv.removeEventListener('resize', schedule)
     vv.removeEventListener('scroll', schedule)
-    measured = 0
-    expecting = false
-    published = -1
-    panned = -1
-    root.style.removeProperty('--kb-inset')
-    root.style.removeProperty('--vv-top')
+    window.removeEventListener('orientationchange', schedule)
+    reset()
   }
 }

@@ -31,14 +31,34 @@ interface Viewport {
 }
 
 function stubViewport({ height, offsetTop }: Viewport, layoutHeight: number) {
-  Object.defineProperty(window, 'visualViewport', {
-    value: { height, offsetTop, addEventListener: () => {}, removeEventListener: () => {} },
-    configurable: true,
-  })
+  const listeners = new Set<() => void>()
+  const vv = {
+    height,
+    offsetTop,
+    addEventListener: (_type: string, fn: () => void) => listeners.add(fn),
+    removeEventListener: (_type: string, fn: () => void) => listeners.delete(fn),
+  }
+  const layout = { height: layoutHeight, width: 390 }
+
+  Object.defineProperty(window, 'visualViewport', { value: vv, configurable: true })
   Object.defineProperty(document.documentElement, 'clientHeight', {
-    value: layoutHeight,
+    get: () => layout.height,
     configurable: true,
   })
+  Object.defineProperty(document.documentElement, 'clientWidth', {
+    get: () => layout.width,
+    configurable: true,
+  })
+
+  return {
+    async move(next: Viewport & { layoutHeight?: number }) {
+      vv.height = next.height
+      vv.offsetTop = next.offsetTop
+      if (next.layoutHeight !== undefined) layout.height = next.layoutHeight
+      listeners.forEach((fn) => fn())
+      await new Promise((resolve) => requestAnimationFrame(resolve))
+    },
+  }
 }
 
 function stubRect(node: Element, top: number, bottom: number) {
@@ -60,6 +80,7 @@ afterEach(() => {
   document.body.replaceChildren()
   Reflect.deleteProperty(window, 'visualViewport')
   Reflect.deleteProperty(document.documentElement, 'clientHeight')
+  Reflect.deleteProperty(document.documentElement, 'clientWidth')
 })
 
 describe('useKeyboardReveal', () => {
@@ -101,28 +122,51 @@ describe('useKeyboardReveal', () => {
     expect(inset()).toBe('0px')
   })
 
-  it('lifts the field clear of a docked footer, not just of the keyboard', () => {
+  it('lifts a field that the keyboard would cover, before the keyboard reports itself', () => {
     localStorage.setItem(STORAGE_KEY, '300')
     stubViewport({ height: 800, offsetTop: 0 }, 800)
     stop = startKeyboardViewport()
 
     const scroll = document.createElement('div')
     const field = document.createElement('input')
-    const dock = document.createElement('div')
-    dock.dataset.slot = 'footer-bar'
-    scroll.append(field, dock)
+    scroll.appendChild(field)
     document.body.appendChild(scroll)
 
     Object.defineProperty(scroll, 'scrollTop', { value: 0, writable: true })
     stubRect(scroll, 64, 800)
-    stubRect(field, 400, 440)
-    stubRect(dock, 420, 500)
+    stubRect(field, 460, 500)
 
     const { result } = renderHook(() => useKeyboardReveal())
     act(() => result.current(scroll))
     act(() => field.focus())
 
-    expect(scroll.scrollTop).toBe(36)
+    expect(scroll.scrollTop).toBe(16)
+  })
+
+  it('measures the band against the anchored shell, not the shrunken layout viewport', async () => {
+    localStorage.setItem(STORAGE_KEY, '200')
+    const viewport = stubViewport({ height: 800, offsetTop: 0 }, 800)
+    stop = startKeyboardViewport()
+
+    const scroll = document.createElement('div')
+    const field = document.createElement('input')
+    scroll.appendChild(field)
+    document.body.appendChild(scroll)
+
+    Object.defineProperty(scroll, 'scrollTop', { value: 0, writable: true })
+    stubRect(scroll, 64, 800)
+    stubRect(field, 460, 500)
+
+    const { result } = renderHook(() => useKeyboardReveal())
+    act(() => result.current(scroll))
+    act(() => field.focus())
+
+    await act(async () => {
+      await viewport.move({ height: 500, offsetTop: 0, layoutHeight: 500 })
+    })
+
+    expect(inset()).toBe('300px')
+    expect(scroll.scrollTop).toBe(16)
   })
 
   it('stops reserving when the scroll surface unmounts', () => {

@@ -1,5 +1,10 @@
 import { useCallback, useRef } from 'react'
-import { expectKeyboard, keyboardHeight, subscribeKeyboard } from './keyboard-viewport'
+import {
+  expectKeyboard,
+  keyboardHeight,
+  subscribeKeyboard,
+  viewportHeight,
+} from './keyboard-viewport'
 
 const REVEAL_GAP = 16
 
@@ -46,12 +51,7 @@ export function useKeyboardReveal(): (node: HTMLElement | null) => void {
     const reveal = (field: HTMLElement) => {
       const bounds = node.getBoundingClientRect()
       const rect = field.getBoundingClientRect()
-      const dock = node.querySelector('[data-slot="footer-bar"]')
-      const limit = Math.min(
-        document.documentElement.clientHeight - keyboardHeight(),
-        bounds.bottom,
-        dock?.getBoundingClientRect().top ?? Infinity,
-      )
+      const limit = Math.min(viewportHeight() - keyboardHeight(), bounds.bottom)
       const delta = revealOffset({ top: bounds.top, bottom: limit }, rect)
       if (delta !== 0) node.scrollTop += delta
     }

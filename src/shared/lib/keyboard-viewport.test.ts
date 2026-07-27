@@ -25,17 +25,24 @@ function stubViewport({ height, offsetTop }: Viewport, layoutHeight: number) {
     },
     removeEventListener: (type: string, fn: () => void) => listeners.get(type)?.delete(fn),
   }
+  const layout = { height: layoutHeight, width: 390 }
 
   Object.defineProperty(window, 'visualViewport', { value: vv, configurable: true })
   Object.defineProperty(document.documentElement, 'clientHeight', {
-    value: layoutHeight,
+    get: () => layout.height,
+    configurable: true,
+  })
+  Object.defineProperty(document.documentElement, 'clientWidth', {
+    get: () => layout.width,
     configurable: true,
   })
 
   return {
-    async move(next: Viewport) {
+    async move(next: Viewport & { layoutHeight?: number; width?: number }) {
       vv.height = next.height
       vv.offsetTop = next.offsetTop
+      if (next.layoutHeight !== undefined) layout.height = next.layoutHeight
+      if (next.width !== undefined) layout.width = next.width
       listeners.get('resize')?.forEach((fn) => fn())
       await new Promise((resolve) => requestAnimationFrame(resolve))
     },
@@ -44,7 +51,7 @@ function stubViewport({ height, offsetTop }: Viewport, layoutHeight: number) {
 
 const inset = () => document.documentElement.style.getPropertyValue('--kb-inset')
 
-const panOffset = () => document.documentElement.style.getPropertyValue('--vv-top')
+const shell = () => document.documentElement.style.getPropertyValue('--app-height')
 
 let stop: (() => void) | undefined
 
@@ -57,6 +64,7 @@ afterEach(() => {
   stop = undefined
   Reflect.deleteProperty(window, 'visualViewport')
   Reflect.deleteProperty(document.documentElement, 'clientHeight')
+  Reflect.deleteProperty(document.documentElement, 'clientWidth')
 })
 
 describe('keyboard viewport', () => {
@@ -78,15 +86,38 @@ describe('keyboard viewport', () => {
     expect(keyboardHeight()).toBe(277)
   })
 
-  it('publishes the pan offset so top chrome can ride back onto the screen', async () => {
+  it('measures the keyboard when the platform shrinks the layout viewport instead of panning', async () => {
+    const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
+    stop = startKeyboardViewport()
+    expectKeyboard(true)
+
+    await viewport.move({ height: 466, offsetTop: 0, layoutHeight: 466 })
+
+    expect(shell()).toBe('802px')
+    expect(keyboardHeight()).toBe(336)
+  })
+
+  it('holds the shell at full height while a field is focused, so nothing reflows', async () => {
+    const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
+    stop = startKeyboardViewport()
+    expect(shell()).toBe('802px')
+
+    expectKeyboard(true)
+    await viewport.move({ height: 466, offsetTop: 0, layoutHeight: 466 })
+    expect(shell()).toBe('802px')
+
+    expectKeyboard(false)
+    await viewport.move({ height: 802, offsetTop: 0, layoutHeight: 802 })
+    expect(shell()).toBe('802px')
+  })
+
+  it('re-anchors the shell on rotation', async () => {
     const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
     stop = startKeyboardViewport()
 
-    expect(panOffset()).toBe('0px')
+    await viewport.move({ height: 390, offsetTop: 0, layoutHeight: 390, width: 802 })
 
-    await viewport.move({ height: 412, offsetTop: 113 })
-
-    expect(panOffset()).toBe('113px')
+    expect(shell()).toBe('390px')
   })
 
   it('ignores a gap too small to be a keyboard', () => {
@@ -150,7 +181,7 @@ describe('keyboard viewport', () => {
     startKeyboardViewport()()
 
     expect(inset()).toBe('')
-    expect(panOffset()).toBe('')
+    expect(shell()).toBe('')
     expect(keyboardHeight()).toBe(0)
   })
 })
