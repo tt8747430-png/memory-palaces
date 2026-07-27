@@ -43,7 +43,7 @@ export function SettingsChangePasswordPage({ onBack }: SettingsChangePasswordPag
         />
       }
     >
-      <form className="mt-4 flex flex-col gap-4 pb-28" onSubmit={handleSubmit} noValidate>
+      <form className="mt-4 flex flex-col gap-4 pb-gutter" onSubmit={handleSubmit} noValidate>
         <PasswordField
           id="current-password"
           label={t('settings.changePasswordScreen.current')}

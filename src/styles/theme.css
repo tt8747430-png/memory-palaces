@@ -83,11 +83,12 @@
     margin: 0;
     height: 100%;
     overflow: hidden;
-    /* The page backdrop lives here, on the full layout viewport, rather than on `#root` — `#root`
-       shrinks to the space above the keyboard, and the strip it gives up must stay painted while
-       the keyboard slides in and out. */
-    background: var(--bg-daylight);
-    background-repeat: no-repeat;
+    /* Behind the system's own chrome. `#root` shrinks to the space above the keyboard, and what it
+       gives up is the keyboard and its floating accessory bar — the app's daylight gradient must
+       not carry on down there as if the page continued, but the strip can't go unpainted either
+       (the canvas would flash white through the keyboard's open/close). A flat surface reads as
+       "the app ends here" in both themes. */
+    background: var(--surface);
     font-family: var(--p-font-sans), sans-serif;
     color: var(--text-primary);
     overscroll-behavior: none;
@@ -108,6 +109,10 @@
     position: fixed;
     inset: var(--vv-top) 0 auto 0;
     height: var(--vvh);
+    /* The daylight gradient is the app's own surface, so it is painted by the box that *is* the
+       app — it stops where the app stops, at the top of the keyboard's accessory bar. */
+    background: var(--bg-daylight);
+    background-repeat: no-repeat;
   }
 
   h1,
@@ -242,8 +247,11 @@
     padding-top: env(safe-area-inset-top);
   }
 
+  /* Clearance for the home indicator — but only while it is exposed. The keyboard covers it, and
+     the shell already ends at the keyboard's top edge, so holding the safe area open there is a
+     gap rather than clearance. */
   .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: max(0px, calc(env(safe-area-inset-bottom) - var(--kb-inset)));
   }
 
   /* Bottom-sheet padding that also lifts pinned footer content above the on-screen keyboard.
@@ -259,6 +267,14 @@
      not, per `--app-bottom-inset`) plus the speed dial that floats above it. */
   .pb-nav {
     padding-bottom: calc(var(--app-bottom-inset) + 4.5rem);
+  }
+
+  /* The breathing room a plain scrolling screen leaves under its last row (the `pb-28` every page
+     without docked chrome uses). It collapses to a thumb's width while the keyboard is up: the
+     shell is a third of its height then, and 7rem of empty scroll below the last field reads as
+     the keyboard inset having gone wrong. */
+  .pb-gutter {
+    padding-bottom: max(1rem, calc(7rem - var(--kb-inset)));
   }
 
   .pl-safe {

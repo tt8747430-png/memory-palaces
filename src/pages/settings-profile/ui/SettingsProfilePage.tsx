@@ -48,7 +48,7 @@ export function SettingsProfilePage({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-        className="mt-4 flex flex-col gap-6 pb-28"
+        className="mt-4 flex flex-col gap-6 pb-gutter"
       >
         <AvatarPicker
           name={value.name}
