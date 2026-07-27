@@ -1,138 +1,129 @@
 # Mobile & PWA Design
 
-How Mindscape should behave and feel on a phone and as an installed app. Code-level engineering rules (components, hooks, Tailwind, React performance, animation APIs) live in [CODE_STYLE.md](CODE_STYLE.md); this doc is product behavior, interaction, and PWA caveats. Each rule points at the real file that implements it.
+Behavior, interaction, PWA caveats. Code-level rules → [CODE_STYLE.md](CODE_STYLE.md).
 
-**What this is:** a **portrait, touch-first, offline-first, installable PWA** — `index.html` sets `viewport-fit=cover`, `maximum-scale=1`, `user-scalable=no`, `interactive-widget=resizes-content`; the manifest (`vite.config.ts`) is `display: standalone`, `orientation: portrait`.
+**Portrait, touch-first, offline-first, installable PWA.** `index.html`: `viewport-fit=cover`, `maximum-scale=1`, `user-scalable=no`, `interactive-widget=resizes-content`. Manifest: `display: standalone`, `orientation: portrait`.
 
-> This is a **web PWA, not React Native**. The "Mobile Design System" template's RN/Flutter APIs (FlatList, SecureStore, `useNativeDriver`, const constructors) **do not apply** — the UX _principles_ below do.
+> Web PWA, **not React Native** — RN/Flutter APIs don't apply; the UX principles do.
 
 ---
 
-## 1. Responsive layout & screen adaptation
+## 1. Layout
 
-The app is **phone-first**, not a breakpoint grid. It renders as a **single centered column capped at `max-w-[430px]`** (see `shared/ui/AppScreen`, and every `Sheet`/overlay). Breakpoints (`sm:`/`md:`/`lg:`) are used in only a handful of places by design.
+One centered column, `max-w-[430px]` (`shared/ui/AppScreen`, every overlay). Breakpoints used in a handful of places by design.
 
-- **Design at ~390–430px width.** Content adapts _within_ the column (wrap, stack, resize), not across desktop breakpoints. On tablet/desktop or a maximized PWA window, the column stays centered — never stretch UI edge-to-edge on a big screen.
-- **Use `dvh`, never `vh`, for full-height regions.** Dynamic viewport units account for the mobile URL bar and on-screen keyboard (the `Sheet` caps at `max-h-[88dvh]`; page shells use `dvh`). `100vh` overflows on mobile Safari.
-- **Fluid inside the column:** relative units, `flex`/`grid` with wrap, `min-w-0` on flex children so text truncates instead of overflowing, `max-w-full` on media. Reserve `sm:`/`md:` for the rare case a wider phone genuinely benefits.
-- **PWA standalone ≠ browser tab.** In `display: standalone` there is no browser chrome (URL bar, back button) — the app must provide its own back affordance and never depend on browser UI. Test both modes.
-- **Orientation:** the manifest locks `portrait`, but the OS may still rotate — don't break in landscape; let the centered column letterbox rather than distort.
-- **Respect Dynamic Type / user font scaling:** size text with the `--p-text-*` tokens (`text-[length:var(--p-text-body)]`) and relative spacing so larger system fonts don't clip or overlap.
+- **Design at ~390–430px.** Content adapts _within_ the column. On big screens it stays centered — never edge-to-edge.
+- **`dvh`, never `vh`** (`100vh` overflows on mobile Safari). `Sheet` caps at `max-h-[88dvh]`.
+- **Fluid inside:** relative units, wrap, `min-w-0` on flex children so text truncates, `max-w-full` on media.
+- **Standalone ≠ tab** — no URL bar, no browser back. Ship your own back affordance. Test both.
+- **Orientation:** manifest locks portrait but the OS may rotate — letterbox, don't distort.
+- **Respect Dynamic Type** — `--p-text-*` tokens + relative spacing.
 
-## 2. Safe areas, viewport & keyboard
+## 2. Safe areas, viewport, keyboard
 
-- `viewport-fit=cover` lets content render under the notch and home indicator — you **must** pad for insets.
-- **Use the safe-area utilities in `theme.css`** (`env(safe-area-inset-*)` for all four sides, plus a bottom-nav offset `calc(7rem + env(safe-area-inset-bottom))` and `pb-safe`). Compose the primitives that already apply them — `AppScreen`, `Sheet`, `HeaderBar`, `SpeedDial` — instead of hand-rolling padding.
-- **Keyboard:** `interactive-widget=resizes-content` shrinks the viewport when the keyboard opens; keep the focused input and its primary action visible above the keyboard (in-study editor, paste-notes, auth fields).
-- **Prevent overscroll chaining** on scroll regions (`overscroll-behavior: contain`) so an inner scroll doesn't bounce the whole app or trigger the browser's pull-to-refresh in standalone.
+- `viewport-fit=cover` renders under the notch and home indicator — you **must** pad for insets.
+- **Use the `theme.css` safe-area utilities**; compose `AppScreen`/`Sheet`/`HeaderBar`/`SpeedDial` rather than hand-rolling padding.
+- **Keyboard:** keep the focused input and its primary action visible above it.
+- **`overscroll-behavior: contain`** on scroll regions — no app bounce, no pull-to-refresh in standalone.
 
-## 3. Touch targets & spacing
+## 3. Touch targets
 
-- **≥ 44px hit area on anything tappable.** `Button` `md`/`lg` (`h-11`/`h-12`) comply; `sm` (`h-9` ≈ 36px) does **not** — only use it where padding brings the tap area to ≥44px.
-- **Icon-only controls** need a ≥44px hit area **and** an `sr-only` label (`shared/ui/IconButton`, `OverflowMenuButton`). Expand a small glyph's tappable area with padding, not a bigger icon.
-- **≥ 8px between adjacent targets** so a ~7mm fingertip can't hit two at once. Dense rows (`SettingsRow`, `SwipeRow`) must still keep separable hit areas.
-- **Kill accidental double-taps:** `touch-action` on draggables (`touch-none` on the sheet grab handle), and disable the tap-highlight flash (`-webkit-tap-highlight-color: transparent`) in favor of explicit `active:` states.
+- **≥ 44px hit area** on anything tappable. `Button` `md`/`lg` comply; `sm` (36px) doesn't — only where padding makes up the difference.
+- **Icon-only:** ≥44px **and** an `sr-only` label. Expand with padding, not a bigger icon.
+- **≥ 8px between adjacent targets.** Dense rows still keep separable hit areas.
+- **Kill double-taps:** `touch-action` on draggables, `-webkit-tap-highlight-color: transparent` + explicit `active:`.
 
-## 4. Thumb zone & reachability
+## 4. Thumb zone
 
-One-handed use: the bottom third is easy, the top is a stretch.
+- **Primary nav and CTAs at the bottom** — `AppNav`, `SpeedDial`, bottom-rising sheets.
+- **Destructive actions out of the resting thumb arc**, behind `ConfirmDialog`.
+- Top-of-screen controls for **low-frequency** actions only.
 
-- **Primary nav and CTAs live at the bottom** — `widgets/bottom-nav` (`AppNav`), `shared/ui/SpeedDial`, and sheets that rise from the bottom (`Sheet`, `ActionSheet`, `PromptSheet`).
-- **Keep destructive actions out of the resting thumb arc** and behind confirmation — route them through `shared/ui/ConfirmDialog`.
-- Top-of-screen controls (back, overflow) are acceptable for **low-frequency** actions only.
+## 5. Gestures & haptics
 
-## 5. Gestures, feedback & haptics
+- **Never rely on hover.** Anything hover-revealed on desktop must be tap-reachable.
+- **Every gesture needs a visible alternative** — swipe (`SwipeRow`) and long-press are accelerators, not the only path.
+- **Discoverable and forgiving:** visible affordances, rubber-band past the commit point, deliberate threshold before a destructive swipe. One recognizer (`@use-gesture`); commit math pure in `shared/lib/gestures`.
+- **Immediate press feedback:** `active:scale-[0.97]` + haptics on commit.
+- **Haptics** (`shared/lib/haptics`): `tick()` 8ms, `impact()` 16ms, `success([12,40,24])`, preference-gated. **`navigator.vibrate` is ignored by iOS Safari** — progressive enhancement only.
 
-- **Never rely on hover** — there is none on touch. Anything exposed on hover on desktop must be reachable by tap.
-- **Every gesture needs a visible alternative.** Swipe (`shared/ui/SwipeRow`, `swipe-actions`) and long-press (`shared/lib/use-long-press`) are accelerators, not the only path — provide a button too.
-- **Make gestures discoverable and forgiving:** show affordances (the sheet grab handle, swipe action colors), give an elastic/rubber-band boundary (`SwipeRow` rubber-bands past its commit point — see `shared/lib/gestures`), and require a deliberate threshold before committing a destructive swipe. `SwipeRow` and the study/browser card decks share one recognizer, **`@use-gesture`** (`useDrag`, `filterTaps` + velocity); the pure commit math lives in `shared/lib/gestures` (unit-tested).
-- **Give immediate press feedback:** `active:scale-[0.97]` (see `Button`) + haptics on commit.
-- **Haptics** (`shared/lib/haptics`): `tick()` (8ms), `impact()` (16ms), `success([12,40,24])`, gated by a user preference (`setHapticsEnabled`). **Caveat:** these use `navigator.vibrate`, which works on Android/Chromium but is **ignored by iOS Safari** — treat haptics as progressive enhancement, never as the only feedback.
+## 6. Interactivity
 
-## 6. Interactivity & input
+- **Local writes are instant — don't fake loading.** Render optimistically; spinners only for genuinely async work.
+- **Guard double-submit** — disable while pending and on success.
+- **Debounce high-frequency input**; cancel in-flight work on unmount.
+- **Don't hijack scroll.** Header/footer `shrink-0`, body `flex-1 overflow-y-auto`.
+- **Inputs:** correct `inputMode`/`type`/`autocomplete`/`enterKeyHint`; submit reachable above the keyboard.
+- **`select-none` on interactive chrome.** Long-press = intentional action, not accidental selection.
 
-- **Local writes are instant — don't fake loading.** A feature command calls `store.save()` → RxDB → reactive query → store updates, so the UI reflects the change immediately. Render optimistically; reserve spinners for genuinely async work (import, future network calls), not local mutations.
-- **Guard against double-submit:** disable the action while it's pending and on success; never let a second tap fire the same command.
-- **Debounce high-frequency input** (search over decks/cards, autosave in editors) and cancel in-flight work on unmount.
-- **Momentum & scroll:** let native momentum scrolling do the work; don't hijack scroll. Use `overflow-y-auto` scroll regions (header/footer `shrink-0`, body `flex-1 overflow-y-auto`, as in `Sheet`) so chrome stays put while content scrolls.
-- **Inputs:** set the right `inputMode`/`type`/`autocomplete`/`enterKeyHint` so the correct on-screen keyboard and return-key label appear; keep the submit action reachable above the keyboard.
-- **Selection & context:** disable text selection on interactive chrome (`select-none` on drag handles, buttons); reserve long-press for intentional actions, not accidental text selection.
+## 7. Sheets, menus, overlays
 
-## 7. Menus, sheets & overlays
+All on **`@base-ui/react`**, wrapped in `shared/ui/primitives/`: `Drawer` → `Sheet`/`ActionSheet`/`PromptSheet`; `AlertDialog` → `ConfirmDialog` (`role="alertdialog"`, no outside-press dismiss); `Menu` → `FlyoutMenu`/`SortControl`/`OverflowMenuButton`. They give focus-trap, portal, swipe-to-dismiss, `Escape`. Prefer them over hand-rolled overlays (`CardBrowser` is the one deliberate exception).
 
-All overlays are built on **`@base-ui/react`** headless primitives, wrapped as project primitives in `shared/ui/primitives/`: bottom sheets on **`Drawer`** (`shared/ui/Sheet`/`ActionSheet`/`PromptSheet`), blocking confirms on **`AlertDialog`** (`ConfirmDialog` → `role="alertdialog"`, no outside-press dismiss), and contextual menus on **`Menu`**/`DropdownMenu` (`FlyoutMenu`/`SortControl`/`OverflowMenuButton`). They provide focus-trap, portal, native swipe-to-dismiss, and `Escape`/backdrop dismissal. Prefer these primitives over hand-rolled overlays. (`CardBrowser` is the one deliberate exception — a full-screen card gallery on Base UI `Dialog`, not a bottom sheet.)
+- **Bottom sheets over centered dialogs.** `Sheet` is canonical: grab handle, native swipe-to-dismiss, `max-h-[88dvh]`, `pb-safe`, top-rounded. On iOS it lifts above the keyboard via `Drawer.VirtualKeyboardProvider` — Safari demotes `position: fixed`, so hand-rolled `bottom` offsets lose.
+- **Pick by job:** `Sheet`/`PromptSheet` = form or single input · `ActionSheet` = short list of choices · `FlyoutMenu` = anchored menu · `ConfirmDialog` = blocking yes/no · `SpeedDial` = primary-action cluster.
+- **Long content scrolls _inside_ the sheet**, never past `88dvh`.
+- **One overlay at a time.** Unavoidable layering respects the z-scale (backdrop `z-300`, popup `z-310`).
+- **Dismissal obvious and cheap:** backdrop tap, swipe-down, visible close button, `Escape`.
+- **Backdrop:** token scrim, not opaque black — context stays sensed.
 
-- **Prefer bottom sheets over centered dialogs on mobile.** They land in the thumb zone and feel native. `Sheet` is the canonical pattern: rises from the bottom (transform from `--closed-transform` + backdrop fade), has a **grab handle**, **native swipe-to-dismiss** (Base UI `Drawer` `swipeDirection="down"` — no hand-rolled drag), caps at **`max-h-[88dvh]`** so the context behind stays visible, pads `pb-safe`, and rounds only the top (`rounded-t-card-featured`). On **iOS** the sheet lifts above the on-screen keyboard via **`Drawer.VirtualKeyboardProvider`** (Safari demotes `position: fixed` once the keyboard is up, so hand-rolled `bottom` offsets lose — the provider reads the visual viewport instead; it replaced vaul's `repositionInputs`). Pass `initialFocus` to land the caret in a specific field (see `PromptSheet`).
-- **Pick the right component for the job:**
-  - `Sheet` / `PromptSheet` — a form or a single input in context.
-  - `ActionSheet` — a short list of choices (the mobile equivalent of a menu).
-  - `FlyoutMenu` / `OverflowMenuButton` — a compact contextual menu anchored to a control.
-  - `ConfirmDialog` — a blocking yes/no, especially destructive confirms.
-  - `SpeedDial` — a bottom-anchored primary-action cluster.
-- **Long content scrolls _inside_ the sheet**, not the page: `shrink-0` header/footer, `flex-1 overflow-y-auto` body. The sheet must never grow taller than `88dvh`.
-- **One overlay at a time.** Don't stack a sheet over a sheet; close the first or compose steps inside one. If layering is unavoidable, respect the z-scale (`Sheet` backdrop `z-300`, popup `z-310`).
-- **Dismissal must be obvious and cheap:** tap-outside on the backdrop, swipe-down, an always-visible close button (`aria-label`), and `Escape` for keyboard. Never trap the user in a sheet.
-- **Backdrop:** dim with the token-based scrim (`color-mix(... var(--primary) 28%)`), not opaque black; the user should sense the context behind.
+## 8. Motion feel
 
-## 8. Animation & motion feel
+- **Communicates, never decorates.** Says nothing → cut it.
+- **Spring physics** for finger-driven motion; short eased tweens for enter/exit chrome (`Sheet` = `300ms ease-out`).
+- **~150–300ms.** Longer feels sluggish in the hand.
+- **Direction encodes hierarchy:** sheets rise and fall; forward nav moves inward, back outward. No lateral slides between peers.
+- **Only `transform`/`opacity`.**
+- **Interruptible & reversible** — a half-open sheet swiped back returns. Let the gesture drive a `MotionValue`, not a fixed animation.
+- **Always honor `prefers-reduced-motion`.**
 
-Code-level animation rules (which library, which properties) are in [CODE_STYLE.md §9](CODE_STYLE.md). This is about _feel_.
+## 9. Visual hierarchy
 
-- **Motion communicates, it doesn't decorate.** Every transition should convey a spatial relationship (where something came from / went) or a state change. If it says nothing, cut it.
-- **Prefer spring physics** (`motion`) for anything the finger drives — drag, dismiss, reorder — so it tracks and settles naturally. Use short eased tweens for enter/exit chrome (the `Sheet` slide is a `300ms ease-out`).
-- **Keep it quick:** ~150–300ms for most UI transitions. Longer feels sluggish on a device held in the hand.
-- **Direction encodes hierarchy:** sheets rise from the bottom and fall back down; forward navigation (list → detail) moves inward, back moves outward. Don't slide laterally between peers as if there were depth.
-- **Animate only `transform`/`opacity`** to hold 60fps (details in CODE_STYLE §9); never animate layout props.
-- **Interruptible & reversible:** a half-open sheet you swipe back down should return, not jump. Base UI `Drawer` tracks the finger natively (`--drawer-swipe-movement-y`); for hand-driven surfaces let the gesture drive a `MotionValue` (e.g. `SwipeRow`'s `style={{ x }}`) rather than firing a fixed animation.
-- **Always honor `prefers-reduced-motion`** — replace slides/scales with a plain fade or cut.
+- **Semantic tokens only.** No raw hex, no per-component `dark:`.
+- **One primary action per screen** (`primary` → `secondary` → `ghost`). Never two competing CTAs.
+- **Elevation by role:** `shadow-rest` / `shadow-interactive` / `shadow-elevated` — not by eye.
+- **Generously rounded, glassy surfaces** (`rounded-2xl`/`rounded-card-*`, `GlassCard`). Tiles read rounded, not near-square.
+- **Rhythm:** consistent spacing scale, group related controls. Mobile shows **one task at a time**.
+- **Icons:** `lucide-react`, sized to the type scale, always with a label or `sr-only` text.
 
-## 9. Visual design & hierarchy
+## 10. States
 
-- **Semantic tokens only** — `bg-card`, `text-heading`, `border-border`, `bg-primary`, and the `--p-*` scale (see CODE_STYLE §5). No raw hex, no per-component `dark:`; dark mode follows the `[data-theme='dark']` token remap automatically.
-- **One primary action per screen.** Everything else is secondary/tertiary (`Button` variants: `primary` → `secondary` → `ghost`). Don't present two competing CTAs.
-- **Consistent elevation scale:** rest surfaces (`shadow-rest`), interactive (`shadow-interactive`), and floating/overlay (`shadow-elevated`) — pick by role, not by eye.
-- **Generously rounded, glassy surfaces:** cards and tiles use large radii (`rounded-2xl`/`rounded-card-*`); `GlassCard`/glass tokens for translucent layers. Tiles read as rounded, not near-square.
-- **Rhythm & density:** a consistent spacing scale and comfortable line length; group related controls, separate unrelated ones. Mobile shows **one task at a time** — resist cramming.
-- **Iconography:** `lucide-react`, sized to the type scale, always paired with a label or `sr-only` text — never an unlabeled icon as the sole meaning.
+All four on every async surface — a missing state reads as a crash.
 
-## 10. States: loading, error, empty, offline
+- **Loading** — skeleton/spinner, never blank (`widgets/splash` for first paint); skip for instant local writes (§6).
+- **Error** — the problem **plus a retry path**.
+- **Empty** — `shared/ui/EmptyState`; put "create" in the toolbar too.
+- **Offline** — §11.
 
-Every async surface must handle all four — a missing state reads as a crash on mobile.
+## 11. Offline-first
 
-- **Loading** — skeleton/spinner, never a blank screen (`widgets/splash` for first paint); but skip it for instant local writes (§6).
-- **Error** — show the problem **with a retry path**, not a dead end.
-- **Empty** — use `shared/ui/EmptyState`; put the primary "create" action in the toolbar, not only in the empty state.
-- **Offline** — see §11.
-
-## 11. Offline-first behavior
-
-- **RxDB (IndexedDB) is the local source of truth** — reads never touch the network, so screens render instantly and the app is fully usable with no connection. Render cached data immediately; **never block the UI on a network round-trip**.
-- **Workbox precache** (`vite.config.ts`: `globPatterns: ['**/*.{js,css,html,svg,png,woff2}']`, `cleanupOutdatedCaches`, `clientsClaim`) makes the app shell available offline after first load.
-- **Caveat — there is no network-status UI yet** (no `navigator.onLine` handling in `src/`). That's fine today because nothing in the read/study path needs the network. When network-dependent features land (sync, cloud media, auth), add an offline indicator and graceful degradation then — don't retrofit it into local-only flows now.
+- **RxDB is the local source of truth** — reads never touch the network. **Never block UI on a round-trip.**
+- **Workbox precache** makes the shell available offline after first load.
+- **Caveat — no network-status UI yet** (no `navigator.onLine`). Fine today; add an indicator when sync/cloud/auth land, don't retrofit into local-only flows.
 
 ## 12. Install & manifest
 
-- **Manifest** (`vite.config.ts` `VitePWA`): `display: standalone`, `orientation: portrait`, `theme_color #091A7A`, `background_color #ADC8FF`, 192/512 icons + a **maskable** 512 (required for Android adaptive icons).
-- **iOS home-screen** meta (`index.html`): `apple-mobile-web-app-capable=yes`, `apple-mobile-web-app-status-bar-style=black`, `apple-mobile-web-app-title=Mindscape`, `apple-touch-icon`. **Caveats:** iOS has no `beforeinstallprompt` — install is manual "Add to Home Screen"; status-bar style is limited to `default`/`black`/`black-translucent`; always test standalone mode separately from the browser tab.
+- **Manifest:** `standalone`, `portrait`, `theme_color #091A7A`, `background_color #ADC8FF`, 192/512 + a **maskable** 512 (required for Android).
+- **iOS:** `apple-mobile-web-app-*` meta + `apple-touch-icon`. No `beforeinstallprompt` (manual Add to Home Screen); status-bar style limited to `default`/`black`/`black-translucent`; test standalone separately.
 
 ## 13. Service-worker updates
 
-- `registerType: 'prompt'` — **updates are never auto-applied.** `app/providers/UpdatePrompt.tsx` uses `virtual:pwa-register/react`, checks for a new SW hourly **and** on `visibilitychange`, and when one is waiting shows a **persistent `sonner` toast** (`update.*` i18n keys) with a **Reload** action that calls `updateServiceWorker(true)`.
-- **Don't switch to `autoUpdate`** — a silent reload mid-study would lose the user's place. Keep the confirm step.
-- `devOptions.enabled: false` — the SW is **off in dev**; verify PWA/offline/update behavior against `npm run build && npm run preview`, not `npm run dev`.
+- `registerType: 'prompt'` — **never auto-applied.** `UpdatePrompt` checks hourly + on `visibilitychange`, shows a persistent toast with a Reload action.
+- **Don't switch to `autoUpdate`** — a silent reload mid-study loses the user's place.
+- SW is **off in dev** — verify against `npm run build && npm run preview`.
 
 ## 14. On-device performance
 
-Assume a low-end device with tight CPU/memory.
+Assume a low-end device.
 
-- **60fps animations**: `transform`/`opacity` only (CODE_STYLE §9).
-- **Virtualize long lists** (decks, cards) with CSS `content-visibility` or windowing; don't render thousands of rows.
-- **Passive scroll/touch listeners** (`{ passive: true }`) so gestures don't block scrolling.
-- **Ship less JS**: route-split pages (`React.lazy`) and keep the bundle lean — CODE_STYLE §7–§8.
+- **60fps:** `transform`/`opacity` only.
+- **Virtualize long lists** (`content-visibility` or windowing).
+- **Passive scroll/touch listeners.**
+- **Ship less JS:** route-split, keep the bundle lean.
 
-## 15. Accessibility & reduced motion
+## 15. Accessibility
 
-- **Honor `prefers-reduced-motion`** — gate non-essential transitions to a fade/cut.
-- **Focus & labels:** every interactive element needs a visible `focus-visible` ring, an accessible name (`aria-label`/`sr-only`), and correct roles — the `@base-ui` primitives handle focus-trap and labelling for overlays; keep those wired up.
-- **Contrast:** verify token pairings meet WCAG AA in **both** themes (they remap under `[data-theme='dark']`).
-- **Respect user font scaling** (§1) so large-text settings never clip content.
+- **Honor `prefers-reduced-motion`.**
+- **Focus & labels:** visible `focus-visible` ring, accessible name, correct roles. Keep the Base UI focus-trap/labelling wired.
+- **Contrast:** WCAG AA in **both** themes.
+- **Respect font scaling** (§1) — large text must never clip.

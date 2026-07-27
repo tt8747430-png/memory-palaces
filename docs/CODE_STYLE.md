@@ -1,181 +1,149 @@
 # Code Style
 
-Conventions for writing components in Mindscape. These build on the architecture in [CLAUDE.md](../CLAUDE.md) (FSD layers, entity stores, feature commands) — read that first. Each rule below points at a real file in the repo that already does it right; match that shape.
+Components in Mindscape. Builds on [CLAUDE.md](../CLAUDE.md) — read that first. Every rule names a file that already does it right; match that shape. Mobile/PWA behavior → [MOBILE_DESIGN.md](MOBILE_DESIGN.md).
 
-The goal: small, single-responsibility, reusable pieces. When AI (or a human) drops 500 lines into one component, decompose it using the rules here rather than leaving it.
-
-Mobile-specific and PWA behavior guidelines (touch targets, thumb zone, gestures, safe areas, offline-first, install/update) live in a separate doc: [MOBILE_DESIGN.md](MOBILE_DESIGN.md).
+Goal: small, single-responsibility, reusable. 500 lines in one component → decompose, don't leave it.
 
 ---
 
-## 1. Compose small components; don't build monoliths
+## 1. Compose small components
 
-Split a screen into single-responsibility parts: a container that wires data, then presentational children (section → list → item). One job per component.
+Container wires data → presentational children (section → list → item). One job each.
 
-**Where each piece lives (FSD placement):**
+| What                            | Where                                         |
+| ------------------------------- | --------------------------------------------- |
+| App-wide, purely presentational | `shared/ui/` (`Sheet`, `GlassCard`, `Button`) |
+| Composite, tied to one screen   | `widgets/<x>/ui/`                             |
+| Screen root                     | `pages/<x>/ui/`                               |
+| Subpart of one parent           | beside it, same `ui/` folder                  |
 
-| Reusable across the app, purely presentational | `shared/ui/` (e.g. `Sheet`, `GlassCard`, `Button`) |
-| Composite UI tied to one domain/screen area | `widgets/<x>/ui/` |
-| Screen root | `pages/<x>/ui/` |
-| A subpart used only by one parent | next to that parent in the same `ui/` folder |
+Reference: [`widgets/study-session/ui/`](../src/widgets/study-session/ui/) — ~11 focused files + `model/` + barrel.
 
-**Good example — [`widgets/study-session/ui/`](../src/widgets/study-session/ui/):** the widget is split into `StudyDeck`, `QueuedCard`, `DirectionChip`, `SessionFooter`, `EmptyQueue`, `CompletionOverlay`, `GearSheet`, `ModeSheet`, `QuickActionRows`, `SheetSection`, and one file per `faces/` — each focused, composed by the panel, with the gesture engine and settings in `model/` and a public `index.ts` barrel.
+- ~200 lines/file soft budget. Past it, extract children — or check the excess is really _state_ belonging in `model/` (§3a).
+- **One exported component per file, named for the file.** Two peers in one file hides their duplication. Private helpers stay.
+- A page composes widgets + `shared/ui`; little markup of its own.
+- Promote to `shared/ui` **only when app-wide and presentational**.
 
-**Rules of thumb:**
+## 2. Logic into hooks; components render
 
-- Soft budget ~200 lines per component file. When a file passes that, extract children — and check whether the excess is really _state_ that belongs in a `model/` module (§3a) rather than markup.
-- **One exported component per file, named for the file.** A file exporting two peer components (the old `ContentRows.tsx` held `CardRow` _and_ `QuestionRow`) hides the duplication between them; splitting it surfaced a shared `ContentRow` frame. Small private helpers used by that one component stay in the file.
-- A page composes widgets and `shared/ui`; it should not hold much presentational markup itself.
-- Extract a component to `shared/ui` **only when it's genuinely app-wide and presentational** — don't hoist a one-off. A subpart reused within a single widget/page stays local.
+- Stateful/effectful logic (subscriptions, gestures, timers, DOM measurement) → a hook. Reusable ones in `shared/lib` ([`use-long-press`](../src/shared/lib/use-long-press.ts), [`use-sticky-header`](../src/shared/lib/sticky-header/use-sticky-header.ts), `use-sortable-sensors`, `gestures`, `haptics`); one-offs colocate.
+- **Pure domain logic never lives in a component or hook** — `shared/lib` or `entities/*/model`, unit-tested without React.
 
-## 2. Extract logic into hooks; keep components rendering
+## 3. Complex state → reducer / machine
 
-Stateful/effectful logic (subscriptions, gestures, timers, DOM measurement) belongs in a hook, not inline in JSX. The component reads the hook's result and renders.
+- Several pieces changing together, or distinct phases → reducer or discriminated-union machine, kept **pure and outside the component** in feature/model: [`features/review/session-machine.ts`](../src/features/review/session-machine.ts), [`features/quiz/quiz-machine.ts`](../src/features/quiz/quiz-machine.ts) (each `*.test.ts`). Component dispatches.
+- `useReducer` for multi-field interdependent UI state (`QuizSession`, `MatchBoard`, `FlashcardsPanel`).
+- Lone toggle stays `useState`.
 
-- **Reusable** hooks live in `shared/lib`: [`use-long-press`](../src/shared/lib/use-long-press.ts), [`sticky-header/use-sticky-header`](../src/shared/lib/sticky-header/use-sticky-header.ts), `use-sortable-sensors`, `gestures`, `haptics`. One-off hooks colocate with their component.
-- **Pure domain logic never goes in a component or hook** — it lives in `shared/lib` (`srs`, `streak`, `stats`, `deck-tree`, `order`, `naming`) or `entities/*/model`, where it is unit-tested independently of React.
+## 3a. A page's state lives in one module
 
-## 3. Complex local state → reducer / state machine, not a pile of `useState`
+A page reading several stores + holding a Selection + doing a dozen acts presents **one** interface to its JSX, in `pages/<page>/model/use-<thing>.ts`. Reference: [`use-library.ts`](../src/pages/deck-library/model/use-library.ts), [`use-deck-questions.ts`](../src/pages/deck-questions/model/use-deck-questions.ts).
 
-When several pieces of state change together or a feature has distinct phases, model it as a reducer or a discriminated-union state machine instead of many `useState` calls.
-
-- Keep the machine **pure and outside the component**, in the feature/model layer: [`features/review/session-machine.ts`](../src/features/review/session-machine.ts), [`features/quiz/quiz-machine.ts`](../src/features/quiz/quiz-machine.ts) (each with its own `*.test.ts`). The component just dispatches.
-- `useReducer` is the right call for multi-field, interdependent UI state — see [`widgets/quiz/ui/QuizSession.tsx`](../src/widgets/quiz/ui/QuizSession.tsx), `widgets/match/ui/MatchBoard.tsx`, `widgets/study-session/ui/FlashcardsPanel.tsx`.
-- A lone toggle or a single value is still fine as `useState` — don't over-engineer.
-
-## 3a. A page's state and commands live in one module, not scattered across the page
-
-A page that reads several stores, holds a Selection, and can perform a dozen acts should present
-**one** interface to its own JSX — not fifteen `useState`s and three hooks the page has to wire
-together. Put it in `pages/<page>/model/use-<thing>.ts` and have the page read that and nothing
-else. Reference: [`pages/deck-library/model/use-library.ts`](../src/pages/deck-library/model/use-library.ts),
-[`pages/deck-questions/model/use-deck-questions.ts`](../src/pages/deck-questions/model/use-deck-questions.ts).
-
-- **Compose internally, expose one surface.** `useLibrary` is built from `useLibraryData`,
-  `useLibrarySelection` and `useLibraryActions`. Those are seams for the module's own tests; the
-  page never sees them. Anything the page can't act on — the optimistic overlay that holds a drop
-  on screen, which store a setting is written to — stays inside.
-- **The interface is the test surface.** These modules are tested with `renderHook` over
-  in-memory repositories (`use-library.test.tsx`), not by rendering the page. If a test wants to
-  reach past the interface, the module is the wrong shape.
-- **Confirmations are one `pending` value, never a flag each.** A page with a delete dialog, a
-  bulk-delete dialog and a move sheet has _one_ `PendingAct` discriminated union plus
-  `request` / `dismiss` / `confirm`. Separate `useState` booleans make "delete dialog open over
-  the move sheet" reachable; a single union makes it unrepresentable.
-- **Name the setting, don't ship a setter per setting.** When a sheet edits many values, take one
-  `set(key, value)` rather than twelve `value` + `onValue` pairs — see
-  [`widgets/study-session/model/use-study-settings.ts`](../src/widgets/study-session/model/use-study-settings.ts),
-  which cut `GearSheet` from 27 props to 7 and hid _which store each setting lands in_.
+- **Compose internally, expose one surface.** `useLibrary` = data + selection + actions hooks — seams for its own tests, invisible to the page. Anything the page can't act on (optimistic overlay, which store a setting writes to) stays inside.
+- **The interface is the test surface** — `renderHook` over in-memory repos, not by rendering the page. A test reaching past it means the module is the wrong shape.
+- **Confirmations are one `pending` value, never a flag each.** One `PendingAct` union + `request`/`dismiss`/`confirm`; separate booleans make "delete dialog over the move sheet" reachable.
+- **One `set(key, value)`, not a setter per setting** — [`use-study-settings.ts`](../src/widgets/study-session/model/use-study-settings.ts) cut `GearSheet` 27 props → 7 and hid which store each lands in.
 
 ## 4. Composition over configuration
 
-From the `vercel-composition-patterns` skill. Build flexible components by composing, not by piling on boolean props.
+- **No boolean-prop proliferation** (`isPrimary`, `isCompact`, `hasIcon`…) → variant components or `children` slots.
+- **Variants = lookup maps of complete static strings** ([`button.tsx`](../src/shared/ui/button.tsx)). Never `` `bg-${x}` `` — Tailwind can't see it.
+- **Compound components for multi-part UI** — subcomponents sharing state via context, not a wide prop list (`Sheet`, `ActionSheet`, `SegmentedControl`). Provider owns state.
+- **`children` over `renderX`** — render props only when the parent injects per-item data.
+- **One component + `as` prop**, not `Button` + `LinkButton` + `IconButton`.
+- **React 19:** `ref` is a normal prop — **no `forwardRef`** (repo has zero). Prefer `use(Context)` in new code.
 
-- **Avoid boolean-prop proliferation.** When a component sprouts `isPrimary`, `isCompact`, `hasIcon`, `showHeader`… it's doing too many jobs. Split into explicit variant components, or expose slots via `children`, instead of branching on flags internally.
-- **Variant styling via lookup maps of complete static strings.** See [`shared/ui/button.tsx`](../src/shared/ui/button.tsx): `variantStyles` / `sizeStyles` are `Record<Variant, string>` maps. Never assemble a class from `` `bg-${x}` `` — the Tailwind compiler can't see it (§5).
-- **Compound components for multi-part UI.** For a component with coordinated parts (a sheet with header/body/actions, a segmented control), expose subcomponents that share state through context rather than a wide flat prop list — see `shared/ui/Sheet`, `ActionSheet`, `SegmentedControl`. The provider owns the state; children read it. This is the same provider-owns-state shape the entity stores already use (`entities/*/model/context.ts`).
-- **Prefer `children` over `renderX` props.** Pass composition through `children`/slots, not `renderHeader`/`renderItem` callbacks — reserve render props for when the parent must inject per-item data.
-- **Polymorphism for element changes.** When the same UI must render different elements (`<button>` vs `<a>` vs a router `Link`), add an `as` prop to one component rather than shipping `Button` + `LinkButton` + `IconButton`.
-- **React 19 conventions:** `ref` is a normal prop — **don't use `forwardRef`** (the repo has zero; keep it that way). Prefer `use(Context)` over `useContext(Context)` in new code (existing `context.ts` files use `useContext` — fine to leave, migrate opportunistically).
+## 4a. One header chrome
 
-## 4a. Every screen wears the same header
+[`shared/ui/HeaderBar`](../src/shared/ui/HeaderBar.tsx) — safe-area inset, glass, **fixed `h-16`**, shadow fading in on scroll. Four fillers: `ScreenHeader`, `SelectHeader`, `HomeHeader`, `ProfileBar`.
 
-There is one header chrome, [`shared/ui/HeaderBar`](../src/shared/ui/HeaderBar.tsx): safe-area inset, glass, **one fixed height (`h-16`)**, and a shadow that fades in as the screen scrolls. Four headers fill it and nothing else builds its own — `ScreenHeader` (back · title · action), `SelectHeader` (a selection's own bar), `HomeHeader`, `ProfileBar`.
-
-- **A screen never hand-rolls a `<header>`.** If a screen needs something the four don't cover, add a slot to the one that's closest — don't fork the chrome. A bespoke bar is how the heights drifted apart in the first place (each screen's title moved a few pixels as you navigated).
-- **Header controls are `IconButton variant="glass"` at the default `md` size (44px).** So are the text buttons beside them (`Button size="md"` is the same 44px). The back chevron and whatever sits opposite it must read as one family.
-- **Elevation comes from `AppScreen`, not from the page.** The screen owns the scroller, so it measures the scroll once and publishes it on `HeaderElevationContext`; `HeaderBar` reads it. A page passes no ref and calls no hook.
-- **A selection swaps the bar's contents, never its size** — same `HeaderBar`, so the list underneath doesn't jump as select mode comes and goes.
+- **No screen hand-rolls a `<header>`** — need more, add a slot to the closest one. Bespoke bars are how the heights drifted.
+- **Controls: `IconButton variant="glass"` at `md` (44px)**; text buttons beside them `Button size="md"` (same 44px).
+- **Elevation comes from `AppScreen`** (owns the scroller, publishes `HeaderElevationContext`). Pages pass no ref, call no hook.
+- **A selection swaps contents, never size** — the list must not jump.
 
 ## 5. Tailwind
 
-This repo is Tailwind **v4** with a two-layer token system: primitives (`--p-navy-900`, …) → semantic roles (`--primary`, `--card`, `--border`, `--danger-surface`) in [`src/styles/tokens.css`](../src/styles/tokens.css), exposed to Tailwind via `@theme` in [`theme.css`](../src/styles/theme.css).
+v4, two-layer tokens: primitives (`--p-navy-900`…) → semantic roles (`--primary`, `--card`, `--border`…) in [`tokens.css`](../src/styles/tokens.css), exposed via `@theme` in [`theme.css`](../src/styles/theme.css).
 
-- **Compose classes with [`cn()`](../src/shared/lib/cn.ts)** (clsx + tailwind-merge), never template-literal concatenation — `cn()` resolves conflicting utilities deterministically; `` `p-4 ${cond && 'p-6'}` `` does not.
-- **Never construct class names dynamically.** Use a lookup map of full static strings (like `button.tsx`), or an inline `style` for truly dynamic values (user-set color, computed position).
-- **Use semantic tokens, not raw values.** `bg-primary`, `text-heading`, `bg-card`, `border-border`, `rounded-control`, `shadow-rest` — not `bg-[#091A7A]`, not `p-[16px]` where `p-4` exists. Reach for a CSS var (`var(--danger-surface)`) when there's no utility alias yet.
-- **Dark mode is automatic via tokens.** Semantic tokens remap under `[data-theme='dark']` in `tokens.css`. Do **not** scatter `dark:` variants or hardcode light/dark colors in components — pick the semantic token and both themes follow.
-- **Interactive elements need states.** hover / `focus-visible` / `disabled` + a `transition`, as in `button.tsx`'s `base` string. Icon-only buttons need an `sr-only` label; use `focus-visible:` (keyboard) over `focus:`.
-- **Mobile-first & responsive.** Base styles target the smallest screen; layer `sm: → md: → lg:` upward. This is a portrait-first PWA — verify at phone width.
+- **Compose with [`cn()`](../src/shared/lib/cn.ts)** — resolves conflicting utilities; template concatenation doesn't.
+- **Never build class names dynamically** — lookup map of full static strings, or inline `style` for genuinely dynamic values.
+- **Semantic tokens, not raw values.** `bg-primary`, `text-heading`, `rounded-control`, `shadow-rest` — not `bg-[#091A7A]`, not `p-[16px]`. No alias yet → CSS var.
+- **Dark mode is automatic** (`[data-theme='dark']` remap). No scattered `dark:`, no hardcoded light/dark colors.
+- **Interactive elements need hover / `focus-visible` / `disabled` + `transition`.** Icon-only → `sr-only` label. `focus-visible:` over `focus:`.
+- **Mobile-first** — base = smallest screen, layer upward. Verify at phone width.
 
 ## 6. TypeScript & imports
 
-Covered in [CLAUDE.md](../CLAUDE.md); the load-bearing ones: use `import type` for type-only imports (`verbatimModuleSyntax`), no `any` (use `unknown`), cross-slice imports go through the slice's `index.ts` barrel only, and use the `@/` alias — never deep relative paths across slices.
+`import type` for type-only imports · no `any` (`unknown`) · cross-slice through `index.ts` only · `@/` alias, never deep relative paths across slices.
 
 ## 7. Performance (React core)
 
-From the `vite-react-best-practices` skill (React-core rules), grounded in this repo. Ordered by impact.
+Ordered by impact.
 
-- **Parallelize independent async — don't await in sequence.** Use `Promise.all` for independent reads/writes; this is already the norm in feature commands (`features/deck/delete-deck.ts`, `features/card/reorder-cards.ts`). Await sequentially only when one call truly depends on the previous.
-- **Subscribe narrowly.** Entity stores expose selectors — read the smallest slice you need via `useXStore(selector)`, and prefer a **derived boolean** (`selectIsReady`) over a raw array when you only need readiness. Don't subscribe to state you only use inside a callback; read it from `useXStoreApi().getState()` at call time instead.
-- **Memoize deliberately.** `useMemo` for expensive derivations is already common (~25 files) — keep it for real work, not trivial values. `React.memo` is currently unused; reach for it to wrap an expensive child when a hot parent (a list, a study session) re-renders frequently.
-- **Split routes with `React.lazy` + `Suspense`.** `app/router.tsx` currently imports all ~30 page components eagerly — lazy-load them so each route is its own chunk (the `lazy()` + `Suspense` pattern already exists in `app/RootLayout.tsx`); Vite emits the split automatically. Do the same for heavy, rarely-opened widgets.
-- **Barrels — the one deliberate exception to the "avoid barrel imports" rule.** FSD slice `index.ts` barrels are our required public API; **keep them.** The tree-shaking caveat applies to _third-party_ barrels: import large libs by name (`import { X } from 'lucide-react'` — already done), and don't add re-export chains inside a slice that pull in unrelated heavy modules.
-- **Reserve space for images (CLS).** Set explicit `width`/`height` or an `aspect-ratio` on `<img>` so late-loading images don't shift layout — applies to `shared/ui/Avatar` (the app's only `<img>`) and any palace/cover art added later.
-- **Don't define components inside components.** A component declared in another's render body remounts every render (state loss + churn) — hoist it to module scope, or pass it via `children`.
-- **Derive during render; don't mirror state with effects.** Compute values from props/state inline or with `useMemo`. Reserve `useEffect` for syncing with the outside world, and put interaction logic in event handlers, not effects.
-- **Passive listeners for scroll/touch.** Register scroll/touch listeners with `{ passive: true }` so they don't block scrolling. Horizontal swipe surfaces use the **`@use-gesture`** recognizer (`useDrag` with `axis: 'x'` + `touch-action: pan-y`, so vertical scroll stays native) rather than hand-rolled pointer events — `shared/ui/SwipeRow` and the study/browser card decks share it; the pure commit math lives in `shared/lib/gestures` (unit-tested, no component logic). Bottom sheets don't hand-roll drag at all: Base UI `Drawer` owns the swipe-to-dismiss (it replaced `vaul`).
-- **Keep input responsive with concurrent features.** Wrap expensive, non-urgent updates (filtering/searching decks and cards) in `startTransition` or `useDeferredValue`.
-- **Rendering hygiene:** conditional render with a ternary (`cond ? <X/> : null`), not `cond && <X/>` (a falsy `0`/`''` renders as stray text); hoist static JSX out of render; use CSS `content-visibility` or windowing for long deck/card lists.
-- **JS micro-perf stays in `shared/lib`** where it's unit-tested: `Map`/`Set` for repeated lookups, `toSorted()` for immutable sorts, early-exit. Don't inline these into components.
-- **Server state (future):** there's no backend yet — reads come from local RxDB. When a cloud/REST layer lands, route server state through a query library (React Query/SWR) for dedup + caching, not ad-hoc `useEffect` + `useState`.
+- **`Promise.all` for independent async** — the norm in feature commands. Sequential awaits only on true dependency.
+- **Subscribe narrowly** — smallest slice via `useXStore(selector)`; prefer a derived boolean (`selectIsReady`) over a raw array. State used only in a callback → `useXStoreApi().getState()` at call time.
+- **Memoize deliberately** — `useMemo` for real derivations; `React.memo` around an expensive child under a hot parent.
+- **Split routes with `React.lazy` + `Suspense`** — `app/router.tsx` still imports ~30 pages eagerly. Same for heavy, rarely-opened widgets.
+- **Keep FSD barrels** — they're our public API. The tree-shaking caveat is about _third-party_ barrels: import large libs by name; no intra-slice re-export chains pulling in heavy modules.
+- **Reserve image space (CLS)** — explicit `width`/`height` or `aspect-ratio`.
+- **Never define a component inside a component** — it remounts every render.
+- **Derive during render, don't mirror state with effects.** `useEffect` = outside-world sync; interaction logic in handlers.
+- **Passive scroll/touch listeners.** Horizontal swipes use **`@use-gesture`** (`axis: 'x'` + `touch-action: pan-y`), commit math in `shared/lib/gestures`; sheets never hand-roll drag (Base UI `Drawer` owns swipe-to-dismiss).
+- **`startTransition` / `useDeferredValue`** for expensive non-urgent updates (deck/card search).
+- **Ternary, not `cond && <X/>`** (falsy `0`/`''` renders as text). Hoist static JSX. `content-visibility`/windowing for long lists.
+- **JS micro-perf stays in `shared/lib`** (`Map`/`Set`, `toSorted()`, early exit) where it's tested.
+- **Server state (future):** when a cloud layer lands, use a query library, not ad-hoc `useEffect` + `useState`.
 
-## 8. Vite build & SPA deployment
+## 8. Vite build & SPA deploy
 
-From the `vite-react-best-practices` skill's Vite-SPA rules. This is a client-routed SPA (TanStack Router) shipped as a PWA — these are non-negotiable for a correct production deploy.
-
-- **SPA fallback rewrite is mandatory — and currently missing.** With client-side routing, the host must rewrite unknown paths to `/index.html`, or refreshing/deep-linking a route like `/deck/123` returns a 404. Add the host's rewrite before deploying (`public/_redirects` → `/* /index.html 200` for Netlify, or `vercel.json` `rewrites` for Vercel). No such config exists in the repo yet.
-- **Cache hashed assets immutably, never `index.html`.** Vite fingerprints `assets/*` filenames — serve those `Cache-Control: public, max-age=31536000, immutable`, but serve `index.html` `no-cache` so new deploys are picked up. (The `vite-plugin-pwa` Workbox precache already handles this at the SW layer; the CDN/host headers must agree.)
-- **Validate the production build before pushing:** `npm run build && npm run preview`. `preview` serves the real built output — it catches base-path, lazy-chunk, and asset issues that `npm run dev` hides.
-- **Env vars: `VITE_` prefix = public.** Only `import.meta.env.VITE_*` (and `DEV`/`PROD`/`MODE`) reach the client bundle; anything without the prefix is stripped. Never put a secret in a `VITE_` var — it ships to every user (see `import.meta.env.DEV` in `app/RootLayout.tsx`).
-- **Never import from a dependency's `dist/`** — import the package entry so it's bundled once and tree-shaken; deep `dist` imports double-bundle and break dedup.
+- **SPA fallback rewrite is mandatory — currently missing.** Without it, deep-linking `/deck/123` 404s. Add `public/_redirects` (`/* /index.html 200`) or `vercel.json` `rewrites` before deploying.
+- **Hashed assets immutable, `index.html` `no-cache`.** Workbox handles the SW layer; host headers must agree.
+- **Validate with `npm run build && npm run preview`** — catches base-path, lazy-chunk and asset issues `dev` hides.
+- **`VITE_` prefix = public.** Never a secret in one.
+- **Never import a dependency's `dist/`** — double-bundles, breaks dedup.
 
 ## 9. Animation
 
-- **`motion` is the animation library** (used in ~58 files) — reach for it, don't hand-roll. Animate GPU-friendly properties (`transform`, `opacity`), not layout props (`width`, `height`, `top`, `margin`), which force reflow and drop frames.
-- **Every animation should mean something** — communicate a spatial relationship or a state change, not decorate. Honor `prefers-reduced-motion`.
-- **View Transitions API (`<ViewTransition>`) — optional/future, not adopted.** It gives native route and shared-element morphs, but needs `react@canary` (we ship stable React 19) and would overlap `motion`. If route/shared-element transitions are wanted, adopt it deliberately per the `vercel-react-view-transitions` skill (`default="none"`, type-keyed directional transitions) — don't run it alongside `motion` ad hoc.
+- **`motion` is the library** — animate `transform`/`opacity` only; layout props reflow and drop frames.
+- **Every animation means something** — spatial relationship or state change. Honor `prefers-reduced-motion`.
+- **View Transitions API — not adopted** (needs `react@canary`, overlaps `motion`). Adopt deliberately per skill, never ad hoc.
 
-## 10. Drag & drop (`@dnd-kit`) — what a drag may mean, and the four causes of drop flicker
+## 10. Drag & drop (`@dnd-kit`)
 
-> The _why_ lives in [`docs/adr/0001-drag-and-drop-and-card-stacks.md`](adr/0001-drag-and-drop-and-card-stacks.md). This section is the operational checklist.
+> _Why_ → [ADR 0001](adr/0001-drag-and-drop-and-card-stacks.md). This is the checklist.
 
-**A drag only ever reorders.** It never changes what a row belongs to. Moving a deck under another deck is an explicit act with its own surface (`MoveDeckSheet`), because a drop is a guess about a finger's position and a re-parent is too consequential to infer from one. The single exception is a discrete, self-announcing target: a deck released over a folder row files it into that folder, and the folder row lights up to say so before the finger lifts.
+**A drag only ever reorders.** Re-parenting is an explicit act with its own surface (`MoveDeckSheet`) — a drop is a guess about a finger. One exception: a deck released over a folder row files into it, and the row lights up before the finger lifts.
 
-That rule is what makes the sortable honest. Sortable's "rows make room" animation is a promise that the drop is a reorder, so **every row a drag can reach has to be a peer of the row in hand**. The library keeps that promise by changing what it shows: select mode is a flat list of this scope's folders and its top-level decks, with no expand control and no subdecks (`widgets/deck-tree/ui/LibrarySelectList.tsx`), while the nested, expandable tree (`DeckTree`) does not drag at all. Don't add a drag to a surface that renders a hierarchy.
+**Every row a drag can reach must be a peer.** "Rows make room" promises a reorder. So select mode is a flat list of folders + top-level decks (`LibrarySelectList`) and the nested `DeckTree` doesn't drag at all. **Never add a drag to a surface rendering a hierarchy.**
 
-Every flicker we have shipped in a drag came from one of these four. Check all of them before adding a new drag surface (`widgets/deck-tree`, `widgets/content-editor` are the worked examples).
+**The four causes of drop flicker** — check all before adding a drag surface:
 
-- **The dropped state must be true on screen the instant the finger lifts.** Our writes round-trip through RxDB, and a reorder is _one write per row_, so the store re-emits half-applied states on the way. Render those and the dropped row snaps back, then jumps. Hold the drop over the store's emissions until the persisted rows agree with it — `useOptimisticPatch` (`shared/lib`) does this for entities (it covers `order` **and** a move's `parentId`/`folderId`; a move left un-held flicks the row back to its old group for a frame). A local surface with no entity store does the same thing with a working copy synced from props (`reconcileHeldOrder`, used by `ReorderableList`; `SettingsSelectPage`, `SettingsSwipePage`).
-- **Render the list in a deterministic order, not the store's.** RxDB returns rows by primary key, so a list that doesn't sort by `order` will _silently ignore_ the reorder it just persisted and snap back. Sibling groups go through `siblingDecks()`; folders through their `order`.
-- **The card in hand must be the row it came from.** A `DragOverlay` whose child has a different size, padding, or missing control (a select checkbox, a fixed `w-24` where the real tile is `flex-1`) morphs into the real row on drop, which reads as a flicker. Share the row's frame and body between the live row and the overlay (`DeckRowBody`/`DeckDragPreview`, `FolderRowBody`/`FolderDragPreview`, `Tile`), and carry the lift with **shadow, not `scale`** — a scaled overlay pops at the end of the drop animation.
-- **Nothing may animate `opacity` on the landing row while the overlay is still flying to it.** dnd-kit hides the drop source with an inline `opacity: 0` for the duration of the drop animation, and a `motion` mount-entrance on a row that remounts will overwrite that inline style — the row fades up underneath the card still in flight and you see the same deck twice. Either suppress entrance animations for the length of the drop, or give the drag no drop animation to collide with (`dropAnimation={null}`, which is what a multi-row drop uses).
+1. **Dropped state not true on screen the instant the finger lifts.** Reorders are one RxDB write per row, so the store re-emits half-applied states. Hold the drop until persisted rows agree — `useOptimisticPatch` (covers `order` **and** a move's `parentId`/`folderId`), or a working copy from props (`reconcileHeldOrder`).
+2. **List not sorted by `order`.** RxDB returns rows by primary key → the list silently ignores the reorder it just persisted. Use `siblingDecks()`; folders by their `order`.
+3. **`DragOverlay` isn't the row it came from.** Different size/padding/missing control morphs on drop. Share frame and body (`DeckRowBody`/`DeckDragPreview`, `Tile`); carry the lift with **shadow, not `scale`**.
+4. **Something animates `opacity` on the landing row mid-flight.** dnd-kit hides the source with inline `opacity: 0`; a mount entrance overwrites it and you see the deck twice. Suppress entrances, or `dropAnimation={null}`.
 
-**Carrying more than one row.** A multi-select drag is one pile in the hand and has to be one block on the ground:
+**Multi-row drag** — one pile in hand, one block on the ground: lands contiguously (`moveBlock()`, after the target from above, before from below); carried rows leave the list so exactly one gap opens at the block's edge; the pile is built from **real rows** (`StackedDragPreview`), top = most recently selected; no drop animation — `useStackLanding()` FLIPs each row on the compositor, nothing under `prefers-reduced-motion`.
 
-- The block lands contiguously, after the target when it came from above and before it when it came from below — `moveBlock()` (`shared/lib`), the same rule dnd-kit's single-row move follows.
-- Carried rows other than the one dnd-kit is tracking leave the rendered list while the drag is live, so exactly one gap opens — at the block's edge, never inside it.
-- The pile is built from the **real rows** (`StackedDragPreview` takes them as `layers`), clipped to the front row's frame so rows of different heights still stack tidily, and the row on top is the one selected **most recently** — not the one the drag started from.
-- A stack has no drop animation: it isn't shaped like any single row, so it clears the instant the finger lifts and its rows travel to their own slots instead — `useStackLanding()` (`shared/lib`) FLIPs each one from where the stack was, on the compositor, and does nothing at all under `prefers-reduced-motion`.
+**All of it is `useSortableBlock()` (`shared/lib`) — don't rewrite it.** Headless; owns carry, pile, landing, drop placement, plus the two settings that must not vary (`drag.collision` → `DndContext`, `drag.dropAnimation` → `DragOverlay`). A surface supplies `sectionOf`, optional `scopeTo`, and markup. Rows go through `SortableRow`, which keeps the frame as the row's own element — that's what `opacity-0` and the landing apply to. Settings pages keep their own `DndContext` on purpose (horizontal single-item assignment ≠ reorder).
 
-**All of that is `useSortableBlock()` (`shared/lib`) — don't write it again.** It is headless and owns carry, pile, landing and drop placement, plus the two `DndContext` settings that must not vary between surfaces: pass `drag.collision` to `DndContext` and `drag.dropAnimation` to `DragOverlay`. A surface supplies only `sectionOf` (who counts as a peer), an optional `scopeTo` (what a drag may be _over_, when that's narrower), and its own markup. Rows go through `SortableRow` (`shared/ui`), which keeps the frame as the row's own element — its surface, ring and padding live there, and that is what `opacity-0` and the landing must apply to. `LibrarySelectList` and `ReorderableList` both sit on all of it. The settings pages keep their own `DndContext` on purpose: horizontal single-item assignment across two buckets is a different interaction, not the same one rendered differently.
+**`LibrarySelectList` is the reference — move other surfaces to it, never it to them.** Two rules easy to "improve" and not to be: `dropAnimation` is `null`, and reorderable rows have **no mount entrance**.
 
-**`LibrarySelectList` is the reference. Unify by moving other surfaces to it, never it to them** — its feel is the tuned one; everything else is a copy that drifted. Two rules it holds that are easy to "improve" and shouldn't be: `dropAnimation` is `null` (the dropped state is already true on screen, so an overlay still flying at it is a duplicate, not a transition), and reorderable rows have **no mount entrance** (a carried row remounts when the block lands, so an entrance animates `opacity` on the landing row and fights `useStackLanding`).
+**Card stacks follow the same rule: build from the real items.** `StudyDeck`/`CardBrowser` render the real upcoming cards behind the current one — inert, `pointer-events-none`, shared `DEPTH_POSE` — and key the front slot by card id, so the arriving card rises out of the deck. Never a blank rectangle: a placeholder can't animate into the thing it stands for.
 
-**A stack of cards obeys the same rule as a stack of rows: build it from the real items.** `StudyDeck` and `CardBrowser` render the real upcoming cards behind the current one — inert, `pointer-events-none`, posed by a shared `DEPTH_POSE` constant. Advancing then keys the front slot by card id, so the arriving card enters from the pose it held one layer down and _rises out of the deck_. Never put a blank rounded rectangle behind a card: a placeholder cannot animate into the thing it stands for, which forces a cross-fade or a slide from off screen.
+**Queued list is nearest-first: `depth={i + 1}`, never `length - i`.** Inverted, you peek at card 15, swipe, and 14 arrives. Only visible in motion — both stacks carry a `z-index` regression test. Shipped inverted once; don't re-derive by eye.
 
-**The queued list is nearest-first, so depth counts _up_ with the index — `depth={i + 1}`, never `length - i`.** Inverted, the furthest queued card is drawn in the visible slot: you peek at card 15, swipe, and card 14 arrives. A still stack looks correct either way, so this is only visible in motion — both stacks carry a regression test that reads the queued layers' `z-index` and asserts the nearest one holds the card the next swipe promotes. We shipped it inverted once; don't re-derive it by eye.
+## 11. Styling traps — invisible on desktop, real on device
 
-## 11. Styling traps (overflow, keyboard, focus) — invisible on desktop, real on device
+jsdom and a desktop dev server render no keyboard, no iOS selection gesture, no clipped ring. Preview edge states at dev-only **`/dev/kitchen-sink`**.
 
-Every bug in this list shipped because it is **invisible where the code is written** — a desktop dev server and jsdom tests never render an on-screen keyboard, an iOS text-selection gesture, or a clipped focus ring. Unit tests will not catch them; encapsulation + the on-device pass at the end of this section will. Preview any surface that touches these in the dev-only **`/dev/kitchen-sink`** route (`pages/dev-preview`, registered only under `import.meta.env.DEV`), which renders the trap-prone components in their edge states side by side.
+- **`overflow-*-auto` clips _both_ axes** — a horizontal scroller cuts the selected item's ring/shadow at every edge. Reserve room inside the scrollport with a net-zero pair (`-m-1.5 p-1.5`, `IconColorRow`). Not `overflow-visible` — that kills the scroll.
+- **Fitting the keyboard is two numbers: `--vvh` _and_ `--vv-top`.** iOS slides the visual viewport down while the layout viewport stays full height, so `position: fixed` rides up by `visualViewport.offsetTop`. `#root` takes both (`inset: var(--vv-top) 0 auto 0; height: var(--vvh)`); `useKeyboardInset` publishes them with `--kb-inset`, and the three sum to the layout viewport. Height alone → header clipped off the top + a band of backdrop above the keyboard. Bottom-docked chrome (`AppNav`) deliberately skips `--vv-top` so it hides behind the keyboard.
+- **What `#root` yields to the keyboard is the system's — in paint _and_ padding.** The gradient ends where the app ends; `body` carries flat `var(--surface)` or the canvas flashes white. Insets measured from the bottom (`--app-bottom-inset`, `.pb-safe`, `.pb-gutter`) subtract `--kb-inset` — with the keyboard up, the home-indicator safe area is a gap, not clearance.
+- **A sheet's pinned footer must consume `--drawer-keyboard-inset`; the body doesn't lift it.** Base UI's `VirtualKeyboardProvider` never moves the sheet, so a `bottom-0` footer stays behind the keyboard → pad the popup with `.pb-safe-keyboard`. **Combine safe-area and keyboard insets with `max()`, never `+`** (the inset already measures to the accessory bar). Full-screen shells instead size to `--vvh`; no padding math.
+- **Focus drawer fields via `Sheet`'s `initialFocus`, never native `autofocus`.** `autofocus` fires before Base UI positions the sheet and without `preventScroll` → iOS scrolls the whole layout, skewing `offsetTop` and corrupting the keyboard measurement. **Lint-banned in `*Sheet.tsx`/`*Form.tsx`.** Full-page inputs in `AppScreen` may keep it — `--vv-top` cancels the skew.
+- **A control tapped while a field is focused must not steal focus** — iOS blurs the field, the keyboard drops, the footer slides out from under the finger and the `click` lands on nothing (tap swallowed). `onMouseDown={(e) => e.preventDefault()}` on the control; toggle still fires, keyboard nav unaffected. `DrawerHeader`/`DrawerFooter` already do it (`keepFieldFocused`), skipping the guard when the tap lands in another field.
+- **Swipe surfaces need `touch-action`, or text selection hijacks the drag.** Base UI declines its swipe while text is selected, and without `touch-action: none` the browser scrolls instead. Chrome is `touch-none select-none`; the scroll body re-enables `touch-auto overscroll-contain`. The selection must be collapsed before the touch reaches the Popup — `DrawerContent` clears it for the whole interior, leaving fields and `.allow-select` alone (`clearSelectionForDrag`). `useAutoSelect` is the usual source.
 
-- **`overflow-*-auto` clips _both_ axes — so a ring/shadow/outline inside a scroller gets cut off.** Setting overflow on one axis makes the browser compute the other as `auto` too, so a horizontal pill/swatch scroller clips the selected item's `ring`/`box-shadow` at every edge (the first and last items lose their outer ring entirely). Reserve room _inside_ the scrollport with a **net-zero negative-margin + padding pair** — `-m-1.5 p-1.5` gives the ring 6px on all four sides while `-m` cancels it so the row's outer size and alignment don't move (`IconColorRow`). Don't reach for `overflow-visible` — that kills the scroll.
-- **Fitting the keyboard is two numbers, not one: `--vvh` _and_ `--vv-top`.** iOS keeps the layout viewport at full height when the keyboard opens and slides the _visual_ viewport down to reveal the focused field. `position: fixed` is anchored to the layout viewport, so the app rides up off the top of the screen by `visualViewport.offsetTop` — height alone can't put it back. `#root` therefore takes both (`inset: var(--vv-top) 0 auto 0; height: var(--vvh)`, `theme.css`), and `useKeyboardInset` publishes them together with `--kb-inset`; the three always sum to the layout viewport. Size to `--vvh` without the offset and you get the exact signature of this bug: the sticky header clipped off the top and an identical band of bare backdrop stranded above the keyboard. Anything else glued to the visible viewport (the status-area cap in `RootLayout`) rides `--vv-top` too; bottom-docked chrome (`AppNav`) deliberately does not, so it hides behind the keyboard.
-- **What `#root` gives up to the keyboard is the system's, not the app's — in paint _and_ in padding.** The daylight gradient belongs to `#root`, so it ends where the app ends, at the top of the keyboard's floating accessory bar (the visual viewport excludes both). `body` carries only a flat `var(--surface)` underneath, because something has to paint that strip or the canvas flashes white as the keyboard slides. The same goes for every inset measured from the bottom of the screen: with the keyboard covering the home indicator, its safe area is no longer clearance but a gap, so `--app-bottom-inset`, `.pb-safe` and `.pb-gutter` all subtract `--kb-inset` and fall back to a floor. A screen that still shows a band of backdrop between its last row and the keyboard has bottom padding that hasn't been taught this.
-- **A bottom sheet's _pinned footer_ must consume `--drawer-keyboard-inset`; the body does not lift it.** Base UI's `Drawer.VirtualKeyboardProvider` only publishes `--drawer-keyboard-inset` on the Viewport and scrolls the focused field within the body — it never moves the sheet. A footer at the popup's `bottom-0` therefore stays behind the keyboard. Lift it by padding the popup with `.pb-safe-keyboard` (`= max(env(safe-area-inset-bottom), var(--drawer-keyboard-inset, 0px))`, `drawer.tsx` + `theme.css`). **Combine safe-area and keyboard insets with `max()`, never `+`** — the inset already measures to the top of the accessory bar, so adding the home-indicator safe area on top doubles the gap. Full-screen shells are a different mechanism: they size to `--vvh` (`useKeyboardInset`), no padding math.
-- **Focus a drawer field through the Sheet's `initialFocus`, never native `autofocus`.** Native `autofocus` fires before Base UI positions the sheet and without `preventScroll`, so iOS scrolls the _whole layout_ to reveal the field — and that page scroll skews `visualViewport.offsetTop`, which corrupts the keyboard-inset measurement (strange footer padding as a knock-on). Pass a ref to `Sheet`'s `initialFocus` instead (`PromptSheet`, `FolderSheet`); it routes through Base UI's scroll-safe `focusKeyboardInputWithoutPageScroll`. **Lint-enforced:** `autoFocus` is banned in `*Sheet.tsx` / `*Form.tsx` (`eslint.config.js`). Full-page inputs inside `AppScreen` may keep native `autofocus` — the skew is real there too (`PasteNotesPage`'s textarea causes it), but `--vv-top` cancels it instead of leaving it to corrupt the layout.
-- **A control tapped while a field is focused must not steal focus, or the keyboard drops — and the first tap is then swallowed.** On iOS, tapping any non-input element (a color swatch, a toolbar button) blurs the focused field and dismisses the keyboard. In a sheet that also collapses `--drawer-keyboard-inset`, so the pinned footer slides down out from under the finger and the `click` lands on nothing: the tap looks like it only closed the keyboard, and you have to press again. Cancel the focus shift with `onMouseDown={(e) => e.preventDefault()}` on the control (or its container) — the `click`/toggle still fires, and keyboard navigation is unaffected because it uses `focus`, not `mousedown` (`IconColorRow` swatches). **`DrawerHeader` and `DrawerFooter` already do this** for everything inside them (`keepFieldFocused`, `drawer.tsx`), skipping the guard when the tap lands in another field so focus can still move between inputs. The keyboard goes away afterwards, when the submitting sheet closes and the field unmounts.
-- **Swipe/drag surfaces need `touch-action`, and text selection will hijack the drag without it.** Base UI deliberately declines its swipe while any text is selected in the drawer (so native selection handles stay draggable); with no `touch-action: none` on the chrome the browser then treats the drag as a native page scroll. The sheet chrome is `touch-none select-none` (Popup/Header/Handle) and the scroll body re-enables its own scroll with `touch-auto overscroll-contain`. Because the gesture is evaluated on the Popup, the selection has to be collapsed _before_ the touch reaches it: `DrawerContent` — the last element a touch bubbles through — clears it for the whole sheet interior, not just the handle, and leaves alone a touch that lands in a field or an `.allow-select` passage (`clearSelectionForDrag`, `drawer.tsx`). An auto-selected field (`useAutoSelect`) is the usual source of that lingering selection.
-
-**Verify on a real device (or Chrome device mode + a real iPhone) before calling it done whenever a change touches:** `overflow-*`/scroll containers · the on-screen keyboard · focus/autofocus · `env(safe-area-*)` · gestures / `touch-action`. These five are exactly the categories jsdom and desktop cannot show you.
+**Verify on a real device** whenever a change touches: `overflow-*`/scroll · keyboard · focus/autofocus · `env(safe-area-*)` · gestures/`touch-action`.

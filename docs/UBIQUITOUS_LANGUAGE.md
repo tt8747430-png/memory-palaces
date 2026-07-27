@@ -1,104 +1,96 @@
 # Ubiquitous Language
 
-The shared vocabulary for Mindscape. Use these canonical terms in code, UI copy, commits, and discussion so we mean the same thing. Grounded in the `entities/*` and `shared/lib` domain model.
+Canonical terms for code, UI copy, commits, discussion. Grounded in `entities/*` and `shared/lib`.
 
-## Content structure
+## Content
 
-| Term         | Definition                                                                            | Aliases to avoid              |
-| ------------ | ------------------------------------------------------------------------------------- | ----------------------------- |
-| **Folder**   | A top-level container that groups Decks                                                | group, category               |
-| **Deck**     | A named study set containing Cards and Questions; may nest as a Subdeck                | palace, set, collection, list |
-| **Subdeck**  | A Deck nested under a parent Deck (`parentId`)                                         | child deck, nested deck       |
-| **Card**     | A flashcard with a **front** and **back** the learner recalls                         | note, term, item              |
-| **Question** | A multiple-choice item with a prompt, options, and one correct answer                  | quiz item, MCQ, card          |
+| Term         | Means                                                 | Avoid                         |
+| ------------ | ----------------------------------------------------- | ----------------------------- |
+| **Folder**   | Top-level container grouping Decks                    | group, category               |
+| **Deck**     | Study set of Cards + Questions; may nest as a Subdeck | palace, set, collection, list |
+| **Subdeck**  | Deck under a parent Deck (`parentId`)                 | child deck, nested deck       |
+| **Card**     | Flashcard: **front** + **back**                       | note, term, item              |
+| **Question** | Multiple choice: prompt, options, one correct answer  | quiz item, MCQ, card          |
 
-## Study & scheduling (SRS)
+## SRS
 
-| Term            | Definition                                                                          | Aliases to avoid    |
-| --------------- | ----------------------------------------------------------------------------------- | ------------------- |
-| **SRS**         | The spaced-repetition scheduler that sets when a Card is next Due                    | algorithm           |
-| **Review**      | Grading a Card's recall, which advances its SRS schedule                            | practice, test      |
-| **Grade**       | The recall rating for a Card: `again` / `hard` / `good` / `easy`                     | score, rating       |
-| **Due**         | The timestamp when a Card is next scheduled for Review                               | next date           |
-| **Card status** | A Card's SRS stage: `new` / `learning` / `known`                                     | state, level        |
-| **Mature**      | A Card whose SRS interval has reached ≥ 21 days                                      | mastered            |
-| **Memorized**   | A **manual** flag marking a Card the learner set as learned (not the SRS `known`)    | known, done         |
-| **Flagged**     | A Card the learner marked for later attention                                        | starred, bookmarked |
+| Term            | Means                                                  | Avoid               |
+| --------------- | ------------------------------------------------------ | ------------------- |
+| **SRS**         | Scheduler setting when a Card is next Due              | algorithm           |
+| **Review**      | Grading a Card's recall; advances its schedule         | practice, test      |
+| **Grade**       | `again` / `hard` / `good` / `easy`                     | score, rating       |
+| **Due**         | When a Card is next scheduled                          | next date           |
+| **Card status** | `new` / `learning` / `known`                           | state, level        |
+| **Mature**      | Interval ≥ 21 days                                     | mastered            |
+| **Memorized**   | **Manual** flag the learner sets — not the SRS `known` | known, done         |
+| **Flagged**     | Marked for later attention                             | starred, bookmarked |
 
 ## Study modes
 
-| Term              | Definition                                                                | Aliases to avoid     |
-| ----------------- | ------------------------------------------------------------------------- | -------------------- |
-| **Study session** | One pass through a Deck in a given Practice mode                          | session, run         |
-| **Practice mode** | Umbrella term for the ways to study a Deck                                | game, activity       |
-| **Flashcards**    | The mode that reveals a Card front→back for self-graded recall            | study cards          |
-| **Quiz**          | The mode that presents Questions to answer                                | test                 |
-| **Match**         | The mode that pairs Cards in a matching game                              | pairs                |
-| **Review**        | The mode that surfaces Due Cards for SRS grading (see above)              | practice             |
-| **Study scope**   | *Which Deck* a Study session runs over                                    | scope                |
-| **Study filter**  | *Which of that Deck's Cards* the session draws from: all / due / new / learning / flagged | scope, selection |
+| Term              | Means                                                      | Avoid            |
+| ----------------- | ---------------------------------------------------------- | ---------------- |
+| **Study session** | One pass through a Deck in a Practice mode                 | session, run     |
+| **Practice mode** | Umbrella for the ways to study                             | game, activity   |
+| **Flashcards**    | Front→back, self-graded recall                             | study cards      |
+| **Quiz**          | Questions to answer                                        | test             |
+| **Match**         | Pairing Cards                                              | pairs            |
+| **Review**        | Surfaces Due Cards for SRS grading                         | practice         |
+| **Study scope**   | _Which Deck_ a session runs over                           | scope            |
+| **Study filter**  | _Which of its Cards_: all / due / new / learning / flagged | scope, selection |
 
-## Organising & selecting
+## Organising
 
-| Term            | Definition                                                                                  | Aliases to avoid            |
-| --------------- | -------------------------------------------------------------------------------------------- | --------------------------- |
-| **Library**     | The learner's whole set of Folders and Decks, and the home screen that browses it            | home, list                  |
-| **Selection**   | The set of rows a learner has picked with select mode, to act on together                    | multi-select, checked items |
-| **Select mode** | The state a surface enters on press-and-hold: the header becomes the Selection's header and the select toolbar takes the bottom edge | edit mode, bulk mode |
-| **Card filter** | Which of a Deck's Cards its card *list* shows: by Card status, or Flagged only               | filter, scope               |
+| Term            | Means                                                                            | Avoid                       |
+| --------------- | -------------------------------------------------------------------------------- | --------------------------- |
+| **Library**     | All Folders and Decks — and the home screen browsing them                        | home, list                  |
+| **Selection**   | Rows picked in select mode, acted on together                                    | multi-select, checked items |
+| **Select mode** | Entered on press-and-hold: header becomes the Selection's, toolbar at the bottom | edit mode, bulk mode        |
+| **Card filter** | What a Deck's card _list_ shows: by status, or Flagged only                      | filter, scope               |
 
-## Progress & gamification
+## Progress
 
-| Term              | Definition                                                                | Aliases to avoid   |
-| ----------------- | ------------------------------------------------------------------------- | ------------------ |
-| **Progress**      | The learner's aggregate stats record (XP, streak, accuracy, training days) | stats, profile     |
-| **XP**            | Experience points earned by studying                                      | points             |
-| **Level**         | A tier derived from total XP                                              | rank               |
-| **Streak**        | The count of consecutive Training days                                    | chain              |
-| **Training day**  | A calendar day the learner studied                                        | active day, session |
-| **Streak freeze** | A token that preserves a Streak across one missed Training day            | freeze, skip       |
-| **Achievement**   | A one-time milestone the learner unlocks                                  | trophy, goal       |
-| **Badge**         | An earned emblem with tiers/pips                                          | medal              |
-| **Notification**  | An in-app notice of a level-up, streak, or quiz result                   | alert              |
+| Term              | Means                                     | Avoid               |
+| ----------------- | ----------------------------------------- | ------------------- |
+| **Progress**      | Stats record (XP, streak, accuracy, days) | stats, profile      |
+| **XP**            | Points earned by studying                 | points              |
+| **Level**         | Tier derived from XP                      | rank                |
+| **Streak**        | Consecutive Training days                 | chain               |
+| **Training day**  | A day the learner studied                 | active day, session |
+| **Streak freeze** | Preserves a Streak across one missed day  | freeze, skip        |
+| **Achievement**   | One-time milestone                        | trophy, goal        |
+| **Badge**         | Emblem with tiers/pips                    | medal               |
+| **Notification**  | In-app notice (level-up, streak, result)  | alert               |
 
-## Identity & settings
+## Identity
 
-| Term            | Definition                                                                          | Aliases to avoid       |
-| --------------- | ----------------------------------------------------------------------------------- | ---------------------- |
-| **Learner**     | The person using the app to study (represented by a Profile + a Session)            | user                   |
-| **Session**     | The current sign-in — either a Guest or an Account (auth context, **not** studying) | login, study session   |
-| **Guest**       | A Session with no signed-up account                                                 | anonymous              |
-| **Account**     | A signed-up identity with an email                                                  | user, login            |
-| **Profile**     | The learner's editable display data (name, username, bio, avatar)                   | account, user          |
-| **Preferences** | Global app settings (haptics, swipe actions, theme)                                 | settings, config       |
-| **Deck settings** | Per-Deck study options (timer, study direction, shuffle, text-to-speech)          | settings, config       |
+| Term              | Means                                                      | Avoid                |
+| ----------------- | ---------------------------------------------------------- | -------------------- |
+| **Learner**       | The person studying (a Profile + a Session)                | user                 |
+| **Session**       | Current sign-in — Guest or Account. **Auth, not studying** | login, study session |
+| **Guest**         | Session with no account                                    | anonymous            |
+| **Account**       | Signed-up identity with an email                           | user, login          |
+| **Profile**       | Display data (name, username, bio, avatar)                 | account, user        |
+| **Preferences**   | Global settings (haptics, swipe actions, theme)            | settings, config     |
+| **Deck settings** | Per-Deck options (timer, direction, shuffle, TTS)          | settings, config     |
 
 ## Relationships
 
-- A **Folder** groups zero-or-more top-level **Decks**.
-- A **Deck** belongs to at most one **Folder** (when top-level) **or** to one parent **Deck** as a **Subdeck** — never both.
-- A **Deck** contains zero-or-more **Cards** and zero-or-more **Questions**.
-- A **Card** or **Question** belongs to exactly one **Deck**.
-- A **Review** advances exactly one **Card**'s SRS schedule.
-- A **Study session** runs one **Deck** in one **Practice mode**, narrowed by one **Study filter**.
-- A **Selection** holds rows of one kind of surface at a time — Folders and Decks in the **Library**, Cards in a Deck, Questions in a Deck. Selecting a **Deck** takes its **Subdecks** with it, because select mode is flat and a Subdeck is never on screen there.
-- A **Learner** has one **Progress** record and one active **Session** (Guest or Account).
+- Folder groups zero-or-more top-level Decks.
+- A Deck belongs to at most one Folder **or** one parent Deck as a Subdeck — never both.
+- A Deck contains zero-or-more Cards and Questions; each belongs to exactly one Deck.
+- A Review advances exactly one Card's schedule.
+- A Study session = one Deck × one Practice mode × one Study filter.
+- A Selection holds one kind of row at a time. Selecting a Deck takes its Subdecks — select mode is flat, so a Subdeck is never on screen there.
+- A Learner has one Progress record and one active Session.
 
-## Example dialogue
+## Ambiguities — resolved
 
-> **Dev:** "When a **Learner** marks a **Card** as **Memorized**, does that move its **Card status** to `known`?"
-> **Domain expert:** "No — **Memorized** is a manual flag the learner sets. `known` is a **Card status** the **SRS** derives from the interval. A Card can be **Memorized** while still `learning`, and it only becomes **Mature** once its interval hits 21 days."
-> **Dev:** "And a **Review** only happens in the Review **Practice mode**?"
-> **Domain expert:** "Grading happens whenever a **Card** is **Due** — the Review mode just surfaces Due Cards. A **Study session** in Flashcards mode can also **Review** Cards. Don't call that pass a 'session' on its own, though — a bare **Session** is the auth context, Guest or Account."
-
-## Flagged ambiguities
-
-- **"session"** is overloaded. The **Session** entity is the **auth** context (Guest/Account). A **Study session** is a pass through a Deck. Never abbreviate the study pass to "session" — say **Study session**; reserve **Session** for auth.
-- **"palace / room / locus"** — the product is *themed* as a memory palace (method of loci), but the shipped model is **Deck / Card / Question**. Don't use palace/room/locus in code, UI copy, or discussion; they're legacy design-doc vocabulary.
-- **`known` vs Memorized** — `known` is an SRS-derived **Card status** (interval-based); **Memorized** is a manual boolean the learner sets. Distinct — don't conflate.
-- **"scope"** was three different things, and the code and the UI disagreed. Resolved: **Study scope** is *which Deck* a Study session runs (`StudyScope`, `MatchScope`); **Study filter** is *which Cards of it* the session draws from (`StudyFilter` in `features/review` — the UI already called these "filters"); and the Folder the Library is browsing is just that — a **Folder**, not a scope. Don't reintroduce a bare `Scope`.
-- **"filter"** — qualify it: a **Study filter** narrows a Study session's queue; a **Card filter** narrows what a Deck's card list displays. Different surfaces, different types.
-- **"settings"** — qualify it: **Deck settings** are per-Deck study options; **Preferences** are global app settings.
-- **"user / account"** — three distinct things: the **Account** (auth identity with email), the **Profile** (editable display data), and the **Learner** (the human). "User" alone is ambiguous — pick the precise one.
-- **"Card"** — in domain talk this always means the **flashcard**; the `shared/ui/Card` component is just a generic surface and doesn't carry the domain meaning.
-- **`Combobox`** — the `shared/ui/Combobox` component is really a **Select** (choose one from a fixed list), not a free-text-filtered combobox. The name is a known misnomer kept for now; a rename to `Select` is a possible future tidy-up (out of scope for the shadcn/Base-UI migration).
+- **"session"** — **Session** = auth (Guest/Account). **Study session** = a pass through a Deck. Never abbreviate the study pass.
+- **"palace / room / locus"** — the theme, not the model. Ship **Deck / Card / Question**; don't use the legacy words anywhere.
+- **`known` vs Memorized** — `known` is SRS-derived from the interval; **Memorized** is a manual boolean. Don't conflate.
+- **"scope"** — **Study scope** = which Deck (`StudyScope`, `MatchScope`); **Study filter** = which of its Cards (`StudyFilter`); the Folder the Library browses is a Folder. Never a bare `Scope`.
+- **"filter"** — **Study filter** narrows a session's queue; **Card filter** narrows a Deck's list.
+- **"settings"** — **Deck settings** are per-Deck; **Preferences** are global.
+- **"user"** — pick one: **Account** (auth identity), **Profile** (display data), **Learner** (the human).
+- **"Card"** — always the flashcard; `shared/ui/Card` is a generic surface with no domain meaning.
+- **`Combobox`** — really a **Select**. Known misnomer, kept for now.
