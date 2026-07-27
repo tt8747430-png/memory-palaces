@@ -41,18 +41,11 @@ export interface SwipeRowProps {
   trailing?: SwipeAction[]
   disabled?: boolean
   className?: string
-  /** Break out of the app's `px-5` column so the tray can sit against the row's
-   *  resting edge. The reveal bleeds; the circular actions are padded back in by
-   *  `EDGE_INSET` so they line up with where the row content was. */
   bleed?: boolean
 }
 
-/** Horizontal space each circular action reveals. */
 const ACTION_WIDTH = 60
-/** Extra swipe past the tray width before a release commits the edge action. */
 const COMMIT_GAP = 64
-/** Matches the app column's `px-5`, so the tray's outer circle lands where the
- *  row content sat before the swipe (only meaningful when `bleed`). */
 const EDGE_INSET = 20
 
 const SETTLE_SPRING = { type: 'spring', stiffness: 540, damping: 40 } as const
@@ -72,10 +65,6 @@ export function SwipeRow({
   const x = useMotionValue(0)
   const [open, setOpen] = useState<Side | null>(null)
   const [armed, setArmed] = useState<Side | null>(null)
-  // True only while the row is actually shifted off its resting spot. The clip
-  // that hides a swipe's overshoot also shears the row's rounded shadow flat, so
-  // it must not be on at rest — see the root className. Setting the same boolean
-  // is a no-op re-render, so this fires at most twice per swipe (0 → offset → 0).
   const [displaced, setDisplaced] = useState(false)
   const wasArmed = useRef<Side | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -135,10 +124,6 @@ export function SwipeRow({
 
   const suppressClick = useRef(false)
 
-  // One recognizer for the whole row (the same `@use-gesture` `useDrag` the study/browser decks use).
-  // Bound to the moving element via `target` (not a spread) so it composes with `motion.div`'s own
-  // drag props; `touch-action: pan-y` lets vertical scrolls through natively, `filterTaps` keeps a tap
-  // a tap.
   useDrag(
     (state) => {
       const [ox] = state.offset
@@ -218,12 +203,6 @@ export function SwipeRow({
       ref={rootRef}
       className={cn(
         'relative isolate',
-        // The clip keeps a swiped row's overshoot from spilling past the column,
-        // but it also shears the row's rounded shadow into a flat line — iOS
-        // ignores `overflow-clip-margin`, so the 24px of promised breathing room
-        // never applies. At rest the trays are hidden (opacity 0) and there is
-        // nothing to clip, so only clip while the row is displaced and let the
-        // shadow render whole the rest of the time.
         displaced && 'overflow-x-clip [overflow-clip-margin:24px]',
         bleed && '-mx-5',
         className,
@@ -301,8 +280,6 @@ function TrayButton({
       style={{ width: ACTION_WIDTH }}
       className="grid h-full shrink-0 place-items-center"
     >
-      {/* A small floating circle — the accent + glyph carry the meaning; the
-          label lives on aria-label so the tray stays compact and calm. */}
       <motion.span
         animate={{ scale: armed ? 1.14 : 1 }}
         transition={reduce ? { duration: 0 } : ARM_SPRING}

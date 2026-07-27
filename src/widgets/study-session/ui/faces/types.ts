@@ -23,10 +23,8 @@ export interface FaceProps {
   registerMechanic?: (handlers: MechanicHandlers | null) => void
 }
 
-/** Controls own their press: a tap on one must never start a card drag. */
 export const stopPress = (event: ReactPointerEvent) => event.stopPropagation()
 
-/** Exposes the visible face's own actions to the swipe layer, for as long as it is visible. */
 export function useSwipeMechanic(
   active: boolean,
   register: FaceProps['registerMechanic'],

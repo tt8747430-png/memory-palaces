@@ -19,18 +19,12 @@ export interface CardCommands {
   resetSrs: (id: string) => void
   remove: (id: string) => void
   removeSelected: () => void
-  /** The learner's configured select toolbar, wired to what a card selection can do. */
   selectHandlers: SelectActionHandlers
 }
 
-/**
- * Every write the card list can make, each with the confirmation it owes the learner. Kept out
- * of the list so the list is only ever deciding what to draw.
- */
 export function useCardCommands(
   cards: Card[],
   selection: MultiSelect,
-  /** Deleting is confirmed first, and the confirmation belongs to the list. */
   onRequestBulkDelete: () => void,
 ): CardCommands {
   const { t } = useTranslation()

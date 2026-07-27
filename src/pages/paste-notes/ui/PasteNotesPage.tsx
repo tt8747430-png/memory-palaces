@@ -61,8 +61,6 @@ export function PasteNotesPage({
       header={
         <ScreenHeader title={t('cards.paste.title')} onBack={onBack} backLabel={t('common.back')} />
       }
-      // The action sits at the foot, under the thumb and directly above the keyboard the learner
-      // is pasting with — the shell fits itself above it, so the bar never needs lifting.
       footer={
         <FooterBar>
           <Button size="lg" className="w-full" disabled={!canCreate} onClick={create}>
@@ -153,7 +151,6 @@ export function PasteNotesPage({
   )
 }
 
-/** Verse text splits itself, so there is nothing to configure — only something to explain. */
 function BibleHint() {
   const { t } = useTranslation()
   return (

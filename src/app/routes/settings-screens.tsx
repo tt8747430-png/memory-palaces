@@ -42,7 +42,6 @@ export function SettingsProfileScreen() {
     <SettingsProfilePage
       onBack={useBackTo(ROUTES.settings)}
       onChangePassword={() => navigate({ to: ROUTES.settingsChangePassword })}
-      // Deleting the account leaves nothing to come back to, so the exit is a sign-out.
       onDeleteAccount={async () => {
         await signOut()
         await navigate({ to: ROUTES.login })

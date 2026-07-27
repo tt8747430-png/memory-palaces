@@ -18,13 +18,6 @@ export interface QueuedCardProps {
 
 const noop = () => {}
 
-/**
- * A card waiting its turn: the real card, rendered as the same full face it will be when it
- * reaches the top — header, footer, mode controls and all — just inert and one step further
- * back. It is seen through the sliver the card above leaves and, for a moment, in full while
- * that card is flung away, and in neither case should it look like a different kind of thing.
- * Its handlers are no-ops: only the card in play may act.
- */
 export function QueuedCard({
   card,
   mode,

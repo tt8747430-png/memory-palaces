@@ -10,14 +10,9 @@ export interface LibraryDialogsProps {
   onConfirm: () => void
 }
 
-/**
- * The confirmation the pending act needs. Driven off the one `pending` value, so exactly one
- * dialog can ever be open and each one closes by clearing that value.
- */
 export function LibraryDialogs({ pending, count, onDismiss, onConfirm }: LibraryDialogsProps) {
   const { t } = useTranslation()
 
-  // Only the deletes ask a question here; a move is answered by the move sheet instead.
   const copy =
     pending?.kind === 'delete-deck'
       ? {

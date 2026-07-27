@@ -20,7 +20,6 @@ describe('NextMilestoneCard', () => {
   it('renders the milestone heading, remaining detail and progress percentage', () => {
     renderWithProviders(<NextMilestoneCard badge={BADGE} />)
     expect(screen.getByText('Almost there')).toBeInTheDocument()
-    // detail: '{{remaining}} more to your next {{label}} badge' → remaining 50, label 'XP Collector'
     expect(screen.getByText(/50 more to your next XP Collector badge/)).toBeInTheDocument()
     expect(screen.getByText('50%')).toBeInTheDocument()
   })

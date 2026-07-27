@@ -5,7 +5,6 @@ import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
 
 interface ProviderOptions extends Omit<RenderOptions, 'wrapper'> {
-  /** Default 'always' so entrance/exit animations never gate assertions. */
   reducedMotion?: 'always' | 'never' | 'user'
 }
 

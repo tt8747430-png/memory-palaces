@@ -13,7 +13,6 @@ export interface QuizCompleteProps {
   onDone: () => void
 }
 
-/** The overlay that closes a test: the score, and the two ways out of it. */
 export function QuizComplete({ result, onRetry, onDone }: QuizCompleteProps) {
   const { t } = useTranslation()
   const passed = result.accuracy >= PASS_MARK

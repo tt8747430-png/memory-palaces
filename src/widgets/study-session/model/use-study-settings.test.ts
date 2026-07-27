@@ -49,7 +49,6 @@ describe('useStudySettings', () => {
     })
   })
 
-  // The three Deck settings travel together, because the Deck stores them as one record.
   it('routes a Deck setting back through the whole prefs object', () => {
     const { result, args } = setup()
     act(() => result.current.set('shuffle', true))
@@ -63,7 +62,6 @@ describe('useStudySettings', () => {
     expect(args.onPrefsChange).not.toHaveBeenCalled()
   })
 
-  // Nothing persists this one — it lasts as long as the Study session does.
   it('keeps a session-only setting itself', () => {
     const { result, args } = setup()
     act(() => result.current.set('typeInitialsOnly', true))

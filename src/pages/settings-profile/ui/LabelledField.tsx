@@ -2,12 +2,10 @@ import type { ReactNode } from 'react'
 
 export interface LabelledFieldProps {
   label: string
-  /** Shown under the control, and only when the value is actually wrong. */
   error?: string
   children: ReactNode
 }
 
-/** A form row: its label above the control, and the reason it is invalid below it. */
 export function LabelledField({ label, error, children }: LabelledFieldProps) {
   return (
     <label className="flex flex-col gap-1.5">

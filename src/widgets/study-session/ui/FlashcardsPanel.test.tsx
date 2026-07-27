@@ -48,8 +48,6 @@ function renderPanel(
   const onComplete = vi.fn(overrides.onComplete)
   const onModeChange = vi.fn()
 
-  // Mirror the real page: `mode` is controlled, so a change has to flow back in as a prop for
-  // the panel to actually switch faces.
   function Harness() {
     const [mode, setMode] = useState<StudyMode>(overrides.mode ?? 'blur')
     return (
@@ -181,14 +179,12 @@ describe('FlashcardsPanel', () => {
     const user = userEvent.setup()
     renderPanel([studyCard('a')], { mode: 'blur' })
 
-    // Flip the Blur card to its answer, then switch to Type through the mode sheet.
     await tap(/show answer/i)
     expect(await screen.findByRole('button', { name: /good/i })).toBeInTheDocument()
 
     fireEvent.click(screen.getAllByRole('button', { name: /change study mode/i })[0]!)
     await user.click(await screen.findByRole('button', { name: /type the answer from memory/i }))
 
-    // Type opens on its front: the answer input is present and grading is not offered yet.
     expect(await screen.findByPlaceholderText(/type the answer/i)).toBeInTheDocument()
     await waitFor(() => expect(screen.queryByRole('button', { name: /good/i })).toBeNull())
   })
@@ -199,8 +195,6 @@ describe('FlashcardsPanel', () => {
     await tap('Back')
     await tap('a')
 
-    // Grading is offered, but the "Solved — tap to see the answer" badge is gone: the
-    // assembled answer is the answer, and there is nothing behind it to reveal.
     expect(await screen.findByRole('button', { name: /good/i })).toBeInTheDocument()
     expect(screen.queryByText(/tap to see/i)).toBeNull()
   })

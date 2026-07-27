@@ -6,15 +6,6 @@ export interface SelectToolbarDockProps {
   className?: string
 }
 
-/**
- * Where a multi-selection action bar floats: pinned to the bottom, centred on
- * the app column, and — on the tab-bar routes — lifted to sit *above* the tab
- * bar instead of over it. `--app-bottom-inset` is the safe area alone by
- * default and grows by the tab bar's height while `AppNav` is mounted, so the
- * dock needs no route knowledge of its own. The empty gutter stays
- * click-through (`pointer-events-none`) so the tab bar underneath keeps
- * taking taps.
- */
 export function SelectToolbarDock({ children, className }: SelectToolbarDockProps) {
   return (
     <div

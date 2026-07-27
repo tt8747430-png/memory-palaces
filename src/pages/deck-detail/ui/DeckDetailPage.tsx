@@ -89,8 +89,6 @@ export function DeckDetailPage({
   const prefs = usePreferencesStore(selectEffectivePreferences)
   const setContentSort = (value: ContentSort) =>
     void setPreferences(prefStore, { contentSort: value })
-  // Selecting cards works exactly as selecting decks does on the home screen: the page header
-  // becomes the selection's header, so the count and its controls are stated once.
   const selection = useMultiSelect()
 
   if (!ready) {

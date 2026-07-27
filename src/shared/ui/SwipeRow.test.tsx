@@ -39,7 +39,6 @@ describe('SwipeRow', () => {
       </SwipeRow>,
     )
 
-    // Trays sit behind the row (aria-hidden), so include hidden elements in the query.
     await user.click(screen.getByRole('button', { name: 'Delete', hidden: true }))
     expect(onDelete).toHaveBeenCalledTimes(1)
     expect(onFlag).not.toHaveBeenCalled()

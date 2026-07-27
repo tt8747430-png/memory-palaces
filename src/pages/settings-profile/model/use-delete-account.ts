@@ -10,12 +10,6 @@ import { setProfile } from '@/features/profile'
 import { resetEverything } from '@/features/data'
 import { forgetPhone } from './use-profile-form'
 
-/**
- * Deleting the account clears everything on the device: every Deck, Folder, Card and Question,
- * the Progress record, the Notifications, and the Profile itself. Seven stores have to be
- * started before any of them can be emptied, which is the whole reason this is one module rather
- * than seven lines in a page.
- */
 export function useDeleteAccount(): () => Promise<void> {
   const profileStore = useProfileStoreApi()
   const deckStore = useDeckStoreApi()

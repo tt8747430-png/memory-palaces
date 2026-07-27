@@ -26,15 +26,9 @@ export function AppNav() {
   const navigate = useNavigate()
   const reduce = useReducedMotion()
   const pathname = useRouterState({ select: (state) => state.location.pathname })
-  // A surface can claim the bottom edge for itself (multi-select docks its toolbar there), and
-  // while it does the tab bar leaves rather than stacking underneath.
   const hidden = useAppNavHidden()
   const showNav = TAB_PATHS.includes(pathname as RoutePath) && !hidden
 
-  // Raise the app's bottom inset by the tab bar's own height, so everything docked down there
-  // (select toolbar, speed dial, scroll padding) clears it instead of stacking on top. Written
-  // in a layout effect: an ordinary effect lands after paint, and the tab-bar routes would show
-  // one frame with the dial and toolbar sitting too low.
   useLayoutEffect(() => {
     if (!showNav) return
     const root = document.documentElement
@@ -55,9 +49,6 @@ export function AppNav() {
           aria-label={t('nav.label')}
           className="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 z-[200] -translate-x-1/2"
         >
-          {/* The bar drops out of view rather than blinking away: entering select mode is one
-              continuous move of the bottom edge from tabs to selection toolbar. Transforms live
-              on this inner element so they never fight the centring translate above. */}
           <motion.div
             initial={reduce ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.94 }}
             animate={reduce ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}

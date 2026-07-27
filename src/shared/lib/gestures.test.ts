@@ -1,13 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import {
-  armedSide,
-  clampSwipeOffset,
-  resolveSwipeRelease,
-  type SwipeGeometry,
-} from './gestures'
+import { armedSide, clampSwipeOffset, resolveSwipeRelease, type SwipeGeometry } from './gestures'
 
-// A row with a one-action leading tray and a two-action trailing tray.
-// (ACTION_WIDTH 60, COMMIT_GAP 64 → commit = width + 64.)
 const geo: SwipeGeometry = {
   hasLeading: true,
   hasTrailing: true,
@@ -26,8 +19,8 @@ describe('clampSwipeOffset', () => {
   })
 
   it('rubber-bands past the commit point (0.35 resistance)', () => {
-    expect(clampSwipeOffset(224, geo)).toBeCloseTo(124 + 100 * 0.35) // 159
-    expect(clampSwipeOffset(-284, geo)).toBeCloseTo(-(184 + 100 * 0.35)) // -219
+    expect(clampSwipeOffset(224, geo)).toBeCloseTo(124 + 100 * 0.35)
+    expect(clampSwipeOffset(-284, geo)).toBeCloseTo(-(184 + 100 * 0.35))
   })
 
   it('softly damps a drag against an absent tray (0.12)', () => {

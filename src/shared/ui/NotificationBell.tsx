@@ -7,11 +7,6 @@ export interface NotificationBellProps {
   onClick: () => void
 }
 
-/**
- * The bell both top-level headers (home and profile) carry, with its unread badge. The icon
- * itself rings when there is something to read, so the state survives even where the badge's
- * colour doesn't carry.
- */
 export function NotificationBell({ unreadCount, label, onClick }: NotificationBellProps) {
   const Icon = unreadCount > 0 ? BellRing : Bell
   return (

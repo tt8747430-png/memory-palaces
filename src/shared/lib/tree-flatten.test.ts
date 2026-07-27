@@ -8,7 +8,6 @@ const deck = (id: string, parentId: string | null, extra: Partial<TreeDeck> = {}
   ...extra,
 })
 
-// A (root) → B → C ; A → D ; E (root). All unfiled.
 const forest: TreeDeck[] = [
   deck('A', null, { order: 0 }),
   deck('D', 'A', { order: 1 }),
@@ -28,7 +27,7 @@ describe('flattenDecks', () => {
     const open = flattenDecks(forest, new Set(['A', 'B']), null)
     expect(open.map((f) => [f.id, f.depth])).toEqual([
       ['A', 0],
-      ['B', 1], // B has order 0, before D
+      ['B', 1],
       ['C', 2],
       ['D', 1],
       ['E', 0],

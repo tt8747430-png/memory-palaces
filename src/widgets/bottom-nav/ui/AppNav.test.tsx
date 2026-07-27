@@ -64,8 +64,6 @@ describe('AppNav', () => {
     expect(screen.getByRole('navigation', { name: 'Primary' })).toBeInTheDocument()
 
     rerender(<Selecting on />)
-    // The inset is handed back at once, so the docked toolbar drops into the freed space while
-    // the bar itself is still animating out.
     expect(inset()).toBe('')
     await waitForElementToBeRemoved(() => screen.queryByRole('navigation', { name: 'Primary' }))
 

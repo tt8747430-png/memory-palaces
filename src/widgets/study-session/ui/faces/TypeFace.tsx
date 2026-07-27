@@ -7,7 +7,6 @@ import { TypeInitials } from './TypeInitials'
 import { TypeWords } from './TypeWords'
 import { type FaceProps, useSwipeMechanic } from './types'
 
-/** Recall by typing: either the whole answer, or just each word's first letter. */
 export function TypeFace(props: FaceProps) {
   const { t } = useTranslation()
   const { card, prompt, answer, canSpeak, typeInitialsOnly, active, onSpeak } = props

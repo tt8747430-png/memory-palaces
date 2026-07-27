@@ -12,7 +12,6 @@ const ROW_SURFACE = 'relative bg-card shadow-card transition-[box-shadow,backgro
 const ROW_HIT =
   'absolute inset-0 touch-pan-y rounded-card transition-colors active:bg-primary/[0.06]'
 
-/** A labelled block of peers. The label is dropped when there is only one block on screen. */
 export function Section({
   id,
   label,
@@ -37,7 +36,6 @@ export function Section({
   )
 }
 
-/** One row of the pile in hand — whichever kind it turns out to be. */
 export function StackLayer({
   id,
   folders,

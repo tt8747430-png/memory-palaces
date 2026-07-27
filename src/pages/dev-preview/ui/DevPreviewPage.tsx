@@ -48,15 +48,6 @@ import {
   Textarea,
 } from '@/shared/ui'
 
-/**
- * Dev-only component gallery (`/dev/kitchen-sink`, registered in `app/router.tsx` only under
- * `import.meta.env.DEV`, so it tree-shakes out of production). It renders the `shared/ui`
- * surfaces in their real states — including the ones that are invisible on desktop and in
- * jsdom (clipped rings, keyboard lift, focus theft, truncation, dark mode) — so styling
- * regressions are catchable in one place. See `docs/CODE_STYLE.md` §11; open the sheet cases
- * on a real device, since keyboard behaviour only exists there.
- */
-
 const FIRST_COLOR = DECK_COLOR_OPTIONS[0]?.value ?? ''
 const MID_COLOR = DECK_COLOR_OPTIONS[Math.floor(DECK_COLOR_OPTIONS.length / 2)]?.value ?? ''
 const LAST_COLOR = DECK_COLOR_OPTIONS[DECK_COLOR_OPTIONS.length - 1]?.value ?? ''
@@ -84,8 +75,6 @@ const SECTIONS = [
   { id: 'feedback', label: 'Feedback' },
   { id: 'data', label: 'Data' },
 ] as const
-
-// ── Layout helpers ────────────────────────────────────────────────────────────
 
 function Section({
   id,
@@ -115,7 +104,6 @@ function Cases({ children }: { children: ReactNode }) {
   return <div className="flex flex-wrap items-start gap-x-6 gap-y-5">{children}</div>
 }
 
-/** One labelled example cell — the state name reads as a caption beneath the sample. */
 function Case({ label, full, children }: { label: string; full?: boolean; children: ReactNode }) {
   return (
     <div className={cn('flex min-w-0 flex-col gap-2', full && 'w-full')}>
@@ -124,8 +112,6 @@ function Case({ label, full, children }: { label: string; full?: boolean; childr
     </div>
   )
 }
-
-// ── Interactive demos (self-contained so the page component stays a layout) ─────
 
 function ColorRowDemo({ initialColor }: { initialColor: string }) {
   const [color, setColor] = useState(initialColor)
@@ -164,8 +150,6 @@ function PromptSheetDemo() {
   )
 }
 
-/** Mirrors the fixed `FolderSheet`: focus via `initialFocus` (never native autofocus) so the
- *  footer lifts above the keyboard and tapping a colour keeps the field focused. */
 function FolderSheetDemo() {
   const [open, setOpen] = useState(false)
   const nameRef = useRef<HTMLInputElement>(null)
@@ -416,8 +400,6 @@ function EditableTitleDemo({ initial }: { initial: string }) {
   return <EditableTitle value={value} onRename={setValue} editLabel="Rename" />
 }
 
-// ── Page ────────────────────────────────────────────────────────────────────
-
 export function DevPreviewPage() {
   const [theme, setTheme] = useState<ThemeMode>('system')
   const [scrollNode, setScrollNode] = useState<HTMLElement | null>(null)
@@ -426,7 +408,6 @@ export function DevPreviewPage() {
   const [toggle, setToggle] = useState(true)
   const [selected, setSelected] = useState(true)
 
-  // Preview theme: drive `data-theme` directly, restoring the app's real theme on exit.
   const originalTheme = useRef<string | undefined>(undefined)
   useEffect(() => {
     originalTheme.current = document.documentElement.dataset.theme
@@ -445,7 +426,6 @@ export function DevPreviewPage() {
     return () => media.removeEventListener('change', apply)
   }, [theme])
 
-  // Scroll-spy: highlight the nav chip for the section nearest the top of the scroll area.
   useEffect(() => {
     if (!scrollNode) return
     const observer = new IntersectionObserver(

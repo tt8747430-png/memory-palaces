@@ -2,14 +2,10 @@ import { Check, Minus } from 'lucide-react'
 import { cn, type SelectState } from '@/shared/lib'
 
 export interface SelectDotProps {
-  /** `checked` fills with a tick, `indeterminate` with a bar, `unchecked` is an empty ring. */
   state: SelectState
   className?: string
 }
 
-/** Multi-select checkbox affordance — an empty ring that fills to an accent tick when selected,
- *  or an accent bar when only part of its subtree is. Shared across the content editor and
- *  library. */
 export function SelectDot({ state, className }: SelectDotProps) {
   return (
     <span

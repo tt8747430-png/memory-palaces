@@ -14,7 +14,6 @@ export interface FolderRowProps {
   swipeHandlers: SwipeActionHandlers
 }
 
-/** A folder at rest: tap to open it, press-and-hold to start a selection. */
 export function FolderRow({
   folder,
   deckCount,

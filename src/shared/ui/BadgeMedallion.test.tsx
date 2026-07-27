@@ -18,7 +18,6 @@ describe('BadgeMedallion', () => {
     const { container } = renderWithProviders(<BadgeMedallion icon={Trophy} locked showLock />)
     const medallion = container.firstElementChild
     expect(medallion?.className).toContain('bg-primary/[0.06]')
-    // the lock badge svg is present in the locked+showLock state
     expect(container.querySelectorAll('svg').length).toBeGreaterThan(1)
   })
 

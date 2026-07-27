@@ -35,8 +35,6 @@ describe('HeaderBar', () => {
     expect(lift).toHaveStyle({ opacity: '1' })
   })
 
-  // A selection swaps the contents of the bar; it must not resize it, or the list underneath
-  // jumps as you enter and leave select mode.
   it('keeps one height whichever header fills it', () => {
     const height = (ui: ReactElement) => {
       const { container, unmount } = renderWithProviders(ui)

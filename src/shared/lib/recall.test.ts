@@ -156,9 +156,6 @@ describe('typedRecallStatus', () => {
   })
 
   it('keeps a typo in place instead of cascading the words after it to missing', () => {
-    // `loced` is a one-letter typo of `loved`; the words after it are correct. Without the
-    // near-word tie-break the aligner would skip `loved the world` as missing and pair the
-    // typo with a distant same-cost match.
     const result = typedRecallStatus(answer, 'For God so loced the world')
     expect(result.slots.map((slot) => slot.kind)).toEqual([
       'correct',
@@ -185,9 +182,6 @@ describe('typedRecallStatus', () => {
   })
 
   it('judges sparse wrong input in place and hides everything not yet reached', () => {
-    // Regression: short nonsense words used to be re-aligned against distant matches, marking
-    // the whole answer `missing`. They now sit wrong at their own position and the rest stays
-    // pending (hidden).
     const result = typedRecallStatus(answer, 'xx yy zz')
     expect(result.slots.map((slot) => slot.kind)).toEqual([
       'wrong',

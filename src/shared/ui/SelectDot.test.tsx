@@ -25,7 +25,6 @@ describe('SelectDot', () => {
     const { container } = renderWithProviders(<SelectDot state="indeterminate" />)
     const dot = container.firstElementChild
     expect(dot?.className).toContain('bg-accent')
-    // The bar (Minus) rather than the tick (Check) marks a partial subtree.
     expect(dot?.querySelector('svg')?.getAttribute('class')).toContain('lucide-minus')
   })
 

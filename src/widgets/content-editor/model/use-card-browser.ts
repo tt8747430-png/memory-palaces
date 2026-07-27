@@ -5,13 +5,11 @@ import type { Card } from '@/entities/card'
 import { tick } from '@/shared/lib'
 import { CARD_EASE, SPRING, STACK_DEPTH } from '../ui/browser-poses'
 
-/** Where the card in play enters from: out of the deck (forward) or back from the edge (back). */
 export type EnterFrom = 'behind' | 'edge' | null
 
 export interface CardBrowserState {
   index: number
   current: Card | null
-  /** The cards still to come, nearest first — the deck drawn under the one in play. */
   ahead: Card[]
   flipped: boolean
   enterFrom: EnterFrom
@@ -19,7 +17,6 @@ export interface CardBrowserState {
   rotate: ReturnType<typeof useTransform<number, number>>
   go: (delta: number) => void
   bind: ReturnType<typeof useDrag>
-  /** How far a card has to travel to leave — measured off the shell it lives in. */
   offscreen: () => number
 }
 
@@ -32,13 +29,6 @@ interface Args {
   onClose: () => void
 }
 
-/**
- * Paging through a deck of cards: which one is in play, which way it leaves, and where its
- * successor comes from. Forward, the card is thrown off and the card *behind* it is promoted —
- * it was already on screen one layer down, so the move reads as the deck advancing. Backward has
- * no deck to draw from (the stack only holds what is still ahead), so the card returns the way
- * it left: out to the right, the previous one back in from the left.
- */
 export function useCardBrowser({
   open,
   cards,
@@ -53,8 +43,6 @@ export function useCardBrowser({
   const x = useMotionValue(0)
   const rotate = useTransform(x, [-240, 0, 240], [-6, 0, 6])
   const count = cards.length
-  // True while a card is flying out and its successor is sliding in, so drags and repeat taps
-  // can't start a second transition mid-flight.
   const animating = useRef(false)
 
   useEffect(() => {
@@ -91,7 +79,7 @@ export function useCardBrowser({
       return
     }
     animating.current = true
-    const dir = delta > 0 ? -1 : 1 // next exits left, prev exits right
+    const dir = delta > 0 ? -1 : 1
     animate(x, dir * offscreen(), {
       duration: 0.2,
       ease: CARD_EASE,
@@ -99,8 +87,6 @@ export function useCardBrowser({
         setFlipped(false)
         setEnterFrom(delta > 0 ? 'behind' : 'edge')
         setIndex(next)
-        // The outgoing card has unmounted with its key; the slot is free to sit at rest again
-        // while the arriving card runs its own entrance.
         x.set(0)
         animating.current = false
       },

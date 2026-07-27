@@ -3,7 +3,6 @@ import { Pencil, Trash2 } from 'lucide-react'
 import { OverflowMenuButton, Switch } from '@/shared/ui'
 import type { DraftCard } from '@/widgets/content-editor'
 
-/** One toggle in the "what to restore" group — a plain row inside an already-framed list. */
 export function RestoreToggle({
   label,
   checked,
@@ -25,7 +24,6 @@ export function RestoreToggle({
   )
 }
 
-/** A card waiting to be imported: tap to edit it, or drop it from the batch. */
 export function ReviewRow({
   card,
   onEdit,

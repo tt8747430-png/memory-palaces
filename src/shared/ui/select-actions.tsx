@@ -24,14 +24,12 @@ const SELECT_ACTION_ICON: Record<SelectActionId, ReactNode> = {
   delete: <Trash2 className="size-[18px]" aria-hidden />,
 }
 
-/** The one icon each select action wears — in the bar and in its settings editor. */
 export function selectActionIcon(id: SelectActionId): ReactNode {
   return SELECT_ACTION_ICON[id]
 }
 
 export interface SelectActionHandler {
   onAction: () => void
-  /** The action exists here but can't run on what is currently selected. */
   disabled?: boolean
 }
 

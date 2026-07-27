@@ -48,8 +48,6 @@ export function FolderSheet({
       open={open}
       onOpenChange={onOpenChange}
       title={isEdit ? t('folder.settingsTitle') : t('folder.newTitle')}
-      // Focus the name field through Base UI (scroll-safe) on create only; editing opens without
-      // grabbing focus so changing just the colour/icon doesn't raise the keyboard.
       initialFocus={isEdit ? undefined : nameRef}
       footer={
         <Button size="lg" className="w-full" disabled={!valid} onClick={() => submit()}>

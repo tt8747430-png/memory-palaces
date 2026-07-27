@@ -19,7 +19,6 @@ interface DropdownMenuContentProps extends Omit<ComponentProps<typeof Menu.Popup
   collisionPadding?: number
 }
 
-/** Portal + positioner + popup, styled as an elevated floating menu. */
 function DropdownMenuContent({
   className,
   side = 'bottom',
@@ -91,7 +90,6 @@ function DropdownMenuItem({ className, variant, ...props }: DropdownMenuItemProp
   )
 }
 
-/** Leading icon slot, sized to the menu row. */
 function DropdownMenuItemIcon({ children }: { children: ReactNode }) {
   return (
     <span className="grid size-5 shrink-0 place-items-center" aria-hidden>

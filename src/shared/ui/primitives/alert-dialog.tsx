@@ -11,15 +11,10 @@ interface AlertDialogContentProps extends Omit<
   'className'
 > {
   className?: string
-  /** Extra layer between backdrop and popup — e.g. a full-bleed decorative wash. */
   backdropClassName?: string
   children: ReactNode
 }
 
-/**
- * Portal + backdrop + centered popup. Alert dialogs are always modal and never
- * dismiss on outside press or Escape — resolve them through their own actions.
- */
 function AlertDialogContent({
   className,
   backdropClassName,

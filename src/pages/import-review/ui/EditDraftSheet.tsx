@@ -4,13 +4,11 @@ import { Button, Sheet } from '@/shared/ui'
 import { CardFields, type DraftCard, type DraftCardEdit } from '@/widgets/content-editor'
 
 export interface EditDraftSheetProps {
-  /** `null` closes the sheet; a card opens it on that card. */
   card: DraftCard | null
   onSave: (id: string, edit: DraftCardEdit) => void
   onClose: () => void
 }
 
-/** Fix a card before it is imported. Nothing is written until the batch is applied. */
 export function EditDraftSheet({ card, onSave, onClose }: EditDraftSheetProps) {
   const { t } = useTranslation()
   const [front, setFront] = useState('')

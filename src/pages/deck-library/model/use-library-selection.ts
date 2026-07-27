@@ -7,14 +7,10 @@ export interface LibrarySelection {
   active: boolean
   ids: ReadonlySet<string>
   count: number
-  /** Every row this scope offers is selected, so "select all" flips to "clear all". */
   allSelected: boolean
-  /** The selected decks — ids and records — for the deck-shaped bulk actions. */
   deckIds: string[]
   decks: Deck[]
-  /** Press-and-hold a folder row. */
   beginFolder: (id: string) => void
-  /** Press-and-hold anywhere in the deck tree; selects the held deck's whole top-level subtree. */
   beginDeck: (id: string) => void
   toggle: (id: string) => void
   toggleAll: () => void
@@ -24,18 +20,11 @@ export interface LibrarySelection {
 interface Args {
   decks: Deck[]
   folderIds: ReadonlySet<string>
-  /** The rows select mode actually shows: this scope's folders and its top-level decks. */
   sectionFolders: Folder[]
   sectionDecks: Deck[]
-  /** Leaving or entering a folder ends any in-progress selection. */
   folderId: string | null
 }
 
-/**
- * Multi-selection for the library, where a row is not always one record: selecting a deck takes
- * its whole non-archived subtree with it, because select mode is flat and a subdeck is off
- * screen — selecting one there would be a selection you cannot see.
- */
 export function useLibrarySelection({
   decks,
   folderIds,
@@ -88,8 +77,6 @@ export function useLibrarySelection({
         const branch = subtree(id)
         const next = new Set(prev)
         if (branch.every((sid) => next.has(sid))) for (const sid of branch) next.delete(sid)
-        // Re-adding moves the root to the end of the set, which is how the drag stack knows
-        // which row was chosen last and belongs on top.
         else for (const sid of branch) next.add(sid)
         return next
       })

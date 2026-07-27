@@ -24,7 +24,6 @@ function baseProps(
     onOpen: vi.fn(),
     onRequestSelect: vi.fn(),
     ...overrides,
-    // Derived from the resolved decks/expanded, so it always matches what the page would pass.
     rows: flattenDecks(decks, expanded, null),
   }
 }

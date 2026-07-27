@@ -29,7 +29,6 @@ export interface MoveDeckSheetProps {
   subtitle: string
   decks: Deck[]
   folders: Folder[]
-  /** Decks that can't be a destination (the moved decks + their subtrees). */
   excludeIds: ReadonlySet<string>
   onPick: (dest: MoveDestination) => void
   onNewFolder: () => void
@@ -77,7 +76,6 @@ export function MoveDeckSheet({
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(allExpandable))
   const [selected, setSelected] = useState<MoveDestination | null>(null)
 
-  // Re-open on a fresh structure: expand everything, clear the pick.
   useEffect(() => {
     if (open) {
       setExpanded(new Set(allExpandable))

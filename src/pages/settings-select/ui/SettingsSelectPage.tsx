@@ -70,12 +70,10 @@ export function SettingsSelectPage({ onBack }: SettingsSelectPageProps) {
     if (full) return
     save([...config, id])
   }
-  // The bar always keeps one action — an empty toolbar would strand a selection.
   const remove = (id: SelectActionId) => {
     if (config.length <= 1) return
     save(config.filter((x) => x !== id))
   }
-  // The preview above snaps back to the defaults, so the reset speaks for itself.
   const resetAll = () => void setPreferences(store, { selectToolbar: DEFAULT_SELECT_TOOLBAR })
 
   return (
@@ -111,8 +109,6 @@ export function SettingsSelectPage({ onBack }: SettingsSelectPageProps) {
           })}
         />
 
-        {/* The preview is the editor: this is the bar as it will appear, and it is where
-            actions are reordered and removed. */}
         <ToolbarEditor
           actions={config}
           canRemove={config.length > 1}

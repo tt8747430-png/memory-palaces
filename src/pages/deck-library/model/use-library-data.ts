@@ -31,15 +31,12 @@ export interface LibraryData {
   patchDecks: (patches: Map<string, Partial<Deck>>) => void
   ready: boolean
   foldersReady: boolean
-  /** This scope's folder record, once the store has emitted it. */
   openFolder: Folder | undefined
   sortedFolders: Folder[]
   folderIds: ReadonlySet<string>
   folderDeckCounts: Map<string, number>
-  /** The rows select mode shows: this scope's folders and its top-level decks. */
   sectionFolders: Folder[]
   sectionDecks: Deck[]
-  /** The browse tree: this scope's decks, nested, descending only into what is expanded. */
   rows: FlatDeck[]
   expanded: ReadonlySet<string>
   toggleExpanded: (id: string) => void
@@ -47,10 +44,6 @@ export interface LibraryData {
   isEmpty: boolean
 }
 
-/**
- * The library's data layer: the three stores it reads, the optimistic overlay a drop needs, and
- * every shape derived from them. The page is left to decide what to draw, not how to gather it.
- */
 export function useLibraryData(folderId: string | null): LibraryData {
   const folderStore = useFolderStoreApi()
   const deckStore = useDeckStoreApi()
@@ -68,12 +61,9 @@ export function useLibraryData(folderId: string | null): LibraryData {
   const foldersReady = useFolderStore(selectFoldersReady)
   const decksReady = useDeckStore(selectDecksReady)
 
-  // A drop shows up instantly and stays put: the new order and parent are held over the store's
-  // emissions until the persisted rows agree with them.
   const [folders, patchFolders] = useOptimisticPatch(storeFolders)
   const [decks, patchDecks] = useOptimisticPatch(storeDecks)
 
-  // Which decks are expanded persists across app restarts (view state, not domain).
   const [expanded, setExpanded] = usePersistedSet('mindscape.library.expanded')
   const toggleExpanded = (id: string) =>
     setExpanded((prev) => {

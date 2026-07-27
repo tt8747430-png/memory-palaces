@@ -4,7 +4,6 @@ import { cn, type PasteFormat } from '@/shared/lib'
 
 export interface FormatToggleProps {
   value: PasteFormat
-  /** The format is still whatever detection decided — say so rather than claiming a choice. */
   auto: boolean
   onChange: (value: PasteFormat) => void
   onReset: () => void
@@ -15,7 +14,6 @@ const OPTIONS = [
   { value: 'bible' as const, labelKey: 'cards.paste.kindBible', Icon: BookOpen },
 ]
 
-/** What kind of text this is — detected on paste, overridable when detection guesses wrong. */
 export function FormatToggle({ value, auto, onChange, onReset }: FormatToggleProps) {
   const { t } = useTranslation()
   const label = t('cards.paste.formatLabel')

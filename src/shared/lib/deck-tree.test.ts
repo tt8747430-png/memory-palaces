@@ -60,9 +60,7 @@ describe('selectionRoots', () => {
   })
 
   it('keeps siblings and orders roots top-to-bottom', () => {
-    // D (order 0) before B (order 1), both children of A but A itself unselected.
     expect(selectionRoots(forest, new Set(['D', 'B']))).toEqual(['D', 'B'])
-    // Unfiled E is walked before the folder that holds A.
     expect(selectionRoots(forest, new Set(['A', 'E']))).toEqual(['E', 'A'])
   })
 

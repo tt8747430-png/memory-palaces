@@ -5,12 +5,10 @@ export interface TextButtonProps {
   children: ReactNode
   onClick: () => void
   icon?: ReactNode
-  /** `muted` for the secondary of a pair — "clear" next to "paste", say. */
   tone?: 'primary' | 'muted'
   className?: string
 }
 
-/** An inline action with no surface of its own: label, optional icon, nothing else. */
 export function TextButton({
   children,
   onClick,

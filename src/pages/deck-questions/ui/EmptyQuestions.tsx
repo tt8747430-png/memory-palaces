@@ -2,7 +2,6 @@ import { useTranslation } from 'react-i18next'
 import { HelpCircle, Plus } from 'lucide-react'
 import { Button } from '@/shared/ui'
 
-/** A deck with no test questions yet — the only way forward is to write one. */
 export function EmptyQuestions({ onAdd }: { onAdd: () => void }) {
   const { t } = useTranslation()
   return (

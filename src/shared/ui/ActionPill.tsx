@@ -5,22 +5,15 @@ export interface ActionPillProps {
   label: string
   icon: ReactNode
   onClick: () => void
-  /** The action's own colour, painted through `sw-tint` when the pill is on. */
   accent?: string
-  /** `on` wears the accent; `off` stays neutral until chosen. */
   on?: boolean
   disabled?: boolean
-  /** A trailing glyph — a plus on an addable action, say. */
   trailing?: ReactNode
   'aria-label'?: string
   'aria-pressed'?: boolean
   className?: string
 }
 
-/**
- * A configurable action as a tappable pill: icon, name, and its accent colour when active. The
- * one shape both the swipe and select-toolbar editors offer their palettes in.
- */
 export function ActionPill({
   label,
   icon,
@@ -55,7 +48,6 @@ export function ActionPill({
   )
 }
 
-/** "3 / 4" — how much of a capped list is used, tinted once it is full. */
 export function SlotCount({ children, full }: { children: ReactNode; full: boolean }) {
   return (
     <span

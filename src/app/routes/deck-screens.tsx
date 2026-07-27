@@ -16,7 +16,6 @@ import { nextDefaultName } from '@/shared/lib'
 import { ROUTES } from '@/shared/config/routes'
 import { useBack } from './use-back'
 
-/** Back out of anything that hangs off a deck: to that deck, or wherever you came from. */
 function useBackToDeck(deckId: string, replace = false) {
   const navigate = useNavigate()
   return useBack(() => void navigate({ to: ROUTES.deckDetail, params: { deckId }, replace }))
@@ -109,7 +108,6 @@ export function DeckPasteScreen({ deckId }: { deckId: string }) {
   )
 }
 
-/** Pasting with no deck to paste into: the deck is created on the way to the review step. */
 export function NewPasteScreen() {
   const navigate = useNavigate()
   const deckStore = useDeckStoreApi()

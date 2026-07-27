@@ -20,7 +20,6 @@ describe('buildSwipeActions', () => {
     const handlers: SwipeActionHandlers = {
       flag: { onAction: onFlag, label: 'Flag it' },
       delete: { onAction: onDelete },
-      // no handler for 'move' — it should be dropped
     }
 
     const { leading, trailing } = buildSwipeActions(config, handlers, t)
@@ -30,7 +29,6 @@ describe('buildSwipeActions', () => {
 
     expect(trailing).toHaveLength(1)
     expect(trailing[0]).toMatchObject({ id: 'delete', onAction: onDelete })
-    // falls back to the translated label key when the handler omits one
     expect(trailing[0]?.label).toBe('swipe.actions.delete')
   })
 })

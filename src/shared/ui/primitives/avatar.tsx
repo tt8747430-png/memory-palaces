@@ -13,12 +13,6 @@ function initials(name: string): string {
   return (words[0]![0]! + words[words.length - 1]![0]!).toUpperCase()
 }
 
-/**
- * Identity glyph — the uploaded image when present, otherwise a gradient initials
- * fallback. Kept as a lightweight img/span rather than Base UI's `Avatar` because
- * our sources are local data/blob URLs that load synchronously; Base UI defers the
- * `<img>` until a load event that never fires under jsdom.
- */
 export function Avatar({ name, src, className }: AvatarProps) {
   if (src) {
     return (

@@ -63,9 +63,6 @@ describe('CardBrowser', () => {
     expect(await screen.findByText('Second front')).toBeInTheDocument()
   })
 
-  // Regression: the queued cards are ordered nearest-first, and depth has to count *up* with that
-  // index. Inverting it drew the furthest card in the visible slot, so the card peeking out from
-  // behind was never the card the next swipe promoted.
   it('peeks at the card the next swipe will actually promote', async () => {
     setup()
     await screen.findByText('First front')

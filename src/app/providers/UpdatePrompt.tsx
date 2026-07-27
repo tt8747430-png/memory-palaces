@@ -9,8 +9,6 @@ const UPDATE_CHECK_INTERVAL = 60 * 60 * 1000
 export function UpdatePrompt() {
   const { t } = useTranslation()
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null)
-  // Registering the worker is urgent; interrupting the launch overlay to announce an update is
-  // not. The toast waits for the splash and then raises itself, rather than being dropped.
   const splashDone = useSplashDone()
 
   const {

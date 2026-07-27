@@ -52,10 +52,6 @@ export interface DeckContentEditorProps {
   searchQuery?: string
   searching?: boolean
   onClearSearch?: () => void
-  /**
-   * The page's selection. It lives up there because the page header *is* the selection's
-   * header — the list only reports which rows are on screen and renders their checkboxes.
-   */
   selection: MultiSelect
   sort: ContentSort
   onSortChange: (sort: ContentSort) => void
@@ -109,8 +105,6 @@ export function DeckContentEditor({
     [sortedCards, needle, filter.applied],
   )
 
-  // Sorting, searching and filtering all happen here, so this is the only place that knows what
-  // "select all" means right now. The page's header reads the answer back off the selection.
   const { setVisibleIds } = selection
   useEffect(() => {
     setVisibleIds(visibleCards.map((card) => card.id))
@@ -297,7 +291,6 @@ const SORT_OPTIONS = [
   { value: 'flagged', labelKey: 'cards.sort.flagged', icon: <Flag className="size-4" /> },
 ] as const satisfies readonly { value: ContentSort; labelKey: string; icon: ReactNode }[]
 
-/** The icons and order are fixed; only the labels need the translator. */
 function useSortOptions(): SortControlOption<ContentSort>[] {
   const { t } = useTranslation()
   return SORT_OPTIONS.map(({ value, labelKey, icon }) => ({

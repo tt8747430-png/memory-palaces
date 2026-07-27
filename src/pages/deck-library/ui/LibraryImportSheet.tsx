@@ -10,10 +10,6 @@ export interface LibraryImportSheetProps {
   onPickFile: (file: File) => void
 }
 
-/**
- * How cards get in from the library: paste them, or hand over a file. The hidden `<input>` lives
- * with the row that opens it so the page never has to hold a ref for someone else's control.
- */
 export function LibraryImportSheet({
   open,
   onOpenChange,

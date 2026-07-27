@@ -29,10 +29,6 @@ export interface DirectionChipProps {
   className: string
 }
 
-/**
- * What this direction commits to, revealed as the card travels far enough that the gesture is
- * clearly deliberate — so the learner reads the outcome before letting go, not after.
- */
 export function DirectionChip({ action, x, y, dir, className }: DirectionChipProps) {
   const { t } = useTranslation()
   const opacity = useTransform([x, y], ([px = 0, py = 0]: number[]) => {

@@ -7,12 +7,6 @@ import { cn } from '@/shared/lib'
 import { STUDY_MODE_META } from '../mode-meta'
 import { stopPress } from './types'
 
-/**
- * The frame every face shares: a pinned header, a pinned footer, and the one scrollable
- * region on the card between them. Nothing rendered as a child may declare its own
- * `overflow` — a nested scroller would both steal the drag and, when this body reports that
- * it fits, sit under a `touch-action: none` ancestor that cannot pan.
- */
 export function CardFace({
   flagged,
   canSpeak,
@@ -95,8 +89,6 @@ export function CardFace({
         style={{ touchAction: scrolls ? 'pan-y' : 'none' }}
         className="relative flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain scrollbar-hide px-5 [scroll-padding-bottom:var(--kb-inset,0px)]"
       >
-        {/* Auto margins centre short content but, unlike `justify-center`, never push tall
-            content past the top edge where it could not be scrolled back to. */}
         <div
           ref={contentRef}
           className={cn(

@@ -6,7 +6,6 @@ import { cn, isReferenceMarker } from '@/shared/lib'
 import type { InitialsRecall } from '../../model/use-initials-recall'
 import { stopPress } from './types'
 
-/** Type only each word's first letter; the answer fills itself in as the letters land. */
 export function TypeInitials({ recall }: { recall: InitialsRecall }) {
   const { t } = useTranslation()
   const inputRef = useRef<HTMLInputElement>(null)
@@ -76,11 +75,6 @@ export function TypeInitials({ recall }: { recall: InitialsRecall }) {
   )
 }
 
-/**
- * The wrong letter surfaces just below the box — not over the answer text. One bubble stays
- * mounted while mistakes keep arriving; only the letter inside swaps, so a run of mistakes reads
- * as a smooth replacement instead of a flicker of remounts.
- */
 function WrongLetterBubble({ wrong }: { wrong: InitialsRecall['wrong'] }) {
   const reduce = useReducedMotion()
   return (

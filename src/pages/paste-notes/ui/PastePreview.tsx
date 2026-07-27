@@ -4,7 +4,6 @@ import type { ParsedCard } from '@/shared/lib'
 
 const PREVIEW_LIMIT = 6
 
-/** The first few cards the current settings produce — proof before committing to an import. */
 export function PastePreview({ cards }: { cards: ParsedCard[] }) {
   const { t } = useTranslation()
   const shown = cards.slice(0, PREVIEW_LIMIT)
@@ -36,7 +35,6 @@ export function PastePreview({ cards }: { cards: ParsedCard[] }) {
   )
 }
 
-/** How many cards the current settings yield, shown beside the input as it is typed into. */
 export function CountBadge({ count }: { count: number }) {
   const { t } = useTranslation()
   if (count === 0) return null

@@ -22,7 +22,6 @@ export interface QuestionRowProps {
   onDelete: () => void
 }
 
-/** One Question in a Deck's list: the prompt, and every option with the answer marked. */
 export function QuestionRow({
   question,
   index,

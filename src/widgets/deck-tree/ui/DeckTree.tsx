@@ -12,31 +12,21 @@ import { DECK_ROW_FRAME, TOGGLE_BASE, toggleFrame, toggleSurface } from './row-s
 
 const EASE_OUT = [0.22, 1, 0.36, 1] as const
 
-/** Left indent per nesting level. */
 const TREE_INDENT = 22
 
 export interface DeckTreeProps {
-  /** The flattened, visible forest to render. */
   rows: FlatDeck[]
   decks: Deck[]
   cards: Card[]
   expanded: ReadonlySet<string>
   onToggle: (deckId: string) => void
   onOpen: (deckId: string) => void
-  /** Press-and-hold hands the library its select mode, which is a flat list of its own. */
   onRequestSelect: (deckId: string) => void
   swipe?: SwipeConfig
   swipeHandlers?: (deck: Deck) => SwipeActionHandlers
   now?: number
 }
 
-/**
- * The library at rest: the deck forest, nested, expandable, swipeable.
- *
- * Nothing here drags. Reordering and filing live in select mode (`LibrarySelectList`), which
- * shows one flat sibling group at a time — a tree can't honestly animate a reorder when half of
- * its rows aren't peers of the one in hand.
- */
 export function DeckTree({
   rows,
   decks,
@@ -118,7 +108,6 @@ function DeckTreeRow({
 
   const inner = (
     <div className={cn(DECK_ROW_FRAME, 'relative bg-card shadow-card transition-shadow')}>
-      {/* Whole-card activator: a tap opens the deck, a press-and-hold enters select mode. */}
       <button
         type="button"
         {...longPress}
@@ -162,7 +151,6 @@ function DeckTreeRow({
         }
       />
 
-      {/* The nesting spine — a soft guide at the left edge of a nested row. */}
       {isSub ? (
         <span
           aria-hidden

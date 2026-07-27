@@ -8,7 +8,6 @@ import {
   type PasteParsing,
 } from '../model/use-paste-parsing'
 
-/** How delimited text is cut into cards: the field split, the card split, and two corrections. */
 export function SeparatorSettings({ parsing }: { parsing: PasteParsing }) {
   const { t } = useTranslation()
   return (

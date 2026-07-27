@@ -87,8 +87,6 @@ export function RebuildFace(props: FaceProps) {
         )}
       </p>
 
-      {/* Rebuilding the answer is the answer: once it is whole, the tray of spent words goes
-          and only Reset brings the exercise back. */}
       {done ? null : (
         <div className="flex flex-wrap justify-center gap-2">
           {chips.map((chip) => {

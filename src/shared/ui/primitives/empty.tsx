@@ -13,7 +13,6 @@ export interface EmptyProps {
 
 const EASE_OUT = [0.16, 1, 0.3, 1] as const
 
-/** Empty state — a centered icon/emoji medallion, title, description and optional action. */
 export function Empty({ icon, emoji, title, description, action, className }: EmptyProps) {
   return (
     <motion.div

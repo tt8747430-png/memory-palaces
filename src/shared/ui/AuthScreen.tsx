@@ -62,9 +62,6 @@ function AuthAtmosphere() {
 }
 
 export function AuthScreen({ children, className }: { children: ReactNode; className?: string }) {
-  // The shell fits the visible viewport (`--vvh`): when the keyboard opens it shrinks to the space
-  // above it and the centered content scrolls, so bottom-anchored rows (the "continue with" block,
-  // the sign-up link) stay reachable instead of hiding behind the keyboard.
   return (
     <main className="relative h-[var(--vvh)] overflow-hidden bg-daylight">
       <AuthAtmosphere />

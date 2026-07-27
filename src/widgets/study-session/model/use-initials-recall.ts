@@ -14,7 +14,6 @@ export interface InitialsRecall {
   reset: () => void
 }
 
-/** A token that carries no letter cue — a verse number, punctuation — fills itself in. */
 function isAutoToken(token: string): boolean {
   return isReferenceMarker(token) || wordInitial(token).initial === ''
 }

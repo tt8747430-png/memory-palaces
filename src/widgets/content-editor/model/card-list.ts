@@ -16,7 +16,6 @@ export const cardFilterCount = (filter: CardFilter): number =>
 
 const dueKey = (card: Card) => card.srs?.due ?? ''
 
-/** `manual` is the stored order, so it is the one sort that returns the list untouched. */
 export function sortCards(cards: Card[], sort: ContentSort): Card[] {
   switch (sort) {
     case 'name':
@@ -34,7 +33,6 @@ export function sortCards(cards: Card[], sort: ContentSort): Card[] {
 
 const SEARCHABLE = ['front', 'back', 'hint', 'tip'] as const
 
-/** Search then filter, in that order — narrowing is cheapest on the smaller list. */
 export function filterCards(cards: Card[], needle: string, filter: CardFilter): Card[] {
   let list = cards
   if (needle) {

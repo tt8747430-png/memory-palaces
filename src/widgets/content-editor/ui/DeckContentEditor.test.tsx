@@ -20,7 +20,6 @@ afterEach(cleanup)
 
 const at = (ms: number) => new Date(ms).toISOString()
 
-/** The editor takes its selection from the page that owns it, so the harness owns one too. */
 function Editor({ onAddCard }: { onAddCard: () => void }) {
   const selection = useMultiSelect()
   return (

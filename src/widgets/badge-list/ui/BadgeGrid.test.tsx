@@ -17,7 +17,6 @@ describe('BadgeGrid', () => {
     renderWithProviders(<BadgeGrid badges={BADGES} />)
     expect(screen.getByText('XP Collector')).toBeInTheDocument()
     expect(screen.getByText('Streak Keeper')).toBeInTheDocument()
-    // tierProgress: '{{tier}} of {{total}}'
     expect(screen.getByText('0 of 3')).toBeInTheDocument()
     expect(screen.getByText('2 of 3')).toBeInTheDocument()
   })

@@ -20,11 +20,9 @@ export interface HomeHeaderData {
   avatar?: string | null
   xp: number
   unreadCount: number
-  /** The daily goal comes from Preferences, so the header can say how close today is. */
   streak: { count: number; dayCount: number; dailyGoal: number }
 }
 
-/** Everything the home header shows — learner, level, streak, unread — in one read. */
 export function useHomeHeaderData(): HomeHeaderData {
   const { t } = useTranslation()
   const profileStore = useProfileStoreApi()

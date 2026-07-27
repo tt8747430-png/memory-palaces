@@ -42,6 +42,7 @@ export default tseslint.config(
       'boundaries/ignore': ['**/*.{test,spec}.{ts,tsx}'],
     },
     rules: {
+      'no-empty': ['error', { allowEmptyCatch: true }],
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
@@ -57,16 +58,10 @@ export default tseslint.config(
     rules: { 'react-refresh/only-export-components': 'off' },
   },
   {
-    // shadcn-on-Base-UI primitives intentionally co-export their `cva` variant
-    // helpers (e.g. `buttonVariants`) alongside the component, per the recipe shape.
     files: ['src/shared/ui/primitives/**/*.{ts,tsx}'],
     rules: { 'react-refresh/only-export-components': 'off' },
   },
   {
-    // Native `autofocus` inside a bottom sheet scrolls the whole layout on iOS and skews the
-    // Drawer's keyboard-inset math (see docs/CODE_STYLE.md §11). Sheet bodies must focus their
-    // field through the Sheet's `initialFocus` ref instead. Full-page inputs (in `AppScreen`)
-    // are unaffected — this only covers the sheet/form surfaces.
     files: ['**/*Sheet.tsx', '**/*Form.tsx'],
     rules: {
       'no-restricted-syntax': [

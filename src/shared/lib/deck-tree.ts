@@ -20,13 +20,6 @@ export function childDecks<T extends TreeDeck>(decks: readonly T[], parentId: st
   return decks.filter((d) => d.parentId === parentId).sort(byOrder)
 }
 
-/**
- * One sibling group of the tree, in manual order: the children of `parentId`,
- * or — when `parentId` is null — the top-level decks of `folderId` (null being
- * the unfiled root). This is the unit a drag reorders, so the tree, the drop
- * handler and the persisted order all read the group through here. Archived
- * decks live in the Archive, never in the tree.
- */
 export function siblingDecks<T extends TreeDeck>(
   decks: readonly T[],
   parentId: string | null,
@@ -77,12 +70,6 @@ export function subtreeDecks<T extends TreeDeck>(decks: readonly T[], rootId: st
     .filter((d): d is T => d !== undefined)
 }
 
-/**
- * The top-most selected decks — those with no selected ancestor — in pre-order (root-first,
- * matching the tree top-to-bottom). These are the decks a multi-select drag actually moves:
- * their descendants ride along, so also moving a selected child would tear it out of the parent
- * that is already on its way. Archived decks are ignored.
- */
 export function selectionRoots(
   decks: readonly TreeDeck[],
   selectedIds: ReadonlySet<string>,
@@ -103,8 +90,6 @@ export function selectionRoots(
     active.filter((d) => selectedIds.has(d.id) && !hasSelectedAncestor(d)).map((d) => d.id),
   )
 
-  // Pre-order across every top-level group (unfiled root + each folder) gives a stable
-  // top-to-bottom order for the roots we keep.
   const ordered: string[] = []
   const folderIds = new Set<string | null>([null])
   for (const d of active) if (d.parentId === null && d.folderId != null) folderIds.add(d.folderId)
@@ -118,11 +103,6 @@ export function selectionRoots(
   return ordered
 }
 
-/**
- * Tri-state of a select checkbox: none, all, or a partial mix. The library's select mode is flat
- * — a deck's subdecks travel with it and are never shown — so its rows are only ever fully on or
- * off; the middle state is for lists that select a subset of something.
- */
 export type SelectState = 'unchecked' | 'checked' | 'indeterminate'
 
 export function deckPath<T extends TreeDeck>(decks: readonly T[], deckId: string): T[] {

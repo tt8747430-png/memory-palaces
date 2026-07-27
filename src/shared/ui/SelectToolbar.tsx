@@ -4,18 +4,11 @@ import { cn } from '@/shared/lib'
 import { type SelectActionHandlers, selectActionIcon } from './select-actions'
 
 export interface SelectToolbarProps {
-  /** The learner's configured bar for this surface, in order. */
   actions: SelectToolbarConfig
   handlers: SelectActionHandlers
   className?: string
 }
 
-/**
- * The bar that a multi-selection acts through. Which actions it carries is the
- * learner's choice (Settings → Select toolbar); everything here stays neutral so
- * a four-action bar reads as one calm surface, with only a destructive action
- * allowed to raise its voice.
- */
 export function SelectToolbar({ actions, handlers, className }: SelectToolbarProps) {
   const { t } = useTranslation()
   const shown = actions.filter((id) => handlers[id] != null)

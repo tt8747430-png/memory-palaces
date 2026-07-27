@@ -6,10 +6,6 @@ const trackOff = 'bg-[color-mix(in_oklch,var(--text-muted)_32%,transparent)]'
 const thumbBase =
   'absolute top-0.5 block size-6 rounded-full bg-card shadow-rest transition-transform'
 
-/**
- * Presentational track + thumb with no interaction of its own — used where the
- * enclosing element is the control (e.g. a fully-clickable `SettingsRow`).
- */
 export function SwitchTrack({ checked }: { checked: boolean }) {
   return (
     <span className={cn(trackBase, checked ? 'bg-primary' : trackOff)}>

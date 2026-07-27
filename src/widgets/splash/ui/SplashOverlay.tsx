@@ -14,10 +14,6 @@ const REDUCED_MS = 500
 const AURA_BG =
   'radial-gradient(circle at center, oklch(var(--p-tint-sky) / 0.45), transparent 60%)'
 
-// The splash is a fixed brand moment, so it uses opaque palette hues directly
-// rather than semantic tokens: in dark mode `--secondary` is a translucent
-// surface tint, which would leave the bottom of the gradient see-through and let
-// the tab bar + FAB show through the overlay.
 const SPLASH_BG =
   'linear-gradient(to bottom, var(--p-navy-900), var(--p-blue-500) 55%, var(--p-blue-300))'
 

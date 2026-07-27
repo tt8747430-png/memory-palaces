@@ -9,13 +9,6 @@ type ToggleGroupProps<Value extends string> = Omit<
   className?: string
 }
 
-/**
- * Single- or multi-select toggle group on Base UI — roving focus, arrow-key nav and
- * `aria-pressed` come for free. Membership is a `readonly Value[]` even for single-select
- * (`multiple` defaults to `false`, so at most one item is pressed). The group and its items
- * are intentionally near-unstyled: bespoke surfaces (segmented pills, colour swatches) own
- * their look via `className` and read the selected state from `data-[pressed]`.
- */
 function ToggleGroup<Value extends string>({ className, ...props }: ToggleGroupProps<Value>) {
   return <ToggleGroupPrimitive data-slot="toggle-group" className={cn(className)} {...props} />
 }

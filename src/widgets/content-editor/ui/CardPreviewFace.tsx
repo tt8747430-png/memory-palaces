@@ -7,11 +7,6 @@ import { CARD_EASE, poseAt } from './browser-poses'
 const FACE_SURFACE =
   'absolute inset-0 flex flex-col rounded-card-featured border border-border bg-card p-6 shadow-elevated'
 
-/**
- * One side of a preview card. Shared by the card in play and by the cards waiting behind it, so
- * a card promoted out of the deck is already exactly the thing it becomes — no cross-fade
- * between a placeholder and the real face.
- */
 export function PreviewFace({ card, back = false }: { card: Card; back?: boolean }) {
   const { t } = useTranslation()
 
@@ -83,7 +78,6 @@ function FaceHint({ children }: { children: string }) {
   )
 }
 
-/** A card waiting its turn: the real card, its real front, inert and one step further back. */
 export function QueuedPreview({
   card,
   depth,

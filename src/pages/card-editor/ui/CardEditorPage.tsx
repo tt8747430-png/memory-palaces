@@ -31,8 +31,6 @@ export function CardEditorPage({ deckId, cardId, onBack, onNavigateCard }: CardE
   const editing = cardId ? (allCards.find((c) => c.id === cardId) ?? null) : null
   const deck = decks.find((d) => d.id === deckId)
 
-  // The prev/next tour spans the deck's whole subtree — matching the card list on the deck
-  // page — so opening a card from a parent deck still shows the neighbours in its subdecks.
   const deckCards = useMemo(
     () => cardsInSubtree(decks, allCards, deckId),
     [decks, allCards, deckId],

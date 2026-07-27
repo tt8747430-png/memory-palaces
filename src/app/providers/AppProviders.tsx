@@ -11,10 +11,6 @@ import { NotificationBridge } from './NotificationBridge'
 import { UpdatePrompt } from './UpdatePrompt'
 
 export function AppProviders({ children }: { children: ReactNode }) {
-  // Toasts land at the very top of the screen, right where the splash is playing. Mounting the
-  // toaster only once the overlay is gone means the launch is never interrupted — and, since
-  // sonner only renders what is published after it mounts, anything raised during the splash is
-  // dropped rather than queued to pile up the moment the learner arrives.
   const splashDone = useSplashDone()
   return (
     <I18nextProvider i18n={i18n}>

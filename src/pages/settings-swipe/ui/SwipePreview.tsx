@@ -40,7 +40,6 @@ type CapSide = keyof SwipeConfig
 const sideOf = (items: SwipeConfig, action: SwipeActionId): CapSide | null =>
   items.leading.includes(action) ? 'leading' : items.trailing.includes(action) ? 'trailing' : null
 
-/** `over` is either a side container or a cap; resolve both to a side. */
 const containerOf = (items: SwipeConfig, overId: string): CapSide | null =>
   overId === 'leading' || overId === 'trailing' ? overId : sideOf(items, overId as SwipeActionId)
 
@@ -50,17 +49,10 @@ export interface SwipePreviewProps {
   onChange: (next: SwipeConfig) => void
 }
 
-/**
- * Drag a cap to reorder within a side, or across the sample row to the other side. An action
- * lives on one side only, so its id is stable while it moves — which is what lets it hop
- * containers without the sortable flickering.
- */
 export function SwipePreview({ type, config, onChange }: SwipePreviewProps) {
   const { t } = useTranslation()
   const TypeIcon = TYPE_ICON[type]
   const sensors = useSortableSensors()
-  // Working copy: `onDragOver` relocates the cap live, so each side's sortable stays internally
-  // consistent instead of fighting across contexts.
   const [items, setItems] = useState<SwipeConfig>(config)
   const [activeId, setActiveId] = useState<SwipeActionId | null>(null)
   useEffect(() => setItems(config), [config])
@@ -133,8 +125,6 @@ export function SwipePreview({ type, config, onChange }: SwipePreviewProps) {
         <PreviewCaps side="trailing" ids={items.trailing} />
       </div>
 
-      {/* The dragged cap rides in an overlay, so the source keeps its slot instead of being
-          flung across the screen by the drag transform. */}
       <DragOverlay dropAnimation={{ duration: 200, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }}>
         {activeId ? <Cap action={activeId} floating /> : null}
       </DragOverlay>
@@ -182,7 +172,6 @@ function SortableCap({ action }: { action: SwipeActionId }) {
       style={{ transform: CSS.Transform.toString(transform), transition, touchAction: 'none' }}
       className={cn(
         'shrink-0 cursor-grab rounded-[14px] active:cursor-grabbing',
-        // The overlay stands in for it while dragging.
         isDragging && 'opacity-0',
       )}
     >

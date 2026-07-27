@@ -28,19 +28,10 @@ export interface ContentRowProps {
   menuActions: SheetAction[]
   onToggleSelect: () => void
   onRequestSelect: () => void
-  /** What a plain tap does outside select mode. A Question has nothing to open. */
   onOpen?: () => void
   children: ReactNode
 }
 
-/**
- * The frame every row in a Deck's content list wears: the surface, the selection affordance, the
- * overflow menu, the swipe actions, and how a press is interpreted — a tap, a hold that starts a
- * Selection, or a drag once reordering is on. Only the body between them differs by row type.
- *
- * Gathering it here is what keeps the drop-flicker rules (`docs/CODE_STYLE.md` §10) true for
- * every row at once instead of once per copy.
- */
 export function ContentRow({
   selectMode,
   selected,
@@ -62,8 +53,6 @@ export function ContentRow({
   })
   const { leading, trailing } = buildSwipeActions(swipe, swipeHandlers, t)
 
-  // While a row is being dragged it answers to the drag and nothing else; while it is reorderable
-  // it is also in select mode, so a tap picks it rather than opening it.
   const interaction = dragging
     ? {}
     : reorderable && dragHandle
@@ -73,10 +62,6 @@ export function ContentRow({
   const row = (
     <motion.div
       ref={!dragging && reorderable && dragHandle ? dragHandle.ref : undefined}
-      // No mount entrance on a drag surface. A row carried in a stack is unmounted for the length
-      // of the drag and remounts when the block lands, so an entrance here would animate `opacity`
-      // on the landing row — the fourth cause of drop flicker (`docs/CODE_STYLE.md` §10) — and
-      // fight the travel `useStackLanding` is already running on it.
       initial={dragging || reorderable ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={reorderable ? undefined : { opacity: 0, scale: 0.97 }}
@@ -106,7 +91,6 @@ export function ContentRow({
     </motion.div>
   )
 
-  // A swipe would fight both the selection tap and the drag, so it only exists at rest.
   if (selectMode || dragging) return row
   return (
     <SwipeRow leading={leading} trailing={trailing} className="rounded-card">
@@ -115,7 +99,6 @@ export function ContentRow({
   )
 }
 
-/** The position badge every content row leads with. */
 export function RowIndex({ index, tone = 'quiet' }: { index: number; tone?: 'quiet' | 'strong' }) {
   return (
     <span

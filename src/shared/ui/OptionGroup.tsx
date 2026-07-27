@@ -5,7 +5,6 @@ export interface Option<T extends string> {
   value: T
   label: string
   description?: string
-  /** A short literal shown on the right — a separator glyph, a shortcut, a unit. */
   hint?: string
 }
 
@@ -14,12 +13,10 @@ export interface OptionGroupProps<T extends string> {
   value: T
   onChange: (value: T) => void
   options: ReadonlyArray<Option<T>>
-  /** Extra content pinned below the last option, inside the same frame. */
   footer?: ReactNode
   className?: string
 }
 
-/** A single-choice list rendered as one framed card of radio rows. */
 export function OptionGroup<T extends string>({
   label,
   value,

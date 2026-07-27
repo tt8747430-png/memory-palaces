@@ -13,7 +13,6 @@ export interface AvatarPickerProps {
   onRemove: () => void
 }
 
-/** The Profile photo, and the two ways to change it. */
 export function AvatarPicker({ name, avatar, onPick, onRemove }: AvatarPickerProps) {
   const { t } = useTranslation()
   const fileRef = useRef<HTMLInputElement>(null)

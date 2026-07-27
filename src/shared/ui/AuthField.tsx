@@ -17,11 +17,6 @@ export interface AuthFieldProps extends NativeProps {
   error?: string
 }
 
-/**
- * Labelled auth input on Base UI's `Field` — label↔control association, `aria-invalid`
- * and error `aria-describedby` are wired by the primitive. Keeps the glass auth look plus
- * the icon / right-slot / valid-check overlays.
- */
 export function AuthField({
   id,
   label,

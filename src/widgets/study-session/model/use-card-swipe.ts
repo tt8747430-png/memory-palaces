@@ -13,7 +13,6 @@ import { impact, tick } from '@/shared/lib'
 
 const LONG_PRESS_MS = 450
 const LONG_PRESS_SLOP = 12
-/** Far enough off screen that the card is gone before its successor settles. */
 const FLING_DISTANCE = 620
 const SNAP = { type: 'spring', stiffness: 520, damping: 34 } as const
 
@@ -21,19 +20,15 @@ export interface CardSwipe {
   x: MotionValue<number>
   y: MotionValue<number>
   rotate: MotionValue<number>
-  /** Spread onto the card's motion wrapper. */
   bind: ReturnType<typeof useDrag>
 }
 
 interface Args {
   swipeConfig: FlashcardSwipeConfig
   reduce: boolean
-  /** A tap anywhere that isn't a control. */
   onFlip: () => void
   onLongPress?: () => void
-  /** A grade, skip or flag — anything the session, not the face, has to answer for. */
   onCommit: (direction: SwipeDirection) => void
-  /** An action the visible face owns (reveal more, reset, next word). */
   onMechanic: (action: ModeSwipeAction) => void
 }
 
@@ -51,21 +46,14 @@ function controlOf(target: EventTarget | null): HTMLElement | null {
 
 const isControl = (target: EventTarget | null) => controlOf(target) !== null
 
-/** True when the press landed in the card's scrolling body, which owns vertical movement. */
 const isScroller = (target: EventTarget | null) =>
   Boolean((target as HTMLElement | null)?.closest('[data-card-scroll]'))
 
-/** A control swallows the swipe unless it is the flip zone, which is the card's own surface. */
 const swipeAllowed = (target: EventTarget | null) => {
   const control = controlOf(target)
   return control === null || control.hasAttribute('data-flip')
 }
 
-/**
- * The flashcard's gesture layer: drag to move the card, release past the threshold to commit the
- * direction's action, tap to flip, hold to open the quick actions. It owns the motion values the
- * card and its direction chips render from, and nothing about what any action means.
- */
 export function useCardSwipe({
   swipeConfig,
   reduce,
@@ -125,8 +113,6 @@ export function useCardSwipe({
       tx ? animate(x, tx, { duration, ease: [0.4, 0, 1, 1] }).finished : Promise.resolve(),
       ty ? animate(y, ty, { duration, ease: [0.4, 0, 1, 1] }).finished : Promise.resolve(),
     ])
-    // Hand the card over and drop the slot back to centre in the same tick: the card that flew
-    // away has already unmounted, and the one taking its place enters from the deck itself.
     onCommit(dir)
     x.jump(0)
     y.jump(0)
@@ -138,8 +124,6 @@ export function useCardSwipe({
       if (locked) return
       if (first) {
         armedRef.current = swipeAllowed(event.target)
-        // A press inside the scrolling body still swipes sideways, but its vertical movement
-        // belongs to the browser — otherwise a long answer costs the learner every swipe.
         horizontalOnlyRef.current = isScroller(event.target)
         heldRef.current = false
         clearHold()

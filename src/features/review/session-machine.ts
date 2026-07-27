@@ -164,10 +164,6 @@ export function nextId(state: SessionState): string | undefined {
   return undefined
 }
 
-/**
- * The cards queued behind the current one, nearest first. The flashcard stack renders these for
- * real behind the card in play, so it needs to see a little further than one.
- */
 export function upcomingIds(state: SessionState, count: number): string[] {
   if (state.status !== 'review') return []
   return state.queue.slice(1, 1 + count)

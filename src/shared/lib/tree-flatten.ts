@@ -1,6 +1,5 @@
 import { siblingDecks, type TreeDeck } from './deck-tree'
 
-/** One row of the deck forest, flattened for a single live-reorder sortable list. */
 export interface FlatDeck {
   id: string
   depth: number
@@ -10,12 +9,6 @@ export interface FlatDeck {
   expanded: boolean
 }
 
-/**
- * Flattens the visible deck forest of one scope — a folder, or the unfiled root — into a single
- * ordered list, descending into a deck's children only when it is expanded. This is the list the
- * tree renders and drags over: one sortable context, so a drag reorders live across the whole
- * forest instead of only within a sibling group.
- */
 export function flattenDecks(
   decks: readonly TreeDeck[],
   expanded: ReadonlySet<string>,

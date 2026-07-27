@@ -1,4 +1,3 @@
-/** Placeholder rows while the folder and deck stores make their first emission. */
 export function LibrarySkeleton() {
   return (
     <div className="space-y-1 pt-2" aria-hidden>

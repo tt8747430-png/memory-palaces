@@ -3,7 +3,6 @@ import { ClipboardPaste, Plus } from 'lucide-react'
 import { Button, Empty } from '@/shared/ui'
 
 export interface LibraryEmptyProps {
-  /** An empty folder reads differently from an empty library: one is a gap, one is a start. */
   inFolder: boolean
   canImport: boolean
   onCreateDeck: () => void

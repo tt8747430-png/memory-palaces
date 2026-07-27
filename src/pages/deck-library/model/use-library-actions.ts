@@ -24,7 +24,6 @@ type Patch<T> = (patches: Map<string, Partial<T>>) => void
 interface Args {
   decks: Deck[]
   folders: Folder[]
-  /** The folder this view is scoped to — deleting it means the route points at nothing. */
   folderId: string | null
   selection: LibrarySelection
   patchDecks: Patch<Deck>
@@ -46,15 +45,9 @@ export interface LibraryActions {
   fileDecksIntoFolder: (deckIds: string[], targetFolderId: string) => void
   bulkMoveTo: (dest: MoveDestination) => void
   confirmBulkDelete: () => void
-  /** The learner's configured select toolbar, wired to what a library selection can do. */
   selectHandlers: SelectActionHandlers
 }
 
-/**
- * Everything the library *does*, kept out of the view that decides when to do it. Each action
- * owns its own confirmation — the toast, the undo, and (for anything that moves rows) the
- * optimistic patch that holds the result on screen until the store agrees with it.
- */
 export function useLibraryActions({
   decks,
   folders,
@@ -122,9 +115,6 @@ export function useLibraryActions({
     if (folderId === id) onFolderGone()
   }
 
-  // Reordering persists as one write per row, so the store re-emits partial orders on the way to
-  // the final one. Both handlers patch the new order on optimistically and hold it until the
-  // stored rows agree, or the block settles row-by-row instead of all at once.
   const reorderFolderIds = (ids: string[]) => {
     patchFolders(orderPatch(ids))
     void reorderFolders(folderStore, ids)
@@ -135,7 +125,6 @@ export function useLibraryActions({
     void reorderDecks(deckStore, ids)
   }
 
-  /** Decks dropped onto a folder row: they leave this list and land at the end of that folder. */
   const fileDecksIntoFolder = (deckIds: string[], targetFolderId: string) => {
     const moving = deckIds.filter((id) => {
       const deck = deckById(id)
@@ -168,7 +157,6 @@ export function useLibraryActions({
     )
   }
 
-  // ---- Bulk, over the current selection ----
   const { deckIds, decks: selectedDecks, exit } = selection
 
   const bulkArchive = () => {
@@ -180,8 +168,6 @@ export function useLibraryActions({
     exit()
   }
 
-  // Favorite is a set, not a flip: a mixed selection favorites everything, and only an
-  // all-favorited selection clears — so the tap always has one meaning.
   const allFavorited = selectedDecks.length > 0 && selectedDecks.every((d) => d.favorite)
   const bulkFavorite = () => {
     const next = !allFavorited
@@ -203,8 +189,6 @@ export function useLibraryActions({
     exit()
   }
 
-  // "Unfile" lifts decks back out to the top level — out of a folder, out of a parent deck.
-  // Decks already sitting there have nothing to lift.
   const filedDecks = selectedDecks.filter(
     (d) => d.parentId !== null || (d.folderId ?? null) !== null,
   )
@@ -262,8 +246,6 @@ export function useLibraryActions({
     exit()
   }
 
-  // Folder-only selections keep the deck-shaped actions visible but disabled, so the bar never
-  // rearranges under the thumb.
   const noDecks = deckIds.length === 0
   const selectHandlers: SelectActionHandlers = {
     move: { onAction: onRequestBulkMove, disabled: noDecks },
@@ -290,7 +272,6 @@ export function useLibraryActions({
   }
 }
 
-/** A deck can't be moved into itself or any of its own descendants. */
 export function moveExclusions(decks: Deck[], targets: string[]): Set<string> {
   const ids = new Set<string>()
   for (const id of targets) for (const sub of subtreeDeckIds(decks, id)) ids.add(sub)

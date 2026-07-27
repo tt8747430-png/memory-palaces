@@ -5,15 +5,8 @@ export interface VirtualKeyboard {
   height: number
 }
 
-// Below this the gap is browser chrome (home indicator, URL bar), not a keyboard.
 const KEYBOARD_MIN = 120
 
-/**
- * Reports the on-screen keyboard as React state — `{ open, height }` — from the visual viewport,
- * for surfaces that need to reposition a floating element above it (not just add scroll slack
- * like `useKeyboardInset`). `interactive-widget=resizes-visual` keeps the layout viewport at full
- * height, so the gap under the visual viewport is the keyboard.
- */
 export function useVirtualKeyboard(): VirtualKeyboard {
   const [height, setHeight] = useState(0)
 
@@ -24,8 +17,6 @@ export function useVirtualKeyboard(): VirtualKeyboard {
     let frame = 0
     const apply = () => {
       frame = 0
-      // Layout viewport height (stable under resizes-visual) minus the visible viewport is the
-      // keyboard plus its native accessory bar.
       const gap = Math.max(0, document.documentElement.clientHeight - vv.height - vv.offsetTop)
       setHeight(gap >= KEYBOARD_MIN ? Math.round(gap) : 0)
     }

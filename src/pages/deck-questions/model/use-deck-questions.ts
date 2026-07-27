@@ -27,10 +27,6 @@ import {
 import type { SelectActionHandlers } from '@/shared/ui'
 import { type QuestionSort, sortQuestions } from './sort-questions'
 
-/**
- * An act the page has asked for but not yet carried out, because it needs the learner to confirm
- * it first. One value rather than three flags: only one of these can be true at a time.
- */
 export type PendingAct =
   | { kind: 'delete-question'; question: Question }
   | { kind: 'delete-selection' }
@@ -39,7 +35,6 @@ export type PendingAct =
 export interface DeckQuestions {
   ready: boolean
   deckName: string
-  /** The Deck's Questions in the chosen order. */
   questions: Question[]
   sort: QuestionSort
   setSort: (sort: QuestionSort) => void
@@ -49,7 +44,6 @@ export interface DeckQuestions {
   duplicate: (id: string) => void
   reorder: (ids: string[]) => void
   exportCsv: () => void
-  /** Read a file and, if it holds Questions, queue the import for confirmation. */
   importFile: (file: File) => Promise<void>
 
   pending: PendingAct | null
@@ -58,13 +52,6 @@ export interface DeckQuestions {
   confirm: () => void
 }
 
-/**
- * A Deck's Questions as one module: what they are, how they're ordered, what is selected, and
- * every act the page can ask for — including the three that need confirming first.
- *
- * The two stores it reads and the two it writes through are its own business; the page names
- * Questions and acts, never repositories.
- */
 export function useDeckQuestions(deckId: string): DeckQuestions {
   const { t } = useTranslation()
   const questionStore = useQuestionStoreApi()
@@ -91,7 +78,6 @@ export function useDeckQuestions(deckId: string): DeckQuestions {
   )
   const questions = useMemo(() => sortQuestions(deckQuestions, sort), [deckQuestions, sort])
 
-  // Select-all covers what is on screen, which after sorting is exactly this list.
   const { setVisibleIds } = selection
   useEffect(() => {
     setVisibleIds(questions.map((question) => question.id))
@@ -154,7 +140,6 @@ export function useDeckQuestions(deckId: string): DeckQuestions {
     selectHandlers,
     duplicate,
     reorder: (ids) => {
-      // Dragging a row *is* choosing a manual order, so the sort follows the gesture.
       if (sort !== 'manual') setSort('manual')
       void reorderQuestions(questionStore, ids)
     },

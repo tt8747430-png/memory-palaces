@@ -147,6 +147,9 @@ GENERAL:
  5. we need to make the header and the footer of the drawers smaller to maximize the content area 
 
 
+1. unify the headers from all the pages so that we use one header with fixed height, same sizes for the buttons back adn setings button and so on. 
+
+
 BUGS:
 
  1. StatusBar gets white when a notification animations gets close to the StatusBar

@@ -9,18 +9,10 @@ export interface ToggleRowProps {
   icon?: ReactNode
   description?: string
   disabled?: boolean
-  /**
-   * `card` stands on its own surface; `plain` is a row inside an already-framed group and draws
-   * no background of its own.
-   */
   surface?: 'card' | 'plain'
   className?: string
 }
 
-/**
- * A labelled switch whose whole row is the control — the target is the full width, not the
- * 44px track. One row shape for every settings-style toggle in the app.
- */
 export function ToggleRow({
   label,
   checked,

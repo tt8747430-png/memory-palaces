@@ -28,7 +28,6 @@ describe('useOptimisticPatch', () => {
     })
 
     act(() => result.current[1](orderPatch(['b', 'a', 'c'])))
-    // Only b's write has landed: a is still at 0, so both claim index 0.
     rerender({ items: rows(['a', 0], ['b', 0], ['c', 2]) })
 
     expect(orderOf(result.current[0])).toEqual(['b', 'a', 'c'])
@@ -42,8 +41,6 @@ describe('useOptimisticPatch', () => {
     act(() => result.current[1](new Map([['a', { parentId: 'b', order: 0 }]])))
     expect(result.current[0].find((r) => r.id === 'a')?.parentId).toBe('b')
 
-    // The reorder write landed first; the reparent has not — the row must not
-    // flick back to the group it came from.
     rerender({ items: rows(['a', 0], ['b', 1]) })
     expect(result.current[0].find((r) => r.id === 'a')?.parentId).toBe('b')
 

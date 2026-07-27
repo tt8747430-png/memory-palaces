@@ -22,7 +22,6 @@ export interface QuizSessionProps {
   onOpenOptions?: () => void
 }
 
-/** Long enough to read the verdict, short enough that auto-advance never feels like a stall. */
 const FEEDBACK_MS = 2200
 
 export function QuizSession({

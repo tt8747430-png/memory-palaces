@@ -20,18 +20,9 @@ export interface SheetProps {
   footer?: ReactNode
   children: ReactNode
   className?: string
-  /**
-   * Element to focus when the sheet opens. Defaults to Base UI's first-tabbable behaviour;
-   * pass an input ref (e.g. from a prompt) to land the caret there instead.
-   */
   initialFocus?: RefObject<HTMLElement | null> | boolean
 }
 
-/**
- * Bottom sheet on Base UI's Drawer. Native swipe-to-dismiss replaces the old hand-rolled drag,
- * and `VirtualKeyboardProvider` lifts the sheet above the on-screen keyboard on iOS — the job
- * vaul's `repositionInputs` used to do.
- */
 export function Sheet({
   open,
   onOpenChange,
@@ -44,8 +35,6 @@ export function Sheet({
 }: SheetProps) {
   return (
     <Drawer open={open} onOpenChange={(next) => onOpenChange(next)}>
-      {/* VirtualKeyboardProvider must sit inside Drawer.Root and wrap the Viewport (rendered by
-          DrawerContent) — it reads keyboard-aware measurements from the drawer store. */}
       <DrawerVirtualKeyboardProvider>
         <DrawerContent className={className} initialFocus={initialFocus}>
           <DrawerHandle />
@@ -61,9 +50,6 @@ export function Sheet({
               <X className="size-[18px]" aria-hidden />
             </DrawerClose>
           </DrawerHeader>
-          {/* `min-h-0` lets this flex child shrink below its content so `overflow-y-auto` scrolls;
-              `touch-auto` re-enables native scrolling inside the `touch-none` popup and
-              `overscroll-contain` stops that scroll from chaining out to the page. */}
           <div className="min-h-0 flex-1 touch-auto overflow-y-auto overscroll-contain px-5 pb-2 pt-1">
             {children}
           </div>

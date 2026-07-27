@@ -16,9 +16,6 @@ export type SwipeActionId =
   | 'known'
   | 'delete'
 
-/** Named accent per swipe action — 10 distinct hues spread around the wheel,
- *  so every action reads as its own thing instead of one of five muddy tones.
- *  Each maps to a `--sw-*` token; `ink` is the text color over the solid fill. */
 export type SwipeAccent =
   | 'rose'
   | 'plum'
@@ -65,8 +62,6 @@ export const SWIPE_ACTION_META: Record<SwipeActionId, SwipeActionMeta> = {
   delete: { id: 'delete', labelKey: 'swipe.actions.delete', accent: 'red' },
 }
 
-/** Every action reachable per item type — the full editor palette. There is no
- *  long-press quick sheet anymore, so swipe is the single per-row action surface. */
 export const SWIPE_ACTIONS: Record<SwipeItemType, readonly SwipeActionId[]> = {
   deck: ['favorite', 'move', 'settings', 'addSubdeck', 'duplicate', 'archive', 'delete'],
   folder: ['edit', 'addDeck', 'delete'],
@@ -80,8 +75,6 @@ export interface SwipeConfig {
 
 export type SwipePreferences = Record<SwipeItemType, SwipeConfig>
 
-/** Trailing (swipe-left) is the primary side and reaches the screen edge, so it
- *  holds more actions than leading (swipe-right). */
 export const SWIPE_SIDE_MAX: Record<keyof SwipeConfig, number> = {
   leading: 2,
   trailing: 4,

@@ -14,10 +14,6 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MIN_PHONE_DIGITS = 6
 export const BIO_MAX = 200
 
-/**
- * The phone number is not part of the Profile entity — nothing in the app studies with it — so it
- * is kept beside the Profile rather than migrated into it.
- */
 const PHONE_KEY = 'mindscape:phone'
 
 export interface ProfileForm {
@@ -37,15 +33,9 @@ export interface ProfileFormControl {
   canSave: boolean
   saving: boolean
   save: () => Promise<void>
-  /** Read an image file into the avatar, or say why it couldn't be read. */
   setPhotoFrom: (file: File) => Promise<void>
 }
 
-/**
- * The editable Profile as a form: seeded from the store, corrected as the learner types, checked
- * before it can be saved, and written back in one go. Which fields live in the Profile entity and
- * which live beside it does not reach the caller.
- */
 export function useProfileForm(onSaved?: () => void): ProfileFormControl {
   const { t } = useTranslation()
   const store = useProfileStoreApi()
@@ -62,8 +52,6 @@ export function useProfileForm(onSaved?: () => void): ProfileFormControl {
   }))
   const [saving, setSaving] = useState(false)
 
-  // Seed once, on the store's first real emission. Re-seeding on every emission would overwrite
-  // what the learner is halfway through typing.
   const seeded = useRef(false)
   useEffect(() => {
     if (!isReady || seeded.current) return
@@ -84,7 +72,6 @@ export function useProfileForm(onSaved?: () => void): ProfileFormControl {
       [key]: key === 'bio' ? String(next).slice(0, BIO_MAX) : next,
     }))
 
-  // Both are optional; an empty field is not an invalid one.
   const emailValid = value.email.trim() === '' || EMAIL_RE.test(value.email.trim())
   const phoneValid =
     value.phone.trim() === '' || value.phone.replace(/\D/g, '').length >= MIN_PHONE_DIGITS
@@ -125,7 +112,6 @@ export function useProfileForm(onSaved?: () => void): ProfileFormControl {
   }
 }
 
-/** Everything the Profile keeps outside its own record, for a reset to clear too. */
 export function forgetPhone() {
   localStorage.removeItem(PHONE_KEY)
 }

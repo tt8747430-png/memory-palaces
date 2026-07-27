@@ -2,7 +2,6 @@ import { useTranslation } from 'react-i18next'
 import { Brain } from 'lucide-react'
 import { Button } from '@/shared/ui'
 
-/** Nothing to test on — the deck has no questions yet, so the only move is back. */
 export function QuizEmpty({ onBack }: { onBack: () => void }) {
   const { t } = useTranslation()
   return (

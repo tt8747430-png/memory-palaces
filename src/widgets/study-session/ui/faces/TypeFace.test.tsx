@@ -40,7 +40,6 @@ describe('TypeFace', () => {
     }) as HTMLTextAreaElement
     await user.click(input)
     await user.type(input, 'Pong answer here')
-    // The input is not stripped, and the per-word feedback stays instead of collapsing away.
     expect(input.value).toBe('Pong answer here')
     expect(screen.getByLabelText('What you typed, checked against the answer')).toBeInTheDocument()
     expect(screen.getByText('answer')).toBeInTheDocument()

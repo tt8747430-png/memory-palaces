@@ -2,22 +2,8 @@ import type { ComponentProps, MouseEvent, PointerEvent, ReactNode } from 'react'
 import { Drawer as DrawerPrimitive } from '@base-ui/react/drawer'
 import { cn } from '@/shared/lib'
 
-/** Places a caret rather than holding a selection — a touch here is typing, not a drag. */
 const TEXT_ENTRY = 'input, textarea, [contenteditable="true"], .allow-select'
 
-/**
- * Collapse a lingering text selection so a downward drag is read as a swipe.
- *
- * Base UI declines its swipe while any text is selected inside the drawer — including the
- * whole-value selection `useAutoSelect` leaves in a freshly opened prompt — so that native
- * selection handles stay draggable. With the swipe declined the browser falls back to a native
- * scroll and the page moves instead of the sheet. Collapsing on pointer-down, before Base UI
- * evaluates the gesture, hands the drag back to the sheet.
- *
- * This runs for the whole sheet interior (not just the handle), so it must not steal a selection
- * the learner is actually holding: a touch that lands in a field or a selectable passage is left
- * alone. Everything else in the app is `user-select: none`, so nothing else can own a selection.
- */
 function clearSelectionForDrag(event: PointerEvent<HTMLElement>) {
   if (event.pointerType === 'mouse') return
   if (event.target instanceof Element && event.target.closest(TEXT_ENTRY)) return
@@ -27,24 +13,13 @@ function clearSelectionForDrag(event: PointerEvent<HTMLElement>) {
     const caret = active.value.length
     try {
       active.setSelectionRange(caret, caret)
-    } catch {
-      // Inputs such as email/number don't support setSelectionRange — nothing to collapse.
-    }
+    } catch {}
   }
 
   const selection = document.getSelection()
   if (selection && !selection.isCollapsed) selection.removeAllRanges()
 }
 
-/**
- * Keep the on-screen keyboard up while a chrome control is tapped.
- *
- * On iOS a tap on any non-input element blurs the focused field. The keyboard then collapses,
- * `--drawer-keyboard-inset` drops to zero, and the pinned footer slides down out from under the
- * finger — so the `click` lands on nothing and the first tap only appears to dismiss the
- * keyboard. Cancelling the focus shift on `mousedown` holds the geometry still through the
- * click; the keyboard goes away afterwards when the sheet closes and the field unmounts.
- */
 function keepFieldFocused(event: MouseEvent<HTMLElement>) {
   const active = document.activeElement
   if (!(active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement)) return
@@ -52,13 +27,6 @@ function keepFieldFocused(event: MouseEvent<HTMLElement>) {
   event.preventDefault()
 }
 
-/**
- * Bottom sheet on Base UI's Drawer. Base UI drives the slide + swipe-to-dismiss
- * natively (`swipeDirection="down"`, `--drawer-swipe-movement-y`), so we no longer
- * hand-roll drag gestures. Wrap a Drawer that hosts a text field in
- * `DrawerVirtualKeyboardProvider` so the sheet lifts above the on-screen keyboard
- * on iOS (where Safari demotes `position: fixed` once the keyboard is up).
- */
 function Drawer({ swipeDirection = 'down', ...props }: DrawerPrimitive.Root.Props) {
   return <DrawerPrimitive.Root data-slot="drawer" swipeDirection={swipeDirection} {...props} />
 }
@@ -72,15 +40,10 @@ interface DrawerContentProps extends Omit<
   'className'
 > {
   className?: string
-  /** Style hook for the dimming backdrop behind the sheet. */
   backdropClassName?: string
   children: ReactNode
 }
 
-/**
- * Portal + backdrop + the sliding sheet panel. Children compose the sheet's chrome
- * (`DrawerHandle`, `DrawerHeader`, a scrollable body, `DrawerFooter`) inside the panel.
- */
 function DrawerContent({ className, backdropClassName, children, ...props }: DrawerContentProps) {
   return (
     <DrawerPrimitive.Portal>
@@ -98,9 +61,6 @@ function DrawerContent({ className, backdropClassName, children, ...props }: Dra
           data-slot="drawer-content"
           className={cn(
             'pointer-events-auto fixed inset-x-0 bottom-0 mx-auto flex w-full max-w-[430px] flex-col',
-            // `touch-none` keeps the browser from treating a drag on the sheet chrome as a native
-            // page scroll (the scrollable body re-enables it with `touch-auto`); `pb-safe-keyboard`
-            // lifts the pinned footer above the on-screen keyboard via `--drawer-keyboard-inset`.
             'max-h-[88dvh] touch-none rounded-t-card-featured bg-card pb-safe-keyboard shadow-elevated outline-none',
             'origin-bottom will-change-transform',
             '[--closed-transform:translate3d(0,calc(100%+2px),0)]',
@@ -112,9 +72,6 @@ function DrawerContent({ className, backdropClassName, children, ...props }: Dra
           )}
           {...props}
         >
-          {/* The selection guard sits on the whole interior, not just the handle: Base UI reads
-              the selection when the gesture starts on the Popup, and this is the last element
-              a touch bubbles through before it gets there. */}
           <DrawerPrimitive.Content
             onPointerDown={clearSelectionForDrag}
             className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[inherit]"
@@ -127,7 +84,6 @@ function DrawerContent({ className, backdropClassName, children, ...props }: Dra
   )
 }
 
-/** Visual grab affordance. The whole sheet is swipeable, so this is decorative. */
 function DrawerHandle({ className }: { className?: string }) {
   return (
     <div
@@ -141,11 +97,6 @@ function DrawerHandle({ className }: { className?: string }) {
   )
 }
 
-/**
- * The sheet's chrome is deliberately thin: a bottom sheet is capped at 88dvh, so every pixel
- * spent on header and footer padding is a pixel the content cannot use. Both bars hold the
- * focused field so their controls survive the first tap (see `keepFieldFocused`).
- */
 function DrawerHeader({ className, ...props }: ComponentProps<'div'>) {
   return (
     <div

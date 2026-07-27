@@ -31,18 +31,11 @@ export interface ToolbarEditorProps {
   onRemove: (id: SelectActionId) => void
 }
 
-/**
- * The bar, live. Tiles drag to reorder and carry a remove badge; what you see here is exactly
- * what a selection will meet — same tiles, same order.
- */
 export function ToolbarEditor({ actions, canRemove, onReorder, onRemove }: ToolbarEditorProps) {
   const { t } = useTranslation()
   const sensors = useSortableSensors()
   const [activeId, setActiveId] = useState<SelectActionId | null>(null)
 
-  // Working copy. The saved bar takes a round-trip through the database before it comes back,
-  // and rendering the *old* order in that gap is what makes a dropped tile snap back to where it
-  // came from and then jump — the drop has to be true on screen the instant the finger lifts.
   const [items, setItems] = useState<SelectToolbarConfig>(actions)
   useEffect(() => setItems(actions), [actions])
 
@@ -132,7 +125,6 @@ function SortableTile({
   )
 }
 
-/** One toolbar tile — the same shape `SelectToolbar` renders in the bar. */
 function Tile({ action, floating = false }: { action: SelectActionId; floating?: boolean }) {
   const { t } = useTranslation()
   const meta = SELECT_ACTION_META[action]
@@ -144,8 +136,6 @@ function Tile({ action, floating = false }: { action: SelectActionId; floating?:
         meta.destructive
           ? 'bg-(--danger-surface) text-(--danger-on-surface)'
           : 'bg-info-surface text-heading',
-        // The tile in hand keeps the footprint of the tile it came out of — a different size
-        // here would morph on the way down, which reads as a flicker. Elevation carries the lift.
         floating && 'shadow-elevated ring-1 ring-accent/40',
       )}
     >

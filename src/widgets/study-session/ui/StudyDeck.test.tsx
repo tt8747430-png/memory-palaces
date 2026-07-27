@@ -43,7 +43,6 @@ function baseProps(
 
 describe('StudyDeck', () => {
   it('renders the current card prompt', () => {
-    // In blur mode the prompt shows on both the front face and the back face's header.
     renderWithProviders(<StudyDeck {...baseProps()} />)
     expect(screen.getAllByText('Prompt front').length).toBeGreaterThan(0)
   })
@@ -55,9 +54,6 @@ describe('StudyDeck', () => {
     expect(screen.getAllByText('Definition').length).toBeGreaterThan(0)
   })
 
-  // Regression: `upcoming` is nearest-first, so depth has to count *up* with that index.
-  // Inverting it drew the furthest card in the visible slot, so the card peeking out from behind
-  // was never the card the next swipe promoted.
   it('peeks at the card the next swipe will actually promote', () => {
     renderWithProviders(
       <StudyDeck
@@ -92,7 +88,6 @@ describe('StudyDeck', () => {
       (node) => node.textContent?.includes('Next up'),
     )
     expect(queued).toBeDefined()
-    // The card in play has these too — a queued card must be the same thing, not a stub.
     expect(queued!.querySelector('[aria-label="Change study mode"]')).not.toBeNull()
     expect(queued!.querySelector('[aria-label="Study options"]')).not.toBeNull()
     expect(queued!.querySelector('[aria-label="Read aloud"]')).not.toBeNull()
@@ -109,8 +104,6 @@ describe('StudyDeck', () => {
     renderWithProviders(
       <StudyDeck {...baseProps({ upcoming: [studyCard('Next up', 'b', 'c2')] })} />,
     )
-    // The queued card carries the same controls, but `inert` + `aria-hidden` keep every one of
-    // them out of the accessibility tree: the deck gains no new reachable buttons.
     expect(modeButtons()).toBe(reachable)
   })
 })

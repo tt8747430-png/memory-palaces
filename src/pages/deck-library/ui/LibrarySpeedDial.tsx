@@ -3,7 +3,6 @@ import { ClipboardPaste, FolderPlus, Layers } from 'lucide-react'
 import { SpeedDial } from '@/shared/ui'
 
 export interface LibrarySpeedDialProps {
-  /** Inside a folder there is no "new folder" — a folder is not a place you nest folders. */
   inFolder: boolean
   canImport: boolean
   onNewDeck: () => void

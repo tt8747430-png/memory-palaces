@@ -21,7 +21,6 @@ describe('moveBlock', () => {
   })
 
   it('treats the block as coming from its topmost row', () => {
-    // `b` is carried and sits above `d`, so the block lands after `d` even though `e` is below it.
     expect(moveBlock(ids, new Set(['b', 'e']), 'd')).toEqual(['a', 'c', 'd', 'b', 'e'])
   })
 

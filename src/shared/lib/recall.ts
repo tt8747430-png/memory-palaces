@@ -71,19 +71,6 @@ export interface RecallTypingResult {
   complete: boolean
 }
 
-/**
- * Evaluates a recall attempt the way a learner reproduces text — word by word, from the start.
- * The Nth word they commit is judged against the Nth word still expected, so a wrong word stays
- * red at its own spot and the word after it can still be correct. Words they have not reached yet
- * are `pending` (hidden), never mistakes, so a half-finished answer reads as unfinished rather
- * than mostly wrong.
- *
- * A one-word slip is recovered locally instead of cascading: if the current word matches the
- * *next* expected word the learner skipped one (that word is `missing`); if the *next* committed
- * word matches the current expected word they inserted a stray one (`extra`). Recovery only looks
- * one word ahead, which keeps a sparse or nonsense attempt from being re-aligned against distant
- * words — the failure mode that used to light up the entire verse.
- */
 export function typedRecallStatus(answer: string, input: string): RecallTypingResult {
   const expected = tokenizeWords(answer)
   const words = tokenizeWords(input)
@@ -106,11 +93,9 @@ export function typedRecallStatus(answer: string, input: string): RecallTypingRe
       i += 1
       j += 1
     } else if (i + 1 < expected.length && exp[i + 1] === com[j]) {
-      // The learner skipped a word: their word is the one after the gap.
       slots.push({ kind: 'missing', expected: expected[i]! })
       i += 1
     } else if (j + 1 < committed.length && exp[i] === com[j + 1]) {
-      // The learner slipped in a stray word before the one we are waiting for.
       slots.push({ kind: 'extra', typed: committed[j]! })
       j += 1
     } else {
@@ -124,8 +109,6 @@ export function typedRecallStatus(answer: string, input: string): RecallTypingRe
   const at = slots.findIndex((slot) => slot.kind === 'pending')
   const next = at === -1 ? undefined : slots[at]!.expected
 
-  // A half-typed word is not a mistake yet: it only turns red once it can no longer become the
-  // word we are waiting for.
   if (draft !== undefined) {
     if (next === undefined) {
       slots.push({ kind: 'extra', typed: draft })
@@ -146,9 +129,6 @@ export function typedRecallStatus(answer: string, input: string): RecallTypingRe
   }
 }
 
-/**
- * Fills in the next word the learner has not reached, replacing any half-typed word.
- */
 export function withNextWord(answer: string, input: string): string {
   const { next, complete } = typedRecallStatus(answer, input)
   if (complete || next === undefined) return input

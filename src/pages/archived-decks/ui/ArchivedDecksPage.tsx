@@ -45,8 +45,6 @@ export function ArchivedDecksPage({ onBack }: ArchivedDecksPageProps) {
   const cardsReady = useCardStore(selectCardsReady)
   const ready = decksReady && cardsReady
 
-  // The top of each archived branch: an archived deck whose parent isn't also
-  // archived (a whole subtree archives together, so only its root shows here).
   const archived = useMemo(() => {
     const archivedIds = new Set(decks.filter((d) => d.archived).map((d) => d.id))
     return decks

@@ -73,8 +73,6 @@ describe('useDeckQuestions', () => {
     expect(result.current.questions.map((q) => q.prompt)).toEqual(['Alpha', 'Beta'])
   })
 
-  // Dragging a row is itself a choice of manual order, so a reorder made under any other sort
-  // has to switch the sort too — otherwise the drop would appear to do nothing.
   it('a reorder switches the sort to manual', async () => {
     const { result } = renderQuestions([question('q1', 'Beta', 0), question('q2', 'Alpha', 1)])
     await waitFor(() => expect(result.current.ready).toBe(true))

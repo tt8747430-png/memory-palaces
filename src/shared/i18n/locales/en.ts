@@ -14,7 +14,6 @@ export const en = {
     delete: 'Delete',
     saveChanges: 'Save changes',
   },
-  // Shared by every select-mode header, whatever is being selected.
   selection: {
     selectAll: 'Select all',
     clearAll: 'Clear all',

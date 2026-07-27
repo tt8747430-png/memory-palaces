@@ -49,30 +49,15 @@
   }
 
   :root {
-    /* Visible-viewport metrics, kept live by `useKeyboardInset`. Defaults mean "no keyboard": the
-       app is full height, flush with the top, and nothing is inset. */
     --vv-top: 0px;
     --vvh: 100%;
     --kb-inset: 0px;
 
-    /* How much room the bottom of the screen is already spoken for. The default is the bare
-       safe area; `AppNav` raises it by the tab bar's height on the routes where it is mounted.
-       Everything docked to the bottom — the select toolbar, the speed dial, a footer bar, a
-       screen's own scroll padding (`.pb-nav`) — measures from this, so a page with no tab bar
-       sits low instead of floating over a gap.
-
-       While the keyboard is up it collapses to the floor: the shell already ends at the top of
-       the keyboard, which is itself covering the home indicator, so the safe area is no longer
-       spoken for and reserving it would only read as a gap above the keyboard. `--kb-inset` is
-       always ≥ the safe area when a keyboard is open, so the subtraction just trips the `max()`. */
     --app-bottom-inset: max(0.75rem, calc(env(safe-area-inset-bottom) - var(--kb-inset)));
   }
 
   html {
     height: 100%;
-    /* No document-level scroll surface: the app scrolls inside `<main>` / sheet bodies. When the
-       keyboard opens, `#root` shrinks to `--vvh` (see `useKeyboardInset`) so every scroller fits
-       above it — nothing here ever slides. */
     overflow: hidden;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
@@ -83,11 +68,6 @@
     margin: 0;
     height: 100%;
     overflow: hidden;
-    /* Behind the system's own chrome. `#root` shrinks to the space above the keyboard, and what it
-       gives up is the keyboard and its floating accessory bar — the app's daylight gradient must
-       not carry on down there as if the page continued, but the strip can't go unpainted either
-       (the canvas would flash white through the keyboard's open/close). A flat surface reads as
-       "the app ends here" in both themes. */
     background: var(--surface);
     font-family: var(--p-font-sans), sans-serif;
     color: var(--text-primary);
@@ -99,18 +79,10 @@
     -webkit-touch-callout: none;
   }
 
-  /* The app fills the *visible* viewport, not the layout viewport. iOS leaves the layout viewport
-     at full height when the keyboard opens and instead slides the visual viewport down to reveal
-     the focused field, which drags every `position: fixed` box up off the top of the screen.
-     Sizing to `--vvh` alone would then strand the app `--vv-top` px above the keyboard (a band of
-     bare backdrop) and clip the same amount — the sticky header — off the top; offsetting by
-     `--vv-top` puts it back. Both are kept live by `useKeyboardInset`. */
   #root {
     position: fixed;
     inset: var(--vv-top) 0 auto 0;
     height: var(--vvh);
-    /* The daylight gradient is the app's own surface, so it is painted by the box that *is* the
-       app — it stops where the app stops, at the top of the keyboard's accessory bar. */
     background: var(--bg-daylight);
     background-repeat: no-repeat;
   }
@@ -214,9 +186,6 @@
     filter: drop-shadow(0 6px 14px oklch(var(--p-tint-navy) / 0.28));
   }
 
-  /* Swipe-action chip: a theme-aware tint of the accent set via `--sw`.
-       Text darkens toward black in light mode / lightens toward white in dark,
-       so it clears 4.5:1 on the tint at every hue without shifting the hue. */
   .sw-tint {
     background: color-mix(in oklch, var(--sw) 15%, transparent);
     color: color-mix(in oklch, var(--sw), black 38%);
@@ -247,32 +216,18 @@
     padding-top: env(safe-area-inset-top);
   }
 
-  /* Clearance for the home indicator — but only while it is exposed. The keyboard covers it, and
-     the shell already ends at the keyboard's top edge, so holding the safe area open there is a
-     gap rather than clearance. */
   .pb-safe {
     padding-bottom: max(0px, calc(env(safe-area-inset-bottom) - var(--kb-inset)));
   }
 
-  /* Bottom-sheet padding that also lifts pinned footer content above the on-screen keyboard.
-     Base UI publishes `--drawer-keyboard-inset` on the Drawer.Viewport while a field inside the
-     sheet is focused; it measures to the top of the keyboard's accessory bar, so the footer sits
-     right above it. `max()` (not `+`) keeps the home-indicator safe area and the keyboard inset
-     from stacking into a double gap. */
   .pb-safe-keyboard {
     padding-bottom: max(env(safe-area-inset-bottom), var(--drawer-keyboard-inset, 0px));
   }
 
-  /* Scroll room under a screen's last row: clears whatever is docked at the bottom (tab bar or
-     not, per `--app-bottom-inset`) plus the speed dial that floats above it. */
   .pb-nav {
     padding-bottom: calc(var(--app-bottom-inset) + 4.5rem);
   }
 
-  /* The breathing room a plain scrolling screen leaves under its last row (the `pb-28` every page
-     without docked chrome uses). It collapses to a thumb's width while the keyboard is up: the
-     shell is a third of its height then, and 7rem of empty scroll below the last field reads as
-     the keyboard inset having gone wrong. */
   .pb-gutter {
     padding-bottom: max(1rem, calc(7rem - var(--kb-inset)));
   }

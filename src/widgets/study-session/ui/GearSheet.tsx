@@ -36,7 +36,6 @@ export interface GearSheetProps {
   mode: StudyMode
   canSpeak: boolean
   quick: QuickActionsModel
-  /** Every setting this sheet edits, and the one way to change any of them. */
   settings: StudySettingsControl
   onFinish: () => void
 }
@@ -72,8 +71,6 @@ export function GearSheet({
   const { t } = useTranslation()
   const { value, filterCounts, set } = settings
 
-  // Shake needs the device's permission before it can be switched on, so this one setting is
-  // asked for rather than simply set — and a refusal leaves the toggle off, honestly.
   const handleShakeToUndo = async (next: boolean) => {
     if (!next) {
       set('shakeToUndo', false)

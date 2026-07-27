@@ -9,23 +9,17 @@ import { DECK_ROW_FRAME, deckColor } from './row-style'
 export interface DeckRowBodyProps {
   deck: Deck
   due: number
-  /** Nested rows read a shade smaller. Only the browse tree nests; select mode is flat. */
   isSub?: boolean
-  /** The select checkbox's state, or `undefined` when the row is not in select mode. */
   selectState?: SelectState
-  /** The expand control — interactive in the tree, absent everywhere else. */
   toggle?: ReactNode
 }
 
-/** Everything inside a deck row: select dot, expand toggle, cover, name, due. */
 export function DeckRowBody({ deck, due, isSub = false, selectState, toggle }: DeckRowBodyProps) {
   const { t } = useTranslation()
   const selectMode = selectState !== undefined
 
   return (
     <>
-      {/* The checkbox sits alongside the expand toggle, so a deck can still be
-          expanded while it is selected. */}
       {selectMode ? (
         <span className="pointer-events-none relative z-20 grid size-6 shrink-0 place-items-center">
           <SelectDot state={selectState} />
@@ -82,11 +76,6 @@ export function DeckRowBody({ deck, due, isSub = false, selectState, toggle }: D
   )
 }
 
-/**
- * The deck in hand. It is the row, one elevation up: same frame, same body, same select dot — so
- * when it is dropped it settles onto the real row instead of cross-fading into a different shape.
- * The lift is carried by shadow alone; a scaled overlay pops at the end of the drop.
- */
 export function DeckDragPreview({
   deck,
   due,

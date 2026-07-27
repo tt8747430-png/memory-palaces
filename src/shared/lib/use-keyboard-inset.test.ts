@@ -7,11 +7,6 @@ interface Viewport {
   offsetTop: number
 }
 
-/**
- * jsdom implements neither `visualViewport` nor layout, so both sides of the measurement are
- * stubbed: the visual viewport the keyboard shrinks, and the layout viewport iOS leaves at full
- * height underneath it.
- */
 function stubViewport({ height, offsetTop }: Viewport, layoutHeight: number) {
   const listeners = new Map<string, Set<() => void>>()
   const vv = {
@@ -32,7 +27,6 @@ function stubViewport({ height, offsetTop }: Viewport, layoutHeight: number) {
   })
 
   return {
-    /** Move the viewport the way the keyboard does, then let the hook's rAF settle. */
     async move(next: Viewport) {
       vv.height = next.height
       vv.offsetTop = next.offsetTop
@@ -66,8 +60,6 @@ describe('useKeyboardInset', () => {
   })
 
   it('reports the offset iOS slides the visual viewport by to reveal a focused field', () => {
-    // The regression: the app was sized to the visible height but still anchored to the layout
-    // viewport, so it sat 113px above the keyboard with its header clipped off the top.
     stubViewport({ height: 412, offsetTop: 113 }, 802)
 
     renderHook(() => useKeyboardInset())

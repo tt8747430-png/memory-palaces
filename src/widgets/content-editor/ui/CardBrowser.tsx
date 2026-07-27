@@ -37,7 +37,6 @@ export interface CardBrowserProps {
 const CHROME_BUTTON =
   'grid place-items-center rounded-full bg-card-glass text-heading ring-1 ring-[color:var(--border-glass)] shadow-rest transition-transform active:scale-95'
 
-/** A full-screen flip-through of the deck: swipe or tap through, flip to check, act from here. */
 export function CardBrowser({
   open,
   cards,
@@ -157,14 +156,10 @@ export function CardBrowser({
                 className="relative flex flex-1 items-center px-5 pb-2 [perspective:1400px]"
               >
                 <div className="relative h-[clamp(340px,62vh,560px)] w-full">
-                  {/* The rest of the deck: the real next cards, showing their real fronts, so the
-                      card that arrives next is one you have already seen the edge of. */}
                   {deck.ahead.map((queued, i) => (
                     <QueuedPreview
                       key={queued.id}
                       card={queued}
-                      // `ahead` is nearest-first, so depth counts up with the index. Inverting
-                      // this draws the *furthest* card in the visible slot.
                       depth={i + 1}
                       reduce={Boolean(reduce)}
                     />
@@ -175,9 +170,6 @@ export function CardBrowser({
                     style={{ x: deck.x, rotate: deck.rotate }}
                     className="absolute inset-0 z-10 touch-pan-y"
                   >
-                    {/* Keyed by card: the one leaving is already off screen and simply goes. The
-                        one arriving enters from the pose it held one layer down (forward) or from
-                        the edge it was last seen at (backward). */}
                     <motion.div
                       key={current.id}
                       initial={

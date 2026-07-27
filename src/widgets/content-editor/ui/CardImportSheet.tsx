@@ -10,7 +10,6 @@ export interface CardImportSheetProps {
   onPickFile: (file: File) => void
 }
 
-/** How cards get into an existing deck: a file, or pasted notes. */
 export function CardImportSheet({
   open,
   onOpenChange,

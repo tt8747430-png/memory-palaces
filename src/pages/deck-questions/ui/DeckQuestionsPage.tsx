@@ -98,8 +98,6 @@ export function DeckQuestionsPage({
       }
     >
       <div className="mt-2 space-y-4 pb-24">
-        {/* A selection is about the rows, so the test call-to-action steps out of the way —
-            the same way the home screen drops to bare rows while you are choosing decks. */}
         {selection.active ? null : (
           <TestLaunchCard questionCount={questions.length} onStartTest={onStartTest} />
         )}

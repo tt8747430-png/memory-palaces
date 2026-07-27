@@ -52,8 +52,6 @@ export function ActionSheet({
     <Drawer
       open={open}
       onOpenChange={(next, details) => {
-        // Swallow the release of the very tap that opened the sheet, which Base UI would
-        // otherwise read as an outside-press / focus-out and close it instantly.
         if (
           !next &&
           (details.reason === 'outside-press' || details.reason === 'focus-out') &&

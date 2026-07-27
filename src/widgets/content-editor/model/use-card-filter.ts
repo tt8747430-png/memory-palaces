@@ -5,7 +5,6 @@ export interface CardFilterControl {
   applied: CardFilter
   appliedCount: number
   clear: () => void
-  /** The sheet edits a draft and commits on Apply, so a half-built filter never hits the list. */
   sheetOpen: boolean
   open: () => void
   close: () => void

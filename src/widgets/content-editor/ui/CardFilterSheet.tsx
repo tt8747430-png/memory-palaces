@@ -16,7 +16,6 @@ export interface FilterButtonProps {
   onClick: () => void
 }
 
-/** Opens the filter sheet, and carries how many filters are already narrowing the list. */
 export function FilterButton({ count, onClick }: FilterButtonProps) {
   const { t } = useTranslation()
   const label = t('cards.filterLabel')
@@ -43,11 +42,9 @@ export function FilterButton({ count, onClick }: FilterButtonProps) {
 
 export interface CardFilterSheetProps {
   filter: CardFilterControl
-  /** How many cards sit in each maturity band, so a band that would empty the list says so. */
   counts: Record<MaturityKey, number>
 }
 
-/** Narrow the card list by maturity and flag. Edits a draft; nothing applies until Apply. */
 export function CardFilterSheet({ filter, counts }: CardFilterSheetProps) {
   const { t } = useTranslation()
   return (

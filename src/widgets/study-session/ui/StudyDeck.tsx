@@ -12,7 +12,6 @@ import type { StudyCard, StudyDirection } from '../model/types'
 
 export type { SwipeDirection }
 
-/** Where each direction's outcome chip sits, angled the way the card tilts toward it. */
 const CHIPS: { dir: SwipeDirection; className: string }[] = [
   { dir: 'right', className: 'left-5 top-5 -rotate-12' },
   { dir: 'left', className: 'right-5 top-5 rotate-12' },
@@ -22,7 +21,6 @@ const CHIPS: { dir: SwipeDirection; className: string }[] = [
 
 export interface StudyDeckProps {
   card: StudyCard
-  /** The cards queued behind this one, nearest first — rendered for real, at most two deep. */
   upcoming?: StudyCard[]
   mode: StudyMode
   direction: StudyDirection
@@ -65,14 +63,9 @@ export function StudyDeck({
   const prompt = direction === 'front' ? cardEntity.front : cardEntity.back
   const answer = recallAnswer(prompt, direction === 'front' ? cardEntity.back : cardEntity.front)
 
-  // Solved is a fact about *this* card. The deck no longer remounts between cards — it animates
-  // the change — so it is tracked by id rather than cleared by an effect, which would leave the
-  // newly promoted card reading as solved for a frame.
   const [solvedId, setSolvedId] = useState<string | null>(null)
   const solved = solvedId === cardEntity.id
 
-  // Solving is terminal: the front already holds the whole answer, so there is nothing behind
-  // it worth turning to. Only a reset reopens the card.
   const showBack = !solved && flipped
 
   const mechanicRef = useRef<MechanicHandlers>({})
@@ -121,9 +114,6 @@ export function StudyDeck({
 
   return (
     <div className="relative mx-auto h-full w-full max-w-md [perspective:1200px]">
-      {/* The deck under the card in play: the real next cards, carrying their own prompts, so
-          advancing promotes something that was already there instead of dealing from nowhere.
-          Rendered deepest-first and inert — only the front card takes a touch. */}
       {behind.map((queued, i) => (
         <QueuedCard
           key={queued.card.id}
@@ -133,8 +123,6 @@ export function StudyDeck({
           canSpeak={canSpeak}
           wordSpaces={wordSpaces}
           typeInitialsOnly={typeInitialsOnly}
-          // `behind` is nearest-first, so depth counts up with the index. Inverting this draws
-          // the *furthest* card in the visible slot — you peek at one card and get another.
           depth={i + 1}
           reduce={Boolean(reduce)}
         />
@@ -156,10 +144,6 @@ export function StudyDeck({
         style={{ x: swipe.x, y: swipe.y, rotate: swipe.rotate, touchAction: 'pan-y' }}
         className="relative z-10 h-full"
       >
-        {/* Keyed by card, so advancing swaps the child outright — the one leaving has already
-            been flung off screen and has nothing left to say. The card arriving enters from the
-            pose it was just sitting in one layer down, which is what makes it read as rising out
-            of the deck rather than fading in over it. */}
         <motion.div
           key={cardEntity.id}
           initial={reduce ? false : DEPTH_POSE[1]}

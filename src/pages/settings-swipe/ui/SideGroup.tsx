@@ -20,7 +20,6 @@ export interface SideGroupProps {
   onToggle: (id: SwipeActionId) => void
 }
 
-/** Everything one side of the swipe can carry, with the ones in use lit in their own colour. */
 export function SideGroup({ icon, label, side, type, selected, onToggle }: SideGroupProps) {
   const { t } = useTranslation()
   const max = SWIPE_SIDE_MAX[side]

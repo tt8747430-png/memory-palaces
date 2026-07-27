@@ -33,11 +33,8 @@ export interface AppCollections {
   notifications: RxCollection<AppNotification>
 }
 
-// Stored preferences outlive any release, so a schema bump migrates them.
 addRxPlugin(RxDBMigrationSchemaPlugin)
 
-/** v0 → v1: learners stored before the select toolbar was configurable get the
- *  bar they have been using all along. */
 const preferencesMigrations = {
   1: (doc: Preferences) => ({ ...doc, selectToolbar: DEFAULT_SELECT_TOOLBAR }),
 }

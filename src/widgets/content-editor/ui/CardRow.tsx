@@ -35,7 +35,6 @@ export interface CardRowProps {
   onResetSrs: () => void
 }
 
-/** One Card in a Deck's list: both faces, its Card status, and its cues. */
 export function CardRow({
   card,
   index,
@@ -143,16 +142,7 @@ export function CardRow({
   )
 }
 
-/** A hint or a tip: the same shape, told apart by its tint. */
-function Cue({
-  className,
-  icon,
-  text,
-}: {
-  className: string
-  icon: ReactNode
-  text: string
-}) {
+function Cue({ className, icon, text }: { className: string; icon: ReactNode; text: string }) {
   return (
     <div className={`flex items-start gap-2 rounded-control px-3 py-2 ${className}`}>
       {icon}

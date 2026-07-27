@@ -13,7 +13,6 @@ export interface QuestionTransferSheetsProps {
   onExportCsv: () => void
 }
 
-/** Questions in and out of a deck: the import picker and the export row, both CSV. */
 export function QuestionTransferSheets({
   importOpen,
   onImportOpenChange,

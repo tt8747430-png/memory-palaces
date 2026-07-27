@@ -8,7 +8,6 @@ import type { Grade } from '../model/types'
 export type RemainingTally = Record<SrsStatus, number>
 
 export interface SessionFooterProps {
-  /** Flipped means the answer is out, so the footer becomes the grading bar. */
   flipped: boolean
   srs: SrsState | undefined
   now: number
@@ -16,10 +15,6 @@ export interface SessionFooterProps {
   onGrade: (grade: Grade) => void
 }
 
-/**
- * The bar under the card: how much is left while you are still recalling, and the grades once
- * the answer is out. Its height is fixed so the swap never moves the card above it.
- */
 export function SessionFooter({ flipped, srs, now, remaining, onGrade }: SessionFooterProps) {
   const reduce = useReducedMotion()
   const crossfade = { duration: reduce ? 0 : 0.12 }

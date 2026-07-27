@@ -40,13 +40,7 @@ export function IconColorRow({
             if (selected) onColorChange(selected)
           }}
           aria-label={label}
-          // Picking a colour must not blur the name field: a tap on a swatch would otherwise
-          // move focus off the input and dismiss the keyboard. Cancelling the pointer's default
-          // keeps focus put; the toggle still commits on click. Keyboard nav is unaffected.
           onMouseDown={(event) => event.preventDefault()}
-          // `overflow-x-auto` clips both axes, so the selected swatch's ring would be cut off at
-          // the edges. `p-1.5` gives the ring room inside the scrollport; `-m-1.5` cancels it so
-          // the row's outer size and alignment are unchanged (the first/last rings now fit too).
           className="-m-1.5 flex flex-1 items-center gap-2.5 overflow-x-auto p-1.5 scrollbar-hide"
         >
           {colorOptions.map((option) => {

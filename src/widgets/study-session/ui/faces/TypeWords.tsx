@@ -8,10 +8,6 @@ import { stopPress } from './types'
 
 const FEEDBACK_TEXT = 'text-(length:--p-text-body) font-medium leading-relaxed'
 
-/**
- * Grows with its content instead of scrolling: the card body is the only scroller, and a
- * textarea that scrolled inside it could neither be panned nor swiped past.
- */
 function useAutoGrow(value: string) {
   const ref = useRef<HTMLTextAreaElement>(null)
   useLayoutEffect(() => {
@@ -31,14 +27,11 @@ export interface TypeWordsProps {
   active: boolean
 }
 
-/** Type the whole answer; the feedback marks it up as you go. */
 export function TypeWords({ value, onChange, slots, solved, active }: TypeWordsProps) {
   const { t } = useTranslation()
   const ref = useAutoGrow(value)
   const keyboard = useVirtualKeyboard()
   const hasFeedback = slots.some((slot) => slot.kind !== 'pending')
-  // The feedback rides above the keyboard while typing and settles back inline once it closes —
-  // only ever mounted in one place, so scroll position and layout do not fight each other.
   const floats = active && keyboard.open && hasFeedback
 
   const body = <RecallTokens slots={slots} />
@@ -90,12 +83,6 @@ export function TypeWords({ value, onChange, slots, solved, active }: TypeWordsP
   )
 }
 
-/**
- * A fixed-height, scrollable feedback panel pinned just above the on-screen keyboard. Its height
- * never tracks its content — a long answer scrolls inside the same box a short one fills, so the
- * panel never grows or shrinks under the typing. Portalled to the body so it escapes the card's
- * flip transform, which would otherwise trap `position: fixed` inside the rotated ancestor.
- */
 function FloatingFeedback({
   height,
   solved,
@@ -106,16 +93,12 @@ function FloatingFeedback({
   height: number
   solved: boolean
   label: string
-  /** Changes whenever the feedback content does, so the box can follow the newest tokens. */
   revision: string
   children: ReactNode
 }) {
   const reduce = useReducedMotion()
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  // Keep the newest tokens in view as the learner types past the fold. Without this the box
-  // looks like it stops giving feedback once the answer overflows — the extra words are being
-  // written, just below the visible edge.
   useLayoutEffect(() => {
     const el = scrollRef.current
     if (el) el.scrollTop = el.scrollHeight

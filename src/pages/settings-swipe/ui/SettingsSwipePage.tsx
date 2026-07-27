@@ -59,7 +59,6 @@ export function SettingsSwipePage({ onBack }: SettingsSwipePageProps) {
       save({ ...current, [side]: current[side].filter((x) => x !== id) })
       return
     }
-    // An action lives on one side only, so picking it here takes it off the other.
     const other: keyof SwipeConfig = side === 'leading' ? 'trailing' : 'leading'
     save({
       ...current,

@@ -9,7 +9,6 @@ export interface QuizFeedbackProps {
   streak: number
 }
 
-/** The verdict on the answer just given, plus the streak it is building — or breaking. */
 export function QuizFeedback({ correct, explanation, streak }: QuizFeedbackProps) {
   const { t } = useTranslation()
   const tone = correct ? 'text-(--success-on-surface)' : 'text-(--danger-on-surface)'

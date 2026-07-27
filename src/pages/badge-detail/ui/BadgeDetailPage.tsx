@@ -192,8 +192,6 @@ function TierLadder({ badge }: { badge: Badge }) {
               <TierStatus reached={reached} isCurrent={isCurrent} remaining={remaining} />
             </div>
 
-            {/* The tier a learner is climbing — here the fill *is* the moment,
-                so this bar (alone) still animates up from zero on arrival. */}
             {isCurrent ? <Progress value={pct} animateOnMount delay={0.3} /> : null}
           </motion.li>
         )

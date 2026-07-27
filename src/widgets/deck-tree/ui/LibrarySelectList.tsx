@@ -17,11 +17,8 @@ import { StackedDragPreview } from '@/shared/ui'
 import { Section, SelectDeckRow, SelectFolderRow, StackLayer } from './select-rows'
 
 export interface LibrarySelectListProps {
-  /** Folders of this scope, in order. Empty inside a folder — folders don't nest. */
   folders: Folder[]
-  /** Top-level decks of this scope, in order. Subdecks ride along with their root, unseen. */
   decks: Deck[]
-  /** The whole forest, so a row's due count can include the subdecks it carries. */
   allDecks: Deck[]
   cards: Card[]
   folderDeckCounts: Map<string, number>
@@ -29,23 +26,10 @@ export interface LibrarySelectListProps {
   onToggleSelect: (id: string) => void
   onReorderFolders: (ids: string[]) => void
   onReorderDecks: (ids: string[]) => void
-  /** A block of decks was dropped onto a folder row. */
   onFileDecks: (deckIds: string[], folderId: string) => void
   now?: number
 }
 
-/**
- * The library while a selection is live: one flat list of folders, then one flat list of decks.
- *
- * Everything on screen here is a peer of everything else in its section, which is what lets the
- * drag be honest — the rows that make room really are the rows the drop will reorder. The nesting
- * that the browse tree shows is deliberately absent: there is no expand control, so subdecks are
- * never on screen, and selecting a deck takes its whole subtree with it. Changing a deck's parent
- * is an explicit act (the Move sheet), never a side effect of where a finger let go.
- *
- * The one drop that isn't a reorder is a deck released over a folder row, which files it there —
- * a discrete target that says what it will do (it lights up) and can't be triggered by drifting.
- */
 export function LibrarySelectList({
   folders,
   decks,
@@ -69,14 +53,10 @@ export function LibrarySelectList({
   const folderIds = useMemo(() => folders.map((f) => f.id), [folders])
   const deckIds = useMemo(() => decks.map((d) => d.id), [decks])
 
-  // A row's peers are the other rows of its own kind. A folder can neither be ordered among decks
-  // nor ride along inside a block of them, so the two sections are two separate reorder universes.
   const sectionOf = useCallback(
     (id: string) => (folderIds.includes(id) ? folderIds : deckIds),
     [folderIds, deckIds],
   )
-  // A folder drag may only ever be over another folder. A deck drag is left unscoped: folder rows
-  // are not its peers, but they are still a legal thing to drop it on (it gets filed there).
   const scopeTo = useCallback(
     (id: string) => (folderIds.includes(id) ? folderIds : null),
     [folderIds],
@@ -101,15 +81,11 @@ export function LibrarySelectList({
   }
 
   const handleDragEnd = (event: DragEndEvent) => {
-    // Read what the drag was holding before `drop` clears the state it derives from.
     const wasFolder = draggingFolder
     const fileInto = fileIntoId
     const block = drag.carriedInOrder
     setFileIntoId(null)
 
-    // Dropped on a folder: the decks leave this list for that folder, so there is nothing here
-    // for them to land on — the folder's own count is the confirmation. Take that branch before
-    // `drop` reads the drop as a reorder among peers, which it is not.
     if (!wasFolder && fileInto && block.length > 0) {
       drag.cancel()
       onFileDecks(block, fileInto)
@@ -129,8 +105,6 @@ export function LibrarySelectList({
     <DndContext
       sensors={sensors}
       collisionDetection={drag.collision}
-      // Nothing horizontal means anything any more: sideways used to choose a nesting depth, and
-      // that is exactly the gesture this list removed.
       modifiers={[restrictToVerticalAxis]}
       onDragStart={(event: DragStartEvent) => drag.start(String(event.active.id))}
       onDragOver={trackOver}
@@ -189,8 +163,6 @@ export function LibrarySelectList({
         ) : null}
       </div>
 
-      {/* A stack clears the instant the finger lifts — its count is a fact about the drag, and the
-          drag is over. The rows it was holding travel to their slots themselves (`land`). */}
       <DragOverlay dropAnimation={drag.dropAnimation}>
         {drag.stackIds.length > 0 ? (
           <StackedDragPreview

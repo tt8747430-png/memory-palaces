@@ -14,7 +14,6 @@ describe('dropZone', () => {
   })
 
   it('gives the middle band to nesting, not to the seams', () => {
-    // A thumb landing anywhere near the centre must nest, not reorder.
     const middle = [0.35, 0.5, 0.65].map((r) => dropZone(row.top + r * row.height, row))
     expect(middle).toEqual(['nest', 'nest', 'nest'])
   })

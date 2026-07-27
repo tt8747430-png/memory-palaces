@@ -59,7 +59,6 @@ const rootRoute = createRootRoute({
   },
 })
 
-// ---- Auth ----
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.login,
@@ -81,7 +80,6 @@ const welcomeRoute = createRoute({
   component: WelcomeScreen,
 })
 
-// ---- Library ----
 const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.home,
@@ -106,7 +104,6 @@ const folderRoute = createRoute({
   },
 })
 
-// ---- Deck ----
 const deckDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.deckDetail,
@@ -209,7 +206,6 @@ const deckCardEditRoute = createRoute({
   },
 })
 
-// ---- Profile ----
 const profileRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.profile,
@@ -247,7 +243,6 @@ const achievementDetailRoute = createRoute({
   },
 })
 
-// ---- Settings ----
 const settingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.settings,
@@ -289,8 +284,6 @@ const settingsAboutRoute = createRoute({
   component: SettingsAboutScreen,
 })
 
-// Dev-only component gallery. Gated on `import.meta.env.DEV` so the whole branch — including the
-// dynamic import of the page — is dead-code-eliminated from the production build.
 const devRoutes = import.meta.env.DEV
   ? [
       createRoute({

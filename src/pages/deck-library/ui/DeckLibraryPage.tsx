@@ -39,11 +39,9 @@ import { LibrarySpeedDial } from './LibrarySpeedDial'
 import { MoveDeckSheet } from './MoveDeckSheet'
 
 export interface DeckLibraryPageProps {
-  /** The folder this view is scoped to, or `null` for the unfiled root (home). */
   folderId: string | null
   onOpenFolder: (folderId: string) => void
   onCloseFolder: () => void
-  /** The scoped folder no longer exists — deleted from inside it, or a stale link. */
   onFolderGone: () => void
   onOpenDeck: (deckId: string) => void
   onOpenDeckSettings?: (deckId: string) => void
@@ -101,10 +99,8 @@ export function DeckLibraryPage({
   const [folderSheetTarget, setFolderSheetTarget] = useState<Folder | null | undefined>(undefined)
   const [folderMenuOpen, setFolderMenuOpen] = useState(false)
 
-  // The select toolbar docks exactly where the tab bar lives, so the bar steps aside for it.
   useHideAppNav(selection.active)
 
-  // ---- Create ----
   const defaultCreateName = useMemo(() => {
     if (!createPrompt) return ''
     if (createPrompt.kind === 'subdeck') {
@@ -144,7 +140,6 @@ export function DeckLibraryPage({
       void editFolder(folderStore, folderSheetTarget, changes)
     } else {
       void createFolder(folderStore, changes)
-      // A new folder is a sibling of the one you are standing in, so step back out to see it.
       if (inFolder) onCloseFolder()
     }
     setFolderSheetTarget(undefined)
@@ -167,7 +162,6 @@ export function DeckLibraryPage({
     }
   }
 
-  // ---- Row actions ----
   const deckSwipeHandlers = (deck: Deck): SwipeActionHandlers => ({
     favorite: {
       onAction: () => act.toggleFavorite(deck),
@@ -227,8 +221,6 @@ export function DeckLibraryPage({
             onCancel={selection.exit}
           />
         ) : inFolder ? (
-          /* A folder is a place, not a mode of home, so it wears the same header as any other
-             screen: back, its name, its actions. */
           <ScreenHeader
             title={library.openFolder?.name ?? ''}
             onBack={onCloseFolder}
@@ -268,9 +260,6 @@ export function DeckLibraryPage({
           onImport={() => setImportOpen(true)}
         />
       ) : selection.active ? (
-        /* Selecting flattens the library: folders, then decks, no nesting on screen. Every row
-           is a peer of every other in its section, so the reorder the drag animates is the
-           reorder the drop performs — and a deck released over a folder files itself there. */
         <LibrarySelectList
           folders={library.sectionFolders}
           decks={library.sectionDecks}

@@ -12,15 +12,6 @@ function readSet(key: string): Set<string> {
   }
 }
 
-/**
- * A set of string ids that survives app restarts. Mirrors the
- * `useState<ReadonlySet<string>>` API — including functional updates — so callers
- * keep writing `setX((prev) => new Set(prev).add(id))`; every change is persisted
- * to `localStorage[key]` as a JSON array.
- *
- * For UI *view* state only (e.g. which tree nodes are expanded). Domain data
- * belongs in RxDB, never here.
- */
 export function usePersistedSet(
   key: string,
 ): [ReadonlySet<string>, Dispatch<SetStateAction<ReadonlySet<string>>>] {
@@ -35,9 +26,7 @@ export function usePersistedSet(
             : action
         try {
           localStorage.setItem(key, JSON.stringify([...next]))
-        } catch {
-          // storage unavailable or full — keep the in-memory value
-        }
+        } catch {}
         return next
       })
     },

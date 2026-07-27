@@ -60,9 +60,6 @@
   --p-radius-xl: 24px;
   --p-radius-nav: 40px;
   --p-radius-pill: 9999px;
-  /* Layered lifts — a crisp contact edge seats the element, a soft ambient blur
-     feathers it off the daylight bg. Cool *steel* (low chroma), never saturated
-     navy, so shadows read clean instead of muddy-blue against the sky gradient. */
   --p-shadow-rest:
     0 1px 2px oklch(var(--p-tint-steel) / 0.09), 0 4px 12px -2px oklch(var(--p-tint-steel) / 0.1);
   --p-shadow-featured:
@@ -141,9 +138,6 @@
   --rating-edge: var(--p-gold-700);
   --favorite: var(--p-coral-400);
 
-  /* Swipe-action accents — one distinct, contrast-safe hue per action.
-       Solid fills carry white ink (navy on --sw-gold); settings chips derive
-       theme-aware tints from these via the .sw-tint utility. */
   --sw-rose: oklch(60% 0.196 14);
   --sw-plum: oklch(54% 0.158 330);
   --sw-violet: oklch(54% 0.174 292);
@@ -165,8 +159,6 @@
   --shadow-featured: var(--p-shadow-featured);
   --shadow-interactive: var(--p-shadow-interactive);
   --shadow-elevated: var(--p-shadow-elevated);
-  /* Lifted list card — clearly raised off the daylight bg, tight footprint so
-     stacked rows don't muddy each other. */
   --shadow-card:
     0 1px 2px oklch(var(--p-tint-steel) / 0.12), 0 6px 12px -2px oklch(var(--p-tint-steel) / 0.12),
     0 16px 32px -8px oklch(var(--p-tint-steel) / 0.16);

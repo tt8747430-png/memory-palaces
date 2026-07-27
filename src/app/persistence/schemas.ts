@@ -176,7 +176,6 @@ export const progressSchema: RxJsonSchema<Progress> = {
 }
 
 export const preferencesSchema: RxJsonSchema<Preferences> = {
-  // v1 added `selectToolbar` — see `preferencesMigrations` in ./database.ts.
   version: 1,
   primaryKey: 'id',
   type: 'object',

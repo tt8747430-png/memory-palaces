@@ -41,8 +41,6 @@ export function SegmentedControl<T extends string>({
   return (
     <ToggleGroup
       value={[value]}
-      // Single-select: keep exactly one segment active — ignore the empty array Base UI
-      // proposes when the active segment is tapped again.
       onValueChange={(next) => {
         const selected = next[0]
         if (selected) onChange(selected)

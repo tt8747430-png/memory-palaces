@@ -62,8 +62,6 @@ describe('useLibrary', () => {
     await waitFor(() => expect(onFolderGone).toHaveBeenCalled())
   })
 
-  // Selecting a deck takes its whole subtree, because select mode is flat: a subdeck is never
-  // on screen there, so leaving it behind would silently exclude it from every bulk action.
   it('selects a held deck together with its subdecks', async () => {
     const { result } = renderLibrary({
       decks: [deck('root'), deck('child', { parentId: 'root' })],
@@ -124,11 +122,16 @@ describe('useLibrary', () => {
   })
 
   it('an empty scope reports itself as empty', async () => {
-    const folder = makeFolder({ id: 'f1', createdAt: at(0), name: 'Latin', color: 'sky', icon: '📁' })
+    const folder = makeFolder({
+      id: 'f1',
+      createdAt: at(0),
+      name: 'Latin',
+      color: 'sky',
+      icon: '📁',
+    })
     const { result } = renderLibrary({ folders: [folder], folderId: 'f1' })
     await waitFor(() => expect(result.current.ready).toBe(true))
     expect(result.current.isEmpty).toBe(true)
-    // Inside a folder the library shows no folder rows — folders don't nest.
     expect(result.current.sectionFolders).toEqual([])
   })
 })

@@ -1,7 +1,5 @@
 import '@testing-library/jest-dom/vitest'
 
-// jsdom doesn't implement the Pointer Capture API, which `@use-gesture` (SwipeRow, study/browser
-// decks) calls unguarded on pointer-down. Stub it so gesture-bound rows don't crash under test.
 if (typeof Element !== 'undefined' && typeof Element.prototype.setPointerCapture !== 'function') {
   Element.prototype.setPointerCapture = () => {}
   Element.prototype.releasePointerCapture = () => {}
@@ -27,7 +25,6 @@ if (typeof globalThis.localStorage === 'undefined') {
   }
 }
 
-// jsdom has no ResizeObserver; CardFace measures its layout with one (self-guarded in prod).
 if (typeof globalThis.ResizeObserver === 'undefined') {
   globalThis.ResizeObserver = class {
     observe() {}

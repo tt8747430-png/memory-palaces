@@ -1,15 +1,3 @@
-/**
- * Where a dragged block of rows lands when it is dropped onto `overId`.
- *
- * A multi-select drag carries several rows at once, and they must land *contiguously* — the
- * selection is one thing in the user's hand, so it has to be one thing when it comes down. The
- * block goes after the target when the drag came from above it and before the target when it
- * came from below, which is the rule dnd-kit's own single-row move follows, generalised: the row
- * you are pointing at keeps the side of the block it was already on.
- *
- * Carried rows keep their relative order. Dropping onto a row that is itself carried, or onto a
- * row that isn't in `order`, is a no-op — there is no gap to land in.
- */
 export function moveBlock(
   order: readonly string[],
   carried: ReadonlySet<string>,

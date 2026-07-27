@@ -88,8 +88,6 @@ export function FlashcardsPanel({
   const byId = useMemo(() => new Map(cards.map((card) => [card.card.id, card])), [cards])
   const filterCounts = useMemo(() => computeFilterCounts(cardEntities, now), [cardEntities, now])
 
-  // Every setting the gear sheet offers, wherever each one is stored. Changing the Study filter
-  // is the one that rebuilds the queue, so it comes back here rather than going straight out.
   const settings = useStudySettings({
     mode,
     prefs,
@@ -143,8 +141,6 @@ export function FlashcardsPanel({
 
   const id = currentId(state)
   const card = id ? byId.get(id) : undefined
-  // The two cards queued behind this one, rendered for real under it so the deck has depth and
-  // the next card rises out of the stack instead of appearing on top of it.
   const upcoming = upcomingIds(state, 2)
     .map((cardId) => byId.get(cardId))
     .filter((c): c is StudyCard => c !== undefined)
@@ -164,9 +160,6 @@ export function FlashcardsPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [flipped])
 
-  // Every mode presents the card on its own front face, so a flip inherited from the mode you
-  // left would land Type or Rebuild on the answer. Clearing it whenever the effective mode
-  // changes holds even across the persisted-preference round-trip — not only the sheet handler.
   useEffect(() => {
     dispatch({ type: 'unflip' })
   }, [mode])
@@ -209,8 +202,6 @@ export function FlashcardsPanel({
     if (card) speak(flipped ? answer : prompt)
   }
 
-  // Each mode presents the card its own way, so it opens on its own face — a flip carried over
-  // from the mode you left would land Type or Rebuild on the answer.
   const changeMode = (nextMode: StudyMode) => {
     dispatch({ type: 'unflip' })
     onModeChange?.(nextMode)
@@ -249,8 +240,6 @@ export function FlashcardsPanel({
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-5 py-3">
         {card ? (
           <StudyDeck
-            // Keyed by mode only: the card id changing is a *transition* the deck animates
-            // itself, not a reason to tear the whole stack down and build a new one.
             key={mode}
             card={card}
             upcoming={upcoming}

@@ -2,7 +2,6 @@ import { useTranslation } from 'react-i18next'
 import { MapPin, Plus, Upload } from 'lucide-react'
 import { Button } from '@/shared/ui'
 
-/** A deck with no cards at all: the one state that offers a way out on its own terms. */
 export function EmptyCards({ onAdd, onImport }: { onAdd: () => void; onImport: () => void }) {
   const { t } = useTranslation()
   return (
@@ -30,7 +29,6 @@ export function EmptyCards({ onAdd, onImport }: { onAdd: () => void; onImport: (
   )
 }
 
-/** The deck has cards; this search or filter just isn't reaching any of them. */
 function NarrowedEmpty({
   message,
   action,

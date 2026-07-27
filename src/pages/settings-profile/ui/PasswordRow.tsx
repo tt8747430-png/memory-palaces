@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { ChevronRight, Lock } from 'lucide-react'
 
-/** The password is never shown or edited here — this row only leads to where it can be changed. */
 export function PasswordRow({ onChangePassword }: { onChangePassword: () => void }) {
   const { t } = useTranslation()
   return (

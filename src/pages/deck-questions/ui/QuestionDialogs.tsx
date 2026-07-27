@@ -10,10 +10,6 @@ export interface QuestionDialogsProps {
   onConfirm: () => void
 }
 
-/**
- * The confirmation the pending act needs. Driven off the one `pending` value, so exactly one
- * dialog can be open and each closes by clearing it.
- */
 export function QuestionDialogs({
   pending,
   selectedCount,

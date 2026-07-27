@@ -7,7 +7,6 @@ export interface TestLaunchCardProps {
   onStartTest: () => void
 }
 
-/** The deck's test at a glance: how many questions are ready, and the way into them. */
 export function TestLaunchCard({ questionCount, onStartTest }: TestLaunchCardProps) {
   const { t } = useTranslation()
   const ready = questionCount > 0

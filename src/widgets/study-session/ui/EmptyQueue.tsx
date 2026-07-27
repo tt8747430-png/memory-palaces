@@ -3,14 +3,12 @@ import { Sparkles } from 'lucide-react'
 import { Button } from '@/shared/ui'
 
 export interface EmptyQueueProps {
-  /** The queue is empty because of the Study filter, not because the Deck is finished. */
   filtered: boolean
   onChangeSelection: () => void
   onStudyAll: () => void
   onDone: () => void
 }
 
-/** No Card to show: either the Study filter matches nothing, or the Deck is caught up. */
 export function EmptyQueue({ filtered, onChangeSelection, onStudyAll, onDone }: EmptyQueueProps) {
   const { t } = useTranslation()
   return (

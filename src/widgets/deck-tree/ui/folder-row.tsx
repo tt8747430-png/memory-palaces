@@ -9,9 +9,7 @@ import { FOLDER_ROW_FRAME } from './row-style'
 export interface FolderRowBodyProps {
   folder: Folder
   deckCount: number
-  /** `undefined` when the row is not in select mode. */
   selected?: boolean
-  /** A dragged deck is hovering over this folder and would be filed into it. */
   isDropTarget?: boolean
 }
 
@@ -33,8 +31,6 @@ export function FolderRowBody({
       ) : null}
 
       <div className="pointer-events-none relative z-10 flex min-w-0 flex-1 items-center gap-3.5">
-        {/* A folder is a container: the glyph carries pale "sheets" stacked
-            behind it, so folders read as holding decks — not as another deck. */}
         <motion.span
           className="relative size-12 shrink-0"
           animate={{ scale: isDropTarget ? 1.08 : 1 }}
@@ -79,7 +75,6 @@ export function FolderRowBody({
   )
 }
 
-/** The folder in hand: the row itself, lifted — same frame, same select dot. */
 export function FolderDragPreview({
   folder,
   deckCount,

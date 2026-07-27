@@ -2,30 +2,18 @@ import { useCallback, useMemo, useState } from 'react'
 import { impact } from './haptics'
 
 export interface MultiSelect {
-  /** True while a selection is in progress — the surface swaps to its select chrome. */
   active: boolean
   ids: ReadonlySet<string>
   count: number
-  /** Every id currently on screen is selected, so "select all" flips to "clear all". */
   allSelected: boolean
   has: (id: string) => boolean
-  /** Start a selection from a press-and-hold, keeping anything already chosen. */
   begin: (id: string) => void
   toggle: (id: string) => void
   toggleAll: () => void
   exit: () => void
-  /**
-   * The rows the surface is showing right now — what "select all" covers. Sorting, searching
-   * and filtering all live in the list, so the list is what reports what is on screen.
-   */
   setVisibleIds: (ids: readonly string[]) => void
 }
 
-/**
- * Multi-selection for a single flat list: which rows are chosen, whether the mode is on, and
- * what "select all" means for the rows in view. The owning page holds it so its header can be
- * the selection's header — one bar, no second count rendered inside the list.
- */
 export function useMultiSelect(): MultiSelect {
   const [active, setActive] = useState(false)
   const [ids, setIds] = useState<ReadonlySet<string>>(() => new Set())

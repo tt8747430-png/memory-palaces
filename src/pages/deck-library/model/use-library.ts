@@ -13,60 +13,39 @@ import { type LibrarySelection, useLibrarySelection } from './use-library-select
 export interface Library {
   ready: boolean
   isEmpty: boolean
-  /** Every folder, in order. Empty of meaning inside a folder — folders don't nest. */
   folders: Folder[]
   decks: Deck[]
   cards: Card[]
-  /** The folder this view is scoped to, once the store has emitted it. */
   openFolder: Folder | undefined
   folderDeckCounts: Map<string, number>
-  /** The rows select mode shows: this scope's folders, then its top-level decks. */
   sectionFolders: Folder[]
   sectionDecks: Deck[]
-  /** The browse tree: this scope's decks, nested, descending only into what is expanded. */
   rows: FlatDeck[]
   expanded: ReadonlySet<string>
   toggleExpanded: (id: string) => void
   expand: (id: string) => void
 
   selection: LibrarySelection
-  /** Acts that run immediately. Anything needing confirmation goes through `request`. */
   act: Omit<LibraryActions, 'selectHandlers'>
-  /** The configured select toolbar, wired to what this selection can do. */
   selectHandlers: SelectActionHandlers
 
-  /** The one act awaiting the learner: a confirmation, or a destination to move to. */
   pending: PendingAct | null
   request: (act: PendingAct) => void
   dismiss: () => void
-  /** Carry out `pending` — for the two deletes and the two moves alike. */
   confirm: (dest?: MoveDestination) => void
-  /** Decks a move may not land in: itself and its own descendants. */
   moveExcludeIds: ReadonlySet<string>
 }
 
-/** Which decks a pending move is about — one, the whole selection, or none. */
 function moveTargets(pending: PendingAct | null, selectedDeckIds: string[]): string[] {
   if (pending?.kind === 'move-deck') return [pending.deck.id]
   if (pending?.kind === 'move-selection') return selectedDeckIds
   return []
 }
 
-/**
- * The deck library as one module: what it shows, what is selected, what it can do, and what it
- * is waiting to be told. The page reads this and nothing else.
- *
- * Composed from three internal parts — the stores and their derivations, the selection, and the
- * commands — which are seams for this module's own tests, not for its caller. In particular the
- * optimistic overlay that holds a drop on screen never surfaces: the page does not know a drop
- * is persisted as several writes, only that reordering is something the library does.
- */
 export function useLibrary(folderId: string | null, onFolderGone: () => void): Library {
   const data = useLibraryData(folderId)
   const [pending, setPending] = useState<PendingAct | null>(null)
 
-  // Once the folders are in and this one isn't among them, the route is pointing at nothing —
-  // deleted from inside it, or a stale link.
   const missing = folderId !== null && data.foldersReady && !data.openFolder
   useEffect(() => {
     if (missing) onFolderGone()
