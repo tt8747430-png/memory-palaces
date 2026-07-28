@@ -1,15 +1,14 @@
 import { useTranslation } from 'react-i18next'
 import type { Achievement, AchievementId } from '@/shared/lib'
-import { BadgeMedallion, CollectionPreview } from '@/shared/ui'
-import { ACHIEVEMENT_META } from './meta'
+import { BadgeMedallion } from '@/shared/ui'
+import { ACHIEVEMENT_META } from '../model/achievement-meta'
+import { RewardPreview, RewardPreviewTile } from './RewardPreview'
 
 export interface AchievementsSectionProps {
   achievements: ReadonlyArray<Achievement>
   onSeeAll: () => void
   onOpenAchievement: (id: AchievementId) => void
 }
-
-const PREVIEW_COUNT = 4
 
 export function AchievementsSection({
   achievements,
@@ -18,21 +17,19 @@ export function AchievementsSection({
 }: AchievementsSectionProps) {
   const { t } = useTranslation()
   return (
-    <CollectionPreview
+    <RewardPreview
       title={t('profile.achievementsSection')}
-      seeAllLabel={t('common.seeAll')}
       ariaLabel={t('profile.seeAllAchievements')}
+      items={achievements}
+      keyOf={(achievement) => achievement.id}
       onSeeAll={onSeeAll}
     >
-      {achievements.slice(0, PREVIEW_COUNT).map((achievement) => {
+      {(achievement) => {
         const meta = ACHIEVEMENT_META[achievement.id]
         return (
-          <button
-            key={achievement.id}
-            type="button"
-            onClick={() => onOpenAchievement(achievement.id)}
-            aria-label={t(meta.titleKey)}
-            className="flex w-0 flex-1 flex-col items-center gap-1.5 rounded-card py-1 transition-transform duration-200 ease-out active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+          <RewardPreviewTile
+            onOpen={() => onOpenAchievement(achievement.id)}
+            ariaLabel={t(meta.titleKey)}
           >
             <BadgeMedallion
               icon={meta.icon}
@@ -43,9 +40,9 @@ export function AchievementsSection({
             <span className="w-full truncate text-center text-[length:var(--p-text-tiny)] font-semibold text-muted-foreground">
               {t(meta.titleKey)}
             </span>
-          </button>
+          </RewardPreviewTile>
         )
-      })}
-    </CollectionPreview>
+      }}
+    </RewardPreview>
   )
 }

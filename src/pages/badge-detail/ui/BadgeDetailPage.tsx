@@ -1,21 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { animate, motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Check, Lock } from 'lucide-react'
-import {
-  type Badge,
-  type BadgeId,
-  cn,
-  computeBadges,
-  computeTrainingTotals,
-  EASE_OUT,
-  milestoneProgress,
-  totalTrainingDays,
-} from '@/shared/lib'
-import { selectProgress, useProgressStore } from '@/entities/progress'
-import { selectDecks, useDeckStore } from '@/entities/deck'
-import { selectCards, useCardStore } from '@/entities/card'
-import { BADGE_META } from '@/widgets/badge-list'
+import { type Badge, type BadgeId, cn, EASE_OUT, milestoneProgress } from '@/shared/lib'
+import { BADGE_META, RewardHero, useRewards } from '@/widgets/rewards'
 import { AppScreen, BadgeMedallion, cardSurface, Progress, ScreenHeader } from '@/shared/ui'
 
 const BADGE_IDS: readonly BadgeId[] = ['xp', 'streak', 'decks', 'library', 'cards', 'days']
@@ -29,24 +17,7 @@ export interface BadgeDetailPageProps {
 
 export function BadgeDetailPage({ badgeId, onBack }: BadgeDetailPageProps) {
   const { t } = useTranslation()
-  const progress = useProgressStore(selectProgress)
-  const decks = useDeckStore(selectDecks)
-  const cards = useCardStore(selectCards)
-
-  const totals = useMemo(() => computeTrainingTotals(decks, cards), [decks, cards])
-  const topLevelDecks = useMemo(() => decks.filter((deck) => deck.parentId === null), [decks])
-  const badges = useMemo(
-    () =>
-      computeBadges({
-        xp: progress?.xp ?? 0,
-        longestStreak: progress?.longestStreak ?? 0,
-        decksCompleted: totals.decksCompleted,
-        deckCount: topLevelDecks.length,
-        totalCards: totals.totalCards,
-        trainingDayCount: totalTrainingDays(progress?.trainingDays ?? []),
-      }),
-    [progress, totals, topLevelDecks.length],
-  )
+  const { badges } = useRewards()
 
   const badge = isBadgeId(badgeId) ? badges.find((entry) => entry.id === badgeId) : undefined
 
@@ -112,21 +83,7 @@ function Hero({
   const { t } = useTranslation()
   const meta = BADGE_META[badge.id]
   return (
-    <section className="relative flex flex-col items-center pt-3 text-center">
-      <span
-        aria-hidden
-        className="pointer-events-none absolute left-1/2 top-0 size-40 -translate-x-1/2 -translate-y-4 rounded-full opacity-35 blur-3xl"
-        style={{ background: 'radial-gradient(circle, var(--accent), transparent 68%)' }}
-      />
-      <motion.div
-        initial={{ opacity: 0, scale: 0.84, y: 8 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-        className="relative"
-      >
-        <BadgeMedallion icon={meta.icon} tier={tier} shine className="size-28" />
-      </motion.div>
-
+    <RewardHero icon={meta.icon} glow tier={tier} shine>
       <p className="mt-4 text-[length:var(--p-text-headline)] font-bold leading-none tabular-nums text-heading">
         <CountUp
           to={badge.value}
@@ -141,7 +98,7 @@ function Hero({
           {t('badgeDetail.maxed')}
         </p>
       ) : null}
-    </section>
+    </RewardHero>
   )
 }
 

@@ -1,7 +1,8 @@
 import { useTranslation } from 'react-i18next'
 import type { Badge, BadgeId } from '@/shared/lib'
-import { BadgeMedallion, CollectionPreview, TierPips } from '@/shared/ui'
-import { BADGE_META, compactNumber } from './meta'
+import { BadgeMedallion, TierPips } from '@/shared/ui'
+import { BADGE_META, compactNumber } from '../model/badge-meta'
+import { RewardPreview, RewardPreviewTile } from './RewardPreview'
 
 export interface BadgesSectionProps {
   badges: ReadonlyArray<Badge>
@@ -9,28 +10,21 @@ export interface BadgesSectionProps {
   onOpenBadge: (id: BadgeId) => void
 }
 
-const PREVIEW_COUNT = 4
-
 export function BadgesSection({ badges, onSeeAll, onOpenBadge }: BadgesSectionProps) {
   const { t } = useTranslation()
   return (
-    <CollectionPreview
+    <RewardPreview
       title={t('profile.badgesSection')}
-      seeAllLabel={t('common.seeAll')}
       ariaLabel={t('profile.seeAllBadges')}
+      items={badges}
+      keyOf={(badge) => badge.id}
       onSeeAll={onSeeAll}
     >
-      {badges.slice(0, PREVIEW_COUNT).map((badge) => {
+      {(badge) => {
         const meta = BADGE_META[badge.id]
         const face = badge.current ?? badge.next
         return (
-          <button
-            key={badge.id}
-            type="button"
-            onClick={() => onOpenBadge(badge.id)}
-            aria-label={t(meta.titleKey)}
-            className="flex w-0 flex-1 flex-col items-center gap-1.5 rounded-card py-1 transition-transform duration-200 ease-out active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-          >
+          <RewardPreviewTile onOpen={() => onOpenBadge(badge.id)} ariaLabel={t(meta.titleKey)}>
             <BadgeMedallion
               icon={meta.icon}
               tier={badge.tier}
@@ -42,9 +36,9 @@ export function BadgesSection({ badges, onSeeAll, onOpenBadge }: BadgesSectionPr
               {t(meta.titleKey)}
             </span>
             <TierPips total={badge.tiers.length} filled={badge.tier} />
-          </button>
+          </RewardPreviewTile>
         )
-      })}
-    </CollectionPreview>
+      }}
+    </RewardPreview>
   )
 }

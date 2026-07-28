@@ -1,23 +1,8 @@
-import { useMemo } from 'react'
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-import {
-  type AchievementId,
-  cardsInSubtree,
-  cn,
-  computeAchievements,
-  computeTrainingTotals,
-  EASE_OUT,
-  isDeckCompleted,
-  levelFromXp,
-  selectIsReady,
-  totalTrainingDays,
-} from '@/shared/lib'
-import { selectProgress, useProgressStore } from '@/entities/progress'
-import { selectDecks, useDeckStore } from '@/entities/deck'
-import { selectCards, useCardStore } from '@/entities/card'
-import { AchievementGrid } from '@/widgets/achievement-list'
-import { AppScreen, cardSurface, ScreenHeader } from '@/shared/ui'
+import { type AchievementId, cn, EASE_OUT, levelFromXp } from '@/shared/lib'
+import { AchievementGrid, RewardGridSkeleton, useRewards } from '@/widgets/rewards'
+import { AppScreen, cardSurface, ScreenHeader, Skeleton } from '@/shared/ui'
 
 export interface AchievementsPageProps {
   onBack?: () => void
@@ -26,37 +11,8 @@ export interface AchievementsPageProps {
 
 export function AchievementsPage({ onBack, onOpenAchievement }: AchievementsPageProps = {}) {
   const { t } = useTranslation()
-  const progress = useProgressStore(selectProgress)
-  const decks = useDeckStore(selectDecks)
-  const cards = useCardStore(selectCards)
-  const progressReady = useProgressStore(selectIsReady)
-  const decksReady = useDeckStore(selectIsReady)
-  const cardsReady = useCardStore(selectIsReady)
-  const dataReady = progressReady && decksReady && cardsReady
-
-  const xp = progress?.xp ?? 0
-  const totals = useMemo(() => computeTrainingTotals(decks, cards), [decks, cards])
-  const daysTrained = useMemo(
-    () => totalTrainingDays(progress?.trainingDays ?? []),
-    [progress?.trainingDays],
-  )
-  const topLevelDecks = useMemo(() => decks.filter((deck) => deck.parentId === null), [decks])
-  const anyDeckCompleted = useMemo(
-    () => topLevelDecks.some((deck) => isDeckCompleted(cardsInSubtree(decks, cards, deck.id))),
-    [topLevelDecks, decks, cards],
-  )
-  const achievements = useMemo(
-    () =>
-      computeAchievements({
-        deckCount: topLevelDecks.length,
-        streakCount: progress?.streakCount ?? 0,
-        xp,
-        bestQuizAccuracy: progress?.bestQuizAccuracy ?? 0,
-        decksCompleted: totals.decksCompleted,
-        anyDeckCompleted,
-      }),
-    [topLevelDecks.length, progress, xp, totals.decksCompleted, anyDeckCompleted],
-  )
+  const { ready, achievements, totals, xp, longestStreak, bestQuizAccuracy, daysTrained } =
+    useRewards()
 
   const records = [
     {
@@ -64,19 +20,11 @@ export function AchievementsPage({ onBack, onOpenAchievement }: AchievementsPage
       value: String(levelFromXp(xp).level),
       label: t('achievementsPage.records.level'),
     },
-    {
-      id: 'streak',
-      value: String(progress?.longestStreak ?? 0),
-      label: t('achievementsPage.records.streak'),
-    },
-    {
-      id: 'xp',
-      value: xp.toLocaleString(),
-      label: t('achievementsPage.records.xp'),
-    },
+    { id: 'streak', value: String(longestStreak), label: t('achievementsPage.records.streak') },
+    { id: 'xp', value: xp.toLocaleString(), label: t('achievementsPage.records.xp') },
     {
       id: 'accuracy',
-      value: `${progress?.bestQuizAccuracy ?? 0}%`,
+      value: `${bestQuizAccuracy}%`,
       label: t('achievementsPage.records.accuracy'),
     },
     {
@@ -84,11 +32,7 @@ export function AchievementsPage({ onBack, onOpenAchievement }: AchievementsPage
       value: String(totals.decksCompleted),
       label: t('achievementsPage.records.decks'),
     },
-    {
-      id: 'days',
-      value: String(daysTrained),
-      label: t('achievementsPage.records.days'),
-    },
+    { id: 'days', value: String(daysTrained), label: t('achievementsPage.records.days') },
   ]
 
   return (
@@ -103,7 +47,7 @@ export function AchievementsPage({ onBack, onOpenAchievement }: AchievementsPage
         />
       }
     >
-      {!dataReady ? (
+      {!ready ? (
         <AchievementsSkeleton />
       ) : (
         <div className="mt-2 flex flex-col gap-6">
@@ -155,16 +99,9 @@ export function AchievementsPage({ onBack, onOpenAchievement }: AchievementsPage
 function AchievementsSkeleton() {
   return (
     <div aria-hidden className="mt-2 flex flex-col gap-6">
-      <div className="h-3 w-36 animate-pulse rounded-full bg-secondary/30" />
-      <div className="h-24 animate-pulse rounded-card bg-secondary/30" />
-      <div className="grid grid-cols-3 gap-x-3 gap-y-7">
-        {Array.from({ length: 6 }, (_, index) => (
-          <div key={index} className="flex flex-col items-center gap-2">
-            <div className="size-20 animate-pulse rounded-full bg-secondary/30" />
-            <div className="h-2.5 w-12 animate-pulse rounded-full bg-secondary/20" />
-          </div>
-        ))}
-      </div>
+      <Skeleton className="h-3 w-36" />
+      <Skeleton className="h-24 rounded-card" />
+      <RewardGridSkeleton />
     </div>
   )
 }
