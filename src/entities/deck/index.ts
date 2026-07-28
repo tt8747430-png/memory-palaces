@@ -8,7 +8,7 @@ export {
 } from './model/appearance'
 export type { DeckColorOption } from './model/appearance'
 export { createDeckStore } from './model/store'
-export type { DeckState, DeckStatus, DeckStore } from './model/store'
+export type { DeckState, DeckStore } from './model/store'
 export { DeckStoreContext, useDeckStore, useDeckStoreApi } from './model/context'
 export { selectDecks, selectDeckCount, selectIsReady } from './model/selectors'
 export type { DeckRepository } from './api/deck-repository'

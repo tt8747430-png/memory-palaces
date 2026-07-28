@@ -1,7 +1,7 @@
 export type { AppNotification, NotificationType, MakeNotificationInput } from './model/types'
 export { makeNotification, NOTIFICATION_CAP } from './model/types'
 export { createNotificationStore } from './model/store'
-export type { NotificationState, NotificationStatus, NotificationStore } from './model/store'
+export type { NotificationState, NotificationStore } from './model/store'
 export {
   NotificationStoreContext,
   useNotificationStore,

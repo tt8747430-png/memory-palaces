@@ -58,6 +58,13 @@ export { isEmail } from './validation'
 export { systemClock, fixedClock, type Clock } from './clock'
 export { cloneEntity, type Entity } from './entity'
 export {
+  createCollectionStore,
+  createSingletonStore,
+  type CollectionState,
+  type SingletonState,
+  type StoreStatus,
+} from './entity-store'
+export {
   isDue,
   schedule,
   srsStatus,

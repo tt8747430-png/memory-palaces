@@ -19,7 +19,7 @@ export {
   STUDY_MODES,
 } from './model/types'
 export { createPreferencesStore } from './model/store'
-export type { PreferencesState, PreferencesStatus, PreferencesStore } from './model/store'
+export type { PreferencesState, PreferencesStore } from './model/store'
 export {
   PreferencesStoreContext,
   usePreferencesStore,
