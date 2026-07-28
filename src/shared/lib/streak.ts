@@ -1,3 +1,5 @@
+import { DAY_MS } from './clock'
+
 export interface StreakState {
   streakCount: number
   longestStreak: number
@@ -18,7 +20,6 @@ export interface StreakResult {
 const MAX_STREAK_FREEZES = 2
 const HISTORY_DAYS = 365
 const MILESTONE_INTERVAL = 7
-const DAY_MS = 86_400_000
 
 export function dayKey(now: number): string {
   return new Date(now).toISOString().slice(0, 10)

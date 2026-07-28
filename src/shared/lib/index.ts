@@ -55,7 +55,7 @@ export type { AppEvents } from './events'
 export { EventBusContext, useEventBus, useEventBusOptional } from './event-bus-context'
 export { AuthGatewayContext, useAuthGateway } from './auth-gateway-context'
 export { isEmail, isLongEnoughPassword, MIN_PASSWORD } from './validation'
-export { systemClock, fixedClock, type Clock } from './clock'
+export { DAY_MS, systemClock, fixedClock, type Clock } from './clock'
 export { cloneEntity, requireEntity, type Entity } from './entity'
 export {
   createCollectionStore,

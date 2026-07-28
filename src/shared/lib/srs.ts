@@ -1,3 +1,5 @@
+import { DAY_MS } from './clock'
+
 export type Grade = 'again' | 'hard' | 'good' | 'easy'
 
 export interface SrsState {
@@ -11,7 +13,6 @@ export interface SrsState {
 
 export type SrsStatus = 'new' | 'learning' | 'known'
 
-const DAY_MS = 86_400_000
 const MIN_EASE = 1.3
 const DEFAULT_EASE = 2.5
 const MATURE_INTERVAL = 21
