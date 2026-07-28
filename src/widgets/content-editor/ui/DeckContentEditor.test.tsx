@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { started } from '@/shared/test/started'
 import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MotionConfig } from 'motion/react'
@@ -46,12 +47,12 @@ function renderEditor({
     <I18nextProvider i18n={i18n}>
       <MotionConfig reducedMotion="always">
         <PreferencesStoreContext
-          value={createPreferencesStore(new InMemoryRepository<Preferences>())}
+          value={started(createPreferencesStore(new InMemoryRepository<Preferences>()))}
         >
-          <DeckStoreContext value={createDeckStore(new InMemoryRepository<Deck>(decks))}>
-            <CardStoreContext value={createCardStore(new InMemoryRepository<Card>(cards))}>
+          <DeckStoreContext value={started(createDeckStore(new InMemoryRepository<Deck>(decks)))}>
+            <CardStoreContext value={started(createCardStore(new InMemoryRepository<Card>(cards)))}>
               <QuestionStoreContext
-                value={createQuestionStore(new InMemoryRepository<Question>(questions))}
+                value={started(createQuestionStore(new InMemoryRepository<Question>(questions)))}
               >
                 <Editor onAddCard={onAddCard} />
               </QuestionStoreContext>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   type AchievementId,
@@ -9,33 +9,15 @@ import {
   computeTrainingTotals,
   isDeckCompleted,
   nextMilestone,
+  selectIsReady,
   totalTrainingDays,
 } from '@/shared/lib'
 import { useSessionStore } from '@/entities/session'
-import { selectEffectiveProfile, useProfileStore, useProfileStoreApi } from '@/entities/profile'
-import {
-  selectIsReady as selectProgressReady,
-  selectProgress,
-  useProgressStore,
-  useProgressStoreApi,
-} from '@/entities/progress'
-import {
-  selectDecks,
-  selectIsReady as selectDecksReady,
-  useDeckStore,
-  useDeckStoreApi,
-} from '@/entities/deck'
-import {
-  selectCards,
-  selectIsReady as selectCardsReady,
-  useCardStore,
-  useCardStoreApi,
-} from '@/entities/card'
-import {
-  selectUnreadCount,
-  useNotificationStore,
-  useNotificationStoreApi,
-} from '@/entities/notification'
+import { selectEffectiveProfile, useProfileStore } from '@/entities/profile'
+import { selectProgress, useProgressStore } from '@/entities/progress'
+import { selectDecks, useDeckStore } from '@/entities/deck'
+import { selectCards, useCardStore } from '@/entities/card'
+import { selectUnreadCount, useNotificationStore } from '@/entities/notification'
 import { ProfileBar, ProfileHero } from '@/widgets/profile-header'
 import { BadgesSection, NextMilestoneCard } from '@/widgets/badge-list'
 import { AchievementsSection } from '@/widgets/achievement-list'
@@ -68,28 +50,15 @@ export function ProfilePage({
   onOpenAchievement,
 }: ProfilePageProps = {}) {
   const session = useSessionStore((state) => state.session)
-  const profileStore = useProfileStoreApi()
   const profile = useProfileStore(selectEffectiveProfile)
-  const progressStore = useProgressStoreApi()
-  const deckStore = useDeckStoreApi()
-  const cardStore = useCardStoreApi()
-  const notificationStore = useNotificationStoreApi()
   const progress = useProgressStore(selectProgress)
   const decks = useDeckStore(selectDecks)
   const cards = useCardStore(selectCards)
   const unreadCount = useNotificationStore(selectUnreadCount)
-  const progressReady = useProgressStore(selectProgressReady)
-  const decksReady = useDeckStore(selectDecksReady)
-  const cardsReady = useCardStore(selectCardsReady)
+  const progressReady = useProgressStore(selectIsReady)
+  const decksReady = useDeckStore(selectIsReady)
+  const cardsReady = useCardStore(selectIsReady)
   const dataReady = progressReady && decksReady && cardsReady
-
-  useEffect(() => {
-    profileStore.getState().start()
-    progressStore.getState().start()
-    deckStore.getState().start()
-    cardStore.getState().start()
-    notificationStore.getState().start()
-  }, [profileStore, progressStore, deckStore, cardStore, notificationStore])
 
   const { t } = useTranslation()
   const name = profile.name.trim() || session?.displayName || t('profile.guest')

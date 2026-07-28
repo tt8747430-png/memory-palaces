@@ -27,10 +27,6 @@ export function NotificationsPage({ onBack }: NotificationsPageProps = {}) {
   const count = notifications.length
 
   useEffect(() => {
-    store.getState().start()
-  }, [store])
-
-  useEffect(() => {
     if (unreadCount > 0) void markAllNotificationsRead(store)
   }, [unreadCount, store])
 

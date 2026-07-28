@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Check, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
-import { selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
+import { selectDecks, useDeckStore } from '@/entities/deck'
 import { createCard, editCard } from '@/features/card'
 import { cardsInSubtree, cn } from '@/shared/lib'
 import { AppScreen, FooterBar, ScreenHeader } from '@/shared/ui'
@@ -19,14 +19,8 @@ export interface CardEditorPageProps {
 export function CardEditorPage({ deckId, cardId, onBack, onNavigateCard }: CardEditorPageProps) {
   const { t } = useTranslation()
   const cardStore = useCardStoreApi()
-  const deckStore = useDeckStoreApi()
   const allCards = useCardStore(selectCards)
   const decks = useDeckStore(selectDecks)
-
-  useEffect(() => {
-    cardStore.getState().start()
-    deckStore.getState().start()
-  }, [cardStore, deckStore])
 
   const editing = cardId ? (allCards.find((c) => c.id === cardId) ?? null) : null
   const deck = decks.find((d) => d.id === deckId)

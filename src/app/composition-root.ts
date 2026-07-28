@@ -50,7 +50,7 @@ export function createServices(): Services {
   const notificationRepo = new RxdbRepository<AppNotification>(
     collections.then((c) => c.notifications),
   )
-  return {
+  const services: Services = {
     authGateway,
     sessionStore: createSessionStore(sessionRepo),
     deckStore: createDeckStore(deckRepo),
@@ -63,6 +63,24 @@ export function createServices(): Services {
     notificationStore: createNotificationStore(notificationRepo),
     eventBus: new EventBus<AppEvents>(),
   }
+
+  // Every store observes its collection from here on. Screens read data and the
+  // `selectIsReady` flag; none of them owns the subscription. The session store
+  // is deliberately absent — AuthProvider restores it once the gateway answers.
+  for (const store of [
+    services.deckStore,
+    services.cardStore,
+    services.folderStore,
+    services.questionStore,
+    services.progressStore,
+    services.preferencesStore,
+    services.profileStore,
+    services.notificationStore,
+  ]) {
+    store.getState().start()
+  }
+
+  return services
 }
 
 export const services: Services = createServices()

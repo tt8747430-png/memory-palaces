@@ -3,7 +3,6 @@ import { DEFAULT_PROFILE } from './types'
 import type { ProfileState } from './store'
 
 export const selectProfile = (state: ProfileState): Profile | null => state.profile
-export const selectIsReady = (state: ProfileState): boolean => state.status === 'ready'
 
 export const selectEffectiveProfile = (
   state: ProfileState,

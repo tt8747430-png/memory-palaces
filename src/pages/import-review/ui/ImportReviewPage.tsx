@@ -34,10 +34,6 @@ export function ImportReviewPage({ deckId, onBack, onDone }: ImportReviewPagePro
   const cardStore = useCardStoreApi()
   const questionStore = useQuestionStoreApi()
 
-  useEffect(() => {
-    cardStore.getState().start()
-  }, [cardStore])
-
   const [restore, setRestore] = useState<RestoreOptions>({
     cues: true,
     flags: true,

@@ -1,14 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import {
-  selectEffectiveProfile,
-  selectIsReady,
-  useProfileStore,
-  useProfileStoreApi,
-} from '@/entities/profile'
+import { selectEffectiveProfile, useProfileStore, useProfileStoreApi } from '@/entities/profile'
 import { setProfile } from '@/features/profile'
-import { fileToAvatar } from '@/shared/lib'
+import { fileToAvatar, selectIsReady } from '@/shared/lib'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MIN_PHONE_DIGITS = 6

@@ -79,10 +79,6 @@ export function DeckContentEditor({
   const allCards = useCardStore(selectCards)
   const setImportDraft = useImportDraft((s) => s.setDraft)
 
-  useEffect(() => {
-    cardStore.getState().start()
-  }, [cardStore])
-
   const prefs = usePreferencesStore(selectEffectivePreferences)
   const decks = useDeckStore(selectDecks)
   const cards = useMemo(() => cardsInSubtree(decks, allCards, deckId), [decks, allCards, deckId])

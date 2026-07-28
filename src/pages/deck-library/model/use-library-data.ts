@@ -1,23 +1,14 @@
-import { useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
 import type { Card } from '@/entities/card'
-import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
+import { selectCards, useCardStore } from '@/entities/card'
 import type { Deck } from '@/entities/deck'
-import {
-  selectDecks,
-  selectIsReady as selectDecksReady,
-  useDeckStore,
-  useDeckStoreApi,
-} from '@/entities/deck'
+import { selectDecks, useDeckStore } from '@/entities/deck'
 import type { Folder } from '@/entities/folder'
-import {
-  selectFolders,
-  selectIsReady as selectFoldersReady,
-  useFolderStore,
-  useFolderStoreApi,
-} from '@/entities/folder'
+import { selectFolders, useFolderStore } from '@/entities/folder'
 import {
   type FlatDeck,
   flattenDecks,
+  selectIsReady,
   siblingDecks,
   useOptimisticPatch,
   usePersistedSet,
@@ -45,21 +36,11 @@ export interface LibraryData {
 }
 
 export function useLibraryData(folderId: string | null): LibraryData {
-  const folderStore = useFolderStoreApi()
-  const deckStore = useDeckStoreApi()
-  const cardStore = useCardStoreApi()
-
-  useEffect(() => {
-    folderStore.getState().start()
-    deckStore.getState().start()
-    cardStore.getState().start()
-  }, [folderStore, deckStore, cardStore])
-
   const storeFolders = useFolderStore(selectFolders)
   const storeDecks = useDeckStore(selectDecks)
   const cards = useCardStore(selectCards)
-  const foldersReady = useFolderStore(selectFoldersReady)
-  const decksReady = useDeckStore(selectDecksReady)
+  const foldersReady = useFolderStore(selectIsReady)
+  const decksReady = useDeckStore(selectIsReady)
 
   const [folders, patchFolders] = useOptimisticPatch(storeFolders)
   const [decks, patchDecks] = useOptimisticPatch(storeDecks)

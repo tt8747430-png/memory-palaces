@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
+import { started } from '@/shared/test/started'
 import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MotionConfig } from 'motion/react'
@@ -35,8 +36,8 @@ function renderQuiz(deckId = 'd1') {
   render(
     <I18nextProvider i18n={i18n}>
       <MotionConfig reducedMotion="always">
-        <DeckStoreContext value={createDeckStore(deckRepo)}>
-          <QuestionStoreContext value={createQuestionStore(questionRepo)}>
+        <DeckStoreContext value={started(createDeckStore(deckRepo))}>
+          <QuestionStoreContext value={started(createQuestionStore(questionRepo))}>
             <QuizPage deckId={deckId} onBack={() => {}} />
           </QuestionStoreContext>
         </DeckStoreContext>

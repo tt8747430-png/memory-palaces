@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   ArrowLeft,
@@ -43,10 +43,6 @@ export function SettingsSwipePage({ onBack }: SettingsSwipePageProps) {
   const store = usePreferencesStoreApi()
   const prefs = usePreferencesStore(selectEffectivePreferences)
   const [type, setType] = useState<SwipeItemType>('deck')
-
-  useEffect(() => {
-    store.getState().start()
-  }, [store])
 
   const save = (next: SwipeConfig) =>
     void setPreferences(store, {

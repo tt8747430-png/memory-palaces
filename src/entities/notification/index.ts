@@ -8,5 +8,5 @@ export {
   useNotificationStoreApi,
   useNotificationStoreApiOptional,
 } from './model/context'
-export { selectNotifications, selectUnreadCount, selectIsReady } from './model/selectors'
+export { selectNotifications, selectUnreadCount } from './model/selectors'
 export type { NotificationRepository } from './api/notification-repository'

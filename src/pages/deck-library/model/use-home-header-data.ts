@@ -1,17 +1,8 @@
-import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { selectEffectiveProfile, useProfileStore, useProfileStoreApi } from '@/entities/profile'
-import { selectProgress, useProgressStore, useProgressStoreApi } from '@/entities/progress'
-import {
-  selectEffectivePreferences,
-  usePreferencesStore,
-  usePreferencesStoreApi,
-} from '@/entities/preferences'
-import {
-  selectUnreadCount,
-  useNotificationStore,
-  useNotificationStoreApi,
-} from '@/entities/notification'
+import { selectEffectiveProfile, useProfileStore } from '@/entities/profile'
+import { selectProgress, useProgressStore } from '@/entities/progress'
+import { selectEffectivePreferences, usePreferencesStore } from '@/entities/preferences'
+import { selectUnreadCount, useNotificationStore } from '@/entities/notification'
 import { useSessionStore } from '@/entities/session'
 import { dayKey } from '@/shared/lib'
 
@@ -25,17 +16,6 @@ export interface HomeHeaderData {
 
 export function useHomeHeaderData(): HomeHeaderData {
   const { t } = useTranslation()
-  const profileStore = useProfileStoreApi()
-  const progressStore = useProgressStoreApi()
-  const preferencesStore = usePreferencesStoreApi()
-  const notificationStore = useNotificationStoreApi()
-
-  useEffect(() => {
-    profileStore.getState().start()
-    progressStore.getState().start()
-    preferencesStore.getState().start()
-    notificationStore.getState().start()
-  }, [profileStore, progressStore, preferencesStore, notificationStore])
 
   const session = useSessionStore((state) => state.session)
   const profile = useProfileStore(selectEffectiveProfile)

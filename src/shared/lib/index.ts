@@ -60,6 +60,7 @@ export { cloneEntity, type Entity } from './entity'
 export {
   createCollectionStore,
   createSingletonStore,
+  selectIsReady,
   type CollectionState,
   type SingletonState,
   type StoreStatus,

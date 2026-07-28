@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
+import { started } from '@/shared/test/started'
 import { act, cleanup, render } from '@testing-library/react'
 import { type AppEvents, EventBus, EventBusContext } from '@/shared/lib'
 import { InMemoryRepository } from '@/shared/api'
@@ -14,7 +15,7 @@ afterEach(cleanup)
 
 function setup() {
   const bus = new EventBus<AppEvents>()
-  const store = createNotificationStore(new InMemoryRepository<AppNotification>())
+  const store = started(createNotificationStore(new InMemoryRepository<AppNotification>()))
   render(
     <NotificationStoreContext value={store}>
       <EventBusContext value={bus}>

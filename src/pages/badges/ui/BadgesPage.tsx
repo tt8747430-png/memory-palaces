@@ -1,30 +1,16 @@
-import { useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   type BadgeId,
   computeBadges,
   computeTrainingTotals,
   nextMilestone,
+  selectIsReady,
   totalTrainingDays,
 } from '@/shared/lib'
-import {
-  selectIsReady as selectProgressReady,
-  selectProgress,
-  useProgressStore,
-  useProgressStoreApi,
-} from '@/entities/progress'
-import {
-  selectDecks,
-  selectIsReady as selectDecksReady,
-  useDeckStore,
-  useDeckStoreApi,
-} from '@/entities/deck'
-import {
-  selectCards,
-  selectIsReady as selectCardsReady,
-  useCardStore,
-  useCardStoreApi,
-} from '@/entities/card'
+import { selectProgress, useProgressStore } from '@/entities/progress'
+import { selectDecks, useDeckStore } from '@/entities/deck'
+import { selectCards, useCardStore } from '@/entities/card'
 import { BadgeGrid, NextMilestoneCard } from '@/widgets/badge-list'
 import { AppScreen, ScreenHeader } from '@/shared/ui'
 
@@ -35,22 +21,13 @@ export interface BadgesPageProps {
 
 export function BadgesPage({ onBack, onOpenBadge }: BadgesPageProps = {}) {
   const { t } = useTranslation()
-  const progressStore = useProgressStoreApi()
-  const deckStore = useDeckStoreApi()
-  const cardStore = useCardStoreApi()
   const progress = useProgressStore(selectProgress)
   const decks = useDeckStore(selectDecks)
   const cards = useCardStore(selectCards)
-  const progressReady = useProgressStore(selectProgressReady)
-  const decksReady = useDeckStore(selectDecksReady)
-  const cardsReady = useCardStore(selectCardsReady)
+  const progressReady = useProgressStore(selectIsReady)
+  const decksReady = useDeckStore(selectIsReady)
+  const cardsReady = useCardStore(selectIsReady)
   const dataReady = progressReady && decksReady && cardsReady
-
-  useEffect(() => {
-    progressStore.getState().start()
-    deckStore.getState().start()
-    cardStore.getState().start()
-  }, [progressStore, deckStore, cardStore])
 
   const totals = useMemo(() => computeTrainingTotals(decks, cards), [decks, cards])
   const topLevelDecks = useMemo(() => decks.filter((deck) => deck.parentId === null), [decks])

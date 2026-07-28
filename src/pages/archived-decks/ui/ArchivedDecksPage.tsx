@@ -1,21 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Archive, ArchiveRestore, Trash2 } from 'lucide-react'
-import {
-  selectDecks,
-  selectIsReady as selectDecksReady,
-  useDeckStore,
-  useDeckStoreApi,
-} from '@/entities/deck'
-import {
-  selectCards,
-  selectIsReady as selectCardsReady,
-  useCardStore,
-  useCardStoreApi,
-} from '@/entities/card'
+import { selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
+import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
 import { deleteDeck, setDeckArchived } from '@/features/deck'
-import { cardsInSubtree } from '@/shared/lib'
+import { cardsInSubtree, selectIsReady } from '@/shared/lib'
 import {
   AppScreen,
   Button,
@@ -34,15 +24,10 @@ export function ArchivedDecksPage({ onBack }: ArchivedDecksPageProps) {
   const deckStore = useDeckStoreApi()
   const cardStore = useCardStoreApi()
 
-  useEffect(() => {
-    deckStore.getState().start()
-    cardStore.getState().start()
-  }, [deckStore, cardStore])
-
   const decks = useDeckStore(selectDecks)
   const cards = useCardStore(selectCards)
-  const decksReady = useDeckStore(selectDecksReady)
-  const cardsReady = useCardStore(selectCardsReady)
+  const decksReady = useDeckStore(selectIsReady)
+  const cardsReady = useCardStore(selectIsReady)
   const ready = decksReady && cardsReady
 
   const archived = useMemo(() => {

@@ -11,9 +11,9 @@ import {
   milestoneProgress,
   totalTrainingDays,
 } from '@/shared/lib'
-import { selectProgress, useProgressStore, useProgressStoreApi } from '@/entities/progress'
-import { selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
-import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
+import { selectProgress, useProgressStore } from '@/entities/progress'
+import { selectDecks, useDeckStore } from '@/entities/deck'
+import { selectCards, useCardStore } from '@/entities/card'
 import { BADGE_META } from '@/widgets/badge-list'
 import { AppScreen, BadgeMedallion, cardSurface, Progress, ScreenHeader } from '@/shared/ui'
 
@@ -30,18 +30,9 @@ export interface BadgeDetailPageProps {
 
 export function BadgeDetailPage({ badgeId, onBack }: BadgeDetailPageProps) {
   const { t } = useTranslation()
-  const progressStore = useProgressStoreApi()
-  const deckStore = useDeckStoreApi()
-  const cardStore = useCardStoreApi()
   const progress = useProgressStore(selectProgress)
   const decks = useDeckStore(selectDecks)
   const cards = useCardStore(selectCards)
-
-  useEffect(() => {
-    progressStore.getState().start()
-    deckStore.getState().start()
-    cardStore.getState().start()
-  }, [progressStore, deckStore, cardStore])
 
   const totals = useMemo(() => computeTrainingTotals(decks, cards), [decks, cards])
   const topLevelDecks = useMemo(() => decks.filter((deck) => deck.parentId === null), [decks])

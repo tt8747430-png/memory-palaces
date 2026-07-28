@@ -9,5 +9,5 @@ export {
 export { createProfileStore } from './model/store'
 export type { ProfileState, ProfileStore } from './model/store'
 export { ProfileStoreContext, useProfileStore, useProfileStoreApi } from './model/context'
-export { selectProfile, selectIsReady, selectEffectiveProfile } from './model/selectors'
+export { selectProfile, selectEffectiveProfile } from './model/selectors'
 export type { ProfileRepository } from './api/profile-repository'

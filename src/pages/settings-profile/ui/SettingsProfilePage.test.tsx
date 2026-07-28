@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { started } from '@/shared/test/started'
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ReactNode } from 'react'
@@ -43,16 +44,22 @@ function renderPage(opts: { profile?: Profile; decks?: Deck[] } = {}) {
   }
   const wrap = (children: ReactNode) => (
     <I18nextProvider i18n={i18n}>
-      <ProfileStoreContext value={createProfileStore(profileRepo)}>
-        <DeckStoreContext value={createDeckStore(deckRepo)}>
-          <CardStoreContext value={createCardStore(new InMemoryRepository<Card>())}>
-            <FolderStoreContext value={createFolderStore(new InMemoryRepository<Folder>())}>
-              <QuestionStoreContext value={createQuestionStore(new InMemoryRepository<Question>())}>
+      <ProfileStoreContext value={started(createProfileStore(profileRepo))}>
+        <DeckStoreContext value={started(createDeckStore(deckRepo))}>
+          <CardStoreContext value={started(createCardStore(new InMemoryRepository<Card>()))}>
+            <FolderStoreContext
+              value={started(createFolderStore(new InMemoryRepository<Folder>()))}
+            >
+              <QuestionStoreContext
+                value={started(createQuestionStore(new InMemoryRepository<Question>()))}
+              >
                 <ProgressStoreContext
-                  value={createProgressStore(new InMemoryRepository<Progress>())}
+                  value={started(createProgressStore(new InMemoryRepository<Progress>()))}
                 >
                   <NotificationStoreContext
-                    value={createNotificationStore(new InMemoryRepository<AppNotification>())}
+                    value={started(
+                      createNotificationStore(new InMemoryRepository<AppNotification>()),
+                    )}
                   >
                     {children}
                   </NotificationStoreContext>

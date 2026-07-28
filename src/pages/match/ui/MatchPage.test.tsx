@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
+import { started } from '@/shared/test/started'
 import { cleanup, render, screen } from '@testing-library/react'
 import { MotionConfig } from 'motion/react'
 import { I18nextProvider } from 'react-i18next'
@@ -23,8 +24,8 @@ function renderMatch(deckId = 'd1') {
   render(
     <I18nextProvider i18n={i18n}>
       <MotionConfig reducedMotion="always">
-        <DeckStoreContext value={createDeckStore(deckRepo)}>
-          <CardStoreContext value={createCardStore(cardRepo)}>
+        <DeckStoreContext value={started(createDeckStore(deckRepo))}>
+          <CardStoreContext value={started(createCardStore(cardRepo))}>
             <MatchPage scope={{ kind: 'deck', deckId }} onBack={() => {}} />
           </CardStoreContext>
         </DeckStoreContext>

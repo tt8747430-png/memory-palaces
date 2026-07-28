@@ -1,4 +1,3 @@
-import { useEffect } from 'react'
 import { useProfileStoreApi } from '@/entities/profile'
 import { useDeckStoreApi } from '@/entities/deck'
 import { useFolderStoreApi } from '@/entities/folder'
@@ -18,24 +17,6 @@ export function useDeleteAccount(): () => Promise<void> {
   const questionStore = useQuestionStoreApi()
   const progressStore = useProgressStoreApi()
   const notificationStore = useNotificationStoreApi()
-
-  useEffect(() => {
-    profileStore.getState().start()
-    deckStore.getState().start()
-    folderStore.getState().start()
-    cardStore.getState().start()
-    questionStore.getState().start()
-    progressStore.getState().start()
-    notificationStore.getState().start()
-  }, [
-    profileStore,
-    deckStore,
-    folderStore,
-    cardStore,
-    questionStore,
-    progressStore,
-    notificationStore,
-  ])
 
   return async () => {
     await resetEverything({

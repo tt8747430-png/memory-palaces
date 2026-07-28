@@ -2,16 +2,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { useCardStoreApi } from '@/entities/card'
-import {
-  selectDecks,
-  selectIsReady as selectDecksReady,
-  useDeckStore,
-  useDeckStoreApi,
-} from '@/entities/deck'
+import { selectDecks, useDeckStore } from '@/entities/deck'
 import {
   type Question,
   questionsForDeck,
-  selectIsReady as selectQuestionsReady,
   selectQuestions,
   useQuestionStore,
   useQuestionStoreApi,
@@ -22,6 +16,7 @@ import {
   ContentImportError,
   type DeckContentData,
   type MultiSelect,
+  selectIsReady,
   useMultiSelect,
 } from '@/shared/lib'
 import type { SelectActionHandlers } from '@/shared/ui'
@@ -55,18 +50,12 @@ export interface DeckQuestions {
 export function useDeckQuestions(deckId: string): DeckQuestions {
   const { t } = useTranslation()
   const questionStore = useQuestionStoreApi()
-  const deckStore = useDeckStoreApi()
   const cardStore = useCardStoreApi()
-
-  useEffect(() => {
-    questionStore.getState().start()
-    deckStore.getState().start()
-  }, [questionStore, deckStore])
 
   const allQuestions = useQuestionStore(selectQuestions)
   const decks = useDeckStore(selectDecks)
-  const questionsReady = useQuestionStore(selectQuestionsReady)
-  const decksReady = useDeckStore(selectDecksReady)
+  const questionsReady = useQuestionStore(selectIsReady)
+  const decksReady = useDeckStore(selectIsReady)
 
   const [sort, setSort] = useState<QuestionSort>('manual')
   const [pending, setPending] = useState<PendingAct | null>(null)

@@ -8,10 +8,5 @@ export {
   useProgressStoreApi,
   useProgressStoreApiOptional,
 } from './model/context'
-export {
-  selectProgress,
-  selectIsReady,
-  progressLevel,
-  progressTrainingDays,
-} from './model/selectors'
+export { selectProgress, progressLevel, progressTrainingDays } from './model/selectors'
 export type { ProgressRepository } from './api/progress-repository'

@@ -1,18 +1,12 @@
-import { useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronLeft, Layers } from 'lucide-react'
-import {
-  selectCards,
-  selectIsReady as selectCardsReady,
-  useCardStore,
-  useCardStoreApi,
-} from '@/entities/card'
+import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
 import {
   type Deck,
   type DeckSettings,
   DEFAULT_DECK_SETTINGS,
   selectDecks,
-  selectIsReady as selectDecksReady,
   useDeckStore,
   useDeckStoreApi,
 } from '@/entities/deck'
@@ -20,12 +14,11 @@ import {
   type FlashcardSwipeByMode,
   resolveStudyMode,
   selectEffectivePreferences,
-  selectIsReady as selectPrefsReady,
   type StudyMode,
   usePreferencesStore,
   usePreferencesStoreApi,
 } from '@/entities/preferences'
-import { cardsInSubtree, deckPath, resolveDeckSettings } from '@/shared/lib'
+import { cardsInSubtree, deckPath, resolveDeckSettings, selectIsReady } from '@/shared/lib'
 import { normalizeFlashcardSwipe } from '@/shared/config/flashcard-swipe'
 import { editCard } from '@/features/card'
 import { editDeck } from '@/features/deck'
@@ -57,18 +50,12 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
   const preferencesStore = usePreferencesStoreApi()
   const reward = useSessionReward()
 
-  useEffect(() => {
-    deckStore.getState().start()
-    cardStore.getState().start()
-    preferencesStore.getState().start()
-  }, [deckStore, cardStore, preferencesStore])
-
   const decks = useDeckStore(selectDecks)
   const allCards = useCardStore(selectCards)
   const preferences = usePreferencesStore(selectEffectivePreferences)
-  const decksReady = useDeckStore(selectDecksReady)
-  const cardsReady = useCardStore(selectCardsReady)
-  const prefsReady = usePreferencesStore(selectPrefsReady)
+  const decksReady = useDeckStore(selectIsReady)
+  const cardsReady = useCardStore(selectIsReady)
+  const prefsReady = usePreferencesStore(selectIsReady)
   const ready = decksReady && cardsReady && prefsReady
 
   const mode: StudyMode = resolveStudyMode(preferences.studyMode)

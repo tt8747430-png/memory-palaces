@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Check, Lock } from 'lucide-react'
@@ -9,9 +9,9 @@ import {
   computeTrainingTotals,
   isDeckCompleted,
 } from '@/shared/lib'
-import { selectProgress, useProgressStore, useProgressStoreApi } from '@/entities/progress'
-import { selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
-import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
+import { selectProgress, useProgressStore } from '@/entities/progress'
+import { selectDecks, useDeckStore } from '@/entities/deck'
+import { selectCards, useCardStore } from '@/entities/card'
 import { ACHIEVEMENT_META } from '@/widgets/achievement-list'
 import { AppScreen, BadgeMedallion, cardSurface, ScreenHeader } from '@/shared/ui'
 
@@ -33,18 +33,9 @@ export interface AchievementDetailPageProps {
 
 export function AchievementDetailPage({ achievementId, onBack }: AchievementDetailPageProps) {
   const { t } = useTranslation()
-  const progressStore = useProgressStoreApi()
-  const deckStore = useDeckStoreApi()
-  const cardStore = useCardStoreApi()
   const progress = useProgressStore(selectProgress)
   const decks = useDeckStore(selectDecks)
   const cards = useCardStore(selectCards)
-
-  useEffect(() => {
-    progressStore.getState().start()
-    deckStore.getState().start()
-    cardStore.getState().start()
-  }, [progressStore, deckStore, cardStore])
 
   const totals = useMemo(() => computeTrainingTotals(decks, cards), [decks, cards])
   const topLevelDecks = useMemo(() => decks.filter((deck) => deck.parentId === null), [decks])

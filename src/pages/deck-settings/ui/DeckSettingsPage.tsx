@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import {
@@ -12,15 +12,9 @@ import {
   RotateCcw,
   Trash2,
 } from 'lucide-react'
-import {
-  DEFAULT_DECK_SETTINGS,
-  selectDecks,
-  selectIsReady as selectDecksReady,
-  useDeckStore,
-  useDeckStoreApi,
-} from '@/entities/deck'
+import { DEFAULT_DECK_SETTINGS, selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
 import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
-import { cardsInSubtree, resolveDeckSettings } from '@/shared/lib'
+import { cardsInSubtree, resolveDeckSettings, selectIsReady } from '@/shared/lib'
 import { deleteDeck, duplicateDeck, editDeck, setDeckArchived } from '@/features/deck'
 import { resetDeckSrs } from '@/features/card'
 import { exportCardsAnki, exportCardsCsv } from '@/features/content'
@@ -46,14 +40,9 @@ export function DeckSettingsPage({ deckId, onBack, onDeleted }: DeckSettingsPage
   const deckStore = useDeckStoreApi()
   const cardStore = useCardStoreApi()
 
-  useEffect(() => {
-    deckStore.getState().start()
-    cardStore.getState().start()
-  }, [deckStore, cardStore])
-
   const decks = useDeckStore(selectDecks)
   const allCards = useCardStore(selectCards)
-  const ready = useDeckStore(selectDecksReady)
+  const ready = useDeckStore(selectIsReady)
   const deck = useMemo(() => decks.find((d) => d.id === deckId), [decks, deckId])
   const settings = useMemo(
     () => resolveDeckSettings(decks, deckId, DEFAULT_DECK_SETTINGS),

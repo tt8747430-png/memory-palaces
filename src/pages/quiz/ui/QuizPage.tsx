@@ -1,19 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { resolveDeckSettings, shuffle, subtreeDeckIds } from '@/shared/lib'
-import {
-  DEFAULT_DECK_SETTINGS,
-  selectDecks,
-  selectIsReady as selectDecksReady,
-  useDeckStore,
-  useDeckStoreApi,
-} from '@/entities/deck'
-import {
-  selectIsReady as selectQuestionsReady,
-  selectQuestions,
-  useQuestionStore,
-  useQuestionStoreApi,
-} from '@/entities/question'
+import { resolveDeckSettings, selectIsReady, shuffle, subtreeDeckIds } from '@/shared/lib'
+import { DEFAULT_DECK_SETTINGS, selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
+import { selectQuestions, useQuestionStore } from '@/entities/question'
 import { editDeck } from '@/features/deck'
 import { QuizOptionsSheet, type QuizResult, QuizSession } from '@/widgets/quiz'
 import { type QuizQuestion } from '@/features/quiz'
@@ -28,19 +17,13 @@ export interface QuizPageProps {
 export function QuizPage({ deckId, onBack }: QuizPageProps) {
   const { t } = useTranslation()
   const deckStore = useDeckStoreApi()
-  const questionStore = useQuestionStoreApi()
   const reward = useSessionReward()
   const [optionsOpen, setOptionsOpen] = useState(false)
 
-  useEffect(() => {
-    deckStore.getState().start()
-    questionStore.getState().start()
-  }, [deckStore, questionStore])
-
   const decks = useDeckStore(selectDecks)
   const allQuestions = useQuestionStore(selectQuestions)
-  const decksReady = useDeckStore(selectDecksReady)
-  const questionsReady = useQuestionStore(selectQuestionsReady)
+  const decksReady = useDeckStore(selectIsReady)
+  const questionsReady = useQuestionStore(selectIsReady)
   const ready = decksReady && questionsReady
 
   const deck = useMemo(() => decks.find((candidate) => candidate.id === deckId), [decks, deckId])

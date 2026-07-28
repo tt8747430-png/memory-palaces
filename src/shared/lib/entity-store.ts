@@ -22,6 +22,9 @@ export type SingletonState<Key extends string, T> = Lifecycle &
     save: (entity: T) => Promise<T>
   }
 
+/** True once a store has received its first snapshot from the repository. */
+export const selectIsReady = (state: Pick<Lifecycle, 'status'>): boolean => state.status === 'ready'
+
 export function createCollectionStore<Key extends string, T extends Identifiable>(
   key: Key,
   repo: Repository<T>,

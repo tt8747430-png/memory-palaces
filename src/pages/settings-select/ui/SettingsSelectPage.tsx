@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CheckSquare, Layers, ListChecks, Plus, RotateCcw, WalletCards } from 'lucide-react'
 import {
@@ -49,10 +49,6 @@ export function SettingsSelectPage({ onBack }: SettingsSelectPageProps) {
   const store = usePreferencesStoreApi()
   const prefs = usePreferencesStore(selectEffectivePreferences)
   const [surface, setSurface] = useState<SelectSurface>('library')
-
-  useEffect(() => {
-    store.getState().start()
-  }, [store])
 
   const config = prefs.selectToolbar[surface]
   const palette = SELECT_ACTIONS[surface].filter((id) => !config.includes(id))
