@@ -1,19 +1,11 @@
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import {
-  Copy,
-  Flag,
-  GraduationCap,
-  Lightbulb,
-  MapPin,
-  Pencil,
-  RotateCcw,
-  Trash2,
-} from 'lucide-react'
+import { Flag, Lightbulb, MapPin } from 'lucide-react'
 import type { Card } from '@/entities/card'
 import type { SwipeConfig } from '@/shared/config/swipe'
-import { type SheetAction, SrsStatusChip } from '@/shared/ui'
+import { actionIcon, SrsStatusChip } from '@/shared/ui'
 import { ContentRow, type RowDragHandle, RowIndex } from './ContentRow'
+import { rowMenuActions } from './row-actions'
 
 export interface CardRowProps {
   card: Card
@@ -49,45 +41,21 @@ export function CardRow({
   const { t } = useTranslation()
   const flagLabel = card.flagged ? t('cards.row.unflag') : t('cards.row.flag')
 
-  const menuActions: SheetAction[] = [
-    {
-      id: 'edit',
-      label: t('common.edit'),
-      icon: <Pencil className="size-5" aria-hidden />,
-      onSelect: onEdit,
-    },
-    {
-      id: 'duplicate',
-      label: t('cards.row.duplicate'),
-      icon: <Copy className="size-5" aria-hidden />,
-      onSelect: onDuplicate,
-    },
-    {
-      id: 'flag',
-      label: flagLabel,
-      icon: <Flag className="size-5" aria-hidden />,
-      onSelect: onToggleFlag,
-    },
+  const menuActions = rowMenuActions(t, { onEdit, onDuplicate, onDelete }, [
+    { id: 'flag', label: flagLabel, icon: actionIcon('flag'), onSelect: onToggleFlag },
     {
       id: 'known',
       label: t('cards.row.markKnown'),
-      icon: <GraduationCap className="size-5" aria-hidden />,
+      icon: actionIcon('known'),
       onSelect: onMarkKnown,
     },
     {
       id: 'reset',
       label: t('cards.row.resetSchedule'),
-      icon: <RotateCcw className="size-5" aria-hidden />,
+      icon: actionIcon('reset'),
       onSelect: onResetSrs,
     },
-    {
-      id: 'delete',
-      label: t('common.delete'),
-      icon: <Trash2 className="size-5" aria-hidden />,
-      destructive: true,
-      onSelect: onDelete,
-    },
-  ]
+  ])
 
   return (
     <ContentRow

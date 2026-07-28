@@ -1,7 +1,11 @@
-import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, Sheet } from '@/shared/ui'
-import { CardFields, type DraftCard, type DraftCardEdit } from '@/widgets/content-editor'
+import {
+  CardFields,
+  type DraftCard,
+  type DraftCardEdit,
+  useCardDraft,
+} from '@/widgets/content-editor'
 
 export interface EditDraftSheetProps {
   card: DraftCard | null
@@ -11,30 +15,11 @@ export interface EditDraftSheetProps {
 
 export function EditDraftSheet({ card, onSave, onClose }: EditDraftSheetProps) {
   const { t } = useTranslation()
-  const [front, setFront] = useState('')
-  const [back, setBack] = useState('')
-  const [hint, setHint] = useState('')
-  const [tip, setTip] = useState('')
+  const draft = useCardDraft(card, card?.id ?? null)
 
-  useEffect(() => {
-    if (card) {
-      setFront(card.front)
-      setBack(card.back)
-      setHint(card.hint ?? '')
-      setTip(card.tip ?? '')
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [card?.id])
-
-  const valid = front.trim().length > 0 && back.trim().length > 0
   const save = () => {
-    if (!card || !valid) return
-    onSave(card.id, {
-      front: front.trim(),
-      back: back.trim(),
-      hint: hint.trim() || undefined,
-      tip: tip.trim() || undefined,
-    })
+    if (!card || !draft.valid) return
+    onSave(card.id, draft.changes)
     onClose()
   }
 
@@ -44,20 +29,20 @@ export function EditDraftSheet({ card, onSave, onClose }: EditDraftSheetProps) {
       onOpenChange={(open) => !open && onClose()}
       title={t('cards.review.editTitle')}
       footer={
-        <Button size="lg" className="w-full" disabled={!valid} onClick={save}>
+        <Button size="lg" className="w-full" disabled={!draft.valid} onClick={save}>
           {t('common.saveChanges')}
         </Button>
       }
     >
       <CardFields
-        front={front}
-        back={back}
-        hint={hint}
-        tip={tip}
-        onFront={setFront}
-        onBack={setBack}
-        onHint={setHint}
-        onTip={setTip}
+        front={draft.front}
+        back={draft.back}
+        hint={draft.hint}
+        tip={draft.tip}
+        onFront={draft.setFront}
+        onBack={draft.setBack}
+        onHint={draft.setHint}
+        onTip={draft.setTip}
       />
     </Sheet>
   )

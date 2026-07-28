@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-import { WordReveal } from '@/shared/ui'
+import { Aura, WordReveal } from '@/shared/ui'
 import { Threshold } from '@/widgets/threshold'
 import { EASE_EXPO } from '@/shared/lib'
 
@@ -11,9 +11,6 @@ export interface SplashOverlayProps {
 
 const FULL_MS = 2400
 const REDUCED_MS = 500
-
-const AURA_BG =
-  'radial-gradient(circle at center, oklch(var(--p-tint-sky) / 0.45), transparent 60%)'
 
 const SPLASH_BG =
   'linear-gradient(to bottom, var(--p-navy-900), var(--p-blue-500) 55%, var(--p-blue-300))'
@@ -42,22 +39,7 @@ export function SplashOverlay({ onDone }: SplashOverlayProps) {
         {t('auth.splash.skip')}
       </button>
 
-      {reduce ? (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute left-1/2 top-1/2 size-[120%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl"
-          style={{ background: AURA_BG }}
-        />
-      ) : (
-        <motion.div
-          aria-hidden
-          className="pointer-events-none absolute left-1/2 top-1/2 size-[120%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl"
-          style={{ background: AURA_BG }}
-          initial={{ opacity: 0, scale: 0.7 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.2, ease: EASE_EXPO }}
-        />
-      )}
+      <Aura />
 
       {reduce ? null : (
         <motion.span

@@ -1,10 +1,10 @@
 import { useTranslation } from 'react-i18next'
-import { Check, Copy, Pencil, Trash2 } from 'lucide-react'
+import { Check } from 'lucide-react'
 import type { Question } from '@/entities/question'
 import { cn } from '@/shared/lib'
 import type { SwipeConfig } from '@/shared/config/swipe'
-import type { SheetAction } from '@/shared/ui'
 import { ContentRow, type RowDragHandle, RowIndex } from './ContentRow'
+import { rowMenuActions } from './row-actions'
 
 export interface QuestionRowProps {
   question: Question
@@ -32,27 +32,7 @@ export function QuestionRow({
 }: QuestionRowProps) {
   const { t } = useTranslation()
 
-  const menuActions: SheetAction[] = [
-    {
-      id: 'edit',
-      label: t('common.edit'),
-      icon: <Pencil className="size-5" aria-hidden />,
-      onSelect: onEdit,
-    },
-    {
-      id: 'duplicate',
-      label: t('cards.row.duplicate'),
-      icon: <Copy className="size-5" aria-hidden />,
-      onSelect: onDuplicate,
-    },
-    {
-      id: 'delete',
-      label: t('common.delete'),
-      icon: <Trash2 className="size-5" aria-hidden />,
-      destructive: true,
-      onSelect: onDelete,
-    },
-  ]
+  const menuActions = rowMenuActions(t, { onEdit, onDuplicate, onDelete })
 
   return (
     <ContentRow

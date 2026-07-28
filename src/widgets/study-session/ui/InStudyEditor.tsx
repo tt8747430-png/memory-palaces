@@ -1,8 +1,7 @@
-import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Check } from 'lucide-react'
 import { Button, Sheet } from '@/shared/ui'
-import { CardFields } from '@/widgets/content-editor'
+import { CardFields, useCardDraft } from '@/widgets/content-editor'
 import type { Card } from '@/entities/card'
 import type { CardChanges } from '../model/types'
 
@@ -15,28 +14,11 @@ export interface InStudyEditorProps {
 
 export function InStudyEditor({ open, card, onClose, onSave }: InStudyEditorProps) {
   const { t } = useTranslation()
-  const [front, setFront] = useState('')
-  const [back, setBack] = useState('')
-  const [hint, setHint] = useState('')
-  const [tip, setTip] = useState('')
+  const draft = useCardDraft(card, open ? card.id : null)
 
-  useEffect(() => {
-    if (!open) return
-    setFront(card.front)
-    setBack(card.back)
-    setHint(card.hint ?? '')
-    setTip(card.tip ?? '')
-  }, [open, card])
-
-  const valid = front.trim().length > 0 && back.trim().length > 0
   const save = () => {
-    if (!valid) return
-    onSave({
-      front: front.trim(),
-      back: back.trim(),
-      hint: hint.trim() || undefined,
-      tip: tip.trim() || undefined,
-    })
+    if (!draft.valid) return
+    onSave(draft.changes)
     onClose()
   }
 
@@ -46,7 +28,7 @@ export function InStudyEditor({ open, card, onClose, onSave }: InStudyEditorProp
       onOpenChange={(next) => !next && onClose()}
       title={t('study.editTitle')}
       footer={
-        <Button className="w-full" disabled={!valid} onClick={save}>
+        <Button className="w-full" disabled={!draft.valid} onClick={save}>
           <Check className="size-[18px]" aria-hidden />
           {t('study.saveCard')}
         </Button>
@@ -54,14 +36,14 @@ export function InStudyEditor({ open, card, onClose, onSave }: InStudyEditorProp
     >
       <div className="pb-2">
         <CardFields
-          front={front}
-          back={back}
-          hint={hint}
-          tip={tip}
-          onFront={setFront}
-          onBack={setBack}
-          onHint={setHint}
-          onTip={setTip}
+          front={draft.front}
+          back={draft.back}
+          hint={draft.hint}
+          tip={draft.tip}
+          onFront={draft.setFront}
+          onBack={draft.setBack}
+          onHint={draft.setHint}
+          onTip={draft.setTip}
         />
       </div>
     </Sheet>

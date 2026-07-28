@@ -1,16 +1,13 @@
 import { motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { useSessionStore } from '@/entities/session'
-import { Button, WordReveal } from '@/shared/ui'
+import { Aura, Button, WordReveal } from '@/shared/ui'
 import { Threshold } from '@/widgets/threshold'
 import { EASE_EXPO } from '@/shared/lib'
 
 export interface WelcomePageProps {
   onContinue: () => void
 }
-
-const AURA_BG =
-  'radial-gradient(circle at center, oklch(var(--p-tint-sky) / 0.45), transparent 60%)'
 
 const EMBERS = [
   { left: '32%', top: '62%', dx: 10, dy: -44, delay: 0.4, duration: 7 },
@@ -25,22 +22,7 @@ export function WelcomePage({ onContinue }: WelcomePageProps) {
 
   return (
     <main className="relative flex h-full flex-col items-center justify-center gap-8 overflow-hidden bg-gradient-to-b from-primary via-accent to-secondary px-6 pt-safe pb-safe text-center">
-      {reduce ? (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute left-1/2 top-1/2 size-[120%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl"
-          style={{ background: AURA_BG }}
-        />
-      ) : (
-        <motion.div
-          aria-hidden
-          className="pointer-events-none absolute left-1/2 top-1/2 size-[120%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl"
-          style={{ background: AURA_BG }}
-          initial={{ opacity: 0, scale: 0.7 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.2, ease: EASE_EXPO }}
-        />
-      )}
+      <Aura />
 
       {reduce
         ? null
