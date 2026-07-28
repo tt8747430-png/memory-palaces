@@ -1,4 +1,4 @@
-import { type ReactNode, type RefObject } from 'react'
+import { type ReactNode, type RefObject, useId } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BookOpen, Check, Lightbulb, MapPin, MessageSquareText, Plus, X } from 'lucide-react'
 import { cn } from '@/shared/lib'
@@ -7,18 +7,21 @@ import { MAX_OPTIONS, MIN_OPTIONS } from './editor-helpers'
 
 function FieldLabel({
   children,
+  htmlFor,
   count,
   icon,
   emphasis = false,
 }: {
   children: ReactNode
+  htmlFor: string
   count?: number
   icon?: ReactNode
   emphasis?: boolean
 }) {
   return (
     <div className="mb-2 flex items-baseline justify-between gap-2">
-      <span
+      <label
+        htmlFor={htmlFor}
         className={cn(
           'inline-flex items-center gap-1.5 text-heading',
           emphasis
@@ -32,7 +35,7 @@ function FieldLabel({
           </span>
         ) : null}
         {children}
-      </span>
+      </label>
       {count !== undefined ? (
         <span className="text-[length:var(--p-text-tiny)] tabular-nums text-muted-foreground">
           {count}
@@ -64,18 +67,22 @@ export function CardFields({
   frontRef?: RefObject<HTMLInputElement | null>
 }) {
   const { t } = useTranslation()
+  const ids = useId()
+  const fieldId = (name: string) => `${ids}-${name}`
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-4">
         <div>
           <FieldLabel
             emphasis
+            htmlFor={fieldId('front')}
             count={front.length}
             icon={<MessageSquareText className="size-[18px] text-heading" aria-hidden />}
           >
             {t('cards.editor.front')}
           </FieldLabel>
           <Input
+            id={fieldId('front')}
             ref={frontRef}
             value={front}
             onChange={(e) => onFront(e.target.value)}
@@ -86,12 +93,14 @@ export function CardFields({
         <div>
           <FieldLabel
             emphasis
+            htmlFor={fieldId('back')}
             count={back.length}
             icon={<BookOpen className="size-[18px] text-heading" aria-hidden />}
           >
             {t('cards.editor.back')}
           </FieldLabel>
           <Textarea
+            id={fieldId('back')}
             value={back}
             onChange={(e) => onBack(e.target.value)}
             placeholder={t('cards.editor.backPlaceholder')}
@@ -102,10 +111,14 @@ export function CardFields({
 
       <div className="flex flex-col gap-4 border-t border-border pt-5">
         <div>
-          <FieldLabel icon={<MapPin className="size-3.5 text-accent" aria-hidden />}>
+          <FieldLabel
+            htmlFor={fieldId('hint')}
+            icon={<MapPin className="size-3.5 text-accent" aria-hidden />}
+          >
             {t('cards.editor.hint')}
           </FieldLabel>
           <Textarea
+            id={fieldId('hint')}
             value={hint}
             onChange={(e) => onHint(e.target.value)}
             placeholder={t('cards.editor.hintPlaceholder')}
@@ -114,11 +127,13 @@ export function CardFields({
         </div>
         <div>
           <FieldLabel
+            htmlFor={fieldId('tip')}
             icon={<Lightbulb className="size-3.5 text-[var(--warning-foreground)]" aria-hidden />}
           >
             {t('cards.editor.tip')}
           </FieldLabel>
           <Textarea
+            id={fieldId('tip')}
             value={tip}
             onChange={(e) => onTip(e.target.value)}
             placeholder={t('cards.editor.tipPlaceholder')}
@@ -154,11 +169,16 @@ export function QuestionFields({
   onExplanation: (value: string) => void
 }) {
   const { t } = useTranslation()
+  const ids = useId()
+  const fieldId = (name: string) => `${ids}-${name}`
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <FieldLabel count={prompt.length}>{t('questions.editor.prompt')}</FieldLabel>
+        <FieldLabel htmlFor={fieldId('prompt')} count={prompt.length}>
+          {t('questions.editor.prompt')}
+        </FieldLabel>
         <Textarea
+          id={fieldId('prompt')}
           value={prompt}
           onChange={(e) => onPrompt(e.target.value)}
           placeholder={t('questions.editor.promptPlaceholder')}
@@ -167,7 +187,7 @@ export function QuestionFields({
       </div>
 
       <div>
-        <FieldLabel>{t('questions.editor.options')}</FieldLabel>
+        <FieldLabel htmlFor={fieldId('option-0')}>{t('questions.editor.options')}</FieldLabel>
         <p className="-mt-1 mb-2 text-[length:var(--p-text-label)] text-muted-foreground">
           {t('questions.editor.optionsHint')}
         </p>
@@ -201,6 +221,7 @@ export function QuestionFields({
                   )}
                 </button>
                 <Input
+                  id={fieldId(`option-${i}`)}
                   value={opt}
                   onChange={(e) => onOption(i, e.target.value)}
                   placeholder={t('questions.editor.optionPlaceholder', {
@@ -235,8 +256,11 @@ export function QuestionFields({
       </div>
 
       <div>
-        <FieldLabel>{t('questions.editor.explanation')}</FieldLabel>
+        <FieldLabel htmlFor={fieldId('explanation')}>
+          {t('questions.editor.explanation')}
+        </FieldLabel>
         <Textarea
+          id={fieldId('explanation')}
           value={explanation}
           onChange={(e) => onExplanation(e.target.value)}
           placeholder={t('questions.editor.explanationPlaceholder')}

@@ -1,8 +1,8 @@
-import { type ReactNode, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Check } from 'lucide-react'
-import { cn } from '@/shared/lib'
-import { Button, Sheet, Input } from '@/shared/ui'
+import { Button, Sheet } from '@/shared/ui'
+import { CardFields } from '@/widgets/content-editor'
 import type { Card } from '@/entities/card'
 import type { CardChanges } from '../model/types'
 
@@ -12,9 +12,6 @@ export interface InStudyEditorProps {
   onClose: () => void
   onSave: (changes: CardChanges) => void
 }
-
-const fieldClass =
-  'w-full rounded-control border border-border bg-card px-3.5 py-3 text-[length:var(--p-text-body)] text-foreground placeholder:text-muted-foreground'
 
 export function InStudyEditor({ open, card, onClose, onSave }: InStudyEditorProps) {
   const { t } = useTranslation()
@@ -55,54 +52,18 @@ export function InStudyEditor({ open, card, onClose, onSave }: InStudyEditorProp
         </Button>
       }
     >
-      <div className="flex flex-col gap-3 pb-2">
-        <Field label={t('study.frontLabel')}>
-          <Input
-            value={front}
-            onChange={(event) => setFront(event.target.value)}
-            placeholder={t('study.frontPlaceholder')}
-            enterKeyHint="next"
-          />
-        </Field>
-        <Field label={t('study.backLabel')}>
-          <textarea
-            value={back}
-            onChange={(event) => setBack(event.target.value)}
-            placeholder={t('study.backPlaceholder')}
-            rows={3}
-            className={cn(fieldClass, 'resize-none')}
-          />
-        </Field>
-        <Field label={t('study.placeLabel')}>
-          <textarea
-            value={hint}
-            onChange={(event) => setHint(event.target.value)}
-            placeholder={t('study.placePlaceholder')}
-            rows={2}
-            className={cn(fieldClass, 'resize-none')}
-          />
-        </Field>
-        <Field label={t('study.tipLabel')}>
-          <textarea
-            value={tip}
-            onChange={(event) => setTip(event.target.value)}
-            placeholder={t('study.tipPlaceholder')}
-            rows={2}
-            className={cn(fieldClass, 'resize-none')}
-          />
-        </Field>
+      <div className="pb-2">
+        <CardFields
+          front={front}
+          back={back}
+          hint={hint}
+          tip={tip}
+          onFront={setFront}
+          onBack={setBack}
+          onHint={setHint}
+          onTip={setTip}
+        />
       </div>
     </Sheet>
-  )
-}
-
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-[length:var(--p-text-label)] font-semibold text-heading">
-        {label}
-      </span>
-      {children}
-    </label>
   )
 }

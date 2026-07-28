@@ -7,6 +7,7 @@ import {
   Button,
   ConfirmDialog,
   Input,
+  LabelledField,
   ScreenHeader,
   SettingsRow,
   SettingsSection,
@@ -14,7 +15,6 @@ import {
 import { BIO_MAX, useProfileForm } from '../model/use-profile-form'
 import { useDeleteAccount } from '../model/use-delete-account'
 import { AvatarPicker } from './AvatarPicker'
-import { LabelledField } from './LabelledField'
 import { PasswordRow } from './PasswordRow'
 import { EASE_OUT } from '@/shared/lib'
 
