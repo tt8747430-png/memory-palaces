@@ -16,6 +16,7 @@ import { useDeleteAccount } from '../model/use-delete-account'
 import { AvatarPicker } from './AvatarPicker'
 import { LabelledField } from './LabelledField'
 import { PasswordRow } from './PasswordRow'
+import { EASE_OUT } from '@/shared/lib'
 
 export interface SettingsProfilePageProps {
   onBack?: () => void
@@ -47,7 +48,7 @@ export function SettingsProfilePage({
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.25, ease: EASE_OUT }}
         className="mt-4 flex flex-col gap-6 pb-gutter"
       >
         <AvatarPicker

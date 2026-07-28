@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useSessionStore } from '@/entities/session'
 import { Button, WordReveal } from '@/shared/ui'
 import { Threshold } from '@/widgets/threshold'
+import { EASE_EXPO } from '@/shared/lib'
 
 export interface WelcomePageProps {
   onContinue: () => void
@@ -37,7 +38,7 @@ export function WelcomePage({ onContinue }: WelcomePageProps) {
           style={{ background: AURA_BG }}
           initial={{ opacity: 0, scale: 0.7 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 1.2, ease: EASE_EXPO }}
         />
       )}
 
@@ -73,7 +74,7 @@ export function WelcomePage({ onContinue }: WelcomePageProps) {
           className="text-balance text-[length:var(--p-text-sub)] text-white/85"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: reduce ? 0 : 1.0, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ delay: reduce ? 0 : 1.0, duration: 0.5, ease: EASE_EXPO }}
         >
           {t('auth.welcome.body')}
         </motion.p>
@@ -83,7 +84,7 @@ export function WelcomePage({ onContinue }: WelcomePageProps) {
         className="relative z-10 w-full max-w-[360px]"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: reduce ? 0 : 1.25, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ delay: reduce ? 0 : 1.25, duration: 0.5, ease: EASE_EXPO }}
       >
         <Button
           variant="ghost"

@@ -4,8 +4,7 @@ import { useTranslation } from 'react-i18next'
 import type { Achievement, AchievementId } from '@/shared/lib'
 import { BadgeMedallion } from '@/shared/ui'
 import { ACHIEVEMENT_META } from './meta'
-
-const EASE_OUT = [0.22, 1, 0.36, 1] as const
+import { EASE_OUT } from '@/shared/lib'
 
 export interface AchievementGridProps {
   achievements: ReadonlyArray<Achievement>

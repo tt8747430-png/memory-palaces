@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react'
 import { motion } from 'motion/react'
-import { cn } from '@/shared/lib'
+import { cn, EASE_OUT } from '@/shared/lib'
 
 export interface EmptyProps {
   icon?: ReactNode
@@ -10,8 +10,6 @@ export interface EmptyProps {
   action?: ReactNode
   className?: string
 }
-
-const EASE_OUT = [0.16, 1, 0.3, 1] as const
 
 export function Empty({ icon, emoji, title, description, action, className }: EmptyProps) {
   return (

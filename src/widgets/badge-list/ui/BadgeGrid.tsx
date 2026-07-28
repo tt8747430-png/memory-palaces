@@ -4,8 +4,7 @@ import { useTranslation } from 'react-i18next'
 import type { Badge, BadgeId } from '@/shared/lib'
 import { BadgeMedallion, TierPips } from '@/shared/ui'
 import { BADGE_META, compactNumber } from './meta'
-
-const EASE_OUT = [0.22, 1, 0.36, 1] as const
+import { EASE_OUT } from '@/shared/lib'
 
 export interface BadgeGridProps {
   badges: ReadonlyArray<Badge>

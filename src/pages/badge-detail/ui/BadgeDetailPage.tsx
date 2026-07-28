@@ -8,6 +8,7 @@ import {
   cn,
   computeBadges,
   computeTrainingTotals,
+  EASE_OUT,
   milestoneProgress,
   totalTrainingDays,
 } from '@/shared/lib'
@@ -16,8 +17,6 @@ import { selectDecks, useDeckStore } from '@/entities/deck'
 import { selectCards, useCardStore } from '@/entities/card'
 import { BADGE_META } from '@/widgets/badge-list'
 import { AppScreen, BadgeMedallion, cardSurface, Progress, ScreenHeader } from '@/shared/ui'
-
-const EASE_OUT = [0.22, 1, 0.36, 1] as const
 
 const BADGE_IDS: readonly BadgeId[] = ['xp', 'streak', 'decks', 'library', 'cards', 'days']
 const isBadgeId = (value: string): value is BadgeId =>

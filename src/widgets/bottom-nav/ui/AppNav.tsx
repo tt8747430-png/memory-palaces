@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { House, User } from 'lucide-react'
 import { type RoutePath, ROUTES } from '@/shared/config/routes'
-import { cn, useAppNavHidden } from '@/shared/lib'
+import { cn, EASE_EXPO, useAppNavHidden } from '@/shared/lib'
 
 interface Tab {
   to: typeof ROUTES.home | typeof ROUTES.profile
@@ -53,7 +53,7 @@ export function AppNav() {
             initial={reduce ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.94 }}
             animate={reduce ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
             exit={reduce ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.94 }}
-            transition={reduce ? { duration: 0 } : { duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+            transition={reduce ? { duration: 0 } : { duration: 0.24, ease: EASE_EXPO }}
             className="relative"
           >
             <div

@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
 import { type HTMLMotionProps, motion, useReducedMotion } from 'motion/react'
 import type { StudyMode } from '@/entities/preferences'
-import { recallAnswer } from '@/shared/lib'
+import { EASE_EXPO, recallAnswer } from '@/shared/lib'
 import type { FlashcardSwipeConfig, SwipeDirection } from '@/shared/config/flashcard-swipe'
 import { BackFace, type FaceProps, FrontFace, type MechanicHandlers } from './faces'
 import { DEPTH_POSE, PROMOTION, STACK_DEPTH } from './deck-poses'
@@ -153,7 +153,7 @@ export function StudyDeck({
         >
           <motion.div
             animate={{ rotateY: showBack ? 180 : 0 }}
-            transition={reduce ? { duration: 0 } : { duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            transition={reduce ? { duration: 0 } : { duration: 0.5, ease: EASE_EXPO }}
             style={{ transformStyle: 'preserve-3d' }}
             className="relative h-full w-full"
           >

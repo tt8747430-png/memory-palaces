@@ -2,7 +2,7 @@ import { type SyntheticEvent, useState } from 'react'
 import { motion, type Variants } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Mail } from 'lucide-react'
-import { isEmail } from '@/shared/lib'
+import { EASE_EXPO, isEmail } from '@/shared/lib'
 import { AuthField, AuthScreen, Button, PasswordField, SocialButtons } from '@/shared/ui'
 import { AuthLogo } from '@/widgets/threshold'
 import { useAuthActions } from '@/features/session'
@@ -14,15 +14,13 @@ export interface LoginPageProps {
   onForgot: () => void
 }
 
-const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1]
-
 const stagger: Variants = {
   initial: {},
   animate: { transition: { staggerChildren: 0.07, delayChildren: 0.04 } },
 }
 const rise: Variants = {
   initial: { opacity: 0, y: 10 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: EASE } },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: EASE_EXPO } },
 }
 
 export function LoginPage({ onAuthed, onGuest, onSignup, onForgot }: LoginPageProps) {

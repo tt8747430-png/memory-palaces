@@ -5,12 +5,10 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import type { Deck } from '@/entities/deck'
 import type { Card } from '@/entities/card'
 import type { SwipeConfig } from '@/shared/config/swipe'
-import { cn, dueCountsPerDeck, type FlatDeck, useLongPress } from '@/shared/lib'
+import { cn, dueCountsPerDeck, EASE_OUT, type FlatDeck, useLongPress } from '@/shared/lib'
 import { buildSwipeActions, type SwipeActionHandlers, SwipeRow } from '@/shared/ui'
 import { DeckRowBody } from './deck-row'
 import { DECK_ROW_FRAME, TOGGLE_BASE, toggleFrame, toggleSurface } from './row-style'
-
-const EASE_OUT = [0.22, 1, 0.36, 1] as const
 
 const TREE_INDENT = 22
 

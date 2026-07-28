@@ -3,6 +3,7 @@ import { motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { WordReveal } from '@/shared/ui'
 import { Threshold } from '@/widgets/threshold'
+import { EASE_EXPO } from '@/shared/lib'
 
 export interface SplashOverlayProps {
   onDone: () => void
@@ -54,7 +55,7 @@ export function SplashOverlay({ onDone }: SplashOverlayProps) {
           style={{ background: AURA_BG }}
           initial={{ opacity: 0, scale: 0.7 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 1.2, ease: EASE_EXPO }}
         />
       )}
 
@@ -64,7 +65,7 @@ export function SplashOverlay({ onDone }: SplashOverlayProps) {
           className="pointer-events-none absolute left-1/2 top-1/2 z-0 size-44 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/30"
           initial={{ opacity: 0.5, scale: 0.6 }}
           animate={{ opacity: 0, scale: 1.9 }}
-          transition={{ duration: 1.7, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 1.7, delay: 0.35, ease: EASE_EXPO }}
         />
       )}
 

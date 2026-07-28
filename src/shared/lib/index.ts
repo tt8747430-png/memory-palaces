@@ -1,5 +1,5 @@
 export { cn } from './cn'
-export { authEntrance } from './motion'
+export { authEntrance, EASE_EXPO, EASE_OUT, EASE_OUT_CSS } from './motion'
 export { coverSquare, fileToAvatar, type CropRect } from './avatar'
 export { downloadText } from './download'
 export { useStickyHeader, type StickyHeader } from './sticky-header/use-sticky-header'

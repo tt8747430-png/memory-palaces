@@ -18,7 +18,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { X } from 'lucide-react'
 import { type SelectActionId, type SelectToolbarConfig } from '@/shared/config/select-toolbar'
-import { cn, useSortableSensors } from '@/shared/lib'
+import { cn, EASE_OUT_CSS, useSortableSensors } from '@/shared/lib'
 import { cardSurface, selectActionIcon } from '@/shared/ui'
 
 export interface ToolbarEditorProps {
@@ -69,7 +69,7 @@ export function ToolbarEditor({ actions, canRemove, onReorder, onRemove }: Toolb
           </div>
         </SortableContext>
 
-        <DragOverlay dropAnimation={{ duration: 200, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }}>
+        <DragOverlay dropAnimation={{ duration: 200, easing: EASE_OUT_CSS }}>
           {activeId ? <Tile action={activeId} floating /> : null}
         </DragOverlay>
       </DndContext>

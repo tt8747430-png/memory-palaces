@@ -2,7 +2,7 @@ import { type ReactNode } from 'react'
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Building2, Flame, Zap } from 'lucide-react'
-import { levelFromXp } from '@/shared/lib'
+import { EASE_OUT, levelFromXp } from '@/shared/lib'
 import { Avatar, Progress } from '@/shared/ui'
 
 export interface ProfileHeroProps {
@@ -16,8 +16,6 @@ export interface ProfileHeroProps {
   onEditProfile: () => void
   onOpenStreak: () => void
 }
-
-const EASE_OUT = [0.22, 1, 0.36, 1] as const
 
 export function ProfileHero({
   name,

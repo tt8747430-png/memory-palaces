@@ -7,6 +7,7 @@ import {
   cn,
   computeAchievements,
   computeTrainingTotals,
+  EASE_OUT,
   isDeckCompleted,
   levelFromXp,
   selectIsReady,
@@ -150,8 +151,6 @@ export function AchievementsPage({ onBack, onOpenAchievement }: AchievementsPage
     </AppScreen>
   )
 }
-
-const EASE_OUT = [0.22, 1, 0.36, 1] as const
 
 function AchievementsSkeleton() {
   return (

@@ -25,7 +25,7 @@ import {
   type SwipeConfig,
   type SwipeItemType,
 } from '@/shared/config/swipe'
-import { cn, useSortableSensors } from '@/shared/lib'
+import { cn, EASE_OUT_CSS, useSortableSensors } from '@/shared/lib'
 import { swipeActionIcon } from '@/shared/ui'
 import { accentOf } from './swipe-accent'
 
@@ -125,7 +125,7 @@ export function SwipePreview({ type, config, onChange }: SwipePreviewProps) {
         <PreviewCaps side="trailing" ids={items.trailing} />
       </div>
 
-      <DragOverlay dropAnimation={{ duration: 200, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }}>
+      <DragOverlay dropAnimation={{ duration: 200, easing: EASE_OUT_CSS }}>
         {activeId ? <Cap action={activeId} floating /> : null}
       </DragOverlay>
     </DndContext>

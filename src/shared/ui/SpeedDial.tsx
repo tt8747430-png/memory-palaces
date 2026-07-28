@@ -1,7 +1,7 @@
 import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { Plus } from 'lucide-react'
-import { cn } from '@/shared/lib'
+import { cn, EASE_OUT } from '@/shared/lib'
 
 export interface SpeedDialAction {
   id: string
@@ -15,8 +15,6 @@ export interface SpeedDialProps {
   actions: SpeedDialAction[]
   className?: string
 }
-
-const EASE_OUT = [0.22, 1, 0.36, 1] as const
 
 export function SpeedDial({ label, actions, className }: SpeedDialProps) {
   const [open, setOpen] = useState(false)

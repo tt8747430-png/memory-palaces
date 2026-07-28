@@ -2,7 +2,7 @@ import { useEffect, useReducer, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Check, Puzzle, RotateCcw, Timer, X, Zap } from 'lucide-react'
-import { cn, success } from '@/shared/lib'
+import { cn, EASE_EXPO, success } from '@/shared/lib'
 import { Button, Chip, IconButton } from '@/shared/ui'
 import {
   buildTiles,
@@ -124,7 +124,7 @@ export function MatchBoard({ cards, subtitle, onBack, onComplete }: MatchBoardPr
                   layout={!reduce}
                   initial={false}
                   exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.7 }}
-                  transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                  transition={{ duration: 0.2, ease: EASE_EXPO }}
                   animate={isWrong && !reduce ? { x: [0, -7, 7, -5, 5, 0] } : { x: 0 }}
                   onClick={() => dispatch({ type: 'pick', tileId: tile.id })}
                   className={cn(

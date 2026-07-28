@@ -1,4 +1,5 @@
 import { useCallback, useRef } from 'react'
+import { EASE_OUT_CSS } from './motion'
 
 export interface StackOrigin {
   top: number
@@ -15,7 +16,6 @@ const MAX_MS = 420
 const MS_PER_PX = 0.25
 const STAGGER_MS = 18
 const MAX_STAGGER_MS = 90
-const EASE_OUT = 'cubic-bezier(0.22, 1, 0.36, 1)'
 
 export function useStackLanding(): StackLanding {
   const nodes = useRef(new Map<string, HTMLElement>())
@@ -52,7 +52,7 @@ export function useStackLanding(): StackLanding {
           {
             duration: Math.min(MAX_MS, MIN_MS + distance * MS_PER_PX),
             delay: Math.min(MAX_STAGGER_MS, index * STAGGER_MS),
-            easing: EASE_OUT,
+            easing: EASE_OUT_CSS,
             fill: 'backwards',
           },
         )

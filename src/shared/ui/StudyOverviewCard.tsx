@@ -3,6 +3,7 @@ import { motion } from 'motion/react'
 import { Check, GraduationCap } from 'lucide-react'
 import { Button } from './primitives/button'
 import { GlassCard } from './GlassCard'
+import { EASE_OUT } from '@/shared/lib'
 
 export interface StudyOverviewCardProps {
   count: number
@@ -49,7 +50,7 @@ export function StudyOverviewCard({
         <motion.p
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.35, ease: EASE_OUT }}
           className="text-[56px] font-bold leading-none tabular-nums text-heading"
         >
           {count}
