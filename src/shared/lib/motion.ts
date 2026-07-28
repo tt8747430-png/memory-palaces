@@ -12,3 +12,14 @@ export const authEntrance = {
   animate: { opacity: 1, y: 0 },
   transition: { duration: 0.22, ease: EASE_EXPO },
 }
+
+/** The auth screens reveal their header, form and footer in sequence. */
+export const authStagger = {
+  initial: {},
+  animate: { transition: { staggerChildren: 0.07, delayChildren: 0.04 } },
+}
+
+export const authRise = {
+  initial: { opacity: 0, y: 10 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: EASE_EXPO } },
+}

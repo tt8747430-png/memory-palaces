@@ -3,9 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { selectEffectiveProfile, useProfileStore, useProfileStoreApi } from '@/entities/profile'
 import { setProfile } from '@/features/profile'
-import { fileToAvatar, selectIsReady } from '@/shared/lib'
+import { fileToAvatar, isEmail, selectIsReady } from '@/shared/lib'
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MIN_PHONE_DIGITS = 6
 export const BIO_MAX = 200
 
@@ -67,7 +66,7 @@ export function useProfileForm(onSaved?: () => void): ProfileFormControl {
       [key]: key === 'bio' ? String(next).slice(0, BIO_MAX) : next,
     }))
 
-  const emailValid = value.email.trim() === '' || EMAIL_RE.test(value.email.trim())
+  const emailValid = value.email.trim() === '' || isEmail(value.email.trim())
   const phoneValid =
     value.phone.trim() === '' || value.phone.replace(/\D/g, '').length >= MIN_PHONE_DIGITS
 

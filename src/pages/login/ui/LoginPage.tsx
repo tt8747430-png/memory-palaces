@@ -1,8 +1,8 @@
 import { type SyntheticEvent, useState } from 'react'
-import { motion, type Variants } from 'motion/react'
+import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Mail } from 'lucide-react'
-import { EASE_EXPO, isEmail } from '@/shared/lib'
+import { authRise, authStagger, isEmail } from '@/shared/lib'
 import { AuthField, AuthScreen, Button, PasswordField, SocialButtons } from '@/shared/ui'
 import { AuthLogo } from '@/widgets/threshold'
 import { useAuthActions } from '@/features/session'
@@ -12,15 +12,6 @@ export interface LoginPageProps {
   onGuest: () => void
   onSignup: () => void
   onForgot: () => void
-}
-
-const stagger: Variants = {
-  initial: {},
-  animate: { transition: { staggerChildren: 0.07, delayChildren: 0.04 } },
-}
-const rise: Variants = {
-  initial: { opacity: 0, y: 10 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: EASE_EXPO } },
 }
 
 export function LoginPage({ onAuthed, onGuest, onSignup, onForgot }: LoginPageProps) {
@@ -53,12 +44,12 @@ export function LoginPage({ onAuthed, onGuest, onSignup, onForgot }: LoginPagePr
   return (
     <AuthScreen>
       <motion.div
-        variants={stagger}
+        variants={authStagger}
         initial="initial"
         animate="animate"
         className="flex flex-1 flex-col justify-center gap-8 py-10"
       >
-        <motion.header variants={rise} className="flex flex-col items-center gap-4 text-center">
+        <motion.header variants={authRise} className="flex flex-col items-center gap-4 text-center">
           <AuthLogo className="size-16" />
           <div className="flex flex-col gap-1.5">
             <h1 className="text-balance text-[length:var(--p-text-headline)] font-bold tracking-tight text-heading">
@@ -69,7 +60,7 @@ export function LoginPage({ onAuthed, onGuest, onSignup, onForgot }: LoginPagePr
         </motion.header>
 
         <motion.form
-          variants={rise}
+          variants={authRise}
           className="flex flex-col gap-4"
           onSubmit={handleSubmit}
           noValidate
@@ -112,18 +103,18 @@ export function LoginPage({ onAuthed, onGuest, onSignup, onForgot }: LoginPagePr
           </Button>
         </motion.form>
 
-        <motion.div variants={rise}>
+        <motion.div variants={authRise}>
           <Button variant="ghost" size="lg" className="w-full" onClick={handleGuest}>
             {t('auth.continueAsGuest')}
           </Button>
         </motion.div>
 
-        <motion.div variants={rise}>
+        <motion.div variants={authRise}>
           <SocialButtons />
         </motion.div>
 
         <motion.p
-          variants={rise}
+          variants={authRise}
           className="text-center text-[length:var(--p-text-label)] text-muted-foreground"
         >
           {t('auth.login.noAccount')}{' '}

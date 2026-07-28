@@ -1,8 +1,8 @@
 import { type SyntheticEvent, useId, useState } from 'react'
-import { motion, type Variants } from 'motion/react'
+import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Mail, User } from 'lucide-react'
-import { EASE_EXPO, isEmail } from '@/shared/lib'
+import { authRise, authStagger, isEmail, isLongEnoughPassword } from '@/shared/lib'
 import { LEGAL_URLS } from '@/shared/config/constants'
 import { AuthField, AuthScreen, Button, PasswordField, SocialButtons } from '@/shared/ui'
 import { AuthLogo } from '@/widgets/threshold'
@@ -12,17 +12,6 @@ export interface SignupPageProps {
   onSuccess: () => void
   onGuest: () => void
   onLogin: () => void
-}
-
-const MIN_PASSWORD = 8
-
-const stagger: Variants = {
-  initial: {},
-  animate: { transition: { staggerChildren: 0.07, delayChildren: 0.04 } },
-}
-const rise: Variants = {
-  initial: { opacity: 0, y: 10 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: EASE_EXPO } },
 }
 
 export function SignupPage({ onSuccess, onGuest, onLogin }: SignupPageProps) {
@@ -49,7 +38,7 @@ export function SignupPage({ onSuccess, onGuest, onLogin }: SignupPageProps) {
     if (!email.trim()) next.email = t('auth.errors.emailRequired')
     else if (!isEmail(email)) next.email = t('auth.errors.emailInvalid')
     if (!password) next.password = t('auth.errors.passwordRequired')
-    else if (password.length < MIN_PASSWORD) next.password = t('auth.errors.passwordShort')
+    else if (!isLongEnoughPassword(password)) next.password = t('auth.errors.passwordShort')
     if (!agreed) next.terms = t('auth.errors.termsRequired')
     setErrors(next)
     if (next.name || next.email || next.password || next.terms) return
@@ -67,12 +56,12 @@ export function SignupPage({ onSuccess, onGuest, onLogin }: SignupPageProps) {
   return (
     <AuthScreen>
       <motion.div
-        variants={stagger}
+        variants={authStagger}
         initial="initial"
         animate="animate"
         className="flex flex-1 flex-col justify-center gap-7 py-10"
       >
-        <motion.header variants={rise} className="flex flex-col items-center gap-4 text-center">
+        <motion.header variants={authRise} className="flex flex-col items-center gap-4 text-center">
           <AuthLogo className="size-16" />
           <div className="flex flex-col gap-1.5">
             <h1 className="text-balance text-[length:var(--p-text-headline)] font-bold tracking-tight text-heading">
@@ -83,7 +72,7 @@ export function SignupPage({ onSuccess, onGuest, onLogin }: SignupPageProps) {
         </motion.header>
 
         <motion.form
-          variants={rise}
+          variants={authRise}
           className="flex flex-col gap-4"
           onSubmit={handleSubmit}
           noValidate
@@ -173,18 +162,18 @@ export function SignupPage({ onSuccess, onGuest, onLogin }: SignupPageProps) {
           </Button>
         </motion.form>
 
-        <motion.div variants={rise}>
+        <motion.div variants={authRise}>
           <Button variant="ghost" size="lg" className="w-full" onClick={handleGuest}>
             {t('auth.continueAsGuest')}
           </Button>
         </motion.div>
 
-        <motion.div variants={rise}>
+        <motion.div variants={authRise}>
           <SocialButtons />
         </motion.div>
 
         <motion.p
-          variants={rise}
+          variants={authRise}
           className="text-center text-[length:var(--p-text-label)] text-muted-foreground"
         >
           {t('auth.signup.haveAccount')}{' '}

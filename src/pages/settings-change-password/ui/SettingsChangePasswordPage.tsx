@@ -1,9 +1,8 @@
 import { type SyntheticEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
+import { isLongEnoughPassword } from '@/shared/lib'
 import { AppScreen, Button, PasswordField, ScreenHeader } from '@/shared/ui'
-
-const MIN_PASSWORD = 8
 
 export interface SettingsChangePasswordPageProps {
   onBack?: () => void
@@ -16,12 +15,12 @@ export function SettingsChangePasswordPage({ onBack }: SettingsChangePasswordPag
   const [confirm, setConfirm] = useState('')
 
   const nextError =
-    next.length > 0 && next.length < MIN_PASSWORD
+    next.length > 0 && !isLongEnoughPassword(next)
       ? t('settings.changePasswordScreen.short')
       : undefined
   const confirmError =
     confirm.length > 0 && confirm !== next ? t('settings.changePasswordScreen.mismatch') : undefined
-  const canSave = current.length > 0 && next.length >= MIN_PASSWORD && confirm === next
+  const canSave = current.length > 0 && isLongEnoughPassword(next) && confirm === next
 
   const handleSubmit = (event: SyntheticEvent) => {
     event.preventDefault()
