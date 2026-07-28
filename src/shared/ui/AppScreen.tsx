@@ -1,7 +1,7 @@
 import { type ReactNode, useCallback, useLayoutEffect, useRef } from 'react'
 import { cn, HeaderElevationContext, useKeyboardReveal, useStickyHeader } from '@/shared/lib'
 
-const SCROLL = 'overflow-y-auto overscroll-contain scrollbar-hide px-5'
+const SCROLL = 'overflow-y-auto overscroll-contain scrollbar-hide px-5 pt-pan'
 
 const SCROLL_SAFE = 'pb-safe'
 

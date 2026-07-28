@@ -88,12 +88,18 @@
   }
 
   /* Standalone WebKit does NOT re-anchor position:fixed during the keyboard pan (a Safari tab
-     does), so the fixed shell rides off the top by --vv-top; ride the chrome back. Translating
-     in-tab would double the pan — ADR 0002's header-dive trap. */
+     does), so the fixed shell rides off the top by --vv-top. Ride the chrome back down, and give
+     the scroll body the same offset as range at its top — the chrome moves alone otherwise and
+     covers the first --vv-top of content, which cannot be scrolled out from under it. Both halves
+     are in-tab no-ops: compensating there would double the pan (ADR 0002's header-dive trap). */
   @media (display-mode: standalone) {
     [data-keyboard] [data-slot='header-bar'],
     [data-keyboard] [data-slot='status-cap'] {
       translate: 0 var(--vv-top, 0px);
+    }
+
+    [data-keyboard] .pt-pan {
+      padding-top: var(--vv-top, 0px);
     }
   }
 
@@ -224,6 +230,10 @@
 
   .pt-safe {
     padding-top: env(safe-area-inset-top);
+  }
+
+  .pt-pan {
+    padding-top: 0px;
   }
 
   .pb-safe {

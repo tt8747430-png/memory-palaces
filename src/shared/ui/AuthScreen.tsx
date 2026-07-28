@@ -68,7 +68,7 @@ export function AuthScreen({ children, className }: { children: ReactNode; class
       <AuthAtmosphere />
       <div
         ref={revealScroll}
-        className="relative h-full overflow-y-auto overscroll-none scrollbar-hide"
+        className="pt-pan relative h-full overflow-y-auto overscroll-none scrollbar-hide"
       >
         <div
           className={cn(
