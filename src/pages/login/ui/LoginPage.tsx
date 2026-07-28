@@ -1,8 +1,7 @@
 import { type SyntheticEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Mail } from 'lucide-react'
 import { isEmail } from '@/shared/lib'
-import { AuthField, PasswordField } from '@/shared/ui'
+import { EmailField, PasswordField } from '@/shared/ui'
 import { AuthForm } from '@/widgets/threshold'
 import { useAuthActions } from '@/features/session'
 
@@ -58,19 +57,7 @@ export function LoginPage({ onAuthed, onGuest, onSignup, onForgot }: LoginPagePr
         </>
       }
     >
-      <AuthField
-        id="email"
-        label={t('auth.emailLabel')}
-        type="email"
-        inputMode="email"
-        autoComplete="email"
-        placeholder={t('auth.emailPlaceholder')}
-        icon={<Mail />}
-        value={email}
-        onValueChange={setEmail}
-        valid={isEmail(email)}
-        error={errors.email}
-      />
+      <EmailField value={email} onValueChange={setEmail} error={errors.email} />
       <PasswordField
         id="password"
         label={t('auth.passwordLabel')}

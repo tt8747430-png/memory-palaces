@@ -1,9 +1,9 @@
 import { type SyntheticEvent, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Mail, User } from 'lucide-react'
+import { User } from 'lucide-react'
 import { isEmail, isLongEnoughPassword } from '@/shared/lib'
 import { LEGAL_URLS } from '@/shared/config/constants'
-import { AuthField, PasswordField } from '@/shared/ui'
+import { AuthField, EmailField, PasswordField } from '@/shared/ui'
 import { AuthForm } from '@/widgets/threshold'
 import { useAuthActions } from '@/features/session'
 
@@ -80,19 +80,7 @@ export function SignupPage({ onSuccess, onGuest, onLogin }: SignupPageProps) {
         onValueChange={setName}
         error={errors.name}
       />
-      <AuthField
-        id="email"
-        label={t('auth.emailLabel')}
-        type="email"
-        inputMode="email"
-        autoComplete="email"
-        placeholder={t('auth.emailPlaceholder')}
-        icon={<Mail />}
-        value={email}
-        onValueChange={setEmail}
-        valid={isEmail(email)}
-        error={errors.email}
-      />
+      <EmailField value={email} onValueChange={setEmail} error={errors.email} />
       <PasswordField
         id="password"
         label={t('auth.passwordLabel')}

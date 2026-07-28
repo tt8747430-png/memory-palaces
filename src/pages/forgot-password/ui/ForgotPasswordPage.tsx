@@ -1,9 +1,9 @@
 import { type SyntheticEvent, useEffect, useState } from 'react'
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft, Mail, MailCheck } from 'lucide-react'
+import { ArrowLeft, MailCheck } from 'lucide-react'
 import { authEntrance, isEmail, useAuthGateway } from '@/shared/lib'
-import { AuthField, AuthScreen, Button } from '@/shared/ui'
+import { AuthScreen, Button, EmailField } from '@/shared/ui'
 import { AuthLogo } from '@/widgets/threshold'
 import { requestPasswordReset } from '@/features/session'
 
@@ -108,19 +108,7 @@ export function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) {
           </Button>
         ) : (
           <form className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
-            <AuthField
-              id="email"
-              label={t('auth.emailLabel')}
-              type="email"
-              inputMode="email"
-              autoComplete="email"
-              placeholder={t('auth.emailPlaceholder')}
-              icon={<Mail />}
-              value={email}
-              onValueChange={setEmail}
-              valid={isEmail(email)}
-              error={error}
-            />
+            <EmailField value={email} onValueChange={setEmail} error={error} />
             <Button type="submit" size="lg" className="w-full" disabled={busy}>
               {busy ? t('auth.forgot.submitting') : t('auth.forgot.submit')}
             </Button>

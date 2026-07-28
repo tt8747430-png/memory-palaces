@@ -42,10 +42,10 @@ One file: `npx vitest run src/shared/lib/srs.test.ts` · one test: `npx vitest r
 **Entities** (`src/entities/<x>/`, reference `card/`) — framework-agnostic:
 
 - `model/types.ts` — types + `makeX()`/`updateX()`: trim, validate, **throw on invariant violation**. No IO, no React.
-- `model/store.ts` — vanilla Zustand `createXStore(repo)`; `start()` subscribes `repo.observe()` → state; `save()`/`remove()` delegate.
-- `model/selectors.ts` pure reads · `model/context.ts` → `useXStore(selector)` / `useXStoreApi()` · `api/<x>-repository.ts` port · `index.ts` barrel.
+- `model/store.ts` — `createCollectionStore(key, repo, compare)` or `createSingletonStore(key, repo)` from `shared/lib`; the slice declares only its state key and ordering. Never hand-roll the lifecycle.
+- `model/selectors.ts` pure reads (readiness is the shared `selectIsReady`) · `model/context.ts` → `createStoreContext<XState>('X')` re-exported as `useXStore(selector)` / `useXStoreApi()` · `api/<x>-repository.ts` port · `index.ts` barrel.
 
-**DI** — port `shared/api/base-repository.ts` (`Repository<T>`: save/remove/observe); adapters `shared/api/rxdb/rxdb-repository.ts` (prod) and `in-memory-repository.ts` (tests + live `session` store). `app/composition-root.ts` builds the DB (`app/persistence/`), wires repo→store, exports `services`; `ServicesProvider` injects via context.
+**DI** — port `shared/api/base-repository.ts` (`Repository<T>`: save/remove/observe); adapters `shared/api/rxdb/rxdb-repository.ts` (prod) and `in-memory-repository.ts` (tests + live `session` store). `app/composition-root.ts` builds the DB (`app/persistence/`), wires repo→store, **calls `start()` on every store**, exports `services`; `ServicesProvider` injects via context. Screens never start a store — they read, and gate on `selectIsReady`. Tests wire their own stores through `shared/test/started.ts`.
 
 **Features = commands (CQRS-lite)** — `src/features/<x>/`, one use-case per file: async fn (entity store, input), e.g. `createDeck` (`features/deck/create-deck.ts`). All writes through features, all reads through selectors. Components get the store from `useXStoreApi()` and pass it in. New mutation → new file + export from `features/<x>/index.ts`.
 
