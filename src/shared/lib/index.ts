@@ -24,7 +24,7 @@ export { useKeyboardReveal, revealOffset, type RevealBand } from './use-keyboard
 export { useVirtualKeyboard, type VirtualKeyboard } from './use-virtual-keyboard'
 export { useSortableSensors } from './use-sortable-sensors'
 export { shuffle } from './shuffle'
-export { nextOrder, resequence } from './order'
+export { nextOrder, reorderById } from './order'
 export {
   ContentImportError,
   contentSlug,
@@ -56,7 +56,7 @@ export { EventBusContext, useEventBus, useEventBusOptional } from './event-bus-c
 export { AuthGatewayContext, useAuthGateway } from './auth-gateway-context'
 export { isEmail } from './validation'
 export { systemClock, fixedClock, type Clock } from './clock'
-export { cloneEntity, type Entity } from './entity'
+export { cloneEntity, requireEntity, type Entity } from './entity'
 export {
   createCollectionStore,
   createSingletonStore,
