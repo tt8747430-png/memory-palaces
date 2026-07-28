@@ -1,10 +1,9 @@
 import { type SyntheticEvent, useState } from 'react'
-import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Mail } from 'lucide-react'
-import { authRise, authStagger, isEmail } from '@/shared/lib'
-import { AuthField, AuthScreen, Button, PasswordField, SocialButtons } from '@/shared/ui'
-import { AuthLogo } from '@/widgets/threshold'
+import { isEmail } from '@/shared/lib'
+import { AuthField, PasswordField } from '@/shared/ui'
+import { AuthForm } from '@/widgets/threshold'
 import { useAuthActions } from '@/features/session'
 
 export interface LoginPageProps {
@@ -42,87 +41,55 @@ export function LoginPage({ onAuthed, onGuest, onSignup, onForgot }: LoginPagePr
   }
 
   return (
-    <AuthScreen>
-      <motion.div
-        variants={authStagger}
-        initial="initial"
-        animate="animate"
-        className="flex flex-1 flex-col justify-center gap-8 py-10"
-      >
-        <motion.header variants={authRise} className="flex flex-col items-center gap-4 text-center">
-          <AuthLogo className="size-16" />
-          <div className="flex flex-col gap-1.5">
-            <h1 className="text-balance text-[length:var(--p-text-headline)] font-bold tracking-tight text-heading">
-              {t('auth.login.title')}
-            </h1>
-            <p className="text-pretty text-muted-foreground">{t('auth.login.subtitle')}</p>
-          </div>
-        </motion.header>
-
-        <motion.form
-          variants={authRise}
-          className="flex flex-col gap-4"
-          onSubmit={handleSubmit}
-          noValidate
-        >
-          <AuthField
-            id="email"
-            label={t('auth.emailLabel')}
-            type="email"
-            inputMode="email"
-            autoComplete="email"
-            placeholder={t('auth.emailPlaceholder')}
-            icon={<Mail />}
-            value={email}
-            onValueChange={setEmail}
-            valid={isEmail(email)}
-            error={errors.email}
-          />
-          <PasswordField
-            id="password"
-            label={t('auth.passwordLabel')}
-            autoComplete="current-password"
-            placeholder={t('auth.passwordPlaceholder')}
-            value={password}
-            onValueChange={setPassword}
-            error={errors.password}
-          />
-
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={onForgot}
-              className="text-[length:var(--p-text-label)] font-medium text-heading"
-            >
-              {t('auth.login.forgot')}
-            </button>
-          </div>
-
-          <Button type="submit" size="lg" className="w-full" disabled={busy}>
-            {busy ? t('auth.login.submitting') : t('auth.login.submit')}
-          </Button>
-        </motion.form>
-
-        <motion.div variants={authRise}>
-          <Button variant="ghost" size="lg" className="w-full" onClick={handleGuest}>
-            {t('auth.continueAsGuest')}
-          </Button>
-        </motion.div>
-
-        <motion.div variants={authRise}>
-          <SocialButtons />
-        </motion.div>
-
-        <motion.p
-          variants={authRise}
-          className="text-center text-[length:var(--p-text-label)] text-muted-foreground"
-        >
+    <AuthForm
+      className="gap-8"
+      title={t('auth.login.title')}
+      subtitle={t('auth.login.subtitle')}
+      onSubmit={handleSubmit}
+      submitLabel={busy ? t('auth.login.submitting') : t('auth.login.submit')}
+      busy={busy}
+      onGuest={handleGuest}
+      footer={
+        <>
           {t('auth.login.noAccount')}{' '}
           <button type="button" onClick={onSignup} className="font-semibold text-heading">
             {t('auth.login.createAccount')}
           </button>
-        </motion.p>
-      </motion.div>
-    </AuthScreen>
+        </>
+      }
+    >
+      <AuthField
+        id="email"
+        label={t('auth.emailLabel')}
+        type="email"
+        inputMode="email"
+        autoComplete="email"
+        placeholder={t('auth.emailPlaceholder')}
+        icon={<Mail />}
+        value={email}
+        onValueChange={setEmail}
+        valid={isEmail(email)}
+        error={errors.email}
+      />
+      <PasswordField
+        id="password"
+        label={t('auth.passwordLabel')}
+        autoComplete="current-password"
+        placeholder={t('auth.passwordPlaceholder')}
+        value={password}
+        onValueChange={setPassword}
+        error={errors.password}
+      />
+
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={onForgot}
+          className="text-[length:var(--p-text-label)] font-medium text-heading"
+        >
+          {t('auth.login.forgot')}
+        </button>
+      </div>
+    </AuthForm>
   )
 }
