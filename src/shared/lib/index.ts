@@ -64,6 +64,7 @@ export {
   type SingletonState,
   type StoreStatus,
 } from './entity-store'
+export { createStoreContext, type StoreContext } from './store-context'
 export {
   isDue,
   schedule,

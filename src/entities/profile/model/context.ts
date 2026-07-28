@@ -1,21 +1,8 @@
-import { createContext, useContext } from 'react'
-import { useStore } from 'zustand'
-import type { ProfileState, ProfileStore } from './store'
+import { createStoreContext } from '@/shared/lib'
+import type { ProfileState } from './store'
 
-export const ProfileStoreContext = createContext<ProfileStore | null>(null)
+const { StoreContext, useSelector, useStoreApi } = createStoreContext<ProfileState>('Profile')
 
-function useProfileStoreContext(): ProfileStore {
-  const store = useContext(ProfileStoreContext)
-  if (!store) {
-    throw new Error('Profile store missing — render inside <ProfileStoreContext value={…}>')
-  }
-  return store
-}
-
-export function useProfileStore<T>(selector: (state: ProfileState) => T): T {
-  return useStore(useProfileStoreContext(), selector)
-}
-
-export function useProfileStoreApi(): ProfileStore {
-  return useProfileStoreContext()
-}
+export const ProfileStoreContext = StoreContext
+export const useProfileStore = useSelector
+export const useProfileStoreApi = useStoreApi

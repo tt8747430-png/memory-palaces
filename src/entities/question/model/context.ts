@@ -1,21 +1,8 @@
-import { createContext, useContext } from 'react'
-import { useStore } from 'zustand'
-import type { QuestionState, QuestionStore } from './store'
+import { createStoreContext } from '@/shared/lib'
+import type { QuestionState } from './store'
 
-export const QuestionStoreContext = createContext<QuestionStore | null>(null)
+const { StoreContext, useSelector, useStoreApi } = createStoreContext<QuestionState>('Question')
 
-function useQuestionStoreContext(): QuestionStore {
-  const store = useContext(QuestionStoreContext)
-  if (!store) {
-    throw new Error('Question store missing — render inside <QuestionStoreContext value={…}>')
-  }
-  return store
-}
-
-export function useQuestionStore<T>(selector: (state: QuestionState) => T): T {
-  return useStore(useQuestionStoreContext(), selector)
-}
-
-export function useQuestionStoreApi(): QuestionStore {
-  return useQuestionStoreContext()
-}
+export const QuestionStoreContext = StoreContext
+export const useQuestionStore = useSelector
+export const useQuestionStoreApi = useStoreApi

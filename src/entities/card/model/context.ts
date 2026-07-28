@@ -1,21 +1,8 @@
-import { createContext, useContext } from 'react'
-import { useStore } from 'zustand'
-import type { CardState, CardStore } from './store'
+import { createStoreContext } from '@/shared/lib'
+import type { CardState } from './store'
 
-export const CardStoreContext = createContext<CardStore | null>(null)
+const { StoreContext, useSelector, useStoreApi } = createStoreContext<CardState>('Card')
 
-function useCardStoreContext(): CardStore {
-  const store = useContext(CardStoreContext)
-  if (!store) {
-    throw new Error('Card store missing — render inside <CardStoreContext value={…}>')
-  }
-  return store
-}
-
-export function useCardStore<T>(selector: (state: CardState) => T): T {
-  return useStore(useCardStoreContext(), selector)
-}
-
-export function useCardStoreApi(): CardStore {
-  return useCardStoreContext()
-}
+export const CardStoreContext = StoreContext
+export const useCardStore = useSelector
+export const useCardStoreApi = useStoreApi

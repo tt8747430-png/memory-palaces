@@ -1,21 +1,8 @@
-import { createContext, useContext } from 'react'
-import { useStore } from 'zustand'
-import type { DeckState, DeckStore } from './store'
+import { createStoreContext } from '@/shared/lib'
+import type { DeckState } from './store'
 
-export const DeckStoreContext = createContext<DeckStore | null>(null)
+const { StoreContext, useSelector, useStoreApi } = createStoreContext<DeckState>('Deck')
 
-function useDeckStoreContext(): DeckStore {
-  const store = useContext(DeckStoreContext)
-  if (!store) {
-    throw new Error('Deck store missing — render inside <DeckStoreContext value={…}>')
-  }
-  return store
-}
-
-export function useDeckStore<T>(selector: (state: DeckState) => T): T {
-  return useStore(useDeckStoreContext(), selector)
-}
-
-export function useDeckStoreApi(): DeckStore {
-  return useDeckStoreContext()
-}
+export const DeckStoreContext = StoreContext
+export const useDeckStore = useSelector
+export const useDeckStoreApi = useStoreApi

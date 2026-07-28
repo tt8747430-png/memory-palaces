@@ -1,27 +1,10 @@
-import { createContext, useContext } from 'react'
-import { useStore } from 'zustand'
-import type { NotificationState, NotificationStore } from './store'
+import { createStoreContext } from '@/shared/lib'
+import type { NotificationState } from './store'
 
-export const NotificationStoreContext = createContext<NotificationStore | null>(null)
+const { StoreContext, useSelector, useStoreApi, useStoreApiOptional } =
+  createStoreContext<NotificationState>('Notification')
 
-function useNotificationStoreContext(): NotificationStore {
-  const store = useContext(NotificationStoreContext)
-  if (!store) {
-    throw new Error(
-      'Notification store missing — render inside <NotificationStoreContext value={…}>',
-    )
-  }
-  return store
-}
-
-export function useNotificationStore<T>(selector: (state: NotificationState) => T): T {
-  return useStore(useNotificationStoreContext(), selector)
-}
-
-export function useNotificationStoreApi(): NotificationStore {
-  return useNotificationStoreContext()
-}
-
-export function useNotificationStoreApiOptional(): NotificationStore | null {
-  return useContext(NotificationStoreContext)
-}
+export const NotificationStoreContext = StoreContext
+export const useNotificationStore = useSelector
+export const useNotificationStoreApi = useStoreApi
+export const useNotificationStoreApiOptional = useStoreApiOptional
