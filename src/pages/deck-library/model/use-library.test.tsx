@@ -71,7 +71,7 @@ describe('useLibrary', () => {
     })
     await waitFor(() => expect(result.current.ready).toBe(true))
 
-    act(() => result.current.selection.beginDeck('root'))
+    act(() => result.current.selection.begin('root'))
     expect(result.current.selection.active).toBe(true)
     expect([...result.current.selection.ids].sort()).toEqual(['child', 'root'])
   })

@@ -280,7 +280,7 @@ export function DeckLibraryPage({
               folder={folder}
               deckCount={library.folderDeckCounts.get(folder.id) ?? 0}
               onOpen={() => onOpenFolder(folder.id)}
-              onRequestSelect={() => selection.beginFolder(folder.id)}
+              onRequestSelect={() => selection.begin(folder.id)}
               swipe={prefs.swipe.folder}
               swipeHandlers={folderSwipeHandlers(folder)}
             />
@@ -293,7 +293,7 @@ export function DeckLibraryPage({
             expanded={library.expanded}
             onToggle={library.toggleExpanded}
             onOpen={onOpenDeck}
-            onRequestSelect={selection.beginDeck}
+            onRequestSelect={selection.begin}
             swipe={prefs.swipe.deck}
             swipeHandlers={deckSwipeHandlers}
           />

@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import type { Deck } from '@/entities/deck'
 import type { Folder } from '@/entities/folder'
-import { deckPath, impact, subtreeDeckIds } from '@/shared/lib'
+import { deckPath, subtreeDeckIds, useMultiSelect } from '@/shared/lib'
 
 export interface LibrarySelection {
   active: boolean
@@ -10,8 +10,7 @@ export interface LibrarySelection {
   allSelected: boolean
   deckIds: string[]
   decks: Deck[]
-  beginFolder: (id: string) => void
-  beginDeck: (id: string) => void
+  begin: (id: string) => void
   toggle: (id: string) => void
   toggleAll: () => void
   exit: () => void
@@ -25,6 +24,10 @@ interface Args {
   folderId: string | null
 }
 
+/**
+ * Library selection over the shared multi-select: a folder stands alone, while
+ * touching a deck carries its whole top-level branch. Changing folder clears it.
+ */
 export function useLibrarySelection({
   decks,
   folderIds,
@@ -32,98 +35,51 @@ export function useLibrarySelection({
   sectionDecks,
   folderId,
 }: Args): LibrarySelection {
-  const [active, setActive] = useState(false)
-  const [ids, setIds] = useState<ReadonlySet<string>>(() => new Set())
-
-  useEffect(() => {
-    setActive(false)
-    setIds(new Set())
-  }, [folderId])
-
   const decksById = useMemo(() => new Map(decks.map((d) => [d.id, d])), [decks])
   const subtree = useCallback(
     (id: string) => subtreeDeckIds(decks, id).filter((sid) => !decksById.get(sid)?.archived),
     [decks, decksById],
   )
 
-  const beginFolder = useCallback((id: string) => {
-    impact()
-    setActive(true)
-    setIds(new Set([id]))
-  }, [])
-
-  const beginDeck = useCallback(
-    (id: string) => {
-      impact()
-      const top = deckPath(decks, id)[0]?.id ?? id
-      setActive(true)
-      setIds(new Set(subtree(top)))
-    },
-    [decks, subtree],
+  const expand = useCallback(
+    (id: string): readonly string[] =>
+      folderIds.has(id) ? [id] : subtree(deckPath(decks, id)[0]?.id ?? id),
+    [folderIds, subtree, decks],
   )
 
-  const toggleFolder = useCallback((id: string) => {
-    setIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }, [])
+  const selection = useMultiSelect({ expand })
+  const { exit, setVisibleIds } = selection
 
-  const toggleDeck = useCallback(
-    (id: string) => {
-      setIds((prev) => {
-        const branch = subtree(id)
-        const next = new Set(prev)
-        if (branch.every((sid) => next.has(sid))) for (const sid of branch) next.delete(sid)
-        else for (const sid of branch) next.add(sid)
-        return next
-      })
-    },
-    [subtree],
-  )
-
-  const toggle = useCallback(
-    (id: string) => (folderIds.has(id) ? toggleFolder(id) : toggleDeck(id)),
-    [folderIds, toggleFolder, toggleDeck],
-  )
+  useEffect(() => exit(), [folderId, exit])
 
   const selectable = useMemo(() => {
-    const all = new Set<string>()
-    for (const folder of sectionFolders) all.add(folder.id)
-    for (const deck of sectionDecks) for (const sid of subtree(deck.id)) all.add(sid)
+    const all: string[] = []
+    for (const folder of sectionFolders) all.push(folder.id)
+    for (const deck of sectionDecks) for (const sid of subtree(deck.id)) all.push(sid)
     return all
   }, [sectionFolders, sectionDecks, subtree])
 
-  const allSelected = selectable.size > 0 && [...selectable].every((id) => ids.has(id))
-  const toggleAll = useCallback(
-    () => setIds(allSelected ? new Set() : new Set(selectable)),
-    [allSelected, selectable],
+  useEffect(() => setVisibleIds(selectable), [selectable, setVisibleIds])
+
+  const deckIds = useMemo(
+    () => [...selection.ids].filter((id) => decksById.has(id)),
+    [selection.ids, decksById],
   )
-
-  const exit = useCallback(() => {
-    setActive(false)
-    setIds(new Set())
-  }, [])
-
-  const deckIds = useMemo(() => [...ids].filter((id) => decksById.has(id)), [ids, decksById])
   const selectedDecks = useMemo(
     () => deckIds.map((id) => decksById.get(id)).filter((d): d is Deck => d !== undefined),
     [deckIds, decksById],
   )
 
   return {
-    active,
-    ids,
-    count: ids.size,
-    allSelected,
+    active: selection.active,
+    ids: selection.ids,
+    count: selection.count,
+    allSelected: selection.allSelected,
     deckIds,
     decks: selectedDecks,
-    beginFolder,
-    beginDeck,
-    toggle,
-    toggleAll,
-    exit,
+    begin: selection.begin,
+    toggle: selection.toggle,
+    toggleAll: selection.toggleAll,
+    exit: selection.exit,
   }
 }
