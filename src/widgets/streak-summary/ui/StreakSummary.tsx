@@ -27,8 +27,7 @@ export function StreakSummary({
   const { t } = useTranslation()
   const level = levelFromXp(xp)
   const week = useMemo(() => buildDayCells(trainingDays, 7, now), [trainingDays, now])
-  const remaining = level.xpForNextLevel - level.xpInLevel
-  const fill = Math.round((level.xpInLevel / level.xpForNextLevel) * 100)
+  const { fill, remaining } = level
 
   return (
     <Card className={cn('p-5', className)}>

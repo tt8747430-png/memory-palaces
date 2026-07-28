@@ -27,9 +27,14 @@ describe('cardMaturityCounts', () => {
 
 describe('levelFromXp', () => {
   it('maps xp onto 250-xp levels', () => {
-    expect(levelFromXp(0)).toEqual({ level: 1, xpInLevel: 0, xpForNextLevel: 250 })
-    expect(levelFromXp(250)).toEqual({ level: 2, xpInLevel: 0, xpForNextLevel: 250 })
-    expect(levelFromXp(600)).toEqual({ level: 3, xpInLevel: 100, xpForNextLevel: 250 })
+    expect(levelFromXp(0)).toMatchObject({ level: 1, xpInLevel: 0, xpForNextLevel: 250 })
+    expect(levelFromXp(250)).toMatchObject({ level: 2, xpInLevel: 0, xpForNextLevel: 250 })
+    expect(levelFromXp(600)).toMatchObject({ level: 3, xpInLevel: 100, xpForNextLevel: 250 })
+  })
+
+  it('carries the bar fill and what is still owed', () => {
+    expect(levelFromXp(600)).toMatchObject({ fill: 40, remaining: 150 })
+    expect(levelFromXp(0)).toMatchObject({ fill: 0, remaining: 250 })
   })
 })
 

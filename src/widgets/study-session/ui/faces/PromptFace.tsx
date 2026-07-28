@@ -4,18 +4,9 @@ import type { FaceProps } from './types'
 
 export function PromptFace(props: FaceProps) {
   const { t } = useTranslation()
-  const { card, prompt, canSpeak, active, onSpeak, onFlip } = props
+  const { card, prompt, onFlip } = props
   return (
-    <CardFace
-      flagged={card.card.flagged}
-      canSpeak={canSpeak}
-      speakText={prompt}
-      onSpeak={onSpeak}
-      active={active}
-      mode={props.mode}
-      onChangeMode={props.onChangeMode}
-      onOpenGear={props.onOpenGear}
-    >
+    <CardFace face={props} speakText={prompt}>
       <h2 className="text-balance wrap-break-word text-center text-[clamp(22px,6vw,28px)] font-bold leading-[1.15] tracking-[-0.01em] text-heading">
         {prompt}
       </h2>

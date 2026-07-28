@@ -60,7 +60,7 @@ function DrawerContent({ className, backdropClassName, children, ...props }: Dra
         <DrawerPrimitive.Popup
           data-slot="drawer-content"
           className={cn(
-            'pointer-events-auto fixed inset-x-0 bottom-0 mx-auto flex w-full max-w-[430px] flex-col',
+            'pointer-events-auto fixed inset-x-0 bottom-0 mx-auto flex w-full max-w-app flex-col',
             'max-h-[88dvh] touch-none rounded-t-card-featured bg-card pb-safe-keyboard shadow-elevated outline-none',
             'origin-bottom will-change-transform',
             '[--closed-transform:translate3d(0,calc(100%+2px),0)]',

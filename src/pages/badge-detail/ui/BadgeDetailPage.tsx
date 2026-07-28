@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { animate, motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Check, Lock } from 'lucide-react'
-import { type Badge, type BadgeId, cn, EASE_OUT, milestoneProgress } from '@/shared/lib'
+import { type Badge, type BadgeId, cn, EASE_OUT, milestonePercent } from '@/shared/lib'
 import { BADGE_META, RewardHero, useRewards } from '@/widgets/rewards'
 import { AppScreen, BadgeMedallion, cardSurface, Progress, ScreenHeader } from '@/shared/ui'
 
@@ -105,7 +105,7 @@ function Hero({
 function TierLadder({ badge }: { badge: Badge }) {
   const { t } = useTranslation()
   const currentIndex = badge.tier < badge.tiers.length ? badge.tier : -1
-  const pct = Math.round(milestoneProgress(badge) * 100)
+  const pct = milestonePercent(badge)
 
   return (
     <ol className={cn(cardSurface, 'flex flex-col divide-y divide-border overflow-hidden')}>

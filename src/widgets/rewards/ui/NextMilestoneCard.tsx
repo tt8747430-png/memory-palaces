@@ -1,7 +1,7 @@
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { ChevronRight } from 'lucide-react'
-import { type Badge, cn, EASE_OUT, milestoneProgress } from '@/shared/lib'
+import { type Badge, cn, EASE_OUT, milestonePercent } from '@/shared/lib'
 import { BadgeMedallion, cardSurface, Progress } from '@/shared/ui'
 import { BADGE_META, compactNumber } from '../model/badge-meta'
 
@@ -15,7 +15,7 @@ export function NextMilestoneCard({ badge, onOpen, className }: NextMilestoneCar
   const { t } = useTranslation()
   const meta = BADGE_META[badge.id]
   const remaining = (badge.next ?? badge.value) - badge.value
-  const pct = Math.round(milestoneProgress(badge) * 100)
+  const pct = milestonePercent(badge)
   const label = t(meta.titleKey)
 
   return (

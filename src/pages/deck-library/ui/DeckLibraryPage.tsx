@@ -18,6 +18,7 @@ import {
   ActionSheet,
   AppScreen,
   IconButton,
+  ImportSheet,
   PromptSheet,
   ScreenHeader,
   SelectHeader,
@@ -33,7 +34,6 @@ import { FolderRow } from './FolderRow'
 import { FolderSheet } from './FolderSheet'
 import { LibraryDialogs } from './LibraryDialogs'
 import { LibraryEmpty } from './LibraryEmpty'
-import { LibraryImportSheet } from './LibraryImportSheet'
 import { LibrarySkeleton } from './LibrarySkeleton'
 import { LibrarySpeedDial } from './LibrarySpeedDial'
 import { MoveDeckSheet } from './MoveDeckSheet'
@@ -214,12 +214,7 @@ export function DeckLibraryPage({
       className="pb-nav"
       header={
         selection.active ? (
-          <SelectHeader
-            count={selection.count}
-            allSelected={selection.allSelected}
-            onToggleAll={selection.toggleAll}
-            onCancel={selection.exit}
-          />
+          <SelectHeader selection={selection} />
         ) : inFolder ? (
           <ScreenHeader
             title={library.openFolder?.name ?? ''}
@@ -342,9 +337,11 @@ export function DeckLibraryPage({
         onSubmit={submitCreate}
       />
 
-      <LibraryImportSheet
+      <ImportSheet
         open={importOpen}
         onOpenChange={setImportOpen}
+        title={t('deck.importTitle')}
+        description={t('deck.importSheetHint')}
         onPasteNotes={() => onImportPaste?.()}
         onPickFile={(file) => void importAnki(file)}
       />

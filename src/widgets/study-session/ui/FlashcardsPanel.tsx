@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { AnimatePresence } from 'motion/react'
+import { useTranslation } from 'react-i18next'
+import { Check } from 'lucide-react'
 import type { StudyMode } from '@/entities/preferences'
 import { speak, speechAvailable, srsStatus, success, tick, useShake } from '@/shared/lib'
 import type { SrsState } from '@/shared/lib'
@@ -19,6 +21,7 @@ import {
   isGradeAction,
   type SwipeDirection,
 } from '@/shared/config/flashcard-swipe'
+import { CardDraftSheet } from '@/widgets/content-editor'
 import { useStudySettings } from '../model/use-study-settings'
 import { StudyDeck } from './StudyDeck'
 import { EmptyQueue } from './EmptyQueue'
@@ -27,7 +30,6 @@ import { GearSheet } from './GearSheet'
 import { ModeSheet } from './ModeSheet'
 import { QuickActionsSheet } from './QuickActionsSheet'
 import type { QuickActionsModel } from './QuickActionRows'
-import { InStudyEditor } from './InStudyEditor'
 import { CompletionOverlay } from './CompletionOverlay'
 import type { Grade, CardChanges, SessionSummary, StudyCard, StudyPrefs } from '../model/types'
 
@@ -76,6 +78,7 @@ export function FlashcardsPanel({
   onComplete,
   now = Date.now(),
 }: FlashcardsPanelProps) {
+  const { t } = useTranslation()
   const canSpeak = speechAvailable()
 
   const [filter, setStudyFilter] = useState<StudyFilter>({ kind: 'all' })
@@ -280,11 +283,13 @@ export function FlashcardsPanel({
       ) : null}
 
       {canEdit && onEditCard && card ? (
-        <InStudyEditor
-          open={editing}
-          card={card.card}
+        <CardDraftSheet
+          card={editing ? card.card : null}
+          title={t('study.editTitle')}
+          saveLabel={t('study.saveCard')}
+          saveIcon={<Check className="size-[18px]" aria-hidden />}
           onClose={() => setEditing(false)}
-          onSave={(changes) => onEditCard(card.card.id, changes)}
+          onSave={(_id, changes) => onEditCard(card.card.id, changes)}
         />
       ) : null}
 

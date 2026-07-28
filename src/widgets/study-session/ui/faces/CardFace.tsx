@@ -5,35 +5,33 @@ import { Flag, Lightbulb, MapPin, SlidersHorizontal, Volume2 } from 'lucide-reac
 import type { StudyMode } from '@/entities/preferences'
 import { cn, useKeyboardReveal } from '@/shared/lib'
 import { STUDY_MODE_META } from '../mode-meta'
-import { stopPress } from './types'
+import { type FaceProps, stopPress } from './types'
 
-export function CardFace({
-  flagged,
-  canSpeak,
-  speakText,
-  onSpeak,
-  active,
-  mode,
-  onChangeMode,
-  onOpenGear,
-  back = false,
-  align = 'center',
-  footer,
-  children,
-}: {
-  flagged: boolean
-  canSpeak: boolean
+export interface CardFaceProps {
+  /** The face's own props — the chrome reads the card, mode and callbacks off it. */
+  face: FaceProps
+  /** What the read-aloud button speaks: the prompt on a front, the answer on a back. */
   speakText: string
-  onSpeak: (text: string) => void
-  active: boolean
-  mode: StudyMode
-  onChangeMode: () => void
-  onOpenGear: () => void
   back?: boolean
   align?: 'center' | 'start'
   footer?: ReactNode
   children: ReactNode
-}) {
+}
+
+/**
+ * The shell every face wears: the flag and read-aloud header, the scrolling
+ * body, and the mode/gear footer around whatever aids the face offers.
+ */
+export function CardFace({
+  face,
+  speakText,
+  back = false,
+  align = 'center',
+  footer,
+  children,
+}: CardFaceProps) {
+  const { card, canSpeak, onSpeak, active, mode, onChangeMode, onOpenGear } = face
+  const flagged = card.card.flagged
   const { t } = useTranslation()
   const bodyRef = useRef<HTMLDivElement | null>(null)
   const contentRef = useRef<HTMLDivElement>(null)
@@ -247,6 +245,24 @@ export function FlipZone({
     >
       {children}
     </button>
+  )
+}
+
+/**
+ * The prompt as a working face states it — fixed at the top, with the tip and a
+ * rule under it, so the answer area below can grow.
+ */
+export function WorkPrompt({ prompt, tip }: { prompt: string; tip?: string }) {
+  return (
+    <>
+      <div className="shrink-0 text-center">
+        <h2 className="text-balance wrap-break-word text-[clamp(18px,5vw,22px)] font-bold leading-tight tracking-[-0.01em] text-heading">
+          {prompt}
+        </h2>
+        {tip ? <TipRow tip={tip} /> : null}
+      </div>
+      <div className="h-px shrink-0 bg-border" aria-hidden />
+    </>
   )
 }
 

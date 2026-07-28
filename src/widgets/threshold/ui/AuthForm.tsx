@@ -3,7 +3,8 @@ import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { authRise, authStagger, cn } from '@/shared/lib'
 import { AuthScreen, Button, SocialButtons } from '@/shared/ui'
-import { AuthLogo } from './AuthLogo'
+import { useAuthActions } from '@/features/session'
+import { AuthHeader } from './AuthHeader'
 
 export interface AuthFormProps {
   title: string
@@ -13,6 +14,7 @@ export interface AuthFormProps {
   onSubmit: (event: SyntheticEvent) => void
   submitLabel: string
   busy?: boolean
+  /** Where to go once the guest session exists — the form opens it itself. */
   onGuest: () => void
   /** The line offering the other way in — sign up from login, and back. */
   footer: ReactNode
@@ -36,6 +38,13 @@ export function AuthForm({
   className,
 }: AuthFormProps) {
   const { t } = useTranslation()
+  const { continueAsGuest } = useAuthActions()
+
+  const enterAsGuest = async () => {
+    await continueAsGuest()
+    onGuest()
+  }
+
   return (
     <AuthScreen>
       <motion.div
@@ -45,13 +54,7 @@ export function AuthForm({
         className={cn('flex flex-1 flex-col justify-center py-10', className)}
       >
         <motion.header variants={authRise} className="flex flex-col items-center gap-4 text-center">
-          <AuthLogo className="size-16" />
-          <div className="flex flex-col gap-1.5">
-            <h1 className="text-balance text-[length:var(--p-text-headline)] font-bold tracking-tight text-heading">
-              {title}
-            </h1>
-            <p className="text-pretty text-muted-foreground">{subtitle}</p>
-          </div>
+          <AuthHeader title={title} subtitle={subtitle} />
         </motion.header>
 
         <motion.form
@@ -67,7 +70,7 @@ export function AuthForm({
         </motion.form>
 
         <motion.div variants={authRise}>
-          <Button variant="ghost" size="lg" className="w-full" onClick={onGuest}>
+          <Button variant="ghost" size="lg" className="w-full" onClick={() => void enterAsGuest()}>
             {t('auth.continueAsGuest')}
           </Button>
         </motion.div>

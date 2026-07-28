@@ -116,7 +116,7 @@ export function CardBrowser({
         />
         <Dialog.Popup
           className={cn(
-            'fixed inset-0 z-[310] mx-auto flex w-full max-w-[430px] flex-col outline-none',
+            'fixed inset-0 z-[310] mx-auto flex w-full max-w-app flex-col outline-none',
             'transition-[opacity,transform] duration-300 ease-out',
             'data-[starting-style]:scale-[0.98] data-[starting-style]:opacity-0',
             'data-[ending-style]:scale-[0.98] data-[ending-style]:opacity-0',

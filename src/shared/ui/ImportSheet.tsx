@@ -1,30 +1,41 @@
 import { useTranslation } from 'react-i18next'
 import { ClipboardPaste, FileText } from 'lucide-react'
-import { TransferSheet, useFilePicker } from '@/shared/ui'
+import { TransferSheet } from './TransferSheet'
+import { useFilePicker } from './use-file-picker'
 
-export interface LibraryImportSheetProps {
+export interface ImportSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  title: string
+  description: string
   onPasteNotes: () => void
   onPickFile: (file: File) => void
 }
 
-export function LibraryImportSheet({
+const ACCEPT = '.csv,.tsv,.txt'
+
+/**
+ * The one way content gets in: paste it, or hand over a delimited file. Every
+ * surface that imports offers the same two doors under its own heading.
+ */
+export function ImportSheet({
   open,
   onOpenChange,
+  title,
+  description,
   onPasteNotes,
   onPickFile,
-}: LibraryImportSheetProps) {
+}: ImportSheetProps) {
   const { t } = useTranslation()
-  const file = useFilePicker('.csv,.tsv,.txt', onPickFile)
+  const file = useFilePicker(ACCEPT, onPickFile)
 
   return (
     <>
       <TransferSheet
         open={open}
         onOpenChange={onOpenChange}
-        title={t('deck.importTitle')}
-        description={t('deck.importSheetHint')}
+        title={title}
+        description={description}
         options={[
           {
             id: 'paste',

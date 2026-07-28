@@ -26,7 +26,15 @@ import { gradeCard, restoreSchedule } from '@/features/review'
 import { setPreferences } from '@/features/preferences'
 import { FlashcardsPanel, type StudyCard, type StudyPrefs } from '@/widgets/study-session'
 import { useSessionReward } from '@/widgets/session-reward'
-import { AppScreen, Button, IconButton, ScreenHeader, ScreenLoading } from '@/shared/ui'
+import {
+  AppScreen,
+  Button,
+  Empty,
+  ScreenHeader,
+  ScreenLoading,
+  SessionHeader,
+  SessionScreen,
+} from '@/shared/ui'
 
 export type StudyScope = { kind: 'deck'; deckId: string }
 
@@ -134,41 +142,26 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
 
   if (cards.length === 0) {
     return (
-      <div className="relative mx-auto flex h-full w-full max-w-[430px] flex-col items-center justify-center gap-5 px-6 text-center">
-        <div className="grid size-16 place-items-center rounded-card-featured bg-info-surface">
-          <Layers className="size-8 text-accent" aria-hidden />
-        </div>
-        <div>
-          <h2 className="mb-1 text-[length:var(--p-text-headline)] font-bold text-heading">
-            {t('study.noCards')}
-          </h2>
-          <p className="mx-auto max-w-[34ch] text-[length:var(--p-text-body)]">
-            {t('study.noCardsHint', { deck: title })}
-          </p>
-        </div>
-        <Button onClick={back}>{t('study.backToDeck')}</Button>
-      </div>
+      <Empty
+        variant="hero"
+        className="mx-auto h-full w-full max-w-app"
+        icon={<Layers className="size-8" aria-hidden />}
+        title={t('study.noCards')}
+        description={t('study.noCardsHint', { deck: title })}
+        action={<Button onClick={back}>{t('study.backToDeck')}</Button>}
+      />
     )
   }
 
   return (
-    <div className="relative mx-auto flex h-full w-full max-w-[430px] flex-col overflow-hidden">
-      <div className="px-5 pt-safe">
-        <div className="flex items-center justify-between pt-3">
-          <IconButton variant="glass" aria-label={t('study.goBack')} onClick={back}>
-            <ChevronLeft className="size-5" aria-hidden />
-          </IconButton>
-          <div className="mx-4 min-w-0 flex-1 text-center">
-            <h1 className="truncate text-[length:var(--p-text-title)] font-semibold text-heading">
-              {title}
-            </h1>
-            {subtitle ? (
-              <p className="truncate text-[length:var(--p-text-label)]">{subtitle}</p>
-            ) : null}
-          </div>
-          <div className="size-10 shrink-0" aria-hidden />
-        </div>
-      </div>
+    <SessionScreen>
+      <SessionHeader
+        title={title}
+        subtitle={subtitle}
+        backLabel={t('study.goBack')}
+        onBack={back}
+        backIcon={<ChevronLeft className="size-5" aria-hidden />}
+      />
 
       <FlashcardsPanel
         key={`flashcards-${scope.deckId}`}
@@ -195,6 +188,6 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
           back()
         }}
       />
-    </div>
+    </SessionScreen>
   )
 }

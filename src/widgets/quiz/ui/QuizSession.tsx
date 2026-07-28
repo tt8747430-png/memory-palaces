@@ -1,8 +1,8 @@
 import { useEffect, useReducer } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-import { Brain, Check, SkipForward, SlidersHorizontal, X } from 'lucide-react'
-import { Button, Card, Chip, IconButton } from '@/shared/ui'
+import { Brain, Check, SkipForward, SlidersHorizontal } from 'lucide-react'
+import { Button, Card, Chip, IconButton, SessionHeader, SessionScreen } from '@/shared/ui'
 import { initQuiz, quizAccuracy, type QuizQuestion, quizReducer } from '@/features/quiz'
 import type { QuizResult } from '../model/types'
 import { QuizComplete } from './QuizComplete'
@@ -75,15 +75,12 @@ export function QuizSession({
   const reached = (state.status === 'answering' ? state.index : state.total) + (done ? 0 : 1)
 
   return (
-    <div className="relative mx-auto flex h-full w-full max-w-[430px] flex-col overflow-hidden">
-      <div className="px-5 pt-safe">
-        <div className="flex items-center justify-between gap-2 pt-3">
-          <IconButton variant="glass" aria-label={t('quiz.goBack')} onClick={onBack}>
-            <X className="size-5" aria-hidden />
-          </IconButton>
-          <h1 className="min-w-0 flex-1 truncate text-center text-(length:--p-text-title) font-semibold text-heading">
-            {title}
-          </h1>
+    <SessionScreen>
+      <SessionHeader
+        title={title}
+        backLabel={t('quiz.goBack')}
+        onBack={onBack}
+        action={
           <div className="flex items-center gap-2">
             {onOpenOptions ? (
               <IconButton
@@ -103,8 +100,8 @@ export function QuizSession({
               <SkipForward className="size-5" aria-hidden />
             </IconButton>
           </div>
-        </div>
-
+        }
+      >
         <div className="mt-3 flex items-center gap-3">
           <div className="h-2 flex-1 overflow-hidden rounded-full bg-secondary/30">
             <motion.div
@@ -120,7 +117,7 @@ export function QuizSession({
             })}
           </span>
         </div>
-      </div>
+      </SessionHeader>
 
       {answering ? (
         <div className="flex-1 space-y-4 overflow-y-auto px-5 py-5 scrollbar-hide">
@@ -205,6 +202,6 @@ export function QuizSession({
           />
         ) : null}
       </AnimatePresence>
-    </div>
+    </SessionScreen>
   )
 }

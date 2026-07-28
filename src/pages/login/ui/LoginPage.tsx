@@ -1,8 +1,8 @@
 import { type SyntheticEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { isEmail } from '@/shared/lib'
+import { emailErrorKey, passwordErrorKey } from '@/shared/lib'
 import { EmailField, PasswordField } from '@/shared/ui'
-import { AuthForm } from '@/widgets/threshold'
+import { AuthForm, AuthSwitchLink } from '@/widgets/threshold'
 import { useAuthActions } from '@/features/session'
 
 export interface LoginPageProps {
@@ -22,21 +22,17 @@ export function LoginPage({ onAuthed, onGuest, onSignup, onForgot }: LoginPagePr
 
   const handleSubmit = async (event: SyntheticEvent) => {
     event.preventDefault()
-    const next: typeof errors = {}
-    if (!email.trim()) next.email = t('auth.errors.emailRequired')
-    else if (!isEmail(email)) next.email = t('auth.errors.emailInvalid')
-    if (!password) next.password = t('auth.errors.passwordRequired')
-    setErrors(next)
-    if (next.email || next.password) return
+    const emailKey = emailErrorKey(email)
+    const passwordKey = passwordErrorKey(password)
+    setErrors({
+      email: emailKey ? t(emailKey) : undefined,
+      password: passwordKey ? t(passwordKey) : undefined,
+    })
+    if (emailKey || passwordKey) return
 
     setBusy(true)
     await actions.signIn(email.trim())
     onAuthed()
-  }
-
-  const handleGuest = async () => {
-    await actions.continueAsGuest()
-    onGuest()
   }
 
   return (
@@ -47,14 +43,13 @@ export function LoginPage({ onAuthed, onGuest, onSignup, onForgot }: LoginPagePr
       onSubmit={handleSubmit}
       submitLabel={busy ? t('auth.login.submitting') : t('auth.login.submit')}
       busy={busy}
-      onGuest={handleGuest}
+      onGuest={onGuest}
       footer={
-        <>
-          {t('auth.login.noAccount')}{' '}
-          <button type="button" onClick={onSignup} className="font-semibold text-heading">
-            {t('auth.login.createAccount')}
-          </button>
-        </>
+        <AuthSwitchLink
+          prompt={t('auth.login.noAccount')}
+          label={t('auth.login.createAccount')}
+          onClick={onSignup}
+        />
       }
     >
       <EmailField value={email} onValueChange={setEmail} error={errors.email} />

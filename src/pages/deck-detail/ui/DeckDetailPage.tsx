@@ -93,12 +93,7 @@ export function DeckDetailPage({
     <AppScreen
       header={
         selection.active ? (
-          <SelectHeader
-            count={selection.count}
-            allSelected={selection.allSelected}
-            onToggleAll={selection.toggleAll}
-            onCancel={selection.exit}
-          />
+          <SelectHeader selection={selection} />
         ) : (
           <ScreenHeader
             title={deck.name}

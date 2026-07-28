@@ -29,6 +29,7 @@ import {
 import {
   CardMaturityOverview,
   ConfirmDialog,
+  ImportSheet,
   SelectToolbar,
   SelectToolbarDock,
   SortControl,
@@ -41,7 +42,6 @@ import { useCardFilter } from '../model/use-card-filter'
 import { useImportDraft } from '../model/import-draft'
 import { CardBrowser } from './CardBrowser'
 import { CardFilterSheet, FilterButton } from './CardFilterSheet'
-import { CardImportSheet } from './CardImportSheet'
 import { EmptyCards, FilterEmpty, NoResults } from './CardListStates'
 import { CardRow } from './CardRow'
 import type { RowDragHandle } from './ContentRow'
@@ -202,9 +202,11 @@ export function DeckContentEditor({
         </SelectToolbarDock>
       ) : null}
 
-      <CardImportSheet
+      <ImportSheet
         open={importOpen}
         onOpenChange={setImportOpen}
+        title={t('cards.transfer.importTitle')}
+        description={t('cards.transfer.importSubtitle')}
         onPasteNotes={onPasteNotes}
         onPickFile={(file) => void importAnki(file)}
       />

@@ -30,13 +30,9 @@ export function ProfileHero({
 }: ProfileHeroProps) {
   const { t } = useTranslation()
   const handle = username || 'you'
-  const { level, xpInLevel, xpForNextLevel } = levelFromXp(xp)
-  const fill = Math.round((xpInLevel / xpForNextLevel) * 100)
+  const { level, fill, remaining } = levelFromXp(xp)
   const levelLabel = t('progress.level', { level })
-  const xpToNext = t('progress.xpToNext', {
-    remaining: xpForNextLevel - xpInLevel,
-    level: level + 1,
-  })
+  const xpToNext = t('progress.xpToNext', { remaining, level: level + 1 })
   const subtitle =
     joinedYear != null
       ? t('profile.handleJoined', { handle, year: joinedYear })

@@ -72,7 +72,7 @@ export function AuthScreen({ children, className }: { children: ReactNode; class
       >
         <div
           className={cn(
-            'mx-auto flex min-h-full w-full max-w-[430px] flex-col px-6 pt-safe pb-safe',
+            'mx-auto flex min-h-full w-full max-w-app flex-col px-6 pt-safe pb-safe',
             className,
           )}
         >

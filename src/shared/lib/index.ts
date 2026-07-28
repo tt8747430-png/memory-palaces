@@ -1,4 +1,5 @@
 export { cn } from './cn'
+export { clamp, clamp01, percentOf } from './number'
 export { authEntrance, authRise, authStagger, EASE_EXPO, EASE_OUT, EASE_OUT_CSS } from './motion'
 export { coverSquare, fileToAvatar, type CropRect } from './avatar'
 export { downloadText } from './download'
@@ -54,7 +55,15 @@ export { EventBus, type EventHandler } from './event-bus'
 export type { AppEvents } from './events'
 export { EventBusContext, useEventBus, useEventBusOptional } from './event-bus-context'
 export { AuthGatewayContext, useAuthGateway } from './auth-gateway-context'
-export { isEmail, isLongEnoughPassword, MIN_PASSWORD } from './validation'
+export {
+  isEmail,
+  isLongEnoughPassword,
+  emailErrorKey,
+  passwordErrorKey,
+  MIN_PASSWORD,
+  type EmailErrorKey,
+  type PasswordErrorKey,
+} from './validation'
 export { DAY_MS, systemClock, fixedClock, type Clock } from './clock'
 export { cloneEntity, requireEntity, type Entity } from './entity'
 export {
@@ -106,6 +115,7 @@ export {
 export {
   computeBadges,
   milestoneProgress,
+  milestonePercent,
   nextMilestone,
   type Badge,
   type BadgeId,

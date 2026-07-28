@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { cn, scramble, tokenizeWords } from '@/shared/lib'
-import { AidButton, CardFace, TipRow } from './CardFace'
+import { AidButton, CardFace, WorkPrompt } from './CardFace'
 import { type FaceProps, stopPress, useSwipeMechanic } from './types'
 
 interface WordChip {
@@ -16,7 +16,7 @@ const WRONG_CHIP_MS = 450
 export function RebuildFace(props: FaceProps) {
   const { t } = useTranslation()
   const reduce = useReducedMotion()
-  const { card, answer, prompt, canSpeak, active, onSpeak } = props
+  const { card, answer, prompt, active } = props
   const words = useMemo(() => tokenizeWords(answer), [answer])
   const chips = useMemo<WordChip[]>(
     () => scramble(words.map((word, pos) => ({ pos, word, key: `${pos}-${word}` }))),
@@ -53,24 +53,12 @@ export function RebuildFace(props: FaceProps) {
 
   return (
     <CardFace
-      flagged={card.card.flagged}
-      canSpeak={canSpeak}
+      face={props}
       speakText={prompt}
-      onSpeak={onSpeak}
-      active={active}
-      mode={props.mode}
-      onChangeMode={props.onChangeMode}
-      onOpenGear={props.onOpenGear}
       align="start"
       footer={placed > 0 ? <AidButton label={t('study.reset')} onClick={reset} /> : null}
     >
-      <div className="shrink-0 text-center">
-        <h2 className="text-balance wrap-break-word text-[clamp(18px,5vw,22px)] font-bold leading-tight tracking-[-0.01em] text-heading">
-          {prompt}
-        </h2>
-        {card.card.tip ? <TipRow tip={card.card.tip} /> : null}
-      </div>
-      <div className="h-px shrink-0 bg-border" aria-hidden />
+      <WorkPrompt prompt={prompt} tip={card.card.tip} />
 
       <p
         className={cn(

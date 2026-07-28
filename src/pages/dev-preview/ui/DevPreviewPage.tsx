@@ -455,7 +455,7 @@ export function DevPreviewPage({ onBack }: { onBack?: () => void }) {
           data-slot="header-bar"
           className="border-b border-border bg-card/80 backdrop-blur-md"
         >
-          <div className="mx-auto w-full max-w-[430px] px-5 pt-safe">
+          <div className="mx-auto w-full max-w-app px-5 pt-safe">
             <div className="flex items-start justify-between gap-3 pt-3">
               {onBack ? (
                 <IconButton variant="glass" aria-label="Back" onClick={onBack} className="shrink-0">

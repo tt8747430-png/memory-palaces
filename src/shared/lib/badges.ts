@@ -70,6 +70,11 @@ export function milestoneProgress(badge: Badge): number {
   return Math.min(1, Math.max(0, (badge.value - floor) / span))
 }
 
+/** A badge's progress towards its next tier, as the whole percent a bar wants. */
+export function milestonePercent(badge: Badge): number {
+  return Math.round(milestoneProgress(badge) * 100)
+}
+
 export function nextMilestone(badges: readonly Badge[]): Badge | null {
   let best: Badge | null = null
   let bestProgress = -1

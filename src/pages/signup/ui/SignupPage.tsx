@@ -1,10 +1,10 @@
 import { type SyntheticEvent, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { User } from 'lucide-react'
-import { isEmail, isLongEnoughPassword } from '@/shared/lib'
+import { emailErrorKey, passwordErrorKey } from '@/shared/lib'
 import { LEGAL_URLS } from '@/shared/config/constants'
 import { AuthField, EmailField, PasswordField } from '@/shared/ui'
-import { AuthForm } from '@/widgets/threshold'
+import { AuthForm, AuthSwitchLink } from '@/widgets/threshold'
 import { useAuthActions } from '@/features/session'
 
 export interface SignupPageProps {
@@ -32,24 +32,20 @@ export function SignupPage({ onSuccess, onGuest, onLogin }: SignupPageProps) {
 
   const handleSubmit = async (event: SyntheticEvent) => {
     event.preventDefault()
-    const next: typeof errors = {}
-    if (!name.trim()) next.name = t('auth.errors.nameRequired')
-    if (!email.trim()) next.email = t('auth.errors.emailRequired')
-    else if (!isEmail(email)) next.email = t('auth.errors.emailInvalid')
-    if (!password) next.password = t('auth.errors.passwordRequired')
-    else if (!isLongEnoughPassword(password)) next.password = t('auth.errors.passwordShort')
-    if (!agreed) next.terms = t('auth.errors.termsRequired')
+    const emailKey = emailErrorKey(email)
+    const passwordKey = passwordErrorKey(password, { strong: true })
+    const next: typeof errors = {
+      name: name.trim() ? undefined : t('auth.errors.nameRequired'),
+      email: emailKey ? t(emailKey) : undefined,
+      password: passwordKey ? t(passwordKey) : undefined,
+      terms: agreed ? undefined : t('auth.errors.termsRequired'),
+    }
     setErrors(next)
     if (next.name || next.email || next.password || next.terms) return
 
     setBusy(true)
     await actions.signUp({ name: name.trim(), email: email.trim() })
     onSuccess()
-  }
-
-  const handleGuest = async () => {
-    await actions.continueAsGuest()
-    onGuest()
   }
 
   return (
@@ -60,14 +56,13 @@ export function SignupPage({ onSuccess, onGuest, onLogin }: SignupPageProps) {
       onSubmit={handleSubmit}
       submitLabel={busy ? t('auth.signup.submitting') : t('auth.signup.submit')}
       busy={busy}
-      onGuest={handleGuest}
+      onGuest={onGuest}
       footer={
-        <>
-          {t('auth.signup.haveAccount')}{' '}
-          <button type="button" onClick={onLogin} className="font-semibold text-heading">
-            {t('auth.signup.signIn')}
-          </button>
-        </>
+        <AuthSwitchLink
+          prompt={t('auth.signup.haveAccount')}
+          label={t('auth.signup.signIn')}
+          onClick={onLogin}
+        />
       }
     >
       <AuthField
@@ -106,25 +101,9 @@ export function SignupPage({ onSuccess, onGuest, onLogin }: SignupPageProps) {
           />
           <span>
             {t('auth.signup.agreePrefix')}{' '}
-            <a
-              href={LEGAL_URLS.terms}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(event) => event.stopPropagation()}
-              className="font-semibold text-accent underline underline-offset-2"
-            >
-              {t('auth.signup.terms')}
-            </a>{' '}
+            <LegalLink href={LEGAL_URLS.terms} label={t('auth.signup.terms')} />{' '}
             {t('auth.signup.and')}{' '}
-            <a
-              href={LEGAL_URLS.privacy}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(event) => event.stopPropagation()}
-              className="font-semibold text-accent underline underline-offset-2"
-            >
-              {t('auth.signup.privacy')}
-            </a>
+            <LegalLink href={LEGAL_URLS.privacy} label={t('auth.signup.privacy')} />
           </span>
         </label>
         {errors.terms ? (
@@ -138,5 +117,19 @@ export function SignupPage({ onSuccess, onGuest, onLogin }: SignupPageProps) {
         ) : null}
       </div>
     </AuthForm>
+  )
+}
+
+function LegalLink({ href, label }: { href: string; label: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={(event) => event.stopPropagation()}
+      className="font-semibold text-accent underline underline-offset-2"
+    >
+      {label}
+    </a>
   )
 }

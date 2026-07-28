@@ -34,6 +34,9 @@
   --color-rating: var(--rating);
   --color-favorite: var(--favorite);
 
+  /* The one width the app column is ever allowed to be — `max-w-app`. */
+  --container-app: var(--p-container-app);
+
   --radius-control: var(--p-radius-sm);
   --radius-card: var(--p-radius-md);
   --radius-card-featured: var(--p-radius-xl);

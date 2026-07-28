@@ -7,8 +7,7 @@ import { useQuestionStoreApi } from '@/entities/question'
 import { applyDeckContent } from '@/features/content'
 import type { ParsedCard } from '@/shared/lib'
 import { AppScreen, Button, ConfirmDialog, FooterBar, IconButton, ScreenHeader } from '@/shared/ui'
-import { type DraftCard, useImportDraft } from '@/widgets/content-editor'
-import { EditDraftSheet } from './EditDraftSheet'
+import { CardDraftSheet, type DraftCard, useImportDraft } from '@/widgets/content-editor'
 import { RestoreToggle, ReviewRow } from './ReviewRow'
 
 export interface ImportReviewPageProps {
@@ -183,8 +182,10 @@ export function ImportReviewPage({ deckId, onBack, onDone }: ImportReviewPagePro
         </section>
       </div>
 
-      <EditDraftSheet
+      <CardDraftSheet
         card={editing}
+        title={t('cards.review.editTitle')}
+        saveLabel={t('common.saveChanges')}
         onSave={(id, edit) => editCard(id, edit)}
         onClose={() => setEditingId(null)}
       />

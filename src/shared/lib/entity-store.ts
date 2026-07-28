@@ -25,30 +25,33 @@ export type SingletonState<Key extends string, T> = Lifecycle &
 /** True once a store has received its first snapshot from the repository. */
 export const selectIsReady = (state: Pick<Lifecycle, 'status'>): boolean => state.status === 'ready'
 
-export function createCollectionStore<Key extends string, T extends Identifiable>(
-  key: Key,
+type SetPartial = (partial: object) => void
+
+/**
+ * The half of a store that every slice shares: hold `key` at `empty` until
+ * `start()`, then keep it equal to whatever `project` makes of the repository's
+ * latest snapshot, and pass `save` straight through.
+ *
+ * Written once so the subscribe/teardown never drifts between store shapes. The
+ * caller picks the state key, so the literals here widen to an index signature
+ * and each public factory casts the assembled object back to its exact state.
+ */
+function mirrorSlice<T extends Identifiable, Held>(
+  key: string,
   repo: Repository<T>,
-  compare: (a: T, b: T) => number,
-): StoreApi<CollectionState<Key, T>> {
-  type State = CollectionState<Key, T>
+  empty: Held,
+  project: (entities: readonly T[]) => Held,
+) {
   let unsubscribe: Unsubscribe | null = null
 
-  // The caller picks the state key, so a computed-key literal widens to an index
-  // signature here. The cast is confined to these helpers; `State` stays exact.
-  const loaded = (entities: T[]) =>
-    ({ [key]: entities, status: 'ready' }) as unknown as Partial<State>
-  const idle = { [key]: [] as T[], status: 'idle' } as unknown as State
-  const loading = { status: 'loading' } as Partial<State>
-
-  return createStore<State>((set) => ({
-    ...idle,
+  return (set: SetPartial) => ({
+    [key]: empty,
+    status: 'idle' as StoreStatus,
 
     start() {
       if (unsubscribe) return
-      set(loading)
-      unsubscribe = repo.observe((entities) => {
-        set(loaded([...entities].sort(compare)))
-      })
+      set({ status: 'loading' })
+      unsubscribe = repo.observe((entities) => set({ [key]: project(entities), status: 'ready' }))
     },
 
     stop() {
@@ -57,41 +60,32 @@ export function createCollectionStore<Key extends string, T extends Identifiable
     },
 
     save: (entity: T) => repo.save(entity),
+  })
+}
 
-    async remove(id: string) {
-      await repo.remove(id)
-    },
-  }))
+export function createCollectionStore<Key extends string, T extends Identifiable>(
+  key: Key,
+  repo: Repository<T>,
+  compare: (a: T, b: T) => number,
+): StoreApi<CollectionState<Key, T>> {
+  const mirror = mirrorSlice<T, T[]>(key, repo, [], (entities) => [...entities].sort(compare))
+  return createStore<CollectionState<Key, T>>(
+    (set) =>
+      ({
+        ...mirror(set as SetPartial),
+        async remove(id: string) {
+          await repo.remove(id)
+        },
+      }) as unknown as CollectionState<Key, T>,
+  )
 }
 
 export function createSingletonStore<Key extends string, T extends Identifiable>(
   key: Key,
   repo: Repository<T>,
 ): StoreApi<SingletonState<Key, T>> {
-  type State = SingletonState<Key, T>
-  let unsubscribe: Unsubscribe | null = null
-
-  const loaded = (entity: T | null) =>
-    ({ [key]: entity, status: 'ready' }) as unknown as Partial<State>
-  const idle = { [key]: null, status: 'idle' } as unknown as State
-  const loading = { status: 'loading' } as Partial<State>
-
-  return createStore<State>((set) => ({
-    ...idle,
-
-    start() {
-      if (unsubscribe) return
-      set(loading)
-      unsubscribe = repo.observe((entities) => {
-        set(loaded(entities[0] ?? null))
-      })
-    },
-
-    stop() {
-      unsubscribe?.()
-      unsubscribe = null
-    },
-
-    save: (entity: T) => repo.save(entity),
-  }))
+  const mirror = mirrorSlice<T, T | null>(key, repo, null, (entities) => entities[0] ?? null)
+  return createStore<SingletonState<Key, T>>(
+    (set) => mirror(set as SetPartial) as unknown as SingletonState<Key, T>,
+  )
 }

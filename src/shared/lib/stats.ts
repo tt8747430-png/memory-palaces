@@ -1,3 +1,4 @@
+import { percentOf } from './number'
 import { type SrsState, srsStatus } from './srs'
 
 const XP_PER_LEVEL = 250
@@ -6,13 +7,20 @@ export interface LevelInfo {
   level: number
   xpInLevel: number
   xpForNextLevel: number
+  /** How far through the level, as the whole percent a progress bar wants. */
+  fill: number
+  /** XP still owed before the next level. */
+  remaining: number
 }
 
 export function levelFromXp(xp: number): LevelInfo {
+  const xpInLevel = xp % XP_PER_LEVEL
   return {
     level: Math.floor(xp / XP_PER_LEVEL) + 1,
-    xpInLevel: xp % XP_PER_LEVEL,
+    xpInLevel,
     xpForNextLevel: XP_PER_LEVEL,
+    fill: percentOf(xpInLevel, XP_PER_LEVEL),
+    remaining: XP_PER_LEVEL - xpInLevel,
   }
 }
 

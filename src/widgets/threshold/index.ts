@@ -1,4 +1,6 @@
 export { Threshold } from './ui/Threshold'
 export { AuthLogo } from './ui/AuthLogo'
+export { AuthHeader, AuthSwitchLink } from './ui/AuthHeader'
+export type { AuthHeaderProps, AuthSwitchLinkProps } from './ui/AuthHeader'
 export { AuthForm } from './ui/AuthForm'
 export type { AuthFormProps } from './ui/AuthForm'

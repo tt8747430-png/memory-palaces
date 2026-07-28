@@ -78,12 +78,7 @@ export function DeckQuestionsPage({
     <AppScreen
       header={
         selection.active ? (
-          <SelectHeader
-            count={selection.count}
-            allSelected={selection.allSelected}
-            onToggleAll={selection.toggleAll}
-            onCancel={selection.exit}
-          />
+          <SelectHeader selection={selection} />
         ) : (
           <ScreenHeader
             title={t('questions.title')}

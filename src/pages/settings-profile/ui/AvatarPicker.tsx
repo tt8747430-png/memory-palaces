@@ -1,8 +1,7 @@
-import { type ChangeEvent, useRef } from 'react'
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Camera, Trash2 } from 'lucide-react'
-import { Avatar, Button } from '@/shared/ui'
+import { Avatar, Button, useFilePicker } from '@/shared/ui'
 
 const GRADIENT = 'linear-gradient(135deg, var(--primary), var(--accent))'
 
@@ -15,14 +14,7 @@ export interface AvatarPickerProps {
 
 export function AvatarPicker({ name, avatar, onPick, onRemove }: AvatarPickerProps) {
   const { t } = useTranslation()
-  const fileRef = useRef<HTMLInputElement>(null)
-  const choose = () => fileRef.current?.click()
-
-  const onChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    event.target.value = ''
-    if (file) onPick(file)
-  }
+  const file = useFilePicker('image/*', onPick)
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -39,7 +31,7 @@ export function AvatarPicker({ name, avatar, onPick, onRemove }: AvatarPickerPro
         />
         <motion.button
           type="button"
-          onClick={choose}
+          onClick={file.open}
           aria-label={t(
             avatar ? 'settings.profileEdit.changePhoto' : 'settings.profileEdit.uploadPhoto',
           )}
@@ -58,13 +50,13 @@ export function AvatarPicker({ name, avatar, onPick, onRemove }: AvatarPickerPro
           {t('settings.profileEdit.removePhoto')}
         </Button>
       ) : (
-        <Button variant="secondary" size="sm" onClick={choose}>
+        <Button variant="secondary" size="sm" onClick={file.open}>
           <Camera className="size-4" aria-hidden />
           {t('settings.profileEdit.uploadPhoto')}
         </Button>
       )}
 
-      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onChange} />
+      {file.input}
     </div>
   )
 }

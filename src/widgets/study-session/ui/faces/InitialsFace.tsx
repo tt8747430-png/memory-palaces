@@ -1,8 +1,9 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-import { cn, isReferenceMarker, tokenizeWords, wordInitial } from '@/shared/lib'
+import { clamp, cn, tokenizeWords, wordInitial } from '@/shared/lib'
 import { AidButton, BackPrompt, CardFace, HintCard } from './CardFace'
+import { TokenLine } from './TokenLine'
 import { type FaceProps, stopPress, useSwipeMechanic } from './types'
 
 interface PeekPosition {
@@ -15,7 +16,7 @@ interface PeekPosition {
 export function InitialsFace(props: FaceProps) {
   const { t } = useTranslation()
   const reduce = useReducedMotion()
-  const { card, prompt, answer, canSpeak, wordSpaces, active, onSpeak } = props
+  const { card, prompt, answer, wordSpaces, active } = props
   const [showAll, setShowAll] = useState(false)
   const tokens = useMemo(() => tokenizeWords(answer), [answer])
   const rootRef = useRef<HTMLDivElement>(null)
@@ -42,7 +43,7 @@ export function InitialsFace(props: FaceProps) {
     const root = rootRef.current
     if (!bubble || !root) return
     const half = bubble.offsetWidth / 2
-    const clamped = Math.min(Math.max(peek.x, 4 + half), root.clientWidth - 4 - half)
+    const clamped = clamp(peek.x, 4 + half, root.clientWidth - 4 - half)
     if (Math.abs(clamped - peek.x) > 0.5) setPeek({ ...peek, x: clamped })
   }, [peek])
 
@@ -61,46 +62,18 @@ export function InitialsFace(props: FaceProps) {
   )
 
   return (
-    <CardFace
-      flagged={card.card.flagged}
-      canSpeak={canSpeak}
-      speakText={answer}
-      onSpeak={onSpeak}
-      active={active}
-      mode={props.mode}
-      onChangeMode={props.onChangeMode}
-      onOpenGear={props.onOpenGear}
-      back
-      footer={footer}
-    >
+    <CardFace face={props} speakText={answer} back footer={footer}>
       <BackPrompt prompt={prompt} onFlip={props.onFlip} />
       <div ref={rootRef} className="relative w-full" onClick={() => setPeek(null)}>
-        <p
-          className={cn(
-            'flex w-full flex-wrap items-baseline justify-center gap-y-3 text-[clamp(17px,4.6vw,22px)] font-semibold text-heading',
-            wordSpaces ? 'gap-x-3' : 'gap-x-2',
-          )}
-        >
-          {tokens.map((token, i) => {
-            if (isReferenceMarker(token)) {
-              return (
-                <span key={i} className="font-bold text-accent">
-                  {token}
-                </span>
-              )
-            }
-            if (showAll) {
-              return (
-                <span key={i} className="whitespace-nowrap">
-                  {token}
-                </span>
-              )
-            }
+        <TokenLine
+          tokens={tokens}
+          className={cn('gap-y-3', wordSpaces ? 'gap-x-3' : 'gap-x-2')}
+          renderWithheld={(token, i) => {
+            if (showAll) return null
             const { lead, initial, hidden, trail } = wordInitial(token)
             const open = peek?.index === i
             return (
               <button
-                key={i}
                 type="button"
                 aria-label={t('study.revealWord', { word: token })}
                 onPointerDown={stopPress}
@@ -120,14 +93,14 @@ export function InitialsFace(props: FaceProps) {
                   <span
                     aria-hidden
                     className="ml-0.5 inline-block border-b-2 border-[color-mix(in_oklch,var(--primary)_40%,transparent)] align-baseline"
-                    style={{ width: `${Math.min(Math.max(hidden, 1), 16)}ch` }}
+                    style={{ width: `${clamp(hidden, 1, 16)}ch` }}
                   />
                 ) : null}
                 {trail}
               </button>
             )
-          })}
-        </p>
+          }}
+        />
 
         <AnimatePresence>
           {peek ? (

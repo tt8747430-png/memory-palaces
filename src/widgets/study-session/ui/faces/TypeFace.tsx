@@ -2,14 +2,14 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { typedRecallStatus, withNextWord } from '@/shared/lib'
 import { useInitialsRecall } from '../../model/use-initials-recall'
-import { AidButton, CardFace, TipRow } from './CardFace'
+import { AidButton, CardFace, WorkPrompt } from './CardFace'
 import { TypeInitials } from './TypeInitials'
 import { TypeWords } from './TypeWords'
 import { type FaceProps, useSwipeMechanic } from './types'
 
 export function TypeFace(props: FaceProps) {
   const { t } = useTranslation()
-  const { card, prompt, answer, canSpeak, typeInitialsOnly, active, onSpeak } = props
+  const { card, prompt, answer, typeInitialsOnly, active } = props
   const [text, setText] = useState('')
   const initials = useInitialsRecall(answer, typeInitialsOnly, props.onRevealInPlace)
   const typed = useMemo(() => typedRecallStatus(answer, text), [answer, text])
@@ -40,14 +40,8 @@ export function TypeFace(props: FaceProps) {
 
   return (
     <CardFace
-      flagged={card.card.flagged}
-      canSpeak={canSpeak}
+      face={props}
       speakText={prompt}
-      onSpeak={onSpeak}
-      active={active}
-      mode={props.mode}
-      onChangeMode={props.onChangeMode}
-      onOpenGear={props.onOpenGear}
       align="start"
       footer={
         solved ? (
@@ -60,13 +54,7 @@ export function TypeFace(props: FaceProps) {
         )
       }
     >
-      <div className="shrink-0 text-center">
-        <h2 className="text-balance wrap-break-word text-[clamp(18px,5vw,22px)] font-bold leading-tight tracking-[-0.01em] text-heading">
-          {prompt}
-        </h2>
-        {card.card.tip ? <TipRow tip={card.card.tip} /> : null}
-      </div>
-      <div className="h-px shrink-0 bg-border" aria-hidden />
+      <WorkPrompt prompt={prompt} tip={card.card.tip} />
       {typeInitialsOnly ? (
         <TypeInitials recall={initials} />
       ) : (
