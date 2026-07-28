@@ -26,7 +26,7 @@ import { gradeCard, restoreSchedule } from '@/features/review'
 import { setPreferences } from '@/features/preferences'
 import { FlashcardsPanel, type StudyCard, type StudyPrefs } from '@/widgets/study-session'
 import { useSessionReward } from '@/widgets/session-reward'
-import { AppScreen, Button, IconButton, ScreenHeader } from '@/shared/ui'
+import { AppScreen, Button, IconButton, ScreenHeader, ScreenLoading } from '@/shared/ui'
 
 export type StudyScope = { kind: 'deck'; deckId: string }
 
@@ -112,11 +112,7 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
     void setPreferences(preferencesStore, { studyWordSpaces: value })
 
   if (!ready) {
-    return (
-      <AppScreen className="items-center justify-center">
-        <span className="size-8 animate-pulse rounded-full bg-secondary" aria-hidden />
-      </AppScreen>
-    )
+    return <ScreenLoading />
   }
 
   if (!deck) {

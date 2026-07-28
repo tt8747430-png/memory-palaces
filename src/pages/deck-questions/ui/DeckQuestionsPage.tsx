@@ -6,6 +6,7 @@ import { selectEffectivePreferences, usePreferencesStore } from '@/entities/pref
 import {
   AppScreen,
   ScreenHeader,
+  ScreenLoading,
   SelectHeader,
   SelectToolbar,
   SelectToolbarDock,
@@ -70,11 +71,7 @@ export function DeckQuestionsPage({
   )
 
   if (!page.ready) {
-    return (
-      <AppScreen className="items-center justify-center">
-        <span className="size-8 animate-pulse rounded-full bg-secondary" aria-hidden />
-      </AppScreen>
-    )
+    return <ScreenLoading />
   }
 
   return (

@@ -13,6 +13,7 @@ import {
   Empty,
   OverflowMenuButton,
   ScreenHeader,
+  Skeleton,
 } from '@/shared/ui'
 
 export interface ArchivedDecksPageProps {
@@ -56,7 +57,7 @@ export function ArchivedDecksPage({ onBack }: ArchivedDecksPageProps) {
     >
       {!ready ? (
         <div className="grid flex-1 place-items-center py-16">
-          <span className="size-8 animate-pulse rounded-full bg-secondary" aria-hidden />
+          <Skeleton className="size-8 bg-secondary" />
         </div>
       ) : archived.length === 0 ? (
         <Empty

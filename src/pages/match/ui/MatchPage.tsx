@@ -6,7 +6,7 @@ import { cardsInSubtree, deckPath, selectIsReady } from '@/shared/lib'
 import { MatchBoard } from '@/widgets/match'
 import { type MatchCard } from '@/features/match'
 import { useSessionReward } from '@/widgets/session-reward'
-import { AppScreen, ScreenHeader } from '@/shared/ui'
+import { AppScreen, ScreenHeader, ScreenLoading } from '@/shared/ui'
 
 export type MatchScope = { kind: 'deck'; deckId: string }
 
@@ -39,11 +39,7 @@ export function MatchPage({ scope, onBack }: MatchPageProps) {
   )
 
   if (!ready) {
-    return (
-      <AppScreen className="items-center justify-center">
-        <span className="size-8 animate-pulse rounded-full bg-secondary" aria-hidden />
-      </AppScreen>
-    )
+    return <ScreenLoading />
   }
 
   if (!deck) {

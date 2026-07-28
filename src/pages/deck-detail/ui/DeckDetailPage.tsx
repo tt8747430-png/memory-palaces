@@ -14,7 +14,14 @@ import { setPreferences } from '@/features/preferences'
 import { cardsInSubtree, selectIsReady, studyOverview, useMultiSelect } from '@/shared/lib'
 import { DeckContentEditor } from '@/widgets/content-editor'
 import { PracticeModes } from '@/widgets/practice-modes'
-import { AppScreen, IconButton, ScreenHeader, SelectHeader, StudyOverviewCard } from '@/shared/ui'
+import {
+  AppScreen,
+  IconButton,
+  ScreenHeader,
+  ScreenLoading,
+  SelectHeader,
+  StudyOverviewCard,
+} from '@/shared/ui'
 
 export interface DeckDetailPageProps {
   deckId: string
@@ -67,11 +74,7 @@ export function DeckDetailPage({
   const selection = useMultiSelect()
 
   if (!ready) {
-    return (
-      <AppScreen className="items-center justify-center">
-        <span className="size-8 animate-pulse rounded-full bg-secondary" aria-hidden />
-      </AppScreen>
-    )
+    return <ScreenLoading />
   }
 
   if (!deck) {

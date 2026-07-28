@@ -7,7 +7,7 @@ import { editDeck } from '@/features/deck'
 import { QuizOptionsSheet, type QuizResult, QuizSession } from '@/widgets/quiz'
 import { type QuizQuestion } from '@/features/quiz'
 import { useSessionReward } from '@/widgets/session-reward'
-import { AppScreen, ScreenHeader } from '@/shared/ui'
+import { AppScreen, ScreenHeader, ScreenLoading } from '@/shared/ui'
 
 export interface QuizPageProps {
   deckId: string
@@ -61,11 +61,7 @@ export function QuizPage({ deckId, onBack }: QuizPageProps) {
   }
 
   if (!ready) {
-    return (
-      <AppScreen className="items-center justify-center">
-        <span className="size-8 animate-pulse rounded-full bg-secondary" aria-hidden />
-      </AppScreen>
-    )
+    return <ScreenLoading />
   }
 
   if (!deck) {
