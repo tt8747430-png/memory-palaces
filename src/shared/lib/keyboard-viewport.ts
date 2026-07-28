@@ -30,7 +30,7 @@ function writeStored(value: number) {
 }
 
 function publish() {
-  const next = expecting ? Math.max(measured, expected) : measured
+  const next = measured || (expecting ? expected : 0)
   if (next === published) return
   published = next
   document.documentElement.style.setProperty('--kb-inset', `${next}px`)
@@ -125,7 +125,7 @@ export function startKeyboardViewport(): () => void {
     const next = gap >= KEYBOARD_MIN ? Math.round(gap) : 0
     if (next === measured) return
     measured = next
-    if (next > 0 && next !== expected) {
+    if (next > expected) {
       expected = next
       writeStored(next)
     }

@@ -176,7 +176,7 @@ describe('keyboard viewport', () => {
     expect(keyboardHeight()).toBe(0)
   })
 
-  it('never shrinks below the reserved height while a field is still focused', () => {
+  it('holds the reserve only until the keyboard reports itself', () => {
     localStorage.setItem(STORAGE_KEY, '336')
     stubViewport({ height: 802, offsetTop: 0 }, 802)
     stop = startKeyboardViewport()
@@ -184,6 +184,27 @@ describe('keyboard viewport', () => {
     expectKeyboard(true)
 
     expect(keyboardHeight()).toBe(336)
+  })
+
+  it('publishes a measurement smaller than the remembered one instead of clamping to it', async () => {
+    localStorage.setItem(STORAGE_KEY, '336')
+    const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
+    stop = startKeyboardViewport()
+    expectKeyboard(true)
+
+    await viewport.move({ height: 466, offsetTop: 150 })
+
+    expect(keyboardHeight()).toBe(186)
+  })
+
+  it('remembers the largest measurement, so the reserve is never short of a full keyboard', async () => {
+    const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
+    stop = startKeyboardViewport()
+
+    await viewport.move({ height: 466, offsetTop: 0 })
+    await viewport.move({ height: 466, offsetTop: 150 })
+
+    expect(localStorage.getItem(STORAGE_KEY)).toBe('336')
   })
 
   it('marks the document while the keyboard is up so footer docks can unstick', async () => {
