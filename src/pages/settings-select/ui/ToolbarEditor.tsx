@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { ACTION_META } from '@/shared/config/actions'
 import { useTranslation } from 'react-i18next'
 import {
   closestCenter,
@@ -16,11 +17,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { X } from 'lucide-react'
-import {
-  SELECT_ACTION_META,
-  type SelectActionId,
-  type SelectToolbarConfig,
-} from '@/shared/config/select-toolbar'
+import { type SelectActionId, type SelectToolbarConfig } from '@/shared/config/select-toolbar'
 import { cn, useSortableSensors } from '@/shared/lib'
 import { cardSurface, selectActionIcon } from '@/shared/ui'
 
@@ -93,7 +90,7 @@ function SortableTile({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: action,
   })
-  const label = t(SELECT_ACTION_META[action].labelKey as never)
+  const label = t(ACTION_META[action].labelKey as never)
 
   return (
     <div
@@ -127,7 +124,7 @@ function SortableTile({
 
 function Tile({ action, floating = false }: { action: SelectActionId; floating?: boolean }) {
   const { t } = useTranslation()
-  const meta = SELECT_ACTION_META[action]
+  const meta = ACTION_META[action]
 
   return (
     <span

@@ -1,44 +1,13 @@
-import { type SwipeAccent } from './swipe'
+import type { ActionId } from './actions'
 
 export type SelectSurface = 'library' | 'card' | 'question'
 
 export const SELECT_SURFACES: readonly SelectSurface[] = ['library', 'card', 'question']
 
-export type SelectActionId =
-  | 'move'
-  | 'favorite'
-  | 'duplicate'
-  | 'archive'
-  | 'unfile'
-  | 'flag'
-  | 'known'
-  | 'reset'
-  | 'delete'
-
-export interface SelectActionMeta {
-  id: SelectActionId
-  labelKey: string
-  accent: SwipeAccent
-  destructive?: boolean
-  decksOnly?: boolean
-}
-
-export const SELECT_ACTION_META: Record<SelectActionId, SelectActionMeta> = {
-  move: { id: 'move', labelKey: 'select.actions.move', accent: 'indigo', decksOnly: true },
-  favorite: {
-    id: 'favorite',
-    labelKey: 'select.actions.favorite',
-    accent: 'rose',
-    decksOnly: true,
-  },
-  duplicate: { id: 'duplicate', labelKey: 'select.actions.duplicate', accent: 'violet' },
-  archive: { id: 'archive', labelKey: 'select.actions.archive', accent: 'teal', decksOnly: true },
-  unfile: { id: 'unfile', labelKey: 'select.actions.unfile', accent: 'blue', decksOnly: true },
-  flag: { id: 'flag', labelKey: 'select.actions.flag', accent: 'gold' },
-  known: { id: 'known', labelKey: 'select.actions.known', accent: 'emerald' },
-  reset: { id: 'reset', labelKey: 'select.actions.reset', accent: 'plum' },
-  delete: { id: 'delete', labelKey: 'select.actions.delete', accent: 'red', destructive: true },
-}
+export type SelectActionId = Extract<
+  ActionId,
+  'move' | 'favorite' | 'duplicate' | 'archive' | 'unfile' | 'flag' | 'known' | 'reset' | 'delete'
+>
 
 export const SELECT_ACTIONS: Record<SelectSurface, readonly SelectActionId[]> = {
   library: ['move', 'favorite', 'duplicate', 'archive', 'unfile', 'delete'],

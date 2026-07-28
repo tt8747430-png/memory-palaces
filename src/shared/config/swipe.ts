@@ -1,66 +1,10 @@
+import type { ActionId } from './actions'
+
 export type SwipeItemType = 'deck' | 'folder' | 'card'
 
 export const SWIPE_ITEM_TYPES: readonly SwipeItemType[] = ['deck', 'folder', 'card']
 
-export type SwipeActionId =
-  | 'favorite'
-  | 'move'
-  | 'archive'
-  | 'settings'
-  | 'edit'
-  | 'addSubdeck'
-  | 'addDeck'
-  | 'duplicate'
-  | 'reset'
-  | 'flag'
-  | 'known'
-  | 'delete'
-
-export type SwipeAccent =
-  | 'rose'
-  | 'plum'
-  | 'violet'
-  | 'indigo'
-  | 'blue'
-  | 'teal'
-  | 'emerald'
-  | 'gold'
-  | 'red'
-  | 'slate'
-
-export const SWIPE_ACCENT: Record<SwipeAccent, { fill: string; ink: 'light' | 'dark' }> = {
-  rose: { fill: 'var(--sw-rose)', ink: 'light' },
-  plum: { fill: 'var(--sw-plum)', ink: 'light' },
-  violet: { fill: 'var(--sw-violet)', ink: 'light' },
-  indigo: { fill: 'var(--sw-indigo)', ink: 'light' },
-  blue: { fill: 'var(--sw-blue)', ink: 'light' },
-  teal: { fill: 'var(--sw-teal)', ink: 'light' },
-  emerald: { fill: 'var(--sw-emerald)', ink: 'light' },
-  gold: { fill: 'var(--sw-gold)', ink: 'dark' },
-  red: { fill: 'var(--sw-red)', ink: 'light' },
-  slate: { fill: 'var(--sw-slate)', ink: 'light' },
-}
-
-export interface SwipeActionMeta {
-  id: SwipeActionId
-  labelKey: string
-  accent: SwipeAccent
-}
-
-export const SWIPE_ACTION_META: Record<SwipeActionId, SwipeActionMeta> = {
-  favorite: { id: 'favorite', labelKey: 'swipe.actions.favorite', accent: 'rose' },
-  move: { id: 'move', labelKey: 'swipe.actions.move', accent: 'indigo' },
-  archive: { id: 'archive', labelKey: 'swipe.actions.archive', accent: 'teal' },
-  settings: { id: 'settings', labelKey: 'swipe.actions.settings', accent: 'slate' },
-  edit: { id: 'edit', labelKey: 'swipe.actions.edit', accent: 'blue' },
-  addSubdeck: { id: 'addSubdeck', labelKey: 'swipe.actions.addSubdeck', accent: 'emerald' },
-  addDeck: { id: 'addDeck', labelKey: 'swipe.actions.addDeck', accent: 'emerald' },
-  duplicate: { id: 'duplicate', labelKey: 'swipe.actions.duplicate', accent: 'violet' },
-  reset: { id: 'reset', labelKey: 'swipe.actions.reset', accent: 'plum' },
-  flag: { id: 'flag', labelKey: 'swipe.actions.flag', accent: 'gold' },
-  known: { id: 'known', labelKey: 'swipe.actions.known', accent: 'emerald' },
-  delete: { id: 'delete', labelKey: 'swipe.actions.delete', accent: 'red' },
-}
+export type SwipeActionId = Exclude<ActionId, 'unfile'>
 
 export const SWIPE_ACTIONS: Record<SwipeItemType, readonly SwipeActionId[]> = {
   deck: ['favorite', 'move', 'settings', 'addSubdeck', 'duplicate', 'archive', 'delete'],

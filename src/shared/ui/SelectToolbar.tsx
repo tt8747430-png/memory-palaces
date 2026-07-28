@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
-import { SELECT_ACTION_META, type SelectToolbarConfig } from '@/shared/config/select-toolbar'
+import { ACTION_META } from '@/shared/config/actions'
+import type { SelectToolbarConfig } from '@/shared/config/select-toolbar'
 import { cn } from '@/shared/lib'
 import { type SelectActionHandlers, selectActionIcon } from './select-actions'
 
@@ -22,7 +23,7 @@ export function SelectToolbar({ actions, handlers, className }: SelectToolbarPro
       )}
     >
       {shown.map((id) => {
-        const meta = SELECT_ACTION_META[id]
+        const meta = ACTION_META[id]
         const handler = handlers[id]!
         return (
           <button

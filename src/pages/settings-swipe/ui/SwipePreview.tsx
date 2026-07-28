@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { ACTION_META } from '@/shared/config/actions'
 import { useTranslation } from 'react-i18next'
 import {
   closestCenter,
@@ -19,7 +20,6 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { ChevronRight, Folder, Layers, WalletCards } from 'lucide-react'
 import {
-  SWIPE_ACTION_META,
   SWIPE_SIDE_MAX,
   type SwipeActionId,
   type SwipeConfig,
@@ -168,7 +168,7 @@ function SortableCap({ action }: { action: SwipeActionId }) {
       type="button"
       {...attributes}
       {...listeners}
-      aria-label={t('swipe.reorderLabel', { name: t(SWIPE_ACTION_META[action].labelKey as never) })}
+      aria-label={t('swipe.reorderLabel', { name: t(ACTION_META[action].labelKey as never) })}
       style={{ transform: CSS.Transform.toString(transform), transition, touchAction: 'none' }}
       className={cn(
         'shrink-0 cursor-grab rounded-[14px] active:cursor-grabbing',

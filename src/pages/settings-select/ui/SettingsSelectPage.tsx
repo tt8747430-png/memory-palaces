@@ -7,11 +7,10 @@ import {
   usePreferencesStoreApi,
 } from '@/entities/preferences'
 import { setPreferences } from '@/features/preferences'
-import { SWIPE_ACCENT } from '@/shared/config/swipe'
+import { ACTION_META, accentStyleOf } from '@/shared/config/actions'
 import {
   DEFAULT_SELECT_TOOLBAR,
   normalizeSelectToolbar,
-  SELECT_ACTION_META,
   SELECT_ACTIONS,
   SELECT_SURFACES,
   SELECT_TOOLBAR_MAX,
@@ -37,8 +36,6 @@ const SURFACE_ICON: Record<SelectSurface, typeof Layers> = {
   card: WalletCards,
   question: ListChecks,
 }
-
-const accentOf = (id: SelectActionId) => SWIPE_ACCENT[SELECT_ACTION_META[id].accent]
 
 export interface SettingsSelectPageProps {
   onBack?: () => void
@@ -129,13 +126,13 @@ export function SettingsSelectPage({ onBack }: SettingsSelectPageProps) {
           ) : (
             <div className="mt-2.5 flex flex-wrap gap-1.5">
               {palette.map((id) => {
-                const label = t(SELECT_ACTION_META[id].labelKey as never)
+                const label = t(ACTION_META[id].labelKey as never)
                 return (
                   <ActionPill
                     key={id}
                     label={label}
                     icon={selectActionIcon(id)}
-                    accent={accentOf(id).fill}
+                    accent={accentStyleOf(id).fill}
                     disabled={full}
                     onClick={() => add(id)}
                     aria-label={t('select.addLabel', { name: label })}
