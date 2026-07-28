@@ -28,6 +28,7 @@ export function RootLayout() {
     <>
       <div
         aria-hidden
+        data-slot="status-cap"
         className="pointer-events-none fixed inset-x-0 top-0 z-1000000000 bg-primary"
         style={{ height: 'env(safe-area-inset-top)' }}
       />

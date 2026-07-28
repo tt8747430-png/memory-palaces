@@ -34,6 +34,7 @@ function publish() {
   if (next === published) return
   published = next
   document.documentElement.style.setProperty('--kb-inset', `${next}px`)
+  document.documentElement.toggleAttribute('data-keyboard', next > 0)
   listeners.forEach((listener) => listener())
 }
 
@@ -94,6 +95,7 @@ export function startKeyboardViewport(): () => void {
     root.style.removeProperty('--kb-inset')
     root.style.removeProperty('--app-height')
     root.style.removeProperty('--vv-top')
+    root.removeAttribute('data-keyboard')
   }
 
   const anchor = () => {

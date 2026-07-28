@@ -9,7 +9,7 @@ const SCROLL_KEYBOARD = 'pb-keyboard'
 
 const FILL = 'min-h-full'
 
-const FOOTER_DOCK = 'sticky bottom-0 z-10 -mx-5 mt-auto shrink-0'
+const FOOTER_DOCK = 'sticky bottom-0 z-10 -mx-5 mt-auto shrink-0 [[data-keyboard]_&]:static'
 
 const SHELL = 'h-full'
 

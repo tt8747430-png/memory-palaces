@@ -186,6 +186,29 @@ describe('keyboard viewport', () => {
     expect(keyboardHeight()).toBe(336)
   })
 
+  it('marks the document while the keyboard is up so footer docks can unstick', async () => {
+    const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
+    stop = startKeyboardViewport()
+
+    expect(document.documentElement.hasAttribute('data-keyboard')).toBe(false)
+
+    await viewport.move({ height: 466, offsetTop: 0 })
+    expect(document.documentElement.hasAttribute('data-keyboard')).toBe(true)
+
+    await viewport.move({ height: 802, offsetTop: 0 })
+    expect(document.documentElement.hasAttribute('data-keyboard')).toBe(false)
+  })
+
+  it('marks the document as soon as a focus reserves the remembered height', () => {
+    localStorage.setItem(STORAGE_KEY, '336')
+    stubViewport({ height: 802, offsetTop: 0 }, 802)
+    stop = startKeyboardViewport()
+
+    expectKeyboard(true)
+
+    expect(document.documentElement.hasAttribute('data-keyboard')).toBe(true)
+  })
+
   it('notifies subscribers when the height changes', async () => {
     const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
     stop = startKeyboardViewport()
@@ -206,6 +229,7 @@ describe('keyboard viewport', () => {
     expect(inset()).toBe('')
     expect(shell()).toBe('')
     expect(panOffset()).toBe('')
+    expect(document.documentElement.hasAttribute('data-keyboard')).toBe(false)
     expect(keyboardHeight()).toBe(0)
   })
 })

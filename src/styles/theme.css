@@ -87,6 +87,16 @@
     background-repeat: no-repeat;
   }
 
+  /* Standalone WebKit does NOT re-anchor position:fixed during the keyboard pan (a Safari tab
+     does), so the fixed shell rides off the top by --vv-top; ride the chrome back. Translating
+     in-tab would double the pan — ADR 0002's header-dive trap. */
+  @media (display-mode: standalone) {
+    [data-keyboard] [data-slot='header-bar'],
+    [data-keyboard] [data-slot='status-cap'] {
+      translate: 0 var(--vv-top, 0px);
+    }
+  }
+
   h1,
   h2,
   h3,
