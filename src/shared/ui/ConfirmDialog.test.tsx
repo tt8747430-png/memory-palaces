@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders } from '@/shared/test/render-with-providers'
+import { usePendingAct } from '@/shared/lib'
 import { ConfirmDialog } from './ConfirmDialog'
 
 afterEach(cleanup)
@@ -51,4 +52,38 @@ describe('ConfirmDialog', () => {
     setup({ destructive: true })
     expect((await screen.findByRole('button', { name: 'Delete' })).className).toContain('danger')
   })
+
+  it('runs the act a screen was holding, rather than closing it away first', async () => {
+    const user = userEvent.setup()
+    const onRun = vi.fn()
+    renderWithProviders(<PendingHarness onRun={onRun} />)
+
+    await user.click(screen.getByRole('button', { name: 'Ask' }))
+    await user.click(await screen.findByRole('button', { name: 'Delete' }))
+
+    expect(onRun).toHaveBeenCalledTimes(1)
+    expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument()
+  })
 })
+
+type Act = { kind: 'delete'; id: string }
+
+/** A screen that holds its pending delete the way every list screen does. */
+function PendingHarness({ onRun }: { onRun: (act: Act) => void }) {
+  const pending = usePendingAct<Act>()
+  return (
+    <>
+      <button type="button" onClick={() => pending.request({ kind: 'delete', id: 'c1' })}>
+        Ask
+      </button>
+      <ConfirmDialog
+        open={pending.act !== null}
+        onOpenChange={(open) => !open && pending.dismiss()}
+        title="Delete card?"
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onConfirm={() => pending.resolve(onRun)}
+      />
+    </>
+  )
+}

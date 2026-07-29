@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next'
 import { Check, Lock } from 'lucide-react'
-import { findEntity, isAchievementId } from '@/shared/lib'
+import { cn, findEntity, isAchievementId } from '@/shared/lib'
 import { ACHIEVEMENT_META, RewardHero, useRewards } from '@/widgets/rewards'
-import { AppScreen, cardSurface, MissingScreen, ScreenHeader } from '@/shared/ui'
+import { AppScreen, cardSurface, MissingScreen, pillSurface, ScreenHeader } from '@/shared/ui'
 
 export interface AchievementDetailPageProps {
   achievementId: string
@@ -39,13 +39,7 @@ export function AchievementDetailPage({ achievementId, onBack }: AchievementDeta
     >
       <div className="mt-2 flex flex-col gap-6">
         <RewardHero icon={meta.icon} glow={earned} locked={!earned} shine={earned}>
-          <span
-            className={
-              earned
-                ? 'mt-4 inline-flex items-center gap-1.5 rounded-full bg-[var(--success-surface)] px-3 py-1 text-[length:var(--p-text-label)] font-bold text-[var(--success-on-surface)]'
-                : 'mt-4 inline-flex items-center gap-1.5 rounded-full bg-info-surface px-3 py-1 text-[length:var(--p-text-label)] font-bold text-info-foreground'
-            }
-          >
+          <span className={cn('mt-4', pillSurface(earned ? 'success' : 'info'))}>
             {earned ? (
               <Check className="size-4" aria-hidden />
             ) : (

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Check, RotateCcw, Sparkles } from 'lucide-react'
-import { Button, OutcomeOverlay } from '@/shared/ui'
+import { Button, OutcomeOverlay, pillSurface } from '@/shared/ui'
 import type { SessionSummary } from '../model/types'
 
 export function CompletionOverlay({
@@ -23,11 +23,11 @@ export function CompletionOverlay({
       </p>
       {total > 0 && (
         <div className="mt-2 flex items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-(--success-surface) px-3 py-1.5 text-(length:--p-text-label) font-semibold text-(--success-on-surface)">
+          <span className={pillSurface('success')}>
             <Check className="size-4" aria-hidden />
             {summary.known} {t('study.known')}
           </span>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-(--warning-surface) px-3 py-1.5 text-(length:--p-text-label) font-semibold text-(--warning-foreground)">
+          <span className={pillSurface('warning')}>
             <RotateCcw className="size-4" aria-hidden />
             {summary.learning} {t('study.stillLearning')}
           </span>

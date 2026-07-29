@@ -13,9 +13,9 @@ import {
 import { deleteQuestion, duplicateQuestion, reorderQuestions } from '@/features/question'
 import { applyDeckContent, exportQuestionsCsv, readContentFile } from '@/features/content'
 import {
-  ContentImportError,
   type DeckContentData,
   findEntity,
+  importErrorMessage,
   type MultiSelect,
   selectIsReady,
   useMultiSelect,
@@ -140,11 +140,7 @@ export function useDeckQuestions(deckId: string): DeckQuestions {
         }
         pending.request({ kind: 'import', questions: data.questions })
       } catch (error) {
-        toast.error(
-          error instanceof ContentImportError
-            ? error.message
-            : t('questions.transfer.importFailed'),
-        )
+        toast.error(importErrorMessage(error, t('questions.transfer.importFailed')))
       }
     },
     pending: pending.act,

@@ -6,7 +6,7 @@ import {
   selectQuestions,
 } from '@/entities/question'
 import { newId, nextOrder, nowIso } from '@/shared/lib'
-import { requireQuestion } from './require-question'
+import { requireQuestion } from './question-commands'
 
 export async function duplicateQuestion(store: QuestionStore, id: string): Promise<Question> {
   const original = requireQuestion(store, id)

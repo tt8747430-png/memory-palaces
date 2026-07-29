@@ -13,7 +13,7 @@ import { readAnkiFile } from '@/features/content'
 import { DeckTree, LibrarySelectList } from '@/widgets/deck-tree'
 import { HomeHeader } from '@/widgets/home-header'
 import { useImportDraft } from '@/widgets/content-editor'
-import { ContentImportError, nextDefaultName, useHideAppNav } from '@/shared/lib'
+import { importErrorMessage, nextDefaultName, useHideAppNav } from '@/shared/lib'
 import {
   ActionSheet,
   AppScreen,
@@ -156,9 +156,7 @@ export function DeckLibraryPage({
       setImportDraft('anki', parsed.cards)
       onReviewDeck?.(deck.id)
     } catch (error) {
-      toast.error(
-        error instanceof ContentImportError ? error.message : t('cards.transfer.importFailed'),
-      )
+      toast.error(importErrorMessage(error, t('cards.transfer.importFailed')))
     }
   }
 

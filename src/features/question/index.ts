@@ -1,7 +1,9 @@
 export { createQuestion } from './create-question'
 export type { CreateQuestionInput } from './create-question'
-export { editQuestion } from './edit-question'
-export { deleteQuestion } from './delete-question'
+export {
+  deleteQuestion,
+  editQuestion,
+  reorderQuestions,
+  requireQuestion,
+} from './question-commands'
 export { duplicateQuestion } from './duplicate-question'
-export { reorderQuestions } from './reorder-questions'
-export { requireQuestion } from './require-question'

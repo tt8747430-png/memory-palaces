@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Flag, Lightbulb, MapPin, SlidersHorizontal, Volume2 } from 'lucide-react'
 import type { StudyMode } from '@/entities/preferences'
 import { cn, useKeyboardReveal } from '@/shared/lib'
+import { pillSurface } from '@/shared/ui'
 import { STUDY_MODE_META } from '../mode-meta'
 import { type FaceProps, stopPress } from './types'
 
@@ -196,7 +197,7 @@ export function TipRow({ tip }: { tip: string }) {
           type="button"
           onPointerDown={stopPress}
           onClick={() => setPeek(true)}
-          className="inline-flex items-center gap-1.5 rounded-full bg-(--warning-surface) px-3 py-1.5 text-(length:--p-text-label) font-semibold text-(--warning-foreground)"
+          className={pillSurface('warning')}
         >
           <Lightbulb className="size-3.5" aria-hidden />
           {t('study.peekHint')}

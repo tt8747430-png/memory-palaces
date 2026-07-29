@@ -39,6 +39,7 @@ export { nextOrder, reorderById, byOrderThenCreated, byNewestFirst, byOldestFirs
 export { CONTENT_SORTS, sortContent, type ContentSort, type SortableContent } from './content-order'
 export {
   ContentImportError,
+  importErrorMessage,
   contentSlug,
   cardsToCsv,
   questionsToCsv,
@@ -88,6 +89,12 @@ export {
   type SingletonState,
   type StoreStatus,
 } from './entity-store'
+export {
+  collectionCommands,
+  type CollectionCommands,
+  type CollectionCommandSpec,
+  type OrderedStore,
+} from './collection-commands'
 export { createStoreContext, type StoreContext } from './store-context'
 export {
   isDue,

@@ -1,6 +1,6 @@
 import { selectDecks, type Deck, type DeckStore } from '@/entities/deck'
 import { canReparent, nextOrder, orderSiblings } from '@/shared/lib'
-import { editDeck } from './edit-deck'
+import { editDeck } from './deck-commands'
 
 export async function moveDeck(
   store: DeckStore,

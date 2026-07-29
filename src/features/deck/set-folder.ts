@@ -1,5 +1,5 @@
 import type { Deck, DeckStore } from '@/entities/deck'
-import { editDeck } from './edit-deck'
+import { editDeck } from './deck-commands'
 
 export async function setDeckFolder(
   store: DeckStore,

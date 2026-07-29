@@ -1,6 +1,6 @@
 import { cardsForDeck, type Card, type CardStore, makeCard, selectCards } from '@/entities/card'
 import { newId, nextOrder, nowIso } from '@/shared/lib'
-import { requireCard } from './require-card'
+import { requireCard } from './card-commands'
 
 export async function duplicateCard(store: CardStore, id: string): Promise<Card> {
   const original = requireCard(store, id)

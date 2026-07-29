@@ -1,6 +1,6 @@
 import { findEntity, nowIso, subtreeDeckIds } from '@/shared/lib'
 import { type Deck, type DeckStore, updateDeck } from '@/entities/deck'
-import { requireDeck } from './require-deck'
+import { requireDeck } from './deck-commands'
 
 export async function setDeckArchived(
   store: DeckStore,

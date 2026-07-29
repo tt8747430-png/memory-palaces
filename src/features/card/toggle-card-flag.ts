@@ -1,5 +1,5 @@
 import { type Card, type CardStore, updateCard } from '@/entities/card'
-import { requireCard } from './require-card'
+import { requireCard } from './card-commands'
 import { nowIso } from '@/shared/lib'
 
 export async function toggleCardFlag(store: CardStore, id: string): Promise<Card> {

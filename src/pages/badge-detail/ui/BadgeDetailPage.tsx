@@ -9,6 +9,7 @@ import {
   BadgeMedallion,
   cardSurface,
   MissingScreen,
+  pillSurface,
   Progress,
   ScreenHeader,
 } from '@/shared/ui'
@@ -87,9 +88,7 @@ function Hero({
           format={(n) => t('badgeDetail.nowValue', { value: n.toLocaleString() })}
         />
       </p>
-      <span className="mt-3 inline-flex items-center rounded-full bg-info-surface px-3 py-1 text-[length:var(--p-text-label)] font-bold text-info-foreground">
-        {tierLabel}
-      </span>
+      <span className={cn('mt-3', pillSurface('info'))}>{tierLabel}</span>
       {maxed ? (
         <p className="mt-2 text-[length:var(--p-text-label)] font-semibold text-[var(--success-foreground)]">
           {t('badgeDetail.maxed')}

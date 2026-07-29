@@ -1,7 +1,7 @@
 import { cloneEntity, newId, nowIso, subtreeDecks } from '@/shared/lib'
 import type { Deck, DeckStore } from '@/entities/deck'
 import type { CardStore } from '@/entities/card'
-import { requireDeck } from './require-deck'
+import { requireDeck } from './deck-commands'
 
 export async function duplicateDeck(
   deckStore: DeckStore,
