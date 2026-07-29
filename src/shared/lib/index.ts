@@ -1,6 +1,15 @@
 export { cn } from './cn'
 export { clamp, clamp01, percentOf } from './number'
-export { authEntrance, authRise, authStagger, EASE_EXPO, EASE_OUT, EASE_OUT_CSS } from './motion'
+export {
+  authEntrance,
+  authRise,
+  authStagger,
+  EASE_EXPO,
+  EASE_OUT,
+  EASE_OUT_CSS,
+  poseAt,
+  STACK_DEPTH,
+} from './motion'
 export { coverSquare, fileToAvatar, type CropRect } from './avatar'
 export { downloadText } from './download'
 export { useStickyHeader, type StickyHeader } from './sticky-header/use-sticky-header'
@@ -25,7 +34,7 @@ export { useKeyboardReveal, revealOffset, type RevealBand } from './use-keyboard
 export { useVirtualKeyboard, type VirtualKeyboard } from './use-virtual-keyboard'
 export { useSortableSensors } from './use-sortable-sensors'
 export { shuffle } from './shuffle'
-export { nextOrder, reorderById } from './order'
+export { nextOrder, reorderById, byOrderThenCreated, byNewestFirst, byOldestFirst } from './order'
 export {
   ContentImportError,
   contentSlug,
@@ -41,6 +50,8 @@ export {
   detectPasteFormat,
   guessFieldSeparator,
   stripHtml,
+  type CardLike,
+  type QuestionLike,
   type ParsedCard,
   type ParsedQuestion,
   type NoteDelimiters,
@@ -65,7 +76,7 @@ export {
   type PasswordErrorKey,
 } from './validation'
 export { DAY_MS, systemClock, fixedClock, type Clock } from './clock'
-export { cloneEntity, requireEntity, type Entity } from './entity'
+export { cloneEntity, findEntity, requireEntity, type Entity } from './entity'
 export {
   createCollectionStore,
   createSingletonStore,
@@ -139,6 +150,7 @@ export {
 export { studyOverview, type StudyOverview } from './study-overview'
 export { nextDefaultName } from './naming'
 export { useOptimisticPatch, orderPatch } from './use-optimistic-patch'
+export { usePendingAct, type PendingAct } from './use-pending-act'
 export { reconcileHeldOrder } from './reconcile-order'
 export { moveBlock } from './move-block'
 export { useStackLanding, type StackLanding, type StackOrigin } from './use-stack-landing'

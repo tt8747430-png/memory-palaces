@@ -2,8 +2,8 @@ import { type RefObject, useEffect, useRef, useState } from 'react'
 import { animate, useMotionValue, useTransform } from 'motion/react'
 import { useDrag } from '@use-gesture/react'
 import type { Card } from '@/entities/card'
-import { tick } from '@/shared/lib'
-import { CARD_EASE, SPRING, STACK_DEPTH } from '../ui/browser-poses'
+import { STACK_DEPTH, tick } from '@/shared/lib'
+import { CARD_EASE, SPRING } from '../ui/browser-poses'
 
 export type EnterFrom = 'behind' | 'edge' | null
 

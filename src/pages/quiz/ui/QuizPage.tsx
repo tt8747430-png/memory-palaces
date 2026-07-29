@@ -1,13 +1,19 @@
 import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { resolveDeckSettings, selectIsReady, shuffle, subtreeDeckIds } from '@/shared/lib'
+import {
+  findEntity,
+  resolveDeckSettings,
+  selectIsReady,
+  shuffle,
+  subtreeDeckIds,
+} from '@/shared/lib'
 import { DEFAULT_DECK_SETTINGS, selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
 import { selectQuestions, useQuestionStore } from '@/entities/question'
 import { editDeck } from '@/features/deck'
 import { QuizOptionsSheet, type QuizResult, QuizSession } from '@/widgets/quiz'
 import { type QuizQuestion } from '@/features/quiz'
 import { useSessionReward } from '@/widgets/session-reward'
-import { AppScreen, ScreenHeader, ScreenLoading } from '@/shared/ui'
+import { MissingScreen, ScreenLoading } from '@/shared/ui'
 
 export interface QuizPageProps {
   deckId: string
@@ -26,7 +32,7 @@ export function QuizPage({ deckId, onBack }: QuizPageProps) {
   const questionsReady = useQuestionStore(selectIsReady)
   const ready = decksReady && questionsReady
 
-  const deck = useMemo(() => decks.find((candidate) => candidate.id === deckId), [decks, deckId])
+  const deck = useMemo(() => findEntity(decks, deckId), [decks, deckId])
   const settings = useMemo(
     () => resolveDeckSettings(decks, deckId, DEFAULT_DECK_SETTINGS),
     [decks, deckId],
@@ -65,13 +71,7 @@ export function QuizPage({ deckId, onBack }: QuizPageProps) {
   }
 
   if (!deck) {
-    return (
-      <AppScreen
-        header={
-          <ScreenHeader title={t('quiz.notFound')} onBack={onBack} backLabel={t('quiz.back')} />
-        }
-      />
-    )
+    return <MissingScreen title={t('quiz.notFound')} onBack={onBack} backLabel={t('quiz.back')} />
   }
 
   const handleComplete = (result: QuizResult) => {

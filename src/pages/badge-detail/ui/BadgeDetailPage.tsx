@@ -4,7 +4,14 @@ import { useTranslation } from 'react-i18next'
 import { Check, Lock } from 'lucide-react'
 import { type Badge, type BadgeId, cn, EASE_OUT, milestonePercent } from '@/shared/lib'
 import { BADGE_META, RewardHero, useRewards } from '@/widgets/rewards'
-import { AppScreen, BadgeMedallion, cardSurface, Progress, ScreenHeader } from '@/shared/ui'
+import {
+  AppScreen,
+  BadgeMedallion,
+  cardSurface,
+  MissingScreen,
+  Progress,
+  ScreenHeader,
+} from '@/shared/ui'
 
 const BADGE_IDS: readonly BadgeId[] = ['xp', 'streak', 'decks', 'library', 'cards', 'days']
 const isBadgeId = (value: string): value is BadgeId =>
@@ -22,13 +29,7 @@ export function BadgeDetailPage({ badgeId, onBack }: BadgeDetailPageProps) {
   const badge = isBadgeId(badgeId) ? badges.find((entry) => entry.id === badgeId) : undefined
 
   if (!badge) {
-    return (
-      <AppScreen
-        header={
-          <ScreenHeader title={t('badges.title')} onBack={onBack} backLabel={t('common.back')} />
-        }
-      />
-    )
+    return <MissingScreen title={t('badges.title')} onBack={onBack} backLabel={t('common.back')} />
   }
 
   const meta = BADGE_META[badge.id]

@@ -23,3 +23,15 @@ export const authRise = {
   initial: { opacity: 0, y: 10 },
   animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: EASE_EXPO } },
 }
+
+/** How many cards sit behind the front one in a stack. */
+export const STACK_DEPTH = 2
+
+/**
+ * The pose a card wears `depth` places back in a stack. Depths past the end of
+ * the table reuse the deepest pose, so a stack can be asked for one more card
+ * than it draws without reaching off the end.
+ */
+export function poseAt<T>(poses: readonly T[], depth: number): T {
+  return poses[Math.min(Math.max(depth, 0), poses.length - 1)]!
+}

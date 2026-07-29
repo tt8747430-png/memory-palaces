@@ -5,7 +5,7 @@ import { Check, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
 import { selectDecks, useDeckStore } from '@/entities/deck'
 import { createCard, editCard } from '@/features/card'
-import { cardsInSubtree, cn } from '@/shared/lib'
+import { cardsInSubtree, cn, findEntity } from '@/shared/lib'
 import { AppScreen, FooterBar, ScreenHeader } from '@/shared/ui'
 import { type CardData, CardFields } from '@/widgets/content-editor'
 
@@ -22,8 +22,8 @@ export function CardEditorPage({ deckId, cardId, onBack, onNavigateCard }: CardE
   const allCards = useCardStore(selectCards)
   const decks = useDeckStore(selectDecks)
 
-  const editing = cardId ? (allCards.find((c) => c.id === cardId) ?? null) : null
-  const deck = decks.find((d) => d.id === deckId)
+  const editing = findEntity(allCards, cardId) ?? null
+  const deck = findEntity(decks, deckId)
 
   const deckCards = useMemo(
     () => cardsInSubtree(decks, allCards, deckId),

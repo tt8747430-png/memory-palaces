@@ -13,7 +13,7 @@ import {
   removeNotification,
 } from '@/features/notification'
 import { NotificationsPanel } from '@/widgets/notifications-panel'
-import { AppScreen, OverflowMenuButton, ScreenHeader, type SheetAction } from '@/shared/ui'
+import { AppScreen, FlyoutMenu, ScreenHeader, type SheetAction } from '@/shared/ui'
 
 export interface NotificationsPageProps {
   onBack?: () => void
@@ -63,8 +63,9 @@ export function NotificationsPage({ onBack }: NotificationsPageProps = {}) {
           backLabel={t('notifications.back')}
           action={
             notifications.length > 0 ? (
-              <OverflowMenuButton
+              <FlyoutMenu
                 variant="glass"
+                size="md"
                 label={t('common.moreOptions')}
                 actions={overflowActions}
               />

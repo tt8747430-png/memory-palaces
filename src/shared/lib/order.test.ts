@@ -1,5 +1,26 @@
 import { describe, expect, it, vi } from 'vitest'
-import { nextOrder, reorderById } from './order'
+import { byNewestFirst, byOldestFirst, byOrderThenCreated, nextOrder, reorderById } from './order'
+
+describe('collection orderings', () => {
+  const rows = [
+    { id: 'b', order: 1, createdAt: '2026-01-02' },
+    { id: 'a', order: 0, createdAt: '2026-01-03' },
+    { id: 'c', order: 1, createdAt: '2026-01-01' },
+  ]
+  const ids = (sorted: { id: string }[]) => sorted.map((row) => row.id)
+
+  it('sorts by manual order, oldest first on a tie', () => {
+    expect(ids([...rows].sort(byOrderThenCreated))).toEqual(['a', 'c', 'b'])
+  })
+
+  it('sorts newest first', () => {
+    expect(ids([...rows].sort(byNewestFirst))).toEqual(['a', 'b', 'c'])
+  })
+
+  it('sorts oldest first', () => {
+    expect(ids([...rows].sort(byOldestFirst))).toEqual(['c', 'b', 'a'])
+  })
+})
 
 describe('nextOrder', () => {
   it('is 0 for an empty list', () => {

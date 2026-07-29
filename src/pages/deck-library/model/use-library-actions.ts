@@ -14,8 +14,8 @@ import {
   toggleDeckFavorite,
 } from '@/features/deck'
 import { deleteFolder, reorderFolders } from '@/features/folder'
-import { canReparent, orderPatch, siblingDecks, subtreeDeckIds } from '@/shared/lib'
-import type { SelectActionHandlers } from '@/shared/ui'
+import { canReparent, findEntity, orderPatch, siblingDecks, subtreeDeckIds } from '@/shared/lib'
+import { bulkAction, type SelectActionHandlers } from '@/shared/ui'
 import type { MoveDestination } from '../ui/MoveDeckSheet'
 import type { LibrarySelection } from './use-library-selection'
 
@@ -64,9 +64,8 @@ export function useLibraryActions({
   const folderStore = useFolderStoreApi()
   const cardStore = useCardStoreApi()
 
-  const deckById = (id: string) => decks.find((d) => d.id === id)
-  const folderName = (id: string | null) =>
-    id ? folders.find((f) => f.id === id)?.name : undefined
+  const deckById = (id: string) => findEntity(decks, id)
+  const folderName = (id: string | null) => findEntity(folders, id)?.name
   const undo = (run: () => void) => ({ label: t('common.undo'), onClick: run })
 
   const archiveDeck = (deck: Deck) => {
@@ -157,7 +156,7 @@ export function useLibraryActions({
     )
   }
 
-  const { deckIds, decks: selectedDecks, exit } = selection
+  const { deckIds, decks: selectedDecks } = selection
 
   const bulkArchive = () => {
     const ids = deckIds
@@ -165,7 +164,6 @@ export function useLibraryActions({
     toast.success(t('library.select.archivedToast', { count: ids.length }), {
       action: undo(() => ids.forEach((id) => void setDeckArchived(deckStore, id, false))),
     })
-    exit()
   }
 
   const allFavorited = selectedDecks.length > 0 && selectedDecks.every((d) => d.favorite)
@@ -179,14 +177,12 @@ export function useLibraryActions({
         ? t('library.select.favoritedToast', { count: selectedDecks.length })
         : t('library.select.unfavoritedToast', { count: selectedDecks.length }),
     )
-    exit()
   }
 
   const bulkDuplicate = () => {
     const ids = deckIds
     ids.forEach((id) => void duplicateDeck(deckStore, cardStore, id))
     toast.success(t('library.select.duplicatedToast', { count: ids.length }))
-    exit()
   }
 
   const filedDecks = selectedDecks.filter(
@@ -204,7 +200,6 @@ export function useLibraryActions({
         moved.forEach((d) => void moveDeck(deckStore, d.id, d.parentId, d.folderId)),
       ),
     })
-    exit()
   }
 
   const bulkMoveTo = (dest: MoveDestination) => {
@@ -212,7 +207,7 @@ export function useLibraryActions({
     if (dest.kind === 'archive') {
       ids.forEach((id) => void setDeckArchived(deckStore, id, true))
       toast.success(t('library.select.archivedToast', { count: ids.length }))
-      exit()
+      selection.exit()
       return
     }
     if (dest.kind === 'deck') {
@@ -224,7 +219,7 @@ export function useLibraryActions({
           name: deckById(dest.deckId)?.name ?? '',
         }),
       )
-      exit()
+      selection.exit()
       return
     }
     const target = dest.kind === 'folder' ? dest.folderId : null
@@ -235,7 +230,7 @@ export function useLibraryActions({
         ? t('library.select.movedToast', { count: ids.length, folder: name })
         : t('library.select.unfiledToast', { count: ids.length }),
     )
-    exit()
+    selection.exit()
   }
 
   const confirmBulkDelete = () => {
@@ -243,16 +238,16 @@ export function useLibraryActions({
     folderIds.forEach((id) => void deleteFolder(folderStore, deckStore, id))
     deckIds.forEach((id) => void deleteDeck(deckStore, cardStore, id))
     if (folderId && folderIds.includes(folderId)) onFolderGone()
-    exit()
+    selection.exit()
   }
 
   const noDecks = deckIds.length === 0
   const selectHandlers: SelectActionHandlers = {
     move: { onAction: onRequestBulkMove, disabled: noDecks },
-    favorite: { onAction: bulkFavorite, disabled: noDecks },
-    duplicate: { onAction: bulkDuplicate, disabled: noDecks },
-    archive: { onAction: bulkArchive, disabled: noDecks },
-    unfile: { onAction: bulkUnfile, disabled: filedDecks.length === 0 },
+    favorite: { ...bulkAction(selection, bulkFavorite), disabled: noDecks },
+    duplicate: { ...bulkAction(selection, bulkDuplicate), disabled: noDecks },
+    archive: { ...bulkAction(selection, bulkArchive), disabled: noDecks },
+    unfile: { ...bulkAction(selection, bulkUnfile), disabled: filedDecks.length === 0 },
     delete: { onAction: onRequestBulkDelete, disabled: selection.count === 0 },
   }
 

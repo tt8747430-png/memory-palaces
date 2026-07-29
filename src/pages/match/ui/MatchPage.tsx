@@ -2,11 +2,11 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { selectCards, useCardStore } from '@/entities/card'
 import { selectDecks, useDeckStore } from '@/entities/deck'
-import { cardsInSubtree, deckPath, selectIsReady } from '@/shared/lib'
+import { cardsInSubtree, deckPath, findEntity, selectIsReady } from '@/shared/lib'
 import { MatchBoard } from '@/widgets/match'
 import { type MatchCard } from '@/features/match'
 import { useSessionReward } from '@/widgets/session-reward'
-import { AppScreen, ScreenHeader, ScreenLoading } from '@/shared/ui'
+import { MissingScreen, ScreenLoading } from '@/shared/ui'
 
 export type MatchScope = { kind: 'deck'; deckId: string }
 
@@ -23,10 +23,7 @@ export function MatchPage({ scope, onBack }: MatchPageProps) {
   const allCards = useCardStore(selectCards)
   const ready = useCardStore(selectIsReady)
 
-  const deck = useMemo(
-    () => decks.find((candidate) => candidate.id === scope.deckId),
-    [decks, scope.deckId],
-  )
+  const deck = useMemo(() => findEntity(decks, scope.deckId), [decks, scope.deckId])
 
   const cards = useMemo<MatchCard[]>(
     () =>
@@ -43,13 +40,7 @@ export function MatchPage({ scope, onBack }: MatchPageProps) {
   }
 
   if (!deck) {
-    return (
-      <AppScreen
-        header={
-          <ScreenHeader title={t('match.notFound')} onBack={onBack} backLabel={t('match.back')} />
-        }
-      />
-    )
+    return <MissingScreen title={t('match.notFound')} onBack={onBack} backLabel={t('match.back')} />
   }
 
   const subtitle = deckPath(decks, deck.id)

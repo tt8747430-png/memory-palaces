@@ -2,22 +2,13 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Flag, Lightbulb, MapPin } from 'lucide-react'
 import type { Card } from '@/entities/card'
-import type { SwipeConfig } from '@/shared/config/swipe'
 import { actionIcon, SrsStatusChip } from '@/shared/ui'
-import { ContentRow, type RowDragHandle, RowIndex } from './ContentRow'
+import { ContentRow, type RowFrameProps, RowIndex } from './ContentRow'
 import { rowMenuActions } from './row-actions'
 
-export interface CardRowProps {
+export interface CardRowProps extends RowFrameProps {
   card: Card
   index: number
-  selectMode: boolean
-  selected: boolean
-  reorderable: boolean
-  dragHandle?: RowDragHandle
-  dragging?: boolean
-  swipe: SwipeConfig
-  onToggleSelect: () => void
-  onRequestSelect: () => void
   onOpen: () => void
   onEdit: () => void
   onDuplicate: () => void

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Check } from 'lucide-react'
 import { selectQuestions, useQuestionStore, useQuestionStoreApi } from '@/entities/question'
+import { findEntity } from '@/shared/lib'
 import { selectDecks, useDeckStore } from '@/entities/deck'
 import { createQuestion, editQuestion } from '@/features/question'
 import { AppScreen, Button, ScreenHeader } from '@/shared/ui'
@@ -31,8 +32,8 @@ export function QuestionEditorPage({
   const questions = useQuestionStore(selectQuestions)
   const decks = useDeckStore(selectDecks)
 
-  const editing = questionId ? (questions.find((q) => q.id === questionId) ?? null) : null
-  const deck = decks.find((d) => d.id === deckId)
+  const editing = findEntity(questions, questionId) ?? null
+  const deck = findEntity(decks, deckId)
 
   const [prompt, setPrompt] = useState('')
   const [options, setOptions] = useState<string[]>(['', ''])

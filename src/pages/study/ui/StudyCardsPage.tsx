@@ -18,7 +18,13 @@ import {
   usePreferencesStore,
   usePreferencesStoreApi,
 } from '@/entities/preferences'
-import { cardsInSubtree, deckPath, resolveDeckSettings, selectIsReady } from '@/shared/lib'
+import {
+  cardsInSubtree,
+  deckPath,
+  findEntity,
+  resolveDeckSettings,
+  selectIsReady,
+} from '@/shared/lib'
 import { normalizeFlashcardSwipe } from '@/shared/config/flashcard-swipe'
 import { editCard } from '@/features/card'
 import { editDeck } from '@/features/deck'
@@ -27,10 +33,9 @@ import { setPreferences } from '@/features/preferences'
 import { FlashcardsPanel, type StudyCard, type StudyPrefs } from '@/widgets/study-session'
 import { useSessionReward } from '@/widgets/session-reward'
 import {
-  AppScreen,
   Button,
   Empty,
-  ScreenHeader,
+  MissingScreen,
   ScreenLoading,
   SessionHeader,
   SessionScreen,
@@ -72,10 +77,7 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
     [preferences.flashcardSwipe],
   )
 
-  const deck = useMemo(
-    () => decks.find((candidate) => candidate.id === scope.deckId),
-    [decks, scope.deckId],
-  )
+  const deck = useMemo(() => findEntity(decks, scope.deckId), [decks, scope.deckId])
 
   const settings = useMemo(
     () => resolveDeckSettings(decks, scope.deckId, DEFAULT_DECK_SETTINGS),
@@ -98,7 +100,7 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
     void gradeCard(cardStore, id, grade)
   }
   const handleToggleFlag = (id: string) => {
-    const card = cardStore.getState().cards.find((candidate) => candidate.id === id)
+    const card = findEntity(cardStore.getState().cards, id)
     if (card) void editCard(cardStore, id, { flagged: !card.flagged })
   }
   const persistStudyPrefs = (target: Deck) => (prefs: StudyPrefs) => {
@@ -124,13 +126,7 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
   }
 
   if (!deck) {
-    return (
-      <AppScreen
-        header={
-          <ScreenHeader title={t('study.notFound')} onBack={onBack} backLabel={t('study.back')} />
-        }
-      />
-    )
+    return <MissingScreen title={t('study.notFound')} onBack={onBack} backLabel={t('study.back')} />
   }
 
   const title = deck.name

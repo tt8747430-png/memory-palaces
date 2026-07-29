@@ -12,6 +12,7 @@ import {
   siblingDecks,
   useOptimisticPatch,
   usePersistedSet,
+  findEntity,
 } from '@/shared/lib'
 
 export interface LibraryData {
@@ -55,7 +56,7 @@ export function useLibraryData(folderId: string | null): LibraryData {
     })
   const expand = (id: string) => setExpanded((prev) => new Set(prev).add(id))
 
-  const openFolder = useMemo(() => folders.find((f) => f.id === folderId), [folders, folderId])
+  const openFolder = useMemo(() => findEntity(folders, folderId), [folders, folderId])
   const sortedFolders = useMemo(() => [...folders].sort((a, b) => a.order - b.order), [folders])
   const folderIds = useMemo(() => new Set(folders.map((f) => f.id)), [folders])
   const inFolder = folderId !== null

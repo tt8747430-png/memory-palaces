@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Archive, Check, FolderPlus, Home, Minus, Plus } from 'lucide-react'
 import { type Deck, DEFAULT_DECK_COLOR, DEFAULT_DECK_ICON } from '@/entities/deck'
 import { DEFAULT_FOLDER_ICON, type Folder } from '@/entities/folder'
-import { childDecks, cn, decksInFolder, rootDecks } from '@/shared/lib'
+import { childDecks, cn, decksInFolder, findEntity, rootDecks } from '@/shared/lib'
 import { Button, DeckCover, FolderGlyph, Sheet } from '@/shared/ui'
 
 export type MoveDestination =
@@ -100,8 +100,8 @@ export function MoveDeckSheet({
         : selected.kind === 'archive'
           ? t('move.archive')
           : selected.kind === 'folder'
-            ? (folders.find((f) => f.id === selected.folderId)?.name ?? '')
-            : (decks.find((d) => d.id === selected.deckId)?.name ?? '')
+            ? (findEntity(folders, selected.folderId)?.name ?? '')
+            : (findEntity(decks, selected.deckId)?.name ?? '')
 
   const renderDeck = (node: DeckNode, depth: number): ReactNode => {
     const key = `deck:${node.deck.id}`

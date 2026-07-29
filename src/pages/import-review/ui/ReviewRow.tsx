@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Pencil, Trash2 } from 'lucide-react'
-import { OverflowMenuButton, Switch } from '@/shared/ui'
+import { FlyoutMenu, Switch } from '@/shared/ui'
 import type { DraftCard } from '@/widgets/content-editor'
 
 export function RestoreToggle({
@@ -44,7 +44,7 @@ export function ReviewRow({
           {card.back}
         </p>
       </button>
-      <OverflowMenuButton
+      <FlyoutMenu
         variant="tint"
         size="sm"
         label={t('cards.row.menuLabel')}

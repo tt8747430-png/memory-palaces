@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Deck } from '@/entities/deck'
 import type { Folder } from '@/entities/folder'
-import { cn } from '@/shared/lib'
+import { cn, findEntity } from '@/shared/lib'
 import { SortableRow } from '@/shared/ui'
 import { DeckDragPreview, DeckRowBody } from './deck-row'
 import { FolderDragPreview, FolderRowBody } from './folder-row'
@@ -51,7 +51,7 @@ export function StackLayer({
   folderDeckCounts: Map<string, number>
   selectedIds: ReadonlySet<string>
 }) {
-  const folder = folders.find((f) => f.id === id)
+  const folder = findEntity(folders, id)
   if (folder) {
     return (
       <FolderDragPreview
@@ -61,7 +61,7 @@ export function StackLayer({
       />
     )
   }
-  const deck = decks.find((d) => d.id === id)
+  const deck = findEntity(decks, id)
   if (!deck) return null
   return (
     <DeckDragPreview
@@ -155,11 +155,7 @@ export function SelectFolderRow({
   )
 }
 
-export function SelectDeckRow({
-  deck,
-  due,
-  ...row
-}: SelectRowProps & { deck: Deck; due: number }) {
+export function SelectDeckRow({ deck, due, ...row }: SelectRowProps & { deck: Deck; due: number }) {
   return (
     <SelectRow {...row} id={deck.id} name={deck.name} frame={DECK_ROW_FRAME}>
       <DeckRowBody deck={deck} due={due} selectState={row.selected ? 'checked' : 'unchecked'} />

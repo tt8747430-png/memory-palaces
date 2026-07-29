@@ -11,7 +11,13 @@ import {
   usePreferencesStoreApi,
 } from '@/entities/preferences'
 import { setPreferences } from '@/features/preferences'
-import { cardsInSubtree, selectIsReady, studyOverview, useMultiSelect } from '@/shared/lib'
+import {
+  cardsInSubtree,
+  findEntity,
+  selectIsReady,
+  studyOverview,
+  useMultiSelect,
+} from '@/shared/lib'
 import { DeckContentEditor } from '@/widgets/content-editor'
 import { PracticeModes } from '@/widgets/practice-modes'
 import {
@@ -58,7 +64,7 @@ export function DeckDetailPage({
   const cardsReady = useCardStore(selectIsReady)
   const ready = decksReady && cardsReady
 
-  const deck = useMemo(() => decks.find((d) => d.id === deckId), [decks, deckId])
+  const deck = useMemo(() => findEntity(decks, deckId), [decks, deckId])
   const subtreeCards = useMemo(
     () => cardsInSubtree(decks, allCards, deckId),
     [decks, allCards, deckId],

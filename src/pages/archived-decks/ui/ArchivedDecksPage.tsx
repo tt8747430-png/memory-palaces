@@ -5,13 +5,13 @@ import { Archive, ArchiveRestore, Trash2 } from 'lucide-react'
 import { selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
 import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
 import { deleteDeck, setDeckArchived } from '@/features/deck'
-import { cardsInSubtree, selectIsReady } from '@/shared/lib'
+import { cardsInSubtree, findEntity, selectIsReady } from '@/shared/lib'
 import {
   AppScreen,
   Button,
   ConfirmDialog,
   Empty,
-  OverflowMenuButton,
+  FlyoutMenu,
   ScreenHeader,
   Skeleton,
 } from '@/shared/ui'
@@ -41,7 +41,7 @@ export function ArchivedDecksPage({ onBack }: ArchivedDecksPageProps) {
   }, [decks])
 
   const [pendingDelete, setPendingDelete] = useState<string | null>(null)
-  const pendingDeck = archived.find((deck) => deck.id === pendingDelete)
+  const pendingDeck = findEntity(archived, pendingDelete)
 
   const restore = (id: string, name: string) => {
     void setDeckArchived(deckStore, id, false)
@@ -92,8 +92,9 @@ export function ArchivedDecksPage({ onBack }: ArchivedDecksPageProps) {
                   <ArchiveRestore className="size-4" aria-hidden />
                   {t('archived.restore')}
                 </Button>
-                <OverflowMenuButton
+                <FlyoutMenu
                   label={`${deck.name} ${t('common.moreOptions')}`}
+                  variant="ghost"
                   size="sm"
                   actions={[
                     {

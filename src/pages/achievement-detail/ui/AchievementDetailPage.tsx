@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { Check, Lock } from 'lucide-react'
 import type { AchievementId } from '@/shared/lib'
 import { ACHIEVEMENT_META, RewardHero, useRewards } from '@/widgets/rewards'
-import { AppScreen, cardSurface, ScreenHeader } from '@/shared/ui'
+import { AppScreen, cardSurface, MissingScreen, ScreenHeader } from '@/shared/ui'
 
 const ACHIEVEMENT_IDS: readonly AchievementId[] = [
   'first-deck',
@@ -30,14 +30,10 @@ export function AchievementDetailPage({ achievementId, onBack }: AchievementDeta
 
   if (!achievement) {
     return (
-      <AppScreen
-        header={
-          <ScreenHeader
-            title={t('achievementsPage.title')}
-            onBack={onBack}
-            backLabel={t('common.back')}
-          />
-        }
+      <MissingScreen
+        title={t('achievementsPage.title')}
+        onBack={onBack}
+        backLabel={t('common.back')}
       />
     )
   }

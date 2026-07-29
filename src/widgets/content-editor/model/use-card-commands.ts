@@ -10,7 +10,7 @@ import {
   toggleCardFlag,
 } from '@/features/card'
 import type { MultiSelect } from '@/shared/lib'
-import type { SelectActionHandlers } from '@/shared/ui'
+import { bulkAction, type SelectActionHandlers } from '@/shared/ui'
 
 export interface CardCommands {
   duplicate: (id: string) => void
@@ -46,40 +46,24 @@ export function useCardCommands(
   }
 
   const selectHandlers: SelectActionHandlers = {
-    flag: {
-      disabled: empty,
-      onAction: () => {
-        const toFlag = cards.filter((card) => ids.has(card.id) && !card.flagged)
-        toFlag.forEach((card) => void toggleCardFlag(store, card.id))
-        toast.success(t('cards.bulk.flagged', { count: toFlag.length }))
-        exit()
-      },
-    },
-    known: {
-      disabled: empty,
-      onAction: () => {
-        void markCardsKnown(store, [...ids])
-        toast.success(t('cards.row.markedKnown'))
-        exit()
-      },
-    },
-    reset: {
-      disabled: empty,
-      onAction: () => {
-        void resetCardsSrs(store, [...ids])
-        toast.success(t('cards.row.scheduleReset'))
-        exit()
-      },
-    },
-    duplicate: {
-      disabled: empty,
-      onAction: () => {
-        const batch = [...ids]
-        void Promise.all(batch.map((id) => duplicateCard(store, id)))
-        toast.success(t('cards.bulk.duplicated', { count: batch.length }))
-        exit()
-      },
-    },
+    flag: bulkAction(selection, (batch) => {
+      const selected = new Set(batch)
+      const toFlag = cards.filter((card) => selected.has(card.id) && !card.flagged)
+      toFlag.forEach((card) => void toggleCardFlag(store, card.id))
+      toast.success(t('cards.bulk.flagged', { count: toFlag.length }))
+    }),
+    known: bulkAction(selection, (batch) => {
+      void markCardsKnown(store, batch)
+      toast.success(t('cards.row.markedKnown'))
+    }),
+    reset: bulkAction(selection, (batch) => {
+      void resetCardsSrs(store, batch)
+      toast.success(t('cards.row.scheduleReset'))
+    }),
+    duplicate: bulkAction(selection, (batch) => {
+      void Promise.all(batch.map((id) => duplicateCard(store, id)))
+      toast.success(t('cards.bulk.duplicated', { count: batch.length }))
+    }),
     delete: { disabled: empty, onAction: onRequestBulkDelete },
   }
 

@@ -15,11 +15,13 @@ import { applyDeckContent, exportQuestionsCsv, readContentFile } from '@/feature
 import {
   ContentImportError,
   type DeckContentData,
+  findEntity,
   type MultiSelect,
   selectIsReady,
   useMultiSelect,
+  usePendingAct,
 } from '@/shared/lib'
-import type { SelectActionHandlers } from '@/shared/ui'
+import { bulkAction, type SelectActionHandlers } from '@/shared/ui'
 import { type QuestionSort, sortQuestions } from './sort-questions'
 
 export type PendingAct =
@@ -58,7 +60,7 @@ export function useDeckQuestions(deckId: string): DeckQuestions {
   const decksReady = useDeckStore(selectIsReady)
 
   const [sort, setSort] = useState<QuestionSort>('manual')
-  const [pending, setPending] = useState<PendingAct | null>(null)
+  const pending = usePendingAct<PendingAct>()
   const selection = useMultiSelect()
 
   const deckQuestions = useMemo(
@@ -78,50 +80,43 @@ export function useDeckQuestions(deckId: string): DeckQuestions {
   }
 
   const selectHandlers: SelectActionHandlers = {
-    duplicate: {
-      disabled: selection.count === 0,
-      onAction: () => {
-        const ids = [...selection.ids]
-        void Promise.all(ids.map((id) => duplicateQuestion(questionStore, id)))
-        toast.success(t('questions.bulk.duplicated', { count: ids.length }))
-        selection.exit()
-      },
-    },
+    duplicate: bulkAction(selection, (ids) => {
+      void Promise.all(ids.map((id) => duplicateQuestion(questionStore, id)))
+      toast.success(t('questions.bulk.duplicated', { count: ids.length }))
+    }),
     delete: {
       disabled: selection.count === 0,
-      onAction: () => setPending({ kind: 'delete-selection' }),
+      onAction: () => pending.request({ kind: 'delete-selection' }),
     },
   }
 
-  const confirm = () => {
-    const act = pending
-    setPending(null)
-    if (!act) return
-    switch (act.kind) {
-      case 'delete-question':
-        void deleteQuestion(questionStore, act.question.id)
-        toast.success(t('cards.transfer.deleted'))
-        return
-      case 'delete-selection': {
-        const ids = [...selection.ids]
-        void Promise.all(ids.map((id) => deleteQuestion(questionStore, id)))
-        toast.success(t('cards.transfer.deletedMany', { count: ids.length }))
-        selection.exit()
-        return
+  const confirm = () =>
+    pending.resolve((act) => {
+      switch (act.kind) {
+        case 'delete-question':
+          void deleteQuestion(questionStore, act.question.id)
+          toast.success(t('cards.transfer.deleted'))
+          return
+        case 'delete-selection': {
+          const ids = [...selection.ids]
+          void Promise.all(ids.map((id) => deleteQuestion(questionStore, id)))
+          toast.success(t('cards.transfer.deletedMany', { count: ids.length }))
+          selection.exit()
+          return
+        }
+        case 'import':
+          void applyDeckContent(cardStore, questionStore, deckId, {
+            cards: [],
+            questions: act.questions,
+          }).then((applied) =>
+            toast.success(t('questions.transfer.imported', { count: applied.questions })),
+          )
       }
-      case 'import':
-        void applyDeckContent(cardStore, questionStore, deckId, {
-          cards: [],
-          questions: act.questions,
-        }).then((applied) =>
-          toast.success(t('questions.transfer.imported', { count: applied.questions })),
-        )
-    }
-  }
+    })
 
   return {
     ready: questionsReady && decksReady,
-    deckName: decks.find((candidate) => candidate.id === deckId)?.name ?? '',
+    deckName: findEntity(decks, deckId)?.name ?? '',
     questions,
     sort,
     setSort,
@@ -133,7 +128,7 @@ export function useDeckQuestions(deckId: string): DeckQuestions {
       void reorderQuestions(questionStore, ids)
     },
     exportCsv: () => {
-      exportQuestionsCsv(decks.find((d) => d.id === deckId)?.name ?? '', questions)
+      exportQuestionsCsv(findEntity(decks, deckId)?.name ?? '', questions)
       toast.success(t('questions.transfer.exported'))
     },
     importFile: async (file) => {
@@ -143,7 +138,7 @@ export function useDeckQuestions(deckId: string): DeckQuestions {
           toast.error(t('questions.transfer.noneFound'))
           return
         }
-        setPending({ kind: 'import', questions: data.questions })
+        pending.request({ kind: 'import', questions: data.questions })
       } catch (error) {
         toast.error(
           error instanceof ContentImportError
@@ -152,9 +147,9 @@ export function useDeckQuestions(deckId: string): DeckQuestions {
         )
       }
     },
-    pending,
-    request: setPending,
-    dismiss: () => setPending(null),
+    pending: pending.act,
+    request: pending.request,
+    dismiss: pending.dismiss,
     confirm,
   }
 }

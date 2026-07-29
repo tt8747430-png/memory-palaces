@@ -5,7 +5,7 @@ import { Download, Trash2 } from 'lucide-react'
 import { useCardStoreApi } from '@/entities/card'
 import { useQuestionStoreApi } from '@/entities/question'
 import { applyDeckContent } from '@/features/content'
-import type { ParsedCard } from '@/shared/lib'
+import { findEntity, type ParsedCard } from '@/shared/lib'
 import { AppScreen, Button, ConfirmDialog, FooterBar, IconButton, ScreenHeader } from '@/shared/ui'
 import { CardDraftSheet, type DraftCard, useImportDraft } from '@/widgets/content-editor'
 import { RestoreToggle, ReviewRow } from './ReviewRow'
@@ -50,7 +50,7 @@ export function ImportReviewPage({ deckId, onBack, onDone }: ImportReviewPagePro
   const cards = draft?.cards ?? []
   const isMindscape = draft?.source === 'mindscape'
   const editing = useMemo(
-    () => draft?.cards.find((c) => c.id === editingId) ?? null,
+    () => findEntity(draft?.cards ?? [], editingId) ?? null,
     [draft, editingId],
   )
 

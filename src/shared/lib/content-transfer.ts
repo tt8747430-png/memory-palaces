@@ -22,8 +22,9 @@ export interface DeckContentData {
   questions: ParsedQuestion[]
 }
 
-type CardLike = { front: string; back: string; hint?: string }
-type QuestionLike = {
+/** The least a card or question has to carry to be written out to a file. */
+export type CardLike = { front: string; back: string; hint?: string }
+export type QuestionLike = {
   prompt: string
   options: string[]
   correctAnswer: number

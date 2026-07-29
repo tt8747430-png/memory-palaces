@@ -2,21 +2,12 @@ import { useTranslation } from 'react-i18next'
 import { Check } from 'lucide-react'
 import type { Question } from '@/entities/question'
 import { cn } from '@/shared/lib'
-import type { SwipeConfig } from '@/shared/config/swipe'
-import { ContentRow, type RowDragHandle, RowIndex } from './ContentRow'
+import { ContentRow, type RowFrameProps, RowIndex } from './ContentRow'
 import { rowMenuActions } from './row-actions'
 
-export interface QuestionRowProps {
+export interface QuestionRowProps extends RowFrameProps {
   question: Question
   index: number
-  selectMode: boolean
-  selected: boolean
-  reorderable: boolean
-  dragHandle?: RowDragHandle
-  dragging?: boolean
-  swipe: SwipeConfig
-  onToggleSelect: () => void
-  onRequestSelect: () => void
   onEdit: () => void
   onDuplicate: () => void
   onDelete: () => void

@@ -1,15 +1,8 @@
 import { cardsForDeck, type Card, type CardStore, makeCard, selectCards } from '@/entities/card'
-import { nextOrder, type SrsState } from '@/shared/lib'
+import { nextOrder, type ParsedCard } from '@/shared/lib'
 
-export interface CreateCardInput {
-  front: string
-  back: string
-  hint?: string
-  tip?: string
-  flagged?: boolean
-  memorized?: boolean
-  srs?: SrsState
-}
+/** A card as it arrives from a form, a paste or an import file. */
+export type CreateCardInput = ParsedCard
 
 export async function createCard(
   store: CardStore,

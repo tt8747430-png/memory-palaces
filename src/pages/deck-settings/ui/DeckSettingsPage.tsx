@@ -14,7 +14,7 @@ import {
 } from 'lucide-react'
 import { DEFAULT_DECK_SETTINGS, selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
 import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
-import { cardsInSubtree, resolveDeckSettings, selectIsReady } from '@/shared/lib'
+import { cardsInSubtree, findEntity, resolveDeckSettings, selectIsReady } from '@/shared/lib'
 import { deleteDeck, duplicateDeck, editDeck, setDeckArchived } from '@/features/deck'
 import { resetDeckSrs } from '@/features/card'
 import { exportCardsAnki, exportCardsCsv } from '@/features/content'
@@ -43,7 +43,7 @@ export function DeckSettingsPage({ deckId, onBack, onDeleted }: DeckSettingsPage
   const decks = useDeckStore(selectDecks)
   const allCards = useCardStore(selectCards)
   const ready = useDeckStore(selectIsReady)
-  const deck = useMemo(() => decks.find((d) => d.id === deckId), [decks, deckId])
+  const deck = useMemo(() => findEntity(decks, deckId), [decks, deckId])
   const settings = useMemo(
     () => resolveDeckSettings(decks, deckId, DEFAULT_DECK_SETTINGS),
     [decks, deckId],

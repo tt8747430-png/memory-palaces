@@ -1,7 +1,6 @@
-import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Check, RotateCcw, Sparkles } from 'lucide-react'
-import { Button } from '@/shared/ui'
+import { Button, OutcomeOverlay } from '@/shared/ui'
 import type { SessionSummary } from '../model/types'
 
 export function CompletionOverlay({
@@ -15,18 +14,7 @@ export function CompletionOverlay({
   const total = summary.known + summary.learning
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-card-glass px-6 text-center"
-    >
-      <div className="mb-3 grid size-24 place-items-center rounded-full bg-(--success-surface)">
-        <Check className="size-12 text-(--success-on-surface)" aria-hidden />
-      </div>
-      <h2 className="text-(length:--p-text-headline) font-bold text-heading">
-        {t('study.complete')}
-      </h2>
+    <OutcomeOverlay icon={<Check className="size-12" aria-hidden />} title={t('study.complete')}>
       <p className="inline-flex items-center gap-2 text-(length:--p-text-sub) font-semibold text-(--success-foreground)">
         <Sparkles className="size-4" aria-hidden />
         {t(summary.graded === 1 ? 'study.cardsReviewedOne' : 'study.cardsReviewedOther', {
@@ -48,6 +36,6 @@ export function CompletionOverlay({
       <Button className="mt-6" onClick={onDone}>
         {t('study.done')}
       </Button>
-    </motion.div>
+    </OutcomeOverlay>
   )
 }

@@ -2,7 +2,8 @@ import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Flag, Lightbulb, MapPin } from 'lucide-react'
 import type { Card } from '@/entities/card'
-import { CARD_EASE, poseAt } from './browser-poses'
+import { poseAt } from '@/shared/lib'
+import { CARD_EASE, DEPTH_POSE } from './browser-poses'
 
 const FACE_SURFACE =
   'absolute inset-0 flex flex-col rounded-card-featured border border-border bg-card p-6 shadow-elevated'
@@ -91,8 +92,8 @@ export function QueuedPreview({
     <motion.div
       aria-hidden
       inert
-      initial={reduce ? false : poseAt(depth + 1)}
-      animate={poseAt(depth)}
+      initial={reduce ? false : poseAt(DEPTH_POSE, depth + 1)}
+      animate={poseAt(DEPTH_POSE, depth)}
       transition={reduce ? { duration: 0 } : { duration: 0.3, ease: CARD_EASE }}
       style={{ zIndex: -depth }}
       className="pointer-events-none absolute inset-0"
