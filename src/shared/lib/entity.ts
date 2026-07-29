@@ -5,6 +5,11 @@ export interface Entity extends Identifiable {
   updatedAt: string
 }
 
+/** The one source of entity ids. Nothing else calls `crypto.randomUUID`. */
+export function newId(): string {
+  return crypto.randomUUID()
+}
+
 export function cloneEntity<T extends Entity>(entity: T, id: string, now: string): T {
   return { ...structuredClone(entity), id, createdAt: now, updatedAt: now }
 }

@@ -5,15 +5,15 @@ import {
   type QuestionStore,
   selectQuestions,
 } from '@/entities/question'
-import { nextOrder } from '@/shared/lib'
+import { newId, nextOrder, nowIso } from '@/shared/lib'
 import { requireQuestion } from './require-question'
 
 export async function duplicateQuestion(store: QuestionStore, id: string): Promise<Question> {
   const original = requireQuestion(store, id)
   const order = nextOrder(questionsForDeck(selectQuestions(store.getState()), original.deckId))
   const copy = makeQuestion({
-    id: crypto.randomUUID(),
-    createdAt: new Date().toISOString(),
+    id: newId(),
+    createdAt: nowIso(),
     deckId: original.deckId,
     prompt: original.prompt,
     options: original.options,

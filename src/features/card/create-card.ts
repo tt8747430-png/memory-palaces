@@ -1,6 +1,5 @@
 import { cardsForDeck, type Card, type CardStore, makeCard, selectCards } from '@/entities/card'
-import { nextOrder, type ParsedCard } from '@/shared/lib'
-
+import { newId, nextOrder, nowIso, type ParsedCard } from '@/shared/lib'
 /** A card as it arrives from a form, a paste or an import file. */
 export type CreateCardInput = ParsedCard
 
@@ -12,8 +11,8 @@ export async function createCard(
   const order = nextOrder(cardsForDeck(selectCards(store.getState()), deckId))
   const card = makeCard({
     ...input,
-    id: crypto.randomUUID(),
-    createdAt: new Date().toISOString(),
+    id: newId(),
+    createdAt: nowIso(),
     deckId,
     order,
   })

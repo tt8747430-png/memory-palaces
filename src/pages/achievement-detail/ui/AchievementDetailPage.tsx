@@ -1,19 +1,8 @@
 import { useTranslation } from 'react-i18next'
 import { Check, Lock } from 'lucide-react'
-import type { AchievementId } from '@/shared/lib'
+import { findEntity, isAchievementId } from '@/shared/lib'
 import { ACHIEVEMENT_META, RewardHero, useRewards } from '@/widgets/rewards'
 import { AppScreen, cardSurface, MissingScreen, ScreenHeader } from '@/shared/ui'
-
-const ACHIEVEMENT_IDS: readonly AchievementId[] = [
-  'first-deck',
-  'week-warrior',
-  'deck-master',
-  'xp-champion',
-  'perfectionist',
-  'dedicated-learner',
-]
-const isAchievementId = (value: string): value is AchievementId =>
-  (ACHIEVEMENT_IDS as readonly string[]).includes(value)
 
 export interface AchievementDetailPageProps {
   achievementId: string
@@ -25,7 +14,7 @@ export function AchievementDetailPage({ achievementId, onBack }: AchievementDeta
   const { achievements } = useRewards()
 
   const achievement = isAchievementId(achievementId)
-    ? achievements.find((entry) => entry.id === achievementId)
+    ? findEntity(achievements, achievementId)
     : undefined
 
   if (!achievement) {

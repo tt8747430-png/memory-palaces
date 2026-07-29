@@ -1,7 +1,7 @@
-import { type SyntheticEvent, useId, useState } from 'react'
+import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { User } from 'lucide-react'
-import { emailErrorKey, passwordErrorKey } from '@/shared/lib'
+import { emailErrorKey, passwordErrorKey, useValidatedSubmit } from '@/shared/lib'
 import { LEGAL_URLS } from '@/shared/config/constants'
 import { AuthField, EmailField, PasswordField } from '@/shared/ui'
 import { AuthForm, AuthSwitchLink } from '@/widgets/threshold'
@@ -22,38 +22,30 @@ export function SignupPage({ onSuccess, onGuest, onLogin }: SignupPageProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [agreed, setAgreed] = useState(false)
-  const [errors, setErrors] = useState<{
-    name?: string
-    email?: string
-    password?: string
-    terms?: string
-  }>({})
-  const [busy, setBusy] = useState(false)
 
-  const handleSubmit = async (event: SyntheticEvent) => {
-    event.preventDefault()
-    const emailKey = emailErrorKey(email)
-    const passwordKey = passwordErrorKey(password, { strong: true })
-    const next: typeof errors = {
-      name: name.trim() ? undefined : t('auth.errors.nameRequired'),
-      email: emailKey ? t(emailKey) : undefined,
-      password: passwordKey ? t(passwordKey) : undefined,
-      terms: agreed ? undefined : t('auth.errors.termsRequired'),
-    }
-    setErrors(next)
-    if (next.name || next.email || next.password || next.terms) return
-
-    setBusy(true)
-    await actions.signUp({ name: name.trim(), email: email.trim() })
-    onSuccess()
-  }
+  const { errors, busy, onSubmit } = useValidatedSubmit<'name' | 'email' | 'password' | 'terms'>(
+    () => {
+      const emailKey = emailErrorKey(email)
+      const passwordKey = passwordErrorKey(password, { strong: true })
+      return {
+        name: name.trim() ? undefined : t('auth.errors.nameRequired'),
+        email: emailKey ? t(emailKey) : undefined,
+        password: passwordKey ? t(passwordKey) : undefined,
+        terms: agreed ? undefined : t('auth.errors.termsRequired'),
+      }
+    },
+    async () => {
+      await actions.signUp({ name: name.trim(), email: email.trim() })
+      onSuccess()
+    },
+  )
 
   return (
     <AuthForm
       className="gap-7"
       title={t('auth.signup.title')}
       subtitle={t('auth.signup.subtitle')}
-      onSubmit={handleSubmit}
+      onSubmit={onSubmit}
       submitLabel={busy ? t('auth.signup.submitting') : t('auth.signup.submit')}
       busy={busy}
       onGuest={onGuest}

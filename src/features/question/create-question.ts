@@ -5,8 +5,7 @@ import {
   type QuestionStore,
   selectQuestions,
 } from '@/entities/question'
-import { nextOrder } from '@/shared/lib'
-
+import { newId, nextOrder, nowIso } from '@/shared/lib'
 export interface CreateQuestionInput {
   prompt: string
   options: string[]
@@ -22,8 +21,8 @@ export async function createQuestion(
   const order = nextOrder(questionsForDeck(selectQuestions(store.getState()), deckId))
   const question = makeQuestion({
     ...input,
-    id: crypto.randomUUID(),
-    createdAt: new Date().toISOString(),
+    id: newId(),
+    createdAt: nowIso(),
     deckId,
     order,
   })

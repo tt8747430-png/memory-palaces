@@ -6,11 +6,7 @@ import { cn, findEntity } from '@/shared/lib'
 import { SortableRow } from '@/shared/ui'
 import { DeckDragPreview, DeckRowBody } from './deck-row'
 import { FolderDragPreview, FolderRowBody } from './folder-row'
-import { DECK_ROW_FRAME, FOLDER_ROW_FRAME } from './row-style'
-
-const ROW_SURFACE = 'relative bg-card shadow-card transition-[box-shadow,background-color]'
-const ROW_HIT =
-  'absolute inset-0 touch-pan-y rounded-card transition-colors active:bg-primary/[0.06]'
+import { DECK_ROW_FRAME, FOLDER_ROW_FRAME, ROW_HIT, ROW_SURFACE } from './row-style'
 
 export function Section({
   id,
@@ -120,7 +116,7 @@ function SelectRow({
             {...handleProps}
             aria-label={t('library.select.toggle', { name })}
             aria-pressed={selected}
-            className={ROW_HIT}
+            className={cn(ROW_HIT, 'touch-pan-y')}
           />
           {children}
         </div>

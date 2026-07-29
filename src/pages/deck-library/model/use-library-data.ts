@@ -10,6 +10,7 @@ import {
   flattenDecks,
   selectIsReady,
   siblingDecks,
+  toggleInSet,
   useOptimisticPatch,
   usePersistedSet,
   findEntity,
@@ -47,13 +48,7 @@ export function useLibraryData(folderId: string | null): LibraryData {
   const [decks, patchDecks] = useOptimisticPatch(storeDecks)
 
   const [expanded, setExpanded] = usePersistedSet('mindscape.library.expanded')
-  const toggleExpanded = (id: string) =>
-    setExpanded((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
+  const toggleExpanded = (id: string) => setExpanded((prev) => toggleInSet(prev, id))
   const expand = (id: string) => setExpanded((prev) => new Set(prev).add(id))
 
   const openFolder = useMemo(() => findEntity(folders, folderId), [folders, folderId])

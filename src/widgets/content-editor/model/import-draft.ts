@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { ParsedCard } from '@/shared/lib'
+import { newId } from '@/shared/lib'
 
 export type ImportSource = 'paste' | 'mindscape' | 'anki'
 
@@ -27,7 +28,7 @@ export const useImportDraft = create<ImportDraftState>((set) => ({
     set({
       draft: {
         source,
-        cards: cards.map((card) => ({ id: crypto.randomUUID(), ...card })),
+        cards: cards.map((card) => ({ id: newId(), ...card })),
       },
     }),
   editCard: (id, changes) =>

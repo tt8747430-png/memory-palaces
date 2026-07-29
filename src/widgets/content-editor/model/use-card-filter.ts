@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { toggleInSet } from '@/shared/lib'
 import { type CardFilter, cardFilterCount, EMPTY_CARD_FILTER, type MaturityKey } from './card-list'
 
 export interface CardFilterControl {
@@ -34,12 +35,7 @@ export function useCardFilter(): CardFilterControl {
     draft,
     draftCount: cardFilterCount(draft),
     toggleMaturity: (key) =>
-      setDraft((prev) => {
-        const maturity = new Set(prev.maturity)
-        if (maturity.has(key)) maturity.delete(key)
-        else maturity.add(key)
-        return { ...prev, maturity }
-      }),
+      setDraft((prev) => ({ ...prev, maturity: toggleInSet(prev.maturity, key) })),
     setFlagged: (on) => setDraft((prev) => ({ ...prev, flaggedOnly: on })),
     resetDraft: () => setDraft(EMPTY_CARD_FILTER),
     apply: () => {

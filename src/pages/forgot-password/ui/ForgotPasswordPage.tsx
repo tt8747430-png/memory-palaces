@@ -1,8 +1,8 @@
-import { type SyntheticEvent, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft, MailCheck } from 'lucide-react'
-import { authEntrance, emailErrorKey, useAuthGateway } from '@/shared/lib'
+import { authEntrance, emailErrorKey, useAuthGateway, useValidatedSubmit } from '@/shared/lib'
 import { AuthScreen, Button, EmailField } from '@/shared/ui'
 import { AuthHeader } from '@/widgets/threshold'
 import { requestPasswordReset } from '@/features/session'
@@ -25,8 +25,6 @@ export function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) {
   const gateway = useAuthGateway()
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
-  const [error, setError] = useState<string>()
-  const [busy, setBusy] = useState(false)
   const [cooldown, setCooldown] = useState(0)
 
   useEffect(() => {
@@ -36,20 +34,15 @@ export function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) {
   }, [cooldown])
 
   const send = async () => {
-    setBusy(true)
     await requestPasswordReset(gateway, email.trim())
-    setBusy(false)
     setSent(true)
     setCooldown(RESEND_SECONDS)
   }
 
-  const handleSubmit = (event: SyntheticEvent) => {
-    event.preventDefault()
+  const { errors, busy, onSubmit } = useValidatedSubmit<'email'>(() => {
     const key = emailErrorKey(email)
-    setError(key ? t(key) : undefined)
-    if (key) return
-    void send()
-  }
+    return { email: key ? t(key) : undefined }
+  }, send)
 
   return (
     <AuthScreen>
@@ -103,8 +96,8 @@ export function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) {
               : t('auth.forgot.resend')}
           </Button>
         ) : (
-          <form className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
-            <EmailField value={email} onValueChange={setEmail} error={error} />
+          <form className="flex flex-col gap-4" onSubmit={onSubmit} noValidate>
+            <EmailField value={email} onValueChange={setEmail} error={errors.email} />
             <Button type="submit" size="lg" className="w-full" disabled={busy}>
               {busy ? t('auth.forgot.submitting') : t('auth.forgot.submit')}
             </Button>

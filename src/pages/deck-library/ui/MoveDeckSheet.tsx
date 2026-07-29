@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Archive, Check, FolderPlus, Home, Minus, Plus } from 'lucide-react'
 import { type Deck, DEFAULT_DECK_COLOR, DEFAULT_DECK_ICON } from '@/entities/deck'
 import { DEFAULT_FOLDER_ICON, type Folder } from '@/entities/folder'
-import { childDecks, cn, decksInFolder, findEntity, rootDecks } from '@/shared/lib'
+import { childDecks, cn, decksInFolder, findEntity, rootDecks, toggleInSet } from '@/shared/lib'
 import { Button, DeckCover, FolderGlyph, Sheet } from '@/shared/ui'
 
 export type MoveDestination =
@@ -83,13 +83,7 @@ export function MoveDeckSheet({
     }
   }, [open, allExpandable])
 
-  const toggle = (key: string) =>
-    setExpanded((prev) => {
-      const next = new Set(prev)
-      if (next.has(key)) next.delete(key)
-      else next.add(key)
-      return next
-    })
+  const toggle = (key: string) => setExpanded((prev) => toggleInSet(prev, key))
 
   const selectedKey = selected ? destKey(selected) : null
   const selectedName =

@@ -1,14 +1,8 @@
 import type { Question } from '@/entities/question'
+import { type ContentSort, sortContent } from '@/shared/lib'
 
-export type QuestionSort = 'manual' | 'recent' | 'name'
+/** A question carries no schedule and no flag, so it offers the sorts it can honour. */
+export type QuestionSort = Extract<ContentSort, 'manual' | 'recent' | 'name'>
 
-export function sortQuestions(questions: Question[], sort: QuestionSort): Question[] {
-  switch (sort) {
-    case 'name':
-      return [...questions].sort((a, b) => a.prompt.localeCompare(b.prompt))
-    case 'recent':
-      return [...questions].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-    case 'manual':
-      return questions
-  }
-}
+export const sortQuestions = (questions: Question[], sort: QuestionSort): Question[] =>
+  sortContent(questions, sort, (question) => question.prompt)

@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
+  ancestorsOf,
   canReparent,
   cardsInSubtree,
   childDecks,
+  orderSiblings,
   countDueInSubtree,
   deckPath,
   decksInFolder,
@@ -179,5 +181,40 @@ describe('dueCountsPerDeck', () => {
     const archivedForest: TreeDeck[] = [deck('A', null, { archived: true }), deck('B', 'A')]
     const counts = dueCountsPerDeck(archivedForest, [{ deckId: 'B' }], Date.now())
     expect(counts.size).toBe(0)
+  })
+})
+
+describe('ancestorsOf', () => {
+  it('lists the chain above a deck, root first, excluding the deck itself', () => {
+    expect(ancestorsOf(forest, 'C').map((d) => d.id)).toEqual(['A', 'B'])
+  })
+
+  it('is empty for a deck at the root', () => {
+    expect(ancestorsOf(forest, 'A')).toEqual([])
+  })
+})
+
+describe('orderSiblings', () => {
+  const filed: TreeDeck[] = [
+    deck('A', null, { folderId: 'f1', order: 0 }),
+    deck('B', null, { folderId: 'f1', order: 1, archived: true }),
+    deck('C', null, { folderId: null, order: 0 }),
+    deck('D', 'A', { order: 0 }),
+  ]
+
+  it('gathers the decks filed under the same folder at the root', () => {
+    expect(orderSiblings(filed, null, 'f1').map((d) => d.id)).toEqual(['A', 'B'])
+  })
+
+  it('ignores the folder once there is a parent deck', () => {
+    expect(orderSiblings(filed, 'A').map((d) => d.id)).toEqual(['D'])
+  })
+
+  it('keeps archived siblings, because they still hold an order', () => {
+    expect(orderSiblings(filed, null, 'f1').some((d) => d.archived)).toBe(true)
+  })
+
+  it('leaves the moving deck out of its own reckoning', () => {
+    expect(orderSiblings(filed, null, 'f1', 'A').map((d) => d.id)).toEqual(['B'])
   })
 })

@@ -1,4 +1,14 @@
-export type BadgeId = 'xp' | 'streak' | 'decks' | 'library' | 'cards' | 'days'
+/**
+ * Every badge, in the order they are shown. The one list: the id union, the
+ * tier tables, the metric lookup and the route guard are all derived from it,
+ * so adding a badge is a single edit that the compiler then chases.
+ */
+export const BADGE_IDS = ['xp', 'streak', 'decks', 'library', 'cards', 'days'] as const
+
+export type BadgeId = (typeof BADGE_IDS)[number]
+
+export const isBadgeId = (value: string): value is BadgeId =>
+  (BADGE_IDS as readonly string[]).includes(value)
 
 export interface BadgeInput {
   xp: number
@@ -27,29 +37,19 @@ const TIERS = {
   days: [10, 50, 100, 365],
 } as const satisfies Record<BadgeId, readonly number[]>
 
-const BADGE_ORDER: readonly BadgeId[] = ['xp', 'streak', 'decks', 'library', 'cards', 'days']
-
-function metricFor(id: BadgeId, input: BadgeInput): number {
-  switch (id) {
-    case 'xp':
-      return input.xp
-    case 'streak':
-      return input.longestStreak
-    case 'decks':
-      return input.decksCompleted
-    case 'library':
-      return input.deckCount
-    case 'cards':
-      return input.totalCards
-    case 'days':
-      return input.trainingDayCount
-  }
-}
+const METRIC = {
+  xp: (input) => input.xp,
+  streak: (input) => input.longestStreak,
+  decks: (input) => input.decksCompleted,
+  library: (input) => input.deckCount,
+  cards: (input) => input.totalCards,
+  days: (input) => input.trainingDayCount,
+} satisfies Record<BadgeId, (input: BadgeInput) => number>
 
 export function computeBadges(input: BadgeInput): Badge[] {
-  return BADGE_ORDER.map((id) => {
+  return BADGE_IDS.map((id) => {
     const tiers = TIERS[id]
-    const value = metricFor(id, input)
+    const value = METRIC[id](input)
     const tier = tiers.filter((threshold) => value >= threshold).length
     return {
       id,

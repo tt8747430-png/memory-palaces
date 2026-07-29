@@ -137,7 +137,7 @@ export function DeckLibraryPage({
 
   const submitFolder = (changes: { name: string; color: string; icon: string }) => {
     if (folderSheetTarget) {
-      void editFolder(folderStore, folderSheetTarget, changes)
+      void editFolder(folderStore, folderSheetTarget.id, changes)
     } else {
       void createFolder(folderStore, changes)
       if (inFolder) onCloseFolder()

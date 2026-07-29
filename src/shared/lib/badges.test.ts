@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { type BadgeInput, computeBadges, milestoneProgress, nextMilestone } from './badges'
+import {
+  BADGE_IDS,
+  type BadgeInput,
+  computeBadges,
+  isBadgeId,
+  milestoneProgress,
+  nextMilestone,
+} from './badges'
 
 const ZERO: BadgeInput = {
   xp: 0,
@@ -67,5 +74,19 @@ describe('nextMilestone', () => {
       trainingDayCount: 1000,
     })
     expect(nextMilestone(maxed)).toBeNull()
+  })
+})
+
+describe('isBadgeId', () => {
+  it('accepts every id the badge list declares', () => {
+    expect(BADGE_IDS.every(isBadgeId)).toBe(true)
+  })
+
+  it('rejects a route param that names no badge', () => {
+    expect(isBadgeId('trophies')).toBe(false)
+  })
+
+  it('guards exactly the ids computeBadges produces', () => {
+    expect(computeBadges(ZERO).map((badge) => badge.id)).toEqual([...BADGE_IDS])
   })
 })

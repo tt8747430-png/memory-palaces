@@ -1,4 +1,4 @@
-import { findEntity, subtreeDeckIds } from '@/shared/lib'
+import { findEntity, nowIso, subtreeDeckIds } from '@/shared/lib'
 import { type Deck, type DeckStore, updateDeck } from '@/entities/deck'
 import { requireDeck } from './require-deck'
 
@@ -9,7 +9,7 @@ export async function setDeckArchived(
 ): Promise<Deck> {
   const root = requireDeck(store, id)
   const decks = store.getState().decks
-  const now = new Date().toISOString()
+  const now = nowIso()
   await Promise.all(
     subtreeDeckIds(decks, id).map((subId) => {
       const deck = findEntity(decks, subId)

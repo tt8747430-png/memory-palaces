@@ -23,6 +23,7 @@ export {
 } from './gestures'
 export { useLongPress, type LongPressHandlers, type LongPressOptions } from './use-long-press'
 export { usePersistedSet } from './use-persisted-set'
+export { toggleInSet } from './set'
 export { useMultiSelect, type MultiSelect } from './use-multi-select'
 export { useHideAppNav, useAppNavHidden } from './app-nav'
 export { useSplashStore, useSplashDone } from './app-splash'
@@ -35,6 +36,7 @@ export { useVirtualKeyboard, type VirtualKeyboard } from './use-virtual-keyboard
 export { useSortableSensors } from './use-sortable-sensors'
 export { shuffle } from './shuffle'
 export { nextOrder, reorderById, byOrderThenCreated, byNewestFirst, byOldestFirst } from './order'
+export { CONTENT_SORTS, sortContent, type ContentSort, type SortableContent } from './content-order'
 export {
   ContentImportError,
   contentSlug,
@@ -66,6 +68,7 @@ export { EventBus, type EventHandler } from './event-bus'
 export type { AppEvents } from './events'
 export { EventBusContext, useEventBus, useEventBusOptional } from './event-bus-context'
 export { AuthGatewayContext, useAuthGateway } from './auth-gateway-context'
+export { useValidatedSubmit, type FieldErrors, type ValidatedSubmit } from './use-validated-submit'
 export {
   isEmail,
   isLongEnoughPassword,
@@ -75,8 +78,8 @@ export {
   type EmailErrorKey,
   type PasswordErrorKey,
 } from './validation'
-export { DAY_MS, systemClock, fixedClock, type Clock } from './clock'
-export { cloneEntity, findEntity, requireEntity, type Entity } from './entity'
+export { DAY_MS, systemClock, fixedClock, nowIso, type Clock } from './clock'
+export { cloneEntity, findEntity, newId, requireEntity, type Entity } from './entity'
 export {
   createCollectionStore,
   createSingletonStore,
@@ -118,13 +121,17 @@ export {
   type TrainingTotals,
 } from './stats'
 export {
+  ACHIEVEMENT_IDS,
   computeAchievements,
+  isAchievementId,
   type Achievement,
   type AchievementId,
   type AchievementInput,
 } from './achievements'
 export {
+  BADGE_IDS,
   computeBadges,
+  isBadgeId,
   milestoneProgress,
   milestonePercent,
   nextMilestone,
@@ -164,12 +171,14 @@ export { flattenDecks, type FlatDeck } from './tree-flatten'
 export {
   childDecks,
   siblingDecks,
+  orderSiblings,
   rootDecks,
   decksInFolder,
   subtreeDeckIds,
   subtreeDecks,
   selectionRoots,
   deckPath,
+  ancestorsOf,
   isDescendantOrSelf,
   canReparent,
   resolveDeckSettings,

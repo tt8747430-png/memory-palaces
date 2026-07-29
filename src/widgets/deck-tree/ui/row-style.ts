@@ -2,6 +2,11 @@ import { type Deck, DECK_COLOR_OPTIONS, DEFAULT_DECK_COLOR } from '@/entities/de
 
 export const DECK_ROW_FRAME = 'flex items-center gap-1.5 rounded-card py-2 pl-1.5 pr-2'
 
+/** The card a library row sits on, and the invisible button that covers it. */
+export const ROW_SURFACE = 'relative bg-card shadow-card transition-[box-shadow,background-color]'
+
+export const ROW_HIT = 'absolute inset-0 rounded-card transition-colors active:bg-primary/[0.06]'
+
 export const FOLDER_ROW_FRAME = 'flex w-full items-center gap-3.5 rounded-card py-2.5 pl-2.5 pr-2'
 
 export const TOGGLE_BASE = 'grid shrink-0 place-items-center rounded-full ring-1 transition-colors'

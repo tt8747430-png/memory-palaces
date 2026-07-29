@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { animate, motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Check, Lock } from 'lucide-react'
-import { type Badge, type BadgeId, cn, EASE_OUT, milestonePercent } from '@/shared/lib'
+import { type Badge, cn, EASE_OUT, findEntity, isBadgeId, milestonePercent } from '@/shared/lib'
 import { BADGE_META, RewardHero, useRewards } from '@/widgets/rewards'
 import {
   AppScreen,
@@ -13,10 +13,6 @@ import {
   ScreenHeader,
 } from '@/shared/ui'
 
-const BADGE_IDS: readonly BadgeId[] = ['xp', 'streak', 'decks', 'library', 'cards', 'days']
-const isBadgeId = (value: string): value is BadgeId =>
-  (BADGE_IDS as readonly string[]).includes(value)
-
 export interface BadgeDetailPageProps {
   badgeId: string
   onBack?: () => void
@@ -26,7 +22,7 @@ export function BadgeDetailPage({ badgeId, onBack }: BadgeDetailPageProps) {
   const { t } = useTranslation()
   const { badges } = useRewards()
 
-  const badge = isBadgeId(badgeId) ? badges.find((entry) => entry.id === badgeId) : undefined
+  const badge = isBadgeId(badgeId) ? findEntity(badges, badgeId) : undefined
 
   if (!badge) {
     return <MissingScreen title={t('badges.title')} onBack={onBack} backLabel={t('common.back')} />

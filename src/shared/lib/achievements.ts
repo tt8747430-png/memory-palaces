@@ -1,10 +1,21 @@
-export type AchievementId =
-  | 'first-deck'
-  | 'week-warrior'
-  | 'deck-master'
-  | 'xp-champion'
-  | 'perfectionist'
-  | 'dedicated-learner'
+/**
+ * Every achievement, in the order they are shown. The one list: the id union,
+ * the earning rules and the route guard are all derived from it, so adding an
+ * achievement is a single edit the compiler then chases.
+ */
+export const ACHIEVEMENT_IDS = [
+  'first-deck',
+  'week-warrior',
+  'deck-master',
+  'xp-champion',
+  'perfectionist',
+  'dedicated-learner',
+] as const
+
+export type AchievementId = (typeof ACHIEVEMENT_IDS)[number]
+
+export const isAchievementId = (value: string): value is AchievementId =>
+  (ACHIEVEMENT_IDS as readonly string[]).includes(value)
 
 export interface AchievementInput {
   deckCount: number
@@ -25,13 +36,15 @@ const XP_CHAMPION_XP = 2000
 const PERFECT_ACCURACY = 100
 const DEDICATED_LEARNER_DECKS = 10
 
+const EARNED = {
+  'first-deck': (input) => input.deckCount >= 1,
+  'week-warrior': (input) => input.streakCount >= WEEK_WARRIOR_STREAK,
+  'deck-master': (input) => input.anyDeckCompleted,
+  'xp-champion': (input) => input.xp >= XP_CHAMPION_XP,
+  perfectionist: (input) => input.bestQuizAccuracy >= PERFECT_ACCURACY,
+  'dedicated-learner': (input) => input.decksCompleted >= DEDICATED_LEARNER_DECKS,
+} satisfies Record<AchievementId, (input: AchievementInput) => boolean>
+
 export function computeAchievements(input: AchievementInput): Achievement[] {
-  return [
-    { id: 'first-deck', earned: input.deckCount >= 1 },
-    { id: 'week-warrior', earned: input.streakCount >= WEEK_WARRIOR_STREAK },
-    { id: 'deck-master', earned: input.anyDeckCompleted },
-    { id: 'xp-champion', earned: input.xp >= XP_CHAMPION_XP },
-    { id: 'perfectionist', earned: input.bestQuizAccuracy >= PERFECT_ACCURACY },
-    { id: 'dedicated-learner', earned: input.decksCompleted >= DEDICATED_LEARNER_DECKS },
-  ]
+  return ACHIEVEMENT_IDS.map((id) => ({ id, earned: EARNED[id](input) }))
 }

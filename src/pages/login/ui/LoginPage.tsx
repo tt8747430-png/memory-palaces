@@ -1,6 +1,6 @@
-import { type SyntheticEvent, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { emailErrorKey, passwordErrorKey } from '@/shared/lib'
+import { emailErrorKey, passwordErrorKey, useValidatedSubmit } from '@/shared/lib'
 import { EmailField, PasswordField } from '@/shared/ui'
 import { AuthForm, AuthSwitchLink } from '@/widgets/threshold'
 import { useAuthActions } from '@/features/session'
@@ -17,30 +17,27 @@ export function LoginPage({ onAuthed, onGuest, onSignup, onForgot }: LoginPagePr
   const actions = useAuthActions()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
-  const [busy, setBusy] = useState(false)
-
-  const handleSubmit = async (event: SyntheticEvent) => {
-    event.preventDefault()
-    const emailKey = emailErrorKey(email)
-    const passwordKey = passwordErrorKey(password)
-    setErrors({
-      email: emailKey ? t(emailKey) : undefined,
-      password: passwordKey ? t(passwordKey) : undefined,
-    })
-    if (emailKey || passwordKey) return
-
-    setBusy(true)
-    await actions.signIn(email.trim())
-    onAuthed()
-  }
+  const { errors, busy, onSubmit } = useValidatedSubmit<'email' | 'password'>(
+    () => {
+      const emailKey = emailErrorKey(email)
+      const passwordKey = passwordErrorKey(password)
+      return {
+        email: emailKey ? t(emailKey) : undefined,
+        password: passwordKey ? t(passwordKey) : undefined,
+      }
+    },
+    async () => {
+      await actions.signIn(email.trim())
+      onAuthed()
+    },
+  )
 
   return (
     <AuthForm
       className="gap-8"
       title={t('auth.login.title')}
       subtitle={t('auth.login.subtitle')}
-      onSubmit={handleSubmit}
+      onSubmit={onSubmit}
       submitLabel={busy ? t('auth.login.submitting') : t('auth.login.submit')}
       busy={busy}
       onGuest={onGuest}
