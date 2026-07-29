@@ -1,11 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@/shared/api'
 import { createCardStore, type Card, makeCard } from '@/entities/card'
-import { countDueInSubtree, type TreeDeck } from '@/shared/lib'
+import { isDue } from '@/shared/lib'
 import { gradeCard } from './grade-card'
 
 const NOW = Date.UTC(2026, 0, 10)
-const decks: TreeDeck[] = [{ id: 'd1', parentId: null }]
 
 function card(id: string): Card {
   return makeCard({ id, createdAt: new Date(0).toISOString(), deckId: 'd1', front: 'a', back: 'b' })
@@ -18,7 +17,7 @@ function storeWith(cards: Card[]) {
 }
 
 const dueCount = (store: ReturnType<typeof storeWith>) =>
-  countDueInSubtree(decks, store.getState().cards, 'd1', NOW)
+  store.getState().cards.filter((c) => isDue(c.srs, NOW)).length
 
 describe('grade → due-queue flow', () => {
   it('a brand-new card is in today’s queue', () => {

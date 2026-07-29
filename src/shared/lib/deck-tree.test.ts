@@ -1,14 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
-  ancestorsOf,
   canReparent,
   cardsInSubtree,
   childDecks,
   orderSiblings,
-  countDueInSubtree,
   deckPath,
   decksInFolder,
-  selectionRoots,
   dueCountsPerDeck,
   isDescendantOrSelf,
   resolveDeckSettings,
@@ -48,30 +45,6 @@ describe('rootDecks / decksInFolder', () => {
   it('decksInFolder are top-level decks with that folderId', () => {
     expect(decksInFolder(forest, 'f1').map((d) => d.id)).toEqual(['A'])
     expect(decksInFolder(forest, 'nope')).toEqual([])
-  })
-})
-
-describe('selectionRoots', () => {
-  it('is empty when nothing is selected', () => {
-    expect(selectionRoots(forest, new Set())).toEqual([])
-  })
-
-  it('drops a selected deck that already has a selected ancestor', () => {
-    expect(selectionRoots(forest, new Set(['A', 'C']))).toEqual(['A'])
-    expect(selectionRoots(forest, new Set(['B', 'C']))).toEqual(['B'])
-  })
-
-  it('keeps siblings and orders roots top-to-bottom', () => {
-    expect(selectionRoots(forest, new Set(['D', 'B']))).toEqual(['D', 'B'])
-    expect(selectionRoots(forest, new Set(['A', 'E']))).toEqual(['E', 'A'])
-  })
-
-  it('ignores archived decks', () => {
-    const archivedForest: TreeDeck[] = [
-      deck('A', null, { order: 0 }),
-      deck('B', 'A', { order: 0, archived: true }),
-    ]
-    expect(selectionRoots(archivedForest, new Set(['A', 'B']))).toEqual(['A'])
   })
 })
 
@@ -156,14 +129,11 @@ const notDue: TreeCard = {
   },
 }
 
-describe('cardsInSubtree / countDueInSubtree', () => {
+describe('cardsInSubtree', () => {
   const cards: TreeCard[] = [{ deckId: 'A' }, { deckId: 'B' }, due, notDue, { deckId: 'E' }]
   it('gathers cards attached anywhere in the subtree', () => {
     expect(cardsInSubtree(forest, cards, 'A')).toHaveLength(4)
     expect(cardsInSubtree(forest, cards, 'E')).toHaveLength(1)
-  })
-  it('counts only due cards in the subtree', () => {
-    expect(countDueInSubtree(forest, cards, 'A', Date.now())).toBe(3)
   })
 })
 
@@ -181,16 +151,6 @@ describe('dueCountsPerDeck', () => {
     const archivedForest: TreeDeck[] = [deck('A', null, { archived: true }), deck('B', 'A')]
     const counts = dueCountsPerDeck(archivedForest, [{ deckId: 'B' }], Date.now())
     expect(counts.size).toBe(0)
-  })
-})
-
-describe('ancestorsOf', () => {
-  it('lists the chain above a deck, root first, excluding the deck itself', () => {
-    expect(ancestorsOf(forest, 'C').map((d) => d.id)).toEqual(['A', 'B'])
-  })
-
-  it('is empty for a deck at the root', () => {
-    expect(ancestorsOf(forest, 'A')).toEqual([])
   })
 })
 

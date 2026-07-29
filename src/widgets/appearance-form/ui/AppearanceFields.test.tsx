@@ -2,16 +2,17 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders } from '@/shared/test/render-with-providers'
-import { FolderForm } from './FolderForm'
+import { AppearanceFields } from './AppearanceFields'
 
 afterEach(cleanup)
 
-function setup(overrides: Partial<Parameters<typeof FolderForm>[0]> = {}) {
+function setup(overrides: Partial<Parameters<typeof AppearanceFields>[0]> = {}) {
   const onNameChange = vi.fn()
   const onColorChange = vi.fn()
   const onIconChange = vi.fn()
   renderWithProviders(
-    <FolderForm
+    <AppearanceFields
+      subject="folder"
       name="Languages"
       color="from-sky-500 to-blue-600"
       icon="📁"
@@ -24,7 +25,7 @@ function setup(overrides: Partial<Parameters<typeof FolderForm>[0]> = {}) {
   return { onNameChange, onColorChange, onIconChange }
 }
 
-describe('FolderForm', () => {
+describe('AppearanceFields', () => {
   it('prefills the name field from props', () => {
     setup()
     expect(screen.getByRole('textbox', { name: 'Folder name' })).toHaveValue('Languages')
@@ -42,5 +43,10 @@ describe('FolderForm', () => {
     const { onColorChange } = setup()
     await user.click(screen.getByRole('button', { name: 'ocean' }))
     expect(onColorChange).toHaveBeenCalledWith('from-blue-600 to-indigo-700')
+  })
+
+  it('labels itself for the subject it is dressing', () => {
+    setup({ subject: 'deck' })
+    expect(screen.getByRole('textbox', { name: 'Deck name' })).toHaveValue('Languages')
   })
 })

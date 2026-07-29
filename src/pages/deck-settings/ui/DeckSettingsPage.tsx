@@ -12,9 +12,9 @@ import {
   RotateCcw,
   Trash2,
 } from 'lucide-react'
-import { DEFAULT_DECK_SETTINGS, selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
+import { useDeck, useDeckStoreApi } from '@/entities/deck'
 import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
-import { cardsInSubtree, findEntity, resolveDeckSettings, selectIsReady } from '@/shared/lib'
+import { cardsInSubtree } from '@/shared/lib'
 import { deleteDeck, duplicateDeck, editDeck, setDeckArchived } from '@/features/deck'
 import { resetDeckSrs } from '@/features/card'
 import { exportCardsAnki, exportCardsCsv } from '@/features/content'
@@ -40,14 +40,8 @@ export function DeckSettingsPage({ deckId, onBack, onDeleted }: DeckSettingsPage
   const deckStore = useDeckStoreApi()
   const cardStore = useCardStoreApi()
 
-  const decks = useDeckStore(selectDecks)
+  const { decks, deck, settings, ready } = useDeck(deckId)
   const allCards = useCardStore(selectCards)
-  const ready = useDeckStore(selectIsReady)
-  const deck = useMemo(() => findEntity(decks, deckId), [decks, deckId])
-  const settings = useMemo(
-    () => resolveDeckSettings(decks, deckId, DEFAULT_DECK_SETTINGS),
-    [decks, deckId],
-  )
   const cards = useMemo(() => cardsInSubtree(decks, allCards, deckId), [decks, allCards, deckId])
 
   const [appearanceOpen, setAppearanceOpen] = useState(false)

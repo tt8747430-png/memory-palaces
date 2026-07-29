@@ -10,7 +10,7 @@ export {
   poseAt,
   STACK_DEPTH,
 } from './motion'
-export { coverSquare, fileToAvatar, type CropRect } from './avatar'
+export { fileToAvatar } from './avatar'
 export { downloadText } from './download'
 export { useStickyHeader, type StickyHeader } from './sticky-header/use-sticky-header'
 export { HeaderElevationContext, useHeaderElevation } from './sticky-header/header-elevation'
@@ -31,7 +31,7 @@ export { useAutoSelect } from './use-auto-select'
 export { useDevMode, setDevMode } from './dev-mode'
 export { visibleBottom } from './keyboard-viewport'
 export { useKeyboardInset } from './use-keyboard-inset'
-export { useKeyboardReveal, revealOffset, type RevealBand } from './use-keyboard-reveal'
+export { useKeyboardReveal } from './use-keyboard-reveal'
 export { useVirtualKeyboard, type VirtualKeyboard } from './use-virtual-keyboard'
 export { useSortableSensors } from './use-sortable-sensors'
 export { shuffle } from './shuffle'
@@ -44,25 +44,19 @@ export {
   cardsToCsv,
   questionsToCsv,
   cardsToAnkiTsv,
-  parsePastedCards,
   parseDelimitedNotes,
   parseAnkiText,
   parseVerses,
-  parseVerseChapters,
   parseDeckContent,
   detectPasteFormat,
   guessFieldSeparator,
-  stripHtml,
   type CardLike,
   type QuestionLike,
   type ParsedCard,
-  type ParsedQuestion,
-  type NoteDelimiters,
   type PasteFormat,
   type DeckContentData,
-  type VerseChapter,
 } from './content-transfer'
-export { speak, cancelSpeech, speechAvailable } from './speech'
+export { speak, speechAvailable } from './speech'
 export { tick, impact, success, setHapticsEnabled } from './haptics'
 export { useShake, motionSupported, requestMotionPermission } from './shake'
 export { EventBus, type EventHandler } from './event-bus'
@@ -75,7 +69,6 @@ export {
   isLongEnoughPassword,
   emailErrorKey,
   passwordErrorKey,
-  MIN_PASSWORD,
   type EmailErrorKey,
   type PasswordErrorKey,
 } from './validation'
@@ -120,7 +113,6 @@ export {
 } from './streak'
 export {
   levelFromXp,
-  isCardReviewed,
   isDeckCompleted,
   computeTrainingTotals,
   cardMaturityCounts,
@@ -139,7 +131,6 @@ export {
   BADGE_IDS,
   computeBadges,
   isBadgeId,
-  milestoneProgress,
   milestonePercent,
   nextMilestone,
   type Badge,
@@ -183,14 +174,10 @@ export {
   decksInFolder,
   subtreeDeckIds,
   subtreeDecks,
-  selectionRoots,
   deckPath,
-  ancestorsOf,
-  isDescendantOrSelf,
   canReparent,
   resolveDeckSettings,
   cardsInSubtree,
-  countDueInSubtree,
   dueCountsPerDeck,
   type SelectState,
   type TreeDeck,

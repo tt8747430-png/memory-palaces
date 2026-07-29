@@ -240,7 +240,7 @@ export function guessFieldSeparator(text: string): string {
   return '\t'
 }
 
-export function stripHtml(input: string): string {
+function stripHtml(input: string): string {
   return input
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/(p|div|li)>/gi, '\n')
@@ -290,7 +290,7 @@ export interface VerseChapter {
   cards: ParsedCard[]
 }
 
-export function parseVerseChapters(text: string): VerseChapter[] {
+function parseVerseChapters(text: string): VerseChapter[] {
   const verseRe = /^\((\d+):(\d+)\)\s*(.*)$/
   const headerRe = /^(.*\p{L})\s+\d+(?:\s*[-–:]\s*\d+)*\.?$/u
   const chapterTail = /\s+\d+(?:\s*[-–:]\s*\d+)*\.?$/u

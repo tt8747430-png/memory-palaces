@@ -68,12 +68,7 @@ export function useLibraryActions({
   const folderName = (id: string | null) => findEntity(folders, id)?.name
   const undo = (run: () => void) => ({ label: t('common.undo'), onClick: run })
 
-  const archiveDeck = (deck: Deck) => {
-    void setDeckArchived(deckStore, deck.id, true)
-    toast.success(t('deck.archivedToast', { name: deck.name }), {
-      action: undo(() => void setDeckArchived(deckStore, deck.id, false)),
-    })
-  }
+  const archiveDeck = (deck: Deck) => moveDecksTo([deck.id], { kind: 'archive' })
 
   const duplicate = (deck: Deck) => {
     void duplicateDeck(deckStore, cardStore, deck.id)
@@ -82,30 +77,92 @@ export function useLibraryActions({
 
   const toggleFavorite = (deck: Deck) => void toggleDeckFavorite(deckStore, deck.id)
 
-  const moveDeckTo = (deck: Deck, dest: MoveDestination) => {
-    if (dest.kind === 'archive') {
-      archiveDeck(deck)
-      return
-    }
-    const previous = { parentId: deck.parentId, folderId: deck.folderId ?? null }
-    const action = undo(
-      () => void moveDeck(deckStore, deck.id, previous.parentId, previous.folderId),
+  /**
+   * The one way decks change where they live. Every surface — a swipe, the move
+   * sheet, a drop onto a folder, the select toolbar — comes through here, so the
+   * subtree guard, the optimistic patch, the message and the undo are decided
+   * once. Decks already at the destination are left alone, and a move that would
+   * put a deck inside its own subtree is dropped rather than throwing.
+   */
+  const moveDecksTo = (ids: readonly string[], dest: MoveDestination) => {
+    const moving = ids
+      .map(deckById)
+      .filter((deck): deck is Deck => deck !== undefined)
+      .filter((deck) => (dest.kind === 'deck' ? canReparent(decks, deck.id, dest.deckId) : true))
+      .filter((deck) => !alreadyAt(deck, dest))
+    if (moving.length === 0) return
+
+    const previous = moving.map((deck) => ({
+      id: deck.id,
+      parentId: deck.parentId,
+      folderId: deck.folderId ?? null,
+    }))
+    const restore = undo(() =>
+      previous.forEach((d) => void moveDeck(deckStore, d.id, d.parentId, d.folderId)),
     )
-    if (dest.kind === 'deck') {
-      if (!canReparent(decks, deck.id, dest.deckId)) return
-      void moveDeck(deckStore, deck.id, dest.deckId, null)
-      toast.success(t('deck.movedIntoToast', { name: deckById(dest.deckId)?.name ?? '' }), {
-        action,
+
+    if (dest.kind === 'archive') {
+      moving.forEach((deck) => void setDeckArchived(deckStore, deck.id, true))
+      toast.success(archiveMessage(moving), {
+        action: undo(() => moving.forEach((d) => void setDeckArchived(deckStore, d.id, false))),
       })
       return
     }
-    const target = dest.kind === 'folder' ? dest.folderId : null
-    void moveDeck(deckStore, deck.id, null, target)
-    const name = folderName(target)
-    toast.success(name ? t('deck.movedToast', { folder: name }) : t('deck.unfiledToast'), {
-      action,
-    })
+
+    const parentId = dest.kind === 'deck' ? dest.deckId : null
+    const folderId = dest.kind === 'folder' ? dest.folderId : null
+
+    // Land the rows where they will end up before the writes resolve, so a drop
+    // onto a folder never shows the deck snapping back to its old row first.
+    const base = siblingDecks(decks, parentId, folderId).length
+    const patches = new Map<string, Partial<Deck>>()
+    moving.forEach((deck, i) => patches.set(deck.id, { parentId, folderId, order: base + i }))
+    patchDecks(patches)
+
+    void (async () => {
+      for (const deck of moving) await moveDeck(deckStore, deck.id, parentId, folderId)
+    })()
+    toast.success(moveMessage(moving, dest), { action: restore })
   }
+
+  const alreadyAt = (deck: Deck, dest: MoveDestination): boolean => {
+    switch (dest.kind) {
+      case 'archive':
+        return deck.archived
+      case 'deck':
+        return deck.parentId === dest.deckId
+      case 'folder':
+        return deck.parentId === null && deck.folderId === dest.folderId
+      case 'home':
+        return deck.parentId === null && (deck.folderId ?? null) === null
+    }
+  }
+
+  /** One deck is named; a batch is counted. */
+  const archiveMessage = (moving: Deck[]): string =>
+    moving.length === 1
+      ? t('deck.archivedToast', { name: moving[0]!.name })
+      : t('library.select.archivedToast', { count: moving.length })
+
+  const moveMessage = (moving: Deck[], dest: MoveDestination): string => {
+    const one = moving.length === 1
+    const count = moving.length
+    if (dest.kind === 'deck') {
+      const name = deckById(dest.deckId)?.name ?? ''
+      return one
+        ? t('deck.movedIntoToast', { name })
+        : t('library.select.movedIntoToast', { count, name })
+    }
+    const folder = dest.kind === 'folder' ? folderName(dest.folderId) : undefined
+    if (!folder) {
+      return one ? t('deck.unfiledToast') : t('library.select.unfiledToast', { count })
+    }
+    return one
+      ? t('deck.movedToast', { folder })
+      : t('library.select.movedToast', { count, folder })
+  }
+
+  const moveDeckTo = (deck: Deck, dest: MoveDestination) => moveDecksTo([deck.id], dest)
 
   const removeDeck = (deckId: string) => void deleteDeck(deckStore, cardStore, deckId)
 
@@ -124,47 +181,12 @@ export function useLibraryActions({
     void reorderDecks(deckStore, ids)
   }
 
-  const fileDecksIntoFolder = (deckIds: string[], targetFolderId: string) => {
-    const moving = deckIds.filter((id) => {
-      const deck = deckById(id)
-      return deck && !(deck.parentId === null && deck.folderId === targetFolderId)
-    })
-    if (moving.length === 0) return
-    const base = siblingDecks(decks, null, targetFolderId).length
-    const patches = new Map<string, Partial<Deck>>()
-    moving.forEach((id, i) =>
-      patches.set(id, { parentId: null, folderId: targetFolderId, order: base + i }),
-    )
-    patchDecks(patches)
-    const previous = moving.map((id) => {
-      const deck = deckById(id)!
-      return { id, parentId: deck.parentId, folderId: deck.folderId ?? null }
-    })
-    void (async () => {
-      for (const id of moving) await moveDeck(deckStore, id, null, targetFolderId)
-    })()
-    toast.success(
-      t('library.select.movedToast', {
-        count: moving.length,
-        folder: folderName(targetFolderId) ?? '',
-      }),
-      {
-        action: undo(() =>
-          previous.forEach((d) => void moveDeck(deckStore, d.id, d.parentId, d.folderId)),
-        ),
-      },
-    )
-  }
+  const fileDecksIntoFolder = (deckIds: string[], targetFolderId: string) =>
+    moveDecksTo(deckIds, { kind: 'folder', folderId: targetFolderId })
 
   const { deckIds, decks: selectedDecks } = selection
 
-  const bulkArchive = () => {
-    const ids = deckIds
-    ids.forEach((id) => void setDeckArchived(deckStore, id, true))
-    toast.success(t('library.select.archivedToast', { count: ids.length }), {
-      action: undo(() => ids.forEach((id) => void setDeckArchived(deckStore, id, false))),
-    })
-  }
+  const bulkArchive = () => moveDecksTo(deckIds, { kind: 'archive' })
 
   const allFavorited = selectedDecks.length > 0 && selectedDecks.every((d) => d.favorite)
   const bulkFavorite = () => {
@@ -188,48 +210,14 @@ export function useLibraryActions({
   const filedDecks = selectedDecks.filter(
     (d) => d.parentId !== null || (d.folderId ?? null) !== null,
   )
-  const bulkUnfile = () => {
-    const moved = filedDecks.map((d) => ({
-      id: d.id,
-      parentId: d.parentId,
-      folderId: d.folderId ?? null,
-    }))
-    moved.forEach((d) => void moveDeck(deckStore, d.id, null, null))
-    toast.success(t('library.select.unfiledToast', { count: moved.length }), {
-      action: undo(() =>
-        moved.forEach((d) => void moveDeck(deckStore, d.id, d.parentId, d.folderId)),
-      ),
-    })
-  }
+  const bulkUnfile = () =>
+    moveDecksTo(
+      filedDecks.map((d) => d.id),
+      { kind: 'home' },
+    )
 
   const bulkMoveTo = (dest: MoveDestination) => {
-    const ids = deckIds
-    if (dest.kind === 'archive') {
-      ids.forEach((id) => void setDeckArchived(deckStore, id, true))
-      toast.success(t('library.select.archivedToast', { count: ids.length }))
-      selection.exit()
-      return
-    }
-    if (dest.kind === 'deck') {
-      const valid = ids.filter((id) => canReparent(decks, id, dest.deckId))
-      valid.forEach((id) => void moveDeck(deckStore, id, dest.deckId, null))
-      toast.success(
-        t('library.select.movedIntoToast', {
-          count: valid.length,
-          name: deckById(dest.deckId)?.name ?? '',
-        }),
-      )
-      selection.exit()
-      return
-    }
-    const target = dest.kind === 'folder' ? dest.folderId : null
-    ids.forEach((id) => void moveDeck(deckStore, id, null, target))
-    const name = folderName(target)
-    toast.success(
-      name
-        ? t('library.select.movedToast', { count: ids.length, folder: name })
-        : t('library.select.unfiledToast', { count: ids.length }),
-    )
+    moveDecksTo(deckIds, dest)
     selection.exit()
   }
 

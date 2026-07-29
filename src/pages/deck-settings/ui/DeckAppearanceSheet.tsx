@@ -1,15 +1,10 @@
 import { type SyntheticEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Check } from 'lucide-react'
-import {
-  type Deck,
-  DECK_COLOR_OPTIONS,
-  DEFAULT_DECK_COLOR,
-  DEFAULT_DECK_ICON,
-  useDeckStoreApi,
-} from '@/entities/deck'
+import { type Deck, DEFAULT_DECK_COLOR, DEFAULT_DECK_ICON, useDeckStoreApi } from '@/entities/deck'
 import { editDeck } from '@/features/deck'
-import { Button, IconColorRow, Sheet, Input } from '@/shared/ui'
+import { AppearanceFields } from '@/widgets/appearance-form'
+import { Button, Sheet } from '@/shared/ui'
 
 export interface DeckAppearanceSheetProps {
   open: boolean
@@ -51,23 +46,15 @@ export function DeckAppearanceSheet({ open, onOpenChange, deck }: DeckAppearance
         </Button>
       }
     >
-      <form onSubmit={submit} className="flex flex-col gap-5 pb-2">
-        <Input
-          aria-label={t('deck.nameLabel')}
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          placeholder={t('deck.namePlaceholder')}
-          enterKeyHint="done"
-          maxLength={60}
-        />
-        <IconColorRow
-          icon={icon}
+      <form onSubmit={submit} className="pb-2">
+        <AppearanceFields
+          subject="deck"
+          name={name}
           color={color}
-          onIconChange={setIcon}
+          icon={icon}
+          onNameChange={setName}
           onColorChange={setColor}
-          colorOptions={DECK_COLOR_OPTIONS}
-          label={t('folder.iconColorLabel')}
-          iconLabel={t('deckSettings.iconLabel')}
+          onIconChange={setIcon}
         />
       </form>
     </Sheet>

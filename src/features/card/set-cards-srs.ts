@@ -1,6 +1,6 @@
 import { type CardStore, selectCards, updateCard } from '@/entities/card'
 import { type DeckStore, selectDecks } from '@/entities/deck'
-import { cardsInSubtree, markKnown, type SrsState } from '@/shared/lib'
+import { cardsInSubtree, markKnown, nowIso, type SrsState } from '@/shared/lib'
 
 /** What a card's schedule becomes, given the schedule it has now. */
 type SrsPatch = (srs: SrsState | undefined, now: number) => SrsState | undefined
@@ -9,9 +9,9 @@ async function patchCardsSrs(
   store: CardStore,
   ids: ReadonlyArray<string>,
   patch: SrsPatch,
+  now: number = Date.now(),
 ): Promise<void> {
-  const now = Date.now()
-  const updatedAt = new Date(now).toISOString()
+  const updatedAt = nowIso(now)
   const targets = new Set(ids)
   const cards = store.getState().cards.filter((card) => targets.has(card.id))
   await Promise.all(
@@ -30,26 +30,27 @@ function subtreeCardIds(deckStore: DeckStore, cardStore: CardStore, deckId: stri
   ).map((card) => card.id)
 }
 
-export async function markCardsKnown(store: CardStore, ids: ReadonlyArray<string>): Promise<void> {
-  await patchCardsSrs(store, ids, (srs, now) => markKnown(srs, now))
-}
-
-export async function resetCardsSrs(store: CardStore, ids: ReadonlyArray<string>): Promise<void> {
-  await patchCardsSrs(store, ids, () => undefined)
-}
-
-export async function markDeckKnown(
-  deckStore: DeckStore,
-  cardStore: CardStore,
-  deckId: string,
+export async function markCardsKnown(
+  store: CardStore,
+  ids: ReadonlyArray<string>,
+  now: number = Date.now(),
 ): Promise<void> {
-  await markCardsKnown(cardStore, subtreeCardIds(deckStore, cardStore, deckId))
+  await patchCardsSrs(store, ids, (srs, at) => markKnown(srs, at), now)
+}
+
+export async function resetCardsSrs(
+  store: CardStore,
+  ids: ReadonlyArray<string>,
+  now: number = Date.now(),
+): Promise<void> {
+  await patchCardsSrs(store, ids, () => undefined, now)
 }
 
 export async function resetDeckSrs(
   deckStore: DeckStore,
   cardStore: CardStore,
   deckId: string,
+  now: number = Date.now(),
 ): Promise<void> {
-  await resetCardsSrs(cardStore, subtreeCardIds(deckStore, cardStore, deckId))
+  await resetCardsSrs(cardStore, subtreeCardIds(deckStore, cardStore, deckId), now)
 }

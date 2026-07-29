@@ -7,13 +7,17 @@ export interface CreateFolderInput {
   icon: string
 }
 
-export async function createFolder(store: FolderStore, input: CreateFolderInput): Promise<Folder> {
+export async function createFolder(
+  store: FolderStore,
+  input: CreateFolderInput,
+  now: number = Date.now(),
+): Promise<Folder> {
   const order = nextOrder(store.getState().folders)
   const folder = makeFolder({
     ...input,
     order,
     id: newId(),
-    createdAt: nowIso(),
+    createdAt: nowIso(now),
   })
   await store.getState().save(folder)
   return folder

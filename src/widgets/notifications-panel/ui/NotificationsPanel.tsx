@@ -37,7 +37,6 @@ const BUCKET_ORDER: DayBucket[] = ['today', 'yesterday', 'earlier']
 export interface NotificationsPanelProps {
   notifications: AppNotification[]
   onRemove: (id: string) => void
-  onClearAll: () => void
   now?: number
 }
 

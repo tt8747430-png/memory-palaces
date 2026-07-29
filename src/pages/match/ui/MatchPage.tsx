@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { selectCards, useCardStore } from '@/entities/card'
-import { selectDecks, useDeckStore } from '@/entities/deck'
-import { cardsInSubtree, deckPath, findEntity, selectIsReady } from '@/shared/lib'
+import { useDeck } from '@/entities/deck'
+import { cardsInSubtree, deckPath, selectIsReady } from '@/shared/lib'
 import { MatchBoard } from '@/widgets/match'
 import { type MatchCard } from '@/features/match'
 import { useSessionReward } from '@/widgets/session-reward'
@@ -19,11 +19,9 @@ export function MatchPage({ scope, onBack }: MatchPageProps) {
   const { t } = useTranslation()
   const reward = useSessionReward()
 
-  const decks = useDeckStore(selectDecks)
+  const { decks, deck } = useDeck(scope.deckId)
   const allCards = useCardStore(selectCards)
   const ready = useCardStore(selectIsReady)
-
-  const deck = useMemo(() => findEntity(decks, scope.deckId), [decks, scope.deckId])
 
   const cards = useMemo<MatchCard[]>(
     () =>

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Settings } from 'lucide-react'
-import { selectDecks, useDeckStore } from '@/entities/deck'
+import { useDeck } from '@/entities/deck'
 import { selectCards, useCardStore } from '@/entities/card'
 import { questionsForDeck, selectQuestions, useQuestionStore } from '@/entities/question'
 import {
@@ -11,13 +11,7 @@ import {
   usePreferencesStoreApi,
 } from '@/entities/preferences'
 import { setPreferences } from '@/features/preferences'
-import {
-  cardsInSubtree,
-  findEntity,
-  selectIsReady,
-  studyOverview,
-  useMultiSelect,
-} from '@/shared/lib'
+import { cardsInSubtree, selectIsReady, studyOverview, useMultiSelect } from '@/shared/lib'
 import { DeckContentEditor } from '@/widgets/content-editor'
 import { PracticeModes } from '@/widgets/practice-modes'
 import {
@@ -57,14 +51,12 @@ export function DeckDetailPage({
   const { t } = useTranslation()
   const prefStore = usePreferencesStoreApi()
 
-  const decks = useDeckStore(selectDecks)
+  const { decks, deck, ready: decksReady } = useDeck(deckId)
   const allCards = useCardStore(selectCards)
   const allQuestions = useQuestionStore(selectQuestions)
-  const decksReady = useDeckStore(selectIsReady)
   const cardsReady = useCardStore(selectIsReady)
   const ready = decksReady && cardsReady
 
-  const deck = useMemo(() => findEntity(decks, deckId), [decks, deckId])
   const subtreeCards = useMemo(
     () => cardsInSubtree(decks, allCards, deckId),
     [decks, allCards, deckId],

@@ -1,13 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import {
-  findEntity,
-  resolveDeckSettings,
-  selectIsReady,
-  shuffle,
-  subtreeDeckIds,
-} from '@/shared/lib'
-import { DEFAULT_DECK_SETTINGS, selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
+import { selectIsReady, shuffle, subtreeDeckIds } from '@/shared/lib'
+import { useDeck, useDeckStoreApi } from '@/entities/deck'
 import { selectQuestions, useQuestionStore } from '@/entities/question'
 import { editDeck } from '@/features/deck'
 import { QuizOptionsSheet, type QuizResult, QuizSession } from '@/widgets/quiz'
@@ -26,17 +20,10 @@ export function QuizPage({ deckId, onBack }: QuizPageProps) {
   const reward = useSessionReward()
   const [optionsOpen, setOptionsOpen] = useState(false)
 
-  const decks = useDeckStore(selectDecks)
+  const { decks, deck, settings, ready: decksReady } = useDeck(deckId)
   const allQuestions = useQuestionStore(selectQuestions)
-  const decksReady = useDeckStore(selectIsReady)
   const questionsReady = useQuestionStore(selectIsReady)
   const ready = decksReady && questionsReady
-
-  const deck = useMemo(() => findEntity(decks, deckId), [decks, deckId])
-  const settings = useMemo(
-    () => resolveDeckSettings(decks, deckId, DEFAULT_DECK_SETTINGS),
-    [decks, deckId],
-  )
 
   const questions = useMemo<QuizQuestion[]>(() => {
     const nameById = new Map(decks.map((each) => [each.id, each.name]))

@@ -6,10 +6,11 @@ export async function setDeckArchived(
   store: DeckStore,
   id: string,
   archived: boolean,
+  at: number = Date.now(),
 ): Promise<Deck> {
   const root = requireDeck(store, id)
   const decks = store.getState().decks
-  const now = nowIso()
+  const now = nowIso(at)
   await Promise.all(
     subtreeDeckIds(decks, id).map((subId) => {
       const deck = findEntity(decks, subId)

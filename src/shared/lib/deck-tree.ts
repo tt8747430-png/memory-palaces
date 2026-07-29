@@ -91,30 +91,6 @@ export function subtreeDecks<T extends TreeDeck>(decks: readonly T[], rootId: st
     .filter((d): d is T => d !== undefined)
 }
 
-export function selectionRoots(
-  decks: readonly TreeDeck[],
-  selectedIds: ReadonlySet<string>,
-): string[] {
-  const active = decks.filter((d) => !d.archived)
-  const hasSelectedAncestor = (deck: TreeDeck): boolean =>
-    ancestorsOf(active, deck.id).some((a) => selectedIds.has(a.id))
-  const rootIds = new Set(
-    active.filter((d) => selectedIds.has(d.id) && !hasSelectedAncestor(d)).map((d) => d.id),
-  )
-
-  const ordered: string[] = []
-  const folderIds = new Set<string | null>([null])
-  for (const d of active) if (d.parentId === null && d.folderId != null) folderIds.add(d.folderId)
-  const walk = (parentId: string | null, folderId: string | null) => {
-    for (const d of siblingDecks(active, parentId, folderId)) {
-      if (rootIds.has(d.id)) ordered.push(d.id)
-      walk(d.id, null)
-    }
-  }
-  for (const fid of folderIds) walk(null, fid)
-  return ordered
-}
-
 export type SelectState = 'unchecked' | 'checked' | 'indeterminate'
 
 /**
@@ -134,11 +110,6 @@ export function deckPath<T extends TreeDeck>(decks: readonly T[], deckId: string
     cur = cur.parentId ? byId.get(cur.parentId) : undefined
   }
   return chain
-}
-
-/** `deckPath` without the deck itself — its parent, grandparent and so on. */
-export function ancestorsOf<T extends TreeDeck>(decks: readonly T[], deckId: string): T[] {
-  return deckPath(decks, deckId).slice(0, -1)
 }
 
 export function isDescendantOrSelf(
@@ -181,18 +152,6 @@ export function cardsInSubtree<C extends TreeCard>(
 ): C[] {
   const ids = new Set(subtreeDeckIds(decks, rootId))
   return cards.filter((c) => ids.has(c.deckId))
-}
-
-export function countDueInSubtree(
-  decks: readonly TreeDeck[],
-  cards: readonly TreeCard[],
-  rootId: string,
-  now: number,
-): number {
-  return cardsInSubtree(decks, cards, rootId).reduce(
-    (n, card) => (isDue(card.srs, now) ? n + 1 : n),
-    0,
-  )
 }
 
 export function dueCountsPerDeck(

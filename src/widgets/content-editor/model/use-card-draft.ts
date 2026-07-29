@@ -7,6 +7,11 @@ export interface CardDraftSource {
   tip?: string
 }
 
+/**
+ * A card's four fields as a command carries them. Optionals are `undefined`
+ * rather than absent, so clearing a hint reaches `updateCard` as a real change
+ * instead of being read as "leave it alone".
+ */
 export interface CardDraftEdit {
   front: string
   back: string
@@ -25,12 +30,20 @@ export interface CardDraft {
   setTip: (value: string) => void
   /** Front and back both carry text. */
   valid: boolean
-  /** The trimmed edit, with blank optionals dropped. */
+  /** The draft differs from what is stored — nothing to save when false. */
+  dirty: boolean
+  /** The trimmed edit. */
   changes: CardDraftEdit
+  /** Empties every field, for the save-and-add-another pass. */
+  clear: () => void
 }
 
+const blank: CardDraftSource = { front: '', back: '' }
+
 /**
- * Editable copies of a card's four fields. The draft re-seeds from `source`
+ * Editable copies of a card's four fields, and the one place the app decides
+ * what a card edit means: what counts as valid, what counts as changed, and how
+ * a cleared optional reaches a command. The draft re-seeds from `source`
  * whenever `seed` changes, so a sheet opening on a different card — or the same
  * card reopened — starts from what is stored rather than what was last typed.
  */
@@ -41,15 +54,29 @@ export function useCardDraft(source: CardDraftSource | null, seed: string | null
   const [tip, setTip] = useState('')
 
   useEffect(() => {
-    if (seed === null || !source) return
-    setFront(source.front)
-    setBack(source.back)
-    setHint(source.hint ?? '')
-    setTip(source.tip ?? '')
+    const next = source ?? blank
+    setFront(next.front)
+    setBack(next.back)
+    setHint(next.hint ?? '')
+    setTip(next.tip ?? '')
     // Re-seeding is keyed on `seed` alone. `source` changing under the same seed
     // is the user's own edit coming back around, which must not overwrite it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seed])
+
+  const changes: CardDraftEdit = {
+    front: front.trim(),
+    back: back.trim(),
+    hint: hint.trim() || undefined,
+    tip: tip.trim() || undefined,
+  }
+
+  const stored = source ?? blank
+  const dirty =
+    changes.front !== stored.front ||
+    changes.back !== stored.back ||
+    changes.hint !== (stored.hint || undefined) ||
+    changes.tip !== (stored.tip || undefined)
 
   return {
     front,
@@ -60,12 +87,14 @@ export function useCardDraft(source: CardDraftSource | null, seed: string | null
     setBack,
     setHint,
     setTip,
-    valid: front.trim().length > 0 && back.trim().length > 0,
-    changes: {
-      front: front.trim(),
-      back: back.trim(),
-      hint: hint.trim() || undefined,
-      tip: tip.trim() || undefined,
+    valid: changes.front.length > 0 && changes.back.length > 0,
+    dirty,
+    changes,
+    clear: () => {
+      setFront('')
+      setBack('')
+      setHint('')
+      setTip('')
     },
   }
 }

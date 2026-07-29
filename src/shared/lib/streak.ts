@@ -1,4 +1,4 @@
-import { DAY_MS } from './clock'
+import { DAY_MS, nowIso } from './clock'
 
 export interface StreakState {
   streakCount: number
@@ -22,7 +22,7 @@ const HISTORY_DAYS = 365
 const MILESTONE_INTERVAL = 7
 
 export function dayKey(now: number): string {
-  return new Date(now).toISOString().slice(0, 10)
+  return nowIso(now).slice(0, 10)
 }
 
 function shiftDayKey(key: string, daysBack: number): string {

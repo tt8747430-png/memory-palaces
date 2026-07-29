@@ -1,10 +1,15 @@
 import type { RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DECK_COLOR_OPTIONS } from '@/entities/deck'
+import { NAME_MAX } from '@/shared/config/constants'
 import { useAutoSelect } from '@/shared/lib'
 import { IconColorRow, Input } from '@/shared/ui'
 
-export interface FolderFormProps {
+/** Which thing is being dressed — it only picks the wording. */
+export type AppearanceSubject = 'deck' | 'folder'
+
+export interface AppearanceFieldsProps {
+  subject: AppearanceSubject
   name: string
   color: string
   icon: string
@@ -15,7 +20,13 @@ export interface FolderFormProps {
   autoFocusName?: boolean
 }
 
-export function FolderForm({
+/**
+ * The one name-icon-colour form. Decks and folders are dressed the same way and
+ * accept the same name length, so the only thing `subject` settles is the
+ * wording of the labels.
+ */
+export function AppearanceFields({
+  subject,
   name,
   color,
   icon,
@@ -24,20 +35,20 @@ export function FolderForm({
   onIconChange,
   nameRef,
   autoFocusName = false,
-}: FolderFormProps) {
+}: AppearanceFieldsProps) {
   const { t } = useTranslation()
   const autoSelect = useAutoSelect<HTMLInputElement>(autoFocusName)
   return (
     <div className="flex flex-col gap-5">
       <Input
         ref={nameRef}
-        aria-label={t('folder.nameLabel')}
+        aria-label={t(`${subject}.nameLabel`)}
         value={name}
         onChange={(event) => onNameChange(event.target.value)}
         onFocus={autoSelect}
-        placeholder={t('folder.namePlaceholder')}
+        placeholder={t(`${subject}.namePlaceholder`)}
         enterKeyHint="done"
-        maxLength={40}
+        maxLength={NAME_MAX}
       />
       <IconColorRow
         icon={icon}
@@ -46,7 +57,7 @@ export function FolderForm({
         onColorChange={onColorChange}
         colorOptions={DECK_COLOR_OPTIONS}
         label={t('folder.iconColorLabel')}
-        iconLabel={t('folder.iconLabel')}
+        iconLabel={t(`${subject}.iconLabel`)}
       />
     </div>
   )

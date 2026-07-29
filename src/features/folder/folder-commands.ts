@@ -7,6 +7,5 @@ const commands = collectionCommands<'folders', Folder, FolderChanges>('folders',
   update: updateFolder,
 })
 
-export const requireFolder = commands.require
 export const editFolder = commands.edit
 export const reorderFolders = commands.reorder

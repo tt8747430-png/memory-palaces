@@ -13,7 +13,7 @@ import {
   Type,
 } from 'lucide-react'
 import { DECK_COLOR_OPTIONS } from '@/entities/deck'
-import { FolderForm } from '@/widgets/folder-form'
+import { AppearanceFields } from '@/widgets/appearance-form'
 import { cn } from '@/shared/lib'
 import {
   ActionSheet,
@@ -182,7 +182,8 @@ function FolderSheetDemo() {
             setOpen(false)
           }}
         >
-          <FolderForm
+          <AppearanceFields
+            subject="folder"
             name={name}
             color={color}
             icon={icon}

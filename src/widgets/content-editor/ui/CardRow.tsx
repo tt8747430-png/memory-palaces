@@ -2,9 +2,8 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Flag, Lightbulb, MapPin } from 'lucide-react'
 import type { Card } from '@/entities/card'
-import { actionIcon, SrsStatusChip } from '@/shared/ui'
+import { buildMenuActions, SrsStatusChip } from '@/shared/ui'
 import { ContentRow, type RowFrameProps, RowIndex } from './ContentRow'
-import { rowMenuActions } from './row-actions'
 
 export interface CardRowProps extends RowFrameProps {
   card: Card
@@ -32,21 +31,18 @@ export function CardRow({
   const { t } = useTranslation()
   const flagLabel = card.flagged ? t('cards.row.unflag') : t('cards.row.flag')
 
-  const menuActions = rowMenuActions(t, { onEdit, onDuplicate, onDelete }, [
-    { id: 'flag', label: flagLabel, icon: actionIcon('flag'), onSelect: onToggleFlag },
+  const menuActions = buildMenuActions(
+    ['edit', 'duplicate', 'flag', 'known', 'reset', 'delete'],
     {
-      id: 'known',
-      label: t('cards.row.markKnown'),
-      icon: actionIcon('known'),
-      onSelect: onMarkKnown,
+      edit: { onAction: onEdit },
+      duplicate: { onAction: onDuplicate },
+      flag: { onAction: onToggleFlag, label: flagLabel },
+      known: { onAction: onMarkKnown },
+      reset: { onAction: onResetSrs },
+      delete: { onAction: onDelete },
     },
-    {
-      id: 'reset',
-      label: t('cards.row.resetSchedule'),
-      icon: actionIcon('reset'),
-      onSelect: onResetSrs,
-    },
-  ])
+    t,
+  )
 
   return (
     <ContentRow

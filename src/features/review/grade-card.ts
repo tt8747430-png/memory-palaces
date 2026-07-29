@@ -1,4 +1,4 @@
-import { type Grade, schedule } from '@/shared/lib'
+import { type Grade, nowIso, schedule } from '@/shared/lib'
 import type { Card, CardStore } from '@/entities/card'
 import { requireCard } from '@/features/card'
 
@@ -12,7 +12,7 @@ export async function gradeCard(
   const updated: Card = {
     ...existing,
     srs: schedule(existing.srs, grade, now),
-    updatedAt: new Date(now).toISOString(),
+    updatedAt: nowIso(now),
   }
   await store.getState().save(updated)
   return updated

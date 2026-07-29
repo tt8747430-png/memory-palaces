@@ -5,7 +5,7 @@ const STUDY_XP_PER_CARD = 6
 const STUDY_XP_MIN = 20
 const STUDY_XP_MAX = 150
 
-export const XP_PER_CORRECT = 20
+const XP_PER_CORRECT = 20
 export const XP_MATCH = 60
 
 export function studyXp(graded: number): number {

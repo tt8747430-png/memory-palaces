@@ -11,13 +11,7 @@ import {
   useDroppable,
 } from '@dnd-kit/core'
 import { restrictToHorizontalAxis } from '@dnd-kit/modifiers'
-import {
-  arrayMove,
-  horizontalListSortingStrategy,
-  SortableContext,
-  useSortable,
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
+import { arrayMove, horizontalListSortingStrategy, SortableContext } from '@dnd-kit/sortable'
 import { ChevronRight, Folder, Layers, WalletCards } from 'lucide-react'
 import {
   SWIPE_SIDE_MAX,
@@ -26,7 +20,7 @@ import {
   type SwipeItemType,
 } from '@/shared/config/swipe'
 import { cn, EASE_OUT_CSS, useSortableSensors } from '@/shared/lib'
-import { swipeActionIcon } from '@/shared/ui'
+import { SortableRow, swipeActionIcon } from '@/shared/ui'
 import { accentOf } from './swipe-accent'
 
 const TYPE_ICON: Record<SwipeItemType, typeof Layers> = {
@@ -159,24 +153,23 @@ function PreviewCaps({ side, ids }: { side: CapSide; ids: SwipeActionId[] }) {
 
 function SortableCap({ action }: { action: SwipeActionId }) {
   const { t } = useTranslation()
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: action,
-  })
   return (
-    <button
-      ref={setNodeRef}
-      type="button"
-      {...attributes}
-      {...listeners}
-      aria-label={t('swipe.reorderLabel', { name: t(ACTION_META[action].labelKey as never) })}
-      style={{ transform: CSS.Transform.toString(transform), transition, touchAction: 'none' }}
-      className={cn(
-        'shrink-0 cursor-grab rounded-[14px] active:cursor-grabbing',
-        isDragging && 'opacity-0',
+    <SortableRow id={action} className="shrink-0">
+      {({ handleRef, handleProps, isDragging }) => (
+        <button
+          ref={handleRef}
+          type="button"
+          {...handleProps}
+          aria-label={t('swipe.reorderLabel', { name: t(ACTION_META[action].labelKey as never) })}
+          className={cn(
+            'shrink-0 cursor-grab touch-none rounded-[14px] active:cursor-grabbing',
+            isDragging && 'opacity-0',
+          )}
+        >
+          <Cap action={action} />
+        </button>
       )}
-    >
-      <Cap action={action} />
-    </button>
+    </SortableRow>
   )
 }
 

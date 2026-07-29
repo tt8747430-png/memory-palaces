@@ -2,14 +2,7 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronLeft, Layers } from 'lucide-react'
 import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
-import {
-  type Deck,
-  type DeckSettings,
-  DEFAULT_DECK_SETTINGS,
-  selectDecks,
-  useDeckStore,
-  useDeckStoreApi,
-} from '@/entities/deck'
+import { type Deck, type DeckSettings, useDeck, useDeckStoreApi } from '@/entities/deck'
 import {
   type FlashcardSwipeByMode,
   resolveStudyMode,
@@ -18,13 +11,7 @@ import {
   usePreferencesStore,
   usePreferencesStoreApi,
 } from '@/entities/preferences'
-import {
-  cardsInSubtree,
-  deckPath,
-  findEntity,
-  resolveDeckSettings,
-  selectIsReady,
-} from '@/shared/lib'
+import { cardsInSubtree, deckPath, findEntity, selectIsReady } from '@/shared/lib'
 import { normalizeFlashcardSwipe } from '@/shared/config/flashcard-swipe'
 import { editCard } from '@/features/card'
 import { editDeck } from '@/features/deck'
@@ -63,10 +50,9 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
   const preferencesStore = usePreferencesStoreApi()
   const reward = useSessionReward()
 
-  const decks = useDeckStore(selectDecks)
+  const { decks, deck, settings, ready: decksReady } = useDeck(scope.deckId)
   const allCards = useCardStore(selectCards)
   const preferences = usePreferencesStore(selectEffectivePreferences)
-  const decksReady = useDeckStore(selectIsReady)
   const cardsReady = useCardStore(selectIsReady)
   const prefsReady = usePreferencesStore(selectIsReady)
   const ready = decksReady && cardsReady && prefsReady
@@ -75,13 +61,6 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
   const swipeByMode = useMemo(
     () => normalizeFlashcardSwipe(preferences.flashcardSwipe),
     [preferences.flashcardSwipe],
-  )
-
-  const deck = useMemo(() => findEntity(decks, scope.deckId), [decks, scope.deckId])
-
-  const settings = useMemo(
-    () => resolveDeckSettings(decks, scope.deckId, DEFAULT_DECK_SETTINGS),
-    [decks, scope.deckId],
   )
 
   const cards = useMemo<StudyCard[]>(() => {

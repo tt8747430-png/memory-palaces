@@ -4,7 +4,6 @@ import {
   type CompleteState,
   currentId,
   initSession,
-  nextId,
   type ReviewState,
   sessionReducer,
   type SessionState,
@@ -222,10 +221,8 @@ describe('finish + reset', () => {
 })
 
 describe('selectors', () => {
-  it('currentId / nextId track the active card', () => {
-    const r = review(['a', 'b'])
-    expect(currentId(r)).toBe('a')
-    expect(nextId(r)).toBe('b')
+  it('currentId tracks the active card', () => {
+    expect(currentId(review(['a', 'b']))).toBe('a')
     expect(currentId(done())).toBeUndefined()
   })
 })

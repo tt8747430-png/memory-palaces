@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { MoreVertical, Plus, Settings, Trash2 } from 'lucide-react'
+import { MoreVertical } from 'lucide-react'
 import type { Deck } from '@/entities/deck'
 import { DECK_COLOR_OPTIONS, useDeckStoreApi } from '@/entities/deck'
 import type { Folder } from '@/entities/folder'
@@ -17,6 +17,7 @@ import { importErrorMessage, nextDefaultName, useHideAppNav } from '@/shared/lib
 import {
   ActionSheet,
   AppScreen,
+  buildMenuActions,
   IconButton,
   ImportSheet,
   PromptSheet,
@@ -182,27 +183,16 @@ export function DeckLibraryPage({
     delete: { onAction: () => library.request({ kind: 'delete-folder', folder }) },
   })
 
-  const folderActions = (folder: Folder): SheetAction[] => [
-    {
-      id: 'settings',
-      label: t('folder.settings'),
-      icon: <Settings className="size-5" aria-hidden />,
-      onSelect: () => setFolderSheetTarget(folder),
-    },
-    {
-      id: 'add-deck',
-      label: t('folder.addDeck'),
-      icon: <Plus className="size-5" aria-hidden />,
-      onSelect: () => setCreatePrompt({ kind: 'deck', folderId: folder.id }),
-    },
-    {
-      id: 'delete',
-      label: t('common.delete'),
-      icon: <Trash2 className="size-5" aria-hidden />,
-      destructive: true,
-      onSelect: () => library.request({ kind: 'delete-folder', folder }),
-    },
-  ]
+  const folderActions = (folder: Folder): SheetAction[] =>
+    buildMenuActions(
+      ['settings', 'addDeck', 'delete'],
+      {
+        settings: { onAction: () => setFolderSheetTarget(folder) },
+        addDeck: { onAction: () => setCreatePrompt({ kind: 'deck', folderId: folder.id }) },
+        delete: { onAction: () => library.request({ kind: 'delete-folder', folder }) },
+      },
+      t,
+    )
 
   const newDeckHere = () => setCreatePrompt({ kind: 'deck', folderId })
   const moving = movingDeck(library.pending)

@@ -75,11 +75,7 @@ export function NotificationsPage({ onBack }: NotificationsPageProps = {}) {
       }
     >
       <div className="mt-2 pb-28">
-        <NotificationsPanel
-          notifications={notifications}
-          onRemove={handleRemove}
-          onClearAll={handleClearAll}
-        />
+        <NotificationsPanel notifications={notifications} onRemove={handleRemove} />
       </div>
     </AppScreen>
   )

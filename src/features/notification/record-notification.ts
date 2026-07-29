@@ -5,7 +5,7 @@ import {
   NOTIFICATION_CAP,
   type NotificationStore,
 } from '@/entities/notification'
-import { newId } from '@/shared/lib'
+import { newId, nowIso } from '@/shared/lib'
 
 export type NotificationDraft = Omit<MakeNotificationInput, 'id' | 'createdAt' | 'read'>
 
@@ -17,7 +17,7 @@ export async function recordNotification(
   const notification = makeNotification({
     ...draft,
     id: newId(),
-    createdAt: new Date(now).toISOString(),
+    createdAt: nowIso(now),
   })
   await store.getState().save(notification)
   await pruneToCapacity(store)

@@ -2,8 +2,8 @@ import { useTranslation } from 'react-i18next'
 import { Check } from 'lucide-react'
 import type { Question } from '@/entities/question'
 import { cn } from '@/shared/lib'
+import { buildMenuActions } from '@/shared/ui'
 import { ContentRow, type RowFrameProps, RowIndex } from './ContentRow'
-import { rowMenuActions } from './row-actions'
 
 export interface QuestionRowProps extends RowFrameProps {
   question: Question
@@ -23,7 +23,15 @@ export function QuestionRow({
 }: QuestionRowProps) {
   const { t } = useTranslation()
 
-  const menuActions = rowMenuActions(t, { onEdit, onDuplicate, onDelete })
+  const menuActions = buildMenuActions(
+    ['edit', 'duplicate', 'delete'],
+    {
+      edit: { onAction: onEdit },
+      duplicate: { onAction: onDuplicate },
+      delete: { onAction: onDelete },
+    },
+    t,
+  )
 
   return (
     <ContentRow

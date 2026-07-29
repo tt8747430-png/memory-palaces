@@ -26,5 +26,5 @@ export {
   usePreferencesStoreApi,
   usePreferencesStoreApiOptional,
 } from './model/context'
-export { selectPreferences, selectEffectivePreferences } from './model/selectors'
+export { selectEffectivePreferences } from './model/selectors'
 export type { PreferencesRepository } from './api/preferences-repository'

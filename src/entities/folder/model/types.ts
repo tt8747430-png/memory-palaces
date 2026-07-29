@@ -19,6 +19,8 @@ export interface MakeFolderInput {
 export function makeFolder(input: MakeFolderInput): Folder {
   const name = input.name.trim()
   if (!name) throw new Error('Folder name is required')
+  const order = input.order ?? 0
+  if (order < 0) throw new Error('Folder order must be >= 0')
   return {
     id: input.id,
     createdAt: input.createdAt,
@@ -26,26 +28,16 @@ export function makeFolder(input: MakeFolderInput): Folder {
     name,
     color: input.color,
     icon: input.icon,
-    order: input.order ?? 0,
+    order,
   }
 }
 
-export interface FolderChanges {
-  name?: string
-  color?: string
-  icon?: string
-  order?: number
-}
+export type FolderChanges = Partial<Omit<Folder, 'id' | 'createdAt' | 'updatedAt'>>
 
-export function updateFolder(folder: Folder, changes: FolderChanges, now: string): Folder {
-  const next: Folder = { ...folder, updatedAt: now }
-  if (changes.name !== undefined) {
-    const name = changes.name.trim()
-    if (!name) throw new Error('Folder name is required')
-    next.name = name
-  }
-  if (changes.color !== undefined) next.color = changes.color
-  if (changes.icon !== undefined) next.icon = changes.icon
-  if (changes.order !== undefined) next.order = changes.order
-  return next
+export function updateFolder(folder: Folder, changes: FolderChanges, updatedAt: string): Folder {
+  const next = { ...folder, ...changes, updatedAt }
+  const name = next.name.trim()
+  if (!name) throw new Error('Folder name is required')
+  if (next.order < 0) throw new Error('Folder order must be >= 0')
+  return { ...next, name }
 }

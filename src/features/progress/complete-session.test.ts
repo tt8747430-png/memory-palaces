@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { dayKey } from '@/shared/lib'
 import { InMemoryRepository } from '@/shared/api'
 import { createProgressStore, makeProgress, type Progress } from '@/entities/progress'
-import { completeSession, quizXp, studyXp, XP_MATCH } from './index'
+import { completeSession } from './index'
 
 const NOW = Date.UTC(2026, 0, 10)
 const DAY = 86_400_000
@@ -12,22 +12,6 @@ function startedStore(seed: Progress[] = []) {
   store.getState().start()
   return store
 }
-
-describe('reward helpers', () => {
-  it('studyXp scales with cards graded, clamped to 20–150', () => {
-    expect(studyXp(0)).toBe(20)
-    expect(studyXp(10)).toBe(60)
-    expect(studyXp(100)).toBe(150)
-  })
-
-  it('quizXp is 20 per correct answer', () => {
-    expect(quizXp(3)).toBe(60)
-  })
-
-  it('XP_MATCH is a flat reward', () => {
-    expect(XP_MATCH).toBeGreaterThan(0)
-  })
-})
 
 describe('completeSession', () => {
   it('awards XP and accumulates the day tally without a streak below goal', async () => {

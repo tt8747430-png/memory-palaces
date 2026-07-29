@@ -8,8 +8,3 @@ export function speak(text: string): void {
   synth.cancel()
   synth.speak(new SpeechSynthesisUtterance(text))
 }
-
-export function cancelSpeech(): void {
-  if (!speechAvailable()) return
-  window.speechSynthesis.cancel()
-}

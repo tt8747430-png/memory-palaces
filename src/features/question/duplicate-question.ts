@@ -8,12 +8,16 @@ import {
 import { newId, nextOrder, nowIso } from '@/shared/lib'
 import { requireQuestion } from './question-commands'
 
-export async function duplicateQuestion(store: QuestionStore, id: string): Promise<Question> {
+export async function duplicateQuestion(
+  store: QuestionStore,
+  id: string,
+  now: number = Date.now(),
+): Promise<Question> {
   const original = requireQuestion(store, id)
   const order = nextOrder(questionsForDeck(selectQuestions(store.getState()), original.deckId))
   const copy = makeQuestion({
     id: newId(),
-    createdAt: nowIso(),
+    createdAt: nowIso(now),
     deckId: original.deckId,
     prompt: original.prompt,
     options: original.options,

@@ -2,12 +2,16 @@ import { cardsForDeck, type Card, type CardStore, makeCard, selectCards } from '
 import { newId, nextOrder, nowIso } from '@/shared/lib'
 import { requireCard } from './card-commands'
 
-export async function duplicateCard(store: CardStore, id: string): Promise<Card> {
+export async function duplicateCard(
+  store: CardStore,
+  id: string,
+  now: number = Date.now(),
+): Promise<Card> {
   const original = requireCard(store, id)
   const order = nextOrder(cardsForDeck(selectCards(store.getState()), original.deckId))
   const copy = makeCard({
     id: newId(),
-    createdAt: nowIso(),
+    createdAt: nowIso(now),
     deckId: original.deckId,
     front: original.front,
     back: original.back,

@@ -45,6 +45,7 @@ export const en = {
     rowOpen: 'Open {{name}}',
     nameLabel: 'Deck name',
     namePlaceholder: 'Deck name',
+    iconLabel: 'Deck icon',
     subdeckOf: 'Subdeck of {{name}}',
     favorite: 'Favorite',
     unfavorite: 'Unfavorite',
@@ -1087,8 +1088,10 @@ export const en = {
     addDeck: 'Add deck',
     duplicate: 'Duplicate',
     reset: 'Reset',
+    resetMenu: 'Reset schedule',
     flag: 'Flag',
     known: 'Known',
+    knownMenu: 'Mark as known',
     delete: 'Delete',
   },
   swipe: {

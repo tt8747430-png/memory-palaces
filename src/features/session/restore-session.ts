@@ -1,5 +1,6 @@
 import { makeAccountSession, makeGuestSession } from '@/entities/session'
 import type { SessionCommandDeps } from './sign-up-with-email'
+import { nowIso } from '@/shared/lib'
 
 export async function restoreSession(
   deps: SessionCommandDeps,
@@ -8,7 +9,7 @@ export async function restoreSession(
   const persisted = deps.gateway.getPersisted()
   if (!persisted) return
 
-  const createdAt = new Date(now).toISOString()
+  const createdAt = nowIso(now)
   const session =
     persisted.kind === 'account'
       ? makeAccountSession(

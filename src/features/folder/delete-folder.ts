@@ -6,11 +6,12 @@ export async function deleteFolder(
   folderStore: FolderStore,
   deckStore: DeckStore,
   id: string,
+  now: number = Date.now(),
 ): Promise<void> {
-  const now = nowIso()
+  const updatedAt = nowIso(now)
   const filed = deckStore.getState().decks.filter((deck) => deck.folderId === id)
   await Promise.all(
-    filed.map((deck) => deckStore.getState().save(updateDeck(deck, { folderId: null }, now))),
+    filed.map((deck) => deckStore.getState().save(updateDeck(deck, { folderId: null }, updatedAt))),
   )
   await folderStore.getState().remove(id)
 }

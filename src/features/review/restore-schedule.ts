@@ -1,4 +1,4 @@
-import type { SrsState } from '@/shared/lib'
+import { nowIso, type SrsState } from '@/shared/lib'
 import type { Card, CardStore } from '@/entities/card'
 import { requireCard } from '@/features/card'
 
@@ -12,7 +12,7 @@ export async function restoreSchedule(
   const restored: Card = {
     ...existing,
     srs,
-    updatedAt: new Date(now).toISOString(),
+    updatedAt: nowIso(now),
   }
   await store.getState().save(restored)
   return restored

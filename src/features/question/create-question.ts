@@ -17,12 +17,13 @@ export async function createQuestion(
   store: QuestionStore,
   deckId: string,
   input: CreateQuestionInput,
+  now: number = Date.now(),
 ): Promise<Question> {
   const order = nextOrder(questionsForDeck(selectQuestions(store.getState()), deckId))
   const question = makeQuestion({
     ...input,
     id: newId(),
-    createdAt: nowIso(),
+    createdAt: nowIso(now),
     deckId,
     order,
   })

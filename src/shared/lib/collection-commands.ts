@@ -30,9 +30,13 @@ export interface CollectionCommands<
   Changes,
 > {
   require: (store: OrderedStore<Key, T>, id: string) => T
-  edit: (store: OrderedStore<Key, T>, id: string, changes: Changes) => Promise<T>
+  edit: (store: OrderedStore<Key, T>, id: string, changes: Changes, now?: number) => Promise<T>
   remove: (store: OrderedStore<Key, T>, id: string) => Promise<void>
-  reorder: (store: OrderedStore<Key, T>, orderedIds: readonly string[]) => Promise<void>
+  reorder: (
+    store: OrderedStore<Key, T>,
+    orderedIds: readonly string[],
+    now?: number,
+  ) => Promise<void>
 }
 
 export function collectionCommands<
@@ -50,20 +54,20 @@ export function collectionCommands<
   return {
     require,
 
-    async edit(store, id, changes) {
-      const updated = update(require(store, id), changes, nowIso())
+    async edit(store, id, changes, now = Date.now()) {
+      const updated = update(require(store, id), changes, nowIso(now))
       await store.getState().save(updated)
       return updated
     },
 
     remove: (store, id) => store.getState().remove(id),
 
-    reorder(store, orderedIds) {
-      const now = nowIso()
+    reorder(store, orderedIds, now = Date.now()) {
+      const updatedAt = nowIso(now)
       // `order` is optional on every slice's change type, but a generic cannot
       // see that; the updater validates it either way.
       return reorderById(rows(store), orderedIds, (entity, order) =>
-        store.getState().save(update(entity, { order } as Changes, now)),
+        store.getState().save(update(entity, { order } as Changes, updatedAt)),
       )
     },
   }

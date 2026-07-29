@@ -7,11 +7,12 @@ export async function duplicateDeck(
   deckStore: DeckStore,
   cardStore: CardStore,
   id: string,
+  at: number = Date.now(),
 ): Promise<Deck> {
   requireDeck(deckStore, id)
   const decks = deckStore.getState().decks
   const subtree = subtreeDecks(decks, id)
-  const now = nowIso()
+  const now = nowIso(at)
 
   const idMap = new Map<string, string>()
   for (const deck of subtree) idMap.set(deck.id, newId())

@@ -8,6 +8,7 @@ import { deleteDeck, setDeckArchived } from '@/features/deck'
 import { cardsInSubtree, findEntity, selectIsReady } from '@/shared/lib'
 import {
   AppScreen,
+  buildMenuActions,
   Button,
   ConfirmDialog,
   Empty,
@@ -96,15 +97,11 @@ export function ArchivedDecksPage({ onBack }: ArchivedDecksPageProps) {
                   label={`${deck.name} ${t('common.moreOptions')}`}
                   variant="ghost"
                   size="sm"
-                  actions={[
-                    {
-                      id: 'delete',
-                      label: t('common.delete'),
-                      icon: <Trash2 className="size-5" aria-hidden />,
-                      destructive: true,
-                      onSelect: () => setPendingDelete(deck.id),
-                    },
-                  ]}
+                  actions={buildMenuActions(
+                    ['delete'],
+                    { delete: { onAction: () => setPendingDelete(deck.id) } },
+                    t,
+                  )}
                 />
               </li>
             )

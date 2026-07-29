@@ -1,15 +1,13 @@
-export interface CardData {
-  front: string
-  back: string
-  hint?: string
-  tip?: string
-}
-
+/**
+ * A question's fields as a command carries them. `explanation` is `undefined`
+ * rather than absent when blank, matching `CardDraftEdit`, so clearing it
+ * reaches `updateQuestion` as a real change rather than "leave it alone".
+ */
 export interface QuestionData {
   prompt: string
   options: string[]
   correctAnswer: number
-  explanation?: string
+  explanation: string | undefined
 }
 
 export const MAX_OPTIONS = 6
@@ -33,7 +31,7 @@ export function buildQuestionData(
     prompt: prompt.trim(),
     options: kept,
     correctAnswer: newCorrect,
-    ...(explanation.trim() ? { explanation: explanation.trim() } : {}),
+    explanation: explanation.trim() || undefined,
   }
 }
 

@@ -51,11 +51,11 @@ function publishTop(next: number) {
   listeners.forEach((listener) => listener())
 }
 
-export function viewportHeight(): number {
+function viewportHeight(): number {
   return appHeight || document.documentElement.clientHeight
 }
 
-export function viewportTop(): number {
+function viewportTop(): number {
   return Math.max(0, panned)
 }
 

@@ -9,17 +9,11 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core'
 import { restrictToHorizontalAxis } from '@dnd-kit/modifiers'
-import {
-  arrayMove,
-  horizontalListSortingStrategy,
-  SortableContext,
-  useSortable,
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
+import { arrayMove, horizontalListSortingStrategy, SortableContext } from '@dnd-kit/sortable'
 import { X } from 'lucide-react'
 import { type SelectActionId, type SelectToolbarConfig } from '@/shared/config/select-toolbar'
 import { cn, EASE_OUT_CSS, useSortableSensors } from '@/shared/lib'
-import { cardSurface, selectActionIcon } from '@/shared/ui'
+import { cardSurface, selectActionIcon, SortableRow } from '@/shared/ui'
 
 export interface ToolbarEditorProps {
   actions: SelectToolbarConfig
@@ -87,38 +81,35 @@ function SortableTile({
   onRemove: (id: SelectActionId) => void
 }) {
   const { t } = useTranslation()
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: action,
-  })
   const label = t(ACTION_META[action].labelKey as never)
 
   return (
-    <div
-      ref={setNodeRef}
-      style={{ transform: CSS.Transform.toString(transform), transition, touchAction: 'none' }}
-      className={cn('relative min-w-0 flex-1', isDragging && 'opacity-0')}
-    >
-      <button
-        type="button"
-        {...attributes}
-        {...listeners}
-        aria-label={t('select.reorderLabel', { name: label })}
-        className="w-full cursor-grab active:cursor-grabbing"
-      >
-        <Tile action={action} />
-      </button>
+    <SortableRow id={action} className="min-w-0 flex-1">
+      {({ handleRef, handleProps, isDragging }) => (
+        <div className={cn('relative', isDragging && 'opacity-0')}>
+          <button
+            type="button"
+            ref={handleRef}
+            {...handleProps}
+            aria-label={t('select.reorderLabel', { name: label })}
+            className="w-full cursor-grab touch-none active:cursor-grabbing"
+          >
+            <Tile action={action} />
+          </button>
 
-      {canRemove ? (
-        <button
-          type="button"
-          onClick={() => onRemove(action)}
-          aria-label={t('select.removeLabel', { name: label })}
-          className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-heading text-[color:var(--surface)] shadow-rest transition-transform active:scale-90"
-        >
-          <X className="size-3" strokeWidth={3} aria-hidden />
-        </button>
-      ) : null}
-    </div>
+          {canRemove ? (
+            <button
+              type="button"
+              onClick={() => onRemove(action)}
+              aria-label={t('select.removeLabel', { name: label })}
+              className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-heading text-[color:var(--surface)] shadow-rest transition-transform active:scale-90"
+            >
+              <X className="size-3" strokeWidth={3} aria-hidden />
+            </button>
+          ) : null}
+        </div>
+      )}
+    </SortableRow>
   )
 }
 

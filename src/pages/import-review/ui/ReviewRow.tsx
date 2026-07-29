@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Pencil, Trash2 } from 'lucide-react'
-import { FlyoutMenu, Switch } from '@/shared/ui'
+import { buildMenuActions, FlyoutMenu, Switch } from '@/shared/ui'
 import type { DraftCard } from '@/widgets/content-editor'
 
 export function RestoreToggle({
@@ -48,21 +47,11 @@ export function ReviewRow({
         variant="tint"
         size="sm"
         label={t('cards.row.menuLabel')}
-        actions={[
-          {
-            id: 'edit',
-            label: t('common.edit'),
-            icon: <Pencil className="size-5" aria-hidden />,
-            onSelect: onEdit,
-          },
-          {
-            id: 'delete',
-            label: t('common.delete'),
-            icon: <Trash2 className="size-5" aria-hidden />,
-            destructive: true,
-            onSelect: onDelete,
-          },
-        ]}
+        actions={buildMenuActions(
+          ['edit', 'delete'],
+          { edit: { onAction: onEdit }, delete: { onAction: onDelete } },
+          t,
+        )}
       />
     </div>
   )

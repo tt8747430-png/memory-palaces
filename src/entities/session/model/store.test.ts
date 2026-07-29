@@ -10,27 +10,24 @@ describe('session store — Dependency Injection', () => {
     const repo = new InMemoryRepository<Session>()
     const store = createSessionStore(repo)
 
-    await store.getState().load()
     expect(store.getState().session).toBeNull()
-    expect(store.getState().status).toBe('ready')
+    expect(store.getState().status).toBe('idle')
 
     const guest = makeGuestSession('g1', at(0))
     await store.getState().set(guest)
 
     expect(store.getState().session).toEqual(guest)
+    expect(store.getState().status).toBe('ready')
     expect(await repo.getById('g1')).toEqual(guest)
   })
 
   it('is swappable: a different adapter yields independent state (Liskov)', async () => {
-    const seeded = new InMemoryRepository<Session>([makeGuestSession('seed', at(0))])
-    const empty = new InMemoryRepository<Session>()
+    const storeA = createSessionStore(new InMemoryRepository<Session>())
+    const storeB = createSessionStore(new InMemoryRepository<Session>())
 
-    const storeA = createSessionStore(seeded)
-    const storeB = createSessionStore(empty)
-    await storeA.getState().load()
-    await storeB.getState().load()
+    await storeA.getState().set(makeGuestSession('a', at(0)))
 
-    expect(storeA.getState().session?.id).toBe('seed')
+    expect(storeA.getState().session?.id).toBe('a')
     expect(storeB.getState().session).toBeNull()
   })
 

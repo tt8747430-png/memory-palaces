@@ -1,30 +1,15 @@
 import { useEffect } from 'react'
-import type { Card } from '@/entities/card'
-import type { Deck } from '@/entities/deck'
-import type { Folder } from '@/entities/folder'
-import { type FlatDeck, usePendingAct } from '@/shared/lib'
+import { usePendingAct } from '@/shared/lib'
 import type { SelectActionHandlers } from '@/shared/ui'
 import type { MoveDestination } from '../ui/MoveDeckSheet'
 import type { PendingAct } from './pending-act'
 import { type LibraryActions, moveExclusions, useLibraryActions } from './use-library-actions'
-import { useLibraryData } from './use-library-data'
+import { type LibraryView, useLibraryData } from './use-library-data'
+
 import { type LibrarySelection, useLibrarySelection } from './use-library-selection'
 
-export interface Library {
-  ready: boolean
-  isEmpty: boolean
-  folders: Folder[]
-  decks: Deck[]
-  cards: Card[]
-  openFolder: Folder | undefined
-  folderDeckCounts: Map<string, number>
-  sectionFolders: Folder[]
-  sectionDecks: Deck[]
-  rows: FlatDeck[]
-  expanded: ReadonlySet<string>
-  toggleExpanded: (id: string) => void
-  expand: (id: string) => void
-
+/** What the library screen reads, plus what it can do about it. */
+export interface Library extends LibraryView {
   selection: LibrarySelection
   act: Omit<LibraryActions, 'selectHandlers'>
   selectHandlers: SelectActionHandlers
@@ -44,24 +29,25 @@ function moveTargets(pending: PendingAct | null, selectedDeckIds: string[]): str
 
 export function useLibrary(folderId: string | null, onFolderGone: () => void): Library {
   const data = useLibraryData(folderId)
+  const view = data.view
   const pending = usePendingAct<PendingAct>()
 
-  const missing = folderId !== null && data.foldersReady && !data.openFolder
+  const missing = folderId !== null && data.foldersReady && !view.openFolder
   useEffect(() => {
     if (missing) onFolderGone()
   }, [missing, onFolderGone])
 
   const selection = useLibrarySelection({
-    decks: data.decks,
+    decks: view.decks,
     folderIds: data.folderIds,
-    sectionFolders: data.sectionFolders,
-    sectionDecks: data.sectionDecks,
+    sectionFolders: view.sectionFolders,
+    sectionDecks: view.sectionDecks,
     folderId,
   })
 
   const { selectHandlers, ...act } = useLibraryActions({
-    decks: data.decks,
-    folders: data.folders,
+    decks: view.decks,
+    folders: view.folders,
     folderId,
     selection,
     patchDecks: data.patchDecks,
@@ -92,19 +78,7 @@ export function useLibrary(folderId: string | null, onFolderGone: () => void): L
     })
 
   return {
-    ready: data.ready,
-    isEmpty: data.isEmpty,
-    folders: data.sortedFolders,
-    decks: data.decks,
-    cards: data.cards,
-    openFolder: data.openFolder,
-    folderDeckCounts: data.folderDeckCounts,
-    sectionFolders: data.sectionFolders,
-    sectionDecks: data.sectionDecks,
-    rows: data.rows,
-    expanded: data.expanded,
-    toggleExpanded: data.toggleExpanded,
-    expand: data.expand,
+    ...view,
     selection,
     act,
     selectHandlers,
@@ -112,6 +86,6 @@ export function useLibrary(folderId: string | null, onFolderGone: () => void): L
     request: pending.request,
     dismiss: pending.dismiss,
     confirm,
-    moveExcludeIds: moveExclusions(data.decks, moveTargets(pending.act, selection.deckIds)),
+    moveExcludeIds: moveExclusions(view.decks, moveTargets(pending.act, selection.deckIds)),
   }
 }

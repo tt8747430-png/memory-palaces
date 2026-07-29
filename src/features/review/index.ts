@@ -12,7 +12,6 @@ export {
   initSession,
   sessionReducer,
   currentId,
-  nextId,
   upcomingIds,
   canUndo,
   type SessionState,

@@ -45,7 +45,14 @@ export const ACTION_ACCENT: Record<ActionAccent, { fill: string; ink: 'light' | 
 
 export interface ActionMeta {
   id: ActionId
+  /** The short label a swipe chip or toolbar button shows. */
   labelKey: string
+  /**
+   * The longer label an overflow menu shows, where there is room to say what
+   * the action does. Falls back to `labelKey` when the short one already reads
+   * as a full instruction.
+   */
+  menuLabelKey?: string
   accent: ActionAccent
   destructive?: boolean
 }
@@ -60,10 +67,26 @@ export const ACTION_META: Record<ActionId, ActionMeta> = {
   addSubdeck: { id: 'addSubdeck', labelKey: 'actions.addSubdeck', accent: 'emerald' },
   addDeck: { id: 'addDeck', labelKey: 'actions.addDeck', accent: 'emerald' },
   duplicate: { id: 'duplicate', labelKey: 'actions.duplicate', accent: 'violet' },
-  reset: { id: 'reset', labelKey: 'actions.reset', accent: 'plum' },
+  reset: {
+    id: 'reset',
+    labelKey: 'actions.reset',
+    menuLabelKey: 'actions.resetMenu',
+    accent: 'plum',
+  },
   flag: { id: 'flag', labelKey: 'actions.flag', accent: 'gold' },
-  known: { id: 'known', labelKey: 'actions.known', accent: 'emerald' },
+  known: {
+    id: 'known',
+    labelKey: 'actions.known',
+    menuLabelKey: 'actions.knownMenu',
+    accent: 'emerald',
+  },
   delete: { id: 'delete', labelKey: 'actions.delete', accent: 'red', destructive: true },
+}
+
+/** The label an action shows on a given surface. */
+export const actionLabelKey = (id: ActionId, surface: 'chip' | 'menu'): string => {
+  const meta = ACTION_META[id]
+  return surface === 'menu' ? (meta.menuLabelKey ?? meta.labelKey) : meta.labelKey
 }
 
 export const accentStyleOf = (id: ActionId) => ACTION_ACCENT[ACTION_META[id].accent]

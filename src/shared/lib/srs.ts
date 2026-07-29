@@ -1,4 +1,4 @@
-import { DAY_MS } from './clock'
+import { DAY_MS, nowIso } from './clock'
 
 export type Grade = 'again' | 'hard' | 'good' | 'easy'
 
@@ -56,7 +56,7 @@ export function schedule(prev: SrsState | undefined, grade: Grade, now: number):
     lapses,
     interval,
     due: isoInDays(now, interval),
-    lastReviewed: new Date(now).toISOString(),
+    lastReviewed: nowIso(now),
   }
 }
 
@@ -73,7 +73,7 @@ export function markKnown(prev: SrsState | undefined, now: number): SrsState {
     lapses: prev?.lapses ?? 0,
     interval,
     due: isoInDays(now, interval),
-    lastReviewed: new Date(now).toISOString(),
+    lastReviewed: nowIso(now),
   }
 }
 
