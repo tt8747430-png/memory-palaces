@@ -26,7 +26,7 @@ export function StatTile({ icon, value, label, delay = 0 }: StatTileProps) {
       <p className="text-[28px] font-bold leading-none tracking-tight tabular-nums text-heading">
         {value}
       </p>
-      <p className="mt-1.5 text-[length:var(--p-text-label)] font-medium text-muted-foreground">
+      <p className="mt-1.5 text-(length:--p-text-label) font-medium text-muted-foreground">
         {label}
       </p>
     </motion.div>

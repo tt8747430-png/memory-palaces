@@ -124,7 +124,7 @@ export function SettingsSwipePage({ onBack }: SettingsSwipePageProps) {
           onClick={() => void setPreferences(store, { swipe: DEFAULT_SWIPE })}
           className="self-start"
         >
-          <RotateCcw className="size-[18px]" aria-hidden />
+          <RotateCcw className="size-4.5" aria-hidden />
           {t('swipe.reset')}
         </Button>
       </div>

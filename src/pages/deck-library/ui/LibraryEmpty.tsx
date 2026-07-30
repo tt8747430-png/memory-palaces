@@ -19,12 +19,12 @@ export function LibraryEmpty({ inFolder, canImport, onCreateDeck, onImport }: Li
       action={
         <div className="flex w-full max-w-60 flex-col gap-2">
           <Button onClick={onCreateDeck}>
-            <Plus className="size-[18px]" aria-hidden />
+            <Plus className="size-4.5" aria-hidden />
             {inFolder ? t('folder.addDeck') : t('deck.newDeck')}
           </Button>
           {canImport ? (
             <Button variant="secondary" onClick={onImport}>
-              <ClipboardPaste className="size-[18px]" aria-hidden />
+              <ClipboardPaste className="size-4.5" aria-hidden />
               {t('deck.importCards')}
             </Button>
           ) : null}

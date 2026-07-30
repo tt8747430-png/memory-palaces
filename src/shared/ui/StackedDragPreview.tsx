@@ -45,7 +45,7 @@ export function StackedDragPreview({
       <div className="relative">{children}</div>
 
       <span
-        className="absolute -right-2 -top-2 z-10 grid h-6 min-w-6 place-items-center rounded-full bg-accent px-1.5 text-[length:var(--p-text-tiny)] font-bold tabular-nums text-[color:var(--surface)] shadow-interactive ring-2 ring-card"
+        className="absolute -right-2 -top-2 z-10 grid h-6 min-w-6 place-items-center rounded-full bg-accent px-1.5 text-(length:--p-text-tiny) font-bold tabular-nums text-(--surface) shadow-interactive ring-2 ring-card"
         aria-hidden
       >
         {count}

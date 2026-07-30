@@ -24,7 +24,7 @@ export function BadgesPage({ onBack, onOpenBadge }: BadgesPageProps = {}) {
         <BadgesSkeleton />
       ) : (
         <div className="mt-2 flex flex-col gap-5">
-          <p className="px-1 text-[length:var(--p-text-label)] text-muted-foreground">
+          <p className="px-1 text-(length:--p-text-label) text-muted-foreground">
             {t('badges.explainer')}
           </p>
           {milestone ? (

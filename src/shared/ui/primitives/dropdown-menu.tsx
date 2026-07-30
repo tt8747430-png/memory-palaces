@@ -34,16 +34,16 @@ function DropdownMenuContent({
         align={align}
         sideOffset={sideOffset}
         collisionPadding={collisionPadding}
-        className="z-[500]"
+        className="z-500"
       >
         <Menu.Popup
           data-slot="dropdown-menu-content"
           className={cn(
-            'min-w-[208px] origin-[var(--transform-origin)] rounded-card bg-card p-1.5',
-            'shadow-elevated outline-none ring-1 ring-[color:var(--border-glass)]',
+            'min-w-52 origin-(--transform-origin) rounded-card bg-card p-1.5',
+            'shadow-elevated outline-none ring-1 ring-(--border-glass)',
             'transition-[transform,opacity] duration-150 ease-out motion-reduce:transition-none',
-            'data-[starting-style]:scale-[0.96] data-[starting-style]:opacity-0',
-            'data-[ending-style]:scale-[0.96] data-[ending-style]:opacity-0',
+            'data-starting-style:scale-[0.96] data-starting-style:opacity-0',
+            'data-ending-style:scale-[0.96] data-ending-style:opacity-0',
             className,
           )}
           {...props}
@@ -113,17 +113,17 @@ function DropdownMenuRadioItem({ className, children, ...props }: DropdownMenuRa
       data-slot="dropdown-menu-radio-item"
       className={cn(
         'flex h-11 cursor-default select-none items-center gap-3 rounded-control px-3',
-        'text-[length:var(--p-text-body)] font-medium text-heading outline-none',
+        'text-(length:--p-text-body) font-medium text-heading outline-none',
         'transition-transform duration-150 ease-out active:scale-[0.99]',
-        'data-[highlighted]:bg-info-surface data-[checked]:text-accent',
-        'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+        'data-highlighted:bg-info-surface data-checked:text-accent',
+        'data-disabled:pointer-events-none data-disabled:opacity-50',
         className,
       )}
       {...props}
     >
       {children}
       <Menu.RadioItemIndicator className="ml-auto shrink-0">
-        <Check className="size-[18px] text-accent" aria-hidden />
+        <Check className="size-4.5 text-accent" aria-hidden />
       </Menu.RadioItemIndicator>
     </Menu.RadioItem>
   )

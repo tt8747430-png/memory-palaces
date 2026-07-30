@@ -23,10 +23,10 @@ export function StudyOverviewCard({
   if (count === 0) {
     return (
       <GlassCard className="flex flex-col items-center gap-3 py-7 text-center">
-        <span className="grid size-12 place-items-center rounded-card-featured bg-card text-[var(--success-foreground)] shadow-rest">
+        <span className="grid size-12 place-items-center rounded-card-featured bg-card text-(--success-foreground) shadow-rest">
           <Check className="size-6" aria-hidden />
         </span>
-        <p className="text-[length:var(--p-text-sub)] font-semibold text-heading">
+        <p className="text-(length:--p-text-sub) font-semibold text-heading">
           {t('study.caughtUp')}
         </p>
         {onStudyAhead ? (
@@ -55,7 +55,7 @@ export function StudyOverviewCard({
         >
           {count}
         </motion.p>
-        <p className="mt-1 text-[length:var(--p-text-body)] font-medium text-secondary">
+        <p className="mt-1 text-(length:--p-text-body) font-medium text-secondary">
           {t(count === 1 ? 'study.cardsForTodayOne' : 'study.cardsForTodayOther', { count })}
         </p>
       </div>
@@ -63,10 +63,10 @@ export function StudyOverviewCard({
       <dl className="grid grid-cols-3 gap-2">
         {items.map((item) => (
           <div key={item.key} className="rounded-control bg-info-surface px-2 py-2">
-            <dd className="text-[length:var(--p-text-sub)] font-bold leading-none tabular-nums text-heading">
+            <dd className="text-(length:--p-text-sub) font-bold leading-none tabular-nums text-heading">
               {item.value}
             </dd>
-            <dt className="mt-1 text-[length:var(--p-text-tiny)] font-medium text-secondary">
+            <dt className="mt-1 text-(length:--p-text-tiny) font-medium text-secondary">
               {t(`srs.${item.key}`)}
             </dt>
           </div>
@@ -74,7 +74,7 @@ export function StudyOverviewCard({
       </dl>
 
       <Button className="w-full" onClick={onStudy}>
-        <GraduationCap className="size-[18px]" aria-hidden />
+        <GraduationCap className="size-4.5" aria-hidden />
         {t('study.studyCards')}
       </Button>
     </GlassCard>

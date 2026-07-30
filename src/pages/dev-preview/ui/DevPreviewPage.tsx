@@ -93,9 +93,9 @@ function Section({
   return (
     <section id={id} className="scroll-mt-4">
       <div className="mb-3">
-        <h2 className="text-[length:var(--p-text-sub)] font-semibold text-heading">{title}</h2>
+        <h2 className="text-(length:--p-text-sub) font-semibold text-heading">{title}</h2>
         {note ? (
-          <p className="mt-0.5 text-[length:var(--p-text-label)] text-muted-foreground">{note}</p>
+          <p className="mt-0.5 text-(length:--p-text-label) text-muted-foreground">{note}</p>
         ) : null}
       </div>
       <div className="rounded-card-featured border border-border bg-card p-4">{children}</div>
@@ -111,7 +111,7 @@ function Case({ label, full, children }: { label: string; full?: boolean; childr
   return (
     <div className={cn('flex min-w-0 flex-col gap-2', full && 'w-full')}>
       <div className="min-w-0">{children}</div>
-      <span className="text-[length:var(--p-text-label)] text-muted-foreground">{label}</span>
+      <span className="text-(length:--p-text-label) text-muted-foreground">{label}</span>
     </div>
   )
 }
@@ -327,7 +327,7 @@ function SwipeDemo() {
       ]}
     >
       <div className="flex items-center gap-3 rounded-card border border-border bg-card px-4 py-3">
-        <span className="text-[length:var(--p-text-body)] text-heading">
+        <span className="text-(length:--p-text-body) text-heading">
           Swipe me left or right
         </span>
       </div>
@@ -464,10 +464,10 @@ export function DevPreviewPage({ onBack }: { onBack?: () => void }) {
                 </IconButton>
               ) : null}
               <div className="flex min-w-0 flex-1 flex-col">
-                <span className="text-[length:var(--p-text-title)] font-bold text-heading">
+                <span className="text-(length:--p-text-title) font-bold text-heading">
                   Kitchen sink
                 </span>
-                <span className="text-[length:var(--p-text-label)] text-muted-foreground">
+                <span className="text-(length:--p-text-label) text-muted-foreground">
                   Component states — dev only · CODE_STYLE.md §11
                 </span>
               </div>
@@ -480,7 +480,7 @@ export function DevPreviewPage({ onBack }: { onBack?: () => void }) {
                   value: option.value,
                   label: option.label,
                 }))}
-                className="w-[180px] shrink-0"
+                className="w-45 shrink-0"
               />
             </div>
             <nav
@@ -494,7 +494,7 @@ export function DevPreviewPage({ onBack }: { onBack?: () => void }) {
                   onClick={() => jumpTo(section.id)}
                   aria-current={activeId === section.id}
                   className={cn(
-                    'shrink-0 rounded-full px-3 py-1.5 text-[length:var(--p-text-label)] font-medium transition-colors',
+                    'shrink-0 rounded-full px-3 py-1.5 text-(length:--p-text-label) font-medium transition-colors',
                     activeId === section.id
                       ? 'bg-primary text-primary-foreground'
                       : 'bg-info-surface text-info-foreground',

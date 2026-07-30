@@ -43,8 +43,8 @@ export function GradeButtons({ srs, now = Date.now(), onGrade, className }: Grad
             tone,
           )}
         >
-          <span className="text-[length:var(--p-text-label)] font-semibold">{t(key)}</span>
-          <span className="text-[length:var(--p-text-tiny)] opacity-80">
+          <span className="text-(length:--p-text-label) font-semibold">{t(key)}</span>
+          <span className="text-(length:--p-text-tiny) opacity-80">
             {nextIntervalLabel(srs, grade, now)}
           </span>
         </button>

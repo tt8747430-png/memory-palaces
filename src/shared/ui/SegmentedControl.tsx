@@ -46,7 +46,7 @@ export function SegmentedControl<T extends string>({
         if (selected) onChange(selected)
       }}
       aria-label={ariaLabel}
-      className={cn('relative flex rounded-card bg-primary/[0.06] p-1', className)}
+      className={cn('relative flex rounded-card bg-primary/6 p-1', className)}
     >
       {options.map((option) => {
         const isActive = option.value === value
@@ -56,7 +56,7 @@ export function SegmentedControl<T extends string>({
             value={option.value}
             aria-label={option.ariaLabel}
             className={cn(
-              'relative flex flex-1 items-center justify-center rounded-control text-[length:var(--p-text-sub)] font-semibold',
+              'relative flex flex-1 items-center justify-center rounded-control text-(length:--p-text-sub) font-semibold',
               SEGMENT_PADDING[size],
               isActive ? 'text-primary' : 'text-primary/50',
             )}

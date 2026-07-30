@@ -96,10 +96,10 @@ export function DeckSettingsPage({ deckId, onBack, onDeleted }: DeckSettingsPage
             iconClassName="text-3xl"
           />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[length:var(--p-text-title)] font-bold tracking-tight text-heading">
+            <p className="truncate text-(length:--p-text-title) font-bold tracking-tight text-heading">
               {deck.name}
             </p>
-            <p className="mt-0.5 text-[length:var(--p-text-label)] text-muted-foreground">
+            <p className="mt-0.5 text-(length:--p-text-label) text-muted-foreground">
               {t('deckSettings.editAppearanceHint')}
             </p>
           </div>

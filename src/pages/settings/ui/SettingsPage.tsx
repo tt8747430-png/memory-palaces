@@ -109,7 +109,7 @@ export function SettingsPage({
   const languageOptions = AVAILABLE_LANGUAGES.map((language) => ({
     value: language.code,
     label: language.label,
-    icon: <Globe className="size-[18px]" aria-hidden />,
+    icon: <Globe className="size-4.5" aria-hidden />,
   }))
 
   return (
@@ -122,7 +122,7 @@ export function SettingsPage({
         <button
           type="button"
           onClick={() => onEditProfile?.()}
-          className="group flex w-full items-center gap-4 rounded-card bg-card p-4 text-left shadow-rest transition-[transform,background-color] duration-200 ease-out active:scale-[0.99] active:bg-primary/[0.04]"
+          className="group flex w-full items-center gap-4 rounded-card bg-card p-4 text-left shadow-rest transition-[transform,background-color] duration-200 ease-out active:scale-[0.99] active:bg-primary/4"
         >
           <Avatar
             name={name}
@@ -130,10 +130,10 @@ export function SettingsPage({
             className="size-16 text-xl shadow-rest transition-transform duration-200 ease-out group-active:scale-[0.96]"
           />
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-[length:var(--p-text-title)] font-semibold text-heading">
+            <span className="block truncate text-(length:--p-text-title) font-semibold text-heading">
               {name}
             </span>
-            <span className="block truncate text-[length:var(--p-text-sub)] text-muted-foreground">
+            <span className="block truncate text-(length:--p-text-sub) text-muted-foreground">
               {handle ? `@${handle}` : t('settings.profileHint')}
             </span>
           </span>

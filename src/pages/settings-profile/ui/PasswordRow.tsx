@@ -12,7 +12,7 @@ export function PasswordRow({ onChangePassword }: { onChangePassword: () => void
         type="button"
         onClick={onChangePassword}
         aria-label={t('settings.changePassword')}
-        className="flex h-11 w-full items-center justify-between rounded-control border border-border bg-card px-3.5 text-left transition-colors active:bg-primary/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+        className="flex h-11 w-full items-center justify-between rounded-control border border-border bg-card px-3.5 text-left transition-colors active:bg-primary/4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
       >
         <span className="flex items-center gap-2.5 text-foreground">
           <Lock className="size-4 text-muted-foreground" aria-hidden />

@@ -20,7 +20,7 @@ export function SrsStatusChip({ srs }: { srs?: SrsState }) {
     <span
       className={cn(
         'inline-flex items-center rounded-control px-2 py-0.5',
-        'text-[length:var(--p-text-tiny)] font-semibold',
+        'text-(length:--p-text-tiny) font-semibold',
         TONE[status],
       )}
     >

@@ -82,10 +82,10 @@ export function ArchivedDecksPage({ onBack }: ArchivedDecksPageProps) {
                   {deck.icon || '🗂️'}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[length:var(--p-text-sub)] font-semibold text-heading">
+                  <span className="block truncate text-(length:--p-text-sub) font-semibold text-heading">
                     {deck.name}
                   </span>
-                  <span className="block truncate text-[length:var(--p-text-label)] text-muted-foreground">
+                  <span className="block truncate text-(length:--p-text-label) text-muted-foreground">
                     {count > 0 ? t('archived.cardCount', { count }) : t('archived.noCards')}
                   </span>
                 </span>

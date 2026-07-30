@@ -68,10 +68,10 @@ export function SettingsPrivacyPage({ onBack }: SettingsPrivacyPageProps) {
     >
       <div className="mt-4 flex flex-col gap-5 pb-28">
         <div className="rounded-card bg-info-surface p-4">
-          <p className="text-[length:var(--p-text-sub)] font-semibold text-info-foreground">
+          <p className="text-(length:--p-text-sub) font-semibold text-info-foreground">
             {t('settings.privacyScreen.bannerTitle')}
           </p>
-          <p className="mt-1 text-[length:var(--p-text-label)] leading-snug text-info-foreground/80">
+          <p className="mt-1 text-(length:--p-text-label) leading-snug text-info-foreground/80">
             {t('settings.privacyScreen.bannerBody')}
           </p>
         </div>

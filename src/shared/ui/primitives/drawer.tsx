@@ -49,14 +49,14 @@ function DrawerContent({ className, backdropClassName, children, ...props }: Dra
     <DrawerPrimitive.Portal>
       <DrawerPrimitive.Backdrop
         className={cn(
-          'fixed inset-0 z-[300] bg-[color-mix(in_oklch,var(--primary)_28%,transparent)]',
+          'fixed inset-0 z-300 bg-[color-mix(in_oklch,var(--primary)_28%,transparent)]',
           'opacity-[calc(1-var(--drawer-swipe-progress,0))]',
-          'transition-opacity duration-[450ms] ease-[cubic-bezier(0.32,0.72,0,1)]',
-          'data-[starting-style]:opacity-0 data-[ending-style]:opacity-0 data-[swiping]:duration-0',
+          'transition-opacity duration-450 ease-[cubic-bezier(0.32,0.72,0,1)]',
+          'data-starting-style:opacity-0 data-ending-style:opacity-0 data-swiping:duration-0',
           backdropClassName,
         )}
       />
-      <DrawerPrimitive.Viewport className="pointer-events-none fixed inset-0 z-[310]">
+      <DrawerPrimitive.Viewport className="pointer-events-none fixed inset-0 z-310">
         <DrawerPrimitive.Popup
           data-slot="drawer-content"
           className={cn(
@@ -65,9 +65,10 @@ function DrawerContent({ className, backdropClassName, children, ...props }: Dra
             'origin-bottom will-change-transform',
             '[--closed-transform:translate3d(0,calc(100%+2px),0)]',
             'transform-[translate3d(0,var(--drawer-swipe-movement-y,0px),0)]',
-            'transition-transform duration-[450ms] ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none',
-            'data-[starting-style]:transform-[var(--closed-transform)]',
-            'data-[ending-style]:transform-[var(--closed-transform)] data-[swiping]:duration-0 data-[swiping]:select-none',
+            'transition-transform duration-450 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none',
+            '' +
+            'data-starting-style:transform-(--closed-transform)',
+            'data-ending-style:transform-(--closed-transform) data-swiping:duration-0 data-swiping:select-none',
             className,
           )}
           {...props}
@@ -130,7 +131,7 @@ function DrawerTitle({ className, ...props }: DrawerTitleProps) {
   return (
     <DrawerPrimitive.Title
       data-slot="drawer-title"
-      className={cn('text-[length:var(--p-text-sub)] font-semibold text-heading', className)}
+      className={cn('text-(length:--p-text-sub) font-semibold text-heading', className)}
       {...props}
     />
   )
@@ -147,7 +148,7 @@ function DrawerDescription({ className, ...props }: DrawerDescriptionProps) {
   return (
     <DrawerPrimitive.Description
       data-slot="drawer-description"
-      className={cn('mt-0.5 text-[length:var(--p-text-label)] text-muted-foreground', className)}
+      className={cn('mt-0.5 text-(length:--p-text-label) text-muted-foreground', className)}
       {...props}
     />
   )

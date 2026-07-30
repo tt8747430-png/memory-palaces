@@ -33,7 +33,7 @@ export function TestLaunchCard({ questionCount, onStartTest }: TestLaunchCardPro
         </div>
       </div>
       <Button size="lg" className="mt-3.5 w-full" disabled={!ready} onClick={onStartTest}>
-        <Play className="size-[18px]" aria-hidden />
+        <Play className="size-4.5" aria-hidden />
         {t('questions.startTest')}
       </Button>
     </div>

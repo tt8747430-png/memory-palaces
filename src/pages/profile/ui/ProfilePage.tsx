@@ -98,9 +98,9 @@ export function ProfilePage({
 function ProfileSkeleton() {
   return (
     <div aria-hidden className="flex flex-col items-center pt-5">
-      <Skeleton className="size-[104px]" />
+      <Skeleton className="size-26" />
       <Skeleton className="mt-4 h-3 w-32" />
-      <Skeleton className="mt-5 h-12 w-full max-w-[300px] rounded-card" />
+      <Skeleton className="mt-5 h-12 w-full max-w-75 rounded-card" />
       <div className="mt-8 w-full space-y-8">
         <Skeleton className="h-20 rounded-card" />
         <Skeleton className="h-24 rounded-card" tone="quiet" />

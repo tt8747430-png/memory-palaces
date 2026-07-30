@@ -9,7 +9,7 @@ const thumbBase =
 export function SwitchTrack({ checked }: { checked: boolean }) {
   return (
     <span className={cn(trackBase, checked ? 'bg-primary' : trackOff)}>
-      <span className={cn(thumbBase, checked ? 'translate-x-[22px]' : 'translate-x-0.5')} />
+      <span className={cn(thumbBase, checked ? 'translate-x-5.5' : 'translate-x-0.5')} />
     </span>
   )
 }
@@ -31,15 +31,17 @@ export function Switch({ checked, onCheckedChange, label, disabled, className }:
       aria-label={label}
       className={cn(
         trackBase,
-        'data-[unchecked]:bg-[color-mix(in_oklch,var(--text-muted)_32%,transparent)]',
-        'data-[checked]:bg-primary disabled:opacity-50',
+        '' +
+        'data-unchecked:bg-[color-mix(in_oklch,var(--text-muted)_32%,transparent)]',
+        'data-checked:bg-primary disabled:opacity-50',
         className,
       )}
     >
       <SwitchPrimitive.Thumb
         className={cn(
           thumbBase,
-          'data-[unchecked]:translate-x-0.5 data-[checked]:translate-x-[22px]',
+          '' +
+          'data-unchecked:translate-x-0.5 data-checked:translate-x-5.5',
         )}
       />
     </SwitchPrimitive.Root>

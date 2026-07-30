@@ -41,7 +41,7 @@ export function DeckAppearanceSheet({ open, onOpenChange, deck }: DeckAppearance
       title={t('deckSettings.appearanceTitle')}
       footer={
         <Button size="lg" className="w-full" disabled={!valid} onClick={() => submit()}>
-          <Check className="size-[18px]" aria-hidden />
+          <Check className="size-4.5" aria-hidden />
           {t('deckSettings.appearanceSave')}
         </Button>
       }

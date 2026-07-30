@@ -10,7 +10,7 @@ export function SelectToolbarDock({ children, className }: SelectToolbarDockProp
   return (
     <div
       className={cn(
-        'pointer-events-none fixed inset-x-0 bottom-0 z-[300] mx-auto w-full max-w-app px-3 pt-2',
+        'pointer-events-none fixed inset-x-0 bottom-0 z-300 mx-auto w-full max-w-app px-3 pt-2',
         className,
       )}
       style={{ paddingBottom: 'calc(var(--app-bottom-inset) + 0.75rem)' }}

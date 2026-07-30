@@ -27,13 +27,13 @@ export function Progress({
     <ProgressPrimitive.Root
       value={pct}
       data-slot="progress"
-      className={cn('block h-2 overflow-hidden rounded-full bg-primary/[0.08]', className)}
+      className={cn('block h-2 overflow-hidden rounded-full bg-primary/8', className)}
       {...(label ? { 'aria-label': label } : { 'aria-hidden': true })}
     >
       <motion.span
         data-slot="progress-indicator"
         className={cn(
-          'block h-full rounded-full bg-gradient-to-r from-primary to-accent',
+          'block h-full rounded-full bg-linear-to-r from-primary to-accent',
           fillClassName,
         )}
         initial={fillFromZero ? { width: 0 } : false}

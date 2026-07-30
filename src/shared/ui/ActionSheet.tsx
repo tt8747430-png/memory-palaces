@@ -78,11 +78,11 @@ export function ActionSheet({
               onClick={() => select(action)}
               className={cn(
                 'flex h-12 items-center gap-3 rounded-control px-3 text-left',
-                'text-[length:var(--p-text-body)] font-medium',
+                'text-(length:--p-text-body) font-medium',
                 'transition-transform duration-150 ease-out active:scale-[0.99]',
                 'disabled:pointer-events-none disabled:opacity-50',
                 action.destructive
-                  ? 'text-[var(--danger-on-surface)] hover:bg-[var(--danger-surface)]'
+                  ? 'text-(--danger-on-surface) hover:bg-(--danger-surface)'
                   : 'text-heading hover:bg-info-surface',
               )}
             >
@@ -99,7 +99,7 @@ export function ActionSheet({
         <DrawerClose
           className={cn(
             'mb-1 flex h-12 items-center justify-center rounded-control bg-info-surface',
-            'text-[length:var(--p-text-body)] font-semibold text-heading',
+            'text-(length:--p-text-body) font-semibold text-heading',
             'transition-transform duration-150 ease-out active:scale-[0.99]',
           )}
         >

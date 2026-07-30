@@ -52,9 +52,9 @@ export function FolderSheet({
       footer={
         <Button size="lg" className="w-full" disabled={!valid} onClick={() => submit()}>
           {isEdit ? (
-            <Check className="size-[18px]" aria-hidden />
+            <Check className="size-4.5" aria-hidden />
           ) : (
-            <FolderPlus className="size-[18px]" aria-hidden />
+            <FolderPlus className="size-4.5" aria-hidden />
           )}
           {isEdit ? t('folder.save') : t('folder.create')}
         </Button>

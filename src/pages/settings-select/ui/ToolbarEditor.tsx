@@ -102,7 +102,7 @@ function SortableTile({
               type="button"
               onClick={() => onRemove(action)}
               aria-label={t('select.removeLabel', { name: label })}
-              className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-heading text-[color:var(--surface)] shadow-rest transition-transform active:scale-90"
+              className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-heading text-(--surface) shadow-rest transition-transform active:scale-90"
             >
               <X className="size-3" strokeWidth={3} aria-hidden />
             </button>
@@ -127,7 +127,7 @@ function Tile({ action, floating = false }: { action: SelectActionId; floating?:
         floating && 'shadow-elevated ring-1 ring-accent/40',
       )}
     >
-      <span className="[&_svg]:size-[18px]">{selectActionIcon(action)}</span>
+      <span className="[&_svg]:size-4.5">{selectActionIcon(action)}</span>
       <span className="w-full truncate text-center text-(length:--p-text-tiny) font-semibold">
         {t(meta.labelKey as never)}
       </span>

@@ -81,7 +81,7 @@ export function SignupPage({ onSuccess, onGuest, onLogin }: SignupPageProps) {
       <div className="flex flex-col gap-1.5">
         <label
           htmlFor={termsId}
-          className="flex items-start gap-2.5 text-[length:var(--p-text-label)] text-muted-foreground"
+          className="flex items-start gap-2.5 text-(length:--p-text-label) text-muted-foreground"
         >
           <input
             id={termsId}
@@ -89,7 +89,7 @@ export function SignupPage({ onSuccess, onGuest, onLogin }: SignupPageProps) {
             checked={agreed}
             onChange={(event) => setAgreed(event.target.checked)}
             aria-describedby={errors.terms ? termsErrorId : undefined}
-            className="mt-0.5 size-4 shrink-0 accent-[var(--primary)]"
+            className="mt-0.5 size-4 shrink-0 accent-primary"
           />
           <span>
             {t('auth.signup.agreePrefix')}{' '}
@@ -102,7 +102,7 @@ export function SignupPage({ onSuccess, onGuest, onLogin }: SignupPageProps) {
           <p
             id={termsErrorId}
             role="alert"
-            className="text-[length:var(--p-text-label)] text-[var(--danger-on-surface)]"
+            className="text-(length:--p-text-label) text-(--danger-on-surface)"
           >
             {errors.terms}
           </p>

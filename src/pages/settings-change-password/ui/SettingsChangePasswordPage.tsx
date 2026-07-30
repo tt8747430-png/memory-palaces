@@ -70,7 +70,7 @@ export function SettingsChangePasswordPage({ onBack }: SettingsChangePasswordPag
           error={confirmError}
         />
 
-        <p className="text-[length:var(--p-text-label)] text-muted-foreground">
+        <p className="text-(length:--p-text-label) text-muted-foreground">
           {t('settings.changePasswordScreen.note')}
         </p>
 

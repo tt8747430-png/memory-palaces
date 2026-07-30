@@ -53,7 +53,7 @@ export function FormatToggle({ value, auto, onChange, onReset }: FormatTogglePro
                   : 'bg-secondary/40 text-muted-foreground',
               )}
             >
-              <Icon className="size-[18px]" aria-hidden />
+              <Icon className="size-4.5" aria-hidden />
               {t(labelKey as never)}
             </button>
           )

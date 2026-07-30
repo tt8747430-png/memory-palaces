@@ -25,21 +25,21 @@ function AlertDialogContent({
     <AlertDialogPrimitive.Portal>
       <AlertDialogPrimitive.Backdrop
         className={cn(
-          'fixed inset-0 z-[400] bg-[color-mix(in_oklch,var(--primary)_28%,transparent)]',
+          'fixed inset-0 z-400 bg-[color-mix(in_oklch,var(--primary)_28%,transparent)]',
           'backdrop-blur-[2px] transition-opacity duration-200 ease-out',
-          'data-[starting-style]:opacity-0 data-[ending-style]:opacity-0',
+          'data-starting-style:opacity-0 data-ending-style:opacity-0',
           backdropClassName,
         )}
       />
-      <div className="pointer-events-none fixed inset-0 z-[500] grid place-items-center p-6">
+      <div className="pointer-events-none fixed inset-0 z-500 grid place-items-center p-6">
         <AlertDialogPrimitive.Popup
           data-slot="alert-dialog-content"
           className={cn(
-            'pointer-events-auto w-full max-w-[340px] origin-center',
+            'pointer-events-auto w-full max-w-85 origin-center',
             'rounded-card-featured bg-card p-6 text-center shadow-elevated outline-none',
             'transition-[transform,opacity] duration-200 ease-out',
-            'data-[starting-style]:scale-95 data-[starting-style]:opacity-0',
-            'data-[ending-style]:scale-95 data-[ending-style]:opacity-0',
+            'data-starting-style:scale-95 data-starting-style:opacity-0',
+            'data-ending-style:scale-95 data-ending-style:opacity-0',
             className,
           )}
           {...props}
@@ -63,7 +63,7 @@ function AlertDialogTitle({ className, ...props }: AlertDialogTitleProps) {
     <AlertDialogPrimitive.Title
       data-slot="alert-dialog-title"
       className={cn(
-        'text-balance text-[length:var(--p-text-headline)] font-bold text-heading',
+        'text-balance text-(length:--p-text-headline) font-bold text-heading',
         className,
       )}
       {...props}
@@ -83,7 +83,7 @@ function AlertDialogDescription({ className, ...props }: AlertDialogDescriptionP
     <AlertDialogPrimitive.Description
       data-slot="alert-dialog-description"
       className={cn(
-        'mx-auto mt-2 max-w-[30ch] text-[length:var(--p-text-body)] leading-relaxed text-muted-foreground',
+        'mx-auto mt-2 max-w-[30ch] text-(length:--p-text-body) leading-relaxed text-muted-foreground',
         className,
       )}
       {...props}

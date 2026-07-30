@@ -29,7 +29,7 @@ export function IconColorRow({
 }: IconColorRowProps) {
   return (
     <div>
-      <p className="mb-2 text-[length:var(--p-text-label)] font-semibold text-heading">{label}</p>
+      <p className="mb-2 text-(length:--p-text-label) font-semibold text-heading">{label}</p>
       <div className="flex items-center gap-3">
         <EmojiField value={icon} onChange={onIconChange} aria-label={iconLabel} />
         <span aria-hidden className="h-9 w-px shrink-0 bg-border" />
@@ -54,7 +54,7 @@ export function IconColorRow({
                   'grid size-10 shrink-0 place-items-center rounded-full bg-linear-to-br shadow-rest',
                   'transition-transform active:scale-90 motion-reduce:active:scale-100',
                   option.value,
-                  'data-[pressed]:ring-2 data-[pressed]:ring-primary data-[pressed]:ring-offset-2 data-[pressed]:ring-offset-card',
+                  'data-pressed:ring-2 data-pressed:ring-primary data-pressed:ring-offset-2 data-pressed:ring-offset-card',
                 )}
               >
                 {active ? <Check className="size-4 text-white drop-shadow" aria-hidden /> : null}

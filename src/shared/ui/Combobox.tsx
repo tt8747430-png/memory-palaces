@@ -41,8 +41,8 @@ export function Combobox<T extends string>({
         onPointerDown={(event) => event.stopPropagation()}
         className={cn(
           bare
-            ? 'flex min-h-11 items-center gap-1 rounded-control pl-2 -mr-1.5 pr-1.5 text-right outline-none data-[popup-open]:text-accent'
-            : 'flex h-11 w-full items-center gap-2.5 rounded-control border border-border bg-card px-3.5 text-left shadow-rest data-[popup-open]:border-[oklch(var(--p-tint-navy)/0.2)]',
+            ? 'flex min-h-11 items-center gap-1 rounded-control pl-2 -mr-1.5 pr-1.5 text-right outline-none data-popup-open:text-accent'
+            : 'flex h-11 w-full items-center gap-2.5 rounded-control border border-border bg-card px-3.5 text-left shadow-rest data-popup-open:border-[oklch(var(--p-tint-navy)/0.2)]',
           'outline-none transition-[color,border-color,box-shadow] duration-150 ease-out',
           'focus-visible:ring-[3px] focus-visible:ring-ring/45',
           'disabled:pointer-events-none disabled:opacity-50',
@@ -77,16 +77,16 @@ export function Combobox<T extends string>({
           align={bare ? 'end' : 'start'}
           sideOffset={6}
           collisionPadding={12}
-          className={cn('z-[500]', bare ? 'min-w-[11rem]' : 'w-[var(--anchor-width)]')}
+          className={cn('z-500', bare ? 'min-w-44' : 'w-(--anchor-width)')}
         >
           <Menu.Popup
             className={cn(
-              'max-h-[min(18rem,var(--available-height))] min-w-[var(--anchor-width)] overflow-y-auto',
-              'origin-[var(--transform-origin)] rounded-card bg-card p-1.5',
-              'shadow-elevated outline-none ring-1 ring-[color:var(--border-glass)]',
+              'max-h-[min(18rem,var(--available-height))] min-w-(--anchor-width) overflow-y-auto',
+              'origin-(--transform-origin) rounded-card bg-card p-1.5',
+              'shadow-elevated outline-none ring-1 ring-(--border-glass)',
               'transition-[transform,opacity] duration-150 ease-out motion-reduce:transition-none',
-              'data-[starting-style]:scale-[0.96] data-[starting-style]:opacity-0',
-              'data-[ending-style]:scale-[0.96] data-[ending-style]:opacity-0',
+              'data-starting-style:scale-[0.96] data-starting-style:opacity-0',
+              'data-ending-style:scale-[0.96] data-ending-style:opacity-0',
             )}
           >
             {options.map((option) => {
@@ -97,9 +97,9 @@ export function Combobox<T extends string>({
                   onClick={() => onChange(option.value)}
                   className={cn(
                     'flex h-11 cursor-default select-none items-center gap-3 rounded-control px-3',
-                    'text-[length:var(--p-text-body)] font-medium outline-none',
+                    'text-(length:--p-text-body) font-medium outline-none',
                     'transition-transform duration-150 ease-out active:scale-[0.99]',
-                    'data-[highlighted]:bg-info-surface',
+                    'data-highlighted:bg-info-surface',
                     isSelected ? 'text-accent' : 'text-heading',
                   )}
                 >
@@ -110,7 +110,7 @@ export function Combobox<T extends string>({
                   ) : null}
                   <span className="min-w-0 flex-1 truncate">{option.label}</span>
                   {isSelected ? (
-                    <Check className="size-[18px] shrink-0 text-accent" aria-hidden />
+                    <Check className="size-4.5 shrink-0 text-accent" aria-hidden />
                   ) : null}
                 </Menu.Item>
               )

@@ -78,7 +78,7 @@ export function EditableTitle({
         aria-label={editLabel}
         className={cn(
           className,
-          'w-full min-w-0 rounded-[8px] bg-info-surface px-1.5 py-0.5 text-heading outline-none ring-2 ring-accent/50',
+          'w-full min-w-0 rounded-lg bg-info-surface px-1.5 py-0.5 text-heading outline-none ring-2 ring-accent/50',
         )}
       />
     )

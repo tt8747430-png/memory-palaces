@@ -14,7 +14,7 @@ export function SelectDot({ state, className }: SelectDotProps) {
         'grid size-6 shrink-0 place-items-center rounded-full border-2 transition-colors',
         state === 'unchecked'
           ? 'border-border bg-card text-transparent'
-          : 'border-accent bg-accent text-[color:var(--surface)]',
+          : 'border-accent bg-accent text-(--surface)',
         className,
       )}
     >

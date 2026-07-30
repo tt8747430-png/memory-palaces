@@ -44,7 +44,7 @@ export function AuthField({
             className={cn(
               'pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors duration-200',
               'group-focus-within:text-accent [&_svg]:size-5',
-              hasError && 'text-[var(--danger-on-surface)]',
+              hasError && 'text-(--danger-on-surface)',
             )}
           >
             {icon}
@@ -60,7 +60,7 @@ export function AuthField({
               onChange={(event) => onValueChange(event.target.value)}
               aria-invalid={hasError || undefined}
               className={cn(
-                'h-12 border-[var(--border-glass)] bg-card-glass transition-shadow duration-200',
+                'h-12 border-(--border-glass) bg-card-glass transition-shadow duration-200',
                 icon ? 'pl-11' : 'pl-3.5',
                 rightSlot || showCheck ? 'pr-11' : 'pr-3.5',
                 className,
@@ -83,7 +83,7 @@ export function AuthField({
       </div>
 
       {hasError ? (
-        <FieldError match className="text-[var(--danger-on-surface)]">
+        <FieldError match className="text-(--danger-on-surface)">
           {error}
         </FieldError>
       ) : null}

@@ -93,7 +93,7 @@ export function KeyboardProbe() {
   return (
     <div className="flex flex-col gap-3">
       <Input placeholder="Focus me, then read the numbers" aria-label="Keyboard probe field" />
-      <dl className="grid grid-cols-2 gap-x-3 gap-y-1 font-mono text-[length:var(--p-text-tiny)] tabular-nums">
+      <dl className="grid grid-cols-2 gap-x-3 gap-y-1 font-mono text-(length:--p-text-tiny) tabular-nums">
         {ROWS.map(([key, label]) => (
           <div key={key} className="contents">
             <dt className="truncate text-muted-foreground">{label}</dt>
@@ -101,11 +101,11 @@ export function KeyboardProbe() {
           </div>
         ))}
         <dt className="truncate text-muted-foreground">top+vv+kb</dt>
-        <dd className={sum === anchored ? 'text-heading' : 'text-[var(--danger-on-surface)]'}>
+        <dd className={sum === anchored ? 'text-heading' : 'text-(--danger-on-surface)'}>
           {sum} {sum === anchored ? '= anchored' : `≠ ${anchored}`}
         </dd>
       </dl>
-      <p className="text-[length:var(--p-text-label)] leading-snug text-muted-foreground">
+      <p className="text-(length:--p-text-label) leading-snug text-muted-foreground">
         Focus the field. <b>visualViewport top</b> above 0 means iOS panned;{' '}
         <b>layout viewport h</b> dropping means it resized instead. <b>html rect top</b> is the one
         that says which coordinate space rects use — 0 means layout-relative, -(pan) means the pan

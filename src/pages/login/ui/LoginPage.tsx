@@ -64,7 +64,7 @@ export function LoginPage({ onAuthed, onGuest, onSignup, onForgot }: LoginPagePr
         <button
           type="button"
           onClick={onForgot}
-          className="text-[length:var(--p-text-label)] font-medium text-heading"
+          className="text-(length:--p-text-label) font-medium text-heading"
         >
           {t('auth.login.forgot')}
         </button>

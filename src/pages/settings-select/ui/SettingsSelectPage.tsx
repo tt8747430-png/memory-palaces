@@ -151,7 +151,7 @@ export function SettingsSelectPage({ onBack }: SettingsSelectPageProps) {
         </section>
 
         <Button variant="ghost" onClick={resetAll} className="self-start">
-          <RotateCcw className="size-[18px]" aria-hidden />
+          <RotateCcw className="size-4.5" aria-hidden />
           {t('select.reset')}
         </Button>
       </div>

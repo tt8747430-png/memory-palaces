@@ -38,13 +38,13 @@ function AuthAtmosphere() {
         reduce ? (
           <span
             key={i}
-            className="absolute size-28 rounded-full bg-gradient-to-br from-secondary to-primary opacity-[0.1] blur-2xl"
+            className="absolute size-28 rounded-full bg-linear-to-br from-secondary to-primary opacity-[0.1] blur-2xl"
             style={{ left: accent.left, top: accent.top }}
           />
         ) : (
           <motion.span
             key={i}
-            className="absolute size-28 rounded-full bg-gradient-to-br from-secondary to-primary blur-2xl"
+            className="absolute size-28 rounded-full bg-linear-to-br from-secondary to-primary blur-2xl"
             style={{ left: accent.left, top: accent.top }}
             initial={{ opacity: 0, scale: 0.7 }}
             animate={{

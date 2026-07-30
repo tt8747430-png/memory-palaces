@@ -51,7 +51,7 @@ export function ConfirmDialog({
             className={cn(
               'mx-auto mb-4 grid size-14 place-items-center rounded-card-featured',
               destructive
-                ? 'bg-[var(--danger-surface)] text-[var(--danger-on-surface)]'
+                ? 'bg-(--danger-surface) text-(--danger-on-surface)'
                 : 'text-primary-foreground shadow-interactive',
             )}
             style={
@@ -79,7 +79,7 @@ export function ConfirmDialog({
           <AlertDialogClose
             className={cn(
               'flex h-12 w-full items-center justify-center rounded-control',
-              'text-[length:var(--p-text-sub)] font-semibold text-heading',
+              'text-(length:--p-text-sub) font-semibold text-heading',
               'transition-[transform,background-color] duration-150 ease-out',
               'hover:bg-info-surface active:scale-[0.98]',
             )}

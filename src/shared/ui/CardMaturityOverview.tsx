@@ -22,11 +22,11 @@ export function CardMaturityOverview({ total, counts }: CardMaturityOverviewProp
   const { t } = useTranslation()
   return (
     <div>
-      <p className="mb-2.5 text-[length:var(--p-text-title)] font-bold tracking-tight text-heading">
+      <p className="mb-2.5 text-(length:--p-text-title) font-bold tracking-tight text-heading">
         {t('study.cardsInDeck', { count: total })}
       </p>
       {total > 0 ? (
-        <div className="flex h-2 overflow-hidden rounded-full bg-[var(--divider)]" aria-hidden>
+        <div className="flex h-2 overflow-hidden rounded-full bg-(--divider)" aria-hidden>
           {ORDER.filter((k) => counts[k] > 0).map((k) => (
             <span
               key={k}
@@ -40,7 +40,7 @@ export function CardMaturityOverview({ total, counts }: CardMaturityOverviewProp
         {ORDER.map((k) => (
           <li
             key={k}
-            className="inline-flex items-center gap-1.5 text-[length:var(--p-text-label)] text-muted-foreground"
+            className="inline-flex items-center gap-1.5 text-(length:--p-text-label) text-muted-foreground"
           >
             <span className={cn('size-2 rounded-full', DOT[k])} aria-hidden />
             {t(`srs.${k}`)}

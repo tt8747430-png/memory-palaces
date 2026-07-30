@@ -21,7 +21,7 @@ export function WelcomePage({ onContinue }: WelcomePageProps) {
   const name = useSessionStore((state) => state.session?.displayName.trim() ?? '')
 
   return (
-    <main className="relative flex h-full flex-col items-center justify-center gap-8 overflow-hidden bg-gradient-to-b from-primary via-accent to-secondary px-6 pt-safe pb-safe text-center">
+    <main className="relative flex h-full flex-col items-center justify-center gap-8 overflow-hidden bg-linear-to-b from-primary via-accent to-secondary px-6 pt-safe pb-safe text-center">
       <Aura />
 
       {reduce
@@ -50,10 +50,10 @@ export function WelcomePage({ onContinue }: WelcomePageProps) {
           as="h1"
           text={t('auth.welcome.greeting', { name })}
           delay={reduce ? 0 : 0.6}
-          className="text-balance text-[length:var(--p-text-headline)] font-bold tracking-tight text-white"
+          className="text-balance text-(length:--p-text-headline) font-bold tracking-tight text-white"
         />
         <motion.p
-          className="text-balance text-[length:var(--p-text-sub)] text-white/85"
+          className="text-balance text-(length:--p-text-sub) text-white/85"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: reduce ? 0 : 1.0, duration: 0.5, ease: EASE_EXPO }}
@@ -63,7 +63,7 @@ export function WelcomePage({ onContinue }: WelcomePageProps) {
       </div>
 
       <motion.div
-        className="relative z-10 w-full max-w-[360px]"
+        className="relative z-10 w-full max-w-90"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: reduce ? 0 : 1.25, duration: 0.5, ease: EASE_EXPO }}

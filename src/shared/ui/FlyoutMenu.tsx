@@ -58,7 +58,7 @@ export function FlyoutMenu({
             {action.icon ? <DropdownMenuItemIcon>{action.icon}</DropdownMenuItemIcon> : null}
             <span className="min-w-0 flex-1 truncate">{action.label}</span>
             {action.selected ? (
-              <Check className="size-[18px] shrink-0 text-accent" aria-hidden />
+              <Check className="size-4.5 shrink-0 text-accent" aria-hidden />
             ) : null}
           </DropdownMenuItem>
         ))}

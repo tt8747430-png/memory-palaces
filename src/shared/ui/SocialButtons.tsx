@@ -44,11 +44,11 @@ export function SocialButtons({ onSelect }: SocialButtonsProps = {}) {
   return (
     <div className="flex flex-col items-center gap-5">
       <div className="flex w-full items-center gap-4">
-        <span className="h-px flex-1 bg-gradient-to-r from-transparent via-secondary/60 to-transparent" />
-        <span className="text-[length:var(--p-text-label)] font-medium text-muted-foreground">
+        <span className="h-px flex-1 bg-linear-to-r from-transparent via-secondary/60 to-transparent" />
+        <span className="text-(length:--p-text-label) font-medium text-muted-foreground">
           {t('auth.orContinueWith')}
         </span>
-        <span className="h-px flex-1 bg-gradient-to-r from-transparent via-secondary/60 to-transparent" />
+        <span className="h-px flex-1 bg-linear-to-r from-transparent via-secondary/60 to-transparent" />
       </div>
 
       <div className="flex items-center gap-4">
@@ -86,7 +86,7 @@ function SocialButton({
       aria-label={label}
       onClick={onClick}
       whileTap={{ scale: 0.92 }}
-      className={`grid size-14 place-items-center rounded-full border border-[var(--border-glass)] shadow-rest ${className}`}
+      className={`grid size-14 place-items-center rounded-full border border-(--border-glass) shadow-rest ${className}`}
     >
       {icon}
     </motion.button>

@@ -69,7 +69,7 @@ export function OptionGroup<T extends string>({
               </span>
               {option.hint ? (
                 <span
-                  className="shrink-0 rounded-control bg-primary/[0.06] px-1.5 py-0.5 font-mono text-(length:--p-text-label) text-muted-foreground"
+                  className="shrink-0 rounded-control bg-primary/6 px-1.5 py-0.5 font-mono text-(length:--p-text-label) text-muted-foreground"
                   aria-hidden
                 >
                   {option.hint}

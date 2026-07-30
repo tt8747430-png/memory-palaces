@@ -64,7 +64,7 @@ export function PasteNotesPage({
       footer={
         <FooterBar>
           <Button size="lg" className="w-full" disabled={!canCreate} onClick={create}>
-            <Sparkles className="size-[18px]" aria-hidden />
+            <Sparkles className="size-4.5" aria-hidden />
             {parsing.cards.length > 0
               ? t('cards.paste.createCount', { count: parsing.cards.length })
               : t('cards.paste.create')}
@@ -104,7 +104,7 @@ export function PasteNotesPage({
                 : t('cards.paste.notesPlaceholder')
             }
             rows={8}
-            className="min-h-[184px] font-mono text-(length:--p-text-label) leading-relaxed"
+            className="min-h-46 font-mono text-(length:--p-text-label) leading-relaxed"
           />
           <div className="mt-2 flex items-center gap-4">
             {canReadClipboard ? (

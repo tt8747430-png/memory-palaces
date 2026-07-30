@@ -39,7 +39,7 @@ export function StreakPage({ onBack }: StreakPageProps = {}) {
           style={{ background: 'var(--warning-surface)' }}
         >
           <Flame
-            className="pointer-events-none absolute -right-4 -top-3 size-44 text-[var(--warning)] opacity-25"
+            className="pointer-events-none absolute -right-4 -top-3 size-44 text-warning opacity-25"
             fill="currentColor"
             aria-hidden
           />
@@ -48,14 +48,14 @@ export function StreakPage({ onBack }: StreakPageProps = {}) {
               initial={reduce ? false : { opacity: 0, scale: 0.85 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ type: 'spring', stiffness: 260, damping: 18 }}
-              className="text-[64px] font-extrabold leading-none tabular-nums text-[var(--warning-foreground)]"
+              className="text-[64px] font-extrabold leading-none tabular-nums text-(--warning-foreground)"
             >
               {streakCount}
             </motion.p>
-            <p className="mt-1 text-[length:var(--p-text-headline)] font-bold text-[var(--warning-foreground)]">
+            <p className="mt-1 text-(length:--p-text-headline) font-bold text-(--warning-foreground)">
               {t('streak.dayStreak')}
             </p>
-            <p className="mt-1 max-w-[14rem] text-[length:var(--p-text-label)] font-medium text-[var(--warning-foreground)]/80">
+            <p className="mt-1 max-w-56 text-(length:--p-text-label) font-medium text-(--warning-foreground)/80">
               {streakCount > 0 ? t('streak.keepItUp') : t('streak.startToday')}
             </p>
           </div>
@@ -98,7 +98,7 @@ function StreakStatCard({
       <span
         className={
           tone === 'amber'
-            ? 'grid size-10 shrink-0 place-items-center rounded-control bg-[var(--warning-surface)] text-[var(--warning-foreground)]'
+            ? 'grid size-10 shrink-0 place-items-center rounded-control bg-(--warning-surface) text-(--warning-foreground)'
             : 'grid size-10 shrink-0 place-items-center rounded-control bg-info-surface text-primary'
         }
       >
@@ -106,7 +106,7 @@ function StreakStatCard({
       </span>
       <div className="min-w-0">
         <p className="text-[22px] font-bold leading-none tabular-nums text-heading">{value}</p>
-        <p className="mt-1 text-[length:var(--p-text-label)] font-medium leading-tight text-muted-foreground">
+        <p className="mt-1 text-(length:--p-text-label) font-medium leading-tight text-muted-foreground">
           {label}
         </p>
       </div>

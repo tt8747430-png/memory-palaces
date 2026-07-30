@@ -11,7 +11,7 @@ export function SettingsSection({ title, children, className }: SettingsSectionP
   return (
     <section className={cn('flex flex-col gap-2', className)}>
       {title ? (
-        <h2 className="px-1 text-[length:var(--p-text-label)] font-semibold uppercase tracking-wide text-muted-foreground">
+        <h2 className="px-1 text-(length:--p-text-label) font-semibold uppercase tracking-wide text-muted-foreground">
           {title}
         </h2>
       ) : null}

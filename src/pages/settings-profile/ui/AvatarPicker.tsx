@@ -27,7 +27,7 @@ export function AvatarPicker({ name, avatar, onPick, onRemove }: AvatarPickerPro
         <Avatar
           name={name}
           src={avatar}
-          className="relative size-24 border-[3px] border-[color:var(--surface)] text-3xl shadow-featured"
+          className="relative size-24 border-[3px] border-(--surface) text-3xl shadow-featured"
         />
         <motion.button
           type="button"
@@ -37,7 +37,7 @@ export function AvatarPicker({ name, avatar, onPick, onRemove }: AvatarPickerPro
           )}
           whileTap={{ scale: 0.9 }}
           transition={{ type: 'spring', stiffness: 400, damping: 24 }}
-          className="absolute -bottom-1 -right-1 grid size-10 place-items-center rounded-full border-[3px] border-[color:var(--surface)] text-primary-foreground shadow-interactive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+          className="absolute -bottom-1 -right-1 grid size-10 place-items-center rounded-full border-[3px] border-(--surface) text-primary-foreground shadow-interactive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
           style={{ background: GRADIENT }}
         >
           <Camera className="size-4" aria-hidden />

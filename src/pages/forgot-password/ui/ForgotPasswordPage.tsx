@@ -50,7 +50,7 @@ export function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) {
         <button
           type="button"
           onClick={onBack}
-          className="-ml-1.5 inline-flex min-h-11 items-center gap-1.5 rounded-control px-1.5 text-[length:var(--p-text-label)] font-medium text-heading transition-colors active:bg-primary/[0.04]"
+          className="-ml-1.5 inline-flex min-h-11 items-center gap-1.5 rounded-control px-1.5 text-(length:--p-text-label) font-medium text-heading transition-colors active:bg-primary/4"
         >
           <ArrowLeft className="size-4" aria-hidden />
           {t('auth.forgot.backToLogin')}

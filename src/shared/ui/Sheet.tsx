@@ -47,7 +47,7 @@ export function Sheet({
               aria-label="Close"
               className="-mr-1 grid size-8 shrink-0 place-items-center rounded-control text-heading hover:bg-info-surface"
             >
-              <X className="size-[18px]" aria-hidden />
+              <X className="size-4.5" aria-hidden />
             </DrawerClose>
           </DrawerHeader>
           <div className="min-h-0 flex-1 touch-auto overflow-y-auto overscroll-contain px-5 pb-2 pt-1">

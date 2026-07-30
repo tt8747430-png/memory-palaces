@@ -141,16 +141,16 @@ function SaveButton({
       onClick={onClick}
       aria-label={saved ? t('cards.editor.saved') : idleLabel}
       className={cn(
-        'flex h-11 shrink-0 items-center gap-1.5 rounded-control px-5 text-[length:var(--p-text-sub)] font-semibold text-primary-foreground shadow-interactive',
+        'flex h-11 shrink-0 items-center gap-1.5 rounded-control px-5 text-(length:--p-text-sub) font-semibold text-primary-foreground shadow-interactive',
         'transition-[background-color,transform] duration-200 ease-out active:scale-[0.97]',
         'disabled:pointer-events-none disabled:opacity-50',
         saved ? 'bg-success' : 'bg-primary',
       )}
     >
       {saved ? (
-        <Check className="size-[18px]" aria-hidden />
+        <Check className="size-4.5" aria-hidden />
       ) : (
-        <IdleIcon className="size-[18px]" aria-hidden />
+        <IdleIcon className="size-4.5" aria-hidden />
       )}
       {saved ? t('cards.editor.saved') : t('cards.editor.save')}
     </button>
@@ -182,7 +182,7 @@ function DeckNav({
       <div className="flex items-center justify-between gap-2">
         <DeckNavButton side="prev" label={prevLabel} disabled={!hasPrev} onClick={onPrev} />
         <div className="flex flex-col items-center gap-1.5">
-          <span className="text-[length:var(--p-text-sub)] font-bold tabular-nums text-heading">
+          <span className="text-(length:--p-text-sub) font-bold tabular-nums text-heading">
             {position + 1}
             <span className="font-semibold text-muted-foreground"> / {total}</span>
           </span>
@@ -216,7 +216,7 @@ function DeckNavButton({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        'inline-flex h-11 items-center gap-1 rounded-control bg-secondary px-3.5 text-[length:var(--p-text-sub)] font-semibold text-secondary-foreground',
+        'inline-flex h-11 items-center gap-1 rounded-control bg-secondary px-3.5 text-(length:--p-text-sub) font-semibold text-secondary-foreground',
         'transition-transform duration-200 ease-out active:scale-95',
         'disabled:pointer-events-none disabled:bg-transparent disabled:text-muted-foreground disabled:opacity-50',
       )}

@@ -52,7 +52,7 @@ export function AchievementsPage({ onBack, onOpenAchievement }: AchievementsPage
       ) : (
         <div className="mt-2 flex flex-col gap-6">
           <section>
-            <h2 className="mb-3 px-1 text-[length:var(--p-text-title)] font-bold text-heading">
+            <h2 className="mb-3 px-1 text-(length:--p-text-title) font-bold text-heading">
               {t('achievementsPage.recordsTitle')}
             </h2>
             <motion.dl
@@ -70,10 +70,10 @@ export function AchievementsPage({ onBack, onOpenAchievement }: AchievementsPage
                     index >= 3 && 'border-t border-border',
                   )}
                 >
-                  <dt className="text-[length:var(--p-text-label)] font-medium leading-tight text-muted-foreground">
+                  <dt className="text-(length:--p-text-label) font-medium leading-tight text-muted-foreground">
                     {record.label}
                   </dt>
-                  <dd className="text-[length:var(--p-text-headline)] font-bold leading-none tabular-nums text-heading">
+                  <dd className="text-(length:--p-text-headline) font-bold leading-none tabular-nums text-heading">
                     {record.value}
                   </dd>
                 </div>
@@ -82,10 +82,10 @@ export function AchievementsPage({ onBack, onOpenAchievement }: AchievementsPage
           </section>
 
           <section>
-            <h2 className="px-1 text-[length:var(--p-text-title)] font-bold text-heading">
+            <h2 className="px-1 text-(length:--p-text-title) font-bold text-heading">
               {t('achievementsPage.milestonesTitle')}
             </h2>
-            <p className="mb-4 mt-0.5 px-1 text-[length:var(--p-text-label)] text-muted-foreground">
+            <p className="mb-4 mt-0.5 px-1 text-(length:--p-text-label) text-muted-foreground">
               {t('achievementsPage.milestonesSubtitle')}
             </p>
             <AchievementGrid achievements={achievements} onOpenAchievement={onOpenAchievement} />

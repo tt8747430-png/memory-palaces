@@ -38,10 +38,10 @@ function RowBody({ icon, label, description, tone = 'default' }: BaseProps) {
       <span
         aria-hidden
         className={cn(
-          'grid size-9 shrink-0 place-items-center rounded-control [&_svg]:size-[18px]',
+          'grid size-9 shrink-0 place-items-center rounded-control [&_svg]:size-4.5',
           'transition-transform duration-200 ease-out group-active:scale-[0.92]',
           danger
-            ? 'bg-[var(--danger-surface)] text-[var(--danger-on-surface)]'
+            ? 'bg-(--danger-surface) text-(--danger-on-surface)'
             : 'bg-info-surface text-info-foreground',
         )}
       >
@@ -50,14 +50,15 @@ function RowBody({ icon, label, description, tone = 'default' }: BaseProps) {
       <span className="min-w-0">
         <span
           className={cn(
-            'block truncate text-[length:var(--p-text-sub)] font-semibold',
-            danger ? 'text-[var(--danger-on-surface)]' : 'text-heading',
+            'block truncate text-(length:--p-text-sub) font-semibold',
+            danger ? '' +
+              'text-(--danger-on-surface)' : 'text-heading',
           )}
         >
           {label}
         </span>
         {description ? (
-          <span className="mt-0.5 block truncate text-[length:var(--p-text-label)] leading-snug text-muted-foreground">
+          <span className="mt-0.5 block truncate text-(length:--p-text-label) leading-snug text-muted-foreground">
             {description}
           </span>
         ) : null}
@@ -67,7 +68,7 @@ function RowBody({ icon, label, description, tone = 'default' }: BaseProps) {
 }
 
 const trailingValue = (value: string) => (
-  <span className="shrink-0 text-[length:var(--p-text-label)] text-muted-foreground">{value}</span>
+  <span className="shrink-0 text-(length:--p-text-label) text-muted-foreground">{value}</span>
 )
 
 export function SettingsRow(props: SettingsRowProps) {
@@ -82,7 +83,7 @@ export function SettingsRow(props: SettingsRowProps) {
         aria-checked={props.checked}
         aria-label={label}
         onClick={() => props.onCheckedChange(!props.checked)}
-        className={cn(ROW, 'group active:bg-primary/[0.04]')}
+        className={cn(ROW, 'group active:bg-primary/4')}
       >
         {body}
         <SwitchTrack checked={props.checked} />
@@ -99,7 +100,7 @@ export function SettingsRow(props: SettingsRowProps) {
         disabled={props.disabled}
         className={cn(
           ROW,
-          'group active:bg-primary/[0.04]',
+          'group active:bg-primary/4',
           'disabled:pointer-events-none disabled:opacity-45',
         )}
       >
@@ -122,7 +123,7 @@ export function SettingsRow(props: SettingsRowProps) {
         disabled={props.disabled}
         className={cn(
           ROW,
-          'group active:bg-primary/[0.04]',
+          'group active:bg-primary/4',
           'disabled:pointer-events-none disabled:opacity-45',
         )}
       >

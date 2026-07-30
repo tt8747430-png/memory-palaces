@@ -50,30 +50,30 @@ export function AchievementDetailPage({ achievementId, onBack }: AchievementDeta
         </RewardHero>
 
         <section className="flex flex-col gap-2">
-          <h2 className="px-1 text-[length:var(--p-text-title)] font-bold text-heading">
+          <h2 className="px-1 text-(length:--p-text-title) font-bold text-heading">
             {t('achievementDetail.howToTitle')}
           </h2>
-          <p className="px-1 text-[length:var(--p-text-body)] leading-relaxed text-foreground">
+          <p className="px-1 text-(length:--p-text-body) leading-relaxed text-foreground">
             {t(`achievementDetail.${achievement.id}.howTo`)}
           </p>
         </section>
 
         <div className={`${cardSurface} flex items-start gap-3 p-4`}>
           <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-control bg-info-surface text-info-foreground">
-            <meta.icon className="size-[18px]" aria-hidden />
+            <meta.icon className="size-4.5" aria-hidden />
           </span>
           <div className="min-w-0">
-            <p className="text-[length:var(--p-text-sub)] font-bold leading-tight text-heading">
+            <p className="text-(length:--p-text-sub) font-bold leading-tight text-heading">
               {title}
             </p>
-            <p className="mt-0.5 text-[length:var(--p-text-label)] leading-snug text-muted-foreground">
+            <p className="mt-0.5 text-(length:--p-text-label) leading-snug text-muted-foreground">
               {t(meta.descriptionKey)}
             </p>
           </div>
         </div>
 
         {earned ? (
-          <p className="px-1 text-[length:var(--p-text-label)] font-semibold text-[var(--success-foreground)]">
+          <p className="px-1 text-(length:--p-text-label) font-semibold text-(--success-foreground)">
             {t('achievementDetail.earnedNote')}
           </p>
         ) : null}

@@ -97,7 +97,7 @@ export function ImportReviewPage({ deckId, onBack, onDone }: ImportReviewPagePro
             disabled={cards.length === 0 || busy}
             onClick={() => void doImport()}
           >
-            <Download className="size-[18px]" aria-hidden />
+            <Download className="size-4.5" aria-hidden />
             {t('cards.review.importCards', { count: cards.length })}
           </Button>
         </FooterBar>
@@ -106,7 +106,7 @@ export function ImportReviewPage({ deckId, onBack, onDone }: ImportReviewPagePro
       <div className="mt-4 flex flex-col gap-5 pb-6">
         {isMindscape ? (
           <section>
-            <h2 className="mb-2 text-[length:var(--p-text-label)] font-bold uppercase tracking-wide text-muted-foreground">
+            <h2 className="mb-2 text-(length:--p-text-label) font-bold uppercase tracking-wide text-muted-foreground">
               {t('cards.review.restoreLabel')}
             </h2>
             <div className="overflow-hidden rounded-card border border-border bg-card shadow-rest">
@@ -137,7 +137,7 @@ export function ImportReviewPage({ deckId, onBack, onDone }: ImportReviewPagePro
 
         <section>
           <div className="mb-2 flex items-center justify-between gap-2">
-            <h2 className="text-[length:var(--p-text-sub)] font-bold text-heading">
+            <h2 className="text-(length:--p-text-sub) font-bold text-heading">
               {t('cards.review.generated', { count: cards.length })}
             </h2>
             {cards.length > 0 ? (
@@ -146,7 +146,7 @@ export function ImportReviewPage({ deckId, onBack, onDone }: ImportReviewPagePro
                 size="sm"
                 aria-label={t('cards.review.clearAll')}
                 onClick={() => setClearOpen(true)}
-                className="text-[var(--danger-on-surface)]"
+                className="text-(--danger-on-surface)"
               >
                 <Trash2 className="size-4" aria-hidden />
               </IconButton>
@@ -155,13 +155,13 @@ export function ImportReviewPage({ deckId, onBack, onDone }: ImportReviewPagePro
 
           {cards.length === 0 ? (
             <div className="rounded-card bg-card-glass p-6 text-center shadow-rest">
-              <p className="text-[length:var(--p-text-body)] text-muted-foreground">
+              <p className="text-(length:--p-text-body) text-muted-foreground">
                 {t('cards.review.empty')}
               </p>
               <button
                 type="button"
                 onClick={onDone}
-                className="mt-2 text-[length:var(--p-text-label)] font-semibold text-accent"
+                className="mt-2 text-(length:--p-text-label) font-semibold text-accent"
               >
                 {t('cards.review.emptyBack')}
               </button>

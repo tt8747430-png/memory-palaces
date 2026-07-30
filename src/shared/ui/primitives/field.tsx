@@ -24,7 +24,8 @@ function FieldLabel({
   return (
     <FieldPrimitive.Label
       data-slot="field-label"
-      className={cn('text-[length:var(--p-text-label)] font-medium text-heading', className)}
+      className={cn('' +
+        'text-(length:--p-text-label) font-medium text-heading', className)}
       {...props}
     />
   )
@@ -44,7 +45,7 @@ function FieldDescription({
   return (
     <FieldPrimitive.Description
       data-slot="field-description"
-      className={cn('text-[length:var(--p-text-label)] text-muted-foreground', className)}
+      className={cn('text-(length:--p-text-label) text-muted-foreground', className)}
       {...props}
     />
   )
@@ -57,7 +58,7 @@ function FieldError({
   return (
     <FieldPrimitive.Error
       data-slot="field-error"
-      className={cn('text-[length:var(--p-text-label)] text-[var(--danger)]', className)}
+      className={cn('text-(length:--p-text-label) text-destructive', className)}
       {...props}
     />
   )

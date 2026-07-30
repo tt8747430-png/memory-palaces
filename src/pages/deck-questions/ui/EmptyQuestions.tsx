@@ -11,7 +11,7 @@ export function EmptyQuestions({ onAdd }: { onAdd: () => void }) {
       description={t('questions.emptyHint')}
       action={
         <Button onClick={onAdd}>
-          <Plus className="size-[18px]" aria-hidden />
+          <Plus className="size-4.5" aria-hidden />
           {t('questions.addQuestion')}
         </Button>
       }

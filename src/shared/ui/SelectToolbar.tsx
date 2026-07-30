@@ -36,12 +36,12 @@ export function SelectToolbar({ actions, handlers, className }: SelectToolbarPro
               'transition-transform active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40',
               'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/40',
               meta.destructive
-                ? 'bg-[var(--danger-surface)] text-[var(--danger-on-surface)]'
+                ? 'bg-(--danger-surface) text-(--danger-on-surface)'
                 : 'bg-info-surface text-heading',
             )}
           >
             {selectActionIcon(id)}
-            <span className="w-full truncate text-center text-[length:var(--p-text-tiny)] font-semibold">
+            <span className="w-full truncate text-center text-(length:--p-text-tiny) font-semibold">
               {t(meta.labelKey as never)}
             </span>
           </button>

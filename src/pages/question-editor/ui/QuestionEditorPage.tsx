@@ -81,7 +81,7 @@ export function QuestionEditorPage({
           backLabel={t('common.back')}
           action={
             <Button size="md" disabled={!valid} onClick={() => void submit()}>
-              <Check className="size-[18px]" aria-hidden />
+              <Check className="size-4.5" aria-hidden />
               {editing ? t('common.saveChanges') : t('questions.editor.save')}
             </Button>
           }

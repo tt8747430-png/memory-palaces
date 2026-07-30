@@ -149,7 +149,7 @@ export function MoveDeckSheet({
           depth={0}
           glyph={
             <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-secondary/40 text-muted-foreground">
-              <Archive className="size-[18px]" aria-hidden />
+              <Archive className="size-4.5" aria-hidden />
             </span>
           }
           label={t('move.archive')}
@@ -160,7 +160,7 @@ export function MoveDeckSheet({
           depth={0}
           glyph={
             <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-              <Home className="size-[18px]" aria-hidden />
+              <Home className="size-4.5" aria-hidden />
             </span>
           }
           label={t('move.home')}
@@ -202,12 +202,12 @@ export function MoveDeckSheet({
       <button
         type="button"
         onClick={onNewFolder}
-        className="mt-1 flex w-full items-center gap-2.5 rounded-card px-2 py-3 text-left text-accent transition-colors active:bg-primary/[0.05]"
+        className="mt-1 flex w-full items-center gap-2.5 rounded-card px-2 py-3 text-left text-accent transition-colors active:bg-primary/5"
       >
         <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-info-surface">
-          <FolderPlus className="size-[18px]" aria-hidden />
+          <FolderPlus className="size-4.5" aria-hidden />
         </span>
-        <span className="text-[length:var(--p-text-body)] font-semibold">
+        <span className="text-(length:--p-text-body) font-semibold">
           {t('move.newFolder')}
         </span>
       </button>
@@ -266,14 +266,14 @@ function Row({
         aria-pressed={selected}
         className={cn(
           'flex min-w-0 flex-1 items-center gap-2.5 rounded-control py-2.5 pl-1.5 pr-2 text-left transition-colors',
-          disabled ? 'opacity-40' : 'active:bg-primary/[0.04]',
-          selected && 'bg-primary/[0.06]',
+          disabled ? 'opacity-40' : 'active:bg-primary/4',
+          selected && 'bg-primary/6',
         )}
       >
         {glyph}
         <span
           className={cn(
-            'min-w-0 flex-1 truncate text-[length:var(--p-text-body)] font-semibold',
+            'min-w-0 flex-1 truncate text-(length:--p-text-body) font-semibold',
             selected ? 'text-primary' : 'text-heading',
           )}
         >

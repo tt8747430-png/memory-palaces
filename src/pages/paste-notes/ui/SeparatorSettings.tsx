@@ -61,7 +61,7 @@ export function SeparatorSettings({ parsing }: { parsing: PasteParsing }) {
       <div className="divide-y divide-border overflow-hidden rounded-card border border-border bg-card shadow-rest">
         <ToggleRow
           surface="plain"
-          icon={<SettingGlyph icon={<ArrowUpDown className="size-[18px]" aria-hidden />} />}
+          icon={<SettingGlyph icon={<ArrowUpDown className="size-4.5" aria-hidden />} />}
           label={t('cards.paste.swapLabel')}
           description={t('cards.paste.swapHint')}
           checked={parsing.swap}
@@ -69,7 +69,7 @@ export function SeparatorSettings({ parsing }: { parsing: PasteParsing }) {
         />
         <ToggleRow
           surface="plain"
-          icon={<SettingGlyph icon={<Table className="size-[18px]" aria-hidden />} />}
+          icon={<SettingGlyph icon={<Table className="size-4.5" aria-hidden />} />}
           label={t('cards.paste.skipHeaderLabel')}
           description={t('cards.paste.skipHeaderHint')}
           checked={parsing.skipHeader}

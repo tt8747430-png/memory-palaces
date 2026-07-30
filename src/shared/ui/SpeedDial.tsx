@@ -65,14 +65,14 @@ export function SpeedDial({ label, actions, placement = 'above-nav', className }
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={() => setOpen(false)}
-            className="fixed inset-0 z-[210] bg-[oklch(29%_0.063_254.3_/_0.3)] backdrop-blur-[2px]"
+            className="fixed inset-0 z-210 bg-[oklch(29%_0.063_254.3/0.3)] backdrop-blur-[2px]"
           />
         ) : null}
       </AnimatePresence>
 
       <div
         className={cn(
-          'fixed right-5 z-[220] flex flex-col items-end gap-3',
+          'fixed right-5 z-220 flex flex-col items-end gap-3',
           PLACEMENT[placement],
           className,
         )}
@@ -100,7 +100,7 @@ export function SpeedDial({ label, actions, placement = 'above-nav', className }
                     onClick={() => fire(action)}
                     className="group flex items-center gap-2.5 rounded-full transition-transform active:scale-[0.97] focus-visible:outline-none"
                   >
-                    <span className="rounded-full bg-card px-3 py-1 text-[length:var(--p-text-label)] font-semibold text-heading shadow-rest transition-colors group-hover:bg-info-surface">
+                    <span className="rounded-full bg-card px-3 py-1 text-(length:--p-text-label) font-semibold text-heading shadow-rest transition-colors group-hover:bg-info-surface">
                       {action.label}
                     </span>
                     <span className="grid size-12 place-items-center rounded-full bg-card text-primary shadow-rest transition-colors group-hover:bg-info-surface group-focus-visible:ring-2 group-focus-visible:ring-primary/50">
@@ -121,7 +121,7 @@ export function SpeedDial({ label, actions, placement = 'above-nav', className }
           aria-haspopup={soleAction ? undefined : 'menu'}
           whileTap={{ scale: 0.92 }}
           onClick={() => (soleAction ? soleAction.onSelect() : setOpen((value) => !value))}
-          className="grid size-14 place-items-center rounded-full bg-primary text-primary-foreground shadow-interactive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--surface)]"
+          className="grid size-14 place-items-center rounded-full bg-primary text-primary-foreground shadow-interactive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-(--surface)"
         >
           <motion.span
             animate={{ rotate: soleAction ? 0 : open ? 45 : 0 }}

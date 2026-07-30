@@ -19,12 +19,12 @@ export function CollectionPreview({
   return (
     <section>
       <div className="mb-3.5 flex items-center justify-between px-1">
-        <h2 className="text-[length:var(--p-text-title)] font-bold text-heading">{title}</h2>
+        <h2 className="text-(length:--p-text-title) font-bold text-heading">{title}</h2>
         <button
           type="button"
           onClick={onSeeAll}
           aria-label={ariaLabel}
-          className="group -mr-1 flex items-center gap-0.5 rounded-control px-1 py-0.5 text-[length:var(--p-text-label)] font-semibold text-muted-foreground transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+          className="group -mr-1 flex items-center gap-0.5 rounded-control px-1 py-0.5 text-(length:--p-text-label) font-semibold text-muted-foreground transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
         >
           {seeAllLabel}
           <ChevronRight

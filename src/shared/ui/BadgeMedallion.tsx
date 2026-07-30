@@ -39,18 +39,18 @@ export function BadgeMedallion({
       style={background ? { background } : undefined}
       className={cn(
         'relative grid size-20 shrink-0 place-items-center rounded-full',
-        locked ? 'bg-primary/[0.06]' : 'shadow-interactive',
+        locked ? 'bg-primary/6' : 'shadow-interactive',
         className,
       )}
     >
       {locked ? null : (
-        <span className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-full bg-gradient-to-b from-white/35 to-transparent" />
+        <span className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-full bg-linear-to-b from-white/35 to-transparent" />
       )}
       {shine && !locked ? (
         <span className="pointer-events-none absolute inset-0 overflow-hidden rounded-full">
           <motion.span
             aria-hidden
-            className="absolute inset-y-0 -left-1/3 w-1/3 skew-x-[-18deg] bg-gradient-to-r from-transparent via-white/55 to-transparent"
+            className="absolute inset-y-0 -left-1/3 w-1/3 skew-x-[-18deg] bg-linear-to-r from-transparent via-white/55 to-transparent"
             initial={{ x: '-60%' }}
             animate={{ x: '460%' }}
             transition={{ duration: 1.1, ease: EASE_OUT, delay: 0.25 }}
@@ -75,12 +75,12 @@ export function BadgeMedallion({
         ) : null}
       </span>
       {locked && showLock ? (
-        <span className="absolute -bottom-0.5 -right-0.5 grid size-6 place-items-center rounded-full border-2 border-[color:var(--surface)] bg-primary/15 text-primary/60">
+        <span className="absolute -bottom-0.5 -right-0.5 grid size-6 place-items-center rounded-full border-2 border-(--surface) bg-primary/15 text-primary/60">
           <Lock className="size-3" strokeWidth={2.5} aria-hidden />
         </span>
       ) : null}
       {!locked && showCheck ? (
-        <span className="absolute -bottom-0.5 -right-0.5 grid size-6 place-items-center rounded-full border-2 border-[color:var(--surface)] bg-[var(--success-foreground)] text-white">
+        <span className="absolute -bottom-0.5 -right-0.5 grid size-6 place-items-center rounded-full border-2 border-(--surface) bg-(--success-foreground) text-white">
           <Check className="size-3" strokeWidth={3} aria-hidden />
         </span>
       ) : null}

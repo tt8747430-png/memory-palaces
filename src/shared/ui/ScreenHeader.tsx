@@ -30,7 +30,7 @@ export function ScreenHeader({
       <div className={onBack ? 'min-w-0 flex-1 pl-1' : 'min-w-0 flex-1 pl-3'}>
         <h1 className="truncate">{title}</h1>
         {subtitle ? (
-          <p className="truncate text-[length:var(--p-text-label)] text-muted-foreground">
+          <p className="truncate text-(length:--p-text-label) text-muted-foreground">
             {subtitle}
           </p>
         ) : null}

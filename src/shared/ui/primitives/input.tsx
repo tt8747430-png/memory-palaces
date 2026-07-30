@@ -8,10 +8,10 @@ function Input({ className, type, ...props }: ComponentProps<'input'>) {
       type={type ?? 'text'}
       className={cn(
         'h-11 w-full rounded-control border border-border bg-card px-3.5',
-        'text-[length:var(--p-text-body)] text-foreground placeholder:text-muted-foreground',
+        'text-(length:--p-text-body) text-foreground placeholder:text-muted-foreground',
         'outline-none transition-shadow',
         'disabled:cursor-not-allowed disabled:opacity-50',
-        'aria-invalid:border-[var(--danger)]',
+        'aria-invalid:border-destructive',
         className,
       )}
       {...props}
