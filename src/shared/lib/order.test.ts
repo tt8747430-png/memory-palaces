@@ -1,5 +1,26 @@
-import { describe, expect, it } from 'vitest'
-import { nextOrder, resequence } from './order'
+import { describe, expect, it, vi } from 'vitest'
+import { byNewestFirst, byOldestFirst, byOrderThenCreated, nextOrder, reorderById } from './order'
+
+describe('collection orderings', () => {
+  const rows = [
+    { id: 'b', order: 1, createdAt: '2026-01-02' },
+    { id: 'a', order: 0, createdAt: '2026-01-03' },
+    { id: 'c', order: 1, createdAt: '2026-01-01' },
+  ]
+  const ids = (sorted: { id: string }[]) => sorted.map((row) => row.id)
+
+  it('sorts by manual order, oldest first on a tie', () => {
+    expect(ids([...rows].sort(byOrderThenCreated))).toEqual(['a', 'c', 'b'])
+  })
+
+  it('sorts newest first', () => {
+    expect(ids([...rows].sort(byNewestFirst))).toEqual(['a', 'b', 'c'])
+  })
+
+  it('sorts oldest first', () => {
+    expect(ids([...rows].sort(byOldestFirst))).toEqual(['c', 'b', 'a'])
+  })
+})
 
 describe('nextOrder', () => {
   it('is 0 for an empty list', () => {
@@ -15,24 +36,66 @@ describe('nextOrder', () => {
   })
 })
 
-describe('resequence', () => {
-  it('returns only the items whose order changed, with their new index', () => {
+describe('reorderById', () => {
+  const write = () => vi.fn(async () => undefined)
+
+  it('writes each item whose order changed, with its new index', async () => {
     const a = { id: 'a', order: 5 }
     const b = { id: 'b', order: 3 }
-    const changes = resequence([a, b])
-    expect(changes).toEqual([
-      { item: a, order: 0 },
-      { item: b, order: 1 },
+    const save = write()
+
+    await reorderById([a, b], ['a', 'b'], save)
+
+    expect(save.mock.calls).toEqual([
+      [a, 0],
+      [b, 1],
     ])
   })
 
-  it('skips items already at their target index', () => {
+  it('follows the given order, not the stored one', async () => {
     const a = { id: 'a', order: 0 }
-    const b = { id: 'b', order: 9 }
-    expect(resequence([a, b])).toEqual([{ item: b, order: 1 }])
+    const b = { id: 'b', order: 1 }
+    const save = write()
+
+    await reorderById([a, b], ['b', 'a'], save)
+
+    expect(save.mock.calls).toEqual([
+      [b, 0],
+      [a, 1],
+    ])
   })
 
-  it('is a no-op when already sequential', () => {
-    expect(resequence([{ order: 0 }, { order: 1 }, { order: 2 }])).toEqual([])
+  it('skips items already at their target index', async () => {
+    const a = { id: 'a', order: 0 }
+    const b = { id: 'b', order: 9 }
+    const save = write()
+
+    await reorderById([a, b], ['a', 'b'], save)
+
+    expect(save.mock.calls).toEqual([[b, 1]])
+  })
+
+  it('writes nothing when the order is unchanged', async () => {
+    const save = write()
+
+    await reorderById(
+      [
+        { id: 'a', order: 0 },
+        { id: 'b', order: 1 },
+      ],
+      ['a', 'b'],
+      save,
+    )
+
+    expect(save).not.toHaveBeenCalled()
+  })
+
+  it('ignores ids the list no longer holds', async () => {
+    const a = { id: 'a', order: 3 }
+    const save = write()
+
+    await reorderById([a], ['ghost', 'a'], save)
+
+    expect(save.mock.calls).toEqual([[a, 1]])
   })
 })

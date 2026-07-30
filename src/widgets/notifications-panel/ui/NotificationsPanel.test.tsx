@@ -13,7 +13,7 @@ const NOW = Date.UTC(2026, 5, 16, 12, 0, 0)
 const iso = (ms: number) => new Date(ms).toISOString()
 
 function renderPanel(props: Partial<Parameters<typeof NotificationsPanel>[0]> = {}) {
-  const handlers = { onRemove: vi.fn(), onClearAll: vi.fn() }
+  const handlers = { onRemove: vi.fn() }
   render(
     <I18nextProvider i18n={i18n}>
       <NotificationsPanel notifications={[]} now={NOW} {...handlers} {...props} />

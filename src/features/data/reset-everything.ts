@@ -1,8 +1,8 @@
 import type { ProgressStore } from '@/entities/progress'
 import type { NotificationStore } from '@/entities/notification'
+import { clearNotifications } from '@/features/notification'
 import { clearAllContent, type ContentStores } from './clear-content'
 import { resetProgress } from './reset-progress'
-import { clearNotifications } from './clear-notifications'
 
 export interface ResetEverythingStores extends ContentStores {
   progressStore: ProgressStore

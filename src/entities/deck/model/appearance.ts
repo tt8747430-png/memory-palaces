@@ -1,36 +1,3 @@
-export const DECK_ICON_OPTIONS = [
-  '🗂️',
-  '📚',
-  '📖',
-  '📝',
-  '🧠',
-  '💡',
-  '🔤',
-  '🔢',
-  '🌍',
-  '🫀',
-  '⚗️',
-  '💻',
-  '🎨',
-  '🎭',
-  '🎵',
-  '⚽',
-  '🏀',
-  '🎯',
-  '🎲',
-  '🎬',
-  '📷',
-  '🎤',
-  '🎸',
-  '🌸',
-  '🌻',
-  '🌹',
-  '🍎',
-  '🍊',
-  '🍇',
-  '🗺️',
-] as const
-
 export interface DeckColorOption {
   id: string
   value: string

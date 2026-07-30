@@ -1,39 +1,33 @@
-import { useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
 import type { Card } from '@/entities/card'
-import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
+import { selectCards, useCardStore } from '@/entities/card'
 import type { Deck } from '@/entities/deck'
-import {
-  selectDecks,
-  selectIsReady as selectDecksReady,
-  useDeckStore,
-  useDeckStoreApi,
-} from '@/entities/deck'
+import { selectDecks, useDeckStore } from '@/entities/deck'
 import type { Folder } from '@/entities/folder'
-import {
-  selectFolders,
-  selectIsReady as selectFoldersReady,
-  useFolderStore,
-  useFolderStoreApi,
-} from '@/entities/folder'
+import { selectFolders, useFolderStore } from '@/entities/folder'
 import {
   type FlatDeck,
   flattenDecks,
+  selectIsReady,
   siblingDecks,
+  toggleInSet,
   useOptimisticPatch,
   usePersistedSet,
+  findEntity,
 } from '@/shared/lib'
 
-export interface LibraryData {
+/**
+ * Everything the library screen reads. Declared once here and carried through
+ * `useLibrary` unchanged, so a field cannot be added to the data hook and go
+ * missing from the screen's view of it.
+ */
+export interface LibraryView {
+  ready: boolean
+  isEmpty: boolean
   folders: Folder[]
   decks: Deck[]
   cards: Card[]
-  patchFolders: (patches: Map<string, Partial<Folder>>) => void
-  patchDecks: (patches: Map<string, Partial<Deck>>) => void
-  ready: boolean
-  foldersReady: boolean
   openFolder: Folder | undefined
-  sortedFolders: Folder[]
-  folderIds: ReadonlySet<string>
   folderDeckCounts: Map<string, number>
   sectionFolders: Folder[]
   sectionDecks: Deck[]
@@ -41,41 +35,33 @@ export interface LibraryData {
   expanded: ReadonlySet<string>
   toggleExpanded: (id: string) => void
   expand: (id: string) => void
-  isEmpty: boolean
+}
+
+export interface LibraryData {
+  view: LibraryView
+  /** Folders alone settle whether an open folder is missing or merely unloaded. */
+  foldersReady: boolean
+  folderIds: ReadonlySet<string>
+  patchFolders: (patches: Map<string, Partial<Folder>>) => void
+  patchDecks: (patches: Map<string, Partial<Deck>>) => void
 }
 
 export function useLibraryData(folderId: string | null): LibraryData {
-  const folderStore = useFolderStoreApi()
-  const deckStore = useDeckStoreApi()
-  const cardStore = useCardStoreApi()
-
-  useEffect(() => {
-    folderStore.getState().start()
-    deckStore.getState().start()
-    cardStore.getState().start()
-  }, [folderStore, deckStore, cardStore])
-
   const storeFolders = useFolderStore(selectFolders)
   const storeDecks = useDeckStore(selectDecks)
   const cards = useCardStore(selectCards)
-  const foldersReady = useFolderStore(selectFoldersReady)
-  const decksReady = useDeckStore(selectDecksReady)
+  const foldersReady = useFolderStore(selectIsReady)
+  const decksReady = useDeckStore(selectIsReady)
 
-  const [folders, patchFolders] = useOptimisticPatch(storeFolders)
+  const [unsorted, patchFolders] = useOptimisticPatch(storeFolders)
   const [decks, patchDecks] = useOptimisticPatch(storeDecks)
 
   const [expanded, setExpanded] = usePersistedSet('mindscape.library.expanded')
-  const toggleExpanded = (id: string) =>
-    setExpanded((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
+  const toggleExpanded = (id: string) => setExpanded((prev) => toggleInSet(prev, id))
   const expand = (id: string) => setExpanded((prev) => new Set(prev).add(id))
 
-  const openFolder = useMemo(() => folders.find((f) => f.id === folderId), [folders, folderId])
-  const sortedFolders = useMemo(() => [...folders].sort((a, b) => a.order - b.order), [folders])
+  const folders = useMemo(() => [...unsorted].sort((a, b) => a.order - b.order), [unsorted])
+  const openFolder = useMemo(() => findEntity(folders, folderId), [folders, folderId])
   const folderIds = useMemo(() => new Set(folders.map((f) => f.id)), [folders])
   const inFolder = folderId !== null
 
@@ -100,23 +86,24 @@ export function useLibraryData(folderId: string | null): LibraryData {
   const rows = useMemo(() => flattenDecks(decks, expanded, folderId), [decks, expanded, folderId])
 
   return {
-    folders,
-    decks,
-    cards,
+    view: {
+      ready: foldersReady && decksReady,
+      isEmpty: inFolder ? scopedDeckCount === 0 : folders.length === 0 && scopedDeckCount === 0,
+      folders,
+      decks,
+      cards,
+      openFolder,
+      folderDeckCounts,
+      sectionFolders: inFolder ? [] : folders,
+      sectionDecks,
+      rows,
+      expanded,
+      toggleExpanded,
+      expand,
+    },
+    foldersReady,
+    folderIds,
     patchFolders,
     patchDecks,
-    ready: foldersReady && decksReady,
-    foldersReady,
-    openFolder,
-    sortedFolders,
-    folderIds,
-    folderDeckCounts,
-    sectionFolders: inFolder ? [] : sortedFolders,
-    sectionDecks,
-    rows,
-    expanded,
-    toggleExpanded,
-    expand,
-    isEmpty: inFolder ? scopedDeckCount === 0 : sortedFolders.length === 0 && scopedDeckCount === 0,
   }
 }

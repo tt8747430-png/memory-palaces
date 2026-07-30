@@ -5,7 +5,7 @@ import { cn, useLongPress } from '@/shared/lib'
 import type { SwipeConfig } from '@/shared/config/swipe'
 import {
   buildSwipeActions,
-  OverflowMenuButton,
+  FlyoutMenu,
   SelectDot,
   type SheetAction,
   type SwipeActionHandlers,
@@ -17,18 +17,26 @@ export interface RowDragHandle {
   props: Record<string, unknown>
 }
 
-export interface ContentRowProps {
+/**
+ * What every content row needs to sit in a list — how it is selected, dragged
+ * and swiped. A row type adds only the fields of its own subject on top, and
+ * hands this frame straight through to `ContentRow`.
+ */
+export interface RowFrameProps {
   selectMode: boolean
   selected: boolean
   reorderable: boolean
   dragHandle?: RowDragHandle
   dragging?: boolean
   swipe: SwipeConfig
-  swipeHandlers: SwipeActionHandlers
-  menuActions: SheetAction[]
   onToggleSelect: () => void
   onRequestSelect: () => void
   onOpen?: () => void
+}
+
+export interface ContentRowProps extends RowFrameProps {
+  swipeHandlers: SwipeActionHandlers
+  menuActions: SheetAction[]
   children: ReactNode
 }
 
@@ -80,7 +88,7 @@ export function ContentRow({
         ) : null}
         <div className="min-w-0 flex-1">{children}</div>
         {selectMode ? null : (
-          <OverflowMenuButton
+          <FlyoutMenu
             variant="tint"
             size="sm"
             label={t('cards.row.menuLabel')}

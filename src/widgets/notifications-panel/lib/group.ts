@@ -1,15 +1,14 @@
-import { dayKey } from '@/shared/lib'
+import { DAY_MS, dayKey } from '@/shared/lib'
 
 export type DayBucket = 'today' | 'yesterday' | 'earlier'
 
 const MINUTE = 60_000
 const HOUR = 3_600_000
-const DAY = 86_400_000
 
 export function bucketOf(iso: string, now: number): DayBucket {
   const at = dayKey(new Date(iso).getTime())
   if (at === dayKey(now)) return 'today'
-  if (at === dayKey(now - DAY)) return 'yesterday'
+  if (at === dayKey(now - DAY_MS)) return 'yesterday'
   return 'earlier'
 }
 
@@ -24,7 +23,7 @@ export function relativeTime(iso: string, now: number): RelativeTime {
   const diff = now - new Date(iso).getTime()
   if (diff < MINUTE) return { unit: 'now' }
   if (diff < HOUR) return { unit: 'minutes', value: Math.floor(diff / MINUTE) }
-  if (diff < DAY) return { unit: 'hours', value: Math.floor(diff / HOUR) }
-  if (diff < 7 * DAY) return { unit: 'days', value: Math.floor(diff / DAY) }
+  if (diff < DAY_MS) return { unit: 'hours', value: Math.floor(diff / HOUR) }
+  if (diff < 7 * DAY_MS) return { unit: 'days', value: Math.floor(diff / DAY_MS) }
   return { unit: 'date', iso }
 }

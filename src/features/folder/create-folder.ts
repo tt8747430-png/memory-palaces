@@ -1,4 +1,5 @@
 import { type Folder, type FolderStore, makeFolder } from '@/entities/folder'
+import { newId, nextOrder, nowIso } from '@/shared/lib'
 
 export interface CreateFolderInput {
   name: string
@@ -6,14 +7,17 @@ export interface CreateFolderInput {
   icon: string
 }
 
-export async function createFolder(store: FolderStore, input: CreateFolderInput): Promise<Folder> {
-  const existing = store.getState().folders
-  const order = existing.length ? Math.max(...existing.map((f) => f.order)) + 1 : 0
+export async function createFolder(
+  store: FolderStore,
+  input: CreateFolderInput,
+  now: number = Date.now(),
+): Promise<Folder> {
+  const order = nextOrder(store.getState().folders)
   const folder = makeFolder({
     ...input,
     order,
-    id: crypto.randomUUID(),
-    createdAt: new Date().toISOString(),
+    id: newId(),
+    createdAt: nowIso(now),
   })
   await store.getState().save(folder)
   return folder

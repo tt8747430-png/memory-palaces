@@ -1,20 +1,21 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ArrowDownAZ, Clock, Download, GripVertical, Plus, Upload } from 'lucide-react'
+import { Download, Plus, Upload } from 'lucide-react'
 import type { Question } from '@/entities/question'
 import { selectEffectivePreferences, usePreferencesStore } from '@/entities/preferences'
 import {
   AppScreen,
   ScreenHeader,
+  ScreenLoading,
   SelectHeader,
   SelectToolbar,
   SelectToolbarDock,
   SortControl,
-  type SortControlOption,
   SpeedDial,
+  useContentSortOptions,
 } from '@/shared/ui'
 import { QuestionRow, ReorderableList, type RowDragHandle } from '@/widgets/content-editor'
-import type { QuestionSort } from '../model/sort-questions'
+import { QUESTION_SORTS } from '../model/sort-questions'
 import { useDeckQuestions } from '../model/use-deck-questions'
 import { EmptyQuestions } from './EmptyQuestions'
 import { QuestionDialogs } from './QuestionDialogs'
@@ -44,11 +45,7 @@ export function DeckQuestionsPage({
   const [importOpen, setImportOpen] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
 
-  const sortOptions: SortControlOption<QuestionSort>[] = [
-    { value: 'manual', label: t('cards.sort.manual'), icon: <GripVertical className="size-4" /> },
-    { value: 'recent', label: t('cards.sort.recent'), icon: <Clock className="size-4" /> },
-    { value: 'name', label: t('cards.sort.name'), icon: <ArrowDownAZ className="size-4" /> },
-  ]
+  const sortOptions = useContentSortOptions(QUESTION_SORTS)
 
   const renderQuestion = (question: Question, dragHandle?: RowDragHandle, dragging = false) => (
     <QuestionRow
@@ -70,23 +67,14 @@ export function DeckQuestionsPage({
   )
 
   if (!page.ready) {
-    return (
-      <AppScreen className="items-center justify-center">
-        <span className="size-8 animate-pulse rounded-full bg-secondary" aria-hidden />
-      </AppScreen>
-    )
+    return <ScreenLoading />
   }
 
   return (
     <AppScreen
       header={
         selection.active ? (
-          <SelectHeader
-            count={selection.count}
-            allSelected={selection.allSelected}
-            onToggleAll={selection.toggleAll}
-            onCancel={selection.exit}
-          />
+          <SelectHeader selection={selection} />
         ) : (
           <ScreenHeader
             title={t('questions.title')}
@@ -154,7 +142,7 @@ export function DeckQuestionsPage({
       {!selection.active ? (
         <SpeedDial
           label={t('questions.quickActions')}
-          className="bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+0.75rem)]"
+          placement="above-safe-area"
           actions={[
             {
               id: 'question',

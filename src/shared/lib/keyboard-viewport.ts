@@ -51,11 +51,11 @@ function publishTop(next: number) {
   listeners.forEach((listener) => listener())
 }
 
-export function viewportHeight(): number {
+function viewportHeight(): number {
   return appHeight || document.documentElement.clientHeight
 }
 
-export function viewportTop(): number {
+function viewportTop(): number {
   return Math.max(0, panned)
 }
 
@@ -116,36 +116,57 @@ export function startKeyboardViewport(): () => void {
   }
 
   let frame = 0
+  let resized = false
+
   const measure = () => {
     frame = 0
-    anchor()
+    const sizeChanged = resized
+    resized = false
     const top = Math.max(0, Math.round(vv.offsetTop))
-    publishTop(top)
-    const gap = Math.max(0, appHeight - vv.height - top)
-    const next = gap >= KEYBOARD_MIN ? Math.round(gap) : 0
-    if (next === measured) return
-    measured = next
-    if (next > expected) {
-      expected = next
-      writeStored(next)
+
+    // Only a resize can change how tall the keyboard is. Re-deriving the height
+    // from a scroll reads the rubber-band mid-flight and republishes --kb-inset,
+    // which resizes the scroll body's padding under the finger.
+    if (sizeChanged) {
+      anchor()
+      const gap = Math.max(0, appHeight - vv.height - top)
+      const next = gap >= KEYBOARD_MIN ? Math.round(gap) : 0
+      if (next !== measured) {
+        measured = next
+        if (next > expected) {
+          expected = next
+          writeStored(next)
+        }
+        publish()
+      }
     }
-    publish()
+
+    // Hold the deepest pan of this keyboard episode. iOS slides the viewport
+    // back as the page rubber-bands, and chrome translated by --vv-top judders
+    // against the scroll if it rides that slide — the keyboard has not moved.
+    publishTop(keyboardHeight() > 0 ? Math.max(top, viewportTop()) : top)
   }
+
   const schedule = () => {
     if (!frame) frame = window.requestAnimationFrame(measure)
   }
+  const onResize = () => {
+    resized = true
+    schedule()
+  }
 
+  resized = true
   measure()
   publish()
-  vv.addEventListener('resize', schedule)
+  vv.addEventListener('resize', onResize)
   vv.addEventListener('scroll', schedule)
-  window.addEventListener('orientationchange', schedule)
+  window.addEventListener('orientationchange', onResize)
 
   return () => {
     window.cancelAnimationFrame(frame)
-    vv.removeEventListener('resize', schedule)
+    vv.removeEventListener('resize', onResize)
     vv.removeEventListener('scroll', schedule)
-    window.removeEventListener('orientationchange', schedule)
+    window.removeEventListener('orientationchange', onResize)
     reset()
   }
 }

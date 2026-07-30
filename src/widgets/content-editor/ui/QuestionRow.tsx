@@ -1,22 +1,13 @@
 import { useTranslation } from 'react-i18next'
-import { Check, Copy, Pencil, Trash2 } from 'lucide-react'
+import { Check } from 'lucide-react'
 import type { Question } from '@/entities/question'
 import { cn } from '@/shared/lib'
-import type { SwipeConfig } from '@/shared/config/swipe'
-import type { SheetAction } from '@/shared/ui'
-import { ContentRow, type RowDragHandle, RowIndex } from './ContentRow'
+import { buildMenuActions } from '@/shared/ui'
+import { ContentRow, type RowFrameProps, RowIndex } from './ContentRow'
 
-export interface QuestionRowProps {
+export interface QuestionRowProps extends RowFrameProps {
   question: Question
   index: number
-  selectMode: boolean
-  selected: boolean
-  reorderable: boolean
-  dragHandle?: RowDragHandle
-  dragging?: boolean
-  swipe: SwipeConfig
-  onToggleSelect: () => void
-  onRequestSelect: () => void
   onEdit: () => void
   onDuplicate: () => void
   onDelete: () => void
@@ -32,27 +23,15 @@ export function QuestionRow({
 }: QuestionRowProps) {
   const { t } = useTranslation()
 
-  const menuActions: SheetAction[] = [
+  const menuActions = buildMenuActions(
+    ['edit', 'duplicate', 'delete'],
     {
-      id: 'edit',
-      label: t('common.edit'),
-      icon: <Pencil className="size-5" aria-hidden />,
-      onSelect: onEdit,
+      edit: { onAction: onEdit },
+      duplicate: { onAction: onDuplicate },
+      delete: { onAction: onDelete },
     },
-    {
-      id: 'duplicate',
-      label: t('cards.row.duplicate'),
-      icon: <Copy className="size-5" aria-hidden />,
-      onSelect: onDuplicate,
-    },
-    {
-      id: 'delete',
-      label: t('common.delete'),
-      icon: <Trash2 className="size-5" aria-hidden />,
-      destructive: true,
-      onSelect: onDelete,
-    },
-  ]
+    t,
+  )
 
   return (
     <ContentRow

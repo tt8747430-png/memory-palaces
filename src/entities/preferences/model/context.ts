@@ -1,25 +1,10 @@
-import { createContext, useContext } from 'react'
-import { useStore } from 'zustand'
-import type { PreferencesState, PreferencesStore } from './store'
+import { createStoreContext } from '@/shared/lib'
+import type { PreferencesState } from './store'
 
-export const PreferencesStoreContext = createContext<PreferencesStore | null>(null)
+const { StoreContext, useSelector, useStoreApi, useStoreApiOptional } =
+  createStoreContext<PreferencesState>('Preferences')
 
-function usePreferencesStoreContext(): PreferencesStore {
-  const store = useContext(PreferencesStoreContext)
-  if (!store) {
-    throw new Error('Preferences store missing — render inside <PreferencesStoreContext value={…}>')
-  }
-  return store
-}
-
-export function usePreferencesStore<T>(selector: (state: PreferencesState) => T): T {
-  return useStore(usePreferencesStoreContext(), selector)
-}
-
-export function usePreferencesStoreApi(): PreferencesStore {
-  return usePreferencesStoreContext()
-}
-
-export function usePreferencesStoreApiOptional(): PreferencesStore | null {
-  return useContext(PreferencesStoreContext)
-}
+export const PreferencesStoreContext = StoreContext
+export const usePreferencesStore = useSelector
+export const usePreferencesStoreApi = useStoreApi
+export const usePreferencesStoreApiOptional = useStoreApiOptional

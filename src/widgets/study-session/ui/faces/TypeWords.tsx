@@ -106,7 +106,7 @@ function FloatingFeedback({
 
   return createPortal(
     <div
-      className="pointer-events-none fixed inset-x-0 z-[220] mx-auto flex max-w-[430px] px-5"
+      className="pointer-events-none fixed inset-x-0 z-[220] mx-auto flex max-w-app px-5"
       style={{ bottom: height }}
     >
       <motion.div

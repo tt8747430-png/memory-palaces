@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { started } from '@/shared/test/started'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
@@ -42,11 +43,11 @@ function renderQuestions(questions: Question[]) {
   function Wrapper({ children }: { children: ReactNode }) {
     return (
       <I18nextProvider i18n={i18n}>
-        <DeckStoreContext value={createDeckStore(new InMemoryRepository<Deck>(decks))}>
+        <DeckStoreContext value={started(createDeckStore(new InMemoryRepository<Deck>(decks)))}>
           <QuestionStoreContext
-            value={createQuestionStore(new InMemoryRepository<Question>(questions))}
+            value={started(createQuestionStore(new InMemoryRepository<Question>(questions)))}
           >
-            <CardStoreContext value={createCardStore(new InMemoryRepository<Card>([]))}>
+            <CardStoreContext value={started(createCardStore(new InMemoryRepository<Card>([])))}>
               {children}
             </CardStoreContext>
           </QuestionStoreContext>

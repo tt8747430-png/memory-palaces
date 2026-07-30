@@ -1,9 +1,9 @@
-import { type ReactNode, useEffect, useMemo, useState } from 'react'
+import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion, useReducedMotion } from 'motion/react'
 import { CalendarCheck, Flame } from 'lucide-react'
 import { dayKey } from '@/shared/lib'
-import { selectProgress, useProgressStore, useProgressStoreApi } from '@/entities/progress'
+import { selectProgress, useProgressStore } from '@/entities/progress'
 import { StreakCalendar } from '@/widgets/streak-calendar'
 import { AppScreen, Card, ScreenHeader } from '@/shared/ui'
 
@@ -14,13 +14,8 @@ export interface StreakPageProps {
 export function StreakPage({ onBack }: StreakPageProps = {}) {
   const { t } = useTranslation()
   const reduce = useReducedMotion()
-  const progressStore = useProgressStoreApi()
   const progress = useProgressStore(selectProgress)
   const [now] = useState(() => Date.now())
-
-  useEffect(() => {
-    progressStore.getState().start()
-  }, [progressStore])
 
   const streakCount = progress?.streakCount ?? 0
   const longestStreak = progress?.longestStreak ?? 0

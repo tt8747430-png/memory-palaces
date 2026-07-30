@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { started } from '@/shared/test/started'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
@@ -29,13 +30,17 @@ function renderPage(props: ProfilePageProps = {}, profileSeed?: Profile) {
     <I18nextProvider i18n={i18n}>
       <SessionStoreContext value={createSessionStore(new InMemoryRepository<Session>())}>
         <NotificationStoreContext
-          value={createNotificationStore(new InMemoryRepository<AppNotification>())}
+          value={started(createNotificationStore(new InMemoryRepository<AppNotification>()))}
         >
-          <ProfileStoreContext value={createProfileStore(profileRepo)}>
-            <ProgressStoreContext value={createProgressStore(new InMemoryRepository<Progress>())}>
-              <DeckStoreContext value={createDeckStore(new InMemoryRepository<Deck>())}>
-                <CardStoreContext value={createCardStore(new InMemoryRepository<Card>())}>
-                  <FolderStoreContext value={createFolderStore(new InMemoryRepository<Folder>())}>
+          <ProfileStoreContext value={started(createProfileStore(profileRepo))}>
+            <ProgressStoreContext
+              value={started(createProgressStore(new InMemoryRepository<Progress>()))}
+            >
+              <DeckStoreContext value={started(createDeckStore(new InMemoryRepository<Deck>()))}>
+                <CardStoreContext value={started(createCardStore(new InMemoryRepository<Card>()))}>
+                  <FolderStoreContext
+                    value={started(createFolderStore(new InMemoryRepository<Folder>()))}
+                  >
                     <ProfilePage {...props} />
                   </FolderStoreContext>
                 </CardStoreContext>

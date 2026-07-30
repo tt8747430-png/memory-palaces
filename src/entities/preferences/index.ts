@@ -19,12 +19,12 @@ export {
   STUDY_MODES,
 } from './model/types'
 export { createPreferencesStore } from './model/store'
-export type { PreferencesState, PreferencesStatus, PreferencesStore } from './model/store'
+export type { PreferencesState, PreferencesStore } from './model/store'
 export {
   PreferencesStoreContext,
   usePreferencesStore,
   usePreferencesStoreApi,
   usePreferencesStoreApiOptional,
 } from './model/context'
-export { selectPreferences, selectIsReady, selectEffectivePreferences } from './model/selectors'
+export { selectEffectivePreferences } from './model/selectors'
 export type { PreferencesRepository } from './api/preferences-repository'

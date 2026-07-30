@@ -14,7 +14,17 @@ export interface MultiSelect {
   setVisibleIds: (ids: readonly string[]) => void
 }
 
-export function useMultiSelect(): MultiSelect {
+export interface MultiSelectOptions {
+  /**
+   * The ids that move with the one the user touched — a deck carries its
+   * subdecks, a card carries only itself. Must be stable across renders.
+   */
+  expand?: (id: string) => readonly string[]
+}
+
+const itself = (id: string): readonly string[] => [id]
+
+export function useMultiSelect({ expand = itself }: MultiSelectOptions = {}): MultiSelect {
   const [active, setActive] = useState(false)
   const [ids, setIds] = useState<ReadonlySet<string>>(() => new Set())
   const [visible, setVisible] = useState<readonly string[]>([])
@@ -27,20 +37,31 @@ export function useMultiSelect(): MultiSelect {
 
   const allSelected = visible.length > 0 && visible.every((id) => ids.has(id))
 
-  const begin = useCallback((id: string) => {
-    impact()
-    setActive(true)
-    setIds((prev) => new Set(prev).add(id))
-  }, [])
+  const begin = useCallback(
+    (id: string) => {
+      impact()
+      setActive(true)
+      setIds((prev) => {
+        const next = new Set(prev)
+        for (const each of expand(id)) next.add(each)
+        return next
+      })
+    },
+    [expand],
+  )
 
-  const toggle = useCallback((id: string) => {
-    setIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }, [])
+  const toggle = useCallback(
+    (id: string) => {
+      setIds((prev) => {
+        const group = expand(id)
+        const next = new Set(prev)
+        if (group.every((each) => next.has(each))) for (const each of group) next.delete(each)
+        else for (const each of group) next.add(each)
+        return next
+      })
+    },
+    [expand],
+  )
 
   const toggleAll = useCallback(() => {
     setIds((prev) => {

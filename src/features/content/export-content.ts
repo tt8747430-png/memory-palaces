@@ -1,18 +1,12 @@
 import {
+  type CardLike,
   contentSlug,
   downloadText,
   cardsToAnkiTsv,
   cardsToCsv,
+  type QuestionLike,
   questionsToCsv,
 } from '@/shared/lib'
-
-type CardLike = { front: string; back: string; hint?: string }
-type QuestionLike = {
-  prompt: string
-  options: string[]
-  correctAnswer: number
-  explanation?: string
-}
 
 export function exportCardsCsv(deckName: string, cards: ReadonlyArray<CardLike>): void {
   downloadText(`${contentSlug(deckName)}-cards.csv`, cardsToCsv(cards), 'text/csv')

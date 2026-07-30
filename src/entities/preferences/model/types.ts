@@ -1,4 +1,4 @@
-import type { Entity } from '@/shared/lib'
+import { CONTENT_SORTS, type ContentSort, type Entity } from '@/shared/lib'
 import { DEFAULT_DAILY_GOAL } from '@/shared/config/constants'
 import {
   DEFAULT_SWIPE,
@@ -22,9 +22,7 @@ export type { SwipePreferences } from '@/shared/config/swipe'
 export type { SelectToolbarPreferences } from '@/shared/config/select-toolbar'
 export type { FlashcardSwipeConfig, FlashcardSwipeByMode } from '@/shared/config/flashcard-swipe'
 
-export type ContentSort = 'manual' | 'recent' | 'name' | 'due' | 'flagged'
-
-const CONTENT_SORTS: readonly ContentSort[] = ['manual', 'recent', 'name', 'due', 'flagged']
+export type { ContentSort }
 
 export const STUDY_MODES = ['blur', 'words', 'initials', 'type'] as const
 export type StudyMode = (typeof STUDY_MODES)[number]
@@ -120,7 +118,10 @@ function resolveSwipe(input?: SwipePreferences): SwipePreferences {
 function resolveSelectToolbar(input?: SelectToolbarPreferences): SelectToolbarPreferences {
   const out = {} as SelectToolbarPreferences
   for (const surface of SELECT_SURFACES) {
-    out[surface] = normalizeSelectToolbar(surface, input?.[surface] ?? DEFAULT_SELECT_TOOLBAR[surface])
+    out[surface] = normalizeSelectToolbar(
+      surface,
+      input?.[surface] ?? DEFAULT_SELECT_TOOLBAR[surface],
+    )
   }
   return out
 }

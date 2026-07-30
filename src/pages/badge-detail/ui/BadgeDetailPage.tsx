@@ -1,27 +1,18 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { animate, motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Check, Lock } from 'lucide-react'
+import { type Badge, cn, EASE_OUT, findEntity, isBadgeId, milestonePercent } from '@/shared/lib'
+import { BADGE_META, RewardHero, useRewards } from '@/widgets/rewards'
 import {
-  type Badge,
-  type BadgeId,
-  cn,
-  computeBadges,
-  computeTrainingTotals,
-  milestoneProgress,
-  totalTrainingDays,
-} from '@/shared/lib'
-import { selectProgress, useProgressStore, useProgressStoreApi } from '@/entities/progress'
-import { selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
-import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
-import { BADGE_META } from '@/widgets/badge-list'
-import { AppScreen, BadgeMedallion, cardSurface, Progress, ScreenHeader } from '@/shared/ui'
-
-const EASE_OUT = [0.22, 1, 0.36, 1] as const
-
-const BADGE_IDS: readonly BadgeId[] = ['xp', 'streak', 'decks', 'library', 'cards', 'days']
-const isBadgeId = (value: string): value is BadgeId =>
-  (BADGE_IDS as readonly string[]).includes(value)
+  AppScreen,
+  BadgeMedallion,
+  cardSurface,
+  MissingScreen,
+  pillSurface,
+  Progress,
+  ScreenHeader,
+} from '@/shared/ui'
 
 export interface BadgeDetailPageProps {
   badgeId: string
@@ -30,44 +21,12 @@ export interface BadgeDetailPageProps {
 
 export function BadgeDetailPage({ badgeId, onBack }: BadgeDetailPageProps) {
   const { t } = useTranslation()
-  const progressStore = useProgressStoreApi()
-  const deckStore = useDeckStoreApi()
-  const cardStore = useCardStoreApi()
-  const progress = useProgressStore(selectProgress)
-  const decks = useDeckStore(selectDecks)
-  const cards = useCardStore(selectCards)
+  const { badges } = useRewards()
 
-  useEffect(() => {
-    progressStore.getState().start()
-    deckStore.getState().start()
-    cardStore.getState().start()
-  }, [progressStore, deckStore, cardStore])
-
-  const totals = useMemo(() => computeTrainingTotals(decks, cards), [decks, cards])
-  const topLevelDecks = useMemo(() => decks.filter((deck) => deck.parentId === null), [decks])
-  const badges = useMemo(
-    () =>
-      computeBadges({
-        xp: progress?.xp ?? 0,
-        longestStreak: progress?.longestStreak ?? 0,
-        decksCompleted: totals.decksCompleted,
-        deckCount: topLevelDecks.length,
-        totalCards: totals.totalCards,
-        trainingDayCount: totalTrainingDays(progress?.trainingDays ?? []),
-      }),
-    [progress, totals, topLevelDecks.length],
-  )
-
-  const badge = isBadgeId(badgeId) ? badges.find((entry) => entry.id === badgeId) : undefined
+  const badge = isBadgeId(badgeId) ? findEntity(badges, badgeId) : undefined
 
   if (!badge) {
-    return (
-      <AppScreen
-        header={
-          <ScreenHeader title={t('badges.title')} onBack={onBack} backLabel={t('common.back')} />
-        }
-      />
-    )
+    return <MissingScreen title={t('badges.title')} onBack={onBack} backLabel={t('common.back')} />
   }
 
   const meta = BADGE_META[badge.id]
@@ -122,43 +81,27 @@ function Hero({
   const { t } = useTranslation()
   const meta = BADGE_META[badge.id]
   return (
-    <section className="relative flex flex-col items-center pt-3 text-center">
-      <span
-        aria-hidden
-        className="pointer-events-none absolute left-1/2 top-0 size-40 -translate-x-1/2 -translate-y-4 rounded-full opacity-35 blur-3xl"
-        style={{ background: 'radial-gradient(circle, var(--accent), transparent 68%)' }}
-      />
-      <motion.div
-        initial={{ opacity: 0, scale: 0.84, y: 8 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-        className="relative"
-      >
-        <BadgeMedallion icon={meta.icon} tier={tier} shine className="size-28" />
-      </motion.div>
-
+    <RewardHero icon={meta.icon} glow tier={tier} shine>
       <p className="mt-4 text-[length:var(--p-text-headline)] font-bold leading-none tabular-nums text-heading">
         <CountUp
           to={badge.value}
           format={(n) => t('badgeDetail.nowValue', { value: n.toLocaleString() })}
         />
       </p>
-      <span className="mt-3 inline-flex items-center rounded-full bg-info-surface px-3 py-1 text-[length:var(--p-text-label)] font-bold text-info-foreground">
-        {tierLabel}
-      </span>
+      <span className={cn('mt-3', pillSurface('info'))}>{tierLabel}</span>
       {maxed ? (
         <p className="mt-2 text-[length:var(--p-text-label)] font-semibold text-[var(--success-foreground)]">
           {t('badgeDetail.maxed')}
         </p>
       ) : null}
-    </section>
+    </RewardHero>
   )
 }
 
 function TierLadder({ badge }: { badge: Badge }) {
   const { t } = useTranslation()
   const currentIndex = badge.tier < badge.tiers.length ? badge.tier : -1
-  const pct = Math.round(milestoneProgress(badge) * 100)
+  const pct = milestonePercent(badge)
 
   return (
     <ol className={cn(cardSurface, 'flex flex-col divide-y divide-border overflow-hidden')}>

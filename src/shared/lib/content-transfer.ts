@@ -22,8 +22,9 @@ export interface DeckContentData {
   questions: ParsedQuestion[]
 }
 
-type CardLike = { front: string; back: string; hint?: string }
-type QuestionLike = {
+/** The least a card or question has to carry to be written out to a file. */
+export type CardLike = { front: string; back: string; hint?: string }
+export type QuestionLike = {
   prompt: string
   options: string[]
   correctAnswer: number
@@ -31,6 +32,15 @@ type QuestionLike = {
 }
 
 export class ContentImportError extends Error {}
+
+/**
+ * What a failed import should say. Our own parse errors already explain
+ * themselves; anything else — a read error, a bug — gets the caller's generic
+ * line rather than leaking a stack message into a toast.
+ */
+export function importErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof ContentImportError ? error.message : fallback
+}
 
 export function contentSlug(name: string): string {
   return (
@@ -230,7 +240,7 @@ export function guessFieldSeparator(text: string): string {
   return '\t'
 }
 
-export function stripHtml(input: string): string {
+function stripHtml(input: string): string {
   return input
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/(p|div|li)>/gi, '\n')
@@ -280,7 +290,7 @@ export interface VerseChapter {
   cards: ParsedCard[]
 }
 
-export function parseVerseChapters(text: string): VerseChapter[] {
+function parseVerseChapters(text: string): VerseChapter[] {
   const verseRe = /^\((\d+):(\d+)\)\s*(.*)$/
   const headerRe = /^(.*\p{L})\s+\d+(?:\s*[-–:]\s*\d+)*\.?$/u
   const chapterTail = /\s+\d+(?:\s*[-–:]\s*\d+)*\.?$/u

@@ -29,9 +29,18 @@ describe('ForgotPasswordPage', () => {
     expect(screen.getByRole('img', { name: /mindscape/i })).toBeInTheDocument()
   })
 
-  it('validates the email before sending', async () => {
+  it('asks for an email before sending', async () => {
     const user = userEvent.setup()
     const { spy } = renderForgot()
+    await user.click(screen.getByRole('button', { name: /send reset link/i }))
+    expect(await screen.findByText('Enter your email.')).toBeInTheDocument()
+    expect(spy).not.toHaveBeenCalled()
+  })
+
+  it('rejects an address that is not one', async () => {
+    const user = userEvent.setup()
+    const { spy } = renderForgot()
+    await user.type(screen.getByLabelText(/email/i), 'not-an-email')
     await user.click(screen.getByRole('button', { name: /send reset link/i }))
     expect(await screen.findByText(/valid email/i)).toBeInTheDocument()
     expect(spy).not.toHaveBeenCalled()

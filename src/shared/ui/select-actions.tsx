@@ -1,31 +1,10 @@
-import { type ReactNode } from 'react'
-import {
-  Archive,
-  Copy,
-  Flag,
-  FolderInput,
-  FolderMinus,
-  GraduationCap,
-  Heart,
-  RotateCcw,
-  Trash2,
-} from 'lucide-react'
+import type { ReactNode } from 'react'
+import type { MultiSelect } from '@/shared/lib'
 import type { SelectActionId } from '@/shared/config/select-toolbar'
-
-const SELECT_ACTION_ICON: Record<SelectActionId, ReactNode> = {
-  move: <FolderInput className="size-[18px]" aria-hidden />,
-  favorite: <Heart className="size-[18px]" aria-hidden />,
-  duplicate: <Copy className="size-[18px]" aria-hidden />,
-  archive: <Archive className="size-[18px]" aria-hidden />,
-  unfile: <FolderMinus className="size-[18px]" aria-hidden />,
-  flag: <Flag className="size-[18px]" aria-hidden />,
-  known: <GraduationCap className="size-[18px]" aria-hidden />,
-  reset: <RotateCcw className="size-[18px]" aria-hidden />,
-  delete: <Trash2 className="size-[18px]" aria-hidden />,
-}
+import { actionIcon } from './action-icon'
 
 export function selectActionIcon(id: SelectActionId): ReactNode {
-  return SELECT_ACTION_ICON[id]
+  return actionIcon(id, 'size-[18px]')
 }
 
 export interface SelectActionHandler {
@@ -34,3 +13,25 @@ export interface SelectActionHandler {
 }
 
 export type SelectActionHandlers = Partial<Record<SelectActionId, SelectActionHandler>>
+
+/**
+ * A toolbar handler that runs a command over whatever is selected. It snapshots
+ * the ids, runs `run`, then leaves select mode — in that order, so `run` can
+ * never read ids the exit has already cleared — and disables itself while the
+ * selection is empty. Spread the result to override `disabled` where an action
+ * needs a narrower rule than "something is selected".
+ */
+export function bulkAction(
+  selection: Pick<MultiSelect, 'ids' | 'exit'>,
+  run: (ids: string[]) => void,
+): SelectActionHandler {
+  return {
+    disabled: selection.ids.size === 0,
+    onAction: () => {
+      const ids = [...selection.ids]
+      if (ids.length === 0) return
+      run(ids)
+      selection.exit()
+    },
+  }
+}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { ACTION_META } from '@/shared/config/actions'
 import { useTranslation } from 'react-i18next'
 import {
   closestCenter,
@@ -8,21 +9,11 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core'
 import { restrictToHorizontalAxis } from '@dnd-kit/modifiers'
-import {
-  arrayMove,
-  horizontalListSortingStrategy,
-  SortableContext,
-  useSortable,
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
+import { arrayMove, horizontalListSortingStrategy, SortableContext } from '@dnd-kit/sortable'
 import { X } from 'lucide-react'
-import {
-  SELECT_ACTION_META,
-  type SelectActionId,
-  type SelectToolbarConfig,
-} from '@/shared/config/select-toolbar'
-import { cn, useSortableSensors } from '@/shared/lib'
-import { cardSurface, selectActionIcon } from '@/shared/ui'
+import { type SelectActionId, type SelectToolbarConfig } from '@/shared/config/select-toolbar'
+import { cn, EASE_OUT_CSS, useSortableSensors } from '@/shared/lib'
+import { cardSurface, selectActionIcon, SortableRow } from '@/shared/ui'
 
 export interface ToolbarEditorProps {
   actions: SelectToolbarConfig
@@ -72,7 +63,7 @@ export function ToolbarEditor({ actions, canRemove, onReorder, onRemove }: Toolb
           </div>
         </SortableContext>
 
-        <DragOverlay dropAnimation={{ duration: 200, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }}>
+        <DragOverlay dropAnimation={{ duration: 200, easing: EASE_OUT_CSS }}>
           {activeId ? <Tile action={activeId} floating /> : null}
         </DragOverlay>
       </DndContext>
@@ -90,44 +81,41 @@ function SortableTile({
   onRemove: (id: SelectActionId) => void
 }) {
   const { t } = useTranslation()
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: action,
-  })
-  const label = t(SELECT_ACTION_META[action].labelKey as never)
+  const label = t(ACTION_META[action].labelKey as never)
 
   return (
-    <div
-      ref={setNodeRef}
-      style={{ transform: CSS.Transform.toString(transform), transition, touchAction: 'none' }}
-      className={cn('relative min-w-0 flex-1', isDragging && 'opacity-0')}
-    >
-      <button
-        type="button"
-        {...attributes}
-        {...listeners}
-        aria-label={t('select.reorderLabel', { name: label })}
-        className="w-full cursor-grab active:cursor-grabbing"
-      >
-        <Tile action={action} />
-      </button>
+    <SortableRow id={action} className="min-w-0 flex-1">
+      {({ handleRef, handleProps, isDragging }) => (
+        <div className={cn('relative', isDragging && 'opacity-0')}>
+          <button
+            type="button"
+            ref={handleRef}
+            {...handleProps}
+            aria-label={t('select.reorderLabel', { name: label })}
+            className="w-full cursor-grab touch-none active:cursor-grabbing"
+          >
+            <Tile action={action} />
+          </button>
 
-      {canRemove ? (
-        <button
-          type="button"
-          onClick={() => onRemove(action)}
-          aria-label={t('select.removeLabel', { name: label })}
-          className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-heading text-[color:var(--surface)] shadow-rest transition-transform active:scale-90"
-        >
-          <X className="size-3" strokeWidth={3} aria-hidden />
-        </button>
-      ) : null}
-    </div>
+          {canRemove ? (
+            <button
+              type="button"
+              onClick={() => onRemove(action)}
+              aria-label={t('select.removeLabel', { name: label })}
+              className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-heading text-[color:var(--surface)] shadow-rest transition-transform active:scale-90"
+            >
+              <X className="size-3" strokeWidth={3} aria-hidden />
+            </button>
+          ) : null}
+        </div>
+      )}
+    </SortableRow>
   )
 }
 
 function Tile({ action, floating = false }: { action: SelectActionId; floating?: boolean }) {
   const { t } = useTranslation()
-  const meta = SELECT_ACTION_META[action]
+  const meta = ACTION_META[action]
 
   return (
     <span

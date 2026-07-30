@@ -29,6 +29,6 @@ describe('buildSwipeActions', () => {
 
     expect(trailing).toHaveLength(1)
     expect(trailing[0]).toMatchObject({ id: 'delete', onAction: onDelete })
-    expect(trailing[0]?.label).toBe('swipe.actions.delete')
+    expect(trailing[0]?.label).toBe('actions.delete')
   })
 })

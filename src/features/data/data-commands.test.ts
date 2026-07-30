@@ -11,7 +11,7 @@ import {
   makeNotification,
 } from '@/entities/notification'
 import { PROGRESS_ID } from '@/features/progress'
-import { clearAllContent, clearNotifications, resetEverything, resetProgress } from './index'
+import { clearAllContent, resetEverything, resetProgress } from './index'
 
 const at = (ms: number) => new Date(ms).toISOString()
 const NOW = Date.UTC(2026, 0, 1)
@@ -69,19 +69,6 @@ describe('resetProgress', () => {
     expect(reset.xp).toBe(0)
     expect(reset.streakCount).toBe(0)
     expect(store.getState().progress?.xp).toBe(0)
-  })
-})
-
-describe('clearNotifications', () => {
-  it('empties the notifications history', async () => {
-    const store = createNotificationStore(
-      new InMemoryRepository<AppNotification>([
-        makeNotification({ id: 'n1', createdAt: at(0), type: 'streak' }),
-      ]),
-    )
-    store.getState().start()
-    await clearNotifications(store)
-    expect(store.getState().notifications).toEqual([])
   })
 })
 

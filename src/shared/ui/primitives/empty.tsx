@@ -1,6 +1,13 @@
 import { type ReactNode } from 'react'
 import { motion } from 'motion/react'
-import { cn } from '@/shared/lib'
+import { cn, EASE_OUT } from '@/shared/lib'
+
+/**
+ * `panel` sits in the flow of a scrolling screen; `hero` is the whole message a
+ * session screen shows when it has nothing to run, and leaves the centring to
+ * its container.
+ */
+export type EmptyVariant = 'panel' | 'hero'
 
 export interface EmptyProps {
   icon?: ReactNode
@@ -8,29 +15,61 @@ export interface EmptyProps {
   title: string
   description: string
   action?: ReactNode
+  variant?: EmptyVariant
   className?: string
 }
 
-const EASE_OUT = [0.16, 1, 0.3, 1] as const
-
-export function Empty({ icon, emoji, title, description, action, className }: EmptyProps) {
+export function Empty({
+  icon,
+  emoji,
+  title,
+  description,
+  action,
+  variant = 'panel',
+  className,
+}: EmptyProps) {
+  const hero = variant === 'hero'
+  const Title = hero ? 'h2' : 'h3'
   return (
     <motion.div
       data-slot="empty"
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: EASE_OUT }}
-      className={cn('flex flex-col items-center justify-center px-6 py-16 text-center', className)}
+      className={cn(
+        'flex flex-col items-center justify-center px-6 text-center',
+        hero ? 'gap-5' : 'py-16',
+        className,
+      )}
     >
-      <div className="mb-5 grid size-16 place-items-center rounded-card-featured bg-info-surface text-accent">
+      <div
+        className={cn(
+          'grid size-16 place-items-center rounded-card-featured bg-info-surface text-accent',
+          !hero && 'mb-5',
+        )}
+      >
         {icon ?? (emoji ? <span className="text-3xl">{emoji}</span> : null)}
       </div>
-      <h3 className="mb-2 text-balance text-[length:var(--p-text-sub)] font-semibold text-heading">
-        {title}
-      </h3>
-      <p className="mb-6 max-w-[34ch] text-pretty text-[length:var(--p-text-body)]">
-        {description}
-      </p>
+      <div>
+        <Title
+          className={cn(
+            'text-balance text-heading',
+            hero
+              ? 'mb-1 text-(length:--p-text-headline) font-bold'
+              : 'mb-2 text-(length:--p-text-sub) font-semibold',
+          )}
+        >
+          {title}
+        </Title>
+        <p
+          className={cn(
+            'mx-auto max-w-[34ch] text-pretty text-(length:--p-text-body)',
+            !hero && 'mb-6',
+          )}
+        >
+          {description}
+        </p>
+      </div>
       {action}
     </motion.div>
   )

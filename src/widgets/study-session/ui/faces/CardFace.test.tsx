@@ -3,25 +3,20 @@ import { cleanup, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders } from '@/shared/test/render-with-providers'
 import { CardFace } from './CardFace'
+import { makeFaceProps } from './face-fixtures'
+import type { FaceProps } from './types'
 
 afterEach(cleanup)
 
-function setup(overrides: Partial<Parameters<typeof CardFace>[0]> = {}) {
+function setup(overrides: Partial<FaceProps> = {}) {
   const onSpeak = vi.fn()
   const onChangeMode = vi.fn()
   const onOpenGear = vi.fn()
   renderWithProviders(
     <CardFace
-      flagged={false}
-      canSpeak
+      face={makeFaceProps({ canSpeak: true, onSpeak, onChangeMode, onOpenGear, ...overrides })}
       speakText="The answer"
-      onSpeak={onSpeak}
-      active
-      mode="blur"
-      onChangeMode={onChangeMode}
-      onOpenGear={onOpenGear}
       footer={<span>Footer slot</span>}
-      {...overrides}
     >
       <p>Body content</p>
     </CardFace>,

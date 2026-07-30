@@ -1,5 +1,6 @@
 import type { AuthGateway } from '@/shared/api'
 import { makeAccountSession, type SessionStore } from '@/entities/session'
+import { nowIso } from '@/shared/lib'
 
 export interface SignUpWithEmailInput {
   name: string
@@ -19,11 +20,5 @@ export async function signUpWithEmail(
   const auth = await deps.gateway.signUp({ email: input.email, name: input.name })
   await deps.sessionStore
     .getState()
-    .set(
-      makeAccountSession(
-        auth.id,
-        { email: input.email, name: input.name },
-        new Date(now).toISOString(),
-      ),
-    )
+    .set(makeAccountSession(auth.id, { email: input.email, name: input.name }, nowIso(now)))
 }

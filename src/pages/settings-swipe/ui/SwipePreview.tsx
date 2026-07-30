@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { ACTION_META } from '@/shared/config/actions'
 import { useTranslation } from 'react-i18next'
 import {
   closestCenter,
@@ -10,23 +11,16 @@ import {
   useDroppable,
 } from '@dnd-kit/core'
 import { restrictToHorizontalAxis } from '@dnd-kit/modifiers'
-import {
-  arrayMove,
-  horizontalListSortingStrategy,
-  SortableContext,
-  useSortable,
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
+import { arrayMove, horizontalListSortingStrategy, SortableContext } from '@dnd-kit/sortable'
 import { ChevronRight, Folder, Layers, WalletCards } from 'lucide-react'
 import {
-  SWIPE_ACTION_META,
   SWIPE_SIDE_MAX,
   type SwipeActionId,
   type SwipeConfig,
   type SwipeItemType,
 } from '@/shared/config/swipe'
-import { cn, useSortableSensors } from '@/shared/lib'
-import { swipeActionIcon } from '@/shared/ui'
+import { cn, EASE_OUT_CSS, useSortableSensors } from '@/shared/lib'
+import { SortableRow, swipeActionIcon } from '@/shared/ui'
 import { accentOf } from './swipe-accent'
 
 const TYPE_ICON: Record<SwipeItemType, typeof Layers> = {
@@ -125,7 +119,7 @@ export function SwipePreview({ type, config, onChange }: SwipePreviewProps) {
         <PreviewCaps side="trailing" ids={items.trailing} />
       </div>
 
-      <DragOverlay dropAnimation={{ duration: 200, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }}>
+      <DragOverlay dropAnimation={{ duration: 200, easing: EASE_OUT_CSS }}>
         {activeId ? <Cap action={activeId} floating /> : null}
       </DragOverlay>
     </DndContext>
@@ -159,24 +153,23 @@ function PreviewCaps({ side, ids }: { side: CapSide; ids: SwipeActionId[] }) {
 
 function SortableCap({ action }: { action: SwipeActionId }) {
   const { t } = useTranslation()
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: action,
-  })
   return (
-    <button
-      ref={setNodeRef}
-      type="button"
-      {...attributes}
-      {...listeners}
-      aria-label={t('swipe.reorderLabel', { name: t(SWIPE_ACTION_META[action].labelKey as never) })}
-      style={{ transform: CSS.Transform.toString(transform), transition, touchAction: 'none' }}
-      className={cn(
-        'shrink-0 cursor-grab rounded-[14px] active:cursor-grabbing',
-        isDragging && 'opacity-0',
+    <SortableRow id={action} className="shrink-0">
+      {({ handleRef, handleProps, isDragging }) => (
+        <button
+          ref={handleRef}
+          type="button"
+          {...handleProps}
+          aria-label={t('swipe.reorderLabel', { name: t(ACTION_META[action].labelKey as never) })}
+          className={cn(
+            'shrink-0 cursor-grab touch-none rounded-[14px] active:cursor-grabbing',
+            isDragging && 'opacity-0',
+          )}
+        >
+          <Cap action={action} />
+        </button>
       )}
-    >
-      <Cap action={action} />
-    </button>
+    </SortableRow>
   )
 }
 

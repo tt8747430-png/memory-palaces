@@ -8,7 +8,6 @@ export function NotificationBridge() {
   const store = useNotificationStoreApi()
 
   useEffect(() => {
-    store.getState().start()
     const offs = [
       bus.on('level-up', ({ level }) => {
         void recordNotification(store, { type: 'level-up', level })

@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react'
 import { Check, Lock } from 'lucide-react'
 import { motion } from 'motion/react'
-import { cn } from '@/shared/lib'
+import { cn, EASE_OUT } from '@/shared/lib'
 
 const TIER_BG: Record<number, string> = {
   1: 'linear-gradient(135deg, var(--secondary), var(--accent))',
@@ -53,7 +53,7 @@ export function BadgeMedallion({
             className="absolute inset-y-0 -left-1/3 w-1/3 skew-x-[-18deg] bg-gradient-to-r from-transparent via-white/55 to-transparent"
             initial={{ x: '-60%' }}
             animate={{ x: '460%' }}
-            transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1], delay: 0.25 }}
+            transition={{ duration: 1.1, ease: EASE_OUT, delay: 0.25 }}
           />
         </span>
       ) : null}

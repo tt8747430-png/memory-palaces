@@ -1,24 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { resolveDeckSettings, shuffle, subtreeDeckIds } from '@/shared/lib'
-import {
-  DEFAULT_DECK_SETTINGS,
-  selectDecks,
-  selectIsReady as selectDecksReady,
-  useDeckStore,
-  useDeckStoreApi,
-} from '@/entities/deck'
-import {
-  selectIsReady as selectQuestionsReady,
-  selectQuestions,
-  useQuestionStore,
-  useQuestionStoreApi,
-} from '@/entities/question'
+import { selectIsReady, shuffle, subtreeDeckIds } from '@/shared/lib'
+import { useDeck, useDeckStoreApi } from '@/entities/deck'
+import { selectQuestions, useQuestionStore } from '@/entities/question'
 import { editDeck } from '@/features/deck'
 import { QuizOptionsSheet, type QuizResult, QuizSession } from '@/widgets/quiz'
 import { type QuizQuestion } from '@/features/quiz'
 import { useSessionReward } from '@/widgets/session-reward'
-import { AppScreen, ScreenHeader } from '@/shared/ui'
+import { MissingScreen, ScreenLoading } from '@/shared/ui'
 
 export interface QuizPageProps {
   deckId: string
@@ -28,26 +17,13 @@ export interface QuizPageProps {
 export function QuizPage({ deckId, onBack }: QuizPageProps) {
   const { t } = useTranslation()
   const deckStore = useDeckStoreApi()
-  const questionStore = useQuestionStoreApi()
   const reward = useSessionReward()
   const [optionsOpen, setOptionsOpen] = useState(false)
 
-  useEffect(() => {
-    deckStore.getState().start()
-    questionStore.getState().start()
-  }, [deckStore, questionStore])
-
-  const decks = useDeckStore(selectDecks)
+  const { decks, deck, settings, ready: decksReady } = useDeck(deckId)
   const allQuestions = useQuestionStore(selectQuestions)
-  const decksReady = useDeckStore(selectDecksReady)
-  const questionsReady = useQuestionStore(selectQuestionsReady)
+  const questionsReady = useQuestionStore(selectIsReady)
   const ready = decksReady && questionsReady
-
-  const deck = useMemo(() => decks.find((candidate) => candidate.id === deckId), [decks, deckId])
-  const settings = useMemo(
-    () => resolveDeckSettings(decks, deckId, DEFAULT_DECK_SETTINGS),
-    [decks, deckId],
-  )
 
   const questions = useMemo<QuizQuestion[]>(() => {
     const nameById = new Map(decks.map((each) => [each.id, each.name]))
@@ -78,21 +54,11 @@ export function QuizPage({ deckId, onBack }: QuizPageProps) {
   }
 
   if (!ready) {
-    return (
-      <AppScreen className="items-center justify-center">
-        <span className="size-8 animate-pulse rounded-full bg-secondary" aria-hidden />
-      </AppScreen>
-    )
+    return <ScreenLoading />
   }
 
   if (!deck) {
-    return (
-      <AppScreen
-        header={
-          <ScreenHeader title={t('quiz.notFound')} onBack={onBack} backLabel={t('quiz.back')} />
-        }
-      />
-    )
+    return <MissingScreen title={t('quiz.notFound')} onBack={onBack} backLabel={t('quiz.back')} />
   }
 
   const handleComplete = (result: QuizResult) => {

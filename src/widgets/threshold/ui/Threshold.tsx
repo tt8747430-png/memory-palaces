@@ -1,5 +1,5 @@
 import { motion, useReducedMotion, type Variants } from 'motion/react'
-import { cn } from '@/shared/lib'
+import { cn, EASE_EXPO } from '@/shared/lib'
 
 const container: Variants = {
   hidden: {},
@@ -8,7 +8,7 @@ const container: Variants = {
 
 const draw: Variants = {
   hidden: { pathLength: 0, opacity: 0 },
-  show: { pathLength: 1, opacity: 1, transition: { duration: 0.9, ease: [0.16, 1, 0.3, 1] } },
+  show: { pathLength: 1, opacity: 1, transition: { duration: 0.9, ease: EASE_EXPO } },
 }
 
 const spark: Variants = {

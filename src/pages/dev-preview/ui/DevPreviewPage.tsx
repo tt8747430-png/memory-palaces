@@ -13,7 +13,7 @@ import {
   Type,
 } from 'lucide-react'
 import { DECK_COLOR_OPTIONS } from '@/entities/deck'
-import { FolderForm } from '@/widgets/folder-form'
+import { AppearanceFields } from '@/widgets/appearance-form'
 import { cn } from '@/shared/lib'
 import {
   ActionSheet,
@@ -182,7 +182,8 @@ function FolderSheetDemo() {
             setOpen(false)
           }}
         >
-          <FolderForm
+          <AppearanceFields
+            subject="folder"
             name={name}
             color={color}
             icon={icon}
@@ -455,7 +456,7 @@ export function DevPreviewPage({ onBack }: { onBack?: () => void }) {
           data-slot="header-bar"
           className="border-b border-border bg-card/80 backdrop-blur-md"
         >
-          <div className="mx-auto w-full max-w-[430px] px-5 pt-safe">
+          <div className="mx-auto w-full max-w-app px-5 pt-safe">
             <div className="flex items-start justify-between gap-3 pt-3">
               {onBack ? (
                 <IconButton variant="glass" aria-label="Back" onClick={onBack} className="shrink-0">

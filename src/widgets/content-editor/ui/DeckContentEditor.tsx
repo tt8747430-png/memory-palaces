@@ -1,16 +1,7 @@
-import { type ReactNode, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import {
-  ArrowDownAZ,
-  Clock,
-  Flag,
-  GripVertical,
-  Plus,
-  Sparkles,
-  Trash2,
-  Upload,
-} from 'lucide-react'
+import { Plus, Trash2, Upload } from 'lucide-react'
 import { type Card, selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
 import { selectDecks, useDeckStore } from '@/entities/deck'
 import { reorderCards } from '@/features/card'
@@ -23,17 +14,20 @@ import { readAnkiFile } from '@/features/content'
 import {
   cardMaturityCounts,
   cardsInSubtree,
-  ContentImportError,
+  CONTENT_SORTS,
+  importErrorMessage,
   type MultiSelect,
+  usePendingAct,
 } from '@/shared/lib'
 import {
   CardMaturityOverview,
   ConfirmDialog,
+  ImportSheet,
   SelectToolbar,
   SelectToolbarDock,
   SortControl,
-  type SortControlOption,
   SpeedDial,
+  useContentSortOptions,
 } from '@/shared/ui'
 import { filterCards, sortCards } from '../model/card-list'
 import { useCardCommands } from '../model/use-card-commands'
@@ -41,7 +35,6 @@ import { useCardFilter } from '../model/use-card-filter'
 import { useImportDraft } from '../model/import-draft'
 import { CardBrowser } from './CardBrowser'
 import { CardFilterSheet, FilterButton } from './CardFilterSheet'
-import { CardImportSheet } from './CardImportSheet'
 import { EmptyCards, FilterEmpty, NoResults } from './CardListStates'
 import { CardRow } from './CardRow'
 import type { RowDragHandle } from './ContentRow'
@@ -79,23 +72,20 @@ export function DeckContentEditor({
   const allCards = useCardStore(selectCards)
   const setImportDraft = useImportDraft((s) => s.setDraft)
 
-  useEffect(() => {
-    cardStore.getState().start()
-  }, [cardStore])
-
   const prefs = usePreferencesStore(selectEffectivePreferences)
   const decks = useDeckStore(selectDecks)
   const cards = useMemo(() => cardsInSubtree(decks, allCards, deckId), [decks, allCards, deckId])
   const maturity = useMemo(() => cardMaturityCounts(cards), [cards])
 
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
-  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
   const [browserCardId, setBrowserCardId] = useState<string | null>(null)
 
-  const sortOptions = useSortOptions()
+  const pending = usePendingAct<PendingCardAct>()
+  const sortOptions = useContentSortOptions(CONTENT_SORTS)
   const filter = useCardFilter()
-  const commands = useCardCommands(cards, selection, () => setBulkDeleteOpen(true))
+  const commands = useCardCommands(cards, selection, () =>
+    pending.request({ kind: 'delete-selection' }),
+  )
 
   const selectMode = selection.active
   const needle = (searchQuery ?? '').trim().toLowerCase()
@@ -127,9 +117,7 @@ export function DeckContentEditor({
       setImportDraft('anki', data.cards)
       onReviewImport()
     } catch (error) {
-      toast.error(
-        error instanceof ContentImportError ? error.message : t('cards.transfer.importFailed'),
-      )
+      toast.error(importErrorMessage(error, t('cards.transfer.importFailed')))
     }
   }
 
@@ -149,7 +137,7 @@ export function DeckContentEditor({
       onOpen={() => setBrowserCardId(card.id)}
       onEdit={() => onEditCard(card.id)}
       onDuplicate={() => commands.duplicate(card.id)}
-      onDelete={() => setPendingDeleteId(card.id)}
+      onDelete={() => pending.request({ kind: 'delete-card', id: card.id })}
       onToggleFlag={() => commands.toggleFlag(card.id)}
       onMarkKnown={() => commands.markKnown(card.id)}
       onResetSrs={() => commands.resetSrs(card.id)}
@@ -206,9 +194,11 @@ export function DeckContentEditor({
         </SelectToolbarDock>
       ) : null}
 
-      <CardImportSheet
+      <ImportSheet
         open={importOpen}
         onOpenChange={setImportOpen}
+        title={t('cards.transfer.importTitle')}
+        description={t('cards.transfer.importSubtitle')}
         onPasteNotes={onPasteNotes}
         onPickFile={(file) => void importAnki(file)}
       />
@@ -216,34 +206,30 @@ export function DeckContentEditor({
       <CardFilterSheet filter={filter} counts={maturity} />
 
       <ConfirmDialog
-        open={pendingDeleteId !== null}
-        onOpenChange={(open) => !open && setPendingDeleteId(null)}
+        open={pending.act !== null}
+        onOpenChange={(open) => !open && pending.dismiss()}
         destructive
         icon={<Trash2 className="size-6" aria-hidden />}
-        title={t('cards.delete.cardTitle')}
+        title={
+          pending.act?.kind === 'delete-selection'
+            ? t('cards.delete.bulkTitle', { count: selection.count })
+            : t('cards.delete.cardTitle')
+        }
         description={t('cards.delete.body')}
         confirmLabel={t('common.delete')}
         cancelLabel={t('common.cancel')}
-        onConfirm={() => {
-          if (pendingDeleteId) commands.remove(pendingDeleteId)
-        }}
-      />
-      <ConfirmDialog
-        open={bulkDeleteOpen}
-        onOpenChange={setBulkDeleteOpen}
-        destructive
-        icon={<Trash2 className="size-6" aria-hidden />}
-        title={t('cards.delete.bulkTitle', { count: selection.count })}
-        description={t('cards.delete.body')}
-        confirmLabel={t('common.delete')}
-        cancelLabel={t('common.cancel')}
-        onConfirm={commands.removeSelected}
+        onConfirm={() =>
+          pending.resolve((act) => {
+            if (act.kind === 'delete-card') commands.remove(act.id)
+            else commands.removeSelected()
+          })
+        }
       />
 
       {!selectMode && total > 0 ? (
         <SpeedDial
           label={t('cards.quickActions')}
-          className="bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+0.75rem)]"
+          placement="above-safe-area"
           actions={[
             {
               id: 'card',
@@ -276,26 +262,12 @@ export function DeckContentEditor({
         onResetSrs={commands.resetSrs}
         onDelete={(id) => {
           setBrowserCardId(null)
-          setPendingDeleteId(id)
+          pending.request({ kind: 'delete-card', id })
         }}
       />
     </div>
   )
 }
 
-const SORT_OPTIONS = [
-  { value: 'manual', labelKey: 'cards.sort.manual', icon: <GripVertical className="size-4" /> },
-  { value: 'recent', labelKey: 'cards.sort.recent', icon: <Clock className="size-4" /> },
-  { value: 'name', labelKey: 'cards.sort.name', icon: <ArrowDownAZ className="size-4" /> },
-  { value: 'due', labelKey: 'cards.sort.due', icon: <Sparkles className="size-4" /> },
-  { value: 'flagged', labelKey: 'cards.sort.flagged', icon: <Flag className="size-4" /> },
-] as const satisfies readonly { value: ContentSort; labelKey: string; icon: ReactNode }[]
-
-function useSortOptions(): SortControlOption<ContentSort>[] {
-  const { t } = useTranslation()
-  return SORT_OPTIONS.map(({ value, labelKey, icon }) => ({
-    value,
-    label: t(labelKey as never),
-    icon,
-  }))
-}
+/** The one delete a card list waits on the user to confirm. */
+type PendingCardAct = { kind: 'delete-card'; id: string } | { kind: 'delete-selection' }

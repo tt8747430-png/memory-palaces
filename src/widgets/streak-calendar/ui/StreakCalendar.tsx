@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { cn, dayKey } from '@/shared/lib'
+import { cn, DAY_MS, dayKey } from '@/shared/lib'
 import { GlassCard, IconButton } from '@/shared/ui'
 
 export interface StreakCalendarProps {
@@ -10,7 +10,6 @@ export interface StreakCalendarProps {
 }
 
 const WEEKDAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
-const DAY_MS = 86_400_000
 const GRID_CELLS = 42
 
 interface MonthCell {

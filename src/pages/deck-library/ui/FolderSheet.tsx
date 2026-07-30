@@ -2,7 +2,7 @@ import { type SyntheticEvent, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Check, FolderPlus } from 'lucide-react'
 import { DEFAULT_FOLDER_ICON, type Folder } from '@/entities/folder'
-import { FolderForm } from '@/widgets/folder-form'
+import { AppearanceFields } from '@/widgets/appearance-form'
 import { Button, Sheet } from '@/shared/ui'
 
 export interface FolderSheetProps {
@@ -61,7 +61,8 @@ export function FolderSheet({
       }
     >
       <form onSubmit={submit} className="pb-2">
-        <FolderForm
+        <AppearanceFields
+          subject="folder"
           name={name}
           color={color}
           icon={icon}

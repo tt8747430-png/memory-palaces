@@ -46,7 +46,9 @@ describe('HeaderBar', () => {
     expect(height(<ScreenHeader title="Deck" onBack={() => {}} />)).toBe('h-16')
     expect(
       height(
-        <SelectHeader count={2} allSelected={false} onToggleAll={() => {}} onCancel={() => {}} />,
+        <SelectHeader
+          selection={{ count: 2, allSelected: false, toggleAll: () => {}, exit: () => {} }}
+        />,
       ),
     ).toBe('h-16')
   })

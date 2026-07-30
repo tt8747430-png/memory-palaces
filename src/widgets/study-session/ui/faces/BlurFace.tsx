@@ -1,14 +1,15 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { isReferenceMarker, normalizeWord, scramble, tokenizeWords } from '@/shared/lib'
+import { clamp, isReferenceMarker, normalizeWord, scramble, tokenizeWords } from '@/shared/lib'
 import { AidButton, BackPrompt, CardFace, HintCard } from './CardFace'
+import { TokenLine } from './TokenLine'
 import { type FaceProps, stopPress, useSwipeMechanic } from './types'
 
 const BLUR_BATCH = 3
 
 export function BlurFace(props: FaceProps) {
   const { t } = useTranslation()
-  const { card, prompt, answer, canSpeak, active, onSpeak } = props
+  const { card, prompt, answer, active } = props
   const tokens = useMemo(() => tokenizeWords(answer), [answer])
   const hideable = useMemo(
     () => tokens.flatMap((token, i) => (isReferenceMarker(token) ? [] : [i])),
@@ -48,38 +49,14 @@ export function BlurFace(props: FaceProps) {
   )
 
   return (
-    <CardFace
-      flagged={card.card.flagged}
-      canSpeak={canSpeak}
-      speakText={answer}
-      onSpeak={onSpeak}
-      active={active}
-      mode={props.mode}
-      onChangeMode={props.onChangeMode}
-      onOpenGear={props.onOpenGear}
-      back
-      footer={footer}
-    >
+    <CardFace face={props} speakText={answer} back footer={footer}>
       <BackPrompt prompt={prompt} onFlip={props.onFlip} />
-      <p className="flex w-full flex-wrap items-baseline justify-center gap-x-2 gap-y-2.5 text-[clamp(17px,4.6vw,22px)] font-semibold leading-relaxed text-heading">
-        {tokens.map((token, i) => {
-          if (isReferenceMarker(token)) {
-            return (
-              <span key={i} className="font-bold text-accent">
-                {token}
-              </span>
-            )
-          }
-          if (!hidden.has(i)) {
-            return (
-              <span key={i} className="whitespace-nowrap">
-                {token}
-              </span>
-            )
-          }
-          return (
+      <TokenLine
+        tokens={tokens}
+        className="gap-x-2 gap-y-2.5 leading-relaxed"
+        renderWithheld={(token, i) =>
+          hidden.has(i) ? (
             <button
-              key={i}
               type="button"
               aria-label={t('study.revealWord', { word: token })}
               onPointerDown={stopPress}
@@ -89,12 +66,12 @@ export function BlurFace(props: FaceProps) {
               <span
                 aria-hidden
                 className="inline-block h-[0.95em] border-b-2 border-[color-mix(in_oklch,var(--primary)_45%,transparent)] align-baseline"
-                style={{ width: `${Math.min(Math.max(normalizeWord(token).length, 2), 14)}ch` }}
+                style={{ width: `${clamp(normalizeWord(token).length, 2, 14)}ch` }}
               />
             </button>
-          )
-        })}
-      </p>
+          ) : null
+        }
+      />
       {card.card.hint ? <HintCard hint={card.card.hint} /> : null}
     </CardFace>
   )

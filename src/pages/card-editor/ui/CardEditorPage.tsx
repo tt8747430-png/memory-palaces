@@ -3,11 +3,11 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Check, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
-import { selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
+import { selectDecks, useDeckStore } from '@/entities/deck'
 import { createCard, editCard } from '@/features/card'
-import { cardsInSubtree, cn } from '@/shared/lib'
+import { cardsInSubtree, cn, findEntity } from '@/shared/lib'
 import { AppScreen, FooterBar, ScreenHeader } from '@/shared/ui'
-import { type CardData, CardFields } from '@/widgets/content-editor'
+import { CardFields, useCardDraft } from '@/widgets/content-editor'
 
 export interface CardEditorPageProps {
   deckId: string
@@ -19,17 +19,11 @@ export interface CardEditorPageProps {
 export function CardEditorPage({ deckId, cardId, onBack, onNavigateCard }: CardEditorPageProps) {
   const { t } = useTranslation()
   const cardStore = useCardStoreApi()
-  const deckStore = useDeckStoreApi()
   const allCards = useCardStore(selectCards)
   const decks = useDeckStore(selectDecks)
 
-  useEffect(() => {
-    cardStore.getState().start()
-    deckStore.getState().start()
-  }, [cardStore, deckStore])
-
-  const editing = cardId ? (allCards.find((c) => c.id === cardId) ?? null) : null
-  const deck = decks.find((d) => d.id === deckId)
+  const editing = findEntity(allCards, cardId) ?? null
+  const deck = findEntity(decks, deckId)
 
   const deckCards = useMemo(
     () => cardsInSubtree(decks, allCards, deckId),
@@ -40,10 +34,7 @@ export function CardEditorPage({ deckId, cardId, onBack, onNavigateCard }: CardE
   const nextCard =
     position >= 0 && position < deckCards.length - 1 ? deckCards[position + 1] : undefined
 
-  const [front, setFront] = useState('')
-  const [back, setBack] = useState('')
-  const [hint, setHint] = useState('')
-  const [tip, setTip] = useState('')
+  const draft = useCardDraft(editing, editing?.id ?? deckId)
   const frontRef = useRef<HTMLInputElement>(null)
 
   const [justSaved, setJustSaved] = useState(false)
@@ -55,52 +46,24 @@ export function CardEditorPage({ deckId, cardId, onBack, onNavigateCard }: CardE
     savedTimer.current = window.setTimeout(() => setJustSaved(false), 1500)
   }
 
-  useEffect(() => {
-    setFront(editing?.front ?? '')
-    setBack(editing?.back ?? '')
-    setHint(editing?.hint ?? '')
-    setTip(editing?.tip ?? '')
-    setJustSaved(false)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editing?.id])
-
-  const valid = front.trim().length > 0 && back.trim().length > 0
-  const build = (): CardData => ({
-    front: front.trim(),
-    back: back.trim(),
-    ...(hint.trim() ? { hint: hint.trim() } : {}),
-    ...(tip.trim() ? { tip: tip.trim() } : {}),
-  })
-  const dirty = editing
-    ? front.trim() !== editing.front ||
-      back.trim() !== editing.back ||
-      hint.trim() !== (editing.hint ?? '') ||
-      tip.trim() !== (editing.tip ?? '')
-    : false
-
-  const clear = () => {
-    setFront('')
-    setBack('')
-    setHint('')
-    setTip('')
-    frontRef.current?.focus()
-  }
+  useEffect(() => setJustSaved(false), [editing?.id])
 
   const saveAndAdd = async () => {
-    if (!valid) return
-    await createCard(cardStore, deckId, build())
+    if (!draft.valid) return
+    await createCard(cardStore, deckId, draft.changes)
     flashSaved()
     toast.success(t('cards.editor.addedNext'))
-    clear()
+    draft.clear()
+    frontRef.current?.focus()
   }
   const saveEdit = async () => {
-    if (!valid || !editing) return
-    await editCard(cardStore, editing.id, build())
+    if (!draft.valid || !editing) return
+    await editCard(cardStore, editing.id, draft.changes)
     flashSaved()
   }
   const goToCard = async (target?: { id: string }) => {
     if (!target || !onNavigateCard) return
-    if (editing && valid && dirty) await editCard(cardStore, editing.id, build())
+    if (editing && draft.valid && draft.dirty) await editCard(cardStore, editing.id, draft.changes)
     onNavigateCard(target.id)
   }
 
@@ -119,7 +82,7 @@ export function CardEditorPage({ deckId, cardId, onBack, onNavigateCard }: CardE
             <SaveButton
               adding={!editing}
               saved={justSaved}
-              disabled={!valid}
+              disabled={!draft.valid}
               onClick={() => void (editing ? saveEdit() : saveAndAdd())}
             />
           }
@@ -142,14 +105,14 @@ export function CardEditorPage({ deckId, cardId, onBack, onNavigateCard }: CardE
     >
       <div className="mt-4 pb-8">
         <CardFields
-          front={front}
-          back={back}
-          hint={hint}
-          tip={tip}
-          onFront={setFront}
-          onBack={setBack}
-          onHint={setHint}
-          onTip={setTip}
+          front={draft.front}
+          back={draft.back}
+          hint={draft.hint}
+          tip={draft.tip}
+          onFront={draft.setFront}
+          onBack={draft.setBack}
+          onHint={draft.setHint}
+          onTip={draft.setTip}
           frontRef={frontRef}
         />
       </div>

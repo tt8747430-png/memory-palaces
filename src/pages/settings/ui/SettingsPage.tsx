@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   ArrowLeftRight,
@@ -28,12 +28,7 @@ import {
   usePreferencesStore,
   usePreferencesStoreApi,
 } from '@/entities/preferences'
-import {
-  profileHandle,
-  selectEffectiveProfile,
-  useProfileStore,
-  useProfileStoreApi,
-} from '@/entities/profile'
+import { profileHandle, selectEffectiveProfile, useProfileStore } from '@/entities/profile'
 import type { SessionKind } from '@/entities/session'
 import { setPreferences } from '@/features/preferences'
 import { AVAILABLE_LANGUAGES, DAILY_GOAL_OPTIONS } from '@/shared/config/constants'
@@ -78,14 +73,8 @@ export function SettingsPage({
   const devMode = useDevMode()
   const prefsStore = usePreferencesStoreApi()
   const prefs = usePreferencesStore(selectEffectivePreferences)
-  const profileStore = useProfileStoreApi()
   const profile = useProfileStore(selectEffectiveProfile)
   const [logoutOpen, setLogoutOpen] = useState(false)
-
-  useEffect(() => {
-    prefsStore.getState().start()
-    profileStore.getState().start()
-  }, [prefsStore, profileStore])
 
   const update = (changes: PreferencesChanges) => void setPreferences(prefsStore, changes)
   const name = profile.name.trim() || t('settings.namePlaceholder')

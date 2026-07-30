@@ -1,10 +1,10 @@
-import { type SyntheticEvent, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft, Mail, MailCheck } from 'lucide-react'
-import { authEntrance, isEmail, useAuthGateway } from '@/shared/lib'
-import { AuthField, AuthScreen, Button } from '@/shared/ui'
-import { AuthLogo } from '@/widgets/threshold'
+import { ArrowLeft, MailCheck } from 'lucide-react'
+import { authEntrance, emailErrorKey, useAuthGateway, useValidatedSubmit } from '@/shared/lib'
+import { AuthScreen, Button, EmailField } from '@/shared/ui'
+import { AuthHeader } from '@/widgets/threshold'
 import { requestPasswordReset } from '@/features/session'
 
 export interface ForgotPasswordPageProps {
@@ -25,8 +25,6 @@ export function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) {
   const gateway = useAuthGateway()
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
-  const [error, setError] = useState<string>()
-  const [busy, setBusy] = useState(false)
   const [cooldown, setCooldown] = useState(0)
 
   useEffect(() => {
@@ -36,22 +34,15 @@ export function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) {
   }, [cooldown])
 
   const send = async () => {
-    setBusy(true)
     await requestPasswordReset(gateway, email.trim())
-    setBusy(false)
     setSent(true)
     setCooldown(RESEND_SECONDS)
   }
 
-  const handleSubmit = (event: SyntheticEvent) => {
-    event.preventDefault()
-    if (!isEmail(email)) {
-      setError(t('auth.errors.emailInvalid'))
-      return
-    }
-    setError(undefined)
-    void send()
-  }
+  const { errors, busy, onSubmit } = useValidatedSubmit<'email'>(() => {
+    const key = emailErrorKey(email)
+    return { email: key ? t(key) : undefined }
+  }, send)
 
   return (
     <AuthScreen>
@@ -72,26 +63,24 @@ export function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) {
         className="flex flex-1 flex-col justify-center gap-8 py-10"
       >
         <header className="flex flex-col items-center gap-4 text-center">
-          {sent ? (
-            <span
-              aria-hidden
-              className="grid size-16 place-items-center rounded-full bg-info-surface text-primary shadow-rest"
-            >
-              <MailCheck className="size-8" />
-            </span>
-          ) : (
-            <AuthLogo className="size-16" />
-          )}
-          <div className="flex flex-col gap-1.5">
-            <h1 className="text-balance text-[length:var(--p-text-headline)] font-bold tracking-tight text-heading">
-              {sent ? t('auth.forgot.sentTitle') : t('auth.forgot.title')}
-            </h1>
-            <p className="text-pretty text-muted-foreground">
-              {sent
+          <AuthHeader
+            title={sent ? t('auth.forgot.sentTitle') : t('auth.forgot.title')}
+            subtitle={
+              sent
                 ? t('auth.forgot.sentBody', { email: maskEmail(email.trim()) })
-                : t('auth.forgot.subtitle')}
-            </p>
-          </div>
+                : t('auth.forgot.subtitle')
+            }
+            mark={
+              sent ? (
+                <span
+                  aria-hidden
+                  className="grid size-16 place-items-center rounded-full bg-info-surface text-primary shadow-rest"
+                >
+                  <MailCheck className="size-8" />
+                </span>
+              ) : undefined
+            }
+          />
         </header>
 
         {sent ? (
@@ -107,20 +96,8 @@ export function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) {
               : t('auth.forgot.resend')}
           </Button>
         ) : (
-          <form className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
-            <AuthField
-              id="email"
-              label={t('auth.emailLabel')}
-              type="email"
-              inputMode="email"
-              autoComplete="email"
-              placeholder={t('auth.emailPlaceholder')}
-              icon={<Mail />}
-              value={email}
-              onValueChange={setEmail}
-              valid={isEmail(email)}
-              error={error}
-            />
+          <form className="flex flex-col gap-4" onSubmit={onSubmit} noValidate>
+            <EmailField value={email} onValueChange={setEmail} error={errors.email} />
             <Button type="submit" size="lg" className="w-full" disabled={busy}>
               {busy ? t('auth.forgot.submitting') : t('auth.forgot.submit')}
             </Button>

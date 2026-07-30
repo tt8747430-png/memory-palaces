@@ -1,4 +1,3 @@
-import { useEffect } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { CardEditorPage } from '@/pages/card-editor'
 import { DeckDetailPage } from '@/pages/deck-detail'
@@ -111,9 +110,6 @@ export function DeckPasteScreen({ deckId }: { deckId: string }) {
 export function NewPasteScreen() {
   const navigate = useNavigate()
   const deckStore = useDeckStoreApi()
-  useEffect(() => {
-    deckStore.getState().start()
-  }, [deckStore])
   const decks = useDeckStore(selectDecks)
   const back = useBack(() => void navigate({ to: ROUTES.home }))
   const defaultName = nextDefaultName(

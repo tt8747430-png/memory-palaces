@@ -1,13 +1,17 @@
 import { createStore, type StoreApi } from 'zustand/vanilla'
+import type { StoreStatus } from '@/shared/lib'
 import type { SessionRepository } from '@/entities/session'
 import type { Session } from './types'
 
-export type SessionStatus = 'idle' | 'loading' | 'ready'
-
+/**
+ * The one store that does not mirror its repository. Nothing observes the
+ * signed-in session — `AuthProvider` writes it once the gateway answers, and
+ * every later change comes from a session command — so it holds the same
+ * `status` vocabulary as the mirroring stores while owning its own writes.
+ */
 export interface SessionState {
   session: Session | null
-  status: SessionStatus
-  load: () => Promise<void>
+  status: StoreStatus
   set: (session: Session) => Promise<void>
   clear: () => Promise<void>
 }
@@ -18,12 +22,6 @@ export function createSessionStore(repo: SessionRepository): SessionStore {
   return createStore<SessionState>((set, get) => ({
     session: null,
     status: 'idle',
-
-    async load() {
-      set({ status: 'loading' })
-      const all = await repo.getAll()
-      set({ session: all[0] ?? null, status: 'ready' })
-    },
 
     async set(session) {
       const saved = await repo.save(session)

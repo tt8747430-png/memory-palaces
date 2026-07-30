@@ -1,3 +1,5 @@
+import { DAY_MS, nowIso } from './clock'
+
 export type Grade = 'again' | 'hard' | 'good' | 'easy'
 
 export interface SrsState {
@@ -11,7 +13,6 @@ export interface SrsState {
 
 export type SrsStatus = 'new' | 'learning' | 'known'
 
-const DAY_MS = 86_400_000
 const MIN_EASE = 1.3
 const DEFAULT_EASE = 2.5
 const MATURE_INTERVAL = 21
@@ -55,7 +56,7 @@ export function schedule(prev: SrsState | undefined, grade: Grade, now: number):
     lapses,
     interval,
     due: isoInDays(now, interval),
-    lastReviewed: new Date(now).toISOString(),
+    lastReviewed: nowIso(now),
   }
 }
 
@@ -72,7 +73,7 @@ export function markKnown(prev: SrsState | undefined, now: number): SrsState {
     lapses: prev?.lapses ?? 0,
     interval,
     due: isoInDays(now, interval),
-    lastReviewed: new Date(now).toISOString(),
+    lastReviewed: nowIso(now),
   }
 }
 

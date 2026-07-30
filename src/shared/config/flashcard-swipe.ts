@@ -1,8 +1,8 @@
 export type SwipeDirection = 'up' | 'down' | 'left' | 'right'
 
-export const SWIPE_DIRECTIONS: readonly SwipeDirection[] = ['up', 'down', 'left', 'right']
+const SWIPE_DIRECTIONS: readonly SwipeDirection[] = ['up', 'down', 'left', 'right']
 
-export const FLASHCARD_MODES = ['blur', 'words', 'initials', 'type'] as const
+const FLASHCARD_MODES = ['blur', 'words', 'initials', 'type'] as const
 export type FlashcardMode = (typeof FLASHCARD_MODES)[number]
 
 export type GradeSwipeAction = 'again' | 'hard' | 'good' | 'easy'
@@ -34,18 +34,9 @@ export function actionsForMode(mode: FlashcardMode): readonly FlashcardSwipeActi
   return [...SHARED_ACTIONS, ...MODE_ACTIONS[mode]]
 }
 
-export function isActionAllowed(mode: FlashcardMode, action: FlashcardSwipeAction): boolean {
+function isActionAllowed(mode: FlashcardMode, action: FlashcardSwipeAction): boolean {
   return actionsForMode(mode).includes(action)
 }
-
-export const FLASHCARD_SWIPE_ACTIONS: readonly FlashcardSwipeAction[] = [
-  ...SHARED_ACTIONS,
-  'hideMore',
-  'showAll',
-  'showWords',
-  'reset',
-  'nextWord',
-]
 
 export function isGradeAction(action: FlashcardSwipeAction): action is GradeSwipeAction {
   return action === 'again' || action === 'hard' || action === 'good' || action === 'easy'
@@ -92,7 +83,7 @@ export const DEFAULT_FLASHCARD_SWIPE: FlashcardSwipeConfig = {
   right: 'good',
 }
 
-export function defaultFlashcardSwipeByMode(): FlashcardSwipeByMode {
+function defaultFlashcardSwipeByMode(): FlashcardSwipeByMode {
   return {
     blur: { ...DEFAULT_FLASHCARD_SWIPE },
     words: { ...DEFAULT_FLASHCARD_SWIPE },

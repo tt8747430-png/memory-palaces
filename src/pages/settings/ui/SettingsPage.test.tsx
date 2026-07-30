@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { started } from '@/shared/test/started'
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { I18nextProvider } from 'react-i18next'
@@ -19,8 +20,8 @@ function renderSettings(props: Partial<SettingsPageProps> = {}) {
   const profileRepo = new InMemoryRepository<Profile>()
   render(
     <I18nextProvider i18n={i18n}>
-      <PreferencesStoreContext value={createPreferencesStore(prefsRepo)}>
-        <ProfileStoreContext value={createProfileStore(profileRepo)}>
+      <PreferencesStoreContext value={started(createPreferencesStore(prefsRepo))}>
+        <ProfileStoreContext value={started(createProfileStore(profileRepo))}>
           <SettingsPage onBack={() => {}} {...props} />
         </ProfileStoreContext>
       </PreferencesStoreContext>

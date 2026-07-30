@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
+import { ACTION_META } from '@/shared/config/actions'
 import { useTranslation } from 'react-i18next'
 import {
-  SWIPE_ACTION_META,
   SWIPE_ACTIONS,
   SWIPE_SIDE_MAX,
   type SwipeActionId,
@@ -43,7 +43,7 @@ export function SideGroup({ icon, label, side, type, selected, onToggle }: SideG
           return (
             <ActionPill
               key={id}
-              label={t(SWIPE_ACTION_META[id].labelKey as never)}
+              label={t(ACTION_META[id].labelKey as never)}
               icon={swipeActionIcon(id)}
               accent={accentOf(id).fill}
               on={on}

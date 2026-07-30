@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { started } from '@/shared/test/started'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
@@ -35,9 +36,11 @@ function renderLibrary({
   function Wrapper({ children }: { children: ReactNode }) {
     return (
       <I18nextProvider i18n={i18n}>
-        <FolderStoreContext value={createFolderStore(new InMemoryRepository<Folder>(folders))}>
-          <DeckStoreContext value={createDeckStore(new InMemoryRepository<Deck>(decks))}>
-            <CardStoreContext value={createCardStore(new InMemoryRepository<Card>([]))}>
+        <FolderStoreContext
+          value={started(createFolderStore(new InMemoryRepository<Folder>(folders)))}
+        >
+          <DeckStoreContext value={started(createDeckStore(new InMemoryRepository<Deck>(decks)))}>
+            <CardStoreContext value={started(createCardStore(new InMemoryRepository<Card>([])))}>
               {children}
             </CardStoreContext>
           </DeckStoreContext>
@@ -68,7 +71,7 @@ describe('useLibrary', () => {
     })
     await waitFor(() => expect(result.current.ready).toBe(true))
 
-    act(() => result.current.selection.beginDeck('root'))
+    act(() => result.current.selection.begin('root'))
     expect(result.current.selection.active).toBe(true)
     expect([...result.current.selection.ids].sort()).toEqual(['child', 'root'])
   })

@@ -1,39 +1,12 @@
 import type { ReactNode } from 'react'
 import type { TFunction } from 'i18next'
-import {
-  Archive,
-  Copy,
-  Flag,
-  FolderInput,
-  FolderPlus,
-  GraduationCap,
-  Heart,
-  Pencil,
-  Plus,
-  RotateCcw,
-  Settings,
-  Trash2,
-} from 'lucide-react'
-import { SWIPE_ACTION_META, type SwipeActionId, type SwipeConfig } from '@/shared/config/swipe'
+import { ACTION_META } from '@/shared/config/actions'
+import type { SwipeActionId, SwipeConfig } from '@/shared/config/swipe'
+import { actionIcon } from './action-icon'
 import type { SwipeAction } from './SwipeRow'
 
-const SWIPE_ACTION_ICON: Record<SwipeActionId, ReactNode> = {
-  favorite: <Heart className="size-5" aria-hidden />,
-  move: <FolderInput className="size-5" aria-hidden />,
-  archive: <Archive className="size-5" aria-hidden />,
-  settings: <Settings className="size-5" aria-hidden />,
-  edit: <Pencil className="size-5" aria-hidden />,
-  addSubdeck: <Plus className="size-5" aria-hidden />,
-  addDeck: <FolderPlus className="size-5" aria-hidden />,
-  duplicate: <Copy className="size-5" aria-hidden />,
-  reset: <RotateCcw className="size-5" aria-hidden />,
-  flag: <Flag className="size-5" aria-hidden />,
-  known: <GraduationCap className="size-5" aria-hidden />,
-  delete: <Trash2 className="size-5" aria-hidden />,
-}
-
 export function swipeActionIcon(id: SwipeActionId): ReactNode {
-  return SWIPE_ACTION_ICON[id]
+  return actionIcon(id)
 }
 
 export type SwipeActionHandlers = Partial<
@@ -56,11 +29,11 @@ export function buildSwipeActions(
     ids.flatMap((id) => {
       const handler = handlers[id]
       if (!handler) return []
-      const meta = SWIPE_ACTION_META[id]
+      const meta = ACTION_META[id]
       return [
         {
           id,
-          icon: handler.icon ?? SWIPE_ACTION_ICON[id],
+          icon: handler.icon ?? actionIcon(id),
           label: handler.label ?? t(meta.labelKey as never),
           accent: meta.accent,
           onAction: handler.onAction,

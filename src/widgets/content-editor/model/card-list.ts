@@ -1,6 +1,6 @@
 import type { Card } from '@/entities/card'
 import type { ContentSort } from '@/entities/preferences'
-import { srsStatus } from '@/shared/lib'
+import { sortContent, srsStatus } from '@/shared/lib'
 
 export type MaturityKey = 'new' | 'learning' | 'known'
 
@@ -14,22 +14,8 @@ export const EMPTY_CARD_FILTER: CardFilter = { maturity: new Set(), flaggedOnly:
 export const cardFilterCount = (filter: CardFilter): number =>
   filter.maturity.size + (filter.flaggedOnly ? 1 : 0)
 
-const dueKey = (card: Card) => card.srs?.due ?? ''
-
-export function sortCards(cards: Card[], sort: ContentSort): Card[] {
-  switch (sort) {
-    case 'name':
-      return [...cards].sort((a, b) => a.front.localeCompare(b.front))
-    case 'recent':
-      return [...cards].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-    case 'due':
-      return [...cards].sort((a, b) => dueKey(a).localeCompare(dueKey(b)))
-    case 'flagged':
-      return [...cards].sort((a, b) => Number(b.flagged) - Number(a.flagged))
-    case 'manual':
-      return cards
-  }
-}
+export const sortCards = (cards: Card[], sort: ContentSort): Card[] =>
+  sortContent(cards, sort, (card) => card.front)
 
 const SEARCHABLE = ['front', 'back', 'hint', 'tip'] as const
 

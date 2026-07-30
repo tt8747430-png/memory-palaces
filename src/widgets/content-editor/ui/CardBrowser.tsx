@@ -2,21 +2,10 @@ import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialog } from '@base-ui/react/dialog'
 import { type HTMLMotionProps, motion, useReducedMotion } from 'motion/react'
-import {
-  ChevronLeft,
-  ChevronRight,
-  Copy,
-  Flag,
-  GraduationCap,
-  MoreVertical,
-  Pencil,
-  RotateCcw,
-  Trash2,
-  X,
-} from 'lucide-react'
+import { ChevronLeft, ChevronRight, MoreVertical, Pencil, X } from 'lucide-react'
 import type { Card } from '@/entities/card'
 import { cn } from '@/shared/lib'
-import { FlyoutMenu, type SheetAction } from '@/shared/ui'
+import { buildMenuActions, FlyoutMenu, type SheetAction } from '@/shared/ui'
 import { useCardBrowser } from '../model/use-card-browser'
 import { CARD_EASE, DEPTH_POSE } from './browser-poses'
 import { PreviewFace, QueuedPreview } from './CardPreviewFace'
@@ -63,39 +52,20 @@ export function CardBrowser({
   const { current } = deck
 
   const menuActions: SheetAction[] = current
-    ? [
+    ? buildMenuActions(
+        ['flag', 'duplicate', 'known', 'reset', 'delete'],
         {
-          id: 'flag',
-          label: current.flagged ? t('cards.row.unflag') : t('cards.row.flag'),
-          icon: <Flag className="size-5" aria-hidden />,
-          onSelect: () => onToggleFlag(current.id),
+          flag: {
+            onAction: () => onToggleFlag(current.id),
+            label: current.flagged ? t('cards.row.unflag') : t('cards.row.flag'),
+          },
+          duplicate: { onAction: () => onDuplicate(current.id) },
+          known: { onAction: () => onMarkKnown(current.id) },
+          reset: { onAction: () => onResetSrs(current.id) },
+          delete: { onAction: () => onDelete(current.id) },
         },
-        {
-          id: 'duplicate',
-          label: t('cards.row.duplicate'),
-          icon: <Copy className="size-5" aria-hidden />,
-          onSelect: () => onDuplicate(current.id),
-        },
-        {
-          id: 'known',
-          label: t('cards.row.markKnown'),
-          icon: <GraduationCap className="size-5" aria-hidden />,
-          onSelect: () => onMarkKnown(current.id),
-        },
-        {
-          id: 'reset',
-          label: t('cards.row.resetSchedule'),
-          icon: <RotateCcw className="size-5" aria-hidden />,
-          onSelect: () => onResetSrs(current.id),
-        },
-        {
-          id: 'delete',
-          label: t('common.delete'),
-          icon: <Trash2 className="size-5" aria-hidden />,
-          destructive: true,
-          onSelect: () => onDelete(current.id),
-        },
-      ]
+        t,
+      )
     : []
 
   return (
@@ -116,7 +86,7 @@ export function CardBrowser({
         />
         <Dialog.Popup
           className={cn(
-            'fixed inset-0 z-[310] mx-auto flex w-full max-w-[430px] flex-col outline-none',
+            'fixed inset-0 z-[310] mx-auto flex w-full max-w-app flex-col outline-none',
             'transition-[opacity,transform] duration-300 ease-out',
             'data-[starting-style]:scale-[0.98] data-[starting-style]:opacity-0',
             'data-[ending-style]:scale-[0.98] data-[ending-style]:opacity-0',

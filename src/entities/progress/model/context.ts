@@ -1,25 +1,10 @@
-import { createContext, useContext } from 'react'
-import { useStore } from 'zustand'
-import type { ProgressState, ProgressStore } from './store'
+import { createStoreContext } from '@/shared/lib'
+import type { ProgressState } from './store'
 
-export const ProgressStoreContext = createContext<ProgressStore | null>(null)
+const { StoreContext, useSelector, useStoreApi, useStoreApiOptional } =
+  createStoreContext<ProgressState>('Progress')
 
-function useProgressStoreContext(): ProgressStore {
-  const store = useContext(ProgressStoreContext)
-  if (!store) {
-    throw new Error('Progress store missing — render inside <ProgressStoreContext value={…}>')
-  }
-  return store
-}
-
-export function useProgressStore<T>(selector: (state: ProgressState) => T): T {
-  return useStore(useProgressStoreContext(), selector)
-}
-
-export function useProgressStoreApi(): ProgressStore {
-  return useProgressStoreContext()
-}
-
-export function useProgressStoreApiOptional(): ProgressStore | null {
-  return useContext(ProgressStoreContext)
-}
+export const ProgressStoreContext = StoreContext
+export const useProgressStore = useSelector
+export const useProgressStoreApi = useStoreApi
+export const useProgressStoreApiOptional = useStoreApiOptional

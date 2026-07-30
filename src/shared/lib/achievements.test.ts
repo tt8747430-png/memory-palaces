@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { type AchievementInput, computeAchievements } from './achievements'
+import {
+  ACHIEVEMENT_IDS,
+  type AchievementInput,
+  computeAchievements,
+  isAchievementId,
+} from './achievements'
 
 const base: AchievementInput = {
   deckCount: 0,
@@ -57,5 +62,19 @@ describe('computeAchievements', () => {
   it('earns dedicated-learner at 10 completed rooms, not 9', () => {
     expect(earnedIds({ ...base, decksCompleted: 9 })).not.toContain('dedicated-learner')
     expect(earnedIds({ ...base, decksCompleted: 10 })).toContain('dedicated-learner')
+  })
+})
+
+describe('isAchievementId', () => {
+  it('accepts every id the achievement list declares', () => {
+    expect(ACHIEVEMENT_IDS.every(isAchievementId)).toBe(true)
+  })
+
+  it('rejects a route param that names no achievement', () => {
+    expect(isAchievementId('first-room')).toBe(false)
+  })
+
+  it('guards exactly the ids computeAchievements produces', () => {
+    expect(computeAchievements(base).map((a) => a.id)).toEqual([...ACHIEVEMENT_IDS])
   })
 })

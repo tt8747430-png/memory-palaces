@@ -14,10 +14,17 @@ export interface SortableRowProps {
   id: string
   as?: 'li' | 'div'
   landingRef?: (node: HTMLElement | null) => void
+  /** Sizing for the wrapper — a chip in a row needs to flex, a list row does not. */
+  className?: string
   children: (render: SortableRowRender) => ReactNode
 }
 
-export function SortableRow({ id, as = 'div', landingRef, children }: SortableRowProps) {
+/**
+ * The one sortable element. Everything draggable — a deck row, a folder row, a
+ * toolbar chip, a swipe cap — gets its transform, its transition and its drag
+ * handle from here, so `useSortable` is called in exactly one place.
+ */
+export function SortableRow({ id, as = 'div', landingRef, className, children }: SortableRowProps) {
   const {
     attributes,
     listeners,
@@ -33,7 +40,7 @@ export function SortableRow({ id, as = 'div', landingRef, children }: SortableRo
     <Outer
       ref={setNodeRef as never}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={cn('relative', isDragging && 'z-50')}
+      className={cn('relative', isDragging && 'z-50', className)}
     >
       {children({
         frameRef: landingRef ?? (() => {}),

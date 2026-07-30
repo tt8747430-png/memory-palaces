@@ -159,11 +159,6 @@ export function currentId(state: SessionState): string | undefined {
   return undefined
 }
 
-export function nextId(state: SessionState): string | undefined {
-  if (state.status === 'review') return state.queue[1]
-  return undefined
-}
-
 export function upcomingIds(state: SessionState, count: number): string[] {
   if (state.status !== 'review') return []
   return state.queue.slice(1, 1 + count)

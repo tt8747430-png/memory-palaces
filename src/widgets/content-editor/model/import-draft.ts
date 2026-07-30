@@ -1,18 +1,11 @@
 import { create } from 'zustand'
-import type { ParsedCard, SrsState } from '@/shared/lib'
+import type { ParsedCard } from '@/shared/lib'
+import { newId } from '@/shared/lib'
 
 export type ImportSource = 'paste' | 'mindscape' | 'anki'
 
-export interface DraftCard {
-  id: string
-  front: string
-  back: string
-  hint?: string
-  tip?: string
-  flagged?: boolean
-  memorized?: boolean
-  srs?: SrsState
-}
+/** A parsed card the review screen can address, once it has an id to key on. */
+export type DraftCard = ParsedCard & { id: string }
 
 export interface ImportDraft {
   source: ImportSource
@@ -35,7 +28,7 @@ export const useImportDraft = create<ImportDraftState>((set) => ({
     set({
       draft: {
         source,
-        cards: cards.map((card) => ({ id: crypto.randomUUID(), ...card })),
+        cards: cards.map((card) => ({ id: newId(), ...card })),
       },
     }),
   editCard: (id, changes) =>

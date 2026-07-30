@@ -2,15 +2,11 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Deck } from '@/entities/deck'
 import type { Folder } from '@/entities/folder'
-import { cn } from '@/shared/lib'
+import { cn, findEntity } from '@/shared/lib'
 import { SortableRow } from '@/shared/ui'
 import { DeckDragPreview, DeckRowBody } from './deck-row'
 import { FolderDragPreview, FolderRowBody } from './folder-row'
-import { DECK_ROW_FRAME, FOLDER_ROW_FRAME } from './row-style'
-
-const ROW_SURFACE = 'relative bg-card shadow-card transition-[box-shadow,background-color]'
-const ROW_HIT =
-  'absolute inset-0 touch-pan-y rounded-card transition-colors active:bg-primary/[0.06]'
+import { DECK_ROW_FRAME, FOLDER_ROW_FRAME, ROW_HIT, ROW_SURFACE } from './row-style'
 
 export function Section({
   id,
@@ -51,7 +47,7 @@ export function StackLayer({
   folderDeckCounts: Map<string, number>
   selectedIds: ReadonlySet<string>
 }) {
-  const folder = folders.find((f) => f.id === id)
+  const folder = findEntity(folders, id)
   if (folder) {
     return (
       <FolderDragPreview
@@ -61,7 +57,7 @@ export function StackLayer({
       />
     )
   }
-  const deck = decks.find((d) => d.id === id)
+  const deck = findEntity(decks, id)
   if (!deck) return null
   return (
     <DeckDragPreview
@@ -78,82 +74,87 @@ interface SelectRowProps {
   landingRef: (node: HTMLElement | null) => void
 }
 
-export function SelectFolderRow({
-  folder,
-  deckCount,
-  isDropTarget,
+/**
+ * A row in select mode: the whole frame is one toggle, and the drag handle is
+ * that same button, so a press reorders and a tap selects. Folders and decks
+ * differ only in their frame and the body they show.
+ */
+function SelectRow({
+  id,
+  name,
+  frame,
+  highlight,
   selected,
   onToggleSelect,
   landingRef,
-}: SelectRowProps & { folder: Folder; deckCount: number; isDropTarget: boolean }) {
+  children,
+}: SelectRowProps & {
+  id: string
+  name: string
+  frame: string
+  highlight?: string | false
+  children: ReactNode
+}) {
   const { t } = useTranslation()
   return (
-    <SortableRow as="li" id={folder.id} landingRef={landingRef}>
+    <SortableRow as="li" id={id} landingRef={landingRef}>
       {({ frameRef, handleRef, handleProps, isDragging }) => (
         <div
           ref={frameRef}
           className={cn(
-            FOLDER_ROW_FRAME,
+            frame,
             ROW_SURFACE,
             selected && 'ring-2 ring-inset ring-accent',
-            isDropTarget &&
-              'bg-accent/[0.08] ring-2 ring-accent ring-offset-2 ring-offset-background',
+            highlight,
             isDragging && 'opacity-0',
           )}
         >
           <button
             type="button"
             ref={handleRef}
-            onClick={() => onToggleSelect(folder.id)}
+            onClick={() => onToggleSelect(id)}
             {...handleProps}
-            aria-label={t('library.select.toggle', { name: folder.name })}
+            aria-label={t('library.select.toggle', { name })}
             aria-pressed={selected}
-            className={ROW_HIT}
+            className={cn(ROW_HIT, 'touch-pan-y')}
           />
-          <FolderRowBody
-            folder={folder}
-            deckCount={deckCount}
-            selected={selected}
-            isDropTarget={isDropTarget}
-          />
+          {children}
         </div>
       )}
     </SortableRow>
   )
 }
 
-export function SelectDeckRow({
-  deck,
-  due,
-  selected,
-  onToggleSelect,
-  landingRef,
-}: SelectRowProps & { deck: Deck; due: number }) {
-  const { t } = useTranslation()
+export function SelectFolderRow({
+  folder,
+  deckCount,
+  isDropTarget,
+  ...row
+}: SelectRowProps & { folder: Folder; deckCount: number; isDropTarget: boolean }) {
   return (
-    <SortableRow as="li" id={deck.id} landingRef={landingRef}>
-      {({ frameRef, handleRef, handleProps, isDragging }) => (
-        <div
-          ref={frameRef}
-          className={cn(
-            DECK_ROW_FRAME,
-            ROW_SURFACE,
-            selected && 'ring-2 ring-inset ring-accent',
-            isDragging && 'opacity-0',
-          )}
-        >
-          <button
-            type="button"
-            ref={handleRef}
-            onClick={() => onToggleSelect(deck.id)}
-            {...handleProps}
-            aria-label={t('library.select.toggle', { name: deck.name })}
-            aria-pressed={selected}
-            className={ROW_HIT}
-          />
-          <DeckRowBody deck={deck} due={due} selectState={selected ? 'checked' : 'unchecked'} />
-        </div>
-      )}
-    </SortableRow>
+    <SelectRow
+      {...row}
+      id={folder.id}
+      name={folder.name}
+      frame={FOLDER_ROW_FRAME}
+      highlight={
+        isDropTarget && 'bg-accent/[0.08] ring-2 ring-accent ring-offset-2 ring-offset-background'
+      }
+    >
+      <FolderRowBody
+        folder={folder}
+        deckCount={deckCount}
+        selected={row.selected}
+        isDropTarget={isDropTarget}
+      />
+    </SelectRow>
+  )
+}
+
+export function SelectDeckRow({ deck, due, ...row }: SelectRowProps & { deck: Deck; due: number }) {
+  return (
+    <SelectRow {...row} id={deck.id} name={deck.name} frame={DECK_ROW_FRAME}>
+      <DeckRowBody deck={deck} due={due} selectState={row.selected ? 'checked' : 'unchecked'} />
+    </SelectRow>
   )
 }

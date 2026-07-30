@@ -1,7 +1,7 @@
 import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { Plus } from 'lucide-react'
-import { cn } from '@/shared/lib'
+import { cn, EASE_OUT } from '@/shared/lib'
 
 export interface SpeedDialAction {
   id: string
@@ -10,15 +10,25 @@ export interface SpeedDialAction {
   onSelect: () => void
 }
 
+/**
+ * Where the dial sits above the bottom edge: clear of the app nav on a screen
+ * that has one, clear of the home indicator on a screen that does not.
+ */
+export type SpeedDialPlacement = 'above-nav' | 'above-safe-area'
+
+const PLACEMENT: Record<SpeedDialPlacement, string> = {
+  'above-nav': 'bottom-[calc(var(--app-bottom-inset)+1rem)]',
+  'above-safe-area': 'bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+0.75rem)]',
+}
+
 export interface SpeedDialProps {
   label: string
   actions: SpeedDialAction[]
+  placement?: SpeedDialPlacement
   className?: string
 }
 
-const EASE_OUT = [0.22, 1, 0.36, 1] as const
-
-export function SpeedDial({ label, actions, className }: SpeedDialProps) {
+export function SpeedDial({ label, actions, placement = 'above-nav', className }: SpeedDialProps) {
   const [open, setOpen] = useState(false)
   const reduce = useReducedMotion()
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -63,7 +73,7 @@ export function SpeedDial({ label, actions, className }: SpeedDialProps) {
       <div
         className={cn(
           'fixed right-5 z-[220] flex flex-col items-end gap-3',
-          'bottom-[calc(var(--app-bottom-inset)+1rem)]',
+          PLACEMENT[placement],
           className,
         )}
       >

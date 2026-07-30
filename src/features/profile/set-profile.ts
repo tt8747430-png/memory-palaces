@@ -1,12 +1,16 @@
-import { makeProfile, type Profile, type ProfileChanges, type ProfileStore, updateProfile, } from '@/entities/profile'
+import {
+  makeProfile,
+  type Profile,
+  type ProfileChanges,
+  type ProfileStore,
+  updateProfile,
+} from '@/entities/profile'
+import { nowIso } from '@/shared/lib'
 
 export const PROFILE_ID = 'profile'
 
 function currentProfile(store: ProfileStore, now: number): Profile {
-  return (
-    store.getState().profile ??
-    makeProfile({ id: PROFILE_ID, createdAt: new Date(now).toISOString() })
-  )
+  return store.getState().profile ?? makeProfile({ id: PROFILE_ID, createdAt: nowIso(now) })
 }
 
 export async function setProfile(
@@ -15,7 +19,7 @@ export async function setProfile(
   now: number = Date.now(),
 ): Promise<Profile> {
   const base = currentProfile(store, now)
-  const updated = updateProfile(base, changes, new Date(now).toISOString())
+  const updated = updateProfile(base, changes, nowIso(now))
   await store.getState().save(updated)
   return updated
 }

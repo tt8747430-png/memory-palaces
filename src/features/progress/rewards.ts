@@ -1,13 +1,12 @@
+import { clamp } from '@/shared/lib'
 import type { CompleteSessionOptions } from './complete-session'
 
 const STUDY_XP_PER_CARD = 6
 const STUDY_XP_MIN = 20
 const STUDY_XP_MAX = 150
 
-export const XP_PER_CORRECT = 20
+const XP_PER_CORRECT = 20
 export const XP_MATCH = 60
-
-const clamp = (value: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, value))
 
 export function studyXp(graded: number): number {
   return clamp(graded * STUDY_XP_PER_CARD, STUDY_XP_MIN, STUDY_XP_MAX)

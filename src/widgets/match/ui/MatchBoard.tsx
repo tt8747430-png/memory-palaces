@@ -1,9 +1,9 @@
 import { useEffect, useReducer, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-import { Check, Puzzle, RotateCcw, Timer, X, Zap } from 'lucide-react'
-import { cn, success } from '@/shared/lib'
-import { Button, Chip, IconButton } from '@/shared/ui'
+import { Check, Puzzle, RotateCcw, Timer, Zap } from 'lucide-react'
+import { cn, EASE_EXPO, success } from '@/shared/lib'
+import { Button, Chip, Empty, IconButton, SessionHeader, SessionScreen } from '@/shared/ui'
 import {
   buildTiles,
   initMatch,
@@ -59,45 +59,32 @@ export function MatchBoard({ cards, subtitle, onBack, onComplete }: MatchBoardPr
 
   if (cards.length < 2) {
     return (
-      <div className="relative mx-auto flex h-full w-full max-w-[430px] flex-col items-center justify-center gap-5 px-6 text-center">
-        <div className="grid size-16 place-items-center rounded-card-featured bg-info-surface">
-          <Puzzle className="size-8 text-accent" aria-hidden />
-        </div>
-        <div>
-          <h2 className="mb-1 text-[length:var(--p-text-headline)] font-bold text-heading">
-            {t('match.notEnough')}
-          </h2>
-          <p className="mx-auto max-w-[34ch] text-[length:var(--p-text-body)]">
-            {t('match.notEnoughHint')}
-          </p>
-        </div>
-        <Button onClick={onBack}>{t('match.back')}</Button>
-      </div>
+      <Empty
+        variant="hero"
+        className="mx-auto h-full w-full max-w-app"
+        icon={<Puzzle className="size-8" aria-hidden />}
+        title={t('match.notEnough')}
+        description={t('match.notEnoughHint')}
+        action={<Button onClick={onBack}>{t('match.back')}</Button>}
+      />
     )
   }
 
   const board = state.tiles.filter((tile) => !state.matched.includes(tile.id))
 
   return (
-    <div className="relative mx-auto flex h-full w-full max-w-[430px] flex-col overflow-hidden">
-      <div className="px-5 pt-safe">
-        <div className="flex items-center justify-between gap-2 pt-3">
-          <IconButton variant="glass" aria-label={t('match.goBack')} onClick={onBack}>
-            <X className="size-5" aria-hidden />
-          </IconButton>
-          <div className="min-w-0 flex-1 text-center">
-            <h1 className="truncate text-[length:var(--p-text-title)] font-semibold text-heading">
-              {t('match.title')}
-            </h1>
-            {subtitle ? (
-              <p className="truncate text-[length:var(--p-text-label)]">{subtitle}</p>
-            ) : null}
-          </div>
+    <SessionScreen>
+      <SessionHeader
+        title={t('match.title')}
+        subtitle={subtitle}
+        backLabel={t('match.goBack')}
+        onBack={onBack}
+        action={
           <IconButton variant="glass" aria-label={t('match.restart')} onClick={restart}>
             <RotateCcw className="size-5" aria-hidden />
           </IconButton>
-        </div>
-
+        }
+      >
         <div className="mt-4 flex items-center justify-center gap-2">
           <Chip icon={<Timer className="size-3.5" aria-hidden />}>{formatTime(elapsed)}</Chip>
           <Chip icon={<Zap className="size-3.5" aria-hidden />}>
@@ -105,7 +92,7 @@ export function MatchBoard({ cards, subtitle, onBack, onComplete }: MatchBoardPr
           </Chip>
           <Chip>{t('match.pairsLeft', { count: remainingPairs(state) })}</Chip>
         </div>
-      </div>
+      </SessionHeader>
 
       <p className="px-5 pb-2 pt-3 text-center text-[length:var(--p-text-label)] font-medium text-muted-foreground">
         {t('match.instruction')}
@@ -124,7 +111,7 @@ export function MatchBoard({ cards, subtitle, onBack, onComplete }: MatchBoardPr
                   layout={!reduce}
                   initial={false}
                   exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.7 }}
-                  transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                  transition={{ duration: 0.2, ease: EASE_EXPO }}
                   animate={isWrong && !reduce ? { x: [0, -7, 7, -5, 5, 0] } : { x: 0 }}
                   onClick={() => dispatch({ type: 'pick', tileId: tile.id })}
                   className={cn(
@@ -187,6 +174,6 @@ export function MatchBoard({ cards, subtitle, onBack, onComplete }: MatchBoardPr
           </motion.div>
         ) : null}
       </AnimatePresence>
-    </div>
+    </SessionScreen>
   )
 }

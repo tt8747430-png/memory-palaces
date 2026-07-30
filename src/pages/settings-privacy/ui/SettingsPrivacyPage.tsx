@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect } from 'react'
+import { type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Eye, Lock, MapPin, Share2, TrendingUp } from 'lucide-react'
 import {
@@ -18,10 +18,6 @@ export function SettingsPrivacyPage({ onBack }: SettingsPrivacyPageProps) {
   const { t } = useTranslation()
   const store = usePreferencesStoreApi()
   const prefs = usePreferencesStore(selectEffectivePreferences)
-
-  useEffect(() => {
-    store.getState().start()
-  }, [store])
 
   const toggle = (key: keyof PrivacySettings, value: boolean) =>
     void setPreferences(store, { privacy: { ...prefs.privacy, [key]: value } })

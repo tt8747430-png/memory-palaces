@@ -1,24 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Settings } from 'lucide-react'
-import {
-  selectDecks,
-  selectIsReady as selectDecksReady,
-  useDeckStore,
-  useDeckStoreApi,
-} from '@/entities/deck'
-import {
-  selectCards,
-  selectIsReady as selectCardsReady,
-  useCardStore,
-  useCardStoreApi,
-} from '@/entities/card'
-import {
-  questionsForDeck,
-  selectQuestions,
-  useQuestionStore,
-  useQuestionStoreApi,
-} from '@/entities/question'
+import { useDeck } from '@/entities/deck'
+import { selectCards, useCardStore } from '@/entities/card'
+import { questionsForDeck, selectQuestions, useQuestionStore } from '@/entities/question'
 import {
   type ContentSort,
   selectEffectivePreferences,
@@ -26,10 +11,17 @@ import {
   usePreferencesStoreApi,
 } from '@/entities/preferences'
 import { setPreferences } from '@/features/preferences'
-import { cardsInSubtree, studyOverview, useMultiSelect } from '@/shared/lib'
+import { cardsInSubtree, selectIsReady, studyOverview, useMultiSelect } from '@/shared/lib'
 import { DeckContentEditor } from '@/widgets/content-editor'
 import { PracticeModes } from '@/widgets/practice-modes'
-import { AppScreen, IconButton, ScreenHeader, SelectHeader, StudyOverviewCard } from '@/shared/ui'
+import {
+  AppScreen,
+  IconButton,
+  ScreenHeader,
+  ScreenLoading,
+  SelectHeader,
+  StudyOverviewCard,
+} from '@/shared/ui'
 
 export interface DeckDetailPageProps {
   deckId: string
@@ -57,26 +49,14 @@ export function DeckDetailPage({
   onReviewImport,
 }: DeckDetailPageProps) {
   const { t } = useTranslation()
-  const deckStore = useDeckStoreApi()
-  const cardStore = useCardStoreApi()
-  const questionStore = useQuestionStoreApi()
   const prefStore = usePreferencesStoreApi()
 
-  useEffect(() => {
-    deckStore.getState().start()
-    cardStore.getState().start()
-    questionStore.getState().start()
-    prefStore.getState().start()
-  }, [deckStore, cardStore, questionStore, prefStore])
-
-  const decks = useDeckStore(selectDecks)
+  const { decks, deck, ready: decksReady } = useDeck(deckId)
   const allCards = useCardStore(selectCards)
   const allQuestions = useQuestionStore(selectQuestions)
-  const decksReady = useDeckStore(selectDecksReady)
-  const cardsReady = useCardStore(selectCardsReady)
+  const cardsReady = useCardStore(selectIsReady)
   const ready = decksReady && cardsReady
 
-  const deck = useMemo(() => decks.find((d) => d.id === deckId), [decks, deckId])
   const subtreeCards = useMemo(
     () => cardsInSubtree(decks, allCards, deckId),
     [decks, allCards, deckId],
@@ -92,11 +72,7 @@ export function DeckDetailPage({
   const selection = useMultiSelect()
 
   if (!ready) {
-    return (
-      <AppScreen className="items-center justify-center">
-        <span className="size-8 animate-pulse rounded-full bg-secondary" aria-hidden />
-      </AppScreen>
-    )
+    return <ScreenLoading />
   }
 
   if (!deck) {
@@ -115,12 +91,7 @@ export function DeckDetailPage({
     <AppScreen
       header={
         selection.active ? (
-          <SelectHeader
-            count={selection.count}
-            allSelected={selection.allSelected}
-            onToggleAll={selection.toggleAll}
-            onCancel={selection.exit}
-          />
+          <SelectHeader selection={selection} />
         ) : (
           <ScreenHeader
             title={deck.name}

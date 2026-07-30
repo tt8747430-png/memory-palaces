@@ -1,32 +1,7 @@
-import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import {
-  type BadgeId,
-  computeBadges,
-  computeTrainingTotals,
-  nextMilestone,
-  totalTrainingDays,
-} from '@/shared/lib'
-import {
-  selectIsReady as selectProgressReady,
-  selectProgress,
-  useProgressStore,
-  useProgressStoreApi,
-} from '@/entities/progress'
-import {
-  selectDecks,
-  selectIsReady as selectDecksReady,
-  useDeckStore,
-  useDeckStoreApi,
-} from '@/entities/deck'
-import {
-  selectCards,
-  selectIsReady as selectCardsReady,
-  useCardStore,
-  useCardStoreApi,
-} from '@/entities/card'
-import { BadgeGrid, NextMilestoneCard } from '@/widgets/badge-list'
-import { AppScreen, ScreenHeader } from '@/shared/ui'
+import type { BadgeId } from '@/shared/lib'
+import { BadgeGrid, NextMilestoneCard, RewardGridSkeleton, useRewards } from '@/widgets/rewards'
+import { AppScreen, ScreenHeader, Skeleton } from '@/shared/ui'
 
 export interface BadgesPageProps {
   onBack?: () => void
@@ -35,38 +10,7 @@ export interface BadgesPageProps {
 
 export function BadgesPage({ onBack, onOpenBadge }: BadgesPageProps = {}) {
   const { t } = useTranslation()
-  const progressStore = useProgressStoreApi()
-  const deckStore = useDeckStoreApi()
-  const cardStore = useCardStoreApi()
-  const progress = useProgressStore(selectProgress)
-  const decks = useDeckStore(selectDecks)
-  const cards = useCardStore(selectCards)
-  const progressReady = useProgressStore(selectProgressReady)
-  const decksReady = useDeckStore(selectDecksReady)
-  const cardsReady = useCardStore(selectCardsReady)
-  const dataReady = progressReady && decksReady && cardsReady
-
-  useEffect(() => {
-    progressStore.getState().start()
-    deckStore.getState().start()
-    cardStore.getState().start()
-  }, [progressStore, deckStore, cardStore])
-
-  const totals = useMemo(() => computeTrainingTotals(decks, cards), [decks, cards])
-  const topLevelDecks = useMemo(() => decks.filter((deck) => deck.parentId === null), [decks])
-  const badges = useMemo(
-    () =>
-      computeBadges({
-        xp: progress?.xp ?? 0,
-        longestStreak: progress?.longestStreak ?? 0,
-        decksCompleted: totals.decksCompleted,
-        deckCount: topLevelDecks.length,
-        totalCards: totals.totalCards,
-        trainingDayCount: totalTrainingDays(progress?.trainingDays ?? []),
-      }),
-    [progress, totals, topLevelDecks.length],
-  )
-  const milestone = useMemo(() => nextMilestone(badges), [badges])
+  const { ready, badges, milestone } = useRewards()
 
   return (
     <AppScreen
@@ -76,7 +20,7 @@ export function BadgesPage({ onBack, onOpenBadge }: BadgesPageProps = {}) {
         <ScreenHeader title={t('badges.title')} onBack={onBack} backLabel={t('common.back')} />
       }
     >
-      {!dataReady ? (
+      {!ready ? (
         <BadgesSkeleton />
       ) : (
         <div className="mt-2 flex flex-col gap-5">
@@ -96,16 +40,9 @@ export function BadgesPage({ onBack, onOpenBadge }: BadgesPageProps = {}) {
 function BadgesSkeleton() {
   return (
     <div aria-hidden className="mt-2 flex flex-col gap-5">
-      <div className="h-3 w-44 animate-pulse rounded-full bg-secondary/30" />
-      <div className="h-20 animate-pulse rounded-card bg-secondary/30" />
-      <div className="grid grid-cols-3 gap-x-3 gap-y-7">
-        {Array.from({ length: 6 }, (_, index) => (
-          <div key={index} className="flex flex-col items-center gap-2">
-            <div className="size-20 animate-pulse rounded-full bg-secondary/30" />
-            <div className="h-2.5 w-12 animate-pulse rounded-full bg-secondary/20" />
-          </div>
-        ))}
-      </div>
+      <Skeleton className="h-3 w-44" />
+      <Skeleton className="h-20 rounded-card" />
+      <RewardGridSkeleton />
     </div>
   )
 }

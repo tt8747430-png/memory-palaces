@@ -35,6 +35,27 @@ export function siblingDecks<T extends TreeDeck>(
     .sort(byOrder)
 }
 
+/**
+ * The decks a new or moving deck would share a row with: same parent, or — at
+ * the root — same folder. Unlike `siblingDecks` this keeps archived decks and
+ * skips the sort, because it exists to answer "what orders are taken", and an
+ * archived deck still holds the `order` it was filed under. Pass `exceptId` to
+ * leave the deck being moved out of its own reckoning.
+ */
+export function orderSiblings<T extends TreeDeck>(
+  decks: readonly T[],
+  parentId: string | null,
+  folderId: string | null = null,
+  exceptId?: string,
+): T[] {
+  return decks.filter(
+    (d) =>
+      d.id !== exceptId &&
+      d.parentId === parentId &&
+      (parentId !== null || (d.folderId ?? null) === folderId),
+  )
+}
+
 export function rootDecks<T extends TreeDeck>(decks: readonly T[]): T[] {
   return decks.filter((d) => d.parentId === null && (d.folderId ?? null) === null).sort(byOrder)
 }
@@ -70,41 +91,14 @@ export function subtreeDecks<T extends TreeDeck>(decks: readonly T[], rootId: st
     .filter((d): d is T => d !== undefined)
 }
 
-export function selectionRoots(
-  decks: readonly TreeDeck[],
-  selectedIds: ReadonlySet<string>,
-): string[] {
-  const active = decks.filter((d) => !d.archived)
-  const byId = new Map(active.map((d) => [d.id, d]))
-  const hasSelectedAncestor = (deck: TreeDeck): boolean => {
-    const seen = new Set<string>()
-    let cur = deck.parentId ? byId.get(deck.parentId) : undefined
-    while (cur && !seen.has(cur.id)) {
-      if (selectedIds.has(cur.id)) return true
-      seen.add(cur.id)
-      cur = cur.parentId ? byId.get(cur.parentId) : undefined
-    }
-    return false
-  }
-  const rootIds = new Set(
-    active.filter((d) => selectedIds.has(d.id) && !hasSelectedAncestor(d)).map((d) => d.id),
-  )
-
-  const ordered: string[] = []
-  const folderIds = new Set<string | null>([null])
-  for (const d of active) if (d.parentId === null && d.folderId != null) folderIds.add(d.folderId)
-  const walk = (parentId: string | null, folderId: string | null) => {
-    for (const d of siblingDecks(active, parentId, folderId)) {
-      if (rootIds.has(d.id)) ordered.push(d.id)
-      walk(d.id, null)
-    }
-  }
-  for (const fid of folderIds) walk(null, fid)
-  return ordered
-}
-
 export type SelectState = 'unchecked' | 'checked' | 'indeterminate'
 
+/**
+ * The chain from the library root down to `deckId`, that deck last. The single
+ * parent-walk in this module: settings inheritance, due roll-up and selection
+ * roots all read the ancestry through here, and a cycle in `parentId` ends the
+ * walk rather than hanging it.
+ */
 export function deckPath<T extends TreeDeck>(decks: readonly T[], deckId: string): T[] {
   const byId = new Map(decks.map((d) => [d.id, d]))
   const chain: T[] = []
@@ -141,19 +135,10 @@ export function resolveDeckSettings<S extends object>(
   deckId: string,
   base: S,
 ): S {
-  const byId = new Map(decks.map((d) => [d.id, d]))
-  const chain: Partial<S>[] = []
-  const seen = new Set<string>()
-  let cur = byId.get(deckId)
-  while (cur && !seen.has(cur.id)) {
-    seen.add(cur.id)
-    chain.unshift(cur.settings)
-    cur = cur.parentId ? byId.get(cur.parentId) : undefined
-  }
   const resolved: S = { ...base }
-  for (const overrides of chain) {
-    for (const key of Object.keys(overrides) as (keyof S)[]) {
-      const value = overrides[key]
+  for (const { settings } of deckPath(decks, deckId)) {
+    for (const key of Object.keys(settings) as (keyof S)[]) {
+      const value = settings[key]
       if (value !== undefined) resolved[key] = value as S[keyof S]
     }
   }
@@ -169,42 +154,17 @@ export function cardsInSubtree<C extends TreeCard>(
   return cards.filter((c) => ids.has(c.deckId))
 }
 
-export function countDueInSubtree(
-  decks: readonly TreeDeck[],
-  cards: readonly TreeCard[],
-  rootId: string,
-  now: number,
-): number {
-  return cardsInSubtree(decks, cards, rootId).reduce(
-    (n, card) => (isDue(card.srs, now) ? n + 1 : n),
-    0,
-  )
-}
-
 export function dueCountsPerDeck(
   decks: readonly TreeDeck[],
   cards: readonly TreeCard[],
   now: number,
 ): Map<string, number> {
-  const byId = new Map(decks.map((d) => [d.id, d]))
   const counts = new Map<string, number>()
   for (const card of cards) {
     if (!isDue(card.srs, now)) continue
-    const chain: string[] = []
-    const seen = new Set<string>()
-    let cur = byId.get(card.deckId)
-    let archived = false
-    while (cur && !seen.has(cur.id)) {
-      seen.add(cur.id)
-      if (cur.archived) {
-        archived = true
-        break
-      }
-      chain.push(cur.id)
-      cur = cur.parentId ? byId.get(cur.parentId) : undefined
-    }
-    if (archived) continue
-    for (const id of chain) counts.set(id, (counts.get(id) ?? 0) + 1)
+    const chain = deckPath(decks, card.deckId)
+    if (chain.some((deck) => deck.archived)) continue
+    for (const deck of chain) counts.set(deck.id, (counts.get(deck.id) ?? 0) + 1)
   }
   return counts
 }

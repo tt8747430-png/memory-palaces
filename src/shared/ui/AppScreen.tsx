@@ -57,7 +57,7 @@ export function AppScreen({
       <main
         ref={setRef}
         className={cn(
-          'mx-auto flex w-full max-w-[430px] flex-col',
+          'mx-auto flex w-full max-w-app flex-col',
           SHELL,
           SCROLL,
           SCROLL_SAFE,
@@ -71,7 +71,7 @@ export function AppScreen({
 
   return (
     <HeaderElevationContext value={elevation}>
-      <div className={cn('mx-auto flex w-full max-w-[430px] flex-col', SHELL)}>
+      <div className={cn('mx-auto flex w-full max-w-app flex-col', SHELL)}>
         {header}
         <main
           ref={setRef}

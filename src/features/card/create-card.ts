@@ -1,26 +1,19 @@
 import { cardsForDeck, type Card, type CardStore, makeCard, selectCards } from '@/entities/card'
-import { nextOrder, type SrsState } from '@/shared/lib'
-
-export interface CreateCardInput {
-  front: string
-  back: string
-  hint?: string
-  tip?: string
-  flagged?: boolean
-  memorized?: boolean
-  srs?: SrsState
-}
+import { newId, nextOrder, nowIso, type ParsedCard } from '@/shared/lib'
+/** A card as it arrives from a form, a paste or an import file. */
+export type CreateCardInput = ParsedCard
 
 export async function createCard(
   store: CardStore,
   deckId: string,
   input: CreateCardInput,
+  now: number = Date.now(),
 ): Promise<Card> {
   const order = nextOrder(cardsForDeck(selectCards(store.getState()), deckId))
   const card = makeCard({
     ...input,
-    id: crypto.randomUUID(),
-    createdAt: new Date().toISOString(),
+    id: newId(),
+    createdAt: nowIso(now),
     deckId,
     order,
   })

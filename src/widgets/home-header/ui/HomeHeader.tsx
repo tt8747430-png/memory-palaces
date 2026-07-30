@@ -33,9 +33,8 @@ export function HomeHeader({
   onOpenStreak,
 }: HomeHeaderProps) {
   const { t } = useTranslation()
-  const { level, xpInLevel, xpForNextLevel } = levelFromXp(xp)
-  const fill = Math.round(Math.max(0, Math.min(1, xpInLevel / xpForNextLevel)) * 100)
-  const xpToNext = t('home.xpToNext', { remaining: xpForNextLevel - xpInLevel, next: level + 1 })
+  const { level, fill, remaining } = levelFromXp(xp)
+  const xpToNext = t('home.xpToNext', { remaining, next: level + 1 })
 
   return (
     <HeaderBar>

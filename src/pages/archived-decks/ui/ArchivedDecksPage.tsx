@@ -1,28 +1,20 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Archive, ArchiveRestore, Trash2 } from 'lucide-react'
-import {
-  selectDecks,
-  selectIsReady as selectDecksReady,
-  useDeckStore,
-  useDeckStoreApi,
-} from '@/entities/deck'
-import {
-  selectCards,
-  selectIsReady as selectCardsReady,
-  useCardStore,
-  useCardStoreApi,
-} from '@/entities/card'
+import { selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
+import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
 import { deleteDeck, setDeckArchived } from '@/features/deck'
-import { cardsInSubtree } from '@/shared/lib'
+import { cardsInSubtree, findEntity, selectIsReady } from '@/shared/lib'
 import {
   AppScreen,
+  buildMenuActions,
   Button,
   ConfirmDialog,
   Empty,
-  OverflowMenuButton,
+  FlyoutMenu,
   ScreenHeader,
+  Skeleton,
 } from '@/shared/ui'
 
 export interface ArchivedDecksPageProps {
@@ -34,15 +26,10 @@ export function ArchivedDecksPage({ onBack }: ArchivedDecksPageProps) {
   const deckStore = useDeckStoreApi()
   const cardStore = useCardStoreApi()
 
-  useEffect(() => {
-    deckStore.getState().start()
-    cardStore.getState().start()
-  }, [deckStore, cardStore])
-
   const decks = useDeckStore(selectDecks)
   const cards = useCardStore(selectCards)
-  const decksReady = useDeckStore(selectDecksReady)
-  const cardsReady = useCardStore(selectCardsReady)
+  const decksReady = useDeckStore(selectIsReady)
+  const cardsReady = useCardStore(selectIsReady)
   const ready = decksReady && cardsReady
 
   const archived = useMemo(() => {
@@ -55,7 +42,7 @@ export function ArchivedDecksPage({ onBack }: ArchivedDecksPageProps) {
   }, [decks])
 
   const [pendingDelete, setPendingDelete] = useState<string | null>(null)
-  const pendingDeck = archived.find((deck) => deck.id === pendingDelete)
+  const pendingDeck = findEntity(archived, pendingDelete)
 
   const restore = (id: string, name: string) => {
     void setDeckArchived(deckStore, id, false)
@@ -71,7 +58,7 @@ export function ArchivedDecksPage({ onBack }: ArchivedDecksPageProps) {
     >
       {!ready ? (
         <div className="grid flex-1 place-items-center py-16">
-          <span className="size-8 animate-pulse rounded-full bg-secondary" aria-hidden />
+          <Skeleton className="size-8 bg-secondary" />
         </div>
       ) : archived.length === 0 ? (
         <Empty
@@ -106,18 +93,15 @@ export function ArchivedDecksPage({ onBack }: ArchivedDecksPageProps) {
                   <ArchiveRestore className="size-4" aria-hidden />
                   {t('archived.restore')}
                 </Button>
-                <OverflowMenuButton
+                <FlyoutMenu
                   label={`${deck.name} ${t('common.moreOptions')}`}
+                  variant="ghost"
                   size="sm"
-                  actions={[
-                    {
-                      id: 'delete',
-                      label: t('common.delete'),
-                      icon: <Trash2 className="size-5" aria-hidden />,
-                      destructive: true,
-                      onSelect: () => setPendingDelete(deck.id),
-                    },
-                  ]}
+                  actions={buildMenuActions(
+                    ['delete'],
+                    { delete: { onAction: () => setPendingDelete(deck.id) } },
+                    t,
+                  )}
                 />
               </li>
             )

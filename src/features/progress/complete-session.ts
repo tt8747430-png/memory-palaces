@@ -1,4 +1,4 @@
-import { levelFromXp, recordPractice } from '@/shared/lib'
+import { levelFromXp, nowIso, recordPractice } from '@/shared/lib'
 import type { Progress, ProgressStore } from '@/entities/progress'
 import { currentProgress } from './current-progress'
 
@@ -37,7 +37,7 @@ export async function completeSession(
     ...base,
     ...practice.state,
     xp: base.xp + gained,
-    updatedAt: new Date(now).toISOString(),
+    updatedAt: nowIso(now),
   }
 
   const quizAccuracy =

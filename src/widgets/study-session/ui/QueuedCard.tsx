@@ -1,8 +1,8 @@
 import { motion } from 'motion/react'
 import type { StudyMode } from '@/entities/preferences'
-import { recallAnswer } from '@/shared/lib'
+import { poseAt, recallAnswer } from '@/shared/lib'
 import { FrontFace } from './faces'
-import { DEPTH_POSE, poseAt, PROMOTION } from './deck-poses'
+import { DEPTH_POSE, PROMOTION } from './deck-poses'
 import type { StudyCard, StudyDirection } from '../model/types'
 
 export interface QueuedCardProps {
@@ -35,8 +35,8 @@ export function QueuedCard({
     <motion.div
       aria-hidden
       inert
-      initial={reduce ? false : DEPTH_POSE[Math.min(depth + 1, DEPTH_POSE.length - 1)]}
-      animate={poseAt(depth)}
+      initial={reduce ? false : poseAt(DEPTH_POSE, depth + 1)}
+      animate={poseAt(DEPTH_POSE, depth)}
       transition={reduce ? { duration: 0 } : PROMOTION}
       style={{ zIndex: -depth }}
       className="pointer-events-none absolute inset-0"

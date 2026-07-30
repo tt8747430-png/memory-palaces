@@ -1,31 +1,17 @@
-import { useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronLeft, Layers } from 'lucide-react'
-import {
-  selectCards,
-  selectIsReady as selectCardsReady,
-  useCardStore,
-  useCardStoreApi,
-} from '@/entities/card'
-import {
-  type Deck,
-  type DeckSettings,
-  DEFAULT_DECK_SETTINGS,
-  selectDecks,
-  selectIsReady as selectDecksReady,
-  useDeckStore,
-  useDeckStoreApi,
-} from '@/entities/deck'
+import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
+import { type Deck, type DeckSettings, useDeck, useDeckStoreApi } from '@/entities/deck'
 import {
   type FlashcardSwipeByMode,
   resolveStudyMode,
   selectEffectivePreferences,
-  selectIsReady as selectPrefsReady,
   type StudyMode,
   usePreferencesStore,
   usePreferencesStoreApi,
 } from '@/entities/preferences'
-import { cardsInSubtree, deckPath, resolveDeckSettings } from '@/shared/lib'
+import { cardsInSubtree, deckPath, findEntity, selectIsReady } from '@/shared/lib'
 import { normalizeFlashcardSwipe } from '@/shared/config/flashcard-swipe'
 import { editCard } from '@/features/card'
 import { editDeck } from '@/features/deck'
@@ -33,7 +19,14 @@ import { gradeCard, restoreSchedule } from '@/features/review'
 import { setPreferences } from '@/features/preferences'
 import { FlashcardsPanel, type StudyCard, type StudyPrefs } from '@/widgets/study-session'
 import { useSessionReward } from '@/widgets/session-reward'
-import { AppScreen, Button, IconButton, ScreenHeader } from '@/shared/ui'
+import {
+  Button,
+  Empty,
+  MissingScreen,
+  ScreenLoading,
+  SessionHeader,
+  SessionScreen,
+} from '@/shared/ui'
 
 export type StudyScope = { kind: 'deck'; deckId: string }
 
@@ -57,34 +50,17 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
   const preferencesStore = usePreferencesStoreApi()
   const reward = useSessionReward()
 
-  useEffect(() => {
-    deckStore.getState().start()
-    cardStore.getState().start()
-    preferencesStore.getState().start()
-  }, [deckStore, cardStore, preferencesStore])
-
-  const decks = useDeckStore(selectDecks)
+  const { decks, deck, settings, ready: decksReady } = useDeck(scope.deckId)
   const allCards = useCardStore(selectCards)
   const preferences = usePreferencesStore(selectEffectivePreferences)
-  const decksReady = useDeckStore(selectDecksReady)
-  const cardsReady = useCardStore(selectCardsReady)
-  const prefsReady = usePreferencesStore(selectPrefsReady)
+  const cardsReady = useCardStore(selectIsReady)
+  const prefsReady = usePreferencesStore(selectIsReady)
   const ready = decksReady && cardsReady && prefsReady
 
   const mode: StudyMode = resolveStudyMode(preferences.studyMode)
   const swipeByMode = useMemo(
     () => normalizeFlashcardSwipe(preferences.flashcardSwipe),
     [preferences.flashcardSwipe],
-  )
-
-  const deck = useMemo(
-    () => decks.find((candidate) => candidate.id === scope.deckId),
-    [decks, scope.deckId],
-  )
-
-  const settings = useMemo(
-    () => resolveDeckSettings(decks, scope.deckId, DEFAULT_DECK_SETTINGS),
-    [decks, scope.deckId],
   )
 
   const cards = useMemo<StudyCard[]>(() => {
@@ -103,7 +79,7 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
     void gradeCard(cardStore, id, grade)
   }
   const handleToggleFlag = (id: string) => {
-    const card = cardStore.getState().cards.find((candidate) => candidate.id === id)
+    const card = findEntity(cardStore.getState().cards, id)
     if (card) void editCard(cardStore, id, { flagged: !card.flagged })
   }
   const persistStudyPrefs = (target: Deck) => (prefs: StudyPrefs) => {
@@ -125,21 +101,11 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
     void setPreferences(preferencesStore, { studyWordSpaces: value })
 
   if (!ready) {
-    return (
-      <AppScreen className="items-center justify-center">
-        <span className="size-8 animate-pulse rounded-full bg-secondary" aria-hidden />
-      </AppScreen>
-    )
+    return <ScreenLoading />
   }
 
   if (!deck) {
-    return (
-      <AppScreen
-        header={
-          <ScreenHeader title={t('study.notFound')} onBack={onBack} backLabel={t('study.back')} />
-        }
-      />
-    )
+    return <MissingScreen title={t('study.notFound')} onBack={onBack} backLabel={t('study.back')} />
   }
 
   const title = deck.name
@@ -151,41 +117,26 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
 
   if (cards.length === 0) {
     return (
-      <div className="relative mx-auto flex h-full w-full max-w-[430px] flex-col items-center justify-center gap-5 px-6 text-center">
-        <div className="grid size-16 place-items-center rounded-card-featured bg-info-surface">
-          <Layers className="size-8 text-accent" aria-hidden />
-        </div>
-        <div>
-          <h2 className="mb-1 text-[length:var(--p-text-headline)] font-bold text-heading">
-            {t('study.noCards')}
-          </h2>
-          <p className="mx-auto max-w-[34ch] text-[length:var(--p-text-body)]">
-            {t('study.noCardsHint', { deck: title })}
-          </p>
-        </div>
-        <Button onClick={back}>{t('study.backToDeck')}</Button>
-      </div>
+      <Empty
+        variant="hero"
+        className="mx-auto h-full w-full max-w-app"
+        icon={<Layers className="size-8" aria-hidden />}
+        title={t('study.noCards')}
+        description={t('study.noCardsHint', { deck: title })}
+        action={<Button onClick={back}>{t('study.backToDeck')}</Button>}
+      />
     )
   }
 
   return (
-    <div className="relative mx-auto flex h-full w-full max-w-[430px] flex-col overflow-hidden">
-      <div className="px-5 pt-safe">
-        <div className="flex items-center justify-between pt-3">
-          <IconButton variant="glass" aria-label={t('study.goBack')} onClick={back}>
-            <ChevronLeft className="size-5" aria-hidden />
-          </IconButton>
-          <div className="mx-4 min-w-0 flex-1 text-center">
-            <h1 className="truncate text-[length:var(--p-text-title)] font-semibold text-heading">
-              {title}
-            </h1>
-            {subtitle ? (
-              <p className="truncate text-[length:var(--p-text-label)]">{subtitle}</p>
-            ) : null}
-          </div>
-          <div className="size-10 shrink-0" aria-hidden />
-        </div>
-      </div>
+    <SessionScreen>
+      <SessionHeader
+        title={title}
+        subtitle={subtitle}
+        backLabel={t('study.goBack')}
+        onBack={back}
+        backIcon={<ChevronLeft className="size-5" aria-hidden />}
+      />
 
       <FlashcardsPanel
         key={`flashcards-${scope.deckId}`}
@@ -212,6 +163,6 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
           back()
         }}
       />
-    </div>
+    </SessionScreen>
   )
 }

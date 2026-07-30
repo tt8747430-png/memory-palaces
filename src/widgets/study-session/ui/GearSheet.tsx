@@ -17,7 +17,7 @@ import {
 import { toast } from 'sonner'
 import type { StudyMode } from '@/entities/preferences'
 import { cn, motionSupported, requestMotionPermission } from '@/shared/lib'
-import { Button, Combobox, type ComboboxOption, Sheet, ToggleRow } from '@/shared/ui'
+import { Button, Combobox, type ComboboxOption, pillSurface, Sheet, ToggleRow } from '@/shared/ui'
 import { type StudyFilter, studyFiltersEqual } from '@/features/review'
 import {
   actionsForMode,
@@ -269,8 +269,8 @@ function FilterChip({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[length:var(--p-text-label)] font-semibold transition-transform active:scale-[0.94]',
-        active ? 'bg-primary text-primary-foreground' : 'bg-info-surface text-info-foreground',
+        pillSurface(active ? 'primary' : 'info'),
+        'transition-transform active:scale-[0.94]',
       )}
     >
       {label}

@@ -2,16 +2,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { useCardStoreApi } from '@/entities/card'
-import {
-  selectDecks,
-  selectIsReady as selectDecksReady,
-  useDeckStore,
-  useDeckStoreApi,
-} from '@/entities/deck'
+import { selectDecks, useDeckStore } from '@/entities/deck'
 import {
   type Question,
   questionsForDeck,
-  selectIsReady as selectQuestionsReady,
   selectQuestions,
   useQuestionStore,
   useQuestionStoreApi,
@@ -19,12 +13,15 @@ import {
 import { deleteQuestion, duplicateQuestion, reorderQuestions } from '@/features/question'
 import { applyDeckContent, exportQuestionsCsv, readContentFile } from '@/features/content'
 import {
-  ContentImportError,
   type DeckContentData,
+  findEntity,
+  importErrorMessage,
   type MultiSelect,
+  selectIsReady,
   useMultiSelect,
+  usePendingAct,
 } from '@/shared/lib'
-import type { SelectActionHandlers } from '@/shared/ui'
+import { bulkAction, type SelectActionHandlers } from '@/shared/ui'
 import { type QuestionSort, sortQuestions } from './sort-questions'
 
 export type PendingAct =
@@ -55,21 +52,15 @@ export interface DeckQuestions {
 export function useDeckQuestions(deckId: string): DeckQuestions {
   const { t } = useTranslation()
   const questionStore = useQuestionStoreApi()
-  const deckStore = useDeckStoreApi()
   const cardStore = useCardStoreApi()
-
-  useEffect(() => {
-    questionStore.getState().start()
-    deckStore.getState().start()
-  }, [questionStore, deckStore])
 
   const allQuestions = useQuestionStore(selectQuestions)
   const decks = useDeckStore(selectDecks)
-  const questionsReady = useQuestionStore(selectQuestionsReady)
-  const decksReady = useDeckStore(selectDecksReady)
+  const questionsReady = useQuestionStore(selectIsReady)
+  const decksReady = useDeckStore(selectIsReady)
 
   const [sort, setSort] = useState<QuestionSort>('manual')
-  const [pending, setPending] = useState<PendingAct | null>(null)
+  const pending = usePendingAct<PendingAct>()
   const selection = useMultiSelect()
 
   const deckQuestions = useMemo(
@@ -89,50 +80,43 @@ export function useDeckQuestions(deckId: string): DeckQuestions {
   }
 
   const selectHandlers: SelectActionHandlers = {
-    duplicate: {
-      disabled: selection.count === 0,
-      onAction: () => {
-        const ids = [...selection.ids]
-        void Promise.all(ids.map((id) => duplicateQuestion(questionStore, id)))
-        toast.success(t('questions.bulk.duplicated', { count: ids.length }))
-        selection.exit()
-      },
-    },
+    duplicate: bulkAction(selection, (ids) => {
+      void Promise.all(ids.map((id) => duplicateQuestion(questionStore, id)))
+      toast.success(t('questions.bulk.duplicated', { count: ids.length }))
+    }),
     delete: {
       disabled: selection.count === 0,
-      onAction: () => setPending({ kind: 'delete-selection' }),
+      onAction: () => pending.request({ kind: 'delete-selection' }),
     },
   }
 
-  const confirm = () => {
-    const act = pending
-    setPending(null)
-    if (!act) return
-    switch (act.kind) {
-      case 'delete-question':
-        void deleteQuestion(questionStore, act.question.id)
-        toast.success(t('cards.transfer.deleted'))
-        return
-      case 'delete-selection': {
-        const ids = [...selection.ids]
-        void Promise.all(ids.map((id) => deleteQuestion(questionStore, id)))
-        toast.success(t('cards.transfer.deletedMany', { count: ids.length }))
-        selection.exit()
-        return
+  const confirm = () =>
+    pending.resolve((act) => {
+      switch (act.kind) {
+        case 'delete-question':
+          void deleteQuestion(questionStore, act.question.id)
+          toast.success(t('cards.transfer.deleted'))
+          return
+        case 'delete-selection': {
+          const ids = [...selection.ids]
+          void Promise.all(ids.map((id) => deleteQuestion(questionStore, id)))
+          toast.success(t('cards.transfer.deletedMany', { count: ids.length }))
+          selection.exit()
+          return
+        }
+        case 'import':
+          void applyDeckContent(cardStore, questionStore, deckId, {
+            cards: [],
+            questions: act.questions,
+          }).then((applied) =>
+            toast.success(t('questions.transfer.imported', { count: applied.questions })),
+          )
       }
-      case 'import':
-        void applyDeckContent(cardStore, questionStore, deckId, {
-          cards: [],
-          questions: act.questions,
-        }).then((applied) =>
-          toast.success(t('questions.transfer.imported', { count: applied.questions })),
-        )
-    }
-  }
+    })
 
   return {
     ready: questionsReady && decksReady,
-    deckName: decks.find((candidate) => candidate.id === deckId)?.name ?? '',
+    deckName: findEntity(decks, deckId)?.name ?? '',
     questions,
     sort,
     setSort,
@@ -144,7 +128,7 @@ export function useDeckQuestions(deckId: string): DeckQuestions {
       void reorderQuestions(questionStore, ids)
     },
     exportCsv: () => {
-      exportQuestionsCsv(decks.find((d) => d.id === deckId)?.name ?? '', questions)
+      exportQuestionsCsv(findEntity(decks, deckId)?.name ?? '', questions)
       toast.success(t('questions.transfer.exported'))
     },
     importFile: async (file) => {
@@ -154,18 +138,14 @@ export function useDeckQuestions(deckId: string): DeckQuestions {
           toast.error(t('questions.transfer.noneFound'))
           return
         }
-        setPending({ kind: 'import', questions: data.questions })
+        pending.request({ kind: 'import', questions: data.questions })
       } catch (error) {
-        toast.error(
-          error instanceof ContentImportError
-            ? error.message
-            : t('questions.transfer.importFailed'),
-        )
+        toast.error(importErrorMessage(error, t('questions.transfer.importFailed')))
       }
     },
-    pending,
-    request: setPending,
-    dismiss: () => setPending(null),
+    pending: pending.act,
+    request: pending.request,
+    dismiss: pending.dismiss,
     confirm,
   }
 }

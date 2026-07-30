@@ -1,30 +1,8 @@
-import { useEffect, useMemo } from 'react'
-import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Check, Lock } from 'lucide-react'
-import {
-  type AchievementId,
-  cardsInSubtree,
-  computeAchievements,
-  computeTrainingTotals,
-  isDeckCompleted,
-} from '@/shared/lib'
-import { selectProgress, useProgressStore, useProgressStoreApi } from '@/entities/progress'
-import { selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
-import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
-import { ACHIEVEMENT_META } from '@/widgets/achievement-list'
-import { AppScreen, BadgeMedallion, cardSurface, ScreenHeader } from '@/shared/ui'
-
-const ACHIEVEMENT_IDS: readonly AchievementId[] = [
-  'first-deck',
-  'week-warrior',
-  'deck-master',
-  'xp-champion',
-  'perfectionist',
-  'dedicated-learner',
-]
-const isAchievementId = (value: string): value is AchievementId =>
-  (ACHIEVEMENT_IDS as readonly string[]).includes(value)
+import { cn, findEntity, isAchievementId } from '@/shared/lib'
+import { ACHIEVEMENT_META, RewardHero, useRewards } from '@/widgets/rewards'
+import { AppScreen, cardSurface, MissingScreen, pillSurface, ScreenHeader } from '@/shared/ui'
 
 export interface AchievementDetailPageProps {
   achievementId: string
@@ -33,52 +11,18 @@ export interface AchievementDetailPageProps {
 
 export function AchievementDetailPage({ achievementId, onBack }: AchievementDetailPageProps) {
   const { t } = useTranslation()
-  const progressStore = useProgressStoreApi()
-  const deckStore = useDeckStoreApi()
-  const cardStore = useCardStoreApi()
-  const progress = useProgressStore(selectProgress)
-  const decks = useDeckStore(selectDecks)
-  const cards = useCardStore(selectCards)
-
-  useEffect(() => {
-    progressStore.getState().start()
-    deckStore.getState().start()
-    cardStore.getState().start()
-  }, [progressStore, deckStore, cardStore])
-
-  const totals = useMemo(() => computeTrainingTotals(decks, cards), [decks, cards])
-  const topLevelDecks = useMemo(() => decks.filter((deck) => deck.parentId === null), [decks])
-  const anyDeckCompleted = useMemo(
-    () => topLevelDecks.some((deck) => isDeckCompleted(cardsInSubtree(decks, cards, deck.id))),
-    [topLevelDecks, decks, cards],
-  )
-  const achievements = useMemo(
-    () =>
-      computeAchievements({
-        deckCount: topLevelDecks.length,
-        streakCount: progress?.streakCount ?? 0,
-        xp: progress?.xp ?? 0,
-        bestQuizAccuracy: progress?.bestQuizAccuracy ?? 0,
-        decksCompleted: totals.decksCompleted,
-        anyDeckCompleted,
-      }),
-    [topLevelDecks.length, progress, totals.decksCompleted, anyDeckCompleted],
-  )
+  const { achievements } = useRewards()
 
   const achievement = isAchievementId(achievementId)
-    ? achievements.find((entry) => entry.id === achievementId)
+    ? findEntity(achievements, achievementId)
     : undefined
 
   if (!achievement) {
     return (
-      <AppScreen
-        header={
-          <ScreenHeader
-            title={t('achievementsPage.title')}
-            onBack={onBack}
-            backLabel={t('common.back')}
-          />
-        }
+      <MissingScreen
+        title={t('achievementsPage.title')}
+        onBack={onBack}
+        backLabel={t('common.back')}
       />
     )
   }
@@ -94,30 +38,8 @@ export function AchievementDetailPage({ achievementId, onBack }: AchievementDeta
       header={<ScreenHeader title={title} onBack={onBack} backLabel={t('common.back')} />}
     >
       <div className="mt-2 flex flex-col gap-6">
-        <section className="relative flex flex-col items-center pt-3 text-center">
-          {earned ? (
-            <span
-              aria-hidden
-              className="pointer-events-none absolute left-1/2 top-0 size-40 -translate-x-1/2 -translate-y-4 rounded-full opacity-35 blur-3xl"
-              style={{ background: 'radial-gradient(circle, var(--accent), transparent 68%)' }}
-            />
-          ) : null}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.84, y: 8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-            className="relative"
-          >
-            <BadgeMedallion icon={meta.icon} locked={!earned} shine={earned} className="size-28" />
-          </motion.div>
-
-          <span
-            className={
-              earned
-                ? 'mt-4 inline-flex items-center gap-1.5 rounded-full bg-[var(--success-surface)] px-3 py-1 text-[length:var(--p-text-label)] font-bold text-[var(--success-on-surface)]'
-                : 'mt-4 inline-flex items-center gap-1.5 rounded-full bg-info-surface px-3 py-1 text-[length:var(--p-text-label)] font-bold text-info-foreground'
-            }
-          >
+        <RewardHero icon={meta.icon} glow={earned} locked={!earned} shine={earned}>
+          <span className={cn('mt-4', pillSurface(earned ? 'success' : 'info'))}>
             {earned ? (
               <Check className="size-4" aria-hidden />
             ) : (
@@ -125,7 +47,7 @@ export function AchievementDetailPage({ achievementId, onBack }: AchievementDeta
             )}
             {t(earned ? 'achievementDetail.earned' : 'achievementDetail.locked')}
           </span>
-        </section>
+        </RewardHero>
 
         <section className="flex flex-col gap-2">
           <h2 className="px-1 text-[length:var(--p-text-title)] font-bold text-heading">

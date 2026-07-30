@@ -2,7 +2,6 @@ import type { ReactNode } from 'react'
 import { Toaster } from 'sonner'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
-import { useSplashDone } from '@/shared/lib'
 import { services } from '../composition-root'
 import { ServicesProvider } from './ServicesProvider'
 import { PreferencesProvider } from './PreferencesProvider'
@@ -10,8 +9,10 @@ import { AuthProvider } from './AuthProvider'
 import { NotificationBridge } from './NotificationBridge'
 import { UpdatePrompt } from './UpdatePrompt'
 
+/** Above every dialog and dropdown (500), below the splash (700). */
+const TOAST_LAYER = 600
+
 export function AppProviders({ children }: { children: ReactNode }) {
-  const splashDone = useSplashDone()
   return (
     <I18nextProvider i18n={i18n}>
       <ServicesProvider services={services}>
@@ -20,14 +21,15 @@ export function AppProviders({ children }: { children: ReactNode }) {
         </PreferencesProvider>
         <NotificationBridge />
         <UpdatePrompt />
-        {splashDone ? (
-          <Toaster
-            position="top-center"
-            richColors
-            theme="system"
-            mobileOffset={{ top: 'calc(env(safe-area-inset-top) + 16px)' }}
-          />
-        ) : null}
+        {/* Mounted from the first render: sonner drops anything published before
+            a Toaster subscribes, and the splash covers this one until it lifts. */}
+        <Toaster
+          position="top-center"
+          richColors
+          theme="system"
+          mobileOffset={{ top: 'calc(env(safe-area-inset-top) + 16px)' }}
+          style={{ zIndex: TOAST_LAYER }}
+        />
       </ServicesProvider>
     </I18nextProvider>
   )

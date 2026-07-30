@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { MoreVertical, Plus, Settings, Trash2 } from 'lucide-react'
+import { MoreVertical } from 'lucide-react'
 import type { Deck } from '@/entities/deck'
 import { DECK_COLOR_OPTIONS, useDeckStoreApi } from '@/entities/deck'
 import type { Folder } from '@/entities/folder'
@@ -13,11 +13,13 @@ import { readAnkiFile } from '@/features/content'
 import { DeckTree, LibrarySelectList } from '@/widgets/deck-tree'
 import { HomeHeader } from '@/widgets/home-header'
 import { useImportDraft } from '@/widgets/content-editor'
-import { ContentImportError, nextDefaultName, useHideAppNav } from '@/shared/lib'
+import { importErrorMessage, nextDefaultName, useHideAppNav } from '@/shared/lib'
 import {
   ActionSheet,
   AppScreen,
+  buildMenuActions,
   IconButton,
+  ImportSheet,
   PromptSheet,
   ScreenHeader,
   SelectHeader,
@@ -33,7 +35,6 @@ import { FolderRow } from './FolderRow'
 import { FolderSheet } from './FolderSheet'
 import { LibraryDialogs } from './LibraryDialogs'
 import { LibraryEmpty } from './LibraryEmpty'
-import { LibraryImportSheet } from './LibraryImportSheet'
 import { LibrarySkeleton } from './LibrarySkeleton'
 import { LibrarySpeedDial } from './LibrarySpeedDial'
 import { MoveDeckSheet } from './MoveDeckSheet'
@@ -137,7 +138,7 @@ export function DeckLibraryPage({
 
   const submitFolder = (changes: { name: string; color: string; icon: string }) => {
     if (folderSheetTarget) {
-      void editFolder(folderStore, folderSheetTarget, changes)
+      void editFolder(folderStore, folderSheetTarget.id, changes)
     } else {
       void createFolder(folderStore, changes)
       if (inFolder) onCloseFolder()
@@ -156,9 +157,7 @@ export function DeckLibraryPage({
       setImportDraft('anki', parsed.cards)
       onReviewDeck?.(deck.id)
     } catch (error) {
-      toast.error(
-        error instanceof ContentImportError ? error.message : t('cards.transfer.importFailed'),
-      )
+      toast.error(importErrorMessage(error, t('cards.transfer.importFailed')))
     }
   }
 
@@ -184,27 +183,16 @@ export function DeckLibraryPage({
     delete: { onAction: () => library.request({ kind: 'delete-folder', folder }) },
   })
 
-  const folderActions = (folder: Folder): SheetAction[] => [
-    {
-      id: 'settings',
-      label: t('folder.settings'),
-      icon: <Settings className="size-5" aria-hidden />,
-      onSelect: () => setFolderSheetTarget(folder),
-    },
-    {
-      id: 'add-deck',
-      label: t('folder.addDeck'),
-      icon: <Plus className="size-5" aria-hidden />,
-      onSelect: () => setCreatePrompt({ kind: 'deck', folderId: folder.id }),
-    },
-    {
-      id: 'delete',
-      label: t('common.delete'),
-      icon: <Trash2 className="size-5" aria-hidden />,
-      destructive: true,
-      onSelect: () => library.request({ kind: 'delete-folder', folder }),
-    },
-  ]
+  const folderActions = (folder: Folder): SheetAction[] =>
+    buildMenuActions(
+      ['settings', 'addDeck', 'delete'],
+      {
+        settings: { onAction: () => setFolderSheetTarget(folder) },
+        addDeck: { onAction: () => setCreatePrompt({ kind: 'deck', folderId: folder.id }) },
+        delete: { onAction: () => library.request({ kind: 'delete-folder', folder }) },
+      },
+      t,
+    )
 
   const newDeckHere = () => setCreatePrompt({ kind: 'deck', folderId })
   const moving = movingDeck(library.pending)
@@ -214,12 +202,7 @@ export function DeckLibraryPage({
       className="pb-nav"
       header={
         selection.active ? (
-          <SelectHeader
-            count={selection.count}
-            allSelected={selection.allSelected}
-            onToggleAll={selection.toggleAll}
-            onCancel={selection.exit}
-          />
+          <SelectHeader selection={selection} />
         ) : inFolder ? (
           <ScreenHeader
             title={library.openFolder?.name ?? ''}
@@ -280,7 +263,7 @@ export function DeckLibraryPage({
               folder={folder}
               deckCount={library.folderDeckCounts.get(folder.id) ?? 0}
               onOpen={() => onOpenFolder(folder.id)}
-              onRequestSelect={() => selection.beginFolder(folder.id)}
+              onRequestSelect={() => selection.begin(folder.id)}
               swipe={prefs.swipe.folder}
               swipeHandlers={folderSwipeHandlers(folder)}
             />
@@ -293,7 +276,7 @@ export function DeckLibraryPage({
             expanded={library.expanded}
             onToggle={library.toggleExpanded}
             onOpen={onOpenDeck}
-            onRequestSelect={selection.beginDeck}
+            onRequestSelect={selection.begin}
             swipe={prefs.swipe.deck}
             swipeHandlers={deckSwipeHandlers}
           />
@@ -342,9 +325,11 @@ export function DeckLibraryPage({
         onSubmit={submitCreate}
       />
 
-      <LibraryImportSheet
+      <ImportSheet
         open={importOpen}
         onOpenChange={setImportOpen}
+        title={t('deck.importTitle')}
+        description={t('deck.importSheetHint')}
         onPasteNotes={() => onImportPaste?.()}
         onPickFile={(file) => void importAnki(file)}
       />

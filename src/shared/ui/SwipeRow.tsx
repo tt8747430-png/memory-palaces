@@ -15,7 +15,7 @@ import {
   useTransform,
 } from 'motion/react'
 import { useDrag } from '@use-gesture/react'
-import { type SwipeAccent, SWIPE_ACCENT } from '@/shared/config/swipe'
+import { ACTION_ACCENT, type ActionAccent } from '@/shared/config/actions'
 import {
   armedSide,
   clampSwipeOffset,
@@ -25,13 +25,11 @@ import {
   type SwipeGeometry,
 } from '@/shared/lib'
 
-export type { SwipeAccent }
-
 export interface SwipeAction {
   id: string
   icon: ReactNode
   label: string
-  accent?: SwipeAccent
+  accent?: ActionAccent
   onAction: () => void
 }
 
@@ -270,7 +268,7 @@ function TrayButton({
   onFire: () => void
 }) {
   const reduce = useReducedMotion()
-  const accent = SWIPE_ACCENT[action.accent ?? 'slate']
+  const accent = ACTION_ACCENT[action.accent ?? 'slate']
   return (
     <button
       type="button"

@@ -32,9 +32,14 @@ export function ConfirmDialog({
   destructive = false,
   onConfirm,
 }: ConfirmDialogProps) {
+  /**
+   * Confirm first, close second. A screen that holds its pending act in a ref —
+   * `usePendingAct` — clears that ref on close, so closing first would hand
+   * `onConfirm` nothing to act on and the delete would silently do nothing.
+   */
   const handleConfirm = () => {
-    onOpenChange(false)
     onConfirm()
+    onOpenChange(false)
   }
 
   return (
