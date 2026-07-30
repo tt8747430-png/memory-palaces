@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { isPanBakedIntoRects, visibleBottom } from '@/shared/lib'
+import { visibleBottom } from '@/shared/lib'
 
 export interface ViewportSample {
   layoutHeight: number
@@ -10,10 +10,10 @@ export interface ViewportSample {
   kbInset: string
   vvTop: string
   panComp: string
-  baked: boolean
   scrollTop: number
   htmlRectTop: number
   rootRectTop: number
+  fixedRectTop: number
   visibleBottom: number
   headerTop: number
   headerBottom: number
@@ -34,6 +34,7 @@ export function readViewport(): ViewportSample {
   const style = root.style
   const active = document.activeElement
   const scroller = document.querySelector('main') ?? document.querySelector('[data-card-scroll]')
+  const fixed = document.querySelector('[data-slot="viewport-probe"]')
   const header = document.querySelector('[data-slot="header-bar"]')
   const footer = document.querySelector('[data-slot="footer-bar"]')
   const rect = active instanceof HTMLElement ? active.getBoundingClientRect() : undefined
@@ -47,10 +48,10 @@ export function readViewport(): ViewportSample {
     kbInset: style.getPropertyValue('--kb-inset') || '(unset)',
     vvTop: style.getPropertyValue('--vv-top') || '(unset)',
     panComp: style.getPropertyValue('--pan-comp') || '(unset)',
-    baked: isPanBakedIntoRects(),
     scrollTop: round(scroller?.scrollTop),
     htmlRectTop: Math.round(root.getBoundingClientRect().top),
     rootRectTop: round(document.getElementById('root')?.getBoundingClientRect().top),
+    fixedRectTop: round(fixed?.getBoundingClientRect().top),
     visibleBottom: Math.round(visibleBottom()),
     headerTop: round(headerRect?.top),
     headerBottom: round(headerRect?.bottom),
@@ -73,10 +74,10 @@ const TRACE_COLUMNS = [
   'vvTop',
   'panComp',
   'kbInset',
-  'baked',
   'scrollTop',
   'htmlRectTop',
   'rootRectTop',
+  'fixedRectTop',
   'headerTop',
   'visibleBottom',
   'focusedTop',

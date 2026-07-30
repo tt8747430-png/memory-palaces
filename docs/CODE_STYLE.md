@@ -210,36 +210,45 @@ dev-only **`/dev/kitchen-sink`**.
   never from live `clientHeight`, so a platform that _does_ resize can't collapse the measurement to zero.
   `useKeyboardInset` publishes `--kb-inset` (≥120px, so an accessory bar alone doesn't count) plus `--vv-top`, and is
   the only `visualViewport` subscriber.
-- **`visualViewport.offsetTop` and `getBoundingClientRect()` are different coordinate spaces, and which one a UA uses
-  is measured, never inferred.** Some UAs re-anchor `position: fixed` to the visual viewport while the keyboard is up,
-  so the app does not ride off-screen and rects come back with the pan already in them; others leave the fixed shell to
-  ride off the top by the full pan ([ADR 0002](adr/0002-keyboard-covers-the-app.md)). Safari answers **differently in a
-  tab and in the standalone PWA**, which is what proves `display-mode` was a proxy and not the cause.
-  `isPanBakedIntoRects()` (`|htmlRect.top + vv.offsetTop| < 1`) decides it per platform and publishes `--pan-comp`: the
-  uncompensated part of the pan, `0` where the UA already handled it. `theme.css` translates
-  `[data-slot="header-bar"]`/`[data-slot="status-cap"]` by `--pan-comp` under `[data-keyboard]`, with no media query —
-  translating where the platform already compensated double-counts the pan and dives the header over the content.
+- **"Did fixed boxes move?" and "which space are rects in?" are two questions, and `html` only answers the second.**
+  Some UAs re-anchor `position: fixed` to the visual viewport while the keyboard is up, so the app does not ride
+  off-screen; others leave the fixed shell to ride off the top by the full pan
+  ([ADR 0002](adr/0002-keyboard-covers-the-app.md)). Safari answers **differently in a tab and in the standalone PWA**,
+  which is what proves `display-mode` was a proxy and not the cause — but so is `htmlRect.top` on its own: `html` sits
+  at the layout origin whether or not the UA lifted fixed boxes off it, so a UA that re-anchors the shell _and_ reports
+  rects layout-relative reads as "not compensated" and gets its header translated down over the content. The
+  compensation is therefore measured **on a fixed box**: `startKeyboardViewport` appends one hidden, never-translated
+  `position: fixed; top: 0` probe and publishes `--pan-comp` as `max(0, pan + htmlRect.top − probeRect.top)`, all in
+  rect coordinates. `theme.css` translates `[data-slot="header-bar"]`/`[data-slot="status-cap"]` by `--pan-comp` under
+  `[data-keyboard]`, with no media query — **the header must never appear to move; the translate exists only to undo a
+  ride-off, and where there is none it must publish 0.**
   **Chrome that rides the pan must take the scroll body with it** (`.pt-pan`, in `SCREEN_SCROLL`): the translate moves
   the header alone, burying the first `--pan-comp` of content behind it with no way to scroll it back out — the page is
   already at `scrollTop: 0`. The padding is scroll range, not a reveal; `useKeyboardReveal` still owns where the focused
-  field lands. `visibleBottom()` is the one sanctioned JS bridge, and it has **two** forms —
-  `--app-height − --kb-inset − --vv-top` where rects carry the pan, `--app-height − --kb-inset` where they do not.
-  Everything else in `useKeyboardReveal` is rect-vs-rect.
+  field lands. `visibleBottom()` is the one sanctioned JS bridge: `htmlRect.top + --app-height − --kb-inset`, where
+  `htmlRect.top` is `0` in a layout-relative space and `−pan` in one that already carries the pan. Everything else in
+  `useKeyboardReveal` is rect-vs-rect.
 - **`visualViewport` fires `scroll` as well as `resize`, and a scroll frame is not news about the keyboard.** iOS slides
   the visual viewport while the page rubber-bands, so `offsetTop` and `height` both read mid-flight on every scroll
   frame. Deriving the keyboard height from them republishes `--kb-inset`, resizing `.pb-keyboard`'s scroll range under
   the finger. Publishing the **pan** from them is worse and was the live bug: chrome translated by a per-frame pan
   **follows the finger down the screen**, and holding it at the episode's `Math.max` (the old damping) leaves it parked
   below the top of the screen until blur. `startKeyboardViewport` re-measures the height on `resize` only, and publishes
-  the pan on `resize` immediately but from a `scroll` only once the viewport has been still for `PAN_SETTLE_MS` — iOS
-  also re-pans without resizing when focus moves between fields, so the pan cannot simply be ignored there. Nothing is
-  held at a maximum. **Symptom to recognise: you can drag the header with your finger, and the page you type in scrolls
-  worse than one you don't.** It is worst where the scroll body has little range, because only a rubber-band moves the
-  visual viewport — a short page flickers where a long one looks fine.
+  the pan on `resize` immediately but from a `scroll` only once the viewport has been still for `PAN_SETTLE_MS`.
+  Nothing is held at a maximum. **Symptom to recognise: you can drag the header with your finger, and the page you type
+  in scrolls worse than one you don't.** It is worst where the scroll body has little range, because only a rubber-band
+  moves the visual viewport — a short page flickers where a long one looks fine.
+- **A pan the app asked for is the exception: track it live.** Moving focus between fields re-pans **without
+  resizing**, and iOS animates that pan — waiting out `PAN_SETTLE_MS` rides the shell off the top for the length of the
+  animation and snaps the chrome back afterwards. `expectKeyboard(on)` arms live tracking on every `focusin`, `scroll`
+  publishes the pan per frame while armed, and the first settle disarms it; a drag never begins with a focus.
+  **Symptom to recognise: the first field is fine and the second or third one jerks the header.**
 - **Height and pan are separate subscriptions.** `subscribeKeyboardHeight` fires once per _keyboard_ event — the inset,
   or the pan moving with it on a `resize`, coalesced into one wake-up. `subscribePan` fires on every published pan,
   including the one that settles after a scroll. Anything that writes `scrollTop` takes the height: woken by a
-  scroll-produced pan it re-scrolls mid-drag, over the scroll the user is performing.
+  scroll-produced pan it re-scrolls mid-drag, over the scroll the user is performing. Because the pan is published from
+  two paths, that wake-up compares against what was **last announced**, not against what the current call wrote — a
+  `resize` that finds both numbers already published still owes its subscribers one notification.
 - **A focused field is revealed by its scroll body, and that needs range, not just `scroll-padding`.**
   `useKeyboardReveal` sets `scrollTop` on `focusin` and again when `--kb-inset` settles; `.pb-keyboard`/`.pb-safe` give
   the scrollport `padding-bottom: var(--kb-inset)` to scroll into. `AppScreen` wires it automatically — opt in by hand

@@ -36,7 +36,7 @@ export {
 export { useAutoSelect } from './use-auto-select'
 export { useDevMode, setDevMode } from './dev-mode'
 export { useProbeOverlay, setProbeOverlay } from './probe-overlay'
-export { visibleBottom, isPanBakedIntoRects, subscribePan } from './keyboard-viewport'
+export { visibleBottom, subscribePan } from './keyboard-viewport'
 export { useKeyboardInset } from './use-keyboard-inset'
 export { useKeyboardReveal } from './use-keyboard-reveal'
 export { keepFieldFocused, TEXT_ENTRY } from './keep-field-focused'

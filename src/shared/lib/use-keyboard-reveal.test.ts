@@ -68,9 +68,10 @@ function stubRect(node: Element, top: number, bottom: number) {
 }
 
 /**
- * Which coordinate space this simulated platform reports rects in — the measurement
- * `keyboard-viewport` takes from `html` to decide whether the pan is already in them. `-pan` is a
- * UA that re-anchored the shell itself; `0` is one that let it ride off the top.
+ * Which coordinate space this simulated platform reports rects in — where `keyboard-viewport` finds
+ * the layout origin. `-pan` is a UA whose rects already carry the pan; `0` is one whose rects are
+ * layout-relative. (The fixed probe it measures alongside stays at jsdom's 0, so the shell reads as
+ * left at the layout origin in both.)
  */
 function stubRectSpace(htmlTop: number) {
   stubRect(document.documentElement, htmlTop, htmlTop)

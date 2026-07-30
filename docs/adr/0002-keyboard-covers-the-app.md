@@ -86,10 +86,20 @@ shell, and not iOS — is what reveals the focused field.**
   **Chrome consumes `--pan-comp` while the keyboard is up, and only via `translate`**: `theme.css` rides
   `[data-slot="header-bar"]` and `[data-slot="status-cap"]` back onto the screen under `[data-keyboard]`.
   _(Amended 2026-07-30.)_ `--pan-comp` is the part of the pan the platform has **not** already compensated for — the
-  pan where rects come back layout-relative, `0` where the UA re-anchored fixed boxes to the visual viewport itself —
-  so the rule is a no-op in a Safari tab without needing a `display-mode` gate to say so. The gate was a proxy for a
-  behaviour, and it classified Chrome iOS, Firefox iOS and every future UA by guess; `isPanBakedIntoRects()` measures
-  it instead (`|htmlRect.top + vv.offsetTop| < 1`).
+  full pan where the UA leaves fixed boxes at the layout origin, `0` where it re-anchored them to the visual viewport
+  itself — so the rule is a no-op in a Safari tab without needing a `display-mode` gate to say so. The gate was a proxy
+  for a behaviour, and it classified Chrome iOS, Firefox iOS and every future UA by guess.
+- **The compensation is measured on a fixed box, because that is the box that rides** _(amended 2026-07-30, second
+  pass)_. The first measured version read `html` alone and called the pan "baked into rects" when
+  `|htmlRect.top + vv.offsetTop| < 1`. That conflates two independent questions — _which space are rects in_ and _did
+  fixed boxes move_ — and `html` only answers the first: it sits at the layout origin whether or not the UA lifted
+  fixed boxes off it. A UA that re-anchors the shell but keeps reporting rects layout-relative therefore read as
+  "not compensated", and the header was translated down over the content by the full pan on every focus that panned.
+  `startKeyboardViewport` now appends one hidden, never-translated `position: fixed; top: 0` probe to `body` and
+  publishes `--pan-comp` as `max(0, pan + htmlRect.top − probeRect.top)`. Both readings come from
+  `getBoundingClientRect()`, so nothing crosses coordinate spaces: `pan + htmlRect.top` is where the visible viewport
+  starts in rect coordinates, and the probe is where a fixed box actually landed. All four combinations of the two
+  questions come out right, and no UA is classified by name.
 - **Chrome that rides the pan drags the scroll body with it, or it eats the top of the page.** The translate moves the
   header alone; the scroll body stays where the ride-off left it, so the first `--pan-comp` of content sits _behind_ the
   header and **cannot be scrolled out from under it — the page is already at `scrollTop: 0`**. `.pt-pan` gives the
@@ -98,13 +108,14 @@ shell, and not iOS — is what reveals the focused field.**
   it; the surfaces that opted out by hand were the ones whose headers covered their content. It is the one place a layout property may consume the pan: it is range, not a reveal,
   and `useKeyboardReveal` — which re-runs on every pan change — is what then puts the focused field back above the
   keyboard. Without that pairing the padding would hand the field back to the position Safari panned away from.
-- **`visibleBottom()` is the single bridge between the two spaces**, and it has **two** forms, chosen by the same
-  measurement that drives `--pan-comp` _(amended 2026-07-30)_. The visible area spans `[offsetTop, offsetTop + vv.height]`
-  in layout coordinates and `[0, vv.height]` in visual ones, so the pan cancels out of exactly one of them:
-  `--app-height − --kb-inset − --vv-top` where rects already carry the pan, `--app-height − --kb-inset` where they do
-  not. A single formula is wrong by a full pan in one of the two spaces, which over-scrolls every revealed field there.
-  Before the keyboard reports itself the pan is 0 and the reserve supplies `--kb-inset`, so both forms are correct in
-  that phase.
+- **`visibleBottom()` is the single bridge between the two spaces**, and it is `originTop + --app-height − --kb-inset`
+  _(amended 2026-07-30, second pass)_. The visible area ends `--kb-inset` above the anchored shell's bottom in layout
+  coordinates; `originTop` (`htmlRect.top`, sampled with the pan) is where those coordinates begin in rect ones — `0`
+  where rects are layout-relative, `−pan` where they already carry it. That is the same two answers the old pair of
+  formulas gave, from the one measurement, instead of a branch on a boolean that also had to be right about fixed
+  boxes. Getting the space wrong costs a full pan of over-scroll on every revealed field. With no pan the two spaces
+  coincide, so `originTop` is 0 by definition and no rect is read at all — the reserve phase, where the keyboard has
+  not reported itself yet, is covered by that.
 - **The reveal band is otherwise built from rects only** — the scrollport, `[data-slot="header-bar"]`'s bottom,
   `[data-slot="footer-bar"]`'s top — so the field lands between the chrome, never under either, with no space conversion
   to get wrong.
@@ -116,8 +127,19 @@ shell, and not iOS — is what reveals the focused field.**
   `Math.max`. Chrome translated by that value follows the finger down the screen and never comes back — the two halves
   of the same fault, and the reason the max-hold existed at all. The height is re-derived on `resize` only, as before;
   the pan is now published from `resize` immediately and from `scroll` only once the viewport has been still for
-  `PAN_SETTLE_MS`, because iOS also re-pans without resizing when focus moves between fields. Nothing is held at a
-  maximum: the pan decays when iOS un-pans.
+  `PAN_SETTLE_MS`. Nothing is held at a maximum: the pan decays when iOS un-pans.
+- **A pan a focus asked for is tracked live; only an unasked-for one waits out the settle** _(amended 2026-07-30,
+  second pass)_. Moving focus between fields re-pans **without resizing**, and iOS animates that pan over several
+  hundred milliseconds — so the settle window is exactly the wrong tool there: the shell rides off the top for the
+  length of the animation with the chrome still translated by the old pan, then snaps. That is the second and third
+  field of a form dragging the header about. `expectKeyboard(on)` (already called from `useKeyboardReveal` on every
+  `focusin`) now also arms live tracking, and `scroll` publishes the pan on every frame while it is armed; the first
+  settle disarms it. A drag never begins with a focus, so chrome still cannot follow a finger.
+- **`notifyKeyboard` compares against what was last announced, not against what the current call wrote**
+  _(added 2026-07-30, second pass)_. With the pan published live, a `resize` can find both numbers already correct and
+  wake nobody — an opening keyboard whose measurement matches the reserve exactly leaves the reveal never re-run
+  against the new pan. One wake-up per keyboard event, and none for an event that moved nothing, is the rule; which
+  write got there first is not the reveal's business.
 - **Height and pan have separate subscriber sets** _(amended 2026-07-30)_. `subscribeKeyboardHeight` fires **once per
   keyboard event** — the inset changing, or the pan changing _with_ it on a `resize`, coalesced into one wake-up because
   an opening keyboard moves both in the same frame. `subscribePan` fires on every published pan, including the one that
@@ -165,8 +187,8 @@ shell, and not iOS — is what reveals the focused field.**
 - **`ImportReviewPage`'s "Import N cards" moved from the header to a `FooterBar`**, so both steps of the paste flow
   present their CTA the same way.
 - **`/dev/kitchen-sink` carries a live viewport probe** (`KeyboardProbe`): layout vs visual viewport, the pan, every
-  published variable, and whether `offsetTop + visualViewport.height + --kb-inset` still balances against
-  `--app-height`. It exists because none of this is observable where the code is written, and three fixes were shipped
+  published variable, the three rects `--pan-comp` is derived from (`html`, `#root`, the hidden fixed probe), and
+  whether `offsetTop + visualViewport.height + --kb-inset` still balances against `--app-height`. It exists because none of this is observable where the code is written, and three fixes were shipped
   on inference before it did.
 - **The same probe floats over any route** (`widgets/dev-probe`, Settings → Developer → _Viewport probe overlay_)
   _(added 2026-07-30)_. A keyboard fault only reproduces on the screen that has it, and a still reading does not show
