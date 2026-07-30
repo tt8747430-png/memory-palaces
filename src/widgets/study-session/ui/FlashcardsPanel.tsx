@@ -287,7 +287,7 @@ export function FlashcardsPanel({
           card={editing ? card.card : null}
           title={t('study.editTitle')}
           saveLabel={t('study.saveCard')}
-          saveIcon={<Check className="size-[18px]" aria-hidden />}
+          saveIcon={<Check className="size-4.5" aria-hidden />}
           onClose={() => setEditing(false)}
           onSave={(_id, changes) => onEditCard(card.card.id, changes)}
         />

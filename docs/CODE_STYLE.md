@@ -12,7 +12,7 @@ Goal: small, single-responsibility, reusable. 500 lines in one component → dec
 Container wires data → presentational children (section → list → item). One job each.
 
 | What                            | Where                                         |
-|---------------------------------|-----------------------------------------------|
+| ------------------------------- | --------------------------------------------- |
 | App-wide, purely presentational | `shared/ui/` (`Sheet`, `GlassCard`, `Button`) |
 | Composite, tied to one screen   | `widgets/<x>/ui/`                             |
 | Screen root                     | `pages/<x>/ui/`                               |
@@ -210,24 +210,36 @@ dev-only **`/dev/kitchen-sink`**.
   never from live `clientHeight`, so a platform that _does_ resize can't collapse the measurement to zero.
   `useKeyboardInset` publishes `--kb-inset` (≥120px, so an accessory bar alone doesn't count) plus `--vv-top`, and is
   the only `visualViewport` subscriber.
-- **`visualViewport.offsetTop` and `getBoundingClientRect()` are different coordinate spaces — and fixed-element
-  behavior depends on display mode.** In a Safari _tab_ WebKit re-anchors `position: fixed` to the visual viewport while
-  the keyboard is up, so the app does not ride off-screen; in the **standalone PWA it does not**, and the fixed shell
-  rides off the top by the full pan ([ADR 0002](adr/0002-keyboard-covers-the-app.md)). The only compensation is
-  `theme.css`'s `translate` of `[data-slot="header-bar"]`/`[data-slot="status-cap"]` by `--vv-top`, gated on
-  `(display-mode: standalone)` + `[data-keyboard]` — translating in-tab double-counts the pan and dives the header over
-  the content. **Chrome that rides the pan must take the scroll body with it** (`.pt-pan`, same gate): the translate
-  moves the header alone, burying the first `--vv-top` of content behind it with no way to scroll it back out — the page
-  is already at `scrollTop: 0`. The padding is scroll range, not a reveal; `useKeyboardReveal` still owns where the
-  focused field lands. `visibleBottom()` (`= --app-height − --kb-inset − --vv-top`) is the one sanctioned JS bridge;
-  everything else in `useKeyboardReveal` is rect-vs-rect.
-- **`visualViewport` fires `scroll` as well as `resize`, and only `resize` means the keyboard moved.** iOS slides the
-  visual viewport while the page rubber-bands, so `offsetTop` and `height` both read mid-flight on every scroll frame.
-  Deriving the keyboard from them there republishes `--kb-inset` — resizing `.pb-keyboard`'s scroll range under the
-  finger and leaving a dead band below a `static` footer dock — and republishes `--vv-top`, so the compensated header
-  judders against the scroll. `startKeyboardViewport` therefore re-measures the height on `resize` only, and holds
-  `--vv-top` at the deepest pan of the episode until the keyboard goes. Symptom to recognise: a page you type in scrolls
-  worse than one you don't.
+- **`visualViewport.offsetTop` and `getBoundingClientRect()` are different coordinate spaces, and which one a UA uses
+  is measured, never inferred.** Some UAs re-anchor `position: fixed` to the visual viewport while the keyboard is up,
+  so the app does not ride off-screen and rects come back with the pan already in them; others leave the fixed shell to
+  ride off the top by the full pan ([ADR 0002](adr/0002-keyboard-covers-the-app.md)). Safari answers **differently in a
+  tab and in the standalone PWA**, which is what proves `display-mode` was a proxy and not the cause.
+  `isPanBakedIntoRects()` (`|htmlRect.top + vv.offsetTop| < 1`) decides it per platform and publishes `--pan-comp`: the
+  uncompensated part of the pan, `0` where the UA already handled it. `theme.css` translates
+  `[data-slot="header-bar"]`/`[data-slot="status-cap"]` by `--pan-comp` under `[data-keyboard]`, with no media query —
+  translating where the platform already compensated double-counts the pan and dives the header over the content.
+  **Chrome that rides the pan must take the scroll body with it** (`.pt-pan`, in `SCREEN_SCROLL`): the translate moves
+  the header alone, burying the first `--pan-comp` of content behind it with no way to scroll it back out — the page is
+  already at `scrollTop: 0`. The padding is scroll range, not a reveal; `useKeyboardReveal` still owns where the focused
+  field lands. `visibleBottom()` is the one sanctioned JS bridge, and it has **two** forms —
+  `--app-height − --kb-inset − --vv-top` where rects carry the pan, `--app-height − --kb-inset` where they do not.
+  Everything else in `useKeyboardReveal` is rect-vs-rect.
+- **`visualViewport` fires `scroll` as well as `resize`, and a scroll frame is not news about the keyboard.** iOS slides
+  the visual viewport while the page rubber-bands, so `offsetTop` and `height` both read mid-flight on every scroll
+  frame. Deriving the keyboard height from them republishes `--kb-inset`, resizing `.pb-keyboard`'s scroll range under
+  the finger. Publishing the **pan** from them is worse and was the live bug: chrome translated by a per-frame pan
+  **follows the finger down the screen**, and holding it at the episode's `Math.max` (the old damping) leaves it parked
+  below the top of the screen until blur. `startKeyboardViewport` re-measures the height on `resize` only, and publishes
+  the pan on `resize` immediately but from a `scroll` only once the viewport has been still for `PAN_SETTLE_MS` — iOS
+  also re-pans without resizing when focus moves between fields, so the pan cannot simply be ignored there. Nothing is
+  held at a maximum. **Symptom to recognise: you can drag the header with your finger, and the page you type in scrolls
+  worse than one you don't.** It is worst where the scroll body has little range, because only a rubber-band moves the
+  visual viewport — a short page flickers where a long one looks fine.
+- **Height and pan are separate subscriptions.** `subscribeKeyboardHeight` fires once per _keyboard_ event — the inset,
+  or the pan moving with it on a `resize`, coalesced into one wake-up. `subscribePan` fires on every published pan,
+  including the one that settles after a scroll. Anything that writes `scrollTop` takes the height: woken by a
+  scroll-produced pan it re-scrolls mid-drag, over the scroll the user is performing.
 - **A focused field is revealed by its scroll body, and that needs range, not just `scroll-padding`.**
   `useKeyboardReveal` sets `scrollTop` on `focusin` and again when `--kb-inset` settles; `.pb-keyboard`/`.pb-safe` give
   the scrollport `padding-bottom: var(--kb-inset)` to scroll into. `AppScreen` wires it automatically — opt in by hand
@@ -236,28 +248,35 @@ dev-only **`/dev/kitchen-sink`**.
   the reserved height is the largest one measured, persisted to `localStorage` — and it is a one-frame bridge, **never a
   floor**: the real measurement replaces it outright. `max()`ing the two clamps the inset to a height measured under a
   different pan and leaves a dead band under the footer.
+- **Every scroll surface is built from `SCREEN_SCROLL`** (`shared/lib`): `overflow-y-auto overscroll-contain
+scrollbar-hide pt-pan`. The `pt-pan` is the part that is easy to leave off and impossible to see on desktop — a
+  surface without it loses its top to the translated header. Inner scrollers that are not a screen's scrollport (a
+  preview box, a popup list) are not this and should not take it.
 - **A page footer is `sticky bottom-0` inside the scroll body — a header, upside down — and goes `static` while the
   keyboard is up.** Content passes behind it; it comes to rest at its flow position at the end of the scroll. WebKit
   re-clamps bottom-anchored sticky boxes to the visual viewport when the keyboard shows — the dock would float above the
   keyboard mid-screen — so `FOOTER_DOCK` carries `[[data-keyboard]_&]:static` (`useKeyboardInset` publishes the
   `data-keyboard` attribute with `--kb-inset`), leaving the CTA at the end of the page, behind the keyboard until
   scrolled to. Pin to a scrollport something can shrink and it lands on the keyboard's edge instead.
-- **Bottom insets measured from the screen must subtract `--kb-inset`** (`--app-bottom-inset`). A home-indicator gutter
-  is clearance; with the keyboard over that area it is a dead band under the footer's controls.
+- **Bottom insets measured from the screen never subtract `--kb-inset`** (`--app-bottom-inset`, `.pb-safe`,
+  `.pb-gutter`). Nothing bottom-anchored is still on screen to save room for — the footer dock has gone `static` and
+  `AppNav` is hidden — so subtracting only twitches bottom chrome on keyboard open. (ADR 0002 asserted the opposite
+  until 2026-07-30; `theme.css` now follows this.)
 - **A sheet's pinned footer must consume `--drawer-keyboard-inset`; the body doesn't lift it.** Base UI's
   `VirtualKeyboardProvider` never moves the sheet, so a `bottom-0` footer stays behind the keyboard → pad the popup with
   `.pb-safe-keyboard`. **Combine safe-area and keyboard insets with `max()`, never `+`** (the inset already measures to
-  the accessory bar). Insets measured from the bottom (`--app-bottom-inset`, `.pb-safe`, `.pb-gutter`) must never
-  _subtract_ `--kb-inset` — nothing shrinks any more, so that only makes bottom chrome twitch on keyboard open.
+  the accessory bar).
 - **Focus drawer fields via `Sheet`'s `initialFocus`, never native `autofocus`.** `autofocus` fires before Base UI
   positions the sheet and without `preventScroll` → iOS scrolls the whole layout, skewing `offsetTop` and corrupting the
   keyboard measurement. **Lint-banned in `*Sheet.tsx`/`*Form.tsx`.** Don't reach for it on full-page inputs either: it
   opens the keyboard over the page's own footer before the learner has seen it, and the mount-time pan lands before any
   keyboard height has been measured (removed from `PasteNotesPage`).
 - **A control tapped while a field is focused must not steal focus** — iOS blurs the field, the keyboard drops, the
-  footer slides out from under the finger and the `click` lands on nothing (tap swallowed).
-  `onMouseDown={(e) => e.preventDefault()}` on the control; toggle still fires, keyboard nav unaffected. `DrawerHeader`/
-  `DrawerFooter` already do it (`keepFieldFocused`), skipping the guard when the tap lands in another field.
+  footer slides out from under the finger and the `click` lands on nothing (tap swallowed). `keepFieldFocused`
+  (`shared/lib`) is `onMouseDown={(e) => e.preventDefault()}` with the tap-landed-in-another-field case skipped; toggle
+  still fires, keyboard nav unaffected. **`HeaderBar`, `FooterBar`, `DrawerHeader` and `DrawerFooter` install it
+  themselves** — a page action inherits the guard and must not re-add it. It was a per-caller rule once, which meant it
+  existed on sheets and on nothing else.
 - **Swipe surfaces need `touch-action`, or text selection hijacks the drag.** Base UI declines its swipe while text is
   selected, and without `touch-action: none` the browser scrolls instead. Chrome is `touch-none select-none`; the scroll
   body re-enables `touch-auto overscroll-contain`. The selection must be collapsed before the touch reaches the Popup —

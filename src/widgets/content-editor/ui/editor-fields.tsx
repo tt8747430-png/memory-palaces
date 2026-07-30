@@ -25,8 +25,8 @@ function FieldLabel({
         className={cn(
           'inline-flex items-center gap-1.5 text-heading',
           emphasis
-            ? 'text-[length:var(--p-text-sub)] font-bold'
-            : 'text-[length:var(--p-text-label)] font-semibold',
+            ? 'text-(length:--p-text-sub) font-bold'
+            : 'text-(length:--p-text-label) font-semibold',
         )}
       >
         {icon ? (
@@ -37,7 +37,7 @@ function FieldLabel({
         {children}
       </label>
       {count !== undefined ? (
-        <span className="text-[length:var(--p-text-tiny)] tabular-nums text-muted-foreground">
+        <span className="text-(length:--p-text-tiny) tabular-nums text-muted-foreground">
           {count}
         </span>
       ) : null}
@@ -77,7 +77,7 @@ export function CardFields({
             emphasis
             htmlFor={fieldId('front')}
             count={front.length}
-            icon={<MessageSquareText className="size-[18px] text-heading" aria-hidden />}
+            icon={<MessageSquareText className="size-4.5 text-heading" aria-hidden />}
           >
             {t('cards.editor.front')}
           </FieldLabel>
@@ -95,7 +95,7 @@ export function CardFields({
             emphasis
             htmlFor={fieldId('back')}
             count={back.length}
-            icon={<BookOpen className="size-[18px] text-heading" aria-hidden />}
+            icon={<BookOpen className="size-4.5 text-heading" aria-hidden />}
           >
             {t('cards.editor.back')}
           </FieldLabel>
@@ -128,7 +128,7 @@ export function CardFields({
         <div>
           <FieldLabel
             htmlFor={fieldId('tip')}
-            icon={<Lightbulb className="size-3.5 text-[var(--warning-foreground)]" aria-hidden />}
+            icon={<Lightbulb className="size-3.5 text-(--warning-foreground)" aria-hidden />}
           >
             {t('cards.editor.tip')}
           </FieldLabel>
@@ -188,7 +188,7 @@ export function QuestionFields({
 
       <div>
         <FieldLabel htmlFor={fieldId('option-0')}>{t('questions.editor.options')}</FieldLabel>
-        <p className="-mt-1 mb-2 text-[length:var(--p-text-label)] text-muted-foreground">
+        <p className="-mt-1 mb-2 text-(length:--p-text-label) text-muted-foreground">
           {t('questions.editor.optionsHint')}
         </p>
         <div className="flex flex-col gap-2">
@@ -208,14 +208,14 @@ export function QuestionFields({
                   className={cn(
                     'grid size-9 shrink-0 place-items-center rounded-full border-2 transition-colors',
                     isCorrect
-                      ? 'border-success bg-success text-[color:var(--surface)]'
+                      ? 'border-success bg-success text-(--surface)'
                       : 'border-border bg-card text-muted-foreground',
                   )}
                 >
                   {isCorrect ? (
-                    <Check className="size-[15px]" strokeWidth={3} aria-hidden />
+                    <Check className="size-3.75" strokeWidth={3} aria-hidden />
                   ) : (
-                    <span className="text-[length:var(--p-text-label)] font-bold">
+                    <span className="text-(length:--p-text-label) font-bold">
                       {String.fromCharCode(65 + i)}
                     </span>
                   )}
@@ -234,7 +234,7 @@ export function QuestionFields({
                     type="button"
                     onClick={() => onRemoveOption(i)}
                     aria-label={t('questions.editor.removeOption')}
-                    className="grid size-9 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-[var(--danger-surface)] hover:text-[var(--danger-on-surface)]"
+                    className="grid size-9 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-(--danger-surface) hover:text-(--danger-on-surface)"
                   >
                     <X className="size-4" aria-hidden />
                   </button>
@@ -247,9 +247,9 @@ export function QuestionFields({
           <button
             type="button"
             onClick={onAddOption}
-            className="mt-2.5 inline-flex items-center gap-1.5 text-[length:var(--p-text-label)] font-semibold text-accent transition-colors hover:text-heading"
+            className="mt-2.5 inline-flex items-center gap-1.5 text-(length:--p-text-label) font-semibold text-accent transition-colors hover:text-heading"
           >
-            <Plus className="size-[15px]" aria-hidden />
+            <Plus className="size-3.75" aria-hidden />
             {t('questions.editor.addOption')}
           </button>
         ) : null}

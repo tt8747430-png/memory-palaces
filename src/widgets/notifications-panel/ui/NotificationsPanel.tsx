@@ -55,10 +55,10 @@ export function NotificationsPanel({
           <BellOff className="size-9" aria-hidden />
         </span>
         <div className="flex flex-col gap-1.5">
-          <h2 className="text-[length:var(--p-text-headline)] font-bold text-heading">
+          <h2 className="text-(length:--p-text-headline) font-bold text-heading">
             {t('notifications.emptyTitle')}
           </h2>
-          <p className="max-w-[34ch] text-pretty text-[length:var(--p-text-body)] text-muted-foreground">
+          <p className="max-w-[34ch] text-pretty text-(length:--p-text-body) text-muted-foreground">
             {t('notifications.emptyBody')}
           </p>
         </div>
@@ -73,7 +73,7 @@ export function NotificationsPanel({
         if (items.length === 0) return null
         return (
           <section key={bucket}>
-            <h2 className="mb-2 px-1 text-[length:var(--p-text-tiny)] font-semibold uppercase tracking-wide text-muted-foreground">
+            <h2 className="mb-2 px-1 text-(length:--p-text-tiny) font-semibold uppercase tracking-wide text-muted-foreground">
               {t(`notifications.${bucket}`)}
             </h2>
             <ul className="flex flex-col gap-2">
@@ -142,7 +142,7 @@ function NotificationRow({
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <p className="truncate text-[length:var(--p-text-label)] font-semibold text-heading">
+          <p className="truncate text-(length:--p-text-label) font-semibold text-heading">
             {titleOf(t, notification)}
           </p>
           {notification.xpGain ? (
@@ -154,10 +154,10 @@ function NotificationRow({
             </Chip>
           ) : null}
         </div>
-        <p className="mt-0.5 text-[length:var(--p-text-label)] text-muted-foreground">
+        <p className="mt-0.5 text-(length:--p-text-label) text-muted-foreground">
           {subtitleOf(t, notification)}
         </p>
-        <p className="mt-1 text-[length:var(--p-text-tiny)] text-muted-foreground">
+        <p className="mt-1 text-(length:--p-text-tiny) text-muted-foreground">
           {formatRelative(t, relativeTime(notification.createdAt, now))}
         </p>
       </div>

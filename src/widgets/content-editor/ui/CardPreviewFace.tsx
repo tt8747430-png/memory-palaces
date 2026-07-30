@@ -18,13 +18,13 @@ export function PreviewFace({ card, back = false }: { card: Card; back?: boolean
           <FaceTag>{t('cards.browser.front')}</FaceTag>
           {card.flagged ? (
             <Flag
-              className="size-4 fill-(--rating) text-(--rating-edge)"
+              className="size-4 fill-rating text-rating-edge"
               aria-label={t('cards.row.flagged')}
             />
           ) : null}
         </div>
         <div className="flex flex-1 items-center justify-center overflow-y-auto px-1 py-3 text-center scrollbar-hide">
-          <p className="text-balance break-words text-[clamp(24px,6.5vw,34px)] font-bold leading-tight text-heading">
+          <p className="text-balance wrap-break-wordword text-[clamp(24px,6.5vw,34px)] font-bold leading-tight text-heading">
             {card.front}
           </p>
         </div>
@@ -40,7 +40,7 @@ export function PreviewFace({ card, back = false }: { card: Card; back?: boolean
     >
       <FaceTag className="self-start">{t('cards.browser.back')}</FaceTag>
       <div className="flex flex-1 flex-col items-center justify-center gap-4 overflow-y-auto py-3 text-center scrollbar-hide">
-        <p className="text-balance break-words text-[clamp(18px,5vw,24px)] font-semibold leading-snug text-heading">
+        <p className="text-balance wrap-break-word text-[clamp(18px,5vw,24px)] font-semibold leading-snug text-heading">
           {card.back}
         </p>
         {card.hint ? (

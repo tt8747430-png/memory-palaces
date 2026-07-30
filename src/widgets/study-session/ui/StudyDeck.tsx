@@ -113,7 +113,7 @@ export function StudyDeck({
   }
 
   return (
-    <div className="relative mx-auto h-full w-full max-w-md [perspective:1200px]">
+    <div className="relative mx-auto h-full w-full max-w-md perspective-distant">
       {behind.map((queued, i) => (
         <QueuedCard
           key={queued.card.id}

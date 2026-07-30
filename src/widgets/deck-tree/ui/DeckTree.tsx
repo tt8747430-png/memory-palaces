@@ -110,7 +110,7 @@ function DeckTreeRow({
         type="button"
         {...longPress}
         aria-label={t('deck.rowOpen', { name: deck.name })}
-        className="absolute inset-0 rounded-card transition-colors active:bg-primary/[0.06]"
+        className="absolute inset-0 rounded-card transition-colors active:bg-primary/6"
       />
 
       <DeckRowBody
@@ -152,7 +152,7 @@ function DeckTreeRow({
       {isSub ? (
         <span
           aria-hidden
-          className="pointer-events-none absolute inset-y-2 left-[-11px] w-[2px] rounded-full bg-primary/[0.12]"
+          className="pointer-events-none absolute inset-y-2 -left-2.75 w-0.5 rounded-full bg-primary/12"
         />
       ) : null}
     </div>

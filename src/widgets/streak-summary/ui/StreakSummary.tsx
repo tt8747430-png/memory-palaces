@@ -35,14 +35,14 @@ export function StreakSummary({
         <>
           <div className="flex items-end justify-between gap-3">
             <div>
-              <h3 className="text-[length:var(--p-text-headline)] font-bold text-heading">
+              <h3 className="text-(length:--p-text-headline) font-bold text-heading">
                 {t('progress.level', { level: level.level })}
               </h3>
-              <p className="mt-0.5 text-[length:var(--p-text-label)] text-muted-foreground">
+              <p className="mt-0.5 text-(length:--p-text-label) text-muted-foreground">
                 {t('progress.xpToNext', { remaining, level: level.level + 1 })}
               </p>
             </div>
-            <span className="shrink-0 text-[length:var(--p-text-label)] font-semibold tabular-nums text-heading">
+            <span className="shrink-0 text-(length:--p-text-label) font-semibold tabular-nums text-heading">
               {t('progress.xpTotal', { xp })}
             </span>
           </div>
@@ -61,7 +61,7 @@ export function StreakSummary({
           <div key={day.key} className="flex flex-col items-center gap-2">
             <span
               className={cn(
-                'text-[length:var(--p-text-tiny)] font-semibold',
+                'text-(length:--p-text-tiny) font-semibold',
                 day.isToday ? 'text-heading' : 'text-muted-foreground',
               )}
             >
@@ -79,7 +79,7 @@ export function StreakSummary({
               className={cn(
                 'grid size-9 place-items-center rounded-[14px]',
                 day.trained
-                  ? 'bg-[var(--warning)] shadow-interactive'
+                  ? 'bg-warning shadow-interactive'
                   : day.isToday
                     ? 'border-2 border-secondary bg-card'
                     : 'border border-border bg-info-surface',
@@ -87,7 +87,8 @@ export function StreakSummary({
             >
               {day.trained ? (
                 <Flame
-                  className="size-4 text-[var(--warning-on-fill)]"
+                  className="size-4
+                  text-(--warning-on-fill)"
                   fill="currentColor"
                   aria-hidden
                 />
@@ -121,13 +122,14 @@ function StreakStat({
     <div className="flex flex-1 flex-col items-center text-center">
       <span className="inline-flex items-center gap-1.5">
         {accent ? (
-          <Flame className="size-5 text-[var(--warning)]" fill="currentColor" aria-hidden />
+          <Flame className="size-5
+          text-warning" fill="currentColor" aria-hidden />
         ) : null}
         <span className="text-[30px] font-bold leading-none tabular-nums text-heading">
           {value}
         </span>
       </span>
-      <span className="mt-1.5 text-[length:var(--p-text-tiny)] font-semibold uppercase tracking-wide text-muted-foreground">
+      <span className="mt-1.5 text-(length:--p-text-tiny) font-semibold uppercase tracking-wide text-muted-foreground">
         {label}
       </span>
     </div>

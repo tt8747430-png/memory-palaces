@@ -39,14 +39,14 @@ export function NextMilestoneCard({ badge, onOpen, className }: NextMilestoneCar
           className="size-14"
         />
         <div className="min-w-0 flex-1">
-          <p className="text-[length:var(--p-text-sub)] font-bold leading-tight text-heading">
+          <p className="text-(length:--p-text-sub) font-bold leading-tight text-heading">
             {t('profile.milestone.title')}
           </p>
-          <p className="mt-0.5 text-[length:var(--p-text-label)] font-medium leading-snug text-muted-foreground">
+          <p className="mt-0.5 text-(length:--p-text-label) font-medium leading-snug text-muted-foreground">
             {t('profile.milestone.detail', { remaining, label })}
           </p>
         </div>
-        <span className="flex shrink-0 items-center gap-0.5 text-[length:var(--p-text-sub)] font-bold tabular-nums text-primary">
+        <span className="flex shrink-0 items-center gap-0.5 text-(length:--p-text-sub) font-bold tabular-nums text-primary">
           {pct}%
           <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
         </span>

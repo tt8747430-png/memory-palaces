@@ -55,16 +55,17 @@ export function ProfileHero({
         />
         <span
           aria-hidden
-          className="absolute -inset-[7px] rounded-full bg-card-glass shadow-featured ring-1 ring-[var(--border-glass)]"
+          className="absolute -inset-1.75 rounded-full bg-card-glass shadow-featured ring-1 ring-(--border-glass)"
         />
         <span
           aria-hidden
-          className="pointer-events-none absolute -inset-[7px] rounded-full bg-gradient-to-br from-white/55 via-white/10 to-transparent"
+          className="pointer-events-none absolute -inset-1.75 rounded-full
+          bg-linear-to-br from-white/55 via-white/10 to-transparent"
         />
         <Avatar
           name={name}
           src={avatar}
-          className="relative size-[104px] rounded-full border-[3px] border-white/70 text-[40px] shadow-featured"
+          className="relative size-26 rounded-full border-[3px] border-white/70 text-[40px] shadow-featured"
         />
       </motion.button>
 
@@ -72,7 +73,8 @@ export function ProfileHero({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: EASE_OUT }}
-        className="mt-4 text-[length:var(--p-text-sub)] font-medium text-muted-foreground"
+        className="mt-4
+        text-(length:--p-text-sub) font-medium text-muted-foreground"
       >
         {subtitle}
       </motion.p>
@@ -81,17 +83,17 @@ export function ProfileHero({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.08, duration: 0.35, ease: EASE_OUT }}
-        className="mt-5 flex w-full max-w-[300px] items-stretch divide-x divide-border"
+        className="mt-5 flex w-full max-w-75 items-stretch divide-x divide-border"
       >
         <Stat
-          icon={<Flame className="size-4 text-[var(--warning)]" fill="currentColor" aria-hidden />}
+          icon={<Flame className="size-4 text-warning" fill="currentColor" aria-hidden />}
           value={String(streakCount)}
           label={t('profile.tiles.currentStreak')}
           onClick={onOpenStreak}
           actionLabel={t('profile.openStreak')}
         />
         <Stat
-          icon={<Zap className="size-4 text-[var(--warning)]" fill="currentColor" aria-hidden />}
+          icon={<Zap className="size-4 text-warning" fill="currentColor" aria-hidden />}
           value={xp.toLocaleString()}
           label={t('profile.tiles.totalXp')}
         />
@@ -106,9 +108,9 @@ export function ProfileHero({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.16, duration: 0.35, ease: EASE_OUT }}
-        className="mt-6 w-full max-w-[300px]"
+        className="mt-6 w-full max-w-75"
       >
-        <div className="flex items-baseline justify-between text-[length:var(--p-text-label)] font-semibold">
+        <div className="flex items-baseline justify-between text-(length:--p-text-label) font-semibold">
           <span className="text-primary">{levelLabel}</span>
           <span className="text-muted-foreground">{xpToNext}</span>
         </div>
@@ -135,11 +137,11 @@ function Stat({
     <>
       <span className="flex items-center gap-1.5">
         {icon}
-        <span className="text-[length:var(--p-text-headline)] font-bold leading-none tabular-nums text-heading">
+        <span className="text-(length:--p-text-headline) font-bold leading-none tabular-nums text-heading">
           {value}
         </span>
       </span>
-      <span className="text-[length:var(--p-text-tiny)] font-medium text-muted-foreground">
+      <span className="text-(length:--p-text-tiny) font-medium text-muted-foreground">
         {label}
       </span>
     </>

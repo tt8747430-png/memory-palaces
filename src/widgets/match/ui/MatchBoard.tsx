@@ -2,7 +2,7 @@ import { useEffect, useReducer, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Check, Puzzle, RotateCcw, Timer, Zap } from 'lucide-react'
-import { cn, EASE_EXPO, success } from '@/shared/lib'
+import { cn, EASE_EXPO, SCREEN_SCROLL, success } from '@/shared/lib'
 import { Button, Chip, Empty, IconButton, SessionHeader, SessionScreen } from '@/shared/ui'
 import {
   buildTiles,
@@ -94,11 +94,11 @@ export function MatchBoard({ cards, subtitle, onBack, onComplete }: MatchBoardPr
         </div>
       </SessionHeader>
 
-      <p className="px-5 pb-2 pt-3 text-center text-[length:var(--p-text-label)] font-medium text-muted-foreground">
+      <p className="px-5 pb-2 pt-3 text-center text-(length:--p-text-label) font-medium text-muted-foreground">
         {t('match.instruction')}
       </p>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-6 scrollbar-hide">
+      <div className={cn(SCREEN_SCROLL, 'min-h-0 flex-1 px-5 pb-6')}>
         <div className="grid auto-rows-fr grid-cols-2 gap-2.5">
           <AnimatePresence mode="popLayout">
             {board.map((tile) => {
@@ -115,9 +115,9 @@ export function MatchBoard({ cards, subtitle, onBack, onComplete }: MatchBoardPr
                   animate={isWrong && !reduce ? { x: [0, -7, 7, -5, 5, 0] } : { x: 0 }}
                   onClick={() => dispatch({ type: 'pick', tileId: tile.id })}
                   className={cn(
-                    'flex min-h-[92px] items-center rounded-card border p-3 text-left transition-colors',
+                    'flex min-h-23 items-center rounded-card border p-3 text-left transition-colors',
                     isWrong
-                      ? 'border-[var(--danger)] bg-[var(--danger-surface)]'
+                      ? 'border-destructive bg-(--danger-surface)'
                       : isSelected
                         ? 'border-primary bg-info-surface ring-2 ring-[color-mix(in_oklch,var(--primary)_20%,transparent)]'
                         : 'border-border bg-card shadow-rest',
@@ -125,7 +125,7 @@ export function MatchBoard({ cards, subtitle, onBack, onComplete }: MatchBoardPr
                 >
                   <span
                     className={cn(
-                      'break-words text-[length:var(--p-text-sub)] leading-snug',
+                      'wrap-break-word text-(length:--p-text-sub) leading-snug',
                       tile.kind === 'term'
                         ? 'font-semibold text-heading'
                         : 'font-medium text-muted-foreground',
@@ -152,14 +152,14 @@ export function MatchBoard({ cards, subtitle, onBack, onComplete }: MatchBoardPr
               initial={reduce ? { opacity: 0 } : { scale: 0.6, opacity: 0 }}
               animate={reduce ? { opacity: 1 } : { scale: 1, opacity: 1 }}
               transition={{ type: 'spring', stiffness: 320, damping: 20 }}
-              className="mb-3 grid size-20 place-items-center rounded-full bg-gradient-to-br from-primary to-accent shadow-interactive"
+              className="mb-3 grid size-20 place-items-center rounded-full bg-linear-to-br from-primary to-accent shadow-interactive"
             >
               <Check className="size-10 text-primary-foreground" strokeWidth={3} aria-hidden />
             </motion.div>
-            <h2 className="text-[length:var(--p-text-headline)] font-bold text-heading">
+            <h2 className="text-(length:--p-text-headline) font-bold text-heading">
               {t('match.complete')}
             </h2>
-            <p className="text-[length:var(--p-text-body)] text-muted-foreground">
+            <p className="text-(length:--p-text-body) text-muted-foreground">
               {formatTime(elapsed)} · {t('match.summary', { moves: state.moves })}
             </p>
             <div className="mt-5 flex w-full max-w-xs flex-col gap-3">

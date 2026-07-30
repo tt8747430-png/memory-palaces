@@ -12,11 +12,11 @@ export function EmptyCards({ onAdd, onImport }: { onAdd: () => void; onImport: (
       action={
         <div className="flex w-full max-w-60 flex-col gap-2">
           <Button onClick={onAdd}>
-            <Plus className="size-[18px]" aria-hidden />
+            <Plus className="size-4.5" aria-hidden />
             {t('cards.addCard')}
           </Button>
           <Button variant="secondary" onClick={onImport}>
-            <Upload className="size-[18px]" aria-hidden />
+            <Upload className="size-4.5" aria-hidden />
             {t('cards.transfer.importShort')}
           </Button>
         </div>

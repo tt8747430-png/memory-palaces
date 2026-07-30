@@ -3,7 +3,7 @@ import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Flag, Lightbulb, MapPin, SlidersHorizontal, Volume2 } from 'lucide-react'
 import type { StudyMode } from '@/entities/preferences'
-import { cn, useKeyboardReveal } from '@/shared/lib'
+import { cn, SCREEN_SCROLL, useKeyboardReveal } from '@/shared/lib'
 import { pillSurface } from '@/shared/ui'
 import { STUDY_MODE_META } from '../mode-meta'
 import { type FaceProps, stopPress } from './types'
@@ -95,7 +95,7 @@ export function CardFace({
         ref={setBody}
         data-card-scroll={scrolls ? '' : undefined}
         style={{ touchAction: scrolls ? 'pan-y' : 'none' }}
-        className="relative flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain scrollbar-hide px-5 pb-keyboard"
+        className={cn(SCREEN_SCROLL, 'relative flex min-h-0 flex-1 flex-col px-5 pb-keyboard')}
       >
         <div
           ref={contentRef}

@@ -41,7 +41,8 @@ export function DeckRowBody({ deck, due, isSub = false, selectState, toggle }: D
           />
           {due > 0 ? (
             <span
-              className="absolute -right-1.5 -top-1.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-primary px-1 text-[length:var(--p-text-tiny)] font-bold tabular-nums text-primary-foreground shadow-interactive ring-2 ring-card"
+              className="absolute -right-1.5 -top-1.5 grid h-4.5
+             min-w-4.5 place-items-center rounded-full bg-primary px-1 text-(length:--p-text-tiny) font-bold tabular-nums text-primary-foreground shadow-interactive ring-2 ring-card"
               aria-hidden
             >
               {due > 99 ? '99+' : due}
@@ -53,14 +54,15 @@ export function DeckRowBody({ deck, due, isSub = false, selectState, toggle }: D
           <span
             className={cn(
               'block truncate font-semibold text-heading',
-              isSub ? 'text-[length:var(--p-text-sub)]' : 'text-[length:var(--p-text-body)]',
+              isSub ? 'text-(length:--p-text-sub)' : 'text-(length:--p-text-body)',
             )}
           >
             {deck.name}
           </span>
           <span
             className={cn(
-              'block truncate text-[length:var(--p-text-label)]',
+              'block truncate ' +
+              'text-(length:--p-text-label)',
               due > 0 ? 'font-medium text-primary/80' : 'text-muted-foreground',
             )}
           >

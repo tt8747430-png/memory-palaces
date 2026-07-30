@@ -71,7 +71,7 @@ function Option({ label, letter, correct }: { label: string; letter: number; cor
         aria-hidden
         className={cn(
           'grid size-5 place-items-center rounded-full text-(length:--p-text-tiny) font-bold',
-          correct ? 'bg-success text-[color:var(--surface)]' : 'bg-card text-muted-foreground',
+          correct ? 'bg-success text-(--surface)' : 'bg-card text-muted-foreground',
         )}
       >
         {correct ? <Check className="size-3" strokeWidth={3} /> : String.fromCharCode(65 + letter)}

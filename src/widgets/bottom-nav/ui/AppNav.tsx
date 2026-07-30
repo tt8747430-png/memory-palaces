@@ -47,7 +47,12 @@ export function AppNav() {
         <nav
           key="app-nav"
           aria-label={t('nav.label')}
-          className="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 z-[200] -translate-x-1/2"
+          className={cn(
+            'fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 z-200 -translate-x-1/2',
+            // WebKit re-clamps bottom-anchored fixed boxes to the visual viewport when the
+            // keyboard shows, which floats the nav mid-screen over the content being typed into.
+            'in-data-keyboard:hidden',
+          )}
         >
           <motion.div
             initial={reduce ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.94 }}
@@ -76,7 +81,7 @@ export function AppNav() {
               />
               <div
                 aria-hidden
-                className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-nav bg-gradient-to-b from-white/15 to-transparent"
+                className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-nav bg-linear-to-b from-white/15 to-transparent"
               />
 
               {TABS.map(({ to, Icon, labelKey }) => {
@@ -88,7 +93,7 @@ export function AppNav() {
                     onClick={() => void navigate({ to })}
                     aria-current={isActive ? 'page' : undefined}
                     whileTap={{ scale: 0.92 }}
-                    className="relative flex h-full min-w-[72px] items-center justify-center"
+                    className="relative flex h-full min-w-18 items-center justify-center"
                   >
                     {isActive ? (
                       <motion.span
@@ -102,7 +107,7 @@ export function AppNav() {
                       <Icon className={cn('size-6', isActive ? 'text-primary' : 'text-white')} />
                       <span
                         className={cn(
-                          'text-[length:var(--p-text-tiny)] font-medium',
+                          'text-(length:--p-text-tiny) font-medium',
                           isActive ? 'text-primary' : 'text-white/75',
                         )}
                       >

@@ -15,7 +15,7 @@ export function EmptyQueue({ filtered, onChangeSelection, onStudyAll, onDone }: 
     <Empty
       variant="hero"
       className="px-1"
-      icon={<Sparkles className="size-8 text-(--rating)" aria-hidden />}
+      icon={<Sparkles className="size-8 text-rating" aria-hidden />}
       title={filtered ? t('study.nothingSelected') : t('study.allCaughtUp')}
       description={filtered ? t('study.nothingSelectedHint') : t('study.allCaughtUpHint')}
       action={

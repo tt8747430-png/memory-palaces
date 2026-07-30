@@ -906,6 +906,8 @@ export const en = {
     kitchenSinkHint: 'Component states and the live keyboard & viewport probe.',
     devMode: 'Developer mode',
     devModeHint: 'Unlocks diagnostics as they land. Nothing else uses it yet.',
+    probeOverlay: 'Viewport probe overlay',
+    probeOverlayHint: 'Floats the keyboard readings over every screen, and records a trace.',
     signOut: 'Log out',
     signOutConfirmTitle: 'Log out of Mindscape?',
     signOutConfirmBody: 'Your decks and progress stay saved on this device.',

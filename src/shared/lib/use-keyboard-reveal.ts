@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react'
-import { expectKeyboard, subscribeKeyboard, visibleBottom } from './keyboard-viewport'
+import { expectKeyboard, subscribeKeyboardHeight, visibleBottom } from './keyboard-viewport'
 
 const REVEAL_GAP = 16
 
@@ -74,7 +74,7 @@ export function useKeyboardReveal(): (node: HTMLElement | null) => void {
       expectKeyboard(false)
     }
 
-    const unsubscribe = subscribeKeyboard(() => {
+    const unsubscribe = subscribeKeyboardHeight(() => {
       if (syncing) return
       const active = document.activeElement
       if (isTextField(active) && node.contains(active)) reveal(active)

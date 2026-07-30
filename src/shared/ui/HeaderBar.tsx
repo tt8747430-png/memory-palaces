@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { motion } from 'motion/react'
-import { cn, useHeaderElevation } from '@/shared/lib'
+import { cn, keepFieldFocused, useHeaderElevation } from '@/shared/lib'
 
 const BAR = 'relative flex h-16 shrink-0 items-center gap-1 px-2'
 
@@ -12,7 +12,11 @@ export interface HeaderBarProps {
 export function HeaderBar({ children, className }: HeaderBarProps) {
   const elevation = useHeaderElevation()
   return (
-    <header data-slot="header-bar" className="relative z-20 shrink-0 bg-glass pt-safe">
+    <header
+      data-slot="header-bar"
+      onMouseDown={keepFieldFocused}
+      className="relative z-20 shrink-0 bg-glass pt-safe"
+    >
       <motion.span
         aria-hidden
         style={{ opacity: elevation }}

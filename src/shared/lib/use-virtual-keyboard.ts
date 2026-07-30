@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import { keyboardHeight, subscribeKeyboard } from './keyboard-viewport'
+import { keyboardHeight, subscribeKeyboardHeight } from './keyboard-viewport'
 
 export interface VirtualKeyboard {
   open: boolean
@@ -7,6 +7,6 @@ export interface VirtualKeyboard {
 }
 
 export function useVirtualKeyboard(): VirtualKeyboard {
-  const height = useSyncExternalStore(subscribeKeyboard, keyboardHeight, () => 0)
+  const height = useSyncExternalStore(subscribeKeyboardHeight, keyboardHeight, () => 0)
   return { open: height > 0, height }
 }

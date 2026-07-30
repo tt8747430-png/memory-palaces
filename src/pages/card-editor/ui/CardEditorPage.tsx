@@ -54,7 +54,7 @@ export function CardEditorPage({ deckId, cardId, onBack, onNavigateCard }: CardE
     flashSaved()
     toast.success(t('cards.editor.addedNext'))
     draft.clear()
-    frontRef.current?.focus()
+    frontRef.current?.focus({ preventScroll: true })
   }
   const saveEdit = async () => {
     if (!draft.valid || !editing) return

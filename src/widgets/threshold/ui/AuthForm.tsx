@@ -81,7 +81,7 @@ export function AuthForm({
 
         <motion.p
           variants={authRise}
-          className="text-center text-[length:var(--p-text-label)] text-muted-foreground"
+          className="text-center text-(length:--p-text-label) text-muted-foreground"
         >
           {footer}
         </motion.p>

@@ -45,34 +45,34 @@ export function QuickActionRows({
   return (
     <div className="space-y-2">
       <button type="button" onClick={run(onUndo)} disabled={!canUndo} className={ROW}>
-        <Undo2 className="size-[19px]" aria-hidden />
+        <Undo2 className="size-4.75" aria-hidden />
         {t('study.undoLast')}
       </button>
       <button type="button" onClick={run(onFlag)} disabled={!canEdit} className={ROW}>
         <Flag
           className={
-            flagged ? 'size-[19px] fill-[var(--rating)] text-[var(--rating-edge)]' : 'size-[19px]'
+            flagged ? 'size-4.75 fill-rating text-(--rating-edge)' : 'size-4.75'
           }
           aria-hidden
         />
         {flagged ? t('study.removeFlag') : t('study.flagThis')}
       </button>
       <button type="button" onClick={run(onEdit)} disabled={!canEdit} className={ROW}>
-        <Pencil className="size-[19px]" aria-hidden />
+        <Pencil className="size-4.75" aria-hidden />
         {t('study.editCard')}
       </button>
       {canSpeak ? (
         <button type="button" onClick={run(onSpeak)} className={ROW}>
-          <Volume2 className="size-[19px]" aria-hidden />
+          <Volume2 className="size-4.75" aria-hidden />
           {t('study.readAloud')}
         </button>
       ) : null}
       <button type="button" onClick={run(onSkip)} className={ROW}>
-        <SkipForward className="size-[19px]" aria-hidden />
+        <SkipForward className="size-4.75" aria-hidden />
         {t('study.skipForNow')}
       </button>
       <button type="button" onClick={run(onRestart)} className={ROW}>
-        <RotateCcw className="size-[19px]" aria-hidden />
+        <RotateCcw className="size-4.75" aria-hidden />
         {t('study.restartSession')}
       </button>
     </div>

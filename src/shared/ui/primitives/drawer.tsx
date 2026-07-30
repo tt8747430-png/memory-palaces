@@ -1,8 +1,6 @@
-import type { ComponentProps, MouseEvent, PointerEvent, ReactNode } from 'react'
+import type { ComponentProps, PointerEvent, ReactNode } from 'react'
 import { Drawer as DrawerPrimitive } from '@base-ui/react/drawer'
-import { cn } from '@/shared/lib'
-
-const TEXT_ENTRY = 'input, textarea, [contenteditable="true"], .allow-select'
+import { cn, keepFieldFocused, TEXT_ENTRY } from '@/shared/lib'
 
 function clearSelectionForDrag(event: PointerEvent<HTMLElement>) {
   if (event.pointerType === 'mouse') return
@@ -18,13 +16,6 @@ function clearSelectionForDrag(event: PointerEvent<HTMLElement>) {
 
   const selection = document.getSelection()
   if (selection && !selection.isCollapsed) selection.removeAllRanges()
-}
-
-function keepFieldFocused(event: MouseEvent<HTMLElement>) {
-  const active = document.activeElement
-  if (!(active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement)) return
-  if (event.target instanceof Element && event.target.closest(TEXT_ENTRY)) return
-  event.preventDefault()
 }
 
 function Drawer({ swipeDirection = 'down', ...props }: DrawerPrimitive.Root.Props) {
@@ -66,8 +57,7 @@ function DrawerContent({ className, backdropClassName, children, ...props }: Dra
             '[--closed-transform:translate3d(0,calc(100%+2px),0)]',
             'transform-[translate3d(0,var(--drawer-swipe-movement-y,0px),0)]',
             'transition-transform duration-450 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none',
-            '' +
-            'data-starting-style:transform-(--closed-transform)',
+            '' + 'data-starting-style:transform-(--closed-transform)',
             'data-ending-style:transform-(--closed-transform) data-swiping:duration-0 data-swiping:select-none',
             className,
           )}

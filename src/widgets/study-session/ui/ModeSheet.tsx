@@ -17,7 +17,7 @@ export function ModeSheet({ open, onClose, mode, onMode }: ModeSheetProps) {
 
   return (
     <Sheet open={open} onOpenChange={(next) => !next && onClose()} title={t('study.modeTitle')}>
-      <p className="-mt-1 mb-3 px-1 text-[length:var(--p-text-label)] text-muted-foreground">
+      <p className="-mt-1 mb-3 px-1 text-(length:--p-text-label) text-muted-foreground">
         {t('study.modeSubtitle')}
       </p>
       <div className="flex flex-col gap-2 pb-1">
@@ -49,7 +49,7 @@ export function ModeSheet({ open, onClose, mode, onMode }: ModeSheetProps) {
                 )}
                 aria-hidden
               >
-                <Icon className="size-[18px]" />
+                <Icon className="size-4.5" />
               </span>
               <span className="min-w-0 flex-1">
                 <span

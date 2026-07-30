@@ -26,7 +26,7 @@ export function SplashOverlay({ onDone }: SplashOverlayProps) {
 
   return (
     <motion.div
-      className="fixed inset-0 z-[700] flex flex-col items-center justify-center gap-6 overflow-hidden px-6 text-center"
+      className="fixed inset-0 z-700 flex flex-col items-center justify-center gap-6 overflow-hidden px-6 text-center"
       style={{ background: SPLASH_BG }}
       initial={{ opacity: 1 }}
       exit={{ opacity: 0, transition: { duration: 0.4, ease: 'easeOut' } }}
@@ -34,7 +34,7 @@ export function SplashOverlay({ onDone }: SplashOverlayProps) {
       <button
         type="button"
         onClick={onDone}
-        className="absolute right-5 top-[calc(env(safe-area-inset-top)+1rem)] z-10 text-[length:var(--p-text-label)] font-medium text-white/75"
+        className="absolute right-5 top-[calc(env(safe-area-inset-top)+1rem)] z-10 text-(length:--p-text-label) font-medium text-white/75"
       >
         {t('auth.splash.skip')}
       </button>
@@ -57,13 +57,13 @@ export function SplashOverlay({ onDone }: SplashOverlayProps) {
         <WordReveal
           text={t('common.appName')}
           delay={reduce ? 0 : 0.85}
-          className="text-[length:var(--p-text-headline)] font-semibold tracking-tight text-white"
+          className="text-(length:--p-text-headline) font-semibold tracking-tight text-white"
         />
         <WordReveal
           text={t('auth.splash.tagline')}
           delay={reduce ? 0 : 1.15}
           stagger={0.06}
-          className="text-[length:var(--p-text-sub)] text-white/80"
+          className="text-(length:--p-text-sub) text-white/80"
         />
       </div>
     </motion.div>

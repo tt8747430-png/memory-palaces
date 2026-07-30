@@ -32,8 +32,8 @@ export function AchievementGrid({ achievements, onOpenAchievement }: Achievement
               <p
                 className={
                   achievement.earned
-                    ? 'text-[length:var(--p-text-label)] font-bold leading-tight text-balance text-heading'
-                    : 'text-[length:var(--p-text-label)] font-bold leading-tight text-balance text-muted-foreground'
+                    ? 'text-(length:--p-text-label) font-bold leading-tight text-balance text-heading'
+                    : 'text-(length:--p-text-label) font-bold leading-tight text-balance text-muted-foreground'
                 }
               >
                 {title}
@@ -41,8 +41,8 @@ export function AchievementGrid({ achievements, onOpenAchievement }: Achievement
               <p
                 className={
                   achievement.earned
-                    ? 'text-[length:var(--p-text-tiny)] font-bold leading-tight text-[var(--success-foreground)]'
-                    : 'text-[length:var(--p-text-tiny)] font-semibold leading-tight text-muted-foreground'
+                    ? 'text-(length:--p-text-tiny) font-bold leading-tight text-(--success-foreground)'
+                    : 'text-(length:--p-text-tiny) font-semibold leading-tight text-muted-foreground'
                 }
               >
                 {status}

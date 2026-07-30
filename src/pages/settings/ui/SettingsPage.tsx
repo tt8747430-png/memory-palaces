@@ -14,6 +14,7 @@ import {
   Monitor,
   Moon,
   Palette,
+  Ruler,
   Shield,
   Sparkles,
   Sun,
@@ -32,7 +33,7 @@ import { profileHandle, selectEffectiveProfile, useProfileStore } from '@/entiti
 import type { SessionKind } from '@/entities/session'
 import { setPreferences } from '@/features/preferences'
 import { AVAILABLE_LANGUAGES, DAILY_GOAL_OPTIONS } from '@/shared/config/constants'
-import { setDevMode, useDevMode } from '@/shared/lib'
+import { setDevMode, setProbeOverlay, useDevMode, useProbeOverlay } from '@/shared/lib'
 import {
   AppScreen,
   Avatar,
@@ -71,6 +72,7 @@ export function SettingsPage({
 }: SettingsPageProps) {
   const { t, i18n } = useTranslation()
   const devMode = useDevMode()
+  const probeOverlay = useProbeOverlay()
   const prefsStore = usePreferencesStoreApi()
   const prefs = usePreferencesStore(selectEffectivePreferences)
   const profile = useProfileStore(selectEffectiveProfile)
@@ -276,6 +278,14 @@ export function SettingsPage({
             description={t('settings.devModeHint')}
             checked={devMode}
             onCheckedChange={setDevMode}
+          />
+          <SettingsRow
+            kind="toggle"
+            icon={<Ruler />}
+            label={t('settings.probeOverlay')}
+            description={t('settings.probeOverlayHint')}
+            checked={probeOverlay}
+            onCheckedChange={setProbeOverlay}
           />
         </SettingsSection>
 

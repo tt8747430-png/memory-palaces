@@ -2,6 +2,10 @@
 
 - **Status:** accepted · **Date:** 2026-07-27
 - **Supersedes:** the shrink-to-fit viewport design (`#root` sized to `--vvh` and re-anchored to `--vv-top`)
+- **Amended:** 2026-07-30
+  by [the keyboard-chrome spec](../superpowers/specs/2026-07-30-keyboard-chrome-design.md) — the pan is sampled once
+  per keyboard event instead of per frame, is no longer held at the episode maximum, and chrome consumes `--pan-comp`
+  (measured) rather than `--vv-top` behind a `display-mode` gate (inferred). Amended bullets are marked below.
 
 ## Context
 
@@ -79,30 +83,49 @@ shell, and not iOS — is what reveals the focused field.**
   grows, never while `expectKeyboard(true)` is in force. So the shell keeps its box across a keyboard: nothing reflows,
   and its bottom edge stays the real screen bottom, behind the keyboard.
 - **Every keyboard measurement uses `--app-height` as the denominator**, never live `clientHeight`. `--vvh` is deleted.
-  **Chrome consumes `--vv-top` only in standalone, only while the keyboard is up, and only via `translate`**:
-  `theme.css` rides `[data-slot="header-bar"]` and `[data-slot="status-cap"]` back onto the screen under
-  `@media (display-mode: standalone)` + `[data-keyboard]`. In a Safari tab the platform re-anchors them itself and the
-  translate would double the pan (the header-dive trap below).
+  **Chrome consumes `--pan-comp` while the keyboard is up, and only via `translate`**: `theme.css` rides
+  `[data-slot="header-bar"]` and `[data-slot="status-cap"]` back onto the screen under `[data-keyboard]`.
+  _(Amended 2026-07-30.)_ `--pan-comp` is the part of the pan the platform has **not** already compensated for — the
+  pan where rects come back layout-relative, `0` where the UA re-anchored fixed boxes to the visual viewport itself —
+  so the rule is a no-op in a Safari tab without needing a `display-mode` gate to say so. The gate was a proxy for a
+  behaviour, and it classified Chrome iOS, Firefox iOS and every future UA by guess; `isPanBakedIntoRects()` measures
+  it instead (`|htmlRect.top + vv.offsetTop| < 1`).
 - **Chrome that rides the pan drags the scroll body with it, or it eats the top of the page.** The translate moves the
-  header alone; the scroll body stays where the ride-off left it, so the first `--vv-top` of content sits _behind_ the
+  header alone; the scroll body stays where the ride-off left it, so the first `--pan-comp` of content sits _behind_ the
   header and **cannot be scrolled out from under it — the page is already at `scrollTop: 0`**. `.pt-pan` gives the
   scrollport the same offset as padding under the same gate, so content begins below the translated header and the range
-  to scroll back up to it exists. It is the one place a layout property may consume the pan: it is range, not a reveal,
+  to scroll back up to it exists. It ships in `SCREEN_SCROLL` (`shared/lib`) so a scroll surface cannot be built without
+  it; the surfaces that opted out by hand were the ones whose headers covered their content. It is the one place a layout property may consume the pan: it is range, not a reveal,
   and `useKeyboardReveal` — which re-runs on every pan change — is what then puts the focused field back above the
   keyboard. Without that pairing the padding would hand the field back to the position Safari panned away from.
-- **`visibleBottom()` is the single bridge between the two spaces**: `--app-height − --kb-inset − --vv-top`. That is the
-  bottom of the usable area _in rect coordinates_, and it is the only place the pan appears. Before the keyboard reports
-  itself the pan is 0 and the reserve supplies `--kb-inset`, so the same expression is correct in both phases. **Never
-  compare a raw rect against `--app-height − --kb-inset`.**
+- **`visibleBottom()` is the single bridge between the two spaces**, and it has **two** forms, chosen by the same
+  measurement that drives `--pan-comp` _(amended 2026-07-30)_. The visible area spans `[offsetTop, offsetTop + vv.height]`
+  in layout coordinates and `[0, vv.height]` in visual ones, so the pan cancels out of exactly one of them:
+  `--app-height − --kb-inset − --vv-top` where rects already carry the pan, `--app-height − --kb-inset` where they do
+  not. A single formula is wrong by a full pan in one of the two spaces, which over-scrolls every revealed field there.
+  Before the keyboard reports itself the pan is 0 and the reserve supplies `--kb-inset`, so both forms are correct in
+  that phase.
 - **The reveal band is otherwise built from rects only** — the scrollport, `[data-slot="header-bar"]`'s bottom,
   `[data-slot="footer-bar"]`'s top — so the field lands between the chrome, never under either, with no space conversion
   to get wrong.
 - `useKeyboardInset` publishes exactly one number, `--kb-inset`, thresholded at 120px so an accessory bar alone never
   reads as a keyboard. It is the single `visualViewport` subscriber; `useVirtualKeyboard` reads the same measurement
   instead of taking a second subscription.
+- **The pan is news about the keyboard, not about the scroll** _(amended 2026-07-30)_. `visualViewport` fires `scroll`
+  on every frame of a rubber-band, and the pan was previously republished from each one and then held at the episode's
+  `Math.max`. Chrome translated by that value follows the finger down the screen and never comes back — the two halves
+  of the same fault, and the reason the max-hold existed at all. The height is re-derived on `resize` only, as before;
+  the pan is now published from `resize` immediately and from `scroll` only once the viewport has been still for
+  `PAN_SETTLE_MS`, because iOS also re-pans without resizing when focus moves between fields. Nothing is held at a
+  maximum: the pan decays when iOS un-pans.
+- **Height and pan have separate subscriber sets** _(amended 2026-07-30)_. `subscribeKeyboardHeight` fires **once per
+  keyboard event** — the inset changing, or the pan changing _with_ it on a `resize`, coalesced into one wake-up because
+  an opening keyboard moves both in the same frame. `subscribePan` fires on every published pan, including the one that
+  settles after a scroll. Anything that writes `scrollTop` takes the height: woken by a scroll-produced pan it
+  re-scrolls mid-drag, over the scroll the user is performing.
 - `useKeyboardReveal` (`shared/lib`) attaches to a scroll node, and on `focusin` of a text field sets `node.scrollTop`
-  so the field clears the keyboard by `REVEAL_GAP`, re-running whenever `--kb-inset` changes. `AppScreen` wires it
-  through its existing scroll ref; `AuthScreen` and `CardFace` opt in.
+  so the field clears the keyboard by `REVEAL_GAP`, re-running once per keyboard event — **never on a pan the page
+  produced by scrolling**. `AppScreen` wires it through its existing scroll ref; `AuthScreen` and `CardFace` opt in.
 - Scroll bodies carry `padding-bottom: var(--kb-inset)` while the keyboard is up (`.pb-keyboard`, and `.pb-safe` via
   `max()`). **The padding is not decoration — it is the scroll range** the reveal needs to lift the last field.
   `scroll-padding-bottom` alone creates none.
@@ -114,9 +137,19 @@ shell, and not iOS — is what reveals the focused field.**
   nothing to lift, so the CTA simply sits at the end of the page, behind the keyboard until you scroll to it. The
   `--kb-inset` padding is then scroll range past the footer's flow position. `sticky` (keyboard closed) is only safe
   because of the anchor — pinned to a scrollport the keyboard can shrink, it would come to rest on the keyboard's edge.
-- **The home-indicator gutter is clearance, not decoration.** `--app-bottom-inset` subtracts `--kb-inset` so a footer
-  stops reserving room for a home indicator that the keyboard is already covering; without it the footer carries a dead
-  band while typing.
+  **`AppNav` is `fixed`, so it has no `static` to fall back to and hides outright** (`in-data-keyboard:hidden`)
+  _(amended 2026-07-30)_ — WebKit lifts it to the visual viewport bottom otherwise, floating a nav bar across the
+  middle of the screen being typed into.
+- **A control tapped while a field is focused is guarded by the bar it sits in, not by its author** _(amended
+  2026-07-30)_. `keepFieldFocused` moved from `drawer.tsx` to `shared/lib` and is installed by `HeaderBar` and
+  `FooterBar`, so a page action inherits it. Left to callers it was applied on sheets and nowhere else, and a header
+  action tapped mid-typing dropped the keyboard, released the translate and moved its own target out from under the
+  finger.
+- **The home-indicator gutter is clearance, not decoration — and it is never reduced by the keyboard**
+  _(amended 2026-07-30; this bullet previously said the opposite and contradicted CODE_STYLE §11)_.
+  `--app-bottom-inset` is `max(0.75rem, env(safe-area-inset-bottom))`. Subtracting `--kb-inset` only makes bottom chrome
+  twitch on keyboard open: nothing bottom-anchored is still on screen to save room for, because the footer dock has gone
+  `static` and `AppNav` is hidden.
 - The **largest** measured keyboard height is persisted to `localStorage`. `focusin` fires _before_ the keyboard reports
   itself, so the reveal reserves the remembered height up front — and **the real measurement then replaces it outright,
   never `max()`ed with it**. The reserve is a bridge across one frame, not a floor: a measurement taken while iOS has
@@ -135,6 +168,10 @@ shell, and not iOS — is what reveals the focused field.**
   published variable, and whether `offsetTop + visualViewport.height + --kb-inset` still balances against
   `--app-height`. It exists because none of this is observable where the code is written, and three fixes were shipped
   on inference before it did.
+- **The same probe floats over any route** (`widgets/dev-probe`, Settings → Developer → _Viewport probe overlay_)
+  _(added 2026-07-30)_. A keyboard fault only reproduces on the screen that has it, and a still reading does not show
+  it — the header-drag bug lives entirely in how the numbers move against a finger. The overlay records a per-frame
+  trace and copies it as TSV.
 - **The probe ships in production builds, on purpose and temporarily.** None of these bugs reproduce outside the
   installed PWA, which needs HTTPS, which rules out a dev server — so a `import.meta.env.DEV` gate hid the diagnostic
   from the only environment that shows the fault. Settings → **Developer** therefore links it in every build. **This

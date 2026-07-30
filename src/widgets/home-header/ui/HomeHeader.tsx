@@ -44,20 +44,20 @@ export function HomeHeader({
         aria-label={`${name} — ${t('home.level', { level })}, ${xpToNext}. ${t('home.openProfile')}`}
         className="flex min-w-0 flex-1 items-center gap-3 text-left transition-transform active:scale-[0.98]"
       >
-        <span className="grid size-12 shrink-0 place-items-center rounded-full border border-[color:var(--border-glass)] bg-card-glass shadow-rest">
-          <Avatar name={name} src={avatar} className="size-11 text-[length:var(--p-text-sub)]" />
+        <span className="grid size-12 shrink-0 place-items-center rounded-full border border-(--border-glass) bg-card-glass shadow-rest">
+          <Avatar name={name} src={avatar} className="size-11 text-(length:--p-text-sub)" />
         </span>
         <span className="flex min-w-0 flex-1 flex-col gap-1">
-          <span className="truncate text-[length:var(--p-text-sub)] font-bold leading-tight tracking-tight text-heading">
+          <span className="truncate text-(length:--p-text-sub) font-bold leading-tight tracking-tight text-heading">
             {t(`home.${greetingKey(new Date().getHours())}`)}
           </span>
           <span className="flex items-center gap-2">
-            <span className="shrink-0 text-[length:var(--p-text-label)] font-semibold text-primary">
+            <span className="shrink-0 text-(length:--p-text-label) font-semibold text-primary">
               {t('home.level', { level })}
             </span>
             <Progress
               value={fill}
-              className="h-1.5 w-full max-w-[140px] bg-secondary/40"
+              className="h-1.5 w-full max-w-35 bg-secondary/40"
               label={xpToNext}
             />
           </span>
@@ -101,10 +101,12 @@ function StreakButton({
         done: streak.dayCount,
         goal: streak.dailyGoal,
       })}
-      className="inline-flex h-11 shrink-0 items-center gap-1 rounded-control bg-card-glass px-2.5 text-[length:var(--p-text-label)] font-semibold text-heading shadow-rest transition-transform active:scale-95"
+      className="inline-flex h-11 shrink-0 items-center gap-1 rounded-control bg-card-glass px-2.5
+
+      text-(length:--p-text-label) font-semibold text-heading shadow-rest transition-transform active:scale-95"
     >
       <Flame
-        className={cn('size-4', active ? 'text-[var(--warning)]' : 'text-muted-foreground')}
+        className={cn('size-4', active ? 'text-warning' : 'text-muted-foreground')}
         fill={active ? 'currentColor' : 'none'}
         aria-hidden
       />

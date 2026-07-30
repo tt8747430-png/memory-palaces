@@ -37,7 +37,7 @@ export function AchievementsSection({
               showCheck={achievement.earned}
               className="size-16"
             />
-            <span className="w-full truncate text-center text-[length:var(--p-text-tiny)] font-semibold text-muted-foreground">
+            <span className="w-full truncate text-center text-(length:--p-text-tiny) font-semibold text-muted-foreground">
               {t(meta.titleKey)}
             </span>
           </RewardPreviewTile>

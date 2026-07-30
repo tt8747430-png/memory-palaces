@@ -61,10 +61,16 @@
            what the keyboard shrinks, and not following it is the whole point. */
         --app-height: 100%;
 
-        /* How far standalone WebKit has panned the page up to keep the caret visible. */
+        /* How far WebKit has panned the page up to keep the caret visible. Reported for
+           diagnostics; chrome consumes --pan-comp, never this. */
         --vv-top: 0px;
 
-        --app-bottom-inset: max(0.75rem, calc(env(safe-area-inset-bottom) - var(--kb-inset)));
+        /* The part of the pan this platform has NOT already compensated for — the pan where rects
+           come back layout-relative, 0 where the UA re-anchored fixed boxes to the visual viewport
+           itself. Measured, not inferred from display-mode. See ADR 0002. */
+        --pan-comp: 0px;
+
+        --app-bottom-inset: max(0.75rem, env(safe-area-inset-bottom));
     }
 
     html {
@@ -100,20 +106,20 @@
         background-repeat: no-repeat;
     }
 
-    /* Standalone WebKit does NOT re-anchor position:fixed during the keyboard pan (a Safari tab
-       does), so the fixed shell rides off the top by --vv-top. Ride the chrome back down, and give
-       the scroll body the same offset as range at its top — the chrome moves alone otherwise and
-       covers the first --vv-top of content, which cannot be scrolled out from under it. Both halves
-       are in-tab no-ops: compensating there would double the pan (ADR 0002's header-dive trap). */
-    @media (display-mode: standalone) {
-        [data-keyboard] [data-slot='header-bar'],
-        [data-keyboard] [data-slot='status-cap'] {
-            translate: 0 var(--vv-top);
-        }
+    /* Where the platform does not re-anchor position:fixed during the keyboard pan, the fixed shell
+       rides off the top of the screen. Ride the chrome back down, and give the scroll body the same
+       offset as range at its top — the chrome moves alone otherwise and covers the first --pan-comp
+       of content, which cannot be scrolled out from under it.
 
-        [data-keyboard] .pt-pan {
-            padding-top: var(--vv-top);
-        }
+       No display-mode gate: --pan-comp is 0 wherever the UA already compensated, so both halves are
+       no-ops there rather than doubling the pan (ADR 0002's header-dive trap). */
+    [data-keyboard] [data-slot='header-bar'],
+    [data-keyboard] [data-slot='status-cap'] {
+        translate: 0 var(--pan-comp);
+    }
+
+    [data-keyboard] .pt-pan {
+        padding-top: var(--pan-comp);
     }
 
     h1,

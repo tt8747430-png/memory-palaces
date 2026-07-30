@@ -67,6 +67,15 @@ function stubRect(node: Element, top: number, bottom: number) {
   node.getBoundingClientRect = () => ({ top, bottom, height: bottom - top }) as DOMRect
 }
 
+/**
+ * Which coordinate space this simulated platform reports rects in — the measurement
+ * `keyboard-viewport` takes from `html` to decide whether the pan is already in them. `-pan` is a
+ * UA that re-anchored the shell itself; `0` is one that let it ride off the top.
+ */
+function stubRectSpace(htmlTop: number) {
+  stubRect(document.documentElement, htmlTop, htmlTop)
+}
+
 const inset = () => document.documentElement.style.getPropertyValue('--kb-inset')
 
 let stop: (() => void) | undefined
@@ -83,6 +92,7 @@ afterEach(() => {
   Reflect.deleteProperty(window, 'visualViewport')
   Reflect.deleteProperty(document.documentElement, 'clientHeight')
   Reflect.deleteProperty(document.documentElement, 'clientWidth')
+  Reflect.deleteProperty(document.documentElement, 'getBoundingClientRect')
 })
 
 describe('useKeyboardReveal', () => {
@@ -197,8 +207,9 @@ describe('useKeyboardReveal', () => {
     expect(scroll.scrollTop).toBe(-34)
   })
 
-  it('subtracts the pan from the band, because rects already carry it', async () => {
+  it('subtracts the pan from the band where rects already carry it', async () => {
     localStorage.setItem(STORAGE_KEY, '290')
+    stubRectSpace(-113)
     const viewport = stubViewport({ height: 793, offsetTop: 0 }, 793)
     stop = startKeyboardViewport()
 
@@ -222,6 +233,35 @@ describe('useKeyboardReveal', () => {
 
     // Visible area is now 390 tall, not 503: a field at 400 sits under the keyboard.
     expect(scroll.scrollTop).toBe(26)
+  })
+
+  it('leaves the pan out of the band where rects are layout-relative', async () => {
+    localStorage.setItem(STORAGE_KEY, '290')
+    stubRectSpace(0)
+    const viewport = stubViewport({ height: 793, offsetTop: 0 }, 793)
+    stop = startKeyboardViewport()
+
+    const scroll = document.createElement('div')
+    const field = document.createElement('input')
+    scroll.appendChild(field)
+    document.body.appendChild(scroll)
+
+    Object.defineProperty(scroll, 'scrollTop', { value: 0, writable: true })
+    stubRect(scroll, 0, 793)
+    stubRect(field, 360, 400)
+
+    const { result } = renderHook(() => useKeyboardReveal())
+    act(() => result.current(scroll))
+    act(() => field.focus())
+
+    await act(async () => {
+      await viewport.move({ height: 390, offsetTop: 113 })
+    })
+
+    // The same geometry, read in the other space: the pan is not in the rects, so the visible area
+    // ends at 503 and a field at 400 is already clear. Subtracting it here would scroll the field
+    // 113px further than the keyboard ever required.
+    expect(scroll.scrollTop).toBe(0)
   })
 
   it('stops reserving when the scroll surface unmounts', () => {

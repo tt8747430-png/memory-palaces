@@ -114,7 +114,7 @@ export function GearSheet({
             onClose()
           }}
         >
-          <Check className="size-[18px]" aria-hidden />
+          <Check className="size-4.5" aria-hidden />
           {t('study.finish')}
         </Button>
       }
@@ -127,7 +127,7 @@ export function GearSheet({
         <SheetSection title={t('study.thisMode')}>
           {mode === 'type' ? (
             <ToggleRow
-              icon={<Type className="size-[18px]" aria-hidden />}
+              icon={<Type className="size-4.5" aria-hidden />}
               label={t('study.typeInitialsOnly')}
               description={t('study.typeInitialsHint')}
               checked={value.typeInitialsOnly}
@@ -136,7 +136,7 @@ export function GearSheet({
           ) : null}
           {mode === 'initials' ? (
             <ToggleRow
-              icon={<WholeWord className="size-[18px]" aria-hidden />}
+              icon={<WholeWord className="size-4.5" aria-hidden />}
               label={t('study.wordSpaces')}
               description={t('study.wordSpacesHint')}
               checked={value.wordSpaces}
@@ -190,7 +190,7 @@ export function GearSheet({
           </div>
 
           <PickerRow
-            icon={<ArrowLeftRight className="size-[18px]" aria-hidden />}
+            icon={<ArrowLeftRight className="size-4.5" aria-hidden />}
             label={t('study.orientation')}
           >
             <Combobox
@@ -203,14 +203,14 @@ export function GearSheet({
           </PickerRow>
 
           <ToggleRow
-            icon={<Shuffle className="size-[18px]" aria-hidden />}
+            icon={<Shuffle className="size-4.5" aria-hidden />}
             label={t('study.shuffle')}
             description={t('study.shuffleHint')}
             checked={value.shuffle}
             onChange={(next) => set('shuffle', next)}
           />
           <ToggleRow
-            icon={<Volume2 className="size-[18px]" aria-hidden />}
+            icon={<Volume2 className="size-4.5" aria-hidden />}
             label={t('study.textToSpeech')}
             description={canSpeak ? t('study.ttsHint') : t('study.ttsUnsupported')}
             checked={value.textToSpeech}
@@ -219,7 +219,7 @@ export function GearSheet({
           />
           {motionSupported() ? (
             <ToggleRow
-              icon={<Smartphone className="size-[18px]" aria-hidden />}
+              icon={<Smartphone className="size-4.5" aria-hidden />}
               label={t('study.shakeToUndo')}
               description={t('study.shakeToUndoHint')}
               checked={value.shakeToUndo}
@@ -277,7 +277,7 @@ function FilterChip({
       {count !== undefined && (
         <span
           className={cn(
-            'text-[length:var(--p-text-tiny)] font-bold',
+            'text-(length:--p-text-tiny) font-bold',
             active ? 'opacity-70' : 'opacity-60',
           )}
         >

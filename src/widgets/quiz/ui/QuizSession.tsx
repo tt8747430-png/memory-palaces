@@ -2,6 +2,7 @@ import { useEffect, useReducer } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Brain, Check, SkipForward, SlidersHorizontal } from 'lucide-react'
+import { cn, SCREEN_SCROLL } from '@/shared/lib'
 import { Button, Card, Chip, IconButton, SessionHeader, SessionScreen } from '@/shared/ui'
 import { initQuiz, quizAccuracy, type QuizQuestion, quizReducer } from '@/features/quiz'
 import type { QuizResult } from '../model/types'
@@ -105,7 +106,7 @@ export function QuizSession({
         <div className="mt-3 flex items-center gap-3">
           <div className="h-2 flex-1 overflow-hidden rounded-full bg-secondary/30">
             <motion.div
-              className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
+              className="h-full rounded-full bg-linear-to-r from-primary to-accent"
               animate={{ width: `${(reached / state.total) * 100}%` }}
               transition={{ duration: 0.3 }}
             />
@@ -120,7 +121,7 @@ export function QuizSession({
       </SessionHeader>
 
       {answering ? (
-        <div className="flex-1 space-y-4 overflow-y-auto px-5 py-5 scrollbar-hide">
+        <div className={cn(SCREEN_SCROLL, 'flex-1 space-y-4 px-5 py-5')}>
           <motion.div
             key={state.index}
             initial={{ opacity: 0, y: 16 }}

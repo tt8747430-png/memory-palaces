@@ -3,6 +3,7 @@ import { Outlet } from '@tanstack/react-router'
 import { AnimatePresence } from 'motion/react'
 import { useKeyboardInset, useSplashStore } from '@/shared/lib'
 import { AppNav } from '@/widgets/bottom-nav'
+import { ProbeOverlay } from '@/widgets/dev-probe'
 import { SplashOverlay } from '@/widgets/splash'
 
 const Devtools = import.meta.env.DEV
@@ -39,6 +40,7 @@ export function RootLayout() {
       <AnimatePresence>
         {splashDone ? null : <SplashOverlay onDone={finishSplash} />}
       </AnimatePresence>
+      <ProbeOverlay />
       <Suspense>
         <Devtools />
       </Suspense>

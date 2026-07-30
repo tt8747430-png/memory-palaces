@@ -1,10 +1,18 @@
 import { type ReactNode, useCallback, useLayoutEffect, useRef } from 'react'
-import { cn, HeaderElevationContext, useKeyboardReveal, useStickyHeader } from '@/shared/lib'
+import {
+  cn,
+  HeaderElevationContext,
+  SCREEN_SCROLL,
+  useKeyboardReveal,
+  useStickyHeader,
+} from '@/shared/lib'
 
-const SCROLL = 'overflow-y-auto overscroll-contain scrollbar-hide px-5 pt-pan'
+const SCROLL = `${SCREEN_SCROLL} flex flex-col px-5`
 
+/** No dock: the scroll body owns the bottom gutter, and the keyboard's range when it is up. */
 const SCROLL_SAFE = 'pb-safe'
 
+/** With a dock: `FooterBar` carries the gutter itself, so only the keyboard's range is added. */
 const SCROLL_KEYBOARD = 'pb-keyboard'
 
 const FILL = 'min-h-full'
@@ -56,13 +64,7 @@ export function AppScreen({
     return (
       <main
         ref={setRef}
-        className={cn(
-          'mx-auto flex w-full max-w-app flex-col',
-          SHELL,
-          SCROLL,
-          SCROLL_SAFE,
-          className,
-        )}
+        className={cn('mx-auto w-full max-w-app', SHELL, SCROLL, SCROLL_SAFE, className)}
       >
         {content}
       </main>
@@ -78,7 +80,7 @@ export function AppScreen({
           className={cn(
             'min-h-0 flex-1',
             SCROLL,
-            footer ? `flex flex-col ${SCROLL_KEYBOARD}` : SCROLL_SAFE,
+            footer ? SCROLL_KEYBOARD : SCROLL_SAFE,
             className,
           )}
         >

@@ -1,9 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   expectKeyboard,
+  isPanBakedIntoRects,
   keyboardHeight,
   startKeyboardViewport,
-  subscribeKeyboard,
+  subscribeKeyboardHeight,
+  subscribePan,
+  visibleBottom,
 } from './keyboard-viewport'
 
 const STORAGE_KEY = 'mindscape.keyboard-height'
@@ -66,6 +69,22 @@ const shell = () => document.documentElement.style.getPropertyValue('--app-heigh
 
 const panOffset = () => document.documentElement.style.getPropertyValue('--vv-top')
 
+const panComp = () => document.documentElement.style.getPropertyValue('--pan-comp')
+
+/**
+ * What `getBoundingClientRect()` reports for `html`. A UA that re-anchors fixed boxes to the visual
+ * viewport puts it at -(pan); one that does not leaves it at 0 and rides the shell off the screen.
+ */
+function stubHtmlRectTop(top: number) {
+  Object.defineProperty(document.documentElement, 'getBoundingClientRect', {
+    value: () => ({ top }) as DOMRect,
+    configurable: true,
+  })
+}
+
+/** Longer than the pan's settle window, so a slide has been given its chance to publish. */
+const afterSettle = () => new Promise((resolve) => setTimeout(resolve, 220))
+
 let stop: (() => void) | undefined
 
 beforeEach(() => {
@@ -78,6 +97,7 @@ afterEach(() => {
   Reflect.deleteProperty(window, 'visualViewport')
   Reflect.deleteProperty(document.documentElement, 'clientHeight')
   Reflect.deleteProperty(document.documentElement, 'clientWidth')
+  Reflect.deleteProperty(document.documentElement, 'getBoundingClientRect')
 })
 
 describe('keyboard viewport', () => {
@@ -315,12 +335,97 @@ describe('keyboard viewport', () => {
     const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
     stop = startKeyboardViewport()
     const listener = vi.fn()
-    const unsubscribe = subscribeKeyboard(listener)
+    const unsubscribe = subscribeKeyboardHeight(listener)
 
     await viewport.move({ height: 466, offsetTop: 0 })
 
     expect(listener).toHaveBeenCalledTimes(1)
     unsubscribe()
+  })
+
+  it('leaves the pan where it was while the viewport slides under a drag', async () => {
+    const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
+    stop = startKeyboardViewport()
+    await viewport.move({ height: 412, offsetTop: 113 })
+
+    // iOS slides the visual viewport frame by frame as the page rubber-bands. Chrome positioned
+    // from those frames follows the finger down the screen.
+    await viewport.slide({ height: 412, offsetTop: 150 })
+    await viewport.slide({ height: 412, offsetTop: 64 })
+    await viewport.slide({ height: 412, offsetTop: 113 })
+
+    expect(panOffset()).toBe('113px')
+  })
+
+  it('publishes the pan once the viewport has stopped sliding', async () => {
+    const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
+    stop = startKeyboardViewport()
+    await viewport.move({ height: 412, offsetTop: 113 })
+
+    // Focus moved to a lower field: iOS re-pans without ever resizing.
+    await viewport.slide({ height: 412, offsetTop: 200 })
+    expect(panOffset()).toBe('113px')
+
+    await afterSettle()
+
+    expect(panOffset()).toBe('200px')
+  })
+
+  it('lets the pan come back down, so chrome is not left hanging below the top', async () => {
+    const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
+    stop = startKeyboardViewport()
+
+    await viewport.move({ height: 412, offsetTop: 200 })
+    expect(panOffset()).toBe('200px')
+
+    await viewport.move({ height: 412, offsetTop: 113 })
+
+    expect(panOffset()).toBe('113px')
+  })
+
+  it('does not tell height subscribers about a pan', async () => {
+    const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
+    stop = startKeyboardViewport()
+    await viewport.move({ height: 412, offsetTop: 113 })
+
+    const onHeight = vi.fn()
+    const onPan = vi.fn()
+    const stopHeight = subscribeKeyboardHeight(onHeight)
+    const stopPan = subscribePan(onPan)
+
+    await viewport.slide({ height: 412, offsetTop: 200 })
+    await afterSettle()
+
+    expect(onHeight).not.toHaveBeenCalled()
+    expect(onPan).toHaveBeenCalledTimes(1)
+    stopHeight()
+    stopPan()
+  })
+
+  it('compensates the pan where the platform leaves the shell off the screen', async () => {
+    stubHtmlRectTop(0)
+    const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
+    stop = startKeyboardViewport()
+
+    await viewport.move({ height: 412, offsetTop: 113 })
+
+    expect(isPanBakedIntoRects()).toBe(false)
+    expect(panComp()).toBe('113px')
+    // Rects are layout-relative, so the visible area ends where the keyboard starts.
+    expect(visibleBottom()).toBe(802 - 277)
+  })
+
+  it('publishes no compensation where the UA re-anchored the shell itself', async () => {
+    stubHtmlRectTop(-113)
+    const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
+    stop = startKeyboardViewport()
+
+    await viewport.move({ height: 412, offsetTop: 113 })
+
+    expect(isPanBakedIntoRects()).toBe(true)
+    expect(panComp()).toBe('0px')
+    // Rects already carry the pan, so the visible area is exactly the visual viewport.
+    expect(visibleBottom()).toBe(412)
   })
 
   it('clears both variables on stop so a keyboardless surface is not left offset', () => {
@@ -331,6 +436,7 @@ describe('keyboard viewport', () => {
     expect(inset()).toBe('')
     expect(shell()).toBe('')
     expect(panOffset()).toBe('')
+    expect(panComp()).toBe('')
     expect(document.documentElement.hasAttribute('data-keyboard')).toBe(false)
     expect(keyboardHeight()).toBe(0)
   })

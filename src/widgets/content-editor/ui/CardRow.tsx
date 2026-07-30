@@ -63,7 +63,7 @@ export function CardRow({
         </p>
         {card.flagged ? (
           <Flag
-            className="size-3.5 shrink-0 fill-(--rating) text-(--rating-edge)"
+            className="size-3.5 shrink-0 fill-rating text-(--rating-edge)"
             aria-label={t('cards.row.flagged')}
           />
         ) : null}

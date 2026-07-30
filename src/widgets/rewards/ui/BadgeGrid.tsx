@@ -35,10 +35,10 @@ export function BadgeGrid({ badges, onOpenBadge }: BadgeGridProps) {
               value={face != null ? compactNumber(face) : undefined}
             />
             <div className="flex w-full flex-col items-center gap-1.5">
-              <p className="text-[length:var(--p-text-label)] font-bold leading-tight text-balance text-heading">
+              <p className="text-(length:--p-text-label) font-bold leading-tight text-balance text-heading">
                 {title}
               </p>
-              <p className="text-[length:var(--p-text-tiny)] font-semibold text-muted-foreground">
+              <p className="text-(length:--p-text-tiny) font-semibold text-muted-foreground">
                 {tierProgress}
               </p>
               <TierPips total={badge.tiers.length} filled={badge.tier} className="mt-0.5" />
