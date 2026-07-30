@@ -238,11 +238,14 @@ dev-only **`/dev/kitchen-sink`**.
   Nothing is held at a maximum. **Symptom to recognise: you can drag the header with your finger, and the page you type
   in scrolls worse than one you don't.** It is worst where the scroll body has little range, because only a rubber-band
   moves the visual viewport — a short page flickers where a long one looks fine.
-- **A pan the app asked for is the exception: track it live.** Moving focus between fields re-pans **without
-  resizing**, and iOS animates that pan — waiting out `PAN_SETTLE_MS` rides the shell off the top for the length of the
-  animation and snaps the chrome back afterwards. `expectKeyboard(on)` arms live tracking on every `focusin`, `scroll`
-  publishes the pan per frame while armed, and the first settle disarms it; a drag never begins with a focus.
-  **Symptom to recognise: the first field is fine and the second or third one jerks the header.**
+- **A pan the app asked for is the exception: track it live, on a deadline.** Moving focus between fields re-pans
+  **without resizing**, and iOS animates that pan — waiting out `PAN_SETTLE_MS` rides the shell off the top for the
+  length of the animation and snaps the chrome back afterwards. `expectKeyboard(on)` arms live tracking for
+  `REVEAL_PAN_MS` on every `focusin`, and `scroll` publishes the pan per frame while the deadline holds.
+  **The window must not close on stillness.** A settle-based one is re-armed by every scroll frame, so it never closes
+  during a drag — which is the finger-drags-the-header bug wearing a different hat, and it was shipped that way once.
+  **Symptoms to recognise: the first field is fine and the second or third one jerks the header (window too slow); the
+  header follows your thumb once the keyboard is up (window never closes).**
 - **Height and pan are separate subscriptions.** `subscribeKeyboardHeight` fires once per _keyboard_ event — the inset,
   or the pan moving with it on a `resize`, coalesced into one wake-up. `subscribePan` fires on every published pan,
   including the one that settles after a scroll. Anything that writes `scrollTop` takes the height: woken by a
@@ -256,7 +259,10 @@ dev-only **`/dev/kitchen-sink`**.
   sheets already scroll their own fields and the two would fight. `focusin` fires before the keyboard reports itself, so
   the reserved height is the largest one measured, persisted to `localStorage` — and it is a one-frame bridge, **never a
   floor**: the real measurement replaces it outright. `max()`ing the two clamps the inset to a height measured under a
-  different pan and leaves a dead band under the footer.
+  different pan and leaves a dead band under the footer. **The bridge also has to end**, at the first keyboard the
+  episode measures — not at blur. iOS dismisses the keyboard without blurring (swipe-down, `Done` on the accessory
+  bar), so a reserve tied to "a field is focused" is republished over a measurement of zero and the page keeps a
+  keyboard-shaped hole under it until the field is left.
 - **Every scroll surface is built from `SCREEN_SCROLL`** (`shared/lib`): `overflow-y-auto overscroll-contain
 scrollbar-hide pt-pan`. The `pt-pan` is the part that is easy to leave off and impossible to see on desktop — a
   surface without it loses its top to the translated header. Inner scrollers that are not a screen's scrollport (a

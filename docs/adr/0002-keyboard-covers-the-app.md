@@ -128,13 +128,20 @@ shell, and not iOS — is what reveals the focused field.**
   of the same fault, and the reason the max-hold existed at all. The height is re-derived on `resize` only, as before;
   the pan is now published from `resize` immediately and from `scroll` only once the viewport has been still for
   `PAN_SETTLE_MS`. Nothing is held at a maximum: the pan decays when iOS un-pans.
-- **A pan a focus asked for is tracked live; only an unasked-for one waits out the settle** _(amended 2026-07-30,
-  second pass)_. Moving focus between fields re-pans **without resizing**, and iOS animates that pan over several
-  hundred milliseconds — so the settle window is exactly the wrong tool there: the shell rides off the top for the
-  length of the animation with the chrome still translated by the old pan, then snaps. That is the second and third
-  field of a form dragging the header about. `expectKeyboard(on)` (already called from `useKeyboardReveal` on every
-  `focusin`) now also arms live tracking, and `scroll` publishes the pan on every frame while it is armed; the first
-  settle disarms it. A drag never begins with a focus, so chrome still cannot follow a finger.
+- **A pan a focus asked for is tracked live, for a fixed length of time; only an unasked-for one waits out the settle**
+  _(amended 2026-07-30, second pass)_. Moving focus between fields re-pans **without resizing**, and iOS animates that
+  pan over several hundred milliseconds — so the settle window is exactly the wrong tool there: the shell rides off the
+  top for the length of the animation with the chrome still translated by the old pan, then snaps. That is the second
+  and third field of a form dragging the header about. `expectKeyboard(on)` (already called from `useKeyboardReveal` on
+  every `focusin`) arms live tracking until `REVEAL_PAN_MS` from now, and `scroll` publishes the pan on every frame
+  until that deadline passes. **The deadline is the point.** The first version disarmed in the settle callback, and a
+  drag never goes still — every scroll frame re-armed the timer, so the window stayed open for the whole gesture and
+  handed the header back to the finger, which is the fault this whole bullet exists to prevent.
+- **The reserve ends at the first measurement, not at blur** _(added 2026-07-30, second pass)_. iOS closes the keyboard
+  without blurring the field (the swipe-down, `Done` on the accessory bar), so `expecting` stays true across a
+  measurement of zero. Keying the reserve off `expecting` republishes the remembered height forever in that state and
+  the page keeps a keyboard-shaped hole under it. It is keyed off its own flag, set on focus and cleared the first time
+  a resize measures a real keyboard — after which the measurement rules, including when it says the keyboard is gone.
 - **`notifyKeyboard` compares against what was last announced, not against what the current call wrote**
   _(added 2026-07-30, second pass)_. With the pan published live, a `resize` can find both numbers already correct and
   wake nobody — an opening keyboard whose measurement matches the reserve exactly leaves the reveal never re-run

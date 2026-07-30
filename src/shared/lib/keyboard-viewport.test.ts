@@ -90,6 +90,9 @@ function stubRectSpace({ html, fixed }: { html: number; fixed: number }) {
 /** Longer than the pan's settle window, so a slide has been given its chance to publish. */
 const afterSettle = () => new Promise((resolve) => setTimeout(resolve, 220))
 
+/** Longer than the window in which a pan still counts as the platform revealing a focused field. */
+const afterRevealWindow = () => new Promise((resolve) => setTimeout(resolve, 450))
+
 let stop: (() => void) | undefined
 
 beforeEach(() => {
@@ -244,6 +247,24 @@ describe('keyboard viewport', () => {
     expectKeyboard(false)
     await viewport.move({ height: 802, offsetTop: 0 })
     expect(keyboardHeight()).toBe(0)
+  })
+
+  it('gives the space back when the keyboard is dismissed under a field that keeps focus', async () => {
+    localStorage.setItem(STORAGE_KEY, '336')
+    const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
+    stop = startKeyboardViewport()
+
+    expectKeyboard(true)
+    await viewport.move({ height: 466, offsetTop: 0 })
+    expect(keyboardHeight()).toBe(336)
+
+    // The iOS swipe-down (or `Done` on the accessory bar) closes the keyboard without blurring, so
+    // nothing tells the app to stop expecting one. Re-reserving the remembered height here leaves a
+    // keyboard-shaped hole under the page for as long as the field holds focus.
+    await viewport.move({ height: 802, offsetTop: 0 })
+
+    expect(keyboardHeight()).toBe(0)
+    expect(document.documentElement.hasAttribute('data-keyboard')).toBe(false)
   })
 
   it('holds the reserve only until the keyboard reports itself', () => {
@@ -491,7 +512,7 @@ describe('keyboard viewport', () => {
     expect(panOffset()).toBe('160px')
   })
 
-  it('stops tracking once that pan has settled, so a drag cannot move chrome', async () => {
+  it('stops tracking when the reveal window closes, so a drag cannot move chrome', async () => {
     const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
     stop = startKeyboardViewport()
     stubRectSpace({ html: 0, fixed: 0 })
@@ -499,12 +520,30 @@ describe('keyboard viewport', () => {
 
     expectKeyboard(true)
     await viewport.slide({ height: 412, offsetTop: 200 })
-    await afterSettle()
+    await afterRevealWindow()
 
     // The rubber-band that follows is the page scrolling, not the platform revealing anything.
     await viewport.slide({ height: 412, offsetTop: 64 })
 
     expect(panComp()).toBe('200px')
+  })
+
+  it('closes the reveal window on a deadline, not on the viewport going still', async () => {
+    const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
+    stop = startKeyboardViewport()
+    stubRectSpace({ html: 0, fixed: 0 })
+    await viewport.move({ height: 412, offsetTop: 113 })
+    expectKeyboard(true)
+    await afterRevealWindow()
+
+    // A drag never goes still: every frame restarts the settle timer, so a window that closed on
+    // stillness would still be open here, and the header would ride the finger frame by frame.
+    for (let frame = 1; frame <= 5; frame += 1) {
+      await viewport.slide({ height: 412, offsetTop: 113 + frame * 20 })
+      await new Promise((resolve) => setTimeout(resolve, 100))
+    }
+
+    expect(panComp()).toBe('113px')
   })
 
   it('clears both variables on stop so a keyboardless surface is not left offset', () => {

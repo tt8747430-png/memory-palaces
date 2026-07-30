@@ -4,9 +4,18 @@ const KEYBOARD_MIN = 120
 
 const PAN_SETTLE_MS = 150
 
+/**
+ * How long after a focus a pan still counts as the platform revealing that field rather than the
+ * page scrolling. iOS animates its reveal pan over a few hundred milliseconds, and the animation
+ * cannot be recognised by stillness: a drag never goes still either, so a settle-based window stays
+ * open for the whole drag and hands chrome to the finger. The window is a deadline instead.
+ */
+const REVEAL_PAN_MS = 400
+
 let measured = 0
 let expected = 0
 let expecting = false
+let reserving = false
 let published = -1
 let notifiedInset = -1
 let notifiedPan = -1
@@ -15,7 +24,7 @@ let appHeight = 0
 let appWidth = 0
 let panned = -1
 let compensated = -1
-let following = false
+let armedUntil = 0
 
 // Where the layout origin sits in rect coordinates: 0 where rects are layout-relative, -(pan)
 // where the UA reports them against the visual viewport.
@@ -50,7 +59,7 @@ function writeStored(value: number) {
 /** Publishes the inset. Notifying is the caller's job — one keyboard event can change the inset
  *  and the pan together, and subscribers want one wake-up, not two. */
 function publish() {
-  const next = measured || (expecting ? expected : 0)
+  const next = measured || (reserving ? expected : 0)
   if (next === published) return
   published = next
   document.documentElement.style.setProperty('--kb-inset', `${next}px`)
@@ -151,11 +160,15 @@ export function subscribePan(listener: () => void): () => void {
 }
 
 export function expectKeyboard(on: boolean) {
-  // Set on every focus, not only the first: moving between fields re-pans without resizing, and
-  // that pan is the platform revealing the field, not the page scrolling.
-  following = on
+  // Armed on every focus, not only the first: moving between fields re-pans without resizing, and
+  // that pan is the platform revealing the field. A blur disarms it outright.
+  armedUntil = on ? performance.now() + REVEAL_PAN_MS : 0
   if (expecting === on) return
   expecting = on
+  // The reserve bridges the frames before the keyboard reports itself. There is nothing to bridge
+  // when it is already up and measured.
+  if (on) reserving = measured === 0
+  else reserving = false
   publish()
   notifyKeyboard()
 }
@@ -164,8 +177,10 @@ function createProbe(): HTMLElement {
   const node = document.createElement('div')
   node.dataset.slot = 'viewport-probe'
   node.setAttribute('aria-hidden', 'true')
+  // 1px, not 0: an empty box is the kind of thing an engine is free to skip laying out, and its
+  // position is the entire measurement.
   node.style.cssText =
-    'position:fixed;top:0;left:0;width:0;height:0;visibility:hidden;pointer-events:none'
+    'position:fixed;top:0;left:0;width:1px;height:1px;visibility:hidden;pointer-events:none'
   document.body.append(node)
   return node
 }
@@ -179,7 +194,8 @@ export function startKeyboardViewport(): () => void {
   const reset = () => {
     measured = 0
     expecting = false
-    following = false
+    reserving = false
+    armedUntil = 0
     published = -1
     notifiedInset = -1
     notifiedPan = -1
@@ -240,6 +256,12 @@ export function startKeyboardViewport(): () => void {
       }
     }
 
+    // The bridge ends at the first keyboard this episode actually measured — after that the
+    // measurement rules, including when it says the keyboard is gone. Without this the reserve is
+    // republished forever for a field that keeps focus while the keyboard is dismissed (the iOS
+    // swipe-down, or `Done` on the accessory bar), which leaves a keyboard-shaped hole in the page.
+    if (measured > 0) reserving = false
+
     // One event, one wake-up: a keyboard that opens changes the inset and the pan in the same
     // frame, and the reveal must run against both, once.
     publish()
@@ -258,18 +280,17 @@ export function startKeyboardViewport(): () => void {
    * rubber-band — chrome positioned from those frames follows the finger down the screen. So a
    * scroll publishes only once the viewport has stopped moving.
    *
-   * Unless a field has just taken focus: iOS then re-pans to reveal it without ever resizing, and
-   * animates that pan over several hundred milliseconds. Waiting out the settle rides the shell —
+   * Inside `REVEAL_PAN_MS` of a focus it publishes every frame instead: iOS re-pans to reveal the
+   * new field without ever resizing, and animates it, so waiting out the settle rides the shell —
    * and the chrome riding back on it — off the screen for the length of that animation and snaps it
-   * back. A drag never begins with a focus, so it still only publishes once it has stopped.
+   * back. **The window has to be a deadline, not a settle.** Re-arming it on each scroll the way the
+   * settle timer does never disarms during a drag, which hands the header to the finger for as long
+   * as the finger keeps moving.
    */
   const onScroll = () => {
     window.clearTimeout(settle)
-    if (following) publishPan()
-    settle = window.setTimeout(() => {
-      following = false
-      publishPan()
-    }, PAN_SETTLE_MS)
+    if (performance.now() < armedUntil) publishPan()
+    settle = window.setTimeout(publishPan, PAN_SETTLE_MS)
   }
 
   const onResize = () => {
