@@ -3,18 +3,18 @@ import { AnimatePresence } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Check } from 'lucide-react'
 import type { StudyMode } from '@/entities/preferences'
-import { speak, speechAvailable, srsStatus, success, tick, useShake } from '@/shared/lib'
 import type { SrsState } from '@/shared/lib'
+import { speak, speechAvailable, srsStatus, success, tick, useShake } from '@/shared/lib'
 import {
   applyStudyFilter,
   canUndo,
   currentId,
   initSession,
-  upcomingIds,
-  type StudyFilter,
-  studyFilterCounts as computeFilterCounts,
   sessionReducer,
   shuffleFirstDue,
+  type StudyFilter,
+  studyFilterCounts as computeFilterCounts,
+  upcomingIds,
 } from '@/features/review'
 import {
   type FlashcardSwipeByMode,
@@ -31,7 +31,7 @@ import { ModeSheet } from './ModeSheet'
 import { QuickActionsSheet } from './QuickActionsSheet'
 import type { QuickActionsModel } from './QuickActionRows'
 import { CompletionOverlay } from './CompletionOverlay'
-import type { Grade, CardChanges, SessionSummary, StudyCard, StudyPrefs } from '../model/types'
+import type { CardChanges, Grade, SessionSummary, StudyCard, StudyPrefs } from '../model/types'
 
 export interface FlashcardsPanelProps {
   cards: StudyCard[]

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@/shared/api'
 import { createFolderStore, type Folder } from '@/entities/folder'
-import { createDeckStore, makeDeck, type Deck } from '@/entities/deck'
+import { createDeckStore, type Deck, makeDeck } from '@/entities/deck'
 import { createFolder } from './create-folder'
 import { deleteFolder } from './delete-folder'
 

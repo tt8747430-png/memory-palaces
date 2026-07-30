@@ -7,7 +7,7 @@ import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
 import { useMultiSelect } from '@/shared/lib'
 import { InMemoryRepository } from '@/shared/api'
-import { CardStoreContext, createCardStore, type Card, makeCard } from '@/entities/card'
+import { type Card, CardStoreContext, createCardStore, makeCard } from '@/entities/card'
 import { createDeckStore, type Deck, DeckStoreContext, makeDeck } from '@/entities/deck'
 import { createQuestionStore, type Question, QuestionStoreContext } from '@/entities/question'
 import {

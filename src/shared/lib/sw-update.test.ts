@@ -6,6 +6,10 @@ class FakeWorker {
   readonly posted: unknown[] = []
   private readonly listeners = new Set<() => void>()
 
+  get listenerCount() {
+    return this.listeners.size
+  }
+
   addEventListener(_type: 'statechange', listener: () => void) {
     this.listeners.add(listener)
   }
@@ -16,10 +20,6 @@ class FakeWorker {
 
   postMessage(message: unknown) {
     this.posted.push(message)
-  }
-
-  get listenerCount() {
-    return this.listeners.size
   }
 
   emitStateChange() {
@@ -34,6 +34,10 @@ class FakeRegistration {
   updates = 0
   private readonly listeners = new Set<() => void>()
 
+  get listenerCount() {
+    return this.listeners.size
+  }
+
   addEventListener(_type: 'updatefound', listener: () => void) {
     this.listeners.add(listener)
   }
@@ -45,10 +49,6 @@ class FakeRegistration {
   update() {
     this.updates += 1
     return Promise.resolve()
-  }
-
-  get listenerCount() {
-    return this.listeners.size
   }
 
   /** A new worker is fetched and starts installing. */

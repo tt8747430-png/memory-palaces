@@ -1,35 +1,51 @@
 # Phase 9 — Cloud + always-on sync Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:
+> executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add real Supabase accounts (email/password + Google + Apple) and always-on, offline-first cross-device sync (RxDB ↔ Supabase) with Storage and guest→account claim — entirely behind existing ports, touching no domain logic.
+**Goal:** Add real Supabase accounts (email/password + Google + Apple) and always-on, offline-first cross-device sync (
+RxDB ↔ Supabase) with Storage and guest→account claim — entirely behind existing ports, touching no domain logic.
 
-**Architecture:** RxDB stays the on-device source of truth; the cloud layer is additive behind `AuthGateway`, a new `SyncManager`, and a `StoragePort`, wired only at the composition root. Replication is hand-rolled with `replicateRxCollection` (upsert push / PostgREST+checkpoint pull / Realtime `stream$`). Conflicts resolve field-aware: last-write-wins for content, counter-merge for `progress`/`card.srs`. Adapters are env-gated — with no `VITE_SUPABASE_URL`, the app runs exactly as today (local auth, no sync), keeping every existing test green.
+**Architecture:** RxDB stays the on-device source of truth; the cloud layer is additive behind `AuthGateway`, a new
+`SyncManager`, and a `StoragePort`, wired only at the composition root. Replication is hand-rolled with
+`replicateRxCollection` (upsert push / PostgREST+checkpoint pull / Realtime `stream$`). Conflicts resolve field-aware:
+last-write-wins for content, counter-merge for `progress`/`card.srs`. Adapters are env-gated — with no
+`VITE_SUPABASE_URL`, the app runs exactly as today (local auth, no sync), keeping every existing test green.
 
-**Tech Stack:** React 19, Vite, TypeScript (strict), RxDB 17 (Dexie), `@supabase/supabase-js` v2 (new dep), Supabase (Postgres + Auth + Realtime + Storage), Vitest + fake-indexeddb, Workbox (vite-plugin-pwa).
+**Tech Stack:** React 19, Vite, TypeScript (strict), RxDB 17 (Dexie), `@supabase/supabase-js` v2 (new dep), Supabase (
+Postgres + Auth + Realtime + Storage), Vitest + fake-indexeddb, Workbox (vite-plugin-pwa).
 
 **Spec:** `docs/superpowers/specs/2026-07-22-phase-9-cloud-sync-design.md`
 
 ## Global Constraints
 
-- **FSD layers (lint-enforced):** `app → pages → widgets → features → entities → shared`; import only from strictly-below layers; cross-slice only via `index.ts` barrels. Path alias `@` → `src`.
-- **No RxDB schema migration** — `updatedAt` already exists (LWW clock); `_deleted`/`user_id` live only in the Supabase mapping layer. Do not add required fields to `app/persistence/schemas.ts`.
-- **Writes go through feature commands; reads through selectors/hooks; pure logic in `shared/lib` or `entities/*/model`** with colocated `*.test.ts`.
-- **TS strict:** `noUncheckedIndexedAccess`, `noUnusedLocals/Parameters`, `verbatimModuleSyntax` + `isolatedModules` → `import type` for type-only imports.
+- **FSD layers (lint-enforced):** `app → pages → widgets → features → entities → shared`; import only from
+  strictly-below layers; cross-slice only via `index.ts` barrels. Path alias `@` → `src`.
+- **No RxDB schema migration** — `updatedAt` already exists (LWW clock); `_deleted`/`user_id` live only in the Supabase
+  mapping layer. Do not add required fields to `app/persistence/schemas.ts`.
+- **Writes go through feature commands; reads through selectors/hooks; pure logic in `shared/lib` or `entities/*/model`
+  ** with colocated `*.test.ts`.
+- **TS strict:** `noUncheckedIndexedAccess`, `noUnusedLocals/Parameters`, `verbatimModuleSyntax` + `isolatedModules` →
+  `import type` for type-only imports.
 - **i18n:** every user-facing string added to `src/shared/i18n/locales/en.ts` (types augmented in `i18n/i18next.d.ts`).
 - **Semantic tokens only** in UI (no raw hex, no per-component `dark:`).
-- **Prettier:** no semicolons, single quotes, trailing-comma `all`, printWidth 100. Format only touched files: `npx prettier --write <files>`.
+- **Prettier:** no semicolons, single quotes, trailing-comma `all`, printWidth 100. Format only touched files:
+  `npx prettier --write <files>`.
 - **Vitest `globals: false`** — import `describe/it/expect/vi` from `vitest`.
 - **Gate before "done" per stage:** `npm run typecheck && npm run lint && npm run test`.
-- **Env var names (exact):** `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` — the modern `sb_publishable_…` client key that replaced the legacy "anon key". (Legacy anon JWTs still work but coexist; we use the publishable key per this repo's zero-legacy rule. The server-side `sb_secret_…` key is never shipped to the client.)
+- **Env var names (exact):** `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` — the modern `sb_publishable_…` client
+  key that replaced the legacy "anon key". (Legacy anon JWTs still work but coexist; we use the publishable key per this
+  repo's zero-legacy rule. The server-side `sb_secret_…` key is never shipped to the client.)
 - **Domain data never served by REST CRUD** — replication only; PostgREST reserved for admin/debug.
-- **Commit style:** end messages with `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`. Work on branch `feat/phase-9-cloud-sync`.
+- **Commit style:** end messages with `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`. Work on branch
+  `feat/phase-9-cloud-sync`.
 
 ---
 
 ## File Structure
 
 **New:**
+
 ```
 supabase/config.toml                                  # supabase init
 supabase/migrations/<ts>_phase9_tables.sql            # 7 mirror tables + set_updated_at trigger
@@ -52,7 +68,9 @@ src/features/auth/index.ts                            # barrel
 src/pages/auth-callback/ui/AuthCallbackPage.tsx       # OAuth PKCE landing (+ test)
 src/pages/auth-callback/index.ts                      # barrel
 ```
+
 **Modified:**
+
 ```
 package.json                                          # + @supabase/supabase-js
 src/shared/api/auth-gateway.ts                        # widened port
@@ -78,13 +96,16 @@ vite.config.ts                                        # Workbox BackgroundSync f
 ### Task 0.1: Supabase dependency, client singleton, env gating
 
 **Files:**
+
 - Modify: `package.json` (add dependency)
 - Create: `.env.example`, `src/shared/api/supabase/client.ts`, `src/shared/api/supabase/index.ts`
 - Modify: `src/shared/api/index.ts`
 - Test: `src/shared/api/supabase/client.test.ts`
 
 **Interfaces:**
-- Produces: `supabase` (a `SupabaseClient`), `isSupabaseConfigured(): boolean`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` from `@/shared/api/supabase`.
+
+- Produces: `supabase` (a `SupabaseClient`), `isSupabaseConfigured(): boolean`, `SUPABASE_URL`,
+  `SUPABASE_PUBLISHABLE_KEY` from `@/shared/api/supabase`.
 
 - [ ] **Step 1: Install the dependency**
 
@@ -104,6 +125,7 @@ VITE_SUPABASE_PUBLISHABLE_KEY=
 - [ ] **Step 3: Write the failing test**
 
 `src/shared/api/supabase/client.test.ts`:
+
 ```ts
 import { describe, expect, it } from 'vitest'
 import { isSupabaseConfigured } from './client'
@@ -124,6 +146,7 @@ Expected: FAIL — `Cannot find module './client'`.
 - [ ] **Step 5: Implement the client**
 
 `src/shared/api/supabase/client.ts`:
+
 ```ts
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
@@ -152,10 +175,14 @@ export const supabase: SupabaseClient = createClient(
 - [ ] **Step 6: Barrel it**
 
 `src/shared/api/supabase/index.ts`:
+
 ```ts
 export { supabase, isSupabaseConfigured, SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from './client'
 ```
-Add `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` to the `ImportMetaEnv` interface in `src/vite-env.d.ts` (create the interface if absent):
+
+Add `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` to the `ImportMetaEnv` interface in `src/vite-env.d.ts` (
+create the interface if absent):
+
 ```ts
 interface ImportMetaEnv {
   readonly VITE_SUPABASE_URL?: string
@@ -178,20 +205,25 @@ git commit -m "feat(sync): add supabase client singleton and env gating"
 ### Task 0.2: Postgres mirror tables + server-clock trigger (migration)
 
 **Files:**
+
 - Create: `supabase/config.toml` (via `supabase init`), `supabase/migrations/<ts>_phase9_tables.sql`
 - Test: `supabase/tests/phase9_tables.sql` (pgTAP) — or the manual SQL assertion in Step 3.
 
 **Interfaces:**
-- Produces: tables `public.{decks,cards,folders,questions,progress,preferences,profiles}` each `(id uuid pk, user_id uuid, data jsonb, deleted bool, updated_at timestamptz)`; trigger `set_updated_at`.
+
+- Produces: tables `public.{decks,cards,folders,questions,progress,preferences,profiles}` each
+  `(id uuid pk, user_id uuid, data jsonb, deleted bool, updated_at timestamptz)`; trigger `set_updated_at`.
 
 - [ ] **Step 1: Initialize Supabase locally**
 
 Run: `npx supabase init` (creates `supabase/config.toml`). If Docker is available, `npx supabase start`.
-Fallback (no Docker): apply migrations to a dev branch via the Supabase MCP `apply_migration`, and run assertions via `execute_sql`.
+Fallback (no Docker): apply migrations to a dev branch via the Supabase MCP `apply_migration`, and run assertions via
+`execute_sql`.
 
 - [ ] **Step 2: Write the migration**
 
 `supabase/migrations/<ts>_phase9_tables.sql`:
+
 ```sql
 -- Shared server-clock trigger: forces updated_at = now() on every write so the
 -- replication pull checkpoint is monotonic and client clocks can't skew it.
@@ -229,11 +261,13 @@ end $$;
 
 Run (local stack): `npx supabase db reset`
 Then assert (psql via `npx supabase db execute` or MCP `execute_sql`):
+
 ```sql
 select count(*) from information_schema.tables
 where table_schema = 'public'
   and table_name in ('decks','cards','folders','questions','progress','preferences','profiles');
 ```
+
 Expected: `7`.
 
 - [ ] **Step 4: Commit**
@@ -246,14 +280,17 @@ git commit -m "feat(sync): postgres mirror tables + server-clock trigger"
 ### Task 0.3: RLS + Realtime migrations
 
 **Files:**
+
 - Create: `supabase/migrations/<ts>_phase9_rls.sql`, `supabase/migrations/<ts>_phase9_realtime.sql`
 
 **Interfaces:**
+
 - Produces: per-user RLS on all 7 tables; all 7 tables in the `supabase_realtime` publication.
 
 - [ ] **Step 1: Write the RLS migration**
 
 `supabase/migrations/<ts>_phase9_rls.sql`:
+
 ```sql
 do $$
 declare t text;
@@ -272,6 +309,7 @@ end $$;
 - [ ] **Step 2: Write the Realtime migration**
 
 `supabase/migrations/<ts>_phase9_realtime.sql`:
+
 ```sql
 alter publication supabase_realtime add table
   public.decks, public.cards, public.folders, public.questions,
@@ -280,7 +318,8 @@ alter publication supabase_realtime add table
 
 - [ ] **Step 3: Verify RLS denies cross-user access**
 
-Run `npx supabase db reset`, then via `execute_sql` (as an authenticated role for user A) attempt to select user B's rows.
+Run `npx supabase db reset`, then via `execute_sql` (as an authenticated role for user A) attempt to select user B's
+rows.
 Expected: 0 rows returned (deny). And `select count(*) from pg_policies where schemaname='public'` ≥ `28` (4 × 7).
 
 - [ ] **Step 4: Run advisors (security check)**
@@ -302,17 +341,21 @@ git commit -m "feat(sync): per-user RLS + realtime publication for mirror tables
 ### Task 1.1: Widen the AuthGateway port + update LocalAuthGateway
 
 **Files:**
+
 - Modify: `src/shared/api/auth-gateway.ts`
 - Modify: `src/app/persistence/local-auth-gateway.ts`
 - Test: `src/app/persistence/local-auth-gateway.test.ts` (update existing)
 
 **Interfaces:**
-- Produces: widened `AuthGateway` with `signUp/signIn(+password)`, `signInWithProvider('google'|'apple')`, real `requestPasswordReset`, async `getCurrent()`, `onAuthChange(cb)`.
+
+- Produces: widened `AuthGateway` with `signUp/signIn(+password)`, `signInWithProvider('google'|'apple')`, real
+  `requestPasswordReset`, async `getCurrent()`, `onAuthChange(cb)`.
 - Consumes: `Unsubscribe` from `@/shared/api/base-repository`.
 
 - [ ] **Step 1: Update the port**
 
 `src/shared/api/auth-gateway.ts` (full file):
+
 ```ts
 import type { Unsubscribe } from './base-repository'
 
@@ -348,11 +391,13 @@ export interface AuthGateway {
   onAuthChange(cb: (auth: PersistedAuth | null) => void): Unsubscribe
 }
 ```
+
 Confirm `Unsubscribe` is exported from `src/shared/api/index.ts` (it is, via `base-repository`).
 
 - [ ] **Step 2: Update the failing test for LocalAuthGateway**
 
 In `src/app/persistence/local-auth-gateway.test.ts`, adapt existing cases to the new signatures and add:
+
 ```ts
 it('exposes the persisted auth via async getCurrent', async () => {
   const gateway = new LocalAuthGateway(() => 'fixed-id')
@@ -383,6 +428,7 @@ Expected: FAIL — `getCurrent`/`onAuthChange`/`signInWithProvider` not defined.
 - [ ] **Step 4: Implement the widened LocalAuthGateway**
 
 `src/app/persistence/local-auth-gateway.ts` (full file):
+
 ```ts
 import type {
   AuthGateway,
@@ -460,7 +506,9 @@ export class LocalAuthGateway implements AuthGateway {
 - [ ] **Step 5: Run tests + typecheck**
 
 Run: `npx vitest run src/app/persistence/local-auth-gateway.test.ts && npm run typecheck`
-Expected: PASS (typecheck will surface every caller of the old port — fix call sites in Tasks 1.3/1.5; if the build is red here, that is expected until those tasks land, so run only the targeted test + `tsc` on this file's islands is not possible — instead proceed and keep the vitest file green).
+Expected: PASS (typecheck will surface every caller of the old port — fix call sites in Tasks 1.3/1.5; if the build is
+red here, that is expected until those tasks land, so run only the targeted test + `tsc` on this file's islands is not
+possible — instead proceed and keep the vitest file green).
 
 - [ ] **Step 6: Commit**
 
@@ -472,17 +520,20 @@ git commit -m "feat(auth): widen AuthGateway port (password, social, async sessi
 ### Task 1.2: SupabaseAuthGateway adapter
 
 **Files:**
+
 - Create: `src/shared/api/supabase/supabase-auth-gateway.ts`
 - Modify: `src/shared/api/supabase/index.ts`
 - Test: `src/shared/api/supabase/supabase-auth-gateway.test.ts`
 
 **Interfaces:**
+
 - Consumes: `supabase` client, `AuthGateway`, `PersistedAuth`, `AuthProvider`, `SignInInput`, `SignUpInput`.
 - Produces: `class SupabaseAuthGateway implements AuthGateway`.
 
 - [ ] **Step 1: Write the failing test (mocked client)**
 
 `src/shared/api/supabase/supabase-auth-gateway.test.ts`:
+
 ```ts
 import { describe, expect, it, vi } from 'vitest'
 import { SupabaseAuthGateway } from './supabase-auth-gateway'
@@ -537,6 +588,7 @@ Expected: FAIL — module not found.
 - [ ] **Step 3: Implement the adapter**
 
 `src/shared/api/supabase/supabase-auth-gateway.ts`:
+
 ```ts
 import type { SupabaseClient, User } from '@supabase/supabase-js'
 import type {
@@ -632,9 +684,11 @@ export class SupabaseAuthGateway implements AuthGateway {
 - [ ] **Step 4: Run test + barrel export**
 
 Add to `src/shared/api/supabase/index.ts`:
+
 ```ts
 export { SupabaseAuthGateway } from './supabase-auth-gateway'
 ```
+
 Run: `npx vitest run src/shared/api/supabase/supabase-auth-gateway.test.ts && npm run typecheck`
 Expected: PASS.
 
@@ -648,17 +702,20 @@ git commit -m "feat(auth): SupabaseAuthGateway adapter (password, oauth, reset, 
 ### Task 1.3: restore-session via onAuthChange + AuthProvider
 
 **Files:**
+
 - Modify: `src/features/session/restore-session.ts`
 - Modify: `src/app/providers/AuthProvider.tsx`
 - Test: `src/features/session/restore-session.test.ts` (update/create)
 
 **Interfaces:**
+
 - Consumes: `AuthGateway.getCurrent`, `AuthGateway.onAuthChange`; the session store.
 - Produces: `restoreSession({ gateway, sessionStore })` now returns an `Unsubscribe`.
 
 - [ ] **Step 1: Write the failing test**
 
 `src/features/session/restore-session.test.ts` (key case):
+
 ```ts
 import { describe, expect, it, vi } from 'vitest'
 import { restoreSession } from './restore-session'
@@ -679,7 +736,9 @@ it('pushes auth changes into the session store', async () => {
   expect(setAuth).toHaveBeenCalledWith({ id: 'u1', kind: 'account' })
 })
 ```
-(Adjust `setAuth` to the session store's actual mutation — inspect `entities/session/model` and match its real API; if the store uses a different setter name, use that verbatim.)
+
+(Adjust `setAuth` to the session store's actual mutation — inspect `entities/session/model` and match its real API; if
+the store uses a different setter name, use that verbatim.)
 
 - [ ] **Step 2: Run to verify it fails**
 
@@ -689,6 +748,7 @@ Expected: FAIL.
 - [ ] **Step 3: Implement**
 
 `src/features/session/restore-session.ts` — read current implementation, then rewrite to:
+
 ```ts
 import type { AuthGateway } from '@/shared/api'
 import type { SessionStore } from '@/entities/session'
@@ -707,11 +767,13 @@ export async function restoreSession({ gateway, sessionStore }: Deps): Promise<(
   return gateway.onAuthChange(apply)
 }
 ```
+
 (Replace `setAuth` with the session store's actual method discovered in Step 1.)
 
 - [ ] **Step 4: Update AuthProvider to keep the subscription**
 
 `src/app/providers/AuthProvider.tsx`:
+
 ```tsx
 import { type ReactNode, useEffect } from 'react'
 import { useAuthGateway } from '@/shared/lib'
@@ -754,17 +816,20 @@ git commit -m "feat(auth): restore session reactively via onAuthChange"
 ### Task 1.4: /auth/callback page + route
 
 **Files:**
+
 - Create: `src/pages/auth-callback/ui/AuthCallbackPage.tsx`, `src/pages/auth-callback/index.ts`
 - Modify: `src/app/router.tsx`
 - Test: `src/pages/auth-callback/ui/AuthCallbackPage.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `supabase` (for the explicit-exchange fallback), `useAuthGateway().onAuthChange`, router navigation.
 - Produces: route `/auth/callback` rendering `AuthCallbackPage`.
 
 - [ ] **Step 1: Write the failing test**
 
 `src/pages/auth-callback/ui/AuthCallbackPage.test.tsx`:
+
 ```tsx
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
@@ -779,7 +844,10 @@ it('shows a signing-in state while resolving the session', () => {
   expect(screen.getByText(/signing you in/i)).toBeInTheDocument()
 })
 ```
-(Follow the repo's existing page-test pattern — check an existing `*Page.test.tsx` for the render helper/providers used, e.g. `renderWithProviders`, and reuse it. The component is written to accept injectable props so it is trivially testable.)
+
+(Follow the repo's existing page-test pattern — check an existing `*Page.test.tsx` for the render helper/providers used,
+e.g. `renderWithProviders`, and reuse it. The component is written to accept injectable props so it is trivially
+testable.)
 
 - [ ] **Step 2: Run to verify it fails**
 
@@ -789,6 +857,7 @@ Expected: FAIL — module not found.
 - [ ] **Step 3: Implement the page**
 
 `src/pages/auth-callback/ui/AuthCallbackPage.tsx`:
+
 ```tsx
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -823,11 +892,15 @@ export function AuthCallbackPage({ sessionReady, onDone, onError }: Props) {
   )
 }
 ```
-Then create a small container (or wire in the route) that: subscribes to `onAuthChange`, passes `sessionReady` when a session arrives, and navigates home via the router. Add i18n key `auth.callback.signingIn` = "Signing you in…" and an error key.
+
+Then create a small container (or wire in the route) that: subscribes to `onAuthChange`, passes `sessionReady` when a
+session arrives, and navigates home via the router. Add i18n key `auth.callback.signingIn` = "Signing you in…" and an
+error key.
 
 - [ ] **Step 4: Register the route**
 
-In `src/app/router.tsx`, add a public (non-guarded) route `/auth/callback` rendering the container. Confirm `app/auth-guard.ts` does **not** gate it.
+In `src/app/router.tsx`, add a public (non-guarded) route `/auth/callback` rendering the container. Confirm
+`app/auth-guard.ts` does **not** gate it.
 
 - [ ] **Step 5: Barrel + run + typecheck**
 
@@ -845,20 +918,26 @@ git commit -m "feat(auth): /auth/callback landing for OAuth PKCE"
 ### Task 1.5: Social buttons + real password flows in the auth UI
 
 **Files:**
-- Modify: `src/shared/ui/AuthScreen.tsx` (add a social slot), `src/pages/login/ui/LoginPage.tsx`, `src/pages/signup/ui/SignupPage.tsx`, `src/pages/forgot-password/...`
+
+- Modify: `src/shared/ui/AuthScreen.tsx` (add a social slot), `src/pages/login/ui/LoginPage.tsx`,
+  `src/pages/signup/ui/SignupPage.tsx`, `src/pages/forgot-password/...`
 - Modify: `src/shared/i18n/locales/en.ts`
 - Test: extend `src/pages/login/ui/LoginPage.test.tsx` (+ signup)
 
 **Interfaces:**
+
 - Consumes: `useAuthGateway()` → `signIn/signUp/signInWithProvider/requestPasswordReset`.
 
 - [ ] **Step 1: Read the existing auth UI**
 
-Read `AuthScreen.tsx`, `AuthField.tsx`, `LoginPage.tsx`, `SignupPage.tsx`, the forgot-password page, and one existing page test to learn the compound-component API, the form state pattern, and `renderWithProviders`. Match that shape — do not invent a new form pattern.
+Read `AuthScreen.tsx`, `AuthField.tsx`, `LoginPage.tsx`, `SignupPage.tsx`, the forgot-password page, and one existing
+page test to learn the compound-component API, the form state pattern, and `renderWithProviders`. Match that shape — do
+not invent a new form pattern.
 
 - [ ] **Step 2: Write the failing test**
 
 In `LoginPage.test.tsx`:
+
 ```tsx
 it('calls signInWithProvider when Continue with Google is pressed', async () => {
   const signInWithProvider = vi.fn().mockResolvedValue(undefined)
@@ -868,6 +947,7 @@ it('calls signInWithProvider when Continue with Google is pressed', async () => 
   expect(signInWithProvider).toHaveBeenCalledWith('google')
 })
 ```
+
 (Use the repo's real provider-injection helper; mirror an existing gateway-stubbing test.)
 
 - [ ] **Step 3: Run to verify it fails**
@@ -877,8 +957,10 @@ Expected: FAIL — no Google button.
 
 - [ ] **Step 4: Implement**
 
-- Add a `SocialSignIn` block (Google + Apple buttons using `lucide-react` marks + semantic tokens) as a composable slot in `AuthScreen`, shown on login + signup.
-- Wire `onClick={() => void gateway.signInWithProvider('google')}` / `'apple'`, with loading + error (toast via `sonner`) + offline handling (disable when `!navigator.onLine`, show `auth.social.offline`).
+- Add a `SocialSignIn` block (Google + Apple buttons using `lucide-react` marks + semantic tokens) as a composable slot
+  in `AuthScreen`, shown on login + signup.
+- Wire `onClick={() => void gateway.signInWithProvider('google')}` / `'apple'`, with loading + error (toast via
+  `sonner`) + offline handling (disable when `!navigator.onLine`, show `auth.social.offline`).
 - Wire the email/password submit to `gateway.signIn` / `gateway.signUp` (surface errors).
 - Wire forgot-password submit to `gateway.requestPasswordReset` with a "check your email" success state.
 - Add i18n keys: `auth.social.google`, `auth.social.apple`, `auth.social.offline`, `auth.reset.sent`, plus error copy.
@@ -898,10 +980,12 @@ git commit -m "feat(auth): social sign-in buttons + real password/reset flows"
 ### Task 1.6: Env-gated adapter selection at the composition root
 
 **Files:**
+
 - Modify: `src/app/composition-root.ts`
 - Test: `src/app/composition-root.test.ts` (create if absent)
 
 **Interfaces:**
+
 - Produces: `createServices()` returns `SupabaseAuthGateway` when `isSupabaseConfigured()`, else `LocalAuthGateway`.
 
 - [ ] **Step 1: Write the failing test**
@@ -925,6 +1009,7 @@ Expected: FAIL.
 - [ ] **Step 3: Implement the selection**
 
 In `composition-root.ts`:
+
 ```ts
 import { isSupabaseConfigured, supabase, SupabaseAuthGateway } from '@/shared/api/supabase'
 // ...
@@ -952,16 +1037,19 @@ git commit -m "feat(auth): env-gated Supabase/local auth adapter selection"
 ### Task 2.1: Document mapping (RxDB doc ↔ Postgres row)
 
 **Files:**
+
 - Create: `src/shared/api/supabase/document-mapping.ts`
 - Test: `src/shared/api/supabase/document-mapping.test.ts`
 
 **Interfaces:**
+
 - Produces: `interface Row`, `docToRow(doc, userId): PushRow`, `rowToDoc(row): T & { _deleted: boolean }`.
 - `updated_at` is **never** written on push (the server trigger owns it); it is only read on pull for the checkpoint.
 
 - [ ] **Step 1: Write the failing test**
 
 `document-mapping.test.ts`:
+
 ```ts
 import { describe, expect, it } from 'vitest'
 import { docToRow, rowToDoc } from './document-mapping'
@@ -986,6 +1074,7 @@ Expected: FAIL — module not found.
 - [ ] **Step 3: Implement**
 
 `document-mapping.ts`:
+
 ```ts
 import type { Identifiable } from '@/shared/api'
 
@@ -1031,16 +1120,19 @@ git commit -m "feat(sync): rxdb doc <-> supabase row mapping"
 ### Task 2.2: Pure counter-merge for `progress`
 
 **Files:**
+
 - Create: `src/shared/lib/merge-progress.ts`
 - Test: `src/shared/lib/merge-progress.test.ts`
 - Modify: `src/shared/lib/index.ts` (barrel)
 
 **Interfaces:**
+
 - Produces: `mergeProgress(local: Progress, remote: Progress): Progress`.
 
 - [ ] **Step 1: Write the failing test**
 
 `merge-progress.test.ts`:
+
 ```ts
 import { describe, expect, it } from 'vitest'
 import { mergeProgress } from './merge-progress'
@@ -1073,6 +1165,7 @@ Expected: FAIL.
 - [ ] **Step 3: Implement**
 
 `merge-progress.ts`:
+
 ```ts
 import type { Progress } from '@/entities/progress'
 
@@ -1116,16 +1209,20 @@ git commit -m "feat(sync): pure counter-merge for progress"
 ### Task 2.3: Pure merge for `card` + `srs`
 
 **Files:**
+
 - Create: `src/shared/lib/merge-srs.ts`
 - Test: `src/shared/lib/merge-srs.test.ts`
 - Modify: `src/shared/lib/index.ts`
 
 **Interfaces:**
-- Produces: `mergeCard(local: Card, remote: Card): Card` (content follows newest edit; `srs` merges — newest `due/interval/ease` by `lastReviewed`, `max(reps)`, `max(lapses)`; handles optional `srs`).
+
+- Produces: `mergeCard(local: Card, remote: Card): Card` (content follows newest edit; `srs` merges — newest
+  `due/interval/ease` by `lastReviewed`, `max(reps)`, `max(lapses)`; handles optional `srs`).
 
 - [ ] **Step 1: Write the failing test**
 
 `merge-srs.test.ts`:
+
 ```ts
 import { describe, expect, it } from 'vitest'
 import { mergeCard } from './merge-srs'
@@ -1170,6 +1267,7 @@ Expected: FAIL.
 - [ ] **Step 3: Implement**
 
 `merge-srs.ts`:
+
 ```ts
 import type { Card } from '@/entities/card'
 
@@ -1204,18 +1302,23 @@ git commit -m "feat(sync): pure merge for card srs"
 ### Task 2.4: Per-collection conflict handlers in the RxDB database
 
 **Files:**
+
 - Modify: `src/app/persistence/database.ts`
 - Test: `src/app/persistence/conflict-handlers.test.ts`
 
 **Interfaces:**
+
 - Consumes: `mergeProgress`, `mergeCard`.
 - Produces: `conflictHandler` attached to `cards`, `progress` (merge) and content collections (LWW by `data.updatedAt`).
 
-> **Confirm the RxDB 17 `RxConflictHandler` return shape** against `node_modules/rxdb` types before implementing (the LWW example in the spec returns `{ documentData }`; newer RxDB may require `{ isEqual: false, documentData }`). The merge *logic* below is stable; only the wrapper's return literal may need adjustment.
+> **Confirm the RxDB 17 `RxConflictHandler` return shape** against `node_modules/rxdb` types before implementing (the
+> LWW example in the spec returns `{ documentData }`; newer RxDB may require `{ isEqual: false, documentData }`). The
+> merge *logic* below is stable; only the wrapper's return literal may need adjustment.
 
 - [ ] **Step 1: Write the failing test**
 
 `conflict-handlers.test.ts`:
+
 ```ts
 import { describe, expect, it } from 'vitest'
 import { lastWriteWins, mergeCardConflict, mergeProgressConflict } from './conflict-handlers'
@@ -1228,6 +1331,7 @@ it('lastWriteWins keeps the doc with the newer updatedAt', async () => {
   expect(out).toMatchObject({ documentData: { name: 'server' } })
 })
 ```
+
 (If the confirmed RxDB contract also needs `isEqual`, assert that field too.)
 
 - [ ] **Step 2: Run to verify it fails**
@@ -1238,6 +1342,7 @@ Expected: FAIL.
 - [ ] **Step 3: Extract handlers into `conflict-handlers.ts`**
 
 `src/app/persistence/conflict-handlers.ts`:
+
 ```ts
 import type { RxConflictHandler } from 'rxdb'
 import type { Card } from '@/entities/card'
@@ -1266,6 +1371,7 @@ export const mergeCardConflict: RxConflictHandler<Card> = async (i) => ({
 - [ ] **Step 4: Attach in `database.ts`**
 
 In `createAppDatabase`, pass `conflictHandler` per collection:
+
 ```ts
 decks:       { schema: deckSchema,       conflictHandler: lastWriteWins as never },
 cards:       { schema: cardSchema,       conflictHandler: mergeCardConflict },
@@ -1275,6 +1381,7 @@ progress:    { schema: progressSchema,   conflictHandler: mergeProgressConflict,
 preferences: { schema: preferencesSchema, conflictHandler: lastWriteWins as never, migrationStrategies: preferencesMigrations },
 profiles:    { schema: profileSchema,    conflictHandler: lastWriteWins as never },
 ```
+
 (Keep `notifications` as-is — not synced.)
 
 - [ ] **Step 5: Run tests + full suite (RxDB DB creation is covered by `database.test.ts`)**
@@ -1292,17 +1399,22 @@ git commit -m "feat(sync): per-collection conflict handlers (LWW + counter-merge
 ### Task 2.5: `createCollectionReplication` (push / pull / realtime stream)
 
 **Files:**
+
 - Create: `src/shared/api/supabase/replication.ts`
 - Modify: `src/shared/api/supabase/index.ts`
 - Test: `src/shared/api/supabase/replication.test.ts`
 
 **Interfaces:**
+
 - Consumes: `supabase` client, an `RxCollection<T>`, `docToRow`/`rowToDoc`.
-- Produces: `createCollectionReplication<T>({ supabase, collection, table, userId }): RxReplicationState<T, Checkpoint>`, `interface Checkpoint { updated_at: string; id: string }`.
+- Produces:
+  `createCollectionReplication<T>({ supabase, collection, table, userId }): RxReplicationState<T, Checkpoint>`,
+  `interface Checkpoint { updated_at: string; id: string }`.
 
 - [ ] **Step 1: Write the failing test (push mapping + pull query, mocked supabase)**
 
 `replication.test.ts`:
+
 ```ts
 import { describe, expect, it, vi } from 'vitest'
 import { buildPushPayload, buildPullQuery } from './replication'
@@ -1315,7 +1427,9 @@ it('push payload maps docs to rows with the user id', () => {
   expect(rows).toEqual([{ id: 'd1', user_id: 'u1', data: { id: 'd1', name: 'x' }, deleted: false }])
 })
 ```
-(Expose `buildPushPayload` / `buildPullQuery` as small pure helpers so the handler logic is unit-testable without a live Postgres; the `createCollectionReplication` wiring is exercised in the Task 2.6 integration test.)
+
+(Expose `buildPushPayload` / `buildPullQuery` as small pure helpers so the handler logic is unit-testable without a live
+Postgres; the `createCollectionReplication` wiring is exercised in the Task 2.6 integration test.)
 
 - [ ] **Step 2: Run to verify it fails**
 
@@ -1325,6 +1439,7 @@ Expected: FAIL.
 - [ ] **Step 3: Implement**
 
 `replication.ts`:
+
 ```ts
 import type { RxCollection } from 'rxdb'
 import type {
@@ -1411,13 +1526,17 @@ export function createCollectionReplication<T extends Identifiable>(opts: {
   })
 }
 ```
-> Note: the pull uses `gt(updated_at)`. Rows sharing an identical server timestamp at a batch boundary are an edge case (microsecond `now()` makes it rare); if it surfaces, harden to keyset pagination (`updated_at > cp OR (updated_at = cp AND id > cp.id)`). Track as a follow-up, not a blocker.
+
+> Note: the pull uses `gt(updated_at)`. Rows sharing an identical server timestamp at a batch boundary are an edge
+> case (microsecond `now()` makes it rare); if it surfaces, harden to keyset pagination (
+`updated_at > cp OR (updated_at = cp AND id > cp.id)`). Track as a follow-up, not a blocker.
 
 - [ ] **Step 4: Barrel + run + typecheck**
 
 Add `export { createCollectionReplication, type Checkpoint } from './replication'` to the supabase barrel.
 Run: `npx vitest run src/shared/api/supabase/replication.test.ts && npm run typecheck`
-Expected: PASS. (Confirm exact `rxdb/plugins/replication` type names against `node_modules/rxdb`; adjust imports if the alias differs.)
+Expected: PASS. (Confirm exact `rxdb/plugins/replication` type names against `node_modules/rxdb`; adjust imports if the
+alias differs.)
 
 - [ ] **Step 5: Commit**
 
@@ -1429,14 +1548,18 @@ git commit -m "feat(sync): supabase replication (upsert push, checkpoint pull, r
 ### Task 2.6: Two-client convergence integration test
 
 **Files:**
+
 - Test: `src/shared/api/supabase/replication.integration.test.ts`
 
 **Interfaces:**
+
 - Consumes: `createCollectionReplication`, a real (local-stack) or PGlite-backed Supabase, two RxDB instances.
 
 - [ ] **Step 1: Write the integration test**
 
-Model it on the repo's `rxdb-persistence.test.ts` (fake-indexeddb). Two RxDB databases A and B replicate to the same table; assert:
+Model it on the repo's `rxdb-persistence.test.ts` (fake-indexeddb). Two RxDB databases A and B replicate to the same
+table; assert:
+
 - write on A → appears on B (`awaitInSync` then query B);
 - offline write on B while A also writes the same doc → after reconnect, both converge to the conflict-handled result;
 - delete on A → tombstone (`_deleted`) propagates and the doc is gone on B.
@@ -1449,11 +1572,14 @@ it('converges a write from client A to client B', async () => {
   // await eventual consistency; expect decksB.findOne('d1') to resolve to name 'Hello'
 })
 ```
-Guard the suite with `describe.skipIf(!process.env.SUPABASE_TEST_URL)` so CI without a stack stays green; document `SUPABASE_TEST_URL`/`SUPABASE_TEST_KEY` in the test header.
+
+Guard the suite with `describe.skipIf(!process.env.SUPABASE_TEST_URL)` so CI without a stack stays green; document
+`SUPABASE_TEST_URL`/`SUPABASE_TEST_KEY` in the test header.
 
 - [ ] **Step 2: Run against a local stack**
 
-Run: `SUPABASE_TEST_URL=... SUPABASE_TEST_KEY=... npx vitest run src/shared/api/supabase/replication.integration.test.ts`
+Run:
+`SUPABASE_TEST_URL=... SUPABASE_TEST_KEY=... npx vitest run src/shared/api/supabase/replication.integration.test.ts`
 Expected: PASS (convergence, offline-merge, tombstone).
 
 - [ ] **Step 3: Commit**
@@ -1470,17 +1596,21 @@ git commit -m "test(sync): two-client convergence + offline-merge + tombstone"
 ### Task 3.1: `SyncManager` — owns all replication states
 
 **Files:**
+
 - Create: `src/shared/api/supabase/sync-manager.ts`
 - Modify: `src/shared/api/supabase/index.ts`
 - Test: `src/shared/api/supabase/sync-manager.test.ts`
 
 **Interfaces:**
+
 - Consumes: `createCollectionReplication`, `RxReplicationState`.
-- Produces: `class SyncManager { start(userId): void; stop(): Promise<void>; flush(): Promise<void>; isInSync(): Promise<boolean> }`.
+- Produces:
+  `class SyncManager { start(userId): void; stop(): Promise<void>; flush(): Promise<void>; isInSync(): Promise<boolean> }`.
 
 - [ ] **Step 1: Write the failing test (injected replication factory)**
 
 `sync-manager.test.ts`:
+
 ```ts
 import { describe, expect, it, vi } from 'vitest'
 import { SyncManager } from './sync-manager'
@@ -1514,6 +1644,7 @@ Expected: FAIL.
 - [ ] **Step 3: Implement**
 
 `sync-manager.ts`:
+
 ```ts
 import type { RxCollection } from 'rxdb'
 import type { RxReplicationState } from 'rxdb'
@@ -1584,12 +1715,16 @@ git commit -m "feat(sync): SyncManager owning replication states + flush/isInSyn
 ### Task 3.2: Flush-on-leave + storage durability
 
 **Files:**
+
 - Create: `src/app/providers/SyncProvider.tsx`
-- Modify: `src/app/composition-root.ts` (build `SyncManager`, expose on `Services`), `src/app/providers/AppProviders.tsx` (mount `SyncProvider`)
+- Modify: `src/app/composition-root.ts` (build `SyncManager`, expose on `Services`),
+  `src/app/providers/AppProviders.tsx` (mount `SyncProvider`)
 - Test: `src/app/providers/SyncProvider.test.tsx`
 
 **Interfaces:**
-- Consumes: `Services.syncManager` (nullable when Supabase not configured), session store (to start on account, stop on sign-out).
+
+- Consumes: `Services.syncManager` (nullable when Supabase not configured), session store (to start on account, stop on
+  sign-out).
 - Produces: visibility/pagehide flush + `navigator.storage.persist()` at mount.
 
 - [ ] **Step 1: Write the failing test**
@@ -1612,6 +1747,7 @@ Expected: FAIL.
 - [ ] **Step 3: Implement**
 
 `SyncProvider.tsx`:
+
 ```tsx
 import { type ReactNode, useEffect } from 'react'
 import type { SyncManager } from '@/shared/api/supabase'
@@ -1645,7 +1781,10 @@ export function SyncProvider({ syncManager, userId, children }: Props) {
   return children
 }
 ```
-Wire it in `AppProviders` below `AuthProvider`, reading `userId` from the session store (account only) and `syncManager` from services. Build `syncManager` in `composition-root.ts` only when `isSupabaseConfigured()` (else `null`), registering the 7 sync targets from the app collections.
+
+Wire it in `AppProviders` below `AuthProvider`, reading `userId` from the session store (account only) and `syncManager`
+from services. Build `syncManager` in `composition-root.ts` only when `isSupabaseConfigured()` (else `null`),
+registering the 7 sync targets from the app collections.
 
 - [ ] **Step 4: Run + typecheck**
 
@@ -1662,14 +1801,18 @@ git commit -m "feat(sync): flush-on-leave + storage.persist via SyncProvider"
 ### Task 3.3: Workbox Background Sync for queued pushes
 
 **Files:**
+
 - Modify: `vite.config.ts` (Workbox `runtimeCaching`)
 
 **Interfaces:**
-- Produces: a `BackgroundSyncPlugin`-backed route for `POST/PATCH` to the Supabase REST host so writes queued while offline/closing replay after the tab dies.
+
+- Produces: a `BackgroundSyncPlugin`-backed route for `POST/PATCH` to the Supabase REST host so writes queued while
+  offline/closing replay after the tab dies.
 
 - [ ] **Step 1: Add the runtime-caching rule**
 
 In `vite.config.ts` `VitePWA({ workbox: { runtimeCaching: [...] } })`, add:
+
 ```ts
 {
   urlPattern: ({ url }) => url.origin === import.meta.env.VITE_SUPABASE_URL && url.pathname.startsWith('/rest/'),
@@ -1683,7 +1826,9 @@ In `vite.config.ts` `VitePWA({ workbox: { runtimeCaching: [...] } })`, add:
   },
 }
 ```
-(Repeat for `'PATCH'`. `VITE_SUPABASE_URL` is not available in the SW build scope the same way — resolve the origin at config time from `process.env.VITE_SUPABASE_URL` / `loadEnv`, and skip the rule when unset.)
+
+(Repeat for `'PATCH'`. `VITE_SUPABASE_URL` is not available in the SW build scope the same way — resolve the origin at
+config time from `process.env.VITE_SUPABASE_URL` / `loadEnv`, and skip the rule when unset.)
 
 - [ ] **Step 2: Verify the build still produces a service worker**
 
@@ -1704,12 +1849,18 @@ git commit -m "feat(sync): workbox background-sync queue for supabase pushes"
 ### Task 4.1: `StoragePort` + no-op local adapter
 
 **Files:**
+
 - Create: `src/shared/api/storage-port.ts`
 - Modify: `src/shared/api/index.ts`
 - Test: `src/shared/api/storage-port.test.ts`
 
 **Interfaces:**
-- Produces: `interface StoragePort { upload(input: UploadInput): Promise<{ url: string }>; remove(bucket: StorageBucket, path: string): Promise<void> }`, `interface UploadInput { bucket: StorageBucket; path: string; file: Blob; contentType?: string }`, `type StorageBucket = 'deck-images' | 'avatars'`, `class LocalObjectUrlStorage implements StoragePort` (returns `URL.createObjectURL`, no network).
+
+- Produces:
+  `interface StoragePort { upload(input: UploadInput): Promise<{ url: string }>; remove(bucket: StorageBucket, path: string): Promise<void> }`,
+  `interface UploadInput { bucket: StorageBucket; path: string; file: Blob; contentType?: string }`,
+  `type StorageBucket = 'deck-images' | 'avatars'`, `class LocalObjectUrlStorage implements StoragePort` (returns
+  `URL.createObjectURL`, no network).
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1729,6 +1880,7 @@ it('returns an object URL without any network', async () => {
 - [ ] **Step 3: Implement**
 
 `storage-port.ts`:
+
 ```ts
 export type StorageBucket = 'deck-images' | 'avatars'
 
@@ -1752,7 +1904,8 @@ export class LocalObjectUrlStorage implements StoragePort {
 }
 ```
 
-- [ ] **Step 4: Barrel + run + typecheck** — add to `src/shared/api/index.ts`; `npx vitest run src/shared/api/storage-port.test.ts && npm run typecheck` → PASS.
+- [ ] **Step 4: Barrel + run + typecheck** — add to `src/shared/api/index.ts`;
+  `npx vitest run src/shared/api/storage-port.test.ts && npm run typecheck` → PASS.
 
 - [ ] **Step 5: Commit**
 
@@ -1764,11 +1917,13 @@ git commit -m "feat(storage): StoragePort + local object-url adapter"
 ### Task 4.2: Supabase storage adapter
 
 **Files:**
+
 - Create: `src/shared/api/supabase/supabase-storage.ts`
 - Modify: `src/shared/api/supabase/index.ts`
 - Test: `src/shared/api/supabase/supabase-storage.test.ts`
 
 **Interfaces:**
+
 - Consumes: `supabase.storage`, `StoragePort`, `UploadInput`.
 - Produces: `class SupabaseStorage implements StoragePort`.
 
@@ -1831,6 +1986,7 @@ git commit -m "feat(storage): supabase storage adapter"
 ### Task 4.3: Storage buckets + RLS migration
 
 **Files:**
+
 - Create: `supabase/migrations/<ts>_phase9_storage.sql`
 
 - [ ] **Step 1: Write the migration**
@@ -1865,12 +2021,16 @@ git commit -m "feat(storage): buckets + per-user storage RLS"
 ### Task 4.4: Offline-graceful image upload in the deck/profile image command
 
 **Files:**
-- Modify: the feature command that sets a deck image (inspect `src/features/deck/` and `src/features/profile/` for the current image-set path) + the entity `image`/`avatar` write.
+
+- Modify: the feature command that sets a deck image (inspect `src/features/deck/` and `src/features/profile/` for the
+  current image-set path) + the entity `image`/`avatar` write.
 - Test: colocated command test.
 
 **Interfaces:**
+
 - Consumes: `StoragePort` (via `useStorage()`/services), the deck/profile store.
-- Produces: `setDeckImage(store, storage, { deckId, file })` — saves the deck immediately with a local object URL, uploads best-effort, patches the stored URL on success.
+- Produces: `setDeckImage(store, storage, { deckId, file })` — saves the deck immediately with a local object URL,
+  uploads best-effort, patches the stored URL on success.
 
 - [ ] **Step 1: Read the current image-set flow** and identify where `deck.image` is assigned today.
 
@@ -1888,7 +2048,9 @@ it('saves immediately with a local url, then patches the uploaded url', async ()
 
 - [ ] **Step 3: Run to verify it fails** → FAIL.
 
-- [ ] **Step 4: Implement** the command: write local URL → `store.save` → `storage.upload` (guarded try/catch; on failure keep the local URL, Background Sync + a later retry reconcile) → on success `store.save` with the CDN URL. Use `${userId}/${deckId}` as the path.
+- [ ] **Step 4: Implement** the command: write local URL → `store.save` → `storage.upload` (guarded try/catch; on
+  failure keep the local URL, Background Sync + a later retry reconcile) → on success `store.save` with the CDN URL. Use
+  `${userId}/${deckId}` as the path.
 
 - [ ] **Step 5: Run + lint + typecheck** → PASS.
 
@@ -1906,17 +2068,22 @@ git commit -m "feat(storage): offline-graceful deck/profile image upload"
 ### Task 5.1: `resolveDataTransition` + `claimGuestData` command
 
 **Files:**
+
 - Create: `src/shared/lib/data-transition.ts`, `src/features/auth/claim-guest-data.ts`, `src/features/auth/index.ts`
 - Modify: `src/shared/lib/index.ts`
 - Test: `src/shared/lib/data-transition.test.ts`, `src/features/auth/claim-guest-data.test.ts`
 
 **Interfaces:**
-- Produces: `resolveDataTransition(prev, next): 'preserve' | 'reset' | 'none'` and `claimGuestData(deps): Promise<void>`.
-- Rules: guest/null → account = **preserve** (local data pushes into the new account); account A → account B(≠A) = **reset** (wipe local, pull B's); same id or sign-out = **none**.
+
+- Produces: `resolveDataTransition(prev, next): 'preserve' | 'reset' | 'none'` and
+  `claimGuestData(deps): Promise<void>`.
+- Rules: guest/null → account = **preserve** (local data pushes into the new account); account A → account B(≠A) = *
+  *reset** (wipe local, pull B's); same id or sign-out = **none**.
 
 - [ ] **Step 1: Write the failing test for the pure fn**
 
 `data-transition.test.ts`:
+
 ```ts
 import { describe, expect, it } from 'vitest'
 import { resolveDataTransition } from './data-transition'
@@ -1944,6 +2111,7 @@ it('does nothing for the same account or sign-out', () => {
 - [ ] **Step 3: Implement the pure fn**
 
 `data-transition.ts`:
+
 ```ts
 import type { PersistedAuth } from '@/shared/api'
 
@@ -1962,6 +2130,7 @@ export function resolveDataTransition(
 - [ ] **Step 4: Write the failing test for the command**
 
 `claim-guest-data.test.ts`:
+
 ```ts
 import { describe, expect, it, vi } from 'vitest'
 import { claimGuestData } from './claim-guest-data'
@@ -1987,6 +2156,7 @@ it('resets local before starting sync on reset', async () => {
 - [ ] **Step 6: Implement the command**
 
 `claim-guest-data.ts`:
+
 ```ts
 import type { DataTransition } from '@/shared/lib'
 import type { SyncManager } from '@/shared/api/supabase'
@@ -2011,7 +2181,8 @@ export async function claimGuestData({ transition, userId, syncManager, resetLoc
 }
 ```
 
-- [ ] **Step 7: Barrel + run + typecheck** — export `resolveDataTransition`/`DataTransition` from `shared/lib`, `claimGuestData` from `features/auth`. Run targeted tests + `npm run typecheck` → PASS.
+- [ ] **Step 7: Barrel + run + typecheck** — export `resolveDataTransition`/`DataTransition` from `shared/lib`,
+  `claimGuestData` from `features/auth`. Run targeted tests + `npm run typecheck` → PASS.
 
 - [ ] **Step 8: Commit**
 
@@ -2023,12 +2194,16 @@ git commit -m "feat(sync): guest->account claim decision + command"
 ### Task 5.2: Local DB reset + wire the transition into SyncProvider
 
 **Files:**
+
 - Create: `src/app/persistence/reset-local-database.ts`
-- Modify: `src/app/providers/SyncProvider.tsx` (track prev auth, call `claimGuestData` on change), `src/app/composition-root.ts` (provide `resetLocal`)
+- Modify: `src/app/providers/SyncProvider.tsx` (track prev auth, call `claimGuestData` on change),
+  `src/app/composition-root.ts` (provide `resetLocal`)
 - Test: `src/app/persistence/reset-local-database.test.ts`
 
 **Interfaces:**
-- Produces: `resetLocalDatabase(storage): Promise<void>` (via `removeRxDatabase(STORAGE_PREFIX, storage)`), then a full reload to rebuild stores cleanly.
+
+- Produces: `resetLocalDatabase(storage): Promise<void>` (via `removeRxDatabase(STORAGE_PREFIX, storage)`), then a full
+  reload to rebuild stores cleanly.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -2062,7 +2237,10 @@ export async function resetLocalDatabase(
 }
 ```
 
-- [ ] **Step 4: Wire into `SyncProvider`** — keep a `useRef<PersistedAuth | null>` of the previous auth; on each auth change compute `resolveDataTransition(prev, next)` and, for account users, call `claimGuestData({ transition, userId, syncManager, resetLocal })`. `resetLocal` comes from services (bound to the app storage).
+- [ ] **Step 4: Wire into `SyncProvider`** — keep a `useRef<PersistedAuth | null>` of the previous auth; on each auth
+  change compute `resolveDataTransition(prev, next)` and, for account users, call
+  `claimGuestData({ transition, userId, syncManager, resetLocal })`. `resetLocal` comes from services (bound to the app
+  storage).
 
 - [ ] **Step 5: Run + typecheck** → PASS.
 
@@ -2076,16 +2254,21 @@ git commit -m "feat(sync): local db reset on user switch; wire claim into SyncPr
 ### Task 5.3: End-to-end guest → signup → second-device test
 
 **Files:**
+
 - Test: `src/shared/api/supabase/guest-claim.integration.test.ts`
 
-- [ ] **Step 1: Write the integration test** (guarded by `SUPABASE_TEST_URL`, mirrors Task 2.6): seed local RxDB "A" as a guest with 2 decks; run the `preserve` claim for a fresh account; assert the rows exist server-side; start a clean RxDB "B" for the same account and assert both decks pull down.
+- [ ] **Step 1: Write the integration test** (guarded by `SUPABASE_TEST_URL`, mirrors Task 2.6): seed local RxDB "A" as
+  a guest with 2 decks; run the `preserve` claim for a fresh account; assert the rows exist server-side; start a clean
+  RxDB "B" for the same account and assert both decks pull down.
 
 - [ ] **Step 2: Run against the local stack** → PASS.
 
 - [ ] **Step 3: Full gate + commit**
 
 Run: `npm run typecheck && npm run lint && npm run test`
-Expected: PASS — **Checkpoint 9: real accounts + guest-claim + cross-device sync + storage; still fully usable offline.**
+Expected: PASS — **Checkpoint 9: real accounts + guest-claim + cross-device sync + storage; still fully usable offline.
+**
+
 ```bash
 git add src/shared/api/supabase/guest-claim.integration.test.ts
 git commit -m "test(sync): guest -> signup -> second-device claim round-trip"
@@ -2095,36 +2278,39 @@ git commit -m "test(sync): guest -> signup -> second-device claim round-trip"
 
 ## Spec coverage (self-review map)
 
-| Spec section | Task(s) |
-| --- | --- |
-| §4 T9.1 tables + trigger | 0.2 |
-| §4 T9.1 RLS + Realtime | 0.3 |
-| §5 T9.2 widened port + Local adapter | 1.1 |
-| §5 T9.2 Supabase auth adapter | 1.2 |
-| §5 T9.2 restore-session + AuthProvider | 1.3 |
-| §5 T9.2 /auth/callback (PKCE) | 1.4 |
-| §5 T9.2 social buttons + password/reset UI | 1.5 |
-| §5/§10 env-gated adapter selection | 1.6 |
-| §6 T9.3 doc↔row mapping | 2.1 |
-| §6 T9.3 counter-merge (progress/srs) | 2.2, 2.3 |
-| §6 T9.3 conflict handlers | 2.4 |
-| §6 T9.3 replication (push/pull/stream) | 2.5 |
-| §12 two-client / offline / tombstone tests | 2.6 |
-| §7 T9.4 SyncManager | 3.1 |
-| §7 T9.4 flush-on-leave + storage.persist | 3.2 |
-| §7 T9.4 Workbox Background Sync | 3.3 |
-| §8 T9.5 StoragePort + local adapter | 4.1 |
-| §8 T9.5 Supabase storage adapter | 4.2 |
-| §8 T9.5 buckets + storage RLS | 4.3 |
-| §8 T9.5 offline-graceful upload | 4.4 |
-| §9 T9.6 claim decision + command | 5.1 |
-| §9 T9.6 local reset / user-switch | 5.2 |
-| §12/§13 guest-claim round-trip | 5.3 |
-| §10 provider config (Google/Apple) | External prerequisite — documented, no task |
+| Spec section                               | Task(s)                                     |
+|--------------------------------------------|---------------------------------------------|
+| §4 T9.1 tables + trigger                   | 0.2                                         |
+| §4 T9.1 RLS + Realtime                     | 0.3                                         |
+| §5 T9.2 widened port + Local adapter       | 1.1                                         |
+| §5 T9.2 Supabase auth adapter              | 1.2                                         |
+| §5 T9.2 restore-session + AuthProvider     | 1.3                                         |
+| §5 T9.2 /auth/callback (PKCE)              | 1.4                                         |
+| §5 T9.2 social buttons + password/reset UI | 1.5                                         |
+| §5/§10 env-gated adapter selection         | 1.6                                         |
+| §6 T9.3 doc↔row mapping                    | 2.1                                         |
+| §6 T9.3 counter-merge (progress/srs)       | 2.2, 2.3                                    |
+| §6 T9.3 conflict handlers                  | 2.4                                         |
+| §6 T9.3 replication (push/pull/stream)     | 2.5                                         |
+| §12 two-client / offline / tombstone tests | 2.6                                         |
+| §7 T9.4 SyncManager                        | 3.1                                         |
+| §7 T9.4 flush-on-leave + storage.persist   | 3.2                                         |
+| §7 T9.4 Workbox Background Sync            | 3.3                                         |
+| §8 T9.5 StoragePort + local adapter        | 4.1                                         |
+| §8 T9.5 Supabase storage adapter           | 4.2                                         |
+| §8 T9.5 buckets + storage RLS              | 4.3                                         |
+| §8 T9.5 offline-graceful upload            | 4.4                                         |
+| §9 T9.6 claim decision + command           | 5.1                                         |
+| §9 T9.6 local reset / user-switch          | 5.2                                         |
+| §12/§13 guest-claim round-trip             | 5.3                                         |
+| §10 provider config (Google/Apple)         | External prerequisite — documented, no task |
 
 ## Notes carried from the spec
 
-- **Apple/Google credentials are external** (§10) — social buttons are inert until configured; **Apple secret rotates every 6 months**.
+- **Apple/Google credentials are external** (§10) — social buttons are inert until configured; **Apple secret rotates
+  every 6 months**.
 - **Apple web returns no name** — Apple sign-ups start with empty `name`, set during profile onboarding.
-- **No RxDB schema migration** — verify each `updateX()` bumps `updatedAt` before relying on LWW (spot-check during Stage 2).
-- **RxDB 17 `RxConflictHandler` return shape** — confirm against `node_modules/rxdb` in Task 2.4 (the one library-signature detail to pin).
+- **No RxDB schema migration** — verify each `updateX()` bumps `updatedAt` before relying on LWW (spot-check during
+  Stage 2).
+- **RxDB 17 `RxConflictHandler` return shape** — confirm against `node_modules/rxdb` in Task 2.4 (the one
+  library-signature detail to pin).

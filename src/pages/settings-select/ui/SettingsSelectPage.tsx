@@ -7,7 +7,7 @@ import {
   usePreferencesStoreApi,
 } from '@/entities/preferences'
 import { setPreferences } from '@/features/preferences'
-import { ACTION_META, accentStyleOf } from '@/shared/config/actions'
+import { accentStyleOf, ACTION_META } from '@/shared/config/actions'
 import {
   DEFAULT_SELECT_TOOLBAR,
   normalizeSelectToolbar,

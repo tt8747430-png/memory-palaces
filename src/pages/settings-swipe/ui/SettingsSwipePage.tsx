@@ -18,9 +18,9 @@ import { setPreferences } from '@/features/preferences'
 import {
   DEFAULT_SWIPE,
   normalizeSwipeConfig,
+  SWIPE_ITEM_TYPES,
   type SwipeActionId,
   type SwipeConfig,
-  SWIPE_ITEM_TYPES,
   type SwipeItemType,
 } from '@/shared/config/swipe'
 import { cn } from '@/shared/lib'

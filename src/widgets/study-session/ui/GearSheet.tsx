@@ -21,8 +21,8 @@ import { Button, Combobox, type ComboboxOption, pillSurface, Sheet, ToggleRow } 
 import { type StudyFilter, studyFiltersEqual } from '@/features/review'
 import {
   actionsForMode,
-  type FlashcardSwipeAction,
   FLASHCARD_SWIPE_ACTION_META,
+  type FlashcardSwipeAction,
   type SwipeDirection,
 } from '@/shared/config/flashcard-swipe'
 import { QuickActionRows, type QuickActionsModel } from './QuickActionRows'

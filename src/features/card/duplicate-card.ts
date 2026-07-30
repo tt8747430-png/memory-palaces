@@ -1,4 +1,4 @@
-import { cardsForDeck, type Card, type CardStore, makeCard, selectCards } from '@/entities/card'
+import { type Card, cardsForDeck, type CardStore, makeCard, selectCards } from '@/entities/card'
 import { newId, nextOrder, nowIso } from '@/shared/lib'
 import { requireCard } from './card-commands'
 

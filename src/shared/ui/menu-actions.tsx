@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next'
-import { type ActionId, ACTION_META, actionLabelKey } from '@/shared/config/actions'
+import { ACTION_META, type ActionId, actionLabelKey } from '@/shared/config/actions'
 import { actionIcon } from './action-icon'
 import type { SheetAction } from './ActionSheet'
 

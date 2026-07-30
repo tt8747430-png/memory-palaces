@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, renderHook } from '@testing-library/react'
-import { DEFAULT_FLASHCARD_SWIPE } from '@/shared/config/flashcard-swipe'
 import type { FlashcardSwipeByMode } from '@/shared/config/flashcard-swipe'
+import { DEFAULT_FLASHCARD_SWIPE } from '@/shared/config/flashcard-swipe'
 import { useStudySettings } from './use-study-settings'
 import type { StudyPrefs } from './types'
 

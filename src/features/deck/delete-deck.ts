@@ -1,5 +1,5 @@
-import { selectDecks, type DeckStore } from '@/entities/deck'
-import { selectCards, type CardStore } from '@/entities/card'
+import { type DeckStore, selectDecks } from '@/entities/deck'
+import { type CardStore, selectCards } from '@/entities/card'
 import { subtreeDeckIds } from '@/shared/lib'
 
 export async function deleteDeck(

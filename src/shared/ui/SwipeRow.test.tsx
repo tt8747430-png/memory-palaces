@@ -3,7 +3,7 @@ import { cleanup, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Flag, Trash2 } from 'lucide-react'
 import { renderWithProviders } from '@/shared/test/render-with-providers'
-import { SwipeRow, type SwipeAction } from './SwipeRow'
+import { type SwipeAction, SwipeRow } from './SwipeRow'
 
 afterEach(cleanup)
 

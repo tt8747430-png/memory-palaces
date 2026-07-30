@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@/shared/api'
-import { createCardStore, type Card, makeCard } from '@/entities/card'
+import { type Card, createCardStore, makeCard } from '@/entities/card'
 import { isDue, schedule } from '@/shared/lib'
 import { gradeCard } from './grade-card'
 import { restoreSchedule } from './restore-schedule'

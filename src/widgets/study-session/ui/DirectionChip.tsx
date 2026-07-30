@@ -1,8 +1,8 @@
 import { motion, type MotionValue, useTransform } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import {
-  type FlashcardSwipeAction,
   FLASHCARD_SWIPE_ACTION_META,
+  type FlashcardSwipeAction,
   type SwipeDirection,
 } from '@/shared/config/flashcard-swipe'
 import { cn } from '@/shared/lib'

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders } from '@/shared/test/render-with-providers'
-import { IconColorRow, type ColorOption } from './IconColorRow'
+import { type ColorOption, IconColorRow } from './IconColorRow'
 
 afterEach(cleanup)
 

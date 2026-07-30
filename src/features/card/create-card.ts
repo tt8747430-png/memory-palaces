@@ -1,5 +1,6 @@
-import { cardsForDeck, type Card, type CardStore, makeCard, selectCards } from '@/entities/card'
+import { type Card, cardsForDeck, type CardStore, makeCard, selectCards } from '@/entities/card'
 import { newId, nextOrder, nowIso, type ParsedCard } from '@/shared/lib'
+
 /** A card as it arrives from a form, a paste or an import file. */
 export type CreateCardInput = ParsedCard
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@/shared/api'
-import { createCardStore, cardsForDeck, type Card, selectCards } from '@/entities/card'
+import { type Card, cardsForDeck, createCardStore, selectCards } from '@/entities/card'
 import {
   createQuestionStore,
   type Question,

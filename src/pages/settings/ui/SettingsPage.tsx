@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   ArrowLeftRight,
-  CheckSquare,
   Bell,
+  CheckSquare,
   ChevronRight,
   FlaskConical,
   Globe,

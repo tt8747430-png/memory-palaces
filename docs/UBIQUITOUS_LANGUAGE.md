@@ -5,7 +5,7 @@ Canonical terms for code, UI copy, commits, discussion. Grounded in `entities/*`
 ## Content
 
 | Term         | Means                                                 | Avoid                         |
-| ------------ | ----------------------------------------------------- | ----------------------------- |
+|--------------|-------------------------------------------------------|-------------------------------|
 | **Folder**   | Top-level container grouping Decks                    | group, category               |
 | **Deck**     | Study set of Cards + Questions; may nest as a Subdeck | palace, set, collection, list |
 | **Subdeck**  | Deck under a parent Deck (`parentId`)                 | child deck, nested deck       |
@@ -15,7 +15,7 @@ Canonical terms for code, UI copy, commits, discussion. Grounded in `entities/*`
 ## SRS
 
 | Term            | Means                                                  | Avoid               |
-| --------------- | ------------------------------------------------------ | ------------------- |
+|-----------------|--------------------------------------------------------|---------------------|
 | **SRS**         | Scheduler setting when a Card is next Due              | algorithm           |
 | **Review**      | Grading a Card's recall; advances its schedule         | practice, test      |
 | **Grade**       | `again` / `hard` / `good` / `easy`                     | score, rating       |
@@ -28,7 +28,7 @@ Canonical terms for code, UI copy, commits, discussion. Grounded in `entities/*`
 ## Study modes
 
 | Term              | Means                                                      | Avoid            |
-| ----------------- | ---------------------------------------------------------- | ---------------- |
+|-------------------|------------------------------------------------------------|------------------|
 | **Study session** | One pass through a Deck in a Practice mode                 | session, run     |
 | **Practice mode** | Umbrella for the ways to study                             | game, activity   |
 | **Flashcards**    | Front→back, self-graded recall                             | study cards      |
@@ -41,7 +41,7 @@ Canonical terms for code, UI copy, commits, discussion. Grounded in `entities/*`
 ## Organising
 
 | Term            | Means                                                                            | Avoid                       |
-| --------------- | -------------------------------------------------------------------------------- | --------------------------- |
+|-----------------|----------------------------------------------------------------------------------|-----------------------------|
 | **Library**     | All Folders and Decks — and the home screen browsing them                        | home, list                  |
 | **Selection**   | Rows picked in select mode, acted on together                                    | multi-select, checked items |
 | **Select mode** | Entered on press-and-hold: header becomes the Selection's, toolbar at the bottom | edit mode, bulk mode        |
@@ -50,7 +50,7 @@ Canonical terms for code, UI copy, commits, discussion. Grounded in `entities/*`
 ## Progress
 
 | Term              | Means                                     | Avoid               |
-| ----------------- | ----------------------------------------- | ------------------- |
+|-------------------|-------------------------------------------|---------------------|
 | **Progress**      | Stats record (XP, streak, accuracy, days) | stats, profile      |
 | **XP**            | Points earned by studying                 | points              |
 | **Level**         | Tier derived from XP                      | rank                |
@@ -64,7 +64,7 @@ Canonical terms for code, UI copy, commits, discussion. Grounded in `entities/*`
 ## Identity
 
 | Term              | Means                                                      | Avoid                |
-| ----------------- | ---------------------------------------------------------- | -------------------- |
+|-------------------|------------------------------------------------------------|----------------------|
 | **Learner**       | The person studying (a Profile + a Session)                | user                 |
 | **Session**       | Current sign-in — Guest or Account. **Auth, not studying** | login, study session |
 | **Guest**         | Session with no account                                    | anonymous            |
@@ -80,15 +80,20 @@ Canonical terms for code, UI copy, commits, discussion. Grounded in `entities/*`
 - A Deck contains zero-or-more Cards and Questions; each belongs to exactly one Deck.
 - A Review advances exactly one Card's schedule.
 - A Study session = one Deck × one Practice mode × one Study filter.
-- A Selection holds one kind of row at a time. Selecting a Deck takes its Subdecks — select mode is flat, so a Subdeck is never on screen there.
+- A Selection holds one kind of row at a time. Selecting a Deck takes its Subdecks — select mode is flat, so a Subdeck
+  is never on screen there.
 - A Learner has one Progress record and one active Session.
 
 ## Ambiguities — resolved
 
-- **"session"** — **Session** = auth (Guest/Account). **Study session** = a pass through a Deck. Never abbreviate the study pass.
-- **"palace / room / locus"** — the theme, not the model. Ship **Deck / Card / Question**; don't use the legacy words anywhere.
-- **`known` vs Memorized** — `known` is SRS-derived from the interval; **Memorized** is a manual boolean. Don't conflate.
-- **"scope"** — **Study scope** = which Deck (`StudyScope`, `MatchScope`); **Study filter** = which of its Cards (`StudyFilter`); the Folder the Library browses is a Folder. Never a bare `Scope`.
+- **"session"** — **Session** = auth (Guest/Account). **Study session** = a pass through a Deck. Never abbreviate the
+  study pass.
+- **"palace / room / locus"** — the theme, not the model. Ship **Deck / Card / Question**; don't use the legacy words
+  anywhere.
+- **`known` vs Memorized** — `known` is SRS-derived from the interval; **Memorized** is a manual boolean. Don't
+  conflate.
+- **"scope"** — **Study scope** = which Deck (`StudyScope`, `MatchScope`); **Study filter** = which of its Cards (
+  `StudyFilter`); the Folder the Library browses is a Folder. Never a bare `Scope`.
 - **"filter"** — **Study filter** narrows a session's queue; **Card filter** narrows a Deck's list.
 - **"settings"** — **Deck settings** are per-Deck; **Preferences** are global.
 - **"user"** — pick one: **Account** (auth identity), **Profile** (display data), **Learner** (the human).

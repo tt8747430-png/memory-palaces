@@ -2,8 +2,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { SelectHeaderProps } from './SelectHeader'
-import { renderWithProviders } from '@/shared/test/render-with-providers'
 import { SelectHeader } from './SelectHeader'
+import { renderWithProviders } from '@/shared/test/render-with-providers'
 
 afterEach(cleanup)
 

@@ -1,271 +1,271 @@
 @theme inline {
-  --font-sans: var(--p-font-sans);
+    --font-sans: var(--p-font-sans);
 
-  --color-background: var(--surface);
-  --color-foreground: var(--text-primary);
-  --color-card: var(--surface);
-  --color-card-foreground: var(--text-primary);
-  --color-popover: var(--surface);
-  --color-popover-foreground: var(--text-primary);
+    --color-background: var(--surface);
+    --color-foreground: var(--text-primary);
+    --color-card: var(--surface);
+    --color-card-foreground: var(--text-primary);
+    --color-popover: var(--surface);
+    --color-popover-foreground: var(--text-primary);
 
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
 
-  --color-muted: var(--surface-sky);
-  --color-muted-foreground: var(--text-muted);
+    --color-muted: var(--surface-sky);
+    --color-muted-foreground: var(--text-muted);
 
-  --color-destructive: var(--danger);
-  --color-destructive-foreground: var(--danger-foreground);
-  --color-success: var(--success);
-  --color-warning: var(--warning);
+    --color-destructive: var(--danger);
+    --color-destructive-foreground: var(--danger-foreground);
+    --color-success: var(--success);
+    --color-warning: var(--warning);
 
-  --color-border: var(--border);
-  --color-input: var(--input-bg);
-  --color-ring: var(--ring);
+    --color-border: var(--border);
+    --color-input: var(--input-bg);
+    --color-ring: var(--ring);
 
-  --color-heading: var(--text-heading);
-  --color-surface-sky: var(--surface-sky);
-  --color-info-surface: var(--info-surface);
-  --color-info-foreground: var(--info-foreground);
-  --color-rating: var(--rating);
-  --color-favorite: var(--favorite);
+    --color-heading: var(--text-heading);
+    --color-surface-sky: var(--surface-sky);
+    --color-info-surface: var(--info-surface);
+    --color-info-foreground: var(--info-foreground);
+    --color-rating: var(--rating);
+    --color-favorite: var(--favorite);
 
-  /* The one width the app column is ever allowed to be — `max-w-app`. */
-  --container-app: var(--p-container-app);
+    /* The one width the app column is ever allowed to be — `max-w-app`. */
+    --container-app: var(--p-container-app);
 
-  --radius-control: var(--p-radius-sm);
-  --radius-card: var(--p-radius-md);
-  --radius-card-featured: var(--p-radius-xl);
-  --radius-nav: var(--p-radius-nav);
-  --radius-pill: var(--p-radius-pill);
+    --radius-control: var(--p-radius-sm);
+    --radius-card: var(--p-radius-md);
+    --radius-card-featured: var(--p-radius-xl);
+    --radius-nav: var(--p-radius-nav);
+    --radius-pill: var(--p-radius-pill);
 }
 
 @layer base {
-  *,
-  *::before,
-  *::after {
-    border-color: var(--border);
-  }
-
-  :root {
-    --kb-inset: 0px;
-
-    --app-bottom-inset: max(0.75rem, calc(env(safe-area-inset-bottom) - var(--kb-inset)));
-  }
-
-  html {
-    height: 100%;
-    overflow: hidden;
-    -webkit-text-size-adjust: 100%;
-    text-size-adjust: 100%;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  body {
-    margin: 0;
-    height: 100%;
-    overflow: hidden;
-    background: var(--surface);
-    font-family: var(--p-font-sans), sans-serif;
-    color: var(--text-primary);
-    overscroll-behavior: none;
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
-    -webkit-user-select: none;
-    user-select: none;
-    -webkit-touch-callout: none;
-  }
-
-  #root {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: var(--app-height, 100%);
-    background: var(--bg-daylight);
-    background-repeat: no-repeat;
-  }
-
-  /* Standalone WebKit does NOT re-anchor position:fixed during the keyboard pan (a Safari tab
-     does), so the fixed shell rides off the top by --vv-top. Ride the chrome back down, and give
-     the scroll body the same offset as range at its top — the chrome moves alone otherwise and
-     covers the first --vv-top of content, which cannot be scrolled out from under it. Both halves
-     are in-tab no-ops: compensating there would double the pan (ADR 0002's header-dive trap). */
-  @media (display-mode: standalone) {
-    [data-keyboard] [data-slot='header-bar'],
-    [data-keyboard] [data-slot='status-cap'] {
-      translate: 0 var(--vv-top, 0px);
+    *,
+    *::before,
+    *::after {
+        border-color: var(--border);
     }
 
-    [data-keyboard] .pt-pan {
-      padding-top: var(--vv-top, 0px);
+    :root {
+        --kb-inset: 0px;
+
+        --app-bottom-inset: max(0.75rem, calc(env(safe-area-inset-bottom) - var(--kb-inset)));
     }
-  }
 
-  h1,
-  h2,
-  h3,
-  h4 {
-    margin: 0;
-    color: var(--text-heading);
-    line-height: var(--p-leading-tight);
-  }
+    html {
+        height: 100%;
+        overflow: hidden;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+        -webkit-tap-highlight-color: transparent;
+    }
 
-  h1 {
-    font-size: var(--p-text-headline);
-    font-weight: var(--p-weight-semibold);
-  }
+    body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        background: var(--surface);
+        font-family: var(--p-font-sans), sans-serif;
+        color: var(--text-primary);
+        overscroll-behavior: none;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+    }
 
-  h2 {
-    font-size: var(--p-text-title);
-    font-weight: var(--p-weight-semibold);
-  }
+    #root {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: var(--app-height, 100%);
+        background: var(--bg-daylight);
+        background-repeat: no-repeat;
+    }
 
-  h3 {
-    font-size: var(--p-text-sub);
-    font-weight: var(--p-weight-medium);
-  }
+    /* Standalone WebKit does NOT re-anchor position:fixed during the keyboard pan (a Safari tab
+       does), so the fixed shell rides off the top by --vv-top. Ride the chrome back down, and give
+       the scroll body the same offset as range at its top — the chrome moves alone otherwise and
+       covers the first --vv-top of content, which cannot be scrolled out from under it. Both halves
+       are in-tab no-ops: compensating there would double the pan (ADR 0002's header-dive trap). */
+    @media (display-mode: standalone) {
+        [data-keyboard] [data-slot='header-bar'],
+        [data-keyboard] [data-slot='status-cap'] {
+            translate: 0 var(--vv-top, 0px);
+        }
 
-  p {
-    margin: 0;
-    font-size: var(--p-text-body);
-    line-height: var(--p-leading-body);
-    color: var(--text-secondary);
-  }
+        [data-keyboard] .pt-pan {
+            padding-top: var(--vv-top, 0px);
+        }
+    }
 
-  :focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 50%, transparent);
-  }
+    h1,
+    h2,
+    h3,
+    h4 {
+        margin: 0;
+        color: var(--text-heading);
+        line-height: var(--p-leading-tight);
+    }
 
-  input,
-  textarea,
-  [contenteditable] {
-    -webkit-user-select: text;
-    user-select: text;
-    -webkit-touch-callout: default;
-  }
+    h1 {
+        font-size: var(--p-text-headline);
+        font-weight: var(--p-weight-semibold);
+    }
 
-  img {
-    -webkit-user-drag: none;
-    -webkit-touch-callout: none;
-  }
+    h2 {
+        font-size: var(--p-text-title);
+        font-weight: var(--p-weight-semibold);
+    }
 
-  button,
-  a,
-  label,
-  summary,
-  [role='button'],
-  [role='tab'] {
-    touch-action: manipulation;
-  }
+    h3 {
+        font-size: var(--p-text-sub);
+        font-weight: var(--p-weight-medium);
+    }
+
+    p {
+        margin: 0;
+        font-size: var(--p-text-body);
+        line-height: var(--p-leading-body);
+        color: var(--text-secondary);
+    }
+
+    :focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 50%, transparent);
+    }
+
+    input,
+    textarea,
+    [contenteditable] {
+        -webkit-user-select: text;
+        user-select: text;
+        -webkit-touch-callout: default;
+    }
+
+    img {
+        -webkit-user-drag: none;
+        -webkit-touch-callout: none;
+    }
+
+    button,
+    a,
+    label,
+    summary,
+    [role='button'],
+    [role='tab'] {
+        touch-action: manipulation;
+    }
 }
 
 @layer utilities {
-  .bg-daylight {
-    background: var(--bg-daylight);
-    background-repeat: no-repeat;
-  }
+    .bg-daylight {
+        background: var(--bg-daylight);
+        background-repeat: no-repeat;
+    }
 
-  .bg-glass {
-    background: var(--surface-glass-sky);
-    backdrop-filter: blur(var(--glass-blur));
-  }
+    .bg-glass {
+        background: var(--surface-glass-sky);
+        backdrop-filter: blur(var(--glass-blur));
+    }
 
-  .bg-card-glass {
-    background: var(--surface-glass);
-    backdrop-filter: blur(var(--glass-blur-card));
-  }
+    .bg-card-glass {
+        background: var(--surface-glass);
+        backdrop-filter: blur(var(--glass-blur-card));
+    }
 
-  .shadow-rest {
-    box-shadow: var(--shadow-rest);
-  }
+    .shadow-rest {
+        box-shadow: var(--shadow-rest);
+    }
 
-  .shadow-card {
-    box-shadow: var(--shadow-card);
-  }
+    .shadow-card {
+        box-shadow: var(--shadow-card);
+    }
 
-  .shadow-featured {
-    box-shadow: var(--shadow-featured);
-  }
+    .shadow-featured {
+        box-shadow: var(--shadow-featured);
+    }
 
-  .shadow-interactive {
-    box-shadow: var(--shadow-interactive);
-  }
+    .shadow-interactive {
+        box-shadow: var(--shadow-interactive);
+    }
 
-  .shadow-elevated {
-    box-shadow: var(--shadow-elevated);
-  }
+    .shadow-elevated {
+        box-shadow: var(--shadow-elevated);
+    }
 
-  .drop-shadow-float {
-    filter: drop-shadow(0 6px 14px oklch(var(--p-tint-navy) / 0.28));
-  }
+    .drop-shadow-float {
+        filter: drop-shadow(0 6px 14px oklch(var(--p-tint-navy) / 0.28));
+    }
 
-  .sw-tint {
-    background: color-mix(in oklch, var(--sw) 15%, transparent);
-    color: color-mix(in oklch, var(--sw), black 38%);
-  }
+    .sw-tint {
+        background: color-mix(in oklch, var(--sw) 15%, transparent);
+        color: color-mix(in oklch, var(--sw), black 38%);
+    }
 
-  [data-theme='dark'] .sw-tint {
-    background: color-mix(in oklch, var(--sw) 26%, transparent);
-    color: color-mix(in oklch, var(--sw), white 46%);
-  }
+    [data-theme='dark'] .sw-tint {
+        background: color-mix(in oklch, var(--sw) 26%, transparent);
+        color: color-mix(in oklch, var(--sw), white 46%);
+    }
 
-  .scrollbar-hide {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
+    .scrollbar-hide {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
 
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
 
-  .allow-select,
-  .allow-select * {
-    -webkit-user-select: text;
-    user-select: text;
-    -webkit-touch-callout: default;
-  }
+    .allow-select,
+    .allow-select * {
+        -webkit-user-select: text;
+        user-select: text;
+        -webkit-touch-callout: default;
+    }
 
-  .pt-safe {
-    padding-top: env(safe-area-inset-top);
-  }
+    .pt-safe {
+        padding-top: env(safe-area-inset-top);
+    }
 
-  .pt-pan {
-    padding-top: 0px;
-  }
+    .pt-pan {
+        padding-top: 0px;
+    }
 
-  .pb-safe {
-    padding-bottom: max(env(safe-area-inset-bottom), var(--kb-inset));
-    scroll-padding-bottom: var(--kb-inset);
-  }
+    .pb-safe {
+        padding-bottom: max(env(safe-area-inset-bottom), var(--kb-inset));
+        scroll-padding-bottom: var(--kb-inset);
+    }
 
-  .pb-keyboard {
-    padding-bottom: var(--kb-inset);
-    scroll-padding-bottom: var(--kb-inset);
-  }
+    .pb-keyboard {
+        padding-bottom: var(--kb-inset);
+        scroll-padding-bottom: var(--kb-inset);
+    }
 
-  .pb-safe-keyboard {
-    padding-bottom: max(env(safe-area-inset-bottom), var(--drawer-keyboard-inset, 0px));
-  }
+    .pb-safe-keyboard {
+        padding-bottom: max(env(safe-area-inset-bottom), var(--drawer-keyboard-inset, 0px));
+    }
 
-  .pb-nav {
-    padding-bottom: calc(var(--app-bottom-inset) + 4.5rem);
-  }
+    .pb-nav {
+        padding-bottom: calc(var(--app-bottom-inset) + 4.5rem);
+    }
 
-  .pb-gutter {
-    padding-bottom: 7rem;
-  }
+    .pb-gutter {
+        padding-bottom: 7rem;
+    }
 
-  .pl-safe {
-    padding-left: env(safe-area-inset-left);
-  }
+    .pl-safe {
+        padding-left: env(safe-area-inset-left);
+    }
 
-  .pr-safe {
-    padding-right: env(safe-area-inset-right);
-  }
+    .pr-safe {
+        padding-right: env(safe-area-inset-right);
+    }
 }

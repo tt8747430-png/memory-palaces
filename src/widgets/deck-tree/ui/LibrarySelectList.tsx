@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next'
 import {
   DndContext,
   type DragEndEvent,
-  DragOverlay,
   type DragOverEvent,
+  DragOverlay,
   type DragStartEvent,
 } from '@dnd-kit/core'
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers'

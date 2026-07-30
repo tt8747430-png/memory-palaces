@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { makeDeck, updateDeck } from './types'
 
 const base = { id: 'd1', createdAt: '2026-01-01T00:00:00.000Z', name: 'Bible' }

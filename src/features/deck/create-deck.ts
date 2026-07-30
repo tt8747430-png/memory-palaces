@@ -1,4 +1,4 @@
-import { makeDeck, type MakeDeckInput, type Deck, type DeckStore } from '@/entities/deck'
+import { type Deck, type DeckStore, makeDeck, type MakeDeckInput } from '@/entities/deck'
 import { newId, nextOrder, nowIso, orderSiblings } from '@/shared/lib'
 
 export type CreateDeckInput = Omit<MakeDeckInput, 'id' | 'createdAt'>

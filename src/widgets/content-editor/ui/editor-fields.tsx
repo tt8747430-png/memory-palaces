@@ -2,7 +2,7 @@ import { type ReactNode, type RefObject, useId } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BookOpen, Check, Lightbulb, MapPin, MessageSquareText, Plus, X } from 'lucide-react'
 import { cn } from '@/shared/lib'
-import { Textarea, Input } from '@/shared/ui'
+import { Input, Textarea } from '@/shared/ui'
 import { MAX_OPTIONS, MIN_OPTIONS } from './editor-helpers'
 
 function FieldLabel({

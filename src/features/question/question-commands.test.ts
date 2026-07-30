@@ -7,9 +7,7 @@ import {
   selectQuestions,
 } from '@/entities/question'
 import { createQuestion } from './create-question'
-import { editQuestion } from './question-commands'
-import { deleteQuestion } from './question-commands'
-import { reorderQuestions } from './question-commands'
+import { deleteQuestion, editQuestion, reorderQuestions } from './question-commands'
 import { duplicateQuestion } from './duplicate-question'
 
 function startedStore() {

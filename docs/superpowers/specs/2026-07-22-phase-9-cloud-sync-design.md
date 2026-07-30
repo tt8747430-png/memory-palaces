@@ -19,14 +19,14 @@ background concern that converges when connectivity returns.
 
 **Decisions locked in (from brainstorming):**
 
-| Fork | Decision |
-| --- | --- |
-| Auth | Email + password **and** social sign-in (Google + Apple) for sign-up and sign-in |
-| Replication | Hand-rolled `replicateRxCollection` + Supabase handlers (only new runtime dep: `@supabase/supabase-js`) |
-| Merge | Field-aware: whole-doc LWW for content; counter-merge for `progress` + `card.srs` |
-| Postgres mirror | `jsonb` document blob + promoted `user_id / deleted / updated_at` columns (low-drift; PostgREST can still index `data->>'…'`) |
-| Local schema | **No RxDB schema migration** — `updatedAt` already exists (LWW clock); `_deleted`/`user_id` live only in the mapping layer |
-| Env gating | Supabase adapters activate only when `VITE_SUPABASE_URL` is set; otherwise the app falls back to `LocalAuthGateway` + no sync (offline dev + tests unchanged) |
+| Fork            | Decision                                                                                                                                                      |
+|-----------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Auth            | Email + password **and** social sign-in (Google + Apple) for sign-up and sign-in                                                                              |
+| Replication     | Hand-rolled `replicateRxCollection` + Supabase handlers (only new runtime dep: `@supabase/supabase-js`)                                                       |
+| Merge           | Field-aware: whole-doc LWW for content; counter-merge for `progress` + `card.srs`                                                                             |
+| Postgres mirror | `jsonb` document blob + promoted `user_id / deleted / updated_at` columns (low-drift; PostgREST can still index `data->>'…'`)                                 |
+| Local schema    | **No RxDB schema migration** — `updatedAt` already exists (LWW clock); `_deleted`/`user_id` live only in the mapping layer                                    |
+| Env gating      | Supabase adapters activate only when `VITE_SUPABASE_URL` is set; otherwise the app falls back to `LocalAuthGateway` + no sync (offline dev + tests unchanged) |
 
 ## 2. Non-goals (explicit scope boundaries)
 
@@ -40,14 +40,14 @@ background concern that converges when connectivity returns.
 
 ## 3. Which entities sync
 
-| Entity | Syncs? | Notes |
-| --- | --- | --- |
-| `deck`, `card`, `folder`, `question` | ✅ | Content; whole-doc LWW |
-| `profile` | ✅ | One row per user; whole-doc LWW |
-| `preferences` | ✅ | One row per user; whole-doc LWW |
-| `progress` | ✅ | Counter-merge (xp, streaks, quiz accuracy) |
-| `notification` | ❌ | Ephemeral local UI state — stays device-local |
-| `session` | ❌ | In-memory only (already non-persisted) |
+| Entity                               | Syncs? | Notes                                         |
+|--------------------------------------|--------|-----------------------------------------------|
+| `deck`, `card`, `folder`, `question` | ✅      | Content; whole-doc LWW                        |
+| `profile`                            | ✅      | One row per user; whole-doc LWW               |
+| `preferences`                        | ✅      | One row per user; whole-doc LWW               |
+| `progress`                           | ✅      | Counter-merge (xp, streaks, quiz accuracy)    |
+| `notification`                       | ❌      | Ephemeral local UI state — stays device-local |
+| `session`                            | ❌      | In-memory only (already non-persisted)        |
 
 `card.srs` is a nested object inside `card`; its merge is handled by the `card`
 conflict handler (counter/recency merge on the `srs` sub-object), not a separate table.
@@ -158,15 +158,15 @@ Per synced collection, `replicateRxCollection`:
 - **`deletedField`** → mapping layer bridges RxDB `_deleted` ↔ Postgres `deleted`.
 - **Conflict handling** (`entities/*/model` collections gain a `conflictHandler` at DB
   creation in `app/persistence/database.ts`):
-  - Content (`deck`, `folder`, `question`, `profile`, `preferences`): whole-doc LWW by
-    `data.updatedAt`.
-  - `progress`: merge — `max` of monotonic counters (`xp`, `streakCount`, `longestStreak`,
-    `streakFreezes`, `bestQuizAccuracy`, `activeDayCount`), union of `trainingDays`, newest
-    `lastTrainingDate`/`activeDayKey`.
-  - `card`: LWW on content fields; `srs` sub-object merges — newest `due`/`lastReviewed`,
-    `max(reps)`, `max(lapses)`, ease/interval follow the newest `lastReviewed`.
-  - Merge functions live as pure, unit-tested helpers in `shared/lib` (e.g. `merge-progress.ts`,
-    `merge-srs.ts`) so the conflict handlers stay thin and the logic is testable in isolation.
+    - Content (`deck`, `folder`, `question`, `profile`, `preferences`): whole-doc LWW by
+      `data.updatedAt`.
+    - `progress`: merge — `max` of monotonic counters (`xp`, `streakCount`, `longestStreak`,
+      `streakFreezes`, `bestQuizAccuracy`, `activeDayCount`), union of `trainingDays`, newest
+      `lastTrainingDate`/`activeDayKey`.
+    - `card`: LWW on content fields; `srs` sub-object merges — newest `due`/`lastReviewed`,
+      `max(reps)`, `max(lapses)`, ease/interval follow the newest `lastReviewed`.
+    - Merge functions live as pure, unit-tested helpers in `shared/lib` (e.g. `merge-progress.ts`,
+      `merge-srs.ts`) so the conflict handlers stay thin and the logic is testable in isolation.
 
 A small **mapping module** (`shared/api/supabase/document-mapping.ts`) owns doc↔row
 translation in one place (single source of truth, no per-handler drift).
@@ -229,19 +229,19 @@ Guest data already lives in local RxDB, so claim is mostly automatic:
   `redirectTo: ${window.location.origin}/auth/callback`.
 - **Provider config (outside code — prerequisite for social login to *function*; the code
   path ships complete and the buttons are inert until these exist):**
-  - **Google** (per `auth-google` docs): Google Cloud console → create a **Web application**
-    OAuth 2.0 client; **Authorized JavaScript origins** = app domain(s); **Authorized
-    redirect URIs** = `https://<ref>.supabase.co/auth/v1/callback`. Paste **Client ID** +
-    **Client Secret** into Supabase Auth → Providers → Google.
-  - **Apple** (per `auth-apple` docs, web flow): Apple Developer → **App ID** (enable "Sign
-    in with Apple") → **Services ID** (e.g. `com.mindscape.app.web`, this is the **Client
-    ID**) with Website URLs domain `<ref>.supabase.co` + return
-    `https://<ref>.supabase.co/auth/v1/callback` → **Sign in with Apple key** (`.p8`) →
-    generate the **client secret** from the `.p8`. Into Supabase Auth → Providers → Apple:
-    **Client ID** (Services ID), **Team ID**, **Key ID**, **Secret**.
-  - **⚠ Apple secret rotates every 6 months** — keep the `.p8`, set a recurring reminder.
-    Document this in `README`/ops notes so social login doesn't silently break later.
-  - Email/password + password-reset work with **no** extra provider setup.
+    - **Google** (per `auth-google` docs): Google Cloud console → create a **Web application**
+      OAuth 2.0 client; **Authorized JavaScript origins** = app domain(s); **Authorized
+      redirect URIs** = `https://<ref>.supabase.co/auth/v1/callback`. Paste **Client ID** +
+      **Client Secret** into Supabase Auth → Providers → Google.
+    - **Apple** (per `auth-apple` docs, web flow): Apple Developer → **App ID** (enable "Sign
+      in with Apple") → **Services ID** (e.g. `com.mindscape.app.web`, this is the **Client
+      ID**) with Website URLs domain `<ref>.supabase.co` + return
+      `https://<ref>.supabase.co/auth/v1/callback` → **Sign in with Apple key** (`.p8`) →
+      generate the **client secret** from the `.p8`. Into Supabase Auth → Providers → Apple:
+      **Client ID** (Services ID), **Team ID**, **Key ID**, **Secret**.
+    - **⚠ Apple secret rotates every 6 months** — keep the `.p8`, set a recurring reminder.
+      Document this in `README`/ops notes so social login doesn't silently break later.
+    - Email/password + password-reset work with **no** extra provider setup.
 
 ## 11. FSD file map (new/changed)
 
@@ -305,4 +305,5 @@ read/review path, and no persisted-schema break for existing on-device data.
   detail to pin).
 - **Suggest a dedicated branch** `feat/phase-9-cloud-sync` (current branch is
   `test/ui-component-suite`, unrelated).
+
 ```

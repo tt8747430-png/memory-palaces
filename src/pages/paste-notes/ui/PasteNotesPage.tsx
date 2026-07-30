@@ -8,8 +8,8 @@ import {
   FooterBar,
   Input,
   ScreenHeader,
-  TextButton,
   Textarea,
+  TextButton,
 } from '@/shared/ui'
 import { useImportDraft } from '@/widgets/content-editor'
 import { usePasteParsing } from '../model/use-paste-parsing'

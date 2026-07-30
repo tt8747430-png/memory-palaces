@@ -3,8 +3,8 @@ import { DEFAULT_DAILY_GOAL } from '@/shared/config/constants'
 import {
   DEFAULT_SWIPE,
   normalizeSwipeConfig,
-  type SwipePreferences,
   SWIPE_ITEM_TYPES,
+  type SwipePreferences,
 } from '@/shared/config/swipe'
 import {
   DEFAULT_FLASHCARD_SWIPE_BY_MODE,

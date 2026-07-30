@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@/shared/api'
-import { createFolderStore, makeFolder, type Folder } from '@/entities/folder'
-import { createDeckStore, makeDeck, type Deck } from '@/entities/deck'
-import { createCardStore, type Card, makeCard } from '@/entities/card'
+import { createFolderStore, type Folder, makeFolder } from '@/entities/folder'
+import { createDeckStore, type Deck, makeDeck } from '@/entities/deck'
+import { type Card, createCardStore, makeCard } from '@/entities/card'
 import { createQuestionStore, makeQuestion, type Question } from '@/entities/question'
 import { createProgressStore, makeProgress, type Progress } from '@/entities/progress'
 import {

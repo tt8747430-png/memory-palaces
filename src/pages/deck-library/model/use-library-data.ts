@@ -6,6 +6,7 @@ import { selectDecks, useDeckStore } from '@/entities/deck'
 import type { Folder } from '@/entities/folder'
 import { selectFolders, useFolderStore } from '@/entities/folder'
 import {
+  findEntity,
   type FlatDeck,
   flattenDecks,
   selectIsReady,
@@ -13,7 +14,6 @@ import {
   toggleInSet,
   useOptimisticPatch,
   usePersistedSet,
-  findEntity,
 } from '@/shared/lib'
 
 /**

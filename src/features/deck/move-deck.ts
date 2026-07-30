@@ -1,4 +1,4 @@
-import { selectDecks, type Deck, type DeckStore } from '@/entities/deck'
+import { type Deck, type DeckStore, selectDecks } from '@/entities/deck'
 import { canReparent, nextOrder, orderSiblings } from '@/shared/lib'
 import { editDeck } from './deck-commands'
 

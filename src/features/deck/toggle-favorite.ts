@@ -1,6 +1,5 @@
 import type { Deck, DeckStore } from '@/entities/deck'
-import { editDeck } from './deck-commands'
-import { requireDeck } from './deck-commands'
+import { editDeck, requireDeck } from './deck-commands'
 
 export async function toggleDeckFavorite(store: DeckStore, id: string): Promise<Deck> {
   const deck = requireDeck(store, id)

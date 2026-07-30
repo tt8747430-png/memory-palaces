@@ -1,8 +1,8 @@
 import {
   ContentImportError,
+  type DeckContentData,
   parseAnkiText,
   parseDeckContent,
-  type DeckContentData,
 } from '@/shared/lib'
 
 export function readContentFile(file: File): Promise<DeckContentData> {

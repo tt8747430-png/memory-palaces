@@ -1,4 +1,5 @@
 import { EASE_EXPO } from '@/shared/lib'
+
 export const DEPTH_POSE = [
   { scale: 1, y: 0, x: 0, opacity: 1 },
   { scale: 0.94, y: 16, x: 0, opacity: 1 },

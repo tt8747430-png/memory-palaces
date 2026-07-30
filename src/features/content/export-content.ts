@@ -1,9 +1,9 @@
 import {
   type CardLike,
-  contentSlug,
-  downloadText,
   cardsToAnkiTsv,
   cardsToCsv,
+  contentSlug,
+  downloadText,
   type QuestionLike,
   questionsToCsv,
 } from '@/shared/lib'

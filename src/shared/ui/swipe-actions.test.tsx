@@ -2,7 +2,7 @@ import { isValidElement } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import type { TFunction } from 'i18next'
 import type { SwipeConfig } from '@/shared/config/swipe'
-import { buildSwipeActions, swipeActionIcon, type SwipeActionHandlers } from './swipe-actions'
+import { buildSwipeActions, type SwipeActionHandlers, swipeActionIcon } from './swipe-actions'
 
 const t = ((key: string) => key) as unknown as TFunction
 

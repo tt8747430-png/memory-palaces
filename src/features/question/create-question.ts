@@ -6,6 +6,7 @@ import {
   selectQuestions,
 } from '@/entities/question'
 import { newId, nextOrder, nowIso } from '@/shared/lib'
+
 export interface CreateQuestionInput {
   prompt: string
   options: string[]
