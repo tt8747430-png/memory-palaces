@@ -9,20 +9,25 @@ export interface EmojiFieldProps {
   className?: string
 }
 
+/**
+ * UTS #51's `Extended_Pictographic` — every character that can start an emoji,
+ * including the text-presentation ones `\p{Emoji_Presentation}` leaves out.
+ * (Some IDE regex parsers do not know this property; engines do.)
+ */
+const PICTOGRAPHIC = /\p{Extended_Pictographic}/u
+
+const graphemes = new Intl.Segmenter(undefined, { granularity: 'grapheme' })
+
 function lastGrapheme(input: string): string {
   if (!input) return ''
-  if (typeof Intl !== 'undefined' && 'Segmenter' in Intl) {
-    const parts = [...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(input)]
-    return parts.at(-1)?.segment ?? ''
-  }
-  return [...input].at(-1) ?? ''
+  return [...graphemes.segment(input)].at(-1)?.segment ?? ''
 }
 
 export function EmojiField({ value, onChange, className, ...rest }: EmojiFieldProps) {
   const ref = useRef<HTMLInputElement>(null)
   const commit = (raw: string) => {
     const next = lastGrapheme(raw.trim())
-    if (next && /\p{Extended_Pictographic}/u.test(next)) onChange(next)
+    if (next && PICTOGRAPHIC.test(next)) onChange(next)
   }
   return (
     <span

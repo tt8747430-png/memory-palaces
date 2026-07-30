@@ -129,40 +129,6 @@ function DropdownMenuRadioItem({ className, children, ...props }: DropdownMenuRa
   )
 }
 
-interface DropdownMenuSeparatorProps extends Omit<
-  ComponentProps<typeof Menu.Separator>,
-  'className'
-> {
-  className?: string
-}
-
-function DropdownMenuSeparator({ className, ...props }: DropdownMenuSeparatorProps) {
-  return (
-    <Menu.Separator
-      data-slot="dropdown-menu-separator"
-      className={cn('mx-1 my-1.5 h-px bg-border', className)}
-      {...props}
-    />
-  )
-}
-
-interface DropdownMenuLabelProps extends Omit<ComponentProps<typeof Menu.GroupLabel>, 'className'> {
-  className?: string
-}
-
-function DropdownMenuLabel({ className, ...props }: DropdownMenuLabelProps) {
-  return (
-    <Menu.GroupLabel
-      data-slot="dropdown-menu-label"
-      className={cn(
-        'px-3 pb-1 pt-2 text-[length:var(--p-text-label)] font-semibold text-muted-foreground',
-        className,
-      )}
-      {...props}
-    />
-  )
-}
-
 export {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -172,7 +138,5 @@ export {
   DropdownMenuItemIcon,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
   menuItemVariants,
 }

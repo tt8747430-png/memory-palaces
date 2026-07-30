@@ -18,7 +18,7 @@ Container wires data → presentational children (section → list → item). On
 | Screen root                     | `pages/<x>/ui/`                               |
 | Subpart of one parent           | beside it, same `ui/` folder                  |
 
-Reference: [`widgets/study-session/ui/`](../src/widgets/study-session/ui/) — ~11 focused files + `model/` + barrel.
+Reference: [`widgets/study-session/ui/`](../src/widgets/study-session/ui) — ~11 focused files + `model/` + barrel.
 
 - ~200 lines/file soft budget. Past it, extract children — or check the excess is really _state_ belonging in `model/` (
   §3a).
@@ -64,7 +64,7 @@ A page reading several stores + holding a Selection + doing a dozen acts present
 ## 4. Composition over configuration
 
 - **No boolean-prop proliferation** (`isPrimary`, `isCompact`, `hasIcon`…) → variant components or `children` slots.
-- **Variants = lookup maps of complete static strings** ([`button.tsx`](../src/shared/ui/button.tsx)). Never
+- **Variants = lookup maps of complete static strings** ([`button.tsx`](../src/shared/ui/primitives/button.tsx)). Never
   `` `bg-${x}` `` — Tailwind can't see it.
 - **Compound components for multi-part UI** — subcomponents sharing state via context, not a wide prop list (`Sheet`,
   `ActionSheet`, `SegmentedControl`). Provider owns state.

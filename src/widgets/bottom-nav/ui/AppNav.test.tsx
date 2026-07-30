@@ -12,7 +12,9 @@ const { navigate, nav } = vi.hoisted(() => ({
 }))
 
 vi.mock('@tanstack/react-router', () => ({
-
+  useNavigate: () => navigate,
+  useRouterState: ({ select }: { select: (state: unknown) => unknown }) =>
+    select({ location: { pathname: nav.path } }),
 }))
 
 afterEach(() => {

@@ -51,8 +51,17 @@
         border-color: var(--border);
     }
 
+    /* `startKeyboardViewport` (shared/lib/keyboard-viewport) owns these three as inline styles on
+       the documentElement and removes them on teardown; the values here are what the app falls
+       back to before the first measurement and after that reset. See ADR 0002. */
     :root {
         --kb-inset: 0px;
+
+        /* The height the shell is anchored to — the visual viewport, never the layout one. */
+        --app-height: 100%;
+
+        /* How far standalone WebKit has panned the page up to keep the caret visible. */
+        --vv-top: 0px;
 
         --app-bottom-inset: max(0.75rem, calc(env(safe-area-inset-bottom) - var(--kb-inset)));
     }
@@ -85,7 +94,7 @@
         top: 0;
         left: 0;
         right: 0;
-        height: var(--app-height, 100%);
+        height: var(--app-height);
         background: var(--bg-daylight);
         background-repeat: no-repeat;
     }
@@ -98,11 +107,11 @@
     @media (display-mode: standalone) {
         [data-keyboard] [data-slot='header-bar'],
         [data-keyboard] [data-slot='status-cap'] {
-            translate: 0 var(--vv-top, 0px);
+            translate: 0 var(--vv-top);
         }
 
         [data-keyboard] .pt-pan {
-            padding-top: var(--vv-top, 0px);
+            padding-top: var(--vv-top);
         }
     }
 
@@ -201,6 +210,16 @@
         box-shadow: var(--shadow-elevated);
     }
 
+    .sw-tint {
+        background: color-mix(in oklch, var(--sw) 15%, transparent);
+        color: color-mix(in oklch, var(--sw), black 38%);
+    }
+
+    [data-theme='dark'] .sw-tint {
+        background: color-mix(in oklch, var(--sw) 26%, transparent);
+        color: color-mix(in oklch, var(--sw), white 46%);
+    }
+
     .scrollbar-hide {
         scrollbar-width: none;
         -ms-overflow-style: none;
@@ -233,6 +252,10 @@
     .pb-keyboard {
         padding-bottom: var(--kb-inset);
         scroll-padding-bottom: var(--kb-inset);
+    }
+
+    .pb-safe-keyboard {
+        padding-bottom: max(env(safe-area-inset-bottom), var(--drawer-keyboard-inset, 0px));
     }
 
     .pb-nav {

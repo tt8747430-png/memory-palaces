@@ -15,7 +15,7 @@ export default tseslint.config(
   { ignores: ['dist', 'dev-dist', 'coverage', 'node_modules'] },
   {
     files: ['**/*.{ts,tsx}'],
-    extends: [js.configs.recommended, tseslint.configs.recommended],
+    extends: [js.configs.recommended, ...tseslint.configs.recommended],
     languageOptions: {
       ecmaVersion: 2023,
       sourceType: 'module',
