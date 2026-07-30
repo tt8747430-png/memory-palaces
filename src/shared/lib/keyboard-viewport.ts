@@ -4,14 +4,6 @@ const KEYBOARD_MIN = 120
 
 const PAN_SETTLE_MS = 150
 
-/**
- * How long after a focus a pan still counts as the platform revealing that field rather than the
- * page scrolling. iOS animates its reveal pan over a few hundred milliseconds, and the animation
- * cannot be recognised by stillness: a drag never goes still either, so a settle-based window stays
- * open for the whole drag and hands chrome to the finger. The window is a deadline instead.
- */
-const REVEAL_PAN_MS = 400
-
 let measured = 0
 let expected = 0
 let expecting = false
@@ -24,11 +16,18 @@ let appHeight = 0
 let appWidth = 0
 let panned = -1
 let compensated = -1
-let armedUntil = 0
+let padded = -1
 
 // Where the layout origin sits in rect coordinates: 0 where rects are layout-relative, -(pan)
 // where the UA reports them against the visual viewport.
 let originTop = 0
+
+// Whether this UA leaves fixed boxes at the layout origin while it pans — i.e. whether the shell
+// rides off the top of the screen and its chrome has to be ridden back. Measured, and sticky: it
+// describes the platform, not the moment, so it survives the frames where there is no pan to read
+// it from. False until a pan proves otherwise — chrome that has not been shown to be off-screen
+// must not be moved.
+let ridesOff = false
 
 /**
  * A `position: fixed` box at `top: 0` that nothing ever translates — a witness for where this UA
@@ -85,6 +84,13 @@ function publishHeight(next: number) {
   document.documentElement.style.setProperty('--app-height', `${next}px`)
 }
 
+/**
+ * The pan and the transform that undoes it. Published on **every** frame of a pan, including the
+ * frames of a drag: the shell rides with the visual viewport, so chrome that updates on a settle
+ * visibly lags the screen it is supposed to be pinned to. It is a `translate` — compositor work,
+ * no reflow — which is what makes per-frame affordable. Layout must not follow it here; that is
+ * `--pan-pad`.
+ */
 function publishTop(next: number, comp: number) {
   if (next === panned && comp === compensated) return
   panned = next
@@ -96,25 +102,44 @@ function publishTop(next: number, comp: number) {
 }
 
 /**
- * How far the fixed shell sits above the top of the visible viewport — the ride-off to give back —
- * measured on a fixed box rather than inferred from `html` alone.
+ * The same compensation as scroll range at the top of the scrollport — the half of the pair that
+ * is *layout*, and so is published only from a resize or a settled scroll. Rewriting a scrollport's
+ * padding on every frame of a drag moves the content under the finger and drags the scroll offset
+ * with it; between settles it is stale by the distance of the current gesture, which costs range at
+ * the top and nothing else.
+ */
+function publishPad(next: number) {
+  if (next === padded) return
+  padded = next
+  document.documentElement.style.setProperty('--pan-pad', `${next}px`)
+}
+
+/**
+ * Decides whether this UA rides the fixed shell off the top, by measuring a fixed box rather than
+ * inferring from `html` alone.
  *
  * Both readings come from `getBoundingClientRect()`, so the subtraction never crosses coordinate
  * spaces: the visible viewport's top is `pan + originTop` in rect coordinates, and the probe says
  * where a fixed box actually landed. A UA that re-anchors fixed boxes to the visual viewport puts
  * the probe exactly there and the difference is 0 — in *either* space, which `html` alone cannot
  * tell you: it is at the layout origin whether or not fixed boxes were moved off it.
+ *
+ * Two forced layouts, so it runs on a resize or a settled scroll and never on a drag frame. A pan
+ * of 0 says nothing either way and leaves the last answer standing.
  */
-function measureCompensation(top: number): number {
-  // No pan, nothing to convert or give back: the two spaces coincide. Worth the branch — it keeps
-  // every keyboardless viewport event off the layout path.
+function classify(top: number) {
   if (top === 0) {
     originTop = 0
-    return 0
+    return
   }
   originTop = Math.round(document.documentElement.getBoundingClientRect().top)
   const fixedTop = Math.round(probe?.getBoundingClientRect().top ?? 0)
-  return Math.max(0, top + originTop - fixedTop)
+  ridesOff = top + originTop - fixedTop > top / 2
+}
+
+/** What the classification implies for a pan, without touching the layout to find out. */
+function compensationFor(top: number): number {
+  return ridesOff ? top : 0
 }
 
 function viewportHeight(): number {
@@ -160,9 +185,6 @@ export function subscribePan(listener: () => void): () => void {
 }
 
 export function expectKeyboard(on: boolean) {
-  // Armed on every focus, not only the first: moving between fields re-pans without resizing, and
-  // that pan is the platform revealing the field. A blur disarms it outright.
-  armedUntil = on ? performance.now() + REVEAL_PAN_MS : 0
   if (expecting === on) return
   expecting = on
   // The reserve bridges the frames before the keyboard reports itself. There is nothing to bridge
@@ -195,7 +217,6 @@ export function startKeyboardViewport(): () => void {
     measured = 0
     expecting = false
     reserving = false
-    armedUntil = 0
     published = -1
     notifiedInset = -1
     notifiedPan = -1
@@ -203,13 +224,16 @@ export function startKeyboardViewport(): () => void {
     appWidth = 0
     panned = -1
     compensated = -1
+    padded = -1
     originTop = 0
+    ridesOff = false
     probe?.remove()
     probe = null
     root.style.removeProperty('--kb-inset')
     root.style.removeProperty('--app-height')
     root.style.removeProperty('--vv-top')
     root.style.removeProperty('--pan-comp')
+    root.style.removeProperty('--pan-pad')
     root.removeAttribute('data-keyboard')
   }
 
@@ -226,6 +250,7 @@ export function startKeyboardViewport(): () => void {
   if (!vv) {
     anchor()
     publishTop(0, 0)
+    publishPad(0)
     publish()
     return reset
   }
@@ -264,33 +289,45 @@ export function startKeyboardViewport(): () => void {
 
     // One event, one wake-up: a keyboard that opens changes the inset and the pan in the same
     // frame, and the reveal must run against both, once.
+    classify(top)
+    const comp = compensationFor(top)
     publish()
-    publishTop(top, measureCompensation(top))
+    publishTop(top, comp)
+    publishPad(comp)
     notifyKeyboard()
   }
 
-  const publishPan = () => {
+  /**
+   * Every frame the viewport moves, including under a finger. The shell is anchored to the layout
+   * viewport and the screen shows the visual one, so chrome pinned to the top of the screen has to
+   * be re-offset as often as that relationship changes — anything less and the header lags the
+   * scroll and only lands when the finger lifts. Cheap on purpose: no rect is read here, the
+   * classification from the last resize or settle says what the pan means.
+   */
+  const trackPan = () => {
     if (vv.scale !== 1) return
     const top = readPan()
-    publishTop(top, measureCompensation(top))
+    publishTop(top, compensationFor(top))
   }
 
   /**
-   * A scroll carries no news about the keyboard, and mid-drag the visual viewport slides with the
-   * rubber-band — chrome positioned from those frames follows the finger down the screen. So a
-   * scroll publishes only once the viewport has stopped moving.
-   *
-   * Inside `REVEAL_PAN_MS` of a focus it publishes every frame instead: iOS re-pans to reveal the
-   * new field without ever resizing, and animates it, so waiting out the settle rides the shell —
-   * and the chrome riding back on it — off the screen for the length of that animation and snaps it
-   * back. **The window has to be a deadline, not a settle.** Re-arming it on each scroll the way the
-   * settle timer does never disarms during a drag, which hands the header to the finger for as long
-   * as the finger keeps moving.
+   * A scroll carries no news about the keyboard, so it never re-measures the height. What it does
+   * carry is the pan, which the transform follows live (`trackPan`) and the layout does not: the
+   * scrollport's padding and the classification behind it wait for the viewport to stop moving.
+   * Reading rects or rewriting padding on a drag frame is what makes the page you type in scroll
+   * worse than one you don't.
    */
   const onScroll = () => {
     window.clearTimeout(settle)
-    if (performance.now() < armedUntil) publishPan()
-    settle = window.setTimeout(publishPan, PAN_SETTLE_MS)
+    trackPan()
+    settle = window.setTimeout(() => {
+      if (vv.scale !== 1) return
+      const top = readPan()
+      classify(top)
+      const comp = compensationFor(top)
+      publishTop(top, comp)
+      publishPad(comp)
+    }, PAN_SETTLE_MS)
   }
 
   const onResize = () => {

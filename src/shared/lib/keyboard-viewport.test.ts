@@ -70,6 +70,8 @@ const panOffset = () => document.documentElement.style.getPropertyValue('--vv-to
 
 const panComp = () => document.documentElement.style.getPropertyValue('--pan-comp')
 
+const panPad = () => document.documentElement.style.getPropertyValue('--pan-pad')
+
 /**
  * The two rects the compensation is measured from: the layout origin (`html`) and where this UA
  * actually put a `position: fixed` box at `top: 0` during the pan. Both are needed — neither alone
@@ -89,9 +91,6 @@ function stubRectSpace({ html, fixed }: { html: number; fixed: number }) {
 
 /** Longer than the pan's settle window, so a slide has been given its chance to publish. */
 const afterSettle = () => new Promise((resolve) => setTimeout(resolve, 220))
-
-/** Longer than the window in which a pan still counts as the platform revealing a focused field. */
-const afterRevealWindow = () => new Promise((resolve) => setTimeout(resolve, 450))
 
 let stop: (() => void) | undefined
 
@@ -321,16 +320,36 @@ describe('keyboard viewport', () => {
     expect(document.documentElement.hasAttribute('data-keyboard')).toBe(true)
   })
 
-  it('holds the pan still while the page scrolls under a raised keyboard', async () => {
+  it('follows the pan frame by frame while the page scrolls under a raised keyboard', async () => {
     const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
     stop = startKeyboardViewport()
+    stubRectSpace({ html: 0, fixed: 0 })
     await viewport.move({ height: 412, offsetTop: 113 })
     expect(panOffset()).toBe('113px')
 
-    // iOS slides the visual viewport back as the page rubber-bands.
+    // iOS slides the visual viewport back as the page rubber-bands, and the shell rides with it:
+    // chrome pinned to the screen has to be re-offset now, not when the finger lifts.
     await viewport.slide({ height: 412, offsetTop: 64 })
 
-    expect(panOffset()).toBe('113px')
+    expect(panOffset()).toBe('64px')
+    expect(panComp()).toBe('64px')
+  })
+
+  it('holds the scrollport padding still through that scroll', async () => {
+    const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
+    stop = startKeyboardViewport()
+    stubRectSpace({ html: 0, fixed: 0 })
+    await viewport.move({ height: 412, offsetTop: 113 })
+    expect(panPad()).toBe('113px')
+
+    // Layout is the half that must not follow a finger: rewriting the scrollport's padding mid-drag
+    // moves the content under it and takes the scroll offset with it.
+    await viewport.slide({ height: 412, offsetTop: 64 })
+    expect(panPad()).toBe('113px')
+
+    await afterSettle()
+
+    expect(panPad()).toBe('64px')
   })
 
   it('keeps the measured keyboard through a scroll, so bottom chrome cannot jump', async () => {
@@ -369,32 +388,46 @@ describe('keyboard viewport', () => {
     unsubscribe()
   })
 
-  it('leaves the pan where it was while the viewport slides under a drag', async () => {
+  it('reads no rect on a drag frame, so a scroll cannot force layout per frame', async () => {
     const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
     stop = startKeyboardViewport()
+    stubRectSpace({ html: 0, fixed: 0 })
     await viewport.move({ height: 412, offsetTop: 113 })
 
-    // iOS slides the visual viewport frame by frame as the page rubber-bands. Chrome positioned
-    // from those frames follows the finger down the screen.
+    let reads = 0
+    Object.defineProperty(document.documentElement, 'getBoundingClientRect', {
+      value: () => {
+        reads += 1
+        return { top: 0 } as DOMRect
+      },
+      configurable: true,
+    })
+
     await viewport.slide({ height: 412, offsetTop: 150 })
     await viewport.slide({ height: 412, offsetTop: 64 })
     await viewport.slide({ height: 412, offsetTop: 113 })
 
+    // Every frame still moved the transform; none of them measured anything to do it.
     expect(panOffset()).toBe('113px')
+    expect(reads).toBe(0)
   })
 
-  it('publishes the pan once the viewport has stopped sliding', async () => {
+  it('re-measures which space it is in once the viewport has stopped sliding', async () => {
     const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
     stop = startKeyboardViewport()
+    stubRectSpace({ html: 0, fixed: 0 })
     await viewport.move({ height: 412, offsetTop: 113 })
+    expect(panComp()).toBe('113px')
 
-    // Focus moved to a lower field: iOS re-pans without ever resizing.
+    // The platform started re-anchoring fixed boxes to the visual viewport — the settle is where
+    // that gets noticed, and the compensation has to fall away with it.
+    stubRectSpace({ html: 0, fixed: 200 })
     await viewport.slide({ height: 412, offsetTop: 200 })
-    expect(panOffset()).toBe('113px')
-
     await afterSettle()
 
     expect(panOffset()).toBe('200px')
+    expect(panComp()).toBe('0px')
+    expect(panPad()).toBe('0px')
   })
 
   it('lets the pan come back down, so chrome is not left hanging below the top', async () => {
@@ -497,7 +530,7 @@ describe('keyboard viewport', () => {
     expect(visibleBottom()).toBe(412)
   })
 
-  it('tracks a focus-driven pan while it animates, instead of after it settles', async () => {
+  it('tracks a pan iOS makes to reveal the next field, which never resizes anything', async () => {
     const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
     stop = startKeyboardViewport()
     stubRectSpace({ html: 0, fixed: 0 })
@@ -510,40 +543,6 @@ describe('keyboard viewport', () => {
 
     expect(panComp()).toBe('160px')
     expect(panOffset()).toBe('160px')
-  })
-
-  it('stops tracking when the reveal window closes, so a drag cannot move chrome', async () => {
-    const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
-    stop = startKeyboardViewport()
-    stubRectSpace({ html: 0, fixed: 0 })
-    await viewport.move({ height: 412, offsetTop: 113 })
-
-    expectKeyboard(true)
-    await viewport.slide({ height: 412, offsetTop: 200 })
-    await afterRevealWindow()
-
-    // The rubber-band that follows is the page scrolling, not the platform revealing anything.
-    await viewport.slide({ height: 412, offsetTop: 64 })
-
-    expect(panComp()).toBe('200px')
-  })
-
-  it('closes the reveal window on a deadline, not on the viewport going still', async () => {
-    const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
-    stop = startKeyboardViewport()
-    stubRectSpace({ html: 0, fixed: 0 })
-    await viewport.move({ height: 412, offsetTop: 113 })
-    expectKeyboard(true)
-    await afterRevealWindow()
-
-    // A drag never goes still: every frame restarts the settle timer, so a window that closed on
-    // stillness would still be open here, and the header would ride the finger frame by frame.
-    for (let frame = 1; frame <= 5; frame += 1) {
-      await viewport.slide({ height: 412, offsetTop: 113 + frame * 20 })
-      await new Promise((resolve) => setTimeout(resolve, 100))
-    }
-
-    expect(panComp()).toBe('113px')
   })
 
   it('clears both variables on stop so a keyboardless surface is not left offset', () => {

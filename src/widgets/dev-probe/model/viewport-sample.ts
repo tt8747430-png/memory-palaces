@@ -10,6 +10,7 @@ export interface ViewportSample {
   kbInset: string
   vvTop: string
   panComp: string
+  panPad: string
   scrollTop: number
   htmlRectTop: number
   rootRectTop: number
@@ -48,6 +49,7 @@ export function readViewport(): ViewportSample {
     kbInset: style.getPropertyValue('--kb-inset') || '(unset)',
     vvTop: style.getPropertyValue('--vv-top') || '(unset)',
     panComp: style.getPropertyValue('--pan-comp') || '(unset)',
+    panPad: style.getPropertyValue('--pan-pad') || '(unset)',
     scrollTop: round(scroller?.scrollTop),
     htmlRectTop: Math.round(root.getBoundingClientRect().top),
     rootRectTop: round(document.getElementById('root')?.getBoundingClientRect().top),
@@ -73,6 +75,7 @@ const TRACE_COLUMNS = [
   'vvHeight',
   'vvTop',
   'panComp',
+  'panPad',
   'kbInset',
   'scrollTop',
   'htmlRectTop',

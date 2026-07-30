@@ -230,28 +230,31 @@ dev-only **`/dev/kitchen-sink`**.
   `useKeyboardReveal` is rect-vs-rect.
 - **`visualViewport` fires `scroll` as well as `resize`, and a scroll frame is not news about the keyboard.** iOS slides
   the visual viewport while the page rubber-bands, so `offsetTop` and `height` both read mid-flight on every scroll
-  frame. Deriving the keyboard height from them republishes `--kb-inset`, resizing `.pb-keyboard`'s scroll range under
-  the finger. Publishing the **pan** from them is worse and was the live bug: chrome translated by a per-frame pan
-  **follows the finger down the screen**, and holding it at the episode's `Math.max` (the old damping) leaves it parked
-  below the top of the screen until blur. `startKeyboardViewport` re-measures the height on `resize` only, and publishes
-  the pan on `resize` immediately but from a `scroll` only once the viewport has been still for `PAN_SETTLE_MS`.
-  Nothing is held at a maximum. **Symptom to recognise: you can drag the header with your finger, and the page you type
-  in scrolls worse than one you don't.** It is worst where the scroll body has little range, because only a rubber-band
-  moves the visual viewport — a short page flickers where a long one looks fine.
-- **A pan the app asked for is the exception: track it live, on a deadline.** Moving focus between fields re-pans
-  **without resizing**, and iOS animates that pan — waiting out `PAN_SETTLE_MS` rides the shell off the top for the
-  length of the animation and snaps the chrome back afterwards. `expectKeyboard(on)` arms live tracking for
-  `REVEAL_PAN_MS` on every `focusin`, and `scroll` publishes the pan per frame while the deadline holds.
-  **The window must not close on stillness.** A settle-based one is re-armed by every scroll frame, so it never closes
-  during a drag — which is the finger-drags-the-header bug wearing a different hat, and it was shipped that way once.
-  **Symptoms to recognise: the first field is fine and the second or third one jerks the header (window too slow); the
-  header follows your thumb once the keyboard is up (window never closes).**
+  frame. Deriving the keyboard **height** from them republishes `--kb-inset`, resizing `.pb-keyboard`'s scroll range
+  under the finger, so the height is re-measured on `resize` only. Nothing is held at a maximum — the old `Math.max`
+  damping left chrome parked below the top of the screen until blur.
+- **The pan is the opposite: publish it on every frame, and split it by what consumes it.** The shell is anchored to
+  the layout viewport and the screen shows the visual one, so every frame that relationship changes — a rubber-band as
+  much as a keyboard — moves the shell on screen. Chrome pinned to the screen must be re-offset just as often, or it
+  visibly lags the scroll and only lands when the finger lifts. What made the old per-frame publishing look like
+  "chrome follows the finger" was **layout** consuming it: two variables now carry the same number, and it is the
+  property type that decides which. `--pan-comp` is written every frame and may only be read by a `translate`
+  (compositor work, no reflow); `--pan-pad` holds the last settled value and is the only one `.pt-pan` — a layout
+  property — is allowed to read. Rewriting a scrollport's padding under a moving finger shifts the content and takes
+  the scroll offset with it. Between settles `--pan-pad` is stale by the distance of the current gesture, which costs
+  range at the top of the scrollport and nothing else.
+- **Classification is measured on a settle, never on a drag frame.** Whether this UA rides fixed boxes off the top
+  takes two `getBoundingClientRect()` calls, and doing that per frame under a finger forces a layout flush per frame —
+  the page you type in then scrolls worse than one you don't. `classify()` runs on `resize` and on a settled scroll and
+  leaves a sticky boolean behind; drag frames extrapolate from it with arithmetic only. A pan of 0 says nothing either
+  way and leaves the last answer standing, and the default is **not** compensating: chrome that has not been shown to
+  be off-screen must never be moved.
 - **Height and pan are separate subscriptions.** `subscribeKeyboardHeight` fires once per _keyboard_ event — the inset,
-  or the pan moving with it on a `resize`, coalesced into one wake-up. `subscribePan` fires on every published pan,
-  including the one that settles after a scroll. Anything that writes `scrollTop` takes the height: woken by a
-  scroll-produced pan it re-scrolls mid-drag, over the scroll the user is performing. Because the pan is published from
-  two paths, that wake-up compares against what was **last announced**, not against what the current call wrote — a
-  `resize` that finds both numbers already published still owes its subscribers one notification.
+  or the pan moving with it on a `resize`, coalesced into one wake-up. `subscribePan` fires on every published pan —
+  every frame the viewport moves, a drag included. Anything that writes `scrollTop` or touches layout takes the height:
+  woken by a scroll-produced pan it re-scrolls mid-drag, over the scroll the user is performing. Because the pan is
+  published from two paths, that wake-up compares against what was **last announced**, not against what the current
+  call wrote — a `resize` that finds both numbers already published still owes its subscribers one notification.
 - **A focused field is revealed by its scroll body, and that needs range, not just `scroll-padding`.**
   `useKeyboardReveal` sets `scrollTop` on `focusin` and again when `--kb-inset` settles; `.pb-keyboard`/`.pb-safe` give
   the scrollport `padding-bottom: var(--kb-inset)` to scroll into. `AppScreen` wires it automatically — opt in by hand
