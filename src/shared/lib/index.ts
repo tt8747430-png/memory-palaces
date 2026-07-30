@@ -27,6 +27,12 @@ export { toggleInSet } from './set'
 export { useMultiSelect, type MultiSelect } from './use-multi-select'
 export { useHideAppNav, useAppNavHidden } from './app-nav'
 export { useSplashStore, useSplashDone } from './app-splash'
+export {
+  activateWaitingWorker,
+  watchWaitingWorker,
+  type RegistrationLike,
+  type WorkerLike,
+} from './sw-update'
 export { useAutoSelect } from './use-auto-select'
 export { useDevMode, setDevMode } from './dev-mode'
 export { visibleBottom } from './keyboard-viewport'
