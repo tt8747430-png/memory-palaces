@@ -37,15 +37,23 @@ function stubViewport({ height, offsetTop }: Viewport, layoutHeight: number) {
     configurable: true,
   })
 
+  const settle = async (
+    next: Viewport & { layoutHeight?: number; width?: number },
+    type: string,
+  ) => {
+    vv.height = next.height
+    vv.offsetTop = next.offsetTop
+    if (next.layoutHeight !== undefined) layout.height = next.layoutHeight
+    if (next.width !== undefined) layout.width = next.width
+    listeners.get(type)?.forEach((fn) => fn())
+    await new Promise((resolve) => requestAnimationFrame(resolve))
+  }
+
   return {
-    async move(next: Viewport & { layoutHeight?: number; width?: number }) {
-      vv.height = next.height
-      vv.offsetTop = next.offsetTop
-      if (next.layoutHeight !== undefined) layout.height = next.layoutHeight
-      if (next.width !== undefined) layout.width = next.width
-      listeners.get('resize')?.forEach((fn) => fn())
-      await new Promise((resolve) => requestAnimationFrame(resolve))
-    },
+    /** The viewport changed size — the keyboard opened, closed or resized. */
+    move: (next: Viewport & { layoutHeight?: number; width?: number }) => settle(next, 'resize'),
+    /** The viewport slid without resizing — the page scrolled under it. */
+    slide: (next: Viewport) => settle(next, 'scroll'),
   }
 }
 
@@ -228,6 +236,42 @@ describe('keyboard viewport', () => {
     expectKeyboard(true)
 
     expect(document.documentElement.hasAttribute('data-keyboard')).toBe(true)
+  })
+
+  it('holds the pan still while the page scrolls under a raised keyboard', async () => {
+    const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
+    stop = startKeyboardViewport()
+    await viewport.move({ height: 412, offsetTop: 113 })
+    expect(panOffset()).toBe('113px')
+
+    // iOS slides the visual viewport back as the page rubber-bands.
+    await viewport.slide({ height: 412, offsetTop: 64 })
+
+    expect(panOffset()).toBe('113px')
+  })
+
+  it('keeps the measured keyboard through a scroll, so bottom chrome cannot jump', async () => {
+    const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
+    stop = startKeyboardViewport()
+    await viewport.move({ height: 412, offsetTop: 113 })
+    expect(keyboardHeight()).toBe(277)
+
+    await viewport.slide({ height: 380, offsetTop: 64 })
+
+    expect(keyboardHeight()).toBe(277)
+    expect(document.documentElement.hasAttribute('data-keyboard')).toBe(true)
+  })
+
+  it('releases the pan once the keyboard goes away', async () => {
+    const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
+    stop = startKeyboardViewport()
+    await viewport.move({ height: 412, offsetTop: 113 })
+    await viewport.slide({ height: 412, offsetTop: 64 })
+
+    await viewport.move({ height: 802, offsetTop: 0 })
+
+    expect(panOffset()).toBe('0px')
+    expect(document.documentElement.hasAttribute('data-keyboard')).toBe(false)
   })
 
   it('notifies subscribers when the height changes', async () => {
