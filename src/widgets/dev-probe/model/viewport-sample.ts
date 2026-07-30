@@ -8,13 +8,10 @@ export interface ViewportSample {
   vvOffsetTop: number
   appHeight: string
   kbInset: string
-  vvTop: string
-  panComp: string
-  panPad: string
+  kbRange: string
   scrollTop: number
   htmlRectTop: number
   rootRectTop: number
-  fixedRectTop: number
   visibleBottom: number
   headerTop: number
   headerBottom: number
@@ -35,7 +32,6 @@ export function readViewport(): ViewportSample {
   const style = root.style
   const active = document.activeElement
   const scroller = document.querySelector('main') ?? document.querySelector('[data-card-scroll]')
-  const fixed = document.querySelector('[data-slot="viewport-probe"]')
   const header = document.querySelector('[data-slot="header-bar"]')
   const footer = document.querySelector('[data-slot="footer-bar"]')
   const rect = active instanceof HTMLElement ? active.getBoundingClientRect() : undefined
@@ -47,13 +43,10 @@ export function readViewport(): ViewportSample {
     vvOffsetTop: round(vv?.offsetTop, 0),
     appHeight: style.getPropertyValue('--app-height') || '(unset)',
     kbInset: style.getPropertyValue('--kb-inset') || '(unset)',
-    vvTop: style.getPropertyValue('--vv-top') || '(unset)',
-    panComp: style.getPropertyValue('--pan-comp') || '(unset)',
-    panPad: style.getPropertyValue('--pan-pad') || '(unset)',
+    kbRange: style.getPropertyValue('--kb-range') || '(unset)',
     scrollTop: round(scroller?.scrollTop),
     htmlRectTop: Math.round(root.getBoundingClientRect().top),
     rootRectTop: round(document.getElementById('root')?.getBoundingClientRect().top),
-    fixedRectTop: round(fixed?.getBoundingClientRect().top),
     visibleBottom: Math.round(visibleBottom()),
     headerTop: round(headerRect?.top),
     headerBottom: round(headerRect?.bottom),
@@ -73,14 +66,11 @@ const TRACE_COLUMNS = [
   'at',
   'vvOffsetTop',
   'vvHeight',
-  'vvTop',
-  'panComp',
-  'panPad',
   'kbInset',
+  'kbRange',
   'scrollTop',
   'htmlRectTop',
   'rootRectTop',
-  'fixedRectTop',
   'headerTop',
   'visibleBottom',
   'focusedTop',

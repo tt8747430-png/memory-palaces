@@ -2,42 +2,28 @@ const STORAGE_KEY = 'mindscape.keyboard-height'
 
 const KEYBOARD_MIN = 120
 
-const PAN_SETTLE_MS = 150
+/**
+ * Breathing room between a revealed field and the keyboard — and the reason it lives here rather
+ * than in `use-keyboard-reveal`, which is what applies it: it is published as **scroll range** too.
+ *
+ * Without that range the last field on a page cannot be lifted clear. `scrollTop` clamps at the end
+ * of the content, the field stays under the keyboard, and iOS finishes the reveal itself by panning
+ * the visual viewport — which is the single event every piece of chrome compensation this module
+ * used to carry existed to survive. The cheapest way to keep the app and the screen aligned is to
+ * leave the platform nothing to do.
+ */
+export const REVEAL_GAP = 24
 
 let measured = 0
 let expected = 0
 let expecting = false
 let reserving = false
 let published = -1
-let notifiedInset = -1
-let notifiedPan = -1
 
 let appHeight = 0
 let appWidth = 0
-let panned = -1
-let compensated = -1
-let padded = -1
 
-// Where the layout origin sits in rect coordinates: 0 where rects are layout-relative, -(pan)
-// where the UA reports them against the visual viewport.
-let originTop = 0
-
-// Whether this UA leaves fixed boxes at the layout origin while it pans — i.e. whether the shell
-// rides off the top of the screen and its chrome has to be ridden back. Measured, and sticky: it
-// describes the platform, not the moment, so it survives the frames where there is no pan to read
-// it from. False until a pan proves otherwise — chrome that has not been shown to be off-screen
-// must not be moved.
-let ridesOff = false
-
-/**
- * A `position: fixed` box at `top: 0` that nothing ever translates — a witness for where this UA
- * puts fixed boxes while the keyboard pans. `#root` is one too, so whatever happened to the probe
- * has happened to the shell.
- */
-let probe: HTMLElement | null = null
-
-const heightListeners = new Set<() => void>()
-const panListeners = new Set<() => void>()
+const listeners = new Set<() => void>()
 
 function readStored(): number {
   try {
@@ -55,27 +41,20 @@ function writeStored(value: number) {
   } catch {}
 }
 
-/** Publishes the inset. Notifying is the caller's job — one keyboard event can change the inset
- *  and the pan together, and subscribers want one wake-up, not two. */
-function publish() {
+/** Publishes the inset and reports whether it moved. */
+function publish(): boolean {
   const next = measured || (reserving ? expected : 0)
-  if (next === published) return
+  if (next === published) return false
   published = next
-  document.documentElement.style.setProperty('--kb-inset', `${next}px`)
+  const style = document.documentElement.style
+  style.setProperty('--kb-inset', `${next}px`)
+  style.setProperty('--kb-range', next > 0 ? `${next + REVEAL_GAP}px` : '0px')
   document.documentElement.toggleAttribute('data-keyboard', next > 0)
+  return true
 }
 
-/**
- * One wake-up per keyboard event, however many writes it took, and none for an event that moved
- * nothing. Comparing against what was last announced rather than against what this call happened to
- * write is what keeps a pan published live a frame earlier — the platform revealing a field it has
- * just been given — from swallowing the notification the resize owes its subscribers.
- */
-function notifyKeyboard() {
-  if (published === notifiedInset && panned === notifiedPan) return
-  notifiedInset = published
-  notifiedPan = panned
-  heightListeners.forEach((listener) => listener())
+function notify() {
+  listeners.forEach((listener) => listener())
 }
 
 function publishHeight(next: number) {
@@ -84,76 +63,8 @@ function publishHeight(next: number) {
   document.documentElement.style.setProperty('--app-height', `${next}px`)
 }
 
-/**
- * The pan and the transform that undoes it. Published on **every** frame of a pan, including the
- * frames of a drag: the shell rides with the visual viewport, so chrome that updates on a settle
- * visibly lags the screen it is supposed to be pinned to. It is a `translate` — compositor work,
- * no reflow — which is what makes per-frame affordable. Layout must not follow it here; that is
- * `--pan-pad`.
- */
-function publishTop(next: number, comp: number) {
-  if (next === panned && comp === compensated) return
-  panned = next
-  compensated = comp
-  const style = document.documentElement.style
-  style.setProperty('--vv-top', `${next}px`)
-  style.setProperty('--pan-comp', `${comp}px`)
-  panListeners.forEach((listener) => listener())
-}
-
-/**
- * The same compensation as scroll range at the top of the scrollport — the half of the pair that
- * is *layout*, and so is published only from a resize or a settled scroll. Rewriting a scrollport's
- * padding on every frame of a drag moves the content under the finger and drags the scroll offset
- * with it; between settles it is stale by the distance of the current gesture, which costs range at
- * the top and nothing else.
- */
-function publishPad(next: number) {
-  if (next === padded) return
-  padded = next
-  document.documentElement.style.setProperty('--pan-pad', `${next}px`)
-}
-
-/**
- * Decides whether this UA rides the fixed shell off the top, by measuring a fixed box rather than
- * inferring from `html` alone.
- *
- * Both readings come from `getBoundingClientRect()`, so the subtraction never crosses coordinate
- * spaces: the visible viewport's top is `pan + originTop` in rect coordinates, and the probe says
- * where a fixed box actually landed. A UA that re-anchors fixed boxes to the visual viewport puts
- * the probe exactly there and the difference is 0 — in *either* space, which `html` alone cannot
- * tell you: it is at the layout origin whether or not fixed boxes were moved off it.
- *
- * Two forced layouts, so it runs on a resize or a settled scroll and never on a drag frame. A pan
- * of 0 says nothing either way and leaves the last answer standing.
- */
-function classify(top: number) {
-  if (top === 0) {
-    originTop = 0
-    return
-  }
-  originTop = Math.round(document.documentElement.getBoundingClientRect().top)
-  const fixedTop = Math.round(probe?.getBoundingClientRect().top ?? 0)
-  ridesOff = top + originTop - fixedTop > top / 2
-}
-
-/** What the classification implies for a pan, without touching the layout to find out. */
-function compensationFor(top: number): number {
-  return ridesOff ? top : 0
-}
-
 function viewportHeight(): number {
   return appHeight || document.documentElement.clientHeight
-}
-
-/**
- * The bottom of the usable area, in rect coordinates — the one bridge between the two spaces. The
- * visible area ends `--kb-inset` above the anchored shell's bottom in layout coordinates, and
- * `originTop` is where those coordinates begin in rect ones: 0 where rects are layout-relative,
- * -(pan) where they already carry it.
- */
-export function visibleBottom(): number {
-  return originTop + viewportHeight() - keyboardHeight()
 }
 
 export function keyboardHeight(): number {
@@ -161,79 +72,59 @@ export function keyboardHeight(): number {
 }
 
 /**
- * Fires once per keyboard event — the inset changing, or the pan changing *with* it on a resize.
- * Never fires for a pan the page produced by scrolling; that is `subscribePan`.
+ * The bottom of the usable area, in rect coordinates — the one place the two coordinate spaces
+ * meet, and the only arithmetic in the app that bridges them.
+ *
+ * The visible area ends `--kb-inset` above the anchored shell's bottom in *layout* coordinates, and
+ * `html`'s rect top says where those coordinates begin in *rect* ones: `0` where rects are
+ * layout-relative, `−pan` where the UA reports them against the visual viewport. Read live rather
+ * than cached — a cached copy is wrong in exactly the case that matters, when iOS has panned
+ * without resizing anything.
  */
+export function visibleBottom(): number {
+  const originTop = document.documentElement.getBoundingClientRect().top
+  return originTop + viewportHeight() - keyboardHeight()
+}
+
+/** Fires once per keyboard event, and never for a scroll: nothing here listens to one. */
 export function subscribeKeyboardHeight(listener: () => void): () => void {
-  heightListeners.add(listener)
+  listeners.add(listener)
   return () => {
-    heightListeners.delete(listener)
+    listeners.delete(listener)
   }
 }
 
 /**
- * Fires whenever the published pan changes, including the settled pan after a scroll. Anything
- * that moves the scroll position must take `subscribeKeyboardHeight` instead: a pan the page
- * produced by scrolling is not news about the keyboard, and re-scrolling on one writes over the
- * scroll the user is performing.
+ * A field took or lost focus. `focusin` fires before the keyboard reports itself, so the remembered
+ * height is reserved up front — the reveal needs the scroll range to exist in the same frame it
+ * scrolls, or it cannot lift the field and the platform panning is what fills the gap.
  */
-export function subscribePan(listener: () => void): () => void {
-  panListeners.add(listener)
-  return () => {
-    panListeners.delete(listener)
-  }
-}
-
 export function expectKeyboard(on: boolean) {
   if (expecting === on) return
   expecting = on
-  // The reserve bridges the frames before the keyboard reports itself. There is nothing to bridge
-  // when it is already up and measured.
-  if (on) reserving = measured === 0
-  else reserving = false
-  publish()
-  notifyKeyboard()
-}
-
-function createProbe(): HTMLElement {
-  const node = document.createElement('div')
-  node.dataset.slot = 'viewport-probe'
-  node.setAttribute('aria-hidden', 'true')
-  // 1px, not 0: an empty box is the kind of thing an engine is free to skip laying out, and its
-  // position is the entire measurement.
-  node.style.cssText =
-    'position:fixed;top:0;left:0;width:1px;height:1px;visibility:hidden;pointer-events:none'
-  document.body.append(node)
-  return node
+  // The reserve bridges the frames before the keyboard reports itself. Nothing to bridge when it is
+  // already up and measured, and it must end at the first measurement rather than at blur: iOS
+  // dismisses the keyboard without blurring (swipe-down, `Done`), and a reserve keyed to focus is
+  // republished over that measurement forever, leaving a keyboard-shaped hole in the page.
+  reserving = on && measured === 0
+  if (publish()) notify()
 }
 
 export function startKeyboardViewport(): () => void {
   const root = document.documentElement
   const vv = window.visualViewport
   expected = readStored()
-  probe = createProbe()
 
   const reset = () => {
     measured = 0
     expecting = false
     reserving = false
     published = -1
-    notifiedInset = -1
-    notifiedPan = -1
     appHeight = 0
     appWidth = 0
-    panned = -1
-    compensated = -1
-    padded = -1
-    originTop = 0
-    ridesOff = false
-    probe?.remove()
-    probe = null
     root.style.removeProperty('--kb-inset')
+    root.style.removeProperty('--kb-range')
     root.style.removeProperty('--app-height')
-    root.style.removeProperty('--vv-top')
-    root.style.removeProperty('--pan-comp')
-    root.style.removeProperty('--pan-pad')
     root.removeAttribute('data-keyboard')
   }
 
@@ -249,16 +140,11 @@ export function startKeyboardViewport(): () => void {
 
   if (!vv) {
     anchor()
-    publishTop(0, 0)
-    publishPad(0)
     publish()
     return reset
   }
 
   let frame = 0
-  let settle = 0
-
-  const readPan = () => Math.max(0, Math.round(vv.offsetTop))
 
   const measure = () => {
     frame = 0
@@ -270,8 +156,9 @@ export function startKeyboardViewport(): () => void {
     // tell. iOS ignores user-scalable=no, so it is reachable. Freeze on last unzoomed read.
     if (vv.scale !== 1) return
 
-    const top = readPan()
-    const gap = Math.max(0, appHeight - vv.height - top)
+    // The pan is part of the measurement — it moves part of the covered area out of the layout
+    // viewport — and that is the only thing this module ever reads it for.
+    const gap = Math.max(0, appHeight - vv.height - Math.max(0, Math.round(vv.offsetTop)))
     const next = gap >= KEYBOARD_MIN ? Math.round(gap) : 0
     if (next !== measured) {
       measured = next
@@ -280,71 +167,36 @@ export function startKeyboardViewport(): () => void {
         writeStored(next)
       }
     }
-
-    // The bridge ends at the first keyboard this episode actually measured — after that the
-    // measurement rules, including when it says the keyboard is gone. Without this the reserve is
-    // republished forever for a field that keeps focus while the keyboard is dismissed (the iOS
-    // swipe-down, or `Done` on the accessory bar), which leaves a keyboard-shaped hole in the page.
     if (measured > 0) reserving = false
 
-    // One event, one wake-up: a keyboard that opens changes the inset and the pan in the same
-    // frame, and the reveal must run against both, once.
-    classify(top)
-    const comp = compensationFor(top)
     publish()
-    publishTop(top, comp)
-    publishPad(comp)
-    notifyKeyboard()
+
+    // Unconditionally, not only when the inset moved: a keyboard whose measurement matches the
+    // reserve exactly still moved the pan, and where the UA reports rects against the visual
+    // viewport that is the reveal band moving. Subscribers are idempotent — the reveal writes
+    // nothing when the field is already inside the band, and `useSyncExternalStore` bails out on an
+    // unchanged snapshot — so the only thing a conditional wake-up can buy is a missed reveal.
+    notify()
   }
 
   /**
-   * Every frame the viewport moves, including under a finger. The shell is anchored to the layout
-   * viewport and the screen shows the visual one, so chrome pinned to the top of the screen has to
-   * be re-offset as often as that relationship changes — anything less and the header lags the
-   * scroll and only lands when the finger lifts. Cheap on purpose: no rect is read here, the
-   * classification from the last resize or settle says what the pan means.
+   * `resize` only. `visualViewport` also fires `scroll` on every frame of a rubber-band, and every
+   * fault this module has ever had came from reading one: the height read mid-flight resizes the
+   * scroll range under the finger, and the pan read mid-flight moved chrome with it. There is
+   * nothing left here that a scroll could tell us — the app no longer positions anything from the
+   * pan — so it is not subscribed to at all.
    */
-  const trackPan = () => {
-    if (vv.scale !== 1) return
-    const top = readPan()
-    publishTop(top, compensationFor(top))
-  }
-
-  /**
-   * A scroll carries no news about the keyboard, so it never re-measures the height. What it does
-   * carry is the pan, which the transform follows live (`trackPan`) and the layout does not: the
-   * scrollport's padding and the classification behind it wait for the viewport to stop moving.
-   * Reading rects or rewriting padding on a drag frame is what makes the page you type in scroll
-   * worse than one you don't.
-   */
-  const onScroll = () => {
-    window.clearTimeout(settle)
-    trackPan()
-    settle = window.setTimeout(() => {
-      if (vv.scale !== 1) return
-      const top = readPan()
-      classify(top)
-      const comp = compensationFor(top)
-      publishTop(top, comp)
-      publishPad(comp)
-    }, PAN_SETTLE_MS)
-  }
-
   const onResize = () => {
-    window.clearTimeout(settle)
     if (!frame) frame = window.requestAnimationFrame(measure)
   }
 
   measure()
   vv.addEventListener('resize', onResize)
-  vv.addEventListener('scroll', onScroll)
   window.addEventListener('orientationchange', onResize)
 
   return () => {
     window.cancelAnimationFrame(frame)
-    window.clearTimeout(settle)
     vv.removeEventListener('resize', onResize)
-    vv.removeEventListener('scroll', onScroll)
     window.removeEventListener('orientationchange', onResize)
     reset()
   }

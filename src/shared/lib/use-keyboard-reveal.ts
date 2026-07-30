@@ -1,7 +1,10 @@
 import { useCallback, useRef } from 'react'
-import { expectKeyboard, subscribeKeyboardHeight, visibleBottom } from './keyboard-viewport'
-
-const REVEAL_GAP = 16
+import {
+  expectKeyboard,
+  REVEAL_GAP,
+  subscribeKeyboardHeight,
+  visibleBottom,
+} from './keyboard-viewport'
 
 const NON_TEXT_INPUT = new Set([
   'button',
@@ -43,6 +46,11 @@ export function useKeyboardReveal(): (node: HTMLElement | null) => void {
     detach.current = null
     if (!node) return
 
+    /**
+     * Lands the field between the chrome, clear of the keyboard by `REVEAL_GAP`. Doing this well is
+     * what keeps iOS from panning the visual viewport to do it instead — the pan is not a fact of
+     * the platform, it is what the platform does when the page has not revealed its own field.
+     */
     const reveal = (field: HTMLElement) => {
       const bounds = node.getBoundingClientRect()
       const chrome = node.parentElement?.querySelector('[data-slot="header-bar"]')

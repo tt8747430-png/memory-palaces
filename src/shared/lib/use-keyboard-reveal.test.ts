@@ -13,15 +13,15 @@ describe('revealOffset', () => {
   })
 
   it('scrolls a field out from behind the keyboard, with breathing room', () => {
-    expect(revealOffset(band(0, 500), band(460, 510))).toBe(26)
+    expect(revealOffset(band(0, 500), band(460, 510))).toBe(34)
   })
 
   it('aligns the top of a field taller than the visible band', () => {
-    expect(revealOffset(band(0, 300), band(100, 800))).toBe(84)
+    expect(revealOffset(band(0, 300), band(100, 800))).toBe(76)
   })
 
   it('scrolls back down for a field stranded above the band', () => {
-    expect(revealOffset(band(100, 500), band(40, 90))).toBe(-76)
+    expect(revealOffset(band(100, 500), band(40, 90))).toBe(-84)
   })
 })
 
@@ -153,7 +153,7 @@ describe('useKeyboardReveal', () => {
     act(() => result.current(scroll))
     act(() => field.focus())
 
-    expect(scroll.scrollTop).toBe(16)
+    expect(scroll.scrollTop).toBe(24)
   })
 
   it('measures the band against the anchored shell, not the shrunken layout viewport', async () => {
@@ -179,7 +179,7 @@ describe('useKeyboardReveal', () => {
     })
 
     expect(inset()).toBe('300px')
-    expect(scroll.scrollTop).toBe(16)
+    expect(scroll.scrollTop).toBe(24)
   })
 
   it('keeps the field clear of the header', () => {
@@ -205,12 +205,11 @@ describe('useKeyboardReveal', () => {
     act(() => result.current(scroll))
     act(() => field.focus())
 
-    expect(scroll.scrollTop).toBe(-34)
+    expect(scroll.scrollTop).toBe(-42)
   })
 
   it('subtracts the pan from the band where rects already carry it', async () => {
     localStorage.setItem(STORAGE_KEY, '290')
-    stubRectSpace(-113)
     const viewport = stubViewport({ height: 793, offsetTop: 0 }, 793)
     stop = startKeyboardViewport()
 
@@ -228,12 +227,15 @@ describe('useKeyboardReveal', () => {
     act(() => field.focus())
     expect(scroll.scrollTop).toBe(0)
 
+    // The pan arrives with the keyboard, and this UA reports rects against the visual viewport, so
+    // the layout origin moves with it.
+    stubRectSpace(-113)
     await act(async () => {
       await viewport.move({ height: 390, offsetTop: 113 })
     })
 
     // Visible area is now 390 tall, not 503: a field at 400 sits under the keyboard.
-    expect(scroll.scrollTop).toBe(26)
+    expect(scroll.scrollTop).toBe(34)
   })
 
   it('leaves the pan out of the band where rects are layout-relative', async () => {
