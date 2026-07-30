@@ -2,12 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { registerSW } from 'virtual:pwa-register'
-import {
-  activateWaitingWorker,
-  useSplashDone,
-  watchWaitingWorker,
-  type WorkerLike,
-} from '@/shared/lib'
+import { activateWaitingWorker, watchWaitingWorker, type WorkerLike } from '@/shared/lib'
 
 const UPDATE_CHECK_INTERVAL = 15 * 60 * 1000
 const RELOAD_FALLBACK = 3000
@@ -32,7 +27,6 @@ function registerOnce() {
 
 export function UpdatePrompt() {
   const { t } = useTranslation()
-  const splashDone = useSplashDone()
   const [waiting, setWaiting] = useState<WorkerLike | null>(null)
 
   useEffect(() => {
@@ -85,7 +79,7 @@ export function UpdatePrompt() {
   }, [waiting])
 
   useEffect(() => {
-    if (!waiting || !splashDone) return
+    if (!waiting) return
     const show = () => {
       if (document.hidden) return
       // A fixed id keeps this to a single toast: re-showing updates the one on
@@ -105,7 +99,7 @@ export function UpdatePrompt() {
       document.removeEventListener('visibilitychange', show)
       toast.dismiss(TOAST_ID)
     }
-  }, [waiting, splashDone, t, reload])
+  }, [waiting, t, reload])
 
   return null
 }
