@@ -11,13 +11,15 @@ const STORAGE_KEY = 'mindscape.keyboard-height'
 interface Viewport {
   height: number
   offsetTop: number
+  scale?: number
 }
 
-function stubViewport({ height, offsetTop }: Viewport, layoutHeight: number) {
+function stubViewport({ height, offsetTop, scale = 1 }: Viewport, layoutHeight: number) {
   const listeners = new Map<string, Set<() => void>>()
   const vv = {
     height,
     offsetTop,
+    scale,
     addEventListener: (type: string, fn: () => void) => {
       const set = listeners.get(type) ?? new Set()
       set.add(fn)
@@ -43,6 +45,7 @@ function stubViewport({ height, offsetTop }: Viewport, layoutHeight: number) {
   ) => {
     vv.height = next.height
     vv.offsetTop = next.offsetTop
+    vv.scale = next.scale ?? 1
     if (next.layoutHeight !== undefined) layout.height = next.layoutHeight
     if (next.width !== undefined) layout.width = next.width
     listeners.get(type)?.forEach((fn) => fn())
@@ -94,6 +97,40 @@ describe('keyboard viewport', () => {
 
     expect(inset()).toBe('277px')
     expect(keyboardHeight()).toBe(277)
+  })
+
+  it('does not read a pinch-zoom as a keyboard', async () => {
+    const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
+    stop = startKeyboardViewport()
+
+    // Same geometry a 390px keyboard would produce, but the viewport is zoomed.
+    await viewport.move({ height: 412, offsetTop: 113, scale: 2 })
+
+    expect(inset()).toBe('0px')
+    expect(keyboardHeight()).toBe(0)
+    expect(panOffset()).toBe('0px')
+  })
+
+  it('measures the keyboard again once the pinch-zoom is released', async () => {
+    const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
+    stop = startKeyboardViewport()
+
+    await viewport.move({ height: 412, offsetTop: 113, scale: 2 })
+    await viewport.move({ height: 412, offsetTop: 113 })
+
+    expect(keyboardHeight()).toBe(277)
+    expect(panOffset()).toBe('113px')
+  })
+
+  it('holds the last unzoomed measurement while the user zooms mid-keyboard', async () => {
+    const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
+    stop = startKeyboardViewport()
+
+    await viewport.move({ height: 412, offsetTop: 113 })
+    await viewport.move({ height: 220, offsetTop: 300, scale: 3 })
+
+    expect(keyboardHeight()).toBe(277)
+    expect(panOffset()).toBe('113px')
   })
 
   it('publishes the pan so top chrome can ride back onto the screen', async () => {

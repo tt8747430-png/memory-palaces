@@ -50,6 +50,19 @@ Two rounds of fixes failed because this was inferred rather than checked. It is 
   ** ([WebKit #259770](https://bugs.webkit.org/show_bug.cgi?id=259770)). The `interactive-widget=resizes-visual` in
   `index.html` is inert on iOS; we cannot ask the platform not to pan, and `overlays-content` is not available to opt
   out of the shrink either. It is handled in JS or not at all.
+- **`resizes-visual` is nonetheless declared on purpose, and is load-bearing where it _is_ implemented.** It is the spec
+  default ([css-viewport-1 §interactive-widget](https://drafts.csswg.org/css-viewport-1/#interactive-widget-section)),
+  so it reads as removable boilerplate — it is not. Chrome 108+ and Firefox 132+ honour the keyword, and under
+  `resizes-content` the layout viewport shrinks _with_ the visual one, so `--app-height − visualViewport.height −
+offsetTop` collapses to ~0 and the keyboard is never detected: no `--kb-inset`, no scroll range, no reveal. Stating
+  `resizes-visual` is what keeps Android on the same measurement iOS forces us into. **Do not "modernise" it.**
+- **Pinch-zoom is indistinguishable from the keyboard by geometry alone.** `visualViewport.height` shrinks and
+  `offsetTop` pans for _both_ ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/VisualViewport)); `scale` is the
+  only discriminator. WebKit ignores our `user-scalable=no` for accessibility, so a zoomed reading is reachable on the
+  exact platform this code exists for — a two-finger zoom would otherwise publish a full-height `--kb-inset`,
+  `data-keyboard`, and a header translate with no keyboard on screen. `measure()` therefore returns early while
+  `vv.scale !== 1`, freezing the last unzoomed values; anchoring runs before the guard because pinch-zoom never touches
+  the layout viewport. (Base UI's drawer keyboard provider takes the same guard.)
 
 So the pan is a given. In a Safari tab nothing may compensate for it — the platform already has. In the standalone PWA
 the platform has not, and the only permitted compensation is a `translate` on chrome, which moves no field and so cannot

@@ -4,6 +4,12 @@
   <meta charset="UTF-8" />
   <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
   <link href="/apple-touch-icon.png" rel="apple-touch-icon" />
+  <!-- interactive-widget=resizes-visual: spec default, but load-bearing, not boilerplate.
+       keyboard-viewport.ts measures --app-height − vv.height − offsetTop — valid only while the
+       LAYOUT viewport holds. resizes-content shrinks both (Chrome 108+, FF 132+) → difference ~0
+       → keyboard never detected → no --kb-inset, no scroll range, no reveal. WebKit implements
+       none (webkit.org/b/259770), so this keeps iOS + Android on one path. Do not "modernise".
+       ADR 0002. -->
   <meta
     content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-visual"
     name="viewport"

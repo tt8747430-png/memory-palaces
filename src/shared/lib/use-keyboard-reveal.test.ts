@@ -35,6 +35,8 @@ function stubViewport({ height, offsetTop }: Viewport, layoutHeight: number) {
   const vv = {
     height,
     offsetTop,
+    // Unzoomed — keyboard-viewport suspends measuring while scale !== 1.
+    scale: 1,
     addEventListener: (_type: string, fn: () => void) => listeners.add(fn),
     removeEventListener: (_type: string, fn: () => void) => listeners.delete(fn),
   }

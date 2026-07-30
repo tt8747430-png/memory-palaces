@@ -124,11 +124,17 @@ export function startKeyboardViewport(): () => void {
     resized = false
     const top = Math.max(0, Math.round(vv.offsetTop))
 
+    // Layout viewport — pinch-zoom never touches it. Safe before the guard.
+    if (sizeChanged) anchor()
+
+    // Zoom shrinks vv.height and pans offsetTop exactly like the keyboard; scale is the only
+    // tell. iOS ignores user-scalable=no, so it is reachable. Freeze on last unzoomed read.
+    if (vv.scale !== 1) return
+
     // Only a resize can change how tall the keyboard is. Re-deriving the height
     // from a scroll reads the rubber-band mid-flight and republishes --kb-inset,
     // which resizes the scroll body's padding under the finger.
     if (sizeChanged) {
-      anchor()
       const gap = Math.max(0, appHeight - vv.height - top)
       const next = gap >= KEYBOARD_MIN ? Math.round(gap) : 0
       if (next !== measured) {

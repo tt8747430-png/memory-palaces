@@ -57,7 +57,8 @@
     :root {
         --kb-inset: 0px;
 
-        /* The height the shell is anchored to — the visual viewport, never the layout one. */
+        /* Anchor height = LAYOUT viewport, held while unfocused. Not the visual one — that is
+           what the keyboard shrinks, and not following it is the whole point. */
         --app-height: 100%;
 
         /* How far standalone WebKit has panned the page up to keep the caret visible. */
