@@ -183,6 +183,22 @@ shell, and not iOS — is what reveals the focused field.**
 --kb-inset` still balances against `--app-height`. **`visualViewport top` is now the headline number** — it should read
   `0`, and anything else means the app failed to reveal its own field and the platform stepped in. It exists because
   none of this is observable where the code is written, and three fixes were shipped on inference before it did.
+- **The probe judges the reading, it does not only print it** _(added 2026-07-30, fourth pass)_.
+  `checkViewport()` turns each rule above into one pass/fail line — the pan is `0`, the field is inside the band, the
+  scroll body has the range the reveal needs, `padding-bottom` ≥ `--kb-range`, the inset is not undercounted by a pan,
+  the shell is at `0`, the scroll body has a reveal attached, the page is unzoomed — and `BandDiagram` draws the shell
+  to scale with the band, the keyboard and the focused field in it. **`top+vv+kb = --app-height` is not a health
+  check**: `--kb-inset` is derived from those three, so it balances by construction and only breaks when the pan moved
+  _after_ the last `resize` — read it as "the pan has drifted since we measured", nothing more.
+  **A keyboard is copied as a pair, never as a still.** The probe keeps the last `EPISODE_LIMIT` (5) keyboards as
+  `{ before, after }` — the resting reading the keyboard interrupted, the reading it settled into, and a diff of every
+  row that moved between them. Every number that matters here is a _difference_ (the pan, the inset against the
+  remembered height, the rects, `scrollTop`), so a lone reading forces its reader to guess the other half; the pairing
+  edge is `--kb-inset > 0`, which the reserve raises on `focusin`, so `before` is the last genuinely resting frame.
+  `useKeyboardReveal` marks its scroll node with `data-reveal-scroll` (`REVEAL_SCROLL_ATTR`) so the probe reads the node
+  that owns the reveal instead of guessing at `main` — "the field never moved" and "the field moved a node nobody
+  watches" are otherwise the same reading. **`copy reading` dumps every row and verdict as text**, and is guarded by
+  `keepFieldFocused`, because the reading worth having is the one taken with the keyboard still up.
 - **The same probe floats over any route** (`widgets/dev-probe`, Settings → Developer → _Viewport probe overlay_)
   _(added 2026-07-30)_. A keyboard fault only reproduces on the screen that has it, and a still reading does not show
   it — the header-drag bug lived entirely in how the numbers moved against a finger. The overlay records a per-frame

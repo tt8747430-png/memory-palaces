@@ -1,10 +1,15 @@
 import { useState } from 'react'
 import { cn, keepFieldFocused, setProbeOverlay, useProbeOverlay } from '@/shared/lib'
-import { traceToTsv, useViewportProbe } from '@/widgets/dev-probe'
+import {
+  BandDiagram,
+  CopyButton,
+  episodesToText,
+  PROBE_ACTION,
+  sampleToText,
+  traceToTsv,
+  useViewportProbe,
+} from '@/widgets/dev-probe'
 import { ViewportReadout } from './ViewportReadout'
-
-const ACTION =
-  'rounded-control border border-border px-2 py-1 text-(length:--p-text-tiny) font-semibold text-heading'
 
 /**
  * The viewport probe, readable on the route that is misbehaving. `/dev/kitchen-sink` shows the same
@@ -19,26 +24,16 @@ export function ProbeOverlay() {
 }
 
 function ProbePanel() {
-  const { sample, trace, recording, toggleRecording } = useViewportProbe()
+  const { sample, trace, recording, episodes, episodeCount, toggleRecording } = useViewportProbe()
   const [collapsed, setCollapsed] = useState(false)
   const [bottom, setBottom] = useState(false)
-  const [copied, setCopied] = useState(false)
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(traceToTsv(trace))
-      setCopied(true)
-      window.setTimeout(() => setCopied(false), 1200)
-    } catch {
-      setCopied(false)
-    }
-  }
+  const [rows, setRows] = useState(false)
 
   return (
     <div
       onMouseDown={keepFieldFocused}
       className={cn(
-        'fixed inset-x-2 z-2000000000 rounded-card border border-border bg-card/95 p-2 shadow-elevated backdrop-blur-md',
+        'fixed inset-x-2 z-2000000000 max-h-[70svh] overflow-y-auto overscroll-contain rounded-card border border-border bg-card/95 p-2 shadow-elevated backdrop-blur-md',
         bottom ? 'bottom-2' : 'top-2',
       )}
     >
@@ -46,32 +41,47 @@ function ProbePanel() {
         <span className="mr-auto text-(length:--p-text-tiny) font-bold text-heading">
           viewport probe
         </span>
-        <button type="button" className={ACTION} onClick={() => setBottom((value) => !value)}>
+        <button type="button" className={PROBE_ACTION} onClick={() => setBottom((value) => !value)}>
           {bottom ? '↑' : '↓'}
         </button>
-        <button type="button" className={ACTION} onClick={() => setCollapsed((value) => !value)}>
+        <button
+          type="button"
+          className={PROBE_ACTION}
+          onClick={() => setCollapsed((value) => !value)}
+        >
           {collapsed ? 'show' : 'hide'}
         </button>
-        <button type="button" className={ACTION} onClick={() => setProbeOverlay(false)}>
+        <button type="button" className={PROBE_ACTION} onClick={() => setProbeOverlay(false)}>
           off
         </button>
       </div>
 
       {collapsed ? null : (
         <>
-          <ViewportReadout sample={sample} className="mt-2" />
-          <div className="mt-2 flex items-center gap-1.5">
+          <BandDiagram sample={sample} className="mt-2" />
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            <CopyButton label={`copy ${episodeCount} kb`} text={() => episodesToText(episodes())} />
+            <CopyButton label="copy now" text={() => sampleToText(sample)} />
             <button
               type="button"
-              className={cn(ACTION, recording && 'border-destructive text-(--danger-on-surface)')}
+              className={cn(
+                PROBE_ACTION,
+                recording && 'border-destructive text-(--danger-on-surface)',
+              )}
               onClick={toggleRecording}
             >
               {recording ? 'stop' : 'record'}
             </button>
-            <button type="button" className={ACTION} onClick={() => void copy()}>
-              {copied ? 'copied' : `copy ${trace.length}`}
+            <CopyButton label={`trace ${trace.length}`} text={() => traceToTsv(trace)} />
+            <button
+              type="button"
+              className={cn(PROBE_ACTION, 'ml-auto')}
+              onClick={() => setRows((value) => !value)}
+            >
+              {rows ? 'verdicts' : 'rows'}
             </button>
           </div>
+          <ViewportReadout sample={sample} className="mt-2" rows={rows} />
         </>
       )}
     </div>

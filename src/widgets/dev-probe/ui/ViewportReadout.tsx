@@ -1,54 +1,54 @@
 import { cn } from '@/shared/lib'
-import type { ViewportSample } from '@/widgets/dev-probe'
+import {
+  checkViewport,
+  SAMPLE_ROWS,
+  type ProbeCheck,
+  type ViewportSample,
+} from '../model/viewport-sample'
 
-const ROWS: [keyof ViewportSample, string][] = [
-  ['layoutHeight', 'layout viewport h'],
-  ['layoutWidth', 'layout viewport w'],
-  ['vvHeight', 'visualViewport h'],
-  ['vvOffsetTop', 'visualViewport top'],
-  ['appHeight', '--app-height'],
-  ['kbInset', '--kb-inset'],
-  ['kbRange', '--kb-range'],
-  ['scrollTop', 'scroll body scrollTop'],
-  ['htmlRectTop', 'html rect top'],
-  ['rootRectTop', '#root rect top'],
-  ['visibleBottom', 'reveal band max'],
-  ['headerTop', 'header top'],
-  ['headerBottom', 'header bottom'],
-  ['footerTop', 'footer top'],
-  ['focused', 'focused element'],
-  ['focusedTop', 'focused top'],
-  ['focusedBottom', 'focused bottom'],
-  ['stored', 'remembered kb'],
-]
+const STATE: Record<ProbeCheck['state'], string> = {
+  ok: 'text-(--success-on-surface)',
+  bad: 'text-(--danger-on-surface)',
+  idle: 'text-muted-foreground',
+}
+
+const MARK: Record<ProbeCheck['state'], string> = { ok: '✓', bad: '✗', idle: '–' }
 
 export function ViewportReadout({
   sample,
   className,
+  rows = true,
 }: {
   sample: ViewportSample
   className?: string
+  /** The verdicts are the reading; the raw rows are the evidence, and the overlay hides them. */
+  rows?: boolean
 }) {
-  const sum = sample.vvOffsetTop + sample.vvHeight + parseInt(sample.kbInset || '0', 10)
-  const anchored = parseInt(sample.appHeight || '0', 10)
+  const checks = checkViewport(sample)
 
   return (
-    <dl
-      className={cn(
-        'grid grid-cols-2 gap-x-3 gap-y-1 font-mono text-(length:--p-text-tiny) tabular-nums',
-        className,
-      )}
-    >
-      {ROWS.map(([key, label]) => (
-        <div key={key} className="contents">
-          <dt className="truncate text-muted-foreground">{label}</dt>
-          <dd className="truncate text-heading">{String(sample[key])}</dd>
-        </div>
-      ))}
-      <dt className="truncate text-muted-foreground">top+vv+kb</dt>
-      <dd className={sum === anchored ? 'text-heading' : 'text-(--danger-on-surface)'}>
-        {sum} {sum === anchored ? '= anchored' : `≠ ${anchored}`}
-      </dd>
-    </dl>
+    <div className={cn('font-mono text-(length:--p-text-tiny) tabular-nums', className)}>
+      <ul className="flex flex-col gap-0.5">
+        {checks.map((check) => (
+          <li key={check.id} className={cn('flex gap-1.5', STATE[check.state])}>
+            <span aria-hidden className="w-2 shrink-0 font-bold">
+              {MARK[check.state]}
+            </span>
+            <span className="w-24 shrink-0 font-semibold">{check.label}</span>
+            <span className="min-w-0 flex-1 break-words">{check.detail}</span>
+          </li>
+        ))}
+      </ul>
+      {rows ? (
+        <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 border-t border-border pt-2">
+          {SAMPLE_ROWS.map(([key, label]) => (
+            <div key={key} className="contents">
+              <dt className="truncate text-muted-foreground">{label}</dt>
+              <dd className="truncate text-heading">{String(sample[key])}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : null}
+    </div>
   )
 }

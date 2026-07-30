@@ -32,7 +32,14 @@ export function revealOffset(view: RevealBand, field: RevealBand, gap = REVEAL_G
   return 0
 }
 
-function isTextField(node: EventTarget | null): node is HTMLElement {
+/**
+ * Marks the scroll node the reveal is attached to. The probe reads it rather than guessing at
+ * `main`: "the field never moved" and "the field moved a node nobody is watching" are the same
+ * still reading, and only this attribute tells them apart.
+ */
+export const REVEAL_SCROLL_ATTR = 'data-reveal-scroll'
+
+export function isTextField(node: EventTarget | null): node is HTMLElement {
   if (node instanceof HTMLTextAreaElement) return true
   if (node instanceof HTMLInputElement) return !NON_TEXT_INPUT.has(node.type)
   return node instanceof HTMLElement && node.isContentEditable
@@ -90,10 +97,12 @@ export function useKeyboardReveal(): (node: HTMLElement | null) => void {
 
     node.addEventListener('focusin', onFocusIn)
     node.addEventListener('focusout', onFocusOut)
+    node.setAttribute(REVEAL_SCROLL_ATTR, '')
 
     detach.current = () => {
       node.removeEventListener('focusin', onFocusIn)
       node.removeEventListener('focusout', onFocusOut)
+      node.removeAttribute(REVEAL_SCROLL_ATTR)
       unsubscribe()
       expectKeyboard(false)
     }
