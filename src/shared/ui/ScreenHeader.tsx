@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { ChevronLeft } from 'lucide-react'
-import { IconButton } from './primitives/icon-button'
+import { IconButton } from '@/shared/ui/primitives'
 import { HeaderBar } from './HeaderBar'
 
 export interface ScreenHeaderProps {

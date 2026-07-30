@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import type { SrsState, SrsStatus } from '@/shared/lib'
 import { cn, srsStatus } from '@/shared/lib'
 import { GradeButtons } from '@/shared/ui'
-import type { Grade } from '../model/types'
+import type { Grade } from '@/shared/lib'
 
 export type RemainingTally = Record<SrsStatus, number>
 

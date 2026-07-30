@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import type { Badge, BadgeId } from '@/shared/lib'
 import { BadgeMedallion, TierPips } from '@/shared/ui'
-import { BADGE_META, compactNumber } from '../model/badge-meta'
+import { BADGE_META, compactNumber } from '@/widgets/rewards'
 import { RewardGrid, RewardTile } from './RewardGrid'
 
 export interface BadgeGridProps {

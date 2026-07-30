@@ -1,5 +1,5 @@
 import { Bell, BellRing } from 'lucide-react'
-import { IconButton } from './primitives/icon-button'
+import { IconButton } from '@/shared/ui/primitives'
 
 export interface NotificationBellProps {
   unreadCount: number

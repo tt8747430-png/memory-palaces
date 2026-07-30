@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { ChevronRight } from 'lucide-react'
 import { type Badge, cn, EASE_OUT, milestonePercent } from '@/shared/lib'
 import { BadgeMedallion, cardSurface, Progress } from '@/shared/ui'
-import { BADGE_META, compactNumber } from '../model/badge-meta'
+import { BADGE_META, compactNumber } from '@/widgets/rewards'
 
 export interface NextMilestoneCardProps {
   badge: Badge

@@ -3,7 +3,7 @@ import { cleanup, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { Badge } from '@/shared/lib'
 import { renderWithProviders } from '@/shared/test/render-with-providers'
-import { NextMilestoneCard } from './NextMilestoneCard'
+import { NextMilestoneCard } from '@/widgets/rewards'
 
 afterEach(cleanup)
 

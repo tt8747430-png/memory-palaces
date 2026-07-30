@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import type { Achievement, AchievementId } from '@/shared/lib'
 import { BadgeMedallion } from '@/shared/ui'
-import { ACHIEVEMENT_META } from '../model/achievement-meta'
+import { ACHIEVEMENT_META } from '@/widgets/rewards'
 import { RewardGrid, RewardTile } from './RewardGrid'
 
 export interface AchievementGridProps {

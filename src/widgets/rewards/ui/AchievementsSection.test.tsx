@@ -3,7 +3,7 @@ import { cleanup, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { Achievement } from '@/shared/lib'
 import { renderWithProviders } from '@/shared/test/render-with-providers'
-import { AchievementsSection } from './AchievementsSection'
+import { AchievementsSection } from '@/widgets/rewards'
 
 afterEach(cleanup)
 

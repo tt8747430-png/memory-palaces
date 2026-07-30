@@ -27,8 +27,5 @@ if (typeof globalThis.localStorage === 'undefined') {
 
 if (typeof globalThis.ResizeObserver === 'undefined') {
   globalThis.ResizeObserver = class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
   } as unknown as typeof ResizeObserver
 }

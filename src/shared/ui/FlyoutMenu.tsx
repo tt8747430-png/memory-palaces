@@ -1,6 +1,6 @@
 import { type ReactElement } from 'react'
 import { Check, MoreVertical } from 'lucide-react'
-import { IconButton, type IconButtonSize, type IconButtonVariant } from './primitives/icon-button'
+import { IconButton, type IconButtonSize, type IconButtonVariant } from '@/shared/ui/primitives'
 import {
   DropdownMenu,
   DropdownMenuContent,

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders } from '@/shared/test/render-with-providers'
-import { QuizOptionsSheet } from './QuizOptionsSheet'
+import { QuizOptionsSheet } from '@/widgets/quiz'
 
 afterEach(cleanup)
 

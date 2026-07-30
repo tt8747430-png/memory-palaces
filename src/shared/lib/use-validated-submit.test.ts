@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { type FieldErrors, useValidatedSubmit } from './use-validated-submit'
+import * as React from 'react'
 
 const submitEvent = () => ({ preventDefault: vi.fn() }) as unknown as React.SyntheticEvent
 

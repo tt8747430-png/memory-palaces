@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders } from '@/shared/test/render-with-providers'
-import { IconButton } from './icon-button'
+import { IconButton } from '@/shared/ui'
 
 afterEach(cleanup)
 

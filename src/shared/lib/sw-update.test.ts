@@ -18,10 +18,6 @@ class FakeWorker {
     this.listeners.delete(listener)
   }
 
-  postMessage(message: unknown) {
-    this.posted.push(message)
-  }
-
   emitStateChange() {
     for (const listener of [...this.listeners]) listener()
   }

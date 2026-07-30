@@ -7,6 +7,7 @@ import {
   type FieldSep,
   type PasteParsing,
 } from '../model/use-paste-parsing'
+import * as React from 'react'
 
 export function SeparatorSettings({ parsing }: { parsing: PasteParsing }) {
   const { t } = useTranslation()
