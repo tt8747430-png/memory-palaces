@@ -26,6 +26,11 @@ Non-trivial plan → suggest a grill first (user runs it): `/grill-me`, `/grill-
 **Exception — persisted data:** RxDB schemas + anything on-device need real back-compat → migrate
 (`app/persistence/schemas.ts`), never orphan stored decks/cards/reviews.
 
+**Staged is deliberate — never restore it.** Anything in the git index was put there on purpose. A staged deletion is a
+decision, not damage: don't `git checkout`/`git restore` it, don't re-add the content, don't "fix" it as an
+inconsistency. That includes content other files still reference — repoint the reference instead. If staged work looks
+wrong, say so and ask; never undo it unprompted. Same for `git stash`, `git reset` and force-overwrites of user edits.
+
 By kind:
 
 - **Refactor** — ruthless, behavior-preserving. Rip out legacy, adapt to current architecture, decompose monoliths.

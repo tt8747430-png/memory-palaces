@@ -1,12 +1,5 @@
 # ADR 0001 — Drag reorders, never re-parents; one drag engine; real cards in every stack
 
-- **Status:** accepted · **Date:** 2026-07-26
-- **Supersedes:** the flattened-tree drag-nest design (a horizontal offset chose a nesting depth)
-
-Four `DndContext` implementations had drifted apart in feel, the library's drag meant two things at once, and three
-surfaces drew a "stack of cards" as a blank rectangle. The operational checklist is
-[CODE_STYLE §10](../CODE_STYLE.md).
-
 ## Decision
 
 ### 1. A drag only ever reorders
