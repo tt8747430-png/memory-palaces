@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { isTextField, revealOffset, visibleBottom, REVEAL_SCROLL_ATTR } from '@/shared/lib'
+import {
+  isTextField,
+  keyboardIsMeasured,
+  revealOffset,
+  visibleBottom,
+  REVEAL_SCROLL_ATTR,
+} from '@/shared/lib'
 
 export interface ViewportSample {
   route: string
@@ -12,6 +18,8 @@ export interface ViewportSample {
   appHeight: string
   kbInset: string
   kbRange: string
+  /** `false` while `--kb-inset` is the remembered height standing in for a measurement. */
+  kbMeasured: boolean
   keyboardAttr: boolean
   scroller: string
   scrollTop: number
@@ -89,6 +97,7 @@ export function readViewport(): ViewportSample {
     appHeight: style.getPropertyValue('--app-height') || '(unset)',
     kbInset: style.getPropertyValue('--kb-inset') || '(unset)',
     kbRange: style.getPropertyValue('--kb-range') || '(unset)',
+    kbMeasured: keyboardIsMeasured(),
     keyboardAttr: root.hasAttribute('data-keyboard'),
     scroller: scroller
       ? `${scroller.tagName.toLowerCase()}${attached ? ' (reveal)' : ' (no reveal)'}`
@@ -136,7 +145,11 @@ export function checkViewport(sample: ViewportSample): ProbeCheck[] {
   const stored = Number.parseInt(sample.stored, 10)
   const sum = sample.vvOffsetTop + sample.vvHeight + inset
   const slack = sample.scrollMax - sample.scrollTop
-  const open = inset > 0
+  /** The keyboard's own height, in screen space — what the inset would be with no pan under it. */
+  const keyboard = app - sample.vvHeight
+  // The attribute, not the inset: a keyboard iOS has panned nearly out of the layout viewport is up,
+  // and covering almost none of the shell.
+  const open = sample.keyboardAttr
   const delta = sample.revealDelta
   const available = delta > 0 ? slack : sample.scrollTop
 
@@ -186,25 +199,33 @@ export function checkViewport(sample: ViewportSample): ProbeCheck[] {
           : `padding-bottom ${sample.padBottom} < --kb-range ${range}: this scroll body has no keyboard range`,
     },
     {
+      // Not "is the inset large enough" — an inset below the remembered height is *correct* under a
+      // pan, and comparing the two is what let the fault below read as clean. The only question a
+      // still reading cannot answer for itself: is this a measurement at all, or the reserve?
       id: 'inset',
       label: 'keyboard measured',
-      state: !open ? 'idle' : !Number.isFinite(stored) || inset >= stored ? 'ok' : 'bad',
+      state: !open ? 'idle' : sample.kbMeasured ? 'ok' : 'bad',
       detail: !open
         ? 'keyboard closed'
-        : !Number.isFinite(stored)
-          ? `${inset}px, nothing remembered yet`
-          : inset >= stored
-            ? `${inset}px, clean against the remembered ${stored}px`
-            : `${inset}px vs remembered ${stored}px: measured during a ${stored - inset}px pan`,
+        : sample.kbMeasured
+          ? sample.vvOffsetTop === 0
+            ? `${inset}px measured`
+            : `${inset}px of a ${keyboard}px keyboard: the other ${sample.vvOffsetTop}px is panned out of the layout viewport`
+          : `${inset}px reserved${Number.isFinite(stored) ? ` from the remembered ${stored}px` : ''}: the keyboard never reported itself, so the reveal band sits ${sum - app}px above the screen`,
     },
     {
+      // This is a health check, and the only one that catches a live reserve: `--kb-inset` balances
+      // by construction *while it is a measurement*, and the case worth catching is the one where it
+      // is not. (ADR 0002 said the opposite until a device reading proved otherwise.)
       id: 'balance',
       label: 'top+vv+kb',
       state: sum === app ? 'ok' : 'bad',
       detail:
         sum === app
           ? `${sum} = --app-height`
-          : `${sum} ≠ ${app}: the pan moved ${sum - app}px since the last measurement`,
+          : !sample.kbMeasured
+            ? `${sum} ≠ ${app}: --kb-inset is the reserve, and the keyboard under it covers ${Math.max(0, keyboard - sample.vvOffsetTop)}px`
+            : `${sum} ≠ ${app}: read ${sum - app}px mid-resize — --kb-inset is a frame behind visualViewport`,
     },
     {
       id: 'chrome',
@@ -246,6 +267,7 @@ export const SAMPLE_ROWS: [keyof ViewportSample, string][] = [
   ['appHeight', '--app-height'],
   ['kbInset', '--kb-inset'],
   ['kbRange', '--kb-range'],
+  ['kbMeasured', '--kb-inset measured'],
   ['keyboardAttr', 'data-keyboard'],
   ['stored', 'remembered kb'],
   ['scroller', 'scroll body'],
@@ -300,8 +322,15 @@ export function sampleToText(sample: ViewportSample): string {
 export interface KeyboardEpisode {
   /** The last reading taken with no keyboard and no reserve. `null` if the probe started mid-open. */
   before: ViewportSample | null
+  /**
+   * The reading the keyboard **settled** into — the last open frame whose numbers agree with each
+   * other. Emphatically not the last open frame: iOS dismisses a keyboard over several frames, the
+   * probe samples faster than the module re-measures, and the final frame with a non-zero inset is
+   * one frame into the close — a restored `visualViewport` against an inset from the frame before
+   * it. Four of the first five device readings were that frame, and every verdict on them was noise.
+   */
   after: ViewportSample
-  /** Still on screen: `after` is the live reading rather than the one it closed on. */
+  /** Still on screen: `after` is this keyboard's own reading rather than the one it closed on. */
   live: boolean
 }
 
@@ -309,7 +338,18 @@ export interface KeyboardEpisode {
 export const EPISODE_LIMIT = 5
 
 export function isKeyboardOpen(sample: ViewportSample): boolean {
-  return px(sample.kbInset) > 0
+  return sample.keyboardAttr
+}
+
+/**
+ * Whether a reading's three viewport numbers agree. They are one identity — pan + visual viewport +
+ * inset = the anchored shell — so a reading that breaks it was taken either mid-resize, with a fresh
+ * `visualViewport` against an inset a frame behind it, or on a reserve that never became a
+ * measurement. Neither is a reading of the keyboard that was up.
+ */
+export function isSettled(sample: ViewportSample): boolean {
+  const app = px(sample.appHeight) || sample.layoutHeight
+  return sample.vvOffsetTop + sample.vvHeight + px(sample.kbInset) === app
 }
 
 function diffLines(before: ViewportSample, after: ViewportSample): string[] {
@@ -422,6 +462,7 @@ export function useViewportProbe(): ViewportProbe {
   const resting = useRef<ViewportSample | null>(null)
   const opened = useRef<ViewportSample | null>(null)
   const latest = useRef<ViewportSample | null>(null)
+  const settled = useRef<ViewportSample | null>(null)
   const [episodeCount, setEpisodeCount] = useState(0)
 
   useEffect(() => {
@@ -442,7 +483,9 @@ export function useViewportProbe(): ViewportProbe {
         opened.current = resting.current
         setEpisodeCount(Math.min(sealed.current.length + 1, EPISODE_LIMIT))
       } else if (!nowOpen && open) {
-        const after = latest.current
+        // The settled frame if there was one, and the last frame otherwise: a keyboard reported
+        // badly still beats a keyboard dropped, and "nothing ever settled" is itself the reading.
+        const after = settled.current ?? latest.current
         if (after) {
           sealed.current = [
             ...sealed.current,
@@ -452,10 +495,13 @@ export function useViewportProbe(): ViewportProbe {
         setEpisodeCount(sealed.current.length)
         opened.current = null
         latest.current = null
+        settled.current = null
       }
       open = nowOpen
-      if (nowOpen) latest.current = next
-      else resting.current = next
+      if (nowOpen) {
+        latest.current = next
+        if (isSettled(next)) settled.current = next
+      } else resting.current = next
 
       frame = window.requestAnimationFrame(tick)
     }
@@ -465,9 +511,8 @@ export function useViewportProbe(): ViewportProbe {
   }, [])
 
   const episodes = useCallback((): KeyboardEpisode[] => {
-    const live = latest.current
-      ? [{ before: opened.current, after: latest.current, live: true }]
-      : []
+    const after = settled.current ?? latest.current
+    const live = after ? [{ before: opened.current, after, live: true }] : []
     return [...sealed.current, ...live].slice(-EPISODE_LIMIT)
   }, [])
 

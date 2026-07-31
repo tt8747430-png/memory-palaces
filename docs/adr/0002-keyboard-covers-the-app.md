@@ -109,8 +109,18 @@ shell, and not iOS — is what reveals the focused field.**
 - **The reveal band is otherwise built from rects only** — the scrollport, `[data-slot="header-bar"]`'s bottom,
   `[data-slot="footer-bar"]`'s top — so the field lands between the chrome, never under either, with no space conversion
   to get wrong.
-- `useKeyboardInset` publishes exactly one number, `--kb-inset`, thresholded at 120px so an accessory bar alone never
-  reads as a keyboard. It is the single `visualViewport` subscriber; `useVirtualKeyboard` reads the same measurement
+- **`useKeyboardInset` measures two things, and only one of them is `--kb-inset`** _(amended 2026-07-31, from a device
+  reading)_. The keyboard's own height is `--app-height − visualViewport.height`, in screen space. `--kb-inset` is that
+  **minus the pan**, in layout space — how much of the anchored shell's bottom is still covered, which is the only
+  question `visibleBottom()` asks. The 120px threshold separates a keyboard from a lone accessory bar, so it is applied
+  to the **height**, never to the pan-reduced inset. Applied to the inset it is a category error with teeth: a keyboard
+  panned by more than `keyboard − 120` measures as zero, so `reserving` never clears (it ends at the first measurement,
+  by design), `--kb-inset` stays the remembered _full_ keyboard for the entire episode, and `visibleBottom()` returns a
+  pan's worth too little — the reveal band lands above the top of the screen and lifts every field out of sight, which
+  is exactly the state iOS pans to fix. Measured on device (2026-07-31, iOS 26, standalone): shell `793`, visual
+  viewport `390`, pan `289` → a 403px keyboard measured as `114`, six pixels under the floor, and the band sat 348px
+  high for the whole keyboard. `data-keyboard` follows the **height** too, so bottom chrome still unsticks when the pan
+  leaves nothing covered. It is the single `visualViewport` subscriber; `useVirtualKeyboard` reads the same measurement
   instead of taking a second subscription.
 - **The height is news about the keyboard; a scroll frame is news about nothing** _(amended 2026-07-30, third pass —
   this bullet has now said three different things, which is itself the lesson)_. `visualViewport` fires `scroll` on
@@ -160,12 +170,15 @@ shell, and not iOS — is what reveals the focused field.**
   `--app-bottom-inset` is `max(0.75rem, env(safe-area-inset-bottom))`. Subtracting `--kb-inset` only makes bottom chrome
   twitch on keyboard open: nothing bottom-anchored is still on screen to save room for, because the footer dock has gone
   `static` and `AppNav` is hidden.
-- The **largest** measured keyboard height is persisted to `localStorage`. `focusin` fires _before_ the keyboard reports
-  itself, so the reveal reserves the remembered height up front — and **the real measurement then replaces it outright,
-  never `max()`ed with it**. The reserve is a bridge across one frame, not a floor: a measurement taken while iOS has
-  panned is legitimately smaller than the same keyboard measured unpanned (the pan moves part of the covered area out of
-  the layout viewport), so clamping to the remembered height leaves a dead band the height of the pan under the footer.
-  Storing the largest is what keeps the one-frame reserve from undershooting a full keyboard.
+- The **largest** measured keyboard height is persisted to `localStorage` — the height, **not the inset** _(amended
+  2026-07-31)_. `focusin` fires _before_ the keyboard reports itself, so the reveal reserves the remembered height up
+  front — and **the real measurement then replaces it outright, never `max()`ed with it**. The reserve is a bridge
+  across one frame, not a floor: a measurement taken while iOS has panned is legitimately smaller than the same keyboard
+  measured unpanned (the pan moves part of the covered area out of the layout viewport), so clamping to the remembered
+  height leaves a dead band the height of the pan under the footer. Storing the largest is what keeps the one-frame
+  reserve from undershooting a full keyboard — and it must be the keyboard's own height for the same reason the
+  threshold is: the reserve stands in for a keyboard measured before anything has panned, so remembering a panned inset
+  under-reserves every later focus by the size of that pan.
 
 ## Consequences
 
@@ -185,16 +198,28 @@ shell, and not iOS — is what reveals the focused field.**
   none of this is observable where the code is written, and three fixes were shipped on inference before it did.
 - **The probe judges the reading, it does not only print it** _(added 2026-07-30, fourth pass)_.
   `checkViewport()` turns each rule above into one pass/fail line — the pan is `0`, the field is inside the band, the
-  scroll body has the range the reveal needs, `padding-bottom` ≥ `--kb-range`, the inset is not undercounted by a pan,
-  the shell is at `0`, the scroll body has a reveal attached, the page is unzoomed — and `BandDiagram` draws the shell
-  to scale with the band, the keyboard and the focused field in it. **`top+vv+kb = --app-height` is not a health
-  check**: `--kb-inset` is derived from those three, so it balances by construction and only breaks when the pan moved
-  _after_ the last `resize` — read it as "the pan has drifted since we measured", nothing more.
+  scroll body has the range the reveal needs, `padding-bottom` ≥ `--kb-range`, the inset is a measurement rather than a
+  reserve, the shell is at `0`, the scroll body has a reveal attached, the page is unzoomed — and `BandDiagram` draws
+  the shell to scale with the band, the keyboard and the focused field in it.
+  **`top+vv+kb = --app-height` _is_ a health check, and it is the one that catches a live reserve** _(amended
+  2026-07-31; this said the exact opposite, and the one device reading that mattered went unread because of it)_. It
+  balances by construction only while `--kb-inset` is a **measurement**, so the two states it breaks in are the two
+  worth catching: a reserve that never became one, and a sample read mid-resize.
+  **The inset check no longer compares the inset to the remembered height** _(amended 2026-07-31)_ — under a pan a
+  smaller inset is _correct_, so that comparison called healthy measurements faults and called a live reserve clean. It
+  asks the only question a still reading cannot answer for itself (`keyboardIsMeasured()`: measurement or reserve), and
+  no verdict names a pan that the same sample reports as `0`.
   **A keyboard is copied as a pair, never as a still.** The probe keeps the last `EPISODE_LIMIT` (5) keyboards as
   `{ before, after }` — the resting reading the keyboard interrupted, the reading it settled into, and a diff of every
   row that moved between them. Every number that matters here is a _difference_ (the pan, the inset against the
   remembered height, the rects, `scrollTop`), so a lone reading forces its reader to guess the other half; the pairing
-  edge is `--kb-inset > 0`, which the reserve raises on `focusin`, so `before` is the last genuinely resting frame.
+  edge is `data-keyboard`, which the reserve raises on `focusin`, so `before` is the last genuinely resting frame.
+  **`after` is the last open frame whose numbers agree with each other (`isSettled`), never simply the last open frame**
+  _(added 2026-07-31)_. iOS dismisses a keyboard over several frames and the module re-measures behind a
+  `requestAnimationFrame`, so the final frame carrying an inset is one frame into the close: a restored `visualViewport`
+  against an inset that has not been recomputed yet. Four of the first five device readings were that frame — a
+  full-height viewport, nothing focused, and an inset from mid-animation — and every verdict on all four was noise. When
+  no frame ever settled the last one is kept anyway, because "nothing settled" is itself the reading.
   `useKeyboardReveal` marks its scroll node with `data-reveal-scroll` (`REVEAL_SCROLL_ATTR`) so the probe reads the node
   that owns the reveal instead of guessing at `main` — "the field never moved" and "the field moved a node nobody
   watches" are otherwise the same reading. **`copy reading` dumps every row and verdict as text**, and is guarded by

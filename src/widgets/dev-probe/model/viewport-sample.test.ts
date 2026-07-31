@@ -3,6 +3,7 @@ import {
   checkViewport,
   episodesToText,
   isKeyboardOpen,
+  isSettled,
   sampleToText,
   type KeyboardEpisode,
   type ProbeCheck,
@@ -21,6 +22,7 @@ const RESTING: ViewportSample = {
   appHeight: '793px',
   kbInset: '0px',
   kbRange: '0px',
+  kbMeasured: false,
   keyboardAttr: false,
   scroller: 'main (reveal)',
   scrollTop: 105,
@@ -62,14 +64,17 @@ describe('checkViewport', () => {
     expect(verdict(checks, 'field').state).toBe('idle')
   })
 
-  it('names the pan, the unrevealed field and the undercounted keyboard together', () => {
-    // The reading from the device: iOS panned 223 and the inset lost exactly that much.
+  it('names the pan and the unrevealed field, and passes the inset the pan shrank', () => {
+    // The reading from the device: iOS panned 223 of a 403px keyboard, leaving 180px of the shell
+    // covered. That inset is *correct* — comparing it to the remembered full height instead is what
+    // made the probe call a healthy measurement a fault, and a live reserve clean.
     const checks = checkViewport(
       sample({
         vvHeight: 390,
         vvOffsetTop: 223,
         kbInset: '180px',
         kbRange: '204px',
+        kbMeasured: true,
         keyboardAttr: true,
         htmlRectTop: -223,
         rootRectTop: -223,
@@ -92,20 +97,51 @@ describe('checkViewport', () => {
     expect(verdict(checks, 'pan').detail).toContain('223px')
     expect(verdict(checks, 'field').state).toBe('bad')
     expect(verdict(checks, 'field').detail).toContain('2363px below')
-    expect(verdict(checks, 'inset').state).toBe('bad')
-    expect(verdict(checks, 'inset').detail).toContain('223px pan')
+    expect(verdict(checks, 'inset').state).toBe('ok')
+    expect(verdict(checks, 'inset').detail).toContain('223px is panned out')
     expect(verdict(checks, 'chrome').state).toBe('bad')
-    // Derived from the inset, so it still balances — the check is worth nothing here on purpose.
+    // Pan + visual viewport + inset is the whole shell, so a measurement always balances.
     expect(verdict(checks, 'balance').state).toBe('ok')
   })
 
-  it('reports a pan that arrived after the last measurement as a balance drift', () => {
+  it('catches the reserve the keyboard never replaced, and says how far off the band is', () => {
+    // The device reading this whole check exists for: a 403px keyboard under a 289px pan measured
+    // 114, which the accessory-bar floor rejected, so `--kb-inset` stayed the remembered 462 for the
+    // entire keyboard and `visibleBottom()` put the reveal band 348px above the screen.
+    const checks = checkViewport(
+      sample({
+        vvHeight: 390,
+        vvOffsetTop: 289,
+        kbInset: '462px',
+        kbRange: '486px',
+        kbMeasured: false,
+        keyboardAttr: true,
+        htmlRectTop: -289,
+        rootRectTop: -289,
+        visibleBottom: 42,
+        bandTop: -108,
+        bandBottom: 42,
+        padBottom: 486,
+        focused: 'input',
+        fieldInScroller: true,
+        stored: '462',
+      }),
+    )
+    expect(verdict(checks, 'inset').state).toBe('bad')
+    expect(verdict(checks, 'inset').detail).toContain('reserved from the remembered 462px')
+    expect(verdict(checks, 'inset').detail).toContain('348px above the screen')
+    expect(verdict(checks, 'balance').state).toBe('bad')
+    expect(verdict(checks, 'balance').detail).toContain('covers 114px')
+  })
+
+  it('reports a reading taken mid-resize as a balance drift, without blaming a pan for it', () => {
     const checks = checkViewport(
       sample({
         vvHeight: 390,
         vvOffsetTop: 11,
         kbInset: '403px',
         kbRange: '427px',
+        kbMeasured: true,
         keyboardAttr: true,
         htmlRectTop: -11,
         rootRectTop: -11,
@@ -123,9 +159,21 @@ describe('checkViewport', () => {
       }),
     )
     expect(verdict(checks, 'balance').state).toBe('bad')
-    expect(verdict(checks, 'balance').detail).toContain('11px')
+    expect(verdict(checks, 'balance').detail).toContain('11px mid-resize')
     expect(verdict(checks, 'inset').state).toBe('ok')
     expect(verdict(checks, 'field').detail).toContain('207px above')
+  })
+
+  it('does not call a straddled resize a pan when the reading says the pan is zero', () => {
+    // Four of the first five device readings: the viewport is back to full height and `--kb-inset`
+    // is a frame behind it. Every verdict that named a pan there was naming one the sample denies.
+    const checks = checkViewport(
+      sample({ kbInset: '403px', kbRange: '427px', kbMeasured: true, keyboardAttr: true }),
+    )
+    expect(verdict(checks, 'pan').state).toBe('ok')
+    expect(verdict(checks, 'inset').detail).not.toContain('pan')
+    expect(verdict(checks, 'balance').state).toBe('bad')
+    expect(verdict(checks, 'balance').detail).not.toContain('pan')
   })
 
   it('fails the scroll range when the body is clamped short of the reveal', () => {
@@ -133,6 +181,7 @@ describe('checkViewport', () => {
       kbInset: '403px',
       kbRange: '427px',
       vvHeight: 390,
+      kbMeasured: true,
       keyboardAttr: true,
       fieldInScroller: true,
       focused: 'input',
@@ -147,7 +196,13 @@ describe('checkViewport', () => {
 
   it('fails the padding when the scroll body carries no keyboard range', () => {
     const checks = checkViewport(
-      sample({ kbInset: '403px', kbRange: '427px', keyboardAttr: true, padBottom: 12 }),
+      sample({
+        kbInset: '403px',
+        kbRange: '427px',
+        kbMeasured: true,
+        keyboardAttr: true,
+        padBottom: 12,
+      }),
     )
     expect(verdict(checks, 'padding').state).toBe('bad')
     expect(verdict(checks, 'padding').detail).toContain('no keyboard range')
@@ -164,9 +219,29 @@ describe('checkViewport', () => {
 })
 
 describe('isKeyboardOpen', () => {
-  it('reads the published inset, so the reserve counts as open', () => {
+  it('reads the attribute, so the reserve counts and a fully panned keyboard is not lost', () => {
     expect(isKeyboardOpen(RESTING)).toBe(false)
-    expect(isKeyboardOpen(sample({ kbInset: '403px' }))).toBe(true)
+    expect(isKeyboardOpen(sample({ kbInset: '403px', keyboardAttr: true }))).toBe(true)
+    // The pan can leave nothing of the shell covered; the keyboard is still up.
+    expect(isKeyboardOpen(sample({ kbInset: '0px', keyboardAttr: true }))).toBe(true)
+  })
+})
+
+describe('isSettled', () => {
+  it('holds when the pan, the visual viewport and the inset add up to the shell', () => {
+    expect(isSettled(RESTING)).toBe(true)
+    expect(
+      isSettled(sample({ vvHeight: 390, vvOffsetTop: 289, kbInset: '114px', kbMeasured: true })),
+    ).toBe(true)
+  })
+
+  it('rejects the frame a keyboard is dismissed on, and a reserve nothing measured', () => {
+    // Viewport restored, inset a frame behind it.
+    expect(isSettled(sample({ vvHeight: 793, kbInset: '403px', keyboardAttr: true }))).toBe(false)
+    // The reserve, with the real keyboard under it 348px smaller.
+    expect(
+      isSettled(sample({ vvHeight: 390, vvOffsetTop: 289, kbInset: '462px', keyboardAttr: true })),
+    ).toBe(false)
   })
 })
 
@@ -176,6 +251,7 @@ describe('episodesToText', () => {
     vvOffsetTop: 223,
     kbInset: '180px',
     kbRange: '204px',
+    kbMeasured: true,
     keyboardAttr: true,
     htmlRectTop: -223,
     rootRectTop: -223,

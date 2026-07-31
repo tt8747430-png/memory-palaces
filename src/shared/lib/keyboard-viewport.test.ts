@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   expectKeyboard,
   keyboardHeight,
+  keyboardIsMeasured,
   REVEAL_GAP,
   startKeyboardViewport,
   subscribeKeyboardHeight,
@@ -200,6 +201,51 @@ describe('keyboard viewport', () => {
     expect(keyboardHeight()).toBe(0)
   })
 
+  it('measures a keyboard the pan has left less than an accessory bar of', async () => {
+    // The device reading (iOS 26, standalone): a 403px keyboard under a 289px pan leaves 114px of
+    // the shell covered. Thresholding *that* rejects the keyboard outright — and since the reserve
+    // only ends at a measurement, the app then runs the whole keyboard on the remembered height.
+    localStorage.setItem(STORAGE_KEY, '462')
+    const viewport = stubViewport({ height: 793, offsetTop: 0 }, 793)
+    stop = startKeyboardViewport()
+    expectKeyboard(true)
+    expect(keyboardIsMeasured()).toBe(false)
+
+    await viewport.move({ height: 390, offsetTop: 289 })
+
+    expect(keyboardIsMeasured()).toBe(true)
+    expect(keyboardHeight()).toBe(114)
+    expect(document.documentElement.hasAttribute('data-keyboard')).toBe(true)
+  })
+
+  it('puts the reveal band on the screen edge under that pan, not a keyboard above it', async () => {
+    localStorage.setItem(STORAGE_KEY, '462')
+    const viewport = stubViewport({ height: 793, offsetTop: 0 }, 793)
+    stop = startKeyboardViewport()
+    expectKeyboard(true)
+
+    await viewport.move({ height: 390, offsetTop: 289 })
+    stubOrigin(-289)
+
+    // The visible area *is* the visual viewport once the rects carry the pan. On the reserve this
+    // read 42 — 348px above the screen — so the reveal lifted every field clean off the top and iOS
+    // kept panning to reveal what the app had just scrolled away.
+    expect(visibleBottom()).toBe(390)
+  })
+
+  it('keeps the document marked when the pan leaves nothing of the keyboard to cover', async () => {
+    const viewport = stubViewport({ height: 793, offsetTop: 0 }, 793)
+    stop = startKeyboardViewport()
+
+    await viewport.move({ height: 390, offsetTop: 403 })
+
+    // Nothing of the shell is covered, but a keyboard is still on screen: the footer dock must stay
+    // `static` and the nav hidden, or WebKit floats them across the middle of the keyboard.
+    expect(keyboardHeight()).toBe(0)
+    expect(keyboardIsMeasured()).toBe(true)
+    expect(document.documentElement.hasAttribute('data-keyboard')).toBe(true)
+  })
+
   it('remembers the measured height so the next launch can reserve room up front', async () => {
     const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
     stop = startKeyboardViewport()
@@ -272,6 +318,17 @@ describe('keyboard viewport', () => {
     await viewport.move({ height: 466, offsetTop: 150 })
 
     expect(localStorage.getItem(STORAGE_KEY)).toBe('336')
+  })
+
+  it('remembers the keyboard, not the part of it the pan left in the layout viewport', async () => {
+    const viewport = stubViewport({ height: 793, offsetTop: 0 }, 793)
+    stop = startKeyboardViewport()
+
+    // The reserve stands in for a keyboard measured before iOS has panned anything, so a keyboard
+    // only ever seen under a pan must still be remembered at its full height.
+    await viewport.move({ height: 390, offsetTop: 289 })
+
+    expect(localStorage.getItem(STORAGE_KEY)).toBe('403')
   })
 
   it('marks the document while the keyboard is up so footer docks can unstick', async () => {

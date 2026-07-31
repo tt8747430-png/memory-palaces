@@ -36,7 +36,7 @@ export {
 export { useAutoSelect } from './use-auto-select'
 export { useDevMode, setDevMode } from './dev-mode'
 export { useProbeOverlay, setProbeOverlay } from './probe-overlay'
-export { visibleBottom, REVEAL_GAP } from './keyboard-viewport'
+export { visibleBottom, keyboardIsMeasured, REVEAL_GAP } from './keyboard-viewport'
 export { useKeyboardInset } from './use-keyboard-inset'
 export {
   isTextField,

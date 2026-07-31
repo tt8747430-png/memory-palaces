@@ -208,8 +208,17 @@ dev-only **`/dev/kitchen-sink`**.
 - **Anchor the shell, and measure against the anchor.** `#root` is `height: var(--app-height)` — the layout viewport
   sampled while no field is focused, re-anchored only on rotation or growth. Every keyboard number is derived from it,
   never from live `clientHeight`, so a platform that _does_ resize can't collapse the measurement to zero.
-  `useKeyboardInset` publishes `--kb-inset` (≥120px, so an accessory bar alone doesn't count) and `--kb-range`, and is
-  the only `visualViewport` subscriber.
+  `useKeyboardInset` publishes `--kb-inset` and `--kb-range`, and is the only `visualViewport` subscriber.
+- **"Is a keyboard up" and "how much does it cover" are two numbers, and the 120px floor belongs to the first.** The
+  keyboard's own height is `--app-height − visualViewport.height`; `--kb-inset` is that _minus the pan_, because the pan
+  moves the rest of the covered area out of the layout viewport. The floor exists to tell a keyboard from a lone
+  accessory bar, so it is tested against the keyboard's height — put it on the pan-reduced inset and a keyboard panned
+  by more than `keyboard − 120` reads as no keyboard at all: the reserve never ends, `--kb-inset` stays the remembered
+  _full_ height for the whole keyboard, `visibleBottom()` lands the reveal band a pan above the screen, and every field
+  is scrolled off the top. Measured on device (2026-07-31, iOS 26 standalone): shell `793`, visual viewport `390`, pan
+  `289` — a 403px keyboard that read as `114`, six pixels under the floor. `data-keyboard` follows the first number, so
+  the footer dock stays `static` and `AppNav` hidden even when the pan leaves nothing to cover; the remembered height is
+  the first number too, or a keyboard only ever seen panned under-reserves every later focus.
 - **Nothing compensates for the pan — the pan is prevented.** iOS pans to reveal the focused field _only when the page
   has not revealed it itself_ ([ADR 0002](adr/0002-keyboard-covers-the-app.md)). Four successive fixes tried to survive
   the pan instead — a `display-mode` gate, then a measured boolean, then a hidden fixed probe, with `--vv-top`,

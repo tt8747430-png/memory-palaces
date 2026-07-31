@@ -9,18 +9,40 @@ const frame = async () => {
   })
 }
 
-const keyboard = (height: number) => {
+const SHELL = 793
+
+const viewport = { height: SHELL, offsetTop: 0, scale: 1 }
+
+const inset = (height: number) => {
   const style = document.documentElement.style
   style.setProperty('--kb-inset', `${height}px`)
   style.setProperty('--kb-range', height > 0 ? `${height + 24}px` : '0px')
   document.documentElement.toggleAttribute('data-keyboard', height > 0)
 }
 
+/** A settled keyboard: the viewport shrank by exactly what the module then published. */
+const keyboard = (height: number) => {
+  viewport.height = SHELL - height
+  viewport.offsetTop = 0
+  inset(height)
+}
+
+/**
+ * The frame a keyboard is dismissed on. iOS animates it away over several frames and the module
+ * re-measures behind a `requestAnimationFrame`, so the probe reads a restored viewport against the
+ * inset from the frame before it — the reading that used to be sealed as the keyboard itself.
+ */
+const dismissing = () => {
+  viewport.height = SHELL
+  viewport.offsetTop = 0
+}
+
 beforeEach(() => {
   vi.useFakeTimers()
   // jsdom ships no `matchMedia`; the probe reads it only to label the display mode.
   vi.stubGlobal('matchMedia', (media: string) => ({ matches: false, media }))
-  document.documentElement.style.setProperty('--app-height', '793px')
+  Object.defineProperty(window, 'visualViewport', { value: viewport, configurable: true })
+  document.documentElement.style.setProperty('--app-height', `${SHELL}px`)
   keyboard(0)
 })
 
@@ -28,6 +50,7 @@ afterEach(() => {
   cleanup()
   vi.useRealTimers()
   vi.unstubAllGlobals()
+  Reflect.deleteProperty(window, 'visualViewport')
   document.documentElement.removeAttribute('style')
   document.documentElement.removeAttribute('data-keyboard')
 })
@@ -83,6 +106,34 @@ describe('useViewportProbe keyboard history', () => {
     expect(episodes).toHaveLength(2)
     expect(episodes[1]?.after.kbInset).toBe('300px')
     expect(episodes[1]?.before?.kbInset).toBe('0px')
+  })
+
+  it('seals the reading the keyboard settled at, not the frame it was dismissed on', async () => {
+    const { result } = renderHook(() => useViewportProbe())
+    await frame()
+    keyboard(403)
+    await frame()
+    dismissing()
+    await frame()
+    keyboard(0)
+    await frame()
+
+    const [episode] = result.current.episodes()
+    expect(episode?.after.vvHeight).toBe(390)
+    expect(episode?.after.kbInset).toBe('403px')
+  })
+
+  it('keeps the last open frame when no frame ever settled, rather than dropping the keyboard', async () => {
+    const { result } = renderHook(() => useViewportProbe())
+    await frame()
+    // An inset with no viewport movement under it: the reserve, before the keyboard reports itself.
+    inset(462)
+    await frame()
+    inset(0)
+    await frame()
+
+    expect(result.current.episodes()).toHaveLength(1)
+    expect(result.current.episodes()[0]?.after.kbInset).toBe('462px')
   })
 
   it('keeps only the last five keyboards', async () => {
