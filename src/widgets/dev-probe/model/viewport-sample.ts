@@ -51,8 +51,8 @@ const px = (value: string) => {
 }
 
 /**
- * The node the reveal is actually attached to, preferring the one holding the focused field —
- * `AppScreen`, `AuthScreen` and every open `CardFace` each attach their own.
+ * The node the reveal is attached to, preferring the one holding the focused field — `AppScreen`,
+ * `AuthScreen` and every open `CardFace` attach their own.
  */
 function revealScroller(active: Element | null): HTMLElement | null {
   const owner = active?.closest(`[${REVEAL_SCROLL_ATTR}]`)
@@ -134,9 +134,9 @@ export interface ProbeCheck {
 }
 
 /**
- * The readout says what the numbers are; this says which of them is the fault. Every check is a
- * sentence from ADR 0002 turned into arithmetic, so a still reading can be pasted into a bug
- * report and read by someone who was not holding the phone.
+ * Readout says what the numbers are; this says which is the fault. Every check is one rule from
+ * ADR 0002 as arithmetic, so a still reading can be pasted into a bug report and read by someone
+ * who was not holding the phone.
  */
 export function checkViewport(sample: ViewportSample): ProbeCheck[] {
   const app = px(sample.appHeight) || sample.layoutHeight
@@ -145,10 +145,10 @@ export function checkViewport(sample: ViewportSample): ProbeCheck[] {
   const stored = Number.parseInt(sample.stored, 10)
   const sum = sample.vvOffsetTop + sample.vvHeight + inset
   const slack = sample.scrollMax - sample.scrollTop
-  /** The keyboard's own height, in screen space — what the inset would be with no pan under it. */
+  /** Keyboard's own height, screen space — what the inset would be with no pan under it. */
   const keyboard = app - sample.vvHeight
-  // The attribute, not the inset: a keyboard iOS has panned nearly out of the layout viewport is up,
-  // and covering almost none of the shell.
+  // Attribute, not inset: a keyboard panned nearly out of the layout viewport is up, and covering
+  // almost none of the shell.
   const open = sample.keyboardAttr
   const delta = sample.revealDelta
   const available = delta > 0 ? slack : sample.scrollTop
@@ -176,8 +176,8 @@ export function checkViewport(sample: ViewportSample): ProbeCheck[] {
           : `${Math.abs(delta)}px ${delta < 0 ? 'above' : 'below'} the band ${sample.bandTop}…${sample.bandBottom}`,
     },
     {
-      // The reveal is `node.scrollTop += delta` and nothing more: without the room to move, it
-      // writes a number the scroller clamps away and iOS finishes the job by panning.
+      // The reveal is `node.scrollTop += delta`, nothing more: without room to move it writes a
+      // number the scroller clamps away, and iOS finishes the job by panning.
       id: 'slack',
       label: 'scroll range',
       state: delta === 0 ? 'idle' : available >= Math.abs(delta) ? 'ok' : 'bad',
@@ -199,9 +199,9 @@ export function checkViewport(sample: ViewportSample): ProbeCheck[] {
           : `padding-bottom ${sample.padBottom} < --kb-range ${range}: this scroll body has no keyboard range`,
     },
     {
-      // Not "is the inset large enough" — an inset below the remembered height is *correct* under a
-      // pan, and comparing the two is what let the fault below read as clean. The only question a
-      // still reading cannot answer for itself: is this a measurement at all, or the reserve?
+      // Not "is the inset large enough" — under a pan an inset below the remembered height is
+      // *correct*, and comparing the two is what let the fault below read as clean. Asks the one
+      // question a still reading cannot answer for itself: measurement, or reserve?
       id: 'inset',
       label: 'keyboard measured',
       state: !open ? 'idle' : sample.kbMeasured ? 'ok' : 'bad',
@@ -214,9 +214,10 @@ export function checkViewport(sample: ViewportSample): ProbeCheck[] {
           : `${inset}px reserved${Number.isFinite(stored) ? ` from the remembered ${stored}px` : ''}: the keyboard never reported itself, so the reveal band sits ${sum - app}px above the screen`,
     },
     {
-      // This is a health check, and the only one that catches a live reserve: `--kb-inset` balances
-      // by construction *while it is a measurement*, and the case worth catching is the one where it
-      // is not. (ADR 0002 said the opposite until a device reading proved otherwise.)
+      // The only check that catches a live reserve: `--kb-inset` balances by construction *while it
+      // is a measurement*, so the two states it breaks in — a reserve that never became one, and a
+      // sample read mid-resize — are exactly the two worth catching. Not a tautology; verified on
+      // device 2026-07-31.
       id: 'balance',
       label: 'top+vv+kb',
       state: sum === app ? 'ok' : 'bad',
@@ -315,22 +316,22 @@ export function sampleToText(sample: ViewportSample): string {
 }
 
 /**
- * One keyboard, from the resting reading it interrupted to the reading it settled into. The pair is
- * the unit worth reading: every number here is a difference — the pan, the inset, the rects, the
- * scroll position — and a single reading forces whoever gets it to guess at the other half.
+ * One keyboard, from the resting reading it interrupted to the one it settled into. The pair is the
+ * unit worth reading: every number here is a difference — pan, inset, rects, scroll position — so a
+ * lone reading forces whoever gets it to guess the other half.
  */
 export interface KeyboardEpisode {
-  /** The last reading taken with no keyboard and no reserve. `null` if the probe started mid-open. */
+  /** Last reading with no keyboard and no reserve. `null` if the probe started mid-open. */
   before: ViewportSample | null
   /**
-   * The reading the keyboard **settled** into — the last open frame whose numbers agree with each
-   * other. Emphatically not the last open frame: iOS dismisses a keyboard over several frames, the
-   * probe samples faster than the module re-measures, and the final frame with a non-zero inset is
-   * one frame into the close — a restored `visualViewport` against an inset from the frame before
-   * it. Four of the first five device readings were that frame, and every verdict on them was noise.
+   * The frame the keyboard **settled** on — the last open one whose numbers agree. Emphatically not
+   * the last open frame: iOS dismisses over several frames and the probe samples faster than the
+   * module re-measures, so the final frame carrying an inset is one frame into the close, a restored
+   * `visualViewport` against a stale inset. Four of the first five device readings were that frame,
+   * and every verdict on them was noise.
    */
   after: ViewportSample
-  /** Still on screen: `after` is this keyboard's own reading rather than the one it closed on. */
+  /** Still on screen: `after` is this keyboard's own reading, not the one it closed on. */
   live: boolean
 }
 
@@ -342,10 +343,10 @@ export function isKeyboardOpen(sample: ViewportSample): boolean {
 }
 
 /**
- * Whether a reading's three viewport numbers agree. They are one identity — pan + visual viewport +
- * inset = the anchored shell — so a reading that breaks it was taken either mid-resize, with a fresh
- * `visualViewport` against an inset a frame behind it, or on a reserve that never became a
- * measurement. Neither is a reading of the keyboard that was up.
+ * Do a reading's three viewport numbers agree? They are one identity — pan + visual viewport +
+ * inset = the anchored shell — so a reading that breaks it was taken mid-resize (fresh
+ * `visualViewport`, inset a frame behind) or on a reserve that never became a measurement. Neither
+ * describes the keyboard that was up.
  */
 export function isSettled(sample: ViewportSample): boolean {
   const app = px(sample.appHeight) || sample.layoutHeight
@@ -436,20 +437,20 @@ export interface ViewportProbe {
   trace: ViewportSample[]
   recording: boolean
   /**
-   * Read at press time rather than held in state: the pairs update every frame, and re-rendering
-   * the panel for a history nobody is looking at until they tap `copy` buys nothing.
+   * Read at press time, not held in state: the pairs update every frame, and re-rendering the panel
+   * for a history nobody reads until they tap `copy` buys nothing.
    */
   episodes: () => KeyboardEpisode[]
-  /** How many pairs `episodes()` would return, including the one on screen. For the button label. */
+  /** How many pairs `episodes()` would return, including the live one. For the button label. */
   episodeCount: number
   toggleRecording: () => void
   clear: () => void
 }
 
 /**
- * Samples the viewport every frame, and keeps the last `EPISODE_LIMIT` keyboards as before/after
- * pairs. The trace is what makes this worth having: none of these faults are observable in a still
- * reading — they live in how the numbers move against a finger.
+ * Samples every frame; keeps the last `EPISODE_LIMIT` keyboards as before/after pairs. The trace is
+ * what makes it worth having: none of these faults show in a still reading — they live in how the
+ * numbers move against a finger.
  */
 export function useViewportProbe(): ViewportProbe {
   const [sample, setSample] = useState<ViewportSample>(() => readViewport())
@@ -477,14 +478,14 @@ export function useViewportProbe(): ViewportProbe {
       }
 
       // The reserve raises `--kb-inset` on `focusin`, a frame or more before the keyboard reports
-      // itself, so this edge is the focus — which is exactly the boundary worth pairing across.
+      // itself, so this edge is the focus — exactly the boundary worth pairing across.
       const nowOpen = isKeyboardOpen(next)
       if (nowOpen && !open) {
         opened.current = resting.current
         setEpisodeCount(Math.min(sealed.current.length + 1, EPISODE_LIMIT))
       } else if (!nowOpen && open) {
-        // The settled frame if there was one, and the last frame otherwise: a keyboard reported
-        // badly still beats a keyboard dropped, and "nothing ever settled" is itself the reading.
+        // Settled frame if there was one, last frame otherwise: a keyboard reported badly beats a
+        // keyboard dropped, and "nothing ever settled" is itself the reading.
         const after = settled.current ?? latest.current
         if (after) {
           sealed.current = [

@@ -8,9 +8,8 @@ export interface CardDraftSource {
 }
 
 /**
- * A card's four fields as a command carries them. Optionals are `undefined`
- * rather than absent, so clearing a hint reaches `updateCard` as a real change
- * instead of being read as "leave it alone".
+ * A card's four fields as a command carries them. Optionals are `undefined` rather than absent, so
+ * clearing a hint reaches `updateCard` as a real change, not as "leave it alone".
  */
 export interface CardDraftEdit {
   front: string
@@ -41,11 +40,10 @@ export interface CardDraft {
 const blank: CardDraftSource = { front: '', back: '' }
 
 /**
- * Editable copies of a card's four fields, and the one place the app decides
- * what a card edit means: what counts as valid, what counts as changed, and how
- * a cleared optional reaches a command. The draft re-seeds from `source`
- * whenever `seed` changes, so a sheet opening on a different card — or the same
- * card reopened — starts from what is stored rather than what was last typed.
+ * Editable copies of a card's four fields, and the one place the app decides what a card edit
+ * means: what is valid, what counts as changed, how a cleared optional reaches a command. Re-seeds
+ * from `source` whenever `seed` changes, so a sheet opening on a different card — or the same one
+ * reopened — starts from what is stored, not what was last typed.
  */
 export function useCardDraft(source: CardDraftSource | null, seed: string | null): CardDraft {
   const [front, setFront] = useState('')
@@ -59,8 +57,8 @@ export function useCardDraft(source: CardDraftSource | null, seed: string | null
     setBack(next.back)
     setHint(next.hint ?? '')
     setTip(next.tip ?? '')
-    // Re-seeding is keyed on `seed` alone. `source` changing under the same seed
-    // is the user's own edit coming back around, which must not overwrite it.
+    // Keyed on `seed` alone: `source` changing under the same seed is the user's own edit coming
+    // back around, and must not overwrite it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seed])
 

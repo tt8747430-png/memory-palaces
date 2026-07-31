@@ -9,14 +9,17 @@ app/ → pages/ → widgets/ → features/ → entities/ → shared/
 Import only from strictly lower layers (lint-enforced). **Clean/Hexagonal sits inside FSD** as the core's dependency
 direction:
 
-- **Domain core** (no React/IO): `entities/*/model` (types + invariants) + `shared/lib` (SRS, streak, stats, dueCards).
-- **Ports:** each entity's repository interface (`entities/<x>/api`).
-- **Adapters:** `shared/api/rxdb`, `shared/api/supabase`, plus in-memory for tests (Liskov). The **composition root** in
-  `app/` wires them via DI.
+- **Domain core** (no React/IO): `entities/*/model` (types + invariants) + `shared/lib` (`srs`, `streak`, `stats`,
+  `recall`, `deck-tree`, `achievements`, `badges`, `order`, …), each with colocated tests.
+- **Ports:** `shared/api/base-repository.ts` (`Repository<T>`) + each entity's typed interface (`entities/<x>/api`).
+- **Adapters:** `shared/api/rxdb` (prod) and `in-memory-repository` (tests, and the live `session` store); both are
+  held to `shared/test/repository-contract.ts` (Liskov). `shared/api/supabase` is **planned, not built** — Phase 9. The
+  **composition root** in `app/` wires them via DI and calls `start()` on every store.
 - **Rule:** adapters depend on ports, never the reverse → core stays portable + unit-testable.
 
-**CQRS-lite:** `features/*` = commands (writes, one use-case each), shared by UI _and_ the AI Tutor via the command
-registry. Reads = reactive selectors over entity Zustand stores + RxDB queries.
+**CQRS-lite:** `features/*` = commands (writes, one use-case each). Reads = reactive selectors over entity Zustand
+stores + RxDB queries. Commands are plain exported functions today; the typed **registry** that would let the AI Tutor
+call the same use-cases as the UI is Phase 13 (T13.1), and is the reason one-use-case-per-file is worth keeping now.
 
 ## Persistence & cloud
 
@@ -47,11 +50,11 @@ second semantic→primitive map** via `data-theme`, zero component edits. WCAG A
 
 ## Patterns → layers
 
-Facade `features/*` · Observer (Zustand + RxDB queries + EventBus; flush-on-leave observes visibility) · Mediator (
-command registry + EventBus) · Proxy (tutor permission gate; lazy-load for Anki import) · Factory (`entities/*/model`,
-repo factory in the composition root) · State (machines in `features/review`, `features/quiz`, study session, tutor
-turn) · Adapter/Strategy (RxDB/Supabase; anki/csv/json) · Singleton (composition-root singletons, injected) ·
-Prototype (`clone()`) · Builder (create flow, LLM-request assembly).
+Facade `features/*` · Observer (Zustand + RxDB queries + `EventBus`) · Mediator (`EventBus`; command registry to come) ·
+Factory (`entities/*/model` `makeX()`, repo factory in the composition root) · State (machines in `features/review`,
+`features/quiz`) · Adapter/Strategy (RxDB + in-memory behind `Repository<T>`; anki/csv in `features/content`) ·
+Singleton (composition-root singletons, injected) · Prototype (`cloneEntity()`).
+_Planned:_ Proxy (tutor permission gate) · Builder (LLM-request assembly) · the Supabase adapter.
 
 **SOLID:** one-concern entities/features (kills god-hooks) · add adapters/commands behind ports/registries · in-memory ↔
 RxDB adapter · narrow ports + selector-scoped reads · core depends on ports.
@@ -61,6 +64,9 @@ only in the theme · one `cn()`. No premature abstraction.
 ---
 
 ## Phases
+
+Phases 0–8 (design system, walking skeleton, domain core, the entity slices) and 12 (dark theme) are **shipped** — what
+follows is what is left. Numbering is historical; nothing is missing.
 
 ### 9 — Cloud + always-on sync (Supabase)
 
@@ -89,10 +95,11 @@ from the old app · deploy to Vercel + Supabase · dead-code removal.
   route (`ROUTES.devKitchenSink`) are deliberately built into **every** build, production included, because the iOS
   keyboard bugs behind [ADR 0002](adr/0002-keyboard-covers-the-app.md) are only reproducible in the installed PWA over
   HTTPS — a `import.meta.env.DEV` gate put the one diagnostic we needed out of reach of the one environment that shows
-  the bug. **That trade expires at 1.0.** Ship it guarded: gate the Settings section on `useDevMode()` (
-  `shared/lib/dev-mode.ts`) and give dev mode an unadvertised way in (the convention is tapping the version on
-  Settings → About seven times), leaving the route reachable but unlisted. Do _not_ simply delete the route — the probe
-  is the reason three keyboard fixes stopped being guesswork.
+  the bug. **That trade expires at 1.0.** The flag already exists (`useDevMode()`/`setDevMode()`,
+  `shared/lib/dev-mode.ts`) but **currently gates nothing** — it is a toggle _inside_ the Developer section, which
+  renders unconditionally. Ship it guarded: wrap that section in `useDevMode()`, give dev mode an unadvertised way in
+  (the convention is tapping the version on Settings → About seven times), and leave the route reachable but unlisted.
+  Do _not_ simply delete the route — the probe is the reason three keyboard fixes stopped being guesswork.
 - **Checkpoint:** acceptance criteria met, Lighthouse installable + green, deployed, **no developer surface reachable
   from a first-run install**.
 

@@ -15,8 +15,8 @@ export interface ImportSheetProps {
 const ACCEPT = '.csv,.tsv,.txt'
 
 /**
- * The one way content gets in: paste it, or hand over a delimited file. Every
- * surface that imports offers the same two doors under its own heading.
+ * The one way content gets in: paste it, or hand over a delimited file. Every importing surface
+ * offers the same two doors under its own heading.
  */
 export function ImportSheet({
   open,

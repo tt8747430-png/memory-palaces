@@ -1,7 +1,7 @@
 /**
- * Every achievement, in the order they are shown. The one list: the id union,
- * the earning rules and the route guard are all derived from it, so adding an
- * achievement is a single edit the compiler then chases.
+ * Every achievement, in display order. The one list — id union, earning rules and the
+ * `isAchievementId` route guard all derive from it — so adding one is a single edit the compiler
+ * chases.
  */
 export const ACHIEVEMENT_IDS = [
   'first-deck',

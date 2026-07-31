@@ -78,11 +78,10 @@ export function useLibraryActions({
   const toggleFavorite = (deck: Deck) => void toggleDeckFavorite(deckStore, deck.id)
 
   /**
-   * The one way decks change where they live. Every surface — a swipe, the move
-   * sheet, a drop onto a folder, the select toolbar — comes through here, so the
-   * subtree guard, the optimistic patch, the message and the undo are decided
-   * once. Decks already at the destination are left alone, and a move that would
-   * put a deck inside its own subtree is dropped rather than throwing.
+   * The one way decks change where they live. Every surface — swipe, move sheet, drop onto a
+   * folder, select toolbar — comes through here, so the subtree guard, optimistic patch, message
+   * and undo are decided once. Decks already at the destination are left alone; a move that would
+   * put a deck inside its own subtree is dropped, not thrown.
    */
   const moveDecksTo = (ids: readonly string[], dest: MoveDestination) => {
     const moving = ids
@@ -112,8 +111,8 @@ export function useLibraryActions({
     const parentId = dest.kind === 'deck' ? dest.deckId : null
     const folderId = dest.kind === 'folder' ? dest.folderId : null
 
-    // Land the rows where they will end up before the writes resolve, so a drop
-    // onto a folder never shows the deck snapping back to its old row first.
+    // Land the rows where they end up before the writes resolve, so a drop onto a folder never
+    // shows the deck snapping back to its old row first.
     const base = siblingDecks(decks, parentId, folderId).length
     const patches = new Map<string, Partial<Deck>>()
     moving.forEach((deck, i) => patches.set(deck.id, { parentId, folderId, order: base + i }))

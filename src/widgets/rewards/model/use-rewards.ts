@@ -32,9 +32,9 @@ export interface Rewards {
 }
 
 /**
- * The single reading of what the learner has earned. Every screen that shows a
- * badge or an achievement takes it from here, so a change to how a milestone is
- * counted lands on the profile, the grids and the detail screens together.
+ * The single reading of what the learner has earned. Every screen showing a badge or achievement
+ * takes it from here, so a change to how a milestone is counted lands on the profile, the grids and
+ * the detail screens together.
  */
 export function useRewards(): Rewards {
   const progress = useProgressStore(selectProgress)

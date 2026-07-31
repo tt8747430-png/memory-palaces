@@ -15,8 +15,8 @@ export type EmailErrorKey = 'auth.errors.emailRequired' | 'auth.errors.emailInva
 export type PasswordErrorKey = 'auth.errors.passwordRequired' | 'auth.errors.passwordShort'
 
 /**
- * The i18n key naming what is wrong with a credential, or `undefined` when
- * nothing is. Every entrance judges an email and a password the same way.
+ * The i18n key naming what is wrong with a credential, `undefined` when nothing is. Every entrance
+ * judges an email and a password the same way.
  */
 export function emailErrorKey(value: string): EmailErrorKey | undefined {
   if (!value.trim()) return 'auth.errors.emailRequired'

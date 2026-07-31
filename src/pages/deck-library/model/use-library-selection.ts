@@ -25,8 +25,8 @@ interface Args {
 }
 
 /**
- * Library selection over the shared multi-select: a folder stands alone, while
- * touching a deck carries its whole top-level branch. Changing folder clears it.
+ * Library selection over the shared multi-select: a folder stands alone, touching a deck carries
+ * its whole top-level branch. Changing folder clears it.
  */
 export function useLibrarySelection({
   decks,

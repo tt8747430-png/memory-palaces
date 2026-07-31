@@ -1,7 +1,6 @@
 /**
- * Every badge, in the order they are shown. The one list: the id union, the
- * tier tables, the metric lookup and the route guard are all derived from it,
- * so adding a badge is a single edit that the compiler then chases.
+ * Every badge, in display order. The one list — id union, tier tables, metric lookup and the
+ * `isBadgeId` route guard all derive from it — so adding a badge is one edit the compiler chases.
  */
 export const BADGE_IDS = ['xp', 'streak', 'decks', 'library', 'cards', 'days'] as const
 

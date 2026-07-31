@@ -11,8 +11,8 @@ const TOAST_ID = 'app-update'
 let registration: Promise<ServiceWorkerRegistration | undefined> | undefined
 
 /**
- * Registers the service worker once per document. `registerSW` builds a Workbox
- * instance that refuses to register twice, and StrictMode runs effects twice.
+ * Registers the service worker once per document. `registerSW` builds a Workbox instance that
+ * refuses to register twice, and StrictMode runs effects twice.
  */
 function registerOnce() {
   registration ??= new Promise((resolve) => {
@@ -37,9 +37,8 @@ export function UpdatePrompt() {
       if (!reg || cancelled) return
       const stopWatching = watchWaitingWorker(reg, setWaiting)
 
-      // An update published while the app is open is only noticed if we ask for
-      // it, so ask on launch, on every return to the app, on reconnect, and
-      // periodically for a window that is left open all day.
+      // An update published while the app is open is noticed only if we ask. So: on launch, on
+      // every return, on reconnect, and periodically for a window left open all day.
       const check = () => {
         if (!document.hidden) void reg.update().catch(() => {})
       }

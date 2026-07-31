@@ -17,9 +17,9 @@ export interface OutcomeOverlayProps {
 }
 
 /**
- * The curtain a finished run drops over its panel: one medallion, one headline,
- * then whatever that run has to report. Study, quiz and anything else that ends
- * share it, so finishing looks the same wherever the user got there.
+ * The curtain a finished run drops over its panel: one medallion, one headline, then whatever that
+ * run reports. Study, quiz and anything else that ends share it, so finishing looks the same
+ * wherever the user got there.
  */
 export function OutcomeOverlay({ icon, title, tone = 'success', children }: OutcomeOverlayProps) {
   return (

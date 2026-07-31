@@ -22,13 +22,9 @@ Non-trivial plan → suggest a grill first (user runs it): `/grill-me`, `/grill-
 
 ## Change rules
 
-Always:
-
-- **Zero legacy in _code_.** Latest stable deps. No polyfills, fallback branches, deprecated APIs, dead shims. *
-  *Exception — persisted data:** RxDB schemas + anything on-device need real back-compat → migrate (
-  `app/persistence/schemas.ts`), never orphan stored decks/cards/reviews.
-- **Optimal, not overengineered.** Simplest thing that scales. No premature abstraction, deep nesting, needless deps.
-  Lone toggle = `useState`; reducer/machine only when state earns it.
+**Zero legacy in _code_.** Latest stable deps. No polyfills, fallback branches, deprecated APIs, dead shims.
+**Exception — persisted data:** RxDB schemas + anything on-device need real back-compat → migrate
+(`app/persistence/schemas.ts`), never orphan stored decks/cards/reviews.
 
 By kind:
 
@@ -66,8 +62,9 @@ One file: `npx vitest run src/shared/lib/srs.test.ts` · one test: `npx vitest r
 
 **DI** — port `shared/api/base-repository.ts` (`Repository<T>`: save/remove/observe); adapters
 `shared/api/rxdb/rxdb-repository.ts` (prod) and `in-memory-repository.ts` (tests + live `session` store).
-`app/composition-root.ts` builds the DB (`app/persistence/`), wires repo→store, **calls `start()` on every store**,
-exports `services`; `ServicesProvider` injects via context. Screens never start a store — they read, and gate on
+`app/composition-root.ts` builds the DB (`app/persistence/`), wires repo→store, **calls `start()` on every mirroring
+store** (`session` is deliberately absent — it owns its writes; `AuthProvider` restores it), exports `services`;
+`ServicesProvider` injects via context. Screens never start a store — they read, and gate on
 `selectIsReady`. Tests wire their own stores through `shared/test/started.ts`.
 
 **Features = commands (CQRS-lite)** — `src/features/<x>/`, one use-case per file: async fn (entity store, input), e.g.
@@ -87,16 +84,17 @@ the store from `useXStoreApi()` and pass it in. New mutation → new file + expo
 - **Drag, reorder, card stack** → [ADR 0001](docs/adr/0001-drag-and-drop-and-card-stacks.md) (a drag only reorders;
   every reachable row is a peer; one engine `useSortableBlock`; stacks built from real items), then CODE_STYLE §10 (four
   causes of drop flicker).
-- **Keyboard, viewport, anything bottom-pinned** → [ADR 0002](docs/adr/0002-keyboard-covers-the-app.md) (iOS pans, never
-  resizes; the shell is anchored to `--app-height`; rects already carry the pan, so **never** compensate for
-  `--vv-top` — `visibleBottom()` is the only bridge), then CODE_STYLE §11.
+- **Keyboard, viewport, anything bottom-pinned** → CODE_STYLE §11, then [ADR
+  0002](docs/adr/0002-keyboard-covers-the-app.md) for why. iOS pans, never resizes; the shell is anchored to
+  `--app-height`; **nothing compensates for the pan — the pan is prevented** by giving the scroll body range
+  (`--kb-range`), and `visibleBottom()` is the only coordinate bridge. Header must not move when the keyboard opens.
 - **Overflow/scroll, focus/autofocus, `env(safe-area-*)`, `touch-action`** → CODE_STYLE §11. Invisible on desktop and in
   jsdom, real on iOS. Check `/dev/kitchen-sink`'s viewport probe **before theorising**; verify on device. That route and
   Settings → Developer ship in **all** builds on purpose — guard, don't delete, before 1.0 (`NEW_ARCHITECHTURE.md`
   T11.G).
 - **Mobile/PWA behavior** → [MOBILE_DESIGN](docs/MOBILE_DESIGN.md).
 - **Naming anything** → [UBIQUITOUS_LANGUAGE](docs/UBIQUITOUS_LANGUAGE.md). "Session" = auth, never a study pass;
-  `known` ≠ Memorized; no palace/room/locus.
+  `known` ≠ Memorized.
 
 ## Conventions
 

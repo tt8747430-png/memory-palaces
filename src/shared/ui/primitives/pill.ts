@@ -1,7 +1,7 @@
 /**
- * The one rounded status pill — a count, an outcome, a toggle. Screens spell
- * only the tone; the shape, type scale and weight are decided here so a pill
- * reads the same whether it sits on a card, a session overlay or a sheet.
+ * The one rounded status pill — a count, an outcome, a toggle. Screens spell only the tone; shape,
+ * type scale and weight are decided here, so a pill reads the same on a card, a session overlay or
+ * a sheet.
  */
 export type PillTone = 'info' | 'success' | 'warning' | 'primary'
 

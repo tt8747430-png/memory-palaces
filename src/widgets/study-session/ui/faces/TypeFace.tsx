@@ -15,6 +15,8 @@ export function TypeFace(props: FaceProps) {
   const typed = useMemo(() => typedRecallStatus(answer, text), [answer, text])
   const solved = typeInitialsOnly ? initials.complete : typed.complete
 
+  // Reveals on the solve edge. `props.onRevealInPlace` is a fresh closure each render, so depending
+  // on it would re-reveal on every keystroke after the answer is complete.
   useEffect(() => {
     if (!typeInitialsOnly && typed.complete) props.onRevealInPlace()
     // eslint-disable-next-line react-hooks/exhaustive-deps

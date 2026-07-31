@@ -36,11 +36,10 @@ export function siblingDecks<T extends TreeDeck>(
 }
 
 /**
- * The decks a new or moving deck would share a row with: same parent, or — at
- * the root — same folder. Unlike `siblingDecks` this keeps archived decks and
- * skips the sort, because it exists to answer "what orders are taken", and an
- * archived deck still holds the `order` it was filed under. Pass `exceptId` to
- * leave the deck being moved out of its own reckoning.
+ * Decks a new or moving deck shares a row with: same parent, or — at the root — same folder.
+ * Unlike `siblingDecks`, keeps archived decks and skips the sort: it answers "what orders are
+ * taken", and an archived deck still holds the `order` it was filed under. `exceptId` leaves the
+ * deck being moved out of its own reckoning.
  */
 export function orderSiblings<T extends TreeDeck>(
   decks: readonly T[],
@@ -94,10 +93,9 @@ export function subtreeDecks<T extends TreeDeck>(decks: readonly T[], rootId: st
 export type SelectState = 'unchecked' | 'checked' | 'indeterminate'
 
 /**
- * The chain from the library root down to `deckId`, that deck last. The single
- * parent-walk in this module: settings inheritance, due roll-up and selection
- * roots all read the ancestry through here, and a cycle in `parentId` ends the
- * walk rather than hanging it.
+ * Chain from the library root down to `deckId`, that deck last. The module's only parent-walk —
+ * settings inheritance, due roll-up and selection roots all read ancestry through here — and a
+ * cycle in `parentId` ends the walk rather than hanging it.
  */
 export function deckPath<T extends TreeDeck>(decks: readonly T[], deckId: string): T[] {
   const byId = new Map(decks.map((d) => [d.id, d]))

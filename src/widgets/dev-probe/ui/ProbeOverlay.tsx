@@ -13,9 +13,9 @@ import { ViewportReadout } from './ViewportReadout'
 
 /**
  * The viewport probe, readable on the route that is misbehaving. `/dev/kitchen-sink` shows the same
- * numbers, but a keyboard fault only reproduces on the screen that has the fault — reading it
- * somewhere else is how three fixes shipped on inference. Nothing here carries a `data-slot`, so it
- * is invisible to the chrome compensation it exists to measure.
+ * numbers, but a keyboard fault only reproduces on the screen that has it — reading it elsewhere is
+ * how three fixes shipped on inference. Nothing here carries a `data-slot`: `header-bar`/`footer-bar`
+ * are what the reveal band is built from, so an overlay wearing one would move the band it measures.
  */
 export function ProbeOverlay() {
   const visible = useProbeOverlay()

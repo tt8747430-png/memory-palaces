@@ -9,9 +9,8 @@ export interface SessionScreenProps {
 }
 
 /**
- * The frame a run of something — a study pass, a quiz, a match — lives in: one
- * app-width column that fills the shell and never scrolls itself, so the panel
- * inside owns the scrolling.
+ * The frame a run of something — a study pass, a quiz, a match — lives in: one app-width column
+ * that fills the shell and never scrolls itself, so the panel inside owns the scrolling.
  */
 export function SessionScreen({ children, className }: SessionScreenProps) {
   return (

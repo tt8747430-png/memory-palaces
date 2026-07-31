@@ -10,13 +10,12 @@ export interface SortableContent {
 }
 
 /**
- * The one arrangement of study content. `title` names whatever a row leads
- * with — a card's front, a question's prompt — so every list answers "by name"
- * the same way, and `manual` hands the list straight back so the `order` the
- * collection store already sorted by survives untouched.
+ * The one arrangement of study content. `title` names whatever a row leads with — a card's front, a
+ * question's prompt — so every list answers "by name" the same way; `manual` hands the list back
+ * untouched, keeping the `order` the collection store already sorted by.
  *
- * Sorts a subject cannot express fall through to that stored order: a question
- * has no schedule and no flag, so asking for `due` or `flagged` leaves it be.
+ * Sorts a subject cannot express fall through to that stored order: a question has no schedule and
+ * no flag, so `due` and `flagged` leave it be (sort is stable, so equal keys hold position).
  */
 export function sortContent<T extends SortableContent>(
   items: T[],

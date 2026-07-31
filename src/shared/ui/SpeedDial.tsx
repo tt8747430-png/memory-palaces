@@ -11,8 +11,8 @@ export interface SpeedDialAction {
 }
 
 /**
- * Where the dial sits above the bottom edge: clear of the app nav on a screen
- * that has one, clear of the home indicator on a screen that does not.
+ * Where the dial sits above the bottom edge: clear of the app nav where there is one, clear of the
+ * home indicator where there is not.
  */
 export type SpeedDialPlacement = 'above-nav' | 'above-safe-area'
 

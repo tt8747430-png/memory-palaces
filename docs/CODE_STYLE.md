@@ -18,7 +18,8 @@ Container wires data → presentational children (section → list → item). On
 | Screen root                     | `pages/<x>/ui/`                               |
 | Subpart of one parent           | beside it, same `ui/` folder                  |
 
-Reference: [`widgets/study-session/ui/`](../src/widgets/study-session/ui) — ~11 focused files + `model/` + barrel.
+Reference: [`widgets/study-session/ui/`](../src/widgets/study-session/ui) — ~15 focused files (plus a `faces/` subfolder
+for the flashcard modes) + `model/` + barrel.
 
 - ~200 lines/file soft budget. Past it, extract children — or check the excess is really _state_ belonging in `model/` (
   §3a).
@@ -112,7 +113,9 @@ Ordered by impact.
 - **Subscribe narrowly** — smallest slice via `useXStore(selector)`; prefer a derived boolean (`selectIsReady`) over a
   raw array. State used only in a callback → `useXStoreApi().getState()` at call time.
 - **Memoize deliberately** — `useMemo` for real derivations; `React.memo` around an expensive child under a hot parent.
-- **Split routes with `React.lazy` + `Suspense`** — `app/router.tsx` still imports ~30 pages eagerly. Same for heavy,
+- **Split routes with `lazyRouteComponent`** (TanStack's, not bare `React.lazy` — it hooks the router's own pending
+  states and `defaultPreload: 'intent'`). `app/router.tsx` has **36 routes and splits exactly one**,
+  `/dev/kitchen-sink`; the other 35 land in the entry chunk via `app/routes/*-screens.tsx`. Same for heavy,
   rarely-opened widgets.
 - **Keep FSD barrels** — they're our public API. The tree-shaking caveat is about _third-party_ barrels: import large
   libs by name; no intra-slice re-export chains pulling in heavy modules.
@@ -208,7 +211,14 @@ dev-only **`/dev/kitchen-sink`**.
 - **Anchor the shell, and measure against the anchor.** `#root` is `height: var(--app-height)` — the layout viewport
   sampled while no field is focused, re-anchored only on rotation or growth. Every keyboard number is derived from it,
   never from live `clientHeight`, so a platform that _does_ resize can't collapse the measurement to zero.
-  `useKeyboardInset` publishes `--kb-inset` and `--kb-range`, and is the only `visualViewport` subscriber.
+  `shared/lib/keyboard-viewport.ts` publishes `--app-height`, `--kb-inset`, `--kb-range` and `data-keyboard` as inline
+  styles on `documentElement`, and is the app's **only** `visualViewport` subscriber — `useKeyboardInset` just starts
+  it once from the shell, and `useVirtualKeyboard` reads the same measurement rather than taking a second subscription.
+  `theme.css` declares the fallbacks used before the first measurement and after teardown.
+- **Pinch-zoom is indistinguishable from a keyboard by geometry — `scale` is the only tell.** Height shrinks and
+  `offsetTop` pans for both, and WebKit ignores `user-scalable=no`, so a zoomed reading is reachable on the one
+  platform this code exists for. `measure()` returns early while `vv.scale !== 1`, freezing the last unzoomed values;
+  anchoring runs _before_ that guard, because pinch-zoom never touches the layout viewport.
 - **"Is a keyboard up" and "how much does it cover" are two numbers, and the 120px floor belongs to the first.** The
   keyboard's own height is `--app-height − visualViewport.height`; `--kb-inset` is that _minus the pan_, because the pan
   moves the rest of the covered area out of the layout viewport. The floor exists to tell a keyboard from a lone
@@ -272,8 +282,8 @@ scrollbar-hide`. It is deliberately plain — a scrollport needs no keyboard geo
   scrolled to. Pin to a scrollport something can shrink and it lands on the keyboard's edge instead.
 - **Bottom insets measured from the screen never subtract `--kb-inset`** (`--app-bottom-inset`, `.pb-safe`,
   `.pb-gutter`). Nothing bottom-anchored is still on screen to save room for — the footer dock has gone `static` and
-  `AppNav` is hidden — so subtracting only twitches bottom chrome on keyboard open. (ADR 0002 asserted the opposite
-  until 2026-07-30; `theme.css` now follows this.)
+  `AppNav` is hidden (`in-data-keyboard:hidden`; it is `fixed`, so it has no `static` to fall back to) — so subtracting
+  only twitches bottom chrome on keyboard open.
 - **A sheet's pinned footer must consume `--drawer-keyboard-inset`; the body doesn't lift it.** Base UI's
   `VirtualKeyboardProvider` never moves the sheet, so a `bottom-0` footer stays behind the keyboard → pad the popup with
   `.pb-safe-keyboard`. **Combine safe-area and keyboard insets with `max()`, never `+`** (the inset already measures to

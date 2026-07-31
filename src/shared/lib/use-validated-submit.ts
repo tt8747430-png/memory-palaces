@@ -11,10 +11,9 @@ export interface ValidatedSubmit<K extends string> {
 }
 
 /**
- * The one shape of a form submit: swallow the browser's own navigation, collect
- * every field's complaint so they all surface at once rather than one per press,
- * and run `submit` only when there are none — holding `busy` from that moment so
- * a second press cannot start a second attempt.
+ * The one shape of a form submit: swallow the browser's navigation, collect every field's complaint
+ * so they surface together rather than one per press, and run `submit` only when there are none —
+ * holding `busy` from that moment so a second press cannot start a second attempt.
  */
 export function useValidatedSubmit<K extends string>(
   validate: () => FieldErrors<K>,

@@ -57,6 +57,8 @@ export function QuizSession({
       FEEDBACK_MS,
     )
     return () => window.clearTimeout(handle)
+    // The finish edge fires once. Depending on the score it reads would restart the delay on the
+    // last answer's own state change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [done])
 

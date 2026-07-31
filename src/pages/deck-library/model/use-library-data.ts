@@ -17,9 +17,8 @@ import {
 } from '@/shared/lib'
 
 /**
- * Everything the library screen reads. Declared once here and carried through
- * `useLibrary` unchanged, so a field cannot be added to the data hook and go
- * missing from the screen's view of it.
+ * Everything the library screen reads. Declared once and carried through `useLibrary` unchanged, so
+ * a field cannot be added to the data hook and go missing from the screen's view of it.
  */
 export interface LibraryView {
   ready: boolean

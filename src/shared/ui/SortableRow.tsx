@@ -20,9 +20,10 @@ export interface SortableRowProps {
 }
 
 /**
- * The one sortable element. Everything draggable — a deck row, a folder row, a
- * toolbar chip, a swipe cap — gets its transform, its transition and its drag
- * handle from here, so `useSortable` is called in exactly one place.
+ * The one sortable element. Everything draggable — deck row, folder row, toolbar chip, swipe cap —
+ * takes its transform, transition and drag handle from here, so `useSortable` is called in exactly
+ * one place. The frame stays the row's own element: that is what `opacity-0` and the landing apply
+ * to, and a wrapper silently changes what is hidden and what is animated.
  */
 export function SortableRow({ id, as = 'div', landingRef, className, children }: SortableRowProps) {
   const {

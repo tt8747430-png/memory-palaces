@@ -64,9 +64,9 @@ export function createServices(): Services {
     eventBus: new EventBus<AppEvents>(),
   }
 
-  // Every store observes its collection from here on. Screens read data and the
-  // `selectIsReady` flag; none of them owns the subscription. The session store
-  // is deliberately absent — AuthProvider restores it once the gateway answers.
+  // Every store observes its collection from here on. Screens read data and `selectIsReady`; none
+  // owns the subscription. Session is deliberately absent — AuthProvider restores it once the
+  // gateway answers.
   for (const store of [
     services.deckStore,
     services.cardStore,

@@ -34,9 +34,8 @@ export type QuestionLike = {
 export class ContentImportError extends Error {}
 
 /**
- * What a failed import should say. Our own parse errors already explain
- * themselves; anything else — a read error, a bug — gets the caller's generic
- * line rather than leaking a stack message into a toast.
+ * What a failed import says. Our own parse errors already explain themselves; anything else — a
+ * read error, a bug — gets the caller's generic line rather than leaking a stack into a toast.
  */
 export function importErrorMessage(error: unknown, fallback: string): string {
   return error instanceof ContentImportError ? error.message : fallback

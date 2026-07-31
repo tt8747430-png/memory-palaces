@@ -22,9 +22,8 @@ export interface AuthFormProps {
 }
 
 /**
- * The shape both ways in share: logo and title, a form, the guest escape
- * hatch, the social buttons, and a line pointing at the other screen. Each
- * band rises in turn.
+ * The shape both ways in share: logo and title, form, guest escape hatch, social buttons, a line
+ * pointing at the other screen. Each band rises in turn.
  */
 export function AuthForm({
   title,

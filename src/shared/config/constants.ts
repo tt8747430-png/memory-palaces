@@ -6,8 +6,10 @@ export const LEGAL_URLS = {
   licenses: 'https://mindscape.app/licenses',
 } as const
 
-/** The longest name a deck or folder may carry. One limit, so a deck renamed
- * into a folder's name never has to be truncated. */
+/**
+ * The longest name a deck or folder may carry. One limit, so a deck renamed into a folder's name is
+ * never truncated.
+ */
 export const NAME_MAX = 60
 
 export const DEFAULT_DAILY_GOAL = 5

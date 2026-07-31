@@ -1,14 +1,11 @@
 # ADR 0001 — Drag reorders, never re-parents; one drag engine; real cards in every stack
 
 - **Status:** accepted · **Date:** 2026-07-26
-- **Supersedes:** the flattened-tree drag-nest design (horizontal offset chose a nesting depth)
+- **Supersedes:** the flattened-tree drag-nest design (a horizontal offset chose a nesting depth)
 
-## Context
-
-Four `DndContext` implementations had drifted apart in feel. The library's drag did two things at once — vertical to
-reorder, horizontal to re-parent — so a drop's meaning depended on a gesture the user couldn't see themselves making.
-Three surfaces drew a "stack of cards" as a blank rectangle; a stack not made of the real items can't animate into or
-out of them, so every transition had to be a cross-fade or an off-screen slide.
+Four `DndContext` implementations had drifted apart in feel, the library's drag meant two things at once, and three
+surfaces drew a "stack of cards" as a blank rectangle. The operational checklist is
+[CODE_STYLE §10](../CODE_STYLE.md).
 
 ## Decision
 
@@ -38,7 +35,7 @@ rows get there, plus the two `DndContext` settings that must not vary (`collisio
 row anatomy. Surfaces differ in what they render, never in how a drag behaves.
 
 | Surface                             | Renders                             | Engine             |
-|-------------------------------------|-------------------------------------|--------------------|
+| ----------------------------------- | ----------------------------------- | ------------------ |
 | `deck-tree/ui/LibrarySelectList`    | two sections + folder drop target   | `useSortableBlock` |
 | `content-editor/ui/ReorderableList` | flat list, order held from props    | `useSortableBlock` |
 | `settings-select`, `settings-swipe` | horizontal chips across two buckets | own `DndContext`   |
@@ -54,7 +51,7 @@ Settings pages stay out deliberately: single-item assignment across two buckets,
 Four drifts, all resolved in the library's favour:
 
 |                | had been             | now                               |
-|----------------|----------------------|-----------------------------------|
+| -------------- | -------------------- | --------------------------------- |
 | collision      | `closestCenter`      | `pointerWithin` → `closestCenter` |
 | drop           | 220ms fly-to-slot    | `null`                            |
 | row anatomy    | inline `useSortable` | `SortableRow`                     |
@@ -96,7 +93,7 @@ card id — the outgoing card was already flung away, the arriving one enters fr
 
 > **Queued list is nearest-first: `depth={i + 1}`.** Inverted (`length - i`) draws the furthest queued card in the
 > visible slot — peek at 15, swipe, 14 arrives. Invisible while the deck is still, which is why both stacks carry a
-`z-index` test asserting the nearest layer holds the card the next swipe promotes. Shipped inverted once; don't
+> `z-index` test asserting the nearest layer holds the card the next swipe promotes. Shipped inverted once; don't
 > re-derive by eye.
 
 **Reduced motion.** `useStackLanding` does nothing — rows are already in place, only the travel drops. Card stacks skip

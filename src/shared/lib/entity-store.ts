@@ -28,13 +28,12 @@ export const selectIsReady = (state: Pick<Lifecycle, 'status'>): boolean => stat
 type SetPartial = (partial: object) => void
 
 /**
- * The half of a store that every slice shares: hold `key` at `empty` until
- * `start()`, then keep it equal to whatever `project` makes of the repository's
- * latest snapshot, and pass `save` straight through.
+ * The half of a store every slice shares: hold `key` at `empty` until `start()`, then keep it equal
+ * to whatever `project` makes of the repository's latest snapshot; `save` passes straight through.
  *
- * Written once so the subscribe/teardown never drifts between store shapes. The
- * caller picks the state key, so the literals here widen to an index signature
- * and each public factory casts the assembled object back to its exact state.
+ * Written once so subscribe/teardown cannot drift between store shapes. The caller picks the state
+ * key, so the literals here widen to an index signature and each factory casts back to its exact
+ * state.
  */
 function mirrorSlice<T extends Identifiable, Held>(
   key: string,

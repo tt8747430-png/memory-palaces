@@ -6,18 +6,18 @@ export interface PendingAct<T> {
   request: (act: T) => void
   dismiss: () => void
   /**
-   * Clears the pending act and hands it to `run`. The act is taken before the
-   * clear and handed over exactly once, so a double-tapped confirm — both taps
-   * landing before React re-renders — cannot run the command twice.
+   * Clears the pending act and hands it to `run`. Taken before the clear and handed over exactly
+   * once, so a double-tapped confirm — both taps landing before React re-renders — cannot run the
+   * command twice.
    */
   resolve: (run: (act: T) => void) => void
 }
 
 /**
- * Holds the one act a screen is waiting on the user to confirm — a delete, a
- * move, an import. Screens ask for one of these instead of hand-rolling the
- * request/dismiss/confirm trio, so "confirming runs it once and closes" means
- * the same thing on every screen.
+ * The one act a screen is waiting on the user to confirm — a delete, a move, an import. Screens
+ * take one of these instead of hand-rolling request/dismiss/confirm, so "confirming runs it once
+ * and closes" means the same thing everywhere. One `pending` value, never a boolean per dialog:
+ * separate flags make "delete over the move sheet" reachable.
  */
 export function usePendingAct<T>(): PendingAct<T> {
   const [act, setAct] = useState<T | null>(null)

@@ -3,16 +3,16 @@
 Behavior, interaction, PWA caveats. Code-level rules → [CODE_STYLE.md](CODE_STYLE.md).
 
 **Portrait, touch-first, offline-first, installable PWA.** `index.html`: `viewport-fit=cover`, `maximum-scale=1`,
-`user-scalable=no`, `interactive-widget=resizes-content`. Manifest: `display: standalone`, `orientation: portrait`.
-
-> Web PWA, **not React Native** — RN/Flutter APIs don't apply; the UX principles do.
+`user-scalable=no`, **`interactive-widget=resizes-visual`** (load-bearing, not boilerplate —
+[ADR 0002](adr/0002-keyboard-covers-the-app.md); `resizes-content` collapses the keyboard measurement to zero on
+Chrome/Firefox). Manifest: `display: standalone`, `orientation: portrait`.
 
 ---
 
 ## 1. Layout
 
-One centered column, `max-w-[430px]` (`shared/ui/AppScreen`, every overlay). Breakpoints used in a handful of places by
-design.
+One centered column, **`max-w-app`** (`--p-container-app`, 430px — `shared/ui/AppScreen`, every overlay). Always the
+token, never a raw width. Breakpoints used in a handful of places by design.
 
 - **Design at ~390–430px.** Content adapts _within_ the column. On big screens it stays centered — never edge-to-edge.
 - **`dvh`, never `vh`** (`100vh` overflows on mobile Safari). `Sheet` caps at `max-h-[88dvh]`.
@@ -26,11 +26,12 @@ design.
 - `viewport-fit=cover` renders under the notch and home indicator — you **must** pad for insets.
 - **Use the `theme.css` safe-area utilities**; compose `AppScreen`/`Sheet`/`HeaderBar`/`SpeedDial` rather than
   hand-rolling padding.
-- **Keyboard:** keep the **focused input and the header** visible above it — the scroll body reveals the field, the
-  shell stays anchored to the screen ([ADR 0002](adr/0002-keyboard-covers-the-app.md)). A page footer stays pinned to
-  the bottom with content passing behind it, sits _behind_ the keyboard rather than above it, and is brought into view
-  by scrolling to the end. Put an action that must survive typing in the header (`CardEditorPage`'s Save), not the
-  footer.
+- **Keyboard:** keep the **focused input and the header** visible — the scroll body reveals the field, the shell stays
+  anchored to the screen and the keyboard covers its bottom ([ADR 0002](adr/0002-keyboard-covers-the-app.md)). A page
+  footer is `sticky bottom-0` with content passing behind it, but **goes `static` while the keyboard is up** and
+  `AppNav` hides outright — WebKit re-clamps bottom-anchored boxes to the visual viewport, which would float them
+  mid-screen. So the CTA rests at the end of the page, behind the keyboard, reached by scrolling. Put an action that
+  must survive typing in the header (`CardEditorPage`'s Save), not the footer.
 - **`overscroll-behavior: contain`** on scroll regions — no app bounce, no pull-to-refresh in standalone.
 
 ## 3. Touch targets
@@ -54,8 +55,8 @@ design.
 - **Discoverable and forgiving:** visible affordances, rubber-band past the commit point, deliberate threshold before a
   destructive swipe. One recognizer (`@use-gesture`); commit math pure in `shared/lib/gestures`.
 - **Immediate press feedback:** `active:scale-[0.97]` + haptics on commit.
-- **Haptics** (`shared/lib/haptics`): `tick()` 8ms, `impact()` 16ms, `success([12,40,24])`, preference-gated. *
-  *`navigator.vibrate` is ignored by iOS Safari** — progressive enhancement only.
+- **Haptics** (`shared/lib/haptics`): `tick()` 8ms, `impact()` 16ms, `success([12,40,24])`, preference-gated.
+  **`navigator.vibrate` is ignored by iOS Safari** — progressive enhancement only.
 
 ## 6. Interactivity
 
@@ -70,9 +71,9 @@ design.
 ## 7. Sheets, menus, overlays
 
 All on **`@base-ui/react`**, wrapped in `shared/ui/primitives/`: `Drawer` → `Sheet`/`ActionSheet`/`PromptSheet`;
-`AlertDialog` → `ConfirmDialog` (`role="alertdialog"`, no outside-press dismiss); `Menu` → `FlyoutMenu`/`SortControl`/
-`OverflowMenuButton`. They give focus-trap, portal, swipe-to-dismiss, `Escape`. Prefer them over hand-rolled overlays (
-`CardBrowser` is the one deliberate exception).
+`AlertDialog` → `ConfirmDialog` (`role="alertdialog"`, no outside-press dismiss); `Menu` (`primitives/dropdown-menu`) →
+`FlyoutMenu`/`SortControl`, with the shared item sets in `shared/ui/menu-actions`. They give focus-trap, portal,
+swipe-to-dismiss, `Escape`. Prefer them over hand-rolled overlays (`CardBrowser` is the one deliberate exception).
 
 - **Bottom sheets over centered dialogs.** `Sheet` is canonical: grab handle, native swipe-to-dismiss, `max-h-[88dvh]`,
   `pb-safe`, top-rounded. On iOS it lifts above the keyboard via `Drawer.VirtualKeyboardProvider` — Safari demotes
@@ -87,8 +88,10 @@ All on **`@base-ui/react`**, wrapped in `shared/ui/primitives/`: `Drawer` → `S
 ## 8. Motion feel
 
 - **Communicates, never decorates.** Says nothing → cut it.
-- **Spring physics** for finger-driven motion; short eased tweens for enter/exit chrome (`Sheet` = `300ms ease-out`).
-- **~150–300ms.** Longer feels sluggish in the hand.
+- **Spring physics** for finger-driven motion; eased tweens for enter/exit chrome.
+- **~150–300ms for in-page feedback.** Longer feels sluggish in the hand. **Full-height surfaces travel further and get
+  longer** — `Sheet` is `450ms cubic-bezier(0.32,0.72,0,1)`, the iOS sheet curve, and `data-swiping:duration-0` hands
+  the motion straight to the finger mid-swipe.
 - **Direction encodes hierarchy:** sheets rise and fall; forward nav moves inward, back outward. No lateral slides
   between peers.
 - **Only `transform`/`opacity`.**
@@ -112,7 +115,7 @@ All four on every async surface — a missing state reads as a crash.
 
 - **Loading** — skeleton/spinner, never blank (`widgets/splash` for first paint); skip for instant local writes (§6).
 - **Error** — the problem **plus a retry path**.
-- **Empty** — `shared/ui/EmptyState`; put "create" in the toolbar too.
+- **Empty** — `Empty` (`shared/ui/primitives/empty.tsx`, `panel`/`hero`); put "create" in the toolbar too.
 - **Offline** — §11.
 
 ## 11. Offline-first
@@ -131,8 +134,10 @@ All four on every async surface — a missing state reads as a crash.
 
 ## 13. Service-worker updates
 
-- `registerType: 'prompt'` — **never auto-applied.** `UpdatePrompt` checks hourly + on `visibilitychange`, shows a
-  persistent toast with a Reload action.
+- `registerType: 'prompt'` — **never auto-applied.** `UpdatePrompt` asks on launch, on `visibilitychange`, on `online`,
+  and every 15 min for a window left open all day; it shows a persistent toast (fixed id, so never a stack) with a
+  Reload action. **`registration.waiting` is the ground truth**, not the `updatefound` event — workbox-window stops
+  reporting updates it classifies as external, which loses every update after the first in an app that stays open.
 - **Don't switch to `autoUpdate`** — a silent reload mid-study loses the user's place.
 - SW is **off in dev** — verify against `npm run build && npm run preview`.
 

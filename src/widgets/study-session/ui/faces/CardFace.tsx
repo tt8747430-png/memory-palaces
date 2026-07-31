@@ -20,8 +20,8 @@ export interface CardFaceProps {
 }
 
 /**
- * The shell every face wears: the flag and read-aloud header, the scrolling
- * body, and the mode/gear footer around whatever aids the face offers.
+ * The shell every face wears: flag and read-aloud header, scrolling body, mode/gear footer, around
+ * whatever aids the face offers.
  */
 export function CardFace({
   face,
@@ -250,8 +250,8 @@ export function FlipZone({
 }
 
 /**
- * The prompt as a working face states it — fixed at the top, with the tip and a
- * rule under it, so the answer area below can grow.
+ * The prompt as a working face states it — fixed at the top, tip and rule under it, so the answer
+ * area below can grow.
  */
 export function WorkPrompt({ prompt, tip }: { prompt: string; tip?: string }) {
   return (

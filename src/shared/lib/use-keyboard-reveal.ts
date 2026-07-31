@@ -34,8 +34,8 @@ export function revealOffset(view: RevealBand, field: RevealBand, gap = REVEAL_G
 
 /**
  * Marks the scroll node the reveal is attached to. The probe reads it rather than guessing at
- * `main`: "the field never moved" and "the field moved a node nobody is watching" are the same
- * still reading, and only this attribute tells them apart.
+ * `main`: "the field never moved" and "the field moved a node nobody watches" are the same still
+ * reading, and only this attribute tells them apart.
  */
 export const REVEAL_SCROLL_ATTR = 'data-reveal-scroll'
 
@@ -54,9 +54,9 @@ export function useKeyboardReveal(): (node: HTMLElement | null) => void {
     if (!node) return
 
     /**
-     * Lands the field between the chrome, clear of the keyboard by `REVEAL_GAP`. Doing this well is
-     * what keeps iOS from panning the visual viewport to do it instead — the pan is not a fact of
-     * the platform, it is what the platform does when the page has not revealed its own field.
+     * Lands the field between the chrome, clear of the keyboard by `REVEAL_GAP`. Doing it well is
+     * what keeps iOS from panning to do it instead: the pan is not a fact of the platform, it is
+     * what the platform does when the page has not revealed its own field.
      */
     const reveal = (field: HTMLElement) => {
       const bounds = node.getBoundingClientRect()

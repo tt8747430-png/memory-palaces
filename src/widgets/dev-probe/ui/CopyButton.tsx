@@ -8,9 +8,9 @@ type State = 'idle' | 'copied' | 'failed'
 
 /**
  * `text` is a thunk: the probe re-renders every frame, and the reading worth copying is the one
- * taken when the button was pressed. `keepFieldFocused` is the load-bearing part — the whole
- * purpose is to copy the numbers *while the keyboard is up*, and a tap that blurred the field
- * would close it and copy the resting state instead.
+ * taken at press time. `keepFieldFocused` is the load-bearing part — the point is to copy the
+ * numbers *while the keyboard is up*, and a tap that blurred the field would close it and copy the
+ * resting state instead.
  */
 export function CopyButton({
   text,

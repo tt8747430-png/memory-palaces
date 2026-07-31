@@ -21,9 +21,8 @@ export interface AppearanceFieldsProps {
 }
 
 /**
- * The one name-icon-colour form. Decks and folders are dressed the same way and
- * accept the same name length, so the only thing `subject` settles is the
- * wording of the labels.
+ * The one name-icon-colour form. Decks and folders are dressed the same way and take the same name
+ * length, so `subject` settles nothing but the wording of the labels.
  */
 export function AppearanceFields({
   subject,

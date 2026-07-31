@@ -10,9 +10,9 @@ export interface EmojiFieldProps {
 }
 
 /**
- * UTS #51's `Extended_Pictographic` — every character that can start an emoji,
- * including the text-presentation ones `\p{Emoji_Presentation}` leaves out.
- * (Some IDE regex parsers do not know this property; engines do.)
+ * UTS #51's `Extended_Pictographic` — every character that can start an emoji, including the
+ * text-presentation ones `\p{Emoji_Presentation}` leaves out. Some IDE regex parsers do not know
+ * this property; engines do.
  */
 const PICTOGRAPHIC = /\p{Extended_Pictographic}/u
 

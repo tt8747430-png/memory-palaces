@@ -5,16 +5,15 @@ export interface TokenLineProps {
   tokens: readonly string[]
   className?: string
   /**
-   * What to draw in place of a word the face is currently withholding. Return
-   * `null` and the word shows as itself. Reference markers are never withheld.
+   * What to draw for a word the face is withholding. Return `null` and the word shows as itself.
+   * Reference markers are never withheld.
    */
   renderWithheld: (token: string, index: number) => ReactNode | null
 }
 
 /**
- * An answer laid out word by word. Every face that hides parts of the answer
- * draws it through here, so a reference marker always reads as an accent and a
- * revealed word always reads the same.
+ * An answer laid out word by word. Every face that hides part of an answer draws it through here,
+ * so a reference marker always reads as an accent and a revealed word always reads the same.
  */
 export function TokenLine({ tokens, className, renderWithheld }: TokenLineProps) {
   return (

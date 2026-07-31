@@ -1,7 +1,6 @@
 /**
- * A question's fields as a command carries them. `explanation` is `undefined`
- * rather than absent when blank, matching `CardDraftEdit`, so clearing it
- * reaches `updateQuestion` as a real change rather than "leave it alone".
+ * A question's fields as a command carries them. Blank `explanation` is `undefined` rather than
+ * absent, matching `CardDraftEdit`, so clearing it reaches `updateQuestion` as a real change.
  */
 export interface QuestionData {
   prompt: string

@@ -75,9 +75,8 @@ interface SelectRowProps {
 }
 
 /**
- * A row in select mode: the whole frame is one toggle, and the drag handle is
- * that same button, so a press reorders and a tap selects. Folders and decks
- * differ only in their frame and the body they show.
+ * A row in select mode: the whole frame is one toggle, and the drag handle is that same button —
+ * press reorders, tap selects. Folders and decks differ only in frame and body.
  */
 function SelectRow({
   id,

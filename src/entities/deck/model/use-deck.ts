@@ -15,10 +15,9 @@ export interface DeckLookup {
 }
 
 /**
- * One deck as a screen needs it. Reading a deck always means the same three
- * steps — wait for the store, find it by id, inherit settings down its
- * ancestry — so they live here rather than being spelled out on every screen
- * that opens a deck.
+ * One deck as a screen needs it. Reading a deck always means the same three steps — wait for the
+ * store, find it by id, inherit settings down its ancestry — so they live here rather than being
+ * respelled on every screen that opens a deck.
  */
 export function useDeck(deckId: string): DeckLookup {
   const decks = useDeckStore(selectDecks)

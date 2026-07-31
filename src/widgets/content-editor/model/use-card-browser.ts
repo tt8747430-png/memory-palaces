@@ -53,6 +53,8 @@ export function useCardBrowser({
     setEnterFrom(null)
     animating.current = false
     x.set(0)
+    // Re-seeds per opening, not per list change: editing a card mid-browse must not throw the
+    // reader back to the card it opened on.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, startId])
 

@@ -1,7 +1,7 @@
 /**
- * The one vocabulary of row actions. Swipe rows and the select toolbar both
- * draw from it, so an action has a single label, accent and icon wherever it
- * appears; each surface only decides *which* of them it offers.
+ * The one vocabulary of row actions. Swipe rows, the select toolbar and overflow menus all draw
+ * from it, so an action keeps one label, accent and icon wherever it appears; a surface decides
+ * only *which* it offers.
  */
 export type ActionId =
   | 'favorite'
@@ -48,9 +48,8 @@ export interface ActionMeta {
   /** The short label a swipe chip or toolbar button shows. */
   labelKey: string
   /**
-   * The longer label an overflow menu shows, where there is room to say what
-   * the action does. Falls back to `labelKey` when the short one already reads
-   * as a full instruction.
+   * Longer label for an overflow menu, where there is room to say what the action does. Falls back
+   * to `labelKey` when the short one already reads as a full instruction.
    */
   menuLabelKey?: string
   accent: ActionAccent

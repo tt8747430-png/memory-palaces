@@ -41,6 +41,8 @@ export function useInitialsRecall(
   const typedCount = tokens.slice(0, accepted).filter((token) => !isAutoToken(token)).length
   const complete = tokens.length > 0 && accepted >= tokens.length
 
+  // Fires on the completion edge. `onSolved` is a new closure each render, so depending on it would
+  // re-fire for every keystroke once the answer is complete.
   useEffect(() => {
     if (enabled && complete) onSolved()
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -1,13 +1,11 @@
 /**
  * Detecting a downloaded-but-not-yet-active app update.
  *
- * `registration.waiting` is the ground truth: once a new service worker
- * finishes installing it sits in `waiting` until it is told to take over, so a
- * watcher that starts at any moment still sees a pending update. Detection here
- * therefore never depends on having witnessed the `updatefound` event that
- * produced the worker — workbox-window classifies any update found more than a
- * minute after registration as "external" and then stops listening for further
- * ones, which loses every update after the first in an app that stays open.
+ * `registration.waiting` is the ground truth: an installed worker sits there until told to take
+ * over, so a watcher starting at any moment still sees a pending update. Never depends on having
+ * witnessed the `updatefound` event — workbox-window calls any update found more than a minute
+ * after registration "external" and stops listening, losing every update after the first in an app
+ * left open.
  */
 
 /** The parts of `ServiceWorker` this module touches. */
@@ -30,8 +28,8 @@ export interface RegistrationLike {
 const SKIP_WAITING = { type: 'SKIP_WAITING' }
 
 /**
- * Reports the worker waiting to take over — immediately if one already is, and
- * again whenever that changes. Returns a function that detaches every listener.
+ * Reports the worker waiting to take over — immediately if one already is, again whenever that
+ * changes. Returns a detach function.
  */
 export function watchWaitingWorker(
   registration: RegistrationLike,
@@ -54,8 +52,8 @@ export function watchWaitingWorker(
     watched.delete(worker)
   }
 
-  // A worker only reaches `waiting` by passing through `installing`, so follow
-  // each installing worker until it either waits or turns out to be redundant.
+  // A worker only reaches `waiting` through `installing` — follow each until it waits or goes
+  // redundant.
   const watchInstalling = () => {
     const installing = registration.installing
     if (stopped || !installing || watched.has(installing)) return
@@ -72,8 +70,8 @@ export function watchWaitingWorker(
   registration.addEventListener('updatefound', watchInstalling)
   watchInstalling()
 
-  // A worker that was already waiting — installed during an earlier run, or
-  // while this page was starting up — never fires an event we could observe.
+  // Already waiting — installed on an earlier run, or while this page booted — fires no observable
+  // event.
   const waiting = registration.waiting
   if (waiting) {
     const listener = () => {

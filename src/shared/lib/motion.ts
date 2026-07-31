@@ -1,10 +1,15 @@
 type Bezier = [number, number, number, number]
 
-/** The app's two easing curves. Anything that moves uses one of them. */
+/**
+ * The two curves Motion animations use. Two more live as tokens for CSS
+ * transitions (`--p-ease-out-quart`, `--p-ease-standard`), and `Sheet` keeps the
+ * iOS sheet curve of its own — a full-height surface travelling further reads
+ * wrong on these. Reach for one of these first; adding a fifth needs a reason.
+ */
 export const EASE_OUT: Bezier = [0.22, 1, 0.36, 1]
 export const EASE_EXPO: Bezier = [0.16, 1, 0.3, 1]
 
-/** CSS forms, for transitions declared outside Motion. */
+/** CSS form of `EASE_OUT`, for transitions declared outside Motion. */
 export const EASE_OUT_CSS = 'cubic-bezier(0.22, 1, 0.36, 1)'
 
 export const authEntrance = {

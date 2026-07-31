@@ -18,9 +18,8 @@ export interface RowDragHandle {
 }
 
 /**
- * What every content row needs to sit in a list — how it is selected, dragged
- * and swiped. A row type adds only the fields of its own subject on top, and
- * hands this frame straight through to `ContentRow`.
+ * What every content row needs to sit in a list — how it is selected, dragged, swiped. A row type
+ * adds only its own subject's fields on top and hands this frame through to `ContentRow`.
  */
 export interface RowFrameProps {
   selectMode: boolean

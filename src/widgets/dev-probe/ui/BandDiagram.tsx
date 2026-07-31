@@ -4,10 +4,9 @@ import type { ViewportSample } from '../model/viewport-sample'
 const LABEL = 'absolute text-(length:--p-text-tiny) font-semibold tabular-nums'
 
 /**
- * The screen, to scale, in the one coordinate space that matters: layout pixels below the anchored
- * shell's top. Rects are converted through `html`'s own rect top — the same bridge `visibleBottom()`
- * uses — so a field drawn outside the band really is outside it, rather than a space-conversion
- * mistake drawn twice.
+ * The screen to scale, in the one coordinate space that matters: layout pixels below the anchored
+ * shell's top. Rects convert through `html`'s own rect top — the bridge `visibleBottom()` uses — so
+ * a field drawn outside the band really is outside it, not a space-conversion mistake drawn twice.
  */
 export function BandDiagram({ sample, className }: { sample: ViewportSample; className?: string }) {
   const app = Number.parseInt(sample.appHeight, 10) || sample.layoutHeight

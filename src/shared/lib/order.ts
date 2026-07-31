@@ -5,9 +5,8 @@ export function nextOrder(items: ReadonlyArray<{ order: number }>): number {
 }
 
 /**
- * The three orderings a collection store can hold its rows in. Every slice
- * picks one of these rather than spelling out its own comparator, so "manual
- * order" and "newest first" mean the same thing everywhere.
+ * The three orderings a collection store can hold rows in. Every slice picks one instead of
+ * spelling out its own comparator, so "manual order" and "newest first" mean one thing everywhere.
  */
 type Ordered = { order: number; createdAt: string }
 type Created = { createdAt: string }
@@ -23,9 +22,9 @@ export const byOldestFirst = (a: Created, b: Created): number =>
   a.createdAt.localeCompare(b.createdAt)
 
 /**
- * Writes `orderedIds` back onto `items` as consecutive orders, calling `write`
- * only for the ones whose order actually moved. Ids the list no longer holds
- * are skipped, so a stale drag cannot resurrect a deleted row.
+ * Writes `orderedIds` back onto `items` as consecutive orders, calling `write` only for rows whose
+ * order moved. Ids the list no longer holds are skipped, so a stale drag cannot resurrect a
+ * deleted row.
  */
 export async function reorderById<T extends Identifiable & { order: number }>(
   items: ReadonlyArray<T>,

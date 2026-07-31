@@ -15,8 +15,8 @@ export interface CardDraftSheetProps {
 }
 
 /**
- * The one sheet for editing a card's four fields, wherever the card is met —
- * mid-study, or in an import awaiting review.
+ * The one sheet for editing a card's four fields, wherever the card is met — mid-study, or in an
+ * import awaiting review.
  */
 export function CardDraftSheet({
   card,

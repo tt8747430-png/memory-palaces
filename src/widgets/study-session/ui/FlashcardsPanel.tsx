@@ -139,6 +139,8 @@ export function FlashcardsPanel({
     success()
     const handle = window.setTimeout(handoff, COMPLETE_DELAY_MS)
     return () => window.clearTimeout(handle)
+    // Completion fires once per run. `handoff` closes over the final tallies and guards itself with
+    // a ref, so re-running on its identity would only restart the delay.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [completed])
 
@@ -154,6 +156,8 @@ export function FlashcardsPanel({
   const prompt = card ? (prefs.direction === 'front' ? card.card.front : card.card.back) : ''
   const answer = card ? (prefs.direction === 'front' ? card.card.back : card.card.front) : ''
 
+  // Speak on the events worth speaking on — arriving at a card, turning it over — not whenever the
+  // text changes. On `prompt`/`answer` an edit mid-card would re-read it aloud.
   useEffect(() => {
     if (prefs.textToSpeech && card && !flipped) speak(prompt)
     // eslint-disable-next-line react-hooks/exhaustive-deps

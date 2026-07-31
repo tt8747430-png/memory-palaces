@@ -44,6 +44,8 @@ export function QuestionEditorPage({
     setOptions(editing?.options ?? ['', ''])
     setCorrect(editing?.correctAnswer ?? 0)
     setExplanation(editing?.explanation ?? '')
+    // Keyed on the id alone: the stored question changing under the same id is this form's own save
+    // coming back, and re-seeding would throw away what is being typed.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editing?.id])
 

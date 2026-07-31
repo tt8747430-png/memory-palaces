@@ -18,11 +18,9 @@ export interface CollectionCommandSpec<T, Changes> {
 }
 
 /**
- * The four commands every ordered collection answers the same way. A slice
- * hands over its state key, its name and its updater; everything else — when
- * `updatedAt` is stamped, which rows a reorder actually writes, what a stale id
- * throws — is decided here so it cannot drift between decks, cards, questions
- * and folders.
+ * The four commands every ordered collection answers the same way. A slice hands over its state
+ * key, name and updater; the rest — when `updatedAt` is stamped, which rows a reorder writes, what
+ * a stale id throws — is decided here so it cannot drift between decks, cards, questions, folders.
  */
 export interface CollectionCommands<
   Key extends string,
@@ -64,8 +62,8 @@ export function collectionCommands<
 
     reorder(store, orderedIds, now = Date.now()) {
       const updatedAt = nowIso(now)
-      // `order` is optional on every slice's change type, but a generic cannot
-      // see that; the updater validates it either way.
+      // `order` is optional on every slice's change type, but a generic cannot see that. The
+      // updater validates it either way.
       return reorderById(rows(store), orderedIds, (entity, order) =>
         store.getState().save(update(entity, { order } as Changes, updatedAt)),
       )

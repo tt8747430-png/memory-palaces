@@ -27,6 +27,8 @@ export function RebuildFace(props: FaceProps) {
   const placed = usedKeys.size
   const done = words.length > 0 && placed >= words.length
 
+  // Reveals on the last chip placed. `props.onRevealInPlace` is a fresh closure each render, so
+  // depending on it would re-reveal on every later render of a solved card.
   useEffect(() => {
     if (done) props.onRevealInPlace()
     // eslint-disable-next-line react-hooks/exhaustive-deps
