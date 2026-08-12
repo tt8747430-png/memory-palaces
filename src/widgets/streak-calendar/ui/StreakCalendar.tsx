@@ -70,9 +70,7 @@ export function StreakCalendar({ trainingDays, now = Date.now() }: StreakCalenda
   return (
     <GlassCard tone="card">
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-(length:--p-text-title) font-semibold text-heading">
-          {monthLabel}
-        </h3>
+        <h3 className="text-(length:--p-text-title) font-semibold text-heading">{monthLabel}</h3>
         <div className="flex items-center gap-1">
           <IconButton size="sm" aria-label={t('progress.prevMonth')} onClick={() => shift(-1)}>
             <ChevronLeft className="size-4" aria-hidden />
@@ -119,10 +117,7 @@ export function StreakCalendar({ trainingDays, now = Date.now() }: StreakCalenda
           {t('progress.legendTrained')}
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span
-            className="size-3 rounded-[5px] ring-2 ring-inset ring-primary"
-            aria-hidden
-          />
+          <span className="size-3 rounded-[5px] ring-2 ring-inset ring-primary" aria-hidden />
           {t('progress.legendToday')}
         </span>
       </div>

@@ -51,8 +51,7 @@ function RowBody({ icon, label, description, tone = 'default' }: BaseProps) {
         <span
           className={cn(
             'block truncate text-(length:--p-text-sub) font-semibold',
-            danger ? '' +
-              'text-(--danger-on-surface)' : 'text-heading',
+            danger ? '' + 'text-(--danger-on-surface)' : 'text-heading',
           )}
         >
           {label}

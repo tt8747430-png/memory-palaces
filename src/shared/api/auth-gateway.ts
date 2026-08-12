@@ -1,7 +1,8 @@
 import type { Unsubscribe } from './base-repository'
 
 export type AuthKind = 'guest' | 'account'
-export type AuthProvider = 'google' | 'apple'
+/** Named for the flow, not the React provider of the same word. */
+export type OAuthProvider = 'google' | 'apple'
 
 export interface PersistedAuth {
   id: string
@@ -39,7 +40,7 @@ export interface AuthGateway {
   signUp(input: SignUpInput): Promise<SignUpResult>
   signIn(input: SignInInput): Promise<PersistedAuth>
   /** Redirect-based: resolves once the redirect has been started, not once signed in. */
-  signInWithProvider(provider: AuthProvider): Promise<void>
+  signInWithProvider(provider: OAuthProvider): Promise<void>
   persistGuest(): Promise<PersistedAuth>
   signOut(): Promise<void>
   requestPasswordReset(email: string): Promise<void>

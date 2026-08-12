@@ -3,7 +3,8 @@ import { motion } from 'motion/react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { authErrorMessage, authRise, authStagger, cn, useOnline } from '@/shared/lib'
-import { AuthScreen, Button, SocialButtons, type SocialProvider } from '@/shared/ui'
+import type { OAuthProvider } from '@/shared/api'
+import { AuthScreen, Button, SocialButtons } from '@/shared/ui'
 import { useAuthActions } from '@/features/session'
 import { AuthHeader } from './AuthHeader'
 
@@ -40,7 +41,7 @@ export function AuthForm({
   const { t } = useTranslation()
   const { continueAsGuest, signInWithProvider } = useAuthActions()
   const online = useOnline()
-  const [pending, setPending] = useState<SocialProvider | null>(null)
+  const [pending, setPending] = useState<OAuthProvider | null>(null)
 
   const enterAsGuest = async () => {
     await continueAsGuest()
@@ -49,7 +50,7 @@ export function AuthForm({
 
   // The redirect leaves the app, so `pending` only ever clears on failure — a successful press
   // never comes back to this component.
-  const startProvider = async (provider: SocialProvider) => {
+  const startProvider = async (provider: OAuthProvider) => {
     setPending(provider)
     try {
       await signInWithProvider(provider)

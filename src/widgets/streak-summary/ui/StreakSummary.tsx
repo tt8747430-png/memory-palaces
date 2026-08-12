@@ -122,8 +122,12 @@ function StreakStat({
     <div className="flex flex-1 flex-col items-center text-center">
       <span className="inline-flex items-center gap-1.5">
         {accent ? (
-          <Flame className="size-5
-          text-warning" fill="currentColor" aria-hidden />
+          <Flame
+            className="size-5
+          text-warning"
+            fill="currentColor"
+            aria-hidden
+          />
         ) : null}
         <span className="text-[30px] font-bold leading-none tabular-nums text-heading">
           {value}

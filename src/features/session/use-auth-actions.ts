@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import type { AuthProvider } from '@/shared/api'
+import type { OAuthProvider } from '@/shared/api'
 import { useAuthGateway } from '@/shared/lib'
 import { useSessionStoreApi } from '@/entities/session'
 import { useProfileStoreApi } from '@/entities/profile'
@@ -10,13 +10,12 @@ import { continueAsGuest } from './continue-as-guest'
 import { signOut } from './sign-out'
 import { requestPasswordReset } from './request-password-reset'
 import { setPassword } from './set-password'
-import { signInWithProvider } from './sign-in-with-provider'
 
 export interface AuthActions {
   /** Resolves with `sessionActive: false` when the account still needs email confirmation. */
   signUp: (input: SignUpWithEmailInput) => Promise<{ sessionActive: boolean }>
   signIn: (input: SignInWithEmailInput) => Promise<void>
-  signInWithProvider: (provider: AuthProvider) => Promise<void>
+  signInWithProvider: (provider: OAuthProvider) => Promise<void>
   continueAsGuest: () => Promise<void>
   signOut: () => Promise<void>
   requestPasswordReset: (email: string) => Promise<void>
@@ -37,8 +36,8 @@ export function useAuthActions(): AuthActions {
         return result
       },
       signIn: (input) => signInWithEmail(deps, input),
-      // Redirect-based: the session lands on /auth/callback, not here.
-      signInWithProvider: (provider) => signInWithProvider(gateway, provider),
+      // Redirect-based, and not a store write: the session lands on /auth/callback, not here.
+      signInWithProvider: (provider) => gateway.signInWithProvider(provider),
       continueAsGuest: () => continueAsGuest(deps),
       signOut: () => signOut(deps),
       requestPasswordReset: (email) => requestPasswordReset(gateway, email),

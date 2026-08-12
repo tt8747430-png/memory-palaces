@@ -2,7 +2,7 @@ import type { AuthError as SupabaseAuthError, SupabaseClient, User } from '@supa
 import {
   AuthError,
   type AuthGateway,
-  type AuthProvider,
+  type OAuthProvider,
   type PersistedAuth,
   type SignInInput,
   type SignUpInput,
@@ -57,7 +57,7 @@ export class SupabaseAuthGateway implements AuthGateway {
     return toAuth(data.user)
   }
 
-  async signInWithProvider(provider: AuthProvider): Promise<void> {
+  async signInWithProvider(provider: OAuthProvider): Promise<void> {
     const { error } = await this.client.auth.signInWithOAuth({
       provider,
       options: { redirectTo: `${window.location.origin}/auth/callback` },

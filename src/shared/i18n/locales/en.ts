@@ -339,6 +339,7 @@ export const en = {
       resetFailed: "We couldn't send the reset link. Please try again.",
       socialFailed: "We couldn't reach that provider. Please try again.",
       offline: "You're offline — reconnect to use social sign-in.",
+      offlineOnly: 'This app is running without an account service, so that is unavailable.',
     },
   },
   achievements: {

@@ -1,7 +1,7 @@
 import type { SrsState } from './srs'
+import { type Clocked, newest } from './newest'
 
-export interface MergeableCard {
-  updatedAt: string
+export interface MergeableCard extends Clocked {
   srs?: SrsState
 }
 
@@ -12,9 +12,10 @@ export interface MergeableCard {
 function mergeSrs(local: SrsState | undefined, remote: SrsState | undefined): SrsState | undefined {
   if (!local) return remote
   if (!remote) return local
-  const newest = local.lastReviewed >= remote.lastReviewed ? local : remote
+  // Reviews merge on their own clock: the schedule follows whoever studied last, not who typed last.
+  const latest = local.lastReviewed >= remote.lastReviewed ? local : remote
   return {
-    ...newest,
+    ...latest,
     reps: Math.max(local.reps, remote.reps),
     lapses: Math.max(local.lapses, remote.lapses),
   }
@@ -22,7 +23,7 @@ function mergeSrs(local: SrsState | undefined, remote: SrsState | undefined): Sr
 
 /** Content is last-write-wins by `updatedAt`; the `srs` sub-object merges on its own clock. */
 export function mergeCard<T extends MergeableCard>(local: T, remote: T): T {
-  const newest = local.updatedAt >= remote.updatedAt ? local : remote
+  const winner = newest(local, remote)
   const srs = mergeSrs(local.srs, remote.srs)
-  return srs ? { ...newest, srs } : { ...newest }
+  return srs ? { ...winner, srs } : { ...winner }
 }

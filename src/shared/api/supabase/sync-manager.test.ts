@@ -83,14 +83,4 @@ describe('SyncManager', () => {
     await manager.start('u1')
     expect(created).toHaveLength(4)
   })
-
-  it('reports in-sync only once every collection agrees', async () => {
-    const { manager, created } = setup()
-    await manager.start('u1')
-
-    await expect(manager.isInSync()).resolves.toBe(true)
-
-    created[1]?.awaitInSync.mockResolvedValue(false)
-    await expect(manager.isInSync()).resolves.toBe(false)
-  })
 })

@@ -3,7 +3,7 @@ export { InMemoryRepository } from './in-memory-repository'
 export type {
   AuthGateway,
   AuthKind,
-  AuthProvider,
+  OAuthProvider,
   PersistedAuth,
   SignInInput,
   SignUpInput,

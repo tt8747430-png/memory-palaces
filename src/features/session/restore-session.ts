@@ -13,12 +13,15 @@ export async function restoreSession(
   now: number = Date.now(),
 ): Promise<Unsubscribe> {
   const apply = async (persisted: PersistedAuth | null): Promise<void> => {
+    const session = deps.sessionStore.getState()
     if (!persisted) {
-      if (deps.sessionStore.getState().session) await deps.sessionStore.getState().clear()
+      // Cleared even when already empty: it marks the store ready, which is how the route guard
+      // knows it can stop asking the gateway on every navigation.
+      await session.clear()
       return
     }
     const createdAt = nowIso(now)
-    const session =
+    const next =
       persisted.kind === 'account'
         ? makeAccountSession(
             persisted.id,
@@ -26,7 +29,7 @@ export async function restoreSession(
             createdAt,
           )
         : makeGuestSession(persisted.id, createdAt)
-    await deps.sessionStore.getState().set(session)
+    await session.set(next)
   }
 
   await apply(await deps.gateway.getCurrent())

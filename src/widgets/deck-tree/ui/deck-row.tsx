@@ -61,8 +61,7 @@ export function DeckRowBody({ deck, due, isSub = false, selectState, toggle }: D
           </span>
           <span
             className={cn(
-              'block truncate ' +
-              'text-(length:--p-text-label)',
+              'block truncate ' + 'text-(length:--p-text-label)',
               due > 0 ? 'font-medium text-primary/80' : 'text-muted-foreground',
             )}
           >

@@ -1,7 +1,7 @@
 import {
   AuthError,
   type AuthGateway,
-  type AuthProvider,
+  type OAuthProvider,
   type PersistedAuth,
   type SignInInput,
   type SignUpInput,
@@ -36,7 +36,7 @@ export class LocalAuthGateway implements AuthGateway {
     return this.write({ id: this.genId(), kind: 'account', email: input.email, name: '' })
   }
 
-  async signInWithProvider(_provider: AuthProvider): Promise<void> {
+  async signInWithProvider(_provider: OAuthProvider): Promise<void> {
     throw new AuthError('Social sign-in requires a cloud connection', 'offline_only')
   }
 

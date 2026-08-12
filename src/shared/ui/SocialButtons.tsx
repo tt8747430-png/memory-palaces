@@ -3,14 +3,13 @@ import { motion } from 'motion/react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { Loader2 } from 'lucide-react'
+import type { OAuthProvider } from '@/shared/api'
 import { cn } from '@/shared/lib'
 
-export type SocialProvider = 'google' | 'apple'
-
 export interface SocialButtonsProps {
-  onSelect?: (provider: SocialProvider) => void
+  onSelect?: (provider: OAuthProvider) => void
   /** The provider whose redirect is in flight — both buttons wait for it. */
-  pending?: SocialProvider | null
+  pending?: OAuthProvider | null
   /** Why the buttons are inert (offline). Shown under them and used as the toast on press. */
   unavailableReason?: string
 }
@@ -48,7 +47,7 @@ export function SocialButtons({
   unavailableReason,
 }: SocialButtonsProps = {}) {
   const { t } = useTranslation()
-  const handle = (provider: SocialProvider) => {
+  const handle = (provider: OAuthProvider) => {
     if (unavailableReason) {
       toast(unavailableReason)
       return
