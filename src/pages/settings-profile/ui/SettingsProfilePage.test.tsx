@@ -5,7 +5,9 @@ import userEvent from '@testing-library/user-event'
 import type { ReactNode } from 'react'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
-import { InMemoryRepository } from '@/shared/api'
+import { InMemoryRepository, LocalObjectUrlStorage } from '@/shared/api'
+import { StoragePortContext } from '@/shared/lib'
+import { createSessionStore, type Session, SessionStoreContext } from '@/entities/session'
 import {
   createProfileStore,
   makeProfile,
@@ -44,31 +46,35 @@ function renderPage(opts: { profile?: Profile; decks?: Deck[] } = {}) {
   }
   const wrap = (children: ReactNode) => (
     <I18nextProvider i18n={i18n}>
-      <ProfileStoreContext value={started(createProfileStore(profileRepo))}>
-        <DeckStoreContext value={started(createDeckStore(deckRepo))}>
-          <CardStoreContext value={started(createCardStore(new InMemoryRepository<Card>()))}>
-            <FolderStoreContext
-              value={started(createFolderStore(new InMemoryRepository<Folder>()))}
-            >
-              <QuestionStoreContext
-                value={started(createQuestionStore(new InMemoryRepository<Question>()))}
-              >
-                <ProgressStoreContext
-                  value={started(createProgressStore(new InMemoryRepository<Progress>()))}
+      <StoragePortContext value={new LocalObjectUrlStorage()}>
+        <SessionStoreContext value={createSessionStore(new InMemoryRepository<Session>())}>
+          <ProfileStoreContext value={started(createProfileStore(profileRepo))}>
+            <DeckStoreContext value={started(createDeckStore(deckRepo))}>
+              <CardStoreContext value={started(createCardStore(new InMemoryRepository<Card>()))}>
+                <FolderStoreContext
+                  value={started(createFolderStore(new InMemoryRepository<Folder>()))}
                 >
-                  <NotificationStoreContext
-                    value={started(
-                      createNotificationStore(new InMemoryRepository<AppNotification>()),
-                    )}
+                  <QuestionStoreContext
+                    value={started(createQuestionStore(new InMemoryRepository<Question>()))}
                   >
-                    {children}
-                  </NotificationStoreContext>
-                </ProgressStoreContext>
-              </QuestionStoreContext>
-            </FolderStoreContext>
-          </CardStoreContext>
-        </DeckStoreContext>
-      </ProfileStoreContext>
+                    <ProgressStoreContext
+                      value={started(createProgressStore(new InMemoryRepository<Progress>()))}
+                    >
+                      <NotificationStoreContext
+                        value={started(
+                          createNotificationStore(new InMemoryRepository<AppNotification>()),
+                        )}
+                      >
+                        {children}
+                      </NotificationStoreContext>
+                    </ProgressStoreContext>
+                  </QuestionStoreContext>
+                </FolderStoreContext>
+              </CardStoreContext>
+            </DeckStoreContext>
+          </ProfileStoreContext>
+        </SessionStoreContext>
+      </StoragePortContext>
     </I18nextProvider>
   )
   render(wrap(<SettingsProfilePage {...handlers} />))

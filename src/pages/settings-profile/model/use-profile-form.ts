@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { selectEffectiveProfile, useProfileStore, useProfileStoreApi } from '@/entities/profile'
-import { setProfile } from '@/features/profile'
-import { fileToAvatar, isEmail, selectIsReady } from '@/shared/lib'
+import { useSessionStore } from '@/entities/session'
+import { setProfile, setProfilePhoto } from '@/features/profile'
+import { fileToAvatar, isEmail, selectIsReady, useStorage } from '@/shared/lib'
 
 const MIN_PHONE_DIGITS = 6
 export const BIO_MAX = 200
@@ -33,8 +34,13 @@ export interface ProfileFormControl {
 export function useProfileForm(onSaved?: () => void): ProfileFormControl {
   const { t } = useTranslation()
   const store = useProfileStoreApi()
+  const storage = useStorage()
   const profile = useProfileStore(selectEffectiveProfile)
   const isReady = useProfileStore(selectIsReady)
+  // Only an account owns a storage prefix; a guest's photo stays inside the document.
+  const userId = useSessionStore((state) =>
+    state.session?.kind === 'account' ? state.session.id : null,
+  )
 
   const [value, setValue] = useState<ProfileForm>(() => ({
     name: profile.name,
@@ -73,13 +79,16 @@ export function useProfileForm(onSaved?: () => void): ProfileFormControl {
   const save = async () => {
     if (!emailValid || !phoneValid || saving) return
     setSaving(true)
+    // A freshly picked photo is still inline; setProfilePhoto saves it, then moves it to storage.
+    const pickedPhoto = value.avatar?.startsWith('data:') ? value.avatar : null
     await setProfile(store, {
       name: value.name.trim(),
       username: value.username.trim(),
       email: value.email.trim(),
       bio: value.bio.trim(),
-      avatar: value.avatar,
+      ...(pickedPhoto ? {} : { avatar: value.avatar }),
     })
+    if (pickedPhoto) await setProfilePhoto({ store, storage, userId }, pickedPhoto)
     const phone = value.phone.trim()
     if (phone) localStorage.setItem(PHONE_KEY, phone)
     else localStorage.removeItem(PHONE_KEY)

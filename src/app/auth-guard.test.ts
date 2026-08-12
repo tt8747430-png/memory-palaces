@@ -14,6 +14,12 @@ describe('authRedirect', () => {
     expect(authRedirect(ROUTES.forgot, null)).toBeNull()
   })
 
+  it('never gates the OAuth callback, signed in or not', () => {
+    expect(authRedirect(ROUTES.authCallback, null)).toBeNull()
+    expect(authRedirect(ROUTES.authCallback, 'guest')).toBeNull()
+    expect(authRedirect(ROUTES.authCallback, 'account')).toBeNull()
+  })
+
   it('bounces an account away from login/signup/forgot', () => {
     expect(authRedirect(ROUTES.login, 'account')).toBe(ROUTES.home)
     expect(authRedirect(ROUTES.signup, 'account')).toBe(ROUTES.home)

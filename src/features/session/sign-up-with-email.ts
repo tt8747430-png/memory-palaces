@@ -5,6 +5,7 @@ import { nowIso } from '@/shared/lib'
 export interface SignUpWithEmailInput {
   name: string
   email: string
+  password: string
 }
 
 export interface SessionCommandDeps {
@@ -17,7 +18,11 @@ export async function signUpWithEmail(
   input: SignUpWithEmailInput,
   now: number = Date.now(),
 ): Promise<void> {
-  const auth = await deps.gateway.signUp({ email: input.email, name: input.name })
+  const auth = await deps.gateway.signUp({
+    email: input.email,
+    name: input.name,
+    password: input.password,
+  })
   await deps.sessionStore
     .getState()
     .set(makeAccountSession(auth.id, { email: input.email, name: input.name }, nowIso(now)))

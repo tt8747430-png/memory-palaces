@@ -10,7 +10,7 @@ export {
   poseAt,
   STACK_DEPTH,
 } from './motion'
-export { fileToAvatar } from './avatar'
+export { coverSquare, dataUrlToBlob, fileToAvatar } from './avatar'
 export { downloadText } from './download'
 export { useStickyHeader, type StickyHeader } from './sticky-header/use-sticky-header'
 export { HeaderElevationContext, useHeaderElevation } from './sticky-header/header-elevation'
@@ -79,7 +79,12 @@ export { EventBus, type EventHandler } from './event-bus'
 export type { AppEvents } from './events'
 export { EventBusContext, useEventBus, useEventBusOptional } from './event-bus-context'
 export { AuthGatewayContext, useAuthGateway } from './auth-gateway-context'
+export { StoragePortContext, useStorage } from './storage-context'
 export { useValidatedSubmit, type FieldErrors, type ValidatedSubmit } from './use-validated-submit'
+export { useOnline } from './use-online'
+export { mergeProgress, type MergeableProgress } from './merge-progress'
+export { mergeCard, type MergeableCard } from './merge-srs'
+export { resolveDataTransition, type DataTransition } from './data-transition'
 export {
   isEmail,
   isLongEnoughPassword,

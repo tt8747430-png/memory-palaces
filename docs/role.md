@@ -5,14 +5,6 @@
 
 GENERAL:
 
-1. the keyboard management is not working correctly and the footer and header is not correctly managed while keyboard is
-   open. we need a good implementation. the first image is before i click the paste you cards field and the second is
-   after i clicked. the create cards button shouldnt be above the keyboard but at the end of the page and the header
-   should stay pinned even with open keyboard. /Users/kristianbraila/Downloads/IMG_2773.PNG
-   /Users/kristianbraila/Downloads/IMG_2774.PNG.
-
-1. the keyboard inset doesnt work correctly
-2. improve the paste notes, and the edit cards sheet
 
 REFACTORINGS:
 
@@ -22,7 +14,7 @@ SETTINGS:
 
 
 1. We need to refactor the whole flashcards settings and algorithms and deck settings using this examples
-1. We dont need ai features now as well as deck publishing or sharing, report deck and offline cards options.
+2. We dont need ai features now as well as deck publishing or sharing, report deck and offline cards options.
 
 '/Users/kristianbraila/Downloads/new_settings/algorightSettings'
 '/Users/kristianbraila/Downloads/new_settings/algorightSettings/IMG_2596.PNG'
@@ -44,7 +36,28 @@ SETTINGS:
 
 FEATURES:
 
+1. Journey in palaces locies 
+2. Journey stations editing and connecting
+3. Add the actual palace locations and real palace image
+
+OTHER: 
 8. we dont have onboarding and guest account lacks customizability
+2. improve the paste notes, and the edit cards sheet
+1.  Appheader should be a component and all the components should be maybe just a implementation of the content inside of this header and not reimplement the whole template and shell, just the content inside the header like the buttons and so on .this should be across all the app
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 fixed:
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'motion/react'
+import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft, MailCheck } from 'lucide-react'
 import { authEntrance, emailErrorKey, useAuthGateway, useValidatedSubmit } from '@/shared/lib'
@@ -34,7 +35,12 @@ export function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) {
   }, [cooldown])
 
   const send = async () => {
-    await requestPasswordReset(gateway, email.trim())
+    try {
+      await requestPasswordReset(gateway, email.trim())
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('auth.errors.resetFailed'))
+      return
+    }
     setSent(true)
     setCooldown(RESEND_SECONDS)
   }

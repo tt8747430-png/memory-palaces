@@ -302,6 +302,11 @@ export const en = {
       body: "Your decks are ready. Let's begin.",
       cta: 'Enter Mindscape',
     },
+    callback: {
+      signingIn: 'Signing you in…',
+      failedTitle: "That sign-in didn't finish",
+      backToLogin: 'Back to sign in',
+    },
     errors: {
       emailRequired: 'Enter your email.',
       emailInvalid: 'Enter a valid email address.',
@@ -309,6 +314,11 @@ export const en = {
       passwordShort: 'Use at least 8 characters.',
       nameRequired: 'Enter your name.',
       termsRequired: 'Please accept the terms to continue.',
+      signInFailed: "We couldn't sign you in. Check your details and try again.",
+      signUpFailed: "We couldn't create your account. Please try again.",
+      resetFailed: "We couldn't send the reset link. Please try again.",
+      socialFailed: "We couldn't reach that provider. Please try again.",
+      offline: "You're offline — reconnect to use social sign-in.",
     },
   },
   achievements: {

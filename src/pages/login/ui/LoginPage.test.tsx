@@ -66,7 +66,10 @@ describe('LoginPage', () => {
     await user.type(screen.getByLabelText(/^password$/i), 'secret123')
     await user.click(screen.getByRole('button', { name: /^sign in$/i }))
     await waitFor(() => expect(onAuthed).toHaveBeenCalled())
-    expect(gateway.getPersisted()).toMatchObject({ kind: 'account', email: 'ada@b.com' })
+    await expect(gateway.getCurrent()).resolves.toMatchObject({
+      kind: 'account',
+      email: 'ada@b.com',
+    })
   })
 
   it('continues as guest', async () => {
@@ -74,7 +77,29 @@ describe('LoginPage', () => {
     const { onGuest, gateway } = renderLogin()
     await user.click(screen.getByRole('button', { name: /continue as a guest/i }))
     await waitFor(() => expect(onGuest).toHaveBeenCalled())
-    expect(gateway.getPersisted()?.kind).toBe('guest')
+    await expect(gateway.getCurrent()).resolves.toMatchObject({ kind: 'guest' })
+  })
+
+  it('starts the Google redirect from the social buttons', async () => {
+    const user = userEvent.setup()
+    const { gateway } = renderLogin()
+    const signInWithProvider = vi.spyOn(gateway, 'signInWithProvider').mockResolvedValue(undefined)
+
+    await user.click(screen.getByRole('button', { name: /continue with google/i }))
+    await waitFor(() => expect(signInWithProvider).toHaveBeenCalledWith('google'))
+  })
+
+  it('surfaces a failed sign-in and stays put', async () => {
+    const user = userEvent.setup()
+    const { onAuthed, gateway } = renderLogin()
+    vi.spyOn(gateway, 'signIn').mockRejectedValue(new Error('Invalid login credentials'))
+
+    await user.type(screen.getByLabelText(/email/i), 'ada@b.com')
+    await user.type(screen.getByLabelText(/^password$/i), 'secret123')
+    await user.click(screen.getByRole('button', { name: /^sign in$/i }))
+
+    await waitFor(() => expect(gateway.signIn).toHaveBeenCalled())
+    expect(onAuthed).not.toHaveBeenCalled()
   })
 
   it('routes to signup and forgot', async () => {

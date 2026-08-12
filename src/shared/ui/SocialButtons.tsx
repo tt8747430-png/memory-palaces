@@ -2,11 +2,17 @@ import type { ReactNode } from 'react'
 import { motion } from 'motion/react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
+import { Loader2 } from 'lucide-react'
+import { cn } from '@/shared/lib'
 
 export type SocialProvider = 'google' | 'apple'
 
 export interface SocialButtonsProps {
   onSelect?: (provider: SocialProvider) => void
+  /** The provider whose redirect is in flight — both buttons wait for it. */
+  pending?: SocialProvider | null
+  /** Why the buttons are inert (offline). Shown under them and used as the toast on press. */
+  unavailableReason?: string
 }
 
 const GoogleMark = (
@@ -36,10 +42,20 @@ const AppleMark = (
   </svg>
 )
 
-export function SocialButtons({ onSelect }: SocialButtonsProps = {}) {
+export function SocialButtons({
+  onSelect,
+  pending = null,
+  unavailableReason,
+}: SocialButtonsProps = {}) {
   const { t } = useTranslation()
-  const handle = (provider: SocialProvider) =>
-    onSelect ? onSelect(provider) : toast(t('auth.socialSoon'))
+  const handle = (provider: SocialProvider) => {
+    if (unavailableReason) {
+      toast(unavailableReason)
+      return
+    }
+    if (onSelect) onSelect(provider)
+    else toast(t('auth.socialSoon'))
+  }
 
   return (
     <div className="flex flex-col items-center gap-5">
@@ -56,15 +72,25 @@ export function SocialButtons({ onSelect }: SocialButtonsProps = {}) {
           label={t('auth.socialGoogle')}
           icon={GoogleMark}
           onClick={() => handle('google')}
+          busy={pending === 'google'}
+          muted={Boolean(unavailableReason) || (pending !== null && pending !== 'google')}
           className="bg-card text-foreground"
         />
         <SocialButton
           label={t('auth.socialApple')}
           icon={AppleMark}
           onClick={() => handle('apple')}
+          busy={pending === 'apple'}
+          muted={Boolean(unavailableReason) || (pending !== null && pending !== 'apple')}
           className="bg-foreground text-white"
         />
       </div>
+
+      {unavailableReason ? (
+        <p className="text-center text-(length:--p-text-label) text-muted-foreground">
+          {unavailableReason}
+        </p>
+      ) : null}
     </div>
   )
 }
@@ -73,22 +99,31 @@ function SocialButton({
   label,
   icon,
   onClick,
+  busy,
+  muted,
   className,
 }: {
   label: string
   icon: ReactNode
   onClick: () => void
+  busy: boolean
+  muted: boolean
   className: string
 }) {
   return (
     <motion.button
       type="button"
       aria-label={label}
+      aria-busy={busy || undefined}
       onClick={onClick}
       whileTap={{ scale: 0.92 }}
-      className={`grid size-14 place-items-center rounded-full border border-(--border-glass) shadow-rest ${className}`}
+      className={cn(
+        'grid size-14 place-items-center rounded-full border border-(--border-glass) shadow-rest transition-opacity',
+        muted && 'opacity-45',
+        className,
+      )}
     >
-      {icon}
+      {busy ? <Loader2 className="size-5 animate-spin motion-reduce:animate-none" /> : icon}
     </motion.button>
   )
 }

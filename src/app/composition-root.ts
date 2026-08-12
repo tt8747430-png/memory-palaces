@@ -1,6 +1,20 @@
+import type { RxCollection } from 'rxdb'
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie'
-import { type AuthGateway, InMemoryRepository } from '@/shared/api'
+import {
+  type AuthGateway,
+  type Identifiable,
+  InMemoryRepository,
+  LocalObjectUrlStorage,
+  type StoragePort,
+} from '@/shared/api'
 import { RxdbRepository } from '@/shared/api/rxdb'
+import {
+  isSupabaseConfigured,
+  supabase,
+  SupabaseStorage,
+  SyncManager,
+  type SyncTarget,
+} from '@/shared/api/supabase'
 import { type AppEvents, EventBus } from '@/shared/lib'
 import { createSessionStore, type Session, type SessionStore } from '@/entities/session'
 import { createDeckStore, type Deck, type DeckStore } from '@/entities/deck'
@@ -20,7 +34,8 @@ import {
   type NotificationStore,
 } from '@/entities/notification'
 import { createAppDatabase } from './persistence/database'
-import { LocalAuthGateway } from './persistence/local-auth-gateway'
+import { resetLocalDatabase } from './persistence/reset-local-database'
+import { createAuthGateway } from './persistence/create-auth-gateway'
 
 export interface Services {
   authGateway: AuthGateway
@@ -34,11 +49,27 @@ export interface Services {
   profileStore: ProfileStore
   notificationStore: NotificationStore
   eventBus: EventBus<AppEvents>
+  storage: StoragePort
+  /** Null when no Supabase project is configured: the app then runs entirely on-device. */
+  syncManager: SyncManager | null
+  /** Wipes the device's database and reloads — only when a different account signs in. */
+  resetLocalData: () => Promise<void>
 }
+
+/** Everything that mirrors to the cloud. `notifications` is ephemeral UI state and stays local. */
+const SYNCED_TABLES = [
+  'decks',
+  'cards',
+  'folders',
+  'questions',
+  'progress',
+  'preferences',
+  'profiles',
+] as const
 
 export function createServices(): Services {
   const collections = createAppDatabase(getRxStorageDexie())
-  const authGateway = new LocalAuthGateway()
+  const authGateway = createAuthGateway()
   const sessionRepo = new InMemoryRepository<Session>()
   const deckRepo = new RxdbRepository<Deck>(collections.then((c) => c.decks))
   const cardRepo = new RxdbRepository<Card>(collections.then((c) => c.cards))
@@ -49,6 +80,12 @@ export function createServices(): Services {
   const profileRepo = new RxdbRepository<Profile>(collections.then((c) => c.profiles))
   const notificationRepo = new RxdbRepository<AppNotification>(
     collections.then((c) => c.notifications),
+  )
+  const syncTargets: Promise<SyncTarget[]> = collections.then((c) =>
+    SYNCED_TABLES.map((table) => ({
+      table,
+      collection: c[table] as unknown as RxCollection<Identifiable>,
+    })),
   )
   const services: Services = {
     authGateway,
@@ -62,6 +99,9 @@ export function createServices(): Services {
     profileStore: createProfileStore(profileRepo),
     notificationStore: createNotificationStore(notificationRepo),
     eventBus: new EventBus<AppEvents>(),
+    storage: isSupabaseConfigured() ? new SupabaseStorage(supabase) : new LocalObjectUrlStorage(),
+    syncManager: isSupabaseConfigured() ? SyncManager.fromSupabase(supabase, syncTargets) : null,
+    resetLocalData: () => resetLocalDatabase({ collections }),
   }
 
   // Every store observes its collection from here on. Screens read data and `selectIsReady`; none

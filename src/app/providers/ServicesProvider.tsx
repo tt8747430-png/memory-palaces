@@ -8,7 +8,7 @@ import { ProgressStoreContext } from '@/entities/progress'
 import { PreferencesStoreContext } from '@/entities/preferences'
 import { ProfileStoreContext } from '@/entities/profile'
 import { NotificationStoreContext } from '@/entities/notification'
-import { AuthGatewayContext, EventBusContext } from '@/shared/lib'
+import { AuthGatewayContext, EventBusContext, StoragePortContext } from '@/shared/lib'
 import type { Services } from '../composition-root'
 
 export function ServicesProvider({
@@ -29,7 +29,11 @@ export function ServicesProvider({
                   <PreferencesStoreContext value={services.preferencesStore}>
                     <ProfileStoreContext value={services.profileStore}>
                       <NotificationStoreContext value={services.notificationStore}>
-                        <EventBusContext value={services.eventBus}>{children}</EventBusContext>
+                        <EventBusContext value={services.eventBus}>
+                          <StoragePortContext value={services.storage}>
+                            {children}
+                          </StoragePortContext>
+                        </EventBusContext>
                       </NotificationStoreContext>
                     </ProfileStoreContext>
                   </PreferencesStoreContext>

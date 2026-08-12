@@ -11,6 +11,7 @@ import type { Profile } from '@/entities/profile'
 import type { AppNotification } from '@/entities/notification'
 import { STORAGE_PREFIX } from '@/shared/config/constants'
 import { DEFAULT_SELECT_TOOLBAR } from '@/shared/config/select-toolbar'
+import { lastWriteWins, mergeCardConflict, mergeProgressConflict } from './conflict-handlers'
 import {
   cardSchema,
   deckSchema,
@@ -43,14 +44,27 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
   storage: RxStorage<Internals, InstanceCreationOptions>,
 ): Promise<AppCollections> {
   const database = await createRxDatabase({ name: STORAGE_PREFIX, storage })
+  // Conflict handlers only ever run for replicated collections, but they belong to the collection,
+  // not the replication — so they are declared once here. `notifications` is device-local and
+  // deliberately keeps RxDB's default.
   const collections = await database.addCollections({
-    decks: { schema: deckSchema },
-    cards: { schema: cardSchema },
-    folders: { schema: folderSchema },
-    questions: { schema: questionSchema },
-    progress: { schema: progressSchema },
-    preferences: { schema: preferencesSchema, migrationStrategies: preferencesMigrations },
-    profiles: { schema: profileSchema },
+    decks: { schema: deckSchema, conflictHandler: lastWriteWins<Deck>() },
+    cards: { schema: cardSchema, conflictHandler: mergeCardConflict },
+    folders: { schema: folderSchema, conflictHandler: lastWriteWins<Folder>() },
+    questions: {
+      schema: questionSchema,
+      conflictHandler: lastWriteWins<Question>(),
+    },
+    progress: { schema: progressSchema, conflictHandler: mergeProgressConflict },
+    preferences: {
+      schema: preferencesSchema,
+      migrationStrategies: preferencesMigrations,
+      conflictHandler: lastWriteWins<Preferences>(),
+    },
+    profiles: {
+      schema: profileSchema,
+      conflictHandler: lastWriteWins<Profile>(),
+    },
     notifications: { schema: notificationSchema },
   })
   return {

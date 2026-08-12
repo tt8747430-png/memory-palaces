@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef } from 'react'
+import { type ReactNode, useEffect } from 'react'
 import { useAuthGateway } from '@/shared/lib'
 import { useSessionStoreApi } from '@/entities/session'
 import { restoreSession } from '@/features/session'
@@ -6,12 +6,20 @@ import { restoreSession } from '@/features/session'
 export function AuthProvider({ children }: { children: ReactNode }) {
   const gateway = useAuthGateway()
   const sessionStore = useSessionStoreApi()
-  const started = useRef(false)
 
   useEffect(() => {
-    if (started.current) return
-    started.current = true
-    void restoreSession({ gateway, sessionStore })
+    let unsubscribe: (() => void) | null = null
+    let cancelled = false
+
+    void restoreSession({ gateway, sessionStore }).then((stop) => {
+      if (cancelled) stop()
+      else unsubscribe = stop
+    })
+
+    return () => {
+      cancelled = true
+      unsubscribe?.()
+    }
   }, [gateway, sessionStore])
 
   return children
