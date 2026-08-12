@@ -27,7 +27,7 @@ export function LoginPage({ onAuthed, onGuest, onSignup, onForgot }: LoginPagePr
       }
     },
     async () => {
-      await actions.signIn(email.trim())
+      await actions.signIn({ email: email.trim(), password })
       onAuthed()
     },
   )

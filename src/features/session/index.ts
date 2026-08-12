@@ -1,6 +1,8 @@
 export { signUpWithEmail } from './sign-up-with-email'
 export type { SignUpWithEmailInput, SessionCommandDeps } from './sign-up-with-email'
 export { signInWithEmail } from './sign-in-with-email'
+export type { SignInWithEmailInput } from './sign-in-with-email'
+export { signInWithProvider } from './sign-in-with-provider'
 export { continueAsGuest } from './continue-as-guest'
 export { signOut } from './sign-out'
 export { restoreSession } from './restore-session'

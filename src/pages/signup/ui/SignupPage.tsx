@@ -35,7 +35,7 @@ export function SignupPage({ onSuccess, onGuest, onLogin }: SignupPageProps) {
       }
     },
     async () => {
-      await actions.signUp({ name: name.trim(), email: email.trim() })
+      await actions.signUp({ name: name.trim(), email: email.trim(), password })
       onSuccess()
     },
   )

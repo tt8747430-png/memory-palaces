@@ -68,7 +68,7 @@ describe('SignupPage', () => {
     await user.click(screen.getByRole('checkbox'))
     await user.click(screen.getByRole('button', { name: /create account/i }))
     await waitFor(() => expect(onSuccess).toHaveBeenCalled())
-    expect(gateway.getPersisted()).toMatchObject({
+    await expect(gateway.getCurrent()).resolves.toMatchObject({
       kind: 'account',
       name: 'Ada',
       email: 'ada@b.com',

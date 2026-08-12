@@ -4,6 +4,7 @@ export const ROUTES = {
   signup: '/signup',
   forgot: '/forgot',
   welcome: '/welcome',
+  authCallback: '/auth/callback',
   folder: '/folders/$folderId',
   deckDetail: '/decks/$deckId',
   deckSettings: '/decks/$deckId/settings',

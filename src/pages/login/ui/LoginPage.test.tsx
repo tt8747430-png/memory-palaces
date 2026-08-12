@@ -66,7 +66,10 @@ describe('LoginPage', () => {
     await user.type(screen.getByLabelText(/^password$/i), 'secret123')
     await user.click(screen.getByRole('button', { name: /^sign in$/i }))
     await waitFor(() => expect(onAuthed).toHaveBeenCalled())
-    expect(gateway.getPersisted()).toMatchObject({ kind: 'account', email: 'ada@b.com' })
+    await expect(gateway.getCurrent()).resolves.toMatchObject({
+      kind: 'account',
+      email: 'ada@b.com',
+    })
   })
 
   it('continues as guest', async () => {
@@ -74,7 +77,7 @@ describe('LoginPage', () => {
     const { onGuest, gateway } = renderLogin()
     await user.click(screen.getByRole('button', { name: /continue as a guest/i }))
     await waitFor(() => expect(onGuest).toHaveBeenCalled())
-    expect(gateway.getPersisted()?.kind).toBe('guest')
+    await expect(gateway.getCurrent()).resolves.toMatchObject({ kind: 'guest' })
   })
 
   it('routes to signup and forgot', async () => {

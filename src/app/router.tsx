@@ -9,7 +9,13 @@ import { ROUTES } from '@/shared/config/routes'
 import { RootLayout } from './RootLayout'
 import { authRedirect } from './auth-guard'
 import { services } from './composition-root'
-import { ForgotScreen, LoginScreen, SignupScreen, WelcomeScreen } from './routes/auth-screens'
+import {
+  AuthCallbackScreen,
+  ForgotScreen,
+  LoginScreen,
+  SignupScreen,
+  WelcomeScreen,
+} from './routes/auth-screens'
 import {
   CardEditorScreen,
   DeckDetailScreen,
@@ -50,11 +56,11 @@ import {
 
 const rootRoute = createRootRoute({
   component: RootLayout,
-  beforeLoad: ({ location }) => {
-    const target = authRedirect(
-      location.pathname,
-      services.authGateway.getPersisted()?.kind ?? null,
-    )
+  // A cloud session is restored asynchronously (stored token, then a refresh), so the guard awaits
+  // the gateway instead of reading a synchronous snapshot that would be null on first paint.
+  beforeLoad: async ({ location }) => {
+    const auth = await services.authGateway.getCurrent()
+    const target = authRedirect(location.pathname, auth?.kind ?? null)
     if (target && target !== location.pathname) throw redirect({ to: target })
   },
 })
@@ -73,6 +79,11 @@ const forgotRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.forgot,
   component: ForgotScreen,
+})
+const authCallbackRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.authCallback,
+  component: AuthCallbackScreen,
 })
 const welcomeRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -294,6 +305,7 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   signupRoute,
   forgotRoute,
+  authCallbackRoute,
   welcomeRoute,
   homeRoute,
   folderRoute,

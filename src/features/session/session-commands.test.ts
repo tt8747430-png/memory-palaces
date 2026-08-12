@@ -23,15 +23,19 @@ describe('session commands', () => {
 
   it('signUpWithEmail creates an account session and persists the identity', async () => {
     const { gateway, sessionStore, deps } = setup()
-    await signUpWithEmail(deps, { name: 'Ada', email: 'a@b.com' }, AT)
+    await signUpWithEmail(deps, { name: 'Ada', email: 'a@b.com', password: 'pw' }, AT)
 
     expect(sessionStore.getState().session).toMatchObject({ kind: 'account', displayName: 'Ada' })
-    expect(gateway.getPersisted()).toMatchObject({ kind: 'account', email: 'a@b.com', name: 'Ada' })
+    await expect(gateway.getCurrent()).resolves.toMatchObject({
+      kind: 'account',
+      email: 'a@b.com',
+      name: 'Ada',
+    })
   })
 
   it('signInWithEmail derives a display name from the email', async () => {
     const { sessionStore, deps } = setup()
-    await signInWithEmail(deps, 'ada@b.com', AT)
+    await signInWithEmail(deps, { email: 'ada@b.com', password: 'pw' }, AT)
     expect(sessionStore.getState().session).toMatchObject({ kind: 'account', displayName: 'ada' })
   })
 
@@ -39,20 +43,20 @@ describe('session commands', () => {
     const { gateway, sessionStore, deps } = setup()
     await continueAsGuest(deps, AT)
     expect(sessionStore.getState().session?.kind).toBe('guest')
-    expect(gateway.getPersisted()?.kind).toBe('guest')
+    await expect(gateway.getCurrent()).resolves.toMatchObject({ kind: 'guest' })
   })
 
   it('signOut clears the session and the persisted identity', async () => {
     const { gateway, sessionStore, deps } = setup()
-    await signUpWithEmail(deps, { name: 'Ada', email: 'a@b.com' }, AT)
+    await signUpWithEmail(deps, { name: 'Ada', email: 'a@b.com', password: 'pw' }, AT)
     await signOut(deps)
     expect(sessionStore.getState().session).toBeNull()
-    expect(gateway.getPersisted()).toBeNull()
+    await expect(gateway.getCurrent()).resolves.toBeNull()
   })
 
   it('restoreSession rehydrates a persisted account', async () => {
     const { gateway, deps } = setup()
-    await gateway.signUp({ name: 'Ada', email: 'a@b.com' })
+    await gateway.signUp({ name: 'Ada', email: 'a@b.com', password: 'pw' })
     await restoreSession(deps, AT)
     expect(deps.sessionStore.getState().session).toMatchObject({
       kind: 'account',
