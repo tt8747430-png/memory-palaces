@@ -21,7 +21,7 @@ import { SyncManager } from './sync-manager'
 
 const URL = process.env.SUPABASE_TEST_URL
 const KEY = process.env.SUPABASE_TEST_KEY
-const EMAIL = process.env.SUPABASE_TEST_EMAIL ?? 'claim@example.test'
+const EMAIL = process.env.SUPABASE_TEST_EMAIL ?? 'claim@example.com'
 const PASSWORD = process.env.SUPABASE_TEST_PASSWORD ?? 'claim-test-password'
 
 interface SyncDeck extends Identifiable {
@@ -74,7 +74,7 @@ describe.skipIf(!URL || !KEY)('guest → account claim', () => {
   })
 
   afterAll(async () => {
-    await supabase.from('decks').delete().eq('user_id', userId)
+    if (supabase && userId) await supabase.from('decks').delete().eq('user_id', userId)
   })
 
   it('pushes a guest’s decks into a fresh account and pulls them onto a second device', async () => {

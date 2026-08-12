@@ -4,7 +4,7 @@
  * Skipped unless a stack is pointed at:
  *   SUPABASE_TEST_URL=http://127.0.0.1:54321 \
  *   SUPABASE_TEST_KEY=<publishable key> \
- *   SUPABASE_TEST_EMAIL=sync@example.test SUPABASE_TEST_PASSWORD=... \
+ *   SUPABASE_TEST_EMAIL=sync@example.com SUPABASE_TEST_PASSWORD=... \
  *   npx vitest run src/shared/api/supabase/replication.integration.test.ts
  *
  * `supabase start` + `supabase db reset` applies the phase-9 migrations; the test signs a real
@@ -21,7 +21,7 @@ import { createCollectionReplication } from './replication'
 
 const URL = process.env.SUPABASE_TEST_URL
 const KEY = process.env.SUPABASE_TEST_KEY
-const EMAIL = process.env.SUPABASE_TEST_EMAIL ?? 'sync@example.test'
+const EMAIL = process.env.SUPABASE_TEST_EMAIL ?? 'sync@example.com'
 const PASSWORD = process.env.SUPABASE_TEST_PASSWORD ?? 'sync-test-password'
 const TABLE = 'decks'
 
@@ -80,7 +80,8 @@ describe.skipIf(!URL || !KEY)('supabase replication (two clients)', () => {
   })
 
   afterAll(async () => {
-    await supabase.from(TABLE).delete().eq('user_id', userId)
+    // beforeAll may have failed before the client existed; do not mask that error with another.
+    if (supabase && userId) await supabase.from(TABLE).delete().eq('user_id', userId)
   })
 
   it('converges a write from client A to client B', async () => {

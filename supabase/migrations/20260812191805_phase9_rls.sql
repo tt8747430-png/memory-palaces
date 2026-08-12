@@ -18,6 +18,11 @@ begin
     -- is explicit. Replication runs entirely as `authenticated`.
     execute format('grant select, insert, update, delete on public.%I to authenticated;', t);
 
+    -- A project's default privileges may hand `anon` a grant on every new public table. No policy
+    -- targets `anon`, so it could never read a row — but a signed-out client should not reach the
+    -- endpoint at all.
+    execute format('revoke all on public.%I from anon;', t);
+
     execute format('drop policy if exists own_select on public.%I;', t);
     execute format(
       $p$create policy own_select on public.%I for select to authenticated
