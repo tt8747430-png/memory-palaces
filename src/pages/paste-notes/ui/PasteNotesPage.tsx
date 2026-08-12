@@ -12,6 +12,7 @@ import {
   TextButton,
 } from '@/shared/ui'
 import { useImportDraft } from '@/widgets/content-editor'
+import { canReadClipboard, readClipboardText } from '../model/clipboard'
 import { usePasteParsing } from '../model/use-paste-parsing'
 import { FormatToggle } from './FormatToggle'
 import { CountBadge, PastePreview } from './PastePreview'
@@ -39,16 +40,25 @@ export function PasteNotesPage({
   const [typedName, setTypedName] = useState<string | null>(null)
   const deckName = typedName ?? (parsing.suggestedName || defaultDeckName)
 
-  const canReadClipboard =
-    typeof navigator !== 'undefined' && typeof navigator.clipboard?.readText === 'function'
+  const showClipboardButton = canReadClipboard()
 
   const pasteFromClipboard = async () => {
-    try {
-      const clip = await navigator.clipboard.readText()
-      if (clip.trim()) parsing.setText(clip)
-    } catch {
-      toast.error(t('cards.paste.clipboardError'))
-    }
+    const clip = await readClipboardText()
+    if (clip.status === 'text') return parsing.setText(clip.text)
+    if (clip.status === 'empty') return void toast.error(t('cards.paste.clipboardEmpty'))
+
+    // The prompt the reader just answered arrives too late for the call that raised it, so the
+    // first attempt is expected to fail and the next one to work. The retry lives on the toast
+    // because that is where they are already looking, and because its tap is the fresh gesture
+    // the second read needs.
+    toast.error(t('cards.paste.clipboardError'), {
+      description: t('cards.paste.clipboardHint'),
+      action: {
+        label: t('cards.paste.clipboardRetry'),
+        onClick: () => void pasteFromClipboard(),
+      },
+      duration: 8000,
+    })
   }
 
   const canCreate = parsing.cards.length > 0 && (!newDeck || deckName.trim().length > 0)
@@ -111,7 +121,7 @@ export function PasteNotesPage({
             className="min-h-46 font-mono text-(length:--p-text-label) leading-relaxed"
           />
           <div className="mt-2 flex items-center gap-4">
-            {canReadClipboard ? (
+            {showClipboardButton ? (
               <TextButton
                 icon={<ClipboardPaste className="size-4" aria-hidden />}
                 onClick={() => void pasteFromClipboard()}
