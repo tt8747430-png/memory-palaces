@@ -302,6 +302,11 @@ export const en = {
       body: "Your decks are ready. Let's begin.",
       cta: 'Enter Mindscape',
     },
+    confirm: {
+      title: 'Confirm your email',
+      body: 'We sent a link to {{email}}. Open it to finish setting up your account.',
+      backToLogin: 'Back to sign in',
+    },
     callback: {
       signingIn: 'Signing you in…',
       failedTitle: "That sign-in didn't finish",
@@ -315,6 +320,7 @@ export const en = {
       nameRequired: 'Enter your name.',
       termsRequired: 'Please accept the terms to continue.',
       signInFailed: "We couldn't sign you in. Check your details and try again.",
+      callbackFailed: "That sign-in link didn't work. Try signing in again.",
       invalidCredentials: 'That email and password do not match.',
       emailNotConfirmed: 'Confirm your email first — check your inbox for the link.',
       userExists: 'That email already has an account. Try signing in.',
@@ -953,7 +959,10 @@ export const en = {
       saved: 'Password updated.',
       mismatch: 'New passwords do not match.',
       short: 'Use at least 8 characters.',
-      note: 'Passwords are not yet verified. Real account security arrives with sign-in.',
+      failed: "We couldn't update your password. Please try again.",
+      note: 'Your new password applies the next time you sign in on any device.',
+      recoveryTitle: 'Set a new password',
+      recoveryNote: 'You followed a recovery link, so you can set a new password straight away.',
     },
     phoneScreen: {
       title: 'Phone',

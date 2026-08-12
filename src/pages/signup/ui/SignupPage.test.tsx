@@ -78,6 +78,25 @@ describe('SignupPage', () => {
     ])
   })
 
+  it('asks for confirmation instead of welcoming a session that does not exist', async () => {
+    const user = userEvent.setup()
+    const { onSuccess, gateway } = renderSignup()
+    // Email confirmation on: the account is created, but no session opens.
+    vi.spyOn(gateway, 'signUp').mockResolvedValue({
+      auth: { id: 'id-1', kind: 'account', email: 'ada@b.com', name: 'Ada' },
+      sessionActive: false,
+    })
+
+    await user.type(screen.getByLabelText(/full name/i), 'Ada')
+    await user.type(screen.getByLabelText(/email/i), 'ada@b.com')
+    await user.type(screen.getByLabelText(/^password$/i), 'secret123')
+    await user.click(screen.getByRole('checkbox'))
+    await user.click(screen.getByRole('button', { name: /create account/i }))
+
+    expect(await screen.findByText(/confirm your email/i)).toBeInTheDocument()
+    expect(onSuccess).not.toHaveBeenCalled()
+  })
+
   it('continues as guest and routes to login', async () => {
     const user = userEvent.setup()
     const { onGuest, onLogin } = renderSignup()

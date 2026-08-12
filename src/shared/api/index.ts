@@ -7,6 +7,7 @@ export type {
   PersistedAuth,
   SignInInput,
   SignUpInput,
+  SignUpResult,
 } from './auth-gateway'
 export { AuthError, isAuthError } from './auth-error'
 export {

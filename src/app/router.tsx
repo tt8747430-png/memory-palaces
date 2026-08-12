@@ -267,7 +267,15 @@ const settingsProfileRoute = createRoute({
 const settingsChangePasswordRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.settingsChangePassword,
-  component: SettingsChangePasswordScreen,
+  // A recovery link lands here with no old password to give, so the screen must know it.
+  validateSearch: (search: Record<string, unknown>): { recovery?: boolean } => ({
+    recovery: search.recovery === true || search.recovery === '1' || search.recovery === 'true',
+  }),
+  component: function SettingsChangePassword() {
+    return (
+      <SettingsChangePasswordScreen recovery={settingsChangePasswordRoute.useSearch().recovery} />
+    )
+  },
 })
 const settingsPrivacyRoute = createRoute({
   getParentRoute: () => rootRoute,

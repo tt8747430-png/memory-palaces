@@ -15,9 +15,15 @@ describe('LocalAuthGateway (mock auth)', () => {
 
   it('signUp persists an account with email + name (no password)', async () => {
     const gw = gateway()
-    const auth = await gw.signUp({ email: 'a@b.com', name: 'Ada', password: 'sup3rSecret!' })
+    const { auth, sessionActive } = await gw.signUp({
+      email: 'a@b.com',
+      name: 'Ada',
+      password: 'sup3rSecret!',
+    })
 
     expect(auth).toEqual({ id: 'id-1', kind: 'account', email: 'a@b.com', name: 'Ada' })
+    // Nothing to confirm offline, so the account is usable straight away.
+    expect(sessionActive).toBe(true)
     await expect(gw.getCurrent()).resolves.toEqual(auth)
     expect(JSON.stringify(localStorage.getItem('mindscape:auth'))).not.toContain('sup3rSecret')
   })

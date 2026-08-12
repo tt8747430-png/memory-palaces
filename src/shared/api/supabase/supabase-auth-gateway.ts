@@ -6,6 +6,7 @@ import {
   type PersistedAuth,
   type SignInInput,
   type SignUpInput,
+  type SignUpResult,
   type Unsubscribe,
 } from '@/shared/api'
 
@@ -30,7 +31,7 @@ export class SupabaseAuthGateway implements AuthGateway {
     private readonly genId: () => string = () => crypto.randomUUID(),
   ) {}
 
-  async signUp(input: SignUpInput): Promise<PersistedAuth> {
+  async signUp(input: SignUpInput): Promise<SignUpResult> {
     const { data, error } = await this.client.auth.signUp({
       email: input.email,
       password: input.password,
@@ -38,9 +39,11 @@ export class SupabaseAuthGateway implements AuthGateway {
     })
     if (error) fail(error)
     // With email confirmation on, `session` is null until confirmed; the user still exists.
-    if (!data.user) throw new AuthError('Sign-up failed')
-    this.forgetGuest()
-    return toAuth(data.user)
+    if (!data.user) throw new AuthError('Sign-up failed', 'signup_failed')
+    const sessionActive = Boolean(data.session)
+    // A guest is only superseded once there is a real session to supersede it with.
+    if (sessionActive) this.forgetGuest()
+    return { auth: toAuth(data.user), sessionActive }
   }
 
   async signIn(input: SignInInput): Promise<PersistedAuth> {
@@ -49,7 +52,7 @@ export class SupabaseAuthGateway implements AuthGateway {
       password: input.password,
     })
     if (error) fail(error)
-    if (!data.user) throw new AuthError('Sign-in failed')
+    if (!data.user) throw new AuthError('Sign-in failed', 'signin_failed')
     this.forgetGuest()
     return toAuth(data.user)
   }
@@ -78,8 +81,21 @@ export class SupabaseAuthGateway implements AuthGateway {
 
   async requestPasswordReset(email: string): Promise<void> {
     const { error } = await this.client.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback`,
+      // The callback hands recovery links to the set-password screen; landing them on the home
+      // screen would mean the reset email never actually resets anything.
+      redirectTo: `${window.location.origin}/auth/callback?next=recovery`,
     })
+    if (error) fail(error)
+  }
+
+  async updatePassword(password: string): Promise<void> {
+    const { error } = await this.client.auth.updateUser({ password })
+    if (error) fail(error)
+  }
+
+  async completeAuthRedirect(code: string): Promise<void> {
+    // `detectSessionInUrl` usually gets there first; this is the path when it did not.
+    const { error } = await this.client.auth.exchangeCodeForSession(code)
     if (error) fail(error)
   }
 
