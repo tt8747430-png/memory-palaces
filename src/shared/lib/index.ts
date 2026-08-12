@@ -84,6 +84,7 @@ export { useValidatedSubmit, type FieldErrors, type ValidatedSubmit } from './us
 export { useOnline } from './use-online'
 export { mergeProgress, type MergeableProgress } from './merge-progress'
 export { mergeCard, type MergeableCard } from './merge-srs'
+export { resolveDataTransition, type DataTransition } from './data-transition'
 export {
   isEmail,
   isLongEnoughPassword,

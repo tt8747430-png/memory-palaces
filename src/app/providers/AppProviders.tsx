@@ -1,7 +1,8 @@
-import type { ReactNode } from 'react'
+import { type ReactNode, useMemo } from 'react'
 import { Toaster } from 'sonner'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
+import type { PersistedAuth } from '@/shared/api'
 import { useSessionStore } from '@/entities/session'
 import { services } from '../composition-root'
 import { ServicesProvider } from './ServicesProvider'
@@ -11,13 +12,18 @@ import { NotificationBridge } from './NotificationBridge'
 import { SyncProvider } from './SyncProvider'
 import { UpdatePrompt } from './UpdatePrompt'
 
-/** Replication follows the account the session store holds — a guest never leaves the device. */
+/** Replication follows the session store's identity — a guest's data never leaves the device. */
 function AppSync({ children }: { children: ReactNode }) {
   const session = useSessionStore((state) => state.session)
+  const auth = useMemo<PersistedAuth | null>(
+    () => (session ? { id: session.id, kind: session.kind } : null),
+    [session],
+  )
   return (
     <SyncProvider
       syncManager={services.syncManager}
-      userId={session?.kind === 'account' ? session.id : null}
+      auth={auth}
+      resetLocal={services.resetLocalData}
     >
       {children}
     </SyncProvider>

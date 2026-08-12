@@ -34,6 +34,7 @@ import {
   type NotificationStore,
 } from '@/entities/notification'
 import { createAppDatabase } from './persistence/database'
+import { resetLocalDatabase } from './persistence/reset-local-database'
 import { createAuthGateway } from './persistence/create-auth-gateway'
 
 export interface Services {
@@ -51,6 +52,8 @@ export interface Services {
   storage: StoragePort
   /** Null when no Supabase project is configured: the app then runs entirely on-device. */
   syncManager: SyncManager | null
+  /** Wipes the device's database and reloads — only when a different account signs in. */
+  resetLocalData: () => Promise<void>
 }
 
 /** Everything that mirrors to the cloud. `notifications` is ephemeral UI state and stays local. */
@@ -98,6 +101,7 @@ export function createServices(): Services {
     eventBus: new EventBus<AppEvents>(),
     storage: isSupabaseConfigured() ? new SupabaseStorage(supabase) : new LocalObjectUrlStorage(),
     syncManager: isSupabaseConfigured() ? SyncManager.fromSupabase(supabase, syncTargets) : null,
+    resetLocalData: () => resetLocalDatabase({ collections }),
   }
 
   // Every store observes its collection from here on. Screens read data and `selectIsReady`; none
