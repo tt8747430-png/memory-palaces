@@ -43,7 +43,15 @@ export function AuthCallbackScreen() {
   return (
     <AuthCallbackPage
       sessionReady={isAccount}
-      onDone={() => navigate({ to: ROUTES.home, replace: true })}
+      onDone={(next) =>
+        next === 'recovery'
+          ? navigate({
+              to: ROUTES.settingsChangePassword,
+              search: { recovery: true },
+              replace: true,
+            })
+          : navigate({ to: ROUTES.home, replace: true })
+      }
       onCancel={() => navigate({ to: ROUTES.login, replace: true })}
     />
   )

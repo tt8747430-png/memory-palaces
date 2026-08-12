@@ -1,11 +1,7 @@
 import type { RxConflictHandler, WithDeleted } from 'rxdb'
 import type { Card } from '@/entities/card'
 import type { Progress } from '@/entities/progress'
-import { mergeCard, mergeProgress } from '@/shared/lib'
-
-interface Clocked {
-  updatedAt: string
-}
+import { type Clocked, mergeCard, mergeProgress, newest } from '@/shared/lib'
 
 /**
  * RxDB asks `isEqual` on every replicated document, so it compares the two things that decide a
@@ -23,9 +19,7 @@ export function lastWriteWins<T extends Clocked>(): RxConflictHandler<T> {
   return {
     isEqual: sameWrite,
     async resolve(input) {
-      const local = input.newDocumentState
-      const master = input.realMasterState
-      return local.updatedAt >= master.updatedAt ? local : master
+      return newest(input.newDocumentState, input.realMasterState)
     },
   }
 }

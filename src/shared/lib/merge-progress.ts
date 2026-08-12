@@ -1,9 +1,10 @@
+import { type Clocked, newest } from './newest'
+
 /**
  * The shape a merge needs, not the entity — `shared` sits below `entities`, and structural typing
  * keeps `Progress` assignable without the upward import.
  */
-export interface MergeableProgress {
-  updatedAt: string
+export interface MergeableProgress extends Clocked {
   xp: number
   streakCount: number
   longestStreak: number
@@ -25,9 +26,8 @@ const maxDate = (a: string | null, b: string | null): string | null => {
  * Whole-document last-write-wins would silently throw away a day of study on the losing device.
  */
 export function mergeProgress<T extends MergeableProgress>(local: T, remote: T): T {
-  const newest = local.updatedAt >= remote.updatedAt ? local : remote
   return {
-    ...newest,
+    ...newest(local, remote),
     xp: Math.max(local.xp, remote.xp),
     streakCount: Math.max(local.streakCount, remote.streakCount),
     longestStreak: Math.max(local.longestStreak, remote.longestStreak),

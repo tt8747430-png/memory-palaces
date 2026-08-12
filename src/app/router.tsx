@@ -56,11 +56,19 @@ import {
 
 const rootRoute = createRootRoute({
   component: RootLayout,
-  // A cloud session is restored asynchronously (stored token, then a refresh), so the guard awaits
-  // the gateway instead of reading a synchronous snapshot that would be null on first paint.
+  /**
+   * A cloud session is restored asynchronously, so the first navigation has to wait for the
+   * gateway — a synchronous snapshot would be null on first paint and bounce a signed-in user to
+   * the login screen. Every navigation after that reads the session store, which AuthProvider keeps
+   * current, so routing never waits on the network again.
+   */
   beforeLoad: async ({ location }) => {
-    const auth = await services.authGateway.getCurrent()
-    const target = authRedirect(location.pathname, auth?.kind ?? null)
+    const { session, status } = services.sessionStore.getState()
+    const kind =
+      status === 'ready'
+        ? (session?.kind ?? null)
+        : ((await services.authGateway.getCurrent())?.kind ?? null)
+    const target = authRedirect(location.pathname, kind)
     if (target && target !== location.pathname) throw redirect({ to: target })
   },
 })
@@ -267,7 +275,15 @@ const settingsProfileRoute = createRoute({
 const settingsChangePasswordRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ROUTES.settingsChangePassword,
-  component: SettingsChangePasswordScreen,
+  // A recovery link lands here with no old password to give, so the screen must know it.
+  validateSearch: (search: Record<string, unknown>): { recovery?: boolean } => ({
+    recovery: search.recovery === true || search.recovery === '1' || search.recovery === 'true',
+  }),
+  component: function SettingsChangePassword() {
+    return (
+      <SettingsChangePasswordScreen recovery={settingsChangePasswordRoute.useSearch().recovery} />
+    )
+  },
 })
 const settingsPrivacyRoute = createRoute({
   getParentRoute: () => rootRoute,

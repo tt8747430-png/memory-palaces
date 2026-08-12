@@ -16,7 +16,7 @@ import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import type { Identifiable } from '@/shared/api'
 import { openRxdbCollection } from '@/shared/api/rxdb/database'
-import { claimGuestData } from '@/features/auth'
+import { applyDataTransition } from '@/features/auth'
 import { resolveDataTransition } from '@/shared/lib'
 import { SyncManager } from './sync-manager'
 
@@ -106,7 +106,7 @@ describe.skipIf(!URL || !KEY)('guest → account claim', () => {
       )
       expect(transition).toBe('preserve')
 
-      await claimGuestData({
+      await applyDataTransition({
         transition,
         userId,
         syncManager: managerA,

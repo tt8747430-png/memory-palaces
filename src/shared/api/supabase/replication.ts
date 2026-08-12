@@ -14,6 +14,10 @@ export interface Checkpoint {
 
 const EPOCH = '1970-01-01T00:00:00Z'
 
+/**
+ * `user_id` travels for readability only — `push_documents` takes the owner from `auth.uid()`, so a
+ * client cannot write rows into somebody else's account by editing this payload.
+ */
 export function buildPushPayload<T extends Identifiable>(
   rows: RxReplicationWriteToMasterRow<T>[],
   userId: string,
@@ -27,8 +31,8 @@ export function buildPushPayload<T extends Identifiable>(
  * the rest of that transaction permanently behind the checkpoint.
  */
 export function buildPullFilter(checkpoint: Checkpoint | undefined): string {
-  // The first pull has no id to tie-break against, and `id` is a uuid column — an empty string
-  // there is not a "lowest id", it is a type error that fails the very first request.
+  // The first pull has nothing to tie-break against, so it asks for no id bound at all: an empty
+  // string is not a "lowest id", and against the original uuid column it was a hard type error.
   if (!checkpoint) return `updated_at.gt."${EPOCH}"`
   const { updated_at: at, id } = checkpoint
   return `updated_at.gt."${at}",and(updated_at.eq."${at}",id.gt."${id}")`
@@ -56,9 +60,10 @@ export interface CollectionReplicationOptions<T> {
  * One collection's half of the sync. RxDB owns the retry loop and the checkpoint; this only maps
  * documents to rows, asks PostgREST for what changed, and forwards Realtime events.
  *
- * A push is a plain upsert: it does not report per-row conflicts back to RxDB, because whichever
- * write lands second is the one the server keeps. Devices still converge — the next pull delivers
- * the master state and the collection's conflict handler resolves it locally.
+ * The push goes through `push_documents`, which declines to overwrite a document whose server copy
+ * is newer and hands those rows back. RxDB takes them as conflicts and runs the collection's
+ * conflict handler, so a device returning from a week offline merges with what happened meanwhile
+ * instead of flattening it.
  */
 export function createCollectionReplication<T extends Identifiable>({
   supabase,
@@ -100,11 +105,13 @@ export function createCollectionReplication<T extends Identifiable>({
     live: true,
     push: {
       async handler(rows) {
-        const { error } = await supabase
-          .from(table)
-          .upsert(buildPushPayload(rows, userId), { onConflict: 'id' })
+        const { data, error } = await supabase.rpc('push_documents', {
+          p_table: table,
+          p_rows: buildPushPayload(rows, userId),
+        })
         if (error) throw new Error(error.message)
-        return []
+        // Whatever the server refused is newer than what we sent; RxDB resolves and re-pushes.
+        return ((data ?? []) as Row[]).map((row) => rowToDoc<T>(row) as WithDeleted<T>)
       },
     },
     pull: {

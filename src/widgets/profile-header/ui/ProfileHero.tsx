@@ -141,9 +141,7 @@ function Stat({
           {value}
         </span>
       </span>
-      <span className="text-(length:--p-text-tiny) font-medium text-muted-foreground">
-        {label}
-      </span>
+      <span className="text-(length:--p-text-tiny) font-medium text-muted-foreground">{label}</span>
     </>
   )
   const className = 'flex flex-1 flex-col items-center justify-center gap-1.5 px-2'

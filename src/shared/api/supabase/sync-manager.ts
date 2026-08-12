@@ -61,11 +61,6 @@ export class SyncManager {
     )
   }
 
-  async isInSync(): Promise<boolean> {
-    const results = await Promise.all(this.states.map((state) => state.awaitInSync()))
-    return results.every(Boolean)
-  }
-
   async stop(): Promise<void> {
     const states = this.states
     this.states = []

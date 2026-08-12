@@ -1,11 +1,11 @@
 import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { User } from 'lucide-react'
+import { MailCheck, User } from 'lucide-react'
 import { authErrorMessage, emailErrorKey, passwordErrorKey, useValidatedSubmit } from '@/shared/lib'
 import { LEGAL_URLS } from '@/shared/config/constants'
-import { AuthField, EmailField, PasswordField } from '@/shared/ui'
-import { AuthForm, AuthSwitchLink } from '@/widgets/threshold'
+import { AuthField, AuthScreen, Button, EmailField, PasswordField } from '@/shared/ui'
+import { AuthForm, AuthHeader, AuthSwitchLink } from '@/widgets/threshold'
 import { useAuthActions } from '@/features/session'
 
 export interface SignupPageProps {
@@ -23,6 +23,7 @@ export function SignupPage({ onSuccess, onGuest, onLogin }: SignupPageProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [agreed, setAgreed] = useState(false)
+  const [awaitingConfirmation, setAwaitingConfirmation] = useState(false)
 
   const { errors, busy, onSubmit } = useValidatedSubmit<'name' | 'email' | 'password' | 'terms'>(
     () => {
@@ -37,7 +38,17 @@ export function SignupPage({ onSuccess, onGuest, onLogin }: SignupPageProps) {
     },
     async () => {
       try {
-        await actions.signUp({ name: name.trim(), email: email.trim(), password })
+        const { sessionActive } = await actions.signUp({
+          name: name.trim(),
+          email: email.trim(),
+          password,
+        })
+        // Email confirmation is on: the account exists but there is no session to use yet, so
+        // saying "welcome" and showing the app would be a lie — and would sync nothing.
+        if (!sessionActive) {
+          setAwaitingConfirmation(true)
+          return
+        }
       } catch (error) {
         toast.error(authErrorMessage(error, t, t('auth.errors.signUpFailed')))
         return
@@ -45,6 +56,28 @@ export function SignupPage({ onSuccess, onGuest, onLogin }: SignupPageProps) {
       onSuccess()
     },
   )
+
+  if (awaitingConfirmation) {
+    return (
+      <AuthScreen>
+        <div className="flex flex-1 flex-col items-center justify-center gap-8 py-10 text-center">
+          <span
+            aria-hidden
+            className="grid size-16 place-items-center rounded-full bg-info-surface text-primary shadow-rest"
+          >
+            <MailCheck className="size-8" />
+          </span>
+          <AuthHeader
+            title={t('auth.confirm.title')}
+            subtitle={t('auth.confirm.body', { email: email.trim() })}
+          />
+          <Button variant="secondary" size="lg" className="w-full" onClick={onLogin}>
+            {t('auth.confirm.backToLogin')}
+          </Button>
+        </div>
+      </AuthScreen>
+    )
+  }
 
   return (
     <AuthForm

@@ -51,8 +51,8 @@ export function SettingsProfileScreen() {
   )
 }
 
-export function SettingsChangePasswordScreen() {
-  return <SettingsChangePasswordPage onBack={useBackTo(ROUTES.settings)} />
+export function SettingsChangePasswordScreen({ recovery = false }: { recovery?: boolean }) {
+  return <SettingsChangePasswordPage recovery={recovery} onBack={useBackTo(ROUTES.settings)} />
 }
 
 export function SettingsPrivacyScreen() {

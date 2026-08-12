@@ -12,6 +12,10 @@ const COPY = {
   email_address_invalid: 'auth.errors.emailInvalid',
   validation_failed: 'auth.errors.emailInvalid',
   signup_disabled: 'auth.errors.signupDisabled',
+  // Ours, not the provider's: raised when there is no cloud to reach at all.
+  offline_only: 'auth.errors.offlineOnly',
+  signup_failed: 'auth.errors.signUpFailed',
+  signin_failed: 'auth.errors.signInFailed',
 } as const satisfies Record<string, string>
 
 export type AuthErrorCopyKey = (typeof COPY)[keyof typeof COPY]

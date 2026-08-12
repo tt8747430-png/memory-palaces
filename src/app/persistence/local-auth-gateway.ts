@@ -1,10 +1,11 @@
 import {
   AuthError,
   type AuthGateway,
-  type AuthProvider,
+  type OAuthProvider,
   type PersistedAuth,
   type SignInInput,
   type SignUpInput,
+  type SignUpResult,
   type Unsubscribe,
 } from '@/shared/api'
 
@@ -20,20 +21,22 @@ export class LocalAuthGateway implements AuthGateway {
 
   constructor(private readonly genId: () => string = () => crypto.randomUUID()) {}
 
-  async signUp(input: SignUpInput): Promise<PersistedAuth> {
-    return this.write({
+  async signUp(input: SignUpInput): Promise<SignUpResult> {
+    const auth = this.write({
       id: this.genId(),
       kind: 'account',
       email: input.email,
       name: input.name,
     })
+    // Nothing to confirm offline, so the session is open immediately.
+    return { auth, sessionActive: true }
   }
 
   async signIn(input: SignInInput): Promise<PersistedAuth> {
     return this.write({ id: this.genId(), kind: 'account', email: input.email, name: '' })
   }
 
-  async signInWithProvider(_provider: AuthProvider): Promise<void> {
+  async signInWithProvider(_provider: OAuthProvider): Promise<void> {
     throw new AuthError('Social sign-in requires a cloud connection', 'offline_only')
   }
 
@@ -49,6 +52,12 @@ export class LocalAuthGateway implements AuthGateway {
   }
 
   async requestPasswordReset(_email: string): Promise<void> {}
+
+  async updatePassword(_password: string): Promise<void> {}
+
+  async completeAuthRedirect(_code: string): Promise<void> {
+    throw new AuthError('There is no cloud session to complete', 'offline_only')
+  }
 
   async getCurrent(): Promise<PersistedAuth | null> {
     return this.read()

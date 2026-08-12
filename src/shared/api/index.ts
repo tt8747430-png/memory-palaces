@@ -3,10 +3,11 @@ export { InMemoryRepository } from './in-memory-repository'
 export type {
   AuthGateway,
   AuthKind,
-  AuthProvider,
+  OAuthProvider,
   PersistedAuth,
   SignInInput,
   SignUpInput,
+  SignUpResult,
 } from './auth-gateway'
 export { AuthError, isAuthError } from './auth-error'
 export {

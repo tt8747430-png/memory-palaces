@@ -50,9 +50,7 @@ export function QuickActionRows({
       </button>
       <button type="button" onClick={run(onFlag)} disabled={!canEdit} className={ROW}>
         <Flag
-          className={
-            flagged ? 'size-4.75 fill-rating text-(--rating-edge)' : 'size-4.75'
-          }
+          className={flagged ? 'size-4.75 fill-rating text-(--rating-edge)' : 'size-4.75'}
           aria-hidden
         />
         {flagged ? t('study.removeFlag') : t('study.flagThis')}

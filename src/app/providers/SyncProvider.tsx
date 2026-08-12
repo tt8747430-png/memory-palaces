@@ -1,8 +1,13 @@
 import { type ReactNode, useEffect, useRef } from 'react'
-import type { PersistedAuth } from '@/shared/api'
+import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
+import type { PersistedAuth, StoragePort } from '@/shared/api'
 import type { SyncManager } from '@/shared/api/supabase'
 import { resolveDataTransition } from '@/shared/lib'
-import { claimGuestData } from '@/features/auth'
+import { useDeckStoreApi } from '@/entities/deck'
+import { useProfileStoreApi } from '@/entities/profile'
+import { applyDataTransition } from '@/features/auth'
+import { reconcileInlineImages } from '@/features/media'
 
 export type SyncController = Pick<SyncManager, 'start' | 'flush' | 'stop'>
 
@@ -13,6 +18,7 @@ export interface SyncProviderProps {
   auth: PersistedAuth | null
   /** Wipes the on-device database when a different account signs in. */
   resetLocal: () => Promise<void>
+  storage: StoragePort
   children?: ReactNode
 }
 
@@ -22,8 +28,17 @@ export interface SyncProviderProps {
  * closed — the moment on mobile where a tab is most likely to be killed before RxDB's own retry
  * loop would have pushed.
  */
-export function SyncProvider({ syncManager, auth, resetLocal, children }: SyncProviderProps) {
+export function SyncProvider({
+  syncManager,
+  auth,
+  resetLocal,
+  storage,
+  children,
+}: SyncProviderProps) {
+  const { t } = useTranslation()
   const previousAuth = useRef<PersistedAuth | null>(null)
+  const deckStore = useDeckStoreApi()
+  const profileStore = useProfileStoreApi()
 
   useEffect(() => {
     // Ask the browser not to evict the RxDB store; it is the source of truth, not a cache.
@@ -35,7 +50,17 @@ export function SyncProvider({ syncManager, auth, resetLocal, children }: SyncPr
     previousAuth.current = auth
     if (!syncManager || auth?.kind !== 'account') return
 
-    void claimGuestData({ transition, userId: auth.id, syncManager, resetLocal })
+    const userId = auth.id
+    void applyDataTransition({
+      transition,
+      userId,
+      syncManager,
+      resetLocal,
+      onUnsyncedLoss: () => toast.error(t('sync.unsyncedLoss')),
+    }).then(() =>
+      // Photos picked offline are still inline; this is the first connected moment to move them.
+      reconcileInlineImages({ profileStore, deckStore, storage, userId }),
+    )
 
     const flushOnLeave = () => {
       if (document.visibilityState === 'hidden') void syncManager.flush()
@@ -49,7 +74,7 @@ export function SyncProvider({ syncManager, auth, resetLocal, children }: SyncPr
       window.removeEventListener('pagehide', flushNow)
       void syncManager.stop()
     }
-  }, [syncManager, auth, resetLocal])
+  }, [syncManager, auth, resetLocal, storage, deckStore, profileStore, t])
 
   return children
 }
