@@ -8,3 +8,9 @@ export type {
   SignInInput,
   SignUpInput,
 } from './auth-gateway'
+export {
+  LocalObjectUrlStorage,
+  type StorageBucket,
+  type StoragePort,
+  type UploadInput,
+} from './storage-port'

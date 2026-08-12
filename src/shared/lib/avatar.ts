@@ -37,3 +37,17 @@ export function fileToAvatar(file: File): Promise<string> {
     reader.readAsDataURL(file)
   })
 }
+
+/**
+ * Turns the data URL `fileToAvatar` produced back into bytes, so the same processed image that is
+ * shown locally is the one uploaded — no second, differently-cropped encode.
+ */
+export function dataUrlToBlob(dataUrl: string): Blob {
+  const [header, encoded] = dataUrl.split(',')
+  if (!header || encoded === undefined) throw new Error('Not a data URL')
+  const type = header.match(/^data:([^;]+)/)?.[1] ?? 'application/octet-stream'
+  const binary = atob(encoded)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i)
+  return new Blob([bytes], { type })
+}

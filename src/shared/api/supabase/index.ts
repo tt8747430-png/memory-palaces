@@ -7,3 +7,4 @@ export {
   type CollectionReplicationOptions,
 } from './replication'
 export { SyncManager, type SyncTarget } from './sync-manager'
+export { SupabaseStorage } from './supabase-storage'

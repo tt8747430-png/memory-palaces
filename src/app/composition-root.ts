@@ -1,8 +1,20 @@
 import type { RxCollection } from 'rxdb'
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie'
-import { type AuthGateway, type Identifiable, InMemoryRepository } from '@/shared/api'
+import {
+  type AuthGateway,
+  type Identifiable,
+  InMemoryRepository,
+  LocalObjectUrlStorage,
+  type StoragePort,
+} from '@/shared/api'
 import { RxdbRepository } from '@/shared/api/rxdb'
-import { isSupabaseConfigured, supabase, SyncManager, type SyncTarget } from '@/shared/api/supabase'
+import {
+  isSupabaseConfigured,
+  supabase,
+  SupabaseStorage,
+  SyncManager,
+  type SyncTarget,
+} from '@/shared/api/supabase'
 import { type AppEvents, EventBus } from '@/shared/lib'
 import { createSessionStore, type Session, type SessionStore } from '@/entities/session'
 import { createDeckStore, type Deck, type DeckStore } from '@/entities/deck'
@@ -36,6 +48,7 @@ export interface Services {
   profileStore: ProfileStore
   notificationStore: NotificationStore
   eventBus: EventBus<AppEvents>
+  storage: StoragePort
   /** Null when no Supabase project is configured: the app then runs entirely on-device. */
   syncManager: SyncManager | null
 }
@@ -83,6 +96,7 @@ export function createServices(): Services {
     profileStore: createProfileStore(profileRepo),
     notificationStore: createNotificationStore(notificationRepo),
     eventBus: new EventBus<AppEvents>(),
+    storage: isSupabaseConfigured() ? new SupabaseStorage(supabase) : new LocalObjectUrlStorage(),
     syncManager: isSupabaseConfigured() ? SyncManager.fromSupabase(supabase, syncTargets) : null,
   }
 
