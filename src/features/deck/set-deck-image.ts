@@ -23,7 +23,13 @@ export async function setDeckImage(
   dataUrl: string | null,
 ): Promise<Deck> {
   const saved = await editDeck(store, deckId, { image: dataUrl ?? undefined })
-  if (!dataUrl || !userId) return saved
+  if (!userId) return saved
+
+  if (!dataUrl) {
+    // Nothing references the object once the deck stops pointing at it, so it should not linger.
+    await storage.remove('deck-images', `${userId}/${deckId}`).catch(() => {})
+    return saved
+  }
 
   const url = await uploadInlineImage(storage, {
     bucket: 'deck-images',
