@@ -151,7 +151,7 @@ Ordered by impact.
 
 > _Why_ → [ADR 0001](adr/0001-drag-and-drop-and-card-stacks.md). This is the checklist.
 
-**A drag only ever reorders.** Re-parenting is an explicit act with its own surface (`MoveDeckSheet`) — a drop is a
+**A drag only ever reorders.** Re-parenting is an explicit act with its own surface (`MoveSheet`) — a drop is a
 guess about a finger. One exception: a deck released over a folder row files into it, and the row lights up before the
 finger lifts.
 

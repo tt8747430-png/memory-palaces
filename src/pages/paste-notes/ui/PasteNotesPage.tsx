@@ -33,7 +33,11 @@ export function PasteNotesPage({
   const { t } = useTranslation()
   const setDraft = useImportDraft((s) => s.setDraft)
   const parsing = usePasteParsing()
-  const [deckName, setDeckName] = useState(defaultDeckName)
+
+  // A pasted Bible chapter names the deck after itself, so the name follows what is in the box —
+  // until the reader types one. From then on the field is theirs and no paste overwrites it.
+  const [typedName, setTypedName] = useState<string | null>(null)
+  const deckName = typedName ?? (parsing.suggestedName || defaultDeckName)
 
   const canReadClipboard =
     typeof navigator !== 'undefined' && typeof navigator.clipboard?.readText === 'function'
@@ -81,7 +85,7 @@ export function PasteNotesPage({
             <Input
               aria-label={t('cards.paste.deckNameLabel')}
               value={deckName}
-              onChange={(e) => setDeckName(e.target.value)}
+              onChange={(e) => setTypedName(e.target.value)}
               placeholder={t('deck.namePlaceholder')}
               maxLength={60}
             />

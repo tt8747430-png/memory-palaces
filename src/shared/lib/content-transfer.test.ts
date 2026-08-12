@@ -10,6 +10,7 @@ import {
   parseDelimitedNotes,
   parsePastedCards,
   parseVerses,
+  verseChapterTitles,
   questionsToCsv,
 } from './content-transfer'
 
@@ -42,6 +43,27 @@ describe('parseVerses', () => {
       { front: '3 John 1:1', back: '3 John 1:1 The elder, to Gaius' },
       { front: '3 John 1:2', back: '3 John 1:2 Beloved, I pray' },
     ])
+  })
+})
+
+describe('verseChapterTitles', () => {
+  it('names the chapters a paste opened with, in order', () => {
+    const text = 'John 1\n(1:1) In the beginning\nJohn 2\n(2:1) There was a wedding'
+    expect(verseChapterTitles(text)).toEqual(['John 1', 'John 2'])
+  })
+
+  it('keeps the reference range a header carries', () => {
+    expect(verseChapterTitles('Psalm 23:1-6\n(23:1) The Lord is my shepherd')).toEqual([
+      'Psalm 23:1-6',
+    ])
+  })
+
+  it('offers no title for verses pasted without a header', () => {
+    expect(verseChapterTitles('(1:1) In the beginning')).toEqual([])
+  })
+
+  it('offers no title for text that holds no verses', () => {
+    expect(verseChapterTitles('front, back')).toEqual([])
   })
 })
 

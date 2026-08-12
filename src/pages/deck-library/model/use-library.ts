@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { usePendingAct } from '@/shared/lib'
 import type { SelectActionHandlers } from '@/shared/ui'
-import type { MoveDestination } from '../ui/MoveDeckSheet'
+import type { MoveDestination } from '@/widgets/deck-tree'
 import type { PendingAct } from './pending-act'
 import { type LibraryActions, moveExclusions, useLibraryActions } from './use-library-actions'
 import { type LibraryView, useLibraryData } from './use-library-data'

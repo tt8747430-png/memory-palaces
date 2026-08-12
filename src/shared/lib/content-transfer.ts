@@ -289,6 +289,9 @@ export interface VerseChapter {
   cards: ParsedCard[]
 }
 
+/** What verses pasted before any "Book Chapter" header are filed under. */
+const UNTITLED_CHAPTER = 'Verses'
+
 function parseVerseChapters(text: string): VerseChapter[] {
   const verseRe = /^\((\d+):(\d+)\)\s*(.*)$/
   const headerRe = /^(.*\p{L})\s+\d+(?:\s*[-–:]\s*\d+)*\.?$/u
@@ -301,7 +304,7 @@ function parseVerseChapters(text: string): VerseChapter[] {
 
   const ensureChapter = (): VerseChapter => {
     if (!current) {
-      current = { title: book || 'Verses', cards: [] }
+      current = { title: book || UNTITLED_CHAPTER, cards: [] }
       chapters.push(current)
     }
     return current
@@ -337,6 +340,16 @@ function parseVerseChapters(text: string): VerseChapter[] {
 
 export function parseVerses(text: string): ParsedCard[] {
   return parseVerseChapters(text).flatMap((c) => c.cards)
+}
+
+/**
+ * The chapter headers a paste opened with, in the order they appeared — what a screen names a new
+ * deck after. Verses pasted without a header contribute nothing to name a deck with.
+ */
+export function verseChapterTitles(text: string): string[] {
+  return parseVerseChapters(text)
+    .map((c) => c.title)
+    .filter((title) => title !== UNTITLED_CHAPTER)
 }
 
 export function parseDeckContent(text: string): DeckContentData {

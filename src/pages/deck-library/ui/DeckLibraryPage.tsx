@@ -10,7 +10,7 @@ import { selectEffectivePreferences, usePreferencesStore } from '@/entities/pref
 import { createDeck, createSubdeck } from '@/features/deck'
 import { createFolder, editFolder } from '@/features/folder'
 import { readAnkiFile } from '@/features/content'
-import { DeckTree, LibrarySelectList } from '@/widgets/deck-tree'
+import { DeckTree, LibrarySelectList, MoveSheet } from '@/widgets/deck-tree'
 import { HomeHeader } from '@/widgets/home-header'
 import { useImportDraft } from '@/widgets/content-editor'
 import { importErrorMessage, nextDefaultName, useHideAppNav } from '@/shared/lib'
@@ -37,7 +37,6 @@ import { LibraryDialogs } from './LibraryDialogs'
 import { LibraryEmpty } from './LibraryEmpty'
 import { LibrarySkeleton } from './LibrarySkeleton'
 import { LibrarySpeedDial } from './LibrarySpeedDial'
-import { MoveDeckSheet } from './MoveDeckSheet'
 
 export interface DeckLibraryPageProps {
   folderId: string | null
@@ -345,7 +344,7 @@ export function DeckLibraryPage({
         onSubmit={submitFolder}
       />
 
-      <MoveDeckSheet
+      <MoveSheet
         open={isMove(library.pending)}
         onOpenChange={(open) => {
           if (!open) library.dismiss()

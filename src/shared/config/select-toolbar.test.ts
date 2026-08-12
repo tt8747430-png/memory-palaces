@@ -26,7 +26,7 @@ describe('normalizeSelectToolbar', () => {
   it('falls back to the default bar rather than leaving a selection with nothing to do', () => {
     expect(normalizeSelectToolbar('library', [])).toEqual(DEFAULT_SELECT_TOOLBAR.library)
     expect(normalizeSelectToolbar('card', undefined)).toEqual(DEFAULT_SELECT_TOOLBAR.card)
-    expect(normalizeSelectToolbar('card', ['move'] as unknown as SelectActionId[])).toEqual(
+    expect(normalizeSelectToolbar('card', ['archive'] as unknown as SelectActionId[])).toEqual(
       DEFAULT_SELECT_TOOLBAR.card,
     )
   })

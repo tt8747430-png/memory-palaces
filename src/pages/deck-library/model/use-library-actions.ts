@@ -16,7 +16,7 @@ import {
 import { deleteFolder, reorderFolders } from '@/features/folder'
 import { canReparent, findEntity, orderPatch, siblingDecks, subtreeDeckIds } from '@/shared/lib'
 import { bulkAction, type SelectActionHandlers } from '@/shared/ui'
-import type { MoveDestination } from '../ui/MoveDeckSheet'
+import type { MoveDestination } from '@/widgets/deck-tree'
 import type { LibrarySelection } from './use-library-selection'
 
 type Patch<T> = (patches: Map<string, Partial<T>>) => void

@@ -1,5 +1,5 @@
 export type { Card, MakeCardInput, CardChanges } from './model/types'
-export { makeCard, updateCard } from './model/types'
+export { makeCard, moveCard, updateCard } from './model/types'
 export { createCardStore } from './model/store'
 export type { CardState, CardStore } from './model/store'
 export { CardStoreContext, useCardStore, useCardStoreApi } from './model/context'

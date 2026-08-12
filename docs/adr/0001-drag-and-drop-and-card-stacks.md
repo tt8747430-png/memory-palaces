@@ -4,7 +4,7 @@
 
 ### 1. A drag only ever reorders
 
-Re-parenting is an explicit act with its own surface (`MoveDeckSheet`). A drop is a guess about where a finger was; a
+Re-parenting is an explicit act with its own surface (`MoveSheet`). A drop is a guess about where a finger was; a
 re-parent is too consequential to infer from one.
 
 **One exception:** a deck released over a **folder row** files into it — the target is discrete and self-announcing (the

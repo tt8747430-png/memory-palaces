@@ -10,6 +10,7 @@ export interface CardRowProps extends RowFrameProps {
   index: number
   onOpen: () => void
   onEdit: () => void
+  onMove: () => void
   onDuplicate: () => void
   onDelete: () => void
   onToggleFlag: () => void
@@ -21,6 +22,7 @@ export function CardRow({
   card,
   index,
   onEdit,
+  onMove,
   onDuplicate,
   onDelete,
   onToggleFlag,
@@ -32,9 +34,10 @@ export function CardRow({
   const flagLabel = card.flagged ? t('cards.row.unflag') : t('cards.row.flag')
 
   const menuActions = buildMenuActions(
-    ['edit', 'duplicate', 'flag', 'known', 'reset', 'delete'],
+    ['edit', 'move', 'duplicate', 'flag', 'known', 'reset', 'delete'],
     {
       edit: { onAction: onEdit },
+      move: { onAction: onMove },
       duplicate: { onAction: onDuplicate },
       flag: { onAction: onToggleFlag, label: flagLabel },
       known: { onAction: onMarkKnown },
@@ -49,6 +52,7 @@ export function CardRow({
       {...frame}
       menuActions={menuActions}
       swipeHandlers={{
+        move: { onAction: onMove },
         flag: { onAction: onToggleFlag, label: flagLabel },
         known: { onAction: onMarkKnown },
         reset: { onAction: onResetSrs },

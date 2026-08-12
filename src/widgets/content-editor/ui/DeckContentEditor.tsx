@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { Plus, Trash2, Upload } from 'lucide-react'
 import { type Card, selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
 import { selectDecks, useDeckStore } from '@/entities/deck'
+import { selectFolders, useFolderStore } from '@/entities/folder'
 import { reorderCards } from '@/features/card'
 import {
   type ContentSort,
@@ -15,6 +16,7 @@ import {
   cardMaturityCounts,
   cardsInSubtree,
   CONTENT_SORTS,
+  findEntity,
   importErrorMessage,
   type MultiSelect,
   usePendingAct,
@@ -29,6 +31,7 @@ import {
   SpeedDial,
   useContentSortOptions,
 } from '@/shared/ui'
+import { type MoveDestination, MoveSheet } from '@/widgets/deck-tree'
 import { filterCards, sortCards } from '../model/card-list'
 import { useCardCommands } from '../model/use-card-commands'
 import { useCardFilter } from '../model/use-card-filter'
@@ -74,17 +77,22 @@ export function DeckContentEditor({
 
   const prefs = usePreferencesStore(selectEffectivePreferences)
   const decks = useDeckStore(selectDecks)
+  const folders = useFolderStore(selectFolders)
   const cards = useMemo(() => cardsInSubtree(decks, allCards, deckId), [decks, allCards, deckId])
   const maturity = useMemo(() => cardMaturityCounts(cards), [cards])
 
   const [importOpen, setImportOpen] = useState(false)
   const [browserCardId, setBrowserCardId] = useState<string | null>(null)
+  const [moveIds, setMoveIds] = useState<readonly string[] | null>(null)
 
   const pending = usePendingAct<PendingCardAct>()
   const sortOptions = useContentSortOptions(CONTENT_SORTS)
   const filter = useCardFilter()
-  const commands = useCardCommands(cards, selection, () =>
-    pending.request({ kind: 'delete-selection' }),
+  const commands = useCardCommands(
+    cards,
+    selection,
+    () => pending.request({ kind: 'delete-selection' }),
+    setMoveIds,
   )
 
   const selectMode = selection.active
@@ -105,6 +113,17 @@ export function DeckContentEditor({
   const reorder = (ids: string[]) => {
     void reorderCards(cardStore, ids)
     if (sort !== 'manual') onSortChange('manual')
+  }
+
+  // A card can only live in a deck, so the picker offers decks; the decks the cards already sit in
+  // are the only ones a move would achieve nothing from.
+  const movingCards = moveIds ? cards.filter((card) => moveIds.includes(card.id)) : []
+  const moveExcludeIds = new Set(movingCards.map((card) => card.deckId))
+  const pickMoveTarget = (dest: MoveDestination) => {
+    if (dest.kind === 'deck' && moveIds) {
+      commands.moveTo(moveIds, dest.deckId, findEntity(decks, dest.deckId)?.name ?? '')
+    }
+    setMoveIds(null)
   }
 
   const importAnki = async (file: File) => {
@@ -136,6 +155,7 @@ export function DeckContentEditor({
       onRequestSelect={() => selection.begin(card.id)}
       onOpen={() => setBrowserCardId(card.id)}
       onEdit={() => onEditCard(card.id)}
+      onMove={() => setMoveIds([card.id])}
       onDuplicate={() => commands.duplicate(card.id)}
       onDelete={() => pending.request({ kind: 'delete-card', id: card.id })}
       onToggleFlag={() => commands.toggleFlag(card.id)}
@@ -204,6 +224,24 @@ export function DeckContentEditor({
       />
 
       <CardFilterSheet filter={filter} counts={maturity} />
+
+      <MoveSheet
+        open={moveIds !== null}
+        onOpenChange={(open) => {
+          if (!open) setMoveIds(null)
+        }}
+        targets="deck"
+        title={t('cards.move.title')}
+        subtitle={
+          movingCards.length === 1
+            ? (movingCards[0]?.front ?? '')
+            : t('selection.count', { count: movingCards.length })
+        }
+        decks={decks}
+        folders={folders}
+        excludeIds={moveExcludeIds}
+        onPick={pickMoveTarget}
+      />
 
       <ConfirmDialog
         open={pending.act !== null}

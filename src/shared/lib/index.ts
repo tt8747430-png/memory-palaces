@@ -62,6 +62,7 @@ export {
   parseDelimitedNotes,
   parseAnkiText,
   parseVerses,
+  verseChapterTitles,
   parseDeckContent,
   detectPasteFormat,
   guessFieldSeparator,

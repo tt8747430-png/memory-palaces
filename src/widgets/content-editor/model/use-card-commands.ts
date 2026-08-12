@@ -6,7 +6,9 @@ import {
   deleteCard,
   duplicateCard,
   markCardsKnown,
+  moveCards,
   resetCardsSrs,
+  restoreCardPlacements,
   toggleCardFlag,
 } from '@/features/card'
 import type { MultiSelect } from '@/shared/lib'
@@ -17,6 +19,7 @@ export interface CardCommands {
   toggleFlag: (id: string) => void
   markKnown: (id: string) => void
   resetSrs: (id: string) => void
+  moveTo: (ids: readonly string[], deckId: string, deckName: string) => void
   remove: (id: string) => void
   removeSelected: () => void
   selectHandlers: SelectActionHandlers
@@ -26,6 +29,7 @@ export function useCardCommands(
   cards: Card[],
   selection: MultiSelect,
   onRequestBulkDelete: () => void,
+  onRequestMove: (ids: string[]) => void,
 ): CardCommands {
   const { t } = useTranslation()
   const store = useCardStoreApi()
@@ -45,7 +49,31 @@ export function useCardCommands(
     toast.success(t('cards.row.scheduleReset'))
   }
 
+  /**
+   * The one way cards change decks, whichever surface asked — row menu, swipe or the select
+   * toolbar. A move that lands nowhere new says nothing; anything else can be undone from the
+   * toast, which puts every card back in the deck and at the order it left.
+   */
+  const moveTo = (batch: readonly string[], deckId: string, deckName: string) => {
+    void (async () => {
+      const previous = await moveCards(store, batch, deckId)
+      if (previous.length === 0) return
+      const message =
+        previous.length === 1
+          ? t('cards.move.movedOne', { name: deckName })
+          : t('cards.move.movedMany', { count: previous.length, name: deckName })
+      toast.success(message, {
+        action: {
+          label: t('common.undo'),
+          onClick: () => void restoreCardPlacements(store, previous),
+        },
+      })
+    })()
+    if (selection.active) exit()
+  }
+
   const selectHandlers: SelectActionHandlers = {
+    move: { disabled: empty, onAction: () => onRequestMove([...ids]) },
     flag: bulkAction(selection, (batch) => {
       const selected = new Set(batch)
       const toFlag = cards.filter((card) => selected.has(card.id) && !card.flagged)
@@ -72,6 +100,7 @@ export function useCardCommands(
     toggleFlag: (id) => void toggleCardFlag(store, id),
     markKnown,
     resetSrs,
+    moveTo,
     remove: (id) => {
       void deleteCard(store, id)
       toast.success(t('cards.transfer.deleted'))

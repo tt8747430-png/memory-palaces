@@ -9,6 +9,7 @@ import { useMultiSelect } from '@/shared/lib'
 import { InMemoryRepository } from '@/shared/api'
 import { type Card, CardStoreContext, createCardStore, makeCard } from '@/entities/card'
 import { createDeckStore, type Deck, DeckStoreContext, makeDeck } from '@/entities/deck'
+import { createFolderStore, type Folder, FolderStoreContext } from '@/entities/folder'
 import { createQuestionStore, type Question, QuestionStoreContext } from '@/entities/question'
 import {
   createPreferencesStore,
@@ -50,13 +51,19 @@ function renderEditor({
           value={started(createPreferencesStore(new InMemoryRepository<Preferences>()))}
         >
           <DeckStoreContext value={started(createDeckStore(new InMemoryRepository<Deck>(decks)))}>
-            <CardStoreContext value={started(createCardStore(new InMemoryRepository<Card>(cards)))}>
-              <QuestionStoreContext
-                value={started(createQuestionStore(new InMemoryRepository<Question>(questions)))}
+            <FolderStoreContext
+              value={started(createFolderStore(new InMemoryRepository<Folder>()))}
+            >
+              <CardStoreContext
+                value={started(createCardStore(new InMemoryRepository<Card>(cards)))}
               >
-                <Editor onAddCard={onAddCard} />
-              </QuestionStoreContext>
-            </CardStoreContext>
+                <QuestionStoreContext
+                  value={started(createQuestionStore(new InMemoryRepository<Question>(questions)))}
+                >
+                  <Editor onAddCard={onAddCard} />
+                </QuestionStoreContext>
+              </CardStoreContext>
+            </FolderStoreContext>
           </DeckStoreContext>
         </PreferencesStoreContext>
       </MotionConfig>

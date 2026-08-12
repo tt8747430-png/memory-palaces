@@ -11,7 +11,7 @@ export type SelectActionId = Extract<
 
 export const SELECT_ACTIONS: Record<SelectSurface, readonly SelectActionId[]> = {
   library: ['move', 'favorite', 'duplicate', 'archive', 'unfile', 'delete'],
-  card: ['flag', 'known', 'reset', 'duplicate', 'delete'],
+  card: ['move', 'flag', 'known', 'reset', 'duplicate', 'delete'],
   question: ['duplicate', 'delete'],
 }
 
@@ -23,7 +23,7 @@ export type SelectToolbarPreferences = Record<SelectSurface, SelectToolbarConfig
 
 export const DEFAULT_SELECT_TOOLBAR: SelectToolbarPreferences = {
   library: ['move', 'archive', 'delete'],
-  card: ['flag', 'known', 'reset', 'delete'],
+  card: ['move', 'flag', 'known', 'delete'],
   question: ['duplicate', 'delete'],
 }
 

@@ -6,6 +6,7 @@ import {
   parseDelimitedNotes,
   parseVerses,
   type PasteFormat,
+  verseChapterTitles,
 } from '@/shared/lib'
 
 export type FieldSep = 'auto' | 'tab' | 'comma' | 'custom'
@@ -38,6 +39,11 @@ export interface PasteParsing {
   skipHeader: boolean
   setSkipHeader: (value: boolean) => void
   cards: ParsedCard[]
+  /**
+   * What the paste suggests the deck be called — the first chapter header of pasted verses, empty
+   * for anything else. Several chapters in one paste still name the deck after the first.
+   */
+  suggestedName: string
 }
 
 export function usePasteParsing(): PasteParsing {
@@ -56,6 +62,11 @@ export function usePasteParsing(): PasteParsing {
   const field =
     fieldSep === 'auto' ? guessedField : fieldSep === 'custom' ? customField : FIELD_VALUE[fieldSep]
   const card = cardSep === 'custom' ? customCard || '\n' : CARD_VALUE[cardSep]
+
+  const suggestedName = useMemo(
+    () => (format === 'bible' ? (verseChapterTitles(text)[0] ?? '') : ''),
+    [format, text],
+  )
 
   const cards = useMemo(() => {
     if (!text.trim()) return []
@@ -85,5 +96,6 @@ export function usePasteParsing(): PasteParsing {
     skipHeader,
     setSkipHeader,
     cards,
+    suggestedName,
   }
 }

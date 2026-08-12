@@ -493,6 +493,11 @@ export const en = {
       reset: 'Reset',
       duplicated: 'Duplicated {{count}} cards',
     },
+    move: {
+      title: 'Move to deck',
+      movedOne: 'Moved to {{name}}',
+      movedMany: 'Moved {{count}} cards to {{name}}',
+    },
     row: {
       menuLabel: 'Card actions',
       duplicate: 'Duplicate',

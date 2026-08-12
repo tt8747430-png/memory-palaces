@@ -50,6 +50,17 @@ export function makeCard(input: MakeCardInput): Card {
   }
 }
 
+/**
+ * Re-homing a card is its own operation, not an edit: `CardChanges` leaves `deckId` out so no form
+ * or import path can move a card by accident. A move always lands the card at a stated order in the
+ * target deck, because the two only make sense together.
+ */
+export function moveCard(card: Card, deckId: string, order: number, updatedAt: string): Card {
+  if (!deckId) throw new Error('Card must belong to a deck')
+  if (order < 0) throw new Error('Card order must be >= 0')
+  return { ...card, deckId, order, updatedAt }
+}
+
 export type CardChanges = Partial<Omit<Card, 'id' | 'createdAt' | 'updatedAt' | 'deckId'>>
 
 export function updateCard(card: Card, changes: CardChanges, updatedAt: string): Card {

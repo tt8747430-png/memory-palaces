@@ -9,7 +9,7 @@ export type SwipeActionId = Exclude<ActionId, 'unfile'>
 export const SWIPE_ACTIONS: Record<SwipeItemType, readonly SwipeActionId[]> = {
   deck: ['favorite', 'move', 'settings', 'addSubdeck', 'duplicate', 'archive', 'delete'],
   folder: ['edit', 'addDeck', 'delete'],
-  card: ['flag', 'known', 'reset', 'duplicate', 'delete'],
+  card: ['move', 'flag', 'known', 'reset', 'duplicate', 'delete'],
 }
 
 export interface SwipeConfig {
@@ -27,7 +27,7 @@ export const SWIPE_SIDE_MAX: Record<keyof SwipeConfig, number> = {
 export const DEFAULT_SWIPE: SwipePreferences = {
   deck: { leading: ['favorite'], trailing: ['move', 'archive', 'delete'] },
   folder: { leading: ['edit'], trailing: ['addDeck', 'delete'] },
-  card: { leading: ['known'], trailing: ['flag', 'delete'] },
+  card: { leading: ['known'], trailing: ['flag', 'move', 'delete'] },
 }
 
 export function normalizeSwipeConfig(type: SwipeItemType, config: SwipeConfig): SwipeConfig {

@@ -12,6 +12,13 @@ export type MoveDestination =
   | { kind: 'folder'; folderId: string }
   | { kind: 'deck'; deckId: string }
 
+/**
+ * Which rows a picker offers. `any` is the library's own set — a deck can also live in a folder, at
+ * home, or in the archive. `deck` is for content that only ever lives in a deck: folders still show
+ * as groups to find a deck by, but they cannot be picked.
+ */
+export type MoveTargets = 'any' | 'deck'
+
 function destKey(d: MoveDestination): string {
   if (d.kind === 'folder') return `folder:${d.folderId}`
   if (d.kind === 'deck') return `deck:${d.deckId}`
@@ -23,7 +30,7 @@ interface DeckNode {
   children: DeckNode[]
 }
 
-export interface MoveDeckSheetProps {
+export interface MoveSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   subtitle: string
@@ -31,12 +38,16 @@ export interface MoveDeckSheetProps {
   folders: Folder[]
   excludeIds: ReadonlySet<string>
   onPick: (dest: MoveDestination) => void
-  onNewFolder: () => void
+  targets?: MoveTargets
+  /** Overrides the sheet title. Defaults to "Select location". */
+  title?: string
+  /** Offered only when folders are pickable. */
+  onNewFolder?: () => void
 }
 
 const INDENT = 20
 
-export function MoveDeckSheet({
+export function MoveSheet({
   open,
   onOpenChange,
   subtitle,
@@ -44,9 +55,12 @@ export function MoveDeckSheet({
   folders,
   excludeIds,
   onPick,
+  targets = 'any',
+  title,
   onNewFolder,
-}: MoveDeckSheetProps) {
+}: MoveSheetProps) {
   const { t } = useTranslation()
+  const decksOnly = targets === 'deck'
 
   const buildDeckNode = (deck: Deck): DeckNode => ({
     deck,
@@ -131,7 +145,7 @@ export function MoveDeckSheet({
     <Sheet
       open={open}
       onOpenChange={onOpenChange}
-      title={t('move.selectLocation')}
+      title={title ?? t('move.selectLocation')}
       description={subtitle}
       footer={
         <Button
@@ -145,28 +159,32 @@ export function MoveDeckSheet({
       }
     >
       <div className="-mx-1 flex flex-col">
-        <Row
-          depth={0}
-          glyph={
-            <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-secondary/40 text-muted-foreground">
-              <Archive className="size-4.5" aria-hidden />
-            </span>
-          }
-          label={t('move.archive')}
-          selected={selectedKey === 'archive'}
-          onSelect={() => setSelected({ kind: 'archive' })}
-        />
-        <Row
-          depth={0}
-          glyph={
-            <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-              <Home className="size-4.5" aria-hidden />
-            </span>
-          }
-          label={t('move.home')}
-          selected={selectedKey === 'home'}
-          onSelect={() => setSelected({ kind: 'home' })}
-        />
+        {decksOnly ? null : (
+          <>
+            <Row
+              depth={0}
+              glyph={
+                <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-secondary/40 text-muted-foreground">
+                  <Archive className="size-4.5" aria-hidden />
+                </span>
+              }
+              label={t('move.archive')}
+              selected={selectedKey === 'archive'}
+              onSelect={() => setSelected({ kind: 'archive' })}
+            />
+            <Row
+              depth={0}
+              glyph={
+                <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                  <Home className="size-4.5" aria-hidden />
+                </span>
+              }
+              label={t('move.home')}
+              selected={selectedKey === 'home'}
+              onSelect={() => setSelected({ kind: 'home' })}
+            />
+          </>
+        )}
 
         {folderNodes.map(({ folder, children }) => {
           const key = `folder:${folder.id}`
@@ -189,6 +207,7 @@ export function MoveDeckSheet({
                 }
                 label={folder.name}
                 selected={selectedKey === key}
+                selectable={!decksOnly}
                 onSelect={() => setSelected({ kind: 'folder', folderId: folder.id })}
               />
               {hasChildren && isOpen ? children.map((child) => renderDeck(child, 2)) : null}
@@ -199,18 +218,18 @@ export function MoveDeckSheet({
         {homeDeckNodes.map((node) => renderDeck(node, 1))}
       </div>
 
-      <button
-        type="button"
-        onClick={onNewFolder}
-        className="mt-1 flex w-full items-center gap-2.5 rounded-card px-2 py-3 text-left text-accent transition-colors active:bg-primary/5"
-      >
-        <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-info-surface">
-          <FolderPlus className="size-4.5" aria-hidden />
-        </span>
-        <span className="text-(length:--p-text-body) font-semibold">
-          {t('move.newFolder')}
-        </span>
-      </button>
+      {onNewFolder && !decksOnly ? (
+        <button
+          type="button"
+          onClick={onNewFolder}
+          className="mt-1 flex w-full items-center gap-2.5 rounded-card px-2 py-3 text-left text-accent transition-colors active:bg-primary/5"
+        >
+          <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-info-surface">
+            <FolderPlus className="size-4.5" aria-hidden />
+          </span>
+          <span className="text-(length:--p-text-body) font-semibold">{t('move.newFolder')}</span>
+        </button>
+      ) : null}
     </Sheet>
   )
 }
@@ -223,6 +242,7 @@ function Row({
   glyph,
   label,
   selected,
+  selectable = true,
   disabled = false,
   onSelect,
 }: {
@@ -233,9 +253,12 @@ function Row({
   glyph: ReactNode
   label: string
   selected: boolean
+  /** A row that cannot be picked still opens and closes, so it works as a group header. */
+  selectable?: boolean
   disabled?: boolean
   onSelect: () => void
 }) {
+  const inert = !selectable && !hasChildren
   return (
     <div
       className="relative flex items-center border-b border-border/50"
@@ -261,25 +284,26 @@ function Row({
 
       <button
         type="button"
-        onClick={onSelect}
-        disabled={disabled}
-        aria-pressed={selected}
+        onClick={selectable ? onSelect : onToggle}
+        disabled={disabled || inert}
+        aria-pressed={selectable ? selected : undefined}
         className={cn(
           'flex min-w-0 flex-1 items-center gap-2.5 rounded-control py-2.5 pl-1.5 pr-2 text-left transition-colors',
           disabled ? 'opacity-40' : 'active:bg-primary/4',
-          selected && 'bg-primary/6',
+          selectable && selected && 'bg-primary/6',
         )}
       >
         {glyph}
         <span
           className={cn(
             'min-w-0 flex-1 truncate text-(length:--p-text-body) font-semibold',
-            selected ? 'text-primary' : 'text-heading',
+            selectable && selected ? 'text-primary' : 'text-heading',
+            !selectable && 'text-muted-foreground',
           )}
         >
           {label}
         </span>
-        {selected ? (
+        {selectable && selected ? (
           <Check className="size-5 shrink-0 text-accent" strokeWidth={2.5} aria-hidden />
         ) : null}
       </button>
