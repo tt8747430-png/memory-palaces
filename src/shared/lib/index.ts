@@ -81,6 +81,8 @@ export { EventBusContext, useEventBus, useEventBusOptional } from './event-bus-c
 export { AuthGatewayContext, useAuthGateway } from './auth-gateway-context'
 export { useValidatedSubmit, type FieldErrors, type ValidatedSubmit } from './use-validated-submit'
 export { useOnline } from './use-online'
+export { mergeProgress, type MergeableProgress } from './merge-progress'
+export { mergeCard, type MergeableCard } from './merge-srs'
 export {
   isEmail,
   isLongEnoughPassword,
