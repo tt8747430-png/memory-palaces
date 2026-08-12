@@ -1,1 +1,1 @@
-export { claimGuestData, type ClaimGuestDataDeps } from './claim-guest-data'
+export { applyDataTransition, type ApplyDataTransitionDeps } from './apply-data-transition'

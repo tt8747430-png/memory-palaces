@@ -10,9 +10,12 @@ export function coverSquare(width: number, height: number): CropRect {
 }
 
 const AVATAR_PX = 256
+/** Deck covers render larger than an avatar, so they get more pixels to work with. */
+export const DECK_IMAGE_PX = 512
 const AVATAR_QUALITY = 0.82
 
-export function fileToAvatar(file: File): Promise<string> {
+/** Centre-crops to a square and re-encodes, so what is shown is exactly what gets uploaded. */
+export function fileToSquareImage(file: File, size: number = AVATAR_PX): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onerror = () => reject(new Error('Could not read the image.'))
@@ -20,16 +23,16 @@ export function fileToAvatar(file: File): Promise<string> {
       const image = new Image()
       image.onerror = () => reject(new Error('Could not load the image.'))
       image.onload = () => {
-        const { sx, sy, size } = coverSquare(image.width, image.height)
+        const { sx, sy, size: crop } = coverSquare(image.width, image.height)
         const canvas = document.createElement('canvas')
-        canvas.width = AVATAR_PX
-        canvas.height = AVATAR_PX
+        canvas.width = size
+        canvas.height = size
         const context = canvas.getContext('2d')
         if (!context) {
           reject(new Error('Could not process the image.'))
           return
         }
-        context.drawImage(image, sx, sy, size, size, 0, 0, AVATAR_PX, AVATAR_PX)
+        context.drawImage(image, sx, sy, crop, crop, 0, 0, size, size)
         resolve(canvas.toDataURL('image/jpeg', AVATAR_QUALITY))
       }
       image.src = reader.result as string
@@ -37,6 +40,8 @@ export function fileToAvatar(file: File): Promise<string> {
     reader.readAsDataURL(file)
   })
 }
+
+export const fileToAvatar = (file: File): Promise<string> => fileToSquareImage(file, AVATAR_PX)
 
 /**
  * Turns the data URL `fileToAvatar` produced back into bytes, so the same processed image that is

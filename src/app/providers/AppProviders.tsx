@@ -24,6 +24,7 @@ function AppSync({ children }: { children: ReactNode }) {
       syncManager={services.syncManager}
       auth={auth}
       resetLocal={services.resetLocalData}
+      storage={services.storage}
     >
       {children}
     </SyncProvider>

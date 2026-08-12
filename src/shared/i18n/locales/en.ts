@@ -127,6 +127,10 @@ export const en = {
     editAppearanceHint: 'Name, icon and colour',
     iconLabel: 'Deck icon',
     appearanceTitle: 'Deck appearance',
+    coverAdd: 'Add cover',
+    coverChange: 'Change cover',
+    coverRemove: 'Remove',
+    coverError: 'Could not use that image.',
     appearanceSave: 'Save',
     study: 'Study',
     manage: 'Manage',
@@ -161,6 +165,9 @@ export const en = {
       body: 'This deletes the deck and all its cards. This can’t be undone.',
       confirm: 'Delete deck',
     },
+  },
+  sync: {
+    unsyncedLoss: 'Some changes from the previous account had not synced yet.',
   },
   update: {
     available: 'A new version is ready',
