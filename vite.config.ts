@@ -1,10 +1,33 @@
 import { fileURLToPath, URL } from 'node:url'
+import { loadEnv } from 'vite'
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
-export default defineConfig({
+const escapeForRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+/**
+ * Queue Supabase writes that were made while offline (or during the last moments of a closing tab)
+ * and replay them once the browser is back. RxDB's own retry covers a live session; this covers the
+ * case where the tab dies first. Absent a configured project, there is nothing to queue.
+ */
+function supabasePushQueue(supabaseUrl: string | undefined) {
+  if (!supabaseUrl) return []
+  const rest = new RegExp(`^${escapeForRegExp(new URL(supabaseUrl).origin)}/rest/`)
+  const backgroundSync = {
+    name: 'supabase-push-queue',
+    options: { maxRetentionTime: 24 * 60 },
+  }
+  return (['POST', 'PATCH'] as const).map((method) => ({
+    urlPattern: rest,
+    handler: 'NetworkOnly' as const,
+    method,
+    options: { backgroundSync },
+  }))
+}
+
+export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     tailwindcss(),
@@ -38,6 +61,7 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
+        runtimeCaching: supabasePushQueue(loadEnv(mode, process.cwd(), 'VITE_').VITE_SUPABASE_URL),
       },
       devOptions: { enabled: false },
     }),
@@ -52,4 +76,4 @@ export default defineConfig({
     css: false,
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
   },
-})
+}))

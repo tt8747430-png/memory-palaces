@@ -1,6 +1,8 @@
+import type { RxCollection } from 'rxdb'
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie'
-import { type AuthGateway, InMemoryRepository } from '@/shared/api'
+import { type AuthGateway, type Identifiable, InMemoryRepository } from '@/shared/api'
 import { RxdbRepository } from '@/shared/api/rxdb'
+import { isSupabaseConfigured, supabase, SyncManager, type SyncTarget } from '@/shared/api/supabase'
 import { type AppEvents, EventBus } from '@/shared/lib'
 import { createSessionStore, type Session, type SessionStore } from '@/entities/session'
 import { createDeckStore, type Deck, type DeckStore } from '@/entities/deck'
@@ -34,7 +36,20 @@ export interface Services {
   profileStore: ProfileStore
   notificationStore: NotificationStore
   eventBus: EventBus<AppEvents>
+  /** Null when no Supabase project is configured: the app then runs entirely on-device. */
+  syncManager: SyncManager | null
 }
+
+/** Everything that mirrors to the cloud. `notifications` is ephemeral UI state and stays local. */
+const SYNCED_TABLES = [
+  'decks',
+  'cards',
+  'folders',
+  'questions',
+  'progress',
+  'preferences',
+  'profiles',
+] as const
 
 export function createServices(): Services {
   const collections = createAppDatabase(getRxStorageDexie())
@@ -50,6 +65,12 @@ export function createServices(): Services {
   const notificationRepo = new RxdbRepository<AppNotification>(
     collections.then((c) => c.notifications),
   )
+  const syncTargets: Promise<SyncTarget[]> = collections.then((c) =>
+    SYNCED_TABLES.map((table) => ({
+      table,
+      collection: c[table] as unknown as RxCollection<Identifiable>,
+    })),
+  )
   const services: Services = {
     authGateway,
     sessionStore: createSessionStore(sessionRepo),
@@ -62,6 +83,7 @@ export function createServices(): Services {
     profileStore: createProfileStore(profileRepo),
     notificationStore: createNotificationStore(notificationRepo),
     eventBus: new EventBus<AppEvents>(),
+    syncManager: isSupabaseConfigured() ? SyncManager.fromSupabase(supabase, syncTargets) : null,
   }
 
   // Every store observes its collection from here on. Screens read data and `selectIsReady`; none
