@@ -72,13 +72,26 @@ client secret from the `.p8` and enter client ID, team ID, key ID and secret und
 
 ## 5. Running the sync tests
 
-The unit tests need nothing. The two integration suites are skipped unless a stack is pointed at:
+The unit tests need nothing, and cannot reach a project even with a `.env.local` present — the
+vitest config blanks `VITE_SUPABASE_*`.
+
+The two integration suites are skipped unless a project is pointed at, and they need a **confirmed
+user**, because every row is behind RLS:
 
 ```bash
-SUPABASE_TEST_URL=http://127.0.0.1:54321 \
+SUPABASE_TEST_URL=https://<ref>.supabase.co \
 SUPABASE_TEST_KEY=<publishable key> \
+SUPABASE_TEST_EMAIL=<confirmed user> \
+SUPABASE_TEST_PASSWORD=<password> \
 npx vitest run src/shared/api/supabase
 ```
 
-They cover two-client convergence, last-write-wins on a concurrent edit, tombstone propagation, and
-the guest → account → second-device claim.
+Create that user in Dashboard → Authentication → Users → Add user with **Auto Confirm** on. Supabase
+Auth rejects `.test` and `example.com` addresses, and the built-in SMTP rate-limits sign-ups, so
+letting the suite sign itself up is not reliable.
+
+They cover two-client convergence, delivery through Realtime alone (no re-sync), last-write-wins on
+a concurrent edit, tombstone propagation, and the guest → account → second-device claim. Each suite
+deletes only the rows it created, so they are safe to run in parallel against one account. Both run
+in the **node** environment: jsdom's `Event` and undici's `WebSocket` are incompatible, and under
+jsdom the Realtime socket never connects.
