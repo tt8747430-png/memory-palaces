@@ -27,8 +27,10 @@ export function buildPushPayload<T extends Identifiable>(
  * the rest of that transaction permanently behind the checkpoint.
  */
 export function buildPullFilter(checkpoint: Checkpoint | undefined): string {
-  const at = checkpoint?.updated_at ?? EPOCH
-  const id = checkpoint?.id ?? ''
+  // The first pull has no id to tie-break against, and `id` is a uuid column — an empty string
+  // there is not a "lowest id", it is a type error that fails the very first request.
+  if (!checkpoint) return `updated_at.gt."${EPOCH}"`
+  const { updated_at: at, id } = checkpoint
   return `updated_at.gt."${at}",and(updated_at.eq."${at}",id.gt."${id}")`
 }
 
@@ -68,8 +70,12 @@ export function createCollectionReplication<T extends Identifiable>({
     { documents: WithDeleted<T>[]; checkpoint: Checkpoint } | 'RESYNC'
   >()
 
+  // The topic must be unique per replication: supabase-js hands back the *existing* channel for a
+  // repeated topic, and callbacks cannot be added to one that has already subscribed. Two
+  // replications for the same table and user are ordinary — a restart, or a second device
+  // simulated in one process — so uniqueness cannot come from the table and user alone.
   const channel = supabase
-    .channel(`sync:${table}:${userId}`)
+    .channel(`sync:${table}:${userId}:${crypto.randomUUID()}`)
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table },

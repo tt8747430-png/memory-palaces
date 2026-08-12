@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Two-client convergence against a real Supabase stack.
  *
@@ -68,67 +69,119 @@ async function openCollection(): Promise<RxCollection<SyncDeck>> {
 
 const settle = (ms = 1500) => new Promise((resolve) => setTimeout(resolve, ms))
 
+/** Polls until `read` returns something, so a passing test never waits the full budget. */
+async function until<T>(read: () => Promise<T | null>, budgetMs = 20_000): Promise<T | null> {
+  const deadline = Date.now() + budgetMs
+  for (;;) {
+    const value = await read()
+    if (value || Date.now() > deadline) return value
+    await settle(250)
+  }
+}
+
+/** Real network, real websockets: the default 5s is not a realistic budget. */
+const TIMEOUT = 60_000
+
 describe.skipIf(!URL || !KEY)('supabase replication (two clients)', () => {
   let supabase: SupabaseClient
   let userId: string
+  // Vitest runs files in parallel and they share one test account, so each suite cleans up only
+  // the rows it made. Deleting everything for the user would pull the ground out from under the
+  // other suite mid-assertion.
+  const created: string[] = []
+
+  const newDeckId = () => {
+    const id = crypto.randomUUID()
+    created.push(id)
+    return id
+  }
 
   beforeAll(async () => {
     supabase = await client()
     const { data } = await supabase.auth.getUser()
     userId = data.user?.id ?? ''
     expect(userId).not.toBe('')
-  })
+  }, TIMEOUT)
 
   afterAll(async () => {
     // beforeAll may have failed before the client existed; do not mask that error with another.
-    if (supabase && userId) await supabase.from(TABLE).delete().eq('user_id', userId)
-  })
+    if (supabase && created.length) await supabase.from(TABLE).delete().in('id', created)
+  }, TIMEOUT)
 
-  it('converges a write from client A to client B', async () => {
-    const [a, b] = [await openCollection(), await openCollection()]
-    const repA = createCollectionReplication({ supabase, collection: a, table: TABLE, userId })
-    const repB = createCollectionReplication({ supabase, collection: b, table: TABLE, userId })
-    await Promise.all([repA.awaitInitialReplication(), repB.awaitInitialReplication()])
+  it(
+    'converges a write from client A to client B',
+    async () => {
+      const [a, b] = [await openCollection(), await openCollection()]
+      const repA = createCollectionReplication({ supabase, collection: a, table: TABLE, userId })
+      const repB = createCollectionReplication({ supabase, collection: b, table: TABLE, userId })
+      await Promise.all([repA.awaitInitialReplication(), repB.awaitInitialReplication()])
 
-    const id = crypto.randomUUID()
-    await a.upsert({ id, name: 'Hello', createdAt: 't1', updatedAt: 't1' })
-    await repA.awaitInSync()
-    repB.reSync()
-    await settle()
+      const id = newDeckId()
+      await a.upsert({ id, name: 'Hello', createdAt: 't1', updatedAt: 't1' })
+      await repA.awaitInSync()
+      repB.reSync()
+      await settle()
 
-    const onB = await b.findOne(id).exec()
-    expect(onB?.name).toBe('Hello')
+      const onB = await b.findOne(id).exec()
+      expect(onB?.name).toBe('Hello')
 
-    await Promise.all([repA.cancel(), repB.cancel()])
-  })
+      await Promise.all([repA.cancel(), repB.cancel()])
+    },
+    TIMEOUT,
+  )
 
-  it('resolves a concurrent edit with last-write-wins and propagates the tombstone', async () => {
-    const [a, b] = [await openCollection(), await openCollection()]
-    const id = crypto.randomUUID()
+  it(
+    'streams a write to the other client without being asked to re-sync',
+    async () => {
+      const [a, b] = [await openCollection(), await openCollection()]
+      const repA = createCollectionReplication({ supabase, collection: a, table: TABLE, userId })
+      const repB = createCollectionReplication({ supabase, collection: b, table: TABLE, userId })
+      await Promise.all([repA.awaitInitialReplication(), repB.awaitInitialReplication()])
 
-    const repA = createCollectionReplication({ supabase, collection: a, table: TABLE, userId })
-    await repA.awaitInitialReplication()
-    await a.upsert({ id, name: 'from A', createdAt: 't1', updatedAt: 't1' })
-    await repA.awaitInSync()
+      const id = newDeckId()
+      await a.upsert({ id, name: 'Live', createdAt: 't1', updatedAt: 't1' })
+      await repA.awaitInSync()
 
-    // B starts cold, edits the same document with a newer clock, then syncs.
-    await b.upsert({ id, name: 'from B', createdAt: 't1', updatedAt: 't2' })
-    const repB = createCollectionReplication({ supabase, collection: b, table: TABLE, userId })
-    await repB.awaitInitialReplication()
-    await repB.awaitInSync()
-    repA.reSync()
-    await settle()
+      // Deliberately no repB.reSync(): only the Realtime channel can deliver this.
+      const onB = await until(() => b.findOne(id).exec())
+      expect(onB?.name).toBe('Live')
 
-    expect((await a.findOne(id).exec())?.name).toBe('from B')
+      await Promise.all([repA.cancel(), repB.cancel()])
+    },
+    TIMEOUT,
+  )
 
-    const doc = await b.findOne(id).exec()
-    await doc?.remove()
-    await repB.awaitInSync()
-    repA.reSync()
-    await settle()
+  it(
+    'resolves a concurrent edit with last-write-wins and propagates the tombstone',
+    async () => {
+      const [a, b] = [await openCollection(), await openCollection()]
+      const id = newDeckId()
 
-    expect(await a.findOne(id).exec()).toBeNull()
+      const repA = createCollectionReplication({ supabase, collection: a, table: TABLE, userId })
+      await repA.awaitInitialReplication()
+      await a.upsert({ id, name: 'from A', createdAt: 't1', updatedAt: 't1' })
+      await repA.awaitInSync()
 
-    await Promise.all([repA.cancel(), repB.cancel()])
-  })
+      // B starts cold, edits the same document with a newer clock, then syncs.
+      await b.upsert({ id, name: 'from B', createdAt: 't1', updatedAt: 't2' })
+      const repB = createCollectionReplication({ supabase, collection: b, table: TABLE, userId })
+      await repB.awaitInitialReplication()
+      await repB.awaitInSync()
+      repA.reSync()
+      await settle()
+
+      expect((await a.findOne(id).exec())?.name).toBe('from B')
+
+      const doc = await b.findOne(id).exec()
+      await doc?.remove()
+      await repB.awaitInSync()
+      repA.reSync()
+      await settle()
+
+      expect(await a.findOne(id).exec()).toBeNull()
+
+      await Promise.all([repA.cancel(), repB.cancel()])
+    },
+    TIMEOUT,
+  )
 })
