@@ -2,7 +2,7 @@ import { type ReactNode, type SyntheticEvent, useState } from 'react'
 import { motion } from 'motion/react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
-import { authRise, authStagger, cn, useOnline } from '@/shared/lib'
+import { authErrorMessage, authRise, authStagger, cn, useOnline } from '@/shared/lib'
 import { AuthScreen, Button, SocialButtons, type SocialProvider } from '@/shared/ui'
 import { useAuthActions } from '@/features/session'
 import { AuthHeader } from './AuthHeader'
@@ -55,7 +55,7 @@ export function AuthForm({
       await signInWithProvider(provider)
     } catch (error) {
       setPending(null)
-      toast.error(error instanceof Error ? error.message : t('auth.errors.socialFailed'))
+      toast.error(authErrorMessage(error, t, t('auth.errors.socialFailed')))
     }
   }
 

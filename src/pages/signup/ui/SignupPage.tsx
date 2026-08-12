@@ -2,7 +2,7 @@ import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { User } from 'lucide-react'
-import { emailErrorKey, passwordErrorKey, useValidatedSubmit } from '@/shared/lib'
+import { authErrorMessage, emailErrorKey, passwordErrorKey, useValidatedSubmit } from '@/shared/lib'
 import { LEGAL_URLS } from '@/shared/config/constants'
 import { AuthField, EmailField, PasswordField } from '@/shared/ui'
 import { AuthForm, AuthSwitchLink } from '@/widgets/threshold'
@@ -39,7 +39,7 @@ export function SignupPage({ onSuccess, onGuest, onLogin }: SignupPageProps) {
       try {
         await actions.signUp({ name: name.trim(), email: email.trim(), password })
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : t('auth.errors.signUpFailed'))
+        toast.error(authErrorMessage(error, t, t('auth.errors.signUpFailed')))
         return
       }
       onSuccess()

@@ -8,6 +8,7 @@ export type {
   SignInInput,
   SignUpInput,
 } from './auth-gateway'
+export { AuthError, isAuthError } from './auth-error'
 export {
   LocalObjectUrlStorage,
   type StorageBucket,

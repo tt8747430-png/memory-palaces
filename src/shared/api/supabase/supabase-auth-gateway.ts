@@ -1,14 +1,20 @@
-import type { SupabaseClient, User } from '@supabase/supabase-js'
-import type {
-  AuthGateway,
-  AuthProvider,
-  PersistedAuth,
-  SignInInput,
-  SignUpInput,
-  Unsubscribe,
+import type { AuthError as SupabaseAuthError, SupabaseClient, User } from '@supabase/supabase-js'
+import {
+  AuthError,
+  type AuthGateway,
+  type AuthProvider,
+  type PersistedAuth,
+  type SignInInput,
+  type SignUpInput,
+  type Unsubscribe,
 } from '@/shared/api'
 
 const GUEST_KEY = 'mindscape:guest'
+
+/** Keeps the provider's code so the UI can say something better than the raw message. */
+const fail = (error: SupabaseAuthError): never => {
+  throw new AuthError(error.message, error.code ?? 'unknown')
+}
 
 const toAuth = (user: User): PersistedAuth => ({
   id: user.id,
@@ -30,9 +36,9 @@ export class SupabaseAuthGateway implements AuthGateway {
       password: input.password,
       options: { data: { name: input.name } },
     })
-    if (error) throw new Error(error.message)
+    if (error) fail(error)
     // With email confirmation on, `session` is null until confirmed; the user still exists.
-    if (!data.user) throw new Error('Sign-up failed')
+    if (!data.user) throw new AuthError('Sign-up failed')
     this.forgetGuest()
     return toAuth(data.user)
   }
@@ -42,8 +48,8 @@ export class SupabaseAuthGateway implements AuthGateway {
       email: input.email,
       password: input.password,
     })
-    if (error) throw new Error(error.message)
-    if (!data.user) throw new Error('Sign-in failed')
+    if (error) fail(error)
+    if (!data.user) throw new AuthError('Sign-in failed')
     this.forgetGuest()
     return toAuth(data.user)
   }
@@ -53,7 +59,7 @@ export class SupabaseAuthGateway implements AuthGateway {
       provider,
       options: { redirectTo: `${window.location.origin}/auth/callback` },
     })
-    if (error) throw new Error(error.message)
+    if (error) fail(error)
   }
 
   async persistGuest(): Promise<PersistedAuth> {
@@ -67,14 +73,14 @@ export class SupabaseAuthGateway implements AuthGateway {
   async signOut(): Promise<void> {
     this.forgetGuest()
     const { error } = await this.client.auth.signOut()
-    if (error) throw new Error(error.message)
+    if (error) fail(error)
   }
 
   async requestPasswordReset(email: string): Promise<void> {
     const { error } = await this.client.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/auth/callback`,
     })
-    if (error) throw new Error(error.message)
+    if (error) fail(error)
   }
 
   async getCurrent(): Promise<PersistedAuth | null> {
