@@ -20,7 +20,7 @@ import {
   type NotificationStore,
 } from '@/entities/notification'
 import { createAppDatabase } from './persistence/database'
-import { LocalAuthGateway } from './persistence/local-auth-gateway'
+import { createAuthGateway } from './persistence/create-auth-gateway'
 
 export interface Services {
   authGateway: AuthGateway
@@ -38,7 +38,7 @@ export interface Services {
 
 export function createServices(): Services {
   const collections = createAppDatabase(getRxStorageDexie())
-  const authGateway = new LocalAuthGateway()
+  const authGateway = createAuthGateway()
   const sessionRepo = new InMemoryRepository<Session>()
   const deckRepo = new RxdbRepository<Deck>(collections.then((c) => c.decks))
   const cardRepo = new RxdbRepository<Card>(collections.then((c) => c.cards))

@@ -80,6 +80,7 @@ export type { AppEvents } from './events'
 export { EventBusContext, useEventBus, useEventBusOptional } from './event-bus-context'
 export { AuthGatewayContext, useAuthGateway } from './auth-gateway-context'
 export { useValidatedSubmit, type FieldErrors, type ValidatedSubmit } from './use-validated-submit'
+export { useOnline } from './use-online'
 export {
   isEmail,
   isLongEnoughPassword,

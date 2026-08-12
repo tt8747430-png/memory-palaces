@@ -80,6 +80,28 @@ describe('LoginPage', () => {
     await expect(gateway.getCurrent()).resolves.toMatchObject({ kind: 'guest' })
   })
 
+  it('starts the Google redirect from the social buttons', async () => {
+    const user = userEvent.setup()
+    const { gateway } = renderLogin()
+    const signInWithProvider = vi.spyOn(gateway, 'signInWithProvider').mockResolvedValue(undefined)
+
+    await user.click(screen.getByRole('button', { name: /continue with google/i }))
+    await waitFor(() => expect(signInWithProvider).toHaveBeenCalledWith('google'))
+  })
+
+  it('surfaces a failed sign-in and stays put', async () => {
+    const user = userEvent.setup()
+    const { onAuthed, gateway } = renderLogin()
+    vi.spyOn(gateway, 'signIn').mockRejectedValue(new Error('Invalid login credentials'))
+
+    await user.type(screen.getByLabelText(/email/i), 'ada@b.com')
+    await user.type(screen.getByLabelText(/^password$/i), 'secret123')
+    await user.click(screen.getByRole('button', { name: /^sign in$/i }))
+
+    await waitFor(() => expect(gateway.signIn).toHaveBeenCalled())
+    expect(onAuthed).not.toHaveBeenCalled()
+  })
+
   it('routes to signup and forgot', async () => {
     const user = userEvent.setup()
     const { onSignup, onForgot } = renderLogin()

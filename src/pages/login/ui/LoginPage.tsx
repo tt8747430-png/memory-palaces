@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 import { emailErrorKey, passwordErrorKey, useValidatedSubmit } from '@/shared/lib'
 import { EmailField, PasswordField } from '@/shared/ui'
 import { AuthForm, AuthSwitchLink } from '@/widgets/threshold'
@@ -27,7 +28,12 @@ export function LoginPage({ onAuthed, onGuest, onSignup, onForgot }: LoginPagePr
       }
     },
     async () => {
-      await actions.signIn({ email: email.trim(), password })
+      try {
+        await actions.signIn({ email: email.trim(), password })
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : t('auth.errors.signInFailed'))
+        return
+      }
       onAuthed()
     },
   )
