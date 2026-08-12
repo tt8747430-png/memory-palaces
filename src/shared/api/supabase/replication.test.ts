@@ -24,8 +24,11 @@ describe('buildPushPayload', () => {
 })
 
 describe('buildPullFilter', () => {
-  it('starts from the epoch with no checkpoint', () => {
-    expect(buildPullFilter(undefined)).toContain('1970-01-01T00:00:00Z')
+  it('starts from the epoch with no checkpoint, and asks for no id tie-break', () => {
+    // `id` is a uuid column: an empty string there is a type error, not a lowest-possible id, and
+    // it would fail the very first pull of every collection.
+    expect(buildPullFilter(undefined)).toBe('updated_at.gt."1970-01-01T00:00:00Z"')
+    expect(buildPullFilter(undefined)).not.toContain('id.gt')
   })
 
   it('breaks ties on id so a batch boundary inside one transaction cannot skip rows', () => {

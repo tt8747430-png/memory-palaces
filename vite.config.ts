@@ -75,5 +75,8 @@ export default defineConfig(({ mode }) => ({
     setupFiles: ['./src/shared/test/setup.ts'],
     css: false,
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    // A developer's .env.local must not change what the unit suite tests. The offline path is the
+    // one under test; the integration suites opt in through their own SUPABASE_TEST_* variables.
+    env: { VITE_SUPABASE_URL: '', VITE_SUPABASE_PUBLISHABLE_KEY: '' },
   },
 }))

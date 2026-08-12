@@ -1,10 +1,19 @@
 import { describe, expect, it } from 'vitest'
-import { isSupabaseConfigured, supabase } from './client'
+import { isConfigured, isSupabaseConfigured, supabase } from './client'
+
+describe('isConfigured', () => {
+  it('needs both halves — a URL cannot authenticate and a key has nowhere to go', () => {
+    expect(isConfigured('https://x.supabase.co', 'sb_publishable_x')).toBe(true)
+    expect(isConfigured('https://x.supabase.co', '')).toBe(false)
+    expect(isConfigured('', 'sb_publishable_x')).toBe(false)
+    expect(isConfigured('', '')).toBe(false)
+  })
+})
 
 describe('isSupabaseConfigured', () => {
-  it('is false when env vars are absent', () => {
-    // The vitest env sets neither VITE_SUPABASE_URL nor VITE_SUPABASE_PUBLISHABLE_KEY, so the
-    // app must fall back to local auth with no sync — exactly how offline dev runs.
+  it('is false in the test environment, which is pinned to the offline path', () => {
+    // vite.config.ts blanks the two vars for the unit suite, so a developer's .env.local cannot
+    // change what is under test — or point these tests at a real project.
     expect(isSupabaseConfigured()).toBe(false)
   })
 

@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Guest → account → second device, against a real Supabase stack.
  *
@@ -55,9 +56,15 @@ async function openDecks(): Promise<RxCollection<SyncDeck>> {
 
 const settle = (ms = 1500) => new Promise((resolve) => setTimeout(resolve, ms))
 
+/** Real network, real websockets: the default 5s is not a realistic budget. */
+const TIMEOUT = 60_000
+
 describe.skipIf(!URL || !KEY)('guest → account claim', () => {
   let supabase: SupabaseClient
   let userId: string
+  // Scoped to the ids this suite creates: the replication suite shares the test account and runs
+  // in parallel, so a blanket delete would break whichever suite is mid-assertion.
+  const guestDeckIds: string[] = [crypto.randomUUID(), crypto.randomUUID()]
 
   beforeAll(async () => {
     supabase = createClient(URL as string, KEY as string, {
@@ -70,53 +77,61 @@ describe.skipIf(!URL || !KEY)('guest → account claim', () => {
     }
     userId = (await supabase.auth.getUser()).data.user?.id ?? ''
     expect(userId).not.toBe('')
-    await supabase.from('decks').delete().eq('user_id', userId)
-  })
+  }, TIMEOUT)
 
   afterAll(async () => {
-    if (supabase && userId) await supabase.from('decks').delete().eq('user_id', userId)
-  })
+    if (supabase) await supabase.from('decks').delete().in('id', guestDeckIds)
+  }, TIMEOUT)
 
-  it('pushes a guest’s decks into a fresh account and pulls them onto a second device', async () => {
-    // Device A studied as a guest.
-    const deviceA = await openDecks()
-    await deviceA.bulkUpsert([
-      { id: crypto.randomUUID(), name: 'Guest deck 1', createdAt: 't1', updatedAt: 't1' },
-      { id: crypto.randomUUID(), name: 'Guest deck 2', createdAt: 't1', updatedAt: 't1' },
-    ])
+  it(
+    'pushes a guest’s decks into a fresh account and pulls them onto a second device',
+    async () => {
+      // Device A studied as a guest.
+      const deviceA = await openDecks()
+      await deviceA.bulkUpsert(
+        guestDeckIds.map((id, i) => ({
+          id,
+          name: `Guest deck ${i + 1}`,
+          createdAt: 't1',
+          updatedAt: 't1',
+        })),
+      )
 
-    const managerA = SyncManager.fromSupabase(supabase, [
-      { table: 'decks', collection: deviceA as unknown as RxCollection<Identifiable> },
-    ])
-    const transition = resolveDataTransition(
-      { id: 'g1', kind: 'guest' },
-      { id: userId, kind: 'account' },
-    )
-    expect(transition).toBe('preserve')
+      const managerA = SyncManager.fromSupabase(supabase, [
+        { table: 'decks', collection: deviceA as unknown as RxCollection<Identifiable> },
+      ])
+      const transition = resolveDataTransition(
+        { id: 'g1', kind: 'guest' },
+        { id: userId, kind: 'account' },
+      )
+      expect(transition).toBe('preserve')
 
-    await claimGuestData({
-      transition,
-      userId,
-      syncManager: managerA,
-      resetLocal: () => Promise.reject(new Error('a claim must never wipe the guest’s data')),
-    })
-    await managerA.flush()
+      await claimGuestData({
+        transition,
+        userId,
+        syncManager: managerA,
+        resetLocal: () => Promise.reject(new Error('a claim must never wipe the guest’s data')),
+      })
+      await managerA.flush()
 
-    const { data: rows } = await supabase.from('decks').select('id,data').eq('user_id', userId)
-    expect(rows).toHaveLength(2)
+      const { data: rows } = await supabase.from('decks').select('id,data').in('id', guestDeckIds)
+      expect(rows).toHaveLength(2)
 
-    // Device B signs into the same account with an empty database.
-    const deviceB = await openDecks()
-    const managerB = SyncManager.fromSupabase(supabase, [
-      { table: 'decks', collection: deviceB as unknown as RxCollection<Identifiable> },
-    ])
-    await managerB.start(userId)
-    await managerB.flush()
-    await settle()
+      // Device B signs into the same account with an empty database.
+      const deviceB = await openDecks()
+      const managerB = SyncManager.fromSupabase(supabase, [
+        { table: 'decks', collection: deviceB as unknown as RxCollection<Identifiable> },
+      ])
+      await managerB.start(userId)
+      await managerB.flush()
+      await settle()
 
-    const pulled = await deviceB.find().exec()
-    expect(pulled.map((deck) => deck.name).sort()).toEqual(['Guest deck 1', 'Guest deck 2'])
+      const pulled = await deviceB.find().exec()
+      const claimed = pulled.filter((deck) => guestDeckIds.includes(deck.id))
+      expect(claimed.map((deck) => deck.name).sort()).toEqual(['Guest deck 1', 'Guest deck 2'])
 
-    await Promise.all([managerA.stop(), managerB.stop()])
-  })
+      await Promise.all([managerA.stop(), managerB.stop()])
+    },
+    TIMEOUT,
+  )
 })

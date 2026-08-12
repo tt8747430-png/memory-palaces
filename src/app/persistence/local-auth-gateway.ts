@@ -1,10 +1,11 @@
-import type {
-  AuthGateway,
-  AuthProvider,
-  PersistedAuth,
-  SignInInput,
-  SignUpInput,
-  Unsubscribe,
+import {
+  AuthError,
+  type AuthGateway,
+  type AuthProvider,
+  type PersistedAuth,
+  type SignInInput,
+  type SignUpInput,
+  type Unsubscribe,
 } from '@/shared/api'
 
 const STORAGE_KEY = 'mindscape:auth'
@@ -33,7 +34,7 @@ export class LocalAuthGateway implements AuthGateway {
   }
 
   async signInWithProvider(_provider: AuthProvider): Promise<void> {
-    throw new Error('Social sign-in requires a cloud connection')
+    throw new AuthError('Social sign-in requires a cloud connection', 'offline_only')
   }
 
   async persistGuest(): Promise<PersistedAuth> {
