@@ -20,7 +20,13 @@ const base: Progress = {
 describe('mergeProgress', () => {
   it('keeps the max of monotonic counters and unions training days', () => {
     const local = { ...base, updatedAt: 't2', xp: 150, trainingDays: ['2026-07-20', '2026-07-21'] }
-    const remote = { ...base, updatedAt: 't1', xp: 120, longestStreak: 9, trainingDays: ['2026-07-18'] }
+    const remote = {
+      ...base,
+      updatedAt: 't1',
+      xp: 120,
+      longestStreak: 9,
+      trainingDays: ['2026-07-18'],
+    }
 
     const merged = mergeProgress(local, remote)
 

@@ -5,7 +5,7 @@ import { lastWriteWins, mergeCardConflict, mergeProgressConflict } from './confl
 
 const CTX = 'test'
 
-const doc = <T,>(value: T) => value as T & { _deleted: boolean }
+const doc = <T>(value: T) => value as T & { _deleted: boolean }
 
 describe('lastWriteWins', () => {
   it('keeps the document with the newer updatedAt', async () => {
