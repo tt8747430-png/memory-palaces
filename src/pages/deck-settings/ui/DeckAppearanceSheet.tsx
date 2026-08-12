@@ -2,7 +2,7 @@ import { type SyntheticEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Check } from 'lucide-react'
 import { type Deck, DEFAULT_DECK_COLOR, DEFAULT_DECK_ICON, useDeckStoreApi } from '@/entities/deck'
-import { useSessionStore } from '@/entities/session'
+import { selectAccountId, useSessionStore } from '@/entities/session'
 import { editDeck, setDeckImage } from '@/features/deck'
 import { AppearanceFields } from '@/widgets/appearance-form'
 import { useStorage } from '@/shared/lib'
@@ -19,10 +19,7 @@ export function DeckAppearanceSheet({ open, onOpenChange, deck }: DeckAppearance
   const { t } = useTranslation()
   const deckStore = useDeckStoreApi()
   const storage = useStorage()
-  // Only an account owns a storage prefix; a guest's cover stays inside the document.
-  const userId = useSessionStore((state) =>
-    state.session?.kind === 'account' ? state.session.id : null,
-  )
+  const userId = useSessionStore(selectAccountId)
   const [name, setName] = useState(deck.name)
   const [color, setColor] = useState(deck.color || DEFAULT_DECK_COLOR)
   const [icon, setIcon] = useState(deck.icon || DEFAULT_DECK_ICON)

@@ -44,15 +44,41 @@ describe('mergeProgress', () => {
     expect(mergeProgress(local, remote)).toEqual(mergeProgress(remote, local))
   })
 
-  it('takes the daily-tracking fields from the newest write', () => {
+  it('takes the daily tally from the later day', () => {
     const local = { ...base, updatedAt: 't3', activeDayKey: '2026-07-21', activeDayCount: 2 }
     const remote = { ...base, updatedAt: 't2', activeDayKey: '2026-07-20', activeDayCount: 9 }
 
     const merged = mergeProgress(local, remote)
 
     expect(merged.activeDayKey).toBe('2026-07-21')
-    // A new day resets the counter, so counting the same day twice would be wrong.
+    // A new day restarts the counter, so yesterday's larger total is not today's.
     expect(merged.activeDayCount).toBe(2)
+    expect(mergeProgress(remote, local)).toEqual(merged)
+  })
+
+  it('keeps the higher count when both devices studied the same day', () => {
+    const local = { ...base, updatedAt: 't3', activeDayKey: '2026-07-21', activeDayCount: 3 }
+    const remote = { ...base, updatedAt: 't4', activeDayKey: '2026-07-21', activeDayCount: 7 }
+
+    const merged = mergeProgress(local, remote)
+
+    expect(merged.activeDayKey).toBe('2026-07-21')
+    expect(merged.activeDayCount).toBe(7)
+  })
+
+  it('adopts a day tally from a device that has one when the other never studied', () => {
+    const local: Progress = { ...base, updatedAt: 't3', activeDayKey: null, activeDayCount: 0 }
+    const remote: Progress = {
+      ...base,
+      updatedAt: 't2',
+      activeDayKey: '2026-07-21',
+      activeDayCount: 5,
+    }
+
+    expect(mergeProgress(local, remote)).toMatchObject({
+      activeDayKey: '2026-07-21',
+      activeDayCount: 5,
+    })
   })
 
   it('sums nothing when a device has never trained', () => {

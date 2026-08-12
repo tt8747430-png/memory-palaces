@@ -7,7 +7,6 @@ import { useProgressStoreApi } from '@/entities/progress'
 import { useNotificationStoreApi } from '@/entities/notification'
 import { setProfile } from '@/features/profile'
 import { resetEverything } from '@/features/data'
-import { forgetPhone } from './use-profile-form'
 
 export function useDeleteAccount(): () => Promise<void> {
   const profileStore = useProfileStoreApi()
@@ -27,7 +26,13 @@ export function useDeleteAccount(): () => Promise<void> {
       progressStore,
       notificationStore,
     })
-    await setProfile(profileStore, { name: '', username: '', email: '', bio: '', avatar: null })
-    forgetPhone()
+    await setProfile(profileStore, {
+      name: '',
+      username: '',
+      email: '',
+      bio: '',
+      phone: '',
+      avatar: null,
+    })
   }
 }

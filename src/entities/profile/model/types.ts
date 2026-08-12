@@ -5,6 +5,7 @@ export interface Profile extends Entity {
   username: string
   email: string
   bio: string
+  phone: string
   avatar: string | null
 }
 
@@ -13,6 +14,7 @@ export const DEFAULT_PROFILE = {
   username: '',
   email: '',
   bio: '',
+  phone: '',
   avatar: null as string | null,
 }
 
@@ -23,6 +25,7 @@ export interface MakeProfileInput {
   username?: string
   email?: string
   bio?: string
+  phone?: string
   avatar?: string | null
 }
 
@@ -35,12 +38,13 @@ export function makeProfile(input: MakeProfileInput): Profile {
     username: input.username ?? DEFAULT_PROFILE.username,
     email: input.email ?? DEFAULT_PROFILE.email,
     bio: input.bio ?? DEFAULT_PROFILE.bio,
+    phone: input.phone ?? DEFAULT_PROFILE.phone,
     avatar: input.avatar ?? DEFAULT_PROFILE.avatar,
   }
 }
 
 export type ProfileChanges = Partial<
-  Pick<Profile, 'name' | 'username' | 'email' | 'bio' | 'avatar'>
+  Pick<Profile, 'name' | 'username' | 'email' | 'bio' | 'phone' | 'avatar'>
 >
 
 export function updateProfile(

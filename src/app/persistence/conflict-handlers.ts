@@ -1,14 +1,18 @@
 import type { RxConflictHandler, WithDeleted } from 'rxdb'
+import { deepEqual } from 'rxdb/plugins/utils'
 import type { Card } from '@/entities/card'
 import type { Progress } from '@/entities/progress'
 import { type Clocked, mergeCard, mergeProgress, newest } from '@/shared/lib'
 
 /**
- * RxDB asks `isEqual` on every replicated document, so it compares the two things that decide a
- * conflict — the write clock and the tombstone — rather than deep-equalling whole documents.
+ * RxDB asks `isEqual` on every replicated document. The write clock and the tombstone decide almost
+ * every case and are the cheap answer, but they cannot be the whole answer: two devices that write
+ * the same document in the same millisecond produce different content under one clock, and calling
+ * those equal makes replication skip the difference entirely — no conflict is raised, so the merges
+ * below never run and one device's XP, streak or review schedule is dropped on the floor.
  */
 function sameWrite<T extends Clocked>(a: WithDeleted<T>, b: WithDeleted<T>): boolean {
-  return a.updatedAt === b.updatedAt && a._deleted === b._deleted
+  return a.updatedAt === b.updatedAt && a._deleted === b._deleted && deepEqual(a, b)
 }
 
 /**

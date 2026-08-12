@@ -2,14 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { selectEffectiveProfile, useProfileStore, useProfileStoreApi } from '@/entities/profile'
-import { useSessionStore } from '@/entities/session'
+import { selectAccountId, useSessionStore } from '@/entities/session'
 import { setProfile, setProfilePhoto } from '@/features/profile'
-import { fileToAvatar, isEmail, selectIsReady, useStorage } from '@/shared/lib'
+import { fileToSquareImage, isEmail, isInlineImage, selectIsReady, useStorage } from '@/shared/lib'
 
 const MIN_PHONE_DIGITS = 6
 export const BIO_MAX = 200
-
-const PHONE_KEY = 'mindscape:phone'
 
 export interface ProfileForm {
   name: string
@@ -37,17 +35,14 @@ export function useProfileForm(onSaved?: () => void): ProfileFormControl {
   const storage = useStorage()
   const profile = useProfileStore(selectEffectiveProfile)
   const isReady = useProfileStore(selectIsReady)
-  // Only an account owns a storage prefix; a guest's photo stays inside the document.
-  const userId = useSessionStore((state) =>
-    state.session?.kind === 'account' ? state.session.id : null,
-  )
+  const userId = useSessionStore(selectAccountId)
 
   const [value, setValue] = useState<ProfileForm>(() => ({
     name: profile.name,
     username: profile.username,
     email: profile.email,
     bio: profile.bio,
-    phone: localStorage.getItem(PHONE_KEY) ?? '',
+    phone: profile.phone,
     avatar: profile.avatar,
   }))
   const [saving, setSaving] = useState(false)
@@ -62,6 +57,7 @@ export function useProfileForm(onSaved?: () => void): ProfileFormControl {
       username: profile.username,
       email: profile.email,
       bio: profile.bio,
+      phone: profile.phone,
       avatar: profile.avatar,
     }))
   }, [isReady, profile])
@@ -80,18 +76,16 @@ export function useProfileForm(onSaved?: () => void): ProfileFormControl {
     if (!emailValid || !phoneValid || saving) return
     setSaving(true)
     // A freshly picked photo is still inline; setProfilePhoto saves it, then moves it to storage.
-    const pickedPhoto = value.avatar?.startsWith('data:') ? value.avatar : null
+    const pickedPhoto = isInlineImage(value.avatar) ? value.avatar : null
     await setProfile(store, {
       name: value.name.trim(),
       username: value.username.trim(),
       email: value.email.trim(),
       bio: value.bio.trim(),
+      phone: value.phone.trim(),
       ...(pickedPhoto ? {} : { avatar: value.avatar }),
     })
     if (pickedPhoto) await setProfilePhoto({ store, storage, userId }, pickedPhoto)
-    const phone = value.phone.trim()
-    if (phone) localStorage.setItem(PHONE_KEY, phone)
-    else localStorage.removeItem(PHONE_KEY)
     setSaving(false)
     toast.success(t('settings.profileEdit.saved'))
     onSaved?.()
@@ -107,14 +101,10 @@ export function useProfileForm(onSaved?: () => void): ProfileFormControl {
     save,
     setPhotoFrom: async (file) => {
       try {
-        set('avatar', await fileToAvatar(file))
+        set('avatar', await fileToSquareImage(file))
       } catch {
         toast.error(t('settings.profileEdit.photoError'))
       }
     },
   }
-}
-
-export function forgetPhone() {
-  localStorage.removeItem(PHONE_KEY)
 }

@@ -17,14 +17,25 @@ The `sb_secret_…` key is server-side only and must never reach the client bund
 
 ## 2. Migrations
 
-Four migrations under `supabase/migrations/` must be applied before sync will work:
+All six migrations under `supabase/migrations/` must be applied before sync will work. The last two
+are not optional extras — without them the push has no function to call, and half the collections
+never sync at all:
 
-| File                    | What it creates                                                                |
-| ----------------------- | ------------------------------------------------------------------------------ |
-| `…_phase9_tables.sql`   | Seven mirror tables + the `set_updated_at()` server-clock trigger              |
-| `…_phase9_rls.sql`      | Per-user RLS on all seven, plus the explicit Data API grant to `authenticated` |
-| `…_phase9_realtime.sql` | Adds the tables to the `supabase_realtime` publication                         |
-| `…_phase9_storage.sql`  | `deck-images` + `avatars` buckets and their per-prefix policies                |
+| File                          | What it creates                                                                |
+| ----------------------------- | ------------------------------------------------------------------------------ |
+| `…_phase9_tables.sql`         | Seven mirror tables + the `set_updated_at()` server-clock trigger              |
+| `…_phase9_rls.sql`            | Per-user RLS on all seven, plus the explicit Data API grant to `authenticated` |
+| `…_phase9_realtime.sql`       | Adds the tables to the `supabase_realtime` publication                         |
+| `…_phase9_storage.sql`        | `deck-images` + `avatars` buckets and their per-prefix policies                |
+| `…_phase9_document_ids.sql`   | Text document ids and a `(user_id, id)` primary key                            |
+| `…_phase9_push_documents.sql` | The `push_documents()` RPC every push goes through                             |
+
+`…_document_ids` is what lets the named singletons sync: `profile`, `progress` and `preferences` are
+not uuids, and every user's copy carries the same id, so under the original `id uuid` primary key
+they either failed to push or collided into one shared row. `…_push_documents` makes a push
+conditional on the document clock and returns the rows it refused — that refusal is what raises a
+conflict on the client, and a conflict is the only thing that runs the counter merges protecting XP,
+streaks and the review schedule.
 
 ```bash
 supabase link --project-ref <ref>

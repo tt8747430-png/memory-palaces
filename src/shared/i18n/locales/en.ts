@@ -972,16 +972,6 @@ export const en = {
       recoveryTitle: 'Set a new password',
       recoveryNote: 'You followed a recovery link, so you can set a new password straight away.',
     },
-    phoneScreen: {
-      title: 'Phone',
-      intro: 'Add a phone number for account recovery.',
-      label: 'Phone number',
-      placeholder: '+1 555 000 0000',
-      submit: 'Save phone number',
-      saved: 'Phone number saved on this device.',
-      invalid: 'Enter a valid phone number.',
-      note: 'Verification is not active yet. This is saved locally for now.',
-    },
     profileEdit: {
       title: 'Profile',
       name: 'Name',

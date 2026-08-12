@@ -9,6 +9,7 @@ import {
   type PersistedAuth,
   type StoragePort,
 } from '@/shared/api'
+import type { DataOwner } from '@/shared/lib'
 import { createDeckStore, type Deck, DeckStoreContext } from '@/entities/deck'
 import { createProfileStore, type Profile, ProfileStoreContext } from '@/entities/profile'
 import { SyncProvider, type SyncController } from './SyncProvider'
@@ -36,6 +37,17 @@ function controller() {
   }
 }
 
+/** Stands in for the device's durable record of whose data is here. */
+function owner(initial: string | null = null): DataOwner {
+  let current = initial
+  return {
+    read: () => current,
+    claim: (userId) => {
+      current = userId
+    },
+  }
+}
+
 /** The provider reconciles inline images too, so it needs the stores those images live in. */
 function wrap(children: ReactNode) {
   return (
@@ -53,14 +65,16 @@ function provider(options: {
   syncManager: SyncController | null
   auth: PersistedAuth | null
   resetLocal?: () => Promise<void>
+  dataOwner?: DataOwner
 }) {
-  const { syncManager, auth, resetLocal = noop } = options
+  const { syncManager, auth, resetLocal = noop, dataOwner = owner() } = options
   return wrap(
     <SyncProvider
       syncManager={syncManager}
       auth={auth}
       resetLocal={resetLocal}
       storage={storage}
+      dataOwner={dataOwner}
     />,
   )
 }
@@ -126,20 +140,44 @@ describe('SyncProvider', () => {
   it('pushes the outgoing account’s work before wiping for a different one', async () => {
     const syncManager = controller()
     const resetLocal = vi.fn().mockResolvedValue(undefined)
-    const { rerender } = render(provider({ syncManager, auth: account, resetLocal }))
+    const dataOwner = owner()
+    const { rerender } = render(provider({ syncManager, auth: account, resetLocal, dataOwner }))
 
-    rerender(provider({ syncManager, auth: otherAccount, resetLocal }))
+    rerender(provider({ syncManager, auth: otherAccount, resetLocal, dataOwner }))
 
     await waitFor(() => expect(resetLocal).toHaveBeenCalled())
     expect(syncManager.flush).toHaveBeenCalled()
   })
 
+  it('wipes when a different account signs in after a sign-out', async () => {
+    const syncManager = controller()
+    const resetLocal = vi.fn().mockResolvedValue(undefined)
+    // Signing out clears the session; the device still holds the first account's decks.
+    const dataOwner = owner('u1')
+
+    render(provider({ syncManager, auth: otherAccount, resetLocal, dataOwner }))
+
+    await waitFor(() => expect(resetLocal).toHaveBeenCalled())
+    expect(syncManager.start).not.toHaveBeenCalled()
+  })
+
+  it('keeps the data of the account that already owns this device', async () => {
+    const syncManager = controller()
+    const resetLocal = vi.fn().mockResolvedValue(undefined)
+
+    render(provider({ syncManager, auth: account, resetLocal, dataOwner: owner('u1') }))
+
+    await waitFor(() => expect(syncManager.start).toHaveBeenCalledWith('u1'))
+    expect(resetLocal).not.toHaveBeenCalled()
+  })
+
   it('keeps the local data when a guest signs up — that is the claim', async () => {
     const syncManager = controller()
     const resetLocal = vi.fn().mockResolvedValue(undefined)
-    const { rerender } = render(provider({ syncManager, auth: guest, resetLocal }))
+    const dataOwner = owner()
+    const { rerender } = render(provider({ syncManager, auth: guest, resetLocal, dataOwner }))
 
-    rerender(provider({ syncManager, auth: account, resetLocal }))
+    rerender(provider({ syncManager, auth: account, resetLocal, dataOwner }))
 
     await waitFor(() => expect(syncManager.start).toHaveBeenCalledWith('u1'))
     expect(resetLocal).not.toHaveBeenCalled()

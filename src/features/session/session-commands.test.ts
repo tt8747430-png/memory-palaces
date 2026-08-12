@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { InMemoryRepository } from '@/shared/api'
 import { createSessionStore, type Session } from '@/entities/session'
 import { LocalAuthGateway } from '@/app/persistence/local-auth-gateway'
@@ -70,8 +70,12 @@ describe('session commands', () => {
     expect(deps.sessionStore.getState().session).toBeNull()
   })
 
-  it('requestPasswordReset resolves', async () => {
+  it('requestPasswordReset hands the address to the gateway', async () => {
     const { gateway } = setup()
+    // Offline there is nothing to send from, so the gateway refuses; the command only forwards.
+    const send = vi.spyOn(gateway, 'requestPasswordReset').mockResolvedValue(undefined)
+
     await expect(requestPasswordReset(gateway, 'a@b.com')).resolves.toBeUndefined()
+    expect(send).toHaveBeenCalledWith('a@b.com')
   })
 })

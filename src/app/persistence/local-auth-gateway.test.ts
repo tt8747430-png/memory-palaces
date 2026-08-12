@@ -62,8 +62,9 @@ describe('LocalAuthGateway (mock auth)', () => {
     await expect(gateway().getCurrent()).resolves.toBeNull()
   })
 
-  it('requestPasswordReset resolves without throwing', async () => {
-    await expect(gateway().requestPasswordReset('a@b.com')).resolves.toBeUndefined()
+  it('refuses password operations rather than reporting a change that never happened', async () => {
+    await expect(gateway().requestPasswordReset('a@b.com')).rejects.toThrow()
+    await expect(gateway().updatePassword('sup3rSecret!')).rejects.toThrow()
   })
 
   it('notifies subscribers on sign-in and sign-out', async () => {

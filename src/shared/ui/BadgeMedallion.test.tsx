@@ -17,7 +17,7 @@ describe('BadgeMedallion', () => {
   it('renders the muted locked surface with a lock adornment', () => {
     const { container } = renderWithProviders(<BadgeMedallion icon={Trophy} locked showLock />)
     const medallion = container.firstElementChild
-    expect(medallion?.className).toContain('bg-primary/[0.06]')
+    expect(medallion?.className).toContain('bg-primary/6')
     expect(container.querySelectorAll('svg').length).toBeGreaterThan(1)
   })
 

@@ -10,13 +10,7 @@ export {
   poseAt,
   STACK_DEPTH,
 } from './motion'
-export {
-  coverSquare,
-  dataUrlToBlob,
-  fileToAvatar,
-  fileToSquareImage,
-  DECK_IMAGE_PX,
-} from './avatar'
+export { coverSquare, dataUrlToBlob, fileToSquareImage, DECK_IMAGE_PX } from './avatar'
 export { isInlineImage, uploadInlineImage } from './inline-image'
 export { downloadText } from './download'
 export { useStickyHeader, type StickyHeader } from './sticky-header/use-sticky-header'
@@ -95,6 +89,7 @@ export { newest, type Clocked } from './newest'
 export { mergeProgress, type MergeableProgress } from './merge-progress'
 export { mergeCard, type MergeableCard } from './merge-srs'
 export { resolveDataTransition, type DataTransition } from './data-transition'
+export { localDataOwner, type DataOwner } from './data-owner'
 export {
   isEmail,
   isLongEnoughPassword,

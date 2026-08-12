@@ -40,6 +40,22 @@ const preferencesMigrations = {
   1: (doc: Preferences) => ({ ...doc, selectToolbar: DEFAULT_SELECT_TOOLBAR }),
 }
 
+/** Where the phone number was kept back when it never left the device. */
+const LEGACY_PHONE_KEY = 'mindscape:phone'
+
+/**
+ * The phone number used to live in localStorage, so it was lost on reinstall and invisible on a
+ * second device. It is a profile field now: the migration lifts whatever was stored into the
+ * document that syncs, and drops the key behind it.
+ */
+const profileMigrations = {
+  1: (doc: Profile) => {
+    const phone = localStorage.getItem(LEGACY_PHONE_KEY) ?? ''
+    localStorage.removeItem(LEGACY_PHONE_KEY)
+    return { ...doc, phone }
+  },
+}
+
 export async function createAppDatabase<Internals, InstanceCreationOptions>(
   storage: RxStorage<Internals, InstanceCreationOptions>,
 ): Promise<AppCollections> {
@@ -63,6 +79,7 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
     },
     profiles: {
       schema: profileSchema,
+      migrationStrategies: profileMigrations,
       conflictHandler: lastWriteWins<Profile>(),
     },
     notifications: { schema: notificationSchema },

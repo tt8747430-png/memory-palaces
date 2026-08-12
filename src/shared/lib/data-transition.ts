@@ -1,22 +1,18 @@
-import type { PersistedAuth } from '@/shared/api'
-
-export type DataTransition = 'preserve' | 'reset' | 'none'
+export type DataTransition = 'keep' | 'reset'
 
 /**
- * What must happen to the on-device data when the identity changes.
+ * What must happen to the data already on this device when an account signs in.
  *
- * - A guest (or a fresh install) signing in **preserves**: everything studied so far is theirs, and
- *   replication pushes it into the new account.
- * - Switching to a *different* account **resets**: the previous account's decks must not leak into
- *   it, and the server has the truth for whoever just signed in.
- * - The same account, or signing out, changes nothing — signing out leaves the data where it is so
- *   coming back is instant.
+ * - Nobody owned it — a fresh install, or a guest who just signed up: **keep**. Everything studied
+ *   so far is theirs, and the first push claims it.
+ * - The same account signing back in: **keep**. The server has the same documents; replication
+ *   reconciles them.
+ * - A different account: **reset**. The decks on the device belong to someone else, and leaving
+ *   them would push one person's study into another's account.
+ *
+ * The owner is asked, not the previous session: signing out clears the session but leaves the data,
+ * so "who was here before" has to be remembered somewhere that survives it — see `DataOwner`.
  */
-export function resolveDataTransition(
-  previous: PersistedAuth | null,
-  next: PersistedAuth | null,
-): DataTransition {
-  if (!next || next.kind !== 'account') return 'none'
-  if (!previous || previous.kind === 'guest') return 'preserve'
-  return previous.id === next.id ? 'none' : 'reset'
+export function resolveDataTransition(ownerId: string | null, accountId: string): DataTransition {
+  return ownerId === null || ownerId === accountId ? 'keep' : 'reset'
 }

@@ -41,6 +41,14 @@ describe('lastWriteWins', () => {
     expect(handler.isEqual(a, { ...b, updatedAt: 't2' }, CTX)).toBe(false)
     expect(handler.isEqual(a, { ...b, _deleted: true }, CTX)).toBe(false)
   })
+
+  it('still sees a conflict when two devices wrote different content on the same clock', () => {
+    const local = doc({ id: 'd1', updatedAt: 't1', name: 'local', _deleted: false })
+    const server = doc({ id: 'd1', updatedAt: 't1', name: 'server', _deleted: false })
+
+    const handler = lastWriteWins<{ id: string; updatedAt: string; name: string }>()
+    expect(handler.isEqual(local, server, CTX)).toBe(false)
+  })
 })
 
 describe('mergeProgressConflict', () => {

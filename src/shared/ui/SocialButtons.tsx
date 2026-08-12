@@ -55,6 +55,9 @@ export function SocialButtons({
     if (onSelect) onSelect(provider)
     else toast(t('auth.socialSoon'))
   }
+  /** Dimmed while unavailable, and while the *other* provider's redirect is in flight. */
+  const isMuted = (provider: OAuthProvider) =>
+    Boolean(unavailableReason) || (pending !== null && pending !== provider)
 
   return (
     <div className="flex flex-col items-center gap-5">
@@ -72,7 +75,7 @@ export function SocialButtons({
           icon={GoogleMark}
           onClick={() => handle('google')}
           busy={pending === 'google'}
-          muted={Boolean(unavailableReason) || (pending !== null && pending !== 'google')}
+          muted={isMuted('google')}
           className="bg-card text-foreground"
         />
         <SocialButton
@@ -80,7 +83,7 @@ export function SocialButtons({
           icon={AppleMark}
           onClick={() => handle('apple')}
           busy={pending === 'apple'}
-          muted={Boolean(unavailableReason) || (pending !== null && pending !== 'apple')}
+          muted={isMuted('apple')}
           className="bg-foreground text-white"
         />
       </div>

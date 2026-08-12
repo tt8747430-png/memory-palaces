@@ -41,11 +41,9 @@ export function fileToSquareImage(file: File, size: number = AVATAR_PX): Promise
   })
 }
 
-export const fileToAvatar = (file: File): Promise<string> => fileToSquareImage(file, AVATAR_PX)
-
 /**
- * Turns the data URL `fileToAvatar` produced back into bytes, so the same processed image that is
- * shown locally is the one uploaded — no second, differently-cropped encode.
+ * Turns the data URL `fileToSquareImage` produced back into bytes, so the same processed image that
+ * is shown locally is the one uploaded — no second, differently-cropped encode.
  */
 export function dataUrlToBlob(dataUrl: string): Blob {
   const [header, encoded] = dataUrl.split(',')

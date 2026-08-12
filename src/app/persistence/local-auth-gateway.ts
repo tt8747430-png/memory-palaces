@@ -13,8 +13,9 @@ const STORAGE_KEY = 'mindscape:auth'
 
 /**
  * The offline identity. Credentials are never checked and never stored — it exists so the app runs
- * with no Supabase project configured (offline dev, tests). Social sign-in has nowhere to redirect,
- * so it throws rather than pretending to succeed.
+ * with no Supabase project configured (offline dev, tests). Anything that needs a provider — social
+ * sign-in, the redirect it lands on, and every password operation — throws rather than pretending to
+ * succeed: a "password changed" toast for a password that was never set is worse than an error.
  */
 export class LocalAuthGateway implements AuthGateway {
   private readonly listeners = new Set<(auth: PersistedAuth | null) => void>()
@@ -51,9 +52,13 @@ export class LocalAuthGateway implements AuthGateway {
     this.emit(null)
   }
 
-  async requestPasswordReset(_email: string): Promise<void> {}
+  async requestPasswordReset(_email: string): Promise<void> {
+    throw new AuthError('Resetting a password requires a cloud connection', 'offline_only')
+  }
 
-  async updatePassword(_password: string): Promise<void> {}
+  async updatePassword(_password: string): Promise<void> {
+    throw new AuthError('Changing a password requires a cloud connection', 'offline_only')
+  }
 
   async completeAuthRedirect(_code: string): Promise<void> {
     throw new AuthError('There is no cloud session to complete', 'offline_only')

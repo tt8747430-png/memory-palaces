@@ -1,3 +1,4 @@
+export { applyDataTransition, type ApplyDataTransitionDeps } from './apply-data-transition'
 export { signUpWithEmail } from './sign-up-with-email'
 export type { SignUpWithEmailInput, SessionCommandDeps } from './sign-up-with-email'
 export { signInWithEmail } from './sign-in-with-email'

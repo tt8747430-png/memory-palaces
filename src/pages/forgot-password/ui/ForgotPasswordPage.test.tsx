@@ -12,7 +12,8 @@ afterEach(cleanup)
 
 function renderForgot(props: Partial<Parameters<typeof ForgotPasswordPage>[0]> = {}) {
   const gateway = new LocalAuthGateway(() => 'id-1')
-  const spy = vi.spyOn(gateway, 'requestPasswordReset')
+  // Sending a reset link is a cloud-only operation; the offline gateway refuses it on purpose.
+  const spy = vi.spyOn(gateway, 'requestPasswordReset').mockResolvedValue(undefined)
   const onBack = vi.fn()
   const wrap = (children: ReactNode) => (
     <I18nextProvider i18n={i18n}>
@@ -54,6 +55,18 @@ describe('ForgotPasswordPage', () => {
     await waitFor(() => expect(screen.getByText(/check your inbox/i)).toBeInTheDocument())
     expect(spy).toHaveBeenCalledWith('ada@b.com')
     expect(screen.getByRole('button', { name: /resend/i })).toBeDisabled()
+  })
+
+  it('stays on the form when the gateway refuses — no inbox to check', async () => {
+    const user = userEvent.setup()
+    const { spy } = renderForgot()
+    spy.mockRejectedValueOnce(new Error('offline'))
+
+    await user.type(screen.getByLabelText(/email/i), 'ada@b.com')
+    await user.click(screen.getByRole('button', { name: /send reset link/i }))
+
+    await waitFor(() => expect(spy).toHaveBeenCalled())
+    expect(screen.queryByText(/check your inbox/i)).not.toBeInTheDocument()
   })
 
   it('routes back to sign in', async () => {

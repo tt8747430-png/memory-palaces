@@ -16,7 +16,7 @@ import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import type { Identifiable } from '@/shared/api'
 import { openRxdbCollection } from '@/shared/api/rxdb/database'
-import { applyDataTransition } from '@/features/auth'
+import { applyDataTransition } from '@/features/session'
 import { resolveDataTransition } from '@/shared/lib'
 import { SyncManager } from './sync-manager'
 
@@ -100,16 +100,15 @@ describe.skipIf(!URL || !KEY)('guest → account claim', () => {
       const managerA = SyncManager.fromSupabase(supabase, [
         { table: 'decks', collection: deviceA as unknown as RxCollection<Identifiable> },
       ])
-      const transition = resolveDataTransition(
-        { id: 'g1', kind: 'guest' },
-        { id: userId, kind: 'account' },
-      )
-      expect(transition).toBe('preserve')
+      // A guest owns nothing on the server, so the device has no owner to compare against.
+      const transition = resolveDataTransition(null, userId)
+      expect(transition).toBe('keep')
 
       await applyDataTransition({
         transition,
         userId,
         syncManager: managerA,
+        dataOwner: { read: () => null, claim: () => {} },
         resetLocal: () => Promise.reject(new Error('a claim must never wipe the guest’s data')),
       })
       await managerA.flush()
