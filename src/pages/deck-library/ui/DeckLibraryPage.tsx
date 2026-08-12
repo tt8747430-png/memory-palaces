@@ -198,7 +198,8 @@ export function DeckLibraryPage({
 
   return (
     <AppScreen
-      className="pb-nav"
+      bounce
+      className="pb-dial"
       header={
         selection.active ? (
           <SelectHeader selection={selection} />

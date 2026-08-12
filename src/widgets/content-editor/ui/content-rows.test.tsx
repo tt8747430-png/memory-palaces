@@ -74,6 +74,21 @@ describe('CardRow', () => {
     expect(onDelete).toHaveBeenCalledTimes(1)
   })
 
+  it('does not open or select the card when a menu action is chosen', async () => {
+    const user = userEvent.setup()
+    const onMove = vi.fn()
+    const onOpen = vi.fn()
+    const onRequestSelect = vi.fn()
+    renderWithProviders(<CardRow {...cardProps({ onMove, onOpen, onRequestSelect })} />)
+
+    await user.click(screen.getByRole('button', { name: 'Card actions' }))
+    await user.click(await screen.findByRole('menuitem', { name: 'Move' }))
+
+    expect(onMove).toHaveBeenCalledTimes(1)
+    expect(onOpen).not.toHaveBeenCalled()
+    expect(onRequestSelect).not.toHaveBeenCalled()
+  })
+
   it('toggles selection in select mode and shows the flag indicator', async () => {
     const user = userEvent.setup()
     const onToggleSelect = vi.fn()

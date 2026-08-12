@@ -17,6 +17,16 @@ const SCROLL_KEYBOARD = 'pb-keyboard'
 
 const FILL = 'min-h-full'
 
+/**
+ * A scrollport with nothing to scroll does not rubber-band — iOS bounces a box that has range, and
+ * a short library has none, so the whole screen reads as a dead slab under the finger. One pixel
+ * past the port is range: invisible, unreachable by a real gesture, and enough to keep the bounce.
+ *
+ * Only meaningful without a footer dock — with one the body is already `flex-1` and the dock rests
+ * at the end of the scroll, so the screen is never shorter than its port.
+ */
+const BOUNCE = 'min-h-[calc(100%+1px)]'
+
 const FOOTER_DOCK = 'sticky bottom-0 z-10 -mx-5 mt-auto shrink-0 [[data-keyboard]_&]:static'
 
 const SHELL = 'h-full'
@@ -28,6 +38,7 @@ export function AppScreen({
   header,
   footer,
   fill,
+  bounce,
 }: {
   children?: ReactNode
   className?: string
@@ -35,6 +46,8 @@ export function AppScreen({
   header?: ReactNode
   footer?: ReactNode
   fill?: boolean
+  /** Keep the scroll gesture alive even when the screen is shorter than the port. See `BOUNCE`. */
+  bounce?: boolean
 }) {
   const innerRef = useRef<HTMLElement | null>(null)
   const { ref: measureScroll, elevation } = useStickyHeader()
@@ -58,7 +71,9 @@ export function AppScreen({
     }
   }, [])
 
-  const content = fill ? <div className={footer ? 'flex-1' : FILL}>{children}</div> : children
+  // `flex-1` first: a dock has to be pushed to the end before anything asks for extra range.
+  const sizer = fill && footer ? 'flex-1' : bounce ? BOUNCE : fill ? FILL : null
+  const content = sizer ? <div className={sizer}>{children}</div> : children
 
   if (!header && !footer) {
     return (
