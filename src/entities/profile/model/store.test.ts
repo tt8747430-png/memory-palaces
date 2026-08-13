@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@/shared/api'
+import { withoutFields } from '@/shared/test/legacy-document'
 import { createProfileStore } from './store'
 import { makeProfile, type Profile } from './types'
 
@@ -17,6 +18,19 @@ describe('profile store — Dependency Injection', () => {
     const seed = makeProfile({ id: 'profile', createdAt: at(0), name: 'Ada' })
     const store = createProfileStore(new InMemoryRepository<Profile>([seed]))
     store.getState().start()
+    expect(store.getState().profile?.name).toBe('Ada')
+  })
+
+  it('completes a document written before a field existed', () => {
+    // What a device running an older build pushed, pulled back into this one: the schema migration
+    // never sees it, because replication writes at the current version.
+    const legacy = withoutFields(
+      makeProfile({ id: 'profile', createdAt: at(0), name: 'Ada' }),
+      'phone',
+    )
+    const store = createProfileStore(new InMemoryRepository<Profile>([legacy]))
+    store.getState().start()
+    expect(store.getState().profile?.phone).toBe('')
     expect(store.getState().profile?.name).toBe('Ada')
   })
 

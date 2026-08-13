@@ -79,11 +79,21 @@ export function createCollectionStore<Key extends string, T extends Identifiable
   )
 }
 
+/**
+ * `complete` fills fields the stored document predates. A schema migration only repairs what is
+ * already on this device; a document that arrives over replication was written by whichever build
+ * the other device runs and is stored at the current version untouched. So the entity — not the
+ * screen reading it — decides what a missing field means, once, on the way in.
+ */
 export function createSingletonStore<Key extends string, T extends Identifiable>(
   key: Key,
   repo: Repository<T>,
+  complete: (entity: T) => T = (entity) => entity,
 ): StoreApi<SingletonState<Key, T>> {
-  const mirror = mirrorSlice<T, T | null>(key, repo, null, (entities) => entities[0] ?? null)
+  const mirror = mirrorSlice<T, T | null>(key, repo, null, (entities) => {
+    const entity = entities[0]
+    return entity ? complete(entity) : null
+  })
   return createStore<SingletonState<Key, T>>(
     (set) => mirror(set as SetPartial) as unknown as SingletonState<Key, T>,
   )

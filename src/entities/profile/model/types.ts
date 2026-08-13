@@ -43,6 +43,16 @@ export function makeProfile(input: MakeProfileInput): Profile {
   }
 }
 
+/**
+ * A stored profile written before this version added a field carries the old shape: the RxDB
+ * migration only rewrites documents already on this device, and one pulled from an account that a
+ * second device last wrote is stored as it arrives. Fill the gaps, but keep `updatedAt` — that
+ * clock decides sync conflicts, and completing a document is not an edit.
+ */
+export function completeProfile(profile: Profile): Profile {
+  return { ...makeProfile(profile), updatedAt: profile.updatedAt }
+}
+
 export type ProfileChanges = Partial<
   Pick<Profile, 'name' | 'username' | 'email' | 'bio' | 'phone' | 'avatar'>
 >

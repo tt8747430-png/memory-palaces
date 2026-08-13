@@ -1,6 +1,7 @@
 export type { Profile, MakeProfileInput, ProfileChanges } from './model/types'
 export {
   makeProfile,
+  completeProfile,
   updateProfile,
   profileInitials,
   profileHandle,

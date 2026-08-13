@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { started } from '@/shared/test/started'
+import { withoutFields } from '@/shared/test/legacy-document'
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ReactNode } from 'react'
@@ -87,6 +88,12 @@ describe('SettingsProfilePage', () => {
     expect(await screen.findByDisplayValue('Ada')).toBeInTheDocument()
     expect(screen.getByDisplayValue('ada')).toBeInTheDocument()
     expect(screen.getByDisplayValue('ada@x.io')).toBeInTheDocument()
+  })
+
+  it('opens on a profile stored before the phone field existed', async () => {
+    renderPage({ profile: withoutFields(seeded, 'phone') })
+    expect(await screen.findByDisplayValue('Ada')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /save changes/i })).toBeEnabled()
   })
 
   it('disables save for an invalid email', async () => {

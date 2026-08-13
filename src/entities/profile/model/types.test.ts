@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import { withoutFields } from '@/shared/test/legacy-document'
 import {
+  completeProfile,
   DEFAULT_PROFILE,
   makeProfile,
   profileHandle,
@@ -29,6 +31,28 @@ describe('makeProfile', () => {
   it('keeps a provided username and defaults it to empty', () => {
     expect(makeProfile({ id: 'profile', createdAt: at(0) }).username).toBe('')
     expect(makeProfile({ id: 'profile', createdAt: at(0), username: 'ada' }).username).toBe('ada')
+  })
+})
+
+describe('completeProfile', () => {
+  it('fills a field the stored document predates', () => {
+    const stored = withoutFields(
+      makeProfile({ id: 'profile', createdAt: at(0), name: 'Ada', email: 'ada@x.io' }),
+      'phone',
+    )
+    expect(completeProfile(stored)).toEqual({
+      ...makeProfile({ id: 'profile', createdAt: at(0), name: 'Ada', email: 'ada@x.io' }),
+    })
+  })
+
+  it('leaves the clock alone — completing a document is not an edit', () => {
+    const edited = updateProfile(makeProfile({ id: 'profile', createdAt: at(0) }), {}, at(1000))
+    expect(completeProfile(withoutFields(edited, 'phone')).updatedAt).toBe(at(1000))
+  })
+
+  it('keeps a complete document as it is', () => {
+    const profile = makeProfile({ id: 'profile', createdAt: at(0), phone: '+1 555 000 0000' })
+    expect(completeProfile(profile)).toEqual(profile)
   })
 })
 

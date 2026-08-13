@@ -12,6 +12,7 @@ export type {
 } from './model/types'
 export {
   makePreferences,
+  completePreferences,
   updatePreferences,
   resolveStudyMode,
   DEFAULT_PREFERENCES,

@@ -152,6 +152,16 @@ export function makePreferences(input: MakePreferencesInput): Preferences {
   }
 }
 
+/**
+ * The profile story, for preferences: a document written before this version added a field keeps
+ * the old shape, because the RxDB migration only rewrites what is already on this device and a
+ * document pulled from another one is stored as it arrives. `updatedAt` survives — that clock
+ * decides sync conflicts, and completing a document is not an edit.
+ */
+export function completePreferences(preferences: Preferences): Preferences {
+  return { ...makePreferences(preferences), updatedAt: preferences.updatedAt }
+}
+
 export type PreferencesChanges = Partial<
   Pick<
     Preferences,
