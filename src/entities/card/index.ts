@@ -1,4 +1,4 @@
-export type { Card, MakeCardInput, CardChanges } from './model/types'
+export type { Card, MakeCardInput, CardChanges, FastOutcome } from './model/types'
 export { makeCard, moveCard, updateCard } from './model/types'
 export { createCardStore } from './model/store'
 export type { CardState, CardStore } from './model/store'
