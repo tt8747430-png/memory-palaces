@@ -1,5 +1,6 @@
 import { isDue, shuffle, srsStatus } from '@/shared/lib'
 import type { Card } from '@/entities/card'
+import type { LearningAlgorithm } from '@/entities/deck'
 
 export function shuffleFirstDue(
   cards: Card[],
@@ -54,4 +55,36 @@ export function studyFilterCounts(cards: Card[], now: number): StudyFilterCounts
 
 export function studyFiltersEqual(a: StudyFilter, b: StudyFilter): boolean {
   return a.kind === b.kind
+}
+
+export interface QueueOptions {
+  now: number
+  algorithm: LearningAlgorithm
+  shuffle: boolean
+  newCardsPerDay: number
+  maxCardsPerDay: number
+  random?: () => number
+}
+
+/**
+ * The one place a study queue is built. Fast review ignores schedules entirely — every card is on
+ * offer, which is the whole point of it — while spaced repetition takes what is due and tops up
+ * with new cards to the day's allowance. Both obey the day's ceiling, and neither ever sees a
+ * frozen card.
+ */
+export function buildStudyQueue(cards: Card[], options: QueueOptions): string[] {
+  const { now, algorithm, shuffle: shouldShuffle, random = Math.random } = options
+  const live = cards.filter((card) => !card.frozen)
+
+  const chosen =
+    algorithm === 'fast'
+      ? live
+      : [
+          ...live.filter((card) => srsStatus(card.srs) !== 'new' && isDue(card.srs, now)),
+          ...live.filter((card) => srsStatus(card.srs) === 'new').slice(0, options.newCardsPerDay),
+        ]
+
+  const capped = chosen.slice(0, options.maxCardsPerDay)
+  const ids = capped.map((card) => card.id)
+  return shouldShuffle ? shuffle(ids, random) : ids
 }
