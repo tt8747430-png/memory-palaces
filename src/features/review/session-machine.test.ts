@@ -10,16 +10,20 @@ import {
 } from './session-machine'
 
 function review(ids: string[]): ReviewState {
-  const state = initSession({ ids })
+  const state = initSession({ ids, mode: 'spaced' })
   if (state.status !== 'review') throw new Error('expected a review session')
   return state
 }
 
+const NO_BUCKETS = { notQuite: [], gotIt: [] }
+
 const done = (over: Partial<Omit<CompleteState, 'status'>> = {}): CompleteState => ({
   status: 'complete',
+  mode: 'spaced',
   graded: 1,
   total: 1,
   piles: { learning: 0, known: 1 },
+  buckets: NO_BUCKETS,
   history: [],
   ...over,
 })
@@ -28,10 +32,12 @@ describe('initSession', () => {
   it('builds a review session from a queue', () => {
     expect(review(['a', 'b', 'c'])).toEqual({
       status: 'review',
+      mode: 'spaced',
       queue: ['a', 'b', 'c'],
       total: 3,
       graded: 0,
       piles: { learning: 0, known: 0 },
+      buckets: NO_BUCKETS,
       flipped: false,
       history: [],
     })
@@ -90,12 +96,22 @@ describe('grade', () => {
     )
     expect(next).toEqual({
       status: 'review',
+      mode: 'spaced',
       queue: ['b'],
       total: 2,
       graded: 1,
       piles: { learning: 0, known: 1 },
+      buckets: NO_BUCKETS,
       flipped: false,
-      history: [{ queue: ['a', 'b'], graded: 0, piles: { learning: 0, known: 0 }, flipped: true }],
+      history: [
+        {
+          queue: ['a', 'b'],
+          graded: 0,
+          piles: { learning: 0, known: 0 },
+          buckets: NO_BUCKETS,
+          flipped: true,
+        },
+      ],
     })
     expect(currentId(next)).toBe('b')
   })
@@ -116,10 +132,20 @@ describe('grade', () => {
     const next = sessionReducer(review(['a']), { type: 'grade', grade: 'easy' })
     expect(next).toEqual({
       status: 'complete',
+      mode: 'spaced',
       graded: 1,
       total: 1,
       piles: { learning: 0, known: 1 },
-      history: [{ queue: ['a'], graded: 0, piles: { learning: 0, known: 0 }, flipped: false }],
+      buckets: NO_BUCKETS,
+      history: [
+        {
+          queue: ['a'],
+          graded: 0,
+          piles: { learning: 0, known: 0 },
+          buckets: NO_BUCKETS,
+          flipped: false,
+        },
+      ],
     })
   })
 
@@ -160,10 +186,12 @@ describe('undo', () => {
     const back = sessionReducer(graded, { type: 'undo' })
     expect(back).toEqual({
       status: 'review',
+      mode: 'spaced',
       queue: ['a', 'b'],
       total: 2,
       graded: 0,
       piles: { learning: 0, known: 0 },
+      buckets: NO_BUCKETS,
       flipped: true,
       history: [],
     })
@@ -224,5 +252,62 @@ describe('selectors', () => {
   it('currentId tracks the active card', () => {
     expect(currentId(review(['a', 'b']))).toBe('a')
     expect(currentId(done())).toBeUndefined()
+  })
+})
+
+describe('fast review', () => {
+  const start = () => initSession({ ids: ['a', 'b', 'c'], mode: 'fast' })
+
+  it('starts every card outside both buckets', () => {
+    const state = start()
+    expect(state.buckets).toEqual({ notQuite: [], gotIt: [] })
+  })
+
+  it('sends a Not quite card back into the queue', () => {
+    const state = sessionReducer(start(), { type: 'answer', outcome: 'notQuite' })
+    if (state.status !== 'review') throw new Error('expected review')
+    expect(state.queue).toContain('a')
+    expect(state.queue[0]).toBe('b')
+    expect(state.buckets.notQuite).toEqual(['a'])
+  })
+
+  it('retires a Got it card', () => {
+    const state = sessionReducer(start(), { type: 'answer', outcome: 'gotIt' })
+    if (state.status !== 'review') throw new Error('expected review')
+    expect(state.queue).not.toContain('a')
+    expect(state.buckets.gotIt).toEqual(['a'])
+  })
+
+  it('counts a card once however often it comes round', () => {
+    let state: SessionState = initSession({ ids: ['a'], mode: 'fast' })
+    state = sessionReducer(state, { type: 'answer', outcome: 'notQuite' })
+    state = sessionReducer(state, { type: 'answer', outcome: 'notQuite' })
+    if (state.status !== 'review') throw new Error('expected review')
+    expect(state.buckets.notQuite).toEqual(['a'])
+  })
+
+  it('moves a card out of Not quite when the learner finally gets it', () => {
+    let state: SessionState = initSession({ ids: ['a'], mode: 'fast' })
+    state = sessionReducer(state, { type: 'answer', outcome: 'notQuite' })
+    state = sessionReducer(state, { type: 'answer', outcome: 'gotIt' })
+    expect(state.status).toBe('complete')
+    expect(state.buckets).toEqual({ notQuite: [], gotIt: ['a'] })
+  })
+
+  it('completes only when every card has been got', () => {
+    let state: SessionState = initSession({ ids: ['a', 'b'], mode: 'fast' })
+    state = sessionReducer(state, { type: 'answer', outcome: 'gotIt' })
+    expect(state.status).toBe('review')
+    state = sessionReducer(state, { type: 'answer', outcome: 'gotIt' })
+    expect(state.status).toBe('complete')
+  })
+
+  it('undoes an answer, buckets and all', () => {
+    let state: SessionState = start()
+    state = sessionReducer(state, { type: 'answer', outcome: 'gotIt' })
+    state = sessionReducer(state, { type: 'undo' })
+    if (state.status !== 'review') throw new Error('expected review')
+    expect(state.queue).toEqual(['a', 'b', 'c'])
+    expect(state.buckets.gotIt).toEqual([])
   })
 })

@@ -114,14 +114,14 @@ export function FlashcardsPanel({
     shuffleFirstDue(applyStudyFilter(cardEntities, activeFilter, now), now, prefs.shuffle)
 
   const [state, dispatch] = useReducer(sessionReducer, undefined, () =>
-    initSession({ ids: buildIds({ kind: 'all' }) }),
+    initSession({ ids: buildIds({ kind: 'all' }), mode: 'spaced' }),
   )
 
   const undoTrail = useRef<UndoEntry[]>([])
 
   const rebuild = (activeFilter: StudyFilter) => {
     undoTrail.current = []
-    dispatch({ type: 'reset', state: initSession({ ids: buildIds(activeFilter) }) })
+    dispatch({ type: 'reset', state: initSession({ ids: buildIds(activeFilter), mode: 'spaced' }) })
   }
 
   const completed = state.status === 'complete'
