@@ -40,9 +40,9 @@ describe('SrsStatusChip', () => {
     expect(screen.getByText('Learning')).toBeInTheDocument()
   })
 
-  it('labels a long-interval, not-due card as Known', () => {
+  it('labels a long-interval, not-due card as Mastered', () => {
     renderChip(srs({ due: iso(NOW + 30 * DAY), interval: 30, reps: 6 }))
-    expect(screen.getByText('Known')).toBeInTheDocument()
+    expect(screen.getByText('Mastered')).toBeInTheDocument()
   })
 
   it('labels a short-interval, not-due card as Learning', () => {
