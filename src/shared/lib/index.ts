@@ -1,6 +1,20 @@
 export { cn } from './cn'
 export { clamp, clamp01, percentOf } from './number'
 export {
+  CARD_ALIGNMENT_IDS,
+  CARD_FONT_IDS,
+  CARD_STYLE_PRESET_IDS,
+  clampCardTextSize,
+  resolveCardStyle,
+  MAX_CARD_TEXT_SIZE,
+  MIN_CARD_TEXT_SIZE,
+  type CardAlignmentId,
+  type CardFontId,
+  type CardStyleInput,
+  type CardStylePresetId,
+  type CardStyleVars,
+} from './card-style'
+export {
   authEntrance,
   authRise,
   authStagger,

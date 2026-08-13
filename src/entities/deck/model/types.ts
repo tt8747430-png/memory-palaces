@@ -1,29 +1,37 @@
-import type { Entity } from '@/shared/lib'
+import {
+  CARD_ALIGNMENT_IDS,
+  CARD_FONT_IDS,
+  CARD_STYLE_PRESET_IDS,
+  type CardAlignmentId,
+  type CardFontId,
+  type CardStyleInput,
+  type CardStylePresetId,
+  type Entity,
+} from '@/shared/lib'
 
 export type StudyDirection = 'front' | 'back'
 
 export const LEARNING_ALGORITHMS = ['fast', 'spaced'] as const
 export type LearningAlgorithm = (typeof LEARNING_ALGORITHMS)[number]
 
-export const CARD_STYLE_PRESETS = ['plain', 'outlined', 'chalk', 'notebook', 'paper'] as const
-export type CardStylePreset = (typeof CARD_STYLE_PRESETS)[number]
+/**
+ * One list, not two: the shared resolver owns what a style may be, and the entity reuses it so a
+ * new preset can never exist in the renderer without being valid in a deck's settings.
+ */
+export const CARD_STYLE_PRESETS = CARD_STYLE_PRESET_IDS
+export type CardStylePreset = CardStylePresetId
 
-export const CARD_FONTS = ['default', 'serif', 'rounded', 'mono'] as const
-export type CardFont = (typeof CARD_FONTS)[number]
+export const CARD_FONTS = CARD_FONT_IDS
+export type CardFont = CardFontId
 
-export const CARD_ALIGNMENTS = ['left', 'center', 'right'] as const
-export type CardAlignment = (typeof CARD_ALIGNMENTS)[number]
+export const CARD_ALIGNMENTS = CARD_ALIGNMENT_IDS
+export type CardAlignment = CardAlignmentId
 
 export const TTS_SIDES = ['front', 'back', 'both'] as const
 export type TtsSide = (typeof TTS_SIDES)[number]
 
-export interface CardStyle {
-  preset: CardStylePreset
-  font: CardFont
-  /** Point size of the card's body text, 14–40. */
-  textSize: number
-  alignment: CardAlignment
-}
+/** The card's body text is 14–40pt; `clampCardTextSize` is the shared enforcement. */
+export type CardStyle = CardStyleInput
 
 export interface SpacedAdvanced {
   /** Minutes between the steps a new card walks before it graduates. */
