@@ -46,4 +46,49 @@ describe('ActionSheet', () => {
     await user.click(await screen.findByRole('button', { name: 'Rename' }))
     expect(onSelect).not.toHaveBeenCalled()
   })
+
+  it('keeps the title for screen readers when it is hidden', async () => {
+    renderWithProviders(
+      <ActionSheet
+        open
+        hideTitle
+        onOpenChange={() => {}}
+        title="Card actions"
+        actions={[{ id: 'edit', label: 'Edit', onSelect: () => {} }]}
+      />,
+    )
+    expect(await screen.findByText('Card actions')).toHaveClass('sr-only')
+  })
+
+  it('omits the cancel row when no label is given', async () => {
+    renderWithProviders(
+      <ActionSheet
+        open
+        onOpenChange={() => {}}
+        title="Card actions"
+        actions={[{ id: 'edit', label: 'Edit', onSelect: () => {} }]}
+      />,
+    )
+    expect(await screen.findByRole('button', { name: 'Edit' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Cancel' })).toBeNull()
+  })
+
+  it('marks the selected action for assistive tech', async () => {
+    renderWithProviders(
+      <ActionSheet
+        open
+        onOpenChange={() => {}}
+        title="Card font"
+        actions={[
+          { id: 'serif', label: 'Serif', selected: true, onSelect: () => {} },
+          { id: 'mono', label: 'Monospace', onSelect: () => {} },
+        ]}
+      />,
+    )
+    expect(await screen.findByRole('button', { name: 'Serif' })).toHaveAttribute(
+      'aria-current',
+      'true',
+    )
+    expect(screen.getByRole('button', { name: 'Monospace' })).not.toHaveAttribute('aria-current')
+  })
 })
