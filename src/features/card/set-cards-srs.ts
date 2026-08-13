@@ -1,23 +1,27 @@
-import { type CardStore, selectCards, updateCard } from '@/entities/card'
+import {
+  type Card,
+  type CardChanges,
+  type CardStore,
+  selectCards,
+  updateCard,
+} from '@/entities/card'
 import { type DeckStore, selectDecks } from '@/entities/deck'
-import { cardsInSubtree, markKnown, nowIso, type SrsState } from '@/shared/lib'
+import { cardsInSubtree, markKnown, nowIso } from '@/shared/lib'
 
-/** What a card's schedule becomes, given the schedule it has now. */
-type SrsPatch = (srs: SrsState | undefined, now: number) => SrsState | undefined
+/** What a card's learning state becomes, given the state it has now. */
+type ProgressPatch = (card: Card, now: number) => CardChanges
 
-async function patchCardsSrs(
+async function patchCardsProgress(
   store: CardStore,
   ids: ReadonlyArray<string>,
-  patch: SrsPatch,
+  patch: ProgressPatch,
   now: number = Date.now(),
 ): Promise<void> {
   const updatedAt = nowIso(now)
   const targets = new Set(ids)
   const cards = store.getState().cards.filter((card) => targets.has(card.id))
   await Promise.all(
-    cards.map((card) =>
-      store.getState().save(updateCard(card, { srs: patch(card.srs, now) }, updatedAt)),
-    ),
+    cards.map((card) => store.getState().save(updateCard(card, patch(card, now), updatedAt))),
   )
 }
 
@@ -35,15 +39,19 @@ export async function markCardsKnown(
   ids: ReadonlyArray<string>,
   now: number = Date.now(),
 ): Promise<void> {
-  await patchCardsSrs(store, ids, (srs, at) => markKnown(srs, at), now)
+  await patchCardsProgress(store, ids, (card, at) => ({ srs: markKnown(card.srs, at) }), now)
 }
 
+/**
+ * Reset progress has to mean the same thing under both algorithms, so it drops the fast-review
+ * bucket alongside the schedule — otherwise a reset deck still reports cards as "Got it".
+ */
 export async function resetCardsSrs(
   store: CardStore,
   ids: ReadonlyArray<string>,
   now: number = Date.now(),
 ): Promise<void> {
-  await patchCardsSrs(store, ids, () => undefined, now)
+  await patchCardsProgress(store, ids, () => ({ srs: undefined, fastReview: undefined }), now)
 }
 
 export async function resetDeckSrs(
