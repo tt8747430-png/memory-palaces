@@ -94,6 +94,8 @@ describe('mergeCardConflict', () => {
       back: 'B',
       flagged: false,
       memorized: false,
+      frozen: false,
+      reversed: false,
       order: 0,
       _deleted: false,
       ...over,

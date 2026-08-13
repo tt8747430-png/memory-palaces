@@ -11,6 +11,8 @@ const card = (over: Partial<Card>): Card => ({
   back: 'B',
   flagged: false,
   memorized: false,
+  frozen: false,
+  reversed: false,
   order: 0,
   ...over,
 })

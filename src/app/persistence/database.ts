@@ -40,6 +40,20 @@ const preferencesMigrations = {
   1: (doc: Preferences) => ({ ...doc, selectToolbar: DEFAULT_SELECT_TOOLBAR }),
 }
 
+/**
+ * A deck written before this version simply lacks the new settings keys, and `resolveDeckSettings`
+ * already answers a missing key with the default — so there is nothing to rewrite. The version bump
+ * exists because the schema's shape changed, not because the documents did.
+ */
+export const deckMigrations = {
+  1: (doc: Deck) => doc,
+}
+
+/** Frozen and reversed are required, so every card that predates them is given the quiet answer. */
+export const cardMigrations = {
+  1: (doc: Card) => ({ ...doc, frozen: doc.frozen ?? false, reversed: doc.reversed ?? false }),
+}
+
 /** Where the phone number was kept back when it never left the device. */
 const LEGACY_PHONE_KEY = 'mindscape:phone'
 
@@ -64,8 +78,16 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
   // not the replication — so they are declared once here. `notifications` is device-local and
   // deliberately keeps RxDB's default.
   const collections = await database.addCollections({
-    decks: { schema: deckSchema, conflictHandler: lastWriteWins<Deck>() },
-    cards: { schema: cardSchema, conflictHandler: mergeCardConflict },
+    decks: {
+      schema: deckSchema,
+      migrationStrategies: deckMigrations,
+      conflictHandler: lastWriteWins<Deck>(),
+    },
+    cards: {
+      schema: cardSchema,
+      migrationStrategies: cardMigrations,
+      conflictHandler: mergeCardConflict,
+    },
     folders: { schema: folderSchema, conflictHandler: lastWriteWins<Folder>() },
     questions: {
       schema: questionSchema,
