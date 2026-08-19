@@ -36,7 +36,7 @@ export function QuestionRow({
   return (
     <ContentRow
       {...frame}
-      menuActions={menuActions}
+      overflow={{ kind: 'menu', actions: menuActions }}
       swipeHandlers={{
         duplicate: { onAction: onDuplicate },
         delete: { onAction: onDelete },

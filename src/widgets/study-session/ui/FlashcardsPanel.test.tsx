@@ -250,3 +250,12 @@ describe('FlashcardsPanel progress header', () => {
     )
   })
 })
+
+describe('FlashcardsPanel session header', () => {
+  it('opens the options sheet from the header', async () => {
+    renderPanel([studyCard('a')])
+    const headerOptions = await screen.findAllByRole('button', { name: 'Study options' })
+    fireEvent.click(headerOptions[0]!)
+    expect(await screen.findByText('This card')).toBeInTheDocument()
+  })
+})

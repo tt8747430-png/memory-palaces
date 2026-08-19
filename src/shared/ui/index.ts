@@ -66,6 +66,8 @@ export { Skeleton } from './Skeleton'
 export type { SkeletonProps } from './Skeleton'
 export { SettingsSection } from './SettingsSection'
 export type { SettingsSectionProps } from './SettingsSection'
+export { StepperRow } from './StepperRow'
+export type { StepperRowProps } from './StepperRow'
 export { SettingsRow } from './SettingsRow'
 export type { SettingsRowProps } from './SettingsRow'
 export { StatTile } from './StatTile'
@@ -99,7 +101,11 @@ export type { IconButtonProps, IconButtonVariant, IconButtonSize } from './primi
 export { GradeButtons } from './GradeButtons'
 export type { GradeButtonsProps } from './GradeButtons'
 export { SrsStatusChip } from './SrsStatusChip'
-export { StudyOverviewCard, type StudyOverviewCardProps } from './StudyOverviewCard'
+export {
+  StudyOverviewCard,
+  type OverviewStat,
+  type StudyOverviewCardProps,
+} from './StudyOverviewCard'
 export { CardMaturityOverview, type CardMaturityOverviewProps } from './CardMaturityOverview'
 export { Sheet } from './Sheet'
 export type { SheetProps } from './Sheet'

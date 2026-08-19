@@ -130,7 +130,10 @@ export function DeckAdvancedPage({ deckId, onBack }: DeckAdvancedPageProps) {
         confirmLabel={t('deckSettings.appearanceSave')}
         onSubmit={(value) => {
           const easyBonus = Number.parseFloat(value)
-          if (!Number.isFinite(easyBonus) || easyBonus <= 0) return
+          if (!Number.isFinite(easyBonus) || easyBonus <= 0) {
+            toast.error(t('algorithm.invalidNumber'))
+            return
+          }
           advance({ easyBonus })
         }}
       />
@@ -144,7 +147,10 @@ export function DeckAdvancedPage({ deckId, onBack }: DeckAdvancedPageProps) {
         confirmLabel={t('deckSettings.appearanceSave')}
         onSubmit={(value) => {
           const learningSteps = parseLearningSteps(value)
-          if (learningSteps.length === 0) return
+          if (learningSteps.length === 0) {
+            toast.error(t('algorithm.invalidSteps'))
+            return
+          }
           advance({ learningSteps })
         }}
       />

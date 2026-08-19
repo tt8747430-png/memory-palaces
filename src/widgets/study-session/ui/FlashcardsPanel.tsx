@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { AnimatePresence } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-import { Check, ChevronLeft } from 'lucide-react'
+import { Check, MoreVertical } from 'lucide-react'
 import type { FastOutcome } from '@/entities/card'
 import type { LearningAlgorithm } from '@/entities/deck'
 import type { StudyMode } from '@/entities/preferences'
@@ -23,7 +23,7 @@ import {
   isGradeAction,
   type SwipeDirection,
 } from '@/shared/config/flashcard-swipe'
-import { SessionHeader } from '@/shared/ui'
+import { IconButton, SessionHeader } from '@/shared/ui'
 import { CardDraftSheet } from '@/widgets/content-editor'
 import { studyFaces } from '../model/study-faces'
 import { useStudySettings } from '../model/use-study-settings'
@@ -279,7 +279,17 @@ export function FlashcardsPanel({
         progress={{ done: state.graded, total: state.total }}
         backLabel={t('study.goBack')}
         onBack={onBack}
-        backIcon={<ChevronLeft className="size-5" aria-hidden />}
+        action={
+          card ? (
+            <IconButton
+              variant="glass"
+              aria-label={t('study.options')}
+              onClick={() => setGearOpen(true)}
+            >
+              <MoreVertical className="size-5" aria-hidden />
+            </IconButton>
+          ) : undefined
+        }
       />
 
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-5 py-3">

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Minus, Plus, Speech, Volume2 } from 'lucide-react'
+import { Speech, Volume2 } from 'lucide-react'
 import {
   type DeckSettings,
   TTS_SIDES,
@@ -12,11 +12,11 @@ import { clamp, speak, speechAvailable } from '@/shared/lib'
 import {
   AppScreen,
   Empty,
-  IconButton,
   ScreenHeader,
   SegmentedControl,
   SettingsRow,
   SettingsSection,
+  StepperRow,
 } from '@/shared/ui'
 
 export interface DeckTtsPageProps {
@@ -103,30 +103,16 @@ export function DeckTtsPage({ deckId, onBack }: DeckTtsPageProps) {
             </section>
 
             <SettingsSection>
-              <div className="flex items-center gap-3 px-4 py-3">
-                <span className="min-w-0 flex-1 text-(length:--p-text-sub) font-semibold text-heading">
-                  {t('tts.rate')}
-                </span>
-                <IconButton
-                  variant="glass"
-                  aria-label={t('cardStyle.decrease')}
-                  disabled={rate <= MIN_RATE}
-                  onClick={() => stepRate(-RATE_STEP)}
-                >
-                  <Minus className="size-4.5" aria-hidden />
-                </IconButton>
-                <span className="w-12 text-center text-(length:--p-text-sub) font-semibold tabular-nums text-heading">
-                  {rate.toFixed(2)}×
-                </span>
-                <IconButton
-                  variant="glass"
-                  aria-label={t('cardStyle.increase')}
-                  disabled={rate >= MAX_RATE}
-                  onClick={() => stepRate(RATE_STEP)}
-                >
-                  <Plus className="size-4.5" aria-hidden />
-                </IconButton>
-              </div>
+              <StepperRow
+                label={t('tts.rate')}
+                value={`${rate.toFixed(2)}×`}
+                decreaseLabel={t('tts.slower')}
+                increaseLabel={t('tts.faster')}
+                canDecrease={rate > MIN_RATE}
+                canIncrease={rate < MAX_RATE}
+                onDecrease={() => stepRate(-RATE_STEP)}
+                onIncrease={() => stepRate(RATE_STEP)}
+              />
               <SettingsRow
                 kind="action"
                 icon={<Volume2 />}

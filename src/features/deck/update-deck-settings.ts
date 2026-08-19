@@ -1,5 +1,5 @@
 import { type Deck, type DeckSettings, type DeckStore } from '@/entities/deck'
-import { editDeck } from './deck-commands'
+import { editDeck, requireDeck } from './deck-commands'
 
 /**
  * Patch a deck's settings without disturbing the rest of them. Every settings surface writes
@@ -11,7 +11,6 @@ export async function updateDeckSettings(
   deckId: string,
   patch: Partial<DeckSettings>,
 ): Promise<Deck> {
-  const current = store.getState().decks.find((deck) => deck.id === deckId)
-  if (!current) throw new Error(`Deck not found: ${deckId}`)
+  const current = requireDeck(store, deckId)
   return editDeck(store, deckId, { settings: { ...current.settings, ...patch } })
 }

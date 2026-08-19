@@ -1,7 +1,7 @@
-import type { Entity, SrsState } from '@/shared/lib'
+import type { Entity, FastOutcome, SrsState } from '@/shared/lib'
 
 /** How a learner answered a card under Fast review. Absent means they have not seen it yet. */
-export type FastOutcome = 'notQuite' | 'gotIt'
+export type { FastOutcome }
 
 export interface Card extends Entity {
   deckId: string

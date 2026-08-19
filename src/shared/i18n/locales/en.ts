@@ -182,6 +182,8 @@ export const en = {
     easyBonus: 'Easy bonus',
     maximumInterval: 'Maximum interval (days)',
     leechThreshold: 'Leech threshold (lapses)',
+    invalidNumber: 'That needs to be a number of 0 or more',
+    invalidSteps: 'Give one or more step lengths in minutes, separated by commas',
     resetDefaults: 'Reset to defaults',
     resetDefaultsDone: 'Advanced settings reset',
     keepsSchedules: 'Switching keeps every schedule — you can change back at any time.',
@@ -255,7 +257,6 @@ export const en = {
   fastReview: {
     notQuite: 'Not quite',
     gotIt: 'Got it',
-    notStudied: 'Not studied',
     cardsToStudy_one: 'card to study',
     cardsToStudy_other: 'cards to study',
   },
@@ -267,6 +268,8 @@ export const en = {
     sideBack: 'Back only',
     sideBoth: 'Both sides',
     rate: 'Speech rate',
+    slower: 'Slower speech',
+    faster: 'Faster speech',
     test: 'Test voice',
     testPhrase: 'This is how your cards will sound.',
     unsupported: 'This device has no speech voices',
@@ -315,6 +318,7 @@ export const en = {
   },
   srs: {
     new: 'New',
+    notStudied: 'Not studied',
     due: 'Due',
     learning: 'Learning',
     known: 'Mastered',

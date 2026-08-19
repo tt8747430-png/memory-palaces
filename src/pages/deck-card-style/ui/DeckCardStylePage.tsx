@@ -1,16 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import {
-  AlignCenter,
-  AlignLeft,
-  AlignRight,
-  Minus,
-  Plus,
-  RotateCcw,
-  Type,
-  Vibrate,
-} from 'lucide-react'
+import { AlignCenter, AlignLeft, AlignRight, RotateCcw, Type, Vibrate } from 'lucide-react'
 import {
   CARD_FONTS,
   CARD_ALIGNMENTS,
@@ -36,6 +27,7 @@ import {
   SegmentedControl,
   SettingsRow,
   SettingsSection,
+  StepperRow,
 } from '@/shared/ui'
 import { PresetStrip } from './PresetStrip'
 import { StylePreview } from './StylePreview'
@@ -136,28 +128,14 @@ export function DeckCardStylePage({ deckId, onBack }: DeckCardStylePageProps) {
             value={t(`cardStyle.fontName.${style.font}` as never)}
             onClick={() => setFontOpen(true)}
           />
-          <div className="flex items-center gap-3 px-4 py-3">
-            <span className="min-w-0 flex-1 text-(length:--p-text-sub) font-semibold text-heading">
-              {t('cardStyle.textSize')}
-            </span>
-            <IconButton
-              variant="glass"
-              aria-label={t('cardStyle.decrease')}
-              onClick={() => step(-SIZE_STEP)}
-            >
-              <Minus className="size-4.5" aria-hidden />
-            </IconButton>
-            <span className="w-8 text-center text-(length:--p-text-sub) font-semibold tabular-nums text-heading">
-              {style.textSize}
-            </span>
-            <IconButton
-              variant="glass"
-              aria-label={t('cardStyle.increase')}
-              onClick={() => step(SIZE_STEP)}
-            >
-              <Plus className="size-4.5" aria-hidden />
-            </IconButton>
-          </div>
+          <StepperRow
+            label={t('cardStyle.textSize')}
+            value={String(style.textSize)}
+            decreaseLabel={t('cardStyle.decrease')}
+            increaseLabel={t('cardStyle.increase')}
+            onDecrease={() => step(-SIZE_STEP)}
+            onIncrease={() => step(SIZE_STEP)}
+          />
         </SettingsSection>
 
         <section className="flex flex-col gap-2">

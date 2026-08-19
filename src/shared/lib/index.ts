@@ -1,4 +1,5 @@
 export { cn } from './cn'
+export { FAST_OUTCOMES, type FastOutcome } from './fast-outcome'
 export { clamp, clamp01, percentOf } from './number'
 export {
   CARD_ALIGNMENT_IDS,

@@ -29,12 +29,12 @@ Anything not **Works** carries what phase 2 owes it.
 
 ## Algorithm settings (`pages/deck-algorithm`)
 
-| Control           | Status    | Notes                                                                   |
-| ----------------- | --------- | ----------------------------------------------------------------------- |
-| Algorithm picker  | **Works** | Writes `settings.algorithm`; inherited by subdecks.                     |
-| New cards per day | **Works** | Caps how many never-studied cards enter a queue, under both algorithms. |
-| Max cards per day | **Works** | Caps every queue, both algorithms; also caps the deck-detail count.     |
-| Shuffle cards     | **Works** | Shuffles the built queue.                                               |
+| Control           | Status    | Notes                                                                                                                                         |
+| ----------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Algorithm picker  | **Works** | Writes `settings.algorithm`; inherited by subdecks.                                                                                           |
+| New cards per day | **Works** | Caps never-studied cards entering a **spaced** queue. Fast review has no such row and no such cap — its count and its queue are the same set. |
+| Max cards per day | **Works** | Caps every queue under both algorithms, and the fast deck-detail count. The spaced count is what is due, which the ceiling does not truncate. |
+| Shuffle cards     | **Works** | Shuffles the built queue.                                                                                                                     |
 
 Under Fast review only Shuffle is shown — the daily limits and Advanced belong to the scheduler.
 
@@ -84,16 +84,16 @@ Phase 2: have `speak()` take the deck's `tts` and honour side and rate.
 
 ## Card actions sheet (`widgets/content-editor`)
 
-| Action            | Status      | Notes                                                                             |
-| ----------------- | ----------- | --------------------------------------------------------------------------------- |
-| Select            | **Works**   | Enters multi-select on that card.                                                 |
-| Edit              | **Works**   | Opens the card editor.                                                            |
-| Freeze/Unfreeze   | **Works**   | Excluded from both queues and from both deck-detail study counts.                 |
-| Move              | **Works**   | Existing move flow.                                                               |
-| Reverse/Unreverse | **Works**   | The session asks a reversed card back-first, composing with the deck's direction. |
-| Duplicate         | **Works**   | Existing command.                                                                 |
-| Learning history  | **UI only** | There is no review log to draw. The sheet says so.                                |
-| Delete            | **Works**   | Confirms first.                                                                   |
+| Action            | Status      | Notes                                                                              |
+| ----------------- | ----------- | ---------------------------------------------------------------------------------- |
+| Select            | **Works**   | Enters multi-select on that card.                                                  |
+| Edit              | **Works**   | Opens the card editor.                                                             |
+| Freeze/Unfreeze   | **Works**   | Excluded from both queues and from both deck-detail study counts.                  |
+| Move              | **Works**   | Existing move flow.                                                                |
+| Reverse/Unreverse | **Works**   | The session asks a reversed card back → front, whatever the deck's direction says. |
+| Duplicate         | **Works**   | Existing command.                                                                  |
+| Learning history  | **UI only** | There is no review log to draw. The sheet says so.                                 |
+| Delete            | **Works**   | Confirms first.                                                                    |
 
 Phase 2 owes Learning history a review log — no table records reviews today.
 
@@ -115,13 +115,16 @@ caught-up state is skipped rather than shown with a zero.
 
 | Element             | Status    | Notes                                                                     |
 | ------------------- | --------- | ------------------------------------------------------------------------- |
-| Progress header     | **Works** | `done/total` pill over a fill; honours reduced motion.                    |
+| Session header      | **Works** | `✕ · done/total · ⋮` over a fill; honours reduced motion.                 |
 | Fast-review footer  | **Works** | Not quite / Got it with live tallies.                                     |
 | Re-insertion rule   | **Works** | "Not quite" returns the card four places on, and keeps returning it.      |
 | Bucket persistence  | **Works** | Each answer writes `card.fastReview`; deck detail reads it back.          |
 | Grade footer        | **Works** | Unchanged under Spaced repetition.                                        |
 | Card style on cards | **Works** | Only the card's material and words follow the style; chrome keeps tokens. |
 | Due filter          | **Works** | Hidden under Fast review, where nothing is scheduled.                     |
+
+Frozen cards are held out of Flashcards **and** Match. Quiz runs on Questions, which have no frozen
+state of their own.
 
 ## The honest summary
 

@@ -39,7 +39,7 @@ export function CardRow({
   return (
     <ContentRow
       {...frame}
-      onOpenActions={onOpenActions}
+      overflow={{ kind: 'sheet', onOpen: onOpenActions }}
       swipeHandlers={{
         move: { onAction: onMove },
         flag: { onAction: onToggleFlag, label: flagLabel },

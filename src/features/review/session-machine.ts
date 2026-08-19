@@ -89,6 +89,20 @@ function withId(ids: string[], id: string, present: boolean): string[] {
   return present ? [...without, id] : without
 }
 
+/** Every route out of a session ends here, so a new field can only be forgotten once. */
+function complete(state: ReviewState, over: Partial<Omit<CompleteState, 'status'>>): CompleteState {
+  return {
+    status: 'complete',
+    mode: state.mode,
+    graded: state.graded,
+    total: state.total,
+    piles: state.piles,
+    buckets: state.buckets,
+    history: state.history,
+    ...over,
+  }
+}
+
 function snapshot(state: ReviewState): Snapshot {
   return {
     queue: state.queue,
@@ -130,17 +144,7 @@ export function sessionReducer(state: SessionState, action: SessionAction): Sess
       }
       const graded = requeue ? state.graded : state.graded + 1
       const queue = requeue ? [...rest, current] : rest
-      if (queue.length === 0) {
-        return {
-          status: 'complete',
-          mode: state.mode,
-          graded,
-          total: state.total,
-          piles,
-          buckets: state.buckets,
-          history,
-        }
-      }
+      if (queue.length === 0) return complete(state, { graded, piles, history })
       return { ...state, queue, graded, piles, flipped: false, history }
     }
 
@@ -157,17 +161,7 @@ export function sessionReducer(state: SessionState, action: SessionAction): Sess
       }
       const queue = gotIt ? rest : reinsertAhead(rest, current)
       const graded = gotIt ? state.graded + 1 : state.graded
-      if (queue.length === 0) {
-        return {
-          status: 'complete',
-          mode: state.mode,
-          graded,
-          total: state.total,
-          piles: state.piles,
-          buckets,
-          history,
-        }
-      }
+      if (queue.length === 0) return complete(state, { graded, buckets, history })
       return { ...state, queue, graded, buckets, flipped: false, history }
     }
 
@@ -198,20 +192,8 @@ export function sessionReducer(state: SessionState, action: SessionAction): Sess
       }
     }
 
-    case 'finish': {
-      if (state.status === 'review') {
-        return {
-          status: 'complete',
-          mode: state.mode,
-          graded: state.graded,
-          total: state.total,
-          piles: state.piles,
-          buckets: state.buckets,
-          history: state.history,
-        }
-      }
-      return state
-    }
+    case 'finish':
+      return state.status === 'review' ? complete(state, {}) : state
 
     case 'reset':
       return action.state

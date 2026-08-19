@@ -25,11 +25,14 @@ export function MatchPage({ scope, onBack }: MatchPageProps) {
 
   const cards = useMemo<MatchCard[]>(
     () =>
-      cardsInSubtree(decks, allCards, scope.deckId).map((card) => ({
-        id: card.id,
-        front: card.front,
-        back: card.back,
-      })),
+      cardsInSubtree(decks, allCards, scope.deckId)
+        // A frozen card is held out of every study queue, Match included.
+        .filter((card) => !card.frozen)
+        .map((card) => ({
+          id: card.id,
+          front: card.front,
+          back: card.back,
+        })),
     [decks, allCards, scope.deckId],
   )
 

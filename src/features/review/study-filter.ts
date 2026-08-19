@@ -67,10 +67,13 @@ function withNewCardLimit(cards: Card[], newCardsPerDay: number): Card[] {
 }
 
 /**
- * The one place a study queue is built. Fast review ignores schedules entirely — every card is on
- * offer, which is the whole point of it — while spaced repetition takes what is due and tops up
- * with new cards to the day's allowance. Both obey the day's new-card allowance and the day's
- * ceiling, and neither ever sees a frozen card.
+ * The one place a study queue is built. Fast review ignores schedules entirely — every unfrozen
+ * card is on offer, capped only by the day's ceiling, which is the whole point of it and what the
+ * deck screen's count promises. Spaced repetition takes what is due and tops up with new cards to
+ * the day's allowance. Neither ever sees a frozen card.
+ *
+ * The new-card allowance is a spaced-repetition idea and belongs to it alone: fast review has no
+ * row for it, and applying it here would make the deck screen advertise a queue it cannot serve.
  *
  * When spaced repetition has nothing due, the queue falls back to every live card rather than
  * coming back empty: that fallback is what "Study ahead" on a caught-up deck rides on.
@@ -81,7 +84,7 @@ export function buildStudyQueue(cards: Card[], options: QueueOptions): string[] 
 
   let chosen: Card[]
   if (algorithm === 'fast') {
-    chosen = withNewCardLimit(live, options.newCardsPerDay)
+    chosen = live
   } else {
     const due = [
       ...live.filter((card) => srsStatus(card.srs) !== 'new' && isDue(card.srs, now)),

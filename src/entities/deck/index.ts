@@ -10,6 +10,7 @@ export type {
   CardFont,
   CardAlignment,
   TtsSide,
+  TtsSettings,
   SpacedAdvanced,
 } from './model/types'
 export {

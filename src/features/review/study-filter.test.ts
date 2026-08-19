@@ -127,20 +127,11 @@ describe('buildStudyQueue', () => {
     expect(buildStudyQueue(cards, { ...options, algorithm: 'fast' })).toEqual(['f', 'a'])
   })
 
-  it('limits new cards under fast review too', () => {
+  it('ignores the new-card allowance under fast review — the count must match the queue', () => {
     const cards = Array.from({ length: 9 }, (_, i) => card(`n${i}`))
     expect(
       buildStudyQueue(cards, { ...options, algorithm: 'fast', newCardsPerDay: 3 }),
-    ).toHaveLength(3)
-  })
-
-  it('keeps studied cards under fast review whatever the new-card allowance', () => {
-    const studied = card('s', srs({ due: new Date(NOW + 90 * DAY).toISOString(), reps: 4 }))
-    const cards = [studied, card('n1'), card('n2')]
-    expect(buildStudyQueue(cards, { ...options, algorithm: 'fast', newCardsPerDay: 1 })).toEqual([
-      's',
-      'n1',
-    ])
+    ).toHaveLength(9)
   })
 
   it('falls back to every live card when nothing is due — this is Study ahead', () => {

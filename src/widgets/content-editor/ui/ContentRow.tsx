@@ -35,15 +35,17 @@ export interface RowFrameProps {
   onOpen?: () => void
 }
 
+/**
+ * What the row's overflow control does. Cards open a full sheet of actions, questions keep the
+ * flyout — one or the other, never a pair of optional props that could both arrive.
+ */
+export type RowOverflow =
+  | { kind: 'menu'; actions: SheetAction[] }
+  | { kind: 'sheet'; onOpen: () => void }
+
 export interface ContentRowProps extends RowFrameProps {
   swipeHandlers: SwipeActionHandlers
-  /** The flyout's actions. Omit when `onOpenActions` opens a sheet instead. */
-  menuActions?: SheetAction[]
-  /**
-   * Given, the row's overflow control opens this instead of the flyout — cards get a full sheet of
-   * actions, questions keep the menu.
-   */
-  onOpenActions?: () => void
+  overflow: RowOverflow
   children: ReactNode
 }
 
@@ -55,8 +57,7 @@ export function ContentRow({
   dragging = false,
   swipe,
   swipeHandlers,
-  menuActions,
-  onOpenActions,
+  overflow,
   onToggleSelect,
   onRequestSelect,
   onOpen,
@@ -95,7 +96,7 @@ export function ContentRow({
           <SelectDot state={selected ? 'checked' : 'unchecked'} className="mt-0.5" />
         ) : null}
         <div className="min-w-0 flex-1">{children}</div>
-        {selectMode ? null : onOpenActions ? (
+        {selectMode ? null : overflow.kind === 'sheet' ? (
           <IconButton
             variant="tint"
             size="sm"
@@ -103,19 +104,19 @@ export function ContentRow({
             onPointerDown={(event) => event.stopPropagation()}
             onClick={(event) => {
               event.stopPropagation()
-              onOpenActions()
+              overflow.onOpen()
             }}
           >
             <MoreVertical className="size-4.5" aria-hidden />
           </IconButton>
-        ) : menuActions ? (
+        ) : (
           <FlyoutMenu
             variant="tint"
             size="sm"
             label={t('cards.row.menuLabel')}
-            actions={menuActions}
+            actions={overflow.actions}
           />
-        ) : null}
+        )}
       </div>
     </motion.div>
   )

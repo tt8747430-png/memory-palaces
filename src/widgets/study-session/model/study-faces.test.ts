@@ -28,7 +28,8 @@ describe('studyFaces', () => {
     expect(faces.answer).toBe('Front')
   })
 
-  it('a reversed card in a back-first deck reads front-first again', () => {
-    expect(studyFaces(card({ reversed: true }), 'back').prompt).toBe('Front')
+  it('a reversed card is back-first whatever the deck says', () => {
+    expect(studyFaces(card({ reversed: true }), 'back').prompt).toBe('Back')
+    expect(studyFaces(card({ reversed: true }), 'front').prompt).toBe('Back')
   })
 })

@@ -30,6 +30,12 @@ export type CardAlignment = CardAlignmentId
 export const TTS_SIDES = ['front', 'back', 'both'] as const
 export type TtsSide = (typeof TTS_SIDES)[number]
 
+export interface TtsSettings {
+  side: TtsSide
+  /** Playback rate, 0.5–2. */
+  rate: number
+}
+
 /** The card's body text is 14–40pt; `clampCardTextSize` is the shared enforcement. */
 export type CardStyle = CardStyleInput
 
@@ -68,7 +74,7 @@ export interface DeckSettings {
   newCardsPerDay: number
   maxCardsPerDay: number
   cardStyle: CardStyle
-  tts: { side: TtsSide; rate: number }
+  tts: TtsSettings
   advanced: SpacedAdvanced
 }
 

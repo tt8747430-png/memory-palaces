@@ -1,3 +1,4 @@
+import type { FastOutcome } from './fast-outcome'
 import { isDue, type SrsState, srsStatus } from './srs'
 
 export interface StudyOverview {
@@ -33,7 +34,7 @@ export interface FastOverview {
  * has got with them rather than when each is next owed.
  */
 export function fastOverview(
-  cards: ReadonlyArray<{ frozen?: boolean; fastReview?: 'notQuite' | 'gotIt' }>,
+  cards: ReadonlyArray<{ frozen?: boolean; fastReview?: FastOutcome }>,
   maxCardsPerDay: number,
 ): FastOverview {
   const live = cards.filter((card) => !card.frozen)

@@ -12,14 +12,9 @@ import {
 } from '@/entities/preferences'
 import { updateDeckSettings } from '@/features/deck'
 import { setPreferences } from '@/features/preferences'
-import {
-  cardsInSubtree,
-  fastOverview,
-  selectIsReady,
-  studyOverview,
-  useMultiSelect,
-} from '@/shared/lib'
+import { cardsInSubtree, selectIsReady, useMultiSelect } from '@/shared/lib'
 import { DeckContentEditor } from '@/widgets/content-editor'
+import { useDeckOverview } from '../model/use-deck-overview'
 import { AlgorithmLine } from './AlgorithmLine'
 import { PracticeModes } from '@/widgets/practice-modes'
 import {
@@ -75,43 +70,7 @@ export function DeckDetailPage({
   const [now] = useState(() => Date.now())
   const fast = settings.algorithm === 'fast'
 
-  /**
-   * One card, two faces. The algorithm decides what the number means and what the three stats are
-   * called; everything downstream just renders what it is handed.
-   */
-  const overview = useMemo(() => {
-    if (fast) {
-      const view = fastOverview(subtreeCards, settings.maxCardsPerDay)
-      return {
-        count: view.count,
-        countLabel: t(
-          view.count === 1 ? 'fastReview.cardsToStudy_one' : 'fastReview.cardsToStudy_other',
-          { count: view.count },
-        ),
-        stats: [
-          {
-            key: 'notStudied',
-            label: t('fastReview.notStudied'),
-            value: view.breakdown.notStudied,
-          },
-          { key: 'notQuite', label: t('fastReview.notQuite'), value: view.breakdown.notQuite },
-          { key: 'gotIt', label: t('fastReview.gotIt'), value: view.breakdown.gotIt },
-        ],
-      }
-    }
-    const view = studyOverview(subtreeCards, now)
-    return {
-      count: view.count,
-      countLabel: t(view.count === 1 ? 'study.cardsForTodayOne' : 'study.cardsForTodayOther', {
-        count: view.count,
-      }),
-      stats: [
-        { key: 'new', label: t('srs.new'), value: view.breakdown.new },
-        { key: 'learning', label: t('srs.learning'), value: view.breakdown.learning },
-        { key: 'known', label: t('srs.known'), value: view.breakdown.known },
-      ],
-    }
-  }, [fast, subtreeCards, settings.maxCardsPerDay, now, t])
+  const overview = useDeckOverview(subtreeCards, settings.algorithm, settings.maxCardsPerDay, now)
 
   const prefs = usePreferencesStore(selectEffectivePreferences)
   const setContentSort = (value: ContentSort) =>

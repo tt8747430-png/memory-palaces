@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 import { PromptSheet, SettingsRow } from '@/shared/ui'
 
 export interface NumberRowProps {
@@ -13,7 +14,7 @@ export interface NumberRowProps {
 /**
  * A whole-number settings row. The value reads on the row, and tapping it opens the prompt sheet
  * the rest of the app uses for short entry — a number pad on the page would fight the keyboard
- * rules in CODE_STYLE §11 for no gain. Anything unparseable is simply not saved.
+ * rules in CODE_STYLE §11 for no gain. Anything unparseable is refused out loud, never silently.
  */
 export function NumberRow({ icon, label, value, onChange }: NumberRowProps) {
   const { t } = useTranslation()
@@ -36,7 +37,10 @@ export function NumberRow({ icon, label, value, onChange }: NumberRowProps) {
         confirmLabel={t('deckSettings.appearanceSave')}
         onSubmit={(next) => {
           const parsed = Number.parseInt(next, 10)
-          if (Number.isNaN(parsed) || parsed < 0) return
+          if (Number.isNaN(parsed) || parsed < 0) {
+            toast.error(t('algorithm.invalidNumber'))
+            return
+          }
           onChange(parsed)
         }}
       />
