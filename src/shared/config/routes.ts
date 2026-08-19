@@ -10,6 +10,7 @@ export const ROUTES = {
   deckSettings: '/decks/$deckId/settings',
   deckAlgorithm: '/decks/$deckId/settings/algorithm',
   deckAlgorithmAdvanced: '/decks/$deckId/settings/algorithm/advanced',
+  deckCardStyle: '/decks/$deckId/settings/card-style',
   deckStudy: '/decks/$deckId/study',
   deckMatch: '/decks/$deckId/match',
   deckQuiz: '/decks/$deckId/quiz',

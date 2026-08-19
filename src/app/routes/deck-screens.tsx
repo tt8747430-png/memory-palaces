@@ -3,6 +3,7 @@ import { CardEditorPage } from '@/pages/card-editor'
 import { DeckDetailPage } from '@/pages/deck-detail'
 import { DeckQuestionsPage } from '@/pages/deck-questions'
 import { DeckAdvancedPage, DeckAlgorithmPage } from '@/pages/deck-algorithm'
+import { DeckCardStylePage } from '@/pages/deck-card-style'
 import { DeckSettingsPage } from '@/pages/deck-settings'
 import { ImportReviewPage } from '@/pages/import-review'
 import { MatchPage } from '@/pages/match'
@@ -68,6 +69,16 @@ export function DeckAdvancedScreen({ deckId }: { deckId: string }) {
     <DeckAdvancedPage
       deckId={deckId}
       onBack={useBack(() => void navigate({ to: ROUTES.deckAlgorithm, params: { deckId } }))}
+    />
+  )
+}
+
+export function DeckCardStyleScreen({ deckId }: { deckId: string }) {
+  const navigate = useNavigate()
+  return (
+    <DeckCardStylePage
+      deckId={deckId}
+      onBack={useBack(() => void navigate({ to: ROUTES.deckSettings, params: { deckId } }))}
     />
   )
 }
