@@ -18,6 +18,8 @@ import {
 } from './routes/auth-screens'
 import {
   CardEditorScreen,
+  DeckAdvancedScreen,
+  DeckAlgorithmScreen,
   DeckDetailScreen,
   DeckImportScreen,
   DeckMatchScreen,
@@ -136,6 +138,22 @@ const deckSettingsRoute = createRoute({
   path: ROUTES.deckSettings,
   component: function DeckSettings() {
     return <DeckSettingsScreen {...deckSettingsRoute.useParams()} />
+  },
+})
+
+const deckAlgorithmRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.deckAlgorithm,
+  component: function DeckAlgorithm() {
+    return <DeckAlgorithmScreen {...deckAlgorithmRoute.useParams()} />
+  },
+})
+
+const deckAlgorithmAdvancedRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.deckAlgorithmAdvanced,
+  component: function DeckAdvanced() {
+    return <DeckAdvancedScreen {...deckAlgorithmAdvancedRoute.useParams()} />
   },
 })
 
@@ -328,6 +346,8 @@ const routeTree = rootRoute.addChildren([
   archivedRoute,
   deckDetailRoute,
   deckSettingsRoute,
+  deckAlgorithmRoute,
+  deckAlgorithmAdvancedRoute,
   deckStudyRoute,
   deckMatchRoute,
   deckQuizRoute,

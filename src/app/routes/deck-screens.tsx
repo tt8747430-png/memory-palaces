@@ -2,6 +2,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { CardEditorPage } from '@/pages/card-editor'
 import { DeckDetailPage } from '@/pages/deck-detail'
 import { DeckQuestionsPage } from '@/pages/deck-questions'
+import { DeckAdvancedPage, DeckAlgorithmPage } from '@/pages/deck-algorithm'
 import { DeckSettingsPage } from '@/pages/deck-settings'
 import { ImportReviewPage } from '@/pages/import-review'
 import { MatchPage } from '@/pages/match'
@@ -46,6 +47,27 @@ export function DeckSettingsScreen({ deckId }: { deckId: string }) {
       deckId={deckId}
       onBack={useBackToDeck(deckId)}
       onDeleted={() => navigate({ to: ROUTES.home })}
+    />
+  )
+}
+
+export function DeckAlgorithmScreen({ deckId }: { deckId: string }) {
+  const navigate = useNavigate()
+  return (
+    <DeckAlgorithmPage
+      deckId={deckId}
+      onBack={useBack(() => void navigate({ to: ROUTES.deckSettings, params: { deckId } }))}
+      onOpenAdvanced={() => navigate({ to: ROUTES.deckAlgorithmAdvanced, params: { deckId } })}
+    />
+  )
+}
+
+export function DeckAdvancedScreen({ deckId }: { deckId: string }) {
+  const navigate = useNavigate()
+  return (
+    <DeckAdvancedPage
+      deckId={deckId}
+      onBack={useBack(() => void navigate({ to: ROUTES.deckAlgorithm, params: { deckId } }))}
     />
   )
 }

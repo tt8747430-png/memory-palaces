@@ -8,6 +8,8 @@ export const ROUTES = {
   folder: '/folders/$folderId',
   deckDetail: '/decks/$deckId',
   deckSettings: '/decks/$deckId/settings',
+  deckAlgorithm: '/decks/$deckId/settings/algorithm',
+  deckAlgorithmAdvanced: '/decks/$deckId/settings/algorithm/advanced',
   deckStudy: '/decks/$deckId/study',
   deckMatch: '/decks/$deckId/match',
   deckQuiz: '/decks/$deckId/quiz',
