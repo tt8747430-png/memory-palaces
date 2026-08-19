@@ -49,6 +49,10 @@ export function DeckSettingsScreen({ deckId }: { deckId: string }) {
       deckId={deckId}
       onBack={useBackToDeck(deckId)}
       onDeleted={() => navigate({ to: ROUTES.home })}
+      onOpenAlgorithm={() => navigate({ to: ROUTES.deckAlgorithm, params: { deckId } })}
+      onOpenCardStyle={() => navigate({ to: ROUTES.deckCardStyle, params: { deckId } })}
+      onOpenTts={() => navigate({ to: ROUTES.deckTts, params: { deckId } })}
+      onImportCards={() => navigate({ to: ROUTES.deckImport, params: { deckId } })}
     />
   )
 }
