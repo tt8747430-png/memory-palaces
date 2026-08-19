@@ -5,6 +5,7 @@ import { DeckQuestionsPage } from '@/pages/deck-questions'
 import { DeckAdvancedPage, DeckAlgorithmPage } from '@/pages/deck-algorithm'
 import { DeckCardStylePage } from '@/pages/deck-card-style'
 import { DeckSettingsPage } from '@/pages/deck-settings'
+import { DeckTtsPage } from '@/pages/deck-tts'
 import { ImportReviewPage } from '@/pages/import-review'
 import { MatchPage } from '@/pages/match'
 import { PasteNotesPage } from '@/pages/paste-notes'
@@ -77,6 +78,16 @@ export function DeckCardStyleScreen({ deckId }: { deckId: string }) {
   const navigate = useNavigate()
   return (
     <DeckCardStylePage
+      deckId={deckId}
+      onBack={useBack(() => void navigate({ to: ROUTES.deckSettings, params: { deckId } }))}
+    />
+  )
+}
+
+export function DeckTtsScreen({ deckId }: { deckId: string }) {
+  const navigate = useNavigate()
+  return (
+    <DeckTtsPage
       deckId={deckId}
       onBack={useBack(() => void navigate({ to: ROUTES.deckSettings, params: { deckId } }))}
     />

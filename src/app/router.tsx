@@ -29,6 +29,7 @@ import {
   DeckQuizScreen,
   DeckSettingsScreen,
   DeckStudyScreen,
+  DeckTtsScreen,
   NewPasteScreen,
   QuestionEditorScreen,
 } from './routes/deck-screens'
@@ -155,6 +156,14 @@ const deckCardStyleRoute = createRoute({
   path: ROUTES.deckCardStyle,
   component: function DeckCardStyle() {
     return <DeckCardStyleScreen {...deckCardStyleRoute.useParams()} />
+  },
+})
+
+const deckTtsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.deckTts,
+  component: function DeckTts() {
+    return <DeckTtsScreen {...deckTtsRoute.useParams()} />
   },
 })
 
@@ -358,6 +367,7 @@ const routeTree = rootRoute.addChildren([
   deckAlgorithmRoute,
   deckAlgorithmAdvancedRoute,
   deckCardStyleRoute,
+  deckTtsRoute,
   deckStudyRoute,
   deckMatchRoute,
   deckQuizRoute,

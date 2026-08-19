@@ -11,6 +11,7 @@ export const ROUTES = {
   deckAlgorithm: '/decks/$deckId/settings/algorithm',
   deckAlgorithmAdvanced: '/decks/$deckId/settings/algorithm/advanced',
   deckCardStyle: '/decks/$deckId/settings/card-style',
+  deckTts: '/decks/$deckId/settings/tts',
   deckStudy: '/decks/$deckId/study',
   deckMatch: '/decks/$deckId/match',
   deckQuiz: '/decks/$deckId/quiz',
