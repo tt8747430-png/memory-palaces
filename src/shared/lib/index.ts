@@ -192,7 +192,12 @@ export {
   type RecallSlotKind,
   type RecallTypingResult,
 } from './recall'
-export { studyOverview, type StudyOverview } from './study-overview'
+export {
+  fastOverview,
+  studyOverview,
+  type FastOverview,
+  type StudyOverview,
+} from './study-overview'
 export { nextDefaultName } from './naming'
 export { useOptimisticPatch, orderPatch } from './use-optimistic-patch'
 export { usePendingAct, type PendingAct } from './use-pending-act'

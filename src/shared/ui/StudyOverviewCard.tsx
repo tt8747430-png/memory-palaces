@@ -5,22 +5,36 @@ import { Button } from './primitives/button'
 import { GlassCard } from './GlassCard'
 import { EASE_OUT } from '@/shared/lib'
 
+export interface OverviewStat {
+  key: string
+  label: string
+  value: number
+}
+
 export interface StudyOverviewCardProps {
+  /**
+   * `spaced` counts what is due today and can be caught up; `fast` counts what is on offer, and a
+   * deck under it is never caught up — every card is always available.
+   */
+  variant: 'fast' | 'spaced'
   count: number
-  breakdown: { new: number; learning: number; known: number }
+  countLabel: string
+  stats: OverviewStat[]
   onStudy: () => void
   onStudyAhead?: () => void
 }
 
 export function StudyOverviewCard({
+  variant,
   count,
-  breakdown,
+  countLabel,
+  stats,
   onStudy,
   onStudyAhead,
 }: StudyOverviewCardProps) {
   const { t } = useTranslation()
 
-  if (count === 0) {
+  if (variant === 'spaced' && count === 0) {
     return (
       <GlassCard className="flex flex-col items-center gap-3 py-7 text-center">
         <span className="grid size-12 place-items-center rounded-card-featured bg-card text-(--success-foreground) shadow-rest">
@@ -38,12 +52,6 @@ export function StudyOverviewCard({
     )
   }
 
-  const items: Array<{ key: 'new' | 'learning' | 'known'; value: number }> = [
-    { key: 'new', value: breakdown.new },
-    { key: 'learning', value: breakdown.learning },
-    { key: 'known', value: breakdown.known },
-  ]
-
   return (
     <GlassCard className="space-y-4 text-center">
       <div>
@@ -55,19 +63,17 @@ export function StudyOverviewCard({
         >
           {count}
         </motion.p>
-        <p className="mt-1 text-(length:--p-text-body) font-medium text-secondary">
-          {t(count === 1 ? 'study.cardsForTodayOne' : 'study.cardsForTodayOther', { count })}
-        </p>
+        <p className="mt-1 text-(length:--p-text-body) font-medium text-secondary">{countLabel}</p>
       </div>
 
       <dl className="grid grid-cols-3 gap-2">
-        {items.map((item) => (
-          <div key={item.key} className="rounded-control bg-info-surface px-2 py-2">
+        {stats.map((stat) => (
+          <div key={stat.key} className="rounded-control bg-info-surface px-2 py-2">
             <dd className="text-(length:--p-text-sub) font-bold leading-none tabular-nums text-heading">
-              {item.value}
+              {stat.value}
             </dd>
             <dt className="mt-1 text-(length:--p-text-tiny) font-medium text-secondary">
-              {t(`srs.${item.key}`)}
+              {stat.label}
             </dt>
           </div>
         ))}

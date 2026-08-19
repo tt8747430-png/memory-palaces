@@ -175,7 +175,8 @@ export function DeckContentEditor({
 
   return (
     <div>
-      {!searching && !selectMode && total > 0 ? (
+      {/* Maturity is an SRS shape; fast review has no maturities to bar-chart. */}
+      {algorithm === 'spaced' && !searching && !selectMode && total > 0 ? (
         <div className="mb-3">
           <CardMaturityOverview total={total} counts={maturity} />
         </div>

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Settings } from 'lucide-react'
-import { useDeck } from '@/entities/deck'
+import { useDeck, useDeckStoreApi } from '@/entities/deck'
 import { selectCards, useCardStore } from '@/entities/card'
 import { questionsForDeck, selectQuestions, useQuestionStore } from '@/entities/question'
 import {
@@ -10,9 +10,17 @@ import {
   usePreferencesStore,
   usePreferencesStoreApi,
 } from '@/entities/preferences'
+import { editDeck } from '@/features/deck'
 import { setPreferences } from '@/features/preferences'
-import { cardsInSubtree, selectIsReady, studyOverview, useMultiSelect } from '@/shared/lib'
+import {
+  cardsInSubtree,
+  fastOverview,
+  selectIsReady,
+  studyOverview,
+  useMultiSelect,
+} from '@/shared/lib'
 import { DeckContentEditor } from '@/widgets/content-editor'
+import { AlgorithmLine } from './AlgorithmLine'
 import { PracticeModes } from '@/widgets/practice-modes'
 import {
   AppScreen,
@@ -50,6 +58,7 @@ export function DeckDetailPage({
 }: DeckDetailPageProps) {
   const { t } = useTranslation()
   const prefStore = usePreferencesStoreApi()
+  const deckStore = useDeckStoreApi()
 
   const { decks, deck, settings, ready: decksReady } = useDeck(deckId)
   const allCards = useCardStore(selectCards)
@@ -64,7 +73,12 @@ export function DeckDetailPage({
   const questions = useMemo(() => questionsForDeck(allQuestions, deckId), [allQuestions, deckId])
 
   const [now] = useState(() => Date.now())
-  const overview = useMemo(() => studyOverview(subtreeCards, now), [subtreeCards, now])
+  const fast = settings.algorithm === 'fast'
+  const spacedOverview = useMemo(() => studyOverview(subtreeCards, now), [subtreeCards, now])
+  const fastView = useMemo(
+    () => fastOverview(subtreeCards, settings.maxCardsPerDay),
+    [subtreeCards, settings.maxCardsPerDay],
+  )
 
   const prefs = usePreferencesStore(selectEffectivePreferences)
   const setContentSort = (value: ContentSort) =>
@@ -113,13 +127,62 @@ export function DeckDetailPage({
       }
     >
       <div className="mt-2 space-y-4 pb-24">
-        {hasContent && !selection.active ? (
-          <StudyOverviewCard
-            count={overview.count}
-            breakdown={overview.breakdown}
-            onStudy={() => onStudy?.()}
-            onStudyAhead={onStudy}
+        {!selection.active ? (
+          <AlgorithmLine
+            value={settings.algorithm}
+            onChange={(algorithm) =>
+              void editDeck(deckStore, deckId, { settings: { ...deck.settings, algorithm } })
+            }
           />
+        ) : null}
+
+        {hasContent && !selection.active ? (
+          fast ? (
+            <StudyOverviewCard
+              variant="fast"
+              count={fastView.count}
+              countLabel={t(
+                fastView.count === 1
+                  ? 'fastReview.cardsToStudy_one'
+                  : 'fastReview.cardsToStudy_other',
+                { count: fastView.count },
+              )}
+              stats={[
+                {
+                  key: 'notStudied',
+                  label: t('fastReview.notStudied'),
+                  value: fastView.breakdown.notStudied,
+                },
+                {
+                  key: 'notQuite',
+                  label: t('fastReview.notQuite'),
+                  value: fastView.breakdown.notQuite,
+                },
+                { key: 'gotIt', label: t('fastReview.gotIt'), value: fastView.breakdown.gotIt },
+              ]}
+              onStudy={() => onStudy?.()}
+            />
+          ) : (
+            <StudyOverviewCard
+              variant="spaced"
+              count={spacedOverview.count}
+              countLabel={t(
+                spacedOverview.count === 1 ? 'study.cardsForTodayOne' : 'study.cardsForTodayOther',
+                { count: spacedOverview.count },
+              )}
+              stats={[
+                { key: 'new', label: t('srs.new'), value: spacedOverview.breakdown.new },
+                {
+                  key: 'learning',
+                  label: t('srs.learning'),
+                  value: spacedOverview.breakdown.learning,
+                },
+                { key: 'known', label: t('srs.known'), value: spacedOverview.breakdown.known },
+              ]}
+              onStudy={() => onStudy?.()}
+              onStudyAhead={onStudy}
+            />
+          )
         ) : null}
 
         {(hasContent || questions.length > 0) && !selection.active ? (
