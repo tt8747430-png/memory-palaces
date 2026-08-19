@@ -7,7 +7,13 @@ import type { StudyPrefs } from './types'
 
 afterEach(cleanup)
 
-const prefs: StudyPrefs = { direction: 'front', shuffle: false, textToSpeech: false }
+const prefs: StudyPrefs = {
+  direction: 'front',
+  shuffle: false,
+  textToSpeech: false,
+  newCardsPerDay: 10,
+  maxCardsPerDay: 3000,
+}
 const swipeByMode = {
   blur: DEFAULT_FLASHCARD_SWIPE,
   words: DEFAULT_FLASHCARD_SWIPE,

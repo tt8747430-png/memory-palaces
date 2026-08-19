@@ -14,6 +14,8 @@ export interface StudyPrefs {
   direction: StudyDirection
   shuffle: boolean
   textToSpeech: boolean
+  newCardsPerDay: number
+  maxCardsPerDay: number
 }
 
 export interface SessionSummary {

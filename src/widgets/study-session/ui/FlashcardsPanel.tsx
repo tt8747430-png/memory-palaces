@@ -2,16 +2,19 @@ import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { AnimatePresence } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Check } from 'lucide-react'
+import type { FastOutcome } from '@/entities/card'
+import type { LearningAlgorithm } from '@/entities/deck'
 import type { StudyMode } from '@/entities/preferences'
 import type { SrsState } from '@/shared/lib'
 import { speak, speechAvailable, srsStatus, success, tick, useShake } from '@/shared/lib'
 import {
   applyStudyFilter,
+  buildStudyQueue,
   canUndo,
   currentId,
   initSession,
+  type SessionMode,
   sessionReducer,
-  shuffleFirstDue,
   type StudyFilter,
   studyFilterCounts as computeFilterCounts,
   upcomingIds,
@@ -36,6 +39,7 @@ import type { CardChanges, Grade, SessionSummary, StudyCard, StudyPrefs } from '
 export interface FlashcardsPanelProps {
   cards: StudyCard[]
   prefs: StudyPrefs
+  algorithm: LearningAlgorithm
   mode: StudyMode
   wordSpaces: boolean
   shakeToUndo: boolean
@@ -46,6 +50,8 @@ export interface FlashcardsPanelProps {
   onWordSpacesChange?: (value: boolean) => void
   onShakeToUndoChange?: (value: boolean) => void
   onGrade: (cardId: string, grade: Grade) => void
+  onAnswer?: (cardId: string, outcome: FastOutcome) => void
+  onProgress?: (done: number, total: number) => void
   onRestoreCard?: (cardId: string, srs: SrsState | undefined) => void
   onToggleFlag?: (cardId: string) => void
   onEditCard?: (cardId: string, changes: CardChanges) => void
@@ -61,6 +67,7 @@ type UndoEntry = { cardId: string; prevSrs: SrsState | undefined } | null
 export function FlashcardsPanel({
   cards,
   prefs,
+  algorithm,
   mode,
   wordSpaces,
   shakeToUndo,
@@ -71,6 +78,8 @@ export function FlashcardsPanel({
   onWordSpacesChange,
   onShakeToUndoChange,
   onGrade,
+  onAnswer,
+  onProgress,
   onRestoreCard,
   onToggleFlag,
   onEditCard,
@@ -110,18 +119,29 @@ export function FlashcardsPanel({
   })
   const activeSwipe = settings.value.swipe
 
+  const sessionMode: SessionMode = algorithm === 'fast' ? 'fast' : 'spaced'
+
   const buildIds = (activeFilter: StudyFilter): string[] =>
-    shuffleFirstDue(applyStudyFilter(cardEntities, activeFilter, now), now, prefs.shuffle)
+    buildStudyQueue(applyStudyFilter(cardEntities, activeFilter, now), {
+      now,
+      algorithm,
+      shuffle: prefs.shuffle,
+      newCardsPerDay: prefs.newCardsPerDay,
+      maxCardsPerDay: prefs.maxCardsPerDay,
+    })
 
   const [state, dispatch] = useReducer(sessionReducer, undefined, () =>
-    initSession({ ids: buildIds({ kind: 'all' }), mode: 'spaced' }),
+    initSession({ ids: buildIds({ kind: 'all' }), mode: sessionMode }),
   )
 
   const undoTrail = useRef<UndoEntry[]>([])
 
   const rebuild = (activeFilter: StudyFilter) => {
     undoTrail.current = []
-    dispatch({ type: 'reset', state: initSession({ ids: buildIds(activeFilter), mode: 'spaced' }) })
+    dispatch({
+      type: 'reset',
+      state: initSession({ ids: buildIds(activeFilter), mode: sessionMode }),
+    })
   }
 
   const completed = state.status === 'complete'
@@ -143,6 +163,14 @@ export function FlashcardsPanel({
     // a ref, so re-running on its identity would only restart the delay.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [completed])
+
+  const graded = state.graded
+  useEffect(() => {
+    onProgress?.(graded, state.total)
+    // The page only wants the numbers, so this fires on the numbers — not on the callback's
+    // identity, which changes on every render of the page above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [graded, state.total])
 
   const id = currentId(state)
   const card = id ? byId.get(id) : undefined
@@ -176,6 +204,13 @@ export function FlashcardsPanel({
     undoTrail.current.push({ cardId: id, prevSrs: card.card.srs })
     onGrade(id, grade)
     dispatch({ type: 'grade', grade })
+  }
+
+  const applyAnswer = (outcome: FastOutcome) => {
+    if (!id || !card) return
+    undoTrail.current.push({ cardId: id, prevSrs: card.card.srs })
+    onAnswer?.(id, outcome)
+    dispatch({ type: 'answer', outcome })
   }
 
   const applySkip = () => {
@@ -279,10 +314,13 @@ export function FlashcardsPanel({
       {card ? (
         <SessionFooter
           flipped={flipped}
+          mode={state.mode}
           srs={card.card.srs}
           now={now}
           remaining={remaining}
+          buckets={state.buckets}
           onGrade={applyGrade}
+          onAnswer={applyAnswer}
         />
       ) : null}
 
@@ -302,6 +340,7 @@ export function FlashcardsPanel({
           open={gearOpen}
           onClose={() => setGearOpen(false)}
           mode={mode}
+          algorithm={algorithm}
           canSpeak={canSpeak}
           quick={quick}
           settings={settings}

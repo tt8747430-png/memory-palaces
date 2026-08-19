@@ -1,7 +1,7 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronLeft, Layers } from 'lucide-react'
-import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
+import { type FastOutcome, selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
 import { type Deck, type DeckSettings, useDeck, useDeckStoreApi } from '@/entities/deck'
 import {
   type FlashcardSwipeByMode,
@@ -13,7 +13,7 @@ import {
 } from '@/entities/preferences'
 import { cardsInSubtree, deckPath, findEntity, selectIsReady } from '@/shared/lib'
 import { normalizeFlashcardSwipe } from '@/shared/config/flashcard-swipe'
-import { editCard } from '@/features/card'
+import { editCard, setCardFastReview } from '@/features/card'
 import { editDeck } from '@/features/deck'
 import { gradeCard, restoreSchedule } from '@/features/review'
 import { setPreferences } from '@/features/preferences'
@@ -40,6 +40,8 @@ function studyPrefsFromSettings(settings: DeckSettings): StudyPrefs {
     direction: settings.studyDirection,
     shuffle: settings.shuffleCards,
     textToSpeech: settings.textToSpeech,
+    newCardsPerDay: settings.newCardsPerDay,
+    maxCardsPerDay: settings.maxCardsPerDay,
   }
 }
 
@@ -49,6 +51,7 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
   const cardStore = useCardStoreApi()
   const preferencesStore = usePreferencesStoreApi()
   const reward = useSessionReward()
+  const [progress, setProgress] = useState({ done: 0, total: 0 })
 
   const { decks, deck, settings, ready: decksReady } = useDeck(scope.deckId)
   const allCards = useCardStore(selectCards)
@@ -77,6 +80,9 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
 
   const handleGrade = (id: string, grade: Parameters<typeof gradeCard>[2]) => {
     void gradeCard(cardStore, id, grade)
+  }
+  const handleAnswer = (id: string, outcome: FastOutcome) => {
+    void setCardFastReview(cardStore, id, outcome)
   }
   const handleToggleFlag = (id: string) => {
     const card = findEntity(cardStore.getState().cards, id)
@@ -133,6 +139,7 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
       <SessionHeader
         title={title}
         subtitle={subtitle}
+        progress={progress}
         backLabel={t('study.goBack')}
         onBack={back}
         backIcon={<ChevronLeft className="size-5" aria-hidden />}
@@ -142,6 +149,7 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
         key={`flashcards-${scope.deckId}`}
         cards={cards}
         prefs={studyPrefsFromSettings(settings)}
+        algorithm={settings.algorithm}
         mode={mode}
         wordSpaces={preferences.studyWordSpaces}
         shakeToUndo={preferences.shakeToUndo}
@@ -154,6 +162,8 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
           void setPreferences(preferencesStore, { shakeToUndo: value })
         }
         onGrade={handleGrade}
+        onAnswer={handleAnswer}
+        onProgress={(done, total) => setProgress({ done, total })}
         onRestoreCard={(id, srs) => void restoreSchedule(cardStore, id, srs)}
         onToggleFlag={handleToggleFlag}
         onEditCard={(id, changes) => void editCard(cardStore, id, changes)}
