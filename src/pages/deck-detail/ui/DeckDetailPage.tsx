@@ -51,7 +51,7 @@ export function DeckDetailPage({
   const { t } = useTranslation()
   const prefStore = usePreferencesStoreApi()
 
-  const { decks, deck, ready: decksReady } = useDeck(deckId)
+  const { decks, deck, settings, ready: decksReady } = useDeck(deckId)
   const allCards = useCardStore(selectCards)
   const allQuestions = useQuestionStore(selectQuestions)
   const cardsReady = useCardStore(selectIsReady)
@@ -135,6 +135,7 @@ export function DeckDetailPage({
         <section aria-label={t('deck.cards')} className="space-y-3 pt-1">
           <DeckContentEditor
             deckId={deckId}
+            algorithm={settings.algorithm}
             selection={selection}
             sort={prefs.contentSort}
             onSortChange={setContentSort}

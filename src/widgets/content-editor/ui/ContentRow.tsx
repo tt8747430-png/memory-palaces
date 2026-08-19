@@ -1,11 +1,13 @@
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'motion/react'
+import { MoreVertical } from 'lucide-react'
 import { cn, useLongPress } from '@/shared/lib'
 import type { SwipeConfig } from '@/shared/config/swipe'
 import {
   buildSwipeActions,
   FlyoutMenu,
+  IconButton,
   SelectDot,
   type SheetAction,
   type SwipeActionHandlers,
@@ -36,6 +38,11 @@ export interface RowFrameProps {
 export interface ContentRowProps extends RowFrameProps {
   swipeHandlers: SwipeActionHandlers
   menuActions: SheetAction[]
+  /**
+   * Given, the row's overflow control opens this instead of the flyout — cards get a full sheet of
+   * actions, questions keep the menu.
+   */
+  onOpenActions?: () => void
   children: ReactNode
 }
 
@@ -48,6 +55,7 @@ export function ContentRow({
   swipe,
   swipeHandlers,
   menuActions,
+  onOpenActions,
   onToggleSelect,
   onRequestSelect,
   onOpen,
@@ -86,7 +94,20 @@ export function ContentRow({
           <SelectDot state={selected ? 'checked' : 'unchecked'} className="mt-0.5" />
         ) : null}
         <div className="min-w-0 flex-1">{children}</div>
-        {selectMode ? null : (
+        {selectMode ? null : onOpenActions ? (
+          <IconButton
+            variant="tint"
+            size="sm"
+            aria-label={t('cards.row.menuLabel')}
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => {
+              event.stopPropagation()
+              onOpenActions()
+            }}
+          >
+            <MoreVertical className="size-4.5" aria-hidden />
+          </IconButton>
+        ) : (
           <FlyoutMenu
             variant="tint"
             size="sm"

@@ -27,6 +27,7 @@ function Editor({ onAddCard }: { onAddCard: () => void }) {
   return (
     <DeckContentEditor
       deckId="d1"
+      algorithm="spaced"
       selection={selection}
       sort="manual"
       onSortChange={() => {}}

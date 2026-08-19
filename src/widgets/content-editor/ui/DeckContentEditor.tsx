@@ -3,9 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Plus, Trash2, Upload } from 'lucide-react'
 import { type Card, selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
-import { selectDecks, useDeckStore } from '@/entities/deck'
+import { type LearningAlgorithm, selectDecks, useDeckStore } from '@/entities/deck'
 import { selectFolders, useFolderStore } from '@/entities/folder'
-import { reorderCards } from '@/features/card'
+import { reorderCards, toggleCardFrozen, toggleCardReversed } from '@/features/card'
 import {
   type ContentSort,
   selectEffectivePreferences,
@@ -39,12 +39,15 @@ import { useImportDraft } from '../model/import-draft'
 import { CardBrowser } from './CardBrowser'
 import { CardFilterSheet, FilterButton } from './CardFilterSheet'
 import { EmptyCards, FilterEmpty, NoResults } from './CardListStates'
+import { CardActionsSheet } from './CardActionsSheet'
 import { CardRow } from './CardRow'
+import { LearningHistorySheet } from './LearningHistorySheet'
 import type { RowDragHandle } from './ContentRow'
 import { ReorderableList } from './ReorderableList'
 
 export interface DeckContentEditorProps {
   deckId: string
+  algorithm: LearningAlgorithm
   searchQuery?: string
   searching?: boolean
   onClearSearch?: () => void
@@ -59,6 +62,7 @@ export interface DeckContentEditorProps {
 
 export function DeckContentEditor({
   deckId,
+  algorithm,
   searchQuery,
   searching = false,
   onClearSearch,
@@ -84,6 +88,8 @@ export function DeckContentEditor({
   const [importOpen, setImportOpen] = useState(false)
   const [browserCardId, setBrowserCardId] = useState<string | null>(null)
   const [moveIds, setMoveIds] = useState<readonly string[] | null>(null)
+  const [actionsCardId, setActionsCardId] = useState<string | null>(null)
+  const [historyOpen, setHistoryOpen] = useState(false)
 
   const pending = usePendingAct<PendingCardAct>()
   const sortOptions = useContentSortOptions(CONTENT_SORTS)
@@ -117,6 +123,7 @@ export function DeckContentEditor({
 
   // A card can only live in a deck, so the picker offers decks; the decks the cards already sit in
   // are the only ones a move would achieve nothing from.
+  const actionsCard = actionsCardId ? cards.find((card) => card.id === actionsCardId) : undefined
   const movingCards = moveIds ? cards.filter((card) => moveIds.includes(card.id)) : []
   const moveExcludeIds = new Set(movingCards.map((card) => card.deckId))
   const pickMoveTarget = (dest: MoveDestination) => {
@@ -161,6 +168,8 @@ export function DeckContentEditor({
       onToggleFlag={() => commands.toggleFlag(card.id)}
       onMarkKnown={() => commands.markKnown(card.id)}
       onResetSrs={() => commands.resetSrs(card.id)}
+      onOpenActions={() => setActionsCardId(card.id)}
+      algorithm={algorithm}
     />
   )
 
@@ -224,6 +233,40 @@ export function DeckContentEditor({
       />
 
       <CardFilterSheet filter={filter} counts={maturity} />
+
+      {actionsCard ? (
+        <CardActionsSheet
+          card={actionsCard}
+          open
+          onOpenChange={(open) => {
+            if (!open) setActionsCardId(null)
+          }}
+          handlers={{
+            onSelect: () => selection.begin(actionsCard.id),
+            onEdit: () => onEditCard(actionsCard.id),
+            onFreeze: () => {
+              void toggleCardFrozen(cardStore, actionsCard.id)
+              toast.success(
+                actionsCard.frozen ? t('cardActions.unfrozeToast') : t('cardActions.frozeToast'),
+              )
+            },
+            onMove: () => setMoveIds([actionsCard.id]),
+            onReverse: () => {
+              void toggleCardReversed(cardStore, actionsCard.id)
+              toast.success(
+                actionsCard.reversed
+                  ? t('cardActions.unreversedToast')
+                  : t('cardActions.reversedToast'),
+              )
+            },
+            onDuplicate: () => commands.duplicate(actionsCard.id),
+            onHistory: () => setHistoryOpen(true),
+            onDelete: () => pending.request({ kind: 'delete-card', id: actionsCard.id }),
+          }}
+        />
+      ) : null}
+
+      <LearningHistorySheet open={historyOpen} onOpenChange={setHistoryOpen} />
 
       <MoveSheet
         open={moveIds !== null}

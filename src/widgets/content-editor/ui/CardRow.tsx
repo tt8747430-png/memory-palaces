@@ -1,13 +1,15 @@
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Flag, Lightbulb, MapPin } from 'lucide-react'
+import { ArrowLeftRight, Flag, Lightbulb, MapPin, Snowflake } from 'lucide-react'
 import type { Card } from '@/entities/card'
-import { buildMenuActions, SrsStatusChip } from '@/shared/ui'
+import type { LearningAlgorithm } from '@/entities/deck'
+import { buildMenuActions, Chip, SrsStatusChip } from '@/shared/ui'
 import { ContentRow, type RowFrameProps, RowIndex } from './ContentRow'
 
 export interface CardRowProps extends RowFrameProps {
   card: Card
   index: number
+  algorithm: LearningAlgorithm
   onOpen: () => void
   onEdit: () => void
   onMove: () => void
@@ -16,11 +18,13 @@ export interface CardRowProps extends RowFrameProps {
   onToggleFlag: () => void
   onMarkKnown: () => void
   onResetSrs: () => void
+  onOpenActions: () => void
 }
 
 export function CardRow({
   card,
   index,
+  algorithm,
   onEdit,
   onMove,
   onDuplicate,
@@ -28,6 +32,7 @@ export function CardRow({
   onToggleFlag,
   onMarkKnown,
   onResetSrs,
+  onOpenActions,
   ...frame
 }: CardRowProps) {
   const { t } = useTranslation()
@@ -51,6 +56,7 @@ export function CardRow({
     <ContentRow
       {...frame}
       menuActions={menuActions}
+      onOpenActions={onOpenActions}
       swipeHandlers={{
         move: { onAction: onMove },
         flag: { onAction: onToggleFlag, label: flagLabel },
@@ -75,8 +81,21 @@ export function CardRow({
       <p className="mt-1 text-(length:--p-text-body) leading-relaxed text-muted-foreground">
         {card.back}
       </p>
-      <div className="mt-2">
-        <SrsStatusChip srs={card.srs} />
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        {/* Fast review schedules nothing, so an SRS chip would report a state it never reaches. */}
+        {algorithm === 'spaced' ? <SrsStatusChip srs={card.srs} /> : null}
+        {card.reversed ? (
+          <Chip>
+            <ArrowLeftRight className="size-3" aria-hidden />
+            {t('cardActions.reversedChip')}
+          </Chip>
+        ) : null}
+        {card.frozen ? (
+          <Chip>
+            <Snowflake className="size-3" aria-hidden />
+            {t('cardActions.frozenChip')}
+          </Chip>
+        ) : null}
       </div>
       {card.hint ? (
         <Cue
