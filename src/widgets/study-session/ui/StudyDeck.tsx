@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
 import { type HTMLMotionProps, motion, useReducedMotion } from 'motion/react'
+import type { CardStyle } from '@/entities/deck'
 import type { StudyMode } from '@/entities/preferences'
 import { EASE_EXPO, recallAnswer, STACK_DEPTH } from '@/shared/lib'
 import type { FlashcardSwipeConfig, SwipeDirection } from '@/shared/config/flashcard-swipe'
@@ -21,6 +22,7 @@ const CHIPS: { dir: SwipeDirection; className: string }[] = [
 
 export interface StudyDeckProps {
   card: StudyCard
+  cardStyle: CardStyle
   upcoming?: StudyCard[]
   mode: StudyMode
   direction: StudyDirection
@@ -43,6 +45,7 @@ export function StudyDeck({
   card,
   upcoming = [],
   mode,
+  cardStyle,
   direction,
   wordSpaces,
   typeInitialsOnly,
@@ -94,6 +97,7 @@ export function StudyDeck({
     prompt,
     answer,
     canSpeak,
+    cardStyle,
     wordSpaces,
     typeInitialsOnly,
     active: !showBack,
@@ -119,6 +123,7 @@ export function StudyDeck({
           key={queued.card.id}
           card={queued}
           mode={mode}
+          cardStyle={cardStyle}
           direction={direction}
           canSpeak={canSpeak}
           wordSpaces={wordSpaces}

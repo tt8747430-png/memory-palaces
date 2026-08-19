@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, renderHook } from '@testing-library/react'
+import { DEFAULT_CARD_STYLE } from '@/entities/deck'
 import type { FlashcardSwipeByMode } from '@/shared/config/flashcard-swipe'
 import { DEFAULT_FLASHCARD_SWIPE } from '@/shared/config/flashcard-swipe'
 import { useStudySettings } from './use-study-settings'
@@ -13,6 +14,7 @@ const prefs: StudyPrefs = {
   textToSpeech: false,
   newCardsPerDay: 10,
   maxCardsPerDay: 3000,
+  cardStyle: DEFAULT_CARD_STYLE,
 }
 const swipeByMode = {
   blur: DEFAULT_FLASHCARD_SWIPE,

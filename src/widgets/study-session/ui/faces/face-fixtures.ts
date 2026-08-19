@@ -1,4 +1,5 @@
 import { makeCard } from '@/entities/card'
+import { DEFAULT_CARD_STYLE } from '@/entities/deck'
 import type { StudyCard } from '../../model/types'
 import type { FaceProps } from './types'
 
@@ -20,6 +21,7 @@ export function makeStudyCard(overrides: Partial<StudyCard> = {}): StudyCard {
 export function makeFaceProps(overrides: Partial<FaceProps> = {}): FaceProps {
   return {
     card: makeStudyCard(),
+    cardStyle: DEFAULT_CARD_STYLE,
     mode: 'blur',
     prompt: 'Ping',
     answer: 'Pong answer here',

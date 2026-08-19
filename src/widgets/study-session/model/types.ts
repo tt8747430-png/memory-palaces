@@ -1,6 +1,6 @@
 import type { Card, CardChanges } from '@/entities/card'
 import type { Grade } from '@/shared/lib'
-import type { StudyDirection } from '@/entities/deck'
+import type { CardStyle, StudyDirection } from '@/entities/deck'
 
 export interface StudyCard {
   card: Card
@@ -16,6 +16,7 @@ export interface StudyPrefs {
   textToSpeech: boolean
   newCardsPerDay: number
   maxCardsPerDay: number
+  cardStyle: CardStyle
 }
 
 export interface SessionSummary {

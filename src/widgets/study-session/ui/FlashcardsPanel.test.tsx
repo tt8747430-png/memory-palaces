@@ -7,7 +7,7 @@ import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
 import { type FastOutcome, makeCard } from '@/entities/card'
 import { DEFAULT_FLASHCARD_SWIPE_BY_MODE } from '@/shared/config/flashcard-swipe'
-import type { LearningAlgorithm } from '@/entities/deck'
+import { DEFAULT_CARD_STYLE, type LearningAlgorithm } from '@/entities/deck'
 import type { StudyMode } from '@/entities/preferences'
 import { FlashcardsPanel } from './FlashcardsPanel'
 import type { Grade, StudyCard, StudyPrefs } from '../model/types'
@@ -22,6 +22,7 @@ const DEFAULT_PREFS: StudyPrefs = {
   textToSpeech: false,
   newCardsPerDay: 10,
   maxCardsPerDay: 3000,
+  cardStyle: DEFAULT_CARD_STYLE,
 }
 
 async function tap(name: RegExp | string) {

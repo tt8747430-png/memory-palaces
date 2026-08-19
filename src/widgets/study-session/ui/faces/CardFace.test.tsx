@@ -25,6 +25,13 @@ function setup(overrides: Partial<FaceProps> = {}) {
 }
 
 describe('CardFace', () => {
+  it("wears the deck's card style", () => {
+    setup({ cardStyle: { preset: 'paper', font: 'serif', textSize: 22, alignment: 'left' } })
+    const shell = screen.getByTestId('card-face')
+    expect(shell.style.getPropertyValue('--card-style-size')).toBe('22px')
+    expect(shell.style.getPropertyValue('--card-style-align')).toBe('left')
+  })
+
   it('renders the children and footer slot', () => {
     setup()
     expect(screen.getByText('Body content')).toBeInTheDocument()

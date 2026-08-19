@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, screen } from '@testing-library/react'
 import { makeCard } from '@/entities/card'
+import { DEFAULT_CARD_STYLE } from '@/entities/deck'
 import { DEFAULT_FLASHCARD_SWIPE } from '@/shared/config/flashcard-swipe'
 import { renderWithProviders } from '@/shared/test/render-with-providers'
 import { StudyDeck } from './StudyDeck'
@@ -23,6 +24,7 @@ function baseProps(
 ): Parameters<typeof StudyDeck>[0] {
   return {
     card: studyCard('Prompt front', 'Answer back'),
+    cardStyle: DEFAULT_CARD_STYLE,
     mode: 'blur',
     direction: 'front',
     wordSpaces: false,

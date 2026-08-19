@@ -42,6 +42,7 @@ function studyPrefsFromSettings(settings: DeckSettings): StudyPrefs {
     textToSpeech: settings.textToSpeech,
     newCardsPerDay: settings.newCardsPerDay,
     maxCardsPerDay: settings.maxCardsPerDay,
+    cardStyle: settings.cardStyle,
   }
 }
 

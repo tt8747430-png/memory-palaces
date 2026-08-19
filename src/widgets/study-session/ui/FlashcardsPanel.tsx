@@ -284,6 +284,7 @@ export function FlashcardsPanel({
           <StudyDeck
             key={mode}
             card={card}
+            cardStyle={prefs.cardStyle}
             upcoming={upcoming}
             mode={mode}
             direction={prefs.direction}
