@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChevronLeft, Layers } from 'lucide-react'
+import { Layers } from 'lucide-react'
 import { type FastOutcome, selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
 import { type Deck, type DeckSettings, useDeck, useDeckStoreApi } from '@/entities/deck'
 import {
@@ -19,14 +19,7 @@ import { gradeCard, restoreSchedule } from '@/features/review'
 import { setPreferences } from '@/features/preferences'
 import { FlashcardsPanel, type StudyCard, type StudyPrefs } from '@/widgets/study-session'
 import { useSessionReward } from '@/widgets/session-reward'
-import {
-  Button,
-  Empty,
-  MissingScreen,
-  ScreenLoading,
-  SessionHeader,
-  SessionScreen,
-} from '@/shared/ui'
+import { Button, Empty, MissingScreen, ScreenLoading, SessionScreen } from '@/shared/ui'
 
 export type StudyScope = { kind: 'deck'; deckId: string }
 
@@ -52,7 +45,6 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
   const cardStore = useCardStoreApi()
   const preferencesStore = usePreferencesStoreApi()
   const reward = useSessionReward()
-  const [progress, setProgress] = useState({ done: 0, total: 0 })
 
   const { decks, deck, settings, ready: decksReady } = useDeck(scope.deckId)
   const allCards = useCardStore(selectCards)
@@ -137,18 +129,11 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
 
   return (
     <SessionScreen>
-      <SessionHeader
-        title={title}
-        subtitle={subtitle}
-        progress={progress}
-        backLabel={t('study.goBack')}
-        onBack={back}
-        backIcon={<ChevronLeft className="size-5" aria-hidden />}
-      />
-
       <FlashcardsPanel
         key={`flashcards-${scope.deckId}`}
         cards={cards}
+        title={title}
+        subtitle={subtitle}
         prefs={studyPrefsFromSettings(settings)}
         algorithm={settings.algorithm}
         mode={mode}
@@ -164,7 +149,6 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
         }
         onGrade={handleGrade}
         onAnswer={handleAnswer}
-        onProgress={(done, total) => setProgress({ done, total })}
         onRestoreCard={(id, srs) => void restoreSchedule(cardStore, id, srs)}
         onToggleFlag={handleToggleFlag}
         onEditCard={(id, changes) => void editCard(cardStore, id, changes)}

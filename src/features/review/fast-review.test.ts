@@ -6,8 +6,9 @@ describe('reinsertAhead', () => {
     expect(reinsertAhead(['b', 'c', 'd', 'e', 'f'], 'a', 3)).toEqual(['b', 'c', 'd', 'a', 'e', 'f'])
   })
 
-  it('puts it last when the queue is shorter than the gap', () => {
-    expect(reinsertAhead(['b'], 'a', 4)).toEqual(['b', 'a'])
+  it('keeps a card behind it when the queue is shorter than the gap', () => {
+    expect(reinsertAhead(['b'], 'a', 4)).toEqual(['a', 'b'])
+    expect(reinsertAhead(['b', 'c'], 'a', 4)).toEqual(['b', 'a', 'c'])
   })
 
   it('still returns the card when the queue is empty — Not quite never retires a card', () => {

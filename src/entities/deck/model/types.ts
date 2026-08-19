@@ -113,8 +113,13 @@ export function validateDeckSettings(settings: Partial<DeckSettings>): void {
       throw new Error('Card text size must be between 14 and 40')
     }
   }
-  if (settings.tts && (settings.tts.rate < 0.5 || settings.tts.rate > 2)) {
-    throw new Error('Speech rate must be between 0.5 and 2')
+  if (settings.tts) {
+    if (!TTS_SIDES.includes(settings.tts.side)) {
+      throw new Error(`Unknown speech side: ${settings.tts.side}`)
+    }
+    if (settings.tts.rate < 0.5 || settings.tts.rate > 2) {
+      throw new Error('Speech rate must be between 0.5 and 2')
+    }
   }
 }
 

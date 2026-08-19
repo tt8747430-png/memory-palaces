@@ -1,9 +1,10 @@
 import { motion } from 'motion/react'
 import type { CardStyle } from '@/entities/deck'
 import type { StudyMode } from '@/entities/preferences'
-import { poseAt, recallAnswer } from '@/shared/lib'
+import { poseAt } from '@/shared/lib'
 import { FrontFace } from './faces'
 import { DEPTH_POSE, PROMOTION } from './deck-poses'
+import { studyFaces } from '../model/study-faces'
 import type { StudyCard, StudyDirection } from '../model/types'
 
 export interface QueuedCardProps {
@@ -31,8 +32,7 @@ export function QueuedCard({
   depth,
   reduce,
 }: QueuedCardProps) {
-  const prompt = direction === 'front' ? card.card.front : card.card.back
-  const answer = recallAnswer(prompt, direction === 'front' ? card.card.back : card.card.front)
+  const { prompt, answer } = studyFaces(card.card, direction)
 
   return (
     <motion.div

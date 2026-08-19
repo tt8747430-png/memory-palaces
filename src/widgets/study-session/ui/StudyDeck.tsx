@@ -2,13 +2,14 @@ import { useCallback, useRef, useState } from 'react'
 import { type HTMLMotionProps, motion, useReducedMotion } from 'motion/react'
 import type { CardStyle } from '@/entities/deck'
 import type { StudyMode } from '@/entities/preferences'
-import { EASE_EXPO, recallAnswer, STACK_DEPTH } from '@/shared/lib'
+import { EASE_EXPO, STACK_DEPTH } from '@/shared/lib'
 import type { FlashcardSwipeConfig, SwipeDirection } from '@/shared/config/flashcard-swipe'
 import { BackFace, type FaceProps, FrontFace, type MechanicHandlers } from './faces'
 import { DEPTH_POSE, PROMOTION } from './deck-poses'
 import { DirectionChip } from './DirectionChip'
 import { QueuedCard } from './QueuedCard'
 import { useCardSwipe } from '../model/use-card-swipe'
+import { studyFaces } from '../model/study-faces'
 import type { StudyCard, StudyDirection } from '../model/types'
 
 export type { SwipeDirection }
@@ -63,8 +64,7 @@ export function StudyDeck({
 }: StudyDeckProps) {
   const reduce = useReducedMotion()
   const cardEntity = card.card
-  const prompt = direction === 'front' ? cardEntity.front : cardEntity.back
-  const answer = recallAnswer(prompt, direction === 'front' ? cardEntity.back : cardEntity.front)
+  const { prompt, answer } = studyFaces(cardEntity, direction)
 
   const [solvedId, setSolvedId] = useState<string | null>(null)
   const solved = solvedId === cardEntity.id

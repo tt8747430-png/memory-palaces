@@ -6,13 +6,15 @@ export interface StudyOverview {
   isCaughtUp: boolean
 }
 
+/** A frozen card is not on offer, so it must not be counted as owed either. */
 export function studyOverview(
-  cards: ReadonlyArray<{ srs?: SrsState }>,
+  cards: ReadonlyArray<{ srs?: SrsState; frozen?: boolean }>,
   now: number,
 ): StudyOverview {
   const breakdown = { new: 0, learning: 0, known: 0 }
   let count = 0
   for (const card of cards) {
+    if (card.frozen) continue
     if (!isDue(card.srs, now)) continue
     count += 1
     breakdown[srsStatus(card.srs)] += 1

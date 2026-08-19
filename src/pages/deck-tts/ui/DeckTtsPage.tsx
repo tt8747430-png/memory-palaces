@@ -7,7 +7,7 @@ import {
   useDeck,
   useDeckStoreApi,
 } from '@/entities/deck'
-import { editDeck } from '@/features/deck'
+import { updateDeckSettings } from '@/features/deck'
 import { clamp, speak, speechAvailable } from '@/shared/lib'
 import {
   AppScreen,
@@ -64,7 +64,7 @@ export function DeckTtsPage({ deckId, onBack }: DeckTtsPageProps) {
   }
 
   const override = (patch: Partial<DeckSettings>) =>
-    void editDeck(deckStore, deckId, { settings: { ...deck.settings, ...patch } })
+    void updateDeckSettings(deckStore, deckId, patch)
 
   const { side, rate } = settings.tts
   const stepRate = (delta: number) =>

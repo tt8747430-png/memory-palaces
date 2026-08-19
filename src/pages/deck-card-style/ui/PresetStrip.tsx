@@ -19,7 +19,7 @@ export function PresetStrip({ style, value, onChange }: PresetStripProps) {
     <div
       role="radiogroup"
       aria-label={t('cardStyle.presets')}
-      className="-mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="-mx-5 -my-1.5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 py-1.5 scrollbar-hide"
     >
       {CARD_STYLE_PRESETS.map((preset) => {
         const selected = preset === value

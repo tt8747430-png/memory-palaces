@@ -88,8 +88,11 @@ export function DeckContentEditor({
   const [importOpen, setImportOpen] = useState(false)
   const [browserCardId, setBrowserCardId] = useState<string | null>(null)
   const [moveIds, setMoveIds] = useState<readonly string[] | null>(null)
-  const [actionsCardId, setActionsCardId] = useState<string | null>(null)
-  const [historyOpen, setHistoryOpen] = useState(false)
+  // One open sheet at a time, never a flag each — two booleans can both be true, and "history over
+  // actions" is not a state this surface has.
+  const [cardSheet, setCardSheet] = useState<
+    { kind: 'actions'; id: string } | { kind: 'history'; id: string } | null
+  >(null)
 
   const pending = usePendingAct<PendingCardAct>()
   const sortOptions = useContentSortOptions(CONTENT_SORTS)
@@ -123,7 +126,7 @@ export function DeckContentEditor({
 
   // A card can only live in a deck, so the picker offers decks; the decks the cards already sit in
   // are the only ones a move would achieve nothing from.
-  const actionsCard = actionsCardId ? cards.find((card) => card.id === actionsCardId) : undefined
+  const sheetCard = cardSheet ? cards.find((card) => card.id === cardSheet.id) : undefined
   const movingCards = moveIds ? cards.filter((card) => moveIds.includes(card.id)) : []
   const moveExcludeIds = new Set(movingCards.map((card) => card.deckId))
   const pickMoveTarget = (dest: MoveDestination) => {
@@ -161,14 +164,13 @@ export function DeckContentEditor({
       onToggleSelect={() => selection.toggle(card.id)}
       onRequestSelect={() => selection.begin(card.id)}
       onOpen={() => setBrowserCardId(card.id)}
-      onEdit={() => onEditCard(card.id)}
       onMove={() => setMoveIds([card.id])}
       onDuplicate={() => commands.duplicate(card.id)}
       onDelete={() => pending.request({ kind: 'delete-card', id: card.id })}
       onToggleFlag={() => commands.toggleFlag(card.id)}
       onMarkKnown={() => commands.markKnown(card.id)}
       onResetSrs={() => commands.resetSrs(card.id)}
-      onOpenActions={() => setActionsCardId(card.id)}
+      onOpenActions={() => setCardSheet({ kind: 'actions', id: card.id })}
       algorithm={algorithm}
     />
   )
@@ -235,39 +237,44 @@ export function DeckContentEditor({
 
       <CardFilterSheet filter={filter} counts={maturity} />
 
-      {actionsCard ? (
+      {sheetCard && cardSheet?.kind === 'actions' ? (
         <CardActionsSheet
-          card={actionsCard}
+          card={sheetCard}
           open
           onOpenChange={(open) => {
-            if (!open) setActionsCardId(null)
+            if (!open) setCardSheet(null)
           }}
           handlers={{
-            onSelect: () => selection.begin(actionsCard.id),
-            onEdit: () => onEditCard(actionsCard.id),
+            onSelect: () => selection.begin(sheetCard.id),
+            onEdit: () => onEditCard(sheetCard.id),
             onFreeze: () => {
-              void toggleCardFrozen(cardStore, actionsCard.id)
+              void toggleCardFrozen(cardStore, sheetCard.id)
               toast.success(
-                actionsCard.frozen ? t('cardActions.unfrozeToast') : t('cardActions.frozeToast'),
+                sheetCard.frozen ? t('cardActions.unfrozeToast') : t('cardActions.frozeToast'),
               )
             },
-            onMove: () => setMoveIds([actionsCard.id]),
+            onMove: () => setMoveIds([sheetCard.id]),
             onReverse: () => {
-              void toggleCardReversed(cardStore, actionsCard.id)
+              void toggleCardReversed(cardStore, sheetCard.id)
               toast.success(
-                actionsCard.reversed
+                sheetCard.reversed
                   ? t('cardActions.unreversedToast')
                   : t('cardActions.reversedToast'),
               )
             },
-            onDuplicate: () => commands.duplicate(actionsCard.id),
-            onHistory: () => setHistoryOpen(true),
-            onDelete: () => pending.request({ kind: 'delete-card', id: actionsCard.id }),
+            onDuplicate: () => commands.duplicate(sheetCard.id),
+            onHistory: () => setCardSheet({ kind: 'history', id: sheetCard.id }),
+            onDelete: () => pending.request({ kind: 'delete-card', id: sheetCard.id }),
           }}
         />
       ) : null}
 
-      <LearningHistorySheet open={historyOpen} onOpenChange={setHistoryOpen} />
+      <LearningHistorySheet
+        open={cardSheet?.kind === 'history'}
+        onOpenChange={(open) => {
+          if (!open) setCardSheet(null)
+        }}
+      />
 
       <MoveSheet
         open={moveIds !== null}

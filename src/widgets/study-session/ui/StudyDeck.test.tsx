@@ -109,3 +109,14 @@ describe('StudyDeck', () => {
     expect(modeButtons()).toBe(reachable)
   })
 })
+
+describe('StudyDeck reversed cards', () => {
+  it('asks a reversed card back-first even in a front-first deck', () => {
+    const reversed: StudyCard = {
+      ...studyCard('Prompt front', 'Answer back'),
+      card: { ...studyCard('Prompt front', 'Answer back').card, reversed: true },
+    }
+    renderWithProviders(<StudyDeck {...baseProps({ card: reversed, direction: 'front' })} />)
+    expect(screen.getByRole('heading', { name: 'Answer back' })).toBeInTheDocument()
+  })
+})

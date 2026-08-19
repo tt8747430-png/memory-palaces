@@ -29,12 +29,12 @@ Anything not **Works** carries what phase 2 owes it.
 
 ## Algorithm settings (`pages/deck-algorithm`)
 
-| Control           | Status    | Notes                                                                     |
-| ----------------- | --------- | ------------------------------------------------------------------------- |
-| Algorithm picker  | **Works** | Writes `settings.algorithm`; inherited by subdecks.                       |
-| New cards per day | **Works** | `buildStudyQueue` caps how many never-studied cards enter a spaced queue. |
-| Max cards per day | **Works** | Caps every queue, both algorithms; also caps the deck-detail count.       |
-| Shuffle cards     | **Works** | Shuffles the built queue.                                                 |
+| Control           | Status    | Notes                                                                   |
+| ----------------- | --------- | ----------------------------------------------------------------------- |
+| Algorithm picker  | **Works** | Writes `settings.algorithm`; inherited by subdecks.                     |
+| New cards per day | **Works** | Caps how many never-studied cards enter a queue, under both algorithms. |
+| Max cards per day | **Works** | Caps every queue, both algorithms; also caps the deck-detail count.     |
+| Shuffle cards     | **Works** | Shuffles the built queue.                                               |
 
 Under Fast review only Shuffle is shown — the daily limits and Advanced belong to the scheduler.
 
@@ -55,15 +55,15 @@ so itself, in `algorithm.advancedHint`.
 
 ## Card style (`pages/deck-card-style`)
 
-| Control          | Status    | Notes                                                                     |
-| ---------------- | --------- | ------------------------------------------------------------------------- |
-| Preset strip     | **Works** | Five presets; the study card wears the chosen one.                        |
-| Font             | **Works** | Four families, applied through `--card-style-font`.                       |
-| Text size        | **Works** | 14–40, stepped by 2, clamped by `clampCardTextSize`.                      |
-| Alignment        | **Works** | Left / centre / right.                                                    |
-| Live preview     | **Works** | Reads the same custom properties the study card does, so it cannot drift. |
-| Reset card style | **Works** | Restores `DEFAULT_CARD_STYLE`.                                            |
-| Haptics toggle   | **Works** | Writes the **global** preference, not a deck setting.                     |
+| Control          | Status    | Notes                                                                              |
+| ---------------- | --------- | ---------------------------------------------------------------------------------- |
+| Preset strip     | **Works** | Five presets; the study card wears the chosen one.                                 |
+| Font             | **Works** | Four families, applied through `--card-style-font`.                                |
+| Text size        | **Works** | 14–40, stepped by 2, clamped by `clampCardTextSize`.                               |
+| Alignment        | **Works** | Left / centre / right.                                                             |
+| Live preview     | **Works** | Shares `CARD_STYLE_SURFACE`/`CARD_STYLE_TEXT` with `CardFace`, so it cannot drift. |
+| Reset card style | **Works** | Restores `DEFAULT_CARD_STYLE`.                                                     |
+| Haptics toggle   | **Works** | Writes the **global** preference, not a deck setting.                              |
 
 `chalk`, `notebook` and `paper` are printed materials: their colours are fixed in both themes on
 purpose. `plain` and `outlined` follow the theme tokens.
@@ -72,31 +72,30 @@ purpose. `plain` and `outlined` follow the theme tokens.
 
 **Invented** — there was no reference screenshot for this page.
 
-| Control          | Status      | Phase 2 owes it                                                    |
-| ---------------- | ----------- | ------------------------------------------------------------------ |
-| Read cards aloud | **Works**   | The study session already speaks when this is on.                  |
-| What to read     | **UI only** | Stored as `tts.side`; the session still speaks both sides.         |
-| Speech rate      | **UI only** | Stored as `tts.rate`; `speak()` uses the platform default rate.    |
-| Test voice       | **Works**   | Speaks a sample through the same `speak()` the session uses.       |
-| No-voices state  | **Works**   | The whole page collapses to an explanation when there is no voice. |
+| Control          | Status      | Phase 2 owes it                                                          |
+| ---------------- | ----------- | ------------------------------------------------------------------------ |
+| Read cards aloud | **Works**   | The study session already speaks when this is on.                        |
+| What to read     | **UI only** | Validated and stored as `tts.side`; the session still speaks both sides. |
+| Speech rate      | **UI only** | Stored as `tts.rate`; `speak()` uses the platform default rate.          |
+| Test voice       | **Works**   | Speaks a sample through the same `speak()` the session uses.             |
+| No-voices state  | **Works**   | The whole page collapses to an explanation when there is no voice.       |
 
 Phase 2: have `speak()` take the deck's `tts` and honour side and rate.
 
 ## Card actions sheet (`widgets/content-editor`)
 
-| Action            | Status      | Notes                                                              |
-| ----------------- | ----------- | ------------------------------------------------------------------ |
-| Select            | **Works**   | Enters multi-select on that card.                                  |
-| Edit              | **Works**   | Opens the card editor.                                             |
-| Freeze/Unfreeze   | **Works**   | A frozen card is excluded from every queue and every count.        |
-| Move              | **Works**   | Existing move flow.                                                |
-| Reverse/Unreverse | **UI only** | Persists `reversed` and chips the row; **the session ignores it**. |
-| Duplicate         | **Works**   | Existing command.                                                  |
-| Learning history  | **UI only** | There is no review log to draw. The sheet says so.                 |
-| Delete            | **Works**   | Confirms first.                                                    |
+| Action            | Status      | Notes                                                                             |
+| ----------------- | ----------- | --------------------------------------------------------------------------------- |
+| Select            | **Works**   | Enters multi-select on that card.                                                 |
+| Edit              | **Works**   | Opens the card editor.                                                            |
+| Freeze/Unfreeze   | **Works**   | Excluded from both queues and from both deck-detail study counts.                 |
+| Move              | **Works**   | Existing move flow.                                                               |
+| Reverse/Unreverse | **Works**   | The session asks a reversed card back-first, composing with the deck's direction. |
+| Duplicate         | **Works**   | Existing command.                                                                 |
+| Learning history  | **UI only** | There is no review log to draw. The sheet says so.                                |
+| Delete            | **Works**   | Confirms first.                                                                   |
 
-Phase 2 owes Reverse: `StudyDeck` must swap prompt and answer for a reversed card, independent of the
-deck's `studyDirection`. Phase 2 owes Learning history a review log — no table records reviews today.
+Phase 2 owes Learning history a review log — no table records reviews today.
 
 ## Deck detail (`pages/deck-detail`)
 
@@ -128,6 +127,10 @@ caught-up state is skipped rather than shown with a zero.
 
 Fast review is **complete**: it schedules nothing by design, so there is nothing left to build behind
 it. Its buckets are the only new scheduling state this phase persists.
+
+"Frozen … excluded from every count" means the two study counts on deck detail. **"Cards in deck (N)"
+is deck inventory and still counts frozen cards** — that is the number of cards the deck holds, not
+the number on offer.
 
 Spaced repetition is **unchanged**. The daily limits are real and shape the queue, but the intervals
 behind it still come from the existing `schedule()` with its built-in constants. Everything under

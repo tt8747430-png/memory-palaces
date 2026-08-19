@@ -10,7 +10,7 @@ import {
   usePreferencesStore,
   usePreferencesStoreApi,
 } from '@/entities/preferences'
-import { editDeck } from '@/features/deck'
+import { updateDeckSettings } from '@/features/deck'
 import { setPreferences } from '@/features/preferences'
 import {
   cardsInSubtree,
@@ -74,11 +74,44 @@ export function DeckDetailPage({
 
   const [now] = useState(() => Date.now())
   const fast = settings.algorithm === 'fast'
-  const spacedOverview = useMemo(() => studyOverview(subtreeCards, now), [subtreeCards, now])
-  const fastView = useMemo(
-    () => fastOverview(subtreeCards, settings.maxCardsPerDay),
-    [subtreeCards, settings.maxCardsPerDay],
-  )
+
+  /**
+   * One card, two faces. The algorithm decides what the number means and what the three stats are
+   * called; everything downstream just renders what it is handed.
+   */
+  const overview = useMemo(() => {
+    if (fast) {
+      const view = fastOverview(subtreeCards, settings.maxCardsPerDay)
+      return {
+        count: view.count,
+        countLabel: t(
+          view.count === 1 ? 'fastReview.cardsToStudy_one' : 'fastReview.cardsToStudy_other',
+          { count: view.count },
+        ),
+        stats: [
+          {
+            key: 'notStudied',
+            label: t('fastReview.notStudied'),
+            value: view.breakdown.notStudied,
+          },
+          { key: 'notQuite', label: t('fastReview.notQuite'), value: view.breakdown.notQuite },
+          { key: 'gotIt', label: t('fastReview.gotIt'), value: view.breakdown.gotIt },
+        ],
+      }
+    }
+    const view = studyOverview(subtreeCards, now)
+    return {
+      count: view.count,
+      countLabel: t(view.count === 1 ? 'study.cardsForTodayOne' : 'study.cardsForTodayOther', {
+        count: view.count,
+      }),
+      stats: [
+        { key: 'new', label: t('srs.new'), value: view.breakdown.new },
+        { key: 'learning', label: t('srs.learning'), value: view.breakdown.learning },
+        { key: 'known', label: t('srs.known'), value: view.breakdown.known },
+      ],
+    }
+  }, [fast, subtreeCards, settings.maxCardsPerDay, now, t])
 
   const prefs = usePreferencesStore(selectEffectivePreferences)
   const setContentSort = (value: ContentSort) =>
@@ -130,59 +163,19 @@ export function DeckDetailPage({
         {!selection.active ? (
           <AlgorithmLine
             value={settings.algorithm}
-            onChange={(algorithm) =>
-              void editDeck(deckStore, deckId, { settings: { ...deck.settings, algorithm } })
-            }
+            onChange={(algorithm) => void updateDeckSettings(deckStore, deckId, { algorithm })}
           />
         ) : null}
 
         {hasContent && !selection.active ? (
-          fast ? (
-            <StudyOverviewCard
-              variant="fast"
-              count={fastView.count}
-              countLabel={t(
-                fastView.count === 1
-                  ? 'fastReview.cardsToStudy_one'
-                  : 'fastReview.cardsToStudy_other',
-                { count: fastView.count },
-              )}
-              stats={[
-                {
-                  key: 'notStudied',
-                  label: t('fastReview.notStudied'),
-                  value: fastView.breakdown.notStudied,
-                },
-                {
-                  key: 'notQuite',
-                  label: t('fastReview.notQuite'),
-                  value: fastView.breakdown.notQuite,
-                },
-                { key: 'gotIt', label: t('fastReview.gotIt'), value: fastView.breakdown.gotIt },
-              ]}
-              onStudy={() => onStudy?.()}
-            />
-          ) : (
-            <StudyOverviewCard
-              variant="spaced"
-              count={spacedOverview.count}
-              countLabel={t(
-                spacedOverview.count === 1 ? 'study.cardsForTodayOne' : 'study.cardsForTodayOther',
-                { count: spacedOverview.count },
-              )}
-              stats={[
-                { key: 'new', label: t('srs.new'), value: spacedOverview.breakdown.new },
-                {
-                  key: 'learning',
-                  label: t('srs.learning'),
-                  value: spacedOverview.breakdown.learning,
-                },
-                { key: 'known', label: t('srs.known'), value: spacedOverview.breakdown.known },
-              ]}
-              onStudy={() => onStudy?.()}
-              onStudyAhead={onStudy}
-            />
-          )
+          <StudyOverviewCard
+            variant={settings.algorithm}
+            count={overview.count}
+            countLabel={overview.countLabel}
+            stats={overview.stats}
+            onStudy={() => onStudy?.()}
+            onStudyAhead={fast ? undefined : onStudy}
+          />
         ) : null}
 
         {(hasContent || questions.length > 0) && !selection.active ? (

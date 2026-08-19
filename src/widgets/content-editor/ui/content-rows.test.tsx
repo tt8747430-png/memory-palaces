@@ -33,7 +33,6 @@ function cardProps(
     onToggleSelect: vi.fn(),
     onRequestSelect: vi.fn(),
     onOpen: vi.fn(),
-    onEdit: vi.fn(),
     onMove: vi.fn(),
     onDuplicate: vi.fn(),
     onDelete: vi.fn(),

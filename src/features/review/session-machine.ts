@@ -1,8 +1,10 @@
 import type { Grade } from '@/shared/lib'
 import type { FastOutcome } from '@/entities/card'
+import type { LearningAlgorithm } from '@/entities/deck'
 import { reinsertAhead } from './fast-review'
 
-export type SessionMode = 'spaced' | 'fast'
+/** A session runs the deck's algorithm; there is no second vocabulary for the same choice. */
+export type SessionMode = LearningAlgorithm
 
 export interface Piles {
   learning: number

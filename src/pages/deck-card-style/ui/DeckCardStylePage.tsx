@@ -25,7 +25,7 @@ import {
   usePreferencesStore,
   usePreferencesStoreApi,
 } from '@/entities/preferences'
-import { editDeck } from '@/features/deck'
+import { updateDeckSettings } from '@/features/deck'
 import { setPreferences } from '@/features/preferences'
 import { clampCardTextSize } from '@/shared/lib'
 import {
@@ -80,9 +80,7 @@ export function DeckCardStylePage({ deckId, onBack }: DeckCardStylePageProps) {
   const style = settings.cardStyle
 
   const write = (patch: Partial<CardStyle>) =>
-    void editDeck(deckStore, deckId, {
-      settings: { ...deck.settings, cardStyle: { ...style, ...patch } },
-    })
+    void updateDeckSettings(deckStore, deckId, { cardStyle: { ...style, ...patch } })
 
   const step = (delta: number) => write({ textSize: clampCardTextSize(style.textSize + delta) })
 

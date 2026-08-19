@@ -7,6 +7,7 @@ import { cn, srsStatus } from '@/shared/lib'
 import { GradeButtons } from '@/shared/ui'
 import type { Grade } from '@/shared/lib'
 import { FastReviewFooter } from './FastReviewFooter'
+import { SessionFooterShell } from './SessionFooterShell'
 
 export type RemainingTally = Record<SrsStatus, number>
 
@@ -48,7 +49,7 @@ export function SessionFooter({
   }
 
   return (
-    <div className="shrink-0 border-t border-border/60 bg-card-glass px-5 pb-[max(0.875rem,env(safe-area-inset-bottom))] pt-2.5">
+    <SessionFooterShell>
       <div className="h-14">
         <AnimatePresence initial={false} mode="wait">
           {flipped ? (
@@ -76,7 +77,7 @@ export function SessionFooter({
           )}
         </AnimatePresence>
       </div>
-    </div>
+    </SessionFooterShell>
   )
 }
 

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { ArrowLeftRight, Flag, Lightbulb, MapPin, Snowflake } from 'lucide-react'
 import type { Card } from '@/entities/card'
 import type { LearningAlgorithm } from '@/entities/deck'
-import { buildMenuActions, Chip, SrsStatusChip } from '@/shared/ui'
+import { Chip, SrsStatusChip } from '@/shared/ui'
 import { ContentRow, type RowFrameProps, RowIndex } from './ContentRow'
 
 export interface CardRowProps extends RowFrameProps {
@@ -11,7 +11,6 @@ export interface CardRowProps extends RowFrameProps {
   index: number
   algorithm: LearningAlgorithm
   onOpen: () => void
-  onEdit: () => void
   onMove: () => void
   onDuplicate: () => void
   onDelete: () => void
@@ -25,7 +24,6 @@ export function CardRow({
   card,
   index,
   algorithm,
-  onEdit,
   onMove,
   onDuplicate,
   onDelete,
@@ -38,24 +36,9 @@ export function CardRow({
   const { t } = useTranslation()
   const flagLabel = card.flagged ? t('cards.row.unflag') : t('cards.row.flag')
 
-  const menuActions = buildMenuActions(
-    ['edit', 'move', 'duplicate', 'flag', 'known', 'reset', 'delete'],
-    {
-      edit: { onAction: onEdit },
-      move: { onAction: onMove },
-      duplicate: { onAction: onDuplicate },
-      flag: { onAction: onToggleFlag, label: flagLabel },
-      known: { onAction: onMarkKnown },
-      reset: { onAction: onResetSrs },
-      delete: { onAction: onDelete },
-    },
-    t,
-  )
-
   return (
     <ContentRow
       {...frame}
-      menuActions={menuActions}
       onOpenActions={onOpenActions}
       swipeHandlers={{
         move: { onAction: onMove },

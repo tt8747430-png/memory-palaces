@@ -111,6 +111,9 @@ Every Deck follows exactly one, inherited down the Deck tree by `resolveDeckSett
   conflate. In learner-facing copy `known` reads **Mastered**; the field name stays `known`.
 - **"algorithm"** — a **Learning algorithm** is the Deck-level choice (Fast review / Spaced repetition). The SRS
   scheduler itself is the **SRS**. Never call the scheduler "the algorithm".
+- **"preset"** — in _code and types_ an algorithm is never a "preset"; a **preset** is one of the five Card style
+  skins. The Deck settings row is labelled "Algorithm preset" because the design spec fixes that string — the label is
+  the exception, not the rule.
 - **Not quite / Got it vs grades** — the two fast-review answers are _not_ Grades; they never touch `srs`. They live
   on the Card as `fastReview`, and Reset progress clears them alongside the schedule.
 - **"scope"** — **Study scope** = which Deck (`StudyScope`, `MatchScope`); **Study filter** = which of its Cards (

@@ -63,6 +63,7 @@ function renderPanel(
     return (
       <FlashcardsPanel
         cards={cards}
+        title="Forum"
         prefs={{ ...DEFAULT_PREFS, ...overrides.prefs }}
         algorithm={overrides.algorithm ?? 'spaced'}
         mode={mode}
@@ -234,5 +235,18 @@ describe('FlashcardsPanel under fast review', () => {
     await tap(/show answer/i)
     await tap('Got it')
     expect(onAnswer).toHaveBeenCalledWith('a', 'gotIt')
+  })
+})
+
+describe('FlashcardsPanel progress header', () => {
+  it('derives the count from the session rather than being told it', async () => {
+    renderPanel([studyCard('a'), studyCard('b')])
+    expect(await screen.findByText('/2')).toBeInTheDocument()
+    expect(screen.getByTestId('session-progress-fill')).toHaveStyle({ width: '0%' })
+    await tap(/show answer/i)
+    await tap(/good/i)
+    await waitFor(() =>
+      expect(screen.getByTestId('session-progress-fill')).toHaveStyle({ width: '50%' }),
+    )
   })
 })

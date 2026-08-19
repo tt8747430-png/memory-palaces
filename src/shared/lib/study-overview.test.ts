@@ -28,6 +28,13 @@ describe('studyOverview', () => {
   })
 })
 
+describe('studyOverview frozen cards', () => {
+  it('never counts a frozen card as due', () => {
+    const due = { srs: undefined }
+    expect(studyOverview([due, { srs: undefined, frozen: true }], NOW).count).toBe(1)
+  })
+})
+
 describe('fastOverview', () => {
   it('counts the three buckets', () => {
     const cards = [{}, { fastReview: 'notQuite' as const }, { fastReview: 'gotIt' as const }]

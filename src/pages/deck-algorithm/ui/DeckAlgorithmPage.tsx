@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronRight, Layers, Shuffle, Sliders } from 'lucide-react'
 import { type DeckSettings, useDeck, useDeckStoreApi } from '@/entities/deck'
-import { editDeck } from '@/features/deck'
+import { updateDeckSettings } from '@/features/deck'
 import { AlgorithmSheet, ALGORITHM_META } from '@/widgets/algorithm'
 import { AppScreen, Button, ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui'
 import { NumberRow } from './NumberRow'
@@ -30,7 +30,7 @@ export function DeckAlgorithmPage({ deckId, onBack, onOpenAdvanced }: DeckAlgori
   }
 
   const override = (patch: Partial<DeckSettings>) =>
-    void editDeck(deckStore, deckId, { settings: { ...deck.settings, ...patch } })
+    void updateDeckSettings(deckStore, deckId, patch)
 
   const meta = ALGORITHM_META[settings.algorithm]
   const spaced = settings.algorithm === 'spaced'

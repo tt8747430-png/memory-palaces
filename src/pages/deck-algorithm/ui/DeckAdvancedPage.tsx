@@ -9,7 +9,7 @@ import {
   useDeck,
   useDeckStoreApi,
 } from '@/entities/deck'
-import { editDeck } from '@/features/deck'
+import { updateDeckSettings } from '@/features/deck'
 import { AppScreen, PromptSheet, ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui'
 import { NumberRow } from './NumberRow'
 
@@ -48,7 +48,7 @@ export function DeckAdvancedPage({ deckId, onBack }: DeckAdvancedPageProps) {
   }
 
   const override = (patch: Partial<DeckSettings>) =>
-    void editDeck(deckStore, deckId, { settings: { ...deck.settings, ...patch } })
+    void updateDeckSettings(deckStore, deckId, patch)
 
   const advance = (patch: Partial<SpacedAdvanced>) =>
     override({ advanced: { ...settings.advanced, ...patch } })

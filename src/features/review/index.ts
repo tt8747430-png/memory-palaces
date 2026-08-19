@@ -5,7 +5,6 @@ export {
   buildStudyQueue,
   studyFilterCounts,
   studyFiltersEqual,
-  shuffleFirstDue,
   type QueueOptions,
   type StudyFilter,
   type StudyFilterCounts,

@@ -1,6 +1,7 @@
 export { createDeck, createSubdeck } from './create-deck'
 export type { CreateDeckInput } from './create-deck'
 export { editDeck, reorderDecks, requireDeck } from './deck-commands'
+export { updateDeckSettings } from './update-deck-settings'
 export { deleteDeck } from './delete-deck'
 export { duplicateDeck } from './duplicate-deck'
 export { toggleDeckFavorite } from './toggle-favorite'

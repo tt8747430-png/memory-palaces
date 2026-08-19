@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { AnimatePresence } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-import { Check } from 'lucide-react'
+import { Check, ChevronLeft } from 'lucide-react'
 import type { FastOutcome } from '@/entities/card'
 import type { LearningAlgorithm } from '@/entities/deck'
 import type { StudyMode } from '@/entities/preferences'
@@ -13,7 +13,6 @@ import {
   canUndo,
   currentId,
   initSession,
-  type SessionMode,
   sessionReducer,
   type StudyFilter,
   studyFilterCounts as computeFilterCounts,
@@ -24,7 +23,9 @@ import {
   isGradeAction,
   type SwipeDirection,
 } from '@/shared/config/flashcard-swipe'
+import { SessionHeader } from '@/shared/ui'
 import { CardDraftSheet } from '@/widgets/content-editor'
+import { studyFaces } from '../model/study-faces'
 import { useStudySettings } from '../model/use-study-settings'
 import { StudyDeck } from './StudyDeck'
 import { EmptyQueue } from './EmptyQueue'
@@ -49,9 +50,10 @@ export interface FlashcardsPanelProps {
   onModeChange?: (mode: StudyMode) => void
   onWordSpacesChange?: (value: boolean) => void
   onShakeToUndoChange?: (value: boolean) => void
+  title: string
+  subtitle?: string
   onGrade: (cardId: string, grade: Grade) => void
   onAnswer?: (cardId: string, outcome: FastOutcome) => void
-  onProgress?: (done: number, total: number) => void
   onRestoreCard?: (cardId: string, srs: SrsState | undefined) => void
   onToggleFlag?: (cardId: string) => void
   onEditCard?: (cardId: string, changes: CardChanges) => void
@@ -77,9 +79,10 @@ export function FlashcardsPanel({
   onModeChange,
   onWordSpacesChange,
   onShakeToUndoChange,
+  title,
+  subtitle,
   onGrade,
   onAnswer,
-  onProgress,
   onRestoreCard,
   onToggleFlag,
   onEditCard,
@@ -119,8 +122,6 @@ export function FlashcardsPanel({
   })
   const activeSwipe = settings.value.swipe
 
-  const sessionMode: SessionMode = algorithm === 'fast' ? 'fast' : 'spaced'
-
   const buildIds = (activeFilter: StudyFilter): string[] =>
     buildStudyQueue(applyStudyFilter(cardEntities, activeFilter, now), {
       now,
@@ -131,7 +132,7 @@ export function FlashcardsPanel({
     })
 
   const [state, dispatch] = useReducer(sessionReducer, undefined, () =>
-    initSession({ ids: buildIds({ kind: 'all' }), mode: sessionMode }),
+    initSession({ ids: buildIds({ kind: 'all' }), mode: algorithm }),
   )
 
   const undoTrail = useRef<UndoEntry[]>([])
@@ -140,7 +141,7 @@ export function FlashcardsPanel({
     undoTrail.current = []
     dispatch({
       type: 'reset',
-      state: initSession({ ids: buildIds(activeFilter), mode: sessionMode }),
+      state: initSession({ ids: buildIds(activeFilter), mode: algorithm }),
     })
   }
 
@@ -164,14 +165,6 @@ export function FlashcardsPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [completed])
 
-  const graded = state.graded
-  useEffect(() => {
-    onProgress?.(graded, state.total)
-    // The page only wants the numbers, so this fires on the numbers — not on the callback's
-    // identity, which changes on every render of the page above.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [graded, state.total])
-
   const id = currentId(state)
   const card = id ? byId.get(id) : undefined
   const upcoming = upcomingIds(state, 2)
@@ -181,8 +174,9 @@ export function FlashcardsPanel({
 
   const canEdit = Boolean(onEditCard || onToggleFlag)
 
-  const prompt = card ? (prefs.direction === 'front' ? card.card.front : card.card.back) : ''
-  const answer = card ? (prefs.direction === 'front' ? card.card.back : card.card.front) : ''
+  const faces = card ? studyFaces(card.card, prefs.direction) : undefined
+  const prompt = faces?.prompt ?? ''
+  const answer = faces?.answer ?? ''
 
   // Speak on the events worth speaking on — arriving at a card, turning it over — not whenever the
   // text changes. On `prompt`/`answer` an edit mid-card would re-read it aloud.
@@ -279,6 +273,15 @@ export function FlashcardsPanel({
 
   return (
     <>
+      <SessionHeader
+        title={title}
+        subtitle={subtitle}
+        progress={{ done: state.graded, total: state.total }}
+        backLabel={t('study.goBack')}
+        onBack={onBack}
+        backIcon={<ChevronLeft className="size-5" aria-hidden />}
+      />
+
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-5 py-3">
         {card ? (
           <StudyDeck

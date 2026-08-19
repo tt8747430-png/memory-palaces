@@ -10,6 +10,9 @@ export function reinsertAhead(
   id: string,
   ahead: number = REINSERT_AHEAD,
 ): string[] {
-  const at = Math.min(ahead, rest.length)
+  // Never last: a card the learner is still learning must come round again, so on a queue shorter
+  // than the gap it lands as early as it must to keep something behind it. Only an empty queue
+  // leaves it alone at the end, and then it is the whole queue.
+  const at = rest.length === 0 ? 0 : Math.min(ahead, rest.length - 1)
   return [...rest.slice(0, at), id, ...rest.slice(at)]
 }

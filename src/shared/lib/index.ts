@@ -4,6 +4,8 @@ export {
   CARD_ALIGNMENT_IDS,
   CARD_FONT_IDS,
   CARD_STYLE_PRESET_IDS,
+  CARD_STYLE_SURFACE,
+  CARD_STYLE_TEXT,
   clampCardTextSize,
   resolveCardStyle,
   MAX_CARD_TEXT_SIZE,

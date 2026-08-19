@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
 import type { CardStyle } from '@/entities/deck'
-import { cn, resolveCardStyle } from '@/shared/lib'
+import { CARD_STYLE_SURFACE, CARD_STYLE_TEXT, cn, resolveCardStyle } from '@/shared/lib'
 
 export interface StylePreviewProps {
   style: CardStyle
@@ -9,10 +9,6 @@ export interface StylePreviewProps {
   className?: string
   compact?: boolean
 }
-
-const TEXT =
-  '[color:var(--card-style-ink)] [font-family:var(--card-style-font)] ' +
-  '[font-size:var(--card-style-size)] [text-align:var(--card-style-align)] leading-snug'
 
 /**
  * The card as the learner will meet it, painted from the same custom properties the study card
@@ -24,19 +20,20 @@ export function StylePreview({ style, front, back, className, compact }: StylePr
     <div
       style={vars}
       className={cn(
-        'rounded-card-featured [background:var(--card-style-bg)] [border:var(--card-style-border)]',
+        'rounded-card-featured',
+        CARD_STYLE_SURFACE,
         compact ? 'p-3' : 'p-6',
         className,
       )}
     >
-      <p className={TEXT}>{front}</p>
+      <p className={cn(CARD_STYLE_TEXT, 'leading-snug')}>{front}</p>
       <hr
         className={cn(
           'border-0 border-t [border-color:var(--card-style-ink)] opacity-20',
           compact ? 'my-2' : 'my-4',
         )}
       />
-      <p className={TEXT}>{back}</p>
+      <p className={cn(CARD_STYLE_TEXT, 'leading-snug')}>{back}</p>
     </div>
   )
 }

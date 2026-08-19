@@ -2,13 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@/shared/api'
 import { started } from '@/shared/test/started'
 import { type Card, createCardStore, makeCard } from '@/entities/card'
-import {
-  clearDeckFastReview,
-  resetCardsSrs,
-  setCardFastReview,
-  toggleCardFrozen,
-  toggleCardReversed,
-} from './index'
+import { resetCardsSrs, setCardFastReview, toggleCardFrozen, toggleCardReversed } from './index'
 
 const card = (id: string, extra: Partial<Card> = {}): Card => ({
   ...makeCard({ id, createdAt: new Date(0).toISOString(), deckId: 'd1', front: id, back: 'b' }),
@@ -36,17 +30,6 @@ describe('card flags', () => {
     const store = storeWith(card('c1'))
     expect((await setCardFastReview(store, 'c1', 'notQuite')).fastReview).toBe('notQuite')
     expect((await setCardFastReview(store, 'c1', 'gotIt')).fastReview).toBe('gotIt')
-  })
-
-  it('clears the outcome across a deck', async () => {
-    const store = storeWith(
-      card('c1', { fastReview: 'gotIt' }),
-      card('c2', { fastReview: 'notQuite' }),
-    )
-    await clearDeckFastReview(store, ['c1', 'c2'])
-    for (const id of ['c1', 'c2']) {
-      expect(store.getState().cards.find((each) => each.id === id)?.fastReview).toBeUndefined()
-    }
   })
 
   it('resetting progress forgets the fast-review bucket too', async () => {

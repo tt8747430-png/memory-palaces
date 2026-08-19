@@ -4,7 +4,14 @@ import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Flag, Lightbulb, MapPin, SlidersHorizontal, Volume2 } from 'lucide-react'
 import type { StudyMode } from '@/entities/preferences'
-import { cn, resolveCardStyle, SCREEN_SCROLL, useKeyboardReveal } from '@/shared/lib'
+import {
+  CARD_STYLE_SURFACE,
+  CARD_STYLE_TEXT,
+  cn,
+  resolveCardStyle,
+  SCREEN_SCROLL,
+  useKeyboardReveal,
+} from '@/shared/lib'
 import { pillSurface } from '@/shared/ui'
 import { STUDY_MODE_META } from '../mode-meta'
 import { type FaceProps, stopPress } from './types'
@@ -75,7 +82,7 @@ export function CardFace({
       style={resolveCardStyle(cardStyle) as CSSProperties}
       className={cn(
         'absolute inset-0 flex flex-col rounded-card-featured shadow-elevated backface-hidden',
-        '[background:var(--card-style-bg)] [border:var(--card-style-border)]',
+        CARD_STYLE_SURFACE,
         back && 'transform-[rotateY(180deg)]',
       )}
       inert={!active}
@@ -107,8 +114,7 @@ export function CardFace({
             'flex w-full shrink-0 flex-col gap-3',
             // Only the card's own words follow the deck's style; the chrome around them keeps the
             // app's tokens so a dark preset never swallows a control.
-            '[color:var(--card-style-ink)] [font-family:var(--card-style-font)]',
-            '[font-size:var(--card-style-size)] [text-align:var(--card-style-align)]',
+            CARD_STYLE_TEXT,
             align === 'center' ? 'my-auto' : 'mb-auto pt-1',
           )}
         >

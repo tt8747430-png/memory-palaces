@@ -3,6 +3,7 @@ import {
   DEFAULT_CARD_STYLE,
   DEFAULT_DECK_SETTINGS,
   type LearningAlgorithm,
+  type TtsSide,
   makeDeck,
   updateDeck,
   validateDeckSettings,
@@ -106,6 +107,12 @@ describe('deck settings', () => {
   it('rejects a speech rate outside 0.5–2', () => {
     expect(() => validateDeckSettings({ tts: { side: 'both', rate: 3 } })).toThrow(
       'Speech rate must be between 0.5 and 2',
+    )
+  })
+
+  it('rejects an unknown speech side', () => {
+    expect(() => validateDeckSettings({ tts: { side: 'sideways' as TtsSide, rate: 1 } })).toThrow(
+      'Unknown speech side: sideways',
     )
   })
 

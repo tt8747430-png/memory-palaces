@@ -86,6 +86,19 @@ const PRESETS: Record<CardStylePresetId, PresetSkin> = {
   },
 }
 
+/**
+ * The classes that consume the variables above. `CardFace`, the settings preview and the preset
+ * thumbnails all wear these, so the three cannot drift — the spec's "one implementation" is these
+ * two strings plus `resolveCardStyle`, not a shared component (the study card carries chrome a
+ * thumbnail must not).
+ */
+export const CARD_STYLE_SURFACE =
+  '[background:var(--card-style-bg)] [border:var(--card-style-border)]'
+
+export const CARD_STYLE_TEXT =
+  '[color:var(--card-style-ink)] [font-family:var(--card-style-font)] ' +
+  '[font-size:var(--card-style-size)] [text-align:var(--card-style-align)]'
+
 export function resolveCardStyle(style: CardStyleInput): CardStyleVars {
   const skin = PRESETS[style.preset]
   return {

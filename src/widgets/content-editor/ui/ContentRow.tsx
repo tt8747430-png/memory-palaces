@@ -37,7 +37,8 @@ export interface RowFrameProps {
 
 export interface ContentRowProps extends RowFrameProps {
   swipeHandlers: SwipeActionHandlers
-  menuActions: SheetAction[]
+  /** The flyout's actions. Omit when `onOpenActions` opens a sheet instead. */
+  menuActions?: SheetAction[]
   /**
    * Given, the row's overflow control opens this instead of the flyout — cards get a full sheet of
    * actions, questions keep the menu.
@@ -107,14 +108,14 @@ export function ContentRow({
           >
             <MoreVertical className="size-4.5" aria-hidden />
           </IconButton>
-        ) : (
+        ) : menuActions ? (
           <FlyoutMenu
             variant="tint"
             size="sm"
             label={t('cards.row.menuLabel')}
             actions={menuActions}
           />
-        )}
+        ) : null}
       </div>
     </motion.div>
   )
