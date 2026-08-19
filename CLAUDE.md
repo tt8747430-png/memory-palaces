@@ -98,6 +98,8 @@ the store from `useXStoreApi()` and pass it in. New mutation → new file + expo
   Settings → Developer ship in **all** builds on purpose — guard, don't delete, before 1.0 (`NEW_ARCHITECHTURE.md`
   T11.G).
 - **Mobile/PWA behavior** → [MOBILE_DESIGN](docs/MOBILE_DESIGN.md).
+- **Deck settings, algorithms, card styles** → [DECK_SETTINGS_UI_STATUS](docs/DECK_SETTINGS_UI_STATUS.md) for what is
+  real (Works / UI only / Invented), then the design spec. Don't build on a control the status doc calls stored-only.
 - **Naming anything** → [UBIQUITOUS_LANGUAGE](docs/UBIQUITOUS_LANGUAGE.md). "Session" = auth, never a study pass;
   `known` ≠ Memorized.
 

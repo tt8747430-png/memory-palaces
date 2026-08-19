@@ -21,9 +21,25 @@ Canonical terms for code, UI copy, commits, discussion. Grounded in `entities/*`
 | **Grade**       | `again` / `hard` / `good` / `easy`                     | score, rating       |
 | **Due**         | When a Card is next scheduled                          | next date           |
 | **Card status** | `new` / `learning` / `known`                           | state, level        |
+| **Mastered**    | The learner-facing word for SRS `known`                | Known, mastered-out |
 | **Mature**      | Interval ≥ 21 days                                     | mastered            |
 | **Memorized**   | **Manual** flag the learner sets — not the SRS `known` | known, done         |
 | **Flagged**     | Marked for later attention                             | starred, bookmarked |
+| **Frozen**      | Card held out of every queue until unfrozen            | paused, suspended   |
+| **Reversed**    | Card studied back → front, whatever the Deck says      | flipped, inverted   |
+
+## Learning algorithms
+
+Every Deck follows exactly one, inherited down the Deck tree by `resolveDeckSettings`.
+
+| Term                   | Means                                                            | Avoid                  |
+| ---------------------- | ---------------------------------------------------------------- | ---------------------- |
+| **Learning algorithm** | Which scheduler a Deck follows: Fast review or Spaced repetition | mode, preset, strategy |
+| **Fast review**        | No schedules; every unfrozen Card is always on offer             | quick mode, cram       |
+| **Spaced repetition**  | Intervals grow with recall; only Due Cards are offered           | SRS mode, SM-2         |
+| **Not quite**          | Fast-review answer: the Card returns later in the same pass      | again, wrong           |
+| **Got it**             | Fast-review answer: the Card retires from the pass               | good, correct          |
+| **Card style**         | A Deck's card look: preset, font, text size, alignment           | theme, skin            |
 
 ## Study modes
 
@@ -92,7 +108,11 @@ Canonical terms for code, UI copy, commits, discussion. Grounded in `entities/*`
   and _method of loci_ (`index.html`, the manifest, marketing surfaces). **Everything else ships
   Deck / Card / Question** — types, stores, routes, i18n keys, in-app copy, commits. A palace is never an entity.
 - **`known` vs Memorized** — `known` is SRS-derived from the interval; **Memorized** is a manual boolean. Don't
-  conflate.
+  conflate. In learner-facing copy `known` reads **Mastered**; the field name stays `known`.
+- **"algorithm"** — a **Learning algorithm** is the Deck-level choice (Fast review / Spaced repetition). The SRS
+  scheduler itself is the **SRS**. Never call the scheduler "the algorithm".
+- **Not quite / Got it vs grades** — the two fast-review answers are _not_ Grades; they never touch `srs`. They live
+  on the Card as `fastReview`, and Reset progress clears them alongside the schedule.
 - **"scope"** — **Study scope** = which Deck (`StudyScope`, `MatchScope`); **Study filter** = which of its Cards (
   `StudyFilter`); the Folder the Library browses is a Folder. Never a bare `Scope`.
 - **"filter"** — **Study filter** narrows a session's queue; **Card filter** narrows a Deck's list.

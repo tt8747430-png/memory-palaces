@@ -13,26 +13,37 @@ SETTINGS:
 3. remove the finish button from the settings.
 
 
-1. We need to refactor the whole flashcards settings and algorithms and deck settings using this examples
-2. We dont need ai features now as well as deck publishing or sharing, report deck and offline cards options.
 
-'/Users/kristianbraila/Downloads/new_settings/algorightSettings'
+
+
+1. We need to refactor the whole flashcards settings and algorithms and deck settings using this examples
+2. We need all the features and options, except ai features now as well as deck publishing or sharing, report deck and offline cards options. this is how the deck settings page will look now firstlty you neeedd to look at all of the settings pages and refactor our settings page completely and for now just make the ui to look like this and backend we will add in next phase. 
+
+'/Users/kristianbraila/Downloads/new_settings/IMG_2502.PNG'
+'/Users/kristianbraila/Downloads/new_settings/IMG_2600.PNG'
+
+1. we need the fast review and the general spaced repetition algorithms. this is the sheet that comes to chose the algorithm when the user clicks on the button in the algorithm settings
 '/Users/kristianbraila/Downloads/new_settings/algorightSettings/IMG_2596.PNG'
 '/Users/kristianbraila/Downloads/new_settings/algorightSettings/IMG_2598.PNG'
 '/Users/kristianbraila/Downloads/new_settings/algorightSettings/IMG_2599.PNG'
-'/Users/kristianbraila/Downloads/new_settings/cardsAndTheirActionsSheet' '
+
+2. thsi is the card and its actions sheet
 /Users/kristianbraila/Downloads/new_settings/cardsAndTheirActionsSheet/IMG_2486.PNG'
 '/Users/kristianbraila/Downloads/new_settings/cardsAndTheirActionsSheet/IMG_2487.PNG'
 '/Users/kristianbraila/Downloads/new_settings/cardsAndTheirActionsSheet/IMG_2488.PNG'
-'/Users/kristianbraila/Downloads/new_settings/cardstyles'
+
+3. we will also have a page for card styles
 '/Users/kristianbraila/Downloads/new_settings/cardstyles/IMG_2096.PNG'
-'/Users/kristianbraila/Downloads/new_settings/fast-review'
+
+4. this is how the page and cards will look when we choose fast review algorithm
 '/Users/kristianbraila/Downloads/new_settings/fast-review/IMG_2595.PNG'
 '/Users/kristianbraila/Downloads/new_settings/fast-review/IMG_2597.PNG'
-'/Users/kristianbraila/Downloads/new_settings/spaced_repetition'
-'/Users/kristianbraila/Downloads/new_settings/spaced_repetition/IMG_2500.PNG'
-'/Users/kristianbraila/Downloads/new_settings/IMG_2502.PNG'
-'/Users/kristianbraila/Downloads/new_settings/IMG_2600.PNG'
+
+5. this is how the page and cards will look when we choose spaced repetition algorithm
+
+/Users/kristianbraila/Downloads/new_settings/spaced_repetition/IMG_2500.PNG
+/Users/kristianbraila/Downloads/new_settings/spaced_repetition/IMG_2601.PNG
+
 
 FEATURES:
 
