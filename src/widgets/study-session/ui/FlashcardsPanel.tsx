@@ -1,17 +1,19 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { AnimatePresence } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-import { Check } from 'lucide-react'
+import { Check, MoreVertical } from 'lucide-react'
+import type { FastOutcome } from '@/entities/card'
+import type { LearningAlgorithm } from '@/entities/deck'
 import type { StudyMode } from '@/entities/preferences'
 import type { SrsState } from '@/shared/lib'
 import { speak, speechAvailable, srsStatus, success, tick, useShake } from '@/shared/lib'
 import {
   applyStudyFilter,
+  buildStudyQueue,
   canUndo,
   currentId,
   initSession,
   sessionReducer,
-  shuffleFirstDue,
   type StudyFilter,
   studyFilterCounts as computeFilterCounts,
   upcomingIds,
@@ -21,7 +23,9 @@ import {
   isGradeAction,
   type SwipeDirection,
 } from '@/shared/config/flashcard-swipe'
+import { IconButton, SessionHeader } from '@/shared/ui'
 import { CardDraftSheet } from '@/widgets/content-editor'
+import { studyFaces } from '../model/study-faces'
 import { useStudySettings } from '../model/use-study-settings'
 import { StudyDeck } from './StudyDeck'
 import { EmptyQueue } from './EmptyQueue'
@@ -36,6 +40,7 @@ import type { CardChanges, Grade, SessionSummary, StudyCard, StudyPrefs } from '
 export interface FlashcardsPanelProps {
   cards: StudyCard[]
   prefs: StudyPrefs
+  algorithm: LearningAlgorithm
   mode: StudyMode
   wordSpaces: boolean
   shakeToUndo: boolean
@@ -45,7 +50,10 @@ export interface FlashcardsPanelProps {
   onModeChange?: (mode: StudyMode) => void
   onWordSpacesChange?: (value: boolean) => void
   onShakeToUndoChange?: (value: boolean) => void
+  title: string
+  subtitle?: string
   onGrade: (cardId: string, grade: Grade) => void
+  onAnswer?: (cardId: string, outcome: FastOutcome) => void
   onRestoreCard?: (cardId: string, srs: SrsState | undefined) => void
   onToggleFlag?: (cardId: string) => void
   onEditCard?: (cardId: string, changes: CardChanges) => void
@@ -61,6 +69,7 @@ type UndoEntry = { cardId: string; prevSrs: SrsState | undefined } | null
 export function FlashcardsPanel({
   cards,
   prefs,
+  algorithm,
   mode,
   wordSpaces,
   shakeToUndo,
@@ -70,7 +79,10 @@ export function FlashcardsPanel({
   onModeChange,
   onWordSpacesChange,
   onShakeToUndoChange,
+  title,
+  subtitle,
   onGrade,
+  onAnswer,
   onRestoreCard,
   onToggleFlag,
   onEditCard,
@@ -111,17 +123,26 @@ export function FlashcardsPanel({
   const activeSwipe = settings.value.swipe
 
   const buildIds = (activeFilter: StudyFilter): string[] =>
-    shuffleFirstDue(applyStudyFilter(cardEntities, activeFilter, now), now, prefs.shuffle)
+    buildStudyQueue(applyStudyFilter(cardEntities, activeFilter, now), {
+      now,
+      algorithm,
+      shuffle: prefs.shuffle,
+      newCardsPerDay: prefs.newCardsPerDay,
+      maxCardsPerDay: prefs.maxCardsPerDay,
+    })
 
   const [state, dispatch] = useReducer(sessionReducer, undefined, () =>
-    initSession({ ids: buildIds({ kind: 'all' }) }),
+    initSession({ ids: buildIds({ kind: 'all' }), mode: algorithm }),
   )
 
   const undoTrail = useRef<UndoEntry[]>([])
 
   const rebuild = (activeFilter: StudyFilter) => {
     undoTrail.current = []
-    dispatch({ type: 'reset', state: initSession({ ids: buildIds(activeFilter) }) })
+    dispatch({
+      type: 'reset',
+      state: initSession({ ids: buildIds(activeFilter), mode: algorithm }),
+    })
   }
 
   const completed = state.status === 'complete'
@@ -153,8 +174,9 @@ export function FlashcardsPanel({
 
   const canEdit = Boolean(onEditCard || onToggleFlag)
 
-  const prompt = card ? (prefs.direction === 'front' ? card.card.front : card.card.back) : ''
-  const answer = card ? (prefs.direction === 'front' ? card.card.back : card.card.front) : ''
+  const faces = card ? studyFaces(card.card, prefs.direction) : undefined
+  const prompt = faces?.prompt ?? ''
+  const answer = faces?.answer ?? ''
 
   // Speak on the events worth speaking on — arriving at a card, turning it over — not whenever the
   // text changes. On `prompt`/`answer` an edit mid-card would re-read it aloud.
@@ -176,6 +198,13 @@ export function FlashcardsPanel({
     undoTrail.current.push({ cardId: id, prevSrs: card.card.srs })
     onGrade(id, grade)
     dispatch({ type: 'grade', grade })
+  }
+
+  const applyAnswer = (outcome: FastOutcome) => {
+    if (!id || !card) return
+    undoTrail.current.push({ cardId: id, prevSrs: card.card.srs })
+    onAnswer?.(id, outcome)
+    dispatch({ type: 'answer', outcome })
   }
 
   const applySkip = () => {
@@ -244,11 +273,31 @@ export function FlashcardsPanel({
 
   return (
     <>
+      <SessionHeader
+        title={title}
+        subtitle={subtitle}
+        progress={{ done: state.graded, total: state.total }}
+        backLabel={t('study.goBack')}
+        onBack={onBack}
+        action={
+          card ? (
+            <IconButton
+              variant="glass"
+              aria-label={t('study.options')}
+              onClick={() => setGearOpen(true)}
+            >
+              <MoreVertical className="size-5" aria-hidden />
+            </IconButton>
+          ) : undefined
+        }
+      />
+
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-5 py-3">
         {card ? (
           <StudyDeck
             key={mode}
             card={card}
+            cardStyle={prefs.cardStyle}
             upcoming={upcoming}
             mode={mode}
             direction={prefs.direction}
@@ -279,10 +328,13 @@ export function FlashcardsPanel({
       {card ? (
         <SessionFooter
           flipped={flipped}
+          mode={state.mode}
           srs={card.card.srs}
           now={now}
           remaining={remaining}
+          buckets={state.buckets}
           onGrade={applyGrade}
+          onAnswer={applyAnswer}
         />
       ) : null}
 
@@ -302,6 +354,7 @@ export function FlashcardsPanel({
           open={gearOpen}
           onClose={() => setGearOpen(false)}
           mode={mode}
+          algorithm={algorithm}
           canSpeak={canSpeak}
           quick={quick}
           settings={settings}

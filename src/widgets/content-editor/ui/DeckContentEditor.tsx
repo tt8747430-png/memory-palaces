@@ -3,9 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Plus, Trash2, Upload } from 'lucide-react'
 import { type Card, selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
-import { selectDecks, useDeckStore } from '@/entities/deck'
+import { type LearningAlgorithm, selectDecks, useDeckStore } from '@/entities/deck'
 import { selectFolders, useFolderStore } from '@/entities/folder'
-import { reorderCards } from '@/features/card'
+import { reorderCards, toggleCardFrozen, toggleCardReversed } from '@/features/card'
 import {
   type ContentSort,
   selectEffectivePreferences,
@@ -39,12 +39,15 @@ import { useImportDraft } from '../model/import-draft'
 import { CardBrowser } from './CardBrowser'
 import { CardFilterSheet, FilterButton } from './CardFilterSheet'
 import { EmptyCards, FilterEmpty, NoResults } from './CardListStates'
+import { CardActionsSheet } from './CardActionsSheet'
 import { CardRow } from './CardRow'
+import { LearningHistorySheet } from './LearningHistorySheet'
 import type { RowDragHandle } from './ContentRow'
 import { ReorderableList } from './ReorderableList'
 
 export interface DeckContentEditorProps {
   deckId: string
+  algorithm: LearningAlgorithm
   searchQuery?: string
   searching?: boolean
   onClearSearch?: () => void
@@ -59,6 +62,7 @@ export interface DeckContentEditorProps {
 
 export function DeckContentEditor({
   deckId,
+  algorithm,
   searchQuery,
   searching = false,
   onClearSearch,
@@ -84,6 +88,11 @@ export function DeckContentEditor({
   const [importOpen, setImportOpen] = useState(false)
   const [browserCardId, setBrowserCardId] = useState<string | null>(null)
   const [moveIds, setMoveIds] = useState<readonly string[] | null>(null)
+  // One open sheet at a time, never a flag each — two booleans can both be true, and "history over
+  // actions" is not a state this surface has.
+  const [cardSheet, setCardSheet] = useState<
+    { kind: 'actions'; id: string } | { kind: 'history'; id: string } | null
+  >(null)
 
   const pending = usePendingAct<PendingCardAct>()
   const sortOptions = useContentSortOptions(CONTENT_SORTS)
@@ -117,6 +126,7 @@ export function DeckContentEditor({
 
   // A card can only live in a deck, so the picker offers decks; the decks the cards already sit in
   // are the only ones a move would achieve nothing from.
+  const sheetCard = cardSheet ? cards.find((card) => card.id === cardSheet.id) : undefined
   const movingCards = moveIds ? cards.filter((card) => moveIds.includes(card.id)) : []
   const moveExcludeIds = new Set(movingCards.map((card) => card.deckId))
   const pickMoveTarget = (dest: MoveDestination) => {
@@ -154,19 +164,21 @@ export function DeckContentEditor({
       onToggleSelect={() => selection.toggle(card.id)}
       onRequestSelect={() => selection.begin(card.id)}
       onOpen={() => setBrowserCardId(card.id)}
-      onEdit={() => onEditCard(card.id)}
       onMove={() => setMoveIds([card.id])}
       onDuplicate={() => commands.duplicate(card.id)}
       onDelete={() => pending.request({ kind: 'delete-card', id: card.id })}
       onToggleFlag={() => commands.toggleFlag(card.id)}
       onMarkKnown={() => commands.markKnown(card.id)}
       onResetSrs={() => commands.resetSrs(card.id)}
+      onOpenActions={() => setCardSheet({ kind: 'actions', id: card.id })}
+      algorithm={algorithm}
     />
   )
 
   return (
     <div>
-      {!searching && !selectMode && total > 0 ? (
+      {/* Maturity is an SRS shape; fast review has no maturities to bar-chart. */}
+      {algorithm === 'spaced' && !searching && !selectMode && total > 0 ? (
         <div className="mb-3">
           <CardMaturityOverview total={total} counts={maturity} />
         </div>
@@ -224,6 +236,45 @@ export function DeckContentEditor({
       />
 
       <CardFilterSheet filter={filter} counts={maturity} />
+
+      {sheetCard && cardSheet?.kind === 'actions' ? (
+        <CardActionsSheet
+          card={sheetCard}
+          open
+          onOpenChange={(open) => {
+            if (!open) setCardSheet(null)
+          }}
+          handlers={{
+            onSelect: () => selection.begin(sheetCard.id),
+            onEdit: () => onEditCard(sheetCard.id),
+            onFreeze: () => {
+              void toggleCardFrozen(cardStore, sheetCard.id)
+              toast.success(
+                sheetCard.frozen ? t('cardActions.unfrozeToast') : t('cardActions.frozeToast'),
+              )
+            },
+            onMove: () => setMoveIds([sheetCard.id]),
+            onReverse: () => {
+              void toggleCardReversed(cardStore, sheetCard.id)
+              toast.success(
+                sheetCard.reversed
+                  ? t('cardActions.unreversedToast')
+                  : t('cardActions.reversedToast'),
+              )
+            },
+            onDuplicate: () => commands.duplicate(sheetCard.id),
+            onHistory: () => setCardSheet({ kind: 'history', id: sheetCard.id }),
+            onDelete: () => pending.request({ kind: 'delete-card', id: sheetCard.id }),
+          }}
+        />
+      ) : null}
+
+      <LearningHistorySheet
+        open={cardSheet?.kind === 'history'}
+        onOpenChange={(open) => {
+          if (!open) setCardSheet(null)
+        }}
+      />
 
       <MoveSheet
         open={moveIds !== null}

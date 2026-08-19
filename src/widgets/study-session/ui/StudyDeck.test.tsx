@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, screen } from '@testing-library/react'
 import { makeCard } from '@/entities/card'
+import { DEFAULT_CARD_STYLE } from '@/entities/deck'
 import { DEFAULT_FLASHCARD_SWIPE } from '@/shared/config/flashcard-swipe'
 import { renderWithProviders } from '@/shared/test/render-with-providers'
 import { StudyDeck } from './StudyDeck'
@@ -23,6 +24,7 @@ function baseProps(
 ): Parameters<typeof StudyDeck>[0] {
   return {
     card: studyCard('Prompt front', 'Answer back'),
+    cardStyle: DEFAULT_CARD_STYLE,
     mode: 'blur',
     direction: 'front',
     wordSpaces: false,
@@ -105,5 +107,16 @@ describe('StudyDeck', () => {
       <StudyDeck {...baseProps({ upcoming: [studyCard('Next up', 'b', 'c2')] })} />,
     )
     expect(modeButtons()).toBe(reachable)
+  })
+})
+
+describe('StudyDeck reversed cards', () => {
+  it('asks a reversed card back-first even in a front-first deck', () => {
+    const reversed: StudyCard = {
+      ...studyCard('Prompt front', 'Answer back'),
+      card: { ...studyCard('Prompt front', 'Answer back').card, reversed: true },
+    }
+    renderWithProviders(<StudyDeck {...baseProps({ card: reversed, direction: 'front' })} />)
+    expect(screen.getByRole('heading', { name: 'Answer back' })).toBeInTheDocument()
   })
 })

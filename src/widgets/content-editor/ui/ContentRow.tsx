@@ -1,11 +1,13 @@
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'motion/react'
+import { MoreVertical } from 'lucide-react'
 import { cn, useLongPress } from '@/shared/lib'
 import type { SwipeConfig } from '@/shared/config/swipe'
 import {
   buildSwipeActions,
   FlyoutMenu,
+  IconButton,
   SelectDot,
   type SheetAction,
   type SwipeActionHandlers,
@@ -33,9 +35,17 @@ export interface RowFrameProps {
   onOpen?: () => void
 }
 
+/**
+ * What the row's overflow control does. Cards open a full sheet of actions, questions keep the
+ * flyout — one or the other, never a pair of optional props that could both arrive.
+ */
+export type RowOverflow =
+  | { kind: 'menu'; actions: SheetAction[] }
+  | { kind: 'sheet'; onOpen: () => void }
+
 export interface ContentRowProps extends RowFrameProps {
   swipeHandlers: SwipeActionHandlers
-  menuActions: SheetAction[]
+  overflow: RowOverflow
   children: ReactNode
 }
 
@@ -47,7 +57,7 @@ export function ContentRow({
   dragging = false,
   swipe,
   swipeHandlers,
-  menuActions,
+  overflow,
   onToggleSelect,
   onRequestSelect,
   onOpen,
@@ -86,12 +96,25 @@ export function ContentRow({
           <SelectDot state={selected ? 'checked' : 'unchecked'} className="mt-0.5" />
         ) : null}
         <div className="min-w-0 flex-1">{children}</div>
-        {selectMode ? null : (
+        {selectMode ? null : overflow.kind === 'sheet' ? (
+          <IconButton
+            variant="tint"
+            size="sm"
+            aria-label={t('cards.row.menuLabel')}
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => {
+              event.stopPropagation()
+              overflow.onOpen()
+            }}
+          >
+            <MoreVertical className="size-4.5" aria-hidden />
+          </IconButton>
+        ) : (
           <FlyoutMenu
             variant="tint"
             size="sm"
             label={t('cards.row.menuLabel')}
-            actions={menuActions}
+            actions={overflow.actions}
           />
         )}
       </div>

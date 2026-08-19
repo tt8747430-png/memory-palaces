@@ -1,9 +1,17 @@
-import { type ReactNode, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Flag, Lightbulb, MapPin, SlidersHorizontal, Volume2 } from 'lucide-react'
 import type { StudyMode } from '@/entities/preferences'
-import { cn, SCREEN_SCROLL, useKeyboardReveal } from '@/shared/lib'
+import {
+  CARD_STYLE_SURFACE,
+  CARD_STYLE_TEXT,
+  cn,
+  resolveCardStyle,
+  SCREEN_SCROLL,
+  useKeyboardReveal,
+} from '@/shared/lib'
 import { pillSurface } from '@/shared/ui'
 import { STUDY_MODE_META } from '../mode-meta'
 import { type FaceProps, stopPress } from './types'
@@ -31,7 +39,7 @@ export function CardFace({
   footer,
   children,
 }: CardFaceProps) {
-  const { card, canSpeak, onSpeak, active, mode, onChangeMode, onOpenGear } = face
+  const { card, cardStyle, canSpeak, onSpeak, active, mode, onChangeMode, onOpenGear } = face
   const flagged = card.card.flagged
   const { t } = useTranslation()
   const bodyRef = useRef<HTMLDivElement | null>(null)
@@ -70,8 +78,11 @@ export function CardFace({
 
   return (
     <div
+      data-testid="card-face"
+      style={resolveCardStyle(cardStyle) as CSSProperties}
       className={cn(
-        'absolute inset-0 flex flex-col rounded-card-featured bg-card-glass shadow-elevated backface-hidden',
+        'absolute inset-0 flex flex-col rounded-card-featured shadow-elevated backface-hidden',
+        CARD_STYLE_SURFACE,
         back && 'transform-[rotateY(180deg)]',
       )}
       inert={!active}
@@ -101,6 +112,9 @@ export function CardFace({
           ref={contentRef}
           className={cn(
             'flex w-full shrink-0 flex-col gap-3',
+            // Only the card's own words follow the deck's style; the chrome around them keeps the
+            // app's tokens so a dark preset never swallows a control.
+            CARD_STYLE_TEXT,
             align === 'center' ? 'my-auto' : 'mb-auto pt-1',
           )}
         >

@@ -1,5 +1,22 @@
 export { cn } from './cn'
+export { FAST_OUTCOMES, type FastOutcome } from './fast-outcome'
 export { clamp, clamp01, percentOf } from './number'
+export {
+  CARD_ALIGNMENT_IDS,
+  CARD_FONT_IDS,
+  CARD_STYLE_PRESET_IDS,
+  CARD_STYLE_SURFACE,
+  CARD_STYLE_TEXT,
+  clampCardTextSize,
+  resolveCardStyle,
+  MAX_CARD_TEXT_SIZE,
+  MIN_CARD_TEXT_SIZE,
+  type CardAlignmentId,
+  type CardFontId,
+  type CardStyleInput,
+  type CardStylePresetId,
+  type CardStyleVars,
+} from './card-style'
 export {
   authEntrance,
   authRise,
@@ -178,7 +195,12 @@ export {
   type RecallSlotKind,
   type RecallTypingResult,
 } from './recall'
-export { studyOverview, type StudyOverview } from './study-overview'
+export {
+  fastOverview,
+  studyOverview,
+  type FastOverview,
+  type StudyOverview,
+} from './study-overview'
 export { nextDefaultName } from './naming'
 export { useOptimisticPatch, orderPatch } from './use-optimistic-patch'
 export { usePendingAct, type PendingAct } from './use-pending-act'

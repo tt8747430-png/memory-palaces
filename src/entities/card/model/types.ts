@@ -1,4 +1,7 @@
-import type { Entity, SrsState } from '@/shared/lib'
+import type { Entity, FastOutcome, SrsState } from '@/shared/lib'
+
+/** How a learner answered a card under Fast review. Absent means they have not seen it yet. */
+export type { FastOutcome }
 
 export interface Card extends Entity {
   deckId: string
@@ -9,6 +12,11 @@ export interface Card extends Entity {
   srs?: SrsState
   flagged: boolean
   memorized: boolean
+  /** Held out of every study queue until the learner unfreezes it. */
+  frozen: boolean
+  /** Studied back → front, whatever the deck's direction says. */
+  reversed: boolean
+  fastReview?: FastOutcome
   order: number
 }
 
@@ -23,6 +31,9 @@ export interface MakeCardInput {
   srs?: SrsState
   flagged?: boolean
   memorized?: boolean
+  frozen?: boolean
+  reversed?: boolean
+  fastReview?: FastOutcome
   order?: number
 }
 
@@ -46,6 +57,9 @@ export function makeCard(input: MakeCardInput): Card {
     srs: input.srs,
     flagged: input.flagged ?? false,
     memorized: input.memorized ?? false,
+    frozen: input.frozen ?? false,
+    reversed: input.reversed ?? false,
+    fastReview: input.fastReview,
     order,
   }
 }

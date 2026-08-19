@@ -25,6 +25,7 @@ function cardProps(
       back: 'Back text',
     }),
     index: 0,
+    algorithm: 'spaced',
     selectMode: false,
     selected: false,
     reorderable: false,
@@ -32,12 +33,12 @@ function cardProps(
     onToggleSelect: vi.fn(),
     onRequestSelect: vi.fn(),
     onOpen: vi.fn(),
-    onEdit: vi.fn(),
     onMove: vi.fn(),
     onDuplicate: vi.fn(),
     onDelete: vi.fn(),
     onToggleFlag: vi.fn(),
     onMarkKnown: vi.fn(),
+    onOpenActions: vi.fn(),
     onResetSrs: vi.fn(),
     ...overrides,
   }
@@ -59,34 +60,34 @@ describe('CardRow', () => {
     expect(onOpen).toHaveBeenCalledTimes(1)
   })
 
-  it('runs overflow menu actions', async () => {
+  it('opens the card actions sheet from the overflow control', async () => {
     const user = userEvent.setup()
-    const onEdit = vi.fn()
-    const onDelete = vi.fn()
-    renderWithProviders(<CardRow {...cardProps({ onEdit, onDelete })} />)
-
-    await user.click(screen.getByRole('button', { name: 'Card actions' }))
-    await user.click(await screen.findByRole('menuitem', { name: 'Edit' }))
-    expect(onEdit).toHaveBeenCalledTimes(1)
-
-    await user.click(screen.getByRole('button', { name: 'Card actions' }))
-    await user.click(await screen.findByRole('menuitem', { name: 'Delete' }))
-    expect(onDelete).toHaveBeenCalledTimes(1)
-  })
-
-  it('does not open or select the card when a menu action is chosen', async () => {
-    const user = userEvent.setup()
-    const onMove = vi.fn()
+    const onOpenActions = vi.fn()
     const onOpen = vi.fn()
     const onRequestSelect = vi.fn()
-    renderWithProviders(<CardRow {...cardProps({ onMove, onOpen, onRequestSelect })} />)
+    renderWithProviders(<CardRow {...cardProps({ onOpenActions, onOpen, onRequestSelect })} />)
 
     await user.click(screen.getByRole('button', { name: 'Card actions' }))
-    await user.click(await screen.findByRole('menuitem', { name: 'Move' }))
 
-    expect(onMove).toHaveBeenCalledTimes(1)
+    expect(onOpenActions).toHaveBeenCalledTimes(1)
     expect(onOpen).not.toHaveBeenCalled()
     expect(onRequestSelect).not.toHaveBeenCalled()
+  })
+
+  it('hides the SRS chip under fast review, where nothing is scheduled', () => {
+    renderWithProviders(<CardRow {...cardProps({ algorithm: 'spaced' })} />)
+    expect(screen.getByText('New')).toBeInTheDocument()
+    cleanup()
+    renderWithProviders(<CardRow {...cardProps({ algorithm: 'fast' })} />)
+    expect(screen.queryByText('New')).toBeNull()
+  })
+
+  it('chips a reversed and a frozen card', () => {
+    renderWithProviders(
+      <CardRow {...cardProps({ card: { ...cardProps().card, reversed: true, frozen: true } })} />,
+    )
+    expect(screen.getByText('Reversed')).toBeInTheDocument()
+    expect(screen.getByText('Frozen')).toBeInTheDocument()
   })
 
   it('toggles selection in select mode and shows the flag indicator', async () => {

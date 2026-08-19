@@ -15,6 +15,7 @@ import {
   WholeWord,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import type { LearningAlgorithm } from '@/entities/deck'
 import type { StudyMode } from '@/entities/preferences'
 import { cn, motionSupported, requestMotionPermission } from '@/shared/lib'
 import { Button, Combobox, type ComboboxOption, pillSurface, Sheet, ToggleRow } from '@/shared/ui'
@@ -34,6 +35,7 @@ export interface GearSheetProps {
   open: boolean
   onClose: () => void
   mode: StudyMode
+  algorithm: LearningAlgorithm
   canSpeak: boolean
   quick: QuickActionsModel
   settings: StudySettingsControl
@@ -63,6 +65,7 @@ export function GearSheet({
   open,
   onClose,
   mode,
+  algorithm,
   canSpeak,
   quick,
   settings,
@@ -93,13 +96,19 @@ export function GearSheet({
     { value: 'back', label: t('study.orientationDefinition') },
   ]
 
-  const filters: { filter: StudyFilter; label: string; count: number }[] = (
-    ['all', 'due', 'new', 'learning', 'flagged'] as const
-  ).map((kind) => ({
-    filter: { kind },
-    label: t(`study.filter${kind[0]!.toUpperCase()}${kind.slice(1)}` as never),
-    count: filterCounts[kind],
-  }))
+  // Fast review schedules nothing, so "due" would name a state no card in the session can be in.
+  const filterKinds =
+    algorithm === 'fast'
+      ? (['all', 'new', 'learning', 'flagged'] as const)
+      : (['all', 'due', 'new', 'learning', 'flagged'] as const)
+
+  const filters: { filter: StudyFilter; label: string; count: number }[] = filterKinds.map(
+    (kind) => ({
+      filter: { kind },
+      label: t(`study.filter${kind[0]!.toUpperCase()}${kind.slice(1)}` as never),
+      count: filterCounts[kind],
+    }),
+  )
 
   return (
     <Sheet

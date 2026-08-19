@@ -1,5 +1,31 @@
-export type { Deck, DeckSettings, StudyDirection, MakeDeckInput, DeckChanges } from './model/types'
-export { makeDeck, updateDeck, DEFAULT_DECK_SETTINGS } from './model/types'
+export type {
+  Deck,
+  DeckSettings,
+  StudyDirection,
+  MakeDeckInput,
+  DeckChanges,
+  LearningAlgorithm,
+  CardStyle,
+  CardStylePreset,
+  CardFont,
+  CardAlignment,
+  TtsSide,
+  TtsSettings,
+  SpacedAdvanced,
+} from './model/types'
+export {
+  makeDeck,
+  updateDeck,
+  validateDeckSettings,
+  DEFAULT_DECK_SETTINGS,
+  DEFAULT_CARD_STYLE,
+  DEFAULT_SPACED_ADVANCED,
+  LEARNING_ALGORITHMS,
+  CARD_STYLE_PRESETS,
+  CARD_FONTS,
+  CARD_ALIGNMENTS,
+  TTS_SIDES,
+} from './model/types'
 export { DECK_COLOR_OPTIONS, DEFAULT_DECK_ICON, DEFAULT_DECK_COLOR } from './model/appearance'
 export type { DeckColorOption } from './model/appearance'
 export { createDeckStore } from './model/store'

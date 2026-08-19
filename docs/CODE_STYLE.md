@@ -96,6 +96,11 @@ v4, two-layer tokens: primitives (`--p-navy-900`…) → semantic roles (`--prim
 - **Semantic tokens, not raw values.** `bg-primary`, `text-heading`, `rounded-control`, `shadow-rest` — not
   `bg-[#091A7A]`, not `p-[16px]`. No alias yet → CSS var.
 - **Dark mode is automatic** (`[data-theme='dark']` remap). No scattered `dark:`, no hardcoded light/dark colors.
+  - **One sanctioned exception:** the `chalk` / `notebook` / `paper` card-style presets in
+    [`shared/lib/card-style.ts`](../src/shared/lib/card-style.ts). Those are _printed materials_ a learner picks, not
+    app chrome — slate, ruled paper and aged stock look the same under any theme, and remapping their ink would make
+    "chalk" mean something different in dark mode. They are literal by design and stay confined to that file's
+    `PRESETS` map. `plain` and `outlined` follow the tokens like everything else.
 - **Interactive elements need hover / `focus-visible` / `disabled` + `transition`.** Icon-only → `sr-only` label.
   `focus-visible:` over `focus:`.
 - **Mobile-first** — base = smallest screen, layer upward. Verify at phone width.

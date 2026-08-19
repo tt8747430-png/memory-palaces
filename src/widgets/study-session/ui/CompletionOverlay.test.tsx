@@ -13,7 +13,7 @@ describe('CompletionOverlay', () => {
     )
     expect(screen.getByRole('heading', { name: 'Session complete' })).toBeInTheDocument()
     expect(screen.getByText('8 cards reviewed')).toBeInTheDocument()
-    expect(screen.getByText('5 Known')).toBeInTheDocument()
+    expect(screen.getByText('5 Mastered')).toBeInTheDocument()
     expect(screen.getByText('3 Still learning')).toBeInTheDocument()
   })
 

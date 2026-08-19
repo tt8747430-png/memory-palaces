@@ -11,7 +11,7 @@ describe('CardMaturityOverview', () => {
       <CardMaturityOverview total={10} counts={{ new: 3, learning: 2, known: 5 }} />,
     )
     expect(screen.getByText('Cards in this deck (10)')).toBeInTheDocument()
-    const known = screen.getByText('Known').closest('li')
+    const known = screen.getByText('Mastered').closest('li')
     expect(known).toHaveTextContent('5')
   })
 

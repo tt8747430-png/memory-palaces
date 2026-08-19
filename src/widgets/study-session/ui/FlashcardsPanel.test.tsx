@@ -5,8 +5,9 @@ import userEvent from '@testing-library/user-event'
 import { MotionConfig } from 'motion/react'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
-import { makeCard } from '@/entities/card'
+import { type FastOutcome, makeCard } from '@/entities/card'
 import { DEFAULT_FLASHCARD_SWIPE_BY_MODE } from '@/shared/config/flashcard-swipe'
+import { DEFAULT_CARD_STYLE, type LearningAlgorithm } from '@/entities/deck'
 import type { StudyMode } from '@/entities/preferences'
 import { FlashcardsPanel } from './FlashcardsPanel'
 import type { Grade, StudyCard, StudyPrefs } from '../model/types'
@@ -15,7 +16,14 @@ afterEach(cleanup)
 
 const NOW = Date.UTC(2026, 0, 10)
 
-const DEFAULT_PREFS: StudyPrefs = { direction: 'front', shuffle: false, textToSpeech: false }
+const DEFAULT_PREFS: StudyPrefs = {
+  direction: 'front',
+  shuffle: false,
+  textToSpeech: false,
+  newCardsPerDay: 10,
+  maxCardsPerDay: 3000,
+  cardStyle: DEFAULT_CARD_STYLE,
+}
 
 async function tap(name: RegExp | string) {
   fireEvent.click(await screen.findByRole('button', { name }, { timeout: 3000 }))
@@ -42,6 +50,8 @@ function renderPanel(
     onComplete: () => void
     prefs: Partial<StudyPrefs>
     mode: StudyMode
+    algorithm: LearningAlgorithm
+    onAnswer: (id: string, outcome: FastOutcome) => void
   }> = {},
 ) {
   const onGrade = vi.fn(overrides.onGrade)
@@ -53,12 +63,15 @@ function renderPanel(
     return (
       <FlashcardsPanel
         cards={cards}
+        title="Forum"
         prefs={{ ...DEFAULT_PREFS, ...overrides.prefs }}
+        algorithm={overrides.algorithm ?? 'spaced'}
         mode={mode}
         wordSpaces
         shakeToUndo={false}
         swipeByMode={DEFAULT_FLASHCARD_SWIPE_BY_MODE}
         onGrade={onGrade}
+        onAnswer={overrides.onAnswer}
         onModeChange={(next) => {
           onModeChange(next)
           setMode(next)
@@ -197,5 +210,52 @@ describe('FlashcardsPanel', () => {
 
     expect(await screen.findByRole('button', { name: /good/i })).toBeInTheDocument()
     expect(screen.queryByText(/tap to see/i)).toBeNull()
+  })
+})
+
+describe('FlashcardsPanel under fast review', () => {
+  it('answers with Not quite and Got it instead of grades', async () => {
+    renderPanel([studyCard('a'), studyCard('b')], { algorithm: 'fast' })
+    await tap(/show answer/i)
+    expect(await screen.findByRole('button', { name: 'Not quite' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Got it' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^again$/i })).toBeNull()
+  })
+
+  it('grades as usual under spaced repetition', async () => {
+    renderPanel([studyCard('a'), studyCard('b')], { algorithm: 'spaced' })
+    await tap(/show answer/i)
+    expect(await screen.findByRole('button', { name: /again/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Not quite' })).toBeNull()
+  })
+
+  it('reports each answer to the page', async () => {
+    const onAnswer = vi.fn()
+    renderPanel([studyCard('a'), studyCard('b')], { algorithm: 'fast', onAnswer })
+    await tap(/show answer/i)
+    await tap('Got it')
+    expect(onAnswer).toHaveBeenCalledWith('a', 'gotIt')
+  })
+})
+
+describe('FlashcardsPanel progress header', () => {
+  it('derives the count from the session rather than being told it', async () => {
+    renderPanel([studyCard('a'), studyCard('b')])
+    expect(await screen.findByText('/2')).toBeInTheDocument()
+    expect(screen.getByTestId('session-progress-fill')).toHaveStyle({ width: '0%' })
+    await tap(/show answer/i)
+    await tap(/good/i)
+    await waitFor(() =>
+      expect(screen.getByTestId('session-progress-fill')).toHaveStyle({ width: '50%' }),
+    )
+  })
+})
+
+describe('FlashcardsPanel session header', () => {
+  it('opens the options sheet from the header', async () => {
+    renderPanel([studyCard('a')])
+    const headerOptions = await screen.findAllByRole('button', { name: 'Study options' })
+    fireEvent.click(headerOptions[0]!)
+    expect(await screen.findByText('This card')).toBeInTheDocument()
   })
 })

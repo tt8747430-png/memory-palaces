@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Settings } from 'lucide-react'
-import { useDeck } from '@/entities/deck'
+import { useDeck, useDeckStoreApi } from '@/entities/deck'
 import { selectCards, useCardStore } from '@/entities/card'
 import { questionsForDeck, selectQuestions, useQuestionStore } from '@/entities/question'
 import {
@@ -10,9 +10,12 @@ import {
   usePreferencesStore,
   usePreferencesStoreApi,
 } from '@/entities/preferences'
+import { updateDeckSettings } from '@/features/deck'
 import { setPreferences } from '@/features/preferences'
-import { cardsInSubtree, selectIsReady, studyOverview, useMultiSelect } from '@/shared/lib'
+import { cardsInSubtree, selectIsReady, useMultiSelect } from '@/shared/lib'
 import { DeckContentEditor } from '@/widgets/content-editor'
+import { useDeckOverview } from '../model/use-deck-overview'
+import { AlgorithmLine } from './AlgorithmLine'
 import { PracticeModes } from '@/widgets/practice-modes'
 import {
   AppScreen,
@@ -50,8 +53,9 @@ export function DeckDetailPage({
 }: DeckDetailPageProps) {
   const { t } = useTranslation()
   const prefStore = usePreferencesStoreApi()
+  const deckStore = useDeckStoreApi()
 
-  const { decks, deck, ready: decksReady } = useDeck(deckId)
+  const { decks, deck, settings, ready: decksReady } = useDeck(deckId)
   const allCards = useCardStore(selectCards)
   const allQuestions = useQuestionStore(selectQuestions)
   const cardsReady = useCardStore(selectIsReady)
@@ -64,7 +68,9 @@ export function DeckDetailPage({
   const questions = useMemo(() => questionsForDeck(allQuestions, deckId), [allQuestions, deckId])
 
   const [now] = useState(() => Date.now())
-  const overview = useMemo(() => studyOverview(subtreeCards, now), [subtreeCards, now])
+  const fast = settings.algorithm === 'fast'
+
+  const overview = useDeckOverview(subtreeCards, settings.algorithm, settings.maxCardsPerDay, now)
 
   const prefs = usePreferencesStore(selectEffectivePreferences)
   const setContentSort = (value: ContentSort) =>
@@ -113,12 +119,21 @@ export function DeckDetailPage({
       }
     >
       <div className="mt-2 space-y-4 pb-24">
+        {!selection.active ? (
+          <AlgorithmLine
+            value={settings.algorithm}
+            onChange={(algorithm) => void updateDeckSettings(deckStore, deckId, { algorithm })}
+          />
+        ) : null}
+
         {hasContent && !selection.active ? (
           <StudyOverviewCard
+            variant={settings.algorithm}
             count={overview.count}
-            breakdown={overview.breakdown}
+            countLabel={overview.countLabel}
+            stats={overview.stats}
             onStudy={() => onStudy?.()}
-            onStudyAhead={onStudy}
+            onStudyAhead={fast ? undefined : onStudy}
           />
         ) : null}
 
@@ -135,6 +150,7 @@ export function DeckDetailPage({
         <section aria-label={t('deck.cards')} className="space-y-3 pt-1">
           <DeckContentEditor
             deckId={deckId}
+            algorithm={settings.algorithm}
             selection={selection}
             sort={prefs.contentSort}
             onSortChange={setContentSort}

@@ -1,25 +1,55 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
+import type { FastOutcome } from '@/entities/card'
+import type { Buckets, SessionMode } from '@/features/review'
 import type { SrsState, SrsStatus } from '@/shared/lib'
 import { cn, srsStatus } from '@/shared/lib'
 import { GradeButtons } from '@/shared/ui'
 import type { Grade } from '@/shared/lib'
+import { FastReviewFooter } from './FastReviewFooter'
+import { SessionFooterShell } from './SessionFooterShell'
 
 export type RemainingTally = Record<SrsStatus, number>
 
 export interface SessionFooterProps {
   flipped: boolean
+  mode: SessionMode
   srs: SrsState | undefined
   now: number
   remaining: RemainingTally
+  buckets: Buckets
   onGrade: (grade: Grade) => void
+  onAnswer: (outcome: FastOutcome) => void
 }
 
-export function SessionFooter({ flipped, srs, now, remaining, onGrade }: SessionFooterProps) {
+export function SessionFooter({
+  flipped,
+  mode,
+  srs,
+  now,
+  remaining,
+  buckets,
+  onGrade,
+  onAnswer,
+}: SessionFooterProps) {
   const reduce = useReducedMotion()
   const crossfade = { duration: reduce ? 0 : 0.12 }
+
+  // Fast review has no schedule to grade against, so it gets its own two-answer bar rather than a
+  // disabled version of this one.
+  if (mode === 'fast') {
+    return (
+      <FastReviewFooter
+        flipped={flipped}
+        notQuite={buckets.notQuite.length}
+        gotIt={buckets.gotIt.length}
+        onAnswer={onAnswer}
+      />
+    )
+  }
+
   return (
-    <div className="shrink-0 border-t border-border/60 bg-card-glass px-5 pb-[max(0.875rem,env(safe-area-inset-bottom))] pt-2.5">
+    <SessionFooterShell>
       <div className="h-14">
         <AnimatePresence initial={false} mode="wait">
           {flipped ? (
@@ -47,7 +77,7 @@ export function SessionFooter({ flipped, srs, now, remaining, onGrade }: Session
           )}
         </AnimatePresence>
       </div>
-    </div>
+    </SessionFooterShell>
   )
 }
 

@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import type { SrsState } from '@/shared/lib'
 import { type Card, makeCard } from '@/entities/card'
-import { applyStudyFilter, studyFilterCounts, studyFiltersEqual } from './study-filter'
+import {
+  applyStudyFilter,
+  buildStudyQueue,
+  studyFilterCounts,
+  studyFiltersEqual,
+} from './study-filter'
 
 const NOW = Date.UTC(2026, 0, 10)
 const DAY = 86_400_000
@@ -83,5 +88,65 @@ describe('studyFiltersEqual', () => {
     expect(studyFiltersEqual({ kind: 'all' }, { kind: 'all' })).toBe(true)
     expect(studyFiltersEqual({ kind: 'all' }, { kind: 'due' })).toBe(false)
     expect(studyFiltersEqual({ kind: 'flagged' }, { kind: 'flagged' })).toBe(true)
+  })
+})
+
+describe('buildStudyQueue', () => {
+  const options = {
+    now: NOW,
+    algorithm: 'spaced' as const,
+    shuffle: false,
+    newCardsPerDay: 10,
+    maxCardsPerDay: 3000,
+  }
+
+  it('never queues a frozen card', () => {
+    const cards = [card('a'), { ...card('b'), frozen: true }]
+    expect(buildStudyQueue(cards, options)).toEqual(['a'])
+  })
+
+  it('caps the queue at the daily maximum', () => {
+    const cards = Array.from({ length: 12 }, (_, i) => card(`c${i}`))
+    expect(buildStudyQueue(cards, { ...options, maxCardsPerDay: 5 })).toHaveLength(5)
+  })
+
+  it('limits how many never-studied cards enter', () => {
+    const cards = Array.from({ length: 12 }, (_, i) => card(`n${i}`))
+    expect(buildStudyQueue(cards, { ...options, newCardsPerDay: 3 })).toHaveLength(3)
+  })
+
+  it('lets due cards through beyond the new-card limit', () => {
+    const overdue = card('due', srs({ due: new Date(NOW - DAY).toISOString(), reps: 3 }))
+    const cards = [overdue, card('n1'), card('n2')]
+    expect(buildStudyQueue(cards, { ...options, newCardsPerDay: 1 })).toHaveLength(2)
+  })
+
+  it('offers every unfrozen card under fast review, ignoring schedules', () => {
+    const future = card('f', srs({ due: new Date(NOW + 90 * DAY).toISOString(), interval: 90 }))
+    const cards = [future, card('a')]
+    expect(buildStudyQueue(cards, { ...options, algorithm: 'fast' })).toEqual(['f', 'a'])
+  })
+
+  it('ignores the new-card allowance under fast review — the count must match the queue', () => {
+    const cards = Array.from({ length: 9 }, (_, i) => card(`n${i}`))
+    expect(
+      buildStudyQueue(cards, { ...options, algorithm: 'fast', newCardsPerDay: 3 }),
+    ).toHaveLength(9)
+  })
+
+  it('falls back to every live card when nothing is due — this is Study ahead', () => {
+    const ahead = card('a', srs({ due: new Date(NOW + 30 * DAY).toISOString(), reps: 5 }))
+    const alsoAhead = card('b', srs({ due: new Date(NOW + 40 * DAY).toISOString(), reps: 6 }))
+    expect(buildStudyQueue([ahead, alsoAhead], options)).toEqual(['a', 'b'])
+  })
+
+  it('offers nothing when every card is frozen', () => {
+    expect(buildStudyQueue([{ ...card('a'), frozen: true }], options)).toEqual([])
+  })
+
+  it('caps fast review at the daily maximum too', () => {
+    const cards = Array.from({ length: 9 }, (_, i) => card(`c${i}`))
+    const queue = buildStudyQueue(cards, { ...options, algorithm: 'fast', maxCardsPerDay: 4 })
+    expect(queue).toHaveLength(4)
   })
 })

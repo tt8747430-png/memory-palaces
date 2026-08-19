@@ -18,6 +18,9 @@ import {
 } from './routes/auth-screens'
 import {
   CardEditorScreen,
+  DeckAdvancedScreen,
+  DeckAlgorithmScreen,
+  DeckCardStyleScreen,
   DeckDetailScreen,
   DeckImportScreen,
   DeckMatchScreen,
@@ -26,6 +29,7 @@ import {
   DeckQuizScreen,
   DeckSettingsScreen,
   DeckStudyScreen,
+  DeckTtsScreen,
   NewPasteScreen,
   QuestionEditorScreen,
 } from './routes/deck-screens'
@@ -136,6 +140,38 @@ const deckSettingsRoute = createRoute({
   path: ROUTES.deckSettings,
   component: function DeckSettings() {
     return <DeckSettingsScreen {...deckSettingsRoute.useParams()} />
+  },
+})
+
+const deckAlgorithmRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.deckAlgorithm,
+  component: function DeckAlgorithm() {
+    return <DeckAlgorithmScreen {...deckAlgorithmRoute.useParams()} />
+  },
+})
+
+const deckCardStyleRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.deckCardStyle,
+  component: function DeckCardStyle() {
+    return <DeckCardStyleScreen {...deckCardStyleRoute.useParams()} />
+  },
+})
+
+const deckTtsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.deckTts,
+  component: function DeckTts() {
+    return <DeckTtsScreen {...deckTtsRoute.useParams()} />
+  },
+})
+
+const deckAlgorithmAdvancedRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: ROUTES.deckAlgorithmAdvanced,
+  component: function DeckAdvanced() {
+    return <DeckAdvancedScreen {...deckAlgorithmAdvancedRoute.useParams()} />
   },
 })
 
@@ -328,6 +364,10 @@ const routeTree = rootRoute.addChildren([
   archivedRoute,
   deckDetailRoute,
   deckSettingsRoute,
+  deckAlgorithmRoute,
+  deckAlgorithmAdvancedRoute,
+  deckCardStyleRoute,
+  deckTtsRoute,
   deckStudyRoute,
   deckMatchRoute,
   deckQuizRoute,

@@ -2,7 +2,10 @@ import { useNavigate } from '@tanstack/react-router'
 import { CardEditorPage } from '@/pages/card-editor'
 import { DeckDetailPage } from '@/pages/deck-detail'
 import { DeckQuestionsPage } from '@/pages/deck-questions'
+import { DeckAdvancedPage, DeckAlgorithmPage } from '@/pages/deck-algorithm'
+import { DeckCardStylePage } from '@/pages/deck-card-style'
 import { DeckSettingsPage } from '@/pages/deck-settings'
+import { DeckTtsPage } from '@/pages/deck-tts'
 import { ImportReviewPage } from '@/pages/import-review'
 import { MatchPage } from '@/pages/match'
 import { PasteNotesPage } from '@/pages/paste-notes'
@@ -46,6 +49,51 @@ export function DeckSettingsScreen({ deckId }: { deckId: string }) {
       deckId={deckId}
       onBack={useBackToDeck(deckId)}
       onDeleted={() => navigate({ to: ROUTES.home })}
+      onOpenAlgorithm={() => navigate({ to: ROUTES.deckAlgorithm, params: { deckId } })}
+      onOpenCardStyle={() => navigate({ to: ROUTES.deckCardStyle, params: { deckId } })}
+      onOpenTts={() => navigate({ to: ROUTES.deckTts, params: { deckId } })}
+      onImportCards={() => navigate({ to: ROUTES.deckImport, params: { deckId } })}
+    />
+  )
+}
+
+export function DeckAlgorithmScreen({ deckId }: { deckId: string }) {
+  const navigate = useNavigate()
+  return (
+    <DeckAlgorithmPage
+      deckId={deckId}
+      onBack={useBack(() => void navigate({ to: ROUTES.deckSettings, params: { deckId } }))}
+      onOpenAdvanced={() => navigate({ to: ROUTES.deckAlgorithmAdvanced, params: { deckId } })}
+    />
+  )
+}
+
+export function DeckAdvancedScreen({ deckId }: { deckId: string }) {
+  const navigate = useNavigate()
+  return (
+    <DeckAdvancedPage
+      deckId={deckId}
+      onBack={useBack(() => void navigate({ to: ROUTES.deckAlgorithm, params: { deckId } }))}
+    />
+  )
+}
+
+export function DeckCardStyleScreen({ deckId }: { deckId: string }) {
+  const navigate = useNavigate()
+  return (
+    <DeckCardStylePage
+      deckId={deckId}
+      onBack={useBack(() => void navigate({ to: ROUTES.deckSettings, params: { deckId } }))}
+    />
+  )
+}
+
+export function DeckTtsScreen({ deckId }: { deckId: string }) {
+  const navigate = useNavigate()
+  return (
+    <DeckTtsPage
+      deckId={deckId}
+      onBack={useBack(() => void navigate({ to: ROUTES.deckSettings, params: { deckId } }))}
     />
   )
 }

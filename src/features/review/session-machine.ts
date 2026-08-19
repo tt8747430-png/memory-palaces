@@ -1,32 +1,49 @@
 import type { Grade } from '@/shared/lib'
+import type { FastOutcome } from '@/entities/card'
+import type { LearningAlgorithm } from '@/entities/deck'
+import { reinsertAhead } from './fast-review'
+
+/** A session runs the deck's algorithm; there is no second vocabulary for the same choice. */
+export type SessionMode = LearningAlgorithm
 
 export interface Piles {
   learning: number
   known: number
 }
 
+/** Which cards the learner has put where. Fast review counts cards, not answers. */
+export interface Buckets {
+  notQuite: string[]
+  gotIt: string[]
+}
+
 export interface Snapshot {
   queue: string[]
   graded: number
   piles: Piles
+  buckets: Buckets
   flipped: boolean
 }
 
 export interface ReviewState {
   status: 'review'
+  mode: SessionMode
   queue: string[]
   total: number
   graded: number
   piles: Piles
+  buckets: Buckets
   flipped: boolean
   history: Snapshot[]
 }
 
 export interface CompleteState {
   status: 'complete'
+  mode: SessionMode
   graded: number
   total: number
   piles: Piles
+  buckets: Buckets
   history: Snapshot[]
 }
 
@@ -37,6 +54,7 @@ export type SessionAction =
   | { type: 'reveal' }
   | { type: 'unflip' }
   | { type: 'grade'; grade: Grade }
+  | { type: 'answer'; outcome: FastOutcome }
   | { type: 'skip' }
   | { type: 'undo' }
   | { type: 'finish' }
@@ -44,15 +62,18 @@ export type SessionAction =
 
 export interface InitParams {
   ids: string[]
+  mode: SessionMode
 }
 
-export function initSession({ ids }: InitParams): SessionState {
+export function initSession({ ids, mode }: InitParams): SessionState {
   return {
     status: 'review',
+    mode,
     queue: ids,
     total: ids.length,
     graded: 0,
     piles: { learning: 0, known: 0 },
+    buckets: { notQuite: [], gotIt: [] },
     flipped: false,
     history: [],
   }
@@ -62,11 +83,32 @@ function isLearningGrade(grade: Grade): boolean {
   return grade === 'again' || grade === 'hard'
 }
 
+/** A card belongs to one bucket at a time, so moving it means dropping it from where it was. */
+function withId(ids: string[], id: string, present: boolean): string[] {
+  const without = ids.filter((each) => each !== id)
+  return present ? [...without, id] : without
+}
+
+/** Every route out of a session ends here, so a new field can only be forgotten once. */
+function complete(state: ReviewState, over: Partial<Omit<CompleteState, 'status'>>): CompleteState {
+  return {
+    status: 'complete',
+    mode: state.mode,
+    graded: state.graded,
+    total: state.total,
+    piles: state.piles,
+    buckets: state.buckets,
+    history: state.history,
+    ...over,
+  }
+}
+
 function snapshot(state: ReviewState): Snapshot {
   return {
     queue: state.queue,
     graded: state.graded,
     piles: state.piles,
+    buckets: state.buckets,
     flipped: state.flipped,
   }
 }
@@ -102,10 +144,25 @@ export function sessionReducer(state: SessionState, action: SessionAction): Sess
       }
       const graded = requeue ? state.graded : state.graded + 1
       const queue = requeue ? [...rest, current] : rest
-      if (queue.length === 0) {
-        return { status: 'complete', graded, total: state.total, piles, history }
-      }
+      if (queue.length === 0) return complete(state, { graded, piles, history })
       return { ...state, queue, graded, piles, flipped: false, history }
+    }
+
+    case 'answer': {
+      if (state.status !== 'review') return state
+      const current = state.queue[0]
+      if (current === undefined) return state
+      const history = [...state.history, snapshot(state)]
+      const rest = state.queue.slice(1)
+      const gotIt = action.outcome === 'gotIt'
+      const buckets: Buckets = {
+        notQuite: withId(state.buckets.notQuite, current, !gotIt),
+        gotIt: withId(state.buckets.gotIt, current, gotIt),
+      }
+      const queue = gotIt ? rest : reinsertAhead(rest, current)
+      const graded = gotIt ? state.graded + 1 : state.graded
+      if (queue.length === 0) return complete(state, { graded, buckets, history })
+      return { ...state, queue, graded, buckets, flipped: false, history }
     }
 
     case 'skip': {
@@ -124,27 +181,19 @@ export function sessionReducer(state: SessionState, action: SessionAction): Sess
       if (!last) return state
       return {
         status: 'review',
+        mode: state.mode,
         queue: last.queue,
         total: state.total,
         graded: last.graded,
         piles: last.piles,
+        buckets: last.buckets,
         flipped: last.flipped,
         history: state.history.slice(0, -1),
       }
     }
 
-    case 'finish': {
-      if (state.status === 'review') {
-        return {
-          status: 'complete',
-          graded: state.graded,
-          total: state.total,
-          piles: state.piles,
-          history: state.history,
-        }
-      }
-      return state
-    }
+    case 'finish':
+      return state.status === 'review' ? complete(state, {}) : state
 
     case 'reset':
       return action.state

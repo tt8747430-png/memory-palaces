@@ -11,6 +11,25 @@ import {
 
 const OPEN_GUARD_MS = 500
 
+type ActionSheetVariant = 'plain' | 'filled'
+
+/** Complete static strings per variant — Tailwind can't see a built-up class name (§4, §5). */
+const ROW_VARIANT: Record<ActionSheetVariant, string> = {
+  plain: 'h-12 rounded-control px-3',
+  filled: 'mb-1.5 h-14 rounded-card bg-info-surface px-4',
+}
+
+const ROW_TONE: Record<ActionSheetVariant, { default: string; destructive: string }> = {
+  plain: {
+    default: 'text-heading hover:bg-info-surface',
+    destructive: 'text-(--danger-on-surface) hover:bg-(--danger-surface)',
+  },
+  filled: {
+    default: 'text-heading hover:bg-info-surface',
+    destructive: 'bg-(--danger-surface) text-(--danger-on-surface)',
+  },
+}
+
 export interface SheetAction {
   id: string
   label: string
@@ -27,7 +46,12 @@ export interface ActionSheetProps {
   title: ReactNode
   description?: ReactNode
   actions: SheetAction[]
-  cancelLabel: string
+  /** Omit to close the sheet by gesture alone — a card's actions need no Cancel row. */
+  cancelLabel?: string
+  /** The title still names the sheet for assistive tech; it just stops taking up a line. */
+  hideTitle?: boolean
+  /** `filled` gives every action its own tinted row, the way the card actions sheet reads. */
+  variant?: ActionSheetVariant
 }
 
 export function ActionSheet({
@@ -37,6 +61,8 @@ export function ActionSheet({
   description,
   actions,
   cancelLabel,
+  hideTitle = false,
+  variant = 'plain',
 }: ActionSheetProps) {
   const openedAt = useRef(0)
   useEffect(() => {
@@ -64,26 +90,31 @@ export function ActionSheet({
     >
       <DrawerContent className="px-4 pt-2">
         <DrawerHandle className="mt-1" />
-        <div className="px-2 pt-3 pb-1">
-          <DrawerTitle>{title}</DrawerTitle>
-          {description ? <DrawerDescription>{description}</DrawerDescription> : null}
-        </div>
+        {hideTitle ? (
+          <DrawerTitle className="sr-only">{title}</DrawerTitle>
+        ) : (
+          <div className="px-2 pt-3 pb-1">
+            <DrawerTitle>{title}</DrawerTitle>
+            {description ? <DrawerDescription>{description}</DrawerDescription> : null}
+          </div>
+        )}
 
-        <div className="mt-1 flex flex-col gap-0.5 pb-2">
+        <div className={cn('flex flex-col gap-0.5 pb-2', hideTitle ? 'mt-3' : 'mt-1')}>
           {actions.map((action) => (
             <button
               key={action.id}
               type="button"
               disabled={action.disabled}
+              aria-current={action.selected ? 'true' : undefined}
               onClick={() => select(action)}
               className={cn(
-                'flex h-12 items-center gap-3 rounded-control px-3 text-left',
+                'flex items-center gap-3 text-left',
                 'text-(length:--p-text-body) font-medium',
                 'transition-transform duration-150 ease-out active:scale-[0.99]',
                 'disabled:pointer-events-none disabled:opacity-50',
-                action.destructive
-                  ? 'text-(--danger-on-surface) hover:bg-(--danger-surface)'
-                  : 'text-heading hover:bg-info-surface',
+                ROW_VARIANT[variant],
+                ROW_TONE[variant][action.destructive ? 'destructive' : 'default'],
+                action.selected && 'text-accent',
               )}
             >
               {action.icon ? (
@@ -96,15 +127,17 @@ export function ActionSheet({
           ))}
         </div>
 
-        <DrawerClose
-          className={cn(
-            'mb-1 flex h-12 items-center justify-center rounded-control bg-info-surface',
-            'text-(length:--p-text-body) font-semibold text-heading',
-            'transition-transform duration-150 ease-out active:scale-[0.99]',
-          )}
-        >
-          {cancelLabel}
-        </DrawerClose>
+        {cancelLabel ? (
+          <DrawerClose
+            className={cn(
+              'mb-1 flex h-12 items-center justify-center rounded-control bg-info-surface',
+              'text-(length:--p-text-body) font-semibold text-heading',
+              'transition-transform duration-150 ease-out active:scale-[0.99]',
+            )}
+          >
+            {cancelLabel}
+          </DrawerClose>
+        ) : null}
       </DrawerContent>
     </Drawer>
   )

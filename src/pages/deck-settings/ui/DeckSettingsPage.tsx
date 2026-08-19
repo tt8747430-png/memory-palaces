@@ -4,25 +4,32 @@ import { toast } from 'sonner'
 import {
   Archive,
   ArchiveRestore,
+  ChevronRight,
   Copy,
   Download,
   FileText,
+  FolderInput,
   MapPin,
+  Palette,
   Pencil,
   RotateCcw,
+  Speech,
   Trash2,
+  Upload,
 } from 'lucide-react'
 import { useDeck, useDeckStoreApi } from '@/entities/deck'
 import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
-import { cardsInSubtree } from '@/shared/lib'
-import { deleteDeck, duplicateDeck, editDeck, setDeckArchived } from '@/features/deck'
+import { selectFolders, useFolderStore } from '@/entities/folder'
+import { cardsInSubtree, subtreeDeckIds } from '@/shared/lib'
+import { deleteDeck, duplicateDeck, moveDeck, setDeckArchived } from '@/features/deck'
 import { resetDeckSrs } from '@/features/card'
 import { exportCardsAnki, exportCardsCsv } from '@/features/content'
+import { ALGORITHM_META } from '@/widgets/algorithm'
+import { MoveSheet } from '@/widgets/deck-tree'
 import {
   ActionSheet,
   AppScreen,
   ConfirmDialog,
-  DeckCover,
   ScreenHeader,
   SettingsRow,
   SettingsSection,
@@ -33,18 +40,34 @@ export interface DeckSettingsPageProps {
   deckId: string
   onBack?: () => void
   onDeleted?: () => void
+  onOpenAlgorithm?: () => void
+  onOpenCardStyle?: () => void
+  onOpenTts?: () => void
+  onImportCards?: () => void
 }
 
-export function DeckSettingsPage({ deckId, onBack, onDeleted }: DeckSettingsPageProps) {
+export function DeckSettingsPage({
+  deckId,
+  onBack,
+  onDeleted,
+  onOpenAlgorithm,
+  onOpenCardStyle,
+  onOpenTts,
+  onImportCards,
+}: DeckSettingsPageProps) {
   const { t } = useTranslation()
   const deckStore = useDeckStoreApi()
   const cardStore = useCardStoreApi()
 
   const { decks, deck, settings, ready } = useDeck(deckId)
+  const folders = useFolderStore(selectFolders)
   const allCards = useCardStore(selectCards)
   const cards = useMemo(() => cardsInSubtree(decks, allCards, deckId), [decks, allCards, deckId])
+  // A deck cannot be moved inside its own subtree, so every deck under it is off the table.
+  const moveExcludeIds = useMemo(() => new Set(subtreeDeckIds(decks, deckId)), [decks, deckId])
 
   const [appearanceOpen, setAppearanceOpen] = useState(false)
+  const [moveOpen, setMoveOpen] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
   const [resetOpen, setResetOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -59,14 +82,13 @@ export function DeckSettingsPage({ deckId, onBack, onDeleted }: DeckSettingsPage
     )
   }
 
-  const override = (patch: Partial<typeof settings>) =>
-    void editDeck(deckStore, deckId, { settings: { ...deck.settings, ...patch } })
-
   const runExport = (run: () => void) => {
     setExportOpen(false)
     run()
     toast.success(t('deckSettings.toast.exported'))
   }
+
+  const algorithm = ALGORITHM_META[settings.algorithm]
 
   return (
     <AppScreen
@@ -84,53 +106,58 @@ export function DeckSettingsPage({ deckId, onBack, onDeleted }: DeckSettingsPage
       <div className="mt-4 flex flex-col gap-6 pb-8">
         <button
           type="button"
-          onClick={() => setAppearanceOpen(true)}
-          aria-label={t('deckSettings.editAppearance')}
-          className="flex items-center gap-3.5 rounded-card bg-card p-4 text-left shadow-rest transition-transform active:scale-[0.99]"
+          onClick={onOpenAlgorithm}
+          className="flex items-center gap-3.5 rounded-card bg-info-surface p-4 text-left transition-transform active:scale-[0.99]"
         >
-          <DeckCover
-            icon={deck.icon || '🗂️'}
-            color={deck.color}
-            image={deck.image}
-            className="size-16 shrink-0 rounded-card shadow-rest"
-            iconClassName="text-3xl"
-          />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-(length:--p-text-title) font-bold tracking-tight text-heading">
-              {deck.name}
-            </p>
-            <p className="mt-0.5 text-(length:--p-text-label) text-muted-foreground">
-              {t('deckSettings.editAppearanceHint')}
-            </p>
-          </div>
-          <Pencil className="size-5 shrink-0 text-muted-foreground" aria-hidden />
+          <span className="grid size-12 shrink-0 place-items-center rounded-card bg-card">
+            {algorithm.icon}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-(length:--p-text-title) font-bold tracking-tight text-heading">
+              {t(algorithm.nameKey as never)}
+            </span>
+            <span className="mt-0.5 block text-(length:--p-text-label) text-muted-foreground">
+              {t('deckSettings.algorithmRow')}
+            </span>
+          </span>
+          <ChevronRight className="size-5 shrink-0 text-muted-foreground" aria-hidden />
         </button>
 
         <SettingsSection title={t('deckSettings.study')}>
           <SettingsRow
-            kind="toggle"
-            icon={<RotateCcw />}
-            label={t('deckSettings.shuffle')}
-            checked={settings.shuffleCards}
-            onCheckedChange={(v) => override({ shuffleCards: v })}
+            kind="nav"
+            icon={<Speech />}
+            label={t('deckSettings.ttsRow')}
+            onClick={() => onOpenTts?.()}
           />
           <SettingsRow
-            kind="toggle"
-            icon={<FileText />}
-            label={t('deckSettings.textToSpeech')}
-            checked={settings.textToSpeech}
-            onCheckedChange={(v) => override({ textToSpeech: v })}
-          />
-          <SettingsRow
-            kind="toggle"
-            icon={<Copy />}
-            label={t('deckSettings.studyBack')}
-            checked={settings.studyDirection === 'back'}
-            onCheckedChange={(v) => override({ studyDirection: v ? 'back' : 'front' })}
+            kind="nav"
+            icon={<Palette />}
+            label={t('deckSettings.cardStyle')}
+            onClick={() => onOpenCardStyle?.()}
           />
         </SettingsSection>
 
         <SettingsSection title={t('deckSettings.manage')}>
+          <SettingsRow
+            kind="nav"
+            icon={<Upload />}
+            label={t('deckSettings.importCards')}
+            onClick={() => onImportCards?.()}
+          />
+          <SettingsRow
+            kind="nav"
+            icon={<Pencil />}
+            label={t('deckSettings.rename')}
+            description={t('deckSettings.editAppearanceHint')}
+            onClick={() => setAppearanceOpen(true)}
+          />
+          <SettingsRow
+            kind="nav"
+            icon={<FolderInput />}
+            label={t('deckSettings.move')}
+            onClick={() => setMoveOpen(true)}
+          />
           <SettingsRow
             kind="nav"
             icon={<Copy />}
@@ -140,14 +167,6 @@ export function DeckSettingsPage({ deckId, onBack, onDeleted }: DeckSettingsPage
               void duplicateDeck(deckStore, cardStore, deckId)
               toast.success(t('deckSettings.toast.duplicated'))
             }}
-          />
-          <SettingsRow
-            kind="nav"
-            icon={<Download />}
-            label={t('deckSettings.export')}
-            description={t('deckSettings.exportHint')}
-            disabled={cards.length === 0}
-            onClick={() => setExportOpen(true)}
           />
           <SettingsRow
             kind="nav"
@@ -169,6 +188,14 @@ export function DeckSettingsPage({ deckId, onBack, onDeleted }: DeckSettingsPage
               )
             }}
           />
+          <SettingsRow
+            kind="nav"
+            icon={<Download />}
+            label={t('deckSettings.export')}
+            description={t('deckSettings.exportHint')}
+            disabled={cards.length === 0}
+            onClick={() => setExportOpen(true)}
+          />
         </SettingsSection>
 
         <SettingsSection>
@@ -182,6 +209,26 @@ export function DeckSettingsPage({ deckId, onBack, onDeleted }: DeckSettingsPage
           />
         </SettingsSection>
       </div>
+
+      <MoveSheet
+        open={moveOpen}
+        onOpenChange={setMoveOpen}
+        subtitle={deck.name}
+        decks={decks}
+        folders={folders}
+        excludeIds={moveExcludeIds}
+        onPick={(dest) => {
+          setMoveOpen(false)
+          if (dest.kind === 'archive') {
+            void setDeckArchived(deckStore, deckId, true)
+            toast.success(t('deckSettings.toast.archived'))
+            return
+          }
+          const parentId = dest.kind === 'deck' ? dest.deckId : null
+          const folderId = dest.kind === 'folder' ? dest.folderId : null
+          void moveDeck(deckStore, deckId, parentId, folderId)
+        }}
+      />
 
       <DeckAppearanceSheet open={appearanceOpen} onOpenChange={setAppearanceOpen} deck={deck} />
 

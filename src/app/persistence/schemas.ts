@@ -9,7 +9,7 @@ import type { Profile } from '@/entities/profile'
 import type { AppNotification } from '@/entities/notification'
 
 export const deckSchema: RxJsonSchema<Deck> = {
-  version: 0,
+  version: 1,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -34,6 +34,47 @@ export const deckSchema: RxJsonSchema<Deck> = {
         shuffleQuestions: { type: 'boolean' },
         shuffleCards: { type: 'boolean' },
         textToSpeech: { type: 'boolean' },
+        algorithm: { type: 'string', enum: ['fast', 'spaced'] },
+        newCardsPerDay: { type: 'number' },
+        maxCardsPerDay: { type: 'number' },
+        cardStyle: {
+          type: 'object',
+          properties: {
+            preset: { type: 'string', enum: ['plain', 'outlined', 'chalk', 'notebook', 'paper'] },
+            font: { type: 'string', enum: ['default', 'serif', 'rounded', 'mono'] },
+            textSize: { type: 'number' },
+            alignment: { type: 'string', enum: ['left', 'center', 'right'] },
+          },
+          required: ['preset', 'font', 'textSize', 'alignment'],
+          additionalProperties: false,
+        },
+        tts: {
+          type: 'object',
+          properties: {
+            side: { type: 'string', enum: ['front', 'back', 'both'] },
+            rate: { type: 'number' },
+          },
+          required: ['side', 'rate'],
+          additionalProperties: false,
+        },
+        advanced: {
+          type: 'object',
+          properties: {
+            learningSteps: { type: 'array', items: { type: 'number' } },
+            graduatingInterval: { type: 'number' },
+            easyBonus: { type: 'number' },
+            maximumInterval: { type: 'number' },
+            leechThreshold: { type: 'number' },
+          },
+          required: [
+            'learningSteps',
+            'graduatingInterval',
+            'easyBonus',
+            'maximumInterval',
+            'leechThreshold',
+          ],
+          additionalProperties: false,
+        },
       },
       additionalProperties: false,
     },
@@ -56,7 +97,7 @@ export const deckSchema: RxJsonSchema<Deck> = {
 }
 
 export const cardSchema: RxJsonSchema<Card> = {
-  version: 0,
+  version: 1,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -83,6 +124,9 @@ export const cardSchema: RxJsonSchema<Card> = {
     },
     flagged: { type: 'boolean' },
     memorized: { type: 'boolean' },
+    frozen: { type: 'boolean' },
+    reversed: { type: 'boolean' },
+    fastReview: { type: 'string', enum: ['notQuite', 'gotIt'] },
     order: { type: 'number' },
   },
   required: [
@@ -94,6 +138,8 @@ export const cardSchema: RxJsonSchema<Card> = {
     'back',
     'flagged',
     'memorized',
+    'frozen',
+    'reversed',
     'order',
   ],
 }

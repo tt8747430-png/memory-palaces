@@ -45,6 +45,7 @@ function setup(overrides: Partial<Parameters<typeof GearSheet>[0]> = {}) {
     open: true,
     onClose: vi.fn(),
     mode: 'blur',
+    algorithm: 'spaced',
     canSpeak: false,
     quick,
     settings: settingsControl(),
@@ -81,5 +82,13 @@ describe('GearSheet', () => {
     await user.click(await screen.findByRole('button', { name: 'Finish' }))
     expect(props.onFinish).toHaveBeenCalledTimes(1)
     expect(props.onClose).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('GearSheet under fast review', () => {
+  it('drops the Due filter, since nothing is scheduled', async () => {
+    setup({ algorithm: 'fast' })
+    expect(await screen.findByRole('button', { name: /All/ })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Due/ })).toBeNull()
   })
 })

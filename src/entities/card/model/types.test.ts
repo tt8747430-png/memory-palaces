@@ -34,3 +34,34 @@ describe('updateCard', () => {
     expect(edited.updatedAt).toBe('2026-02-01T00:00:00.000Z')
   })
 })
+
+describe('card learner flags', () => {
+  const flagBase = {
+    id: 'c1',
+    createdAt: new Date(0).toISOString(),
+    deckId: 'd1',
+    front: 'f',
+    back: 'b',
+  }
+
+  it('defaults frozen and reversed to false and leaves the bucket unset', () => {
+    const card = makeCard(flagBase)
+    expect(card.frozen).toBe(false)
+    expect(card.reversed).toBe(false)
+    expect(card.fastReview).toBeUndefined()
+  })
+
+  it('accepts the flags through makeCard', () => {
+    const card = makeCard({ ...flagBase, frozen: true, reversed: true, fastReview: 'gotIt' })
+    expect(card.frozen).toBe(true)
+    expect(card.reversed).toBe(true)
+    expect(card.fastReview).toBe('gotIt')
+  })
+
+  it('updates the bucket without touching the rest', () => {
+    const card = makeCard(flagBase)
+    const next = updateCard(card, { fastReview: 'notQuite' }, new Date(1).toISOString())
+    expect(next.fastReview).toBe('notQuite')
+    expect(next.front).toBe('f')
+  })
+})

@@ -1,4 +1,5 @@
 import { type PointerEvent as ReactPointerEvent, useEffect, useRef } from 'react'
+import type { CardStyle } from '@/entities/deck'
 import type { StudyMode } from '@/entities/preferences'
 import type { ModeSwipeAction } from '@/shared/config/flashcard-swipe'
 import type { StudyCard } from '../../model/types'
@@ -7,6 +8,7 @@ export type MechanicHandlers = Partial<Record<ModeSwipeAction, () => void>>
 
 export interface FaceProps {
   card: StudyCard
+  cardStyle: CardStyle
   mode: StudyMode
   prompt: string
   answer: string
