@@ -13,8 +13,8 @@ direction:
   `recall`, `deck-tree`, `achievements`, `badges`, `order`, …), each with colocated tests.
 - **Ports:** `shared/api/base-repository.ts` (`Repository<T>`) + each entity's typed interface (`entities/<x>/api`).
 - **Adapters:** `shared/api/rxdb` (prod) and `in-memory-repository` (tests, and the live `session` store); both are
-  held to `shared/test/repository-contract.ts` (Liskov). `shared/api/supabase` is **planned, not built** — Phase 9. The
-  **composition root** in `app/` wires them via DI and calls `start()` on every store.
+  held to `shared/test/repository-contract.ts` (Liskov). `shared/api/supabase` (Auth, replication, Storage) is
+  **shipped** — Phase 9. The **composition root** in `app/` wires them via DI and calls `start()` on every store.
 - **Rule:** adapters depend on ports, never the reverse → core stays portable + unit-testable.
 
 **CQRS-lite:** `features/*` = commands (writes, one use-case each). Reads = reactive selectors over entity Zustand
@@ -24,11 +24,13 @@ call the same use-cases as the UI is Phase 13 (T13.1), and is the reason one-use
 ## Persistence & cloud
 
 - **RxDB (IndexedDB) is the single on-device truth** — instant, fully offline; reactive queries feed the stores.
-- **Supabase behind ports:** Auth (dev/tests use a guest provider), replication (RxDB ↔ Postgres, per-doc revisions +
-  append-only merge so cross-device reviews are never lost), Storage, Edge Function (Claude proxy — the app never holds
-  the key).
-- **Always-in-sync-on-leave:** live replication → flush on `visibilitychange`/`pagehide` → Workbox
-  `BackgroundSyncPlugin` delivers queued changes after the tab closes.
+- **Supabase behind ports (shipped, Phase 9):** Auth (dev/tests use a guest provider; email/password + Google + Apple
+  in prod), replication (RxDB ↔ Postgres, field-aware merge — LWW for content, counter-merge for `progress`/`card.srs`
+  — so cross-device reviews are never lost), Storage (deck images, avatars), guest → account claim. Edge Function
+  (Claude proxy — the app never holds the key) is still Phase 13.
+- **Always-in-sync-on-leave (shipped):** live replication → flush on `visibilitychange`/`pagehide`
+  (`app/providers/SyncProvider.tsx`) → Workbox `BackgroundSyncPlugin` (`vite.config.ts`) delivers queued changes after
+  the tab closes → `navigator.storage.persist()` requested on sign-in.
 - The whole cloud layer is additive and swappable; it touches no feature or entity logic.
 
 ## REST vs replication
@@ -54,7 +56,7 @@ Facade `features/*` · Observer (Zustand + RxDB queries + `EventBus`) · Mediato
 Factory (`entities/*/model` `makeX()`, repo factory in the composition root) · State (machines in `features/review`,
 `features/quiz`) · Adapter/Strategy (RxDB + in-memory behind `Repository<T>`; anki/csv in `features/content`) ·
 Singleton (composition-root singletons, injected) · Prototype (`cloneEntity()`).
-_Planned:_ Proxy (tutor permission gate) · Builder (LLM-request assembly) · the Supabase adapter.
+_Planned:_ Proxy (tutor permission gate) · Builder (LLM-request assembly).
 
 **SOLID:** one-concern entities/features (kills god-hooks) · add adapters/commands behind ports/registries · in-memory ↔
 RxDB adapter · narrow ports + selector-scoped reads · core depends on ports.
@@ -65,19 +67,8 @@ only in the theme · one `cn()`. No premature abstraction.
 
 ## Phases
 
-Phases 0–8 (design system, walking skeleton, domain core, the entity slices) and 12 (dark theme) are **shipped** — what
-follows is what is left. Numbering is historical; nothing is missing.
-
-### 9 — Cloud + always-on sync (Supabase)
-
-- **T9.1** Postgres schema mirroring entities + RLS
-- **T9.2** Supabase Auth adapter for `AuthProvider`; swap at the composition root
-- **T9.3** RxDB ↔ Supabase replication + conflicts (per-doc revisions, server time, append-only merge, tombstones).
-  _Verify:_ two-client + offline-merge tests
-- **T9.4** Sync-on-leave flush + Workbox Background Sync + `navigator.storage.persist()`
-- **T9.5** Storage — palace images, offline-graceful
-- **T9.6** Guest → account claim (migrate local RxDB on first sign-up). _Verify:_ guest → signup → second device
-- **Checkpoint:** real accounts, guest claim, cross-device sync, storage — still fully usable offline
+Phases 0–8 (design system, walking skeleton, domain core, the entity slices), 9 (cloud + always-on sync) and 12 (dark
+theme) are **shipped** — what follows is what is left. Numbering is historical; nothing is missing.
 
 ### 10 — Web Push & reminders
 
