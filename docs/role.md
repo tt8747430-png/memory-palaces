@@ -1,6 +1,6 @@
 # Problems
 
-4. "Be extremly consisse. Sacrifise grammar for the sake of consision." - Put this on top of the CLAUDE.md and document
+"Be extremly consisse. Sacrifise grammar for the sake of consision." - Put this on top of the CLAUDE.md and document
    it everywhere you can.
 
 GENERAL:
@@ -10,39 +10,20 @@ REFACTORINGS:
 
 SETTINGS:
 
-3. remove the finish button from the settings.
+
+7. in the home page the decks and folder  are not correctly elevated above the speed dial horizontal line like,  e.g. the bottom nav is 50px above the screen edge and the dial is 100 px above the screen edge and it has 15px height, the decks should be elevated above at the e.g. 120 px with space between decks and speed dial. 
+
+8. also in the flashcards study page when a page has to many words and the scrollbar appears the focus of the scrollbar when i want to scroll is trapped by the swipe actions although in the area of the scrollbar the actions should not trap the focus from the scrollbar
 
 
 
 
 
-1. We need to refactor the whole flashcards settings and algorithms and deck settings using this examples
-2. We need all the features and options, except ai features now as well as deck publishing or sharing, report deck and offline cards options. this is how the deck settings page will look now firstlty you neeedd to look at all of the settings pages and refactor our settings page completely and for now just make the ui to look like this and backend we will add in next phase. 
 
-'/Users/kristianbraila/Downloads/new_settings/IMG_2502.PNG'
-'/Users/kristianbraila/Downloads/new_settings/IMG_2600.PNG'
 
-1. we need the fast review and the general spaced repetition algorithms. this is the sheet that comes to chose the algorithm when the user clicks on the button in the algorithm settings
-'/Users/kristianbraila/Downloads/new_settings/algorightSettings/IMG_2596.PNG'
-'/Users/kristianbraila/Downloads/new_settings/algorightSettings/IMG_2598.PNG'
-'/Users/kristianbraila/Downloads/new_settings/algorightSettings/IMG_2599.PNG'
 
-2. thsi is the card and its actions sheet
-/Users/kristianbraila/Downloads/new_settings/cardsAndTheirActionsSheet/IMG_2486.PNG'
-'/Users/kristianbraila/Downloads/new_settings/cardsAndTheirActionsSheet/IMG_2487.PNG'
-'/Users/kristianbraila/Downloads/new_settings/cardsAndTheirActionsSheet/IMG_2488.PNG'
 
-3. we will also have a page for card styles
-'/Users/kristianbraila/Downloads/new_settings/cardstyles/IMG_2096.PNG'
 
-4. this is how the page and cards will look when we choose fast review algorithm
-'/Users/kristianbraila/Downloads/new_settings/fast-review/IMG_2595.PNG'
-'/Users/kristianbraila/Downloads/new_settings/fast-review/IMG_2597.PNG'
-
-5. this is how the page and cards will look when we choose spaced repetition algorithm
-
-/Users/kristianbraila/Downloads/new_settings/spaced_repetition/IMG_2500.PNG
-/Users/kristianbraila/Downloads/new_settings/spaced_repetition/IMG_2601.PNG
 
 
 FEATURES:
@@ -202,6 +183,58 @@ GENERAL:
 1. unify the headers from all the pages so that we use one header with fixed height, same sizes for the buttons back adn
    setings button and so on.
 
+
+
+1. We need to refactor the whole flashcards settings and algorithms and deck settings using this examples
+2. We need all the features and options, except ai features now as well as deck publishing or sharing, report deck and offline cards options. this is how the deck settings page will look now firstlty you neeedd to look at all of the settings pages and refactor our settings page completely and for now just make the ui to look like this and backend we will add in next phase. 
+
+'/Users/kristianbraila/Downloads/new_settings/IMG_2502.PNG'
+'/Users/kristianbraila/Downloads/new_settings/IMG_2600.PNG'
+
+1. we need the fast review and the general spaced repetition algorithms. this is the sheet that comes to chose the algorithm when the user clicks on the button in the algorithm settings
+'/Users/kristianbraila/Downloads/new_settings/algorightSettings/IMG_2596.PNG'
+'/Users/kristianbraila/Downloads/new_settings/algorightSettings/IMG_2598.PNG'
+'/Users/kristianbraila/Downloads/new_settings/algorightSettings/IMG_2599.PNG'
+
+2. thsi is the card and its actions sheet
+/Users/kristianbraila/Downloads/new_settings/cardsAndTheirActionsSheet/IMG_2486.PNG'
+'/Users/kristianbraila/Downloads/new_settings/cardsAndTheirActionsSheet/IMG_2487.PNG'
+'/Users/kristianbraila/Downloads/new_settings/cardsAndTheirActionsSheet/IMG_2488.PNG'
+
+3. we will also have a page for card styles
+'/Users/kristianbraila/Downloads/new_settings/cardstyles/IMG_2096.PNG'
+
+4. this is how the page and cards will look when we choose fast review algorithm
+'/Users/kristianbraila/Downloads/new_settings/fast-review/IMG_2595.PNG'
+'/Users/kristianbraila/Downloads/new_settings/fast-review/IMG_2597.PNG'
+
+5. this is how the page and cards will look when we choose spaced repetition algorithm
+
+/Users/kristianbraila/Downloads/new_settings/spaced_repetition/IMG_2500.PNG
+/Users/kristianbraila/Downloads/new_settings/spaced_repetition/IMG_2601.PNG
+
+
+3. remove the finish button from the  flashcard settings or make it close the drawer and not to finish the session. also move all the unrelated setting to the top header and the mode specific settings leave on the flashcard itself like it is now 
+4. In the deck page where the algorithm is overviewd and it has a button next to it that shows the same  info from the  change algorith drawer, remove this drawer and make it one with the _Fast review !_ like this When i click it just opens this change algorithm drawer
+5. In the show initial mode when i click on the letter and the popup is shown it should be only shown when is focused and when not it disapears
+6. In the questions page you should make all the option availabel from the page without a dial when there are no questions, and move the export function to the questions settings and it leaves only there
+
+8. the flashcards in the study mode doesnt behave correctly e.g. when the text is too long they dont habe a fixed height and become a  scrollbar but get higher and push the bottom grades bar behind the screen edge like this /Users/kristianbraila/Downloads/IMG_3147.png and the same happens in the edit card page  /Users/kristianbraila/Downloads/IMG_3145.png 
+9. in the select toolbar page the toolbaar options are elevated without the x button but should be with 
+10. in the flashcard mode drawer the initials mode should be above the rebuild mode
+
+
+   1. the import button in the deck settings doesnt work correctly 
+   2. the duplicate and archive deck buttons hould have a dialog to ask whether i realy want to duplicate it  or archive it and after i archive it it should instantly leave this arhcive and go to the home page
+   3. the algorithm choosing buttton colors merge too many into the page background and doenst have the same outlines and colors as other buttons
+   4. in the card styles there should be no transparent card and improve the styles
+   5. also the styles can not only change the cards styles but also the study screen background and styles and so on like here  /Users/kristianbraila/Downloads/IMG_3237.png /Users/kristianbraila/Downloads/IMG_3238.png 
+   6. and so look the page when i didnt change any card styles and after i change, comes a persisted bottom bar imovable that has this button apply /Users/kristianbraila/Downloads/IMG_3239.png /Users/kristianbraila/Downloads/IMG_3240.png. when somethning doesnt fit the page is divided is this peaceas: when no changes are maded and we have no persisted bottom bar then the page is divided in two peaces: first is for the card and how it will look like that is persisted and the other will have scroll bar like this /Users/kristianbraila/Downloads/IMG_3241.png and when something has changed and  we have the bottom bar we will have three parts and  a flashcard part and a editing controls part and a bottom bar part like this also with a scroll bar /Users/kristianbraila/Downloads/IMG_3243.png /Users/kristianbraila/Downloads/IMG_3242.png 
+
+
+
+
+
 BUGS:
 
 1. StatusBar gets white when a notification animations gets close to the StatusBar
@@ -212,6 +245,9 @@ BUGS:
    app like notification comes and it toches the status bar by hiding the status bar gets recolored. fix and debug this
    so that we can it stays also colored in our background and we in our app log or know whenever something weird happens
    and the status bar gets white
+
+
+
 
 <!--
 

@@ -9,7 +9,7 @@ import type { Profile } from '@/entities/profile'
 import type { AppNotification } from '@/entities/notification'
 
 export const deckSchema: RxJsonSchema<Deck> = {
-  version: 1,
+  version: 2,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -40,7 +40,10 @@ export const deckSchema: RxJsonSchema<Deck> = {
         cardStyle: {
           type: 'object',
           properties: {
-            preset: { type: 'string', enum: ['plain', 'outlined', 'chalk', 'notebook', 'paper'] },
+            preset: {
+              type: 'string',
+              enum: ['plain', 'outlined', 'chalk', 'notebook', 'paper', 'parchment', 'night'],
+            },
             font: { type: 'string', enum: ['default', 'serif', 'rounded', 'mono'] },
             textSize: { type: 'number' },
             alignment: { type: 'string', enum: ['left', 'center', 'right'] },

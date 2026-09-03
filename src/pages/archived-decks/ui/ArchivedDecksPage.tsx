@@ -51,7 +51,7 @@ export function ArchivedDecksPage({ onBack }: ArchivedDecksPageProps) {
 
   return (
     <AppScreen
-      className="pb-nav"
+      gutter="nav"
       header={
         <ScreenHeader title={t('archived.title')} onBack={onBack} backLabel={t('common.back')} />
       }

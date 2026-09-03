@@ -58,7 +58,7 @@ export function DeckAdvancedPage({ deckId, onBack }: DeckAdvancedPageProps) {
   return (
     <AppScreen
       fill
-      className="pb-nav"
+      gutter="nav"
       header={
         <ScreenHeader
           title={t('algorithm.advancedTitle')}

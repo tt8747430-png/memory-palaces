@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, screen, within } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
@@ -79,8 +79,7 @@ describe('DeckSettingsPage', () => {
     const onOpenAlgorithm = vi.fn()
     const onOpenCardStyle = vi.fn()
     const onOpenTts = vi.fn()
-    const onImportCards = vi.fn()
-    renderPage({}, { onOpenAlgorithm, onOpenCardStyle, onOpenTts, onImportCards })
+    renderPage({}, { onOpenAlgorithm, onOpenCardStyle, onOpenTts })
 
     await user.click(await screen.findByRole('button', { name: /Fast review|Spaced repetition/ }))
     expect(onOpenAlgorithm).toHaveBeenCalled()
@@ -88,7 +87,47 @@ describe('DeckSettingsPage', () => {
     expect(onOpenCardStyle).toHaveBeenCalled()
     await user.click(screen.getByRole('button', { name: /Text-to-speech/ }))
     expect(onOpenTts).toHaveBeenCalled()
-    await user.click(screen.getByRole('button', { name: /Import cards/ }))
-    expect(onImportCards).toHaveBeenCalled()
+  })
+
+  /**
+   * The row used to navigate straight to the review screen, which renders nothing without a draft
+   * and bounced the learner back out. It opens the two import doors instead.
+   */
+  it('opens the import sheet rather than an empty review screen', async () => {
+    const user = userEvent.setup()
+    const onPasteNotes = vi.fn()
+    const onReviewImport = vi.fn()
+    renderPage({}, { onPasteNotes, onReviewImport })
+
+    await user.click(await screen.findByRole('button', { name: /Import cards/ }))
+    expect(onReviewImport).not.toHaveBeenCalled()
+
+    await user.click(await screen.findByRole('button', { name: /Paste notes/ }))
+    expect(onPasteNotes).toHaveBeenCalled()
+  })
+
+  it('asks before duplicating', async () => {
+    const user = userEvent.setup()
+    const { repo } = renderPage()
+
+    await user.click(await screen.findByRole('button', { name: /Duplicate deck/ }))
+    expect(await repo.getAll()).toHaveLength(1)
+
+    await user.click(await screen.findByRole('button', { name: /^Duplicate$/ }))
+    await waitFor(async () => expect(await repo.getAll()).toHaveLength(2))
+  })
+
+  it('asks before archiving, then leaves the deck behind', async () => {
+    const user = userEvent.setup()
+    const onArchived = vi.fn()
+    const { repo } = renderPage({}, { onArchived })
+
+    await user.click(await screen.findByRole('button', { name: /Archive deck/ }))
+    expect((await repo.getById('d1'))?.archived).toBe(false)
+    expect(onArchived).not.toHaveBeenCalled()
+
+    await user.click(await screen.findByRole('button', { name: /^Archive deck$/ }))
+    await waitFor(async () => expect((await repo.getById('d1'))?.archived).toBe(true))
+    expect(onArchived).toHaveBeenCalled()
   })
 })

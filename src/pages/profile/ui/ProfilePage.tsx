@@ -48,7 +48,7 @@ export function ProfilePage({
 
   return (
     <AppScreen
-      className="pb-nav"
+      gutter="nav"
       header={
         <ProfileBar
           name={name}

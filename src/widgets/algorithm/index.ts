@@ -1,3 +1,5 @@
+export { AlgorithmCard } from './ui/AlgorithmCard'
+export type { AlgorithmCardProps } from './ui/AlgorithmCard'
 export { AlgorithmSheet } from './ui/AlgorithmSheet'
 export type { AlgorithmSheetProps } from './ui/AlgorithmSheet'
 export { ALGORITHM_META } from './ui/algorithm-meta'

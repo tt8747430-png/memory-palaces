@@ -96,11 +96,23 @@ v4, two-layer tokens: primitives (`--p-navy-900`…) → semantic roles (`--prim
 - **Semantic tokens, not raw values.** `bg-primary`, `text-heading`, `rounded-control`, `shadow-rest` — not
   `bg-[#091A7A]`, not `p-[16px]`. No alias yet → CSS var.
 - **Dark mode is automatic** (`[data-theme='dark']` remap). No scattered `dark:`, no hardcoded light/dark colors.
-  - **One sanctioned exception:** the `chalk` / `notebook` / `paper` card-style presets in
-    [`shared/lib/card-style.ts`](../src/shared/lib/card-style.ts). Those are _printed materials_ a learner picks, not
-    app chrome — slate, ruled paper and aged stock look the same under any theme, and remapping their ink would make
-    "chalk" mean something different in dark mode. They are literal by design and stay confined to that file's
-    `PRESETS` map. `plain` and `outlined` follow the tokens like everything else.
+  - **One sanctioned exception:** the printed card-style presets in
+    [`shared/lib/card-style.ts`](../src/shared/lib/card-style.ts) — `chalk`, `notebook`, `paper`, `parchment`,
+    `night`. Those are _printed materials_ a learner picks, not app chrome — slate, ruled paper, aged stock, a survey
+    map and a night sky look the same under any theme, and remapping their ink would make "chalk" mean something
+    different in dark mode. They are literal by design and stay confined to that file: the `PRESETS` map and the
+    `DARK_CHROME` / `LIGHT_CHROME` tables it draws on. `plain` and `outlined` follow the tokens like everything else.
+  - A preset is a **scene**, so it also carries the screen behind the card. `resolveCardScene` hands its subtree a
+    remap of the semantic tokens the session chrome reads — the set is `CHROME_TOKENS`, exported from that file, and
+    every printed preset must give a value for **all** of it. That is how `SessionHeader`, the buttons on the card
+    and the session footer's grade buttons stay legible on slate without knowing a scene exists.
+    - **Remap the paper with the ink.** `bg-card` resolves to `--surface`; remapping `--text-*` without it is how the
+      type-answer field became white-on-white. The tinted pairs (`--success-surface`, `--danger-surface`, …) are the
+      same trap one step out — the grade buttons are painted from them.
+    - Three tests in `card-style.test.ts` hold it: every `var()` a preset names must be declared in `tokens.css`,
+      every printed scene must set every `CHROME_TOKENS` entry, and a scene may set **nothing** beyond that set plus
+      `--scene-bg`. Adding a token to the list without giving it a value fails rather than silently keeping the
+      app's own.
 - **Interactive elements need hover / `focus-visible` / `disabled` + `transition`.** Icon-only → `sr-only` label.
   `focus-visible:` over `focus:`.
 - **Mobile-first** — base = smallest screen, layer upward. Verify at phone width.

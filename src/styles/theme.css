@@ -1,264 +1,251 @@
 @theme inline {
-    --font-sans: var(--p-font-sans);
+  --font-sans: var(--p-font-sans);
 
-    --color-background: var(--surface);
-    --color-foreground: var(--text-primary);
-    --color-card: var(--surface);
-    --color-card-foreground: var(--text-primary);
-    --color-popover: var(--surface);
-    --color-popover-foreground: var(--text-primary);
+  --color-background: var(--surface);
+  --color-foreground: var(--text-primary);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--text-primary);
+  --color-popover: var(--surface);
+  --color-popover-foreground: var(--text-primary);
 
-    --color-primary: var(--primary);
-    --color-primary-foreground: var(--primary-foreground);
-    --color-secondary: var(--secondary);
-    --color-secondary-foreground: var(--secondary-foreground);
-    --color-accent: var(--accent);
-    --color-accent-foreground: var(--accent-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
 
-    --color-muted: var(--surface-sky);
-    --color-muted-foreground: var(--text-muted);
+  --color-muted: var(--surface-sky);
+  --color-muted-foreground: var(--text-muted);
 
-    --color-destructive: var(--danger);
-    --color-destructive-foreground: var(--danger-foreground);
-    --color-success: var(--success);
-    --color-warning: var(--warning);
+  --color-destructive: var(--danger);
+  --color-destructive-foreground: var(--danger-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
 
-    --color-border: var(--border);
-    --color-input: var(--input-bg);
-    --color-ring: var(--ring);
+  --color-border: var(--border);
+  --color-input: var(--input-bg);
+  --color-ring: var(--ring);
 
-    --color-heading: var(--text-heading);
-    --color-surface-sky: var(--surface-sky);
-    --color-info-surface: var(--info-surface);
-    --color-info-foreground: var(--info-foreground);
-    --color-rating: var(--rating);
-    --color-favorite: var(--favorite);
+  --color-heading: var(--text-heading);
+  --color-surface-sky: var(--surface-sky);
+  --color-info-surface: var(--info-surface);
+  --color-info-foreground: var(--info-foreground);
+  --color-rating: var(--rating);
+  --color-favorite: var(--favorite);
 
-    /* The one width the app column is ever allowed to be — `max-w-app`. */
-    --container-app: var(--p-container-app);
+  /* The one width the app column is ever allowed to be — `max-w-app`. */
+  --container-app: var(--p-container-app);
 
-    --radius-control: var(--p-radius-sm);
-    --radius-card: var(--p-radius-md);
-    --radius-card-featured: var(--p-radius-xl);
-    --radius-nav: var(--p-radius-nav);
-    --radius-pill: var(--p-radius-pill);
+  --radius-control: var(--p-radius-sm);
+  --radius-card: var(--p-radius-md);
+  --radius-card-featured: var(--p-radius-xl);
+  --radius-nav: var(--p-radius-nav);
+  --radius-pill: var(--p-radius-pill);
 }
 
 @layer base {
-    *,
-    *::before,
-    *::after {
-        border-color: var(--border);
-    }
+  *,
+  *::before,
+  *::after {
+    border-color: var(--border);
+  }
 
-    /* `startKeyboardViewport` (shared/lib/keyboard-viewport) owns these three as inline styles on
+  /* `startKeyboardViewport` (shared/lib/keyboard-viewport) owns these three as inline styles on
        the documentElement and removes them on teardown; the values here are what the app falls
        back to before the first measurement and after that reset. See ADR 0002. */
-    :root {
-        --kb-inset: 0px;
+  :root {
+    --kb-inset: 0px;
 
-        /* The scroll range a keyboard costs: the inset plus the gap the reveal needs to land a
+    /* The scroll range a keyboard costs: the inset plus the gap the reveal needs to land a
            field *clear* of the keyboard rather than flush against it. A scroll body short of that
            gap cannot lift its last field, so iOS pans the visual viewport to finish the job — and
            the pan is what used to drag every piece of chrome in the app off the screen with it. */
-        --kb-range: 0px;
+    --kb-range: 0px;
 
-        /* Anchor height = LAYOUT viewport, held while unfocused. Not the visual one — that is
+    /* Anchor height = LAYOUT viewport, held while unfocused. Not the visual one — that is
            what the keyboard shrinks, and not following it is the whole point. */
-        --app-height: 100%;
+    --app-height: 100%;
 
-        --app-bottom-inset: max(0.75rem, env(safe-area-inset-bottom));
-    }
+    --app-bottom-inset: max(0.75rem, env(safe-area-inset-bottom));
+  }
 
-    html {
-        height: 100%;
-        overflow: hidden;
-        -webkit-text-size-adjust: 100%;
-        text-size-adjust: 100%;
-        -webkit-tap-highlight-color: transparent;
-    }
+  html {
+    height: 100%;
+    overflow: hidden;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
 
-    body {
-        margin: 0;
-        height: 100%;
-        overflow: hidden;
-        background: var(--surface);
-        font-family: var(--p-font-sans), sans-serif;
-        color: var(--text-primary);
-        overscroll-behavior: none;
-        -webkit-font-smoothing: antialiased;
-        text-rendering: optimizeLegibility;
-        -webkit-user-select: none;
-        user-select: none;
-        -webkit-touch-callout: none;
-    }
+  body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    background: var(--surface);
+    font-family: var(--p-font-sans), sans-serif;
+    color: var(--text-primary);
+    overscroll-behavior: none;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
 
-    #root {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: var(--app-height);
-        background: var(--bg-daylight);
-        background-repeat: no-repeat;
-    }
+  #root {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--app-height);
+    background: var(--bg-daylight);
+    background-repeat: no-repeat;
+  }
 
-    h1,
-    h2,
-    h3,
-    h4 {
-        margin: 0;
-        color: var(--text-heading);
-        line-height: var(--p-leading-tight);
-    }
+  h1,
+  h2,
+  h3,
+  h4 {
+    margin: 0;
+    color: var(--text-heading);
+    line-height: var(--p-leading-tight);
+  }
 
-    h1 {
-        font-size: var(--p-text-headline);
-        font-weight: var(--p-weight-semibold);
-    }
+  h1 {
+    font-size: var(--p-text-headline);
+    font-weight: var(--p-weight-semibold);
+  }
 
-    h2 {
-        font-size: var(--p-text-title);
-        font-weight: var(--p-weight-semibold);
-    }
+  h2 {
+    font-size: var(--p-text-title);
+    font-weight: var(--p-weight-semibold);
+  }
 
-    h3 {
-        font-size: var(--p-text-sub);
-        font-weight: var(--p-weight-medium);
-    }
+  h3 {
+    font-size: var(--p-text-sub);
+    font-weight: var(--p-weight-medium);
+  }
 
-    p {
-        margin: 0;
-        font-size: var(--p-text-body);
-        line-height: var(--p-leading-body);
-        color: var(--text-secondary);
-    }
+  p {
+    margin: 0;
+    font-size: var(--p-text-body);
+    line-height: var(--p-leading-body);
+    color: var(--text-secondary);
+  }
 
-    :focus-visible {
-        outline: none;
-        box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 50%, transparent);
-    }
+  :focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 50%, transparent);
+  }
 
-    input,
-    textarea,
-    [contenteditable] {
-        -webkit-user-select: text;
-        user-select: text;
-        -webkit-touch-callout: default;
-    }
+  input,
+  textarea,
+  [contenteditable] {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
+  }
 
-    img {
-        -webkit-user-drag: none;
-        -webkit-touch-callout: none;
-    }
+  img {
+    -webkit-user-drag: none;
+    -webkit-touch-callout: none;
+  }
 
-    button,
-    a,
-    label,
-    summary,
-    [role='button'],
-    [role='tab'] {
-        touch-action: manipulation;
-    }
+  button,
+  a,
+  label,
+  summary,
+  [role='button'],
+  [role='tab'] {
+    touch-action: manipulation;
+  }
 }
 
 @layer utilities {
-    .bg-daylight {
-        background: var(--bg-daylight);
-        background-repeat: no-repeat;
-    }
+  .bg-daylight {
+    background: var(--bg-daylight);
+    background-repeat: no-repeat;
+  }
 
-    .bg-glass {
-        background: var(--surface-glass-sky);
-        backdrop-filter: blur(var(--glass-blur));
-    }
+  .bg-glass {
+    background: var(--surface-glass-sky);
+    backdrop-filter: blur(var(--glass-blur));
+  }
 
-    .bg-card-glass {
-        background: var(--surface-glass);
-        backdrop-filter: blur(var(--glass-blur-card));
-    }
+  .bg-card-glass {
+    background: var(--surface-glass);
+    backdrop-filter: blur(var(--glass-blur-card));
+  }
 
-    .shadow-rest {
-        box-shadow: var(--shadow-rest);
-    }
+  .shadow-rest {
+    box-shadow: var(--shadow-rest);
+  }
 
-    .shadow-card {
-        box-shadow: var(--shadow-card);
-    }
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
 
-    .shadow-featured {
-        box-shadow: var(--shadow-featured);
-    }
+  .shadow-featured {
+    box-shadow: var(--shadow-featured);
+  }
 
-    .shadow-interactive {
-        box-shadow: var(--shadow-interactive);
-    }
+  .shadow-interactive {
+    box-shadow: var(--shadow-interactive);
+  }
 
-    .shadow-elevated {
-        box-shadow: var(--shadow-elevated);
-    }
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
 
-    .sw-tint {
-        background: color-mix(in oklch, var(--sw) 15%, transparent);
-        color: color-mix(in oklch, var(--sw), black 38%);
-    }
+  .sw-tint {
+    background: color-mix(in oklch, var(--sw) 15%, transparent);
+    color: color-mix(in oklch, var(--sw), black 38%);
+  }
 
-    [data-theme='dark'] .sw-tint {
-        background: color-mix(in oklch, var(--sw) 26%, transparent);
-        color: color-mix(in oklch, var(--sw), white 46%);
-    }
+  [data-theme='dark'] .sw-tint {
+    background: color-mix(in oklch, var(--sw) 26%, transparent);
+    color: color-mix(in oklch, var(--sw), white 46%);
+  }
 
-    .scrollbar-hide {
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-    }
+  .scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
 
-    .scrollbar-hide::-webkit-scrollbar {
-        display: none;
-    }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 
-    .allow-select,
-    .allow-select * {
-        -webkit-user-select: text;
-        user-select: text;
-        -webkit-touch-callout: default;
-    }
+  .allow-select,
+  .allow-select * {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
+  }
 
-    .pt-safe {
-        padding-top: env(safe-area-inset-top);
-    }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
 
-    /* --kb-range, not --kb-inset: the padding is the room the reveal scrolls into, and it has to
+  /* --kb-range, not --kb-inset: the padding is the room the reveal scrolls into, and it has to
        clear the keyboard, not stop at it. `scroll-padding-bottom` stays the bare inset — that one
        describes where the keyboard is, not how far past it a field may be lifted. */
-    .pb-safe {
-        padding-bottom: max(env(safe-area-inset-bottom), var(--kb-range));
-        scroll-padding-bottom: var(--kb-inset);
-    }
+  .pb-safe {
+    padding-bottom: max(env(safe-area-inset-bottom), var(--kb-range));
+    scroll-padding-bottom: var(--kb-inset);
+  }
 
-    .pb-keyboard {
-        padding-bottom: var(--kb-range);
-        scroll-padding-bottom: var(--kb-inset);
-    }
+  .pb-keyboard {
+    padding-bottom: var(--kb-range);
+    scroll-padding-bottom: var(--kb-inset);
+  }
 
-    .pb-safe-keyboard {
-        padding-bottom: max(env(safe-area-inset-bottom), var(--drawer-keyboard-inset, 0px));
-    }
+  .pb-safe-keyboard {
+    padding-bottom: max(env(safe-area-inset-bottom), var(--drawer-keyboard-inset, 0px));
+  }
 
-    .pb-nav {
-        padding-bottom: calc(var(--app-bottom-inset) + 4.5rem);
-    }
-
-    /* A floating dial reaches higher than the nav beside it: `SpeedDial`'s `above-nav` puts a
-       3.5rem button 1rem above `--app-bottom-inset`, so its top edge lands exactly where `.pb-nav`
-       stops — flush, with no gutter of its own. This is that edge plus a visible 2rem, so the last
-       row comes to rest clearly above the dial instead of tucked under it. */
-    .pb-dial {
-        padding-bottom: calc(var(--app-bottom-inset) + 6.5rem);
-    }
-
-    .pb-gutter {
-        padding-bottom: 7rem;
-    }
-
+  .pb-gutter {
+    padding-bottom: 7rem;
+  }
 }

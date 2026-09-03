@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { AlignCenter, AlignLeft, AlignRight, RotateCcw, Type, Vibrate } from 'lucide-react'
+import { AlignCenter, AlignLeft, AlignRight, Check, RotateCcw, Type, Vibrate } from 'lucide-react'
 import {
   CARD_FONTS,
   CARD_ALIGNMENTS,
@@ -18,10 +18,13 @@ import {
 } from '@/entities/preferences'
 import { updateDeckSettings } from '@/features/deck'
 import { setPreferences } from '@/features/preferences'
-import { clampCardTextSize } from '@/shared/lib'
+import { clampCardTextSize, sameCardStyle } from '@/shared/lib'
 import {
   ActionSheet,
   AppScreen,
+  Button,
+  CardScene,
+  FooterBar,
   IconButton,
   ScreenHeader,
   SegmentedControl,
@@ -38,6 +41,15 @@ export interface DeckCardStylePageProps {
 }
 
 const SIZE_STEP = 2
+
+/**
+ * The pinned pane keeps the card in view while the controls under it scroll: a share of the shell,
+ * bounded in pixels at both ends so a small phone still leaves room to edit and a tall one does not
+ * hand the preview half the screen. `--app-height` is the shell's own height (CODE_STYLE §11), so
+ * this is not a second opinion about how tall the app is.
+ */
+const PREVIEW_PANE =
+  'grid place-items-center h-[clamp(190px,calc(var(--app-height)*0.34),340px)] px-5 py-4'
 
 const ALIGN_ICONS: Record<CardAlignment, typeof AlignLeft> = {
   left: AlignLeft,
@@ -58,6 +70,9 @@ export function DeckCardStylePage({ deckId, onBack }: DeckCardStylePageProps) {
   const prefs = usePreferencesStore(selectEffectivePreferences)
   const { deck, settings, ready } = useDeck(deckId)
   const [fontOpen, setFontOpen] = useState(false)
+  // Edits are previewed, not saved: `null` means "showing what the deck already has". Leaving the
+  // screen drops the draft, which is the whole point of a separate Apply.
+  const [draft, setDraft] = useState<CardStyle | null>(null)
 
   if (!ready || !deck) {
     return (
@@ -69,17 +84,25 @@ export function DeckCardStylePage({ deckId, onBack }: DeckCardStylePageProps) {
     )
   }
 
-  const style = settings.cardStyle
+  const saved = settings.cardStyle
+  const style = draft ?? saved
+  const dirty = draft !== null && !sameCardStyle(draft, saved)
+  // Nothing to reset to when the style already is the default — an enabled button that silently
+  // does nothing is worse than one that says so.
+  const canReset = !sameCardStyle(style, DEFAULT_CARD_STYLE)
 
-  const write = (patch: Partial<CardStyle>) =>
-    void updateDeckSettings(deckStore, deckId, { cardStyle: { ...style, ...patch } })
+  const edit = (patch: Partial<CardStyle>) => setDraft({ ...style, ...patch })
+  const step = (delta: number) => edit({ textSize: clampCardTextSize(style.textSize + delta) })
 
-  const step = (delta: number) => write({ textSize: clampCardTextSize(style.textSize + delta) })
+  const apply = () => {
+    void updateDeckSettings(deckStore, deckId, { cardStyle: style })
+    setDraft(null)
+    toast.success(t('cardStyle.applied'))
+  }
 
   return (
     <AppScreen
       fill
-      className="pb-nav"
       header={
         <ScreenHeader
           title={t('cardStyle.title')}
@@ -99,10 +122,8 @@ export function DeckCardStylePage({ deckId, onBack }: DeckCardStylePageProps) {
               <IconButton
                 variant="glass"
                 aria-label={t('cardStyle.reset')}
-                onClick={() => {
-                  write(DEFAULT_CARD_STYLE)
-                  toast.success(t('cardStyle.resetDone'))
-                }}
+                disabled={!canReset}
+                onClick={() => setDraft(DEFAULT_CARD_STYLE)}
               >
                 <RotateCcw className="size-5" aria-hidden />
               </IconButton>
@@ -110,15 +131,29 @@ export function DeckCardStylePage({ deckId, onBack }: DeckCardStylePageProps) {
           }
         />
       }
+      pinned={
+        <CardScene style={style} className={PREVIEW_PANE}>
+          <StylePreview
+            style={style}
+            front={t('cardStyle.previewFront')}
+            back={t('cardStyle.previewBack')}
+            className="max-h-full w-full overflow-hidden"
+          />
+        </CardScene>
+      }
+      footer={
+        dirty ? (
+          <FooterBar>
+            <Button size="lg" className="w-full" onClick={apply}>
+              <Check className="size-4.5" aria-hidden />
+              {t('cardStyle.apply')}
+            </Button>
+          </FooterBar>
+        ) : undefined
+      }
     >
       <div className="mt-4 flex flex-col gap-6 pb-8">
-        <StylePreview
-          style={style}
-          front={t('cardStyle.previewFront')}
-          back={t('cardStyle.previewBack')}
-        />
-
-        <PresetStrip style={style} value={style.preset} onChange={(preset) => write({ preset })} />
+        <PresetStrip style={style} value={style.preset} onChange={(preset) => edit({ preset })} />
 
         <SettingsSection>
           <SettingsRow
@@ -145,7 +180,7 @@ export function DeckCardStylePage({ deckId, onBack }: DeckCardStylePageProps) {
           <SegmentedControl
             aria-label={t('cardStyle.alignment')}
             value={style.alignment}
-            onChange={(alignment) => write({ alignment })}
+            onChange={(alignment) => edit({ alignment })}
             options={CARD_ALIGNMENTS.map((alignment) => {
               const Icon = ALIGN_ICONS[alignment]
               return {
@@ -167,7 +202,7 @@ export function DeckCardStylePage({ deckId, onBack }: DeckCardStylePageProps) {
           id: font,
           label: t(`cardStyle.fontName.${font}` as never),
           selected: font === style.font,
-          onSelect: () => write({ font }),
+          onSelect: () => edit({ font }),
         }))}
       />
     </AppScreen>

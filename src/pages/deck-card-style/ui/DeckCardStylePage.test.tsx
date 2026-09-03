@@ -42,39 +42,75 @@ function renderPage(settings: Partial<DeckSettings> = {}) {
     </I18nextProvider>,
   )
   const style = async () => (await repo.getById('d1'))?.settings.cardStyle
-  return { repo, style }
+  const apply = () => screen.getByRole('button', { name: 'Apply' })
+  return { repo, style, apply }
 }
 
 describe('DeckCardStylePage', () => {
-  it('saves a preset', async () => {
+  it('previews a preset without saving it, and offers Apply', async () => {
     const user = userEvent.setup()
-    const { style } = renderPage()
+    const { style, apply } = renderPage()
+    expect(screen.queryByRole('button', { name: 'Apply' })).toBeNull()
+
     await user.click(await screen.findByRole('radio', { name: 'Notebook' }))
+    expect(await screen.findByRole('radio', { name: 'Notebook' })).toBeChecked()
+    expect(await style()).toBeUndefined()
+
+    await user.click(apply())
     await waitFor(async () => expect((await style())?.preset).toBe('notebook'))
+  })
+
+  it('drops the bar again once the draft matches what is saved', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(await screen.findByRole('radio', { name: 'Chalk' }))
+    expect(screen.getByRole('button', { name: 'Apply' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('radio', { name: 'Plain' }))
+    expect(screen.queryByRole('button', { name: 'Apply' })).toBeNull()
   })
 
   it('steps the text size and clamps at the top', async () => {
     const user = userEvent.setup()
-    const { style } = renderPage({ cardStyle: { ...DEFAULT_CARD_STYLE, textSize: 39 } })
+    const { style, apply } = renderPage({
+      cardStyle: { ...DEFAULT_CARD_STYLE, textSize: 39 },
+    })
     await user.click(await screen.findByRole('button', { name: 'Larger text' }))
-    await waitFor(async () => expect((await style())?.textSize).toBe(40))
     await user.click(screen.getByRole('button', { name: 'Larger text' }))
+    await user.click(apply())
     await waitFor(async () => expect((await style())?.textSize).toBe(40))
   })
 
   it('saves an alignment', async () => {
     const user = userEvent.setup()
-    const { style } = renderPage()
+    const { style, apply } = renderPage()
     await user.click(await screen.findByRole('button', { name: 'Align left' }))
+    await user.click(apply())
     await waitFor(async () => expect((await style())?.alignment).toBe('left'))
   })
 
-  it('resets the style', async () => {
+  it('resets into the draft, so the reset itself is undoable until Apply', async () => {
     const user = userEvent.setup()
-    const { style } = renderPage({
-      cardStyle: { preset: 'chalk', font: 'mono', textSize: 18, alignment: 'right' },
-    })
+    const started = { preset: 'chalk', font: 'mono', textSize: 18, alignment: 'right' } as const
+    const { style, apply } = renderPage({ cardStyle: started })
+
     await user.click(await screen.findByRole('button', { name: 'Reset card style' }))
+    expect(await style()).toEqual(started)
+
+    await user.click(apply())
     await waitFor(async () => expect(await style()).toEqual(DEFAULT_CARD_STYLE))
+  })
+
+  /** An enabled button that silently does nothing is worse than one that says it has nothing to do. */
+  it('offers no reset when the style already is the default', async () => {
+    renderPage()
+    expect(await screen.findByRole('button', { name: 'Reset card style' })).toBeDisabled()
+  })
+
+  it('offers every preset, the two new scenes included', async () => {
+    renderPage()
+    for (const name of ['Plain', 'Outlined', 'Chalk', 'Notebook', 'Paper', 'Parchment', 'Night']) {
+      expect(await screen.findByRole('radio', { name })).toBeInTheDocument()
+    }
   })
 })

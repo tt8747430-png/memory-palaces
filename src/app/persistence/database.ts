@@ -44,9 +44,13 @@ const preferencesMigrations = {
  * A deck written before this version simply lacks the new settings keys, and `resolveDeckSettings`
  * already answers a missing key with the default — so there is nothing to rewrite. The version bump
  * exists because the schema's shape changed, not because the documents did.
+ *
+ * v2 widened the card-style preset enum for the two new scenes. Nothing was renamed or removed, so
+ * every preset a v1 deck can be carrying is still one v2 accepts, and this is identity too.
  */
 export const deckMigrations = {
   1: (doc: Deck) => doc,
+  2: (doc: Deck) => doc,
 }
 
 /** Frozen and reversed are required, so every card that predates them is given the quiet answer. */

@@ -23,7 +23,7 @@ import {
   isGradeAction,
   type SwipeDirection,
 } from '@/shared/config/flashcard-swipe'
-import { IconButton, SessionHeader } from '@/shared/ui'
+import { CardScene, IconButton, SessionHeader } from '@/shared/ui'
 import { CardDraftSheet } from '@/widgets/content-editor'
 import { studyFaces } from '../model/study-faces'
 import { useStudySettings } from '../model/use-study-settings'
@@ -275,70 +275,72 @@ export function FlashcardsPanel({
 
   return (
     <>
-      <SessionHeader
-        title={title}
-        subtitle={subtitle}
-        progress={{ done: state.graded, total: state.total }}
-        backLabel={t('study.goBack')}
-        onBack={onBack}
-        action={
-          card ? (
-            <IconButton
-              variant="glass"
-              aria-label={t('study.studySessionSettingsTitle')}
-              onClick={() => setStudySessionSettingsOpen(true)}
-            >
-              <MoreVertical className="size-5" aria-hidden />
-            </IconButton>
-          ) : undefined
-        }
-      />
+      <CardScene style={prefs.cardStyle} className="flex min-h-0 flex-1 flex-col">
+        <SessionHeader
+          title={title}
+          subtitle={subtitle}
+          progress={{ done: state.graded, total: state.total }}
+          backLabel={t('study.goBack')}
+          onBack={onBack}
+          action={
+            card ? (
+              <IconButton
+                variant="glass"
+                aria-label={t('study.studySessionSettingsTitle')}
+                onClick={() => setStudySessionSettingsOpen(true)}
+              >
+                <MoreVertical className="size-5" aria-hidden />
+              </IconButton>
+            ) : undefined
+          }
+        />
 
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-5 py-3">
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-5 py-3">
+          {card ? (
+            <StudyDeck
+              key={mode}
+              card={card}
+              cardStyle={prefs.cardStyle}
+              upcoming={upcoming}
+              mode={mode}
+              direction={prefs.direction}
+              wordSpaces={wordSpaces}
+              typeInitialsOnly={settings.value.typeInitialsOnly}
+              flipped={flipped}
+              swipeConfig={activeSwipe}
+              canSpeak={canSpeak}
+              onFlip={() => dispatch({ type: 'flip' })}
+              onReveal={() => dispatch({ type: 'reveal' })}
+              onUnflip={() => dispatch({ type: 'unflip' })}
+              onCommit={handleCommit}
+              onSpeak={(text) => speak(text)}
+              onChangeMode={() => setModeOpen(true)}
+              onOpenGear={() => setGearOpen(true)}
+              onLongPress={() => setQuickOpen(true)}
+            />
+          ) : !completed ? (
+            <EmptyQueue
+              filtered={filter.kind !== 'all'}
+              onChangeSelection={() => setStudySessionSettingsOpen(true)}
+              onStudyAll={() => settings.set('filter', { kind: 'all' })}
+              onDone={onBack}
+            />
+          ) : null}
+        </div>
+
         {card ? (
-          <StudyDeck
-            key={mode}
-            card={card}
-            cardStyle={prefs.cardStyle}
-            upcoming={upcoming}
-            mode={mode}
-            direction={prefs.direction}
-            wordSpaces={wordSpaces}
-            typeInitialsOnly={settings.value.typeInitialsOnly}
+          <SessionFooter
             flipped={flipped}
-            swipeConfig={activeSwipe}
-            canSpeak={canSpeak}
-            onFlip={() => dispatch({ type: 'flip' })}
-            onReveal={() => dispatch({ type: 'reveal' })}
-            onUnflip={() => dispatch({ type: 'unflip' })}
-            onCommit={handleCommit}
-            onSpeak={(text) => speak(text)}
-            onChangeMode={() => setModeOpen(true)}
-            onOpenGear={() => setGearOpen(true)}
-            onLongPress={() => setQuickOpen(true)}
-          />
-        ) : !completed ? (
-          <EmptyQueue
-            filtered={filter.kind !== 'all'}
-            onChangeSelection={() => setStudySessionSettingsOpen(true)}
-            onStudyAll={() => settings.set('filter', { kind: 'all' })}
-            onDone={onBack}
+            mode={state.mode}
+            srs={card.card.srs}
+            now={now}
+            remaining={remaining}
+            buckets={state.buckets}
+            onGrade={applyGrade}
+            onAnswer={applyAnswer}
           />
         ) : null}
-      </div>
-
-      {card ? (
-        <SessionFooter
-          flipped={flipped}
-          mode={state.mode}
-          srs={card.card.srs}
-          now={now}
-          remaining={remaining}
-          buckets={state.buckets}
-          onGrade={applyGrade}
-          onAnswer={applyAnswer}
-        />
-      ) : null}
+      </CardScene>
 
       {canEdit && onEditCard && card ? (
         <CardDraftSheet

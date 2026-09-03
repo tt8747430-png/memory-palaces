@@ -39,8 +39,17 @@ describe('schema migrations', () => {
     expect(migrated.fastReview).toBeUndefined()
   })
 
+  it('carries a v1 deck across the widened card-style enum untouched', () => {
+    const v1 = {
+      id: 'd1',
+      name: 'Deck',
+      settings: { cardStyle: { preset: 'paper', font: 'serif', textSize: 24, alignment: 'left' } },
+    }
+    expect(deckMigrations[2](v1 as never)).toEqual(v1)
+  })
+
   it('versions both collections', () => {
-    expect(deckSchema.version).toBe(1)
+    expect(deckSchema.version).toBe(2)
     expect(cardSchema.version).toBe(1)
   })
 })

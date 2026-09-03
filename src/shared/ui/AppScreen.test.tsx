@@ -29,6 +29,49 @@ describe('AppScreen', () => {
     expect(screen.getByRole('main').firstElementChild).toHaveClass('min-h-[calc(100%+1px)]')
   })
 
+  /**
+   * The clearance is an empty box at the end of the content, so the port still runs to the display
+   * edge and rows keep passing behind the nav's glass — only where the list *stops* changes. Not
+   * padding: a scrolling flex column's end padding is not reliably part of its scrollable overflow.
+   */
+  it('ends the scroll with an empty box, leaving the port full height', () => {
+    renderWithProviders(
+      <AppScreen bounce gutter="dial">
+        Body
+      </AppScreen>,
+    )
+    const main = screen.getByRole('main')
+    expect(main.className).not.toContain('mb-[')
+    expect(main.className).not.toContain('pb-safe')
+    expect(main.lastElementChild).toHaveClass('h-[calc(var(--app-bottom-inset)+8.5rem)]')
+    expect(main.lastElementChild).toBeEmptyDOMElement()
+  })
+
+  it('clears the tab bar for a nav gutter', () => {
+    renderWithProviders(<AppScreen gutter="nav">Body</AppScreen>)
+    expect(screen.getByRole('main').lastElementChild).toHaveClass(
+      'h-[calc(var(--app-bottom-inset)+4.5rem)]',
+    )
+  })
+
+  it('keeps the gutter above a docked footer, never below it', () => {
+    renderWithProviders(
+      <AppScreen fill gutter="nav" footer={<footer>Bottom</footer>}>
+        Body
+      </AppScreen>,
+    )
+    const main = screen.getByRole('main')
+    expect(main.lastElementChild).toHaveTextContent('Bottom')
+    expect(main.children[1]).toHaveClass('h-[calc(var(--app-bottom-inset)+4.5rem)]')
+  })
+
+  it('keeps the safe-area padding, and no gutter box, when nothing floats over the screen', () => {
+    renderWithProviders(<AppScreen bounce>Body</AppScreen>)
+    const main = screen.getByRole('main')
+    expect(main).toHaveClass('pb-safe')
+    expect(main.children).toHaveLength(1)
+  })
+
   it('lets a docked footer size the body instead', () => {
     renderWithProviders(
       <AppScreen bounce fill footer={<footer>Bottom</footer>}>

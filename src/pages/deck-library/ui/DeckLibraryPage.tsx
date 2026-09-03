@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { toast } from 'sonner'
 import { MoreVertical } from 'lucide-react'
 import type { Deck } from '@/entities/deck'
 import { DECK_COLOR_OPTIONS, useDeckStoreApi } from '@/entities/deck'
@@ -9,11 +8,10 @@ import { useFolderStoreApi } from '@/entities/folder'
 import { selectEffectivePreferences, usePreferencesStore } from '@/entities/preferences'
 import { createDeck, createSubdeck } from '@/features/deck'
 import { createFolder, editFolder } from '@/features/folder'
-import { readAnkiFile } from '@/features/content'
 import { DeckTree, LibrarySelectList, MoveSheet } from '@/widgets/deck-tree'
 import { HomeHeader } from '@/widgets/home-header'
-import { useImportDraft } from '@/widgets/content-editor'
-import { importErrorMessage, nextDefaultName, useHideAppNav } from '@/shared/lib'
+import { useImportFile } from '@/widgets/content-editor'
+import { nextDefaultName, useHideAppNav } from '@/shared/lib'
 import {
   ActionSheet,
   AppScreen,
@@ -85,7 +83,7 @@ export function DeckLibraryPage({
   const { t } = useTranslation()
   const deckStore = useDeckStoreApi()
   const folderStore = useFolderStoreApi()
-  const setImportDraft = useImportDraft((s) => s.setDraft)
+  const importFile = useImportFile()
   const canImport = Boolean(onImportPaste)
   const inFolder = folderId !== null
 
@@ -145,20 +143,12 @@ export function DeckLibraryPage({
     setFolderSheetTarget(undefined)
   }
 
-  const importAnki = async (file: File) => {
-    try {
-      const parsed = await readAnkiFile(file)
-      if (parsed.cards.length === 0) {
-        toast.error(t('cards.transfer.noCardsFound'))
-        return
-      }
+  /** A file dropped on the library has no deck yet, so one is named after it on the way in. */
+  const importIntoNewDeck = (file: File) =>
+    importFile(file, async () => {
       const deck = await createDeck(deckStore, { name: deckNameFromFile(file.name) })
-      setImportDraft('anki', parsed.cards)
       onReviewDeck?.(deck.id)
-    } catch (error) {
-      toast.error(importErrorMessage(error, t('cards.transfer.importFailed')))
-    }
-  }
+    })
 
   const deckSwipeHandlers = (deck: Deck): SwipeActionHandlers => ({
     favorite: {
@@ -199,7 +189,7 @@ export function DeckLibraryPage({
   return (
     <AppScreen
       bounce
-      className="pb-dial"
+      gutter="dial"
       header={
         selection.active ? (
           <SelectHeader selection={selection} />
@@ -335,7 +325,7 @@ export function DeckLibraryPage({
         title={t('deck.importTitle')}
         description={t('deck.importSheetHint')}
         onPasteNotes={() => onImportPaste?.()}
-        onPickFile={(file) => void importAnki(file)}
+        onPickFile={(file) => void importIntoNewDeck(file)}
       />
 
       <FolderSheet

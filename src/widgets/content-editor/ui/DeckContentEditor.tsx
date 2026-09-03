@@ -11,13 +11,11 @@ import {
   selectEffectivePreferences,
   usePreferencesStore,
 } from '@/entities/preferences'
-import { readAnkiFile } from '@/features/content'
 import {
   cardMaturityCounts,
   cardsInSubtree,
   CONTENT_SORTS,
   findEntity,
-  importErrorMessage,
   type MultiSelect,
   usePendingAct,
 } from '@/shared/lib'
@@ -34,8 +32,8 @@ import {
 import { type MoveDestination, MoveSheet } from '@/widgets/deck-tree'
 import { filterCards, sortCards } from '../model/card-list'
 import { useCardCommands } from '../model/use-card-commands'
+import { useImportFile } from '../model/use-import-file'
 import { useCardFilter } from '../model/use-card-filter'
-import { useImportDraft } from '../model/import-draft'
 import { CardBrowser } from './CardBrowser'
 import { CardFilterSheet, FilterButton } from './CardFilterSheet'
 import { EmptyCards, FilterEmpty, NoResults } from './CardListStates'
@@ -77,7 +75,7 @@ export function DeckContentEditor({
   const { t } = useTranslation()
   const cardStore = useCardStoreApi()
   const allCards = useCardStore(selectCards)
-  const setImportDraft = useImportDraft((s) => s.setDraft)
+  const importFile = useImportFile()
 
   const prefs = usePreferencesStore(selectEffectivePreferences)
   const decks = useDeckStore(selectDecks)
@@ -134,20 +132,6 @@ export function DeckContentEditor({
       commands.moveTo(moveIds, dest.deckId, findEntity(decks, dest.deckId)?.name ?? '')
     }
     setMoveIds(null)
-  }
-
-  const importAnki = async (file: File) => {
-    try {
-      const data = await readAnkiFile(file)
-      if (data.cards.length === 0) {
-        toast.error(t('cards.transfer.noCardsFound'))
-        return
-      }
-      setImportDraft('anki', data.cards)
-      onReviewImport()
-    } catch (error) {
-      toast.error(importErrorMessage(error, t('cards.transfer.importFailed')))
-    }
   }
 
   const renderCard = (card: Card, dragHandle?: RowDragHandle, dragging = false) => (
@@ -236,7 +220,7 @@ export function DeckContentEditor({
         title={t('cards.transfer.importTitle')}
         description={t('cards.transfer.importSubtitle')}
         onPasteNotes={onPasteNotes}
-        onPickFile={(file) => void importAnki(file)}
+        onPickFile={(file) => void importFile(file, onReviewImport)}
       />
 
       <CardFilterSheet filter={filter} counts={maturity} />

@@ -158,6 +158,16 @@ export const en = {
       archived: 'Deck archived',
       unarchived: 'Deck restored',
     },
+    duplicateConfirm: {
+      title: 'Duplicate this deck?',
+      body: 'A copy of “{{name}}” and every card in it is added to your library.',
+      confirm: 'Duplicate',
+    },
+    archiveConfirm: {
+      title: 'Archive this deck?',
+      body: '“{{name}}” leaves your library and keeps all its cards. Restore it any time from Archived.',
+      confirm: 'Archive deck',
+    },
     resetConfirm: {
       title: 'Reset progress?',
       body: 'Every card in this deck goes back to new. This can’t be undone.',
@@ -212,7 +222,8 @@ export const en = {
     alignCenter: 'Align centre',
     alignRight: 'Align right',
     reset: 'Reset card style',
-    resetDone: 'Card style reset',
+    apply: 'Apply',
+    applied: 'Card style applied',
     haptics: 'Haptics',
     preview: 'Preview',
     previewFront: 'What are the 3 different types of equilibrium in physics?',
@@ -223,6 +234,8 @@ export const en = {
       chalk: 'Chalk',
       notebook: 'Notebook',
       paper: 'Paper',
+      parchment: 'Parchment',
+      night: 'Night',
     },
     fontName: {
       default: 'Default',
