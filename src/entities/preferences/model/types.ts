@@ -24,7 +24,7 @@ export type { FlashcardSwipeConfig, FlashcardSwipeByMode } from '@/shared/config
 
 export type { ContentSort }
 
-export const STUDY_MODES = ['blur', 'words', 'initials', 'type'] as const
+export const STUDY_MODES = ['blur', 'initials', 'words', 'type'] as const
 export type StudyMode = (typeof STUDY_MODES)[number]
 
 export type Theme = 'light' | 'dark' | 'system'

@@ -32,6 +32,7 @@ import { EmptyQueue } from './EmptyQueue'
 import { type RemainingTally, SessionFooter } from './SessionFooter'
 import { GearSheet } from './GearSheet'
 import { ModeSheet } from './ModeSheet'
+import { StudySessionSettingsSheet } from './StudySessionSettingsSheet'
 import { QuickActionsSheet } from './QuickActionsSheet'
 import type { QuickActionsModel } from './QuickActionRows'
 import { CompletionOverlay } from './CompletionOverlay'
@@ -95,6 +96,7 @@ export function FlashcardsPanel({
 
   const [filter, setStudyFilter] = useState<StudyFilter>({ kind: 'all' })
   const [gearOpen, setGearOpen] = useState(false)
+  const [studySessionSettingsOpen, setStudySessionSettingsOpen] = useState(false)
   const [modeOpen, setModeOpen] = useState(false)
   const [quickOpen, setQuickOpen] = useState(false)
   const [editing, setEditing] = useState(false)
@@ -283,8 +285,8 @@ export function FlashcardsPanel({
           card ? (
             <IconButton
               variant="glass"
-              aria-label={t('study.options')}
-              onClick={() => setGearOpen(true)}
+              aria-label={t('study.studySessionSettingsTitle')}
+              onClick={() => setStudySessionSettingsOpen(true)}
             >
               <MoreVertical className="size-5" aria-hidden />
             </IconButton>
@@ -318,7 +320,7 @@ export function FlashcardsPanel({
         ) : !completed ? (
           <EmptyQueue
             filtered={filter.kind !== 'all'}
-            onChangeSelection={() => setGearOpen(true)}
+            onChangeSelection={() => setStudySessionSettingsOpen(true)}
             onStudyAll={() => settings.set('filter', { kind: 'all' })}
             onDone={onBack}
           />
@@ -354,13 +356,19 @@ export function FlashcardsPanel({
           open={gearOpen}
           onClose={() => setGearOpen(false)}
           mode={mode}
-          algorithm={algorithm}
-          canSpeak={canSpeak}
           quick={quick}
           settings={settings}
-          onFinish={() => dispatch({ type: 'finish' })}
         />
       ) : null}
+
+      <StudySessionSettingsSheet
+        open={studySessionSettingsOpen}
+        onClose={() => setStudySessionSettingsOpen(false)}
+        algorithm={algorithm}
+        canSpeak={canSpeak}
+        settings={settings}
+        onFinish={() => dispatch({ type: 'finish' })}
+      />
 
       <ModeSheet
         open={modeOpen}

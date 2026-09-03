@@ -5,6 +5,7 @@ import type { Question } from '@/entities/question'
 import { selectEffectivePreferences, usePreferencesStore } from '@/entities/preferences'
 import {
   AppScreen,
+  IconButton,
   ScreenHeader,
   ScreenLoading,
   SelectHeader,
@@ -81,6 +82,15 @@ export function DeckQuestionsPage({
             subtitle={page.deckName}
             onBack={onBack}
             backLabel={t('common.back')}
+            action={
+              <IconButton
+                variant="glass"
+                aria-label={t('questions.transfer.exportShort')}
+                onClick={() => setExportOpen(true)}
+              >
+                <Download className="size-5" aria-hidden />
+              </IconButton>
+            }
           />
         )
       }
@@ -103,7 +113,7 @@ export function DeckQuestionsPage({
           ) : null}
 
           {questions.length === 0 ? (
-            <EmptyQuestions onAdd={onAddQuestion} />
+            <EmptyQuestions onAdd={onAddQuestion} onImport={() => setImportOpen(true)} />
           ) : (
             <ReorderableList
               items={questions}
@@ -118,7 +128,11 @@ export function DeckQuestionsPage({
 
       {selection.active ? (
         <SelectToolbarDock>
-          <SelectToolbar actions={prefs.selectToolbar.question} handlers={page.selectHandlers} />
+          <SelectToolbar
+            actions={prefs.selectToolbar.question}
+            handlers={page.selectHandlers}
+            selection={selection}
+          />
         </SelectToolbarDock>
       ) : null}
 
@@ -139,7 +153,7 @@ export function DeckQuestionsPage({
         onExportCsv={page.exportCsv}
       />
 
-      {!selection.active ? (
+      {questions.length > 0 && !selection.active ? (
         <SpeedDial
           label={t('questions.quickActions')}
           placement="above-safe-area"
@@ -155,12 +169,6 @@ export function DeckQuestionsPage({
               label: t('questions.transfer.importShort'),
               icon: <Upload className="size-5" aria-hidden />,
               onSelect: () => setImportOpen(true),
-            },
-            {
-              id: 'export',
-              label: t('questions.transfer.exportShort'),
-              icon: <Download className="size-5" aria-hidden />,
-              onSelect: () => setExportOpen(true),
             },
           ]}
         />

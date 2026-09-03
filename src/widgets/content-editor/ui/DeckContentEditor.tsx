@@ -222,7 +222,11 @@ export function DeckContentEditor({
 
       {selectMode ? (
         <SelectToolbarDock>
-          <SelectToolbar actions={prefs.selectToolbar.card} handlers={commands.selectHandlers} />
+          <SelectToolbar
+            actions={prefs.selectToolbar.card}
+            handlers={commands.selectHandlers}
+            selection={selection}
+          />
         </SelectToolbarDock>
       ) : null}
 

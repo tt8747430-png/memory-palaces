@@ -285,7 +285,11 @@ export function DeckLibraryPage({
 
       {selection.active ? (
         <SelectToolbarDock>
-          <SelectToolbar actions={prefs.selectToolbar.library} handlers={library.selectHandlers} />
+          <SelectToolbar
+            actions={prefs.selectToolbar.library}
+            handlers={library.selectHandlers}
+            selection={selection}
+          />
         </SelectToolbarDock>
       ) : null}
 
