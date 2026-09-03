@@ -79,9 +79,14 @@ export function InitialsFace(props: FaceProps) {
                 onPointerDown={stopPress}
                 onClick={(event) => {
                   event.stopPropagation()
-                  if (open) setPeek(null)
-                  else openPeek(i, event.currentTarget)
+                  if (open) {
+                    setPeek(null)
+                    return
+                  }
+                  openPeek(i, event.currentTarget)
+                  event.currentTarget.focus()
                 }}
+                onBlur={() => setPeek((prev) => (prev?.index === i ? null : prev))}
                 className={cn(
                   'whitespace-nowrap rounded-control px-1 transition-colors',
                   open ? 'bg-primary/12 text-heading' : 'active:bg-primary/5',

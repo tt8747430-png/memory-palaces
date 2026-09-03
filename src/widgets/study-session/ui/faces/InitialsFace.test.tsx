@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { cleanup, screen } from '@testing-library/react'
+import { cleanup, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders } from '@/shared/test/render-with-providers'
 import { makeFaceProps } from './face-fixtures'
@@ -28,5 +28,18 @@ describe('InitialsFace', () => {
 
     await user.click(screen.getByRole('button', { name: 'Show initials' }))
     expect(screen.getByRole('button', { name: /pax/i })).toBeInTheDocument()
+  })
+
+  it('shows the peeked word only while its button stays focused', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(
+      <InitialsFace {...makeFaceProps({ mode: 'initials', answer: 'Pax Romana' })} />,
+    )
+
+    await user.click(screen.getByRole('button', { name: /pax/i }))
+    expect(screen.getByText('Pax')).toBeInTheDocument()
+
+    await user.tab()
+    await waitFor(() => expect(screen.queryByText('Pax')).toBeNull())
   })
 })
