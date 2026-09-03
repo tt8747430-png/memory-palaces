@@ -45,11 +45,8 @@ function setup(overrides: Partial<Parameters<typeof GearSheet>[0]> = {}) {
     open: true,
     onClose: vi.fn(),
     mode: 'blur',
-    algorithm: 'spaced',
-    canSpeak: false,
     quick,
     settings: settingsControl(),
-    onFinish: vi.fn(),
     ...overrides,
   }
   renderWithProviders(<GearSheet {...props} />)
@@ -62,33 +59,34 @@ describe('GearSheet', () => {
     expect(await screen.findByText('Study options')).toBeInTheDocument()
   })
 
-  it('names the setting it is changing, rather than calling a setting-specific handler', async () => {
-    const user = userEvent.setup()
-    const props = setup()
-    await user.click(await screen.findByRole('switch', { name: 'Shuffle cards' }))
-    expect(props.settings.set).toHaveBeenCalledWith('shuffle', true)
+  it('has no study-session-wide settings — those live in the header sheet', async () => {
+    setup()
+    expect(await screen.findByText('This card')).toBeInTheDocument()
+    expect(screen.queryByRole('switch', { name: 'Shuffle cards' })).toBeNull()
+    expect(screen.queryByRole('button', { name: /Finish/ })).toBeNull()
   })
 
-  it('picks a Study filter through the same one setter', async () => {
+  it('pins a close bar where the old finish bar was', async () => {
     const user = userEvent.setup()
     const props = setup()
-    await user.click(await screen.findByRole('button', { name: /due/i }))
-    expect(props.settings.set).toHaveBeenCalledWith('filter', { kind: 'due' })
-  })
-
-  it('finishes the session from the footer action', async () => {
-    const user = userEvent.setup()
-    const props = setup()
-    await user.click(await screen.findByRole('button', { name: 'Finish' }))
-    expect(props.onFinish).toHaveBeenCalledTimes(1)
+    // The header's icon dismiss answers to the same name; the pinned bar is the last of the two.
+    const closers = await screen.findAllByRole('button', { name: 'Close' })
+    await user.click(closers[closers.length - 1]!)
     expect(props.onClose).toHaveBeenCalledTimes(1)
   })
-})
 
-describe('GearSheet under fast review', () => {
-  it('drops the Due filter, since nothing is scheduled', async () => {
-    setup({ algorithm: 'fast' })
-    expect(await screen.findByRole('button', { name: /All/ })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /^Due/ })).toBeNull()
+  it('names the setting it is changing, rather than calling a setting-specific handler', async () => {
+    const user = userEvent.setup()
+    const props = setup({ mode: 'initials' })
+    await user.click(await screen.findByRole('switch', { name: 'Show word spaces' }))
+    expect(props.settings.set).toHaveBeenCalledWith('wordSpaces', true)
+  })
+
+  it('sets a swipe action through the shared setter', async () => {
+    const user = userEvent.setup()
+    const props = setup()
+    await user.click(await screen.findByRole('button', { name: 'Swipe up' }))
+    await user.click(await screen.findByRole('menuitem', { name: 'Skip' }))
+    expect(props.settings.setSwipe).toHaveBeenCalledWith('up', 'skip')
   })
 })

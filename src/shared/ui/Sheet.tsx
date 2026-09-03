@@ -1,4 +1,5 @@
 import type { ReactNode, RefObject } from 'react'
+import { useTranslation } from 'react-i18next'
 import { X } from 'lucide-react'
 import {
   Drawer,
@@ -33,6 +34,7 @@ export function Sheet({
   className,
   initialFocus,
 }: SheetProps) {
+  const { t } = useTranslation()
   return (
     <Drawer open={open} onOpenChange={(next) => onOpenChange(next)}>
       <DrawerVirtualKeyboardProvider>
@@ -44,7 +46,7 @@ export function Sheet({
               {description ? <DrawerDescription>{description}</DrawerDescription> : null}
             </div>
             <DrawerClose
-              aria-label="Close"
+              aria-label={t('common.close')}
               className="-mr-1 grid size-8 shrink-0 place-items-center rounded-control text-heading hover:bg-info-surface"
             >
               <X className="size-4.5" aria-hidden />
