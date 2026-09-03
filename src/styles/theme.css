@@ -251,10 +251,10 @@
 
     /* A floating dial reaches higher than the nav beside it: `SpeedDial`'s `above-nav` puts a
        3.5rem button 1rem above `--app-bottom-inset`, so its top edge lands exactly where `.pb-nav`
-       stops and the last row comes to rest flush under it. This is that edge plus a gutter, so a
-       list can be scrolled clear of the dial rather than up against it. */
+       stops — flush, with no gutter of its own. This is that edge plus a visible 2rem, so the last
+       row comes to rest clearly above the dial instead of tucked under it. */
     .pb-dial {
-        padding-bottom: calc(var(--app-bottom-inset) + 5.5rem);
+        padding-bottom: calc(var(--app-bottom-inset) + 6.5rem);
     }
 
     .pb-gutter {
