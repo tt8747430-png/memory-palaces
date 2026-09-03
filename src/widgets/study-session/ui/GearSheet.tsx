@@ -1,25 +1,8 @@
 import { type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import {
-  ArrowDown,
-  ArrowLeft,
-  ArrowLeftRight,
-  ArrowRight,
-  ArrowUp,
-  Check,
-  Keyboard,
-  Shuffle,
-  Smartphone,
-  Type,
-  Volume2,
-  WholeWord,
-} from 'lucide-react'
-import { toast } from 'sonner'
-import type { LearningAlgorithm } from '@/entities/deck'
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Keyboard, Type, WholeWord } from 'lucide-react'
 import type { StudyMode } from '@/entities/preferences'
-import { cn, motionSupported, requestMotionPermission } from '@/shared/lib'
-import { Button, Combobox, type ComboboxOption, pillSurface, Sheet, ToggleRow } from '@/shared/ui'
-import { type StudyFilter, studyFiltersEqual } from '@/features/review'
+import { Button, Combobox, type ComboboxOption, Sheet, ToggleRow } from '@/shared/ui'
 import {
   actionsForMode,
   FLASHCARD_SWIPE_ACTION_META,
@@ -29,17 +12,13 @@ import {
 import { QuickActionRows, type QuickActionsModel } from './QuickActionRows'
 import { SheetSection } from './SheetSection'
 import type { StudySettingsControl } from '../model/use-study-settings'
-import type { StudyDirection } from '../model/types'
 
 export interface GearSheetProps {
   open: boolean
   onClose: () => void
   mode: StudyMode
-  algorithm: LearningAlgorithm
-  canSpeak: boolean
   quick: QuickActionsModel
   settings: StudySettingsControl
-  onFinish: () => void
 }
 
 const DIRECTION_META: { direction: SwipeDirection; icon: ReactNode; labelKey: string }[] = [
@@ -61,52 +40,19 @@ const DIRECTION_META: { direction: SwipeDirection; icon: ReactNode; labelKey: st
   },
 ]
 
-export function GearSheet({
-  open,
-  onClose,
-  mode,
-  algorithm,
-  canSpeak,
-  quick,
-  settings,
-  onFinish,
-}: GearSheetProps) {
+/**
+ * The card's own settings — what this mode does, what this card does.
+ * Study-session-wide settings (filters, orientation, shuffle, TTS…) live in
+ * `StudySessionSettingsSheet`, reached from the header.
+ */
+export function GearSheet({ open, onClose, mode, quick, settings }: GearSheetProps) {
   const { t } = useTranslation()
-  const { value, filterCounts, set } = settings
-
-  const handleShakeToUndo = async (next: boolean) => {
-    if (!next) {
-      set('shakeToUndo', false)
-      return
-    }
-    const granted = await requestMotionPermission()
-    set('shakeToUndo', granted)
-    if (!granted) toast(t('study.shakeUnsupported'))
-  }
+  const { value, set } = settings
 
   const actionOptions: ComboboxOption<FlashcardSwipeAction>[] = actionsForMode(mode).map(
     (action) => ({
       value: action,
       label: t(FLASHCARD_SWIPE_ACTION_META[action].labelKey as never),
-    }),
-  )
-
-  const orientationOptions: ComboboxOption<StudyDirection>[] = [
-    { value: 'front', label: t('study.orientationTerm') },
-    { value: 'back', label: t('study.orientationDefinition') },
-  ]
-
-  // Fast review schedules nothing, so "due" would name a state no card in the session can be in.
-  const filterKinds =
-    algorithm === 'fast'
-      ? (['all', 'new', 'learning', 'flagged'] as const)
-      : (['all', 'due', 'new', 'learning', 'flagged'] as const)
-
-  const filters: { filter: StudyFilter; label: string; count: number }[] = filterKinds.map(
-    (kind) => ({
-      filter: { kind },
-      label: t(`study.filter${kind[0]!.toUpperCase()}${kind.slice(1)}` as never),
-      count: filterCounts[kind],
     }),
   )
 
@@ -116,15 +62,11 @@ export function GearSheet({
       onOpenChange={(next) => !next && onClose()}
       title={t('study.optionsTitle')}
       footer={
-        <Button
-          className="w-full"
-          onClick={() => {
-            onFinish()
-            onClose()
-          }}
-        >
-          <Check className="size-4.5" aria-hidden />
-          {t('study.finish')}
+        // Where the old Finish bar sat. Stopping the study session belongs to
+        // `StudySessionSettingsSheet`; what a long options list needs pinned in thumb reach is the
+        // way out of it.
+        <Button variant="secondary" className="w-full" onClick={onClose}>
+          {t('study.closeSettings')}
         </Button>
       }
     >
@@ -181,118 +123,7 @@ export function GearSheet({
             </div>
           </div>
         </SheetSection>
-
-        <SheetSection title={t('study.session')}>
-          <div className="flex flex-wrap gap-2">
-            {filters.map(
-              ({ filter: candidate, label, count }) =>
-                (candidate.kind === 'all' || count > 0) && (
-                  <FilterChip
-                    key={candidate.kind}
-                    label={label}
-                    count={count}
-                    active={studyFiltersEqual(value.filter, candidate)}
-                    onClick={() => set('filter', candidate)}
-                  />
-                ),
-            )}
-          </div>
-
-          <PickerRow
-            icon={<ArrowLeftRight className="size-4.5" aria-hidden />}
-            label={t('study.orientation')}
-          >
-            <Combobox
-              variant="bare"
-              label={t('study.orientation')}
-              value={value.direction}
-              options={orientationOptions}
-              onChange={(next) => set('direction', next)}
-            />
-          </PickerRow>
-
-          <ToggleRow
-            icon={<Shuffle className="size-4.5" aria-hidden />}
-            label={t('study.shuffle')}
-            description={t('study.shuffleHint')}
-            checked={value.shuffle}
-            onChange={(next) => set('shuffle', next)}
-          />
-          <ToggleRow
-            icon={<Volume2 className="size-4.5" aria-hidden />}
-            label={t('study.textToSpeech')}
-            description={canSpeak ? t('study.ttsHint') : t('study.ttsUnsupported')}
-            checked={value.textToSpeech}
-            onChange={(next) => set('textToSpeech', next)}
-            disabled={!canSpeak}
-          />
-          {motionSupported() ? (
-            <ToggleRow
-              icon={<Smartphone className="size-4.5" aria-hidden />}
-              label={t('study.shakeToUndo')}
-              description={t('study.shakeToUndoHint')}
-              checked={value.shakeToUndo}
-              onChange={handleShakeToUndo}
-            />
-          ) : null}
-        </SheetSection>
       </div>
     </Sheet>
-  )
-}
-
-function PickerRow({
-  icon,
-  label,
-  children,
-}: {
-  icon: ReactNode
-  label: string
-  children: ReactNode
-}) {
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-card bg-info-surface px-4 py-2.5">
-      <span className="flex min-w-0 items-center gap-3 text-heading">
-        <span className="shrink-0">{icon}</span>
-        <span className="truncate text-(length:--p-text-sub) font-semibold">{label}</span>
-      </span>
-      {children}
-    </div>
-  )
-}
-
-function FilterChip({
-  label,
-  count,
-  active,
-  onClick,
-}: {
-  label: string
-  count?: number
-  active: boolean
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={active}
-      onClick={onClick}
-      className={cn(
-        pillSurface(active ? 'primary' : 'info'),
-        'transition-transform active:scale-[0.94]',
-      )}
-    >
-      {label}
-      {count !== undefined && (
-        <span
-          className={cn(
-            'text-(length:--p-text-tiny) font-bold',
-            active ? 'opacity-70' : 'opacity-60',
-          )}
-        >
-          {count}
-        </span>
-      )}
-    </button>
   )
 }

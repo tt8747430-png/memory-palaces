@@ -12,6 +12,7 @@ describe('SelectToolbar', () => {
       <SelectToolbar
         actions={['flag', 'delete']}
         handlers={{ flag: { onAction: () => {} }, delete: { onAction: () => {} } }}
+        selection={{ exit: () => {} }}
       />,
     )
     expect(screen.getByRole('button', { name: 'Flag' })).toBeInTheDocument()
@@ -26,6 +27,7 @@ describe('SelectToolbar', () => {
       <SelectToolbar
         actions={['flag', 'delete']}
         handlers={{ flag: { onAction: onFlag }, delete: { onAction: onDelete, disabled: true } }}
+        selection={{ exit: () => {} }}
       />,
     )
     await user.click(screen.getByRole('button', { name: 'Flag' }))
@@ -37,10 +39,19 @@ describe('SelectToolbar', () => {
     expect(onDelete).not.toHaveBeenCalled()
   })
 
-  it('renders nothing when no configured action has a handler', () => {
-    const { container } = renderWithProviders(
-      <SelectToolbar actions={['flag', 'delete']} handlers={{}} />,
+  it('renders only the close button when no configured action has a handler', () => {
+    renderWithProviders(
+      <SelectToolbar actions={['flag', 'delete']} handlers={{}} selection={{ exit: () => {} }} />,
     )
-    expect(container).toBeEmptyDOMElement()
+    expect(screen.getAllByRole('button')).toHaveLength(1)
+  })
+
+  it('ends the selection from a control the header does not already name', async () => {
+    const user = userEvent.setup()
+    const exit = vi.fn()
+    renderWithProviders(<SelectToolbar actions={['flag']} handlers={{}} selection={{ exit }} />)
+    expect(screen.queryByRole('button', { name: 'Cancel' })).toBeNull()
+    await user.click(screen.getByRole('button', { name: 'Exit select mode' }))
+    expect(exit).toHaveBeenCalledTimes(1)
   })
 })

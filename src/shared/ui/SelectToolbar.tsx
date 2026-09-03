@@ -1,19 +1,26 @@
 import { useTranslation } from 'react-i18next'
+import { X } from 'lucide-react'
 import { ACTION_META } from '@/shared/config/actions'
 import type { SelectToolbarConfig } from '@/shared/config/select-toolbar'
-import { cn } from '@/shared/lib'
+import { cn, type MultiSelect } from '@/shared/lib'
+import { IconButton } from './primitives'
 import { type SelectActionHandlers, selectActionIcon } from './select-actions'
 
 export interface SelectToolbarProps {
   actions: SelectToolbarConfig
   handlers: SelectActionHandlers
+  /**
+   * The live selection — the toolbar ends it, the same way `SelectHeader` takes the selection it
+   * counts. Leaving select mode sits beside the actions so it is in reach with them, not only up in
+   * the header.
+   */
+  selection: Pick<MultiSelect, 'exit'>
   className?: string
 }
 
-export function SelectToolbar({ actions, handlers, className }: SelectToolbarProps) {
+export function SelectToolbar({ actions, handlers, selection, className }: SelectToolbarProps) {
   const { t } = useTranslation()
   const shown = actions.filter((id) => handlers[id] != null)
-  if (shown.length === 0) return null
 
   return (
     <div
@@ -22,6 +29,17 @@ export function SelectToolbar({ actions, handlers, className }: SelectToolbarPro
         className,
       )}
     >
+      <IconButton
+        variant="tint"
+        // Not "Cancel": the header already offers one by that name, and two controls sharing a name
+        // on one screen leaves a screen reader with no way to tell them apart.
+        aria-label={t('selection.exitSelectMode')}
+        onClick={selection.exit}
+        className="focus-visible:ring-[3px] focus-visible:ring-primary/40"
+      >
+        <X className="size-4.5" aria-hidden />
+      </IconButton>
+      {shown.length > 0 ? <div className="my-1 w-px shrink-0 bg-border" aria-hidden /> : null}
       {shown.map((id) => {
         const meta = ACTION_META[id]
         const handler = handlers[id]!
