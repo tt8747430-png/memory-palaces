@@ -50,6 +50,18 @@ describe('CardFace', () => {
     expect(screen.queryByRole('button', { name: 'Read aloud' })).toBeNull()
   })
 
+  it('lets a tap fall through the face that is turned away', () => {
+    // Not just `inert`: an inert hit retargets to the drag layer, so the facing card's button never
+    // gets the click. The turned-away face has to be transparent to hit-testing as well.
+    setup({ active: false })
+    expect(screen.getByTestId('card-face')).toHaveClass('pointer-events-none')
+  })
+
+  it('keeps the facing side hit-testable', () => {
+    setup({ active: true })
+    expect(screen.getByTestId('card-face')).not.toHaveClass('pointer-events-none')
+  })
+
   it('fires the change-mode and gear controls', async () => {
     const user = userEvent.setup()
     const { onChangeMode, onOpenGear } = setup()
