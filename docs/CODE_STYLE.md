@@ -103,16 +103,18 @@ v4, two-layer tokens: primitives (`--p-navy-900`…) → semantic roles (`--prim
     different in dark mode. They are literal by design and stay confined to that file: the `PRESETS` map and the
     `DARK_CHROME` / `LIGHT_CHROME` tables it draws on. `plain` and `outlined` follow the tokens like everything else.
   - A preset is a **scene**, so it also carries the screen behind the card. `resolveCardScene` hands its subtree a
-    remap of the semantic tokens the session chrome reads — the set is `CHROME_TOKENS`, exported from that file, and
+    remap of the semantic tokens the study session's chrome reads — the set is `CHROME_TOKENS`, exported from that file, and
     every printed preset must give a value for **all** of it. That is how `SessionHeader`, the buttons on the card
-    and the session footer's grade buttons stay legible on slate without knowing a scene exists.
+    and the study session's grade buttons stay legible on slate without knowing a scene exists.
     - **Remap the paper with the ink.** `bg-card` resolves to `--surface`; remapping `--text-*` without it is how the
       type-answer field became white-on-white. The tinted pairs (`--success-surface`, `--danger-surface`, …) are the
       same trap one step out — the grade buttons are painted from them.
-    - Three tests in `card-style.test.ts` hold it: every `var()` a preset names must be declared in `tokens.css`,
-      every printed scene must set every `CHROME_TOKENS` entry, and a scene may set **nothing** beyond that set plus
-      `--scene-bg`. Adding a token to the list without giving it a value fails rather than silently keeping the
-      app's own.
+    - Four tests hold it. Three in `card-style.test.ts`: every `var()` a preset names must be declared in
+      `tokens.css`, every printed scene must set every `CHROME_TOKENS` entry, and a scene may set **nothing** beyond
+      that set plus `--scene-bg` — so adding a token to the list without giving it a value fails rather than silently
+      keeping the app's own. The fourth, `widgets/study-session/ui/scene-chrome.test.ts`, holds the **list** to the
+      screen: it reads the role→token map out of `@theme inline` and every semantic colour utility the scene's
+      subtree wears must resolve into `CHROME_TOKENS`. A face that reaches for a role no scene repaints fails there.
 - **Interactive elements need hover / `focus-visible` / `disabled` + `transition`.** Icon-only → `sr-only` label.
   `focus-visible:` over `focus:`.
 - **Mobile-first** — base = smallest screen, layer upward. Verify at phone width.

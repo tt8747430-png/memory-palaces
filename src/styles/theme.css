@@ -68,6 +68,12 @@
     --app-height: 100%;
 
     --app-bottom-inset: max(0.75rem, env(safe-area-inset-bottom));
+
+    /* A pinned preview's share of the shell — the card-style screen's live card. Bounded in pixels
+           at both ends so a small phone still leaves room to edit and a tall one does not hand the
+           preview half the screen. Derived from `--app-height` so it is not a second opinion about
+           how tall the app is. */
+    --preview-pane-height: clamp(190px, calc(var(--app-height) * 0.34), 340px);
   }
 
   html {

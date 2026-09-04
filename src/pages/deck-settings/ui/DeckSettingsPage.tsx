@@ -41,7 +41,11 @@ export function DeckSettingsPage({ deckId, ...nav }: DeckSettingsPageProps) {
     return (
       <AppScreen
         header={
-          <ScreenHeader title={t('deck.settings')} onBack={nav.onBack} backLabel={t('common.back')} />
+          <ScreenHeader
+            title={t('deck.settings')}
+            onBack={nav.onBack}
+            backLabel={t('common.back')}
+          />
         }
       />
     )
@@ -143,7 +147,7 @@ export function DeckSettingsPage({ deckId, ...nav }: DeckSettingsPageProps) {
 
       <MoveSheet
         open={page.sheet === 'move'}
-        onOpenChange={page.onSheetOpenChange}
+        onOpenChange={page.onSheetOpenChange('move')}
         subtitle={deck.name}
         decks={page.decks}
         folders={page.folders}
@@ -153,13 +157,13 @@ export function DeckSettingsPage({ deckId, ...nav }: DeckSettingsPageProps) {
 
       <DeckAppearanceSheet
         open={page.sheet === 'appearance'}
-        onOpenChange={page.onSheetOpenChange}
+        onOpenChange={page.onSheetOpenChange('appearance')}
         deck={deck}
       />
 
       <ImportSheet
         open={page.sheet === 'import'}
-        onOpenChange={page.onSheetOpenChange}
+        onOpenChange={page.onSheetOpenChange('import')}
         title={t('cards.transfer.importTitle')}
         description={t('cards.transfer.importSubtitle')}
         onPasteNotes={act.pasteNotes}
@@ -168,7 +172,7 @@ export function DeckSettingsPage({ deckId, ...nav }: DeckSettingsPageProps) {
 
       <ActionSheet
         open={page.sheet === 'export'}
-        onOpenChange={page.onSheetOpenChange}
+        onOpenChange={page.onSheetOpenChange('export')}
         title={t('deckSettings.exportSheetTitle')}
         description={t('deckSettings.exportSheetDescription')}
         cancelLabel={t('common.cancel')}

@@ -113,4 +113,20 @@ describe('DeckCardStylePage', () => {
       expect(await screen.findByRole('radio', { name })).toBeInTheDocument()
     }
   })
+
+  /**
+   * The apply bar arriving is a layout change the spec asks for; the controls under it shifting a
+   * second time because the scroll body re-padded itself is not. `AppScreen` takes that inset from
+   * the footer's presence, so the dock stays mounted whether or not there is anything to apply.
+   */
+  it('keeps the same bottom inset whether or not the bar is showing', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    const main = await screen.findByRole('main')
+    expect(main).toHaveClass('pb-keyboard')
+
+    await user.click(await screen.findByRole('radio', { name: 'Night' }))
+    expect(screen.getByRole('button', { name: 'Apply' })).toBeInTheDocument()
+    expect(main).toHaveClass('pb-keyboard')
+  })
 })

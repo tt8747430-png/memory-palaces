@@ -8,6 +8,7 @@ export {
   CARD_STYLE_PRESET_IDS,
   CARD_STYLE_SURFACE,
   CARD_STYLE_TEXT,
+  CHROME_TOKENS,
   clampCardTextSize,
   resolveCardScene,
   resolveCardStyle,

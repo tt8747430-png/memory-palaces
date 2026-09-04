@@ -1,5 +1,5 @@
-import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
+import { readStylesheet } from '@/shared/test/stylesheet'
 import {
   CARD_STYLE_PRESET_IDS,
   CHROME_TOKENS,
@@ -48,9 +48,7 @@ describe('resolveCardStyle', () => {
    * kept by hand beside it.
    */
   it('names only custom properties the app defines', () => {
-    // Repo-relative: the jsdom environment gives `import.meta.url` an http origin, and Vitest
-    // runs from the project root.
-    const tokens = readFileSync('src/styles/tokens.css', 'utf8')
+    const tokens = readStylesheet('tokens.css')
     const declared = new Set(
       [...tokens.matchAll(/^\s*(--[a-z0-9-]+)\s*:/gm)].map(([, name]) => name),
     )

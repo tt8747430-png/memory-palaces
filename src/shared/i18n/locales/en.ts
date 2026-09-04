@@ -166,17 +166,17 @@ export const en = {
     archiveConfirm: {
       title: 'Archive this deck?',
       body: '“{{name}}” leaves your library and keeps all its cards. Restore it any time from Archived.',
-      confirm: 'Archive deck',
+      confirm: 'Archive',
     },
     resetConfirm: {
       title: 'Reset progress?',
       body: 'Every card in this deck goes back to new. This can’t be undone.',
-      confirm: 'Reset progress',
+      confirm: 'Reset',
     },
     deleteConfirm: {
       title: 'Delete {{name}}?',
       body: 'This deletes the deck and all its cards. This can’t be undone.',
-      confirm: 'Delete deck',
+      confirm: 'Delete',
     },
   },
   algorithm: {

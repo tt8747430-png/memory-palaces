@@ -134,10 +134,27 @@ describe('useDeckSettings', () => {
     await waitFor(() => expect(hook.result.current.ready).toBe(true))
 
     act(() => hook.result.current.open('export'))
-    act(() => hook.result.current.onSheetOpenChange(true))
+    act(() => hook.result.current.onSheetOpenChange('export')(true))
     expect(hook.result.current.sheet).toBe('export')
 
-    act(() => hook.result.current.onSheetOpenChange(false))
+    act(() => hook.result.current.onSheetOpenChange('export')(false))
+    expect(hook.result.current.sheet).toBeNull()
+  })
+
+  /**
+   * A sheet on its way out fires `onOpenChange(false)` after the next one has opened — the export
+   * sheet must not be able to close the move sheet that replaced it.
+   */
+  it('lets a sheet close only itself', async () => {
+    const { hook } = setup()
+    await waitFor(() => expect(hook.result.current.ready).toBe(true))
+
+    act(() => hook.result.current.open('export'))
+    act(() => hook.result.current.open('move'))
+    act(() => hook.result.current.onSheetOpenChange('export')(false))
+    expect(hook.result.current.sheet).toBe('move')
+
+    act(() => hook.result.current.onSheetOpenChange('move')(false))
     expect(hook.result.current.sheet).toBeNull()
   })
 })

@@ -13,8 +13,8 @@ export interface CardSceneProps {
  * exists.
  *
  * One component for both places a scene is painted — the study session and the style page's preview
- * — so a thumbnail cannot promise a backdrop the session does not deliver. The caller brings the
- * layout; this brings the paint.
+ * — so a thumbnail cannot promise a backdrop the study session does not deliver. The caller brings
+ * the layout; this brings the paint.
  *
  * Sheets and dialogs stay outside it: they portal to the body and belong to the app, not the deck.
  */

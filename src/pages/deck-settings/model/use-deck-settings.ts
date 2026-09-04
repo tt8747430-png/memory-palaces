@@ -18,16 +18,6 @@ export type DeckSettingsSheet = 'appearance' | 'move' | 'export' | 'import'
 /** And one pending confirmation, for the same reason (CODE_STYLE §3a). */
 export type DeckSettingsConfirm = 'duplicate' | 'archive' | 'reset' | 'delete'
 
-/** What each confirmation runs once the learner says yes — the acts that take no argument. */
-type ConfirmableAct = 'duplicate' | 'toggleArchived' | 'reset' | 'remove'
-
-const RUN: Record<DeckSettingsConfirm, ConfirmableAct> = {
-  duplicate: 'duplicate',
-  archive: 'toggleArchived',
-  reset: 'reset',
-  delete: 'remove',
-}
-
 /** Every way this screen hands control back to the router. */
 export interface DeckSettingsNav {
   onBack?: () => void
@@ -53,8 +43,8 @@ export interface DeckSettingsModel {
   archiving: boolean
   sheet: DeckSettingsSheet | null
   open: (sheet: DeckSettingsSheet) => void
-  /** `onOpenChange` for the open sheet — it closes on dismissal and ignores the rest. */
-  onSheetOpenChange: (open: boolean) => void
+  /** `onOpenChange` for one sheet: like the dialogs', it may only dismiss the sheet it belongs to. */
+  onSheetOpenChange: (sheet: DeckSettingsSheet) => (open: boolean) => void
   confirming: DeckSettingsConfirm | null
   ask: (confirm: DeckSettingsConfirm) => void
   /** Runs the pending act — through `usePendingAct`, so a double-tapped confirm runs it once. */
@@ -148,6 +138,14 @@ export function useDeckSettings(deckId: string, nav: DeckSettingsNav): DeckSetti
     },
   }
 
+  /** What each confirmation runs once the learner says yes. */
+  const confirmed: Record<DeckSettingsConfirm, () => void> = {
+    duplicate: act.duplicate,
+    archive: act.toggleArchived,
+    reset: act.reset,
+    delete: act.remove,
+  }
+
   return {
     ready,
     deck,
@@ -159,12 +157,14 @@ export function useDeckSettings(deckId: string, nav: DeckSettingsNav): DeckSetti
     archiving,
     sheet,
     open: setSheet,
-    onSheetOpenChange: (open) => {
-      if (!open) setSheet(null)
+    // A sheet on its way out fires `onOpenChange(false)` after the next one has opened, so it is
+    // only allowed to close itself — the same guard the dialogs use.
+    onSheetOpenChange: (which) => (open) => {
+      if (!open) setSheet((current) => (current === which ? null : current))
     },
     confirming: pending.act,
     ask: pending.request,
-    confirm: () => pending.resolve((kind) => act[RUN[kind]]()),
+    confirm: () => pending.resolve((kind) => confirmed[kind]()),
     onConfirmOpenChange: (kind) => (open) => {
       if (!open && pending.act === kind) pending.dismiss()
     },

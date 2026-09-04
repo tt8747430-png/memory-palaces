@@ -115,59 +115,85 @@ function stars(opacity: number): string {
 }
 
 /**
- * The semantic tokens the session chrome paints from. A printed scene remaps them for its own
- * subtree, so `SessionHeader`, the flag and speaker buttons, the mode and gear controls — every one
- * of which already reads these — stay legible on slate or on parchment without knowing a scene
+ * The semantic tokens the study session's chrome paints from. A printed scene remaps them for its
+ * own subtree, so `SessionHeader`, the flag and speaker buttons, the mode and gear controls — every
+ * one of which already reads these — stay legible on slate or on parchment without knowing a scene
  * exists.
  *
  * `--surface` is in the list because `bg-card` resolves to it: the type-answer field and the
  * direction chip sit inside the scene wearing `bg-card` with `text-foreground`, and remapping the
  * ink without the paper under it is how you get white text typed onto white. The tinted pairs are
- * there for the same reason one step out — the session footer's grade buttons and the remaining
- * tallies are painted from them.
+ * there for the same reason one step out — the study session's grade buttons and the remaining
+ * tallies are painted from them. So are the solid roles: the initials keypad is `bg-primary` with
+ * `text-primary-foreground`, a wrong answer rings `ring-destructive`, and a starred card is
+ * `fill-rating`. `--text-secondary` is in for a rule no utility names: base `p` is painted from it,
+ * and the faces are full of paragraphs.
  *
- * `CHROME_TOKENS` is the whole set, and every printed scene must answer for all of it:
- * `card-style.test.ts` checks the tables against this list, so a token added here without a value
- * fails rather than silently keeping the app's own.
+ * `CHROME_TOKENS` is the whole set, and every printed scene must answer for all of it —
+ * `card-style.test.ts` holds the tables to the list in both directions. The list itself is held to
+ * the screen one layer up, by `widgets/study-session/ui/scene-chrome.test.ts`: every semantic colour
+ * utility the scene's subtree wears has to resolve to something in here, so a face that reaches for
+ * a new role fails rather than silently keeping the app's own.
  */
 export const CHROME_TOKENS = [
   '--surface',
   '--text-heading',
   '--text-primary',
+  '--text-secondary',
   '--text-muted',
   '--surface-glass',
   '--info-surface',
   '--info-foreground',
   '--border',
+  '--ring',
+  '--primary',
+  '--primary-foreground',
+  '--accent',
+  '--rating',
   '--secondary',
   '--secondary-foreground',
   '--success-surface',
   '--success-on-surface',
   '--warning-surface',
   '--warning-foreground',
+  '--danger',
   '--danger-surface',
   '--danger-on-surface',
 ] as const
 
 type ChromeTokens = Record<(typeof CHROME_TOKENS)[number], string>
 
-/** Mirrors the app's own dark theme, so a dark scene's controls read the way dark mode does. */
+/**
+ * Mirrors the app's own dark theme, so a dark scene's controls read the way dark mode does.
+ *
+ * Every value the palette can name is named — `var(--p-…)`, or a `color-mix` of one where the theme
+ * uses that primitive at an alpha. The stylesheet and this table then move together, and the test
+ * that reads `tokens.css` covers them. What stays literal is what `tokens.css` itself states
+ * literally, plus the paper and ink: those are the printed material, not the theme (CODE_STYLE §5).
+ */
 const DARK_CHROME: ChromeTokens = {
   '--surface': '#222836',
   '--text-heading': '#f3f6fa',
   '--text-primary': '#e4eaf1',
+  '--text-secondary': 'rgba(228,234,241,0.82)',
   '--text-muted': 'rgba(228,234,241,0.66)',
   '--surface-glass': 'rgba(255,255,255,0.13)',
   '--info-surface': 'rgba(255,255,255,0.15)',
   '--info-foreground': '#f3f6fa',
   '--border': 'rgba(255,255,255,0.17)',
+  '--ring': 'var(--p-blue-300)',
+  '--primary': 'var(--p-blue-300)',
+  '--primary-foreground': 'var(--p-navy-900)',
+  '--accent': 'var(--p-blue-500)',
+  '--rating': 'var(--p-gold-400)',
   '--secondary': 'oklch(var(--p-tint-sky) / 0.16)',
   '--secondary-foreground': 'oklch(97.9% 0.01 267.4)',
-  '--success-surface': 'oklch(69.6% 0.149 162.5 / 0.16)',
+  '--success-surface': 'color-mix(in oklch, var(--p-green-500) 16%, transparent)',
   '--success-on-surface': 'oklch(86% 0.11 165)',
-  '--warning-surface': 'oklch(76.9% 0.165 70.1 / 0.16)',
+  '--warning-surface': 'color-mix(in oklch, var(--p-amber-500) 16%, transparent)',
   '--warning-foreground': 'oklch(86% 0.13 80)',
-  '--danger-surface': 'oklch(63.7% 0.208 25.3 / 0.18)',
+  '--danger': 'var(--p-red-500)',
+  '--danger-surface': 'color-mix(in oklch, var(--p-red-500) 18%, transparent)',
   '--danger-on-surface': 'oklch(82% 0.12 22)',
 }
 
@@ -176,17 +202,24 @@ const LIGHT_CHROME: ChromeTokens = {
   '--surface': '#fffdf7',
   '--text-heading': '#2f2a22',
   '--text-primary': '#3d3428',
+  '--text-secondary': 'rgba(61,52,40,0.82)',
   '--text-muted': 'rgba(61,52,40,0.64)',
   '--surface-glass': 'rgba(255,253,247,0.8)',
   '--info-surface': 'rgba(255,253,247,0.74)',
   '--info-foreground': '#2f2a22',
   '--border': 'rgba(72,57,36,0.2)',
+  '--ring': 'var(--p-navy-900)',
+  '--primary': 'var(--p-navy-900)',
+  '--primary-foreground': 'var(--p-white)',
+  '--accent': 'var(--p-blue-500)',
+  '--rating': 'var(--p-gold-400)',
   '--secondary': 'var(--p-blue-300)',
   '--secondary-foreground': 'var(--p-navy-900)',
   '--success-surface': 'var(--p-green-50)',
   '--success-on-surface': 'var(--p-green-800)',
   '--warning-surface': 'var(--p-amber-50)',
   '--warning-foreground': 'var(--p-amber-700)',
+  '--danger': 'var(--p-red-600)',
   '--danger-surface': 'var(--p-red-50)',
   '--danger-on-surface': 'var(--p-red-700)',
 }
@@ -209,7 +242,10 @@ interface PresetSkin {
  */
 const PRESETS: Record<CardStylePresetId, PresetSkin> = {
   plain: {
-    bg: 'linear-gradient(180deg, rgba(255,255,255,0.6), transparent 42%), var(--surface)',
+    // The card is the theme's own paper, opaque and nothing else — a white wash over it read as a
+    // 60% highlight on a dark `--surface` in dark mode, which is the exception this preset is
+    // explicitly outside. What separates it from the scene is its border and the card's shadow.
+    bg: 'var(--surface)',
     ink: 'var(--text-heading)',
     border: '1px solid var(--border)',
     scene: 'var(--bg-daylight)',

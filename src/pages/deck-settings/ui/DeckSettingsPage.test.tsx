@@ -126,7 +126,7 @@ describe('DeckSettingsPage', () => {
     expect((await repo.getById('d1'))?.archived).toBe(false)
     expect(onArchived).not.toHaveBeenCalled()
 
-    await user.click(await screen.findByRole('button', { name: /^Archive deck$/ }))
+    await user.click(await screen.findByRole('button', { name: /^Archive$/ }))
     await waitFor(async () => expect((await repo.getById('d1'))?.archived).toBe(true))
     expect(onArchived).toHaveBeenCalled()
   })
