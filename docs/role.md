@@ -8,7 +8,17 @@ GENERAL:
 
 REFACTORINGS:
 
-SETTINGS:
+SETTINGS:use 
+
+1. review the pages structures and theme.css and other appscreen structure and look for overlapping structures colliding, things that are not used, outdated, broken, wrong, look at the events que and so on.  find broken styles broken tailwind that doesnt work, find all insconsistencies, use /superpowers and other bug finding skills and other best practices and skills 
+
+
+
+
+
+1. when deleting a folder it also must delete all that it constains 
+2. when i move the deck out of the folder al of its' subdecks become decks alongside with the main deck bug
+
 
 
 7. in the home page the decks and folder  are not correctly elevated above the speed dial horizontal line like,  e.g. the bottom nav is 50px above the screen edge and the dial is 100 px above the screen edge and it has 15px height, the decks should be elevated above at the e.g. 120 px with space between decks and speed dial. 
@@ -17,24 +27,24 @@ SETTINGS:
 
 
 
+2. improve the paste notes add bible prefill and better admin mode, and the edit cards sheet, 
+3. add posibility to submit bugs 
 
 
 
-
-
-
-
-
+- Scope creep (b) — AppScreen's pinned/ScreenGutter API across 6 screens, AlgorithmCard, theme.css's reindent, role.md's reorg. Shipped and working; reverting is a bigger change than the finding. They were unmentioned in the commit bodies, not wrong.
+- card-style.ts divergent change — down to one concern (printed materials + the vars that paint them) now the chrome tables are gone; splitting further would fragment a cohesive 285-line module.
+- MoveSheet still offers "Archive" to an archived deck. It also offers "Home" to a deck already at home — same no-op, now documented rather than special-cased.
 
 FEATURES:
 
+1. Extenstions Gallery: Memory Palaces, Bible 
 1. Journey in palaces locies 
 2. Journey stations editing and connecting
 3. Add the actual palace locations and real palace image
 
 OTHER: 
 8. we dont have onboarding and guest account lacks customizability
-2. improve the paste notes, and the edit cards sheet
 1.  Appheader should be a component and all the components should be maybe just a implementation of the content inside of this header and not reimplement the whole template and shell, just the content inside the header like the buttons and so on .this should be across all the app
 
 
