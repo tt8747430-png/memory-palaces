@@ -1,7 +1,6 @@
 :root {
   --p-navy-900: oklch(29.4% 0.16 266.1);
   --p-blue-500: oklch(66.1% 0.18 261.1);
-  --p-blue-450: oklch(64.7% 0.164 254.5);
   --p-blue-300: oklch(83.2% 0.083 264.3);
   --p-sky-100: oklch(95.7% 0.021 254.9);
   --p-sky-50: oklch(96.3% 0.018 250.6);
@@ -9,12 +8,10 @@
   --p-gray-600: oklch(44.6% 0.026 256.8);
   --p-gray-500: oklch(55.1% 0.023 264.4);
   --p-gray-400: oklch(64% 0 0);
-  --p-gray-300: oklch(75.1% 0 0);
   --p-gray-100: oklch(96.1% 0 0);
   --p-white: oklch(100% 0 0);
   --p-gold-400: oklch(85.6% 0.17 87.3);
   --p-gold-700: oklch(65.2% 0.132 81.6);
-  --p-coral-400: oklch(67.2% 0.216 25.1);
   --p-green-500: oklch(69.6% 0.149 162.5);
   --p-green-700: oklch(50.8% 0.105 165.6);
   --p-green-800: oklch(43.2% 0.087 166.9);
@@ -29,7 +26,8 @@
   --p-tint-navy: 29.4% 0.16 266.1;
   --p-tint-steel: 29% 0.063 254.3;
   --p-tint-sky: 83.2% 0.083 264.3;
-  --p-font-sans: 'Lexend', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --p-font-sans:
+    'Lexend', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
   --p-text-headline: 20px;
   --p-text-title: 16px;
@@ -37,22 +35,20 @@
   --p-text-body: 14px;
   --p-text-label: 12px;
   --p-text-tiny: 10px;
-  --p-weight-regular: 400;
+
+  /**
+   * The one size a text-entry control may be. Below 16px, iOS zooms the visual viewport on focus,
+   * which changes `visualViewport.scale` underneath every measurement in `keyboard-viewport.ts` —
+   * so the app used to buy immunity with `user-scalable=no` and lose pinch-zoom for everyone.
+   * Sizing the fields instead is what lets the viewport meta stay zoomable. ADR 0002.
+   */
+  --p-text-entry: 16px;
+
   --p-weight-medium: 500;
   --p-weight-semibold: 600;
 
   --p-leading-tight: 1.4;
   --p-leading-body: 1.5;
-
-  --p-space-1: 4px;
-  --p-space-2: 8px;
-  --p-space-3: 12px;
-  --p-space-4: 16px;
-  --p-space-5: 20px;
-  --p-space-6: 24px;
-  --p-space-8: 32px;
-  --p-space-10: 40px;
-  --p-space-12: 48px;
 
   --p-radius-sm: 12px;
   --p-radius-md: 16px;
@@ -74,21 +70,29 @@
 
   --p-blur-glass: 12px;
   --p-blur-card: 20px;
-  --p-dur-fast: 150ms;
-  --p-dur-base: 200ms;
-  --p-dur-slow: 250ms;
-  --p-ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
-  --p-ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  --p-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
 
-  --p-z-base: 0;
-  --p-z-sticky: 100;
-  --p-z-nav: 200;
-  --p-z-overlay: 300;
-  --p-z-backdrop: 400;
-  --p-z-modal: 500;
-  --p-z-toast: 600;
-  --p-z-tooltip: 700;
+  /**
+   * One ladder for every piece of chrome that stacks against other chrome — anything `fixed` or
+   * `sticky` — read as `z-(--z-nav)` and friends. Rungs are spaced so a pair (a scrim and the
+   * surface it dims) sits adjacent without a third layer squeezing between them. A bare
+   * `z-<number>` is for stacking *inside* one component, where the number is local to that
+   * element's own context and means nothing to the app; the moment two components have to agree,
+   * the answer belongs here, where the whole stack can be read top to bottom.
+   */
+  --z-raised: 10;
+  --z-header: 20;
+  --z-nav: 200;
+  --z-dial-scrim: 210;
+  --z-dial: 220;
+  --z-dock: 230;
+  --z-sheet-backdrop: 300;
+  --z-sheet: 310;
+  --z-dialog-backdrop: 400;
+  --z-dialog: 500;
+  --z-toast: 600;
+  --z-splash: 700;
+  --z-status-cap: 800;
+  --z-dev-probe: 900;
 
   --p-container-app: 430px;
   --bg: linear-gradient(
@@ -102,6 +106,20 @@
     radial-gradient(circle at 80% 70%, oklch(var(--p-tint-sky) / 0.15) 0%, transparent 40%),
     radial-gradient(ellipse at center, oklch(var(--p-tint-sky) / 0.1) 0%, transparent 60%),
     var(--bg);
+
+  /**
+   * The brand's own descent, and the one gradient that is *not* a theme role: the splash and the
+   * welcome screen are the same moment in the product, and they carry white type over navy in both
+   * themes. Built from primitives on purpose — `--primary` inverts between themes, and this must
+   * not, or the white type lands on pale blue.
+   */
+  --bg-threshold: linear-gradient(
+    to bottom,
+    var(--p-navy-900),
+    var(--p-blue-500) 55%,
+    var(--p-blue-300)
+  );
+
   --surface: var(--p-white);
   --surface-sky: var(--p-sky-100);
   --surface-glass: oklch(100% 0 0 / 0.9);
@@ -111,14 +129,25 @@
   --text-secondary: var(--p-gray-600);
   --text-muted: var(--p-gray-500);
   --text-faint: var(--p-gray-400);
-  --text-on-primary: var(--p-white);
-  --text-on-accent: var(--p-navy-900);
   --primary: var(--p-navy-900);
   --primary-foreground: var(--p-white);
   --secondary: var(--p-blue-300);
   --secondary-foreground: var(--p-navy-900);
   --accent: var(--p-blue-500);
   --accent-foreground: var(--p-white);
+
+  /**
+   * Chrome that must read as chrome in either theme. A scrim always darkens what is under it, the
+   * status cap always continues the navy of `<meta name="theme-color">`, and the nav is a dark bar
+   * carrying white type. All three used to be built from `--primary`, which is navy in light and
+   * pale blue in dark — so all three inverted, and their white content went with them.
+   */
+  --scrim: var(--p-navy-900);
+  --status-cap: var(--p-navy-900);
+  --nav-surface: var(--p-navy-900);
+  --nav-pill: var(--p-white);
+  --nav-ink: var(--p-white);
+  --nav-ink-active: var(--p-navy-900);
 
   --info-surface: var(--p-sky-50);
   --info-foreground: var(--p-navy-900);
@@ -136,7 +165,6 @@
   --danger-on-surface: var(--p-red-700);
   --rating: var(--p-gold-400);
   --rating-edge: var(--p-gold-700);
-  --favorite: var(--p-coral-400);
 
   --sw-rose: oklch(60% 0.196 14);
   --sw-plum: oklch(54% 0.158 330);
@@ -153,7 +181,6 @@
   --border-glass: oklch(100% 0 0 / 0.3);
   --divider: var(--p-gray-100);
   --ring: var(--p-navy-900);
-  --input-bg: var(--p-white);
 
   --shadow-rest: var(--p-shadow-rest);
   --shadow-featured: var(--p-shadow-featured);
@@ -163,19 +190,8 @@
     0 1px 2px oklch(var(--p-tint-steel) / 0.12), 0 6px 12px -2px oklch(var(--p-tint-steel) / 0.12),
     0 16px 32px -8px oklch(var(--p-tint-steel) / 0.16);
 
-  --radius-control: var(--p-radius-sm);
-  --radius-card: var(--p-radius-md);
-  --radius-card-featured: var(--p-radius-xl);
-  --radius-nav: var(--p-radius-nav);
-  --radius-pill: var(--p-radius-pill);
-
   --glass-blur: var(--p-blur-glass);
   --glass-blur-card: var(--p-blur-card);
-  --nav-glow: radial-gradient(
-    ellipse at center,
-    oklch(66.1% 0.18 261.1 / 0.35) 0%,
-    transparent 70%
-  );
 }
 
 [data-theme='dark'] {
@@ -197,8 +213,6 @@
   --text-secondary: oklch(86.7% 0.05 267.6);
   --text-muted: oklch(76.5% 0.07 267.2);
   --text-faint: oklch(60.5% 0.076 269);
-  --text-on-primary: var(--p-navy-900);
-  --text-on-accent: var(--p-navy-900);
 
   --primary: var(--p-blue-300);
   --primary-foreground: var(--p-navy-900);
@@ -206,6 +220,10 @@
   --secondary-foreground: oklch(97.9% 0.01 267.4);
   --accent: var(--p-blue-500);
   --accent-foreground: var(--p-white);
+
+  /* Chrome holds. Only the scrim deepens, because it now dims a dark app rather than a light one. */
+  --scrim: oklch(12% 0.04 267);
+  --status-cap: oklch(24.2% 0.113 267.7);
 
   --info-surface: oklch(var(--p-tint-sky) / 0.14);
   --info-foreground: oklch(89% 0.04 267);
@@ -232,7 +250,6 @@
   --border-glass: oklch(100% 0 0 / 0.12);
   --divider: oklch(100% 0 0 / 0.1);
   --ring: var(--p-blue-300);
-  --input-bg: oklch(100% 0 0 / 0.06);
   --shadow-card: 0 2px 4px -1px oklch(0% 0 0 / 0.3), 0 8px 22px -4px oklch(0% 0 0 / 0.5);
 }
 

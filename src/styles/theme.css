@@ -1,12 +1,22 @@
 @theme inline {
   --font-sans: var(--p-font-sans);
 
+  /**
+   * The type scale, as utilities. Every size in the app is one of these six names — `text-body`,
+   * `text-label` — and never a raw length. They map onto `--p-text-*` so the primitives stay the
+   * one place a size is a number.
+   */
+  --text-tiny: var(--p-text-tiny);
+  --text-label: var(--p-text-label);
+  --text-body: var(--p-text-body);
+  --text-sub: var(--p-text-sub);
+  --text-title: var(--p-text-title);
+  --text-headline: var(--p-text-headline);
+  --text-entry: var(--p-text-entry);
+
   --color-background: var(--surface);
   --color-foreground: var(--text-primary);
   --color-card: var(--surface);
-  --color-card-foreground: var(--text-primary);
-  --color-popover: var(--surface);
-  --color-popover-foreground: var(--text-primary);
 
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
@@ -17,6 +27,7 @@
 
   --color-muted: var(--surface-sky);
   --color-muted-foreground: var(--text-muted);
+  --color-faint: var(--text-faint);
 
   --color-destructive: var(--danger);
   --color-destructive-foreground: var(--danger-foreground);
@@ -24,7 +35,6 @@
   --color-warning: var(--warning);
 
   --color-border: var(--border);
-  --color-input: var(--input-bg);
   --color-ring: var(--ring);
 
   --color-heading: var(--text-heading);
@@ -32,13 +42,14 @@
   --color-info-surface: var(--info-surface);
   --color-info-foreground: var(--info-foreground);
   --color-rating: var(--rating);
-  --color-favorite: var(--favorite);
+  --color-rating-edge: var(--rating-edge);
 
   /* The one width the app column is ever allowed to be — `max-w-app`. */
   --container-app: var(--p-container-app);
 
   --radius-control: var(--p-radius-sm);
   --radius-card: var(--p-radius-md);
+  --radius-squircle: var(--p-radius-lg);
   --radius-card-featured: var(--p-radius-xl);
   --radius-nav: var(--p-radius-nav);
   --radius-pill: var(--p-radius-pill);
@@ -140,9 +151,29 @@
     color: var(--text-secondary);
   }
 
+  /**
+   * `outline`, not `box-shadow`. The ring used to be a box-shadow in this layer, which meant any
+   * control also carrying a `shadow-*` utility — every default Button, every glass IconButton, so
+   * the back arrow on 33 screens — overwrote it from the utilities layer and focused invisibly.
+   * An outline is a different property: it cannot be clobbered by an elevation, and it composes
+   * with the components that draw a `focus-visible:ring-*` of their own. It follows border-radius
+   * in every engine the app supports.
+   */
   :focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 50%, transparent);
+    outline: 3px solid color-mix(in oklch, var(--ring) 60%, transparent);
+    outline-offset: 2px;
+  }
+
+  /**
+   * Below 16px, iOS zooms the visual viewport when a field takes focus, and every measurement in
+   * `keyboard-viewport.ts` is taken in an unzoomed frame. Sizing the fields is what buys that
+   * immunity now that the viewport meta lets people pinch-zoom again. ADR 0002.
+   */
+  input,
+  textarea,
+  select,
+  [contenteditable='true'] {
+    font-size: var(--p-text-entry);
   }
 
   input,
@@ -172,6 +203,10 @@
   .bg-daylight {
     background: var(--bg-daylight);
     background-repeat: no-repeat;
+  }
+
+  .bg-threshold {
+    background: var(--bg-threshold);
   }
 
   .bg-glass {
