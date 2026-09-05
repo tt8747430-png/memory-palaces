@@ -1,4 +1,4 @@
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useParams } from '@tanstack/react-router'
 import { CardEditorPage } from '@/pages/card-editor'
 import { DeckDetailPage } from '@/pages/deck-detail'
 import { DeckQuestionsPage } from '@/pages/deck-questions'
@@ -18,12 +18,22 @@ import { nextDefaultName } from '@/shared/lib'
 import { ROUTES } from '@/shared/config/routes'
 import { useBack } from './use-back'
 
+/**
+ * Screens read their own params rather than taking them as props from `router.tsx`. That is what
+ * lets every route in this module be a `lazyRouteComponent`: the router file no longer has to
+ * import a screen in order to hand it a param, so none of this module is in the entry chunk.
+ */
+function useDeckId(from: (typeof ROUTES)[keyof typeof ROUTES]) {
+  return useParams({ from, select: (params) => (params as { deckId: string }).deckId })
+}
+
 function useBackToDeck(deckId: string, replace = false) {
   const navigate = useNavigate()
   return useBack(() => void navigate({ to: ROUTES.deckDetail, params: { deckId }, replace }))
 }
 
-export function DeckDetailScreen({ deckId }: { deckId: string }) {
+export function DeckDetailScreen() {
+  const deckId = useDeckId(ROUTES.deckDetail)
   const navigate = useNavigate()
   const back = useBack(() => void navigate({ to: ROUTES.home }))
   return (
@@ -42,7 +52,8 @@ export function DeckDetailScreen({ deckId }: { deckId: string }) {
   )
 }
 
-export function DeckSettingsScreen({ deckId }: { deckId: string }) {
+export function DeckSettingsScreen() {
+  const deckId = useDeckId(ROUTES.deckSettings)
   const navigate = useNavigate()
   return (
     <DeckSettingsPage
@@ -59,7 +70,8 @@ export function DeckSettingsScreen({ deckId }: { deckId: string }) {
   )
 }
 
-export function DeckAlgorithmScreen({ deckId }: { deckId: string }) {
+export function DeckAlgorithmScreen() {
+  const deckId = useDeckId(ROUTES.deckAlgorithm)
   const navigate = useNavigate()
   return (
     <DeckAlgorithmPage
@@ -70,7 +82,8 @@ export function DeckAlgorithmScreen({ deckId }: { deckId: string }) {
   )
 }
 
-export function DeckAdvancedScreen({ deckId }: { deckId: string }) {
+export function DeckAdvancedScreen() {
+  const deckId = useDeckId(ROUTES.deckAlgorithmAdvanced)
   const navigate = useNavigate()
   return (
     <DeckAdvancedPage
@@ -80,7 +93,8 @@ export function DeckAdvancedScreen({ deckId }: { deckId: string }) {
   )
 }
 
-export function DeckCardStyleScreen({ deckId }: { deckId: string }) {
+export function DeckCardStyleScreen() {
+  const deckId = useDeckId(ROUTES.deckCardStyle)
   const navigate = useNavigate()
   return (
     <DeckCardStylePage
@@ -90,7 +104,8 @@ export function DeckCardStyleScreen({ deckId }: { deckId: string }) {
   )
 }
 
-export function DeckTtsScreen({ deckId }: { deckId: string }) {
+export function DeckTtsScreen() {
+  const deckId = useDeckId(ROUTES.deckTts)
   const navigate = useNavigate()
   return (
     <DeckTtsPage
@@ -100,19 +115,23 @@ export function DeckTtsScreen({ deckId }: { deckId: string }) {
   )
 }
 
-export function DeckStudyScreen({ deckId }: { deckId: string }) {
+export function DeckStudyScreen() {
+  const deckId = useDeckId(ROUTES.deckStudy)
   return <StudyCardsPage scope={{ kind: 'deck', deckId }} onBack={useBackToDeck(deckId)} />
 }
 
-export function DeckMatchScreen({ deckId }: { deckId: string }) {
+export function DeckMatchScreen() {
+  const deckId = useDeckId(ROUTES.deckMatch)
   return <MatchPage scope={{ kind: 'deck', deckId }} onBack={useBackToDeck(deckId)} />
 }
 
-export function DeckQuizScreen({ deckId }: { deckId: string }) {
+export function DeckQuizScreen() {
+  const deckId = useDeckId(ROUTES.deckQuiz)
   return <QuizPage deckId={deckId} onBack={useBackToDeck(deckId)} />
 }
 
-export function DeckQuestionsScreen({ deckId }: { deckId: string }) {
+export function DeckQuestionsScreen() {
+  const deckId = useDeckId(ROUTES.deckQuestions)
   const navigate = useNavigate()
   return (
     <DeckQuestionsPage
@@ -127,27 +146,30 @@ export function DeckQuestionsScreen({ deckId }: { deckId: string }) {
   )
 }
 
-export function QuestionEditorScreen({
-  deckId,
-  questionId,
-}: {
-  deckId: string
-  questionId?: string
-}) {
+function QuestionEditor({ deckId, questionId }: { deckId: string; questionId?: string }) {
   const navigate = useNavigate()
   const toQuestions = () => void navigate({ to: ROUTES.deckQuestions, params: { deckId } })
-  const back = useBack(toQuestions)
   return (
     <QuestionEditorPage
       deckId={deckId}
       questionId={questionId}
-      onBack={back}
+      onBack={useBack(toQuestions)}
       onDone={toQuestions}
     />
   )
 }
 
-export function DeckPasteScreen({ deckId }: { deckId: string }) {
+export function QuestionNewScreen() {
+  return <QuestionEditor deckId={useDeckId(ROUTES.deckQuestionNew)} />
+}
+
+export function QuestionEditScreen() {
+  const { deckId, questionId } = useParams({ from: ROUTES.deckQuestionEdit })
+  return <QuestionEditor deckId={deckId} questionId={questionId} />
+}
+
+export function DeckPasteScreen() {
+  const deckId = useDeckId(ROUTES.deckPaste)
   const navigate = useNavigate()
   return (
     <PasteNotesPage
@@ -180,13 +202,14 @@ export function NewPasteScreen() {
   )
 }
 
-export function DeckImportScreen({ deckId }: { deckId: string }) {
+export function DeckImportScreen() {
+  const deckId = useDeckId(ROUTES.deckImport)
   const navigate = useNavigate()
   const toDeck = () => void navigate({ to: ROUTES.deckDetail, params: { deckId }, replace: true })
   return <ImportReviewPage deckId={deckId} onBack={useBack(toDeck)} onDone={toDeck} />
 }
 
-export function CardEditorScreen({ deckId, cardId }: { deckId: string; cardId?: string }) {
+function CardEditor({ deckId, cardId }: { deckId: string; cardId?: string }) {
   const navigate = useNavigate()
   return (
     <CardEditorPage
@@ -198,4 +221,13 @@ export function CardEditorScreen({ deckId, cardId }: { deckId: string; cardId?: 
       }
     />
   )
+}
+
+export function CardNewScreen() {
+  return <CardEditor deckId={useDeckId(ROUTES.deckCardNew)} />
+}
+
+export function CardEditScreen() {
+  const { deckId, cardId } = useParams({ from: ROUTES.deckCardEdit })
+  return <CardEditor deckId={deckId} cardId={cardId} />
 }

@@ -1,11 +1,11 @@
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useParams } from '@tanstack/react-router'
 import { ArchivedDecksPage } from '@/pages/archived-decks'
 import { DeckLibraryPage } from '@/pages/deck-library'
 import { NotificationsPage } from '@/pages/notifications'
 import { ROUTES } from '@/shared/config/routes'
 import { useBack, useBackTo } from './use-back'
 
-export function LibraryScreen({ folderId }: { folderId: string | null }) {
+function Library({ folderId }: { folderId: string | null }) {
   const navigate = useNavigate()
   const leaveFolder = useBack(() => void navigate({ to: ROUTES.home }))
   return (
@@ -27,7 +27,11 @@ export function LibraryScreen({ folderId }: { folderId: string | null }) {
 }
 
 export function HomeScreen() {
-  return <LibraryScreen folderId={null} />
+  return <Library folderId={null} />
+}
+
+export function FolderScreen() {
+  return <Library folderId={useParams({ from: ROUTES.folder }).folderId} />
 }
 
 export function ArchivedScreen() {

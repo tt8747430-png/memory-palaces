@@ -1,4 +1,4 @@
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useParams } from '@tanstack/react-router'
 import { AchievementDetailPage } from '@/pages/achievement-detail'
 import { AchievementsPage } from '@/pages/achievements'
 import { BadgeDetailPage } from '@/pages/badge-detail'
@@ -40,7 +40,8 @@ export function BadgesScreen() {
   )
 }
 
-export function BadgeDetailScreen({ badgeId }: { badgeId: string }) {
+export function BadgeDetailScreen() {
+  const { badgeId } = useParams({ from: ROUTES.badgeDetail })
   return <BadgeDetailPage badgeId={badgeId} onBack={useBackTo(ROUTES.badges)} />
 }
 
@@ -56,7 +57,8 @@ export function AchievementsScreen() {
   )
 }
 
-export function AchievementDetailScreen({ achievementId }: { achievementId: string }) {
+export function AchievementDetailScreen() {
+  const { achievementId } = useParams({ from: ROUTES.achievementDetail })
   return (
     <AchievementDetailPage achievementId={achievementId} onBack={useBackTo(ROUTES.achievements)} />
   )
