@@ -69,7 +69,7 @@ export function RebuildFace(props: FaceProps) {
         )}
       >
         {placed === 0 ? (
-          <span className="text-(length:--p-text-body) font-medium text-muted-foreground">
+          <span className="text-body font-medium text-muted-foreground">
             {t('study.rebuildHint')}
           </span>
         ) : (
@@ -92,7 +92,7 @@ export function RebuildFace(props: FaceProps) {
                 animate={isWrong && !reduce ? { x: [0, -6, 6, -4, 4, 0] } : { x: 0 }}
                 transition={{ duration: 0.4 }}
                 className={cn(
-                  'rounded-full px-3.5 py-2 text-(length:--p-text-sub) font-semibold transition-colors',
+                  'rounded-full px-3.5 py-2 text-sub font-semibold transition-colors',
                   used
                     ? 'bg-info-surface text-muted-foreground opacity-40'
                     : isWrong

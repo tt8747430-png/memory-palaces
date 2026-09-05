@@ -41,11 +41,9 @@ export function ToggleRow({
       <span className="flex min-w-0 items-center gap-3">
         {icon ? <span className="shrink-0 text-heading">{icon}</span> : null}
         <span className="min-w-0">
-          <span className="block text-(length:--p-text-sub) font-semibold text-heading">
-            {label}
-          </span>
+          <span className="block text-sub font-semibold text-heading">{label}</span>
           {description ? (
-            <span className="mt-0.5 block text-(length:--p-text-label) leading-snug text-muted-foreground">
+            <span className="mt-0.5 block text-label leading-snug text-muted-foreground">
               {description}
             </span>
           ) : null}

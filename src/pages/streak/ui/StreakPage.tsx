@@ -52,10 +52,10 @@ export function StreakPage({ onBack }: StreakPageProps = {}) {
             >
               {streakCount}
             </motion.p>
-            <p className="mt-1 text-(length:--p-text-headline) font-bold text-(--warning-foreground)">
+            <p className="mt-1 text-headline font-bold text-(--warning-foreground)">
               {t('streak.dayStreak')}
             </p>
-            <p className="mt-1 max-w-56 text-(length:--p-text-label) font-medium text-(--warning-foreground)/80">
+            <p className="mt-1 max-w-56 text-label font-medium text-(--warning-foreground)/80">
               {streakCount > 0 ? t('streak.keepItUp') : t('streak.startToday')}
             </p>
           </div>
@@ -106,9 +106,7 @@ function StreakStatCard({
       </span>
       <div className="min-w-0">
         <p className="text-[22px] font-bold leading-none tabular-nums text-heading">{value}</p>
-        <p className="mt-1 text-(length:--p-text-label) font-medium leading-tight text-muted-foreground">
-          {label}
-        </p>
+        <p className="mt-1 text-label font-medium leading-tight text-muted-foreground">{label}</p>
       </div>
     </Card>
   )

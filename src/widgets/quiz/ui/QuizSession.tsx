@@ -113,7 +113,7 @@ export function QuizSession({
               transition={{ duration: 0.3 }}
             />
           </div>
-          <span className="shrink-0 text-(length:--p-text-label) font-semibold tabular-nums text-heading">
+          <span className="shrink-0 text-label font-semibold tabular-nums text-heading">
             {t('quiz.questionCount', {
               current: state.status === 'answering' ? state.index + 1 : state.total,
               total: state.total,
@@ -136,7 +136,7 @@ export function QuizSession({
                 </div>
                 <div className="min-w-0 flex-1">
                   <Chip className="mb-2">{question.deckName}</Chip>
-                  <h2 className="text-(length:--p-text-sub) font-medium leading-relaxed text-heading">
+                  <h2 className="text-sub font-medium leading-relaxed text-heading">
                     {question.prompt}
                   </h2>
                 </div>

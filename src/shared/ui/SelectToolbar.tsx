@@ -59,7 +59,7 @@ export function SelectToolbar({ actions, handlers, selection, className }: Selec
             )}
           >
             {selectActionIcon(id)}
-            <span className="w-full truncate text-center text-(length:--p-text-tiny) font-semibold">
+            <span className="w-full truncate text-center text-tiny font-semibold">
               {t(meta.labelKey as never)}
             </span>
           </button>

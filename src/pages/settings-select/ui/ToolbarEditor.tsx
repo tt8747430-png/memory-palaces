@@ -43,9 +43,7 @@ export function ToolbarEditor({ actions, canRemove, onReorder, onRemove }: Toolb
 
   return (
     <div className={cn(cardSurface, 'p-3.5')}>
-      <span className="text-(length:--p-text-label) font-bold text-heading">
-        {t('select.inBar')}
-      </span>
+      <span className="text-label font-bold text-heading">{t('select.inBar')}</span>
 
       <DndContext
         sensors={sensors}
@@ -128,7 +126,7 @@ function Tile({ action, floating = false }: { action: SelectActionId; floating?:
       )}
     >
       <span className="[&_svg]:size-4.5">{selectActionIcon(action)}</span>
-      <span className="w-full truncate text-center text-(length:--p-text-tiny) font-semibold">
+      <span className="w-full truncate text-center text-tiny font-semibold">
         {t(meta.labelKey as never)}
       </span>
     </span>

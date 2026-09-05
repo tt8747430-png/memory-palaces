@@ -27,9 +27,7 @@ export function OptionGroup<T extends string>({
 }: OptionGroupProps<T>) {
   return (
     <fieldset className={cn('min-w-0', className)}>
-      <legend className="mb-2 text-(length:--p-text-label) font-semibold text-heading">
-        {label}
-      </legend>
+      <legend className="mb-2 text-label font-semibold text-heading">{label}</legend>
       <div
         role="radiogroup"
         aria-label={label}
@@ -55,21 +53,21 @@ export function OptionGroup<T extends string>({
               <span className="min-w-0 flex-1">
                 <span
                   className={cn(
-                    'block truncate text-(length:--p-text-body) font-semibold',
+                    'block truncate text-body font-semibold',
                     selected ? 'text-heading' : 'text-foreground',
                   )}
                 >
                   {option.label}
                 </span>
                 {option.description ? (
-                  <span className="block truncate text-(length:--p-text-label) text-muted-foreground">
+                  <span className="block truncate text-label text-muted-foreground">
                     {option.description}
                   </span>
                 ) : null}
               </span>
               {option.hint ? (
                 <span
-                  className="shrink-0 rounded-control bg-primary/6 px-1.5 py-0.5 font-mono text-(length:--p-text-label) text-muted-foreground"
+                  className="shrink-0 rounded-control bg-primary/6 px-1.5 py-0.5 font-mono text-label text-muted-foreground"
                   aria-hidden
                 >
                   {option.hint}

@@ -15,7 +15,7 @@ export function HeaderBar({ children, className }: HeaderBarProps) {
     <header
       data-slot="header-bar"
       onMouseDown={keepFieldFocused}
-      className="relative z-20 shrink-0 bg-glass pt-safe"
+      className="relative z-(--z-header) shrink-0 bg-glass pt-safe"
     >
       <motion.span
         aria-hidden

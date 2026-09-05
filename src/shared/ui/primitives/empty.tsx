@@ -53,19 +53,12 @@ export function Empty({
         <Title
           className={cn(
             'text-balance text-heading',
-            hero
-              ? 'mb-1 text-(length:--p-text-headline) font-bold'
-              : 'mb-2 text-(length:--p-text-sub) font-semibold',
+            hero ? 'mb-1 text-headline font-bold' : 'mb-2 text-sub font-semibold',
           )}
         >
           {title}
         </Title>
-        <p
-          className={cn(
-            'mx-auto max-w-[34ch] text-pretty text-(length:--p-text-body)',
-            !hero && 'mb-6',
-          )}
-        >
+        <p className={cn('mx-auto max-w-[34ch] text-pretty text-body', !hero && 'mb-6')}>
           {description}
         </p>
       </div>

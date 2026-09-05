@@ -29,7 +29,7 @@ export function QuizOption({ letter, option, state, disabled, onClick }: QuizOpt
       )}
     >
       <span className="flex items-center gap-3">
-        <span className="grid size-8 shrink-0 place-items-center rounded-control bg-card text-(length:--p-text-label) font-semibold text-muted-foreground">
+        <span className="grid size-8 shrink-0 place-items-center rounded-control bg-card text-label font-semibold text-muted-foreground">
           {letter}
         </span>
         <span className="font-medium">{option}</span>

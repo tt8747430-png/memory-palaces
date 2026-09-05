@@ -36,13 +36,13 @@ export function QuizFeedback({ correct, explanation, streak }: QuizFeedbackProps
               {correct ? t('quiz.correct') : t('quiz.notQuite')}
             </p>
             {correct && streak >= 2 ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-(--warning-surface) px-2 py-0.5 text-(length:--p-text-label) font-semibold text-(--warning-foreground)">
+              <span className="inline-flex items-center gap-1 rounded-full bg-(--warning-surface) px-2 py-0.5 text-label font-semibold text-(--warning-foreground)">
                 <Flame className="size-3" aria-hidden />
                 {t('quiz.streakOther', { count: streak })}
               </span>
             ) : null}
           </div>
-          <p className={cn('mt-1 text-(length:--p-text-label)', tone)}>
+          <p className={cn('mt-1 text-label', tone)}>
             {explanation ?? (correct ? t('quiz.wellRecalled') : t('quiz.reviewHint'))}
           </p>
         </div>

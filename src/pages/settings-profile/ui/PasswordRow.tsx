@@ -5,7 +5,7 @@ export function PasswordRow({ onChangePassword }: { onChangePassword: () => void
   const { t } = useTranslation()
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="px-1 text-(length:--p-text-label) font-medium text-muted-foreground">
+      <span className="px-1 text-label font-medium text-muted-foreground">
         {t('settings.profileEdit.password')}
       </span>
       <button
@@ -21,9 +21,7 @@ export function PasswordRow({ onChangePassword }: { onChangePassword: () => void
           </span>
         </span>
         <span className="flex items-center gap-1 text-muted-foreground">
-          <span className="text-(length:--p-text-label) font-medium">
-            {t('settings.profileEdit.passwordAction')}
-          </span>
+          <span className="text-label font-medium">{t('settings.profileEdit.passwordAction')}</span>
           <ChevronRight className="size-4" aria-hidden />
         </span>
       </button>

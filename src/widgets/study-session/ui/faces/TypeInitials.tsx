@@ -38,18 +38,14 @@ export function TypeInitials({ recall }: { recall: InitialsRecall }) {
       {complete ? (
         <div className="mb-2 flex items-center gap-1.5 text-(--success-on-surface)">
           <Check className="size-4 shrink-0" aria-hidden />
-          <span className="text-(length:--p-text-label) font-semibold">
-            {t('study.initialsComplete')}
-          </span>
+          <span className="text-label font-semibold">{t('study.initialsComplete')}</span>
         </div>
       ) : null}
 
       {accepted === 0 ? (
-        <p className="text-(length:--p-text-body) text-muted-foreground">
-          {t('study.initialsPlaceholder')}
-        </p>
+        <p className="text-body text-muted-foreground">{t('study.initialsPlaceholder')}</p>
       ) : (
-        <p className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1.5 text-(length:--p-text-body) font-medium leading-relaxed">
+        <p className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1.5 text-body font-medium leading-relaxed">
           {tokens.slice(0, accepted).map((token, i) => (
             <span
               key={i}

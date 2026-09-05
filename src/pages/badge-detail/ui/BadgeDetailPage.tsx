@@ -48,18 +48,14 @@ export function BadgeDetailPage({ badgeId, onBack }: BadgeDetailPageProps) {
         <Hero badge={badge} tier={heroTier} tierLabel={tierLabel} maxed={maxed} />
 
         <section className="flex flex-col gap-2">
-          <h2 className="px-1 text-(length:--p-text-title) font-bold text-heading">
-            {t('badgeDetail.howToTitle')}
-          </h2>
-          <p className="px-1 text-(length:--p-text-body) leading-relaxed text-foreground">
+          <h2 className="px-1 text-title font-bold text-heading">{t('badgeDetail.howToTitle')}</h2>
+          <p className="px-1 text-body leading-relaxed text-foreground">
             {t(`badges.${badge.id}.blurb`)}
           </p>
         </section>
 
         <section className="flex flex-col gap-3">
-          <h2 className="px-1 text-(length:--p-text-title) font-bold text-heading">
-            {t('badgeDetail.ladderTitle')}
-          </h2>
+          <h2 className="px-1 text-title font-bold text-heading">{t('badgeDetail.ladderTitle')}</h2>
           <TierLadder badge={badge} />
         </section>
       </div>
@@ -82,7 +78,7 @@ function Hero({
   const meta = BADGE_META[badge.id]
   return (
     <RewardHero icon={meta.icon} glow tier={tier} shine>
-      <p className="mt-4 text-(length:--p-text-headline) font-bold leading-none tabular-nums text-heading">
+      <p className="mt-4 text-headline font-bold leading-none tabular-nums text-heading">
         <CountUp
           to={badge.value}
           format={(n) => t('badgeDetail.nowValue', { value: n.toLocaleString() })}
@@ -90,7 +86,7 @@ function Hero({
       </p>
       <span className={cn('mt-3', pillSurface('info'))}>{tierLabel}</span>
       {maxed ? (
-        <p className="mt-2 text-(length:--p-text-label) font-semibold text-(--success-foreground)">
+        <p className="mt-2 text-label font-semibold text-(--success-foreground)">
           {t('badgeDetail.maxed')}
         </p>
       ) : null}
@@ -122,13 +118,13 @@ function TierLadder({ badge }: { badge: Badge }) {
               <div className="min-w-0 flex-1">
                 <p
                   className={cn(
-                    'text-(length:--p-text-sub) font-bold leading-tight',
+                    'text-sub font-bold leading-tight',
                     reached || isCurrent ? 'text-heading' : 'text-muted-foreground',
                   )}
                 >
                   {t('badgeDetail.tierLabel', { n: index + 1 })}
                 </p>
-                <p className="text-(length:--p-text-label) font-medium tabular-nums text-muted-foreground">
+                <p className="text-label font-medium tabular-nums text-muted-foreground">
                   {threshold.toLocaleString()}
                 </p>
               </div>
@@ -159,7 +155,7 @@ function TierMarker({
     <span
       aria-hidden
       className={cn(
-        'grid size-10 shrink-0 place-items-center rounded-full text-(length:--p-text-sub) font-bold tabular-nums',
+        'grid size-10 shrink-0 place-items-center rounded-full text-sub font-bold tabular-nums',
         isCurrent
           ? 'bg-primary/8 text-primary ring-2 ring-primary/30'
           : 'bg-primary/5 text-primary/40',
@@ -182,7 +178,7 @@ function TierStatus({
   const { t } = useTranslation()
   if (reached) {
     return (
-      <span className="flex shrink-0 items-center gap-1 text-(length:--p-text-label) font-bold text-(--success-foreground)">
+      <span className="flex shrink-0 items-center gap-1 text-label font-bold text-(--success-foreground)">
         <Check className="size-4" aria-hidden />
         {t('badgeDetail.reached')}
       </span>
@@ -190,13 +186,13 @@ function TierStatus({
   }
   if (isCurrent) {
     return (
-      <span className="shrink-0 text-(length:--p-text-label) font-bold tabular-nums text-primary">
+      <span className="shrink-0 text-label font-bold tabular-nums text-primary">
         {t('badgeDetail.inProgress', { remaining: remaining.toLocaleString() })}
       </span>
     )
   }
   return (
-    <span className="shrink-0 text-(length:--p-text-label) font-semibold text-muted-foreground">
+    <span className="shrink-0 text-label font-semibold text-muted-foreground">
       {t('badgeDetail.upcoming')}
     </span>
   )

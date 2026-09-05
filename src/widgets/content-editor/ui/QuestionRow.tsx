@@ -44,7 +44,7 @@ export function QuestionRow({
     >
       <div className="mb-2 flex items-center gap-2">
         <RowIndex index={index} tone="strong" />
-        <p className="min-w-0 flex-1 text-(length:--p-text-sub) font-semibold leading-snug text-heading">
+        <p className="min-w-0 flex-1 text-sub font-semibold leading-snug text-heading">
           {question.prompt}
         </p>
       </div>
@@ -61,7 +61,7 @@ function Option({ label, letter, correct }: { label: string; letter: number; cor
   return (
     <li
       className={cn(
-        'flex items-center gap-2 rounded-control px-2.5 py-1.5 text-(length:--p-text-label)',
+        'flex items-center gap-2 rounded-control px-2.5 py-1.5 text-label',
         correct
           ? 'bg-(--success-surface) font-semibold text-(--success-on-surface)'
           : 'bg-info-surface text-muted-foreground',
@@ -70,7 +70,7 @@ function Option({ label, letter, correct }: { label: string; letter: number; cor
       <span
         aria-hidden
         className={cn(
-          'grid size-5 place-items-center rounded-full text-(length:--p-text-tiny) font-bold',
+          'grid size-5 place-items-center rounded-full text-tiny font-bold',
           correct ? 'bg-success text-(--surface)' : 'bg-card text-muted-foreground',
         )}
       >

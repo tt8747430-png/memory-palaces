@@ -104,7 +104,7 @@ export function SettingsChangePasswordPage({
           error={confirmError}
         />
 
-        <p className="text-(length:--p-text-label) text-muted-foreground">
+        <p className="text-label text-muted-foreground">
           {recovery
             ? t('settings.changePasswordScreen.recoveryNote')
             : t('settings.changePasswordScreen.note')}

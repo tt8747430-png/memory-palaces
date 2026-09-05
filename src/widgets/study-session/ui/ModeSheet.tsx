@@ -17,9 +17,7 @@ export function ModeSheet({ open, onClose, mode, onMode }: ModeSheetProps) {
 
   return (
     <Sheet open={open} onOpenChange={(next) => !next && onClose()} title={t('study.modeTitle')}>
-      <p className="-mt-1 mb-3 px-1 text-(length:--p-text-label) text-muted-foreground">
-        {t('study.modeSubtitle')}
-      </p>
+      <p className="-mt-1 mb-3 px-1 text-label text-muted-foreground">{t('study.modeSubtitle')}</p>
       <div className="flex flex-col gap-2 pb-1">
         {STUDY_MODES.map((candidate) => {
           const { Icon, labelKey, hintKey } = STUDY_MODE_META[candidate]
@@ -54,7 +52,7 @@ export function ModeSheet({ open, onClose, mode, onMode }: ModeSheetProps) {
               <span className="min-w-0 flex-1">
                 <span
                   className={cn(
-                    'block text-(length:--p-text-sub) font-semibold',
+                    'block text-sub font-semibold',
                     active ? 'text-primary-foreground' : 'text-heading',
                   )}
                 >
@@ -62,7 +60,7 @@ export function ModeSheet({ open, onClose, mode, onMode }: ModeSheetProps) {
                 </span>
                 <span
                   className={cn(
-                    'block text-(length:--p-text-label) leading-snug',
+                    'block text-label leading-snug',
                     active ? 'text-primary-foreground/80' : 'text-muted-foreground',
                   )}
                 >

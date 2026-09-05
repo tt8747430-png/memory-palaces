@@ -32,7 +32,7 @@ export function OutcomeOverlay({ icon, title, tone = 'success', children }: Outc
       <div className={cn('mb-3 grid size-24 place-items-center rounded-full', TONE[tone])}>
         {icon}
       </div>
-      <h2 className="text-(length:--p-text-headline) font-bold text-heading">{title}</h2>
+      <h2 className="text-headline font-bold text-heading">{title}</h2>
       {children}
     </motion.div>
   )

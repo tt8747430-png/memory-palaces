@@ -36,12 +36,8 @@ export function SettingsAboutPage({ onBack }: { onBack?: () => void }) {
             <Brain className="size-8" aria-hidden />
           </motion.span>
           <div>
-            <p className="text-(length:--p-text-headline) font-semibold text-heading">
-              Mindscape
-            </p>
-            <p className="text-(length:--p-text-sub) text-muted-foreground">
-              {t('settings.aboutScreen.tagline')}
-            </p>
+            <p className="text-headline font-semibold text-heading">Mindscape</p>
+            <p className="text-sub text-muted-foreground">{t('settings.aboutScreen.tagline')}</p>
           </div>
         </div>
 
@@ -79,10 +75,8 @@ export function SettingsAboutPage({ onBack }: { onBack?: () => void }) {
         </SettingsSection>
 
         <div className="px-1 text-center">
-          <p className="text-(length:--p-text-label) text-muted-foreground">
-            {t('settings.aboutScreen.credits')}
-          </p>
-          <p className="mt-1 text-(length:--p-text-tiny) text-muted-foreground">
+          <p className="text-label text-muted-foreground">{t('settings.aboutScreen.credits')}</p>
+          <p className="mt-1 text-tiny text-muted-foreground">
             {t('settings.aboutScreen.copyright')}
           </p>
         </div>

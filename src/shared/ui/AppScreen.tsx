@@ -30,7 +30,8 @@ const FILL = 'min-h-full'
  */
 const BOUNCE = 'min-h-[calc(100%+1px)]'
 
-const FOOTER_DOCK = 'sticky bottom-0 z-10 -mx-5 mt-auto shrink-0 [[data-keyboard]_&]:static'
+const FOOTER_DOCK =
+  'sticky bottom-0 z-(--z-raised) -mx-5 mt-auto shrink-0 [[data-keyboard]_&]:static'
 
 const SHELL = 'h-full'
 

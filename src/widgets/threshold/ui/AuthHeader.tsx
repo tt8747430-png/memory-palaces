@@ -14,7 +14,7 @@ export function AuthHeader({ title, subtitle, mark }: AuthHeaderProps) {
     <>
       {mark ?? <AuthLogo className="size-16" />}
       <div className="flex flex-col gap-1.5">
-        <h1 className="text-balance text-(length:--p-text-headline) font-bold tracking-tight text-heading">
+        <h1 className="text-balance text-headline font-bold tracking-tight text-heading">
           {title}
         </h1>
         <p className="text-pretty text-muted-foreground">{subtitle}</p>

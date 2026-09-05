@@ -67,11 +67,7 @@ export function LoginPage({ onAuthed, onGuest, onSignup, onForgot }: LoginPagePr
       />
 
       <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={onForgot}
-          className="text-(length:--p-text-label) font-medium text-heading"
-        >
+        <button type="button" onClick={onForgot} className="text-label font-medium text-heading">
           {t('auth.login.forgot')}
         </button>
       </div>

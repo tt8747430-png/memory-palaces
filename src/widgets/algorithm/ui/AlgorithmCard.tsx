@@ -28,10 +28,10 @@ export function AlgorithmCard({ algorithm, onClick }: AlgorithmCardProps) {
         {meta.icon}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-(length:--p-text-title) font-bold tracking-tight text-heading">
+        <span className="block truncate text-title font-bold tracking-tight text-heading">
           {t(meta.nameKey as never)}
         </span>
-        <span className="mt-0.5 block text-(length:--p-text-label) text-muted-foreground">
+        <span className="mt-0.5 block text-label text-muted-foreground">
           {t('deckSettings.algorithmRow')}
         </span>
       </span>

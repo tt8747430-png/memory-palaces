@@ -182,7 +182,7 @@ export function DeckCardStylePage({ deckId, onBack }: DeckCardStylePageProps) {
         </SettingsSection>
 
         <section className="flex flex-col gap-2">
-          <h2 className="px-1 text-(length:--p-text-label) font-semibold text-muted-foreground">
+          <h2 className="px-1 text-label font-semibold text-muted-foreground">
             {t('cardStyle.alignment')}
           </h2>
           <SegmentedControl

@@ -56,7 +56,7 @@ export function Combobox<T extends string>({
         ) : null}
         <span
           className={cn(
-            'min-w-0 truncate text-(length:--p-text-body) font-semibold',
+            'min-w-0 truncate text-body font-semibold',
             bare ? 'text-heading' : 'flex-1',
             selected ? 'text-heading' : 'text-muted-foreground',
           )}
@@ -77,7 +77,7 @@ export function Combobox<T extends string>({
           align={bare ? 'end' : 'start'}
           sideOffset={6}
           collisionPadding={12}
-          className={cn('z-500', bare ? 'min-w-44' : 'w-(--anchor-width)')}
+          className={cn('z-(--z-dialog)', bare ? 'min-w-44' : 'w-(--anchor-width)')}
         >
           <Menu.Popup
             className={cn(
@@ -97,7 +97,7 @@ export function Combobox<T extends string>({
                   onClick={() => onChange(option.value)}
                   className={cn(
                     'flex h-11 cursor-default select-none items-center gap-3 rounded-control px-3',
-                    'text-(length:--p-text-body) font-medium outline-none',
+                    'text-body font-medium outline-none',
                     'transition-transform duration-150 ease-out active:scale-[0.99]',
                     'data-highlighted:bg-info-surface',
                     isSelected ? 'text-accent' : 'text-heading',

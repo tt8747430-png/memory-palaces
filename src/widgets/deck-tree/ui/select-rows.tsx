@@ -20,10 +20,7 @@ export function Section({
   return (
     <section aria-labelledby={label ? id : undefined}>
       {label ? (
-        <h2
-          id={id}
-          className="px-1 pb-2 pt-3 text-(length:--p-text-label) font-semibold text-muted-foreground"
-        >
+        <h2 id={id} className="px-1 pb-2 pt-3 text-label font-semibold text-muted-foreground">
           {label}
         </h2>
       ) : null}

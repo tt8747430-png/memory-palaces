@@ -73,7 +73,7 @@ export function SettingsSwipePage({ onBack }: SettingsSwipePageProps) {
       }
     >
       <div className="mt-3 flex flex-col gap-4 pb-24">
-        <p className="flex items-start gap-2 px-1 text-(length:--p-text-label) leading-relaxed text-muted-foreground">
+        <p className="flex items-start gap-2 px-1 text-label leading-relaxed text-muted-foreground">
           <ArrowLeftRight className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
           {t('swipe.subtitle')}
         </p>

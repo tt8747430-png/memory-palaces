@@ -21,7 +21,7 @@ export function TextButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'inline-flex items-center gap-1.5 text-(length:--p-text-label) font-semibold transition-colors active:opacity-70',
+        'inline-flex items-center gap-1.5 text-label font-semibold transition-colors active:opacity-70',
         tone === 'primary' ? 'text-primary' : 'text-muted-foreground',
         className,
       )}

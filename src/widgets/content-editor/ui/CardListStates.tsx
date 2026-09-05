@@ -36,11 +36,11 @@ function NarrowedEmpty({
 }) {
   return (
     <div className="rounded-card bg-card-glass p-6 text-center shadow-rest">
-      <p className="text-(length:--p-text-body) text-muted-foreground">{message}</p>
+      <p className="text-body text-muted-foreground">{message}</p>
       <button
         type="button"
         onClick={onAction}
-        className="mt-2 text-(length:--p-text-label) font-semibold text-accent"
+        className="mt-2 text-label font-semibold text-accent"
       >
         {action}
       </button>

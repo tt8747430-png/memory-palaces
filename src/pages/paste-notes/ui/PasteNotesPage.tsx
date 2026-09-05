@@ -89,7 +89,7 @@ export function PasteNotesPage({
       <div className="mt-4 flex flex-col gap-5 pb-6">
         {newDeck ? (
           <div>
-            <span className="mb-2 block text-(length:--p-text-sub) font-bold text-heading">
+            <span className="mb-2 block text-sub font-bold text-heading">
               {t('cards.paste.deckNameLabel')}
             </span>
             <Input
@@ -104,9 +104,7 @@ export function PasteNotesPage({
 
         <div>
           <div className="mb-2 flex items-baseline justify-between gap-2">
-            <span className="text-(length:--p-text-sub) font-bold text-heading">
-              {t('cards.paste.dataLabel')}
-            </span>
+            <span className="text-sub font-bold text-heading">{t('cards.paste.dataLabel')}</span>
             <CountBadge count={parsing.cards.length} />
           </div>
           <Textarea
@@ -118,7 +116,7 @@ export function PasteNotesPage({
                 : t('cards.paste.notesPlaceholder')
             }
             rows={8}
-            className="min-h-46 font-mono text-(length:--p-text-label) leading-relaxed"
+            className="min-h-46 font-mono text-label leading-relaxed"
           />
           <div className="mt-2 flex items-center gap-4">
             {showClipboardButton ? (
@@ -154,7 +152,7 @@ export function PasteNotesPage({
           parsing.cards.length > 0 ? (
             <PastePreview cards={parsing.cards} />
           ) : (
-            <p className="rounded-card bg-secondary/40 px-4 py-3 text-(length:--p-text-label) text-muted-foreground">
+            <p className="rounded-card bg-secondary/40 px-4 py-3 text-label text-muted-foreground">
               {t('cards.paste.noneParsed')}
             </p>
           )
@@ -170,10 +168,8 @@ function BibleHint() {
     <div className="flex items-start gap-3 rounded-card bg-info-surface p-4">
       <BookOpen className="mt-0.5 size-5 shrink-0 text-accent" aria-hidden />
       <div>
-        <p className="text-(length:--p-text-sub) font-semibold text-heading">
-          {t('cards.paste.bibleHintTitle')}
-        </p>
-        <p className="mt-0.5 text-(length:--p-text-label) leading-snug text-info-foreground">
+        <p className="text-sub font-semibold text-heading">{t('cards.paste.bibleHintTitle')}</p>
+        <p className="mt-0.5 text-label leading-snug text-info-foreground">
           {t('cards.paste.bibleHint')}
         </p>
       </div>

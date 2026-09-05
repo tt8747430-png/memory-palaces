@@ -111,7 +111,7 @@ export function SwipePreview({ type, config, onChange }: SwipePreviewProps) {
           <span className="grid size-8 shrink-0 place-items-center rounded-control bg-info-surface text-primary">
             <TypeIcon className="size-4" />
           </span>
-          <span className="min-w-0 flex-1 truncate text-(length:--p-text-body) font-semibold text-heading">
+          <span className="min-w-0 flex-1 truncate text-body font-semibold text-heading">
             {t(`swipe.sample.${type}` as never)}
           </span>
           <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
@@ -133,7 +133,7 @@ function PreviewCaps({ side, ids }: { side: CapSide; ids: SwipeActionId[] }) {
       <div
         ref={setNodeRef}
         className={cn(
-          'flex min-h-9 shrink-0 items-center gap-1 rounded-2xl transition-colors',
+          'flex min-h-9 shrink-0 items-center gap-1 rounded-card transition-colors',
           ids.length === 0 && 'w-9 justify-center',
           isOver && 'bg-primary/6',
         )}

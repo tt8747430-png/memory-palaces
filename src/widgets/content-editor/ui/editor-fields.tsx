@@ -24,9 +24,7 @@ function FieldLabel({
         htmlFor={htmlFor}
         className={cn(
           'inline-flex items-center gap-1.5 text-heading',
-          emphasis
-            ? 'text-(length:--p-text-sub) font-bold'
-            : 'text-(length:--p-text-label) font-semibold',
+          emphasis ? 'text-sub font-bold' : 'text-label font-semibold',
         )}
       >
         {icon ? (
@@ -37,9 +35,7 @@ function FieldLabel({
         {children}
       </label>
       {count !== undefined ? (
-        <span className="text-(length:--p-text-tiny) tabular-nums text-muted-foreground">
-          {count}
-        </span>
+        <span className="text-tiny tabular-nums text-muted-foreground">{count}</span>
       ) : null}
     </div>
   )
@@ -188,7 +184,7 @@ export function QuestionFields({
 
       <div>
         <FieldLabel htmlFor={fieldId('option-0')}>{t('questions.editor.options')}</FieldLabel>
-        <p className="-mt-1 mb-2 text-(length:--p-text-label) text-muted-foreground">
+        <p className="-mt-1 mb-2 text-label text-muted-foreground">
           {t('questions.editor.optionsHint')}
         </p>
         <div className="flex flex-col gap-2">
@@ -215,9 +211,7 @@ export function QuestionFields({
                   {isCorrect ? (
                     <Check className="size-3.75" strokeWidth={3} aria-hidden />
                   ) : (
-                    <span className="text-(length:--p-text-label) font-bold">
-                      {String.fromCharCode(65 + i)}
-                    </span>
+                    <span className="text-label font-bold">{String.fromCharCode(65 + i)}</span>
                   )}
                 </button>
                 <Input
@@ -247,7 +241,7 @@ export function QuestionFields({
           <button
             type="button"
             onClick={onAddOption}
-            className="mt-2.5 inline-flex items-center gap-1.5 text-(length:--p-text-label) font-semibold text-accent transition-colors hover:text-heading"
+            className="mt-2.5 inline-flex items-center gap-1.5 text-label font-semibold text-accent transition-colors hover:text-heading"
           >
             <Plus className="size-3.75" aria-hidden />
             {t('questions.editor.addOption')}

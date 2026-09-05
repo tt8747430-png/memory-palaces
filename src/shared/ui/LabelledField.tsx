@@ -11,12 +11,10 @@ export interface LabelledFieldProps {
 export function LabelledField({ label, error, children }: LabelledFieldProps) {
   return (
     <Field invalid={Boolean(error)}>
-      <FieldLabel className="px-1 text-(length:--p-text-label) font-medium text-muted-foreground">
-        {label}
-      </FieldLabel>
+      <FieldLabel className="px-1 text-label font-medium text-muted-foreground">{label}</FieldLabel>
       {children}
       {error ? (
-        <FieldError match className="px-1 text-(length:--p-text-label) text-(--danger-on-surface)">
+        <FieldError match className="px-1 text-label text-(--danger-on-surface)">
           {error}
         </FieldError>
       ) : null}

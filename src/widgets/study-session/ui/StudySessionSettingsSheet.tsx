@@ -133,7 +133,7 @@ function PickerRow({
     <div className="flex items-center justify-between gap-3 rounded-card bg-info-surface px-4 py-2.5">
       <span className="flex min-w-0 items-center gap-3 text-heading">
         <span className="shrink-0">{icon}</span>
-        <span className="truncate text-(length:--p-text-sub) font-semibold">{label}</span>
+        <span className="truncate text-sub font-semibold">{label}</span>
       </span>
       {children}
     </div>

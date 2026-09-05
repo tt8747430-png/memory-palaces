@@ -23,13 +23,13 @@ export function KeyboardProbe() {
         />
         <CopyButton label="copy this reading" text={() => sampleToText(sample)} />
       </div>
-      <p className="text-(length:--p-text-tiny) text-muted-foreground">
+      <p className="text-tiny text-muted-foreground">
         Each keyboard is kept as a pair — the resting reading it interrupted, the reading it settled
         into, and the diff between them. The last {EPISODE_LIMIT} are copied at once, so a fault and
         the state it came from travel together.
       </p>
       <ViewportReadout sample={sample} />
-      <p className="text-(length:--p-text-label) leading-snug text-muted-foreground">
+      <p className="text-label leading-snug text-muted-foreground">
         Focus the field. <b>visualViewport top</b> is the number that matters: it should stay{' '}
         <b>0</b>. Above 0 means iOS panned the page itself, which it only does when the app failed
         to reveal its own field — check that <b>reveal delta</b> came back to <b>0</b>, and that{' '}

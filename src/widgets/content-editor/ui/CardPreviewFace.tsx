@@ -44,13 +44,13 @@ export function PreviewFace({ card, back = false }: { card: Card; back?: boolean
           {card.back}
         </p>
         {card.hint ? (
-          <p className="flex max-w-[34ch] items-center gap-1.5 text-(length:--p-text-label) italic leading-relaxed text-accent">
+          <p className="flex max-w-[34ch] items-center gap-1.5 text-label italic leading-relaxed text-accent">
             <MapPin className="size-3.5 shrink-0" aria-hidden />
             {card.hint}
           </p>
         ) : null}
         {card.tip ? (
-          <p className="flex max-w-[34ch] items-center gap-1.5 rounded-control bg-(--warning-surface) px-3 py-1.5 text-(length:--p-text-label) italic leading-relaxed text-(--warning-foreground)">
+          <p className="flex max-w-[34ch] items-center gap-1.5 rounded-control bg-(--warning-surface) px-3 py-1.5 text-label italic leading-relaxed text-(--warning-foreground)">
             <Lightbulb className="size-3.5 shrink-0" aria-hidden />
             {card.tip}
           </p>
@@ -64,7 +64,7 @@ export function PreviewFace({ card, back = false }: { card: Card; back?: boolean
 function FaceTag({ children, className = '' }: { children: string; className?: string }) {
   return (
     <span
-      className={`rounded-control bg-info-surface px-2.5 py-1 text-(length:--p-text-tiny) font-semibold text-info-foreground ${className}`}
+      className={`rounded-control bg-info-surface px-2.5 py-1 text-tiny font-semibold text-info-foreground ${className}`}
     >
       {children}
     </span>
@@ -72,11 +72,7 @@ function FaceTag({ children, className = '' }: { children: string; className?: s
 }
 
 function FaceHint({ children }: { children: string }) {
-  return (
-    <p className="text-center text-(length:--p-text-label) font-medium text-muted-foreground">
-      {children}
-    </p>
-  )
+  return <p className="text-center text-label font-medium text-muted-foreground">{children}</p>
 }
 
 export function QueuedPreview({

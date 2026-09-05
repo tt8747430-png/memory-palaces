@@ -70,7 +70,7 @@ export function StreakCalendar({ trainingDays, now = Date.now() }: StreakCalenda
   return (
     <GlassCard tone="card">
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-(length:--p-text-title) font-semibold text-heading">{monthLabel}</h3>
+        <h3 className="text-title font-semibold text-heading">{monthLabel}</h3>
         <div className="flex items-center gap-1">
           <IconButton size="sm" aria-label={t('progress.prevMonth')} onClick={() => shift(-1)}>
             <ChevronLeft className="size-4" aria-hidden />
@@ -83,10 +83,7 @@ export function StreakCalendar({ trainingDays, now = Date.now() }: StreakCalenda
 
       <div className="mb-2 grid grid-cols-7 gap-1">
         {WEEKDAY_INITIALS.map((initial, i) => (
-          <span
-            key={i}
-            className="text-center text-(length:--p-text-tiny) font-semibold text-muted-foreground"
-          >
+          <span key={i} className="text-center text-tiny font-semibold text-muted-foreground">
             {initial}
           </span>
         ))}
@@ -98,7 +95,7 @@ export function StreakCalendar({ trainingDays, now = Date.now() }: StreakCalenda
             key={cell.key}
             aria-hidden={!cell.inMonth}
             className={cn(
-              'grid aspect-square place-items-center rounded-control text-(length:--p-text-label) font-semibold tabular-nums',
+              'grid aspect-square place-items-center rounded-control text-label font-semibold tabular-nums',
               !cell.inMonth && 'text-transparent',
               cell.inMonth && cell.trained && 'bg-warning text-(--warning-on-fill)',
               cell.inMonth && !cell.trained && 'bg-info-surface text-muted-foreground',
@@ -111,7 +108,7 @@ export function StreakCalendar({ trainingDays, now = Date.now() }: StreakCalenda
         ))}
       </div>
 
-      <div className="mt-4 flex items-center justify-center gap-5 text-(length:--p-text-tiny) font-medium text-muted-foreground">
+      <div className="mt-4 flex items-center justify-center gap-5 text-tiny font-medium text-muted-foreground">
         <span className="inline-flex items-center gap-1.5">
           <span className="size-3 rounded-[5px] bg-warning" aria-hidden />
           {t('progress.legendTrained')}

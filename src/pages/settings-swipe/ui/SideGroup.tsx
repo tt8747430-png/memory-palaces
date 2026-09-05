@@ -28,7 +28,7 @@ export function SideGroup({ icon, label, side, type, selected, onToggle }: SideG
   return (
     <div className="p-3.5">
       <div className="flex items-center justify-between gap-2">
-        <span className="inline-flex items-center gap-1.5 text-(length:--p-text-label) font-bold text-heading">
+        <span className="inline-flex items-center gap-1.5 text-label font-bold text-heading">
           <span className="grid size-5 place-items-center rounded-md bg-primary/[0.07] text-primary">
             {icon}
           </span>

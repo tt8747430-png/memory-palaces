@@ -50,10 +50,10 @@ export function AchievementDetailPage({ achievementId, onBack }: AchievementDeta
         </RewardHero>
 
         <section className="flex flex-col gap-2">
-          <h2 className="px-1 text-(length:--p-text-title) font-bold text-heading">
+          <h2 className="px-1 text-title font-bold text-heading">
             {t('achievementDetail.howToTitle')}
           </h2>
-          <p className="px-1 text-(length:--p-text-body) leading-relaxed text-foreground">
+          <p className="px-1 text-body leading-relaxed text-foreground">
             {t(`achievementDetail.${achievement.id}.howTo`)}
           </p>
         </section>
@@ -63,17 +63,15 @@ export function AchievementDetailPage({ achievementId, onBack }: AchievementDeta
             <meta.icon className="size-4.5" aria-hidden />
           </span>
           <div className="min-w-0">
-            <p className="text-(length:--p-text-sub) font-bold leading-tight text-heading">
-              {title}
-            </p>
-            <p className="mt-0.5 text-(length:--p-text-label) leading-snug text-muted-foreground">
+            <p className="text-sub font-bold leading-tight text-heading">{title}</p>
+            <p className="mt-0.5 text-label leading-snug text-muted-foreground">
               {t(meta.descriptionKey)}
             </p>
           </div>
         </div>
 
         {earned ? (
-          <p className="px-1 text-(length:--p-text-label) font-semibold text-(--success-foreground)">
+          <p className="px-1 text-label font-semibold text-(--success-foreground)">
             {t('achievementDetail.earnedNote')}
           </p>
         ) : null}

@@ -96,7 +96,7 @@ export function GearSheet({ open, onClose, mode, quick, settings }: GearSheetPro
           ) : null}
 
           <div className="rounded-card bg-info-surface">
-            <p className="flex items-center gap-2 px-4 pt-3 text-(length:--p-text-label) text-muted-foreground">
+            <p className="flex items-center gap-2 px-4 pt-3 text-label text-muted-foreground">
               <Keyboard className="size-4 shrink-0" aria-hidden />
               {t('study.swipeActionsHint')}
             </p>
@@ -107,9 +107,7 @@ export function GearSheet({ open, onClose, mode, quick, settings }: GearSheetPro
                     <span className="grid size-7 shrink-0 place-items-center rounded-control bg-card text-heading shadow-rest">
                       {icon}
                     </span>
-                    <span className="text-(length:--p-text-sub) font-semibold">
-                      {t(labelKey as never)}
-                    </span>
+                    <span className="text-sub font-semibold">{t(labelKey as never)}</span>
                   </span>
                   <Combobox
                     variant="bare"

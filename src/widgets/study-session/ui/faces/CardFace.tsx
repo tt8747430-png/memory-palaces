@@ -156,7 +156,7 @@ export function AidButton({
       onPointerDown={stopPress}
       onClick={onClick}
       className={cn(
-        'inline-flex min-h-11 items-center justify-center rounded-control px-4 text-(length:--p-text-label) font-semibold transition-transform active:scale-[0.97]',
+        'inline-flex min-h-11 items-center justify-center rounded-control px-4 text-label font-semibold transition-transform active:scale-[0.97]',
         tone === 'solid'
           ? 'bg-info-surface text-heading'
           : 'text-muted-foreground active:bg-info-surface',
@@ -208,7 +208,7 @@ export function TipRow({ tip }: { tip: string }) {
         <motion.p
           initial={{ opacity: 0, y: 4 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-[36ch] text-pretty text-(length:--p-text-label) italic text-muted-foreground"
+          className="max-w-[36ch] text-pretty text-label italic text-muted-foreground"
         >
           {tip}
         </motion.p>
@@ -233,13 +233,9 @@ export function HintCard({ hint }: { hint: string }) {
     <div className="w-full rounded-card bg-secondary/20 p-4 text-left">
       <div className="mb-1.5 flex items-center gap-2">
         <MapPin className="size-4 shrink-0 text-heading" aria-hidden />
-        <p className="text-(length:--p-text-label) font-semibold text-heading">
-          {t('study.whereToPicture')}
-        </p>
+        <p className="text-label font-semibold text-heading">{t('study.whereToPicture')}</p>
       </div>
-      <p className="text-(length:--p-text-label) italic leading-relaxed text-muted-foreground">
-        {hint}
-      </p>
+      <p className="text-label italic leading-relaxed text-muted-foreground">{hint}</p>
     </div>
   )
 }
@@ -292,7 +288,7 @@ export function BackPrompt({ prompt, onFlip }: { prompt: string; onFlip: () => v
   return (
     <>
       <FlipZone label={t('study.showFront')} onFlip={onFlip} className="shrink-0">
-        <span className="block truncate text-center text-(length:--p-text-label) font-semibold text-accent">
+        <span className="block truncate text-center text-label font-semibold text-accent">
           {prompt}
         </span>
       </FlipZone>

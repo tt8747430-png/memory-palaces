@@ -120,7 +120,7 @@ export function SignupPage({ onSuccess, onGuest, onLogin }: SignupPageProps) {
       <div className="flex flex-col gap-1.5">
         <label
           htmlFor={termsId}
-          className="flex items-start gap-2.5 text-(length:--p-text-label) text-muted-foreground"
+          className="flex items-start gap-2.5 text-label text-muted-foreground"
         >
           <input
             id={termsId}
@@ -138,11 +138,7 @@ export function SignupPage({ onSuccess, onGuest, onLogin }: SignupPageProps) {
           </span>
         </label>
         {errors.terms ? (
-          <p
-            id={termsErrorId}
-            role="alert"
-            className="text-(length:--p-text-label) text-(--danger-on-surface)"
-          >
+          <p id={termsErrorId} role="alert" className="text-label text-(--danger-on-surface)">
             {errors.terms}
           </p>
         ) : null}

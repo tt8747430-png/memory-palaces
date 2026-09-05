@@ -40,8 +40,7 @@ export interface RowFrameProps {
  * flyout — one or the other, never a pair of optional props that could both arrive.
  */
 export type RowOverflow =
-  | { kind: 'menu'; actions: SheetAction[] }
-  | { kind: 'sheet'; onOpen: () => void }
+  { kind: 'menu'; actions: SheetAction[] } | { kind: 'sheet'; onOpen: () => void }
 
 export interface ContentRowProps extends RowFrameProps {
   swipeHandlers: SwipeActionHandlers
@@ -135,8 +134,8 @@ export function RowIndex({ index, tone = 'quiet' }: { index: number; tone?: 'qui
       className={cn(
         'grid shrink-0 place-items-center rounded-full font-bold',
         tone === 'strong'
-          ? 'h-6 min-w-6 bg-primary px-1.5 text-(length:--p-text-label) text-primary-foreground'
-          : 'h-5 min-w-5 bg-info-surface px-1 text-(length:--p-text-tiny) text-info-foreground',
+          ? 'h-6 min-w-6 bg-primary px-1.5 text-label text-primary-foreground'
+          : 'h-5 min-w-5 bg-info-surface px-1 text-tiny text-info-foreground',
       )}
     >
       {index + 1}

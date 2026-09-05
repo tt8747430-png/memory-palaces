@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { cn, keepFieldFocused } from '@/shared/lib'
 
 export const PROBE_ACTION =
-  'rounded-control border border-border px-2 py-1 text-(length:--p-text-tiny) font-semibold text-heading'
+  'rounded-control border border-border px-2 py-1 text-tiny font-semibold text-heading'
 
 type State = 'idle' | 'copied' | 'failed'
 

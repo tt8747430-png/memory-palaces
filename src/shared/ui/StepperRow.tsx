@@ -29,9 +29,7 @@ export function StepperRow({
 }: StepperRowProps) {
   return (
     <div className="flex items-center gap-3 px-4 py-3">
-      <span className="min-w-0 flex-1 text-(length:--p-text-sub) font-semibold text-heading">
-        {label}
-      </span>
+      <span className="min-w-0 flex-1 text-sub font-semibold text-heading">{label}</span>
       <IconButton
         variant="glass"
         aria-label={decreaseLabel}
@@ -40,7 +38,7 @@ export function StepperRow({
       >
         <Minus className="size-4.5" aria-hidden />
       </IconButton>
-      <span className="min-w-12 text-center text-(length:--p-text-sub) font-semibold tabular-nums text-heading">
+      <span className="min-w-12 text-center text-sub font-semibold tabular-nums text-heading">
         {value}
       </span>
       <IconButton

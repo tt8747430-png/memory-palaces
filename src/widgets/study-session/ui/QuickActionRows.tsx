@@ -15,7 +15,7 @@ export interface QuickActionsModel {
 }
 
 const ROW =
-  'flex w-full items-center gap-3.5 rounded-card bg-info-surface px-4 py-3.5 text-[length:var(--p-text-body)] font-semibold text-heading transition-transform active:scale-[0.99] disabled:opacity-50'
+  'flex w-full items-center gap-3.5 rounded-card bg-info-surface px-4 py-3.5 text-body font-semibold text-heading transition-transform active:scale-[0.99] disabled:opacity-50'
 
 export function QuickActionRows({
   model,

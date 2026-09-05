@@ -56,7 +56,7 @@ export function SegmentedControl<T extends string>({
             value={option.value}
             aria-label={option.ariaLabel}
             className={cn(
-              'relative flex flex-1 items-center justify-center rounded-control text-(length:--p-text-sub) font-semibold',
+              'relative flex flex-1 items-center justify-center rounded-control text-sub font-semibold',
               SEGMENT_PADDING[size],
               isActive ? 'text-primary' : 'text-primary/50',
             )}

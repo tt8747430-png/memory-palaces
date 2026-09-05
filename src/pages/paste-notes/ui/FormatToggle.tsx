@@ -20,18 +20,14 @@ export function FormatToggle({ value, auto, onChange, onReset }: FormatTogglePro
   return (
     <div>
       <div className="mb-2 flex items-center justify-between gap-2">
-        <span className="text-(length:--p-text-label) font-semibold text-heading">{label}</span>
+        <span className="text-label font-semibold text-heading">{label}</span>
         {auto ? (
-          <span className="inline-flex items-center gap-1 text-(length:--p-text-tiny) font-semibold text-muted-foreground">
+          <span className="inline-flex items-center gap-1 text-tiny font-semibold text-muted-foreground">
             <Wand2 className="size-3.5" aria-hidden />
             {t('cards.paste.autoDetected')}
           </span>
         ) : (
-          <button
-            type="button"
-            onClick={onReset}
-            className="text-(length:--p-text-tiny) font-bold text-primary"
-          >
+          <button type="button" onClick={onReset} className="text-tiny font-bold text-primary">
             {t('cards.paste.resetAuto')}
           </button>
         )}
@@ -47,7 +43,7 @@ export function FormatToggle({ value, auto, onChange, onReset }: FormatTogglePro
               aria-checked={selected}
               onClick={() => onChange(option)}
               className={cn(
-                'flex items-center justify-center gap-2 rounded-control py-2.5 text-(length:--p-text-sub) font-semibold transition-[background-color,box-shadow,transform] active:scale-[0.98]',
+                'flex items-center justify-center gap-2 rounded-control py-2.5 text-sub font-semibold transition-[background-color,box-shadow,transform] active:scale-[0.98]',
                 selected
                   ? 'bg-info-surface text-heading ring-1 ring-inset ring-primary/20 shadow-rest'
                   : 'bg-secondary/40 text-muted-foreground',

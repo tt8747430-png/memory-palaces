@@ -4,7 +4,7 @@ import { cn, type SrsState, type SrsStatus, srsStatus } from '@/shared/lib'
 const TONE: Record<SrsStatus, string> = {
   new: 'bg-info-surface text-info-foreground',
   learning: 'bg-secondary text-secondary-foreground',
-  known: 'bg-[var(--success-surface)] text-[var(--success-on-surface)]',
+  known: 'bg-(--success-surface) text-(--success-on-surface)',
 }
 
 const LABEL: Record<SrsStatus, `srs.${SrsStatus}`> = {
@@ -20,7 +20,7 @@ export function SrsStatusChip({ srs }: { srs?: SrsState }) {
     <span
       className={cn(
         'inline-flex items-center rounded-control px-2 py-0.5',
-        'text-(length:--p-text-tiny) font-semibold',
+        'text-tiny font-semibold',
         TONE[status],
       )}
     >

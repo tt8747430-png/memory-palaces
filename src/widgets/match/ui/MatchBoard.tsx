@@ -94,7 +94,7 @@ export function MatchBoard({ cards, subtitle, onBack, onComplete }: MatchBoardPr
         </div>
       </SessionHeader>
 
-      <p className="px-5 pb-2 pt-3 text-center text-(length:--p-text-label) font-medium text-muted-foreground">
+      <p className="px-5 pb-2 pt-3 text-center text-label font-medium text-muted-foreground">
         {t('match.instruction')}
       </p>
 
@@ -125,7 +125,7 @@ export function MatchBoard({ cards, subtitle, onBack, onComplete }: MatchBoardPr
                 >
                   <span
                     className={cn(
-                      'wrap-break-word text-(length:--p-text-sub) leading-snug',
+                      'wrap-break-word text-sub leading-snug',
                       tile.kind === 'term'
                         ? 'font-semibold text-heading'
                         : 'font-medium text-muted-foreground',
@@ -156,10 +156,8 @@ export function MatchBoard({ cards, subtitle, onBack, onComplete }: MatchBoardPr
             >
               <Check className="size-10 text-primary-foreground" strokeWidth={3} aria-hidden />
             </motion.div>
-            <h2 className="text-(length:--p-text-headline) font-bold text-heading">
-              {t('match.complete')}
-            </h2>
-            <p className="text-(length:--p-text-body) text-muted-foreground">
+            <h2 className="text-headline font-bold text-heading">{t('match.complete')}</h2>
+            <p className="text-body text-muted-foreground">
               {formatTime(elapsed)} · {t('match.summary', { moves: state.moves })}
             </p>
             <div className="mt-5 flex w-full max-w-xs flex-col gap-3">

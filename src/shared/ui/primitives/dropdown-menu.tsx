@@ -43,7 +43,7 @@ function DropdownMenuContent({
         align={align}
         sideOffset={sideOffset}
         collisionPadding={collisionPadding}
-        className="z-500"
+        className="z-(--z-dialog)"
       >
         <Menu.Popup
           data-slot="dropdown-menu-content"
@@ -68,7 +68,7 @@ function DropdownMenuContent({
 const menuItemVariants = cva(
   cn(
     'flex h-11 cursor-default select-none items-center gap-3 rounded-control px-3',
-    'text-[length:var(--p-text-body)] font-medium outline-none',
+    'text-body font-medium outline-none',
     'transition-transform duration-150 ease-out active:scale-[0.99]',
     'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
   ),
@@ -77,8 +77,7 @@ const menuItemVariants = cva(
       variant: {
         default: 'text-heading data-[highlighted]:bg-info-surface',
         active: 'text-accent data-[highlighted]:bg-info-surface',
-        destructive:
-          'text-[var(--danger-on-surface)] data-[highlighted]:bg-[var(--danger-surface)]',
+        destructive: 'text-(--danger-on-surface) data-[highlighted]:bg-(--danger-surface)',
       },
     },
     defaultVariants: { variant: 'default' },
@@ -125,7 +124,7 @@ function DropdownMenuRadioItem({ className, children, ...props }: DropdownMenuRa
       data-slot="dropdown-menu-radio-item"
       className={cn(
         'flex h-11 cursor-default select-none items-center gap-3 rounded-control px-3',
-        'text-(length:--p-text-body) font-medium text-heading outline-none',
+        'text-body font-medium text-heading outline-none',
         'transition-transform duration-150 ease-out active:scale-[0.99]',
         'data-highlighted:bg-info-surface data-checked:text-accent',
         'data-disabled:pointer-events-none data-disabled:opacity-50',

@@ -29,7 +29,7 @@ export function IconColorRow({
 }: IconColorRowProps) {
   return (
     <div>
-      <p className="mb-2 text-(length:--p-text-label) font-semibold text-heading">{label}</p>
+      <p className="mb-2 text-label font-semibold text-heading">{label}</p>
       <div className="flex items-center gap-3">
         <EmojiField value={icon} onChange={onIconChange} aria-label={iconLabel} />
         <span aria-hidden className="h-9 w-px shrink-0 bg-border" />

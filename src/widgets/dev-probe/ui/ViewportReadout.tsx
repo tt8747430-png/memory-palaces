@@ -27,7 +27,7 @@ export function ViewportReadout({
   const checks = checkViewport(sample)
 
   return (
-    <div className={cn('font-mono text-(length:--p-text-tiny) tabular-nums', className)}>
+    <div className={cn('font-mono text-tiny tabular-nums', className)}>
       <ul className="flex flex-col gap-0.5">
         {checks.map((check) => (
           <li key={check.id} className={cn('flex gap-1.5', STATE[check.state])}>

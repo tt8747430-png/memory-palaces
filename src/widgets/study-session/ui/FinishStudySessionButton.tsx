@@ -25,10 +25,7 @@ export function FinishStudySessionButton({ onFinish }: { onFinish: () => void })
         <FlagTriangleRight className="size-4.5" aria-hidden />
         {t('study.finishStudySession')}
       </Button>
-      <p
-        id={hintId}
-        className="px-1 text-center text-(length:--p-text-label) leading-snug text-muted-foreground"
-      >
+      <p id={hintId} className="px-1 text-center text-label leading-snug text-muted-foreground">
         {t('study.finishStudySessionHint')}
       </p>
     </div>

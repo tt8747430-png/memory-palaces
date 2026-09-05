@@ -33,14 +33,12 @@ function ProbePanel() {
     <div
       onMouseDown={keepFieldFocused}
       className={cn(
-        'fixed inset-x-2 z-2000000000 max-h-[70svh] overflow-y-auto overscroll-contain rounded-card border border-border bg-card/95 p-2 shadow-elevated backdrop-blur-md',
+        'fixed inset-x-2 z-(--z-dev-probe) max-h-[70svh] overflow-y-auto overscroll-contain rounded-card border border-border bg-card/95 p-2 shadow-elevated backdrop-blur-md',
         bottom ? 'bottom-2' : 'top-2',
       )}
     >
       <div className="flex items-center gap-1.5">
-        <span className="mr-auto text-(length:--p-text-tiny) font-bold text-heading">
-          viewport probe
-        </span>
+        <span className="mr-auto text-tiny font-bold text-heading">viewport probe</span>
         <button type="button" className={PROBE_ACTION} onClick={() => setBottom((value) => !value)}>
           {bottom ? '↑' : '↓'}
         </button>

@@ -19,7 +19,7 @@ export function AlgorithmLine({ value, onChange }: AlgorithmLineProps) {
 
   return (
     <>
-      <p className="flex flex-wrap items-center gap-1.5 text-(length:--p-text-label) text-muted-foreground">
+      <p className="flex flex-wrap items-center gap-1.5 text-label text-muted-foreground">
         <span>{t('algorithm.deckLine')}</span>
         <button
           type="button"

@@ -77,7 +77,7 @@ export function SettingsSelectPage({ onBack }: SettingsSelectPageProps) {
       }
     >
       <div className="mt-3 flex flex-col gap-4 pb-24">
-        <p className="flex items-start gap-2 px-1 text-(length:--p-text-label) leading-relaxed text-muted-foreground">
+        <p className="flex items-start gap-2 px-1 text-label leading-relaxed text-muted-foreground">
           <CheckSquare className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
           {t('select.subtitle')}
         </p>
@@ -111,18 +111,14 @@ export function SettingsSelectPage({ onBack }: SettingsSelectPageProps) {
 
         <section className={cn(cardSurface, 'p-3.5')}>
           <div className="flex items-center justify-between gap-2">
-            <span className="text-(length:--p-text-label) font-bold text-heading">
-              {t('select.available')}
-            </span>
+            <span className="text-label font-bold text-heading">{t('select.available')}</span>
             <SlotCount full={full}>
               {t('select.slots', { count: config.length, max: SELECT_TOOLBAR_MAX })}
             </SlotCount>
           </div>
 
           {palette.length === 0 ? (
-            <p className="mt-2.5 text-(length:--p-text-label) text-muted-foreground">
-              {t('select.allInUse')}
-            </p>
+            <p className="mt-2.5 text-label text-muted-foreground">{t('select.allInUse')}</p>
           ) : (
             <div className="mt-2.5 flex flex-wrap gap-1.5">
               {palette.map((id) => {
@@ -144,9 +140,7 @@ export function SettingsSelectPage({ onBack }: SettingsSelectPageProps) {
           )}
 
           {full ? (
-            <p className="mt-2.5 text-(length:--p-text-tiny) text-muted-foreground">
-              {t('select.full')}
-            </p>
+            <p className="mt-2.5 text-tiny text-muted-foreground">{t('select.full')}</p>
           ) : null}
         </section>
 

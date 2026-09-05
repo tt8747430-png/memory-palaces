@@ -41,7 +41,7 @@ export function PresetStrip({ style, value, onChange }: PresetStripProps) {
             <CardScene style={previewStyle} className="grid place-items-center p-2.5">
               <StylePreview compact style={previewStyle} front="Aa" back="Bb" className="w-full" />
             </CardScene>
-            <span className="block truncate bg-card px-2 py-1.5 text-(length:--p-text-label) font-medium text-muted-foreground">
+            <span className="block truncate bg-card px-2 py-1.5 text-label font-medium text-muted-foreground">
               {t(`cardStyle.preset.${preset}` as never)}
             </span>
           </button>

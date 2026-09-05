@@ -132,10 +132,8 @@ export function SettingsPage({
             className="size-16 text-xl shadow-rest transition-transform duration-200 ease-out group-active:scale-[0.96]"
           />
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-(length:--p-text-title) font-semibold text-heading">
-              {name}
-            </span>
-            <span className="block truncate text-(length:--p-text-sub) text-muted-foreground">
+            <span className="block truncate text-title font-semibold text-heading">{name}</span>
+            <span className="block truncate text-sub text-muted-foreground">
               {handle ? `@${handle}` : t('settings.profileHint')}
             </span>
           </span>

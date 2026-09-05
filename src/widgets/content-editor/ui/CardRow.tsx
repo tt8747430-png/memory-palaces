@@ -51,7 +51,7 @@ export function CardRow({
     >
       <div className="flex items-center gap-2">
         <RowIndex index={index} />
-        <p className="min-w-0 flex-1 text-(length:--p-text-sub) font-semibold leading-snug text-heading">
+        <p className="min-w-0 flex-1 text-sub font-semibold leading-snug text-heading">
           {card.front}
         </p>
         {card.flagged ? (
@@ -61,9 +61,7 @@ export function CardRow({
           />
         ) : null}
       </div>
-      <p className="mt-1 text-(length:--p-text-body) leading-relaxed text-muted-foreground">
-        {card.back}
-      </p>
+      <p className="mt-1 text-body leading-relaxed text-muted-foreground">{card.back}</p>
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
         {/* Fast review schedules nothing, so an SRS chip would report a state it never reaches. */}
         {algorithm === 'spaced' ? <SrsStatusChip srs={card.srs} /> : null}
@@ -107,7 +105,7 @@ function Cue({ className, icon, text }: { className: string; icon: ReactNode; te
   return (
     <div className={`flex items-start gap-2 rounded-control px-3 py-2 ${className}`}>
       {icon}
-      <p className="text-(length:--p-text-label) italic leading-snug">{text}</p>
+      <p className="text-label italic leading-snug">{text}</p>
     </div>
   )
 }

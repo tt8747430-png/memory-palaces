@@ -46,9 +46,7 @@ export function SortControl<T extends string>({
             )}
           >
             <span className="shrink-0 text-accent">{active?.icon}</span>
-            <span className="truncate text-(length:--p-text-label) font-semibold text-heading">
-              {active?.label}
-            </span>
+            <span className="truncate text-label font-semibold text-heading">{active?.label}</span>
             <ChevronDown
               className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-data-popup-open:rotate-180"
               aria-hidden

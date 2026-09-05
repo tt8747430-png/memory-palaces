@@ -20,10 +20,10 @@ export function QuizComplete({ result, onRetry, onDone }: QuizCompleteProps) {
       title={t('quiz.complete')}
       tone={passed ? 'success' : 'info'}
     >
-      <p className="text-(length:--p-text-sub) font-semibold text-heading">
+      <p className="text-sub font-semibold text-heading">
         {t('quiz.scoreLine', { score: result.score, total: result.total })}
       </p>
-      <p className="text-(length:--p-text-body) text-muted-foreground">
+      <p className="text-body text-muted-foreground">
         {t('quiz.accuracy', { accuracy: result.accuracy })}
       </p>
       <div className="mt-4 flex gap-3">

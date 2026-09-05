@@ -20,10 +20,8 @@ export function TestLaunchCard({ questionCount, onStartTest }: TestLaunchCardPro
           <Brain className="size-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-(length:--p-text-sub) font-bold text-heading">
-            {t('questions.testLead')}
-          </p>
-          <p className="text-(length:--p-text-label) text-muted-foreground">
+          <p className="text-sub font-bold text-heading">{t('questions.testLead')}</p>
+          <p className="text-label text-muted-foreground">
             {ready
               ? t(questionCount === 1 ? 'questions.testReadyOne' : 'questions.testReadyOther', {
                   count: questionCount,

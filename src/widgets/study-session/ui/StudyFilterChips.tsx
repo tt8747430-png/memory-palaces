@@ -67,12 +67,7 @@ function FilterChip({
       )}
     >
       {label}
-      <span
-        className={cn(
-          'text-(length:--p-text-tiny) font-bold',
-          active ? 'opacity-70' : 'opacity-60',
-        )}
-      >
+      <span className={cn('text-tiny font-bold', active ? 'opacity-70' : 'opacity-60')}>
         {count}
       </span>
     </button>

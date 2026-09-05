@@ -109,7 +109,7 @@ export function ActionSheet({
               onClick={() => select(action)}
               className={cn(
                 'flex items-center gap-3 text-left',
-                'text-(length:--p-text-body) font-medium',
+                'text-body font-medium',
                 'transition-transform duration-150 ease-out active:scale-[0.99]',
                 'disabled:pointer-events-none disabled:opacity-50',
                 ROW_VARIANT[variant],
@@ -131,7 +131,7 @@ export function ActionSheet({
           <DrawerClose
             className={cn(
               'mb-1 flex h-12 items-center justify-center rounded-control bg-info-surface',
-              'text-(length:--p-text-body) font-semibold text-heading',
+              'text-body font-semibold text-heading',
               'transition-transform duration-150 ease-out active:scale-[0.99]',
             )}
           >

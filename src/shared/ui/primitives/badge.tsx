@@ -4,7 +4,7 @@ import { cn } from '@/shared/lib'
 
 const badgeVariants = cva(
   'inline-flex items-center gap-1 rounded-control px-2.5 py-1 ' +
-    'text-[length:var(--p-text-label)] font-medium select-none',
+    'text-label font-medium select-none',
   {
     variants: {
       variant: {

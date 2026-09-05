@@ -78,7 +78,7 @@ export function ConfirmDialog({
           <AlertDialogClose
             className={cn(
               'flex h-12 w-full items-center justify-center rounded-control',
-              'text-(length:--p-text-sub) font-semibold text-heading',
+              'text-sub font-semibold text-heading',
               'transition-[transform,background-color] duration-150 ease-out',
               'hover:bg-info-surface active:scale-[0.98]',
             )}

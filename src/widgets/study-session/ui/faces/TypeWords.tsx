@@ -6,7 +6,7 @@ import { cn, type RecallSlot, useVirtualKeyboard } from '@/shared/lib'
 import { RecallTokens } from './RecallTokens'
 import { stopPress } from './types'
 
-const FEEDBACK_TEXT = 'text-(length:--p-text-body) font-medium leading-relaxed'
+const FEEDBACK_TEXT = 'text-body font-medium leading-relaxed'
 
 function useAutoGrow(value: string) {
   const ref = useRef<HTMLTextAreaElement>(null)
@@ -106,7 +106,7 @@ function FloatingFeedback({
 
   return createPortal(
     <div
-      className="pointer-events-none fixed inset-x-0 z-[220] mx-auto flex max-w-app px-5"
+      className="pointer-events-none fixed inset-x-0 z-(--z-dock) mx-auto flex max-w-app px-5"
       style={{ bottom: height }}
     >
       <motion.div

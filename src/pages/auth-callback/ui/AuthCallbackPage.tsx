@@ -65,7 +65,7 @@ export function AuthCallbackPage({ sessionReady, onDone, onCancel }: AuthCallbac
               className="size-8 animate-spin text-primary motion-reduce:animate-none"
               aria-hidden
             />
-            <p role="status" className="text-(length:--p-text-body) text-muted-foreground">
+            <p role="status" className="text-body text-muted-foreground">
               {t('auth.callback.signingIn')}
             </p>
           </>

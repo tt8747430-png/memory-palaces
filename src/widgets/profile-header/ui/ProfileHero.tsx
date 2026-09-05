@@ -74,7 +74,7 @@ export function ProfileHero({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: EASE_OUT }}
         className="mt-4
-        text-(length:--p-text-sub) font-medium text-muted-foreground"
+        text-sub font-medium text-muted-foreground"
       >
         {subtitle}
       </motion.p>
@@ -110,7 +110,7 @@ export function ProfileHero({
         transition={{ delay: 0.16, duration: 0.35, ease: EASE_OUT }}
         className="mt-6 w-full max-w-75"
       >
-        <div className="flex items-baseline justify-between text-(length:--p-text-label) font-semibold">
+        <div className="flex items-baseline justify-between text-label font-semibold">
           <span className="text-primary">{levelLabel}</span>
           <span className="text-muted-foreground">{xpToNext}</span>
         </div>
@@ -137,11 +137,11 @@ function Stat({
     <>
       <span className="flex items-center gap-1.5">
         {icon}
-        <span className="text-(length:--p-text-headline) font-bold leading-none tabular-nums text-heading">
+        <span className="text-headline font-bold leading-none tabular-nums text-heading">
           {value}
         </span>
       </span>
-      <span className="text-(length:--p-text-tiny) font-medium text-muted-foreground">{label}</span>
+      <span className="text-tiny font-medium text-muted-foreground">{label}</span>
     </>
   )
   const className = 'flex flex-1 flex-col items-center justify-center gap-1.5 px-2'

@@ -7,9 +7,9 @@ export type ImportRowTone = 'brand' | 'accent' | 'positive' | 'warning' | 'dange
 const TONE_CHIP: Record<ImportRowTone, string> = {
   brand: 'bg-info-surface text-primary',
   accent: 'bg-secondary/45 text-primary',
-  positive: 'bg-[var(--success-surface)] text-[var(--success-on-surface)]',
-  warning: 'bg-[var(--warning-surface)] text-[var(--warning-foreground)]',
-  danger: 'bg-[var(--danger-surface)] text-[var(--danger-on-surface)]',
+  positive: 'bg-(--success-surface) text-(--success-on-surface)',
+  warning: 'bg-(--warning-surface) text-(--warning-foreground)',
+  danger: 'bg-(--danger-surface) text-(--danger-on-surface)',
   neutral: 'bg-secondary/25 text-secondary-foreground',
 }
 
@@ -56,15 +56,13 @@ export function ImportRow({
         {icon}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[length:var(--p-text-sub)] font-semibold text-heading">
-          {title}
-        </span>
-        <span className="mt-0.5 block text-[length:var(--p-text-label)] leading-snug text-muted-foreground">
+        <span className="block truncate text-sub font-semibold text-heading">{title}</span>
+        <span className="mt-0.5 block text-label leading-snug text-muted-foreground">
           {subtitle}
         </span>
       </span>
       {badge ? (
-        <span className="shrink-0 rounded-pill bg-info-surface px-2 py-0.5 text-[length:var(--p-text-tiny)] font-semibold uppercase tracking-wide text-info-foreground">
+        <span className="shrink-0 rounded-pill bg-info-surface px-2 py-0.5 text-tiny font-semibold uppercase tracking-wide text-info-foreground">
           {badge}
         </span>
       ) : null}

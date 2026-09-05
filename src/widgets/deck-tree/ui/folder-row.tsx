@@ -38,26 +38,26 @@ export function FolderRowBody({
         >
           <span
             aria-hidden
-            className="absolute inset-0 translate-x-1.25 -translate-y-1.25 rounded-2xl bg-card shadow-rest ring-1 ring-border/40"
+            className="absolute inset-0 translate-x-1.25 -translate-y-1.25 rounded-card bg-card shadow-rest ring-1 ring-border/40"
           />
           <span
             aria-hidden
-            className="absolute inset-0 translate-x-[2.5px] translate-y-[-2.5px] rounded-2xl bg-card shadow-rest ring-1 ring-border/50"
+            className="absolute inset-0 translate-x-[2.5px] translate-y-[-2.5px] rounded-card bg-card shadow-rest ring-1 ring-border/50"
           />
           <FolderGlyph
             color={folder.color}
             icon={folder.icon || DEFAULT_FOLDER_ICON}
-            className="relative size-12 rounded-2xl"
+            className="relative size-12 rounded-card"
             iconClassName="text-xl leading-none"
           />
         </motion.span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-(length:--p-text-title) font-semibold text-heading">
+          <span className="block truncate text-title font-semibold text-heading">
             {folder.name}
           </span>
           <span
             className={cn(
-              'mt-1 inline-flex items-center gap-1 rounded-pill px-2 py-0.5 text-(length:--p-text-tiny) font-semibold',
+              'mt-1 inline-flex items-center gap-1 rounded-pill px-2 py-0.5 text-tiny font-semibold',
               deckCount > 0
                 ? 'bg-primary/[0.07] text-primary/80'
                 : 'bg-secondary/40 text-muted-foreground',

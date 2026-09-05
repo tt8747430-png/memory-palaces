@@ -44,21 +44,19 @@ export function AlgorithmSheet({ open, onOpenChange, value, onChange }: Algorith
             >
               <span className="flex items-center gap-3">
                 {meta.icon}
-                <span className="min-w-0 flex-1 text-(length:--p-text-body) font-semibold text-heading">
+                <span className="min-w-0 flex-1 text-body font-semibold text-heading">
                   {t(meta.longNameKey as never)}
                 </span>
                 <SelectDot state={selected ? 'checked' : 'unchecked'} />
               </span>
-              <span className="mt-2 block text-(length:--p-text-label) text-muted-foreground">
+              <span className="mt-2 block text-label text-muted-foreground">
                 {t(meta.bodyKey as never)}
               </span>
             </button>
           )
         })}
       </div>
-      <p className="mt-4 text-(length:--p-text-label) text-muted-foreground">
-        {t('algorithm.keepsSchedules')}
-      </p>
+      <p className="mt-4 text-label text-muted-foreground">{t('algorithm.keepsSchedules')}</p>
     </Sheet>
   )
 }

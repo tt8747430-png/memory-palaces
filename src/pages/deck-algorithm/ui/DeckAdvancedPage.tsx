@@ -69,9 +69,7 @@ export function DeckAdvancedPage({ deckId, onBack }: DeckAdvancedPageProps) {
       }
     >
       <div className="mt-4 flex flex-col gap-6 pb-8">
-        <p className="text-(length:--p-text-label) text-muted-foreground">
-          {t('algorithm.advancedHint')}
-        </p>
+        <p className="text-label text-muted-foreground">{t('algorithm.advancedHint')}</p>
 
         <SettingsSection>
           <SettingsRow

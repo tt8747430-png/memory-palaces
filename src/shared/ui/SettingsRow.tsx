@@ -50,14 +50,14 @@ function RowBody({ icon, label, description, tone = 'default' }: BaseProps) {
       <span className="min-w-0">
         <span
           className={cn(
-            'block truncate text-(length:--p-text-sub) font-semibold',
+            'block truncate text-sub font-semibold',
             danger ? '' + 'text-(--danger-on-surface)' : 'text-heading',
           )}
         >
           {label}
         </span>
         {description ? (
-          <span className="mt-0.5 block truncate text-(length:--p-text-label) leading-snug text-muted-foreground">
+          <span className="mt-0.5 block truncate text-label leading-snug text-muted-foreground">
             {description}
           </span>
         ) : null}
@@ -67,7 +67,7 @@ function RowBody({ icon, label, description, tone = 'default' }: BaseProps) {
 }
 
 const trailingValue = (value: string) => (
-  <span className="shrink-0 text-(length:--p-text-label) text-muted-foreground">{value}</span>
+  <span className="shrink-0 text-label text-muted-foreground">{value}</span>
 )
 
 export function SettingsRow(props: SettingsRowProps) {
