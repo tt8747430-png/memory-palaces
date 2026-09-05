@@ -40,7 +40,7 @@ for the flashcard modes) + `model/` + barrel.
 ## 3. Complex state → reducer / machine
 
 - Several pieces changing together, or distinct phases → reducer or discriminated-union machine, kept **pure and outside
-  the component** in feature/model: [`features/review/session-machine.ts`](../src/features/review/session-machine.ts), [
+  the component** in feature/model: [`features/review/study-session-machine.ts`](../src/features/review/study-session-machine.ts), [
   `features/quiz/quiz-machine.ts`](../src/features/quiz/quiz-machine.ts) (each `*.test.ts`). Component dispatches.
 - `useReducer` for multi-field interdependent UI state (`QuizSession`, `MatchBoard`, `FlashcardsPanel`).
 - Lone toggle stays `useState`.
@@ -75,11 +75,32 @@ A page reading several stores + holding a Selection + doing a dozen acts present
 
 ## 4a. One header chrome
 
-[`shared/ui/HeaderBar`](../src/shared/ui/HeaderBar.tsx) — safe-area inset, glass, **fixed `h-16`**, shadow fading in on
-scroll. Four fillers: `ScreenHeader`, `SelectHeader`, `HomeHeader`, `ProfileBar`.
+[`shared/ui/header`](../src/shared/ui/header) — one `<header>`, one provider, one set of parts. Every bar in the app is
+that frame; what differs is which parts a screen composes into it.
 
-- **No screen hand-rolls a `<header>`** — need more, add a slot to the closest one. Bespoke bars are how the heights
-  drifted.
+- [`Header`](../src/shared/ui/header/Header.tsx) is the frame: safe-area inset, the guard that stops a control up here
+  dropping an open keyboard, and what the bar is _about_ — `title`, `subtitle`, `progress`, the back pair — published
+  on context. It paints nothing and renders no controls.
+- [`AppHeader`](../src/shared/ui/header/AppHeader.tsx) is that frame wearing the app's own chrome: stacked over the
+  scroller, frosted, lifting a hairline and a shadow as the body passes under it.
+- **Parts** read the frame's context, never props: `HeaderBar`, `HeaderBack`, `HeaderHeading`, `HeaderTitle`,
+  `HeaderSubtitle`, `HeaderCount`, `HeaderTrack`, `HeaderActions`, `HeaderSpacer`.
+- **Three compositions are named** — `ScreenHeader`, `SelectHeader`, `StudySessionHeader` — and three screens compose
+  their own on `AppHeader`: `HomeHeader`, `ProfileBar`, `DevPreviewPage`.
+
+- **No screen hand-rolls a `<header>`** — compose the parts, or add a part. Bespoke bars are how the heights drifted.
+- **A one-off part calls `useHeader()`** rather than taking props: it then works in any bar without knowing which.
+- **`HeaderBar` has two layouts, and `LAYOUT` is the whole list.** `bar` is **fixed `h-16`** — every app screen's
+  chrome, so a list does not jump when a selection swaps the contents. `study` is the study session's, deliberately
+  auto-height because the count pill, the track and a chip row stack inside the header. A composition picks a layout;
+  it never overrides the height by `className`, which is how "one height" quietly stopped being true before.
+- **A study session gets the bare `Header`, never `AppHeader`.** The card scene behind it paints the bar, and
+  `bg-glass` resolves to `--surface-glass-sky`, which no printed scene repaints — keeping the glass in `AppHeader` is
+  what keeps it out of the modules `widgets/study-session/ui/scene-chrome.test.ts` walks (§5).
+- **`data-slot="header"` is a contract.** `useKeyboardReveal` and the dev viewport probe find the top of the reveal
+  band by it, through the shared `CHROME` selectors in `shared/lib`. Rename it and a focused field is revealed _under_
+  the bar, silently — `Header.test.tsx` renders the real `AppScreen` shell and asserts the lookup still resolves, so a
+  hand-built DOM can no longer keep the suite green over a dead selector. §11 / ADR 0002.
 - **Controls: `IconButton variant="glass"` at `md` (44px)**; text buttons beside them `Button size="md"` (same 44px).
 - **Elevation comes from `AppScreen`** (owns the scroller, publishes `HeaderElevationContext`). Pages pass no ref, call
   no hook.
@@ -95,6 +116,10 @@ v4, two-layer tokens: primitives (`--p-navy-900`…) → semantic roles (`--prim
   values.
 - **Semantic tokens, not raw values.** `bg-primary`, `text-heading`, `rounded-control`, `shadow-rest` — not
   `bg-[#091A7A]`, not `p-[16px]`. No alias yet → CSS var.
+  - **Radii too, including Tailwind's own defaults.** `rounded-md` / `-lg` / `-xs` are off our scale as surely as
+    `rounded-[14px]` is. Below `rounded-control` the roles are `rounded-field` (a field editing text in place),
+    `rounded-mark` (an inline mark, a 20px glyph), `rounded-swatch` (a 12px legend chip) and `rounded-hairline`;
+    above it, `rounded-tile` for a 36px glyph tile and `rounded-tile-slot` for the outline standing in for one.
 - **Dark mode is automatic** (`[data-theme='dark']` remap). No scattered `dark:`, no hardcoded light/dark colors.
   - **One sanctioned exception:** the printed card-style presets in
     [`shared/lib/card-style.ts`](../src/shared/lib/card-style.ts) — `chalk`, `notebook`, `paper`, `parchment`,
@@ -107,7 +132,7 @@ v4, two-layer tokens: primitives (`--p-navy-900`…) → semantic roles (`--prim
     its subtree `data-scene="dark"` or `"light"`, and `tokens.css` repaints from there — set on a descendant, those
     blocks out-inherit `:root` / `[data-theme]` whichever theme the app is in. **The colours stay in the stylesheet**,
     beside the theme whose role colours they mirror; the TypeScript names which of the two a preset picks and nothing
-    more. That is how `SessionHeader`, the buttons on the card and the study session's grade buttons stay legible on
+    more. That is how `StudySessionHeader`, the buttons on the card and the study session's grade buttons stay legible on
     slate without knowing a scene exists.
     - The set a scene block must cover is `CHROME_TOKENS`, exported from `card-style.ts`. **Remap the paper with the
       ink:** `bg-card` resolves to `--surface`; remapping `--text-*` without it is how the type-answer field became
@@ -322,7 +347,7 @@ scrollbar-hide`. It is deliberately plain — a scrollport needs no keyboard geo
 - **A control tapped while a field is focused must not steal focus** — iOS blurs the field, the keyboard drops, the
   footer slides out from under the finger and the `click` lands on nothing (tap swallowed). `keepFieldFocused`
   (`shared/lib`) is `onMouseDown={(e) => e.preventDefault()}` with the tap-landed-in-another-field case skipped; toggle
-  still fires, keyboard nav unaffected. **`HeaderBar`, `FooterBar`, `DrawerHeader` and `DrawerFooter` install it
+  still fires, keyboard nav unaffected. **`Header`, `FooterBar`, `DrawerHeader` and `DrawerFooter` install it
   themselves** — a page action inherits the guard and must not re-add it. It was a per-caller rule once, which meant it
   existed on sheets and on nothing else.
 - **Swipe surfaces need `touch-action`, or text selection hijacks the drag.** Base UI declines its swipe while text is

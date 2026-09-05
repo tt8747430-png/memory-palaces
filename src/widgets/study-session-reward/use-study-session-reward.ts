@@ -4,19 +4,23 @@ import { useTranslation } from 'react-i18next'
 import { useEventBusOptional } from '@/shared/lib'
 import { useProgressStoreApiOptional } from '@/entities/progress'
 import { usePreferencesStoreApiOptional } from '@/entities/preferences'
-import { completeSession, outcomeToReward, type SessionOutcome } from '@/features/progress'
+import {
+  completeStudySession,
+  outcomeToReward,
+  type StudySessionOutcome,
+} from '@/features/progress'
 import { DEFAULT_DAILY_GOAL } from '@/shared/config/constants'
 
-export function useSessionReward(): (outcome: SessionOutcome) => Promise<void> {
+export function useStudySessionReward(): (outcome: StudySessionOutcome) => Promise<void> {
   const store = useProgressStoreApiOptional()
   const preferencesStore = usePreferencesStoreApiOptional()
   const eventBus = useEventBusOptional()
   const { t } = useTranslation()
   return useCallback(
-    async (outcome: SessionOutcome) => {
+    async (outcome: StudySessionOutcome) => {
       if (!store) return
       const dailyGoal = preferencesStore?.getState().preferences?.dailyGoal ?? DEFAULT_DAILY_GOAL
-      const reward = await completeSession(store, { ...outcomeToReward(outcome), dailyGoal })
+      const reward = await completeStudySession(store, { ...outcomeToReward(outcome), dailyGoal })
 
       if (reward.leveledUp) eventBus?.emit('level-up', { level: reward.level })
       if (reward.isMilestone) eventBus?.emit('streak', { count: reward.streakCount })

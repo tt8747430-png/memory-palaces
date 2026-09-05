@@ -116,7 +116,7 @@ function stars(opacity: number): string {
 
 /**
  * The semantic tokens the study session's chrome paints from. A printed scene remaps them for its
- * own subtree, so `SessionHeader`, the flag and speaker buttons, the mode and gear controls — every
+ * own subtree, so `StudySessionHeader`, the flag and speaker buttons, the mode and gear controls — every
  * one of which already reads these — stay legible on slate or on parchment without knowing a scene
  * exists. The values live in `tokens.css`, under `[data-scene='dark']` and `[data-scene='light']`,
  * beside the theme most of them mirror; this is the list they answer to.

@@ -47,7 +47,21 @@
   /* The one width the app column is ever allowed to be — `max-w-app`. */
   --container-app: var(--p-container-app);
 
+  --radius-hairline: var(--p-radius-hairline);
+  /** A 12px legend chip. */
+  --radius-swatch: var(--p-radius-swatch);
+  /** An inline mark inside a line of type, and the 20px glyph square beside a label. */
+  --radius-mark: var(--p-radius-mark);
+  /** A field editing text in place, cut tighter than a control so it reads as part of the line. */
+  --radius-field: var(--p-radius-field);
   --radius-control: var(--p-radius-sm);
+  /** A 36px glyph tile — a swipe cap, a day of the streak week. */
+  --radius-tile: var(--p-radius-tile);
+  /**
+   * The dashed outline standing where a tile would be. One pixel tighter than the tile itself so
+   * its 2px border reads level with the filled cap beside it.
+   */
+  --radius-tile-slot: calc(var(--p-radius-tile) - 1px);
   --radius-card: var(--p-radius-md);
   --radius-squircle: var(--p-radius-lg);
   --radius-card-featured: var(--p-radius-xl);

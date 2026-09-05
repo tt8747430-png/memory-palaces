@@ -1,5 +1,5 @@
 import { clamp } from '@/shared/lib'
-import type { CompleteSessionOptions } from './complete-session'
+import type { CompleteStudySessionOptions } from './complete-study-session'
 
 const STUDY_XP_PER_CARD = 6
 const STUDY_XP_MIN = 20
@@ -16,14 +16,14 @@ export function quizXp(score: number): number {
   return Math.max(0, score) * XP_PER_CORRECT
 }
 
-export type SessionOutcome =
+export type StudySessionOutcome =
   | { kind: 'study'; graded: number }
   | { kind: 'quiz'; correct: number; total: number; accuracy: number }
   | { kind: 'match'; pairs: number }
 
 export function outcomeToReward(
-  outcome: SessionOutcome,
-): Omit<CompleteSessionOptions, 'dailyGoal'> {
+  outcome: StudySessionOutcome,
+): Omit<CompleteStudySessionOptions, 'dailyGoal'> {
   switch (outcome.kind) {
     case 'study':
       return { xp: studyXp(outcome.graded), itemsPracticed: outcome.graded }

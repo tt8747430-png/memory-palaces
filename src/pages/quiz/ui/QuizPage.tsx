@@ -4,9 +4,9 @@ import { selectIsReady, shuffle, subtreeDeckIds } from '@/shared/lib'
 import { useDeck, useDeckStoreApi } from '@/entities/deck'
 import { selectQuestions, useQuestionStore } from '@/entities/question'
 import { editDeck } from '@/features/deck'
-import { QuizOptionsSheet, type QuizResult, QuizSession } from '@/widgets/quiz'
+import { QuizOptionsSheet, type QuizResult, QuizPanel } from '@/widgets/quiz'
 import { type QuizQuestion } from '@/features/quiz'
-import { useSessionReward } from '@/widgets/session-reward'
+import { useStudySessionReward } from '@/widgets/study-session-reward'
 import { MissingScreen, ScreenLoading } from '@/shared/ui'
 
 export interface QuizPageProps {
@@ -17,7 +17,7 @@ export interface QuizPageProps {
 export function QuizPage({ deckId, onBack }: QuizPageProps) {
   const { t } = useTranslation()
   const deckStore = useDeckStoreApi()
-  const reward = useSessionReward()
+  const reward = useStudySessionReward()
   const [optionsOpen, setOptionsOpen] = useState(false)
 
   const { decks, deck, settings, ready: decksReady } = useDeck(deckId)
@@ -73,7 +73,7 @@ export function QuizPage({ deckId, onBack }: QuizPageProps) {
 
   return (
     <>
-      <QuizSession
+      <QuizPanel
         key={deckId}
         questions={runQuestions}
         title={t('quiz.title', { deck: deck.name })}

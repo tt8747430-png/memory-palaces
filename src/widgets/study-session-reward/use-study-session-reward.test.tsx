@@ -11,7 +11,7 @@ import {
   type Progress,
   ProgressStoreContext,
 } from '@/entities/progress'
-import { useSessionReward } from './use-session-reward'
+import { useStudySessionReward } from './use-study-session-reward'
 
 afterEach(cleanup)
 
@@ -28,11 +28,11 @@ function setup(seed: Progress[] = []) {
       </ProgressStoreContext>
     </I18nextProvider>
   )
-  const { result } = renderHook(() => useSessionReward(), { wrapper })
+  const { result } = renderHook(() => useStudySessionReward(), { wrapper })
   return { bus, reward: () => result.current }
 }
 
-describe('useSessionReward — EventBus emission', () => {
+describe('useStudySessionReward — EventBus emission', () => {
   it('emits level-up and quiz for a best-quiz session that crosses a level', async () => {
     const { bus, reward } = setup()
     let levelUp: AppEvents['level-up'] | undefined

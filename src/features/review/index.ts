@@ -11,17 +11,17 @@ export {
 } from './study-filter'
 export { reinsertAhead, REINSERT_AHEAD } from './fast-review'
 export {
-  initSession,
-  sessionReducer,
+  initStudySession,
+  studySessionReducer,
   currentId,
   upcomingIds,
   canUndo,
-  type SessionState,
-  type SessionAction,
-  type SessionMode,
+  type StudySessionState,
+  type StudySessionAction,
+  type StudySessionMode,
   type ReviewState,
   type CompleteState,
   type Buckets,
   type Piles,
   type InitParams,
-} from './session-machine'
+} from './study-session-machine'

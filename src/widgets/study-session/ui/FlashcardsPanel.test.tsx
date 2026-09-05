@@ -242,11 +242,11 @@ describe('FlashcardsPanel progress header', () => {
   it('derives the count from the session rather than being told it', async () => {
     renderPanel([studyCard('a'), studyCard('b')])
     expect(await screen.findByText('/2')).toBeInTheDocument()
-    expect(screen.getByTestId('session-progress-fill')).toHaveStyle({ width: '0%' })
+    expect(screen.getByTestId('header-progress-fill')).toHaveStyle({ transform: 'scaleX(0)' })
     await tap(/show answer/i)
     await tap(/good/i)
     await waitFor(() =>
-      expect(screen.getByTestId('session-progress-fill')).toHaveStyle({ width: '50%' }),
+      expect(screen.getByTestId('header-progress-fill')).toHaveStyle({ transform: 'scaleX(0.5)' }),
     )
   })
 })

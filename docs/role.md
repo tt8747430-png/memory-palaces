@@ -36,6 +36,19 @@ SETTINGS:use
 - card-style.ts divergent change — down to one concern (printed materials + the vars that paint them) now the chrome tables are gone; splitting further would fragment a cohesive 285-line module.
 - MoveSheet still offers "Archive" to an archived deck. It also offers "Home" to a deck already at home — same no-op, now documented rather than special-cased.
 
+
+rounded-[13px], rounded-[14px], rounded-[5px] and the rounded-md/lg/xs uses are gone: no token matched those values, so each became one — `tile`, `tile-slot`, `swatch`, `mark`, `field`, `hairline` — at the value it already had. Snapping them onto the existing scale is what would have redrawn the swipe caps, the streak week and the calendar legend, and that is a design change, not a cleanup. The three that replaced Tailwind defaults are px where Tailwind's were rem, matching the rest of our scale, which is px throughout: identical at a 16px root, and consistent with the other seven radii at any other.
+
+SessionHeader and HeaderBar are one implementation now, `shared/ui/header`: a `Header` frame that publishes what the bar is about on context, `AppHeader` for the frame in the app's glass, and parts (`HeaderBar`, `HeaderBack`, `HeaderHeading`, `HeaderTitle`, `HeaderCount`, `HeaderTrack`, …) that read it. The close-cross-with-a-track and the chevron-with-a-title are still different controls — they are two compositions of the same parts rather than two `<header>` elements, and neither moved a pixel. `HeaderBar` carries both row shapes as named layouts rather than letting one composition override the other's height by className, so §4a's "one height" is true of the code and tested against the study session too.
+
+What else changed with it: a study session's header now installs the keep-the-keyboard guard it never had; the progress fill animates `scaleX` rather than `width`; `SessionHeader`/`SessionScreen` became `StudySessionHeader`/`StudySessionScreen`, because Session is auth (UBIQUITOUS_LANGUAGE) and "run" is on the avoid list too; the kitchen sink's hand-rolled `<header>` — the last one — is composed from the parts; `QuizSession` became `QuizPanel` (a sibling of `FlashcardsPanel` and `MatchBoard`) and `SessionFooter`/`SessionFooterShell` became `StudySessionFooter`/`StudySessionFooterShell`; the same abbreviation went from the review machine (`study-session-machine.ts`, `StudySessionState`/`Mode`/`Action`, `initStudySession`, `studySessionReducer`), from progress (`complete-study-session.ts`, `completeStudySession`, `StudySessionReward`, `StudySessionOutcome`) and from `widgets/study-session-reward` — `entities/session` and `features/session` keep the word, because there it means auth; and the `data-slot` the reveal band looks the bar up by is one exported selector with a test that renders the real shell, after a rename slipped past a suite that built its own DOM.
+
+Two ordering details worth knowing if you rebase:
+
+- fb2b033 carries --p-font-sans: 'Lexend' and 91dae0d flips it to 'Lexend Variable' alongside the package. Reordering those two leaves a commit rendering in the system fallback — it builds, it just looks wrong.
+- 35fc6f0 is the 112-file mechanical pass. Files that also needed a semantic fix were held back into 8e00f8a / 6269791 and carry their own rename, so no file's diff spans two commits — but it does mean 35fc6f0 is not "all renames everywhere", and a reviewer scanning it for completeness will find a few missing.
+
+One thing I'd flag for your own eyes rather than a test: black-translucent and the installed-mode zoom lock only show their real behaviour on a device. The status cap in particular went from measuring 0px to filling the safe area — worth an install check on the phone before you push.
 FEATURES:
 
 1. Extenstions Gallery: Memory Palaces, Bible 

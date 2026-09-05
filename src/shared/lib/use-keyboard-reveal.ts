@@ -45,6 +45,18 @@ export function isTextField(node: EventTarget | null): node is HTMLElement {
   return node instanceof HTMLElement && node.isContentEditable
 }
 
+/**
+ * How the reveal band finds its edges. The two bars publish these slots (`Header`, `FooterBar`) and
+ * two readers look them up — here and the dev viewport probe — so the selector lives once. Renaming
+ * a slot without its readers is a silent regression: the band quietly falls back to the scroller's
+ * own top and a focused field can be revealed under the bar. `Header.test.tsx` asserts the shipped
+ * header still answers to `CHROME.header`. ADR 0002.
+ */
+export const CHROME = {
+  header: '[data-slot="header"]',
+  footer: '[data-slot="footer-bar"]',
+} as const
+
 export function useKeyboardReveal(): (node: HTMLElement | null) => void {
   const detach = useRef<(() => void) | null>(null)
 
@@ -60,8 +72,8 @@ export function useKeyboardReveal(): (node: HTMLElement | null) => void {
      */
     const reveal = (field: HTMLElement) => {
       const bounds = node.getBoundingClientRect()
-      const chrome = node.parentElement?.querySelector('[data-slot="header-bar"]')
-      const dock = node.querySelector('[data-slot="footer-bar"]')
+      const chrome = node.parentElement?.querySelector(CHROME.header)
+      const dock = node.querySelector(CHROME.footer)
       const band = {
         top: Math.max(bounds.top, chrome?.getBoundingClientRect().bottom ?? 0),
         bottom: Math.min(

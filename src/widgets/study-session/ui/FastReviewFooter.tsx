@@ -2,7 +2,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import type { FastOutcome } from '@/entities/card'
 import { cn } from '@/shared/lib'
-import { SessionFooterShell } from './SessionFooterShell'
+import { StudySessionFooterShell } from './StudySessionFooterShell'
 
 export interface FastReviewFooterProps {
   flipped: boolean
@@ -28,7 +28,7 @@ export function FastReviewFooter({ flipped, notQuite, gotIt, onAnswer }: FastRev
   const crossfade = { duration: reduce ? 0 : 0.12 }
 
   return (
-    <SessionFooterShell>
+    <StudySessionFooterShell>
       <div className="flex h-14 items-center gap-2">
         <span className={cn(TALLY, 'text-(--warning-foreground)')}>{notQuite}</span>
         <div className="h-full min-w-0 flex-1">
@@ -73,6 +73,6 @@ export function FastReviewFooter({ flipped, notQuite, gotIt, onAnswer }: FastRev
         </div>
         <span className={cn(TALLY, 'text-(--success-on-surface)')}>{gotIt}</span>
       </div>
-    </SessionFooterShell>
+    </StudySessionFooterShell>
   )
 }

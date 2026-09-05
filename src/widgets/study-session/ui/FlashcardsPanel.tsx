@@ -12,8 +12,8 @@ import {
   buildStudyQueue,
   canUndo,
   currentId,
-  initSession,
-  sessionReducer,
+  initStudySession,
+  studySessionReducer,
   type StudyFilter,
   studyFilterCounts as computeFilterCounts,
   upcomingIds,
@@ -23,13 +23,13 @@ import {
   isGradeAction,
   type SwipeDirection,
 } from '@/shared/config/flashcard-swipe'
-import { CardScene, IconButton, SessionHeader } from '@/shared/ui'
+import { CardScene, IconButton, StudySessionHeader } from '@/shared/ui'
 import { CardDraftSheet } from '@/widgets/content-editor'
 import { studyFaces } from '../model/study-faces'
 import { useStudySettings } from '../model/use-study-settings'
 import { StudyDeck } from './StudyDeck'
 import { EmptyQueue } from './EmptyQueue'
-import { type RemainingTally, SessionFooter } from './SessionFooter'
+import { type RemainingTally, StudySessionFooter } from './StudySessionFooter'
 import { GearSheet } from './GearSheet'
 import { ModeSheet } from './ModeSheet'
 import { StudySessionSettingsSheet } from './StudySessionSettingsSheet'
@@ -133,8 +133,8 @@ export function FlashcardsPanel({
       maxCardsPerDay: prefs.maxCardsPerDay,
     })
 
-  const [state, dispatch] = useReducer(sessionReducer, undefined, () =>
-    initSession({ ids: buildIds({ kind: 'all' }), mode: algorithm }),
+  const [state, dispatch] = useReducer(studySessionReducer, undefined, () =>
+    initStudySession({ ids: buildIds({ kind: 'all' }), mode: algorithm }),
   )
 
   const undoTrail = useRef<UndoEntry[]>([])
@@ -143,7 +143,7 @@ export function FlashcardsPanel({
     undoTrail.current = []
     dispatch({
       type: 'reset',
-      state: initSession({ ids: buildIds(activeFilter), mode: algorithm }),
+      state: initStudySession({ ids: buildIds(activeFilter), mode: algorithm }),
     })
   }
 
@@ -276,7 +276,7 @@ export function FlashcardsPanel({
   return (
     <>
       <CardScene style={prefs.cardStyle} className="flex min-h-0 flex-1 flex-col">
-        <SessionHeader
+        <StudySessionHeader
           title={title}
           subtitle={subtitle}
           progress={{ done: state.graded, total: state.total }}
@@ -329,7 +329,7 @@ export function FlashcardsPanel({
         </div>
 
         {card ? (
-          <SessionFooter
+          <StudySessionFooter
             flipped={flipped}
             mode={state.mode}
             srs={card.card.srs}

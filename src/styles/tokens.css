@@ -50,7 +50,19 @@
   --p-leading-tight: 1.4;
   --p-leading-body: 1.5;
 
+  /**
+   * Radii. `sm`…`xl` are the box scale every card, control and sheet is cut from; the four names
+   * around them are roles the scale has no step for, and each is the value its callers already
+   * used as a literal. They are here so nothing reaches for a raw length again — snapping them
+   * onto the scale instead would have redrawn the swipe caps, the streak week and the calendar
+   * legend, which is a design change and not a cleanup.
+   */
+  --p-radius-hairline: 2px;
+  --p-radius-swatch: 5px;
+  --p-radius-mark: 6px;
+  --p-radius-field: 8px;
   --p-radius-sm: 12px;
+  --p-radius-tile: 14px;
   --p-radius-md: 16px;
   --p-radius-lg: 20px;
   --p-radius-xl: 24px;

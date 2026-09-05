@@ -5,7 +5,7 @@ import { MotionConfig } from 'motion/react'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
 import type { QuizQuestion } from '@/features/quiz'
-import { QuizSession } from './QuizSession'
+import { QuizPanel } from './QuizPanel'
 
 afterEach(cleanup)
 
@@ -31,7 +31,7 @@ function renderQuiz(questions: QuizQuestion[] = QUESTIONS) {
   render(
     <I18nextProvider i18n={i18n}>
       <MotionConfig reducedMotion="always">
-        <QuizSession
+        <QuizPanel
           questions={questions}
           title="Forum Quiz"
           onBack={() => {}}
@@ -43,7 +43,7 @@ function renderQuiz(questions: QuizQuestion[] = QUESTIONS) {
   return { onComplete }
 }
 
-describe('QuizSession', () => {
+describe('QuizPanel', () => {
   it('scores answers and completes with an accuracy summary', async () => {
     const user = userEvent.setup()
     const { onComplete } = renderQuiz()

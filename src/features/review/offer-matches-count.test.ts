@@ -18,7 +18,7 @@ const deck = (size: number, over: Partial<Card> = {}): Card[] =>
   }))
 
 /**
- * The deck screen promises a number and the session has to deliver it. These two are computed by
+ * The deck screen promises a number and the study session has to deliver it. These two are computed by
  * different modules, so nothing but a test keeps them honest — this is the drift that shipped a
  * deck advertising 3000 cards and serving 10.
  */

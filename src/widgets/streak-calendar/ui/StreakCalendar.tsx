@@ -110,11 +110,11 @@ export function StreakCalendar({ trainingDays, now = Date.now() }: StreakCalenda
 
       <div className="mt-4 flex items-center justify-center gap-5 text-tiny font-medium text-muted-foreground">
         <span className="inline-flex items-center gap-1.5">
-          <span className="size-3 rounded-[5px] bg-warning" aria-hidden />
+          <span className="size-3 rounded-swatch bg-warning" aria-hidden />
           {t('progress.legendTrained')}
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="size-3 rounded-[5px] ring-2 ring-inset ring-primary" aria-hidden />
+          <span className="size-3 rounded-swatch ring-2 ring-inset ring-primary" aria-hidden />
           {t('progress.legendToday')}
         </span>
       </div>

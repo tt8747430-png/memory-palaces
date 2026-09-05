@@ -18,8 +18,8 @@ import { editDeck } from '@/features/deck'
 import { gradeCard, restoreSchedule } from '@/features/review'
 import { setPreferences } from '@/features/preferences'
 import { FlashcardsPanel, type StudyCard, type StudyPrefs } from '@/widgets/study-session'
-import { useSessionReward } from '@/widgets/session-reward'
-import { Button, Empty, MissingScreen, ScreenLoading, SessionScreen } from '@/shared/ui'
+import { useStudySessionReward } from '@/widgets/study-session-reward'
+import { Button, Empty, MissingScreen, ScreenLoading, StudySessionScreen } from '@/shared/ui'
 
 export type StudyScope = { kind: 'deck'; deckId: string }
 
@@ -44,7 +44,7 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
   const deckStore = useDeckStoreApi()
   const cardStore = useCardStoreApi()
   const preferencesStore = usePreferencesStoreApi()
-  const reward = useSessionReward()
+  const reward = useStudySessionReward()
 
   const { decks, deck, settings, ready: decksReady } = useDeck(scope.deckId)
   const allCards = useCardStore(selectCards)
@@ -128,7 +128,7 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
   }
 
   return (
-    <SessionScreen>
+    <StudySessionScreen>
       <FlashcardsPanel
         key={`flashcards-${scope.deckId}`}
         cards={cards}
@@ -158,6 +158,6 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
           back()
         }}
       />
-    </SessionScreen>
+    </StudySessionScreen>
   )
 }

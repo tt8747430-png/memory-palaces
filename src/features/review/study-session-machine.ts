@@ -3,8 +3,8 @@ import type { FastOutcome } from '@/entities/card'
 import type { LearningAlgorithm } from '@/entities/deck'
 import { reinsertAhead } from './fast-review'
 
-/** A session runs the deck's algorithm; there is no second vocabulary for the same choice. */
-export type SessionMode = LearningAlgorithm
+/** A study session runs the deck's algorithm; there is no second vocabulary for the same choice. */
+export type StudySessionMode = LearningAlgorithm
 
 export interface Piles {
   learning: number
@@ -27,7 +27,7 @@ export interface Snapshot {
 
 export interface ReviewState {
   status: 'review'
-  mode: SessionMode
+  mode: StudySessionMode
   queue: string[]
   total: number
   graded: number
@@ -39,7 +39,7 @@ export interface ReviewState {
 
 export interface CompleteState {
   status: 'complete'
-  mode: SessionMode
+  mode: StudySessionMode
   graded: number
   total: number
   piles: Piles
@@ -47,9 +47,9 @@ export interface CompleteState {
   history: Snapshot[]
 }
 
-export type SessionState = ReviewState | CompleteState
+export type StudySessionState = ReviewState | CompleteState
 
-export type SessionAction =
+export type StudySessionAction =
   | { type: 'flip' }
   | { type: 'reveal' }
   | { type: 'unflip' }
@@ -58,14 +58,14 @@ export type SessionAction =
   | { type: 'skip' }
   | { type: 'undo' }
   | { type: 'finish' }
-  | { type: 'reset'; state: SessionState }
+  | { type: 'reset'; state: StudySessionState }
 
 export interface InitParams {
   ids: string[]
-  mode: SessionMode
+  mode: StudySessionMode
 }
 
-export function initSession({ ids, mode }: InitParams): SessionState {
+export function initStudySession({ ids, mode }: InitParams): StudySessionState {
   return {
     status: 'review',
     mode,
@@ -89,7 +89,7 @@ function withId(ids: string[], id: string, present: boolean): string[] {
   return present ? [...without, id] : without
 }
 
-/** Every route out of a session ends here, so a new field can only be forgotten once. */
+/** Every route out of a study session ends here, so a new field can only be forgotten once. */
 function complete(state: ReviewState, over: Partial<Omit<CompleteState, 'status'>>): CompleteState {
   return {
     status: 'complete',
@@ -113,7 +113,10 @@ function snapshot(state: ReviewState): Snapshot {
   }
 }
 
-export function sessionReducer(state: SessionState, action: SessionAction): SessionState {
+export function studySessionReducer(
+  state: StudySessionState,
+  action: StudySessionAction,
+): StudySessionState {
   switch (action.type) {
     case 'flip': {
       if (state.status === 'complete') return state
@@ -203,16 +206,16 @@ export function sessionReducer(state: SessionState, action: SessionAction): Sess
   }
 }
 
-export function currentId(state: SessionState): string | undefined {
+export function currentId(state: StudySessionState): string | undefined {
   if (state.status === 'review') return state.queue[0]
   return undefined
 }
 
-export function upcomingIds(state: SessionState, count: number): string[] {
+export function upcomingIds(state: StudySessionState, count: number): string[] {
   if (state.status !== 'review') return []
   return state.queue.slice(1, 1 + count)
 }
 
-export function canUndo(state: SessionState): boolean {
+export function canUndo(state: StudySessionState): boolean {
   return state.history.length > 0
 }

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { dayKey } from '@/shared/lib'
 import { InMemoryRepository } from '@/shared/api'
 import { createProgressStore, makeProgress, type Progress } from '@/entities/progress'
-import { completeSession } from './index'
+import { completeStudySession } from './index'
 
 const NOW = Date.UTC(2026, 0, 10)
 const DAY = 86_400_000
@@ -13,10 +13,14 @@ function startedStore(seed: Progress[] = []) {
   return store
 }
 
-describe('completeSession', () => {
+describe('completeStudySession', () => {
   it('awards XP and accumulates the day tally without a streak below goal', async () => {
     const store = startedStore()
-    const reward = await completeSession(store, { xp: 100, itemsPracticed: 3, dailyGoal: 5 }, NOW)
+    const reward = await completeStudySession(
+      store,
+      { xp: 100, itemsPracticed: 3, dailyGoal: 5 },
+      NOW,
+    )
     expect(reward.xpGained).toBe(100)
     expect(reward.dayCount).toBe(3)
     expect(reward.dayBecameActive).toBe(false)
@@ -28,7 +32,11 @@ describe('completeSession', () => {
 
   it('starts the streak when the goal is reached', async () => {
     const store = startedStore()
-    const reward = await completeSession(store, { xp: 50, itemsPracticed: 5, dailyGoal: 5 }, NOW)
+    const reward = await completeStudySession(
+      store,
+      { xp: 50, itemsPracticed: 5, dailyGoal: 5 },
+      NOW,
+    )
     expect(reward.dayBecameActive).toBe(true)
     expect(reward.streakCount).toBe(1)
     expect(store.getState().progress?.trainingDays).toContain('2026-01-10')
@@ -36,8 +44,12 @@ describe('completeSession', () => {
 
   it('accumulates across sessions and crosses the goal on the second', async () => {
     const store = startedStore()
-    await completeSession(store, { xp: 10, itemsPracticed: 3, dailyGoal: 5 }, NOW)
-    const reward = await completeSession(store, { xp: 10, itemsPracticed: 2, dailyGoal: 5 }, NOW)
+    await completeStudySession(store, { xp: 10, itemsPracticed: 3, dailyGoal: 5 }, NOW)
+    const reward = await completeStudySession(
+      store,
+      { xp: 10, itemsPracticed: 2, dailyGoal: 5 },
+      NOW,
+    )
     expect(reward.dayCount).toBe(5)
     expect(reward.dayBecameActive).toBe(true)
     expect(reward.streakCount).toBe(1)
@@ -45,15 +57,19 @@ describe('completeSession', () => {
 
   it('reports a level-up when XP crosses a threshold', async () => {
     const store = startedStore()
-    await completeSession(store, { xp: 240, itemsPracticed: 5, dailyGoal: 5 }, NOW)
-    const reward = await completeSession(store, { xp: 20, itemsPracticed: 1, dailyGoal: 5 }, NOW)
+    await completeStudySession(store, { xp: 240, itemsPracticed: 5, dailyGoal: 5 }, NOW)
+    const reward = await completeStudySession(
+      store,
+      { xp: 20, itemsPracticed: 1, dailyGoal: 5 },
+      NOW,
+    )
     expect(reward.leveledUp).toBe(true)
     expect(reward.level).toBe(2)
   })
 
   it('records the best quiz accuracy when provided', async () => {
     const store = startedStore()
-    const reward = await completeSession(
+    const reward = await completeStudySession(
       store,
       { xp: 40, itemsPracticed: 4, dailyGoal: 5, quizAccuracy: 75 },
       NOW,
@@ -74,7 +90,11 @@ describe('completeSession', () => {
       trainingDays: [dayKey(target - DAY)],
     })
     const store = startedStore([seed])
-    const reward = await completeSession(store, { xp: 50, itemsPracticed: 5, dailyGoal: 5 }, target)
+    const reward = await completeStudySession(
+      store,
+      { xp: 50, itemsPracticed: 5, dailyGoal: 5 },
+      target,
+    )
     expect(reward.streakCount).toBe(7)
     expect(reward.isMilestone).toBe(true)
   })

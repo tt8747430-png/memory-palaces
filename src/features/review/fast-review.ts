@@ -1,7 +1,7 @@
 /**
  * How far ahead a "Not quite" card is put back. Fast review has no schedule, so "still learning"
- * has to mean something inside the session: the card returns soon, and keeps returning, until the
- * learner says they have it.
+ * has to mean something inside the study session: the card returns soon, and keeps returning,
+ * until the learner says they have it.
  */
 export const REINSERT_AHEAD = 4
 

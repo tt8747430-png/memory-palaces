@@ -1,5 +1,5 @@
-export { QuizSession } from './ui/QuizSession'
-export type { QuizSessionProps } from './ui/QuizSession'
+export { QuizPanel } from './ui/QuizPanel'
+export type { QuizPanelProps } from './ui/QuizPanel'
 export type { QuizResult } from './model/types'
 export { QuizOptionsSheet } from './ui/QuizOptionsSheet'
 export type { QuizOptionsSheetProps } from './ui/QuizOptionsSheet'
