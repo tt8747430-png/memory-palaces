@@ -63,7 +63,7 @@ export function SocialButtons({
     <div className="flex flex-col items-center gap-5">
       <div className="flex w-full items-center gap-4">
         <span className="h-px flex-1 bg-linear-to-r from-transparent via-secondary/60 to-transparent" />
-        <span className="text-(length:--p-text-label) font-medium text-muted-foreground">
+        <span className="text-label font-medium text-muted-foreground">
           {t('auth.orContinueWith')}
         </span>
         <span className="h-px flex-1 bg-linear-to-r from-transparent via-secondary/60 to-transparent" />
@@ -84,14 +84,12 @@ export function SocialButtons({
           onClick={() => handle('apple')}
           busy={pending === 'apple'}
           muted={isMuted('apple')}
-          className="bg-foreground text-white"
+          className="bg-foreground text-background"
         />
       </div>
 
       {unavailableReason ? (
-        <p className="text-center text-(length:--p-text-label) text-muted-foreground">
-          {unavailableReason}
-        </p>
+        <p className="text-center text-label text-muted-foreground">{unavailableReason}</p>
       ) : null}
     </div>
   )

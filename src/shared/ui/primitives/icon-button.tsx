@@ -5,7 +5,7 @@ import { cn } from '@/shared/lib'
 const iconButtonVariants = cva(
   'inline-grid shrink-0 place-items-center rounded-control select-none ' +
     'transition-transform duration-150 ease-out active:scale-[0.94] ' +
-    'focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50',
+    'disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
@@ -13,7 +13,7 @@ const iconButtonVariants = cva(
         tint: 'bg-info-surface text-info-foreground',
         solid: 'bg-primary text-primary-foreground shadow-interactive',
         glass: 'bg-card-glass text-heading shadow-rest',
-        danger: 'text-[var(--danger-on-surface)] hover:bg-[var(--danger-surface)]',
+        danger: 'text-(--danger-on-surface) hover:bg-(--danger-surface)',
       },
       size: {
         sm: 'size-9',

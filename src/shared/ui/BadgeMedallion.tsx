@@ -4,11 +4,11 @@ import { motion } from 'motion/react'
 import { cn, EASE_OUT } from '@/shared/lib'
 
 const TIER_BG: Record<number, string> = {
-  1: 'linear-gradient(135deg, var(--secondary), var(--accent))',
-  2: 'linear-gradient(135deg, var(--accent), var(--primary))',
-  3: 'linear-gradient(135deg, var(--primary), var(--accent))',
+  1: 'linear-gradient(135deg, var(--p-blue-300), var(--accent))',
+  2: 'linear-gradient(135deg, var(--accent), var(--p-navy-900))',
+  3: 'linear-gradient(135deg, var(--p-navy-900), var(--accent))',
   4: 'linear-gradient(135deg, var(--rating-edge), var(--rating))',
-  5: 'linear-gradient(135deg, var(--rating), var(--primary))',
+  5: 'linear-gradient(135deg, var(--rating), var(--p-navy-900))',
 }
 
 export interface BadgeMedallionProps {

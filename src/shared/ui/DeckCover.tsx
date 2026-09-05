@@ -22,12 +22,12 @@ export function DeckCover({
 }: DeckCoverProps) {
   if (image) {
     return (
-      <div className={cn('relative overflow-hidden bg-primary', className)}>
+      <div className={cn('relative overflow-hidden bg-(--scrim)', className)}>
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${image})` }}
         />
-        <div className="absolute inset-0 bg-linear-to-t from-[color-mix(in_oklch,var(--primary)_45%,transparent)] via-transparent to-[color-mix(in_oklch,var(--primary)_12%,transparent)]" />
+        <div className="absolute inset-0 bg-linear-to-t from-[color-mix(in_oklch,var(--scrim)_45%,transparent)] via-transparent to-[color-mix(in_oklch,var(--scrim)_12%,transparent)]" />
         {!hideIcon ? (
           <span
             className={cn('absolute bottom-1 right-1.5 drop-shadow', iconClassName)}

@@ -12,9 +12,6 @@ export interface SplashOverlayProps {
 const FULL_MS = 2400
 const REDUCED_MS = 500
 
-const SPLASH_BG =
-  'linear-gradient(to bottom, var(--p-navy-900), var(--p-blue-500) 55%, var(--p-blue-300))'
-
 export function SplashOverlay({ onDone }: SplashOverlayProps) {
   const { t } = useTranslation()
   const reduce = useReducedMotion()
@@ -26,15 +23,14 @@ export function SplashOverlay({ onDone }: SplashOverlayProps) {
 
   return (
     <motion.div
-      className="fixed inset-0 z-700 flex flex-col items-center justify-center gap-6 overflow-hidden px-6 text-center"
-      style={{ background: SPLASH_BG }}
+      className="fixed inset-0 z-(--z-splash) flex flex-col items-center justify-center gap-6 overflow-hidden bg-threshold px-6 text-center"
       initial={{ opacity: 1 }}
       exit={{ opacity: 0, transition: { duration: 0.4, ease: 'easeOut' } }}
     >
       <button
         type="button"
         onClick={onDone}
-        className="absolute right-5 top-[calc(env(safe-area-inset-top)+1rem)] z-10 text-(length:--p-text-label) font-medium text-white/75"
+        className="absolute right-5 top-[calc(env(safe-area-inset-top)+1rem)] z-10 text-label font-medium text-white/75"
       >
         {t('auth.splash.skip')}
       </button>
@@ -57,13 +53,13 @@ export function SplashOverlay({ onDone }: SplashOverlayProps) {
         <WordReveal
           text={t('common.appName')}
           delay={reduce ? 0 : 0.85}
-          className="text-(length:--p-text-headline) font-semibold tracking-tight text-white"
+          className="text-headline font-semibold tracking-tight text-white"
         />
         <WordReveal
           text={t('auth.splash.tagline')}
           delay={reduce ? 0 : 1.15}
           stagger={0.06}
-          className="text-(length:--p-text-sub) text-white/80"
+          className="text-sub text-white/80"
         />
       </div>
     </motion.div>

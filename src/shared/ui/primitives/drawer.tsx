@@ -40,14 +40,14 @@ function DrawerContent({ className, backdropClassName, children, ...props }: Dra
     <DrawerPrimitive.Portal>
       <DrawerPrimitive.Backdrop
         className={cn(
-          'fixed inset-0 z-300 bg-[color-mix(in_oklch,var(--primary)_28%,transparent)]',
+          'fixed inset-0 z-(--z-sheet-backdrop) bg-[color-mix(in_oklch,var(--scrim)_38%,transparent)]',
           'opacity-[calc(1-var(--drawer-swipe-progress,0))]',
           'transition-opacity duration-450 ease-[cubic-bezier(0.32,0.72,0,1)]',
           'data-starting-style:opacity-0 data-ending-style:opacity-0 data-swiping:duration-0',
           backdropClassName,
         )}
       />
-      <DrawerPrimitive.Viewport className="pointer-events-none fixed inset-0 z-310">
+      <DrawerPrimitive.Viewport className="pointer-events-none fixed inset-0 z-(--z-sheet)">
         <DrawerPrimitive.Popup
           data-slot="drawer-content"
           className={cn(
@@ -121,7 +121,7 @@ function DrawerTitle({ className, ...props }: DrawerTitleProps) {
   return (
     <DrawerPrimitive.Title
       data-slot="drawer-title"
-      className={cn('text-(length:--p-text-sub) font-semibold text-heading', className)}
+      className={cn('text-sub font-semibold text-heading', className)}
       {...props}
     />
   )
@@ -138,7 +138,7 @@ function DrawerDescription({ className, ...props }: DrawerDescriptionProps) {
   return (
     <DrawerPrimitive.Description
       data-slot="drawer-description"
-      className={cn('mt-0.5 text-(length:--p-text-label) text-muted-foreground', className)}
+      className={cn('mt-0.5 text-label text-muted-foreground', className)}
       {...props}
     />
   )

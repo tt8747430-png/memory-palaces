@@ -48,7 +48,7 @@ export function AppNav() {
           key="app-nav"
           aria-label={t('nav.label')}
           className={cn(
-            'fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 z-200 -translate-x-1/2',
+            'fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 z-(--z-nav) -translate-x-1/2',
             // WebKit re-clamps bottom-anchored fixed boxes to the visual viewport when the
             // keyboard shows, which floats the nav mid-screen over the content being typed into.
             'in-data-keyboard:hidden',
@@ -66,7 +66,7 @@ export function AppNav() {
               className="absolute inset-0 -z-10 scale-110 opacity-60 blur-2xl"
               style={{
                 background:
-                  'linear-gradient(to top, color-mix(in srgb, var(--primary) 26%, transparent), color-mix(in srgb, var(--accent) 12%, transparent), transparent)',
+                  'linear-gradient(to top, color-mix(in oklch, var(--nav-surface) 26%, transparent), color-mix(in oklch, var(--accent) 12%, transparent), transparent)',
               }}
             />
 
@@ -76,7 +76,7 @@ export function AppNav() {
                 className="absolute inset-0 backdrop-blur-2xl"
                 style={{
                   background:
-                    'linear-gradient(135deg, color-mix(in srgb, var(--primary) 62%, transparent), color-mix(in srgb, var(--primary) 50%, transparent))',
+                    'linear-gradient(135deg, color-mix(in oklch, var(--nav-surface) 62%, transparent), color-mix(in oklch, var(--nav-surface) 50%, transparent))',
                 }}
               />
               <div
@@ -100,15 +100,20 @@ export function AppNav() {
                         layoutId="navPill"
                         transition={navySpring}
                         aria-hidden
-                        className="absolute size-12 rounded-[20px] bg-white shadow-[inset_0_2px_8px_rgba(0,0,0,0.12),inset_0_-2px_6px_rgba(255,255,255,0.25)]"
+                        className="absolute size-12 rounded-squircle bg-(--nav-pill) shadow-[inset_0_2px_8px_rgba(0,0,0,0.12),inset_0_-2px_6px_rgba(255,255,255,0.25)]"
                       />
                     ) : null}
                     <span className="relative z-10 flex flex-col items-center gap-1">
-                      <Icon className={cn('size-6', isActive ? 'text-primary' : 'text-white')} />
+                      <Icon
+                        className={cn(
+                          'size-6',
+                          isActive ? 'text-(--nav-ink-active)' : 'text-(--nav-ink)',
+                        )}
+                      />
                       <span
                         className={cn(
-                          'text-(length:--p-text-tiny) font-medium',
-                          isActive ? 'text-primary' : 'text-white/75',
+                          'text-tiny font-medium',
+                          isActive ? 'text-(--nav-ink-active)' : 'text-(--nav-ink)/75',
                         )}
                       >
                         {t(labelKey)}

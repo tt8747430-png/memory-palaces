@@ -8,8 +8,8 @@ function Textarea({ className, rows = 3, ...props }: ComponentProps<'textarea'>)
       rows={rows}
       className={cn(
         'w-full resize-none rounded-control border border-border bg-card px-3.5 py-3',
-        'text-(length:--p-text-body) leading-relaxed text-foreground',
-        'placeholder:text-muted-foreground outline-none transition-shadow',
+        'text-entry leading-relaxed text-foreground',
+        'placeholder:text-muted-foreground transition-shadow',
         'disabled:cursor-not-allowed disabled:opacity-50',
         'aria-invalid:border-destructive',
         className,

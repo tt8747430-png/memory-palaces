@@ -65,14 +65,14 @@ export function SpeedDial({ label, actions, placement = 'above-nav', className }
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={() => setOpen(false)}
-            className="fixed inset-0 z-210 bg-[oklch(29%_0.063_254.3/0.3)] backdrop-blur-[2px]"
+            className="fixed inset-0 z-(--z-dial-scrim) bg-[color-mix(in_oklch,var(--scrim)_34%,transparent)] backdrop-blur-[2px]"
           />
         ) : null}
       </AnimatePresence>
 
       <div
         className={cn(
-          'fixed right-5 z-220 flex flex-col items-end gap-3',
+          'fixed right-5 z-(--z-dial) flex flex-col items-end gap-3',
           PLACEMENT[placement],
           className,
         )}
@@ -98,9 +98,9 @@ export function SpeedDial({ label, actions, placement = 'above-nav', className }
                     type="button"
                     aria-label={action.label}
                     onClick={() => fire(action)}
-                    className="group flex items-center gap-2.5 rounded-full transition-transform active:scale-[0.97] focus-visible:outline-none"
+                    className="group flex items-center gap-2.5 rounded-full transition-transform active:scale-[0.97]"
                   >
-                    <span className="rounded-full bg-card px-3 py-1 text-(length:--p-text-label) font-semibold text-heading shadow-rest transition-colors group-hover:bg-info-surface">
+                    <span className="rounded-full bg-card px-3 py-1 text-label font-semibold text-heading shadow-rest transition-colors group-hover:bg-info-surface">
                       {action.label}
                     </span>
                     <span className="grid size-12 place-items-center rounded-full bg-card text-primary shadow-rest transition-colors group-hover:bg-info-surface group-focus-visible:ring-2 group-focus-visible:ring-primary/50">

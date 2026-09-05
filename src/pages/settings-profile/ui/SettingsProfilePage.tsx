@@ -86,13 +86,13 @@ export function SettingsProfilePage({
               placeholder={t('settings.profileEdit.bioPlaceholder')}
               maxLength={BIO_MAX}
               rows={3}
-              className="w-full resize-none rounded-control border border-border bg-card px-3.5 py-2.5 text-(length:--p-text-body) text-foreground placeholder:text-muted-foreground"
+              className="w-full resize-none rounded-control border border-border bg-card px-3.5 py-2.5 text-entry text-foreground placeholder:text-muted-foreground"
             />
           </LabelledField>
         </div>
 
         <div className="flex flex-col gap-4">
-          <h2 className="px-1 text-(length:--p-text-title) font-semibold text-heading">
+          <h2 className="px-1 text-title font-semibold text-heading">
             {t('settings.accountSection')}
           </h2>
 

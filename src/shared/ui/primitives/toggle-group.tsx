@@ -28,7 +28,7 @@ function ToggleGroupItem<Value extends string>({
     <TogglePrimitive
       data-slot="toggle-group-item"
       className={cn(
-        'outline-none transition-colors disabled:pointer-events-none disabled:opacity-50',
+        'transition-colors disabled:pointer-events-none disabled:opacity-50',
         className,
       )}
       {...props}

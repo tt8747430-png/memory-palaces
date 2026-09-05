@@ -79,14 +79,14 @@ export function CardBrowser({
       <Dialog.Portal>
         <Dialog.Backdrop
           className={cn(
-            'fixed inset-0 z-300 bg-[color-mix(in_oklch,var(--primary)_42%,transparent)] backdrop-blur-md',
+            'fixed inset-0 z-(--z-sheet-backdrop) bg-[color-mix(in_oklch,var(--scrim)_52%,transparent)] backdrop-blur-md',
             'transition-opacity duration-300 ease-out',
             'data-starting-style:opacity-0 data-ending-style:opacity-0',
           )}
         />
         <Dialog.Popup
           className={cn(
-            'fixed inset-0 z-310 mx-auto flex w-full max-w-app flex-col outline-none',
+            'fixed inset-0 z-(--z-sheet) mx-auto flex w-full max-w-app flex-col outline-none',
             'transition-[opacity,transform] duration-300 ease-out',
             'data-starting-style:scale-[0.98] data-starting-style:opacity-0',
             'data-ending-style:scale-[0.98] data-ending-style:opacity-0',
@@ -101,7 +101,7 @@ export function CardBrowser({
                 >
                   <X className="size-5" aria-hidden />
                 </Dialog.Close>
-                <Dialog.Title className="rounded-pill bg-card-glass px-4 py-1.5 text-(length:--p-text-label) font-bold tabular-nums text-heading ring-1 ring-(--border-glass) shadow-rest">
+                <Dialog.Title className="rounded-pill bg-card-glass px-4 py-1.5 text-label font-bold tabular-nums text-heading ring-1 ring-(--border-glass) shadow-rest">
                   {t('cards.browser.position', { current: deck.index + 1, total: cards.length })}
                 </Dialog.Title>
                 <FlyoutMenu
@@ -183,7 +183,7 @@ export function CardBrowser({
                 <button
                   type="button"
                   onClick={() => onEdit(current.id)}
-                  className="flex h-12 items-center gap-2 rounded-control bg-primary px-6 text-(length:--p-text-sub) font-semibold text-primary-foreground shadow-interactive transition-transform active:scale-[0.97]"
+                  className="flex h-12 items-center gap-2 rounded-control bg-primary px-6 text-sub font-semibold text-primary-foreground shadow-interactive transition-transform active:scale-[0.97]"
                 >
                   <Pencil className="size-4.5" aria-hidden />
                   {t('common.edit')}

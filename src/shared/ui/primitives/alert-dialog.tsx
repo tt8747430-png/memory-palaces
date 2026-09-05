@@ -25,13 +25,13 @@ function AlertDialogContent({
     <AlertDialogPrimitive.Portal>
       <AlertDialogPrimitive.Backdrop
         className={cn(
-          'fixed inset-0 z-400 bg-[color-mix(in_oklch,var(--primary)_28%,transparent)]',
+          'fixed inset-0 z-(--z-dialog-backdrop) bg-[color-mix(in_oklch,var(--scrim)_38%,transparent)]',
           'backdrop-blur-[2px] transition-opacity duration-200 ease-out',
           'data-starting-style:opacity-0 data-ending-style:opacity-0',
           backdropClassName,
         )}
       />
-      <div className="pointer-events-none fixed inset-0 z-500 grid place-items-center p-6">
+      <div className="pointer-events-none fixed inset-0 z-(--z-dialog) grid place-items-center p-6">
         <AlertDialogPrimitive.Popup
           data-slot="alert-dialog-content"
           className={cn(
@@ -62,10 +62,7 @@ function AlertDialogTitle({ className, ...props }: AlertDialogTitleProps) {
   return (
     <AlertDialogPrimitive.Title
       data-slot="alert-dialog-title"
-      className={cn(
-        'text-balance text-(length:--p-text-headline) font-bold text-heading',
-        className,
-      )}
+      className={cn('text-balance text-headline font-bold text-heading', className)}
       {...props}
     />
   )
@@ -83,7 +80,7 @@ function AlertDialogDescription({ className, ...props }: AlertDialogDescriptionP
     <AlertDialogPrimitive.Description
       data-slot="alert-dialog-description"
       className={cn(
-        'mx-auto mt-2 max-w-[30ch] text-(length:--p-text-body) leading-relaxed text-muted-foreground',
+        'mx-auto mt-2 max-w-[30ch] text-body leading-relaxed text-muted-foreground',
         className,
       )}
       {...props}

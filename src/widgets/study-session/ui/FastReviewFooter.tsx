@@ -11,12 +11,12 @@ export interface FastReviewFooterProps {
   onAnswer: (outcome: FastOutcome) => void
 }
 
-const TALLY = 'w-9 shrink-0 text-center text-(length:--p-text-sub) font-bold tabular-nums'
+const TALLY = 'w-9 shrink-0 text-center text-sub font-bold tabular-nums'
 
 const ANSWER =
   'flex h-full flex-1 items-center justify-center rounded-control px-3 ' +
-  'text-(length:--p-text-label) font-semibold transition-transform duration-150 ease-out ' +
-  'active:scale-[0.96] focus-visible:outline-none'
+  'text-label font-semibold transition-transform duration-150 ease-out ' +
+  'active:scale-[0.96]'
 
 /**
  * Fast review's answer bar. The two tallies stay put whether the card is turned over or not, so the
@@ -64,7 +64,7 @@ export function FastReviewFooter({ flipped, notQuite, gotIt, onAnswer }: FastRev
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={crossfade}
-                className="flex h-full items-center justify-center text-(length:--p-text-label) text-muted-foreground"
+                className="flex h-full items-center justify-center text-label text-muted-foreground"
               >
                 {t('study.tapToReveal')}
               </motion.p>
