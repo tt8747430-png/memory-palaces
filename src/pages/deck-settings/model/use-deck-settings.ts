@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { type Deck, type DeckSettings, useDeck, useDeckStoreApi } from '@/entities/deck'
@@ -10,7 +10,7 @@ import { resetDeckSrs } from '@/features/card'
 import { exportCardsAnki, exportCardsCsv } from '@/features/content'
 import type { MoveDestination } from '@/widgets/deck-tree'
 import { useImportFile } from '@/widgets/content-editor'
-import { cardsInSubtree, subtreeDeckIds, usePendingAct } from '@/shared/lib'
+import { cardsInSubtree, subtreeDeckIds, useOneOpen, usePendingAct } from '@/shared/lib'
 
 /** One open sheet at a time — a flag each makes "export over move" a reachable state. */
 export type DeckSettingsSheet = 'appearance' | 'move' | 'export' | 'import'
@@ -43,7 +43,10 @@ export interface DeckSettingsModel {
   archiving: boolean
   sheet: DeckSettingsSheet | null
   open: (sheet: DeckSettingsSheet) => void
-  /** `onOpenChange` for one sheet: like the dialogs', it may only dismiss the sheet it belongs to. */
+  /**
+   * `onOpenChange` for one sheet: it may only dismiss the sheet it belongs to. A sheet on its way
+   * out fires `onOpenChange(false)` after the next one has opened — `useOneOpen` owns the guard.
+   */
   onSheetOpenChange: (sheet: DeckSettingsSheet) => (open: boolean) => void
   confirming: DeckSettingsConfirm | null
   ask: (confirm: DeckSettingsConfirm) => void
@@ -81,7 +84,7 @@ export function useDeckSettings(deckId: string, nav: DeckSettingsNav): DeckSetti
   const cards = useMemo(() => cardsInSubtree(decks, allCards, deckId), [decks, allCards, deckId])
   const moveExcludeIds = useMemo(() => new Set(subtreeDeckIds(decks, deckId)), [decks, deckId])
 
-  const [sheet, setSheet] = useState<DeckSettingsSheet | null>(null)
+  const sheet = useOneOpen<DeckSettingsSheet>()
   const pending = usePendingAct<DeckSettingsConfirm>()
 
   const archiving = !deck?.archived
@@ -95,7 +98,7 @@ export function useDeckSettings(deckId: string, nav: DeckSettingsNav): DeckSetti
   }
 
   const exportWith = (run: () => void) => {
-    setSheet(null)
+    sheet.close()
     run()
     toast.success(t('deckSettings.toast.exported'))
   }
@@ -117,11 +120,12 @@ export function useDeckSettings(deckId: string, nav: DeckSettingsNav): DeckSetti
     exportCsv: () => exportWith(() => exportCardsCsv(deck?.name ?? '', cards)),
     exportAnki: () => exportWith(() => exportCardsAnki(deck?.name ?? '', cards)),
     move: (destination) => {
-      setSheet(null)
+      sheet.close()
       // "Move to archive" is the archive act, so it asks the same question the row asks rather
-      // than archiving behind the learner's back.
+      // than archiving behind the learner's back. A deck already in the archive is already at that
+      // destination: picking it is the no-op picking your own folder is, never a silent restore.
       if (destination.kind === 'archive') {
-        pending.request('archive')
+        if (archiving) pending.request('archive')
         return
       }
       const parentId = destination.kind === 'deck' ? destination.deckId : null
@@ -129,11 +133,11 @@ export function useDeckSettings(deckId: string, nav: DeckSettingsNav): DeckSetti
       void moveDeck(deckStore, deckId, parentId, folderId)
     },
     importFile: (file) => {
-      setSheet(null)
+      sheet.close()
       void importFile(file, () => nav.onReviewImport?.())
     },
     pasteNotes: () => {
-      setSheet(null)
+      sheet.close()
       nav.onPasteNotes?.()
     },
   }
@@ -155,19 +159,13 @@ export function useDeckSettings(deckId: string, nav: DeckSettingsNav): DeckSetti
     cards,
     moveExcludeIds,
     archiving,
-    sheet,
-    open: setSheet,
-    // A sheet on its way out fires `onOpenChange(false)` after the next one has opened, so it is
-    // only allowed to close itself — the same guard the dialogs use.
-    onSheetOpenChange: (which) => (open) => {
-      if (!open) setSheet((current) => (current === which ? null : current))
-    },
+    sheet: sheet.current,
+    open: sheet.open,
+    onSheetOpenChange: sheet.onOpenChange,
     confirming: pending.act,
     ask: pending.request,
     confirm: () => pending.resolve((kind) => confirmed[kind]()),
-    onConfirmOpenChange: (kind) => (open) => {
-      if (!open && pending.act === kind) pending.dismiss()
-    },
+    onConfirmOpenChange: pending.onOpenChange,
     act,
   }
 }

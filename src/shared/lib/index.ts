@@ -8,6 +8,7 @@ export {
   CARD_STYLE_PRESET_IDS,
   CARD_STYLE_SURFACE,
   CARD_STYLE_TEXT,
+  cardSceneChrome,
   CHROME_TOKENS,
   clampCardTextSize,
   resolveCardScene,
@@ -21,6 +22,7 @@ export {
   type CardStyleInput,
   type CardStylePresetId,
   type CardStyleVars,
+  type SceneChrome,
 } from './card-style'
 export {
   authEntrance,
@@ -208,6 +210,7 @@ export {
 } from './study-overview'
 export { nextDefaultName } from './naming'
 export { useOptimisticPatch, orderPatch } from './use-optimistic-patch'
+export { useOneOpen, type OneOpen } from './use-one-open'
 export { usePendingAct, type PendingAct } from './use-pending-act'
 export { reconcileHeldOrder } from './reconcile-order'
 export { moveBlock } from './move-block'

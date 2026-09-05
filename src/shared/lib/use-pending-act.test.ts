@@ -44,6 +44,27 @@ describe('usePendingAct', () => {
     expect(run).not.toHaveBeenCalled()
   })
 
+  /**
+   * A dialog on its way out fires `onOpenChange(false)` after the next one has opened, in the same
+   * frame — so the guard has to read what is pending now, not what the closing dialog rendered on.
+   */
+  it('dismisses only the act named, even before a re-render', () => {
+    const { result } = renderHook(() => usePendingAct<Act>())
+    const first = { kind: 'delete', id: 'a' } as const
+    const second = { kind: 'import' } as const
+
+    act(() => result.current.request(first))
+    const dismissFirst = result.current.onOpenChange(first)
+    act(() => {
+      result.current.request(second)
+      dismissFirst(false)
+    })
+    expect(result.current.act).toEqual(second)
+
+    act(() => result.current.dismiss(second))
+    expect(result.current.act).toBeNull()
+  })
+
   it('ignores a second confirm landing in the same tick', () => {
     const { result } = renderHook(() => usePendingAct<Act>())
     const run = vi.fn()

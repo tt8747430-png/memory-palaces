@@ -269,20 +269,20 @@ describe('FlashcardsPanel study header', () => {
 })
 
 describe('FlashcardsPanel scene', () => {
-  it('studies the deck inside the preset it chose, chrome tokens and all', async () => {
+  it('studies the deck inside the preset it chose, printed chrome and all', async () => {
     renderPanel([studyCard('c1')], {
       prefs: { cardStyle: { ...DEFAULT_CARD_STYLE, preset: 'parchment' } },
     })
     const scene = await screen.findByTestId('card-scene')
     expect(scene.style.getPropertyValue('--scene-bg')).toBeTruthy()
-    expect(scene.style.getPropertyValue('--text-heading')).toBeTruthy()
-    expect(scene.style.getPropertyValue('--surface-glass')).toBeTruthy()
+    // `tokens.css` repaints the chrome off this; the panel's job is to ask for it.
+    expect(scene).toHaveAttribute('data-scene', 'light')
   })
 
   it('leaves the app chrome alone for a preset that follows the theme', async () => {
     renderPanel([studyCard('c1')], { prefs: { cardStyle: DEFAULT_CARD_STYLE } })
     const scene = await screen.findByTestId('card-scene')
     expect(scene.style.getPropertyValue('--scene-bg')).toBe('var(--bg-daylight)')
-    expect(scene.style.getPropertyValue('--text-heading')).toBe('')
+    expect(scene).not.toHaveAttribute('data-scene')
   })
 })

@@ -117,6 +117,23 @@ describe('useDeckSettings', () => {
     await waitFor(async () => expect((await repo.getById('d1'))?.archived).toBe(true))
   })
 
+  /**
+   * The archive is where an archived deck already is, so picking it changes nothing — the row's
+   * label says "Archive", and confirming it would have restored the deck instead.
+   */
+  it('does nothing when an archived deck is moved to the archive', async () => {
+    const { hook, repo, nav } = setup({ archived: true })
+    await waitFor(() => expect(hook.result.current.ready).toBe(true))
+
+    act(() => hook.result.current.open('move'))
+    act(() => hook.result.current.act.move({ kind: 'archive' }))
+
+    expect(hook.result.current.confirming).toBeNull()
+    expect(hook.result.current.sheet).toBeNull()
+    expect((await repo.getById('d1'))?.archived).toBe(true)
+    expect(nav.onArchived).not.toHaveBeenCalled()
+  })
+
   it('dismisses only the confirmation the dialog belongs to', async () => {
     const { hook } = setup()
     await waitFor(() => expect(hook.result.current.ready).toBe(true))

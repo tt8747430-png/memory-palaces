@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { readStylesheet } from '@/shared/test/stylesheet'
 import {
   CARD_STYLE_PRESET_IDS,
+  cardSceneChrome,
   CHROME_TOKENS,
   clampCardTextSize,
   resolveCardScene,
@@ -17,6 +18,22 @@ const TOKEN_PRESETS = ['plain', 'outlined'] as const
 const PRINTED_PRESETS = CARD_STYLE_PRESET_IDS.filter(
   (id) => !TOKEN_PRESETS.includes(id as (typeof TOKEN_PRESETS)[number]),
 )
+
+const tokens = readStylesheet('tokens.css')
+
+/** Every custom property the app declares anywhere — the vocabulary a `var()` may draw on. */
+const DECLARED = new Set([...tokens.matchAll(/^\s*(--[a-z0-9-]+)\s*:/gm)].map(([, name]) => name))
+
+/** The declarations inside one `[data-scene='…']` block, which is where a printed chrome lives. */
+function sceneBlock(chrome: 'dark' | 'light'): Map<string, string> {
+  const body = new RegExp(`\\[data-scene='${chrome}'\\]\\s*\\{([^}]*)\\}`).exec(tokens)?.[1]
+  expect(body, `tokens.css has no [data-scene='${chrome}'] block`).toBeTruthy()
+  return new Map(
+    [...(body ?? '').matchAll(/(--[a-z0-9-]+)\s*:\s*([^;]+);/g)].map(
+      ([, name, value]) => [name ?? '', (value ?? '').trim()] as const,
+    ),
+  )
+}
 
 describe('resolveCardStyle', () => {
   it('turns a style into custom properties', () => {
@@ -48,17 +65,13 @@ describe('resolveCardStyle', () => {
    * kept by hand beside it.
    */
   it('names only custom properties the app defines', () => {
-    const tokens = readStylesheet('tokens.css')
-    const declared = new Set(
-      [...tokens.matchAll(/^\s*(--[a-z0-9-]+)\s*:/gm)].map(([, name]) => name),
-    )
-    expect(declared.size).toBeGreaterThan(20)
+    expect(DECLARED.size).toBeGreaterThan(20)
     for (const preset of CARD_STYLE_PRESET_IDS) {
       const style = resolveCardStyle({ ...plain, preset })
       const scene = resolveCardScene({ ...plain, preset })
       const painted = [...Object.values(style), ...Object.values(scene)].join(' ')
       for (const [, name] of painted.matchAll(/var\((--[a-z0-9-]+)/g)) {
-        expect(declared, `${preset} paints from ${name}`).toContain(name)
+        expect(DECLARED, `${preset} paints from ${name}`).toContain(name)
       }
     }
   })
@@ -76,9 +89,25 @@ describe('resolveCardScene', () => {
     }
   })
 
+  it('carries nothing but the backdrop — the chrome is an attribute', () => {
+    for (const preset of CARD_STYLE_PRESET_IDS) {
+      expect(Object.keys(resolveCardScene({ ...plain, preset }))).toEqual(['--scene-bg'])
+    }
+  })
+})
+
+describe('cardSceneChrome', () => {
   it('leaves the app chrome alone for the presets that follow the theme', () => {
     for (const preset of TOKEN_PRESETS) {
-      expect(Object.keys(resolveCardScene({ ...plain, preset }))).toEqual(['--scene-bg'])
+      expect(cardSceneChrome({ ...plain, preset })).toBeUndefined()
+    }
+  })
+
+  it('lights every printed preset from one of the two blocks', () => {
+    for (const preset of PRINTED_PRESETS) {
+      expect(['dark', 'light'], `${preset} has no printed chrome`).toContain(
+        cardSceneChrome({ ...plain, preset }),
+      )
     }
   })
 
@@ -87,19 +116,30 @@ describe('resolveCardScene', () => {
    * which is how `bg-card` stayed white under `night` and the answer field became white-on-white.
    */
   it('repaints every chrome token a printed scene would otherwise swallow', () => {
-    for (const preset of PRINTED_PRESETS) {
-      const scene = resolveCardScene({ ...plain, preset })
+    for (const chrome of ['dark', 'light'] as const) {
+      const block = sceneBlock(chrome)
       for (const token of CHROME_TOKENS) {
-        expect(scene[token], `${preset} leaves ${token} to the app`).toBeTruthy()
+        expect([...block.keys()], `the ${chrome} scene leaves ${token} to the app`).toContain(token)
       }
     }
   })
 
-  it('adds nothing to a scene beyond the backdrop and that set', () => {
-    const allowed = new Set<string>(['--scene-bg', ...CHROME_TOKENS])
-    for (const preset of CARD_STYLE_PRESET_IDS) {
-      for (const key of Object.keys(resolveCardScene({ ...plain, preset }))) {
-        expect(allowed, `${preset} sets ${key}`).toContain(key)
+  it('declares nothing in a scene block beyond that set', () => {
+    const allowed = new Set<string>(CHROME_TOKENS)
+    for (const chrome of ['dark', 'light'] as const) {
+      for (const token of sceneBlock(chrome).keys()) {
+        expect(allowed, `the ${chrome} scene sets ${token}`).toContain(token)
+      }
+    }
+  })
+
+  /** A scene block painting from an undeclared primitive is a control with no colour at all. */
+  it('paints a scene block only from primitives the app declares', () => {
+    for (const chrome of ['dark', 'light'] as const) {
+      for (const [token, value] of sceneBlock(chrome)) {
+        for (const [, name] of value.matchAll(/var\((--[a-z0-9-]+)/g)) {
+          expect(DECLARED, `the ${chrome} scene's ${token} paints from ${name}`).toContain(name)
+        }
       }
     }
   })

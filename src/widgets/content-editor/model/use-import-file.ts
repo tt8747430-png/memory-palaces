@@ -15,8 +15,9 @@ export function useImportFile() {
   const { t } = useTranslation()
   const setDraft = useImportDraft((s) => s.setDraft)
 
-  // Stable across renders: callers hand it straight to a sheet's `onPickFile`, and a new function
-  // every render would defeat their memoisation (CODE_STYLE §7).
+  // Stable across renders, so it is safe in a dependency array and a caller that does memoise its
+  // sheet is not defeated by this hook. Nothing downstream is memoised today (CODE_STYLE §7 —
+  // memoise deliberately); what this buys is an identity that does not churn.
   return useCallback(
     async (file: File, onReady: () => void | Promise<void>) => {
       try {

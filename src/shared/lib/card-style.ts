@@ -118,7 +118,8 @@ function stars(opacity: number): string {
  * The semantic tokens the study session's chrome paints from. A printed scene remaps them for its
  * own subtree, so `SessionHeader`, the flag and speaker buttons, the mode and gear controls — every
  * one of which already reads these — stay legible on slate or on parchment without knowing a scene
- * exists.
+ * exists. The values live in `tokens.css`, under `[data-scene='dark']` and `[data-scene='light']`,
+ * beside the theme most of them mirror; this is the list they answer to.
  *
  * `--surface` is in the list because `bg-card` resolves to it: the type-answer field and the
  * direction chip sit inside the scene wearing `bg-card` with `text-foreground`, and remapping the
@@ -129,11 +130,12 @@ function stars(opacity: number): string {
  * `fill-rating`. `--text-secondary` is in for a rule no utility names: base `p` is painted from it,
  * and the faces are full of paragraphs.
  *
- * `CHROME_TOKENS` is the whole set, and every printed scene must answer for all of it —
- * `card-style.test.ts` holds the tables to the list in both directions. The list itself is held to
- * the screen one layer up, by `widgets/study-session/ui/scene-chrome.test.ts`: every semantic colour
- * utility the scene's subtree wears has to resolve to something in here, so a face that reaches for
- * a new role fails rather than silently keeping the app's own.
+ * `CHROME_TOKENS` is the whole set, and each scene block must answer for all of it —
+ * `card-style.test.ts` holds the stylesheet to the list in both directions. The list itself is held
+ * to the screen one layer up, by `widgets/study-session/ui/scene-chrome.test.ts`: it walks what
+ * renders inside a `<CardScene>` and every semantic colour utility any of it wears has to resolve
+ * to something in here, so a face that reaches for a new role fails rather than silently keeping
+ * the app's own.
  */
 export const CHROME_TOKENS = [
   '--surface',
@@ -161,68 +163,11 @@ export const CHROME_TOKENS = [
   '--danger-on-surface',
 ] as const
 
-type ChromeTokens = Record<(typeof CHROME_TOKENS)[number], string>
-
 /**
- * Mirrors the app's own dark theme, so a dark scene's controls read the way dark mode does.
- *
- * Every value the palette can name is named — `var(--p-…)`, or a `color-mix` of one where the theme
- * uses that primitive at an alpha. The stylesheet and this table then move together, and the test
- * that reads `tokens.css` covers them. What stays literal is what `tokens.css` itself states
- * literally, plus the paper and ink: those are the printed material, not the theme (CODE_STYLE §5).
+ * Which of the two printed-chrome blocks in `tokens.css` a scene hands its subtree. One value, not
+ * a table of colours: the colours belong in the stylesheet next to the theme they depart from.
  */
-const DARK_CHROME: ChromeTokens = {
-  '--surface': '#222836',
-  '--text-heading': '#f3f6fa',
-  '--text-primary': '#e4eaf1',
-  '--text-secondary': 'rgba(228,234,241,0.82)',
-  '--text-muted': 'rgba(228,234,241,0.66)',
-  '--surface-glass': 'rgba(255,255,255,0.13)',
-  '--info-surface': 'rgba(255,255,255,0.15)',
-  '--info-foreground': '#f3f6fa',
-  '--border': 'rgba(255,255,255,0.17)',
-  '--ring': 'var(--p-blue-300)',
-  '--primary': 'var(--p-blue-300)',
-  '--primary-foreground': 'var(--p-navy-900)',
-  '--accent': 'var(--p-blue-500)',
-  '--rating': 'var(--p-gold-400)',
-  '--secondary': 'oklch(var(--p-tint-sky) / 0.16)',
-  '--secondary-foreground': 'oklch(97.9% 0.01 267.4)',
-  '--success-surface': 'color-mix(in oklch, var(--p-green-500) 16%, transparent)',
-  '--success-on-surface': 'oklch(86% 0.11 165)',
-  '--warning-surface': 'color-mix(in oklch, var(--p-amber-500) 16%, transparent)',
-  '--warning-foreground': 'oklch(86% 0.13 80)',
-  '--danger': 'var(--p-red-500)',
-  '--danger-surface': 'color-mix(in oklch, var(--p-red-500) 18%, transparent)',
-  '--danger-on-surface': 'oklch(82% 0.12 22)',
-}
-
-/** And the light one, so a paper scene stays paper even while the app is in dark mode. */
-const LIGHT_CHROME: ChromeTokens = {
-  '--surface': '#fffdf7',
-  '--text-heading': '#2f2a22',
-  '--text-primary': '#3d3428',
-  '--text-secondary': 'rgba(61,52,40,0.82)',
-  '--text-muted': 'rgba(61,52,40,0.64)',
-  '--surface-glass': 'rgba(255,253,247,0.8)',
-  '--info-surface': 'rgba(255,253,247,0.74)',
-  '--info-foreground': '#2f2a22',
-  '--border': 'rgba(72,57,36,0.2)',
-  '--ring': 'var(--p-navy-900)',
-  '--primary': 'var(--p-navy-900)',
-  '--primary-foreground': 'var(--p-white)',
-  '--accent': 'var(--p-blue-500)',
-  '--rating': 'var(--p-gold-400)',
-  '--secondary': 'var(--p-blue-300)',
-  '--secondary-foreground': 'var(--p-navy-900)',
-  '--success-surface': 'var(--p-green-50)',
-  '--success-on-surface': 'var(--p-green-800)',
-  '--warning-surface': 'var(--p-amber-50)',
-  '--warning-foreground': 'var(--p-amber-700)',
-  '--danger': 'var(--p-red-600)',
-  '--danger-surface': 'var(--p-red-50)',
-  '--danger-on-surface': 'var(--p-red-700)',
-}
+export type SceneChrome = 'dark' | 'light'
 
 interface PresetSkin {
   bg: string
@@ -231,7 +176,7 @@ interface PresetSkin {
   /** The screen the card is studied against. */
   scene: string
   /** Absent for the token-following presets — they inherit the app's own chrome unchanged. */
-  chrome?: ChromeTokens
+  chrome?: SceneChrome
 }
 
 /**
@@ -261,7 +206,7 @@ const PRESETS: Record<CardStylePresetId, PresetSkin> = {
     ink: '#f2f5f7',
     border: '1px solid rgba(255,255,255,0.14)',
     scene: `${grain(0.2, '0.8')}, linear-gradient(165deg, #2b323c, #161b21)`,
-    chrome: DARK_CHROME,
+    chrome: 'dark',
   },
   notebook: {
     // The red margin rule a ruled pad actually has, drawn once at 2.25rem in.
@@ -269,28 +214,28 @@ const PRESETS: Record<CardStylePresetId, PresetSkin> = {
     ink: '#28303a',
     border: '1px solid rgba(80,120,200,0.25)',
     scene: `${grain(0.1, '0.7')}, linear-gradient(180deg, #e8e2d6, #d6cdbd)`,
-    chrome: LIGHT_CHROME,
+    chrome: 'light',
   },
   paper: {
     bg: `${grain(0.16, '0.65')}, radial-gradient(115% 95% at 50% 45%, transparent 55%, rgba(120,90,50,0.16)), radial-gradient(120% 100% at 30% 0%, #f7ecd8, #e6d2b3)`,
     ink: '#4a3620',
     border: '1px solid rgba(120,90,50,0.25)',
     scene: `${grain(0.14, '0.6')}, radial-gradient(120% 100% at 50% 0%, #e7d5b4, #c8ac81)`,
-    chrome: LIGHT_CHROME,
+    chrome: 'light',
   },
   parchment: {
     bg: `${grain(0.12, '0.7')}, radial-gradient(115% 95% at 50% 45%, transparent 58%, rgba(120,90,50,0.14)), radial-gradient(130% 110% at 40% 0%, #fbf3e2, #ecdcbe)`,
     ink: '#5a4021',
     border: '2px solid rgba(255,252,242,0.72)',
     scene: `${contour(0.5)}, ${grain(0.13, '0.55')}, radial-gradient(130% 110% at 50% 10%, #ddc79c, #b99a68)`,
-    chrome: LIGHT_CHROME,
+    chrome: 'light',
   },
   night: {
     bg: `${grain(0.1, '0.9')}, radial-gradient(120% 90% at 50% 0%, rgba(255,255,255,0.06), transparent 55%), linear-gradient(165deg, #232836, #14171f)`,
     ink: '#e9edf6',
     border: '1px solid rgba(255,255,255,0.12)',
     scene: `${stars(0.85)}, radial-gradient(120% 90% at 50% 0%, #232a3d, #0c0e15)`,
-    chrome: DARK_CHROME,
+    chrome: 'dark',
   },
 }
 
@@ -326,11 +271,15 @@ export function resolveCardStyle(style: CardStyleInput): CardStyleVars {
   }
 }
 
-/**
- * The room the card is studied in: the backdrop, plus the chrome tokens a printed scene has to
- * repaint so the controls over it stay readable.
- */
+/** The room the card is studied in: the backdrop behind it. */
 export function resolveCardScene(style: CardStyleInput): CardSceneVars {
-  const skin = PRESETS[style.preset]
-  return { '--scene-bg': skin.scene, ...skin.chrome }
+  return { '--scene-bg': PRESETS[style.preset].scene }
+}
+
+/**
+ * Which printed chrome the room is lit by, or `undefined` where the preset follows the app's own
+ * theme. `CardScene` puts it on the element as `data-scene`; `tokens.css` does the repainting.
+ */
+export function cardSceneChrome(style: CardStyleInput): SceneChrome | undefined {
+  return PRESETS[style.preset].chrome
 }
