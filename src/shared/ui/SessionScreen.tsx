@@ -15,14 +15,14 @@ export interface SessionScreenProps {
  */
 export function SessionScreen({ children, className }: SessionScreenProps) {
   return (
-    <div
+    <main
       className={cn(
         'relative mx-auto flex h-full w-full max-w-app flex-col overflow-hidden',
         className,
       )}
     >
       {children}
-    </div>
+    </main>
   )
 }
 
@@ -58,24 +58,22 @@ export function SessionHeader({
   const fraction = progress && progress.total > 0 ? clamp01(progress.done / progress.total) : 0
 
   return (
-    <div className="px-5 pt-safe">
+    <header className="px-5 pt-safe">
       <div className="flex items-center justify-between gap-2 pt-3">
         <IconButton variant="glass" aria-label={backLabel} onClick={onBack}>
           {backIcon ?? <X className="size-5" aria-hidden />}
         </IconButton>
         {progress ? (
           <div className="flex min-w-0 flex-1 justify-center">
-            <span className="rounded-pill bg-info-surface px-3 py-1 text-(length:--p-text-label) tabular-nums">
+            <span className="rounded-pill bg-info-surface px-3 py-1 text-label tabular-nums">
               <span className="font-semibold text-heading">{progress.done}</span>
               <span className="text-muted-foreground">{`/${progress.total}`}</span>
             </span>
           </div>
         ) : (
           <div className="min-w-0 flex-1 text-center">
-            <h1 className="truncate text-(length:--p-text-title) font-semibold text-heading">
-              {title}
-            </h1>
-            {subtitle ? <p className="truncate text-(length:--p-text-label)">{subtitle}</p> : null}
+            <h1 className="truncate text-title font-semibold text-heading">{title}</h1>
+            {subtitle ? <p className="truncate text-label">{subtitle}</p> : null}
           </div>
         )}
         {action ?? <div className="size-10 shrink-0" aria-hidden />}
@@ -93,6 +91,6 @@ export function SessionHeader({
         </div>
       ) : null}
       {children}
-    </div>
+    </header>
   )
 }

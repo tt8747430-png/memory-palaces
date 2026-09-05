@@ -43,7 +43,7 @@ describe('HeaderBar', () => {
       return bar.split(' ').find((each) => each.startsWith('h-'))
     }
 
-    expect(height(<ScreenHeader title="Deck" onBack={() => {}} />)).toBe('h-16')
+    expect(height(<ScreenHeader title="Deck" onBack={() => {}} backLabel="Back" />)).toBe('h-16')
     expect(
       height(
         <SelectHeader

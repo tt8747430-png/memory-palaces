@@ -127,7 +127,7 @@ export function MoveSheet({
             <DeckCover
               icon={node.deck.icon || DEFAULT_DECK_ICON}
               color={node.deck.color || DEFAULT_DECK_COLOR}
-              className="size-8 rounded-xl ring-1 ring-black/5"
+              className="size-8 rounded-control ring-1 ring-border"
               iconClassName="text-[0.85rem] leading-none"
             />
           }
@@ -164,7 +164,7 @@ export function MoveSheet({
             <Row
               depth={0}
               glyph={
-                <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-secondary/40 text-muted-foreground">
+                <span className="grid size-8 shrink-0 place-items-center rounded-control bg-secondary/40 text-muted-foreground">
                   <Archive className="size-4.5" aria-hidden />
                 </span>
               }
@@ -175,7 +175,7 @@ export function MoveSheet({
             <Row
               depth={0}
               glyph={
-                <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                <span className="grid size-8 shrink-0 place-items-center rounded-control bg-primary/10 text-primary">
                   <Home className="size-4.5" aria-hidden />
                 </span>
               }
@@ -224,10 +224,10 @@ export function MoveSheet({
           onClick={onNewFolder}
           className="mt-1 flex w-full items-center gap-2.5 rounded-card px-2 py-3 text-left text-accent transition-colors active:bg-primary/5"
         >
-          <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-info-surface">
+          <span className="grid size-8 shrink-0 place-items-center rounded-control bg-info-surface">
             <FolderPlus className="size-4.5" aria-hidden />
           </span>
-          <span className="text-(length:--p-text-body) font-semibold">{t('move.newFolder')}</span>
+          <span className="text-body font-semibold">{t('move.newFolder')}</span>
         </button>
       ) : null}
     </Sheet>
@@ -296,7 +296,7 @@ function Row({
         {glyph}
         <span
           className={cn(
-            'min-w-0 flex-1 truncate text-(length:--p-text-body) font-semibold',
+            'min-w-0 flex-1 truncate text-body font-semibold',
             selectable && selected ? 'text-primary' : 'text-heading',
             !selectable && 'text-muted-foreground',
           )}

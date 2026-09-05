@@ -16,14 +16,14 @@ afterEach(cleanup)
 function setup() {
   const bus = new EventBus<AppEvents>()
   const store = started(createNotificationStore(new InMemoryRepository<AppNotification>()))
-  render(
+  const { unmount } = render(
     <NotificationStoreContext value={store}>
       <EventBusContext value={bus}>
         <NotificationBridge />
       </EventBusContext>
     </NotificationStoreContext>,
   )
-  return { bus, store }
+  return { bus, store, unmount }
 }
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
@@ -56,11 +56,12 @@ describe('NotificationBridge', () => {
     expect(types).toContain('quiz')
   })
 
-  it('ignores xp-gain events — they are not part of the history', async () => {
-    const { bus, store } = setup()
+  it('stops recording once unmounted', async () => {
+    const { bus, store, unmount } = setup()
+    unmount()
 
     await act(async () => {
-      bus.emit('xp-gain', { amount: 50 })
+      bus.emit('level-up', { level: 4 })
       await flush()
     })
 

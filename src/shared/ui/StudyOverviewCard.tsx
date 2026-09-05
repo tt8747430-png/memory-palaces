@@ -40,9 +40,7 @@ export function StudyOverviewCard({
         <span className="grid size-12 place-items-center rounded-card-featured bg-card text-(--success-foreground) shadow-rest">
           <Check className="size-6" aria-hidden />
         </span>
-        <p className="text-(length:--p-text-sub) font-semibold text-heading">
-          {t('study.caughtUp')}
-        </p>
+        <p className="text-sub font-semibold text-heading">{t('study.caughtUp')}</p>
         {onStudyAhead ? (
           <Button variant="secondary" onClick={onStudyAhead}>
             {t('study.studyAhead')}
@@ -63,18 +61,18 @@ export function StudyOverviewCard({
         >
           {count}
         </motion.p>
-        <p className="mt-1 text-(length:--p-text-body) font-medium text-secondary">{countLabel}</p>
+        <p className="mt-1 text-body font-medium text-muted-foreground">{countLabel}</p>
       </div>
 
       <dl className="grid grid-cols-3 gap-2">
         {stats.map((stat) => (
-          <div key={stat.key} className="rounded-control bg-info-surface px-2 py-2">
-            <dd className="text-(length:--p-text-sub) font-bold leading-none tabular-nums text-heading">
-              {stat.value}
-            </dd>
-            <dt className="mt-1 text-(length:--p-text-tiny) font-medium text-secondary">
+          <div key={stat.key} className="flex flex-col rounded-control bg-info-surface px-2 py-2">
+            <dt className="order-2 mt-1 text-tiny font-medium text-muted-foreground">
               {stat.label}
             </dt>
+            <dd className="order-1 text-sub font-bold leading-none tabular-nums text-heading">
+              {stat.value}
+            </dd>
           </div>
         ))}
       </dl>

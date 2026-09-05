@@ -6,7 +6,7 @@ import type { CardFilterControl } from '../model/use-card-filter'
 import type { MaturityKey } from '../model/card-list'
 
 const MATURITY: { key: MaturityKey; labelKey: string; dot: string }[] = [
-  { key: 'new', labelKey: 'cards.filter.new', dot: 'bg-(--text-faint)' },
+  { key: 'new', labelKey: 'cards.filter.new', dot: 'bg-faint' },
   { key: 'learning', labelKey: 'cards.filter.learning', dot: 'bg-accent' },
   { key: 'known', labelKey: 'cards.filter.known', dot: 'bg-success' },
 ]
@@ -30,9 +30,9 @@ export function FilterButton({ count, onClick }: FilterButtonProps) {
       )}
     >
       <SlidersHorizontal className="size-4 shrink-0 text-accent" aria-hidden />
-      <span className="text-(length:--p-text-label) font-semibold text-heading">{label}</span>
+      <span className="text-label font-semibold text-heading">{label}</span>
       {count > 0 ? (
-        <span className="grid size-5 place-items-center rounded-full bg-accent text-(length:--p-text-tiny) font-bold tabular-nums text-accent-foreground">
+        <span className="grid size-5 place-items-center rounded-full bg-accent text-tiny font-bold tabular-nums text-accent-foreground">
           {count}
         </span>
       ) : null}
@@ -70,7 +70,7 @@ export function CardFilterSheet({ filter, counts }: CardFilterSheetProps) {
     >
       <div className="flex flex-col gap-5 pb-2">
         <section>
-          <p className="mb-2 px-1 text-(length:--p-text-label) font-bold uppercase tracking-wide text-muted-foreground">
+          <p className="mb-2 px-1 text-label font-bold uppercase tracking-wide text-muted-foreground">
             {t('cards.filter.maturity')}
           </p>
           <div className="flex flex-wrap gap-2">
@@ -88,11 +88,11 @@ export function CardFilterSheet({ filter, counts }: CardFilterSheetProps) {
         </section>
 
         <section>
-          <p className="mb-2 px-1 text-(length:--p-text-label) font-bold uppercase tracking-wide text-muted-foreground">
+          <p className="mb-2 px-1 text-label font-bold uppercase tracking-wide text-muted-foreground">
             {t('cards.filter.status')}
           </p>
           <label className="flex items-center justify-between gap-3 rounded-card bg-secondary/40 px-3.5 py-3">
-            <span className="inline-flex items-center gap-2.5 text-(length:--p-text-body) font-semibold text-heading">
+            <span className="inline-flex items-center gap-2.5 text-body font-semibold text-heading">
               <span
                 aria-hidden
                 className="grid size-8 shrink-0 place-items-center rounded-full bg-(--warning-surface)"
@@ -132,7 +132,7 @@ function MaturityChip({
       aria-pressed={on}
       onClick={onToggle}
       className={cn(
-        'inline-flex items-center gap-2 rounded-pill py-2 pl-3 pr-2 text-(length:--p-text-label) font-semibold transition-[background-color,box-shadow,transform] duration-150 active:scale-[0.96]',
+        'inline-flex items-center gap-2 rounded-pill py-2 pl-3 pr-2 text-label font-semibold transition-[background-color,box-shadow,transform] duration-150 active:scale-[0.96]',
         on
           ? 'bg-primary text-primary-foreground shadow-interactive'
           : 'bg-secondary/40 text-heading ring-1 ring-inset ring-primary/10',
@@ -148,7 +148,7 @@ function MaturityChip({
       <span>{label}</span>
       <span
         className={cn(
-          'grid h-5 min-w-5 place-items-center rounded-full px-1.5 text-(length:--p-text-tiny) font-bold tabular-nums transition-colors',
+          'grid h-5 min-w-5 place-items-center rounded-full px-1.5 text-tiny font-bold tabular-nums transition-colors',
           on ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-card text-muted-foreground',
         )}
       >

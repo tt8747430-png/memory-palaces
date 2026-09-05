@@ -1,7 +1,7 @@
 import { cn } from '@/shared/lib'
 import type { ViewportSample } from '../model/viewport-sample'
 
-const LABEL = 'absolute text-(length:--p-text-tiny) font-semibold tabular-nums'
+const LABEL = 'absolute text-tiny font-semibold tabular-nums'
 
 /**
  * The screen to scale, in the one coordinate space that matters: layout pixels below the anchored
@@ -30,7 +30,7 @@ export function BandDiagram({ sample, className }: { sample: ViewportSample; cla
 
   return (
     <div className={cn('relative', className)}>
-      <div className="relative h-40 overflow-hidden rounded-card border border-border bg-surface">
+      <div className="relative h-40 overflow-hidden rounded-card border border-border bg-card">
         {/* The keyboard: the bottom of the anchored shell, covered. */}
         {inset > 0 ? (
           <div
@@ -93,7 +93,7 @@ export function BandDiagram({ sample, className }: { sample: ViewportSample; cla
               fieldTop > app ? 'bottom-0' : 'top-0',
             )}
           >
-            <span className="text-(length:--p-text-tiny) font-semibold text-(--danger-on-surface)">
+            <span className="text-tiny font-semibold text-(--danger-on-surface)">
               field off-scale, {away}
             </span>
           </div>
@@ -110,7 +110,7 @@ export function BandDiagram({ sample, className }: { sample: ViewportSample; cla
           </span>
         ) : null}
       </div>
-      <div className="mt-1 flex justify-between text-(length:--p-text-tiny) text-muted-foreground tabular-nums">
+      <div className="mt-1 flex justify-between text-tiny text-muted-foreground tabular-nums">
         <span>0</span>
         <span>--app-height {app}</span>
       </div>

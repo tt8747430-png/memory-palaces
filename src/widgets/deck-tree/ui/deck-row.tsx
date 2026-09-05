@@ -34,7 +34,7 @@ export function DeckRowBody({ deck, due, isSub = false, selectState, toggle }: D
             icon={deck.icon || DEFAULT_DECK_ICON}
             color={deckColor(deck)}
             className={cn(
-              'rounded-2xl shadow-rest ring-1 ring-black/5',
+              'rounded-card shadow-rest ring-1 ring-border',
               isSub ? 'size-8' : 'size-9',
             )}
             iconClassName={isSub ? 'text-[0.9rem] leading-none' : 'text-base leading-none'}
@@ -42,7 +42,7 @@ export function DeckRowBody({ deck, due, isSub = false, selectState, toggle }: D
           {due > 0 ? (
             <span
               className="absolute -right-1.5 -top-1.5 grid h-4.5
-             min-w-4.5 place-items-center rounded-full bg-primary px-1 text-(length:--p-text-tiny) font-bold tabular-nums text-primary-foreground shadow-interactive ring-2 ring-card"
+             min-w-4.5 place-items-center rounded-full bg-primary px-1 text-tiny font-bold tabular-nums text-primary-foreground shadow-interactive ring-2 ring-card"
               aria-hidden
             >
               {due > 99 ? '99+' : due}
@@ -54,14 +54,14 @@ export function DeckRowBody({ deck, due, isSub = false, selectState, toggle }: D
           <span
             className={cn(
               'block truncate font-semibold text-heading',
-              isSub ? 'text-(length:--p-text-sub)' : 'text-(length:--p-text-body)',
+              isSub ? 'text-sub' : 'text-body',
             )}
           >
             {deck.name}
           </span>
           <span
             className={cn(
-              'block truncate ' + 'text-(length:--p-text-label)',
+              'block truncate ' + 'text-label',
               due > 0 ? 'font-medium text-primary/80' : 'text-muted-foreground',
             )}
           >

@@ -31,9 +31,6 @@ function AppSync({ children }: { children: ReactNode }) {
   )
 }
 
-/** Above every dialog and dropdown (500), below the splash (700). */
-const TOAST_LAYER = 600
-
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <I18nextProvider i18n={i18n}>
@@ -52,7 +49,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
           richColors
           theme="system"
           mobileOffset={{ top: 'calc(env(safe-area-inset-top) + 16px)' }}
-          style={{ zIndex: TOAST_LAYER }}
+          style={{ zIndex: 'var(--z-toast)' }}
         />
       </ServicesProvider>
     </I18nextProvider>

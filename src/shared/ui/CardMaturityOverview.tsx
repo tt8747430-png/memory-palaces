@@ -8,12 +8,12 @@ export interface CardMaturityOverviewProps {
 
 const ORDER: Array<'new' | 'learning' | 'known'> = ['new', 'learning', 'known']
 const FILL: Record<'new' | 'learning' | 'known', string> = {
-  new: 'bg-[var(--divider)]',
+  new: 'bg-(--divider)',
   learning: 'bg-secondary',
   known: 'bg-success',
 }
 const DOT: Record<'new' | 'learning' | 'known', string> = {
-  new: 'bg-[var(--text-faint)]',
+  new: 'bg-faint',
   learning: 'bg-secondary',
   known: 'bg-success',
 }
@@ -22,7 +22,7 @@ export function CardMaturityOverview({ total, counts }: CardMaturityOverviewProp
   const { t } = useTranslation()
   return (
     <div>
-      <p className="mb-2.5 text-(length:--p-text-title) font-bold tracking-tight text-heading">
+      <p className="mb-2.5 text-title font-bold tracking-tight text-heading">
         {t('study.cardsInDeck', { count: total })}
       </p>
       {total > 0 ? (
@@ -38,10 +38,7 @@ export function CardMaturityOverview({ total, counts }: CardMaturityOverviewProp
       ) : null}
       <ul className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1.5">
         {ORDER.map((k) => (
-          <li
-            key={k}
-            className="inline-flex items-center gap-1.5 text-(length:--p-text-label) text-muted-foreground"
-          >
+          <li key={k} className="inline-flex items-center gap-1.5 text-label text-muted-foreground">
             <span className={cn('size-2 rounded-full', DOT[k])} aria-hidden />
             {t(`srs.${k}`)}
             <span className="font-semibold text-heading">{counts[k]}</span>
