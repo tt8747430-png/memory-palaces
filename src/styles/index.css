@@ -1,4 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap');
+/**
+ * Self-hosted, not the Google Fonts CDN. The app's whole promise is that it works offline, and a
+ * `@import url(https://fonts.googleapis.com/…)` meant the typeface was a third-party round trip
+ * the service worker never precached — every offline launch fell back to the system stack. Vite
+ * fingerprints these woff2 files into `dist/assets`, where Workbox's `globPatterns` picks them up.
+ */
+@import '@fontsource-variable/lexend/index.css';
 @import 'tailwindcss';
 @import './tokens.css';
 @import './theme.css';
