@@ -52,7 +52,7 @@ export function DeckTtsPage({ deckId, onBack }: DeckTtsPageProps) {
 
   if (!speechAvailable()) {
     return (
-      <AppScreen fill gutter="nav" header={header}>
+      <AppScreen fill gutter="end" header={header}>
         <Empty
           className="mt-10"
           emoji="🔇"
@@ -73,7 +73,7 @@ export function DeckTtsPage({ deckId, onBack }: DeckTtsPageProps) {
     })
 
   return (
-    <AppScreen fill gutter="nav" header={header}>
+    <AppScreen fill gutter="end" header={header}>
       <div className="mt-4 flex flex-col gap-6 pb-8">
         <SettingsSection>
           <SettingsRow

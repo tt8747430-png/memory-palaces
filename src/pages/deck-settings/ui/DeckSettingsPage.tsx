@@ -54,7 +54,7 @@ export function DeckSettingsPage({ deckId, ...nav }: DeckSettingsPageProps) {
   return (
     <AppScreen
       fill
-      gutter="nav"
+      gutter="end"
       header={
         <ScreenHeader
           title={t('deck.settings')}

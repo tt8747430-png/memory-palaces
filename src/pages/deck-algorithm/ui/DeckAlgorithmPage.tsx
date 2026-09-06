@@ -37,7 +37,7 @@ export function DeckAlgorithmPage({ deckId, onBack, onOpenAdvanced }: DeckAlgori
   return (
     <AppScreen
       fill
-      gutter="nav"
+      gutter="end"
       header={
         <ScreenHeader
           title={t('algorithm.title')}

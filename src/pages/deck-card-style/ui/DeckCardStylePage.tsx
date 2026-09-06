@@ -100,7 +100,7 @@ export function DeckCardStylePage({ deckId, onBack }: DeckCardStylePageProps) {
 
   return (
     // No `gutter`: the tab bar never renders on a deck route, and the footer dock below already
-    // owns the bottom inset. Its deck-settings siblings keep `gutter="nav"` — that is the spacing
+    // owns the bottom inset. Its deck-settings siblings keep `gutter="end"` — that is the spacing
     // they shipped with, not a rule this screen is breaking.
     <AppScreen
       fill

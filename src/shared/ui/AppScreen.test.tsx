@@ -47,22 +47,22 @@ describe('AppScreen', () => {
     expect(main.lastElementChild).toBeEmptyDOMElement()
   })
 
-  it('clears the tab bar for a nav gutter', () => {
-    renderWithProviders(<AppScreen gutter="nav">Body</AppScreen>)
+  it('clears the floating chrome for an end gutter', () => {
+    renderWithProviders(<AppScreen gutter="end">Body</AppScreen>)
     expect(screen.getByRole('main').lastElementChild).toHaveClass(
-      'h-[calc(var(--app-bottom-inset)+4.5rem)]',
+      'h-[calc(var(--app-bottom-inset)+5rem)]',
     )
   })
 
   it('keeps the gutter above a docked footer, never below it', () => {
     renderWithProviders(
-      <AppScreen fill gutter="nav" footer={<footer>Bottom</footer>}>
+      <AppScreen fill gutter="end" footer={<footer>Bottom</footer>}>
         Body
       </AppScreen>,
     )
     const main = screen.getByRole('main')
     expect(main.lastElementChild).toHaveTextContent('Bottom')
-    expect(main.children[1]).toHaveClass('h-[calc(var(--app-bottom-inset)+4.5rem)]')
+    expect(main.children[1]).toHaveClass('h-[calc(var(--app-bottom-inset)+5rem)]')
   })
 
   it('keeps the safe-area padding, and no gutter box, when nothing floats over the screen', () => {
