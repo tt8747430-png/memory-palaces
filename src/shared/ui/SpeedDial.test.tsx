@@ -24,9 +24,30 @@ describe('SpeedDial', () => {
     expect(trigger).toHaveAttribute('aria-expanded', 'false')
 
     await user.click(trigger)
-    await user.click(await screen.findByRole('button', { name: 'New deck' }))
+    // The trigger says `aria-haspopup="menu"`, so what opens has to be a menu of menu items —
+    // it used to be a plain list of buttons, and a screen reader landed on list items instead.
+    expect(await screen.findByRole('menu', { name: 'Create' })).toBeInTheDocument()
+    await user.click(screen.getByRole('menuitem', { name: 'New deck' }))
     expect(onDeck).toHaveBeenCalledTimes(1)
-    await waitFor(() => expect(screen.queryByRole('button', { name: 'New deck' })).toBeNull())
+    await waitFor(() => expect(screen.queryByRole('menuitem', { name: 'New deck' })).toBeNull())
+  })
+
+  it('returns focus to the trigger when the scrim dismisses the menu', async () => {
+    const user = userEvent.setup()
+    const actions: SpeedDialAction[] = [
+      { id: 'deck', label: 'New deck', icon, onSelect: () => {} },
+      { id: 'folder', label: 'New folder', icon, onSelect: () => {} },
+    ]
+    renderWithProviders(<SpeedDial label="Create" actions={actions} />)
+
+    const trigger = screen.getByRole('button', { name: 'Create' })
+    await user.click(trigger)
+    await screen.findByRole('menu', { name: 'Create' })
+
+    await user.click(document.querySelector('.z-\\(--z-dial-scrim\\)')!)
+
+    await waitFor(() => expect(screen.queryByRole('menu')).toBeNull())
+    expect(trigger).toHaveFocus()
   })
 
   it('fires a single action directly without a menu', async () => {

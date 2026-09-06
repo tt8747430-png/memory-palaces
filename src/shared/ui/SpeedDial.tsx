@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef, useState } from 'react'
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { Plus } from 'lucide-react'
 import { cn, EASE_OUT } from '@/shared/lib'
@@ -18,7 +18,7 @@ export type SpeedDialPlacement = 'above-nav' | 'above-safe-area'
 
 const PLACEMENT: Record<SpeedDialPlacement, string> = {
   'above-nav': 'bottom-[calc(var(--app-bottom-inset)+1rem)]',
-  'above-safe-area': 'bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+0.75rem)]',
+  'above-safe-area': 'bottom-[calc(var(--p-safe-bottom)+0.75rem)]',
 }
 
 export interface SpeedDialProps {
@@ -36,18 +36,25 @@ export function SpeedDial({ label, actions, placement = 'above-nav', className }
 
   const soleAction = actions.length === 1 ? actions[0]! : null
 
+  /**
+   * Closing always hands focus back to the trigger. Escape did this already; clicking the scrim
+   * did not, so dismissing the dial by tapping away dropped focus onto `<body>` and a keyboard or
+   * screen-reader user restarted from the top of the document.
+   */
+  const close = useCallback(() => {
+    setOpen(false)
+    triggerRef.current?.focus()
+  }, [])
+
   useEffect(() => {
     if (!open) return
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setOpen(false)
-        triggerRef.current?.focus()
-      }
+      if (event.key === 'Escape') close()
     }
     window.addEventListener('keydown', onKey)
     firstActionRef.current?.focus()
     return () => window.removeEventListener('keydown', onKey)
-  }, [open])
+  }, [close, open])
 
   const fire = (action: SpeedDialAction) => {
     setOpen(false)
@@ -64,8 +71,8 @@ export function SpeedDial({ label, actions, placement = 'above-nav', className }
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            onClick={() => setOpen(false)}
-            className="fixed inset-0 z-(--z-dial-scrim) bg-[color-mix(in_oklch,var(--scrim)_34%,transparent)] backdrop-blur-[2px]"
+            onClick={close}
+            className="fixed inset-0 z-(--z-dial-scrim) bg-[color-mix(in_oklch,var(--scrim)_34%,transparent)] backdrop-blur-[2px] in-data-keyboard:hidden"
           />
         ) : null}
       </AnimatePresence>
@@ -73,16 +80,25 @@ export function SpeedDial({ label, actions, placement = 'above-nav', className }
       <div
         className={cn(
           'fixed right-5 z-(--z-dial) flex flex-col items-end gap-3',
+          // WebKit re-clamps bottom-anchored fixed boxes to the visual viewport when the keyboard
+          // shows, which floats the dial mid-screen over the field being typed into. AppNav and
+          // AppScreen's footer dock yield for the same reason. CODE_STYLE §11.
+          'in-data-keyboard:hidden',
           PLACEMENT[placement],
           className,
         )}
       >
         <AnimatePresence>
           {open ? (
-            <motion.ul className="flex list-none flex-col items-end gap-3">
+            <motion.ul
+              role="menu"
+              aria-label={label}
+              className="flex list-none flex-col items-end gap-3"
+            >
               {actions.map((action, index) => (
                 <motion.li
                   key={action.id}
+                  role="none"
                   initial={reduce ? { opacity: 0 } : { opacity: 0, y: 14, scale: 0.8 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={reduce ? { opacity: 0 } : { opacity: 0, y: 10, scale: 0.85 }}
@@ -96,6 +112,7 @@ export function SpeedDial({ label, actions, placement = 'above-nav', className }
                   <button
                     ref={index === 0 ? firstActionRef : undefined}
                     type="button"
+                    role="menuitem"
                     aria-label={action.label}
                     onClick={() => fire(action)}
                     className="group flex items-center gap-2.5 rounded-full transition-transform active:scale-[0.97]"
