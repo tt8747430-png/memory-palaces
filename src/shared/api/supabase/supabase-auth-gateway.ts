@@ -1,4 +1,9 @@
-import type { AuthError as SupabaseAuthError, SupabaseClient, User } from '@supabase/supabase-js'
+import {
+  type AuthError as SupabaseAuthError,
+  isAuthRetryableFetchError,
+  type SupabaseClient,
+  type User,
+} from '@supabase/supabase-js'
 import {
   AuthError,
   type AuthGateway,
@@ -12,8 +17,16 @@ import {
 
 const GUEST_KEY = 'mindscape:guest'
 
-/** Keeps the provider's code so the UI can say something better than the raw message. */
+/**
+ * Keeps the provider's code so the UI can say something better than the raw message.
+ *
+ * A request that never reached the provider has no provider code — `code` is undefined and the
+ * message is whichever words the engine uses for a dead network ("Failed to fetch" on Chrome,
+ * "Load failed" on Safari). Those were reaching people as toast copy on every auth screen, so the
+ * transport case is named here, once, where it is still distinguishable.
+ */
 const fail = (error: SupabaseAuthError): never => {
+  if (isAuthRetryableFetchError(error)) throw new AuthError(error.message, 'network')
   throw new AuthError(error.message, error.code ?? 'unknown')
 }
 

@@ -14,6 +14,12 @@ const COPY = {
   signup_disabled: 'auth.errors.signupDisabled',
   // Ours, not the provider's: raised when there is no cloud to reach at all.
   offline_only: 'auth.errors.offlineOnly',
+  // Ours too. A fetch that never lands carries no provider code, so `SupabaseAuthGateway` labels
+  // it on the way out — otherwise every auth screen showed the transport's own words
+  // ("Failed to fetch", "Load failed") to a person who is simply on a train.
+  network: 'auth.errors.network',
+  // Ours: `setPassword` raises it when re-authentication rejects the old password.
+  current_password_invalid: 'auth.errors.currentPasswordInvalid',
   signup_failed: 'auth.errors.signUpFailed',
   signin_failed: 'auth.errors.signInFailed',
 } as const satisfies Record<string, string>

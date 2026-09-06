@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Loader2 } from 'lucide-react'
-import { parseAuthCallback, useAuthGateway } from '@/shared/lib'
+import { parseAuthCallback, useAuthGateway, useOnline } from '@/shared/lib'
 import { AuthScreen, Button } from '@/shared/ui'
 import { AuthHeader } from '@/widgets/threshold'
 
@@ -21,6 +21,9 @@ export interface AuthCallbackPageProps {
 export function AuthCallbackPage({ sessionReady, onDone, onCancel }: AuthCallbackPageProps) {
   const { t } = useTranslation()
   const gateway = useAuthGateway()
+  // An expired link and a dead network fail the same way here; only one of them is the link's
+  // fault, and telling a person to sign in again while they are on a train is a dead end.
+  const online = useOnline()
   const [failed, setFailed] = useState(false)
 
   useEffect(() => {
@@ -53,7 +56,7 @@ export function AuthCallbackPage({ sessionReady, onDone, onCancel }: AuthCallbac
                 reads the same to a person however it is phrased. */}
             <AuthHeader
               title={t('auth.callback.failedTitle')}
-              subtitle={t('auth.errors.callbackFailed')}
+              subtitle={online ? t('auth.errors.callbackFailed') : t('auth.errors.network')}
             />
             <Button size="lg" className="w-full" onClick={onCancel}>
               {t('auth.callback.backToLogin')}

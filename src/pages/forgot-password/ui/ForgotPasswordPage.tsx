@@ -8,9 +8,10 @@ import {
   authErrorMessage,
   emailErrorKey,
   useAuthGateway,
+  useOnline,
   useValidatedSubmit,
 } from '@/shared/lib'
-import { AuthScreen, Button, EmailField } from '@/shared/ui'
+import { AuthScreen, Button, EmailField, OfflineNotice } from '@/shared/ui'
 import { AuthHeader } from '@/widgets/threshold'
 import { requestPasswordReset } from '@/features/session'
 
@@ -30,6 +31,9 @@ function maskEmail(email: string): string {
 export function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) {
   const { t } = useTranslation()
   const gateway = useAuthGateway()
+  // A reset link is sent by the provider, so this is one of the few screens that cannot work
+  // offline. It says so before the press instead of letting the transport fail into a toast.
+  const online = useOnline()
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
   const [cooldown, setCooldown] = useState(0)
@@ -74,33 +78,33 @@ export function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) {
         {...authEntrance}
         className="flex flex-1 flex-col justify-center gap-8 py-10"
       >
-        <header className="flex flex-col items-center gap-4 text-center">
-          <AuthHeader
-            title={sent ? t('auth.forgot.sentTitle') : t('auth.forgot.title')}
-            subtitle={
-              sent
-                ? t('auth.forgot.sentBody', { email: maskEmail(email.trim()) })
-                : t('auth.forgot.subtitle')
-            }
-            mark={
-              sent ? (
-                <span
-                  aria-hidden
-                  className="grid size-16 place-items-center rounded-full bg-info-surface text-primary shadow-rest"
-                >
-                  <MailCheck className="size-8" />
-                </span>
-              ) : undefined
-            }
-          />
-        </header>
+        <AuthHeader
+          title={sent ? t('auth.forgot.sentTitle') : t('auth.forgot.title')}
+          subtitle={
+            sent
+              ? t('auth.forgot.sentBody', { email: maskEmail(email.trim()) })
+              : t('auth.forgot.subtitle')
+          }
+          mark={
+            sent ? (
+              <span
+                aria-hidden
+                className="grid size-16 place-items-center rounded-full bg-info-surface text-primary shadow-rest"
+              >
+                <MailCheck className="size-8" />
+              </span>
+            ) : undefined
+          }
+        />
+
+        <OfflineNotice />
 
         {sent ? (
           <Button
             variant="secondary"
             size="lg"
             className="w-full"
-            disabled={cooldown > 0}
+            disabled={cooldown > 0 || !online}
             onClick={() => void send()}
           >
             {cooldown > 0
@@ -110,7 +114,7 @@ export function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) {
         ) : (
           <form className="flex flex-col gap-4" onSubmit={onSubmit} noValidate>
             <EmailField value={email} onValueChange={setEmail} error={errors.email} />
-            <Button type="submit" size="lg" className="w-full" disabled={busy}>
+            <Button type="submit" size="lg" className="w-full" disabled={busy || !online}>
               {busy ? t('auth.forgot.submitting') : t('auth.forgot.submit')}
             </Button>
           </form>
