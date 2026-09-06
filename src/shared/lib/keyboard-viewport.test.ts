@@ -3,6 +3,7 @@ import {
   expectKeyboard,
   keyboardHeight,
   keyboardIsMeasured,
+  keyboardOpen,
   REVEAL_GAP,
   startKeyboardViewport,
   subscribeKeyboardHeight,
@@ -215,6 +216,23 @@ describe('keyboard viewport', () => {
 
     expect(keyboardIsMeasured()).toBe(true)
     expect(keyboardHeight()).toBe(114)
+    expect(document.documentElement.hasAttribute('data-keyboard')).toBe(true)
+  })
+
+  it('still reports the keyboard open when the pan has swallowed the whole inset', async () => {
+    // The focused field sitting at the very bottom: the pan equals the keyboard, so nothing of the
+    // shell is left covered and `--kb-inset` is 0. "Is a keyboard up" and "how much does it cover"
+    // are two numbers — deriving the first from the second answers `false` with a keyboard on
+    // screen, and the one consumer (`TypeWords`) then renders its feedback band inline, under it.
+    localStorage.setItem(STORAGE_KEY, '462')
+    const viewport = stubViewport({ height: 793, offsetTop: 0 }, 793)
+    stop = startKeyboardViewport()
+    expectKeyboard(true)
+
+    await viewport.move({ height: 390, offsetTop: 403 })
+
+    expect(keyboardHeight()).toBe(0)
+    expect(keyboardOpen()).toBe(true)
     expect(document.documentElement.hasAttribute('data-keyboard')).toBe(true)
   })
 

@@ -83,6 +83,16 @@ export function keyboardHeight(): number {
 }
 
 /**
+ * Is a keyboard up? The other half of the pair `publish()` keeps apart — this is what
+ * `data-keyboard` is set from, and it is *not* `keyboardHeight() > 0`. When the pan equals the
+ * keyboard's own height, which is what happens with the focused field at the very bottom of the
+ * screen, nothing of the shell is left covered: the inset is 0 while the keyboard is plainly there.
+ */
+export function keyboardOpen(): boolean {
+  return publishedOpen
+}
+
+/**
  * Is `--kb-inset` a measurement, or the remembered height still standing in for one? Probe is the
  * only caller: the two are indistinguishable in a still reading, and a reserve that outlives the
  * keyboard reporting itself is the one fault that puts the whole reveal band off screen.
