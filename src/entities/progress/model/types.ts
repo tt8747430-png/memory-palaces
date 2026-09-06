@@ -44,3 +44,18 @@ export function makeProgress(input: MakeProgressInput): Progress {
     activeDayCount: input.activeDayCount ?? 0,
   }
 }
+
+/**
+ * Repair a stored document on the way in. A `progress` document that arrives over replication was
+ * written by whichever build the other device runs and is stored at the current version untouched,
+ * so a field this build expects can simply be absent. The entity decides what that means, once,
+ * here — not every screen reading it: `StreakPage`, `use-rewards` and `use-home-header-data` each
+ * carried their own `?? 0` / `?? []`, and `mergeProgress` carried none, so a document missing
+ * `trainingDays` threw inside the replication conflict handler.
+ *
+ * `makeProgress` already defaults every field, so completing one is re-making it and keeping the
+ * timestamp it arrived with. Matches `completePreferences` and `completeProfile`.
+ */
+export function completeProgress(progress: Progress): Progress {
+  return { ...makeProgress(progress), updatedAt: progress.updatedAt }
+}

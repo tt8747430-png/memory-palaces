@@ -1,5 +1,5 @@
 export type { Progress, MakeProgressInput } from './model/types'
-export { makeProgress } from './model/types'
+export { completeProgress, makeProgress } from './model/types'
 export { createProgressStore } from './model/store'
 export type { ProgressState, ProgressStore } from './model/store'
 export {
