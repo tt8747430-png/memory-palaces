@@ -69,6 +69,28 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        /**
+         * The three dependencies that dwarf everything else get their own chunks.
+         *
+         * Not to shrink the first load — the app cannot paint without its database, so these are
+         * fetched either way. It is so a deploy that touches app code does not invalidate them:
+         * the service worker precaches by file, and RxDB and Dexie together are ~300 kB that has
+         * not changed since the last release. Grouped by name rather than by importer so the
+         * boundary survives a refactor.
+         */
+        advancedChunks: {
+          groups: [
+            { name: 'persistence', test: /node_modules\/(rxdb|dexie)\// },
+            { name: 'supabase', test: /node_modules\/@supabase\// },
+            { name: 'react', test: /node_modules\/(react|react-dom|scheduler)\// },
+          ],
+        },
+      },
+    },
+  },
   test: {
     environment: 'jsdom',
     globals: false,
