@@ -25,16 +25,18 @@
       content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-visual"
       name="viewport"
     />
-    <!-- Matches --status-cap in each theme; the cap in RootLayout continues this colour downward. -->
+    <!-- Android/Chrome only: iOS ignores theme-color in standalone and paints the status bar from
+       the style below instead. -->
     <meta content="#091A7A" media="(prefers-color-scheme: light)" name="theme-color" />
     <meta content="#0B1533" media="(prefers-color-scheme: dark)" name="theme-color" />
     <meta content="yes" name="mobile-web-app-capable" />
-    <!-- Still the only spelling iOS honours, and black-translucent needs it. Pairs with
-       viewport-fit=cover: the web view runs under the status bar, env(safe-area-inset-top) is
-       then non-zero, and RootLayout's cap has something to fill. Under plain `black` that cap
-       measured 0 and the app drew nothing there. -->
+    <!-- Still the only spelling iOS honours. `black`, not `black-translucent`: translucent runs
+       the web view under the status bar, and iOS then reports env(safe-area-inset-top) late and
+       inconsistently — 0 on first paint, and again on rotate and on keyboard dismiss — so the
+       shell's top edge moved under the clock. Under `black` the web view starts below the status
+       bar, the inset is 0 by construction, and iOS paints the bar itself. -->
     <meta content="yes" name="apple-mobile-web-app-capable" />
-    <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style" />
+    <meta content="black" name="apple-mobile-web-app-status-bar-style" />
     <meta content="Mindscape" name="apple-mobile-web-app-title" />
     <meta
       content="Mindscape — Your Memory Palace. Train recall with the method of loci. Offline-first."

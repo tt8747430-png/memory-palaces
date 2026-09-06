@@ -131,7 +131,9 @@ All four on every async surface — a missing state reads as a crash.
 - **Manifest:** `standalone`, `portrait`, `theme_color #091A7A`, `background_color #ADC8FF`, 192/512 + a **maskable**
   512 (required for Android).
 - **iOS:** `apple-mobile-web-app-*` meta + `apple-touch-icon`. No `beforeinstallprompt` (manual Add to Home Screen);
-  status-bar style limited to `default`/`black`/`black-translucent`; test standalone separately.
+  status-bar style limited to `default`/`black`/`black-translucent`, and the app is on **`black`** — under
+  `black-translucent` the web view runs behind the status bar and iOS reports `env(safe-area-inset-top)` late and
+  inconsistently, so the top edge moved under the clock. Test standalone separately.
 
 ## 13. Service-worker updates
 

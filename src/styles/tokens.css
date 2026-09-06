@@ -162,7 +162,6 @@
   --z-dialog: 500;
   --z-toast: 600;
   --z-splash: 700;
-  --z-status-cap: 800;
   --z-dev-probe: 900;
 
   --p-container-app: 430px;
@@ -208,13 +207,11 @@
   --accent-foreground: var(--p-white);
 
   /**
-   * Chrome that must read as chrome in either theme. A scrim always darkens what is under it, the
-   * status cap always continues the navy of `<meta name="theme-color">`, and the nav is a dark bar
-   * carrying white type. All three used to be built from `--primary`, which is navy in light and
-   * pale blue in dark — so all three inverted, and their white content went with them.
+   * Chrome that must read as chrome in either theme. A scrim always darkens what is under it, and
+   * the nav is a dark bar carrying white type. Both used to be built from `--primary`, which is
+   * navy in light and pale blue in dark — so both inverted, and their white content went with them.
    */
   --scrim: var(--p-navy-900);
-  --status-cap: var(--p-navy-900);
   --nav-surface: var(--p-navy-900);
   --nav-pill: var(--p-white);
   --nav-ink: var(--p-white);
@@ -294,7 +291,6 @@
 
   /* Chrome holds. Only the scrim deepens, because it now dims a dark app rather than a light one. */
   --scrim: oklch(12% 0.04 267);
-  --status-cap: oklch(24.2% 0.113 267.7);
 
   --info-surface: oklch(var(--p-tint-sky) / 0.14);
   --info-foreground: oklch(89% 0.04 267);

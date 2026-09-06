@@ -27,12 +27,6 @@ export function RootLayout() {
 
   return (
     <>
-      <div
-        aria-hidden
-        data-slot="status-cap"
-        className="pointer-events-none fixed inset-x-0 top-0 z-(--z-status-cap) bg-(--status-cap)"
-        style={{ height: 'env(safe-area-inset-top)' }}
-      />
       <div inert={!splashDone} className="contents">
         <Outlet />
         <AppNav />
