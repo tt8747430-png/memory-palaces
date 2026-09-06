@@ -11,11 +11,13 @@
        none (webkit.org/b/259770), so this keeps iOS + Android on one path. Do not "modernise".
        ADR 0002.
 
-       Zoom is decided at boot, not here: installed, the app locks it so a pinch reads as a gesture
-       the app owns rather than a page being scaled; in a browser tab it stays a page and stays
-       zoomable. The script below switches this tag. Either way text-entry controls are 16px
-       (--p-text-entry, theme.css) so iOS never zooms the visual viewport on focus — that zoom
-       would move the ground under every measurement described above. -->
+       No maximum-scale, no user-scalable=no — not even for an installed app. Pinch-zoom is the
+       only way some people read a screen, so removing it fails WCAG 2.2 §1.4.4, and it does not
+       even buy what it used to: WebKit ignores the pair outright, so locking zoom took the
+       gesture away on Android installs alone, which is the one place it was never needed. The
+       measurement immunity it once paid for comes from sizing text-entry controls at 16px
+       (--p-text-entry, theme.css) instead: below that, iOS zooms the visual viewport on focus and
+       moves the ground under every measurement described above. -->
     <meta
       content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-visual"
       name="viewport"
@@ -51,25 +53,6 @@
                 : 'light'
         } catch (_) {
           document.documentElement.dataset.theme = 'light'
-        }
-
-        /* Installed, the app is an app: a pinch is not a page being scaled, and double-tap must not
-         cost a tap its response. In a browser tab it is still a page, so zoom stays — an install
-         is the user asking for the app, and nobody loses the gesture without having asked.
-         iOS reports the home-screen case through navigator.standalone as well as display-mode. */
-        try {
-          var installed =
-            window.matchMedia('(display-mode: standalone)').matches ||
-            window.matchMedia('(display-mode: fullscreen)').matches ||
-            window.navigator.standalone === true
-          if (installed) {
-            document.querySelector('meta[name=viewport]').content =
-              'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no,' +
-              ' viewport-fit=cover, interactive-widget=resizes-visual'
-            document.documentElement.dataset.display = 'installed'
-          }
-        } catch (_) {
-          /* Leave the zoomable default in place. */
         }
       })()
     </script>
