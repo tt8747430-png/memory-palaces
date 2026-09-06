@@ -9,7 +9,7 @@ import { signInWithEmail, type SignInWithEmailInput } from './sign-in-with-email
 import { continueAsGuest } from './continue-as-guest'
 import { signOut } from './sign-out'
 import { requestPasswordReset } from './request-password-reset'
-import { setPassword } from './set-password'
+import { setPassword, type SetPasswordInput } from './set-password'
 
 export interface AuthActions {
   /** Resolves with `sessionActive: false` when the account still needs email confirmation. */
@@ -19,7 +19,8 @@ export interface AuthActions {
   continueAsGuest: () => Promise<void>
   signOut: () => Promise<void>
   requestPasswordReset: (email: string) => Promise<void>
-  setPassword: (password: string) => Promise<void>
+  /** Pass `verify` whenever the person is signed in and knows the old password. */
+  setPassword: (input: SetPasswordInput) => Promise<void>
 }
 
 export function useAuthActions(): AuthActions {
@@ -41,7 +42,7 @@ export function useAuthActions(): AuthActions {
       continueAsGuest: () => continueAsGuest(deps),
       signOut: () => signOut(deps),
       requestPasswordReset: (email) => requestPasswordReset(gateway, email),
-      setPassword: (password) => setPassword(gateway, password),
+      setPassword: (input) => setPassword(gateway, input),
     }
   }, [gateway, sessionStore, profileStore])
 }

@@ -1,8 +1,9 @@
 import { type SyntheticEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { authErrorMessage, isLongEnoughPassword } from '@/shared/lib'
-import { AppScreen, Button, PasswordField, ScreenHeader } from '@/shared/ui'
+import { authErrorMessage, isLongEnoughPassword, useOnline } from '@/shared/lib'
+import { selectEffectiveProfile, useProfileStore } from '@/entities/profile'
+import { AppScreen, Button, OfflineNotice, PasswordField, ScreenHeader } from '@/shared/ui'
 import { useAuthActions } from '@/features/session'
 
 export interface SettingsChangePasswordPageProps {
@@ -21,6 +22,8 @@ export function SettingsChangePasswordPage({
 }: SettingsChangePasswordPageProps) {
   const { t } = useTranslation()
   const { setPassword } = useAuthActions()
+  const online = useOnline()
+  const email = useProfileStore(selectEffectiveProfile).email
   const [current, setCurrent] = useState('')
   const [next, setNext] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -32,8 +35,14 @@ export function SettingsChangePasswordPage({
       : undefined
   const confirmError =
     confirm.length > 0 && confirm !== next ? t('settings.changePasswordScreen.mismatch') : undefined
+  // Changing a password is one of the few things in this app that cannot happen offline, so the
+  // submit says so before the press rather than letting the transport fail into a toast.
   const canSave =
-    (recovery || current.length > 0) && isLongEnoughPassword(next) && confirm === next && !saving
+    (recovery || current.length > 0) &&
+    isLongEnoughPassword(next) &&
+    confirm === next &&
+    !saving &&
+    online
 
   const handleSubmit = async (event: SyntheticEvent) => {
     event.preventDefault()
@@ -41,7 +50,11 @@ export function SettingsChangePasswordPage({
 
     setSaving(true)
     try {
-      await setPassword(next)
+      // Off the recovery path the old password is verified, not merely collected.
+      await setPassword({
+        password: next,
+        ...(recovery ? {} : { verify: { email, currentPassword: current } }),
+      })
     } catch (error) {
       toast.error(authErrorMessage(error, t, t('settings.changePasswordScreen.failed')))
       return
@@ -58,6 +71,7 @@ export function SettingsChangePasswordPage({
 
   return (
     <AppScreen
+      gutter="end"
       header={
         <ScreenHeader
           title={
@@ -71,10 +85,12 @@ export function SettingsChangePasswordPage({
       }
     >
       <form
-        className="mt-4 flex flex-col gap-4 pb-gutter"
+        className="mt-4 flex flex-col gap-4"
         onSubmit={(event) => void handleSubmit(event)}
         noValidate
       >
+        <OfflineNotice />
+
         {recovery ? null : (
           <PasswordField
             id="current-password"
