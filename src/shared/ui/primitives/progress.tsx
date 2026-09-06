@@ -30,14 +30,19 @@ export function Progress({
       className={cn('block h-2 overflow-hidden rounded-full bg-primary/8', className)}
       {...(label ? { 'aria-label': label } : { 'aria-hidden': true })}
     >
+      {/* `scaleX`, not `width`. Width is a layout property: animating it relayouts and repaints the
+          bar on every frame, and every `<Progress>` in the app — the profile hero, each badge, each
+          achievement — runs one at once. `origin-left` is what makes the transform read as filling
+          rather than growing out of the middle. `HeaderTrack` does the same thing for the same
+          reason. CODE_STYLE §9. */}
       <motion.span
         data-slot="progress-indicator"
         className={cn(
-          'block h-full rounded-full bg-linear-to-r from-primary to-accent',
+          'block h-full w-full origin-left rounded-full bg-linear-to-r from-primary to-accent',
           fillClassName,
         )}
-        initial={fillFromZero ? { width: 0 } : false}
-        animate={{ width: `${pct}%` }}
+        initial={fillFromZero ? { scaleX: 0 } : false}
+        animate={{ scaleX: pct / 100 }}
         transition={
           reduce
             ? { duration: 0 }

@@ -26,6 +26,10 @@ export function CardMaturityOverview({ total, counts }: CardMaturityOverviewProp
         {t('study.cardsInDeck', { count: total })}
       </p>
       {total > 0 ? (
+        // Width, and deliberately: the segments are siblings in a flex row whose widths sum to
+        // 100%, so each one moving has to move the next — a transform leaves them overlapping.
+        // §9's rule is about bars that move under the finger; this one changes only when the
+        // deck's card counts do, at most a few segments, off the interaction path.
         <div className="flex h-2 overflow-hidden rounded-full bg-(--divider)" aria-hidden>
           {ORDER.filter((k) => counts[k] > 0).map((k) => (
             <span

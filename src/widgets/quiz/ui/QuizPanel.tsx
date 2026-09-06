@@ -107,9 +107,10 @@ export function QuizPanel({
       >
         <div className="mt-3 flex items-center gap-3">
           <div className="h-2 flex-1 overflow-hidden rounded-full bg-secondary/30">
+            {/* `scaleX`, not `width` — the bar moves on every answer. CODE_STYLE §9. */}
             <motion.div
-              className="h-full rounded-full bg-linear-to-r from-primary to-accent"
-              animate={{ width: `${(reached / state.total) * 100}%` }}
+              className="h-full w-full origin-left rounded-full bg-linear-to-r from-primary to-accent"
+              animate={{ scaleX: reached / state.total }}
               transition={{ duration: 0.3 }}
             />
           </div>
@@ -136,7 +137,7 @@ export function QuizPanel({
                 </div>
                 <div className="min-w-0 flex-1">
                   <Chip className="mb-2">{question.deckName}</Chip>
-                  <h2 className="text-sub font-medium leading-relaxed text-heading">
+                  <h2 className="text-body font-medium leading-relaxed text-heading">
                     {question.prompt}
                   </h2>
                 </div>
