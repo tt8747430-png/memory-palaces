@@ -319,6 +319,10 @@
     scroll-padding-bottom: var(--kb-inset);
   }
 
+  /* `--drawer-keyboard-inset` is Base UI's, published on the drawer viewport under
+       `Drawer.VirtualKeyboardProvider` — a sheet's own keyboard measurement, not this app's, and
+       absent while no sheet is open. `max()`, never `+`: the inset already measures to the
+       accessory bar. */
   .pb-safe-keyboard {
     padding-bottom: max(env(safe-area-inset-bottom), var(--drawer-keyboard-inset, 0px));
   }
