@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Brain, Check, SkipForward, SlidersHorizontal } from 'lucide-react'
 import { cn, SCREEN_SCROLL } from '@/shared/lib'
-import { Button, Card, Chip, IconButton, SessionHeader, SessionScreen } from '@/shared/ui'
+import { Button, Card, Chip, IconButton, StudySessionHeader, StudySessionScreen } from '@/shared/ui'
 import { initQuiz, quizAccuracy, type QuizQuestion, quizReducer } from '@/features/quiz'
 import type { QuizResult } from '../model/types'
 import { QuizComplete } from './QuizComplete'
@@ -14,7 +14,7 @@ import { QuizOption } from './QuizOption'
 
 export type { QuizResult }
 
-export interface QuizSessionProps {
+export interface QuizPanelProps {
   questions: QuizQuestion[]
   title: string
   onBack: () => void
@@ -25,14 +25,14 @@ export interface QuizSessionProps {
 
 const FEEDBACK_MS = 2200
 
-export function QuizSession({
+export function QuizPanel({
   questions,
   title,
   onBack,
   onComplete,
   autoAdvance = true,
   onOpenOptions,
-}: QuizSessionProps) {
+}: QuizPanelProps) {
   const { t } = useTranslation()
   const [state, dispatch] = useReducer(quizReducer, questions.length, initQuiz)
 
@@ -78,8 +78,8 @@ export function QuizSession({
   const reached = (state.status === 'answering' ? state.index : state.total) + (done ? 0 : 1)
 
   return (
-    <SessionScreen>
-      <SessionHeader
+    <StudySessionScreen>
+      <StudySessionHeader
         title={title}
         backLabel={t('quiz.goBack')}
         onBack={onBack}
@@ -120,7 +120,7 @@ export function QuizSession({
             })}
           </span>
         </div>
-      </SessionHeader>
+      </StudySessionHeader>
 
       {answering ? (
         <div className={cn(SCREEN_SCROLL, 'flex-1 space-y-4 px-5 py-5')}>
@@ -205,6 +205,6 @@ export function QuizSession({
           />
         ) : null}
       </AnimatePresence>
-    </SessionScreen>
+    </StudySessionScreen>
   )
 }

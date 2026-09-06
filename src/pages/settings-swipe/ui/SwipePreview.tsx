@@ -141,7 +141,7 @@ function PreviewCaps({ side, ids }: { side: CapSide; ids: SwipeActionId[] }) {
         {ids.length === 0 ? (
           <span
             aria-hidden
-            className="size-8 rounded-[13px] border-2 border-dashed border-border"
+            className="size-8 rounded-tile-slot border-2 border-dashed border-border"
           />
         ) : (
           ids.map((id) => <SortableCap key={id} action={id} />)
@@ -162,7 +162,7 @@ function SortableCap({ action }: { action: SwipeActionId }) {
           {...handleProps}
           aria-label={t('swipe.reorderLabel', { name: t(ACTION_META[action].labelKey as never) })}
           className={cn(
-            'shrink-0 cursor-grab touch-none rounded-[14px] active:cursor-grabbing',
+            'shrink-0 cursor-grab touch-none rounded-tile active:cursor-grabbing',
             isDragging && 'opacity-0',
           )}
         >
@@ -179,7 +179,7 @@ function Cap({ action, floating = false }: { action: SwipeActionId; floating?: b
     <span
       style={{ backgroundColor: accent.fill }}
       className={cn(
-        'grid size-9 place-items-center rounded-[14px] [&_svg]:size-4',
+        'grid size-9 place-items-center rounded-tile [&_svg]:size-4',
         floating && 'scale-105 shadow-elevated',
         accent.ink === 'dark' ? 'text-(--p-navy-900)' : 'text-white',
       )}

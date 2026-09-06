@@ -1,5 +1,5 @@
 import { AppScreen } from './AppScreen'
-import { ScreenHeader } from './ScreenHeader'
+import { ScreenHeader } from './header'
 
 export interface MissingScreenProps {
   /** What the user came looking for, e.g. "Deck not found". */

@@ -189,7 +189,7 @@ describe('useKeyboardReveal', () => {
 
     const shell = document.createElement('div')
     const header = document.createElement('header')
-    header.dataset.slot = 'header-bar'
+    header.dataset.slot = 'header'
     const scroll = document.createElement('div')
     const field = document.createElement('input')
     scroll.appendChild(field)

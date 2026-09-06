@@ -74,7 +74,7 @@ export function BandDiagram({ sample, className }: { sample: ViewportSample; cla
         {hasField && !offScale ? (
           <div
             className={cn(
-              'absolute inset-x-6 rounded-xs',
+              'absolute inset-x-6 rounded-hairline',
               sample.revealDelta === 0
                 ? 'bg-(--success-on-surface)'
                 : 'bg-(--danger-on-surface) ring-2 ring-(--danger-on-surface)/40',

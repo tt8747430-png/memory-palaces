@@ -1,7 +1,15 @@
 import { useTranslation } from 'react-i18next'
 import { Archive, Flame } from 'lucide-react'
 import { cn, levelFromXp } from '@/shared/lib'
-import { Avatar, HeaderBar, IconButton, NotificationBell, Progress } from '@/shared/ui'
+import {
+  AppHeader,
+  Avatar,
+  HeaderActions,
+  HeaderBar,
+  IconButton,
+  NotificationBell,
+  Progress,
+} from '@/shared/ui'
 
 export interface HomeHeaderProps {
   name: string
@@ -37,49 +45,51 @@ export function HomeHeader({
   const xpToNext = t('home.xpToNext', { remaining, next: level + 1 })
 
   return (
-    <HeaderBar>
-      <button
-        type="button"
-        onClick={onOpenProfile}
-        aria-label={`${name} — ${t('home.level', { level })}, ${xpToNext}. ${t('home.openProfile')}`}
-        className="flex min-w-0 flex-1 items-center gap-3 text-left transition-transform active:scale-[0.98]"
-      >
-        <span className="grid size-12 shrink-0 place-items-center rounded-full border border-(--border-glass) bg-card-glass shadow-rest">
-          <Avatar name={name} src={avatar} className="size-11 text-sub" />
-        </span>
-        <span className="flex min-w-0 flex-1 flex-col gap-1">
-          <span className="truncate text-sub font-bold leading-tight tracking-tight text-heading">
-            {t(`home.${greetingKey(new Date().getHours())}`)}
+    <AppHeader>
+      <HeaderBar>
+        <button
+          type="button"
+          onClick={onOpenProfile}
+          aria-label={`${name} — ${t('home.level', { level })}, ${xpToNext}. ${t('home.openProfile')}`}
+          className="flex min-w-0 flex-1 items-center gap-3 text-left transition-transform active:scale-[0.98]"
+        >
+          <span className="grid size-12 shrink-0 place-items-center rounded-full border border-(--border-glass) bg-card-glass shadow-rest">
+            <Avatar name={name} src={avatar} className="size-11 text-sub" />
           </span>
-          <span className="flex items-center gap-2">
-            <span className="shrink-0 text-label font-semibold text-primary">
-              {t('home.level', { level })}
+          <span className="flex min-w-0 flex-1 flex-col gap-1">
+            <span className="truncate text-sub font-bold leading-tight tracking-tight text-heading">
+              {t(`home.${greetingKey(new Date().getHours())}`)}
             </span>
-            <Progress
-              value={fill}
-              className="h-1.5 w-full max-w-35 bg-secondary/40"
-              label={xpToNext}
-            />
+            <span className="flex items-center gap-2">
+              <span className="shrink-0 text-label font-semibold text-primary">
+                {t('home.level', { level })}
+              </span>
+              <Progress
+                value={fill}
+                className="h-1.5 w-full max-w-35 bg-secondary/40"
+                label={xpToNext}
+              />
+            </span>
           </span>
-        </span>
-      </button>
+        </button>
 
-      <div className="flex shrink-0 items-center gap-1">
-        {streak && onOpenStreak ? (
-          <StreakButton streak={streak} onOpenStreak={onOpenStreak} />
-        ) : null}
-        <NotificationBell
-          unreadCount={unreadCount}
-          label={t('notifications.openLabel')}
-          onClick={onOpenNotifications}
-        />
-        {onOpenArchived ? (
-          <IconButton variant="glass" aria-label={t('home.archive')} onClick={onOpenArchived}>
-            <Archive className="size-5" aria-hidden />
-          </IconButton>
-        ) : null}
-      </div>
-    </HeaderBar>
+        <HeaderActions>
+          {streak && onOpenStreak ? (
+            <StreakButton streak={streak} onOpenStreak={onOpenStreak} />
+          ) : null}
+          <NotificationBell
+            unreadCount={unreadCount}
+            label={t('notifications.openLabel')}
+            onClick={onOpenNotifications}
+          />
+          {onOpenArchived ? (
+            <IconButton variant="glass" aria-label={t('home.archive')} onClick={onOpenArchived}>
+              <Archive className="size-5" aria-hidden />
+            </IconButton>
+          ) : null}
+        </HeaderActions>
+      </HeaderBar>
+    </AppHeader>
   )
 }
 

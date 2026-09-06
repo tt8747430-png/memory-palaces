@@ -77,7 +77,7 @@ export function StreakSummary({
                 damping: 24,
               }}
               className={cn(
-                'grid size-9 place-items-center rounded-[14px]',
+                'grid size-9 place-items-center rounded-tile',
                 day.trained
                   ? 'bg-warning shadow-interactive'
                   : day.isToday

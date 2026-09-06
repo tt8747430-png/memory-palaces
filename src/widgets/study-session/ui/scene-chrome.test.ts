@@ -50,8 +50,9 @@ const ROOTS = [
   ...Object.keys(sources).filter(
     (path) => path.startsWith('/src/widgets/study-session/ui/') && paintsInScene(path),
   ),
-  // The header is shared, but it is drawn inside the scene like everything else here.
-  '/src/shared/ui/SessionScreen.tsx',
+  // The frame and its bar are shared, but they are drawn inside the scene like everything else.
+  '/src/shared/ui/StudySessionScreen.tsx',
+  '/src/shared/ui/header/StudySessionHeader.tsx',
   // The style page's preview pane and every preset thumbnail render this one component.
   '/src/pages/deck-card-style/ui/StylePreview.tsx',
 ]

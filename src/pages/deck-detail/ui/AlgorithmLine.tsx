@@ -10,7 +10,7 @@ export interface AlgorithmLineProps {
 
 /**
  * The deck says out loud which algorithm it follows, because everything else on the screen — the
- * counts, the chips, the footer in the session — reads differently depending on the answer.
+ * counts, the chips, the footer in the study session — reads differently depending on the answer.
  */
 export function AlgorithmLine({ value, onChange }: AlgorithmLineProps) {
   const { t } = useTranslation()

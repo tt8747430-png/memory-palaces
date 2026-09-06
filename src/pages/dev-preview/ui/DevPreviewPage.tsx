@@ -2,7 +2,6 @@ import { type ReactNode, useEffect, useRef, useState } from 'react'
 import {
   ArrowUpDown,
   Bell,
-  ChevronLeft,
   Clock,
   Copy,
   Flame,
@@ -17,6 +16,7 @@ import { AppearanceFields } from '@/widgets/appearance-form'
 import { cn } from '@/shared/lib'
 import {
   ActionSheet,
+  AppHeader,
   AppScreen,
   AuthField,
   Avatar,
@@ -32,6 +32,10 @@ import {
   FolderGlyph,
   GlassCard,
   GradeButtons,
+  HeaderBack,
+  HeaderBar,
+  HeaderSubtitle,
+  HeaderTitle,
   IconButton,
   IconColorRow,
   Input,
@@ -448,22 +452,18 @@ export function DevPreviewPage({ onBack }: { onBack?: () => void }) {
     <AppScreen
       scrollRef={setScrollNode}
       header={
-        <header
-          data-slot="header-bar"
-          className="border-b border-border bg-card/80 backdrop-blur-md"
+        <AppHeader
+          onBack={onBack}
+          backLabel="Back"
+          title="Kitchen sink"
+          subtitle="Component states — dev only · CODE_STYLE.md §11"
         >
-          <div className="mx-auto w-full max-w-app px-5 pt-safe">
-            <div className="flex items-start justify-between gap-3 pt-3">
-              {onBack ? (
-                <IconButton variant="glass" aria-label="Back" onClick={onBack} className="shrink-0">
-                  <ChevronLeft className="size-5" aria-hidden />
-                </IconButton>
-              ) : null}
+          <div className="mx-auto w-full max-w-app px-5">
+            <HeaderBar layout="study" className="items-start gap-3">
+              <HeaderBack className="shrink-0" />
               <div className="flex min-w-0 flex-1 flex-col">
-                <span className="text-title font-bold text-heading">Kitchen sink</span>
-                <span className="text-label text-muted-foreground">
-                  Component states — dev only · CODE_STYLE.md §11
-                </span>
+                <HeaderTitle className="text-title font-bold" />
+                <HeaderSubtitle className="text-muted-foreground" />
               </div>
               <SegmentedControl
                 aria-label="Preview theme"
@@ -476,7 +476,7 @@ export function DevPreviewPage({ onBack }: { onBack?: () => void }) {
                 }))}
                 className="w-45 shrink-0"
               />
-            </div>
+            </HeaderBar>
             <nav
               aria-label="Sections"
               className="-mx-1.5 mt-3 flex gap-2 overflow-x-auto p-1.5 scrollbar-hide"
@@ -499,7 +499,7 @@ export function DevPreviewPage({ onBack }: { onBack?: () => void }) {
               ))}
             </nav>
           </div>
-        </header>
+        </AppHeader>
       }
     >
       <div className="flex flex-col gap-8 pt-4 pb-32">

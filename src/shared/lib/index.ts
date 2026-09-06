@@ -70,6 +70,7 @@ export {
   REVEAL_SCROLL_ATTR,
   type RevealBand,
 } from './use-keyboard-reveal'
+export { CHROME } from './use-keyboard-reveal'
 export { keepFieldFocused, TEXT_ENTRY } from './keep-field-focused'
 export { SCREEN_SCROLL } from './screen-scroll'
 export { useVirtualKeyboard, type VirtualKeyboard } from './use-virtual-keyboard'

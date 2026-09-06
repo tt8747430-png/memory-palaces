@@ -2,8 +2,9 @@ import { cn, type RecallSlot } from '@/shared/lib'
 
 const CORRECT = 'text-(--success-foreground)'
 const STRUCK =
-  'rounded-md bg-(--danger-surface) px-1 text-(--danger-on-surface) line-through decoration-2'
-const EXPECTED = 'rounded-md bg-(--warning-surface) px-1 font-semibold text-(--warning-foreground)'
+  'rounded-mark bg-(--danger-surface) px-1 text-(--danger-on-surface) line-through decoration-2'
+const EXPECTED =
+  'rounded-mark bg-(--warning-surface) px-1 font-semibold text-(--warning-foreground)'
 
 export function RecallTokens({ slots }: { slots: RecallSlot[] }) {
   return (

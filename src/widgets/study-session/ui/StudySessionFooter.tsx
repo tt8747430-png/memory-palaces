@@ -1,19 +1,19 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import type { FastOutcome } from '@/entities/card'
-import type { Buckets, SessionMode } from '@/features/review'
+import type { Buckets, StudySessionMode } from '@/features/review'
 import type { SrsState, SrsStatus } from '@/shared/lib'
 import { cn, srsStatus } from '@/shared/lib'
 import { GradeButtons } from '@/shared/ui'
 import type { Grade } from '@/shared/lib'
 import { FastReviewFooter } from './FastReviewFooter'
-import { SessionFooterShell } from './SessionFooterShell'
+import { StudySessionFooterShell } from './StudySessionFooterShell'
 
 export type RemainingTally = Record<SrsStatus, number>
 
-export interface SessionFooterProps {
+export interface StudySessionFooterProps {
   flipped: boolean
-  mode: SessionMode
+  mode: StudySessionMode
   srs: SrsState | undefined
   now: number
   remaining: RemainingTally
@@ -22,7 +22,7 @@ export interface SessionFooterProps {
   onAnswer: (outcome: FastOutcome) => void
 }
 
-export function SessionFooter({
+export function StudySessionFooter({
   flipped,
   mode,
   srs,
@@ -31,7 +31,7 @@ export function SessionFooter({
   buckets,
   onGrade,
   onAnswer,
-}: SessionFooterProps) {
+}: StudySessionFooterProps) {
   const reduce = useReducedMotion()
   const crossfade = { duration: reduce ? 0 : 0.12 }
 
@@ -49,7 +49,7 @@ export function SessionFooter({
   }
 
   return (
-    <SessionFooterShell>
+    <StudySessionFooterShell>
       <div className="h-14">
         <AnimatePresence initial={false} mode="wait">
           {flipped ? (
@@ -77,7 +77,7 @@ export function SessionFooter({
           )}
         </AnimatePresence>
       </div>
-    </SessionFooterShell>
+    </StudySessionFooterShell>
   )
 }
 

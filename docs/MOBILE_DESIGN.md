@@ -24,7 +24,7 @@ token, never a raw width. Breakpoints used in a handful of places by design.
 ## 2. Safe areas, viewport, keyboard
 
 - `viewport-fit=cover` renders under the notch and home indicator — you **must** pad for insets.
-- **Use the `theme.css` safe-area utilities**; compose `AppScreen`/`Sheet`/`HeaderBar`/`SpeedDial` rather than
+- **Use the `theme.css` safe-area utilities**; compose `AppScreen`/`Sheet`/`Header`/`SpeedDial` rather than
   hand-rolling padding.
 - **Keyboard:** keep the **focused input and the header** visible — the scroll body reveals the field, the shell stays
   anchored to the screen and the keyboard covers its bottom ([ADR 0002](adr/0002-keyboard-covers-the-app.md)). A page

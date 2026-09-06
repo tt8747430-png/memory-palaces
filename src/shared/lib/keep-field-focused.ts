@@ -10,7 +10,7 @@ export const TEXT_ENTRY = 'input, textarea, [contenteditable="true"], .allow-sel
  *
  * A tap landing in another field is left alone — that one is meant to move focus.
  *
- * `HeaderBar`, `FooterBar`, `DrawerHeader` and `DrawerFooter` install it themselves; a page action
+ * `Header`, `FooterBar`, `DrawerHeader` and `DrawerFooter` install it themselves; a page action
  * inherits the guard and must not re-add it.
  */
 export function keepFieldFocused(event: MouseEvent<HTMLElement>) {

@@ -3,14 +3,14 @@ import {
   canUndo,
   type CompleteState,
   currentId,
-  initSession,
+  initStudySession,
   type ReviewState,
-  sessionReducer,
-  type SessionState,
-} from './session-machine'
+  studySessionReducer,
+  type StudySessionState,
+} from './study-session-machine'
 
 function review(ids: string[]): ReviewState {
-  const state = initSession({ ids, mode: 'spaced' })
+  const state = initStudySession({ ids, mode: 'spaced' })
   if (state.status !== 'review') throw new Error('expected a review session')
   return state
 }
@@ -28,7 +28,7 @@ const done = (over: Partial<Omit<CompleteState, 'status'>> = {}): CompleteState 
   ...over,
 })
 
-describe('initSession', () => {
+describe('initStudySession', () => {
   it('builds a review session from a queue', () => {
     expect(review(['a', 'b', 'c'])).toEqual({
       status: 'review',
@@ -46,51 +46,51 @@ describe('initSession', () => {
 
 describe('flip', () => {
   it('toggles the visible face', () => {
-    const flipped = sessionReducer(review(['a']), { type: 'flip' })
+    const flipped = studySessionReducer(review(['a']), { type: 'flip' })
     expect(flipped.status === 'review' && flipped.flipped).toBe(true)
   })
 
   it('is a no-op once complete', () => {
     const complete = done()
-    expect(sessionReducer(complete, { type: 'flip' })).toBe(complete)
+    expect(studySessionReducer(complete, { type: 'flip' })).toBe(complete)
   })
 })
 
 describe('reveal', () => {
   it('shows the answer one-way', () => {
-    const revealed = sessionReducer(review(['a']), { type: 'reveal' })
+    const revealed = studySessionReducer(review(['a']), { type: 'reveal' })
     expect(revealed.status === 'review' && revealed.flipped).toBe(true)
   })
 
   it('is idempotent once revealed', () => {
-    const revealed = sessionReducer(review(['a']), { type: 'reveal' })
-    expect(sessionReducer(revealed, { type: 'reveal' })).toBe(revealed)
+    const revealed = studySessionReducer(review(['a']), { type: 'reveal' })
+    expect(studySessionReducer(revealed, { type: 'reveal' })).toBe(revealed)
   })
 
   it('is a no-op once complete', () => {
     const complete = done()
-    expect(sessionReducer(complete, { type: 'reveal' })).toBe(complete)
+    expect(studySessionReducer(complete, { type: 'reveal' })).toBe(complete)
   })
 })
 
 describe('unflip', () => {
   it('returns a flipped card to the front', () => {
-    const flipped = sessionReducer(review(['a']), { type: 'flip' })
-    const front = sessionReducer(flipped, { type: 'unflip' })
+    const flipped = studySessionReducer(review(['a']), { type: 'flip' })
+    const front = studySessionReducer(flipped, { type: 'unflip' })
     expect(front.status === 'review' && front.flipped).toBe(false)
   })
 
   it('is a no-op on an unflipped card and once complete', () => {
     const state = review(['a'])
-    expect(sessionReducer(state, { type: 'unflip' })).toBe(state)
+    expect(studySessionReducer(state, { type: 'unflip' })).toBe(state)
     const complete = done()
-    expect(sessionReducer(complete, { type: 'unflip' })).toBe(complete)
+    expect(studySessionReducer(complete, { type: 'unflip' })).toBe(complete)
   })
 })
 
 describe('grade', () => {
   it('good dequeues the card, advances, counts it known, resets the flip', () => {
-    const next = sessionReducer(
+    const next = studySessionReducer(
       { ...review(['a', 'b']), flipped: true },
       { type: 'grade', grade: 'good' },
     )
@@ -117,19 +117,19 @@ describe('grade', () => {
   })
 
   it('again requeues the card to the back without counting it graded', () => {
-    const next = sessionReducer(review(['a', 'b']), { type: 'grade', grade: 'again' })
+    const next = studySessionReducer(review(['a', 'b']), { type: 'grade', grade: 'again' })
     expect(next.status === 'review' && next.queue).toEqual(['b', 'a'])
     expect(next.status === 'review' && next.graded).toBe(0)
     expect(next.status === 'review' && next.piles.learning).toBe(1)
   })
 
   it('hard counts toward the learning pile', () => {
-    const next = sessionReducer(review(['a', 'b']), { type: 'grade', grade: 'hard' })
+    const next = studySessionReducer(review(['a', 'b']), { type: 'grade', grade: 'hard' })
     expect(next.status === 'review' && next.piles).toEqual({ learning: 1, known: 0 })
   })
 
   it('completes when the last card leaves the queue', () => {
-    const next = sessionReducer(review(['a']), { type: 'grade', grade: 'easy' })
+    const next = studySessionReducer(review(['a']), { type: 'grade', grade: 'easy' })
     expect(next).toEqual({
       status: 'complete',
       mode: 'spaced',
@@ -151,20 +151,20 @@ describe('grade', () => {
 
   it('is ignored once complete', () => {
     const complete = done({ graded: 0, piles: { learning: 0, known: 0 } })
-    expect(sessionReducer(complete, { type: 'grade', grade: 'good' })).toBe(complete)
+    expect(studySessionReducer(complete, { type: 'grade', grade: 'good' })).toBe(complete)
   })
 })
 
 describe('skip', () => {
   it('rotates the current review card to the back', () => {
-    const next = sessionReducer(review(['a', 'b', 'c']), { type: 'skip' })
+    const next = studySessionReducer(review(['a', 'b', 'c']), { type: 'skip' })
     expect(next.status === 'review' && next.queue).toEqual(['b', 'c', 'a'])
     expect(next.status === 'review' && next.graded).toBe(0)
   })
 
   it('unflips a single-card queue in place', () => {
     const one = { ...review(['a']), flipped: true }
-    const next = sessionReducer(one, { type: 'skip' })
+    const next = studySessionReducer(one, { type: 'skip' })
     expect(next.status === 'review' && next.queue).toEqual(['a'])
     expect(next.status === 'review' && next.flipped).toBe(false)
   })
@@ -173,17 +173,17 @@ describe('skip', () => {
 describe('undo', () => {
   it('is a no-op at the session start', () => {
     const start = review(['a', 'b'])
-    expect(sessionReducer(start, { type: 'undo' })).toBe(start)
+    expect(studySessionReducer(start, { type: 'undo' })).toBe(start)
     expect(canUndo(start)).toBe(false)
   })
 
   it('steps back a graded card, restoring its position, tallies, and revealed face', () => {
-    const graded = sessionReducer(
+    const graded = studySessionReducer(
       { ...review(['a', 'b']), flipped: true },
       { type: 'grade', grade: 'good' },
     )
     expect(canUndo(graded)).toBe(true)
-    const back = sessionReducer(graded, { type: 'undo' })
+    const back = studySessionReducer(graded, { type: 'undo' })
     expect(back).toEqual({
       status: 'review',
       mode: 'spaced',
@@ -198,45 +198,45 @@ describe('undo', () => {
   })
 
   it('reverses an again requeue', () => {
-    const again = sessionReducer(review(['a', 'b']), { type: 'grade', grade: 'again' })
+    const again = studySessionReducer(review(['a', 'b']), { type: 'grade', grade: 'again' })
     expect(again.status === 'review' && again.queue).toEqual(['b', 'a'])
-    const back = sessionReducer(again, { type: 'undo' })
+    const back = studySessionReducer(again, { type: 'undo' })
     expect(back.status === 'review' && back.queue).toEqual(['a', 'b'])
     expect(back.status === 'review' && back.piles.learning).toBe(0)
   })
 
   it('steps back repeatedly to the session start', () => {
-    let state: SessionState = review(['a', 'b', 'c'])
-    state = sessionReducer(state, { type: 'grade', grade: 'good' })
-    state = sessionReducer(state, { type: 'grade', grade: 'hard' })
+    let state: StudySessionState = review(['a', 'b', 'c'])
+    state = studySessionReducer(state, { type: 'grade', grade: 'good' })
+    state = studySessionReducer(state, { type: 'grade', grade: 'hard' })
     expect(state.status === 'review' && state.queue).toEqual(['c'])
-    state = sessionReducer(state, { type: 'undo' })
-    state = sessionReducer(state, { type: 'undo' })
+    state = studySessionReducer(state, { type: 'undo' })
+    state = studySessionReducer(state, { type: 'undo' })
     expect(state).toEqual(review(['a', 'b', 'c']))
     expect(canUndo(state)).toBe(false)
   })
 
   it('re-enters review from a completed session', () => {
-    const complete = sessionReducer(review(['a']), { type: 'grade', grade: 'good' })
+    const complete = studySessionReducer(review(['a']), { type: 'grade', grade: 'good' })
     expect(complete.status).toBe('complete')
-    const back = sessionReducer(complete, { type: 'undo' })
+    const back = studySessionReducer(complete, { type: 'undo' })
     expect(back.status).toBe('review')
     expect(currentId(back)).toBe('a')
     expect(back.status === 'review' && back.graded).toBe(0)
   })
 
   it('reverses a skip', () => {
-    const skipped = sessionReducer(review(['a', 'b', 'c']), { type: 'skip' })
+    const skipped = studySessionReducer(review(['a', 'b', 'c']), { type: 'skip' })
     expect(skipped.status === 'review' && skipped.queue).toEqual(['b', 'c', 'a'])
-    const back = sessionReducer(skipped, { type: 'undo' })
+    const back = studySessionReducer(skipped, { type: 'undo' })
     expect(back.status === 'review' && back.queue).toEqual(['a', 'b', 'c'])
   })
 })
 
 describe('finish + reset', () => {
   it('finish completes a review with its running tallies', () => {
-    const mid = sessionReducer(review(['a', 'b']), { type: 'grade', grade: 'good' })
-    const finished = sessionReducer(mid, { type: 'finish' })
+    const mid = studySessionReducer(review(['a', 'b']), { type: 'grade', grade: 'good' })
+    const finished = studySessionReducer(mid, { type: 'finish' })
     expect(finished.status).toBe('complete')
     expect(finished.graded).toBe(1)
     expect(finished.piles).toEqual({ learning: 0, known: 1 })
@@ -244,7 +244,7 @@ describe('finish + reset', () => {
 
   it('reset replaces the whole machine state', () => {
     const fresh = review(['x'])
-    expect(sessionReducer(review(['a']), { type: 'reset', state: fresh })).toBe(fresh)
+    expect(studySessionReducer(review(['a']), { type: 'reset', state: fresh })).toBe(fresh)
   })
 })
 
@@ -256,7 +256,7 @@ describe('selectors', () => {
 })
 
 describe('fast review', () => {
-  const start = () => initSession({ ids: ['a', 'b', 'c'], mode: 'fast' })
+  const start = () => initStudySession({ ids: ['a', 'b', 'c'], mode: 'fast' })
 
   it('starts every card outside both buckets', () => {
     const state = start()
@@ -264,7 +264,7 @@ describe('fast review', () => {
   })
 
   it('sends a Not quite card back into the queue', () => {
-    const state = sessionReducer(start(), { type: 'answer', outcome: 'notQuite' })
+    const state = studySessionReducer(start(), { type: 'answer', outcome: 'notQuite' })
     if (state.status !== 'review') throw new Error('expected review')
     expect(state.queue).toContain('a')
     expect(state.queue[0]).toBe('b')
@@ -272,40 +272,40 @@ describe('fast review', () => {
   })
 
   it('retires a Got it card', () => {
-    const state = sessionReducer(start(), { type: 'answer', outcome: 'gotIt' })
+    const state = studySessionReducer(start(), { type: 'answer', outcome: 'gotIt' })
     if (state.status !== 'review') throw new Error('expected review')
     expect(state.queue).not.toContain('a')
     expect(state.buckets.gotIt).toEqual(['a'])
   })
 
   it('counts a card once however often it comes round', () => {
-    let state: SessionState = initSession({ ids: ['a'], mode: 'fast' })
-    state = sessionReducer(state, { type: 'answer', outcome: 'notQuite' })
-    state = sessionReducer(state, { type: 'answer', outcome: 'notQuite' })
+    let state: StudySessionState = initStudySession({ ids: ['a'], mode: 'fast' })
+    state = studySessionReducer(state, { type: 'answer', outcome: 'notQuite' })
+    state = studySessionReducer(state, { type: 'answer', outcome: 'notQuite' })
     if (state.status !== 'review') throw new Error('expected review')
     expect(state.buckets.notQuite).toEqual(['a'])
   })
 
   it('moves a card out of Not quite when the learner finally gets it', () => {
-    let state: SessionState = initSession({ ids: ['a'], mode: 'fast' })
-    state = sessionReducer(state, { type: 'answer', outcome: 'notQuite' })
-    state = sessionReducer(state, { type: 'answer', outcome: 'gotIt' })
+    let state: StudySessionState = initStudySession({ ids: ['a'], mode: 'fast' })
+    state = studySessionReducer(state, { type: 'answer', outcome: 'notQuite' })
+    state = studySessionReducer(state, { type: 'answer', outcome: 'gotIt' })
     expect(state.status).toBe('complete')
     expect(state.buckets).toEqual({ notQuite: [], gotIt: ['a'] })
   })
 
   it('completes only when every card has been got', () => {
-    let state: SessionState = initSession({ ids: ['a', 'b'], mode: 'fast' })
-    state = sessionReducer(state, { type: 'answer', outcome: 'gotIt' })
+    let state: StudySessionState = initStudySession({ ids: ['a', 'b'], mode: 'fast' })
+    state = studySessionReducer(state, { type: 'answer', outcome: 'gotIt' })
     expect(state.status).toBe('review')
-    state = sessionReducer(state, { type: 'answer', outcome: 'gotIt' })
+    state = studySessionReducer(state, { type: 'answer', outcome: 'gotIt' })
     expect(state.status).toBe('complete')
   })
 
   it('undoes an answer, buckets and all', () => {
-    let state: SessionState = start()
-    state = sessionReducer(state, { type: 'answer', outcome: 'gotIt' })
-    state = sessionReducer(state, { type: 'undo' })
+    let state: StudySessionState = start()
+    state = studySessionReducer(state, { type: 'answer', outcome: 'gotIt' })
+    state = studySessionReducer(state, { type: 'undo' })
     if (state.status !== 'review') throw new Error('expected review')
     expect(state.queue).toEqual(['a', 'b', 'c'])
     expect(state.buckets.gotIt).toEqual([])

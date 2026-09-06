@@ -5,7 +5,7 @@ import { useDeck } from '@/entities/deck'
 import { cardsInSubtree, deckPath, selectIsReady } from '@/shared/lib'
 import { MatchBoard } from '@/widgets/match'
 import { type MatchCard } from '@/features/match'
-import { useSessionReward } from '@/widgets/session-reward'
+import { useStudySessionReward } from '@/widgets/study-session-reward'
 import { MissingScreen, ScreenLoading } from '@/shared/ui'
 
 export type MatchScope = { kind: 'deck'; deckId: string }
@@ -17,7 +17,7 @@ export interface MatchPageProps {
 
 export function MatchPage({ scope, onBack }: MatchPageProps) {
   const { t } = useTranslation()
-  const reward = useSessionReward()
+  const reward = useStudySessionReward()
 
   const { decks, deck } = useDeck(scope.deckId)
   const allCards = useCardStore(selectCards)

@@ -3,7 +3,14 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Check, Puzzle, RotateCcw, Timer, Zap } from 'lucide-react'
 import { cn, EASE_EXPO, SCREEN_SCROLL, success } from '@/shared/lib'
-import { Button, Chip, Empty, IconButton, SessionHeader, SessionScreen } from '@/shared/ui'
+import {
+  Button,
+  Chip,
+  Empty,
+  IconButton,
+  StudySessionHeader,
+  StudySessionScreen,
+} from '@/shared/ui'
 import {
   buildTiles,
   initMatch,
@@ -73,8 +80,8 @@ export function MatchBoard({ cards, subtitle, onBack, onComplete }: MatchBoardPr
   const board = state.tiles.filter((tile) => !state.matched.includes(tile.id))
 
   return (
-    <SessionScreen>
-      <SessionHeader
+    <StudySessionScreen>
+      <StudySessionHeader
         title={t('match.title')}
         subtitle={subtitle}
         backLabel={t('match.goBack')}
@@ -92,7 +99,7 @@ export function MatchBoard({ cards, subtitle, onBack, onComplete }: MatchBoardPr
           </Chip>
           <Chip>{t('match.pairsLeft', { count: remainingPairs(state) })}</Chip>
         </div>
-      </SessionHeader>
+      </StudySessionHeader>
 
       <p className="px-5 pb-2 pt-3 text-center text-label font-medium text-muted-foreground">
         {t('match.instruction')}
@@ -172,6 +179,6 @@ export function MatchBoard({ cards, subtitle, onBack, onComplete }: MatchBoardPr
           </motion.div>
         ) : null}
       </AnimatePresence>
-    </SessionScreen>
+    </StudySessionScreen>
   )
 }

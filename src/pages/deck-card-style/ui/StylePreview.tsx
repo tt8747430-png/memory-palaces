@@ -12,7 +12,7 @@ export interface StylePreviewProps {
 
 /**
  * The card as the learner will meet it, painted from the same custom properties the study card
- * reads — so what the preview promises is what the session delivers.
+ * reads — so what the preview promises is what the study session delivers.
  */
 export function StylePreview({ style, front, back, className, compact }: StylePreviewProps) {
   const vars = resolveCardStyle(style) as CSSProperties

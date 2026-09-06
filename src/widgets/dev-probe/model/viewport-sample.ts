@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
+  CHROME,
   isTextField,
   keyboardIsMeasured,
   revealOffset,
@@ -70,9 +71,8 @@ export function readViewport(): ViewportSample {
   const scroller = attached ?? document.querySelector('main')
   // Exactly the lookups `useKeyboardReveal` makes, so the band below is the band it would use.
   const header =
-    scroller?.parentElement?.querySelector('[data-slot="header-bar"]') ??
-    document.querySelector('[data-slot="header-bar"]')
-  const footer = scroller?.querySelector('[data-slot="footer-bar"]')
+    scroller?.parentElement?.querySelector(CHROME.header) ?? document.querySelector(CHROME.header)
+  const footer = scroller?.querySelector(CHROME.footer)
   const rect = active instanceof HTMLElement ? active.getBoundingClientRect() : undefined
   const headerRect = header?.getBoundingClientRect()
   const scrollerRect = scroller?.getBoundingClientRect()

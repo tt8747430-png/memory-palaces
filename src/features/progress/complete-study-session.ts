@@ -2,14 +2,14 @@ import { levelFromXp, nowIso, recordPractice } from '@/shared/lib'
 import type { Progress, ProgressStore } from '@/entities/progress'
 import { currentProgress } from './current-progress'
 
-export interface CompleteSessionOptions {
+export interface CompleteStudySessionOptions {
   xp: number
   itemsPracticed: number
   dailyGoal: number
   quizAccuracy?: number
 }
 
-export interface SessionReward {
+export interface StudySessionReward {
   xpGained: number
   leveledUp: boolean
   level: number
@@ -22,11 +22,11 @@ export interface SessionReward {
   quizAccuracy?: number
 }
 
-export async function completeSession(
+export async function completeStudySession(
   store: ProgressStore,
-  options: CompleteSessionOptions,
+  options: CompleteStudySessionOptions,
   now: number = Date.now(),
-): Promise<SessionReward> {
+): Promise<StudySessionReward> {
   const base = currentProgress(store, now)
   const beforeLevel = levelFromXp(base.xp).level
   const gained = Math.max(0, Math.round(options.xp))

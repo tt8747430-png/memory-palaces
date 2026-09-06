@@ -18,10 +18,8 @@ export { FolderGlyph } from './FolderGlyph'
 export type { FolderGlyphProps } from './FolderGlyph'
 export { Empty } from './primitives'
 export type { EmptyProps } from './primitives'
-export { ScreenHeader } from './ScreenHeader'
-export type { ScreenHeaderProps } from './ScreenHeader'
-export { SessionScreen, SessionHeader } from './SessionScreen'
-export type { SessionScreenProps, SessionHeaderProps } from './SessionScreen'
+export { StudySessionScreen } from './StudySessionScreen'
+export type { StudySessionScreenProps } from './StudySessionScreen'
 export { ActionPill, SlotCount } from './ActionPill'
 export type { ActionPillProps } from './ActionPill'
 export { OptionGroup, RadioDot } from './OptionGroup'
@@ -30,8 +28,6 @@ export { TextButton } from './TextButton'
 export type { TextButtonProps } from './TextButton'
 export { ToggleRow } from './ToggleRow'
 export type { ToggleRowProps } from './ToggleRow'
-export { SelectHeader } from './SelectHeader'
-export type { SelectHeaderProps } from './SelectHeader'
 export { SelectDot } from './SelectDot'
 export type { SelectDotProps } from './SelectDot'
 export { StackedDragPreview } from './StackedDragPreview'
@@ -47,8 +43,34 @@ export type { SelectToolbarDockProps } from './SelectToolbarDock'
 export { actionIcon } from './action-icon'
 export { bulkAction, selectActionIcon } from './select-actions'
 export type { SelectActionHandlers, SelectActionHandler } from './select-actions'
-export { HeaderBar } from './HeaderBar'
-export type { HeaderBarProps } from './HeaderBar'
+export {
+  AppHeader,
+  Header,
+  HeaderActions,
+  HeaderBack,
+  HeaderBar,
+  HeaderCount,
+  HeaderHeading,
+  HeaderSpacer,
+  HeaderSubtitle,
+  HeaderTitle,
+  HeaderTrack,
+  ScreenHeader,
+  SelectHeader,
+  StudySessionHeader,
+  useHeader,
+} from './header'
+export type {
+  HeaderBackProps,
+  HeaderContextValue,
+  HeaderLayout,
+  HeaderProgress,
+  HeaderProps,
+  HeaderSubject,
+  ScreenHeaderProps,
+  SelectHeaderProps,
+  StudySessionHeaderProps,
+} from './header'
 export { FooterBar } from './FooterBar'
 export { NotificationBell } from './NotificationBell'
 export type { NotificationBellProps } from './NotificationBell'
