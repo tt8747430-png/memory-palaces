@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  buildDayCells,
   type DailyTally,
   dayKey,
   recordPractice,
@@ -182,29 +181,5 @@ describe('recordPractice', () => {
 describe('totalTrainingDays', () => {
   it('counts distinct days', () => {
     expect(totalTrainingDays(['2026-01-01', '2026-01-01', '2026-01-02'])).toBe(2)
-  })
-})
-
-describe('buildDayCells', () => {
-  it('returns `count` days ending today, oldest first', () => {
-    const cells = buildDayCells([], 7, NOW)
-    expect(cells).toHaveLength(7)
-    expect(cells[0]?.key).toBe('2026-01-04')
-    expect(cells[6]?.key).toBe('2026-01-10')
-    expect(cells[6]?.isToday).toBe(true)
-    expect(cells[0]?.isToday).toBe(false)
-  })
-
-  it('marks the days that were trained (and only on/before today)', () => {
-    const cells = buildDayCells(['2026-01-08', '2026-01-10', '2026-01-20'], 7, NOW)
-    expect(cells.find((cell) => cell.key === '2026-01-08')?.trained).toBe(true)
-    expect(cells.find((cell) => cell.key === '2026-01-09')?.trained).toBe(false)
-    expect(cells[6]?.trained).toBe(true)
-  })
-
-  it('exposes a three-letter weekday and its initial', () => {
-    const today = buildDayCells([], 1, NOW)[0]
-    expect(today?.weekdayShort).toBe('Sat')
-    expect(today?.weekdayInitial).toBe('S')
   })
 })

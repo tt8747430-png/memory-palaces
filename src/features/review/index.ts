@@ -9,7 +9,6 @@ export {
   type StudyFilter,
   type StudyFilterCounts,
 } from './study-filter'
-export { reinsertAhead, REINSERT_AHEAD } from './fast-review'
 export {
   initStudySession,
   studySessionReducer,

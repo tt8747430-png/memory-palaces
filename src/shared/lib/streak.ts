@@ -1,4 +1,4 @@
-import { DAY_MS, nowIso } from './clock'
+import { nowIso } from './clock'
 
 export interface StreakState {
   streakCount: number
@@ -129,42 +129,4 @@ export function recordPractice(
 
 export function totalTrainingDays(trainingDays: string[]): number {
   return new Set(trainingDays).size
-}
-
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
-
-export interface DayCell {
-  key: string
-  weekdayShort: string
-  weekdayInitial: string
-  isToday: boolean
-  trained: boolean
-  future: boolean
-}
-
-function makeDayCell(ms: number, trained: Set<string>, todayKey: string): DayCell {
-  const key = dayKey(ms)
-  const weekday = WEEKDAYS[new Date(ms).getUTCDay()] ?? 'Sun'
-  return {
-    key,
-    weekdayShort: weekday,
-    weekdayInitial: weekday.charAt(0),
-    isToday: key === todayKey,
-    future: key > todayKey,
-    trained: trained.has(key) && key <= todayKey,
-  }
-}
-
-export function buildDayCells(
-  trainingDays: readonly string[],
-  count: number,
-  now: number,
-): DayCell[] {
-  const trained = new Set(trainingDays)
-  const todayKey = dayKey(now)
-  const cells: DayCell[] = []
-  for (let i = count - 1; i >= 0; i--) {
-    cells.push(makeDayCell(now - i * DAY_MS, trained, todayKey))
-  }
-  return cells
 }

@@ -1,4 +1,3 @@
-import { useRef } from 'react'
 import { Smile } from 'lucide-react'
 import { cn } from '@/shared/lib'
 
@@ -24,7 +23,6 @@ function lastGrapheme(input: string): string {
 }
 
 export function EmojiField({ value, onChange, className, ...rest }: EmojiFieldProps) {
-  const ref = useRef<HTMLInputElement>(null)
   const commit = (raw: string) => {
     const next = lastGrapheme(raw.trim())
     if (next && PICTOGRAPHIC.test(next)) onChange(next)
@@ -38,21 +36,20 @@ export function EmojiField({ value, onChange, className, ...rest }: EmojiFieldPr
       )}
     >
       {value ? (
-        <span aria-hidden className="text-3xl leading-none">
+        <span aria-hidden className="text-glyph-2xl leading-none">
           {value}
         </span>
       ) : (
         <Smile aria-hidden className="size-6 text-muted-foreground" />
       )}
       <input
-        ref={ref}
         value={value}
         onChange={(event) => commit(event.target.value)}
         inputMode="text"
         autoComplete="off"
         autoCapitalize="none"
         spellCheck={false}
-        className="absolute inset-0 size-full cursor-pointer rounded-card text-center text-3xl text-transparent caret-transparent outline-none"
+        className="absolute inset-0 size-full cursor-pointer rounded-card text-center text-glyph-2xl text-transparent caret-transparent outline-none"
         {...rest}
       />
     </span>

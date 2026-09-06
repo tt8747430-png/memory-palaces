@@ -8,7 +8,6 @@ export interface DeckCoverProps {
   variant?: 'identity' | 'brand'
   className?: string
   iconClassName?: string
-  hideIcon?: boolean
 }
 
 export function DeckCover({
@@ -17,8 +16,7 @@ export function DeckCover({
   image,
   variant = 'identity',
   className,
-  iconClassName = 'text-2xl',
-  hideIcon = false,
+  iconClassName = 'text-glyph-xl',
 }: DeckCoverProps) {
   if (image) {
     return (
@@ -28,14 +26,12 @@ export function DeckCover({
           style={{ backgroundImage: `url(${image})` }}
         />
         <div className="absolute inset-0 bg-linear-to-t from-[color-mix(in_oklch,var(--scrim)_45%,transparent)] via-transparent to-[color-mix(in_oklch,var(--scrim)_12%,transparent)]" />
-        {!hideIcon ? (
-          <span
-            className={cn('absolute bottom-1 right-1.5 drop-shadow', iconClassName)}
-            style={{ fontSize: '0.7em' }}
-          >
-            {icon}
-          </span>
-        ) : null}
+        <span
+          className={cn('absolute bottom-1 right-1.5 drop-shadow', iconClassName)}
+          style={{ fontSize: '0.7em' }}
+        >
+          {icon}
+        </span>
       </div>
     )
   }
@@ -48,7 +44,7 @@ export function DeckCover({
           className,
         )}
       >
-        {!hideIcon ? <span className={iconClassName}>{icon}</span> : null}
+        <span className={iconClassName}>{icon}</span>
       </div>
     )
   }
@@ -69,7 +65,7 @@ export function DeckCover({
       )}
       style={style}
     >
-      {!hideIcon ? <span className={iconClassName}>{icon}</span> : null}
+      <span className={iconClassName}>{icon}</span>
     </div>
   )
 }

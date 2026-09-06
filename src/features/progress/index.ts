@@ -1,4 +1,4 @@
-export { currentProgress, PROGRESS_ID } from './current-progress'
+export { PROGRESS_ID } from './current-progress'
 export {
   completeStudySession,
   type CompleteStudySessionOptions,

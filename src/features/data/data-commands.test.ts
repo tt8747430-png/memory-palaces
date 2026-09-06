@@ -11,7 +11,9 @@ import {
   makeNotification,
 } from '@/entities/notification'
 import { PROGRESS_ID } from '@/features/progress'
-import { clearAllContent, resetEverything, resetProgress } from './index'
+import { clearAllContent } from './clear-content'
+import { resetProgress } from './reset-progress'
+import { resetEverything } from './index'
 
 const at = (ms: number) => new Date(ms).toISOString()
 const NOW = Date.UTC(2026, 0, 1)

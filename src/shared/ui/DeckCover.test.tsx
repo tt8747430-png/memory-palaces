@@ -19,9 +19,4 @@ describe('DeckCover', () => {
     expect(layer).not.toBeNull()
     expect(layer?.getAttribute('style')).toContain('cover.png')
   })
-
-  it('hides the icon when hideIcon is set', () => {
-    renderWithProviders(<DeckCover icon="🗺️" color="from-rose-500 to-pink-600" hideIcon />)
-    expect(screen.queryByText('🗺️')).toBeNull()
-  })
 })

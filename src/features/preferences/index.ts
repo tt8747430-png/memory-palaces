@@ -1,1 +1,1 @@
-export { setPreferences, PREFERENCES_ID } from './set-preferences'
+export { setPreferences } from './set-preferences'
