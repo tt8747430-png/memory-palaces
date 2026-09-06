@@ -68,13 +68,13 @@ export function ProfilePage({
             avatar={profile.avatar}
             xp={xp}
             streakCount={streakCount}
-            palaceCount={topLevelDecks.length}
+            deckCount={topLevelDecks.length}
             joinedYear={session?.createdAt ? joinedYearOf(session.createdAt) : null}
             onEditProfile={() => onEditProfile?.()}
             onOpenStreak={() => onOpenStreak?.()}
           />
 
-          <div className="mt-8 flex min-h-[calc(100dvh-20rem)] flex-col gap-8">
+          <div className="mt-8 flex min-h-[calc(var(--app-height)-20rem)] flex-col gap-8">
             {milestone ? (
               <NextMilestoneCard badge={milestone} onOpen={() => onOpenBadge?.(milestone.id)} />
             ) : null}

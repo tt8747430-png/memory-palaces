@@ -28,7 +28,7 @@ export function AchievementsPage({ onBack, onOpenAchievement }: AchievementsPage
       label: t('achievementsPage.records.accuracy'),
     },
     {
-      id: 'rooms',
+      id: 'decks',
       value: String(totals.decksCompleted),
       label: t('achievementsPage.records.decks'),
     },
@@ -38,7 +38,7 @@ export function AchievementsPage({ onBack, onOpenAchievement }: AchievementsPage
   return (
     <AppScreen
       fill
-      className="pb-28"
+      gutter="end"
       header={
         <ScreenHeader
           title={t('achievementsPage.title')}

@@ -12,7 +12,7 @@ function renderHero(props: Partial<ProfileHeroProps> = {}) {
     username: 'ada',
     xp: 600,
     streakCount: 5,
-    palaceCount: 3,
+    deckCount: 3,
     joinedYear: 2026,
     onEditProfile: () => {},
     onOpenStreak: () => {},
@@ -37,7 +37,7 @@ describe('ProfileHero', () => {
   })
 
   it('shows the streak, XP and decks headline stats', () => {
-    renderHero({ streakCount: 5, xp: 4600, palaceCount: 7 })
+    renderHero({ streakCount: 5, xp: 4600, deckCount: 7 })
     expect(screen.getByText('5')).toBeInTheDocument()
     expect(screen.getByText('4,600')).toBeInTheDocument()
     expect(screen.getByText('7')).toBeInTheDocument()
@@ -75,7 +75,7 @@ describe('ProfileHero', () => {
           avatar="data:image/jpeg;base64,zzz"
           xp={0}
           streakCount={0}
-          palaceCount={0}
+          deckCount={0}
           joinedYear={null}
           onEditProfile={() => {}}
           onOpenStreak={() => {}}

@@ -26,13 +26,13 @@ const stroke = {
 
 const GLOW = 'drop-shadow(0 0 12px oklch(83.2% 0.083 264.3 / 0.55))'
 
-export interface PalaceThresholdProps {
+export interface ThresholdProps {
   className?: string
   tone?: 'dark' | 'light'
   animated?: boolean
 }
 
-export function Threshold({ className, tone = 'dark', animated = true }: PalaceThresholdProps) {
+export function Threshold({ className, tone = 'dark', animated = true }: ThresholdProps) {
   const reduce = useReducedMotion()
   const isStatic = !animated || !!reduce
   const isLight = tone === 'light'

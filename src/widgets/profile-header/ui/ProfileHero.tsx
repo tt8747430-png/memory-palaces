@@ -11,7 +11,7 @@ export interface ProfileHeroProps {
   avatar?: string | null
   xp: number
   streakCount: number
-  palaceCount: number
+  deckCount: number
   joinedYear: number | null
   onEditProfile: () => void
   onOpenStreak: () => void
@@ -23,7 +23,7 @@ export function ProfileHero({
   avatar,
   xp,
   streakCount,
-  palaceCount,
+  deckCount,
   joinedYear,
   onEditProfile,
   onOpenStreak,
@@ -65,7 +65,7 @@ export function ProfileHero({
         <Avatar
           name={name}
           src={avatar}
-          className="relative size-26 rounded-full border-[3px] border-white/70 text-[40px] shadow-featured"
+          className="relative size-26 rounded-full border-[3px] border-white/70 text-glyph-3xl shadow-featured"
         />
       </motion.button>
 
@@ -74,7 +74,7 @@ export function ProfileHero({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: EASE_OUT }}
         className="mt-4
-        text-sub font-medium text-muted-foreground"
+        text-body font-medium text-muted-foreground"
       >
         {subtitle}
       </motion.p>
@@ -99,7 +99,7 @@ export function ProfileHero({
         />
         <Stat
           icon={<Building2 className="size-4 text-primary" aria-hidden />}
-          value={String(palaceCount)}
+          value={String(deckCount)}
           label={t('profile.tiles.decks')}
         />
       </motion.div>
