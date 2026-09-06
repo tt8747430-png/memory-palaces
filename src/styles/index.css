@@ -5,6 +5,18 @@
  * fingerprints these woff2 files into `dist/assets`, where Workbox's `globPatterns` picks them up.
  */
 @import '@fontsource-variable/lexend/index.css';
-@import 'tailwindcss';
+
+/**
+ * `source(none)` + explicit sources: Tailwind's automatic detection scans the whole repo, so every
+ * class name written *about* the app in `docs/` and `.scratch/` was compiled into the app. That is
+ * where `pb-24`, `pb-28`, `pb-32` and `pb-[max(1rem,env(safe-area-inset-bottom))]` came from — the
+ * flat bottom paddings `AppScreen`'s gutter replaced, still shipping months after the last call
+ * site went — along with `padding-bottom: max(.75rem, env(…))`, an actual ellipsis character, from
+ * a prose elision in a code fence. Utilities the app cannot use, in the stylesheet it downloads.
+ */
+@import 'tailwindcss' source(none);
+@source '../../index.html';
+@source '../';
+
 @import './tokens.css';
 @import './theme.css';
