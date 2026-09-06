@@ -92,7 +92,7 @@ describe('DeckContentEditor', () => {
     await screen.findByText('seed')
 
     await user.click(screen.getByRole('button', { name: /add to deck/i }))
-    await user.click(screen.getByRole('button', { name: /add card/i }))
+    await user.click(await screen.findByRole('menuitem', { name: /add card/i }))
 
     expect(onAddCard).toHaveBeenCalledOnce()
   })

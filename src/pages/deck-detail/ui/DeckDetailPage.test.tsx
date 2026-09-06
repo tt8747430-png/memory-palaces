@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
 import { InMemoryRepository } from '@/shared/api'
@@ -93,5 +94,29 @@ describe('DeckDetailPage', () => {
     renderPage({ algorithm: 'fast' })
     expect(await screen.findByText('Learning algorithm:')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Fast review' })).toBeInTheDocument()
+  })
+
+  it('filters the cards from the header search, and offers a way out of a dead end', async () => {
+    const user = userEvent.setup()
+    renderPage({ algorithm: 'fast' }, [
+      card('c1', { front: 'Momentum', back: 'mass times velocity' }),
+      card('c2', { front: 'Entropy', back: 'disorder' }),
+    ])
+
+    await user.click(await screen.findByRole('button', { name: /search cards/i }))
+    await user.type(screen.getByRole('searchbox', { name: /search cards/i }), 'entro')
+
+    expect(screen.getByText('Entropy')).toBeInTheDocument()
+    expect(screen.queryByText('Momentum')).toBeNull()
+
+    // A search that matches nothing has to offer its own exit — `NoResults` was unreachable
+    // before the screen passed `searchQuery` at all.
+    await user.clear(screen.getByRole('searchbox', { name: /search cards/i }))
+    await user.type(screen.getByRole('searchbox', { name: /search cards/i }), 'zzzz')
+    expect(screen.getByText(/no matches/i)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /clear search/i }))
+    expect(screen.getByText('Momentum')).toBeInTheDocument()
+    expect(screen.queryByRole('searchbox')).toBeNull()
   })
 })

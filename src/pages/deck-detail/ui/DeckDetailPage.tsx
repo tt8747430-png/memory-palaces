@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Settings } from 'lucide-react'
+import { Search, Settings } from 'lucide-react'
 import { useDeck, useDeckStoreApi } from '@/entities/deck'
 import { selectCards, useCardStore } from '@/entities/card'
 import { questionsForDeck, selectQuestions, useQuestionStore } from '@/entities/question'
@@ -22,6 +22,7 @@ import {
   IconButton,
   ScreenHeader,
   ScreenLoading,
+  SearchField,
   SelectHeader,
   StudyOverviewCard,
 } from '@/shared/ui'
@@ -77,6 +78,17 @@ export function DeckDetailPage({
     void setPreferences(prefStore, { contentSort: value })
   const selection = useMultiSelect()
 
+  // Search is a mode, not a permanent field: a deck of six cards does not want a search box over
+  // it, and the band costs the list its height while it is open. `DeckContentEditor` has taken
+  // `searchQuery` / `searching` / `onClearSearch` since it was written — nothing ever passed them,
+  // so its filter, its `NoResults` state and both `!searching` gates were unreachable.
+  const [searching, setSearching] = useState(false)
+  const [query, setQuery] = useState('')
+  const closeSearch = () => {
+    setSearching(false)
+    setQuery('')
+  }
+
   if (!ready) {
     return <ScreenLoading />
   }
@@ -95,6 +107,7 @@ export function DeckDetailPage({
 
   return (
     <AppScreen
+      gutter="dial"
       header={
         selection.active ? (
           <SelectHeader selection={selection} />
@@ -104,29 +117,55 @@ export function DeckDetailPage({
             onBack={onBack}
             backLabel={t('common.back')}
             action={
-              onOpenSettings ? (
-                <IconButton
-                  variant="glass"
-                  aria-label={t('deck.settings')}
-                  onClick={onOpenSettings}
-                >
-                  <Settings className="size-5" aria-hidden />
-                </IconButton>
-              ) : null
+              <span className="flex items-center gap-1">
+                {hasContent ? (
+                  <IconButton
+                    variant="glass"
+                    aria-label={t('cards.searchCards')}
+                    aria-expanded={searching}
+                    onClick={() => (searching ? closeSearch() : setSearching(true))}
+                  >
+                    <Search className="size-5" aria-hidden />
+                  </IconButton>
+                ) : null}
+                {onOpenSettings ? (
+                  <IconButton
+                    variant="glass"
+                    aria-label={t('deck.settings')}
+                    onClick={onOpenSettings}
+                  >
+                    <Settings className="size-5" aria-hidden />
+                  </IconButton>
+                ) : null}
+              </span>
             }
           />
         )
       }
+      pinned={
+        searching && !selection.active ? (
+          <div className="px-5 pb-3">
+            <SearchField
+              autoFocus
+              value={query}
+              onValueChange={setQuery}
+              placeholder={t('cards.searchCards')}
+              closeLabel={t('cards.closeSearch')}
+              onClose={closeSearch}
+            />
+          </div>
+        ) : null
+      }
     >
-      <div className="mt-2 space-y-4 pb-24">
-        {!selection.active ? (
+      <div className="mt-2 space-y-4">
+        {!selection.active && !searching ? (
           <AlgorithmLine
             value={settings.algorithm}
             onChange={(algorithm) => void updateDeckSettings(deckStore, deckId, { algorithm })}
           />
         ) : null}
 
-        {hasContent && !selection.active ? (
+        {hasContent && !selection.active && !searching ? (
           <StudyOverviewCard
             variant={settings.algorithm}
             count={overview.count}
@@ -137,7 +176,7 @@ export function DeckDetailPage({
           />
         ) : null}
 
-        {(hasContent || questions.length > 0) && !selection.active ? (
+        {(hasContent || questions.length > 0) && !selection.active && !searching ? (
           <PracticeModes
             cardCount={subtreeCards.length}
             questionCount={questions.length}
@@ -151,6 +190,9 @@ export function DeckDetailPage({
           <DeckContentEditor
             deckId={deckId}
             algorithm={settings.algorithm}
+            searchQuery={query}
+            searching={searching}
+            onClearSearch={closeSearch}
             selection={selection}
             sort={prefs.contentSort}
             onSortChange={setContentSort}
