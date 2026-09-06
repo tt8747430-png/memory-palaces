@@ -3,10 +3,10 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Check } from 'lucide-react'
 import { selectQuestions, useQuestionStore, useQuestionStoreApi } from '@/entities/question'
-import { findEntity } from '@/shared/lib'
+import { findEntity, selectIsReady } from '@/shared/lib'
 import { useDeck } from '@/entities/deck'
 import { createQuestion, editQuestion } from '@/features/question'
-import { AppScreen, Button, ScreenHeader } from '@/shared/ui'
+import { AppScreen, Button, ScreenHeader, ScreenLoading } from '@/shared/ui'
 import {
   buildQuestionData,
   isQuestionValid,
@@ -29,6 +29,7 @@ export function QuestionEditorPage({
 }: QuestionEditorPageProps) {
   const { t } = useTranslation()
   const questionStore = useQuestionStoreApi()
+  const questionsReady = useQuestionStore(selectIsReady)
   const questions = useQuestionStore(selectQuestions)
   const { deck } = useDeck(deckId)
 
@@ -71,6 +72,10 @@ export function QuestionEditorPage({
     }
     onDone()
   }
+
+  // Editing an existing question off a cold start, `editing` is null until the snapshot lands, so
+  // the form paints as "new question" and then re-seeds underneath.
+  if (!questionsReady) return <ScreenLoading />
 
   return (
     <AppScreen

@@ -5,8 +5,8 @@ import { Check, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
 import { selectDecks, useDeckStore } from '@/entities/deck'
 import { createCard, editCard } from '@/features/card'
-import { cardsInSubtree, cn, findEntity } from '@/shared/lib'
-import { AppScreen, FooterBar, ScreenHeader } from '@/shared/ui'
+import { cardsInSubtree, cn, findEntity, selectIsReady } from '@/shared/lib'
+import { AppScreen, FooterBar, ScreenHeader, ScreenLoading } from '@/shared/ui'
 import { CardFields, useCardDraft } from '@/widgets/content-editor'
 
 export interface CardEditorPageProps {
@@ -19,6 +19,8 @@ export interface CardEditorPageProps {
 export function CardEditorPage({ deckId, cardId, onBack, onNavigateCard }: CardEditorPageProps) {
   const { t } = useTranslation()
   const cardStore = useCardStoreApi()
+  const cardsReady = useCardStore(selectIsReady)
+  const decksReady = useDeckStore(selectIsReady)
   const allCards = useCardStore(selectCards)
   const decks = useDeckStore(selectDecks)
 
@@ -68,6 +70,10 @@ export function CardEditorPage({ deckId, cardId, onBack, onNavigateCard }: CardE
   }
 
   const showNav = Boolean(editing && onNavigateCard && deckCards.length > 1)
+
+  // Editing an existing card off a cold start, `editing` is null until the snapshot lands, so the
+  // form paints as "new card" — empty fields, the wrong title — and then re-seeds underneath.
+  if (!cardsReady || !decksReady) return <ScreenLoading />
 
   return (
     <AppScreen
@@ -141,7 +147,7 @@ function SaveButton({
       onClick={onClick}
       aria-label={saved ? t('cards.editor.saved') : idleLabel}
       className={cn(
-        'flex h-11 shrink-0 items-center gap-1.5 rounded-control px-5 text-sub font-semibold text-primary-foreground shadow-interactive',
+        'flex h-11 shrink-0 items-center gap-1.5 rounded-control px-5 text-body font-semibold text-primary-foreground shadow-interactive',
         'transition-[background-color,transform] duration-200 ease-out active:scale-[0.97]',
         'disabled:pointer-events-none disabled:opacity-50',
         saved ? 'bg-success' : 'bg-primary',
@@ -182,14 +188,15 @@ function DeckNav({
       <div className="flex items-center justify-between gap-2">
         <DeckNavButton side="prev" label={prevLabel} disabled={!hasPrev} onClick={onPrev} />
         <div className="flex flex-col items-center gap-1.5">
-          <span className="text-sub font-bold tabular-nums text-heading">
+          <span className="text-body font-bold tabular-nums text-heading">
             {position + 1}
             <span className="font-semibold text-muted-foreground"> / {total}</span>
           </span>
           <span className="block h-1 w-16 overflow-hidden rounded-full bg-border" aria-hidden>
+            {/* `scaleX`, not `width` — a transform does not relayout. CODE_STYLE §9. */}
             <span
-              className="block h-full rounded-full bg-accent transition-[width] duration-300 ease-out"
-              style={{ width: `${progress}%` }}
+              className="block h-full w-full origin-left rounded-full bg-accent transition-transform duration-300 ease-out"
+              style={{ transform: `scaleX(${progress / 100})` }}
             />
           </span>
         </div>
@@ -216,7 +223,7 @@ function DeckNavButton({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        'inline-flex h-11 items-center gap-1 rounded-control bg-secondary px-3.5 text-sub font-semibold text-secondary-foreground',
+        'inline-flex h-11 items-center gap-1 rounded-control bg-secondary px-3.5 text-body font-semibold text-secondary-foreground',
         'transition-transform duration-200 ease-out active:scale-95',
         'disabled:pointer-events-none disabled:bg-transparent disabled:text-muted-foreground disabled:opacity-50',
       )}

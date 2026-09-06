@@ -2,10 +2,10 @@ import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion, useReducedMotion } from 'motion/react'
 import { CalendarCheck, Flame } from 'lucide-react'
-import { dayKey } from '@/shared/lib'
+import { dayKey, selectIsReady } from '@/shared/lib'
 import { selectProgress, useProgressStore } from '@/entities/progress'
 import { StreakCalendar } from '@/widgets/streak-calendar'
-import { AppScreen, Card, ScreenHeader } from '@/shared/ui'
+import { AppScreen, Card, ScreenHeader, ScreenLoading } from '@/shared/ui'
 
 export interface StreakPageProps {
   onBack?: () => void
@@ -14,6 +14,7 @@ export interface StreakPageProps {
 export function StreakPage({ onBack }: StreakPageProps = {}) {
   const { t } = useTranslation()
   const reduce = useReducedMotion()
+  const ready = useProgressStore(selectIsReady)
   const progress = useProgressStore(selectProgress)
   const [now] = useState(() => Date.now())
 
@@ -26,18 +27,18 @@ export function StreakPage({ onBack }: StreakPageProps = {}) {
     return trainingDays.filter((day) => day.startsWith(prefix)).length
   }, [trainingDays, now])
 
+  // Without this, a cold start paints a 40-day streak as `0` and "Start today", then flips.
+  if (!ready) return <ScreenLoading />
+
   return (
     <AppScreen
-      className="pb-28"
+      gutter="end"
       header={
         <ScreenHeader title={t('streak.title')} onBack={onBack} backLabel={t('common.back')} />
       }
     >
       <div className="mt-2 flex flex-col gap-5">
-        <section
-          className="relative overflow-hidden rounded-card-featured p-6"
-          style={{ background: 'var(--warning-surface)' }}
-        >
+        <section className="relative overflow-hidden rounded-card-featured bg-(--warning-surface) p-6">
           <Flame
             className="pointer-events-none absolute -right-4 -top-3 size-44 text-warning opacity-25"
             fill="currentColor"
@@ -48,7 +49,7 @@ export function StreakPage({ onBack }: StreakPageProps = {}) {
               initial={reduce ? false : { opacity: 0, scale: 0.85 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ type: 'spring', stiffness: 260, damping: 18 }}
-              className="text-[64px] font-extrabold leading-none tabular-nums text-(--warning-foreground)"
+              className="text-figure-xl font-extrabold leading-none tabular-nums text-(--warning-foreground)"
             >
               {streakCount}
             </motion.p>
@@ -105,7 +106,7 @@ function StreakStatCard({
         {icon}
       </span>
       <div className="min-w-0">
-        <p className="text-[22px] font-bold leading-none tabular-nums text-heading">{value}</p>
+        <p className="text-figure-sm font-bold leading-none tabular-nums text-heading">{value}</p>
         <p className="mt-1 text-label font-medium leading-tight text-muted-foreground">{label}</p>
       </div>
     </Card>

@@ -12,8 +12,9 @@ import {
   markAllNotificationsRead,
   removeNotification,
 } from '@/features/notification'
+import { selectIsReady } from '@/shared/lib'
 import { NotificationsPanel } from '@/widgets/notifications-panel'
-import { AppScreen, FlyoutMenu, ScreenHeader, type SheetAction } from '@/shared/ui'
+import { AppScreen, FlyoutMenu, ScreenHeader, ScreenLoading, type SheetAction } from '@/shared/ui'
 
 export interface NotificationsPageProps {
   onBack?: () => void
@@ -22,6 +23,7 @@ export interface NotificationsPageProps {
 export function NotificationsPage({ onBack }: NotificationsPageProps = {}) {
   const { t } = useTranslation()
   const store = useNotificationStoreApi()
+  const ready = useNotificationStore(selectIsReady)
   const notifications = useNotificationStore(selectNotifications)
   const unreadCount = useNotificationStore(selectUnreadCount)
   const count = notifications.length
@@ -49,8 +51,13 @@ export function NotificationsPage({ onBack }: NotificationsPageProps = {}) {
     },
   ]
 
+  // Without this the "No notifications yet" empty state flashes on a cold start, and the header's
+  // overflow menu appears a beat later.
+  if (!ready) return <ScreenLoading />
+
   return (
     <AppScreen
+      gutter="end"
       header={
         <ScreenHeader
           title={t('notifications.title')}
@@ -74,7 +81,7 @@ export function NotificationsPage({ onBack }: NotificationsPageProps = {}) {
         />
       }
     >
-      <div className="mt-2 pb-28">
+      <div className="mt-2">
         <NotificationsPanel notifications={notifications} onRemove={handleRemove} />
       </div>
     </AppScreen>
