@@ -32,10 +32,7 @@ export function AppNav() {
   useLayoutEffect(() => {
     if (!showNav) return
     const root = document.documentElement
-    root.style.setProperty(
-      '--app-bottom-inset',
-      'calc(max(0.75rem, env(safe-area-inset-bottom)) + 4rem)',
-    )
+    root.style.setProperty('--app-bottom-inset', 'calc(var(--p-safe-bottom) + 4rem)')
     return () => {
       root.style.removeProperty('--app-bottom-inset')
     }
@@ -48,7 +45,7 @@ export function AppNav() {
           key="app-nav"
           aria-label={t('nav.label')}
           className={cn(
-            'fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 z-(--z-nav) -translate-x-1/2',
+            'fixed bottom-(--p-safe-bottom) left-1/2 z-(--z-nav) -translate-x-1/2',
             // WebKit re-clamps bottom-anchored fixed boxes to the visual viewport when the
             // keyboard shows, which floats the nav mid-screen over the content being typed into.
             'in-data-keyboard:hidden',

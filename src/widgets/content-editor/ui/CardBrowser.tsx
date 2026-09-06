@@ -101,7 +101,7 @@ export function CardBrowser({
                 >
                   <X className="size-5" aria-hidden />
                 </Dialog.Close>
-                <Dialog.Title className="rounded-pill bg-card-glass px-4 py-1.5 text-label font-bold tabular-nums text-heading ring-1 ring-(--border-glass) shadow-rest">
+                <Dialog.Title className="rounded-full bg-card-glass px-4 py-1.5 text-label font-bold tabular-nums text-heading ring-1 ring-(--border-glass) shadow-rest">
                   {t('cards.browser.position', { current: deck.index + 1, total: cards.length })}
                 </Dialog.Title>
                 <FlyoutMenu
@@ -125,7 +125,7 @@ export function CardBrowser({
                 ref={shellRef}
                 className="relative flex flex-1 items-center px-5 pb-2 perspective-[1400px]"
               >
-                <div className="relative h-[clamp(340px,62vh,560px)] w-full">
+                <div className="relative h-[clamp(340px,calc(var(--app-height)*0.62),560px)] w-full">
                   {deck.ahead.map((queued, i) => (
                     <QueuedPreview
                       key={queued.id}
@@ -167,7 +167,7 @@ export function CardBrowser({
                 </div>
               </div>
 
-              <div className="flex items-center justify-between px-6 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2">
+              <div className="flex items-center justify-between px-6 pb-(--p-safe-bottom) pt-2">
                 <button
                   type="button"
                   onClick={() => deck.go(-1)}
@@ -183,7 +183,7 @@ export function CardBrowser({
                 <button
                   type="button"
                   onClick={() => onEdit(current.id)}
-                  className="flex h-12 items-center gap-2 rounded-control bg-primary px-6 text-sub font-semibold text-primary-foreground shadow-interactive transition-transform active:scale-[0.97]"
+                  className="flex h-12 items-center gap-2 rounded-control bg-primary px-6 text-body font-semibold text-primary-foreground shadow-interactive transition-transform active:scale-[0.97]"
                 >
                   <Pencil className="size-4.5" aria-hidden />
                   {t('common.edit')}

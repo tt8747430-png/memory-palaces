@@ -128,7 +128,7 @@ export function CardFace({
         </div>
       </div>
 
-      <footer className="flex min-h-13 shrink-0 touch-none items-center justify-between gap-2 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-1.5">
+      <footer className="flex min-h-13 shrink-0 touch-none items-center justify-between gap-2 px-3 pb-(--p-safe-bottom) pt-1.5">
         <ModeButton mode={mode} onClick={onChangeMode} />
         <div className="flex min-w-0 flex-1 flex-wrap items-center justify-center gap-2">
           {footer}
@@ -273,7 +273,7 @@ export function WorkPrompt({ prompt, tip }: { prompt: string; tip?: string }) {
   return (
     <>
       <div className="shrink-0 text-center">
-        <h2 className="text-balance wrap-break-word text-[clamp(18px,5vw,22px)] font-bold leading-tight tracking-[-0.01em] text-heading">
+        <h2 className="text-balance wrap-break-word text-card-title font-bold leading-tight tracking-[-0.01em] text-heading">
           {prompt}
         </h2>
         {tip ? <TipRow tip={tip} /> : null}
