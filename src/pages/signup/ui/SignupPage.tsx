@@ -61,15 +61,17 @@ export function SignupPage({ onSuccess, onGuest, onLogin }: SignupPageProps) {
     return (
       <AuthScreen>
         <div className="flex flex-1 flex-col items-center justify-center gap-8 py-10 text-center">
-          <span
-            aria-hidden
-            className="grid size-16 place-items-center rounded-full bg-info-surface text-primary shadow-rest"
-          >
-            <MailCheck className="size-8" />
-          </span>
           <AuthHeader
             title={t('auth.confirm.title')}
             subtitle={t('auth.confirm.body', { email: email.trim() })}
+            mark={
+              <span
+                aria-hidden
+                className="grid size-16 place-items-center rounded-full bg-info-surface text-primary shadow-rest"
+              >
+                <MailCheck className="size-8" />
+              </span>
+            }
           />
           <Button variant="secondary" size="lg" className="w-full" onClick={onLogin}>
             {t('auth.confirm.backToLogin')}

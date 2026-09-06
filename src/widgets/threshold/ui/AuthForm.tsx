@@ -68,9 +68,9 @@ export function AuthForm({
         animate="animate"
         className={cn('flex flex-1 flex-col justify-center py-10', className)}
       >
-        <motion.header variants={authRise} className="flex flex-col items-center gap-4 text-center">
+        <motion.div variants={authRise}>
           <AuthHeader title={title} subtitle={subtitle} />
-        </motion.header>
+        </motion.div>
 
         <motion.form
           variants={authRise}

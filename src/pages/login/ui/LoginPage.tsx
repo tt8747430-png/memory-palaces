@@ -66,8 +66,14 @@ export function LoginPage({ onAuthed, onGuest, onSignup, onForgot }: LoginPagePr
         error={errors.password}
       />
 
-      <div className="flex justify-end">
-        <button type="button" onClick={onForgot} className="text-label font-medium text-heading">
+      <div className="-my-2 flex justify-end">
+        {/* `min-h-11` and real padding: 12px type with none was a ~16px-tall target, well under the
+            44px floor. The negative margin keeps the form's own rhythm while the box grows. */}
+        <button
+          type="button"
+          onClick={onForgot}
+          className="-mr-2 inline-flex min-h-11 items-center rounded-control px-2 text-label font-medium text-heading transition-colors active:bg-primary/4"
+        >
           {t('auth.login.forgot')}
         </button>
       </div>
