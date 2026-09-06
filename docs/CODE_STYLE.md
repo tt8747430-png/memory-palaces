@@ -112,12 +112,28 @@ v4, two-layer tokens: primitives (`--p-navy-900`…) → semantic roles (`--prim
 `tokens.css`](../src/styles/tokens.css), exposed via `@theme` in [`theme.css`](../src/styles/theme.css).
 
 - **Compose with [`cn()`](../src/shared/lib/cn.ts)** — resolves conflicting utilities; template concatenation doesn't.
+  - **`cn()` is told the theme.** `tailwind-merge` only knows Tailwind's own scales, so a custom name it does not
+    recognise gets filed under whichever group's matcher accepts anything — `text-label` looked like a *colour*, and a
+    single `cn()` holding a size and a colour dropped the size. Every type, radius and elevation name is declared in
+    `cn.ts`; `cn.test.ts` is that list restated as behaviour. **Adding a name to `theme.css` means adding it there.**
 - **Never build class names dynamically** — lookup map of full static strings, or inline `style` for genuinely dynamic
   values.
 - **Semantic tokens, not raw values.** `bg-primary`, `text-heading`, `rounded-control`, `shadow-rest` — not
   `bg-[#091A7A]`, not `p-[16px]`. No alias yet → CSS var.
+  - **Type is five names** — `text-tiny` (10) · `text-label` (12) · `text-body` (14) · `text-title` (16) ·
+    `text-headline` (20) — plus `text-entry` (16), the one size a field may be. A size that repeats is not a role:
+    `text-sub` used to sit at 14px beside `body`'s 14px, so "which does this line take" had no answer and the one row
+    that wanted a step between them rendered identically. **What separates a row's title from the line under it is
+    weight and colour, not a sixth size.**
+  - **Three things are not type, and have their own scales.** `text-glyph-*` is an emoji filling a square (a deck
+    cover, a folder mark, an avatar) — named for the square, so a `size-8` cover and a `size-8` folder take the same
+    step. `text-figure-*` is a display figure, one tabular number that *is* the content — the scale stops at 20px
+    because it describes lines of type, and a streak count read across a room is not one. `text-card-*` is the printed
+    study card's own fluid ramp, the only viewport-relative sizes in the app.
+  - **`rounded-full` is the pill**, and the one Tailwind radius that is not off the scale — it is a shape, not a step.
+    There is no `rounded-pill`.
   - **Radii too, including Tailwind's own defaults.** `rounded-md` / `-lg` / `-xs` are off our scale as surely as
-    `rounded-[14px]` is. Below `rounded-control` the roles are `rounded-field` (a field editing text in place),
+    `rounded-[14px]` is — `rounded-full` excepted, above. Below `rounded-control` the roles are `rounded-field` (a field editing text in place),
     `rounded-mark` (an inline mark, a 20px glyph), `rounded-swatch` (a 12px legend chip) and `rounded-hairline`;
     above it, `rounded-tile` for a 36px glyph tile and `rounded-tile-slot` for the outline standing in for one.
 - **Dark mode is automatic** (`[data-theme='dark']` remap). No scattered `dark:`, no hardcoded light/dark colors.
@@ -149,6 +165,13 @@ v4, two-layer tokens: primitives (`--p-navy-900`…) → semantic roles (`--prim
       not silently skipped. A face that reaches for a role no scene repaints fails there.
 - **Interactive elements need hover / `focus-visible` / `disabled` + `transition`.** Icon-only → `sr-only` label.
   `focus-visible:` over `focus:`.
+  - **`outline-none` needs a replacement indicator, with two exceptions.** Tailwind v4 changed it from v3's transparent
+    ring to `outline-style: none`, and the utilities layer beats the `:focus-visible` rule in `theme.css` — so a bare
+    `outline-none` on a control removes the focus ring outright. The two places it is correct: a **popup container**
+    that takes focus programmatically (a dialog, a menu surface, a drawer — a ring around the whole panel is noise),
+    and a **menu item** whose selected state is drawn from `data-highlighted`. `focus-visible:outline-none` paired with
+    a `focus-visible:ring-*` is always safe: the pseudo-class raises specificity above `.shadow-rest`, so the ring is
+    not clobbered by the control's own elevation.
 - **Mobile-first** — base = smallest screen, layer upward. Verify at phone width.
 
 ## 6. TypeScript & imports
@@ -165,9 +188,12 @@ Ordered by impact.
   raw array. State used only in a callback → `useXStoreApi().getState()` at call time.
 - **Memoize deliberately** — `useMemo` for real derivations; `React.memo` around an expensive child under a hot parent.
 - **Split routes with `lazyRouteComponent`** (TanStack's, not bare `React.lazy` — it hooks the router's own pending
-  states and `defaultPreload: 'intent'`). `app/router.tsx` has **36 routes and splits exactly one**,
-  `/dev/kitchen-sink`; the other 35 land in the entry chunk via `app/routes/*-screens.tsx`. Same for heavy,
-  rarely-opened widgets.
+  states and `defaultPreload: 'intent'`). `app/router.tsx` loads **every** screen on demand: the
+  `app/routes/*-screens.tsx` modules are the split points and each becomes its own chunk, so a cold start on the login
+  screen carries neither the study engine nor the drag-and-drop stack. Same for heavy, rarely-opened widgets.
+- **The heavy dependencies are their own chunks** (`vite.config.ts` → `advancedChunks`): `persistence` (RxDB + Dexie),
+  `supabase`, `react`. Not to shrink the first load — the app cannot paint without its database — but so a deploy that
+  touches app code does not invalidate ~300 kB the service worker already precached.
 - **Keep FSD barrels** — they're our public API. The tree-shaking caveat is about _third-party_ barrels: import large
   libs by name; no intra-slice re-export chains pulling in heavy modules.
 - **Reserve image space (CLS)** — explicit `width`/`height` or `aspect-ratio`.
@@ -184,9 +210,12 @@ Ordered by impact.
 
 ## 8. Vite build & SPA deploy
 
-- **SPA fallback rewrite is mandatory — currently missing.** Without it, deep-linking `/deck/123` 404s. Add
-  `public/_redirects` (`/* /index.html 200`) or `vercel.json` `rewrites` before deploying.
-- **Hashed assets immutable, `index.html` `no-cache`.** Workbox handles the SW layer; host headers must agree.
+- **SPA fallback rewrite is mandatory.** Without it, deep-linking `/decks/123` — or reloading anywhere but `/` — 404s
+  on a static host. Both spellings ship: [`vercel.json`](../vercel.json) `rewrites`, and
+  [`public/_redirects`](../public/_redirects) (`/* /index.html 200`) for Netlify and Cloudflare Pages. A host reads its
+  own and ignores the other.
+- **Hashed assets immutable, `index.html` `no-cache`.** Workbox handles the SW layer; host headers must agree —
+  `vercel.json` `headers` is where they are said, and `sw.js` and the manifest revalidate with `index.html`.
 - **Validate with `npm run build && npm run preview`** — catches base-path, lazy-chunk and asset issues `dev` hides.
 - **`VITE_` prefix = public.** Never a secret in one.
 - **Never import a dependency's `dist/`** — double-bundles, breaks dedup.
