@@ -18,7 +18,14 @@ const SCROLL_SAFE = 'pb-safe'
  */
 const SCROLL_KEYBOARD = 'pb-keyboard'
 
-const FILL = 'min-h-full'
+/**
+ * `shrink-0` on both sizers, and it is load-bearing. A flex item's `min-height: auto` is what
+ * normally stops it shrinking below its own content; writing any other `min-height` — which is
+ * exactly what these two do — throws that floor away, and the item becomes free to compress to the
+ * value written here while its content overflows a box the scroller never measured. The scroll
+ * range then describes the port, not the list.
+ */
+const FILL = 'min-h-full shrink-0'
 
 /**
  * A scrollport with nothing to scroll does not rubber-band — iOS bounces a box that has range, and
@@ -28,7 +35,7 @@ const FILL = 'min-h-full'
  * Only meaningful without a footer dock — with one the body is already `flex-1` and the dock rests
  * at the end of the scroll, so the screen is never shorter than its port.
  */
-const BOUNCE = 'min-h-[calc(100%+1px)]'
+const BOUNCE = 'min-h-[calc(100%+1px)] shrink-0'
 
 const FOOTER_DOCK = 'sticky bottom-0 z-(--z-raised) -mx-5 mt-auto shrink-0 in-data-keyboard:static'
 
