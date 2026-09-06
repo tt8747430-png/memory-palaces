@@ -37,6 +37,7 @@ export function SettingsProfilePage({
 
   return (
     <AppScreen
+      gutter="end"
       header={
         <ScreenHeader
           title={t('settings.profileEdit.title')}
@@ -49,7 +50,7 @@ export function SettingsProfilePage({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25, ease: EASE_OUT }}
-        className="mt-4 flex flex-col gap-6 pb-gutter"
+        className="mt-4 flex flex-col gap-6"
       >
         <AvatarPicker
           name={value.name}

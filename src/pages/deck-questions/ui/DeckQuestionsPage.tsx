@@ -73,6 +73,7 @@ export function DeckQuestionsPage({
 
   return (
     <AppScreen
+      gutter="dial"
       header={
         selection.active ? (
           <SelectHeader selection={selection} />
@@ -95,7 +96,7 @@ export function DeckQuestionsPage({
         )
       }
     >
-      <div className="mt-2 space-y-4 pb-24">
+      <div className="mt-2 space-y-4">
         {selection.active ? null : (
           <TestLaunchCard questionCount={questions.length} onStartTest={onStartTest} />
         )}

@@ -34,7 +34,7 @@ export function AchievementDetailPage({ achievementId, onBack }: AchievementDeta
   return (
     <AppScreen
       fill
-      className="pb-28"
+      gutter="end"
       header={<ScreenHeader title={title} onBack={onBack} backLabel={t('common.back')} />}
     >
       <div className="mt-2 flex flex-col gap-6">
@@ -63,7 +63,7 @@ export function AchievementDetailPage({ achievementId, onBack }: AchievementDeta
             <meta.icon className="size-4.5" aria-hidden />
           </span>
           <div className="min-w-0">
-            <p className="text-sub font-bold leading-tight text-heading">{title}</p>
+            <p className="text-body font-bold leading-tight text-heading">{title}</p>
             <p className="mt-0.5 text-label leading-snug text-muted-foreground">
               {t(meta.descriptionKey)}
             </p>

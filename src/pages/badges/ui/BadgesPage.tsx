@@ -15,7 +15,7 @@ export function BadgesPage({ onBack, onOpenBadge }: BadgesPageProps = {}) {
   return (
     <AppScreen
       fill
-      className="pb-28"
+      gutter="end"
       header={
         <ScreenHeader title={t('badges.title')} onBack={onBack} backLabel={t('common.back')} />
       }

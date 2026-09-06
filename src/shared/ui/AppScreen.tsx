@@ -30,8 +30,7 @@ const FILL = 'min-h-full'
  */
 const BOUNCE = 'min-h-[calc(100%+1px)]'
 
-const FOOTER_DOCK =
-  'sticky bottom-0 z-(--z-raised) -mx-5 mt-auto shrink-0 [[data-keyboard]_&]:static'
+const FOOTER_DOCK = 'sticky bottom-0 z-(--z-raised) -mx-5 mt-auto shrink-0 in-data-keyboard:static'
 
 const SHELL = 'h-full'
 
@@ -49,11 +48,19 @@ const SHELL = 'h-full'
  * `nav` keeps the value the old `.pb-nav` utility had, to the pixel — six screens use it and none
  * of them asked for a spacing change; only the mechanism moved. `dial` is the one that grew: the
  * dial's 3.5rem button floats 1rem above `--app-bottom-inset` and so reaches 4.5rem up, and the
- * last row rests a further 4rem clear of it.
+ * last row rests a further 4rem clear of it. `dial` also clears the select-mode toolbar dock,
+ * which stands about 7.75rem tall on the two screens that carry both.
+ *
+ * `end` is the case where nothing floats at all and the last row simply wants somewhere to rest:
+ * ten screens each spelled it as a flat `pb-24` / `pb-28` / `pb-32` / `pb-gutter` on an inner
+ * div — four values for one slot, none of them folding in the home indicator, and five of them on
+ * the scroller itself where WebKit dropped them. It is the same 7rem those screens had on a phone,
+ * measured from the inset instead of from the display edge.
  */
-export type ScreenGutter = 'nav' | 'dial'
+export type ScreenGutter = 'end' | 'nav' | 'dial'
 
 const GUTTER: Record<ScreenGutter, string> = {
+  end: 'h-[calc(var(--app-bottom-inset)+5rem)]',
   nav: 'h-[calc(var(--app-bottom-inset)+4.5rem)]',
   dial: 'h-[calc(var(--app-bottom-inset)+8.5rem)]',
 }

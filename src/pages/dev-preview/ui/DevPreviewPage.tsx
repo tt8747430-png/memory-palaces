@@ -97,7 +97,7 @@ function Section({
   return (
     <section id={id} className="scroll-mt-4">
       <div className="mb-3">
-        <h2 className="text-sub font-semibold text-heading">{title}</h2>
+        <h2 className="text-body font-semibold text-heading">{title}</h2>
         {note ? <p className="mt-0.5 text-label text-muted-foreground">{note}</p> : null}
       </div>
       <div className="rounded-card-featured border border-border bg-card p-4">{children}</div>
@@ -450,6 +450,7 @@ export function DevPreviewPage({ onBack }: { onBack?: () => void }) {
 
   return (
     <AppScreen
+      gutter="end"
       scrollRef={setScrollNode}
       header={
         <AppHeader
@@ -502,7 +503,7 @@ export function DevPreviewPage({ onBack }: { onBack?: () => void }) {
         </AppHeader>
       }
     >
-      <div className="flex flex-col gap-8 pt-4 pb-32">
+      <div className="flex flex-col gap-8 pt-4">
         <Section
           id="keyboard"
           title="Keyboard & viewport"

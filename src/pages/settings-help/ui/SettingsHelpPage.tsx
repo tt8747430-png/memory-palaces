@@ -16,6 +16,7 @@ export function SettingsHelpPage({ onBack }: { onBack?: () => void }) {
 
   return (
     <AppScreen
+      gutter="end"
       header={
         <ScreenHeader
           title={t('settings.help.title')}
@@ -24,8 +25,8 @@ export function SettingsHelpPage({ onBack }: { onBack?: () => void }) {
         />
       }
     >
-      <div className="mt-4 flex flex-col gap-6 pb-28">
-        <p className="px-1 text-sub text-muted-foreground">{t('settings.help.intro')}</p>
+      <div className="mt-4 flex flex-col gap-6">
+        <p className="px-1 text-body text-muted-foreground">{t('settings.help.intro')}</p>
 
         {CATEGORIES.map((category) => (
           <SettingsSection
@@ -34,7 +35,7 @@ export function SettingsHelpPage({ onBack }: { onBack?: () => void }) {
           >
             {category.items.map((item) => (
               <details key={item} className="group px-4 py-3">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sub font-semibold text-heading">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-body font-semibold text-heading">
                   {t(`settings.help.categories.${category.key}.q${item}`)}
                   <ChevronDown
                     className="size-5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
@@ -50,13 +51,13 @@ export function SettingsHelpPage({ onBack }: { onBack?: () => void }) {
         ))}
 
         <div className="rounded-card bg-info-surface p-4">
-          <p className="text-sub font-semibold text-info-foreground">
+          <p className="text-body font-semibold text-info-foreground">
             {t('settings.help.contactTitle')}
           </p>
           <div className="mt-2 flex flex-col gap-2.5">
             <a
               href={`mailto:${t('settings.help.email')}`}
-              className="inline-flex items-center gap-2 text-sub font-semibold text-primary"
+              className="inline-flex items-center gap-2 text-body font-semibold text-primary"
             >
               <Mail className="size-4" aria-hidden />
               {t('settings.help.emailLabel')}
@@ -65,7 +66,7 @@ export function SettingsHelpPage({ onBack }: { onBack?: () => void }) {
               href={DOCS_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-sub font-semibold text-primary"
+              className="inline-flex items-center gap-2 text-body font-semibold text-primary"
             >
               <BookOpen className="size-4" aria-hidden />
               {t('settings.help.docs')}

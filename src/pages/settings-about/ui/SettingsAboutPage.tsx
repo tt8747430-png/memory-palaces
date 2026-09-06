@@ -16,6 +16,7 @@ export function SettingsAboutPage({ onBack }: { onBack?: () => void }) {
 
   return (
     <AppScreen
+      gutter="end"
       header={
         <ScreenHeader
           title={t('settings.aboutScreen.title')}
@@ -24,7 +25,7 @@ export function SettingsAboutPage({ onBack }: { onBack?: () => void }) {
         />
       }
     >
-      <div className="mt-4 flex flex-col gap-6 pb-28">
+      <div className="mt-4 flex flex-col gap-6">
         <div className="flex flex-col items-center gap-3 pt-4 text-center">
           <motion.span
             initial={{ opacity: 0, scale: 0.8, y: 6 }}
@@ -37,7 +38,7 @@ export function SettingsAboutPage({ onBack }: { onBack?: () => void }) {
           </motion.span>
           <div>
             <p className="text-headline font-semibold text-heading">Mindscape</p>
-            <p className="text-sub text-muted-foreground">{t('settings.aboutScreen.tagline')}</p>
+            <p className="text-body text-muted-foreground">{t('settings.aboutScreen.tagline')}</p>
           </div>
         </div>
 

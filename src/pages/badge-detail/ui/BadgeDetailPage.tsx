@@ -41,7 +41,7 @@ export function BadgeDetailPage({ badgeId, onBack }: BadgeDetailPageProps) {
   return (
     <AppScreen
       fill
-      className="pb-28"
+      gutter="end"
       header={<ScreenHeader title={title} onBack={onBack} backLabel={t('common.back')} />}
     >
       <div className="mt-2 flex flex-col gap-6">
@@ -118,7 +118,7 @@ function TierLadder({ badge }: { badge: Badge }) {
               <div className="min-w-0 flex-1">
                 <p
                   className={cn(
-                    'text-sub font-bold leading-tight',
+                    'text-body font-bold leading-tight',
                     reached || isCurrent ? 'text-heading' : 'text-muted-foreground',
                   )}
                 >
@@ -155,7 +155,7 @@ function TierMarker({
     <span
       aria-hidden
       className={cn(
-        'grid size-10 shrink-0 place-items-center rounded-full text-sub font-bold tabular-nums',
+        'grid size-10 shrink-0 place-items-center rounded-full text-body font-bold tabular-nums',
         isCurrent
           ? 'bg-primary/8 text-primary ring-2 ring-primary/30'
           : 'bg-primary/5 text-primary/40',
