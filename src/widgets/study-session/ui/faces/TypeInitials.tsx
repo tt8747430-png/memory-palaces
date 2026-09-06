@@ -32,7 +32,7 @@ export function TypeInitials({ recall }: { recall: InitialsRecall }) {
         autoComplete="off"
         spellCheck={false}
         enterKeyHint="done"
-        className="sr-only text-base"
+        className="sr-only text-entry"
       />
 
       {complete ? (
@@ -84,7 +84,7 @@ function WrongLetterBubble({ wrong }: { wrong: InitialsRecall['wrong'] }) {
             exit={{ opacity: 0, scale: reduce ? 1 : 0.92, transition: { duration: 0.14 } }}
             transition={{ type: 'spring', stiffness: 520, damping: 30 }}
             aria-hidden
-            className="grid h-16 w-14 place-items-center overflow-hidden rounded-card bg-destructive text-[26px] font-bold text-white shadow-elevated"
+            className="grid h-16 w-14 place-items-center overflow-hidden rounded-card bg-destructive text-figure-md font-bold text-white shadow-elevated"
           >
             <AnimatePresence mode="popLayout" initial={false}>
               <motion.span

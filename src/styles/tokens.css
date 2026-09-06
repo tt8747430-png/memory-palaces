@@ -29,12 +29,62 @@
   --p-font-sans:
     'Lexend Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
+  /**
+   * The type scale. Five steps, each a different number and a different job — a size that repeats
+   * is not a role, it is a second name for one. `sub` used to sit here at 14px beside `body`'s
+   * 14px, so "which of the two does this line take" had no answer and the one place a step was
+   * actually wanted (a subdeck row against its parent) rendered identically to it. What separates
+   * a row's title from the line under it is weight and colour, and that is where it belongs.
+   *
+   *   headline — the one hero line on a screen
+   *   title    — a screen, section or card title
+   *   body     — every other line of type: row titles, prose, menu items, values
+   *   label    — a label, a caption, a piece of metadata under a title
+   *   tiny     — a count riding on a glyph
+   */
   --p-text-headline: 20px;
   --p-text-title: 16px;
-  --p-text-sub: 14px;
   --p-text-body: 14px;
   --p-text-label: 12px;
   --p-text-tiny: 10px;
+
+  /**
+   * A glyph square. An emoji standing in for a deck, a folder or a person is not type — it is a
+   * pictograph sized to fill the box it sits in, and every one of these used to be a raw length
+   * (`text-2xl`, `text-[0.85rem]`, `text-[40px]`) chosen next to the box rather than from a scale.
+   * The steps are named for the square, so a `size-8` cover and a `size-8` folder take the same
+   * one instead of landing 1.6px apart.
+   */
+  --p-glyph-sm: 14px;
+  --p-glyph-md: 16px;
+  --p-glyph-lg: 20px;
+  --p-glyph-xl: 24px;
+  --p-glyph-2xl: 30px;
+  --p-glyph-3xl: 40px;
+
+  /**
+   * A display figure: one tabular number that *is* the content — a streak count, a tile's value,
+   * the cards left today. The type scale stops at 20px because it describes lines of type, and a
+   * number read across a room is not one, so these were raw pixels everywhere they appeared.
+   */
+  --p-figure-sm: 22px;
+  --p-figure-md: 28px;
+  --p-figure-lg: 56px;
+  --p-figure-xl: 64px;
+
+  /**
+   * The printed card's own type, and the only fluid sizes in the app. A study card carries one
+   * phrase and nothing else, so its type is sized to the viewport rather than to the app's scale —
+   * a prompt should fill a large phone and still fit a small one. Each step is the clamp its face
+   * already used; naming them is what stops the seventh face inventing an eighth clamp.
+   */
+  --p-card-prompt: clamp(22px, 6vw, 28px);
+  --p-card-title: clamp(18px, 5vw, 22px);
+  --p-card-answer: clamp(17px, 4.6vw, 21px);
+  --p-card-token: clamp(17px, 4.6vw, 22px);
+  --p-card-line: clamp(16px, 4.4vw, 20px);
+  --p-card-preview: clamp(24px, 6.5vw, 34px);
+  --p-card-preview-back: clamp(18px, 5vw, 24px);
 
   /**
    * The one size a text-entry control may be. Below 16px, iOS zooms the visual viewport on focus,
@@ -67,7 +117,6 @@
   --p-radius-lg: 20px;
   --p-radius-xl: 24px;
   --p-radius-nav: 40px;
-  --p-radius-pill: 9999px;
   --p-shadow-rest:
     0 1px 2px oklch(var(--p-tint-steel) / 0.09), 0 4px 12px -2px oklch(var(--p-tint-steel) / 0.1);
   --p-shadow-featured:
@@ -79,6 +128,16 @@
   --p-shadow-elevated:
     0 4px 10px -2px oklch(var(--p-tint-steel) / 0.16),
     0 18px 40px -10px oklch(var(--p-tint-steel) / 0.22);
+
+  /**
+   * The bare distance the bottom edge owes the device: the home indicator where there is one, a
+   * comfortable 12px where there is not. Every bottom-anchored thing in the app derives from this
+   * one number — `--app-bottom-inset` is it, `AppNav` writes it plus its own height, the dial and
+   * the study footer add their own gap to it. It exists because those four used to spell it out
+   * by hand with three different minimums, so changing the inset moved three of them and not the
+   * fourth.
+   */
+  --p-safe-bottom: max(0.75rem, env(safe-area-inset-bottom));
 
   --p-blur-glass: 12px;
   --p-blur-card: 20px;
@@ -262,6 +321,20 @@
   --border-glass: oklch(100% 0 0 / 0.12);
   --divider: oklch(100% 0 0 / 0.1);
   --ring: var(--p-blue-300);
+  /**
+   * Elevation in the dark. A shadow is a hole in the light, and the light here is a 20 %-lightness
+   * navy — so the tinted primitives, which are a 29 %-lightness steel at ≤22 % alpha, are *lighter
+   * than the surface they fall on* and read as nothing at all. Every role therefore restates
+   * itself in black at the alpha the dark surface needs, keeping its own geometry: the offsets and
+   * blurs below are the light role's, only the colour and the opacity change.
+   *
+   * `--shadow-interactive` loses its navy tint for the same reason the others lose their steel:
+   * a navy glow under a control standing on navy is not a lift.
+   */
+  --shadow-rest: 0 1px 2px oklch(0% 0 0 / 0.28), 0 4px 12px -2px oklch(0% 0 0 / 0.36);
+  --shadow-featured: 0 2px 5px -1px oklch(0% 0 0 / 0.3), 0 12px 30px -6px oklch(0% 0 0 / 0.45);
+  --shadow-interactive: 0 2px 5px -1px oklch(0% 0 0 / 0.4), 0 10px 24px -6px oklch(0% 0 0 / 0.55);
+  --shadow-elevated: 0 4px 10px -2px oklch(0% 0 0 / 0.42), 0 18px 40px -10px oklch(0% 0 0 / 0.6);
   --shadow-card: 0 2px 4px -1px oklch(0% 0 0 / 0.3), 0 8px 22px -4px oklch(0% 0 0 / 0.5);
 }
 

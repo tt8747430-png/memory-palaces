@@ -39,7 +39,7 @@ export function CountBadge({ count }: { count: number }) {
   const { t } = useTranslation()
   if (count === 0) return null
   return (
-    <span className="rounded-pill bg-info-surface px-2.5 py-1 text-tiny font-bold tabular-nums text-info-foreground">
+    <span className="rounded-full bg-info-surface px-2.5 py-1 text-tiny font-bold tabular-nums text-info-foreground">
       {t('cards.paste.found', { count })}
     </span>
   )

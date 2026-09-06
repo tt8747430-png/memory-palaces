@@ -64,7 +64,7 @@ export function RebuildFace(props: FaceProps) {
 
       <p
         className={cn(
-          'min-h-8 text-balance text-center text-[clamp(16px,4.4vw,20px)] font-semibold leading-relaxed',
+          'min-h-8 text-balance text-center text-card-line font-semibold leading-relaxed',
           done ? 'text-(--success-foreground)' : 'text-heading',
         )}
       >
@@ -92,7 +92,7 @@ export function RebuildFace(props: FaceProps) {
                 animate={isWrong && !reduce ? { x: [0, -6, 6, -4, 4, 0] } : { x: 0 }}
                 transition={{ duration: 0.4 }}
                 className={cn(
-                  'rounded-full px-3.5 py-2 text-sub font-semibold transition-colors',
+                  'rounded-full px-3.5 py-2 text-body font-semibold transition-colors',
                   used
                     ? 'bg-info-surface text-muted-foreground opacity-40'
                     : isWrong

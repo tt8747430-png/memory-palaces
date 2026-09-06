@@ -11,7 +11,7 @@ export interface FastReviewFooterProps {
   onAnswer: (outcome: FastOutcome) => void
 }
 
-const TALLY = 'w-9 shrink-0 text-center text-sub font-bold tabular-nums'
+const TALLY = 'w-9 shrink-0 text-center text-body font-bold tabular-nums'
 
 const ANSWER =
   'flex h-full flex-1 items-center justify-center rounded-control px-3 ' +

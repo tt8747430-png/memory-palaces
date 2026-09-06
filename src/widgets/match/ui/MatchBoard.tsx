@@ -132,7 +132,7 @@ export function MatchBoard({ cards, subtitle, onBack, onComplete }: MatchBoardPr
                 >
                   <span
                     className={cn(
-                      'wrap-break-word text-sub leading-snug',
+                      'wrap-break-word text-body leading-snug',
                       tile.kind === 'term'
                         ? 'font-semibold text-heading'
                         : 'font-medium text-muted-foreground',

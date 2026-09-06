@@ -40,7 +40,7 @@ export function StudyOverviewCard({
         <span className="grid size-12 place-items-center rounded-card-featured bg-card text-(--success-foreground) shadow-rest">
           <Check className="size-6" aria-hidden />
         </span>
-        <p className="text-sub font-semibold text-heading">{t('study.caughtUp')}</p>
+        <p className="text-body font-semibold text-heading">{t('study.caughtUp')}</p>
         {onStudyAhead ? (
           <Button variant="secondary" onClick={onStudyAhead}>
             {t('study.studyAhead')}
@@ -57,7 +57,7 @@ export function StudyOverviewCard({
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.35, ease: EASE_OUT }}
-          className="text-[56px] font-bold leading-none tabular-nums text-heading"
+          className="text-figure-lg font-bold leading-none tabular-nums text-heading"
         >
           {count}
         </motion.p>
@@ -70,7 +70,7 @@ export function StudyOverviewCard({
             <dt className="order-2 mt-1 text-tiny font-medium text-muted-foreground">
               {stat.label}
             </dt>
-            <dd className="order-1 text-sub font-bold leading-none tabular-nums text-heading">
+            <dd className="order-1 text-body font-bold leading-none tabular-nums text-heading">
               {stat.value}
             </dd>
           </div>

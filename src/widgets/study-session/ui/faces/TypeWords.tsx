@@ -51,7 +51,7 @@ export function TypeWords({ value, onChange, slots, solved, active }: TypeWordsP
         spellCheck={false}
         rows={1}
         className={cn(
-          'min-h-23 w-full resize-none overflow-hidden rounded-card border border-border bg-card px-4 py-3 text-base leading-relaxed text-foreground placeholder:text-muted-foreground focus-visible:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30',
+          'min-h-23 w-full resize-none overflow-hidden rounded-card border border-border bg-card px-4 py-3 text-entry leading-relaxed text-foreground placeholder:text-muted-foreground focus-visible:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30',
           solved && 'border-transparent bg-(--success-surface) text-(--success-on-surface)',
         )}
       />

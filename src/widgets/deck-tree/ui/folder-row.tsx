@@ -48,7 +48,7 @@ export function FolderRowBody({
             color={folder.color}
             icon={folder.icon || DEFAULT_FOLDER_ICON}
             className="relative size-12 rounded-card"
-            iconClassName="text-xl leading-none"
+            iconClassName="text-glyph-lg leading-none"
           />
         </motion.span>
         <span className="min-w-0 flex-1">
@@ -57,7 +57,7 @@ export function FolderRowBody({
           </span>
           <span
             className={cn(
-              'mt-1 inline-flex items-center gap-1 rounded-pill px-2 py-0.5 text-tiny font-semibold',
+              'mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-tiny font-semibold',
               deckCount > 0
                 ? 'bg-primary/[0.07] text-primary/80'
                 : 'bg-secondary/40 text-muted-foreground',

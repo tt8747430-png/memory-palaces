@@ -52,12 +52,12 @@ function DrawerContent({ className, backdropClassName, children, ...props }: Dra
           data-slot="drawer-content"
           className={cn(
             'pointer-events-auto fixed inset-x-0 bottom-0 mx-auto flex w-full max-w-app flex-col',
-            'max-h-[88dvh] touch-none rounded-t-card-featured bg-card pb-safe-keyboard shadow-elevated outline-none',
+            'max-h-[calc(var(--app-height)*0.88)] touch-none rounded-t-card-featured bg-card pb-safe-keyboard shadow-elevated outline-none',
             'origin-bottom will-change-transform',
             '[--closed-transform:translate3d(0,calc(100%+2px),0)]',
             'transform-[translate3d(0,var(--drawer-swipe-movement-y,0px),0)]',
             'transition-transform duration-450 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none',
-            '' + 'data-starting-style:transform-(--closed-transform)',
+            'data-starting-style:transform-(--closed-transform)',
             'data-ending-style:transform-(--closed-transform) data-swiping:duration-0 data-swiping:select-none',
             className,
           )}
@@ -121,7 +121,7 @@ function DrawerTitle({ className, ...props }: DrawerTitleProps) {
   return (
     <DrawerPrimitive.Title
       data-slot="drawer-title"
-      className={cn('text-sub font-semibold text-heading', className)}
+      className={cn('text-body font-semibold text-heading', className)}
       {...props}
     />
   )

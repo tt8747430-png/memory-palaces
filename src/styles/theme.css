@@ -2,17 +2,40 @@
   --font-sans: var(--p-font-sans);
 
   /**
-   * The type scale, as utilities. Every size in the app is one of these six names — `text-body`,
-   * `text-label` — and never a raw length. They map onto `--p-text-*` so the primitives stay the
-   * one place a size is a number.
+   * The type scale, as utilities. Every size in the app is one of these five names — `text-body`,
+   * `text-label` — plus `text-entry`, the one size a field may be, and never a raw length. They
+   * map onto `--p-text-*` so the primitives stay the one place a size is a number. Adding a name
+   * here means adding it to `cn()`'s theme too, or the merge will file it as a colour.
    */
   --text-tiny: var(--p-text-tiny);
   --text-label: var(--p-text-label);
   --text-body: var(--p-text-body);
-  --text-sub: var(--p-text-sub);
   --text-title: var(--p-text-title);
   --text-headline: var(--p-text-headline);
   --text-entry: var(--p-text-entry);
+
+  /** A glyph filling a square — an emoji deck cover, a folder mark, an avatar. */
+  --text-glyph-sm: var(--p-glyph-sm);
+  --text-glyph-md: var(--p-glyph-md);
+  --text-glyph-lg: var(--p-glyph-lg);
+  --text-glyph-xl: var(--p-glyph-xl);
+  --text-glyph-2xl: var(--p-glyph-2xl);
+  --text-glyph-3xl: var(--p-glyph-3xl);
+
+  /** A display figure — one tabular number that is itself the content. */
+  --text-figure-sm: var(--p-figure-sm);
+  --text-figure-md: var(--p-figure-md);
+  --text-figure-lg: var(--p-figure-lg);
+  --text-figure-xl: var(--p-figure-xl);
+
+  /** The printed card's fluid type. See `--p-card-*`. */
+  --text-card-prompt: var(--p-card-prompt);
+  --text-card-title: var(--p-card-title);
+  --text-card-answer: var(--p-card-answer);
+  --text-card-token: var(--p-card-token);
+  --text-card-line: var(--p-card-line);
+  --text-card-preview: var(--p-card-preview);
+  --text-card-preview-back: var(--p-card-preview-back);
 
   --color-background: var(--surface);
   --color-foreground: var(--text-primary);
@@ -66,7 +89,6 @@
   --radius-squircle: var(--p-radius-lg);
   --radius-card-featured: var(--p-radius-xl);
   --radius-nav: var(--p-radius-nav);
-  --radius-pill: var(--p-radius-pill);
 }
 
 @layer base {
@@ -92,7 +114,7 @@
            what the keyboard shrinks, and not following it is the whole point. */
     --app-height: 100%;
 
-    --app-bottom-inset: max(0.75rem, env(safe-area-inset-bottom));
+    --app-bottom-inset: var(--p-safe-bottom);
 
     /* A pinned preview's share of the shell — the card-style screen's live card. Bounded in pixels
            at both ends so a small phone still leaves room to edit and a tall one does not hand the
@@ -154,7 +176,7 @@
   }
 
   h3 {
-    font-size: var(--p-text-sub);
+    font-size: var(--p-text-body);
     font-weight: var(--p-weight-medium);
   }
 
@@ -298,9 +320,5 @@
 
   .pb-safe-keyboard {
     padding-bottom: max(env(safe-area-inset-bottom), var(--drawer-keyboard-inset, 0px));
-  }
-
-  .pb-gutter {
-    padding-bottom: 7rem;
   }
 }

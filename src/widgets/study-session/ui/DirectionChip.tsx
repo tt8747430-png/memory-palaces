@@ -53,7 +53,7 @@ export function DirectionChip({ action, x, y, dir, className }: DirectionChipPro
     <motion.div
       style={{ opacity }}
       className={cn(
-        'pointer-events-none absolute z-30 rounded-card border-2 border-current bg-card px-3 py-1.5 text-sub font-extrabold uppercase tracking-wide',
+        'pointer-events-none absolute z-30 rounded-card border-2 border-current bg-card px-3 py-1.5 text-body font-extrabold uppercase tracking-wide',
         ACTION_TINT[action],
         className,
       )}

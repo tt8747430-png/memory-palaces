@@ -32,7 +32,7 @@ export function ActionPill({
       onClick={onClick}
       style={on && accent ? ({ '--sw': accent } as CSSProperties) : undefined}
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-pill px-2.5 py-1.5 text-label font-semibold',
+        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-label font-semibold',
         'transition-[transform,background-color,color,opacity] active:scale-[0.96]',
         'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/30',
         on && accent ? 'sw-tint' : 'bg-secondary/40 text-muted-foreground',
@@ -52,7 +52,7 @@ export function SlotCount({ children, full }: { children: ReactNode; full: boole
   return (
     <span
       className={cn(
-        'rounded-pill px-2 py-0.5 text-tiny font-bold tabular-nums',
+        'rounded-full px-2 py-0.5 text-tiny font-bold tabular-nums',
         full ? 'bg-info-surface text-info-foreground' : 'bg-secondary/50 text-muted-foreground',
       )}
     >

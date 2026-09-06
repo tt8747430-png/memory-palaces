@@ -6,7 +6,7 @@ export function AnswerFace(props: FaceProps) {
   return (
     <CardFace face={props} speakText={answer} back>
       <BackPrompt prompt={prompt} onFlip={props.onFlip} />
-      <p className="allow-select text-balance wrap-break-word text-center text-[clamp(17px,4.6vw,21px)] font-semibold leading-relaxed text-heading">
+      <p className="allow-select text-balance wrap-break-word text-center text-card-answer font-semibold leading-relaxed text-heading">
         {answer}
       </p>
       {card.card.hint ? <HintCard hint={card.card.hint} /> : null}

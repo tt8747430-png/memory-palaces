@@ -89,7 +89,7 @@ export function PasteNotesPage({
       <div className="mt-4 flex flex-col gap-5 pb-6">
         {newDeck ? (
           <div>
-            <span className="mb-2 block text-sub font-bold text-heading">
+            <span className="mb-2 block text-body font-bold text-heading">
               {t('cards.paste.deckNameLabel')}
             </span>
             <Input
@@ -104,7 +104,7 @@ export function PasteNotesPage({
 
         <div>
           <div className="mb-2 flex items-baseline justify-between gap-2">
-            <span className="text-sub font-bold text-heading">{t('cards.paste.dataLabel')}</span>
+            <span className="text-body font-bold text-heading">{t('cards.paste.dataLabel')}</span>
             <CountBadge count={parsing.cards.length} />
           </div>
           <Textarea
@@ -168,7 +168,7 @@ function BibleHint() {
     <div className="flex items-start gap-3 rounded-card bg-info-surface p-4">
       <BookOpen className="mt-0.5 size-5 shrink-0 text-accent" aria-hidden />
       <div>
-        <p className="text-sub font-semibold text-heading">{t('cards.paste.bibleHintTitle')}</p>
+        <p className="text-body font-semibold text-heading">{t('cards.paste.bibleHintTitle')}</p>
         <p className="mt-0.5 text-label leading-snug text-info-foreground">
           {t('cards.paste.bibleHint')}
         </p>

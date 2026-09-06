@@ -36,7 +36,7 @@ export function ReviewRow({
   return (
     <div className="flex items-center gap-2 rounded-card border border-border bg-card p-4 shadow-rest">
       <button type="button" onClick={onEdit} className="min-w-0 flex-1 text-left">
-        <p className="truncate text-sub font-semibold text-heading">{card.front}</p>
+        <p className="truncate text-body font-semibold text-heading">{card.front}</p>
         <p className="mt-0.5 truncate text-label text-muted-foreground">{card.back}</p>
       </button>
       <FlyoutMenu

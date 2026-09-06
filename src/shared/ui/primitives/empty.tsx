@@ -47,13 +47,13 @@ export function Empty({
           !hero && 'mb-5',
         )}
       >
-        {icon ?? (emoji ? <span className="text-3xl">{emoji}</span> : null)}
+        {icon ?? (emoji ? <span className="text-glyph-2xl">{emoji}</span> : null)}
       </div>
       <div>
         <Title
           className={cn(
             'text-balance text-heading',
-            hero ? 'mb-1 text-headline font-bold' : 'mb-2 text-sub font-semibold',
+            hero ? 'mb-1 text-headline font-bold' : 'mb-2 text-body font-semibold',
           )}
         >
           {title}

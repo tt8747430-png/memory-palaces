@@ -23,7 +23,7 @@ export function StatTile({ icon, value, label, delay = 0 }: StatTileProps) {
       <div className="mb-4 grid size-11 place-items-center rounded-control bg-info-surface text-primary">
         {icon}
       </div>
-      <p className="text-[28px] font-bold leading-none tracking-tight tabular-nums text-heading">
+      <p className="text-figure-md font-bold leading-none tracking-tight tabular-nums text-heading">
         {value}
       </p>
       <p className="mt-1.5 text-label font-medium text-muted-foreground">{label}</p>

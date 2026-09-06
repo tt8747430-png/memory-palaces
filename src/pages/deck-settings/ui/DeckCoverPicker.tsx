@@ -33,7 +33,7 @@ export function DeckCoverPicker({ icon, color, image, onChange }: DeckCoverPicke
         color={color}
         image={image ?? undefined}
         className="size-16 shrink-0 rounded-card shadow-rest"
-        iconClassName="text-3xl"
+        iconClassName="text-glyph-2xl"
       />
       <div className="flex min-w-0 flex-1 flex-wrap gap-2">
         <Button type="button" variant="secondary" onClick={picker.open}>

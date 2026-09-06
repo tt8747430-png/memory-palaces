@@ -54,10 +54,10 @@ export function HomeHeader({
           className="flex min-w-0 flex-1 items-center gap-3 text-left transition-transform active:scale-[0.98]"
         >
           <span className="grid size-12 shrink-0 place-items-center rounded-full border border-(--border-glass) bg-card-glass shadow-rest">
-            <Avatar name={name} src={avatar} className="size-11 text-sub" />
+            <Avatar name={name} src={avatar} className="size-11 text-body" />
           </span>
           <span className="flex min-w-0 flex-1 flex-col gap-1">
-            <span className="truncate text-sub font-bold leading-tight tracking-tight text-heading">
+            <span className="truncate text-body font-bold leading-tight tracking-tight text-heading">
               {t(`home.${greetingKey(new Date().getHours())}`)}
             </span>
             <span className="flex items-center gap-2">

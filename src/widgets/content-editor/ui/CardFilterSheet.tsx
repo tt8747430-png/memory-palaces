@@ -132,7 +132,7 @@ function MaturityChip({
       aria-pressed={on}
       onClick={onToggle}
       className={cn(
-        'inline-flex items-center gap-2 rounded-pill py-2 pl-3 pr-2 text-label font-semibold transition-[background-color,box-shadow,transform] duration-150 active:scale-[0.96]',
+        'inline-flex items-center gap-2 rounded-full py-2 pl-3 pr-2 text-label font-semibold transition-[background-color,box-shadow,transform] duration-150 active:scale-[0.96]',
         on
           ? 'bg-primary text-primary-foreground shadow-interactive'
           : 'bg-secondary/40 text-heading ring-1 ring-inset ring-primary/10',

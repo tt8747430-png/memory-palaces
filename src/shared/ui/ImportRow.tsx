@@ -56,13 +56,13 @@ export function ImportRow({
         {icon}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sub font-semibold text-heading">{title}</span>
+        <span className="block truncate text-body font-semibold text-heading">{title}</span>
         <span className="mt-0.5 block text-label leading-snug text-muted-foreground">
           {subtitle}
         </span>
       </span>
       {badge ? (
-        <span className="shrink-0 rounded-pill bg-info-surface px-2 py-0.5 text-tiny font-semibold uppercase tracking-wide text-info-foreground">
+        <span className="shrink-0 rounded-full bg-info-surface px-2 py-0.5 text-tiny font-semibold uppercase tracking-wide text-info-foreground">
           {badge}
         </span>
       ) : null}

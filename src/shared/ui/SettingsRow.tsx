@@ -50,8 +50,8 @@ function RowBody({ icon, label, description, tone = 'default' }: BaseProps) {
       <span className="min-w-0">
         <span
           className={cn(
-            'block truncate text-sub font-semibold',
-            danger ? '' + 'text-(--danger-on-surface)' : 'text-heading',
+            'block truncate text-body font-semibold',
+            danger ? 'text-(--danger-on-surface)' : 'text-heading',
           )}
         >
           {label}

@@ -33,7 +33,7 @@ function ProbePanel() {
     <div
       onMouseDown={keepFieldFocused}
       className={cn(
-        'fixed inset-x-2 z-(--z-dev-probe) max-h-[70svh] overflow-y-auto overscroll-contain rounded-card border border-border bg-card/95 p-2 shadow-elevated backdrop-blur-md',
+        'fixed inset-x-2 z-(--z-dev-probe) max-h-[calc(var(--app-height)*0.7)] overflow-y-auto overscroll-contain rounded-card border border-border bg-card/95 p-2 shadow-elevated backdrop-blur-md',
         bottom ? 'bottom-2' : 'top-2',
       )}
     >

@@ -137,7 +137,7 @@ export function ImportReviewPage({ deckId, onBack, onDone }: ImportReviewPagePro
 
         <section>
           <div className="mb-2 flex items-center justify-between gap-2">
-            <h2 className="text-sub font-bold text-heading">
+            <h2 className="text-body font-bold text-heading">
               {t('cards.review.generated', { count: cards.length })}
             </h2>
             {cards.length > 0 ? (

@@ -66,7 +66,7 @@ export function BadgeMedallion({
         {value != null ? (
           <span
             className={cn(
-              'text-[12px] font-extrabold leading-none tabular-nums',
+              'text-label font-extrabold leading-none tabular-nums',
               locked ? 'text-primary/35' : 'text-white',
             )}
           >

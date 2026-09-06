@@ -37,7 +37,7 @@ export function DeckRowBody({ deck, due, isSub = false, selectState, toggle }: D
               'rounded-card shadow-rest ring-1 ring-border',
               isSub ? 'size-8' : 'size-9',
             )}
-            iconClassName={isSub ? 'text-[0.9rem] leading-none' : 'text-base leading-none'}
+            iconClassName={isSub ? 'text-glyph-sm leading-none' : 'text-glyph-md leading-none'}
           />
           {due > 0 ? (
             <span
@@ -51,17 +51,12 @@ export function DeckRowBody({ deck, due, isSub = false, selectState, toggle }: D
         </span>
 
         <span className="min-w-0 flex-1">
+          {/* A subdeck is subordinated by its indent and its smaller cover, not by its type: this
+              row used to ask for two sizes that were the same 14px, so the step never rendered. */}
+          <span className="block truncate text-body font-semibold text-heading">{deck.name}</span>
           <span
             className={cn(
-              'block truncate font-semibold text-heading',
-              isSub ? 'text-sub' : 'text-body',
-            )}
-          >
-            {deck.name}
-          </span>
-          <span
-            className={cn(
-              'block truncate ' + 'text-label',
+              'block truncate text-label',
               due > 0 ? 'font-medium text-primary/80' : 'text-muted-foreground',
             )}
           >

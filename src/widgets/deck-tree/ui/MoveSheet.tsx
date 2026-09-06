@@ -128,7 +128,7 @@ export function MoveSheet({
               icon={node.deck.icon || DEFAULT_DECK_ICON}
               color={node.deck.color || DEFAULT_DECK_COLOR}
               className="size-8 rounded-control ring-1 ring-border"
-              iconClassName="text-[0.85rem] leading-none"
+              iconClassName="text-glyph-sm leading-none"
             />
           }
           label={node.deck.name}
@@ -202,7 +202,7 @@ export function MoveSheet({
                     color={folder.color}
                     icon={folder.icon || DEFAULT_FOLDER_ICON}
                     className="size-8"
-                    iconClassName="text-[0.95rem] leading-none"
+                    iconClassName="text-glyph-sm leading-none"
                   />
                 }
                 label={folder.name}

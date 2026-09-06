@@ -27,7 +27,7 @@ export function AvatarPicker({ name, avatar, onPick, onRemove }: AvatarPickerPro
         <Avatar
           name={name}
           src={avatar}
-          className="relative size-24 border-[3px] border-(--surface) text-3xl shadow-featured"
+          className="relative size-24 border-[3px] border-(--surface) text-glyph-2xl shadow-featured"
         />
         <motion.button
           type="button"

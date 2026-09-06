@@ -126,7 +126,7 @@ export function InitialsFace(props: FaceProps) {
                 animate={reduce ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, transition: { duration: 0.1 } }}
                 transition={{ type: 'spring', stiffness: 520, damping: 30 }}
-                className="block whitespace-nowrap rounded-control bg-primary px-2.5 py-1.5 text-sub font-semibold text-primary-foreground shadow-interactive"
+                className="block whitespace-nowrap rounded-control bg-primary px-2.5 py-1.5 text-body font-semibold text-primary-foreground shadow-interactive"
               >
                 {tokens[peek.index]}
               </motion.span>

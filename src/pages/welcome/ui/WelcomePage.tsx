@@ -53,7 +53,7 @@ export function WelcomePage({ onContinue }: WelcomePageProps) {
           className="text-balance text-headline font-bold tracking-tight text-white"
         />
         <motion.p
-          className="text-balance text-sub text-white/85"
+          className="text-balance text-body text-white/85"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: reduce ? 0 : 1.0, duration: 0.5, ease: EASE_EXPO }}

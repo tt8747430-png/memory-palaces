@@ -79,7 +79,7 @@ function ModeTile({
         {icon}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-sub font-semibold text-heading">{label}</span>
+        <span className="block text-body font-semibold text-heading">{label}</span>
         <span className="block truncate text-label text-muted-foreground">{sublabel}</span>
       </span>
       <ChevronRight className="size-5 shrink-0 text-faint" aria-hidden />

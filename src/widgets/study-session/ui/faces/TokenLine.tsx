@@ -19,7 +19,7 @@ export function TokenLine({ tokens, className, renderWithheld }: TokenLineProps)
   return (
     <p
       className={cn(
-        'flex w-full flex-wrap items-baseline justify-center text-[clamp(17px,4.6vw,22px)] font-semibold text-heading',
+        'flex w-full flex-wrap items-baseline justify-center text-card-token font-semibold text-heading',
         className,
       )}
     >

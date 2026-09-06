@@ -107,7 +107,7 @@ export function GearSheet({ open, onClose, mode, quick, settings }: GearSheetPro
                     <span className="grid size-7 shrink-0 place-items-center rounded-control bg-card text-heading shadow-rest">
                       {icon}
                     </span>
-                    <span className="text-sub font-semibold">{t(labelKey as never)}</span>
+                    <span className="text-body font-semibold">{t(labelKey as never)}</span>
                   </span>
                   <Combobox
                     variant="bare"

@@ -59,7 +59,7 @@ export function SplashOverlay({ onDone }: SplashOverlayProps) {
           text={t('auth.splash.tagline')}
           delay={reduce ? 0 : 1.15}
           stagger={0.06}
-          className="text-sub text-white/80"
+          className="text-body text-white/80"
         />
       </div>
     </motion.div>

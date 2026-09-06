@@ -7,7 +7,7 @@ export function PromptFace(props: FaceProps) {
   const { card, prompt, onFlip } = props
   return (
     <CardFace face={props} speakText={prompt}>
-      <h2 className="text-balance wrap-break-word text-center text-[clamp(22px,6vw,28px)] font-bold leading-[1.15] tracking-[-0.01em] text-heading">
+      <h2 className="text-balance wrap-break-word text-center text-card-prompt font-bold leading-[1.15] tracking-[-0.01em] text-heading">
         {prompt}
       </h2>
       {card.card.tip ? <TipRow tip={card.card.tip} /> : null}

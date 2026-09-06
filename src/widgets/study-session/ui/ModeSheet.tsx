@@ -52,7 +52,7 @@ export function ModeSheet({ open, onClose, mode, onMode }: ModeSheetProps) {
               <span className="min-w-0 flex-1">
                 <span
                   className={cn(
-                    'block text-sub font-semibold',
+                    'block text-body font-semibold',
                     active ? 'text-primary-foreground' : 'text-heading',
                   )}
                 >

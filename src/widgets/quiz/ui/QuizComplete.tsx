@@ -20,7 +20,7 @@ export function QuizComplete({ result, onRetry, onDone }: QuizCompleteProps) {
       title={t('quiz.complete')}
       tone={passed ? 'success' : 'info'}
     >
-      <p className="text-sub font-semibold text-heading">
+      <p className="text-body font-semibold text-heading">
         {t('quiz.scoreLine', { score: result.score, total: result.total })}
       </p>
       <p className="text-body text-muted-foreground">

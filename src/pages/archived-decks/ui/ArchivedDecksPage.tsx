@@ -76,13 +76,13 @@ export function ArchivedDecksPage({ onBack }: ArchivedDecksPageProps) {
                 className="flex items-center gap-3 rounded-card bg-card p-3 shadow-rest"
               >
                 <span
-                  className="grid size-11 shrink-0 place-items-center rounded-card bg-info-surface text-2xl"
+                  className="grid size-11 shrink-0 place-items-center rounded-card bg-info-surface text-glyph-xl"
                   aria-hidden
                 >
                   {deck.icon || '🗂️'}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sub font-semibold text-heading">
+                  <span className="block truncate text-body font-semibold text-heading">
                     {deck.name}
                   </span>
                   <span className="block truncate text-label text-muted-foreground">

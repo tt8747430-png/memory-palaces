@@ -43,7 +43,7 @@ export function FormatToggle({ value, auto, onChange, onReset }: FormatTogglePro
               aria-checked={selected}
               onClick={() => onChange(option)}
               className={cn(
-                'flex items-center justify-center gap-2 rounded-control py-2.5 text-sub font-semibold transition-[background-color,box-shadow,transform] active:scale-[0.98]',
+                'flex items-center justify-center gap-2 rounded-control py-2.5 text-body font-semibold transition-[background-color,box-shadow,transform] active:scale-[0.98]',
                 selected
                   ? 'bg-info-surface text-heading ring-1 ring-inset ring-primary/20 shadow-rest'
                   : 'bg-secondary/40 text-muted-foreground',

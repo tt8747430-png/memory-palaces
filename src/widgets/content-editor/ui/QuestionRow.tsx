@@ -44,7 +44,7 @@ export function QuestionRow({
     >
       <div className="mb-2 flex items-center gap-2">
         <RowIndex index={index} tone="strong" />
-        <p className="min-w-0 flex-1 text-sub font-semibold leading-snug text-heading">
+        <p className="min-w-0 flex-1 text-body font-semibold leading-snug text-heading">
           {question.prompt}
         </p>
       </div>

@@ -24,7 +24,7 @@ function FieldLabel({
         htmlFor={htmlFor}
         className={cn(
           'inline-flex items-center gap-1.5 text-heading',
-          emphasis ? 'text-sub font-bold' : 'text-label font-semibold',
+          emphasis ? 'text-body font-bold' : 'text-label font-semibold',
         )}
       >
         {icon ? (

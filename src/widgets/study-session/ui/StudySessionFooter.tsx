@@ -103,7 +103,7 @@ function RemainingCounts({
         <span
           key={key}
           className={cn(
-            'inline-flex items-baseline gap-1.5 rounded-pill px-3 py-1.5 text-label font-bold tabular-nums',
+            'inline-flex items-baseline gap-1.5 rounded-full px-3 py-1.5 text-label font-bold tabular-nums',
             COUNT_CHIP[key],
             current === key && 'ring-2 ring-(--ring)/30',
           )}

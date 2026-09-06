@@ -51,7 +51,7 @@ export function CardRow({
     >
       <div className="flex items-center gap-2">
         <RowIndex index={index} />
-        <p className="min-w-0 flex-1 text-sub font-semibold leading-snug text-heading">
+        <p className="min-w-0 flex-1 text-body font-semibold leading-snug text-heading">
           {card.front}
         </p>
         {card.flagged ? (

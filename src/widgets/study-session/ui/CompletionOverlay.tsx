@@ -15,7 +15,7 @@ export function CompletionOverlay({
 
   return (
     <OutcomeOverlay icon={<Check className="size-12" aria-hidden />} title={t('study.complete')}>
-      <p className="inline-flex items-center gap-2 text-sub font-semibold text-(--success-foreground)">
+      <p className="inline-flex items-center gap-2 text-body font-semibold text-(--success-foreground)">
         <Sparkles className="size-4" aria-hidden />
         {t(summary.graded === 1 ? 'study.cardsReviewedOne' : 'study.cardsReviewedOther', {
           count: summary.graded,

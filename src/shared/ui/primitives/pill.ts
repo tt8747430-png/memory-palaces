@@ -6,7 +6,7 @@
 export type PillTone = 'info' | 'success' | 'warning' | 'primary'
 
 const PILL_SHAPE =
-  'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 ' + 'text-label font-semibold'
+  'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-label font-semibold'
 
 const PILL_TONE: Record<PillTone, string> = {
   info: 'bg-info-surface text-info-foreground',

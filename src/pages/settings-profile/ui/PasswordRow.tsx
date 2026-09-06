@@ -16,7 +16,7 @@ export function PasswordRow({ onChangePassword }: { onChangePassword: () => void
       >
         <span className="flex items-center gap-2.5 text-foreground">
           <Lock className="size-4 text-muted-foreground" aria-hidden />
-          <span aria-hidden className="text-[18px] leading-none tracking-[0.2em]">
+          <span aria-hidden className="text-glyph-md leading-none tracking-[0.2em]">
             ••••••••
           </span>
         </span>

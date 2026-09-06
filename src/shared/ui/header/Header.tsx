@@ -159,7 +159,7 @@ export function HeaderCount({ className }: HeaderSlotProps) {
   if (!state.progress) return null
   return (
     <span
-      className={cn('rounded-pill bg-info-surface px-3 py-1 text-label tabular-nums', className)}
+      className={cn('rounded-full bg-info-surface px-3 py-1 text-label tabular-nums', className)}
     >
       <span className="font-semibold text-heading">{state.progress.done}</span>
       <span className="text-muted-foreground">{`/${state.progress.total}`}</span>
@@ -176,10 +176,10 @@ export function HeaderTrack({ className }: HeaderSlotProps) {
   const { state } = useHeader()
   const reduce = useReducedMotion()
   return (
-    <div className={cn('h-0.5 overflow-hidden rounded-pill bg-primary/10', className)}>
+    <div className={cn('h-0.5 overflow-hidden rounded-full bg-primary/10', className)}>
       <div
         data-testid="header-progress-fill"
-        className="h-full w-full origin-left rounded-pill bg-(--success-foreground)"
+        className="h-full w-full origin-left rounded-full bg-(--success-foreground)"
         style={{
           transform: `scaleX(${state.fraction})`,
           transition: reduce ? undefined : 'transform 0.3s ease-out',
