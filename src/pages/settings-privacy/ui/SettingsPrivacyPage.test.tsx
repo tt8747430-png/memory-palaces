@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { cleanup, render, screen } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
 import { InMemoryRepository } from '@/shared/api'
+import { started } from '@/shared/test/started'
 import {
   createPreferencesStore,
   type Preferences,
@@ -17,7 +17,7 @@ function renderPage() {
   const repo = new InMemoryRepository<Preferences>()
   render(
     <I18nextProvider i18n={i18n}>
-      <PreferencesStoreContext value={createPreferencesStore(repo)}>
+      <PreferencesStoreContext value={started(createPreferencesStore(repo))}>
         <SettingsPrivacyPage onBack={() => {}} />
       </PreferencesStoreContext>
     </I18nextProvider>,
@@ -26,28 +26,30 @@ function renderPage() {
 }
 
 describe('SettingsPrivacyPage', () => {
-  it('reflects the privacy defaults', () => {
+  it('lists every privacy control', () => {
     renderPage()
-    expect(screen.getByRole('switch', { name: /profile visibility/i })).toHaveAttribute(
-      'aria-checked',
-      'true',
-    )
-    expect(screen.getByRole('switch', { name: /activity sharing/i })).toHaveAttribute(
-      'aria-checked',
-      'false',
-    )
+    for (const label of [
+      /profile visibility/i,
+      /activity sharing/i,
+      /location access/i,
+      /notification insights/i,
+      /data encryption/i,
+    ]) {
+      expect(screen.getByRole('button', { name: label })).toBeInTheDocument()
+    }
   })
 
-  it('persists a privacy change without dropping the other flags', async () => {
-    const user = userEvent.setup()
+  it('offers no switch, because nothing reads what a switch would write', () => {
+    renderPage()
+    // A control that changes nothing must not look like one that does — "Data encryption"
+    // used to render already on, over an unencrypted IndexedDB store.
+    expect(screen.queryAllByRole('switch')).toHaveLength(0)
+    expect(screen.getByRole('button', { name: /data encryption/i })).toBeDisabled()
+  })
+
+  it('writes nothing when a row is pressed', async () => {
     const { repo } = renderPage()
-
-    await user.click(screen.getByRole('switch', { name: /activity sharing/i }))
-
-    await waitFor(async () => {
-      const [prefs] = await repo.getAll()
-      expect(prefs?.privacy.activitySharing).toBe(true)
-      expect(prefs?.privacy.profileVisibility).toBe(true)
-    })
+    screen.getByRole('button', { name: /activity sharing/i }).click()
+    await expect(repo.getAll()).resolves.toHaveLength(0)
   })
 })

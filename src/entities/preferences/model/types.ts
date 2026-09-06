@@ -37,12 +37,18 @@ export interface PrivacySettings {
   dataEncryption: boolean
 }
 
+/**
+ * None of these is honoured by anything yet — `/settings/privacy` renders them as "Soon" rows
+ * until they are. `dataEncryption` defaults to **false** because the on-device store is a plain
+ * IndexedDB database: a stored `true` was a claim the app could not back, and a default is the one
+ * place that claim gets made for every new learner at once.
+ */
 export const DEFAULT_PRIVACY: PrivacySettings = {
   profileVisibility: true,
   activitySharing: false,
   locationAccess: false,
   notificationTracking: true,
-  dataEncryption: true,
+  dataEncryption: false,
 }
 
 export interface Preferences extends Entity {

@@ -18,13 +18,14 @@ import {
   type SelectSurface,
   type SelectToolbarConfig,
 } from '@/shared/config/select-toolbar'
-import { cn } from '@/shared/lib'
+import { cn, selectIsReady } from '@/shared/lib'
 import {
   ActionPill,
   AppScreen,
   Button,
   cardSurface,
   ScreenHeader,
+  ScreenLoading,
   SegmentedControl,
   selectActionIcon,
   SlotCount,
@@ -44,6 +45,7 @@ export interface SettingsSelectPageProps {
 export function SettingsSelectPage({ onBack }: SettingsSelectPageProps) {
   const { t } = useTranslation()
   const store = usePreferencesStoreApi()
+  const ready = usePreferencesStore(selectIsReady)
   const prefs = usePreferencesStore(selectEffectivePreferences)
   const [surface, setSurface] = useState<SelectSurface>('library')
 
@@ -69,14 +71,20 @@ export function SettingsSelectPage({ onBack }: SettingsSelectPageProps) {
   }
   const resetAll = () => void setPreferences(store, { selectToolbar: DEFAULT_SELECT_TOOLBAR })
 
+  // `selectEffectivePreferences` answers `DEFAULT_PREFERENCES` until the snapshot lands, so
+  // without this every control on this screen paints its default first and then flips — a learner
+  // with haptics off watches the switch turn itself on and back off on every cold start.
+  if (!ready) return <ScreenLoading />
+
   return (
     <AppScreen
+      gutter="end"
       fill
       header={
         <ScreenHeader title={t('select.title')} onBack={onBack} backLabel={t('settings.back')} />
       }
     >
-      <div className="mt-3 flex flex-col gap-4 pb-24">
+      <div className="mt-3 flex flex-col gap-4">
         <p className="flex items-start gap-2 px-1 text-label leading-relaxed text-muted-foreground">
           <CheckSquare className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
           {t('select.subtitle')}

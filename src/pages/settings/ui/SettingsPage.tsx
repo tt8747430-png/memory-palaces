@@ -33,12 +33,19 @@ import { profileHandle, selectEffectiveProfile, useProfileStore } from '@/entiti
 import type { SessionKind } from '@/entities/session'
 import { setPreferences } from '@/features/preferences'
 import { AVAILABLE_LANGUAGES, DAILY_GOAL_OPTIONS } from '@/shared/config/constants'
-import { setDevMode, setProbeOverlay, useDevMode, useProbeOverlay } from '@/shared/lib'
+import {
+  selectIsReady,
+  setDevMode,
+  setProbeOverlay,
+  useDevMode,
+  useProbeOverlay,
+} from '@/shared/lib'
 import {
   AppScreen,
   Avatar,
   ConfirmDialog,
   ScreenHeader,
+  ScreenLoading,
   SettingsRow,
   SettingsSection,
 } from '@/shared/ui'
@@ -74,6 +81,7 @@ export function SettingsPage({
   const devMode = useDevMode()
   const probeOverlay = useProbeOverlay()
   const prefsStore = usePreferencesStoreApi()
+  const ready = usePreferencesStore(selectIsReady)
   const prefs = usePreferencesStore(selectEffectivePreferences)
   const profile = useProfileStore(selectEffectiveProfile)
   const [logoutOpen, setLogoutOpen] = useState(false)
@@ -114,13 +122,19 @@ export function SettingsPage({
     icon: <Globe className="size-4.5" aria-hidden />,
   }))
 
+  // `selectEffectivePreferences` answers `DEFAULT_PREFERENCES` until the snapshot lands, so
+  // without this every control on this screen paints its default first and then flips — a learner
+  // with haptics off watches the switch turn itself on and back off on every cold start.
+  if (!ready) return <ScreenLoading />
+
   return (
     <AppScreen
+      gutter="end"
       header={
         <ScreenHeader title={t('settings.title')} onBack={onBack} backLabel={t('settings.back')} />
       }
     >
-      <div className="mt-4 flex flex-col gap-5 pb-28">
+      <div className="mt-4 flex flex-col gap-5">
         <button
           type="button"
           onClick={() => onEditProfile?.()}
@@ -129,11 +143,11 @@ export function SettingsPage({
           <Avatar
             name={name}
             src={profile.avatar}
-            className="size-16 text-xl shadow-rest transition-transform duration-200 ease-out group-active:scale-[0.96]"
+            className="size-16 text-glyph-lg shadow-rest transition-transform duration-200 ease-out group-active:scale-[0.96]"
           />
           <span className="min-w-0 flex-1">
             <span className="block truncate text-title font-semibold text-heading">{name}</span>
-            <span className="block truncate text-sub text-muted-foreground">
+            <span className="block truncate text-body text-muted-foreground">
               {handle ? `@${handle}` : t('settings.profileHint')}
             </span>
           </span>
@@ -164,13 +178,15 @@ export function SettingsPage({
             checked={prefs.notifications}
             onCheckedChange={(value) => update({ notifications: value })}
           />
+          {/* Nothing in the app plays a sound — there is no `Audio`, no `AudioContext`, no asset.
+              The row stays because the feature is planned and its preference is already stored;
+              it stops being a switch because a switch that changes nothing is a lie. */}
           <SettingsRow
-            kind="toggle"
+            kind="soon"
             icon={<Volume2 />}
             label={t('settings.sound')}
             description={t('settings.soundHint')}
-            checked={prefs.soundEffects}
-            onCheckedChange={(value) => update({ soundEffects: value })}
+            badge={t('settings.comingSoon')}
           />
           <SettingsRow
             kind="toggle"

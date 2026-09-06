@@ -33,11 +33,17 @@ function renderSettings(props: Partial<SettingsPageProps> = {}) {
 describe('SettingsPage', () => {
   it('shows the preference toggles defaulting to on', () => {
     renderSettings()
-    expect(screen.getByRole('switch', { name: /sound effects/i })).toHaveAttribute(
+    expect(screen.getByRole('switch', { name: /notifications/i })).toHaveAttribute(
       'aria-checked',
       'true',
     )
     expect(screen.getByRole('switch', { name: /reduced motion/i })).toBeInTheDocument()
+  })
+
+  it('does not offer sound effects as a switch, because nothing plays a sound', () => {
+    renderSettings()
+    expect(screen.queryByRole('switch', { name: /sound effects/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /sound effects/i })).toBeDisabled()
   })
 
   it('persists the appearance theme chosen from the picker', async () => {

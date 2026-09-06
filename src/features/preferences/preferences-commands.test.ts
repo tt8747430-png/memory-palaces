@@ -52,6 +52,6 @@ describe('setPreferences', () => {
     )
     expect(prefs.privacy.activitySharing).toBe(true)
     expect(prefs.privacy.profileVisibility).toBe(true)
-    expect(prefs.privacy.dataEncryption).toBe(true)
+    expect(prefs.privacy.dataEncryption).toBe(false)
   })
 })

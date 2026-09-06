@@ -23,8 +23,15 @@ import {
   type SwipeConfig,
   type SwipeItemType,
 } from '@/shared/config/swipe'
-import { cn } from '@/shared/lib'
-import { AppScreen, Button, cardSurface, ScreenHeader, SegmentedControl } from '@/shared/ui'
+import { cn, selectIsReady } from '@/shared/lib'
+import {
+  AppScreen,
+  Button,
+  cardSurface,
+  ScreenHeader,
+  ScreenLoading,
+  SegmentedControl,
+} from '@/shared/ui'
 import { SideGroup } from './SideGroup'
 import { SwipePreview } from './SwipePreview'
 
@@ -41,6 +48,7 @@ export interface SettingsSwipePageProps {
 export function SettingsSwipePage({ onBack }: SettingsSwipePageProps) {
   const { t } = useTranslation()
   const store = usePreferencesStoreApi()
+  const ready = usePreferencesStore(selectIsReady)
   const prefs = usePreferencesStore(selectEffectivePreferences)
   const [type, setType] = useState<SwipeItemType>('deck')
 
@@ -65,14 +73,20 @@ export function SettingsSwipePage({ onBack }: SettingsSwipePageProps) {
 
   const config = prefs.swipe[type]
 
+  // `selectEffectivePreferences` answers `DEFAULT_PREFERENCES` until the snapshot lands, so
+  // without this every control on this screen paints its default first and then flips — a learner
+  // with haptics off watches the switch turn itself on and back off on every cold start.
+  if (!ready) return <ScreenLoading />
+
   return (
     <AppScreen
+      gutter="end"
       fill
       header={
         <ScreenHeader title={t('swipe.title')} onBack={onBack} backLabel={t('settings.back')} />
       }
     >
-      <div className="mt-3 flex flex-col gap-4 pb-24">
+      <div className="mt-3 flex flex-col gap-4">
         <p className="flex items-start gap-2 px-1 text-label leading-relaxed text-muted-foreground">
           <ArrowLeftRight className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
           {t('swipe.subtitle')}
