@@ -182,7 +182,8 @@ export function startKeyboardViewport(): () => void {
     anchor()
 
     // Zoom shrinks vv.height and pans offsetTop exactly like the keyboard; scale is the only tell.
-    // iOS ignores user-scalable=no, so it is reachable. Freeze on last unzoomed read.
+    // Locked in an installed app, kept in a browser tab (where Safari ignores user-scalable=no
+    // anyway), so a zoomed reading is reachable. Freeze on last unzoomed read.
     if (vv.scale !== 1) return
 
     // Screen space: the keyboard's own height, pan or no pan. `KEYBOARD_MIN` tells a keyboard from

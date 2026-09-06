@@ -203,7 +203,8 @@
   /**
    * Below 16px, iOS zooms the visual viewport when a field takes focus, and every measurement in
    * `keyboard-viewport.ts` is taken in an unzoomed frame. Sizing the fields is what buys that
-   * immunity now that the viewport meta lets people pinch-zoom again. ADR 0002.
+   * immunity in a browser tab, where the page stays zoomable on purpose and `user-scalable=no`
+   * would be ignored anyway. ADR 0002.
    */
   input,
   textarea,

@@ -11,13 +11,16 @@
        none (webkit.org/b/259770), so this keeps iOS + Android on one path. Do not "modernise".
        ADR 0002.
 
-       No maximum-scale, no user-scalable=no — not even for an installed app. Pinch-zoom is the
-       only way some people read a screen, so removing it fails WCAG 2.2 §1.4.4, and it does not
-       even buy what it used to: WebKit ignores the pair outright, so locking zoom took the
-       gesture away on Android installs alone, which is the one place it was never needed. The
-       measurement immunity it once paid for comes from sizing text-entry controls at 16px
-       (--p-text-entry, theme.css) instead: below that, iOS zooms the visual viewport on focus and
-       moves the ground under every measurement described above. -->
+       Zoom is decided at boot, not here: installed, the app locks it so a pinch reads as a
+       gesture the app owns rather than a page being scaled; in a browser tab it stays a page and
+       stays zoomable, which is where anyone who needs to magnify the content still can. The
+       script below switches this tag. `maximum-scale` + `user-scalable=no` are honoured exactly
+       where it matters — an iOS home-screen app and an Android install — and ignored only by
+       Safari in a tab (iOS 10+), which is the case deliberately left zoomable anyway.
+
+       Either way text-entry controls are 16px (--p-text-entry, theme.css) so iOS never zooms the
+       visual viewport on focus — a separate mechanism for a separate zoom, and that one would
+       move the ground under every measurement described above. -->
     <meta
       content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-visual"
       name="viewport"
@@ -53,6 +56,24 @@
                 : 'light'
         } catch (_) {
           document.documentElement.dataset.theme = 'light'
+        }
+
+        /* Installed, the app is an app: a pinch is not a page being scaled, and double-tap must
+         not cost a tap its response. In a browser tab it is still a page, so zoom stays — an
+         install is the user asking for the app, and the zoomable copy is one tab away.
+         iOS reports the home-screen case through navigator.standalone as well as display-mode. */
+        try {
+          var installed =
+            window.matchMedia('(display-mode: standalone)').matches ||
+            window.matchMedia('(display-mode: fullscreen)').matches ||
+            window.navigator.standalone === true
+          if (installed) {
+            document.querySelector('meta[name=viewport]').content =
+              'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no,' +
+              ' viewport-fit=cover, interactive-widget=resizes-visual'
+          }
+        } catch (_) {
+          /* Leave the zoomable default in place. */
         }
       })()
     </script>

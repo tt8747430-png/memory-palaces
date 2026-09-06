@@ -26,7 +26,8 @@ What iOS actually does — measured on device, not inferred, because two rounds 
   honour it, and under `resizes-content` the layout viewport shrinks with the visual one, collapsing the measurement to
   ~0 — no inset, no scroll range, no reveal. Do not "modernise" it.
 - **Pinch-zoom is indistinguishable from a keyboard by geometry** — height shrinks and `offsetTop` pans for both;
-  `scale` is the only tell, and WebKit ignores `user-scalable=no`.
+  `scale` is the only tell. An installed app locks zoom at boot; a browser tab keeps it, and Safari ignores
+  `user-scalable=no` there in any case — so the guard is for the tab.
 
 ## Decision
 

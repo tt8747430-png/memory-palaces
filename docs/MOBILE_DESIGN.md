@@ -2,10 +2,11 @@
 
 Behavior, interaction, PWA caveats. Code-level rules → [CODE_STYLE.md](CODE_STYLE.md).
 
-**Portrait, touch-first, offline-first, installable PWA.** `index.html`: `viewport-fit=cover`, `maximum-scale=1`,
-`user-scalable=no`, **`interactive-widget=resizes-visual`** (load-bearing, not boilerplate —
+**Portrait, touch-first, offline-first, installable PWA.** `index.html`: `viewport-fit=cover`,
+**`interactive-widget=resizes-visual`** (load-bearing, not boilerplate —
 [ADR 0002](adr/0002-keyboard-covers-the-app.md); `resizes-content` collapses the keyboard measurement to zero on
-Chrome/Firefox). Manifest: `display: standalone`, `orientation: portrait`.
+Chrome/Firefox). Installed, the boot script swaps in `maximum-scale=1, user-scalable=no`; in a browser tab the page
+stays zoomable. Manifest: `display: standalone`, `orientation: portrait`.
 
 ---
 

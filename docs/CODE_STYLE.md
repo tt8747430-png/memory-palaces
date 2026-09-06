@@ -113,7 +113,7 @@ v4, two-layer tokens: primitives (`--p-navy-900`…) → semantic roles (`--prim
 
 - **Compose with [`cn()`](../src/shared/lib/cn.ts)** — resolves conflicting utilities; template concatenation doesn't.
   - **`cn()` is told the theme.** `tailwind-merge` only knows Tailwind's own scales, so a custom name it does not
-    recognise gets filed under whichever group's matcher accepts anything — `text-label` looked like a *colour*, and a
+    recognise gets filed under whichever group's matcher accepts anything — `text-label` looked like a _colour_, and a
     single `cn()` holding a size and a colour dropped the size. Every type, radius and elevation name is declared in
     `cn.ts`; `cn.test.ts` is that list restated as behaviour. **Adding a name to `theme.css` means adding it there.**
 - **Never build class names dynamically** — lookup map of full static strings, or inline `style` for genuinely dynamic
@@ -127,7 +127,7 @@ v4, two-layer tokens: primitives (`--p-navy-900`…) → semantic roles (`--prim
     weight and colour, not a sixth size.**
   - **Three things are not type, and have their own scales.** `text-glyph-*` is an emoji filling a square (a deck
     cover, a folder mark, an avatar) — named for the square, so a `size-8` cover and a `size-8` folder take the same
-    step. `text-figure-*` is a display figure, one tabular number that *is* the content — the scale stops at 20px
+    step. `text-figure-*` is a display figure, one tabular number that _is_ the content — the scale stops at 20px
     because it describes lines of type, and a streak count read across a room is not one. `text-card-*` is the printed
     study card's own fluid ramp, the only viewport-relative sizes in the app.
   - **`rounded-full` is the pill**, and the one Tailwind radius that is not off the scale — it is a shape, not a step.
@@ -296,8 +296,9 @@ dev-only **`/dev/kitchen-sink`**.
   it once from the shell, and `useVirtualKeyboard` reads the same measurement rather than taking a second subscription.
   `theme.css` declares the fallbacks used before the first measurement and after teardown.
 - **Pinch-zoom is indistinguishable from a keyboard by geometry — `scale` is the only tell.** Height shrinks and
-  `offsetTop` pans for both, and WebKit ignores `user-scalable=no`, so a zoomed reading is reachable on the one
-  platform this code exists for. `measure()` returns early while `vv.scale !== 1`, freezing the last unzoomed values;
+  `offsetTop` pans for both. Installed, the boot script locks zoom and the case cannot arise; in a browser tab the app
+  is deliberately left zoomable, and Safari ignores `user-scalable=no` there anyway, so a zoomed reading stays
+  reachable. `measure()` returns early while `vv.scale !== 1`, freezing the last unzoomed values;
   anchoring runs _before_ that guard, because pinch-zoom never touches the layout viewport.
 - **"Is a keyboard up" and "how much does it cover" are two numbers, and the 120px floor belongs to the first.** The
   keyboard's own height is `--app-height − visualViewport.height`; `--kb-inset` is that _minus the pan_, because the pan
