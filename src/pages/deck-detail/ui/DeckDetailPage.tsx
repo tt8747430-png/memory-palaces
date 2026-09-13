@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Search, Settings } from 'lucide-react'
-import { useDeck, useDeckStoreApi } from '@/entities/deck'
+import { isSubdeck, useDeck, useDeckStoreApi } from '@/entities/deck'
 import { selectCards, useCardStore } from '@/entities/card'
 import { questionsForDeck, selectQuestions, useQuestionStore } from '@/entities/question'
 import {
@@ -16,6 +16,7 @@ import { cardsInSubtree, selectIsReady, useMultiSelect } from '@/shared/lib'
 import { DeckContentEditor } from '@/widgets/content-editor'
 import { useDeckOverview } from '../model/use-deck-overview'
 import { AlgorithmLine } from './AlgorithmLine'
+import { LockedAlgorithmLine } from './LockedAlgorithmLine'
 import { PracticeModes } from '@/widgets/practice-modes'
 import {
   AppScreen,
@@ -144,7 +145,7 @@ export function DeckDetailPage({
       }
       pinned={
         searching && !selection.active ? (
-          <div className="px-5 pb-3">
+          <div className="px-5 py-3">
             <SearchField
               autoFocus
               value={query}
@@ -158,12 +159,14 @@ export function DeckDetailPage({
       }
     >
       <div className="mt-2 space-y-4">
-        {!selection.active && !searching ? (
+        {selection.active || searching ? null : isSubdeck(deck) ? (
+          <LockedAlgorithmLine value={settings.algorithm} />
+        ) : (
           <AlgorithmLine
             value={settings.algorithm}
             onChange={(algorithm) => void updateDeckSettings(deckStore, deckId, { algorithm })}
           />
-        ) : null}
+        )}
 
         {hasContent && !selection.active && !searching ? (
           <StudyOverviewCard

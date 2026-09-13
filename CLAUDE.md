@@ -24,7 +24,8 @@ Non-trivial plan → suggest a grill first (user runs it): `/grill-me`, `/grill-
 
 **Zero legacy in _code_.** Latest stable deps. No polyfills, fallback branches, deprecated APIs, dead shims.
 **Exception — persisted data:** RxDB schemas + anything on-device need real back-compat → migrate
-(`app/persistence/schemas.ts`), never orphan stored decks/cards/reviews.
+(`app/persistence/schemas.ts`), never orphan stored decks/cards/reviews. A repair one document can't decide alone
+(it must see others) is a keeper in `app/persistence/` the composition root starts — `keep-archive-detached.ts`.
 
 **Staged is deliberate — never restore it.** Anything in the git index was put there on purpose. A staged deletion is a
 decision, not damage: don't `git checkout`/`git restore` it, don't re-add the content, don't "fix" it as an
@@ -68,7 +69,8 @@ One file: `npx vitest run src/shared/lib/srs.test.ts` · one test: `npx vitest r
 **DI** — port `shared/api/base-repository.ts` (`Repository<T>`: save/remove/observe); adapters
 `shared/api/rxdb/rxdb-repository.ts` (prod) and `in-memory-repository.ts` (tests + live `session` store).
 `app/composition-root.ts` builds the DB (`app/persistence/`), wires repo→store, **calls `start()` on every mirroring
-store** (`session` is deliberately absent — it owns its writes; `AuthProvider` restores it), exports `services`;
+store** (`session` is deliberately absent — it owns its writes; `AuthProvider` restores it), starts the persisted-data
+keepers, exports `services`;
 `ServicesProvider` injects via context. Screens never start a store — they read, and gate on
 `selectIsReady`. Tests wire their own stores through `shared/test/started.ts`.
 
@@ -100,6 +102,9 @@ the store from `useXStoreApi()` and pass it in. New mutation → new file + expo
 - **Mobile/PWA behavior** → [MOBILE_DESIGN](docs/MOBILE_DESIGN.md).
 - **Deck settings, algorithms, card styles** → [DECK_SETTINGS_UI_STATUS](docs/DECK_SETTINGS_UI_STATUS.md) for what is
   real (Works / UI only / Invented), then the design spec. Don't build on a control the status doc calls stored-only.
+- **Archive, moving decks, subdeck settings** → [ADR 0003](docs/adr/0003-the-archive-is-a-place.md) (archive is a place
+  outside every folder/deck; a batch never acts on a subdeck its selected parent carries, `idsWithoutDescendants`;
+  placement from one snapshot, `placeDecks`; the main deck owns `MAIN_DECK_SETTINGS`).
 - **Naming anything** → [UBIQUITOUS_LANGUAGE](docs/UBIQUITOUS_LANGUAGE.md). "Session" = auth, never a study pass;
   `known` ≠ Memorized.
 

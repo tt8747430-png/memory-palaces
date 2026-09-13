@@ -5,12 +5,7 @@ import { type Deck, DEFAULT_DECK_COLOR, DEFAULT_DECK_ICON } from '@/entities/dec
 import { DEFAULT_FOLDER_ICON, type Folder } from '@/entities/folder'
 import { childDecks, cn, decksInFolder, findEntity, rootDecks, toggleInSet } from '@/shared/lib'
 import { Button, DeckCover, FolderGlyph, Sheet } from '@/shared/ui'
-
-export type MoveDestination =
-  | { kind: 'home' }
-  | { kind: 'archive' }
-  | { kind: 'folder'; folderId: string }
-  | { kind: 'deck'; deckId: string }
+import type { MoveDestination } from '../model/move-destination'
 
 /**
  * Which rows a picker offers. `any` is the library's own set — a deck can also live in a folder, at

@@ -1,9 +1,8 @@
 import { useTranslation } from 'react-i18next'
-import { X } from 'lucide-react'
 import { ACTION_META } from '@/shared/config/actions'
 import type { SelectToolbarConfig } from '@/shared/config/select-toolbar'
 import { cn, type MultiSelect } from '@/shared/lib'
-import { IconButton } from './primitives'
+import { CloseBadge } from './CloseBadge'
 import { type SelectActionHandlers, selectActionIcon } from './select-actions'
 
 export interface SelectToolbarProps {
@@ -11,8 +10,8 @@ export interface SelectToolbarProps {
   handlers: SelectActionHandlers
   /**
    * The live selection — the toolbar ends it, the same way `SelectHeader` takes the selection it
-   * counts. Leaving select mode sits beside the actions so it is in reach with them, not only up in
-   * the header.
+   * counts. Leaving select mode stands on the toolbar's corner so it is in reach with the actions,
+   * not only up in the header, without taking a column from them.
    */
   selection: Pick<MultiSelect, 'exit'>
   className?: string
@@ -25,21 +24,18 @@ export function SelectToolbar({ actions, handlers, selection, className }: Selec
   return (
     <div
       className={cn(
-        'flex items-stretch gap-1.5 rounded-card-featured bg-card/95 p-2 shadow-elevated backdrop-blur-xl',
+        'relative flex items-stretch gap-1.5 rounded-card-featured bg-card/95 p-2 shadow-elevated backdrop-blur-xl',
         className,
       )}
     >
-      <IconButton
-        variant="tint"
+      <CloseBadge
+        size="md"
+        corner="start"
         // Not "Cancel": the header already offers one by that name, and two controls sharing a name
         // on one screen leaves a screen reader with no way to tell them apart.
-        aria-label={t('selection.exitSelectMode')}
+        label={t('selection.exitSelectMode')}
         onClick={selection.exit}
-        className="focus-visible:ring-[3px] focus-visible:ring-primary/40"
-      >
-        <X className="size-4.5" aria-hidden />
-      </IconButton>
-      {shown.length > 0 ? <div className="my-1 w-px shrink-0 bg-border" aria-hidden /> : null}
+      />
       {shown.map((id) => {
         const meta = ACTION_META[id]
         const handler = handlers[id]!

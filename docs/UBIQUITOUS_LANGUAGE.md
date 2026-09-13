@@ -4,13 +4,14 @@ Canonical terms for code, UI copy, commits, discussion. Grounded in `entities/*`
 
 ## Content
 
-| Term         | Means                                                 | Avoid                         |
-| ------------ | ----------------------------------------------------- | ----------------------------- |
-| **Folder**   | Top-level container grouping Decks                    | group, category               |
-| **Deck**     | Study set of Cards + Questions; may nest as a Subdeck | palace, set, collection, list |
-| **Subdeck**  | Deck under a parent Deck (`parentId`)                 | child deck, nested deck       |
-| **Card**     | Flashcard: **front** + **back**                       | note, term, item              |
-| **Question** | Multiple choice: prompt, options, one correct answer  | quiz item, MCQ, card          |
+| Term          | Means                                                 | Avoid                         |
+| ------------- | ----------------------------------------------------- | ----------------------------- |
+| **Folder**    | Top-level container grouping Decks                    | group, category               |
+| **Deck**      | Study set of Cards + Questions; may nest as a Subdeck | palace, set, collection, list |
+| **Subdeck**   | Deck under a parent Deck (`parentId`)                 | child deck, nested deck       |
+| **Main deck** | The Deck at the top of a tree of Subdecks             | root deck, top deck, parent   |
+| **Card**      | Flashcard: **front** + **back**                       | note, term, item              |
+| **Question**  | Multiple choice: prompt, options, one correct answer  | quiz item, MCQ, card          |
 
 ## SRS
 
@@ -30,7 +31,7 @@ Canonical terms for code, UI copy, commits, discussion. Grounded in `entities/*`
 
 ## Learning algorithms
 
-Every Deck follows exactly one, inherited down the Deck tree by `resolveDeckSettings`.
+Every Deck follows exactly one: its Main deck's. A Subdeck never holds the algorithm settings (`MAIN_DECK_SETTINGS`).
 
 | Term                   | Means                                                            | Avoid                  |
 | ---------------------- | ---------------------------------------------------------------- | ---------------------- |
@@ -62,6 +63,7 @@ Every Deck follows exactly one, inherited down the Deck tree by `resolveDeckSett
 | **Selection**   | Rows picked in select mode, acted on together                                    | multi-select, checked items |
 | **Select mode** | Entered on press-and-hold: header becomes the Selection's, toolbar at the bottom | edit mode, bulk mode        |
 | **Card filter** | What a Deck's card _list_ shows: by status, or Flagged only                      | filter, scope               |
+| **Archive**     | Where archived Decks live — a place of its own, outside every Folder and Deck    | hidden, trash               |
 
 ## Progress
 
@@ -92,7 +94,9 @@ Every Deck follows exactly one, inherited down the Deck tree by `resolveDeckSett
 ## Relationships
 
 - Folder groups zero-or-more top-level Decks.
-- A Deck belongs to at most one Folder **or** one parent Deck as a Subdeck — never both.
+- A Deck belongs to at most one Folder **or** one parent Deck as a Subdeck — never both. An archived Deck belongs to
+  neither: the Archive is its place, and restoring it lands it at the top of the Library.
+- Deleting a Folder deletes every Deck in it; the Archive is never reached.
 - A Deck contains zero-or-more Cards and Questions; each belongs to exactly one Deck.
 - A Review advances exactly one Card's schedule.
 - A Study session = one Deck × one Practice mode × one Study filter.

@@ -22,6 +22,7 @@ import {
   type SwipeActionId,
   type SwipeConfig,
   type SwipeItemType,
+  withoutSwipeAction,
 } from '@/shared/config/swipe'
 import { cn, selectIsReady } from '@/shared/lib'
 import {
@@ -59,16 +60,8 @@ export function SettingsSwipePage({ onBack }: SettingsSwipePageProps) {
 
   const toggle = (side: keyof SwipeConfig, id: SwipeActionId) => {
     const current = prefs.swipe[type]
-    if (current[side].includes(id)) {
-      save({ ...current, [side]: current[side].filter((x) => x !== id) })
-      return
-    }
-    const other: keyof SwipeConfig = side === 'leading' ? 'trailing' : 'leading'
-    save({
-      ...current,
-      [side]: [...current[side], id],
-      [other]: current[other].filter((x) => x !== id),
-    })
+    const without = withoutSwipeAction(current, id)
+    save(current[side].includes(id) ? without : { ...without, [side]: [...without[side], id] })
   }
 
   const config = prefs.swipe[type]

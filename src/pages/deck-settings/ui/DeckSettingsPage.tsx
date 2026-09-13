@@ -14,7 +14,7 @@ import {
   Trash2,
   Upload,
 } from 'lucide-react'
-import { AlgorithmCard } from '@/widgets/algorithm'
+import { AlgorithmCard, LockedAlgorithmCard } from '@/widgets/algorithm'
 import { MoveSheet } from '@/widgets/deck-tree'
 import {
   ActionSheet,
@@ -65,7 +65,11 @@ export function DeckSettingsPage({ deckId, ...nav }: DeckSettingsPageProps) {
       }
     >
       <div className="mt-4 flex flex-col gap-6 pb-8">
-        <AlgorithmCard algorithm={page.settings.algorithm} onClick={nav.onOpenAlgorithm} />
+        {page.algorithmLocked ? (
+          <LockedAlgorithmCard algorithm={page.settings.algorithm} />
+        ) : (
+          <AlgorithmCard algorithm={page.settings.algorithm} onClick={nav.onOpenAlgorithm} />
+        )}
 
         <SettingsSection title={t('deckSettings.study')}>
           <SettingsRow

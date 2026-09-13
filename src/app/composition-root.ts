@@ -36,6 +36,7 @@ import {
 import { createAppDatabase } from './persistence/database'
 import { resetLocalDatabase } from './persistence/reset-local-database'
 import { createAuthGateway } from './persistence/create-auth-gateway'
+import { keepArchiveDetached } from './persistence/keep-archive-detached'
 
 export interface Services {
   authGateway: AuthGateway
@@ -119,6 +120,8 @@ export function createServices(): Services {
   ]) {
     store.getState().start()
   }
+
+  keepArchiveDetached(services.deckStore)
 
   return services
 }

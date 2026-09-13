@@ -4,7 +4,8 @@ import { toast } from 'sonner'
 import { Archive, ArchiveRestore, Trash2 } from 'lucide-react'
 import { selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
 import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
-import { deleteDeck, setDeckArchived } from '@/features/deck'
+import { useFolderStoreApi } from '@/entities/folder'
+import { deleteDeck, restoreDecks } from '@/features/deck'
 import { cardsInSubtree, findEntity, selectIsReady } from '@/shared/lib'
 import {
   AppScreen,
@@ -25,6 +26,7 @@ export function ArchivedDecksPage({ onBack }: ArchivedDecksPageProps) {
   const { t } = useTranslation()
   const deckStore = useDeckStoreApi()
   const cardStore = useCardStoreApi()
+  const folderStore = useFolderStoreApi()
 
   const decks = useDeckStore(selectDecks)
   const cards = useCardStore(selectCards)
@@ -45,7 +47,7 @@ export function ArchivedDecksPage({ onBack }: ArchivedDecksPageProps) {
   const pendingDeck = findEntity(archived, pendingDelete)
 
   const restore = (id: string, name: string) => {
-    void setDeckArchived(deckStore, id, false)
+    void restoreDecks(deckStore, folderStore, [{ id }])
     toast.success(t('archived.restored', { name }))
   }
 

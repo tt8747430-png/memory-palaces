@@ -20,17 +20,30 @@ import { DeckSettingsPage, type DeckSettingsPageProps } from './DeckSettingsPage
 
 afterEach(cleanup)
 
+/** `mainDeck` makes d1 a subdeck of a main deck holding those settings. */
 function renderPage(
   settings: Partial<DeckSettings> = {},
   props: Partial<DeckSettingsPageProps> = {},
+  mainDeck?: Partial<DeckSettings>,
 ) {
+  const main = mainDeck
+    ? [
+        makeDeck({
+          id: 'm1',
+          createdAt: new Date(0).toISOString(),
+          name: 'Science',
+          settings: mainDeck,
+        }),
+      ]
+    : []
   const deck = makeDeck({
     id: 'd1',
     createdAt: new Date(0).toISOString(),
     name: 'Physics',
+    parentId: mainDeck ? 'm1' : null,
     settings,
   })
-  const repo = new InMemoryRepository<Deck>([deck])
+  const repo = new InMemoryRepository<Deck>([...main, deck])
   render(
     <I18nextProvider i18n={i18n}>
       <SessionStoreContext value={createSessionStore(new InMemoryRepository<Session>())}>
@@ -54,6 +67,19 @@ describe('DeckSettingsPage', () => {
     renderPage({ algorithm: 'fast' })
     const row = await screen.findByRole('button', { name: /Fast review/ })
     expect(within(row).getByText('Algorithm preset')).toBeInTheDocument()
+  })
+
+  it('a subdeck explains its algorithm belongs to the main deck instead of opening it', async () => {
+    const user = userEvent.setup()
+    const onOpenAlgorithm = vi.fn()
+    renderPage({}, { onOpenAlgorithm }, { algorithm: 'fast' })
+
+    const row = await screen.findByRole('button', { name: /Fast review/ })
+    expect(within(row).getByText('Set on the main deck')).toBeInTheDocument()
+    await user.click(row)
+
+    expect(await screen.findByText('Action restricted')).toBeInTheDocument()
+    expect(onOpenAlgorithm).not.toHaveBeenCalled()
   })
 
   it('offers the settings groups and nothing excluded', async () => {

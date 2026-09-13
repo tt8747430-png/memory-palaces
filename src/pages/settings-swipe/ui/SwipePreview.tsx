@@ -18,9 +18,10 @@ import {
   type SwipeActionId,
   type SwipeConfig,
   type SwipeItemType,
+  withoutSwipeAction,
 } from '@/shared/config/swipe'
 import { cn, EASE_OUT_CSS, useSortableSensors } from '@/shared/lib'
-import { SortableRow, swipeActionIcon } from '@/shared/ui'
+import { CLOSE_BADGE_ROW_GAP, CloseBadge, SortableRow, swipeActionIcon } from '@/shared/ui'
 import { accentOf } from './swipe-accent'
 
 const TYPE_ICON: Record<SwipeItemType, typeof Layers> = {
@@ -50,6 +51,12 @@ export function SwipePreview({ type, config, onChange }: SwipePreviewProps) {
   const [items, setItems] = useState<SwipeConfig>(config)
   const [activeId, setActiveId] = useState<SwipeActionId | null>(null)
   useEffect(() => setItems(config), [config])
+
+  const remove = (action: SwipeActionId) => {
+    const next = withoutSwipeAction(items, action)
+    setItems(next)
+    onChange(next)
+  }
 
   const handleDragOver = ({ active, over }: DragOverEvent) => {
     if (!over) return
@@ -103,7 +110,7 @@ export function SwipePreview({ type, config, onChange }: SwipePreviewProps) {
       }}
     >
       <div className="flex items-center gap-1">
-        <PreviewCaps side="leading" ids={items.leading} />
+        <PreviewCaps side="leading" ids={items.leading} onRemove={remove} />
         <div
           aria-hidden
           className="flex min-w-0 flex-1 items-center gap-2.5 rounded-card bg-card px-3 py-2.5 shadow-rest"
@@ -116,24 +123,38 @@ export function SwipePreview({ type, config, onChange }: SwipePreviewProps) {
           </span>
           <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
         </div>
-        <PreviewCaps side="trailing" ids={items.trailing} />
+        <PreviewCaps side="trailing" ids={items.trailing} onRemove={remove} />
       </div>
 
       <DragOverlay dropAnimation={{ duration: 200, easing: EASE_OUT_CSS }}>
-        {activeId ? <Cap action={activeId} floating /> : null}
+        {activeId ? (
+          <span className="relative block">
+            <Cap action={activeId} floating />
+            <CloseBadge />
+          </span>
+        ) : null}
       </DragOverlay>
     </DndContext>
   )
 }
 
-function PreviewCaps({ side, ids }: { side: CapSide; ids: SwipeActionId[] }) {
+function PreviewCaps({
+  side,
+  ids,
+  onRemove,
+}: {
+  side: CapSide
+  ids: SwipeActionId[]
+  onRemove: (action: SwipeActionId) => void
+}) {
   const { setNodeRef, isOver } = useDroppable({ id: side })
   return (
     <SortableContext items={ids} strategy={horizontalListSortingStrategy}>
       <div
         ref={setNodeRef}
         className={cn(
-          'flex min-h-9 shrink-0 items-center gap-1 rounded-card transition-colors',
+          'flex min-h-9 shrink-0 items-center rounded-card transition-colors',
+          CLOSE_BADGE_ROW_GAP,
           ids.length === 0 && 'w-9 justify-center',
           isOver && 'bg-primary/6',
         )}
@@ -144,30 +165,37 @@ function PreviewCaps({ side, ids }: { side: CapSide; ids: SwipeActionId[] }) {
             className="size-8 rounded-tile-slot border-2 border-dashed border-border"
           />
         ) : (
-          ids.map((id) => <SortableCap key={id} action={id} />)
+          ids.map((id) => <SortableCap key={id} action={id} onRemove={onRemove} />)
         )}
       </div>
     </SortableContext>
   )
 }
 
-function SortableCap({ action }: { action: SwipeActionId }) {
+function SortableCap({
+  action,
+  onRemove,
+}: {
+  action: SwipeActionId
+  onRemove: (action: SwipeActionId) => void
+}) {
   const { t } = useTranslation()
+  const name = t(ACTION_META[action].labelKey as never)
   return (
     <SortableRow id={action} className="shrink-0">
       {({ handleRef, handleProps, isDragging }) => (
-        <button
-          ref={handleRef}
-          type="button"
-          {...handleProps}
-          aria-label={t('swipe.reorderLabel', { name: t(ACTION_META[action].labelKey as never) })}
-          className={cn(
-            'shrink-0 cursor-grab touch-none rounded-tile active:cursor-grabbing',
-            isDragging && 'opacity-0',
-          )}
-        >
-          <Cap action={action} />
-        </button>
+        <span className={cn('relative block', isDragging && 'opacity-0')}>
+          <button
+            ref={handleRef}
+            type="button"
+            {...handleProps}
+            aria-label={t('swipe.reorderLabel', { name })}
+            className="block shrink-0 cursor-grab touch-none rounded-tile active:cursor-grabbing"
+          >
+            <Cap action={action} />
+          </button>
+          <CloseBadge label={t('swipe.removeLabel', { name })} onClick={() => onRemove(action)} />
+        </span>
       )}
     </SortableRow>
   )
@@ -180,7 +208,8 @@ function Cap({ action, floating = false }: { action: SwipeActionId; floating?: b
       style={{ backgroundColor: accent.fill }}
       className={cn(
         'grid size-9 place-items-center rounded-tile [&_svg]:size-4',
-        floating && 'scale-105 shadow-elevated',
+        // Lifted by shadow alone: a scale would morph on the drop (CODE_STYLE §10).
+        floating && 'shadow-elevated',
         accent.ink === 'dark' ? 'text-(--p-navy-900)' : 'text-white',
       )}
     >

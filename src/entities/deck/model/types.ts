@@ -78,6 +78,21 @@ export interface DeckSettings {
   advanced: SpacedAdvanced
 }
 
+/**
+ * What a deck studies by — the whole algorithm screen. A subdeck's cards are queued in its main
+ * deck's study session, so a subdeck following a schedule of its own would be studied by two at
+ * once. These are read from the top of the tree (`resolveDeckSettings`); a subdeck never holds them.
+ */
+export const MAIN_DECK_SETTINGS = [
+  'algorithm',
+  'newCardsPerDay',
+  'maxCardsPerDay',
+  'shuffleCards',
+  'advanced',
+] as const satisfies readonly (keyof DeckSettings)[]
+
+export type MainDeckSetting = (typeof MAIN_DECK_SETTINGS)[number]
+
 export const DEFAULT_DECK_SETTINGS: DeckSettings = {
   quizTimer: true,
   studyDirection: 'front',
@@ -159,6 +174,23 @@ export interface MakeDeckInput {
   settings?: Partial<DeckSettings>
 }
 
+/** `settings` with every key its main deck owns taken out. */
+export function withoutMainDeckSettings(settings: Partial<DeckSettings>): Partial<DeckSettings> {
+  const kept = { ...settings }
+  for (const key of MAIN_DECK_SETTINGS) delete kept[key]
+  return kept
+}
+
+/**
+ * The overrides a deck may hold where it stands. A subdeck sheds its main deck's settings the way it
+ * sheds a folder: kept, they would sit unread under a value the learner cannot see. This is the
+ * stored shape's rule, so it holds for every write; `updateDeckSettings` refuses a subdeck patch
+ * carrying one outright, because a screen offering that change is a bug worth hearing about.
+ */
+function settingsAt(parentId: string | null, settings: Partial<DeckSettings>) {
+  return parentId === null ? { ...settings } : withoutMainDeckSettings(settings)
+}
+
 export function makeDeck(input: MakeDeckInput): Deck {
   const name = input.name.trim()
   if (!name) throw new Error('Deck name is required')
@@ -181,7 +213,7 @@ export function makeDeck(input: MakeDeckInput): Deck {
     order,
     favorite: input.favorite ?? false,
     archived: input.archived ?? false,
-    settings: { ...input.settings },
+    settings: settingsAt(parentId, input.settings ?? {}),
   }
 }
 
@@ -194,5 +226,5 @@ export function updateDeck(deck: Deck, changes: DeckChanges, updatedAt: string):
   if (next.order < 0) throw new Error('Deck order must be >= 0')
   validateDeckSettings(next.settings)
   const folderId = next.parentId === null ? next.folderId : null
-  return { ...next, name, folderId }
+  return { ...next, name, folderId, settings: settingsAt(next.parentId, next.settings) }
 }

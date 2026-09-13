@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { LearningAlgorithm } from '@/entities/deck'
 import { ALGORITHM_META, AlgorithmSheet } from '@/widgets/algorithm'
+import { AlgorithmLineFrame } from './AlgorithmLineFrame'
 
 export interface AlgorithmLineProps {
   value: LearningAlgorithm
@@ -11,31 +12,18 @@ export interface AlgorithmLineProps {
 /**
  * The deck says out loud which algorithm it follows, because everything else on the screen — the
  * counts, the chips, the footer in the study session — reads differently depending on the answer.
+ * Pressing the name opens the picker; a subdeck, whose main deck owns it, gets `LockedAlgorithmLine`.
  */
 export function AlgorithmLine({ value, onChange }: AlgorithmLineProps) {
   const { t } = useTranslation()
-  const [pickerOpen, setPickerOpen] = useState(false)
-  const meta = ALGORITHM_META[value]
+  const [open, setOpen] = useState(false)
 
   return (
     <>
-      <p className="flex flex-wrap items-center gap-1.5 text-label text-muted-foreground">
-        <span>{t('algorithm.deckLine')}</span>
-        <button
-          type="button"
-          onClick={() => setPickerOpen(true)}
-          className="rounded-control font-semibold text-accent underline-offset-2 hover:underline"
-        >
-          {t(meta.nameKey as never)}
-        </button>
-      </p>
-
-      <AlgorithmSheet
-        open={pickerOpen}
-        onOpenChange={setPickerOpen}
-        value={value}
-        onChange={onChange}
-      />
+      <AlgorithmLineFrame onClick={() => setOpen(true)}>
+        {t(ALGORITHM_META[value].nameKey as never)}
+      </AlgorithmLineFrame>
+      <AlgorithmSheet open={open} onOpenChange={setOpen} value={value} onChange={onChange} />
     </>
   )
 }

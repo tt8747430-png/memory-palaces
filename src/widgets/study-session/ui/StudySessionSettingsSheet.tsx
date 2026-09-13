@@ -33,7 +33,8 @@ export function StudySessionSettingsSheet({
   onFinish,
 }: StudySessionSettingsSheetProps) {
   const { t } = useTranslation()
-  const { value, filterCounts, set } = settings
+  const { value, locked, filterCounts, set } = settings
+  const lockedHint = t('algorithm.locked.rowHint')
 
   const handleShakeToUndo = async (next: boolean) => {
     if (!next) {
@@ -81,23 +82,31 @@ export function StudySessionSettingsSheet({
             value={value.direction}
             options={orientationOptions}
             onChange={(next) => set('direction', next)}
+            disabled={locked.has('direction')}
           />
         </PickerRow>
 
         <ToggleRow
           icon={<Shuffle className="size-4.5" aria-hidden />}
           label={t('study.shuffle')}
-          description={t('study.shuffleHint')}
+          description={locked.has('shuffle') ? lockedHint : t('study.shuffleHint')}
           checked={value.shuffle}
           onChange={(next) => set('shuffle', next)}
+          disabled={locked.has('shuffle')}
         />
         <ToggleRow
           icon={<Volume2 className="size-4.5" aria-hidden />}
           label={t('study.textToSpeech')}
-          description={canSpeak ? t('study.ttsHint') : t('study.ttsUnsupported')}
+          description={
+            !canSpeak
+              ? t('study.ttsUnsupported')
+              : locked.has('textToSpeech')
+                ? lockedHint
+                : t('study.ttsHint')
+          }
           checked={value.textToSpeech}
           onChange={(next) => set('textToSpeech', next)}
-          disabled={!canSpeak}
+          disabled={!canSpeak || locked.has('textToSpeech')}
         />
         {motionSupported() ? (
           <ToggleRow

@@ -8,7 +8,7 @@ import { StudySessionSettingsSheet } from './StudySessionSettingsSheet'
 
 afterEach(cleanup)
 
-function settingsControl(): StudySettingsControl {
+function settingsControl(over: Partial<StudySettingsControl> = {}): StudySettingsControl {
   return {
     value: {
       direction: 'front',
@@ -20,9 +20,11 @@ function settingsControl(): StudySettingsControl {
       swipe: DEFAULT_FLASHCARD_SWIPE,
       filter: { kind: 'all' },
     },
+    locked: new Set(),
     filterCounts: { all: 10, due: 5, new: 3, learning: 2, flagged: 1 },
     set: vi.fn(),
     setSwipe: vi.fn(),
+    ...over,
   }
 }
 
@@ -51,6 +53,17 @@ describe('StudySessionSettingsSheet', () => {
     const props = setup()
     await user.click(await screen.findByRole('switch', { name: 'Shuffle cards' }))
     expect(props.settings.set).toHaveBeenCalledWith('shuffle', true)
+  })
+
+  it('shows a setting the main deck owns as locked, saying where it is set', async () => {
+    const user = userEvent.setup()
+    const props = setup({ settings: settingsControl({ locked: new Set(['shuffle']) }) })
+
+    const shuffle = await screen.findByRole('switch', { name: 'Shuffle cards' })
+    expect(shuffle).toBeDisabled()
+    expect(screen.getByText('Set on the main deck')).toBeInTheDocument()
+    await user.click(shuffle)
+    expect(props.settings.set).not.toHaveBeenCalled()
   })
 
   it('stops the study session from the finish button, saying what that does', async () => {

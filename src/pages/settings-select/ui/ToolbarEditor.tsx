@@ -10,10 +10,15 @@ import {
 } from '@dnd-kit/core'
 import { restrictToHorizontalAxis } from '@dnd-kit/modifiers'
 import { arrayMove, horizontalListSortingStrategy, SortableContext } from '@dnd-kit/sortable'
-import { X } from 'lucide-react'
 import { type SelectActionId, type SelectToolbarConfig } from '@/shared/config/select-toolbar'
 import { cn, EASE_OUT_CSS, useSortableSensors } from '@/shared/lib'
-import { cardSurface, selectActionIcon, SortableRow } from '@/shared/ui'
+import {
+  cardSurface,
+  CLOSE_BADGE_ROW_GAP,
+  CloseBadge,
+  selectActionIcon,
+  SortableRow,
+} from '@/shared/ui'
 
 export interface ToolbarEditorProps {
   actions: SelectToolbarConfig
@@ -54,7 +59,12 @@ export function ToolbarEditor({ actions, canRemove, onReorder, onRemove }: Toolb
         onDragCancel={() => setActiveId(null)}
       >
         <SortableContext items={items} strategy={horizontalListSortingStrategy}>
-          <div className="mt-2.5 flex items-stretch gap-1.5 rounded-card-featured bg-card/95 p-2 shadow-elevated">
+          <div
+            className={cn(
+              'mt-2.5 flex items-stretch rounded-card-featured bg-card/95 p-2 shadow-elevated',
+              CLOSE_BADGE_ROW_GAP,
+            )}
+          >
             {items.map((id) => (
               <SortableTile key={id} action={id} canRemove={canRemove} onRemove={onRemove} />
             ))}
@@ -62,7 +72,12 @@ export function ToolbarEditor({ actions, canRemove, onReorder, onRemove }: Toolb
         </SortableContext>
 
         <DragOverlay dropAnimation={{ duration: 200, easing: EASE_OUT_CSS }}>
-          {activeId ? <Tile action={activeId} floating /> : null}
+          {activeId ? (
+            <div className="relative size-full">
+              <Tile action={activeId} floating />
+              {canRemove ? <CloseBadge /> : null}
+            </div>
+          ) : null}
         </DragOverlay>
       </DndContext>
     </div>
@@ -96,14 +111,10 @@ function SortableTile({
           </button>
 
           {canRemove ? (
-            <button
-              type="button"
+            <CloseBadge
+              label={t('select.removeLabel', { name: label })}
               onClick={() => onRemove(action)}
-              aria-label={t('select.removeLabel', { name: label })}
-              className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-heading text-(--surface) shadow-rest transition-transform active:scale-90"
-            >
-              <X className="size-3" strokeWidth={3} aria-hidden />
-            </button>
+            />
           ) : null}
         </div>
       )}

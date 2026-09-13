@@ -36,11 +36,20 @@ import { StudySessionSettingsSheet } from './StudySessionSettingsSheet'
 import { QuickActionsSheet } from './QuickActionsSheet'
 import type { QuickActionsModel } from './QuickActionRows'
 import { CompletionOverlay } from './CompletionOverlay'
-import type { CardChanges, Grade, SessionSummary, StudyCard, StudyPrefs } from '../model/types'
+import type {
+  CardChanges,
+  EditableStudyPref,
+  Grade,
+  SessionSummary,
+  StudyCard,
+  StudyPrefs,
+} from '../model/types'
 
 export interface FlashcardsPanelProps {
   cards: StudyCard[]
   prefs: StudyPrefs
+  /** Prefs the deck being studied does not own — a subdeck's main deck does. Shown, not changeable. */
+  lockedPrefs?: readonly EditableStudyPref[]
   algorithm: LearningAlgorithm
   mode: StudyMode
   wordSpaces: boolean
@@ -70,6 +79,7 @@ type UndoEntry = { cardId: string; prevSrs: SrsState | undefined } | null
 export function FlashcardsPanel({
   cards,
   prefs,
+  lockedPrefs,
   algorithm,
   mode,
   wordSpaces,
@@ -109,6 +119,7 @@ export function FlashcardsPanel({
     mode,
     prefs,
     onPrefsChange,
+    lockedPrefs,
     wordSpaces,
     onWordSpacesChange,
     shakeToUndo,

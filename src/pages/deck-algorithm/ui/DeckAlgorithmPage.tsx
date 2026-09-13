@@ -1,36 +1,55 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Layers, Shuffle, Sliders } from 'lucide-react'
-import { type DeckSettings, useDeck, useDeckStoreApi } from '@/entities/deck'
+import { type DeckSettings, useDeckStoreApi } from '@/entities/deck'
 import { updateDeckSettings } from '@/features/deck'
 import { AlgorithmCard, AlgorithmSheet } from '@/widgets/algorithm'
 import { AppScreen, Button, ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui'
+import { useGatedDeck } from '../model/gated-deck'
+import { MainDeckGate } from './MainDeckGate'
 import { NumberRow } from './NumberRow'
 
 export interface DeckAlgorithmPageProps {
   deckId: string
   onBack?: () => void
   onOpenAdvanced?: () => void
+  /** A subdeck's algorithm screen is its main deck's; this goes there. */
+  onOpenMainDeck?: (mainDeckId: string) => void
 }
 
-export function DeckAlgorithmPage({ deckId, onBack, onOpenAdvanced }: DeckAlgorithmPageProps) {
+export function DeckAlgorithmPage({
+  deckId,
+  onBack,
+  onOpenAdvanced,
+  onOpenMainDeck,
+}: DeckAlgorithmPageProps) {
   const { t } = useTranslation()
+  return (
+    <MainDeckGate
+      deckId={deckId}
+      title={t('algorithm.title')}
+      onBack={onBack}
+      onOpenMainDeck={onOpenMainDeck}
+    >
+      <AlgorithmScreen onBack={onBack} onOpenAdvanced={onOpenAdvanced} />
+    </MainDeckGate>
+  )
+}
+
+function AlgorithmScreen({
+  onBack,
+  onOpenAdvanced,
+}: {
+  onBack?: () => void
+  onOpenAdvanced?: () => void
+}) {
+  const { t } = useTranslation()
+  const { deck, settings } = useGatedDeck()
   const deckStore = useDeckStoreApi()
-  const { deck, settings, ready } = useDeck(deckId)
   const [pickerOpen, setPickerOpen] = useState(false)
 
-  if (!ready || !deck) {
-    return (
-      <AppScreen
-        header={
-          <ScreenHeader title={t('algorithm.title')} onBack={onBack} backLabel={t('common.back')} />
-        }
-      />
-    )
-  }
-
   const override = (patch: Partial<DeckSettings>) =>
-    void updateDeckSettings(deckStore, deckId, patch)
+    void updateDeckSettings(deckStore, deck.id, patch)
 
   const spaced = settings.algorithm === 'spaced'
 

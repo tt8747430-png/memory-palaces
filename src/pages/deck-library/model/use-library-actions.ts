@@ -1,22 +1,35 @@
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import type { Deck } from '@/entities/deck'
-import { useDeckStoreApi } from '@/entities/deck'
+import {
+  type Deck,
+  isAtLibraryTop,
+  placeDecks,
+  placeOf,
+  standsAt,
+  useDeckStoreApi,
+} from '@/entities/deck'
 import type { Folder } from '@/entities/folder'
 import { useFolderStoreApi } from '@/entities/folder'
 import { useCardStoreApi } from '@/entities/card'
 import {
+  archiveDecks,
   deleteDeck,
   duplicateDeck,
-  moveDeck,
+  moveDecks,
   reorderDecks,
-  setDeckArchived,
+  restoreDecks,
   toggleDeckFavorite,
 } from '@/features/deck'
 import { deleteFolder, reorderFolders } from '@/features/folder'
-import { canReparent, findEntity, orderPatch, siblingDecks, subtreeDeckIds } from '@/shared/lib'
+import {
+  canReparent,
+  findEntity,
+  idsWithoutDescendants,
+  orderPatch,
+  subtreeDeckIds,
+} from '@/shared/lib'
 import { bulkAction, type SelectActionHandlers } from '@/shared/ui'
-import type { MoveDestination } from '@/widgets/deck-tree'
+import { type MoveDestination, placeOfDestination } from '@/widgets/deck-tree'
 import type { LibrarySelection } from './use-library-selection'
 
 type Patch<T> = (patches: Map<string, Partial<T>>) => void
@@ -80,61 +93,47 @@ export function useLibraryActions({
   /**
    * The one way decks change where they live. Every surface — swipe, move sheet, drop onto a
    * folder, select toolbar — comes through here, so the subtree guard, optimistic patch, message
-   * and undo are decided once. Decks already at the destination are left alone; a move that would
-   * put a deck inside its own subtree is dropped, not thrown.
+   * and undo are decided once. A selection carries each deck with its subdecks, so only the decks
+   * no ancestor carries are moved; the rest come along under them. Decks already at the destination
+   * are left alone; a move that would put a deck inside its own subtree is dropped, not thrown.
    */
   const moveDecksTo = (ids: readonly string[], dest: MoveDestination) => {
-    const moving = ids
+    const place = placeOfDestination(dest)
+    const moving = idsWithoutDescendants(decks, ids)
       .map(deckById)
       .filter((deck): deck is Deck => deck !== undefined)
-      .filter((deck) => (dest.kind === 'deck' ? canReparent(decks, deck.id, dest.deckId) : true))
-      .filter((deck) => !alreadyAt(deck, dest))
+      .filter((deck) => place === null || canReparent(decks, deck.id, place.parentId))
+      .filter((deck) => (place === null ? !deck.archived : !standsAt(deck, place)))
     if (moving.length === 0) return
 
-    const previous = moving.map((deck) => ({
-      id: deck.id,
-      parentId: deck.parentId,
-      folderId: deck.folderId ?? null,
-    }))
-    const restore = undo(() =>
-      previous.forEach((d) => void moveDeck(deckStore, d.id, d.parentId, d.folderId)),
-    )
+    const previous = moving.map((deck) => ({ id: deck.id, from: placeOf(deck) }))
 
-    if (dest.kind === 'archive') {
-      moving.forEach((deck) => void setDeckArchived(deckStore, deck.id, true))
+    if (place === null) {
+      void archiveDecks(
+        deckStore,
+        moving.map((deck) => deck.id),
+      )
       toast.success(archiveMessage(moving), {
-        action: undo(() => moving.forEach((d) => void setDeckArchived(deckStore, d.id, false))),
+        action: undo(() => void restoreDecks(deckStore, folderStore, previous)),
       })
       return
     }
 
-    const parentId = dest.kind === 'deck' ? dest.deckId : null
-    const folderId = dest.kind === 'folder' ? dest.folderId : null
-
+    const moves = moving.map((deck) => ({ id: deck.id, to: place }))
     // Land the rows where they end up before the writes resolve, so a drop onto a folder never
-    // shows the deck snapping back to its old row first.
-    const base = siblingDecks(decks, parentId, folderId).length
-    const patches = new Map<string, Partial<Deck>>()
-    moving.forEach((deck, i) => patches.set(deck.id, { parentId, folderId, order: base + i }))
-    patchDecks(patches)
-
-    void (async () => {
-      for (const deck of moving) await moveDeck(deckStore, deck.id, parentId, folderId)
-    })()
-    toast.success(moveMessage(moving, dest), { action: restore })
-  }
-
-  const alreadyAt = (deck: Deck, dest: MoveDestination): boolean => {
-    switch (dest.kind) {
-      case 'archive':
-        return deck.archived
-      case 'deck':
-        return deck.parentId === dest.deckId
-      case 'folder':
-        return deck.parentId === null && deck.folderId === dest.folderId
-      case 'home':
-        return deck.parentId === null && (deck.folderId ?? null) === null
-    }
+    // shows the deck snapping back to its old row first. The patch is the very placement the
+    // command writes, so the held rows and the persisted ones agree to the order.
+    patchDecks(placeDecks(decks, moves))
+    void moveDecks(deckStore, moves)
+    toast.success(moveMessage(moving, dest), {
+      action: undo(
+        () =>
+          void moveDecks(
+            deckStore,
+            previous.map(({ id, from }) => ({ id, to: from })),
+          ),
+      ),
+    })
   }
 
   /** One deck is named; a batch is counted. */
@@ -166,7 +165,7 @@ export function useLibraryActions({
   const removeDeck = (deckId: string) => void deleteDeck(deckStore, cardStore, deckId)
 
   const removeFolder = (id: string) => {
-    void deleteFolder(folderStore, deckStore, id)
+    void deleteFolder(folderStore, deckStore, cardStore, id)
     if (folderId === id) onFolderGone()
   }
 
@@ -184,6 +183,8 @@ export function useLibraryActions({
     moveDecksTo(deckIds, { kind: 'folder', folderId: targetFolderId })
 
   const { deckIds, decks: selectedDecks } = selection
+  /** The selected decks no selected ancestor carries — what acts on a deck with its subdecks. */
+  const carrierIds = idsWithoutDescendants(decks, deckIds)
 
   const bulkArchive = () => moveDecksTo(deckIds, { kind: 'archive' })
 
@@ -200,20 +201,18 @@ export function useLibraryActions({
     )
   }
 
+  // `duplicateDeck` copies a subtree, so a subdeck duplicated on its own as well would be a second
+  // copy standing beside its parent's.
   const bulkDuplicate = () => {
-    const ids = deckIds
-    ids.forEach((id) => void duplicateDeck(deckStore, cardStore, id))
-    toast.success(t('library.select.duplicatedToast', { count: ids.length }))
+    carrierIds.forEach((id) => void duplicateDeck(deckStore, cardStore, id))
+    toast.success(t('library.select.duplicatedToast', { count: carrierIds.length }))
   }
 
-  const filedDecks = selectedDecks.filter(
-    (d) => d.parentId !== null || (d.folderId ?? null) !== null,
-  )
-  const bulkUnfile = () =>
-    moveDecksTo(
-      filedDecks.map((d) => d.id),
-      { kind: 'home' },
-    )
+  const filedIds = carrierIds.filter((id) => {
+    const deck = deckById(id)
+    return deck !== undefined && !isAtLibraryTop(deck)
+  })
+  const bulkUnfile = () => moveDecksTo(filedIds, { kind: 'home' })
 
   const bulkMoveTo = (dest: MoveDestination) => {
     moveDecksTo(deckIds, dest)
@@ -222,8 +221,8 @@ export function useLibraryActions({
 
   const confirmBulkDelete = () => {
     const folderIds = [...selection.ids].filter((id) => folders.some((f) => f.id === id))
-    folderIds.forEach((id) => void deleteFolder(folderStore, deckStore, id))
-    deckIds.forEach((id) => void deleteDeck(deckStore, cardStore, id))
+    folderIds.forEach((id) => void deleteFolder(folderStore, deckStore, cardStore, id))
+    carrierIds.forEach((id) => void deleteDeck(deckStore, cardStore, id))
     if (folderId && folderIds.includes(folderId)) onFolderGone()
     selection.exit()
   }
@@ -234,7 +233,7 @@ export function useLibraryActions({
     favorite: { ...bulkAction(selection, bulkFavorite), disabled: noDecks },
     duplicate: { ...bulkAction(selection, bulkDuplicate), disabled: noDecks },
     archive: { ...bulkAction(selection, bulkArchive), disabled: noDecks },
-    unfile: { ...bulkAction(selection, bulkUnfile), disabled: filedDecks.length === 0 },
+    unfile: { ...bulkAction(selection, bulkUnfile), disabled: filedIds.length === 0 },
     delete: { onAction: onRequestBulkDelete, disabled: selection.count === 0 },
   }
 

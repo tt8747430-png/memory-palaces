@@ -1,14 +1,20 @@
 import { useMemo } from 'react'
-import { findEntity, resolveDeckSettings, selectIsReady } from '@/shared/lib'
+import { findEntity, selectIsReady } from '@/shared/lib'
 import { useDeckStore } from './context'
 import { selectDecks } from './selectors'
-import { type Deck, type DeckSettings, DEFAULT_DECK_SETTINGS } from './types'
+import { mainDeckOf, resolveDeckSettings } from './settings'
+import type { Deck, DeckSettings } from './types'
 
 export interface DeckLookup {
   /** Every deck, for callers that also walk the tree. */
   decks: Deck[]
   /** The deck itself — `undefined` once `ready` and the id is stale. */
   deck: Deck | undefined
+  /**
+   * The top of the deck's tree — the deck itself when it is not a subdeck. What owns the main deck's
+   * settings (`MAIN_DECK_SETTINGS`) for everything under it.
+   */
+  mainDeck: Deck | undefined
   /** The deck's settings with its ancestors' choices already folded in. */
   settings: DeckSettings
   ready: boolean
@@ -24,10 +30,8 @@ export function useDeck(deckId: string): DeckLookup {
   const ready = useDeckStore(selectIsReady)
 
   const deck = useMemo(() => findEntity(decks, deckId), [decks, deckId])
-  const settings = useMemo(
-    () => resolveDeckSettings(decks, deckId, DEFAULT_DECK_SETTINGS),
-    [decks, deckId],
-  )
+  const mainDeck = useMemo(() => mainDeckOf(decks, deckId), [decks, deckId])
+  const settings = useMemo(() => resolveDeckSettings(decks, deckId), [decks, deckId])
 
-  return { decks, deck, settings, ready }
+  return { decks, deck, mainDeck, settings, ready }
 }

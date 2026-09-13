@@ -6,16 +6,19 @@ import {
   DEFAULT_SPACED_ADVANCED,
   type DeckSettings,
   type SpacedAdvanced,
-  useDeck,
   useDeckStoreApi,
 } from '@/entities/deck'
 import { updateDeckSettings } from '@/features/deck'
 import { AppScreen, PromptSheet, ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui'
+import { useGatedDeck } from '../model/gated-deck'
+import { MainDeckGate } from './MainDeckGate'
 import { NumberRow } from './NumberRow'
 
 export interface DeckAdvancedPageProps {
   deckId: string
   onBack?: () => void
+  /** A subdeck's advanced settings are its main deck's; this goes there. */
+  onOpenMainDeck?: (mainDeckId: string) => void
 }
 
 /** Minutes, comma-separated. Anything that is not a positive number is dropped, not guessed at. */
@@ -26,29 +29,29 @@ function parseLearningSteps(value: string): number[] {
     .filter((step) => Number.isFinite(step) && step > 0)
 }
 
-export function DeckAdvancedPage({ deckId, onBack }: DeckAdvancedPageProps) {
+export function DeckAdvancedPage({ deckId, onBack, onOpenMainDeck }: DeckAdvancedPageProps) {
   const { t } = useTranslation()
+  return (
+    <MainDeckGate
+      deckId={deckId}
+      title={t('algorithm.advancedTitle')}
+      onBack={onBack}
+      onOpenMainDeck={onOpenMainDeck}
+    >
+      <AdvancedScreen onBack={onBack} />
+    </MainDeckGate>
+  )
+}
+
+function AdvancedScreen({ onBack }: { onBack?: () => void }) {
+  const { t } = useTranslation()
+  const { deck, settings } = useGatedDeck()
   const deckStore = useDeckStoreApi()
-  const { deck, settings, ready } = useDeck(deckId)
   const [stepsOpen, setStepsOpen] = useState(false)
   const [bonusOpen, setBonusOpen] = useState(false)
 
-  if (!ready || !deck) {
-    return (
-      <AppScreen
-        header={
-          <ScreenHeader
-            title={t('algorithm.advancedTitle')}
-            onBack={onBack}
-            backLabel={t('common.back')}
-          />
-        }
-      />
-    )
-  }
-
   const override = (patch: Partial<DeckSettings>) =>
-    void updateDeckSettings(deckStore, deckId, patch)
+    void updateDeckSettings(deckStore, deck.id, patch)
 
   const advance = (patch: Partial<SpacedAdvanced>) =>
     override({ advanced: { ...settings.advanced, ...patch } })

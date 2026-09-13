@@ -1,9 +1,9 @@
 import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { selectIsReady, shuffle, subtreeDeckIds } from '@/shared/lib'
-import { useDeck, useDeckStoreApi } from '@/entities/deck'
+import { type DeckSettings, useDeck, useDeckStoreApi } from '@/entities/deck'
 import { selectQuestions, useQuestionStore } from '@/entities/question'
-import { editDeck } from '@/features/deck'
+import { updateDeckSettings } from '@/features/deck'
 import { QuizOptionsSheet, type QuizResult, QuizPanel } from '@/widgets/quiz'
 import { type QuizQuestion } from '@/features/quiz'
 import { useStudySessionReward } from '@/widgets/study-session-reward'
@@ -49,8 +49,8 @@ export function QuizPage({ deckId, onBack }: QuizPageProps) {
   if (ready && frozenRef.current === null) frozenRef.current = questions
   const runQuestions = frozenRef.current ?? questions
 
-  const setSetting = (changes: Partial<{ quizTimer: boolean; shuffleQuestions: boolean }>) => {
-    if (deck) void editDeck(deckStore, deck.id, { settings: { ...deck.settings, ...changes } })
+  const setSetting = (changes: Partial<Pick<DeckSettings, 'quizTimer' | 'shuffleQuestions'>>) => {
+    if (deck) void updateDeckSettings(deckStore, deck.id, changes)
   }
 
   if (!ready) {

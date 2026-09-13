@@ -16,27 +16,66 @@ import { DeckAlgorithmPage } from './DeckAlgorithmPage'
 
 afterEach(cleanup)
 
-function renderPage(settings: Partial<DeckSettings> = {}) {
+/** `mainDeck` makes d1 a subdeck of a main deck holding those settings; `deckId` opens another. */
+function renderPage(
+  settings: Partial<DeckSettings> = {},
+  mainDeck?: Partial<DeckSettings>,
+  deckId = 'd1',
+) {
+  const main = mainDeck
+    ? [
+        makeDeck({
+          id: 'm1',
+          createdAt: new Date(0).toISOString(),
+          name: 'Science',
+          settings: mainDeck,
+        }),
+      ]
+    : []
   const deck = makeDeck({
     id: 'd1',
     createdAt: new Date(0).toISOString(),
     name: 'Physics',
+    parentId: mainDeck ? 'm1' : null,
     settings,
   })
-  const repo = new InMemoryRepository<Deck>([deck])
+  const repo = new InMemoryRepository<Deck>([...main, deck])
   const onOpenAdvanced = vi.fn()
+  const onOpenMainDeck = vi.fn()
   render(
     <I18nextProvider i18n={i18n}>
       <DeckStoreContext value={started(createDeckStore(repo))}>
-        <DeckAlgorithmPage deckId="d1" onBack={() => {}} onOpenAdvanced={onOpenAdvanced} />
+        <DeckAlgorithmPage
+          deckId={deckId}
+          onBack={() => {}}
+          onOpenAdvanced={onOpenAdvanced}
+          onOpenMainDeck={onOpenMainDeck}
+        />
       </DeckStoreContext>
     </I18nextProvider>,
   )
   const saved = async () => (await repo.getById('d1'))?.settings
-  return { repo, saved, onOpenAdvanced }
+  return { repo, saved, onOpenAdvanced, onOpenMainDeck }
 }
 
 describe('DeckAlgorithmPage', () => {
+  it('offers a subdeck no controls, only the way to its main deck', async () => {
+    const user = userEvent.setup()
+    const { onOpenMainDeck } = renderPage({}, { algorithm: 'fast' })
+
+    expect(await screen.findByText('Set on the main deck')).toBeInTheDocument()
+    expect(screen.queryByRole('switch')).toBeNull()
+    await user.click(screen.getByRole('button', { name: 'Open Science' }))
+    expect(onOpenMainDeck).toHaveBeenCalledWith('m1')
+  })
+
+  it('says the deck is gone when the id no longer names one', async () => {
+    renderPage({}, undefined, 'deleted')
+
+    expect(await screen.findByText('Deck not found')).toBeInTheDocument()
+    expect(screen.queryByRole('switch')).toBeNull()
+  })
+
   it('shows only shuffle under fast review', async () => {
     renderPage({ algorithm: 'fast' })
     expect(await screen.findByRole('switch', { name: 'Shuffle cards' })).toBeInTheDocument()

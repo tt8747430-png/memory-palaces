@@ -1,14 +1,14 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { type Deck, type DeckSettings, useDeck, useDeckStoreApi } from '@/entities/deck'
+import { type Deck, type DeckSettings, isSubdeck, useDeck, useDeckStoreApi } from '@/entities/deck'
 import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
-import { type Folder, selectFolders, useFolderStore } from '@/entities/folder'
+import { type Folder, selectFolders, useFolderStore, useFolderStoreApi } from '@/entities/folder'
 import type { Card } from '@/entities/card'
-import { deleteDeck, duplicateDeck, moveDeck, setDeckArchived } from '@/features/deck'
+import { archiveDecks, deleteDeck, duplicateDeck, moveDecks, restoreDecks } from '@/features/deck'
 import { resetDeckSrs } from '@/features/card'
 import { exportCardsAnki, exportCardsCsv } from '@/features/content'
-import type { MoveDestination } from '@/widgets/deck-tree'
+import { type MoveDestination, placeOfDestination } from '@/widgets/deck-tree'
 import { useImportFile } from '@/widgets/content-editor'
 import { cardsInSubtree, subtreeDeckIds, useOneOpen, usePendingAct } from '@/shared/lib'
 
@@ -41,6 +41,8 @@ export interface DeckSettingsModel {
   moveExcludeIds: ReadonlySet<string>
   /** Whether the archive row would archive (rather than restore) the deck. */
   archiving: boolean
+  /** A subdeck's algorithm belongs to its main deck: the row explains that instead of opening. */
+  algorithmLocked: boolean
   sheet: DeckSettingsSheet | null
   open: (sheet: DeckSettingsSheet) => void
   /**
@@ -76,6 +78,7 @@ export function useDeckSettings(deckId: string, nav: DeckSettingsNav): DeckSetti
   const { t } = useTranslation()
   const deckStore = useDeckStoreApi()
   const cardStore = useCardStoreApi()
+  const folderStore = useFolderStoreApi()
   const importFile = useImportFile()
 
   const { decks, deck, settings, ready } = useDeck(deckId)
@@ -90,10 +93,11 @@ export function useDeckSettings(deckId: string, nav: DeckSettingsNav): DeckSetti
   const archiving = !deck?.archived
 
   const toggleArchived = () => {
-    void setDeckArchived(deckStore, deckId, archiving)
+    if (archiving) void archiveDecks(deckStore, [deckId])
+    else void restoreDecks(deckStore, folderStore, [{ id: deckId }])
     toast.success(archiving ? t('deckSettings.toast.archived') : t('deckSettings.toast.unarchived'))
     // An archived deck is gone from the library it was reached through, so its settings screen has
-    // nothing left to describe. Restoring one leaves you where you are.
+    // nothing left to describe. Restoring one — to the top of the library — leaves you where you are.
     if (archiving) nav.onArchived?.()
   }
 
@@ -124,13 +128,12 @@ export function useDeckSettings(deckId: string, nav: DeckSettingsNav): DeckSetti
       // "Move to archive" is the archive act, so it asks the same question the row asks rather
       // than archiving behind the learner's back. A deck already in the archive is already at that
       // destination: picking it is the no-op picking your own folder is, never a silent restore.
-      if (destination.kind === 'archive') {
+      const place = placeOfDestination(destination)
+      if (place === null) {
         if (archiving) pending.request('archive')
         return
       }
-      const parentId = destination.kind === 'deck' ? destination.deckId : null
-      const folderId = destination.kind === 'folder' ? destination.folderId : null
-      void moveDeck(deckStore, deckId, parentId, folderId)
+      void moveDecks(deckStore, [{ id: deckId, to: place }])
     },
     importFile: (file) => {
       sheet.close()
@@ -159,6 +162,7 @@ export function useDeckSettings(deckId: string, nav: DeckSettingsNav): DeckSetti
     cards,
     moveExcludeIds,
     archiving,
+    algorithmLocked: deck !== undefined && isSubdeck(deck),
     sheet: sheet.current,
     open: sheet.open,
     onSheetOpenChange: sheet.onOpenChange,

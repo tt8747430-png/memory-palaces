@@ -61,8 +61,8 @@ const SHELL = 'h-full'
  * `end` is the resting case: nothing floats over the scroll but the nav, and the last row simply
  * wants somewhere to come to rest. `dial` is the one that grew — the dial's 3.5rem button floats
  * 1rem above `--app-bottom-inset` and so reaches 4.5rem up, and the last row rests a further 4rem
- * clear of it. `dial` also clears the select-mode toolbar dock, which stands about 7.75rem tall on
- * the two screens that carry both.
+ * clear of it. `dial` also clears `SelectToolbarDock` on the two screens that carry both — a
+ * change to the dock's height is a change to this value.
  */
 export type ScreenGutter = 'end' | 'dial'
 

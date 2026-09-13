@@ -78,6 +78,9 @@ export function DeckAlgorithmScreen() {
       deckId={deckId}
       onBack={useBack(() => void navigate({ to: ROUTES.deckSettings, params: { deckId } }))}
       onOpenAdvanced={() => navigate({ to: ROUTES.deckAlgorithmAdvanced, params: { deckId } })}
+      onOpenMainDeck={(mainDeckId) =>
+        navigate({ to: ROUTES.deckAlgorithm, params: { deckId: mainDeckId }, replace: true })
+      }
     />
   )
 }
@@ -89,6 +92,13 @@ export function DeckAdvancedScreen() {
     <DeckAdvancedPage
       deckId={deckId}
       onBack={useBack(() => void navigate({ to: ROUTES.deckAlgorithm, params: { deckId } }))}
+      onOpenMainDeck={(mainDeckId) =>
+        navigate({
+          to: ROUTES.deckAlgorithmAdvanced,
+          params: { deckId: mainDeckId },
+          replace: true,
+        })
+      }
     />
   )
 }

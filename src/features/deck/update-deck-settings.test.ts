@@ -14,6 +14,18 @@ function storeWith(settings: Deck['settings'] = {}) {
   return started(createDeckStore(new InMemoryRepository<Deck>([deck])))
 }
 
+function subdeckStore() {
+  const createdAt = new Date(0).toISOString()
+  return started(
+    createDeckStore(
+      new InMemoryRepository<Deck>([
+        makeDeck({ id: 'main', createdAt, name: 'Science' }),
+        makeDeck({ id: 'sub', createdAt, name: 'Physics', parentId: 'main' }),
+      ]),
+    ),
+  )
+}
+
 describe('updateDeckSettings', () => {
   it('merges the patch over the deck’s existing overrides', async () => {
     const store = storeWith({ algorithm: 'fast', newCardsPerDay: 25 })
@@ -28,7 +40,21 @@ describe('updateDeckSettings', () => {
   })
 
   it('throws for a deck that is not there', async () => {
-    await expect(updateDeckSettings(storeWith(), 'nope', {})).rejects.toThrow('Deck not found: nope')
+    await expect(updateDeckSettings(storeWith(), 'nope', {})).rejects.toThrow(
+      'Deck not found: nope',
+    )
+  })
+
+  it('refuses a subdeck a setting only its main deck may change', async () => {
+    const store = subdeckStore()
+    await expect(updateDeckSettings(store, 'sub', { algorithm: 'fast' })).rejects.toThrow(
+      'A subdeck follows its main deck for algorithm',
+    )
+  })
+
+  it('still takes a subdeck setting of its own', async () => {
+    const next = await updateDeckSettings(subdeckStore(), 'sub', { textToSpeech: true })
+    expect(next.settings).toEqual({ textToSpeech: true })
   })
 
   it('refuses an invalid patch', async () => {

@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Layers } from 'lucide-react'
 import { type FastOutcome, selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
-import { type Deck, type DeckSettings, useDeck, useDeckStoreApi } from '@/entities/deck'
+import { useDeck, useDeckStoreApi } from '@/entities/deck'
 import {
   type FlashcardSwipeByMode,
   resolveStudyMode,
@@ -14,29 +14,19 @@ import {
 import { cardsInSubtree, deckPath, findEntity, selectIsReady } from '@/shared/lib'
 import { normalizeFlashcardSwipe } from '@/shared/config/flashcard-swipe'
 import { editCard, setCardFastReview } from '@/features/card'
-import { editDeck } from '@/features/deck'
+import { updateDeckSettings } from '@/features/deck'
 import { gradeCard, restoreSchedule } from '@/features/review'
 import { setPreferences } from '@/features/preferences'
 import { FlashcardsPanel, type StudyCard, type StudyPrefs } from '@/widgets/study-session'
 import { useStudySessionReward } from '@/widgets/study-session-reward'
 import { Button, Empty, MissingScreen, ScreenLoading, StudySessionScreen } from '@/shared/ui'
+import { lockedStudyPrefs, studyPrefsFromSettings, studyPrefsPatch } from '../model/study-prefs'
 
 export type StudyScope = { kind: 'deck'; deckId: string }
 
 export interface StudyCardsPageProps {
   scope: StudyScope
   onBack?: () => void
-}
-
-function studyPrefsFromSettings(settings: DeckSettings): StudyPrefs {
-  return {
-    direction: settings.studyDirection,
-    shuffle: settings.shuffleCards,
-    textToSpeech: settings.textToSpeech,
-    newCardsPerDay: settings.newCardsPerDay,
-    maxCardsPerDay: settings.maxCardsPerDay,
-    cardStyle: settings.cardStyle,
-  }
 }
 
 export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
@@ -81,15 +71,9 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
     const card = findEntity(cardStore.getState().cards, id)
     if (card) void editCard(cardStore, id, { flagged: !card.flagged })
   }
-  const persistStudyPrefs = (target: Deck) => (prefs: StudyPrefs) => {
-    void editDeck(deckStore, target.id, {
-      settings: {
-        ...target.settings,
-        studyDirection: prefs.direction,
-        shuffleCards: prefs.shuffle,
-        textToSpeech: prefs.textToSpeech,
-      },
-    })
+  const persistStudyPrefs = (prefs: StudyPrefs) => {
+    const patch = studyPrefsPatch(studyPrefsFromSettings(settings), prefs)
+    if (Object.keys(patch).length > 0) void updateDeckSettings(deckStore, scope.deckId, patch)
   }
   const persistSwipe = (config: FlashcardSwipeByMode) =>
     void setPreferences(preferencesStore, { flashcardSwipe: config })
@@ -135,12 +119,13 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
         title={title}
         subtitle={subtitle}
         prefs={studyPrefsFromSettings(settings)}
+        lockedPrefs={lockedStudyPrefs(deck)}
         algorithm={settings.algorithm}
         mode={mode}
         wordSpaces={preferences.studyWordSpaces}
         shakeToUndo={preferences.shakeToUndo}
         swipeByMode={swipeByMode}
-        onPrefsChange={persistStudyPrefs(deck)}
+        onPrefsChange={persistStudyPrefs}
         onSwipeByModeChange={persistSwipe}
         onModeChange={changeMode}
         onWordSpacesChange={persistWordSpaces}

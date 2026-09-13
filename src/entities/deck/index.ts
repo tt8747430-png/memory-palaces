@@ -12,11 +12,13 @@ export type {
   TtsSide,
   TtsSettings,
   SpacedAdvanced,
+  MainDeckSetting,
 } from './model/types'
 export {
   makeDeck,
   updateDeck,
   validateDeckSettings,
+  MAIN_DECK_SETTINGS,
   DEFAULT_DECK_SETTINGS,
   DEFAULT_CARD_STYLE,
   DEFAULT_SPACED_ADVANCED,
@@ -32,5 +34,17 @@ export { createDeckStore } from './model/store'
 export type { DeckState, DeckStore } from './model/store'
 export { DeckStoreContext, useDeckStore, useDeckStoreApi } from './model/context'
 export { selectDecks } from './model/selectors'
+export { mainDeckOf, resolveDeckSettings } from './model/settings'
+export {
+  isAtLibraryTop,
+  isSubdeck,
+  LIBRARY_TOP,
+  placeDecks,
+  placeOf,
+  standsAt,
+  strandedArchivedIds,
+  type DeckMove,
+  type DeckPlace,
+} from './model/placement'
 export { useDeck, type DeckLookup } from './model/use-deck'
 export type { DeckRepository } from './api/deck-repository'

@@ -34,6 +34,7 @@ function settingsControl(): StudySettingsControl {
       swipe: DEFAULT_FLASHCARD_SWIPE,
       filter: { kind: 'all' },
     },
+    locked: new Set(),
     filterCounts: { all: 10, due: 5, new: 3, learning: 2, flagged: 1 },
     set: vi.fn(),
     setSwipe: vi.fn(),

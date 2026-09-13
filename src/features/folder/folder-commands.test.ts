@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@/shared/api'
 import { createFolderStore, type Folder } from '@/entities/folder'
 import { createDeckStore, type Deck, makeDeck } from '@/entities/deck'
+import { type Card, createCardStore, makeCard } from '@/entities/card'
 import { createFolder } from './create-folder'
 import { deleteFolder } from './delete-folder'
 
@@ -16,6 +17,15 @@ function deckStore(seed: Deck[] = []) {
   store.getState().start()
   return store
 }
+
+function cardStore(seed: Card[] = []) {
+  const store = createCardStore(new InMemoryRepository<Card>(seed))
+  store.getState().start()
+  return store
+}
+
+const card = (id: string, deckId: string): Card =>
+  makeCard({ id, createdAt: new Date(0).toISOString(), deckId, front: id, back: id })
 
 const deck = (id: string, folderId: string | null): Deck =>
   makeDeck({ id, createdAt: new Date(0).toISOString(), name: id, folderId })
@@ -37,28 +47,42 @@ describe('createFolder', () => {
 })
 
 describe('deleteFolder', () => {
-  it('removes the folder and unfiles every deck that was in it', async () => {
+  it('deletes the folder with every deck filed in it, their subdecks and their cards', async () => {
     const folders = folderStore()
     const created = await createFolder(folders, {
       name: 'Med school',
       color: 'from-teal-500 to-emerald-600',
       icon: '📁',
     })
-    const decks = deckStore([deck('p1', created.id), deck('p2', created.id), deck('p3', null)])
+    const decks = deckStore([
+      deck('p1', created.id),
+      deck('p2', created.id),
+      { ...deck('p1-sub', null), parentId: 'p1' },
+      deck('p3', null),
+    ])
+    const cards = cardStore([card('c1', 'p1'), card('c2', 'p1-sub'), card('c3', 'p3')])
 
-    await deleteFolder(folders, decks, created.id)
+    await deleteFolder(folders, decks, cards, created.id)
 
     expect(folders.getState().folders).toHaveLength(0)
-    expect(decks.getState().decks.find((p) => p.id === 'p1')?.folderId).toBeNull()
-    expect(decks.getState().decks.find((p) => p.id === 'p2')?.folderId).toBeNull()
-    expect(decks.getState().decks.find((p) => p.id === 'p3')?.folderId).toBeNull()
+    expect(decks.getState().decks.map((d) => d.id)).toEqual(['p3'])
+    expect(cards.getState().cards.map((c) => c.id)).toEqual(['c3'])
   })
 
-  it('is idempotent — deleting a missing folder unfiles nothing and does not throw', async () => {
+  it('leaves the archive alone — an archived deck is no longer in any folder', async () => {
+    const folders = folderStore()
+    const decks = deckStore([{ ...deck('old', null), archived: true }, deck('p1', 'f1')])
+
+    await deleteFolder(folders, decks, cardStore(), 'f1')
+
+    expect(decks.getState().decks.map((d) => d.id)).toEqual(['old'])
+  })
+
+  it('is idempotent — deleting a missing folder deletes nothing and does not throw', async () => {
     const folders = folderStore()
     const decks = deckStore([deck('p1', 'other')])
 
-    await deleteFolder(folders, decks, 'ghost')
+    await deleteFolder(folders, decks, cardStore(), 'ghost')
 
     expect(decks.getState().decks.find((p) => p.id === 'p1')?.folderId).toBe('other')
   })

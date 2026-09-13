@@ -38,18 +38,18 @@ export function siblingDecks<T extends TreeDeck>(
 /**
  * Decks a new or moving deck shares a row with: same parent, or — at the root — same folder.
  * Unlike `siblingDecks`, keeps archived decks and skips the sort: it answers "what orders are
- * taken", and an archived deck still holds the `order` it was filed under. `exceptId` leaves the
- * deck being moved out of its own reckoning.
+ * taken", and the archive stands at the top of the library, holding orders in that same row.
+ * `exceptIds` leaves the decks being moved out of their own reckoning.
  */
 export function orderSiblings<T extends TreeDeck>(
   decks: readonly T[],
   parentId: string | null,
   folderId: string | null = null,
-  exceptId?: string,
+  exceptIds: ReadonlySet<string> = new Set(),
 ): T[] {
   return decks.filter(
     (d) =>
-      d.id !== exceptId &&
+      !exceptIds.has(d.id) &&
       d.parentId === parentId &&
       (parentId !== null || (d.folderId ?? null) === folderId),
   )
@@ -128,18 +128,44 @@ export function canReparent(
   return !isDescendantOrSelf(decks, deckId, newParentId)
 }
 
-export function resolveDeckSettings<S extends object>(
+/**
+ * `ids` without any deck whose ancestor is also in `ids`. A subdeck travels with its parent, so a
+ * batch that also acted on the subdeck by itself would pull it out from under that parent — moving
+ * a selected deck used to land every subdeck beside it. Batch order is kept.
+ */
+export function idsWithoutDescendants(
+  decks: readonly TreeDeck[],
+  ids: readonly string[],
+): string[] {
+  const batch = new Set(ids)
+  return ids.filter(
+    (id) =>
+      !deckPath(decks, id)
+        .slice(0, -1)
+        .some((ancestor) => batch.has(ancestor.id)),
+  )
+}
+
+/**
+ * A deck's settings with its ancestors' choices folded in over `base`, nearest winning. A key in
+ * `mainOnly` is read from the top of the tree alone, and whatever a deck below holds for it is
+ * ignored rather than trusted. `entities/deck` says which keys those are.
+ */
+export function inheritSettings<S extends object>(
   decks: readonly { id: string; parentId: string | null; settings: Partial<S> }[],
   deckId: string,
   base: S,
+  mainOnly: readonly (keyof S)[] = [],
 ): S {
   const resolved: S = { ...base }
-  for (const { settings } of deckPath(decks, deckId)) {
+  const pinned = new Set(mainOnly)
+  deckPath(decks, deckId).forEach(({ settings }, depth) => {
     for (const key of Object.keys(settings) as (keyof S)[]) {
       const value = settings[key]
-      if (value !== undefined) resolved[key] = value as S[keyof S]
+      if (value === undefined || (depth > 0 && pinned.has(key))) continue
+      resolved[key] = value as S[keyof S]
     }
-  }
+  })
   return resolved
 }
 

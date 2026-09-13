@@ -30,6 +30,14 @@ export const DEFAULT_SWIPE: SwipePreferences = {
   card: { leading: ['known'], trailing: ['flag', 'move', 'delete'] },
 }
 
+/** `config` with `id` on neither side — an action swipes one way at most. */
+export function withoutSwipeAction(config: SwipeConfig, id: SwipeActionId): SwipeConfig {
+  return {
+    leading: config.leading.filter((x) => x !== id),
+    trailing: config.trailing.filter((x) => x !== id),
+  }
+}
+
 export function normalizeSwipeConfig(type: SwipeItemType, config: SwipeConfig): SwipeConfig {
   const allowed = new Set(SWIPE_ACTIONS[type])
   const clean = (ids: SwipeActionId[], side: keyof SwipeConfig) =>

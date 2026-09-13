@@ -19,6 +19,9 @@ export interface StudyPrefs {
   cardStyle: CardStyle
 }
 
+/** The study prefs the study session's settings sheet changes. */
+export type EditableStudyPref = 'direction' | 'shuffle' | 'textToSpeech'
+
 export interface SessionSummary {
   graded: number
   learning: number

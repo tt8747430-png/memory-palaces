@@ -10,6 +10,7 @@ export const en = {
     edit: 'Edit',
     delete: 'Delete',
     saveChanges: 'Save changes',
+    gotIt: 'Got it',
     offline: "You're offline. This one needs a connection — reconnect and try again.",
   },
   selection: {
@@ -73,7 +74,8 @@ export const en = {
     rowActions: '{{name}} actions',
     rowOpen: 'Open {{name}}',
     deleteTitle: 'Delete {{name}}?',
-    deleteBody: 'The folder is removed; its decks move back to the library.',
+    deleteBody:
+      'This deletes the folder, every deck in it and all their cards. Archived decks are not affected. This can’t be undone.',
     confirmDelete: 'Delete folder',
   },
   move: {
@@ -103,7 +105,7 @@ export const en = {
       duplicatedToast: 'Duplicated {{count}} decks',
       deleteTitle: 'Delete {{count}} items?',
       deleteBody:
-        'This permanently removes the selected decks and folders and their cards. This cannot be undone.',
+        'This permanently removes the selected decks, the folders with every deck in them, and all their cards. This cannot be undone.',
     },
   },
   deckSettings: {
@@ -143,7 +145,7 @@ export const en = {
       exported: 'Deck exported',
       reset: 'Schedule reset',
       archived: 'Deck archived',
-      unarchived: 'Deck restored',
+      unarchived: 'Deck restored to your library',
     },
     duplicateConfirm: {
       title: 'Duplicate this deck?',
@@ -195,6 +197,15 @@ export const en = {
       body: 'An intelligent system that schedules reviews based on how well you remember each card. Easier cards appear less often, while challenging ones are shown more often — helping you learn efficiently and retain knowledge over the long term.',
     },
     deckLine: 'Learning algorithm:',
+    locked: {
+      title: 'Action restricted',
+      body: 'To modify the learning algorithm, please proceed to the main deck. Changes to this setting can’t be made in a subdeck.',
+      rowHint: 'Set on the main deck',
+      lineLabel: '{{name}} — set on the main deck',
+      pageTitle: 'Set on the main deck',
+      pageBody: '{{name}} is a subdeck, so it studies by the algorithm settings of {{main}}.',
+      openMainDeck: 'Open {{name}}',
+    },
   },
   cardStyle: {
     title: 'Card style',
@@ -302,9 +313,9 @@ export const en = {
     title: 'Archived decks',
     empty: 'Nothing archived',
     emptyBody:
-      'Decks you archive land here. Restore one anytime — its cards and progress stay intact.',
+      'Decks you archive leave their folder and land here. Restore one anytime — it returns to your library with its cards and progress intact.',
     restore: 'Restore',
-    restored: '{{name}} restored',
+    restored: '{{name}} is back in your library',
     noCards: 'No cards yet',
     cardCount_one: '{{count}} card',
     cardCount_other: '{{count}} cards',
@@ -1161,6 +1172,7 @@ export const en = {
     sideCount: '{{count}} / {{max}}',
     reset: 'Reset to defaults',
     reorderLabel: 'Reorder {{name}}',
+    removeLabel: 'Remove {{name}} from this swipe',
     types: {
       deck: 'Decks',
       folder: 'Folders',

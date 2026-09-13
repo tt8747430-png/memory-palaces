@@ -6,9 +6,10 @@ import {
   deckPath,
   decksInFolder,
   dueCountsPerDeck,
+  idsWithoutDescendants,
+  inheritSettings,
   isDescendantOrSelf,
   orderSiblings,
-  resolveDeckSettings,
   rootDecks,
   subtreeDeckIds,
   subtreeDecks,
@@ -70,6 +71,25 @@ describe('deckPath', () => {
   })
 })
 
+describe('idsWithoutDescendants', () => {
+  it('drops every deck whose ancestor is in the batch, keeping the batch order', () => {
+    expect(idsWithoutDescendants(forest, ['C', 'A', 'D', 'B', 'E'])).toEqual(['A', 'E'])
+  })
+
+  it('keeps a subdeck whose parent is not in the batch', () => {
+    expect(idsWithoutDescendants(forest, ['C', 'D'])).toEqual(['C', 'D'])
+  })
+
+  it('reaches past a gap in the batch to a further ancestor', () => {
+    expect(idsWithoutDescendants(forest, ['A', 'C'])).toEqual(['A'])
+  })
+
+  it('is cycle-safe if data is corrupt', () => {
+    const cyclic: TreeDeck[] = [deck('X', 'Y'), deck('Y', 'X')]
+    expect(idsWithoutDescendants(cyclic, ['X'])).toEqual(['X'])
+  })
+})
+
 describe('isDescendantOrSelf / canReparent', () => {
   it('detects descendants and self', () => {
     expect(isDescendantOrSelf(forest, 'A', 'C')).toBe(true)
@@ -91,28 +111,47 @@ interface Settings {
 }
 const base: Settings = { algo: 'sm2', tts: false, shuffle: false }
 
-describe('resolveDeckSettings', () => {
+describe('inheritSettings', () => {
   const decks = [
     { id: 'A', parentId: null, settings: { tts: true } as Partial<Settings> },
     { id: 'B', parentId: 'A', settings: {} as Partial<Settings> },
     { id: 'C', parentId: 'B', settings: { shuffle: true } as Partial<Settings> },
   ]
   it('inherits from ancestors and applies base for unset fields', () => {
-    expect(resolveDeckSettings(decks, 'B', base)).toEqual({
+    expect(inheritSettings(decks, 'B', base)).toEqual({
       algo: 'sm2',
       tts: true,
       shuffle: false,
     })
   })
   it('lets a deeper deck override while still inheriting the rest', () => {
-    expect(resolveDeckSettings(decks, 'C', base)).toEqual({ algo: 'sm2', tts: true, shuffle: true })
+    expect(inheritSettings(decks, 'C', base)).toEqual({ algo: 'sm2', tts: true, shuffle: true })
   })
   it('a nearer override wins over an ancestor override', () => {
     const over = [
       { id: 'A', parentId: null, settings: { tts: true } as Partial<Settings> },
       { id: 'B', parentId: 'A', settings: { tts: false } as Partial<Settings> },
     ]
-    expect(resolveDeckSettings(over, 'B', base).tts).toBe(false)
+    expect(inheritSettings(over, 'B', base).tts).toBe(false)
+  })
+  it('reads a main-deck-only key from the top of the tree, whatever a subdeck holds', () => {
+    const over = [
+      { id: 'A', parentId: null, settings: { algo: 'fsrs' } as Partial<Settings> },
+      { id: 'B', parentId: 'A', settings: { algo: 'sm2', tts: true } as Partial<Settings> },
+      { id: 'C', parentId: 'B', settings: { algo: 'leitner' } as Partial<Settings> },
+    ]
+    expect(inheritSettings(over, 'C', base, ['algo'])).toEqual({
+      algo: 'fsrs',
+      tts: true,
+      shuffle: false,
+    })
+  })
+  it('falls back to the base when the main deck never set a main-deck-only key', () => {
+    const over = [
+      { id: 'A', parentId: null, settings: {} as Partial<Settings> },
+      { id: 'B', parentId: 'A', settings: { algo: 'fsrs' } as Partial<Settings> },
+    ]
+    expect(inheritSettings(over, 'B', base, ['algo']).algo).toBe('sm2')
   })
 })
 
@@ -174,7 +213,7 @@ describe('orderSiblings', () => {
     expect(orderSiblings(filed, null, 'f1').some((d) => d.archived)).toBe(true)
   })
 
-  it('leaves the moving deck out of its own reckoning', () => {
-    expect(orderSiblings(filed, null, 'f1', 'A').map((d) => d.id)).toEqual(['B'])
+  it('leaves the moving decks out of their own reckoning', () => {
+    expect(orderSiblings(filed, null, 'f1', new Set(['A'])).map((d) => d.id)).toEqual(['B'])
   })
 })

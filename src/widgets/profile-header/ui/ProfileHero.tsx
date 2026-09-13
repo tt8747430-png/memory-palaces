@@ -1,8 +1,8 @@
 import { type ReactNode } from 'react'
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-import { Building2, Flame, Zap } from 'lucide-react'
-import { EASE_OUT, levelFromXp } from '@/shared/lib'
+import { Building2, ChevronRight, Flame, Zap } from 'lucide-react'
+import { cn, EASE_OUT, levelFromXp } from '@/shared/lib'
 import { Avatar, Progress } from '@/shared/ui'
 
 export interface ProfileHeroProps {
@@ -133,28 +133,47 @@ function Stat({
   onClick?: () => void
   actionLabel?: string
 }) {
-  const body = (
-    <>
-      <span className="flex items-center gap-1.5">
-        {icon}
-        <span className="text-headline font-bold leading-none tabular-nums text-heading">
-          {value}
-        </span>
+  const figure = (
+    <span className="flex items-center gap-1.5">
+      {icon}
+      <span className="text-headline font-bold leading-none tabular-nums text-heading">
+        {value}
       </span>
-      <span className="text-tiny font-medium text-muted-foreground">{label}</span>
-    </>
+    </span>
   )
-  const className = 'flex flex-1 flex-col items-center justify-center gap-1.5 px-2'
-  return onClick ? (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={actionLabel}
-      className={`${className} rounded-control transition-transform active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40`}
-    >
-      {body}
-    </button>
-  ) : (
-    <div className={className}>{body}</div>
+
+  if (!onClick) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-1.5 px-2">
+        {figure}
+        <span className="text-tiny font-medium text-muted-foreground">{label}</span>
+      </div>
+    )
+  }
+
+  // The one stat that opens a screen wears a control's surface — the glass and hairline of the
+  // avatar ring above it, so it lifts off the row without shouting over its neighbours — and a
+  // chevron saying where the press goes. The figures stay level with the other two.
+  return (
+    <div className="flex flex-1 px-1.5">
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={actionLabel}
+        className={cn(
+          'flex w-full flex-col items-center justify-center gap-1.5 rounded-card px-2 py-2.5',
+          // A border, not a ring: `shadow-rest` writes `box-shadow` outright and would erase one.
+          'border border-(--border-glass) bg-card-glass shadow-rest',
+          'transition-[transform,background-color] duration-150 ease-out hover:bg-info-surface active:scale-[0.96]',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+        )}
+      >
+        {figure}
+        <span className="flex items-center gap-0.5 text-tiny font-medium text-muted-foreground">
+          {label}
+          <ChevronRight className="size-3" strokeWidth={2.5} aria-hidden />
+        </span>
+      </button>
+    </div>
   )
 }

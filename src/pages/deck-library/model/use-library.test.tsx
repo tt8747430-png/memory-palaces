@@ -27,6 +27,8 @@ const deck = (id: string, over: Partial<Deck> = {}) => ({
   ...over,
 })
 
+const latin = makeFolder({ id: 'f1', createdAt: at(0), name: 'Latin', color: 'sky', icon: '📁' })
+
 function renderLibrary({
   decks = [] as Deck[],
   folders = [] as Folder[],
@@ -112,6 +114,59 @@ describe('useLibrary', () => {
     act(() => result.current.request({ kind: 'move-deck', deck: root }))
 
     expect([...result.current.moveExcludeIds].sort()).toEqual(['child', 'root'])
+  })
+
+  it('moving a selected deck out of its folder keeps its subdecks under it', async () => {
+    const { result } = renderLibrary({
+      decks: [
+        deck('root', { folderId: 'f1' }),
+        deck('child', { parentId: 'root' }),
+        deck('leaf', { parentId: 'child' }),
+      ],
+      folders: [latin],
+      folderId: 'f1',
+    })
+    await waitFor(() => expect(result.current.ready).toBe(true))
+
+    act(() => result.current.selection.begin('root'))
+    act(() => result.current.selectHandlers.unfile!.onAction())
+
+    await waitFor(() =>
+      expect(result.current.decks.find((d) => d.id === 'root')?.folderId).toBeNull(),
+    )
+    const parents = Object.fromEntries(result.current.decks.map((d) => [d.id, d.parentId]))
+    expect(parents).toEqual({ root: null, child: 'root', leaf: 'child' })
+  })
+
+  it('moving a selection into a deck carries each deck with its subdecks', async () => {
+    const { result } = renderLibrary({
+      decks: [deck('root'), deck('child', { parentId: 'root' }), deck('target', { order: 1 })],
+    })
+    await waitFor(() => expect(result.current.ready).toBe(true))
+
+    act(() => result.current.selection.begin('root'))
+    act(() => result.current.act.bulkMoveTo({ kind: 'deck', deckId: 'target' }))
+
+    await waitFor(() =>
+      expect(result.current.decks.find((d) => d.id === 'root')?.parentId).toBe('target'),
+    )
+    expect(result.current.decks.find((d) => d.id === 'child')?.parentId).toBe('root')
+  })
+
+  it('confirming a folder delete deletes the decks filed in it', async () => {
+    const onFolderGone = vi.fn()
+    const { result } = renderLibrary({
+      decks: [deck('inside', { folderId: 'f1' }), deck('outside', { order: 1 })],
+      folders: [latin],
+      onFolderGone,
+    })
+    await waitFor(() => expect(result.current.ready).toBe(true))
+
+    act(() => result.current.request({ kind: 'delete-folder', folder: latin }))
+    act(() => result.current.confirm())
+
+    await waitFor(() => expect(result.current.decks.map((d) => d.id)).toEqual(['outside']))
+    expect(result.current.folders).toEqual([])
   })
 
   it('a reorder shows up immediately, before the writes settle', async () => {

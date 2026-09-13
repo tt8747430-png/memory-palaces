@@ -7,7 +7,7 @@ import type {
 } from '@/shared/config/flashcard-swipe'
 import type { StudyMode } from '@/entities/preferences'
 import type { StudyFilter, StudyFilterCounts } from '@/features/review'
-import type { StudyDirection, StudyPrefs } from './types'
+import type { EditableStudyPref, StudyDirection, StudyPrefs } from './types'
 
 export interface StudySettings {
   direction: StudyDirection
@@ -22,6 +22,8 @@ export interface StudySettings {
 
 export interface StudySettingsControl {
   value: StudySettings
+  /** Prefs shown but not changeable here — the deck being studied does not own them. `set` ignores them. */
+  locked: ReadonlySet<EditableStudyPref>
   filterCounts: StudyFilterCounts
   set: <K extends keyof StudySettings>(key: K, next: StudySettings[K]) => void
   setSwipe: (direction: SwipeDirection, action: FlashcardSwipeAction) => void
@@ -31,6 +33,7 @@ interface Args {
   mode: StudyMode
   prefs: StudyPrefs
   onPrefsChange?: (prefs: StudyPrefs) => void
+  lockedPrefs?: readonly EditableStudyPref[]
   wordSpaces: boolean
   onWordSpacesChange?: (value: boolean) => void
   shakeToUndo: boolean
@@ -46,6 +49,7 @@ export function useStudySettings({
   mode,
   prefs,
   onPrefsChange,
+  lockedPrefs = [],
   wordSpaces,
   onWordSpacesChange,
   shakeToUndo,
@@ -57,6 +61,7 @@ export function useStudySettings({
   onFilterChange,
 }: Args): StudySettingsControl {
   const [typeInitialsOnly, setTypeInitialsOnly] = useState(false)
+  const locked = new Set(lockedPrefs)
 
   const value: StudySettings = {
     direction: prefs.direction,
@@ -74,7 +79,7 @@ export function useStudySettings({
       case 'direction':
       case 'shuffle':
       case 'textToSpeech':
-        onPrefsChange?.({ ...prefs, [key]: next })
+        if (!locked.has(key)) onPrefsChange?.({ ...prefs, [key]: next })
         return
       case 'wordSpaces':
         onWordSpacesChange?.(next as boolean)
@@ -95,6 +100,7 @@ export function useStudySettings({
 
   return {
     value,
+    locked,
     filterCounts,
     set,
     setSwipe: (direction, action) =>

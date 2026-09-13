@@ -35,11 +35,27 @@ const card = (id: string, over: Partial<Card> = {}): Card => ({
   ...over,
 })
 
-function renderPage(settings: Partial<DeckSettings> = {}, cards: Card[] = [card('c1')]) {
+/** `mainDeck` makes d1 a subdeck of a main deck holding those settings. */
+function renderPage(
+  settings: Partial<DeckSettings> = {},
+  cards: Card[] = [card('c1')],
+  mainDeck?: Partial<DeckSettings>,
+) {
+  const main = mainDeck
+    ? [
+        makeDeck({
+          id: 'm1',
+          createdAt: new Date(0).toISOString(),
+          name: 'Science',
+          settings: mainDeck,
+        }),
+      ]
+    : []
   const deck = makeDeck({
     id: 'd1',
     createdAt: new Date(0).toISOString(),
     name: 'Physics',
+    parentId: mainDeck ? 'm1' : null,
     settings,
   })
   render(
@@ -53,7 +69,7 @@ function renderPage(settings: Partial<DeckSettings> = {}, cards: Card[] = [card(
           <FolderStoreContext value={started(createFolderStore(new InMemoryRepository<Folder>()))}>
             <CardStoreContext value={started(createCardStore(new InMemoryRepository<Card>(cards)))}>
               <DeckStoreContext
-                value={started(createDeckStore(new InMemoryRepository<Deck>([deck])))}
+                value={started(createDeckStore(new InMemoryRepository<Deck>([...main, deck])))}
               >
                 <DeckDetailPage
                   deckId="d1"
@@ -94,6 +110,29 @@ describe('DeckDetailPage', () => {
     renderPage({ algorithm: 'fast' })
     expect(await screen.findByText('Learning algorithm:')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Fast review' })).toBeInTheDocument()
+  })
+
+  it('a subdeck shows its main deck’s algorithm, and says where to change it', async () => {
+    const user = userEvent.setup()
+    renderPage({}, [card('c1')], { algorithm: 'fast' })
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Fast review — set on the main deck' }),
+    )
+
+    expect(await screen.findByText('Action restricted')).toBeInTheDocument()
+    expect(screen.queryByRole('radio')).toBeNull()
+    await user.click(screen.getByRole('button', { name: 'Got it' }))
+    expect(screen.queryByText('Action restricted')).toBeNull()
+  })
+
+  it('a main deck opens the algorithm picker from the same line', async () => {
+    const user = userEvent.setup()
+    renderPage({ algorithm: 'fast' })
+
+    await user.click(await screen.findByRole('button', { name: 'Fast review' }))
+
+    expect(await screen.findAllByRole('radio')).toHaveLength(2)
   })
 
   it('filters the cards from the header search, and offers a way out of a dead end', async () => {

@@ -12,21 +12,26 @@ _Invented_.**
 
 ## Deck settings (`pages/deck-settings`)
 
-| Control             | Status | Notes                                                                                           |
-| ------------------- | ------ | ----------------------------------------------------------------------------------------------- |
-| Algorithm card      | Works  | Opens the algorithm screen; `settings.algorithm` drives the study queue.                        |
-| Text-to-speech row  | Works  | `settings.textToSpeech` + `settings.tts`; the card face's speaker button reads them.            |
-| Card style row      | Works  | See below.                                                                                      |
-| Import cards        | Works  | `ImportSheet` → paste screen, or a file through `useImportFile` → import review.                |
-| Rename / appearance | Works  | `DeckAppearanceSheet` → `editDeck`.                                                             |
-| Move                | Works  | `moveDeck`; "archive" as a destination is the archive act — same dialog, same exit.             |
-| Duplicate           | Works  | Behind a confirmation; `duplicateDeck` copies the deck and its cards.                           |
-| Reset progress      | Works  | Behind a confirmation; `resetDeckSrs` clears every card's schedule.                             |
-| Archive / restore   | Works  | Archiving is confirmed from either entry point and returns to the library; restoring stays put. |
-| Export              | Works  | CSV and Anki text. Disabled with no cards.                                                      |
-| Delete              | Works  | Behind a destructive confirmation.                                                              |
+| Control             | Status | Notes                                                                                         |
+| ------------------- | ------ | --------------------------------------------------------------------------------------------- |
+| Algorithm card      | Works  | Opens the algorithm screen; `settings.algorithm` drives the study queue. Locked on a subdeck. |
+| Text-to-speech row  | Works  | `settings.textToSpeech` + `settings.tts`; the card face's speaker button reads them.          |
+| Card style row      | Works  | See below.                                                                                    |
+| Import cards        | Works  | `ImportSheet` → paste screen, or a file through `useImportFile` → import review.              |
+| Rename / appearance | Works  | `DeckAppearanceSheet` → `editDeck`.                                                           |
+| Move                | Works  | `moveDecks`; "archive" as a destination is the archive act — same dialog, same exit.          |
+| Duplicate           | Works  | Behind a confirmation; `duplicateDeck` copies the deck and its cards.                         |
+| Reset progress      | Works  | Behind a confirmation; `resetDeckSrs` clears every card's schedule.                           |
+| Archive / restore   | Works  | Archiving is confirmed, lifts the deck out of its folder or parent (ADR 0003); restore → top. |
+| Export              | Works  | CSV and Anki text. Disabled with no cards.                                                    |
+| Delete              | Works  | Behind a destructive confirmation.                                                            |
 
 ## Algorithm (`pages/deck-algorithm`)
+
+Every control on this screen is a **main deck setting** (`MAIN_DECK_SETTINGS`): read from the top of the tree, never
+held by a subdeck ([ADR 0003](adr/0003-the-archive-is-a-place.md)). On a subdeck the deck-detail line and the settings
+row wear a lock and open `AlgorithmLockedNotice`; the study session's settings sheet shows shuffle locked; the routes
+themselves pass through `MainDeckGate` to `MainDeckOnlyScreen`.
 
 | Control                                                                              | Status  | Notes                                                                   |
 | ------------------------------------------------------------------------------------ | ------- | ----------------------------------------------------------------------- |

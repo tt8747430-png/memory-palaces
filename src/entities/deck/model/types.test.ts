@@ -41,6 +41,15 @@ describe('makeDeck', () => {
     expect(() => makeDeck({ ...base, name: '  ' })).toThrow()
     expect(() => makeDeck({ ...base, order: -1 })).toThrow()
   })
+
+  it('a subdeck keeps no setting its main deck owns', () => {
+    const deck = makeDeck({
+      ...base,
+      parentId: 'p1',
+      settings: { algorithm: 'fast', newCardsPerDay: 5, shuffleCards: true, textToSpeech: true },
+    })
+    expect(deck.settings).toEqual({ textToSpeech: true })
+  })
 })
 
 describe('updateDeck', () => {
@@ -57,6 +66,21 @@ describe('updateDeck', () => {
     const nested = updateDeck(top, { parentId: 'p1' }, '2026-02-01T00:00:00.000Z')
     expect(nested.parentId).toBe('p1')
     expect(nested.folderId).toBeNull()
+  })
+
+  it('making a deck a subdeck drops the settings its new main deck owns', () => {
+    const main = makeDeck({
+      ...base,
+      settings: { algorithm: 'fast', maxCardsPerDay: 50, cardStyle: DEFAULT_CARD_STYLE },
+    })
+    const nested = updateDeck(main, { parentId: 'p1' }, '2026-02-01T00:00:00.000Z')
+    expect(nested.settings).toEqual({ cardStyle: DEFAULT_CARD_STYLE })
+  })
+
+  it('a main deck keeps every setting it holds', () => {
+    const main = makeDeck({ ...base, settings: { algorithm: 'fast', shuffleCards: true } })
+    const renamed = updateDeck(main, { name: 'Psalms' }, '2026-02-01T00:00:00.000Z')
+    expect(renamed.settings).toEqual({ algorithm: 'fast', shuffleCards: true })
   })
 
   it('rejects a blank name', () => {
