@@ -42,10 +42,23 @@ export { HeaderElevationContext, useHeaderElevation } from './sticky-header/head
 export {
   clampSwipeOffset,
   armedSide,
+  type DragFrame,
+  dragFrame,
+  resolveFling,
   resolveSwipeRelease,
+  resolveThrow,
+  type FlingThresholds,
   type SwipeGeometry,
   type SwipeRelease,
+  type Throw,
+  type ThrowAxis,
 } from './gestures'
+export {
+  type GestureHold,
+  type ReleaseReason,
+  type SurfaceProps,
+  useGestureHold,
+} from './gesture-hold'
 export { useLongPress, type LongPressHandlers, type LongPressOptions } from './use-long-press'
 export { usePersistedSet } from './use-persisted-set'
 export { toggleInSet } from './set'

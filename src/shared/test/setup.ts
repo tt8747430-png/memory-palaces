@@ -6,6 +6,18 @@ if (typeof Element !== 'undefined' && typeof Element.prototype.setPointerCapture
   Element.prototype.hasPointerCapture = () => false
 }
 
+/**
+ * jsdom dispatches pointer events but declares none of their event-handler properties, and
+ * `@use-gesture` picks its device by asking whether `onpointerdown` is in `window` — once, when it
+ * is imported. Undeclared, it decides the environment is mouse-only and listens for `mousedown`,
+ * so a test driving the gesture the way the phone does reaches a library bound to other events
+ * entirely, and no cancel path exists to test at all. Declared here, before any test module
+ * imports it, jsdom answers the question the way every browser the app runs in does.
+ */
+if (typeof window !== 'undefined' && !('onpointerdown' in window)) {
+  Object.defineProperty(window, 'onpointerdown', { value: null, writable: true })
+}
+
 if (typeof globalThis.localStorage === 'undefined') {
   const store = new Map<string, string>()
   const memoryStorage = {

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { AlignCenter, AlignLeft, AlignRight, Check, RotateCcw, Type, Vibrate } from 'lucide-react'
+import { AlignCenter, AlignLeft, AlignRight, Check, Maximize2, RotateCcw, Type } from 'lucide-react'
 import {
   CARD_FONTS,
   CARD_ALIGNMENTS,
@@ -11,13 +11,7 @@ import {
   useDeck,
   useDeckStoreApi,
 } from '@/entities/deck'
-import {
-  selectEffectivePreferences,
-  usePreferencesStore,
-  usePreferencesStoreApi,
-} from '@/entities/preferences'
 import { updateDeckSettings } from '@/features/deck'
-import { setPreferences } from '@/features/preferences'
 import { clampCardTextSize, sameCardStyle } from '@/shared/lib'
 import {
   ActionSheet,
@@ -33,6 +27,7 @@ import {
   StepperRow,
 } from '@/shared/ui'
 import { PresetStrip } from './PresetStrip'
+import { StyleFullscreen } from './StyleFullscreen'
 import { StylePreview } from './StylePreview'
 
 export interface DeckCardStylePageProps {
@@ -64,10 +59,9 @@ const ALIGN_LABEL_KEYS: Record<CardAlignment, string> = {
 export function DeckCardStylePage({ deckId, onBack }: DeckCardStylePageProps) {
   const { t } = useTranslation()
   const deckStore = useDeckStoreApi()
-  const prefsStore = usePreferencesStoreApi()
-  const prefs = usePreferencesStore(selectEffectivePreferences)
   const { deck, settings, ready } = useDeck(deckId)
   const [fontOpen, setFontOpen] = useState(false)
+  const [fullscreen, setFullscreen] = useState(false)
   // Edits are previewed, not saved: `null` means "showing what the deck already has". Leaving the
   // screen drops the draft, which is the whole point of a separate Apply.
   const [draft, setDraft] = useState<CardStyle | null>(null)
@@ -114,11 +108,10 @@ export function DeckCardStylePage({ deckId, onBack }: DeckCardStylePageProps) {
             <div className="flex items-center gap-1">
               <IconButton
                 variant="glass"
-                aria-label={t('cardStyle.haptics')}
-                aria-pressed={prefs.haptics}
-                onClick={() => void setPreferences(prefsStore, { haptics: !prefs.haptics })}
+                aria-label={t('cardStyle.fullscreen')}
+                onClick={() => setFullscreen(true)}
               >
-                <Vibrate className="size-5" aria-hidden />
+                <Maximize2 className="size-5" aria-hidden />
               </IconButton>
               <IconButton
                 variant="glass"
@@ -134,11 +127,13 @@ export function DeckCardStylePage({ deckId, onBack }: DeckCardStylePageProps) {
       }
       pinned={
         <CardScene style={style} className={PREVIEW_PANE}>
+          {/* `h-full`, not `max-h-full`: the frame is the pane's, so stepping the text size moves
+              the words inside a card that does not resize under the control that moved them. */}
           <StylePreview
             style={style}
             front={t('cardStyle.previewFront')}
             back={t('cardStyle.previewBack')}
-            className="max-h-full w-full overflow-hidden"
+            className="h-full w-full"
           />
         </CardScene>
       }
@@ -200,6 +195,14 @@ export function DeckCardStylePage({ deckId, onBack }: DeckCardStylePageProps) {
           />
         </section>
       </div>
+
+      <StyleFullscreen
+        open={fullscreen}
+        onOpenChange={setFullscreen}
+        style={style}
+        front={t('cardStyle.previewFront')}
+        back={t('cardStyle.previewBack')}
+      />
 
       <ActionSheet
         open={fontOpen}

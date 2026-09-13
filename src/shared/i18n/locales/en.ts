@@ -222,7 +222,7 @@ export const en = {
     reset: 'Reset card style',
     apply: 'Apply',
     applied: 'Card style applied',
-    haptics: 'Haptics',
+    fullscreen: 'Preview full screen',
     preview: 'Preview',
     previewFront: 'What are the 3 different types of equilibrium in physics?',
     previewBack: 'Stable, unstable and neutral.',

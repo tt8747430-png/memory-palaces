@@ -2,8 +2,19 @@ import { type RefObject, useEffect, useRef, useState } from 'react'
 import { animate, useMotionValue, useTransform } from 'motion/react'
 import { useDrag } from '@use-gesture/react'
 import type { Card } from '@/entities/card'
-import { STACK_DEPTH, tick } from '@/shared/lib'
+import {
+  dragFrame,
+  type FlingThresholds,
+  resolveFling,
+  STACK_DEPTH,
+  type SurfaceProps,
+  tick,
+  useGestureHold,
+} from '@/shared/lib'
 import { CARD_EASE, SPRING } from '../ui/browser-poses'
+
+/** A page turn: far enough, or short and fast. Per axis — see `resolveFling`. */
+const TURN: FlingThresholds = { distance: 70, speed: 0.45 }
 
 export type EnterFrom = 'behind' | 'edge' | null
 
@@ -17,6 +28,8 @@ export interface CardBrowserState {
   rotate: ReturnType<typeof useTransform<number, number>>
   go: (delta: number) => void
   bind: ReturnType<typeof useDrag>
+  /** Spread beside `bind()`: the card is a swipe surface like any row. */
+  surface: SurfaceProps
   offscreen: () => number
 }
 
@@ -64,12 +77,22 @@ export function useCardBrowser({
     else if (index > count - 1) setIndex(count - 1)
   }, [open, count, index, onClose])
 
+  // The browser owns the finger while a card is being turned, so anything left displaced behind it
+  // puts itself back; taken over, the card returns to its place in the deck — unless the turn is
+  // already under way, which nothing should interrupt.
+  const { surface, hold, drop } = useGestureHold(() => {
+    if (!animating.current) animate(x, 0, SPRING)
+  })
+
   const offscreen = () => (shellRef.current?.offsetWidth ?? 430) + 48
 
+  // The claim is given up when the card has landed, not at the lift: a card still crossing the
+  // screen is displaced, and the next touch has to be able to put it back.
   const go = (delta: number) => {
     const next = index + delta
     if (animating.current || next < 0 || next > count - 1) {
       animate(x, 0, SPRING)
+      drop()
       return
     }
     tick()
@@ -78,6 +101,7 @@ export function useCardBrowser({
       setEnterFrom(null)
       setIndex(next)
       x.set(0)
+      drop()
       return
     }
     animating.current = true
@@ -91,25 +115,42 @@ export function useCardBrowser({
         setIndex(next)
         x.set(0)
         animating.current = false
+        drop()
       },
     })
   }
 
   const bind = useDrag(
-    ({ down, movement: [mx], velocity: [vx], direction: [dx], tap }) => {
+    ({ first, last, down, movement: [mx], velocity: [vx], direction: [dx], tap, event }) => {
       if (animating.current) return
-      if (tap) {
-        setFlipped((value) => !value)
-        return
+      if (first) hold()
+
+      switch (dragFrame({ tap, last, event })) {
+        case 'tap':
+          drop()
+          setFlipped((value) => !value)
+          return
+
+        // A gesture the platform cancelled turns no page.
+        case 'canceled':
+          animate(x, 0, SPRING)
+          drop()
+          return
+
+        case 'released': {
+          const turn = resolveFling(mx, vx, dx, TURN)
+          if (turn < 0 && index < count - 1) go(1)
+          else if (turn > 0 && index > 0) go(-1)
+          else {
+            animate(x, 0, SPRING)
+            drop()
+          }
+          return
+        }
+
+        case 'moving':
+          if (down) x.set(mx)
       }
-      if (down) {
-        x.set(mx)
-        return
-      }
-      const fling = vx > 0.45
-      if ((mx < -70 || (fling && dx < 0)) && index < count - 1) go(1)
-      else if ((mx > 70 || (fling && dx > 0)) && index > 0) go(-1)
-      else animate(x, 0, SPRING)
     },
     { axis: 'x', filterTaps: true, pointer: { touch: true } },
   )
@@ -124,6 +165,7 @@ export function useCardBrowser({
     rotate,
     go,
     bind,
+    surface,
     offscreen,
   }
 }

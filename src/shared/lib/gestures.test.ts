@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { armedSide, clampSwipeOffset, resolveSwipeRelease, type SwipeGeometry } from './gestures'
+import {
+  armedSide,
+  clampSwipeOffset,
+  dragFrame,
+  type FlingThresholds,
+  resolveFling,
+  resolveSwipeRelease,
+  resolveThrow,
+  type SwipeGeometry,
+  wasCanceled,
+} from './gestures'
 
 const geo: SwipeGeometry = {
   hasLeading: true,
@@ -55,5 +65,105 @@ describe('resolveSwipeRelease', () => {
   it('snaps closed below the open threshold', () => {
     expect(resolveSwipeRelease(-30, geo)).toEqual({ kind: 'close', settleTo: 0 })
     expect(resolveSwipeRelease(20, geo)).toEqual({ kind: 'close', settleTo: 0 })
+  })
+})
+
+describe('wasCanceled', () => {
+  it('tells a gesture the platform took away from one the learner released', () => {
+    expect(wasCanceled(new Event('pointercancel'))).toBe(true)
+    expect(wasCanceled(new Event('touchcancel'))).toBe(true)
+    expect(wasCanceled(new Event('pointerup'))).toBe(false)
+    expect(wasCanceled(undefined)).toBe(false)
+  })
+})
+
+describe('resolveFling', () => {
+  const throwIt: FlingThresholds = { distance: 80, speed: 0.5 }
+
+  it('counts travel past the distance however slowly it was made', () => {
+    expect(resolveFling(-80, 0, 0, throwIt)).toBe(-1)
+    expect(resolveFling(80, 0, 0, throwIt)).toBe(1)
+  })
+
+  it('counts a short throw that was fast enough, in the direction it went', () => {
+    expect(resolveFling(-30, 0.6, -1, throwIt)).toBe(-1)
+    expect(resolveFling(30, 0.6, 1, throwIt)).toBe(1)
+  })
+
+  it('is neither, below both bars', () => {
+    expect(resolveFling(-30, 0.4, -1, throwIt)).toBe(0)
+    expect(resolveFling(79, 0.49, 1, throwIt)).toBe(0)
+  })
+
+  /**
+   * Velocity arrives unsigned, so a card that asked whether "the fastest axis" cleared the bar
+   * committed a horizontal grade off a fast vertical flick. Each axis answers for itself.
+   */
+  it('does not lend one axis another axis speed', () => {
+    expect(resolveFling(4, 0.9, 0, throwIt)).toBe(0)
+  })
+})
+
+describe('dragFrame', () => {
+  const released = new Event('pointerup')
+
+  it('calls a frame that has not ended a move', () => {
+    expect(dragFrame({ tap: false, last: false, event: released })).toBe('moving')
+  })
+
+  it('calls a lift a release and a cancel its own thing', () => {
+    expect(dragFrame({ tap: false, last: true, event: released })).toBe('released')
+    expect(dragFrame({ tap: false, last: true, event: new Event('pointercancel') })).toBe('canceled')
+  })
+
+  // A tap that ends in a cancel still moved nothing, and a surface acting on it acts on nothing.
+  it('calls a tap a tap however it ended', () => {
+    expect(dragFrame({ tap: true, last: true, event: new Event('pointercancel') })).toBe('tap')
+  })
+})
+
+describe('resolveThrow', () => {
+  const throwIt: FlingThresholds = { distance: 80, speed: 0.5 }
+  const still = { velocity: [0, 0], direction: [0, 0] } as const
+
+  it('is null for a drag that was no throw', () => {
+    expect(resolveThrow({ movement: [20, 10], ...still }, throwIt)).toBeNull()
+  })
+
+  it('takes the axis the finger went furthest along', () => {
+    expect(resolveThrow({ movement: [-90, 200], ...still }, throwIt)).toEqual({
+      axis: 'y',
+      sign: 1,
+    })
+    expect(resolveThrow({ movement: [-200, 90], ...still }, throwIt)).toEqual({
+      axis: 'x',
+      sign: -1,
+    })
+  })
+
+  // Where the two grades live: a diagonal that cannot decide should not decide for the learner.
+  it('keeps a tie on x', () => {
+    expect(resolveThrow({ movement: [100, -100], ...still }, throwIt)).toEqual({
+      axis: 'x',
+      sign: 1,
+    })
+  })
+
+  /**
+   * The card over a scroller can be swiped sideways but not up, and the vertical travel is the
+   * evidence that this was the scroll it looks like. Without the test, reading a long answer with
+   * a little sideways drift grades the card — the false trigger this resolver exists to stop.
+   */
+  it('refuses a locked-axis throw that wandered further across the axis than along it', () => {
+    const scroll = { movement: [-90, 400], ...still, lockedTo: 'x' } as const
+    expect(resolveThrow(scroll, throwIt)).toBeNull()
+    expect(resolveThrow({ ...scroll, movement: [-90, 40] }, throwIt)).toEqual({
+      axis: 'x',
+      sign: -1,
+    })
+  })
+
+  it('never answers with the axis the surface is locked out of', () => {
+    expect(resolveThrow({ movement: [0, 300], ...still, lockedTo: 'x' }, throwIt)).toBeNull()
   })
 })

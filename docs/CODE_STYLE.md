@@ -386,5 +386,46 @@ scrollbar-hide`. It is deliberately plain — a scrollport needs no keyboard geo
   `DrawerContent` clears it for the whole interior, leaving fields and `.allow-select` alone (`clearSelectionForDrag`).
   `useAutoSelect` is the usual source.
 
+- **A screen that fits must not scroll.** The gutter (`GUTTER`, above) is height at the end of the content, so a body
+  sized to the whole port _plus_ a gutter under it scrolls by the gutter's height with every row already visible. The
+  gutter is declared once as `--screen-gutter` and the sizer subtracts it (`FILL`, `BOUNCE`), so the two cannot drift; a
+  gutter implies a sizer even where the screen asked for neither. The one sizer that subtracts nothing is `flex-1`,
+  which any screen with a dock takes: the dock's height is not written down anywhere, so the only sizer that can
+  account for it is the one that takes what is left. The gutter collapses to `0` under `data-keyboard` — nothing it
+  clears is on screen then — or a revealed field rides the gutter _plus_ `--kb-range` past the keyboard's edge.
+
 **Verify on a real device** whenever a change touches: `overflow-*`/scroll · keyboard · focus/autofocus ·
 `env(safe-area-*)` · gestures/`touch-action`.
+
+## 12. Swipe gestures (`@use-gesture`)
+
+**One surface owns the finger at a time — `useGestureHold` (`shared/lib/gesture-hold.ts`) is the registry, and nothing
+keeps its own.** A surface claims when it starts moving and holds while it stays displaced — an open tray until the next
+touch, a card until its throw has landed, which is why both card hooks give the claim up in the animation's completion
+and not on the lift. The next claim puts the previous holder back _before_ it moves. Two rows animating under one finger
+is the flicker, and it is what a per-row `document` listener produces — the old row springs shut while the new one drags.
+
+- **Why the release carries a reason.** `claimed` jumps (the surface taking over is already moving under the same
+  finger); `outside` springs (the learner put the row down). Telling those apart needs the surface's own element _and_
+  its `SWIPE_SURFACE_ATTR` mark, so the hook hands both over as one `surface` bundle to spread — a surface that
+  registered without marking itself made every takeover read as a tap away, which is the spring this exists to prevent.
+- **A frame of a drag is one of four things — `dragFrame(state)` names them.** `tap`, `moving`, `released`, `canceled`:
+  every surface classified these for itself, and the one that forgot `canceled` fired its action on a gesture nobody
+  finished. `@use-gesture` routes `pointercancel`/`touchcancel` through the same path as a lift, so without that case a
+  scroll takeover, an incoming call or a backgrounded app commits whatever the finger was over.
+- **Throws resolve per axis (`resolveFling`, `resolveThrow`), never "the fastest axis".** Velocity arrives unsigned, so
+  a card that compared `max(vx, vy)` to one bar graded a horizontal swipe off a fast vertical flick. Each axis gets its
+  own distance, speed and direction; `resolveThrow` picks the winner.
+- **A locked axis still reads the other one.** A card over a scroller can be swiped sideways but not up, and the
+  vertical travel is the evidence that the gesture was the scroll it looks like: `lockedTo` refuses a throw that
+  wandered further across the axis than along it. Drop that test and reading a long answer with a little sideways drift
+  grades the card.
+- **Clear the click guard on a real `pointerdown`, not on the engine's first frame.** With a locked `axis` the engine
+  reports nothing at all until the finger has moved — which is exactly the tap the guard would swallow.
+- **Never re-render the row from a motion value.** A `useMotionValueEvent` that sets state per frame re-renders the row
+  and its children on every frame of the drag. Toggle nothing during a drag: `SwipeRow` clips unconditionally and pays
+  for it with `overflow-clip-margin`.
+- **Testing gestures in jsdom:** every synthetic pointer event needs a `pointerType` — the engine picks its
+  axis-intent threshold by it, and jsdom's empty default finds none, so the gesture stays blocked and the handler is
+  never called (a test without it passes for the wrong reason). `shared/test/setup.ts` also declares `onpointerdown` on
+  `window`, or the engine decides the environment is mouse-only and listens for other events entirely.

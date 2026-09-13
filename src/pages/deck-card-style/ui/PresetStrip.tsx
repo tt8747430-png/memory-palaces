@@ -38,8 +38,18 @@ export function PresetStrip({ style, value, onChange }: PresetStripProps) {
               selected ? 'ring-2 ring-accent' : 'ring-1 ring-border',
             )}
           >
-            <CardScene style={previewStyle} className="grid place-items-center p-2.5">
-              <StylePreview compact style={previewStyle} front="Aa" back="Bb" className="w-full" />
+            {/* The card runs to the top and side edges — at thumbnail size a margin of backdrop
+                around it reads as the tile's own padding rather than as the preset's paper, and
+                what the thumb is choosing is the card. It is clipped at the bottom instead, where
+                the strip of scene left showing is the backdrop this preset would be studied on. */}
+            <CardScene style={previewStyle} className="h-20">
+              <StylePreview
+                compact
+                style={previewStyle}
+                front="Aa"
+                back="Bb"
+                className="h-[calc(100%-0.625rem)] w-full rounded-none"
+              />
             </CardScene>
             <span className="block truncate bg-card px-2 py-1.5 text-label font-medium text-muted-foreground">
               {t(`cardStyle.preset.${preset}` as never)}

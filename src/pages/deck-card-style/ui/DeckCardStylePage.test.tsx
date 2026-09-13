@@ -115,6 +115,27 @@ describe('DeckCardStylePage', () => {
   })
 
   /**
+   * The full-screen preview reads the same draft the pane does — open it mid-edit and it shows the
+   * edit, not what the deck last saved, and closing it leaves the draft where it was.
+   */
+  it('previews the draft full screen and leaves it unsaved', async () => {
+    const user = userEvent.setup()
+    const { style } = renderPage()
+
+    await user.click(await screen.findByRole('radio', { name: 'Night' }))
+    await user.click(screen.getByRole('button', { name: 'Preview full screen' }))
+
+    const dialog = await screen.findByRole('dialog')
+    expect(dialog).toHaveTextContent('Stable, unstable and neutral.')
+    expect(dialog.querySelector('[data-scene]')).toHaveAttribute('data-scene', 'dark')
+
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(await style()).toBeUndefined()
+    expect(screen.getByRole('button', { name: 'Apply' })).toBeInTheDocument()
+  })
+
+  /**
    * The apply bar arriving is a layout change the spec asks for; the controls under it shifting a
    * second time because the scroll body re-padded itself is not. `AppScreen` takes that inset from
    * the footer's presence, so the dock stays mounted whether or not there is anything to apply.

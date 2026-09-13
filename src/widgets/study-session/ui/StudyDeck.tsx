@@ -146,6 +146,7 @@ export function StudyDeck({
 
       <motion.div
         {...(swipe.bind() as unknown as HTMLMotionProps<'div'>)}
+        {...swipe.surface}
         style={{ x: swipe.x, y: swipe.y, rotate: swipe.rotate, touchAction: 'pan-y' }}
         className="relative z-10 h-full"
       >
