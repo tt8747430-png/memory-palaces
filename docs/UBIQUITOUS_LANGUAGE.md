@@ -115,9 +115,12 @@ Every Deck follows exactly one: its Main deck's. A Subdeck never holds the algor
   conflate. In learner-facing copy `known` reads **Mastered**; the field name stays `known`.
 - **"algorithm"** — a **Learning algorithm** is the Deck-level choice (Fast review / Spaced repetition). The SRS
   scheduler itself is the **SRS**. Never call the scheduler "the algorithm".
-- **"preset"** — in _code and types_ an algorithm is never a "preset"; a **preset** is one of the five Card style
-  skins. The Deck settings row is labelled "Algorithm preset" because the design spec fixes that string — the label is
-  the exception, not the rule.
+- **"preset"** — in _code and types_ an algorithm is never a "preset"; a **preset** is one of the Card style scenes
+  (`CARD_STYLE_PRESET_IDS`, eleven of them). The Deck settings row is labelled "Algorithm preset" because the design
+  spec fixes that string — the label is the exception, not the rule.
+  - A preset's **id is persisted and its label is not**, so the two are free to differ — but only where the id has
+    gone stale, never as a rename. `paper` is labelled "Paper"; a preset whose material has changed enough to want
+    another name wants a new id and a migration, the way `outlined` got one.
 - **Not quite / Got it vs grades** — the two fast-review answers are _not_ Grades; they never touch `srs`. They live
   on the Card as `fastReview`, and Reset progress clears them alongside the schedule.
 - **"scope"** — **Study scope** = which Deck (`StudyScope`, `MatchScope`); **Study filter** = which of its Cards (

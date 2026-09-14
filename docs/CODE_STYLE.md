@@ -138,12 +138,16 @@ v4, two-layer tokens: primitives (`--p-navy-900`…) → semantic roles (`--prim
     above it, `rounded-tile` for a 36px glyph tile and `rounded-tile-slot` for the outline standing in for one.
 - **Dark mode is automatic** (`[data-theme='dark']` remap). No scattered `dark:`, no hardcoded light/dark colors.
   - **One sanctioned exception:** the printed card-style presets in
-    [`shared/lib/card-style.ts`](../src/shared/lib/card-style.ts) — `chalk`, `notebook`, `paper`, `parchment`,
-    `night`. Those are _printed materials_ a learner picks, not app chrome — slate, ruled paper, aged stock, a survey
-    map and a night sky look the same under any theme, and remapping their ink would make "chalk" mean something
-    different in dark mode. They are literal by design and stay confined to that file's `PRESETS` map: the card's
-    paper, ink, border and the backdrop behind it, nothing else. `plain` and `outlined` follow the tokens like
-    everything else.
+    [`shared/lib/card-style.ts`](../src/shared/lib/card-style.ts) — every preset but `plain`. Those are _printed
+    materials_ a learner picks, not app chrome — slate, ruled paper, kraft stock, a survey map, a sky and a meadow look
+    the same under any theme, and remapping their ink would make "chalk" mean something different in dark mode. They
+    are literal by design and stay confined to that file's `PRESETS` map: the card's paper, ink, border and the
+    backdrop behind it, nothing else. `plain` is the one that follows the tokens like everything else.
+    - `outlined` was the second such preset until deck schema v3. It stroked the theme's own ink around the theme's
+      own paper, which in dark mode is a white rectangle drawn around a dark card — the tokens followed, and the
+      result still read as a fault. `bold` is that idea as a *material* instead, and `deckMigrations[3]` repaints
+      any deck still carrying the old id. **Retiring a preset id is a migration**, not a deletion: it is persisted
+      deck settings, and `validateDeckSettings` throws on an id it does not know.
   - A preset is a **scene**, so it also carries the screen behind the card and the chrome over it. `CardScene` marks
     its subtree `data-scene="dark"` or `"light"`, and `tokens.css` repaints from there — set on a descendant, those
     blocks out-inherit `:root` / `[data-theme]` whichever theme the app is in. **The colours stay in the stylesheet**,
