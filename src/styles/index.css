@@ -6,6 +6,9 @@
  */
 @import '@fontsource-variable/lexend/index.css';
 
+/** The card-style faces, cut down to the Latin subsets for the same reason. */
+@import './fonts.css';
+
 /**
  * `source(none)` + explicit sources: Tailwind's automatic detection scans the whole repo, so every
  * class name written *about* the app in `docs/` and `.scratch/` was compiled into the app. That is
