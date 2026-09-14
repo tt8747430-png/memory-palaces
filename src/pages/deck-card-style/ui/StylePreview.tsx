@@ -34,7 +34,7 @@ export function StylePreview({ style, front, back, className, compact }: StylePr
       <div
         className={cn(
           'min-h-0 flex-1',
-          compact ? 'overflow-hidden p-3' : 'overflow-y-auto overscroll-contain p-6',
+          compact ? 'overflow-hidden p-2' : 'overflow-y-auto overscroll-contain p-6',
         )}
       >
         <p className={cn(CARD_STYLE_TEXT, 'leading-snug')}>{front}</p>
