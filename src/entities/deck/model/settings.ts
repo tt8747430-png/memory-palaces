@@ -1,12 +1,21 @@
-import { deckPath, inheritSettings } from '@/shared/lib'
+import { coerceCardStyle, deckPath, inheritSettings } from '@/shared/lib'
 import { type Deck, type DeckSettings, DEFAULT_DECK_SETTINGS, MAIN_DECK_SETTINGS } from './types'
 
 /**
  * A deck's settings as it is studied by them: its own and its ancestors' overrides folded over the
  * defaults, nearest winning — except `MAIN_DECK_SETTINGS`, which come from its main deck alone.
+ *
+ * The card style is coerced on the way out, which extends this seam's existing promise — a missing
+ * key resolves to the default at read time — from absent keys to *unknown values*. A retired preset
+ * can reach a deck without passing the migration (see `coerceCardStyle`), and every consumer reads
+ * through here: the style page's draft, `studyPrefsFromSettings`, the preset thumbnails. Coercing
+ * once here is what lets `validateDeckSettings` go on throwing for writes — otherwise a learner
+ * whose deck carried a retired id would crash the moment they nudged the text size and pressed
+ * Apply, having changed nothing that was wrong.
  */
 export function resolveDeckSettings(decks: readonly Deck[], deckId: string): DeckSettings {
-  return inheritSettings(decks, deckId, DEFAULT_DECK_SETTINGS, MAIN_DECK_SETTINGS)
+  const settings = inheritSettings(decks, deckId, DEFAULT_DECK_SETTINGS, MAIN_DECK_SETTINGS)
+  return { ...settings, cardStyle: coerceCardStyle(settings.cardStyle) }
 }
 
 /** The deck at the top of the tree `deckId` stands in — the deck itself when it is no subdeck. */

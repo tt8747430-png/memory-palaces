@@ -48,8 +48,44 @@ describe('schema migrations', () => {
     expect(deckMigrations[2](v1 as never)).toEqual(v1)
   })
 
+  /**
+   * The first deck migration that rewrites anything. `outlined` left the enum with v3, so a deck
+   * still naming it would fail the schema and `validateDeckSettings` alike — it is repainted with
+   * the preset it was a stroked variant of, and the learner's font, size and alignment are kept.
+   */
+  it('repaints a v2 deck off the retired preset and keeps the rest of its style', () => {
+    const v2 = {
+      id: 'd1',
+      name: 'Deck',
+      settings: {
+        shuffleCards: true,
+        cardStyle: { preset: 'outlined', font: 'serif', textSize: 24, alignment: 'left' },
+      },
+    }
+    expect(deckMigrations[3](v2 as never)).toEqual({
+      id: 'd1',
+      name: 'Deck',
+      settings: {
+        shuffleCards: true,
+        cardStyle: { preset: 'plain', font: 'serif', textSize: 24, alignment: 'left' },
+      },
+    })
+  })
+
+  it('leaves a v2 deck on a surviving preset alone, and one with no style at all', () => {
+    const kept = {
+      id: 'd1',
+      name: 'Deck',
+      settings: { cardStyle: { preset: 'paper', font: 'serif', textSize: 24, alignment: 'left' } },
+    }
+    expect(deckMigrations[3](kept as never)).toEqual(kept)
+
+    const styleless = { id: 'd2', name: 'Deck', settings: { shuffleCards: true } }
+    expect(deckMigrations[3](styleless as never)).toEqual(styleless)
+  })
+
   it('versions both collections', () => {
-    expect(deckSchema.version).toBe(2)
+    expect(deckSchema.version).toBe(3)
     expect(cardSchema.version).toBe(1)
   })
 })

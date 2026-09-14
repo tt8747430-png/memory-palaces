@@ -4,6 +4,27 @@ import { followedMainSettings, mainDeckOf, resolveDeckSettings } from './setting
 import { DEFAULT_DECK_SETTINGS } from './types'
 
 describe('resolveDeckSettings', () => {
+  /**
+   * Replication can hand this device a deck carrying a preset the migration already retired, so the
+   * read seam has to answer an unknown *value* the way it answers an absent key. Without this, the
+   * style page would hand that id straight back to `validateDeckSettings` on Apply.
+   */
+  it('snaps a card style the app no longer has back to the default', () => {
+    const decks = [
+      storedDeck('d1', {
+        settings: {
+          cardStyle: { preset: 'outlined', font: 'serif', textSize: 22, alignment: 'left' },
+        },
+      } as never),
+    ]
+    expect(resolveDeckSettings(decks, 'd1').cardStyle).toEqual({
+      preset: 'plain',
+      font: 'serif',
+      textSize: 22,
+      alignment: 'left',
+    })
+  })
+
   it('reads the algorithm screen from the main deck, whatever a subdeck stored', () => {
     const decks = [
       storedDeck('main', { settings: { algorithm: 'fast', newCardsPerDay: 4 } }),

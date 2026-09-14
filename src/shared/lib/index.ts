@@ -11,6 +11,7 @@ export {
   cardSceneChrome,
   CHROME_TOKENS,
   clampCardTextSize,
+  coerceCardStyle,
   resolveCardScene,
   resolveCardStyle,
   sameCardStyle,

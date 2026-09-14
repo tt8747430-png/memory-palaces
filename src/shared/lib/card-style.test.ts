@@ -5,6 +5,7 @@ import {
   cardSceneChrome,
   CHROME_TOKENS,
   clampCardTextSize,
+  coerceCardStyle,
   resolveCardScene,
   resolveCardStyle,
   sameCardStyle,
@@ -12,8 +13,8 @@ import {
 
 const plain = { preset: 'plain', font: 'default', textSize: 30, alignment: 'center' } as const
 
-/** Only these two follow the theme; every other preset is a printed material with fixed colours. */
-const TOKEN_PRESETS = ['plain', 'outlined'] as const
+/** Only this one follows the theme; every other preset is a printed material with fixed colours. */
+const TOKEN_PRESETS = ['plain'] as const
 
 const PRINTED_PRESETS = CARD_STYLE_PRESET_IDS.filter(
   (id) => !TOKEN_PRESETS.includes(id as (typeof TOKEN_PRESETS)[number]),
@@ -60,7 +61,7 @@ describe('resolveCardStyle', () => {
 
   /**
    * A card painted from a custom property nothing defines is a transparent card with no border —
-   * which is exactly how `plain` and `outlined` shipped once. Every `var()` a preset names has to
+   * which is exactly how the token-following presets shipped once. Every `var()` a preset names has to
    * be one the app actually declares, so the list of those is read from the stylesheet rather than
    * kept by hand beside it.
    */
@@ -142,6 +143,47 @@ describe('cardSceneChrome', () => {
         }
       }
     }
+  })
+})
+
+/**
+ * A retired preset can reach a device without passing `deckMigrations[3]`: replication writes pulled
+ * rows straight into the collection, so a second device that has not upgraded still pushes
+ * `outlined`. The types cannot see that, which is the whole reason these are written as strings.
+ */
+describe('coerceCardStyle', () => {
+  const retired = { ...plain, preset: 'outlined', font: 'comic' } as never
+
+  it('leaves a style the app still has exactly as it found it', () => {
+    const live = { preset: 'meadow', font: 'hand', textSize: 22, alignment: 'left' } as const
+    expect(coerceCardStyle(live)).toEqual(live)
+  })
+
+  it('snaps a field naming something the app no longer has back to the default', () => {
+    expect(coerceCardStyle(retired)).toEqual({
+      preset: 'plain',
+      font: 'default',
+      textSize: 30,
+      alignment: 'center',
+    })
+  })
+
+  it('keeps the fields that are still good when another is not', () => {
+    const half = { ...plain, preset: 'outlined', textSize: 18, alignment: 'right' } as never
+    expect(coerceCardStyle(half)).toMatchObject({
+      preset: 'plain',
+      textSize: 18,
+      alignment: 'right',
+    })
+  })
+
+  it('paints a retired preset instead of throwing — the study screen must not crash', () => {
+    expect(() => resolveCardStyle(retired)).not.toThrow()
+    expect(resolveCardStyle(retired)['--card-style-bg']).toBe(
+      resolveCardStyle(plain)['--card-style-bg'],
+    )
+    expect(resolveCardScene(retired)['--scene-bg']).toBe(resolveCardScene(plain)['--scene-bg'])
+    expect(cardSceneChrome(retired)).toBeUndefined()
   })
 })
 

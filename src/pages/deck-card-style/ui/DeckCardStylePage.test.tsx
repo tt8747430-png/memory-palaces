@@ -107,9 +107,21 @@ describe('DeckCardStylePage', () => {
     expect(await screen.findByRole('button', { name: 'Reset card style' })).toBeDisabled()
   })
 
-  it('offers every preset, the two new scenes included', async () => {
+  it('offers every preset', async () => {
     renderPage()
-    for (const name of ['Plain', 'Outlined', 'Chalk', 'Notebook', 'Paper', 'Parchment', 'Night']) {
+    for (const name of [
+      'Plain',
+      'Bold',
+      'Frost',
+      'Sky',
+      'Meadow',
+      'Marble',
+      'Notebook',
+      'Paper',
+      'Parchment',
+      'Chalk',
+      'Night',
+    ]) {
       expect(await screen.findByRole('radio', { name })).toBeInTheDocument()
     }
   })

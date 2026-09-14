@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { coerceCardStyle } from '@/shared/lib'
 import {
   DEFAULT_CARD_STYLE,
   DEFAULT_DECK_SETTINGS,
@@ -100,6 +101,17 @@ describe('deck settings', () => {
       textSize: 30,
       alignment: 'center',
     })
+  })
+
+  /**
+   * `coerceCardStyle` cannot import this default — `shared/lib` sits below `entities` — so it keeps
+   * its own copy, and this is what stops the two from drifting. Were they to disagree, a deck whose
+   * style was coerced would come back "changed" against the saved one and the Apply bar would
+   * appear on a screen nobody had touched.
+   */
+  it('falls back to the same style the coercion in shared/lib does', () => {
+    const foreign = { preset: 'outlined', font: 'comic', textSize: 30, alignment: 'sideways' }
+    expect(coerceCardStyle(foreign as never)).toEqual(DEFAULT_DECK_SETTINGS.cardStyle)
   })
 
   it('carries settings through makeDeck', () => {
