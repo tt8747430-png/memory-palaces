@@ -63,4 +63,28 @@ describe('TypeFace', () => {
     await user.type(input, 'pah')
     expect(screen.getByText('Recalled — every initial')).toBeInTheDocument()
   })
+
+  it('locks the initials field once every initial is recalled', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(
+      <TypeFace
+        {...makeFaceProps({
+          mode: 'type',
+          typeInitialsOnly: true,
+          prompt: 'Ping',
+          answer: 'Pong answer here',
+        })}
+      />,
+    )
+    const input = screen.getByRole('textbox', { name: 'Type first letters…' }) as HTMLInputElement
+    await user.click(input)
+    await user.type(input, 'pah')
+
+    // Read-only, blurred and no longer asking for focus: nothing is left to type, so no keyboard
+    // opens over the finished card and `useKeyboardReveal` has nothing to lift.
+    expect(input.readOnly).toBe(true)
+    expect(input).not.toHaveFocus()
+    await user.click(screen.getByText('Recalled — every initial'))
+    expect(input).not.toHaveFocus()
+  })
 })

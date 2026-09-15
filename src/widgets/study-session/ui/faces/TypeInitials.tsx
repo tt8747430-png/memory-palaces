@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Check } from 'lucide-react'
@@ -6,25 +6,42 @@ import { cn, isReferenceMarker } from '@/shared/lib'
 import type { InitialsRecall } from '../../model/use-initials-recall'
 import { stopPress } from './types'
 
+/**
+ * A solved recall has nothing left to type, so the field it is typed into stops being one: the
+ * input goes read-only, the box stops asking for focus, and the keyboard is dismissed on the
+ * solving keystroke.
+ *
+ * That last part is the whole of the scroll fix. The input is `sr-only` — a 1px proxy sitting at
+ * the *top* of a box that, once solved, holds the entire answer — so every time a keyboard opened
+ * over a finished card, `useKeyboardReveal` lifted that one pixel clear of it and took the card's
+ * prompt off the top of the scroll body with it. Nothing should have been revealed at all.
+ * `isTextField` no longer counts a read-only field, so the reveal and the height reserve both stay
+ * out of it (CODE_STYLE §11).
+ */
 export function TypeInitials({ recall }: { recall: InitialsRecall }) {
   const { t } = useTranslation()
   const inputRef = useRef<HTMLInputElement>(null)
   const { tokens, accepted, wrong, complete, handleInput } = recall
 
+  useEffect(() => {
+    if (complete) inputRef.current?.blur()
+  }, [complete])
+
   return (
     <div
       data-card-control
       onPointerDown={stopPress}
-      onClick={() => inputRef.current?.focus()}
+      onClick={complete ? undefined : () => inputRef.current?.focus()}
       className={cn(
-        'relative flex min-h-23 w-full cursor-text flex-col rounded-card px-4 py-3 transition-colors focus-within:ring-2 focus-within:ring-primary/30',
-        complete ? 'bg-(--success-surface)' : 'bg-info-surface',
+        'relative flex min-h-23 w-full flex-col rounded-card px-4 py-3 transition-colors focus-within:ring-2 focus-within:ring-primary/30',
+        complete ? 'bg-(--success-surface)' : 'cursor-text bg-info-surface',
       )}
     >
       <input
         ref={inputRef}
         type="text"
         value=""
+        readOnly={complete}
         onChange={(event) => handleInput(event.target.value)}
         aria-label={t('study.initialsPlaceholder')}
         autoCapitalize="none"

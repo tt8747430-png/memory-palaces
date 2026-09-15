@@ -39,9 +39,21 @@ export function revealOffset(view: RevealBand, field: RevealBand, gap = REVEAL_G
  */
 export const REVEAL_SCROLL_ATTR = 'data-reveal-scroll'
 
+/**
+ * A field the platform will raise a keyboard for. Read-only and disabled ones are not: they still
+ * take focus and still answer to `HTMLInputElement`, but no keyboard comes — so reserving its
+ * remembered height and revealing the field scrolls the page clear of a keyboard that never
+ * arrives, and the reserve then stands until blur.
+ *
+ * The rule is general on purpose: it holds for every read-only field in the app, not the study
+ * faces that prompted it. Any field the platform will not type into is a field the reveal has no
+ * business scrolling to.
+ */
 export function isTextField(node: EventTarget | null): node is HTMLElement {
-  if (node instanceof HTMLTextAreaElement) return true
-  if (node instanceof HTMLInputElement) return !NON_TEXT_INPUT.has(node.type)
+  if (node instanceof HTMLTextAreaElement) return !node.readOnly && !node.disabled
+  if (node instanceof HTMLInputElement) {
+    return !node.readOnly && !node.disabled && !NON_TEXT_INPUT.has(node.type)
+  }
   return node instanceof HTMLElement && node.isContentEditable
 }
 

@@ -135,6 +135,69 @@ describe('useKeyboardReveal', () => {
     expect(inset()).toBe('0px')
   })
 
+  it('reserves nothing and scrolls nothing for a read-only field', () => {
+    localStorage.setItem(STORAGE_KEY, '336')
+    stubViewport({ height: 802, offsetTop: 0 }, 802)
+    stop = startKeyboardViewport()
+
+    const scroll = document.createElement('div')
+    const field = document.createElement('input')
+    field.readOnly = true
+    scroll.appendChild(field)
+    document.body.appendChild(scroll)
+
+    Object.defineProperty(scroll, 'scrollTop', { value: 0, writable: true })
+    stubRect(scroll, 64, 800)
+    stubRect(field, 460, 500)
+
+    const { result } = renderHook(() => useKeyboardReveal())
+    act(() => result.current(scroll))
+    act(() => field.focus())
+
+    expect(inset()).toBe('0px')
+    expect(scroll.scrollTop).toBe(0)
+  })
+
+  it('reserves nothing for a read-only textarea either', () => {
+    localStorage.setItem(STORAGE_KEY, '336')
+    stubViewport({ height: 802, offsetTop: 0 }, 802)
+    stop = startKeyboardViewport()
+
+    const scroll = document.createElement('div')
+    const field = document.createElement('textarea')
+    field.readOnly = true
+    scroll.appendChild(field)
+    document.body.appendChild(scroll)
+
+    const { result } = renderHook(() => useKeyboardReveal())
+    act(() => result.current(scroll))
+    act(() => field.focus())
+
+    expect(inset()).toBe('0px')
+  })
+
+  it('still reveals a field that is merely required or invalid', () => {
+    localStorage.setItem(STORAGE_KEY, '300')
+    stubViewport({ height: 800, offsetTop: 0 }, 800)
+    stop = startKeyboardViewport()
+
+    const scroll = document.createElement('div')
+    const field = document.createElement('input')
+    field.required = true
+    scroll.appendChild(field)
+    document.body.appendChild(scroll)
+
+    Object.defineProperty(scroll, 'scrollTop', { value: 0, writable: true })
+    stubRect(scroll, 64, 800)
+    stubRect(field, 460, 500)
+
+    const { result } = renderHook(() => useKeyboardReveal())
+    act(() => result.current(scroll))
+    act(() => field.focus())
+
+    expect(scroll.scrollTop).toBe(24)
+  })
+
   it('lifts a field that the keyboard would cover, before the keyboard reports itself', () => {
     localStorage.setItem(STORAGE_KEY, '300')
     stubViewport({ height: 800, offsetTop: 0 }, 800)

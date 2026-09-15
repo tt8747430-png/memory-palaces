@@ -83,6 +83,17 @@ export function TypeWords({ value, onChange, slots, solved, active }: TypeWordsP
   )
 }
 
+/**
+ * The aid, lifted clear of the keyboard. It is sized by what has been typed rather than held at one
+ * height: a single word should not open a half-screen panel, and a long answer should not be cut to
+ * the same box. `min-h` keeps the small case from reading as a stray pill, `max-h` stops the panel
+ * from climbing over the card, and only between the two does the scrollbar appear — pinned to the
+ * end, because the word being typed is the last one.
+ *
+ * It keeps the platform's own scrollbar — this is a popup list, not a screen's scrollport, and
+ * CODE_STYLE §11 puts `SCREEN_SCROLL`'s `scrollbar-hide` on the latter only. Between `min-h` and
+ * `max-h` the bar is the only thing that says there is more above.
+ */
 function FloatingFeedback({
   height,
   solved,
@@ -116,7 +127,7 @@ function FloatingFeedback({
         transition={{ type: 'spring', stiffness: 460, damping: 34 }}
         aria-label={label}
         className={cn(
-          'pointer-events-auto mb-2 h-44 w-full overflow-y-auto overscroll-contain scrollbar-hide rounded-card px-4 py-3 shadow-elevated',
+          'pointer-events-auto mb-2 max-h-44 min-h-14 w-full overflow-y-auto overscroll-contain rounded-card px-4 py-3 shadow-elevated',
           FEEDBACK_TEXT,
           solved ? 'bg-(--success-surface)' : 'bg-info-surface',
         )}
