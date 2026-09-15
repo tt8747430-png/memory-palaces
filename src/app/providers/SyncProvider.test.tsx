@@ -98,7 +98,7 @@ async function stores({ autosync = false, pending = 0, pendingReady = true }: Op
   const syncStateRepo = new InMemoryRepository<SyncState>([{ ...DEFAULT_SYNC_STATE, autosync }])
   const pendingRepo = new InMemoryRepository<PendingChange>(
     Array.from({ length: pending }, (_, i) =>
-      makePendingChange({ collection: 'decks', entityId: `d${i}`, op: 'save', at: 't' }),
+      makePendingChange({ contentCollection: 'decks', entityId: `d${i}`, op: 'save', at: 't' }),
     ),
   )
   const pendingStore = createPendingChangeStore(pendingRepo)
@@ -288,7 +288,9 @@ describe('SyncProvider', () => {
     await stores.deck.getState().save({ id: 'd1' } as never)
     await stores.pending
       .getState()
-      .save(makePendingChange({ collection: 'decks', entityId: 'd1', op: 'remove', at: 't' }))
+      .save(
+        makePendingChange({ contentCollection: 'decks', entityId: 'd1', op: 'remove', at: 't' }),
+      )
 
     await expect(runner()!.run()).resolves.toMatchObject({ kind: 'needs-review' })
 
@@ -315,7 +317,9 @@ describe('SyncProvider', () => {
     await waitFor(() => expect(runner()).not.toBeNull())
     await stores.pending
       .getState()
-      .save(makePendingChange({ collection: 'decks', entityId: 'd1', op: 'remove', at: 't' }))
+      .save(
+        makePendingChange({ contentCollection: 'decks', entityId: 'd1', op: 'remove', at: 't' }),
+      )
 
     await runner()!.openReview()
     await waitFor(() => expect(runner()!.review?.rows).toEqual({ state: 'failed' }))
@@ -334,7 +338,7 @@ describe('SyncProvider', () => {
       const edit = (at: string) =>
         stores.pending
           .getState()
-          .save(makePendingChange({ collection: 'cards', entityId: 'c1', op: 'save', at }))
+          .save(makePendingChange({ contentCollection: 'cards', entityId: 'c1', op: 'save', at }))
 
       await edit('t1')
       await vi.advanceTimersByTimeAsync(3000)

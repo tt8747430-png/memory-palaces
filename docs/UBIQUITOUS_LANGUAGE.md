@@ -111,18 +111,19 @@ Every Deck follows exactly one: its Main deck's. A Subdeck never holds the algor
 
 ## Sync
 
-| Term                       | Means                                                                                       | Avoid                  |
-| -------------------------- | ------------------------------------------------------------------------------------------- | ---------------------- |
-| **Sync**                   | One peek → classify → cycle → confirm pass (`syncNow`). Never a study pass, never a login   | sync session, refresh  |
-| **Synchronise**            | The user-facing verb — the banner button, and every sentence in UI copy                     | sync (as a verb in UI) |
-| **Autosync**               | The **device-local** setting that runs a Sync without being asked. Off by default           | auto-sync, background  |
-| **Pending change**         | One content write (deck, folder, card, question) a Sync has not confirmed. `pendingChanges` | dirty, unsaved         |
-| **Checkpoint**             | Where this device's last Sync got to in a table — `(updated_at, id)`. Ours, not RxDB's      | cursor, bookmark       |
-| **Divergence**             | The cloud and the device both changed since this device's last Sync                         | conflict               |
-| **Destructive divergence** | A divergence no merge can settle — deleted here, changed elsewhere. The only question asked | conflict               |
-| **Review** _(of a Sync)_   | The dialog that answers a Destructive divergence: **Delete** (default) or **Keep**          | conflict dialog, merge |
-| **Restoring**              | The forced Sync after a cancelled account deletion, shown on the banner                     | recovery, reload       |
-| **Purge**                  | The irreversible server-side destruction of an account, 30 days after the request           | delete, wipe           |
+| Term                       | Means                                                                                                                                | Avoid                  |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------- |
+| **Sync**                   | One peek → classify → cycle → confirm pass (`syncNow`). Never a study pass, never a login                                            | sync session, refresh  |
+| **Synchronise**            | The user-facing verb — the banner button, and every sentence in UI copy                                                              | sync (as a verb in UI) |
+| **Autosync**               | The **device-local** setting that runs a Sync without being asked. Off by default                                                    | auto-sync, background  |
+| **Pending change**         | One content write (deck, folder, card, question) a Sync has not confirmed. `pendingChanges`                                          | dirty, unsaved         |
+| **Content collection**     | Which of the four a Pending change belongs to. Stored as `contentCollection` — never `collection`, which RxDB owns on every document | table, kind            |
+| **Checkpoint**             | Where this device's last Sync got to in a table — `(updated_at, id)`. Ours, not RxDB's                                               | cursor, bookmark       |
+| **Divergence**             | The cloud and the device both changed since this device's last Sync                                                                  | conflict               |
+| **Destructive divergence** | A divergence no merge can settle — deleted here, changed elsewhere. The only question asked                                          | conflict               |
+| **Review** _(of a Sync)_   | The dialog that answers a Destructive divergence: **Delete** (default) or **Keep**                                                   | conflict dialog, merge |
+| **Restoring**              | The forced Sync after a cancelled account deletion, shown on the banner                                                              | recovery, reload       |
+| **Purge**                  | The irreversible server-side destruction of an account, 30 days after the request                                                    | delete, wipe           |
 
 ## Relationships
 

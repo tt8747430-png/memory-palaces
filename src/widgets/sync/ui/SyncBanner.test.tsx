@@ -77,7 +77,7 @@ async function setup(
   const pendingRepo = new InMemoryRepository<PendingChange>()
   for (let i = 0; i < pending; i++) {
     await pendingRepo.save(
-      makePendingChange({ collection: 'decks', entityId: `d${i}`, op: 'save', at: AT }),
+      makePendingChange({ contentCollection: 'decks', entityId: `d${i}`, op: 'save', at: AT }),
     )
   }
   const syncStateRepo = new InMemoryRepository<SyncState>()

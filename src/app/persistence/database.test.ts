@@ -1,8 +1,11 @@
 import 'fake-indexeddb/auto'
+import { createRxDatabase, type RxJsonSchema } from 'rxdb'
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie'
 import { describe, expect, it } from 'vitest'
 import { RxdbRepository } from '@/shared/api/rxdb'
+import { STORAGE_PREFIX } from '@/shared/config/constants'
 import { makeProfile, type Profile } from '@/entities/profile'
+import type { PendingChange } from '@/entities/pending-change'
 import {
   cardMigrations,
   createAppDatabase,
@@ -10,7 +13,13 @@ import {
   preferencesMigrations,
   profileMigrations,
 } from './database'
-import { cardSchema, deckSchema, preferencesSchema, profileSchema } from './schemas'
+import {
+  cardSchema,
+  deckSchema,
+  pendingChangeSchema,
+  preferencesSchema,
+  profileSchema,
+} from './schemas'
 
 describe('createAppDatabase', () => {
   it('registers a profiles collection that round-trips a Profile through RxDB', async () => {
@@ -135,5 +144,67 @@ describe('schema migrations', () => {
     expect(cardSchema.version).toBe(1)
     expect(preferencesSchema.version).toBe(2)
     expect(profileSchema.version).toBe(2)
+    expect(pendingChangeSchema.version).toBe(1)
+  })
+
+  /** The shape of a row written by the build whose field name collided with RxDB's own. */
+  interface PendingChangeV0 {
+    id: string
+    collection: PendingChange['contentCollection']
+    entityId: string
+    op: PendingChange['op']
+    at: string
+  }
+
+  const v0PendingChangeSchema: RxJsonSchema<PendingChangeV0> = {
+    version: 0,
+    primaryKey: 'id',
+    type: 'object',
+    properties: {
+      id: { type: 'string', maxLength: 140 },
+      collection: { type: 'string', enum: ['folders', 'decks', 'cards', 'questions'] },
+      entityId: { type: 'string', maxLength: 100 },
+      op: { type: 'string', enum: ['save', 'remove'] },
+      at: { type: 'string' },
+    },
+    required: ['id', 'collection', 'entityId', 'op', 'at'],
+    indexes: ['collection'],
+  }
+
+  it('carries a pending change written under the old field name across the rename', async () => {
+    const storage = getRxStorageDexie()
+    const row = {
+      id: 'cards:c1',
+      collection: 'cards',
+      entityId: 'c1',
+      op: 'save',
+      at: '2026-09-15T16:07:00.000Z',
+    }
+
+    // The broken build: the write reaches storage and *then* the document throws, which is how a
+    // device ends up holding rows it can never read back.
+    const broken = await createRxDatabase({ name: STORAGE_PREFIX, storage })
+    const { pendingChanges } = await broken.addCollections({
+      pendingChanges: { schema: v0PendingChangeSchema },
+    })
+    await expect(pendingChanges.upsert(row)).rejects.toThrow(/collection/)
+    expect(await pendingChanges.storageInstance.findDocumentsById([row.id], true)).toHaveLength(1)
+    await broken.close()
+
+    // This build, opening the same database.
+    const collections = await createAppDatabase(storage)
+    const migrated = await collections.pendingChanges.find().exec()
+
+    expect(migrated.map((document) => document.toMutableJSON() as PendingChange)).toEqual([
+      {
+        id: 'cards:c1',
+        contentCollection: 'cards',
+        entityId: 'c1',
+        op: 'save',
+        at: '2026-09-15T16:07:00.000Z',
+      },
+    ])
+
+    await collections.pendingChanges.database.remove()
   })
 })

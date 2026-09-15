@@ -407,23 +407,25 @@ export const historySchema: RxJsonSchema<HistoryEntry> = {
  * tombstone needed"), and it keeps the log from competing on the same clock as the documents it
  * describes. `at` is when the write happened, for the user-facing ordering.
  *
- * Version 0 with no migration: the collection is new, so an existing device simply starts with an
- * empty log. That reads as "nothing pending" — wrong only until the first Sync, and wrong in the
- * direction that asks the user fewer questions rather than more.
+ * `contentCollection` rather than the obvious `collection`: RxDB builds a document's prototype from
+ * its schema and then assigns `this.collection` on the instance, so a field by that name shadows
+ * the assignment with a getter and every document of this collection throws on construction. The
+ * write still reaches storage and the read side dies afterwards, which is a log that poisons itself
+ * on first use — v1 renames the field. See `schemas.test.ts`, which holds every schema to the rule.
  */
 export const pendingChangeSchema: RxJsonSchema<PendingChange> = {
-  version: 0,
+  version: 1,
   primaryKey: 'id',
   type: 'object',
   properties: {
     id: { type: 'string', maxLength: 140 },
-    collection: { type: 'string', enum: [...CONTENT_COLLECTIONS] },
+    contentCollection: { type: 'string', enum: [...CONTENT_COLLECTIONS] },
     entityId: { type: 'string', maxLength: 100 },
     op: { type: 'string', enum: ['save', 'remove'] },
     at: { type: 'string' },
   },
-  required: ['id', 'collection', 'entityId', 'op', 'at'],
-  indexes: ['collection'],
+  required: ['id', 'contentCollection', 'entityId', 'op', 'at'],
+  indexes: ['contentCollection'],
 }
 
 /**

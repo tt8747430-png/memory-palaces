@@ -15,9 +15,14 @@ export type PendingOp = 'save' | 'remove'
  * the replication cannot: how many changes are pending, and which of them are destructive.
  */
 export interface PendingChange {
-  /** `contentKey(collection, entityId)` — which is what makes the collapse an upsert. */
+  /** `contentKey(contentCollection, entityId)` — which is what makes the collapse an upsert. */
   id: string
-  collection: ContentCollection
+  /**
+   * Which content collection the document lives in. Not `collection`: RxDB assigns `collection` to
+   * every document instance, and a schema field by that name shadows it with a getter that makes
+   * the assignment throw. See `pendingChangeSchema`.
+   */
+  contentCollection: ContentCollection
   entityId: string
   op: PendingOp
   /** When the write happened. Not `updatedAt`: this collection is device-local and never replicates. */
@@ -25,7 +30,7 @@ export interface PendingChange {
 }
 
 export interface MakePendingChangeInput {
-  collection: ContentCollection
+  contentCollection: ContentCollection
   entityId: string
   op: PendingOp
   at: string
@@ -35,8 +40,8 @@ export function makePendingChange(input: MakePendingChangeInput): PendingChange 
   if (!input.entityId) throw new Error('A pending change belongs to a document')
   if (!input.at) throw new Error('A pending change happened at a time')
   return {
-    id: contentKey(input.collection, input.entityId),
-    collection: input.collection,
+    id: contentKey(input.contentCollection, input.entityId),
+    contentCollection: input.contentCollection,
     entityId: input.entityId,
     op: input.op,
     at: input.at,

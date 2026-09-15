@@ -237,8 +237,10 @@ Both follow the shape CLAUDE.md fixes for entities — `model/types.ts`, `model/
 
 ```ts
 type PendingChange = {
-  id: string // `${collection}:${entityId}`, built by contentKey (shared/config/sync-tables)
-  collection: ContentCollection // 'decks' | 'folders' | 'cards' | 'questions'
+  id: string // `${contentCollection}:${entityId}`, built by contentKey (shared/config/sync-tables)
+  // Not `collection`: RxDB assigns that onto every document instance, and a schema field by the
+  // same name shadows the assignment with a getter, so the document throws on construction.
+  contentCollection: ContentCollection // 'decks' | 'folders' | 'cards' | 'questions'
   entityId: string
   op: 'save' | 'remove'
   at: string
@@ -286,12 +288,14 @@ questions: _how many changes are pending_ and _which of them are destructive_.
 
 ### Schema
 
-`pendingChangeSchema` and `syncStateSchema`, both version 0, in `src/app/persistence/schemas.ts`,
-registered in `src/app/persistence/database.ts` with RxDB's default conflict handler like
-`notifications` and `history`. No migration: both collections are new, and an existing device starts
-with an empty log and null checkpoints. That reads as "nothing pending, cloud position unknown",
-which the first Sync resolves by peeking from the epoch — wrong only until that Sync, and wrong in
-the safe direction.
+`pendingChangeSchema` (version 1) and `syncStateSchema` (version 0), in
+`src/app/persistence/schemas.ts`, registered in `src/app/persistence/database.ts` with RxDB's
+default conflict handler like `notifications` and `history`. `syncState` needs no migration: the
+collection is new, and an existing device starts with null checkpoints. `pendingChanges` v1 renames
+`collection` to `contentCollection` and migrates the rows, because a device that ran v0 holds
+entries it could never read back. A device that never ran v0 simply starts with an empty log and
+null checkpoints. That reads as "nothing pending, cloud position unknown", which the first Sync
+resolves by peeking from the epoch — wrong only until that Sync, and wrong in the safe direction.
 
 ### Peeking without RxDB
 

@@ -3,8 +3,8 @@ import { makePendingChange } from './types'
 import { pendingByCollection, selectLatestPendingAt, selectPendingCount } from './selectors'
 import type { PendingChangeState } from './store'
 
-const change = (collection: 'decks' | 'cards', entityId: string, at: string) =>
-  makePendingChange({ collection, entityId, op: 'save', at })
+const change = (contentCollection: 'decks' | 'cards', entityId: string, at: string) =>
+  makePendingChange({ contentCollection, entityId, op: 'save', at })
 
 const holding = (pendingChanges: PendingChangeState['pendingChanges']): PendingChangeState => ({
   pendingChanges,

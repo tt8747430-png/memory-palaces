@@ -30,6 +30,6 @@ export function pendingByCollection(
   const counts = Object.fromEntries(
     CONTENT_COLLECTIONS.map((collection) => [collection, 0]),
   ) as Record<ContentCollection, number>
-  for (const change of changes) counts[change.collection] += 1
+  for (const change of changes) counts[change.contentCollection] += 1
   return counts
 }

@@ -17,7 +17,9 @@ export function createPendingChangePort(
   now: () => string,
 ): PendingChangePort {
   const record = async (entityId: string, op: 'save' | 'remove') => {
-    await store.getState().save(makePendingChange({ collection, entityId, op, at: now() }))
+    await store
+      .getState()
+      .save(makePendingChange({ contentCollection: collection, entityId, op, at: now() }))
   }
   return {
     save: (entityId) => record(entityId, 'save'),
