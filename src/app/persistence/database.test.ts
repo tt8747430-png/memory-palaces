@@ -1,12 +1,14 @@
 import 'fake-indexeddb/auto'
-import { createRxDatabase, type RxJsonSchema } from 'rxdb'
+import { createRxDatabase, type RxCollection, type RxJsonSchema } from 'rxdb'
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie'
 import { describe, expect, it } from 'vitest'
 import { RxdbRepository } from '@/shared/api/rxdb'
 import { STORAGE_PREFIX } from '@/shared/config/constants'
 import { makeProfile, type Profile } from '@/entities/profile'
 import type { PendingChange } from '@/entities/pending-change'
+import { DEFAULT_SYNC_STATE, SYNC_STATE_ID } from '@/entities/sync-state'
 import {
+  type AppCollections,
   cardMigrations,
   createAppDatabase,
   deckMigrations,
@@ -19,7 +21,29 @@ import {
   pendingChangeSchema,
   preferencesSchema,
   profileSchema,
+  syncStateSchema,
 } from './schemas'
+
+const AT = '2026-09-15T16:07:00.000Z'
+
+/**
+ * A device that stored documents under an older schema, reopened by this build. `seed` writes them
+ * the way the old build did — including failing the way it failed, where that is the point.
+ */
+async function reopenedAfterSeeding(
+  name: string,
+  schema: RxJsonSchema<Record<string, unknown>>,
+  seed: (collection: RxCollection) => Promise<void>,
+): Promise<AppCollections> {
+  const storage = getRxStorageDexie()
+  const before = await createRxDatabase({ name: STORAGE_PREFIX, storage })
+  const created = await before.addCollections({ [name]: { schema } })
+  const collection = created[name]
+  if (!collection) throw new Error(`${name} did not open`)
+  await seed(collection)
+  await before.close()
+  return createAppDatabase(storage)
+}
 
 describe('createAppDatabase', () => {
   it('registers a profiles collection that round-trips a Profile through RxDB', async () => {
@@ -145,6 +169,24 @@ describe('schema migrations', () => {
     expect(preferencesSchema.version).toBe(2)
     expect(profileSchema.version).toBe(2)
     expect(pendingChangeSchema.version).toBe(1)
+    expect(syncStateSchema.version).toBe(1)
+  })
+
+  it('turns Autosync on for a device that stored it off', async () => {
+    const collections = await reopenedAfterSeeding(
+      'syncState',
+      { ...syncStateSchema, version: 0 } as unknown as RxJsonSchema<Record<string, unknown>>,
+      async (syncState) => {
+        await syncState.upsert({ ...DEFAULT_SYNC_STATE, autosync: false, lastSyncedAt: AT })
+      },
+    )
+    const stored = await collections.syncState.findOne(SYNC_STATE_ID).exec()
+
+    expect(stored?.get('autosync')).toBe(true)
+    // Everything else the device had is untouched.
+    expect(stored?.get('lastSyncedAt')).toBe(AT)
+
+    await collections.syncState.database.remove()
   })
 
   /** The shape of a row written by the build whose field name collided with RxDB's own. */
@@ -172,37 +214,24 @@ describe('schema migrations', () => {
   }
 
   it('carries a pending change written under the old field name across the rename', async () => {
-    const storage = getRxStorageDexie()
-    const row = {
-      id: 'cards:c1',
-      collection: 'cards',
-      entityId: 'c1',
-      op: 'save',
-      at: '2026-09-15T16:07:00.000Z',
-    }
+    const row = { id: 'cards:c1', collection: 'cards', entityId: 'c1', op: 'save', at: AT }
 
-    // The broken build: the write reaches storage and *then* the document throws, which is how a
-    // device ends up holding rows it can never read back.
-    const broken = await createRxDatabase({ name: STORAGE_PREFIX, storage })
-    const { pendingChanges } = await broken.addCollections({
-      pendingChanges: { schema: v0PendingChangeSchema },
-    })
-    await expect(pendingChanges.upsert(row)).rejects.toThrow(/collection/)
-    expect(await pendingChanges.storageInstance.findDocumentsById([row.id], true)).toHaveLength(1)
-    await broken.close()
-
-    // This build, opening the same database.
-    const collections = await createAppDatabase(storage)
+    const collections = await reopenedAfterSeeding(
+      'pendingChanges',
+      v0PendingChangeSchema as unknown as RxJsonSchema<Record<string, unknown>>,
+      async (pendingChanges) => {
+        // The broken build: the write reaches storage and *then* the document throws, which is how
+        // a device ends up holding rows it can never read back.
+        await expect(pendingChanges.upsert(row)).rejects.toThrow(/collection/)
+        expect(await pendingChanges.storageInstance.findDocumentsById([row.id], true)).toHaveLength(
+          1,
+        )
+      },
+    )
     const migrated = await collections.pendingChanges.find().exec()
 
     expect(migrated.map((document) => document.toMutableJSON() as PendingChange)).toEqual([
-      {
-        id: 'cards:c1',
-        contentCollection: 'cards',
-        entityId: 'c1',
-        op: 'save',
-        at: '2026-09-15T16:07:00.000Z',
-      },
+      { id: 'cards:c1', contentCollection: 'cards', entityId: 'c1', op: 'save', at: AT },
     ])
 
     await collections.pendingChanges.database.remove()

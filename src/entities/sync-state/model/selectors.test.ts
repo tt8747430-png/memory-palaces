@@ -28,7 +28,7 @@ const empty: SyncStateState = { ...held, syncState: null }
 describe('sync-state selectors', () => {
   it('reads the defaults until the first write — a new device has synced nothing', () => {
     expect(selectSyncState(empty)).toBe(DEFAULT_SYNC_STATE)
-    expect(selectAutosync(empty)).toBe(false)
+    expect(selectAutosync(empty)).toBe(true)
     expect(selectCloudChanged(empty)).toBe(false)
     expect(selectLastSyncedAt(empty)).toBeNull()
   })

@@ -26,7 +26,11 @@ export interface SyncState {
    */
   checkpoints: Partial<Record<SyncedTable, Checkpoint | null>>
   lastSyncedAt: string | null
-  /** False on a new device. The risk is named and accepted; the banner is the mitigation. */
+  /**
+   * True on a new device: a Sync runs on reconnect, on returning to and leaving the app, and once
+   * a burst of writes settles. Still device-local, and still no replication between those moments
+   * — and a destructive divergence interrupts to ask, exactly as it does for a pressed Synchronise.
+   */
   autosync: boolean
   /** Raised by the cloud watcher when somebody else's device wrote. Lowered by a completed Sync. */
   cloudChanged: boolean
@@ -36,7 +40,7 @@ export const DEFAULT_SYNC_STATE: SyncState = {
   id: SYNC_STATE_ID,
   checkpoints: {},
   lastSyncedAt: null,
-  autosync: false,
+  autosync: true,
   cloudChanged: false,
 }
 

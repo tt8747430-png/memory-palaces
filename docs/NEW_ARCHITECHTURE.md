@@ -33,7 +33,7 @@ call the same use-cases as the UI is Phase 13 (T13.1), and is the reason one-use
   guest → account claim. Edge Functions shipped: `request-account-deletion` and `purge-account` (daily `pg_cron`). The
   Claude proxy Edge Function is still Phase 13.
 - **Manual sync (shipped) — replaces always-on replication.** Nothing leaves the device until the learner presses
-  Synchronise, or Autosync (device-local, off by default) runs one on reconnect, focus, leaving and after writes settle.
+  Synchronise, or Autosync (device-local, on by default) runs one on reconnect, focus, leaving and after writes settle.
   One Sync (`features/sync/sync-now.ts`) = peek ids since this device's checkpoint → classify against the pending-change
   log → one `live: false` cycle (`SyncManager.runCycle`) → confirm. Only a **destructive divergence** — deleted here,
   changed elsewhere — asks the learner anything. A Realtime watcher only lights the banner (`widgets/sync`). The risk is

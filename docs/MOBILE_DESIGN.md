@@ -126,7 +126,7 @@ All four on every async surface — a missing state reads as a crash.
 - **RxDB is the local source of truth** — reads never touch the network. **Never block UI on a round-trip.**
 - **Workbox precache** makes the shell available offline after first load.
 - **Sync is manual, and the banner is its network-status UI.** `widgets/sync` `SyncBanner` states what is waiting, and
-  says so offline (`useOnline`). Nothing leaves the device until Synchronise is pressed or Autosync — device-local, off
+  says so offline (`useOnline`). Nothing leaves the device until Synchronise is pressed or Autosync — device-local, on
   by default — asks.
 - **Gate only what the server must answer now** (ADR 0004): sign-in, sign-up, password reset and change, requesting
   account deletion. `OfflineNotice` + a disabled control, before the press. Every content write stays ungated.

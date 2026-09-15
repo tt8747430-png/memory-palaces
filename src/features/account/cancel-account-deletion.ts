@@ -18,7 +18,7 @@ export interface CancelAccountDeletionDeps {
  * nobody can see.
  *
  * **The restore is not optional and is not left to the user to discover.** Local was wiped at
- * request time, Autosync is off by default, and the banner's "nothing pending, cloud unchanged"
+ * request time, Autosync may be off on this device, and the banner's "nothing pending, cloud unchanged"
  * state is hidden — so without a forced Sync the user cancels and lands in an empty app with
  * nothing on screen telling them their decks are one press away.
  */

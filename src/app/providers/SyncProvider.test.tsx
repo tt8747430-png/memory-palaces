@@ -94,7 +94,11 @@ function Probe({ onRunner }: { onRunner: (runner: SyncRunner | null) => void }) 
   return null
 }
 
-async function stores({ autosync = false, pending = 0, pendingReady = true }: Options) {
+async function stores({
+  autosync = DEFAULT_SYNC_STATE.autosync,
+  pending = 0,
+  pendingReady = true,
+}: Options) {
   const syncStateRepo = new InMemoryRepository<SyncState>([{ ...DEFAULT_SYNC_STATE, autosync }])
   const pendingRepo = new InMemoryRepository<PendingChange>(
     Array.from({ length: pending }, (_, i) =>
@@ -196,10 +200,10 @@ describe('SyncProvider', () => {
     await expect(mount({ syncManager: null, cloudSync: null, auth: account })).resolves.toBeTruthy()
   })
 
-  describe('with Autosync off — the default', () => {
+  describe('with Autosync turned off', () => {
     it('asks the cloud nothing on reconnect, on focus, on backgrounding or on pagehide', async () => {
       const cloudSync = cloud()
-      await mount({ cloudSync, auth: account })
+      await mount({ cloudSync, auth: account, autosync: false })
 
       window.dispatchEvent(new Event('online'))
       document.dispatchEvent(new Event('visibilitychange'))
@@ -213,6 +217,16 @@ describe('SyncProvider', () => {
   })
 
   describe('with Autosync on', () => {
+    it('runs on the default a new device is given, with nothing turned on first', async () => {
+      const cloudSync = cloud()
+      const { runner } = await mount({ cloudSync, auth: account })
+      await waitFor(() => expect(runner()).not.toBeNull())
+
+      window.dispatchEvent(new Event('online'))
+
+      await waitFor(() => expect(cloudSync.runCycle).toHaveBeenCalled())
+    })
+
     it.each([
       ['a reconnect', () => window.dispatchEvent(new Event('online'))],
       ['returning to the app', () => document.dispatchEvent(new Event('visibilitychange'))],

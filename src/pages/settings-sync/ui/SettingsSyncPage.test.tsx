@@ -149,11 +149,14 @@ describe('SettingsSyncPage', () => {
     expect(toast).toHaveBeenCalledWith(expect.stringMatching(/nothing needs your answer/i))
   })
 
-  it('turns Autosync on for this device', async () => {
+  // On by default now, so the switch's job on a new device is to turn it *off* — the setting is
+  // device-local either way, and nothing about it reaches the account.
+  it('turns Autosync off for this device', async () => {
     const { syncStateStore } = await setup()
 
+    expect(await screen.findByRole('switch', { name: /autosync/i })).toBeChecked()
     await userEvent.click(await screen.findByRole('switch', { name: /autosync/i }))
 
-    await waitFor(() => expect(selectSyncState(syncStateStore.getState()).autosync).toBe(true))
+    await waitFor(() => expect(selectSyncState(syncStateStore.getState()).autosync).toBe(false))
   })
 })

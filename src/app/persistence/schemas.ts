@@ -435,9 +435,12 @@ export const pendingChangeSchema: RxJsonSchema<PendingChange> = {
  * `checkpoints` is a map keyed by table name with no required keys, so adding a table to
  * `SYNCED_TABLES` is not a schema change. A missing key reads as "cloud position unknown", which
  * the next peek resolves by starting from the epoch.
+ *
+ * v1 carries the change of heart about Autosync onto devices that already hold a document: the
+ * default moved from off to on, and a default only reaches a device that has never stored one.
  */
 export const syncStateSchema: RxJsonSchema<SyncState> = {
-  version: 0,
+  version: 1,
   primaryKey: 'id',
   type: 'object',
   properties: {

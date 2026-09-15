@@ -55,7 +55,7 @@ const SYNCED_MS = 2500
  * data does when the identity changes.
  *
  * It does **not** replicate continuously. Nothing leaves the device until Synchronise is pressed,
- * or until Autosync — off by default, and a property of this device — asks. Classification lives in
+ * or until Autosync — on by default, and a property of this device — asks. Classification lives in
  * `syncNow`, the replication lifecycle in `SyncManager`, Realtime in `CloudWatcher`; this provider
  * absorbs none of them.
  */

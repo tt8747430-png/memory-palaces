@@ -58,9 +58,14 @@ Settled during design; the implementation plans do not reopen them.
   deleted here and edited there, or a deck or folder deleted here whose descendants were edited
   there. A deletion pushed to a cloud that has not changed is never a question, however large.
 - **Sync is manual.** Nothing leaves the device until the user asks, or until Autosync is on.
-- **Autosync defaults to off, and is a property of the device, not the account.** The risk is named
-  and accepted: a device lost or reinstalled before the user presses Synchronise loses everything
-  since the last press. The banner is the only thing standing in that gap, so it is permanent.
+- **Autosync defaults to on, and is a property of the device, not the account.** It was specified
+  off, and the reason it is not is the risk that reasoning named: a device lost or reinstalled
+  before the user presses Synchronise loses everything since the last press. Defaulting on closes
+  that gap by default and leaves the decision where it was — one device-local toggle, reaching no
+  other device and no part of the account. Nothing else about manual Sync changes: there is still
+  no continuous replication, a cycle still runs only at the moments `useAutosync` names, and a
+  destructive divergence still interrupts to ask. The banner is still permanent, because a device
+  with Autosync off has the same gap as before.
 - **Account deletion gets a 30-day grace period**, cancellable by signing in.
 - **Buckets go private and image bytes are cached ahead of the read**, so privacy costs neither
   offline rendering nor the "reads never touch the network" rule.
@@ -259,7 +264,7 @@ type SyncState = {
   id: 'sync-state'
   checkpoints: Partial<Record<SyncedTable, Checkpoint | null>> // no required keys: a new table needs no migration
   lastSyncedAt: string | null
-  autosync: boolean // false for a new device
+  autosync: boolean // true for a new device; v1 migrates a stored false, see database.ts
   cloudChanged: boolean
 }
 ```
@@ -288,14 +293,15 @@ questions: _how many changes are pending_ and _which of them are destructive_.
 
 ### Schema
 
-`pendingChangeSchema` (version 1) and `syncStateSchema` (version 0), in
-`src/app/persistence/schemas.ts`, registered in `src/app/persistence/database.ts` with RxDB's
-default conflict handler like `notifications` and `history`. `syncState` needs no migration: the
-collection is new, and an existing device starts with null checkpoints. `pendingChanges` v1 renames
-`collection` to `contentCollection` and migrates the rows, because a device that ran v0 holds
-entries it could never read back. A device that never ran v0 simply starts with an empty log and
-null checkpoints. That reads as "nothing pending, cloud position unknown", which the first Sync
-resolves by peeking from the epoch — wrong only until that Sync, and wrong in the safe direction.
+`pendingChangeSchema` and `syncStateSchema`, both version 1, in `src/app/persistence/schemas.ts`,
+registered in `src/app/persistence/database.ts` with RxDB's default conflict handler like
+`notifications` and `history`. `pendingChanges` v1 renames `collection` to `contentCollection` and
+migrates the rows, because a device that ran v0 holds entries it could never read back.
+`syncState` v1 sets `autosync` to true, because the default moved from off to on and a default is
+only ever read by a device that has never stored a document. A device new to both simply starts
+with an empty log and null checkpoints. That reads as "nothing pending, cloud position unknown",
+which the first Sync resolves by peeking from the epoch — wrong only until that Sync, and wrong in
+the safe direction.
 
 ### Peeking without RxDB
 
@@ -711,8 +717,8 @@ Cancelling deletes the row and then **forces one Sync regardless of Autosync**, 
 its _Restoring_ state. **As built,** `cancelAccountDeletion` resolves as soon as the cancel lands and hands
 back the restore still running, and the gate opens the app at that moment — otherwise the Restoring
 banner would play behind the gate where nobody can see it. Without that, a user who cancels lands in an empty app — local was wiped at
-request time, Autosync is off by default, and the banner's "nothing pending, cloud unchanged" state
-is hidden, so nothing would tell them their data is one press away. The restore is not optional and
+request time, Autosync may be off on this device, and the banner's "nothing pending, cloud
+unchanged" state is hidden, so nothing would tell them their data is one press away. The restore is not optional and
 is not left to the user to discover.
 
 ### Testing

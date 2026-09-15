@@ -66,6 +66,28 @@ export const preferencesMigrations = {
 }
 
 /**
+ * v1 turns Autosync on. It ships as a migration rather than a default alone because a default is
+ * only ever read by a device with no document, and any device that has synced once already has
+ * one — it would keep the old answer forever while the app claimed the opposite.
+ *
+ * It overrides a stored `false`, and that includes one the user chose by turning the toggle on and
+ * back off again. There is no way to tell that apart from a `false` nobody ever touched, because
+ * the field records the setting and not whether anyone set it. Moving a default onto devices that
+ * already hold a document costs exactly this, it is paid once, and the toggle is where it always
+ * was: off after this release stays off.
+ *
+ * No read-side twin — and here one would be wrong rather than merely unnecessary. `syncState` is
+ * absent from `SYNCED_TABLES`, so no row of it ever arrives by replication; and a twin coercing
+ * `false` to `true` on the way in is precisely what would make the toggle impossible to turn off.
+ *
+ * The document's shape did not change, only the default did, so a v0 document is already a
+ * `SyncState` — this is a version bump whose whole purpose is to re-answer one field.
+ */
+export const syncStateMigrations = {
+  1: (doc: SyncState): SyncState => ({ ...doc, autosync: true }),
+}
+
+/**
  * v1 renamed `collection` to `contentCollection`. A device that ran a build with the old field has
  * rows on disk it could never read back — the rename is what makes them readable, so the entries
  * are carried over rather than dropped: they are the only record of which local writes a Sync has
@@ -190,7 +212,7 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
     notifications: { schema: notificationSchema },
     history: { schema: historySchema, conflictHandler: firstWriteWins<HistoryEntry>() },
     pendingChanges: { schema: pendingChangeSchema, migrationStrategies: pendingChangeMigrations },
-    syncState: { schema: syncStateSchema },
+    syncState: { schema: syncStateSchema, migrationStrategies: syncStateMigrations },
   })
   return {
     decks: collections.decks,
