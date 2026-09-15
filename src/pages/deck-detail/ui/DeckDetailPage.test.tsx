@@ -20,6 +20,11 @@ import {
   PreferencesStoreContext,
 } from '@/entities/preferences'
 import { createQuestionStore, type Question, QuestionStoreContext } from '@/entities/question'
+import {
+  createHistoryStore,
+  type HistoryEntry,
+  HistoryStoreContext,
+} from '@/entities/learning-history'
 import { DeckDetailPage } from './DeckDetailPage'
 
 afterEach(cleanup)
@@ -71,13 +76,17 @@ function renderPage(
               <DeckStoreContext
                 value={started(createDeckStore(new InMemoryRepository<Deck>([...main, deck])))}
               >
-                <DeckDetailPage
-                  deckId="d1"
-                  onAddCard={() => {}}
-                  onEditCard={() => {}}
-                  onPasteNotes={() => {}}
-                  onReviewImport={() => {}}
-                />
+                <HistoryStoreContext
+                  value={started(createHistoryStore(new InMemoryRepository<HistoryEntry>()))}
+                >
+                  <DeckDetailPage
+                    deckId="d1"
+                    onAddCard={() => {}}
+                    onEditCard={() => {}}
+                    onPasteNotes={() => {}}
+                    onReviewImport={() => {}}
+                  />
+                </HistoryStoreContext>
               </DeckStoreContext>
             </CardStoreContext>
           </FolderStoreContext>

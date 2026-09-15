@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@/shared/api'
 import { started } from '@/shared/test/started'
 import { type Card, createCardStore, makeCard } from '@/entities/card'
+import { createHistoryStore, type HistoryEntry } from '@/entities/learning-history'
 import { resetCardsSrs, setCardFastReview, toggleCardFrozen, toggleCardReversed } from './index'
 
 const card = (id: string, extra: Partial<Card> = {}): Card => ({
@@ -34,7 +35,8 @@ describe('card flags', () => {
 
   it('resetting progress forgets the fast-review bucket too', async () => {
     const store = storeWith(card('c1', { fastReview: 'gotIt' }))
-    await resetCardsSrs(store, ['c1'])
+    const history = started(createHistoryStore(new InMemoryRepository<HistoryEntry>()))
+    await resetCardsSrs(store, history, ['c1'])
     const reset = store.getState().cards.find((each) => each.id === 'c1')
     expect(reset?.srs).toBeUndefined()
     expect(reset?.fastReview).toBeUndefined()

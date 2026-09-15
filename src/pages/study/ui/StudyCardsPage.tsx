@@ -1,7 +1,13 @@
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Layers } from 'lucide-react'
-import { type FastOutcome, selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
+import {
+  type FastOutcome,
+  type PriorAnswer,
+  selectCards,
+  useCardStore,
+  useCardStoreApi,
+} from '@/entities/card'
 import { useDeck, useDeckStoreApi } from '@/entities/deck'
 import {
   resolveStudyMode,
@@ -11,9 +17,10 @@ import {
   usePreferencesStoreApi,
 } from '@/entities/preferences'
 import { cardsInSubtree, deckPath, findEntity, type Grade, selectIsReady } from '@/shared/lib'
-import { editCard, setCardFastReview } from '@/features/card'
+import { type HistoryEntry, useHistoryStoreApi } from '@/entities/learning-history'
+import { editCard } from '@/features/card'
 import { updateDeckSettings } from '@/features/deck'
-import { gradeCard, restoreSchedule } from '@/features/review'
+import { answerCard, type AnsweredCard, gradeCard, undoAnswer } from '@/features/review'
 import { setPreferences } from '@/features/preferences'
 import {
   type DeckStudyPrefs,
@@ -43,6 +50,7 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
   const deckStore = useDeckStoreApi()
   const cardStore = useCardStoreApi()
   const preferencesStore = usePreferencesStoreApi()
+  const historyStore = useHistoryStoreApi()
   const reward = useStudySessionReward()
 
   const { decks, deck, settings, ready: decksReady } = useDeck(scope.deckId)
@@ -67,11 +75,39 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
     }))
   }, [deck, decks, allCards, scope.deckId])
 
+  /**
+   * The history entry each unfinished answer wrote, per card, so an undo can name the row it takes
+   * off instead of asking the store for "the newest one" — a question the store answers from a
+   * mirror that lags its own writes.
+   *
+   * A stack per card, because the session's undo trail is LIFO and a trail restricted to one card
+   * is LIFO too: a card graded twice before either is undone gets its second answer taken back
+   * first. The entry arrives asynchronously, so what is stacked is the write itself.
+   */
+  const answered = useRef(new Map<string, Promise<AnsweredCard>[]>())
+  const remember = (id: string, write: Promise<AnsweredCard>) => {
+    const stack = answered.current.get(id) ?? []
+    stack.push(write)
+    answered.current.set(id, stack)
+  }
+
   const handleGrade = (id: string, grade: Grade) => {
-    void gradeCard(cardStore, id, grade)
+    remember(id, gradeCard(cardStore, historyStore, id, grade))
   }
   const handleAnswer = (id: string, outcome: FastOutcome) => {
-    void setCardFastReview(cardStore, id, outcome)
+    remember(id, answerCard(cardStore, historyStore, id, outcome))
+  }
+  const handleUndo = (id: string, prior: PriorAnswer) => {
+    const write = answered.current.get(id)?.pop()
+    void (async () => {
+      const entry: HistoryEntry | undefined = await write?.then(
+        (result) => result.entry,
+        // The write already failed; the undo still has a card to put back, and there is no entry
+        // to take off because none was ever recorded.
+        () => undefined,
+      )
+      await undoAnswer(cardStore, historyStore, id, prior, entry?.id)
+    })()
   }
   const handleToggleFlag = (id: string) => {
     const card = findEntity(cardStore.getState().cards, id)
@@ -133,7 +169,7 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
         onModeChange={changeMode}
         onGrade={handleGrade}
         onAnswer={handleAnswer}
-        onRestoreCard={(id, srs) => void restoreSchedule(cardStore, id, srs)}
+        onRestoreCard={handleUndo}
         onToggleFlag={handleToggleFlag}
         onEditCard={(id, changes) => void editCard(cardStore, id, changes)}
         onBack={back}

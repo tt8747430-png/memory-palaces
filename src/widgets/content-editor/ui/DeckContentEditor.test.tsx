@@ -16,6 +16,11 @@ import {
   type Preferences,
   PreferencesStoreContext,
 } from '@/entities/preferences'
+import {
+  createHistoryStore,
+  type HistoryEntry,
+  HistoryStoreContext,
+} from '@/entities/learning-history'
 import { DeckContentEditor } from './DeckContentEditor'
 
 afterEach(cleanup)
@@ -61,7 +66,11 @@ function renderEditor({
                 <QuestionStoreContext
                   value={started(createQuestionStore(new InMemoryRepository<Question>(questions)))}
                 >
-                  <Editor onAddCard={onAddCard} />
+                  <HistoryStoreContext
+                    value={started(createHistoryStore(new InMemoryRepository<HistoryEntry>()))}
+                  >
+                    <Editor onAddCard={onAddCard} />
+                  </HistoryStoreContext>
                 </QuestionStoreContext>
               </CardStoreContext>
             </FolderStoreContext>

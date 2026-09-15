@@ -7,6 +7,11 @@ import { started } from '@/shared/test/started'
 import { type Card, CardStoreContext, createCardStore } from '@/entities/card'
 import { createDeckStore, type Deck, DeckStoreContext, makeDeck } from '@/entities/deck'
 import { createFolderStore, type Folder, FolderStoreContext } from '@/entities/folder'
+import {
+  createHistoryStore,
+  type HistoryEntry,
+  HistoryStoreContext,
+} from '@/entities/learning-history'
 import { useDeckSettings } from './use-deck-settings'
 
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }))
@@ -24,6 +29,7 @@ function setup(deckOverrides: { archived?: boolean } = {}) {
   const deckStore = started(createDeckStore(repo))
   const cardStore = started(createCardStore(new InMemoryRepository<Card>()))
   const folderStore = started(createFolderStore(new InMemoryRepository<Folder>()))
+  const historyStore = started(createHistoryStore(new InMemoryRepository<HistoryEntry>()))
 
   const wrapper = ({ children }: { children: ReactNode }) =>
     createElement(
@@ -32,7 +38,11 @@ function setup(deckOverrides: { archived?: boolean } = {}) {
       createElement(
         CardStoreContext,
         { value: cardStore },
-        createElement(DeckStoreContext, { value: deckStore }, children),
+        createElement(
+          HistoryStoreContext,
+          { value: historyStore },
+          createElement(DeckStoreContext, { value: deckStore }, children),
+        ),
       ),
     )
 

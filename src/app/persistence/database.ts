@@ -9,6 +9,7 @@ import type { Progress } from '@/entities/progress'
 import { DEFAULT_PREFERENCES, type Preferences } from '@/entities/preferences'
 import type { Profile } from '@/entities/profile'
 import type { AppNotification } from '@/entities/notification'
+import type { HistoryEntry } from '@/entities/learning-history'
 import { STORAGE_PREFIX } from '@/shared/config/constants'
 import { DEFAULT_SELECT_TOOLBAR } from '@/shared/config/select-toolbar'
 import { lastWriteWins, mergeCardConflict, mergeProgressConflict } from './conflict-handlers'
@@ -20,6 +21,7 @@ import {
   preferencesSchema,
   profileSchema,
   progressSchema,
+  historySchema,
   questionSchema,
 } from './schemas'
 
@@ -32,6 +34,7 @@ export interface AppCollections {
   preferences: RxCollection<Preferences>
   profiles: RxCollection<Profile>
   notifications: RxCollection<AppNotification>
+  history: RxCollection<HistoryEntry>
 }
 
 addRxPlugin(RxDBMigrationSchemaPlugin)
@@ -114,8 +117,8 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
 ): Promise<AppCollections> {
   const database = await createRxDatabase({ name: STORAGE_PREFIX, storage })
   // Conflict handlers only ever run for replicated collections, but they belong to the collection,
-  // not the replication — so they are declared once here. `notifications` is device-local and
-  // deliberately keeps RxDB's default.
+  // not the replication — so they are declared once here. `notifications` and `history` are
+  // device-local and deliberately keep RxDB's default.
   const collections = await database.addCollections({
     decks: {
       schema: deckSchema,
@@ -144,6 +147,7 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
       conflictHandler: lastWriteWins<Profile>(),
     },
     notifications: { schema: notificationSchema },
+    history: { schema: historySchema },
   })
   return {
     decks: collections.decks,
@@ -154,5 +158,6 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
     preferences: collections.preferences,
     profiles: collections.profiles,
     notifications: collections.notifications,
+    history: collections.history,
   }
 }

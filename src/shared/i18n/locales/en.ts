@@ -268,7 +268,14 @@ export const en = {
     historyTitle: 'Learning history',
     historyEmpty: 'No history yet',
     historyEmptyBody:
-      'Reviews are not recorded yet. Once the new scheduler lands, every answer for this card shows up here.',
+      'Every answer you give this card is recorded here, on this device. Study it once to begin.',
+    historyCount_one: '{{count}} answer',
+    historyCount_other: '{{count}} answers',
+    historyKept: 'Kept on this device, last {{count}}',
+    historyInterval: '{{from}} → {{to}}',
+    historyFirstReview: 'First review',
+    historyFast: 'Fast review',
+    historyMastered: 'Marked mastered',
   },
   fastReview: {
     notQuite: 'Not quite',

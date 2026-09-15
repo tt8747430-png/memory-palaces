@@ -5,6 +5,7 @@ import { type Deck, type DeckSettings, isSubdeck, useDeck, useDeckStoreApi } fro
 import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
 import { type Folder, selectFolders, useFolderStore, useFolderStoreApi } from '@/entities/folder'
 import type { Card } from '@/entities/card'
+import { useHistoryStoreApi } from '@/entities/learning-history'
 import { archiveDecks, deleteDeck, duplicateDeck, moveDecks, restoreDecks } from '@/features/deck'
 import { resetDeckSrs } from '@/features/card'
 import { exportCardsAnki, exportCardsCsv } from '@/features/content'
@@ -79,6 +80,7 @@ export function useDeckSettings(deckId: string, nav: DeckSettingsNav): DeckSetti
   const deckStore = useDeckStoreApi()
   const cardStore = useCardStoreApi()
   const folderStore = useFolderStoreApi()
+  const historyStore = useHistoryStoreApi()
   const importFile = useImportFile()
 
   const { decks, deck, settings, ready } = useDeck(deckId)
@@ -114,7 +116,7 @@ export function useDeckSettings(deckId: string, nav: DeckSettingsNav): DeckSetti
     },
     toggleArchived,
     reset: () => {
-      void resetDeckSrs(deckStore, cardStore, deckId)
+      void resetDeckSrs(deckStore, cardStore, historyStore, deckId)
       toast.success(t('deckSettings.toast.reset'))
     },
     remove: () => {

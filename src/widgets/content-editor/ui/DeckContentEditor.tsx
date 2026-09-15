@@ -259,6 +259,7 @@ export function DeckContentEditor({
 
       <LearningHistorySheet
         open={cardSheet?.kind === 'history'}
+        cardId={cardSheet?.kind === 'history' ? cardSheet.id : null}
         onOpenChange={(open) => {
           if (!open) setCardSheet(null)
         }}

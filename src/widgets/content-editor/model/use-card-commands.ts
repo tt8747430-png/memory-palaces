@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import type { Card } from '@/entities/card'
 import { useCardStoreApi } from '@/entities/card'
+import { useHistoryStoreApi } from '@/entities/learning-history'
 import {
   deleteCard,
   duplicateCard,
@@ -33,6 +34,7 @@ export function useCardCommands(
 ): CardCommands {
   const { t } = useTranslation()
   const store = useCardStoreApi()
+  const history = useHistoryStoreApi()
   const { ids, exit } = selection
   const empty = ids.size === 0
 
@@ -41,11 +43,11 @@ export function useCardCommands(
     toast.success(t('cards.row.duplicated'))
   }
   const markKnown = (id: string) => {
-    void markCardsKnown(store, [id])
+    void markCardsKnown(store, history, [id])
     toast.success(t('cards.row.markedKnown'))
   }
   const resetSrs = (id: string) => {
-    void resetCardsSrs(store, [id])
+    void resetCardsSrs(store, history, [id])
     toast.success(t('cards.row.scheduleReset'))
   }
 
@@ -81,11 +83,11 @@ export function useCardCommands(
       toast.success(t('cards.bulk.flagged', { count: toFlag.length }))
     }),
     known: bulkAction(selection, (batch) => {
-      void markCardsKnown(store, batch)
+      void markCardsKnown(store, history, batch)
       toast.success(t('cards.row.markedKnown'))
     }),
     reset: bulkAction(selection, (batch) => {
-      void resetCardsSrs(store, batch)
+      void resetCardsSrs(store, history, batch)
       toast.success(t('cards.row.scheduleReset'))
     }),
     duplicate: bulkAction(selection, (batch) => {

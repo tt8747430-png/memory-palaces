@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@/shared/api'
 import { type Card, createCardStore, makeCard } from '@/entities/card'
+import { createHistoryStore, type HistoryEntry } from '@/entities/learning-history'
+import { started } from '@/shared/test/started'
 import { isDue } from '@/shared/lib'
 import { gradeCard } from './grade-card'
 
@@ -16,6 +18,8 @@ function storeWith(cards: Card[]) {
   return store
 }
 
+const history = () => started(createHistoryStore(new InMemoryRepository<HistoryEntry>()))
+
 const dueCount = (store: ReturnType<typeof storeWith>) =>
   store.getState().cards.filter((c) => isDue(c.srs, NOW)).length
 
@@ -27,13 +31,13 @@ describe('grade → due-queue flow', () => {
 
   it("a card graded 'again' stays in today's queue", async () => {
     const store = storeWith([card('c1')])
-    await gradeCard(store, 'c1', 'again', NOW)
+    await gradeCard(store, history(), 'c1', 'again', NOW)
     expect(dueCount(store)).toBe(1)
   })
 
   it("a card graded 'good' leaves today's queue", async () => {
     const store = storeWith([card('c1')])
-    await gradeCard(store, 'c1', 'good', NOW)
+    await gradeCard(store, history(), 'c1', 'good', NOW)
     expect(dueCount(store)).toBe(0)
   })
 })

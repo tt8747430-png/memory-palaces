@@ -33,10 +33,16 @@ import {
   createNotificationStore,
   type NotificationStore,
 } from '@/entities/notification'
+import {
+  createHistoryStore,
+  type HistoryEntry,
+  type HistoryStore,
+} from '@/entities/learning-history'
 import { createAppDatabase } from './persistence/database'
 import { resetLocalDatabase } from './persistence/reset-local-database'
 import { createAuthGateway } from './persistence/create-auth-gateway'
 import { keepArchiveDetached } from './persistence/keep-archive-detached'
+import { keepHistoryCapped } from './persistence/keep-history-capped'
 
 export interface Services {
   authGateway: AuthGateway
@@ -49,6 +55,7 @@ export interface Services {
   preferencesStore: PreferencesStore
   profileStore: ProfileStore
   notificationStore: NotificationStore
+  historyStore: HistoryStore
   eventBus: EventBus<AppEvents>
   storage: StoragePort
   /** Null when no Supabase project is configured: the app then runs entirely on-device. */
@@ -57,7 +64,11 @@ export interface Services {
   resetLocalData: () => Promise<void>
 }
 
-/** Everything that mirrors to the cloud. `notifications` is ephemeral UI state and stays local. */
+/**
+ * Everything that mirrors to the cloud. `notifications` is ephemeral UI state and stays local, and
+ * so does `history`: there is no mirror table for the Learning history, so each device records the
+ * answers given on it.
+ */
 const SYNCED_TABLES = [
   'decks',
   'cards',
@@ -82,6 +93,7 @@ export function createServices(): Services {
   const notificationRepo = new RxdbRepository<AppNotification>(
     collections.then((c) => c.notifications),
   )
+  const historyRepo = new RxdbRepository<HistoryEntry>(collections.then((c) => c.history))
   const syncTargets: Promise<SyncTarget[]> = collections.then((c) =>
     SYNCED_TABLES.map((table) => ({
       table,
@@ -99,6 +111,7 @@ export function createServices(): Services {
     preferencesStore: createPreferencesStore(preferencesRepo),
     profileStore: createProfileStore(profileRepo),
     notificationStore: createNotificationStore(notificationRepo),
+    historyStore: createHistoryStore(historyRepo),
     eventBus: new EventBus<AppEvents>(),
     storage: isSupabaseConfigured() ? new SupabaseStorage(supabase) : new LocalObjectUrlStorage(),
     syncManager: isSupabaseConfigured() ? SyncManager.fromSupabase(supabase, syncTargets) : null,
@@ -117,11 +130,13 @@ export function createServices(): Services {
     services.preferencesStore,
     services.profileStore,
     services.notificationStore,
+    services.historyStore,
   ]) {
     store.getState().start()
   }
 
   keepArchiveDetached(services.deckStore)
+  keepHistoryCapped(services.historyStore)
 
   return services
 }

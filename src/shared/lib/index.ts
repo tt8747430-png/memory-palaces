@@ -159,6 +159,7 @@ export {
   schedule,
   srsStatus,
   markKnown,
+  intervalLabel,
   nextIntervalLabel,
   type Grade,
   type SrsState,

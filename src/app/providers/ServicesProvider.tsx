@@ -8,6 +8,7 @@ import { ProgressStoreContext } from '@/entities/progress'
 import { PreferencesStoreContext } from '@/entities/preferences'
 import { ProfileStoreContext } from '@/entities/profile'
 import { NotificationStoreContext } from '@/entities/notification'
+import { HistoryStoreContext } from '@/entities/learning-history'
 import { AuthGatewayContext, EventBusContext, StoragePortContext } from '@/shared/lib'
 import type { Services } from '../composition-root'
 
@@ -29,11 +30,13 @@ export function ServicesProvider({
                   <PreferencesStoreContext value={services.preferencesStore}>
                     <ProfileStoreContext value={services.profileStore}>
                       <NotificationStoreContext value={services.notificationStore}>
-                        <EventBusContext value={services.eventBus}>
-                          <StoragePortContext value={services.storage}>
-                            {children}
-                          </StoragePortContext>
-                        </EventBusContext>
+                        <HistoryStoreContext value={services.historyStore}>
+                          <EventBusContext value={services.eventBus}>
+                            <StoragePortContext value={services.storage}>
+                              {children}
+                            </StoragePortContext>
+                          </EventBusContext>
+                        </HistoryStoreContext>
                       </NotificationStoreContext>
                     </ProfileStoreContext>
                   </PreferencesStoreContext>

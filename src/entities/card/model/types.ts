@@ -75,6 +75,21 @@ export function moveCard(card: Card, deckId: string, order: number, updatedAt: s
   return { ...card, deckId, order, updatedAt }
 }
 
+/**
+ * Everything an answer moves on a Card, together — the pair an undo has to put back. `srs` alone
+ * was not enough: a Fast-review answer never touches the schedule, so taking one back restored
+ * nothing and the Card went on reporting "Got it".
+ */
+export interface PriorAnswer {
+  srs: SrsState | undefined
+  fastReview: FastOutcome | undefined
+}
+
+/** What a Card's answer state is right now, for an undo to carry. */
+export function priorAnswer(card: Card): PriorAnswer {
+  return { srs: card.srs, fastReview: card.fastReview }
+}
+
 export type CardChanges = Partial<Omit<Card, 'id' | 'createdAt' | 'updatedAt' | 'deckId'>>
 
 export function updateCard(card: Card, changes: CardChanges, updatedAt: string): Card {

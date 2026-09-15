@@ -2,10 +2,9 @@ import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { AnimatePresence } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Check, MoreVertical } from 'lucide-react'
-import type { FastOutcome } from '@/entities/card'
+import { type FastOutcome, type PriorAnswer, priorAnswer } from '@/entities/card'
 import type { LearningAlgorithm } from '@/entities/deck'
 import type { StudyMode } from '@/entities/preferences'
-import type { SrsState } from '@/shared/lib'
 import { speak, speechAvailable, srsStatus, success, tick, useShake } from '@/shared/lib'
 import {
   applyStudyFilter,
@@ -59,7 +58,7 @@ export interface FlashcardsPanelProps {
   subtitle?: string
   onGrade: (cardId: string, grade: Grade) => void
   onAnswer?: (cardId: string, outcome: FastOutcome) => void
-  onRestoreCard?: (cardId: string, srs: SrsState | undefined) => void
+  onRestoreCard?: (cardId: string, prior: PriorAnswer) => void
   onToggleFlag?: (cardId: string) => void
   onEditCard?: (cardId: string, changes: CardChanges) => void
   onBack: () => void
@@ -69,7 +68,11 @@ export interface FlashcardsPanelProps {
 
 const COMPLETE_DELAY_MS = 2200
 
-type UndoEntry = { cardId: string; prevSrs: SrsState | undefined } | null
+/**
+ * What an undo puts back. The whole answer state, not just the schedule: a Fast-review answer never
+ * touches `srs`, so a trail carrying only that took nothing back.
+ */
+type UndoEntry = { cardId: string; prior: PriorAnswer } | null
 
 export function FlashcardsPanel({
   cards,
@@ -198,14 +201,14 @@ export function FlashcardsPanel({
 
   const applyGrade = (grade: Grade) => {
     if (!id || !card) return
-    undoTrail.current.push({ cardId: id, prevSrs: card.card.srs })
+    undoTrail.current.push({ cardId: id, prior: priorAnswer(card.card) })
     onGrade(id, grade)
     dispatch({ type: 'grade', grade })
   }
 
   const applyAnswer = (outcome: FastOutcome) => {
     if (!id || !card) return
-    undoTrail.current.push({ cardId: id, prevSrs: card.card.srs })
+    undoTrail.current.push({ cardId: id, prior: priorAnswer(card.card) })
     onAnswer?.(id, outcome)
     dispatch({ type: 'answer', outcome })
   }
@@ -220,7 +223,7 @@ export function FlashcardsPanel({
     if (!canUndo(state)) return
     const entry = undoTrail.current.pop() ?? null
     dispatch({ type: 'undo' })
-    if (entry) onRestoreCard?.(entry.cardId, entry.prevSrs)
+    if (entry) onRestoreCard?.(entry.cardId, entry.prior)
     tick()
   }
 

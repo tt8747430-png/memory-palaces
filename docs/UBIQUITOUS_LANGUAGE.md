@@ -29,6 +29,22 @@ Canonical terms for code, UI copy, commits, discussion. Grounded in `entities/*`
 | **Frozen**      | Card held out of every queue until unfrozen            | paused, suspended   |
 | **Reversed**    | Card studied back → front, whatever the Deck says      | flipped, inverted   |
 
+### Learning history
+
+| Term                 | Means                                                                          | Avoid              |
+| -------------------- | ------------------------------------------------------------------------------ | ------------------ |
+| **Learning history** | Every answer a Card has been given, newest first — `entities/learning-history` | review log, audit  |
+| **History entry**    | One answer on it: a Grade, a Fast-review answer, or a Mastered mark            | review, row, event |
+
+A **History entry** is deliberately wider than a **Review**: a Review advances a schedule, and the two
+fast-review answers are not Reviews at all (see below), yet both belong on the history — as does a
+**Mastered** mark, which moves a schedule with no recall behind it. That is why an entry is keyed on
+`kind` (`graded` / `answered` / `mastered`) and never on the **Learning algorithm**.
+
+An entry is written once and never edited. Undoing an answer removes it; **Reset progress** removes
+every entry for the Cards it resets, because the history describes schedules those Cards no longer
+have. The history is device-local and capped (`HISTORY_CAP`) — a rolling window, not an archive.
+
 ## Learning algorithms
 
 Every Deck follows exactly one: its Main deck's. A Subdeck never holds the algorithm settings (`MAIN_DECK_SETTINGS`).

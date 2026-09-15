@@ -14,6 +14,11 @@ import {
   makeDeck,
 } from '@/entities/deck'
 import { createFolderStore, type Folder, FolderStoreContext } from '@/entities/folder'
+import {
+  createHistoryStore,
+  type HistoryEntry,
+  HistoryStoreContext,
+} from '@/entities/learning-history'
 import { createSessionStore, type Session, SessionStoreContext } from '@/entities/session'
 import { StoragePortContext } from '@/shared/lib'
 import { DeckSettingsPage, type DeckSettingsPageProps } from './DeckSettingsPage'
@@ -50,9 +55,13 @@ function renderPage(
         <StoragePortContext value={new LocalObjectUrlStorage()}>
           <FolderStoreContext value={started(createFolderStore(new InMemoryRepository<Folder>()))}>
             <CardStoreContext value={started(createCardStore(new InMemoryRepository<Card>()))}>
-              <DeckStoreContext value={started(createDeckStore(repo))}>
-                <DeckSettingsPage deckId="d1" onBack={() => {}} {...props} />
-              </DeckStoreContext>
+              <HistoryStoreContext
+                value={started(createHistoryStore(new InMemoryRepository<HistoryEntry>()))}
+              >
+                <DeckStoreContext value={started(createDeckStore(repo))}>
+                  <DeckSettingsPage deckId="d1" onBack={() => {}} {...props} />
+                </DeckStoreContext>
+              </HistoryStoreContext>
             </CardStoreContext>
           </FolderStoreContext>
         </StoragePortContext>

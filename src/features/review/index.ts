@@ -1,5 +1,7 @@
-export { gradeCard } from './grade-card'
-export { restoreSchedule } from './restore-schedule'
+export { gradeCard, type AnsweredCard } from './grade-card'
+export { answerCard } from './answer-card'
+export { restoreAnswer } from './restore-answer'
+export { undoAnswer } from './undo-answer'
 export {
   applyStudyFilter,
   buildStudyQueue,

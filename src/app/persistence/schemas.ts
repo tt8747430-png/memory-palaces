@@ -7,6 +7,7 @@ import type { Progress } from '@/entities/progress'
 import type { Preferences } from '@/entities/preferences'
 import type { Profile } from '@/entities/profile'
 import type { AppNotification } from '@/entities/notification'
+import type { HistoryEntry } from '@/entities/learning-history'
 
 export const deckSchema: RxJsonSchema<Deck> = {
   version: 3,
@@ -365,3 +366,32 @@ export const notificationSchema: RxJsonSchema<AppNotification> = {
   required: ['id', 'createdAt', 'updatedAt', 'type', 'read'],
 }
 
+/**
+ * The Learning history. Device-local like `notifications`: it is not in `SYNCED_TABLES`, so there
+ * is no mirror table for it and nothing to keep two devices' histories in step — each device
+ * records the answers given on it.
+ *
+ * Only the four fields every entry has are required. The rest are decided by `kind`, and an absent
+ * `intervalBefore` is load-bearing rather than merely optional: it is what says the Card had no
+ * schedule yet, which `0` — where a lapse leaves a Card — does not.
+ */
+export const historySchema: RxJsonSchema<HistoryEntry> = {
+  version: 0,
+  primaryKey: 'id',
+  type: 'object',
+  properties: {
+    id: { type: 'string', maxLength: 100 },
+    createdAt: { type: 'string' },
+    updatedAt: { type: 'string' },
+    cardId: { type: 'string', maxLength: 100 },
+    deckId: { type: 'string', maxLength: 100 },
+    kind: { type: 'string', enum: ['graded', 'answered', 'mastered'] },
+    grade: { type: 'string', enum: ['again', 'hard', 'good', 'easy'] },
+    outcome: { type: 'string', enum: ['notQuite', 'gotIt'] },
+    intervalBefore: { type: 'number' },
+    intervalAfter: { type: 'number' },
+    dueAfter: { type: 'string' },
+  },
+  required: ['id', 'createdAt', 'updatedAt', 'cardId', 'deckId', 'kind'],
+  indexes: ['cardId'],
+}
