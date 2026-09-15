@@ -4,8 +4,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
-import { InMemoryRepository } from '@/shared/api'
+import { InMemoryRepository, LocalObjectUrlStorage } from '@/shared/api'
+import { StoragePortContext } from '@/shared/lib'
+import { createSessionStore, type Session, SessionStoreContext } from '@/entities/session'
 import { type Card, CardStoreContext, createCardStore } from '@/entities/card'
+import { createQuestionStore, type Question, QuestionStoreContext } from '@/entities/question'
 import { createDeckStore, type Deck, DeckStoreContext, makeDeck } from '@/entities/deck'
 import { createFolderStore, type Folder, FolderStoreContext, makeFolder } from '@/entities/folder'
 import { useLibrary } from './use-library'
@@ -38,15 +41,27 @@ function renderLibrary({
   function Wrapper({ children }: { children: ReactNode }) {
     return (
       <I18nextProvider i18n={i18n}>
-        <FolderStoreContext
-          value={started(createFolderStore(new InMemoryRepository<Folder>(folders)))}
-        >
-          <DeckStoreContext value={started(createDeckStore(new InMemoryRepository<Deck>(decks)))}>
-            <CardStoreContext value={started(createCardStore(new InMemoryRepository<Card>([])))}>
-              {children}
-            </CardStoreContext>
-          </DeckStoreContext>
-        </FolderStoreContext>
+        <StoragePortContext value={new LocalObjectUrlStorage()}>
+          <SessionStoreContext value={createSessionStore(new InMemoryRepository<Session>())}>
+            <FolderStoreContext
+              value={started(createFolderStore(new InMemoryRepository<Folder>(folders)))}
+            >
+              <DeckStoreContext
+                value={started(createDeckStore(new InMemoryRepository<Deck>(decks)))}
+              >
+                <CardStoreContext
+                  value={started(createCardStore(new InMemoryRepository<Card>([])))}
+                >
+                  <QuestionStoreContext
+                    value={started(createQuestionStore(new InMemoryRepository<Question>()))}
+                  >
+                    {children}
+                  </QuestionStoreContext>
+                </CardStoreContext>
+              </DeckStoreContext>
+            </FolderStoreContext>
+          </SessionStoreContext>
+        </StoragePortContext>
       </I18nextProvider>
     )
   }

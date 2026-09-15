@@ -16,8 +16,9 @@ function setup(decks: Deck[] = [], avatar: string | null = null) {
   )
   const deckStore = started(createDeckStore(new InMemoryRepository<Deck>(decks)))
   const storage = {
-    upload: vi.fn().mockResolvedValue({ url: 'https://cdn/moved' }),
+    upload: vi.fn().mockResolvedValue({ path: 'u1/moved' }),
     remove: vi.fn(),
+    signedUrl: vi.fn().mockResolvedValue('https://cdn/signed'),
   }
   return { profileStore, deckStore, storage: storage as unknown as StoragePort & typeof storage }
 }
@@ -26,13 +27,13 @@ const deck = (id: string, image?: string) =>
   ({ ...makeDeck({ id, createdAt: NOW, name: id }), image }) as Deck
 
 describe('reconcileInlineImages', () => {
-  it('moves an inline avatar into storage and patches the hosted URL in', async () => {
+  it('moves an inline avatar into storage and patches its object path in', async () => {
     const { profileStore, deckStore, storage } = setup([], INLINE)
 
     const moved = await reconcileInlineImages({ profileStore, deckStore, storage, userId: 'u1' })
 
     expect(moved).toBe(1)
-    expect(profileStore.getState().profile?.avatar).toBe('https://cdn/moved')
+    expect(profileStore.getState().profile?.avatar).toBe('u1/moved')
   })
 
   it('moves every inline deck cover', async () => {
@@ -44,11 +45,8 @@ describe('reconcileInlineImages', () => {
     expect(storage.upload).toHaveBeenCalledTimes(2)
   })
 
-  it('leaves already-hosted images alone', async () => {
-    const { profileStore, deckStore, storage } = setup(
-      [deck('d1', 'https://cdn/existing.jpg')],
-      'https://cdn/avatar.jpg',
-    )
+  it('leaves images that already live in storage alone', async () => {
+    const { profileStore, deckStore, storage } = setup([deck('d1', 'u1/d1')], 'u1/profile')
 
     const moved = await reconcileInlineImages({ profileStore, deckStore, storage, userId: 'u1' })
 

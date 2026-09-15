@@ -1,4 +1,5 @@
 export { createFolder } from './create-folder'
 export type { CreateFolderInput } from './create-folder'
-export { deleteFolder } from './delete-folder'
+export { deleteFolder, type DeleteFolderDeps } from './delete-folder'
 export { editFolder, reorderFolders } from './folder-commands'
+export { useDeleteFolderDeps } from './use-delete-folder-deps'

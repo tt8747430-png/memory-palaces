@@ -8,9 +8,12 @@ import type { Preferences } from '@/entities/preferences'
 import type { Profile } from '@/entities/profile'
 import type { AppNotification } from '@/entities/notification'
 import type { HistoryEntry } from '@/entities/learning-history'
+import type { PendingChange } from '@/entities/pending-change'
+import type { SyncState } from '@/entities/sync-state'
+import { CONTENT_COLLECTIONS } from '@/shared/config/sync-tables'
 
 export const deckSchema: RxJsonSchema<Deck> = {
-  version: 3,
+  version: 4,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -331,7 +334,7 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
 }
 
 export const profileSchema: RxJsonSchema<Profile> = {
-  version: 1,
+  version: 2,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -367,9 +370,9 @@ export const notificationSchema: RxJsonSchema<AppNotification> = {
 }
 
 /**
- * The Learning history. Device-local like `notifications`: it is not in `SYNCED_TABLES`, so there
- * is no mirror table for it and nothing to keep two devices' histories in step — each device
- * records the answers given on it.
+ * The Learning history. It mirrors to the cloud like the content collections, but records no
+ * pending change: an entry is one answer at one moment and is never edited, so it cannot diverge
+ * and there is nothing to ask anyone about. Its conflict handler is `firstWriteWins`.
  *
  * Only the four fields every entry has are required. The rest are decided by `kind`, and an absent
  * `intervalBefore` is load-bearing rather than merely optional: it is what says the Card had no
@@ -394,4 +397,53 @@ export const historySchema: RxJsonSchema<HistoryEntry> = {
   },
   required: ['id', 'createdAt', 'updatedAt', 'cardId', 'deckId', 'kind'],
   indexes: ['cardId'],
+}
+
+/**
+ * The device's log of writes a Sync has not confirmed yet.
+ *
+ * No `updatedAt`, and that is load-bearing twice over: it says the collection is device-local (it
+ * is not in `SYNCED_TABLES`, and `RxdbRepository.remove` reads the absence of a clock as "no
+ * tombstone needed"), and it keeps the log from competing on the same clock as the documents it
+ * describes. `at` is when the write happened, for the user-facing ordering.
+ *
+ * Version 0 with no migration: the collection is new, so an existing device simply starts with an
+ * empty log. That reads as "nothing pending" — wrong only until the first Sync, and wrong in the
+ * direction that asks the user fewer questions rather than more.
+ */
+export const pendingChangeSchema: RxJsonSchema<PendingChange> = {
+  version: 0,
+  primaryKey: 'id',
+  type: 'object',
+  properties: {
+    id: { type: 'string', maxLength: 140 },
+    collection: { type: 'string', enum: [...CONTENT_COLLECTIONS] },
+    entityId: { type: 'string', maxLength: 100 },
+    op: { type: 'string', enum: ['save', 'remove'] },
+    at: { type: 'string' },
+  },
+  required: ['id', 'collection', 'entityId', 'op', 'at'],
+  indexes: ['collection'],
+}
+
+/**
+ * This device's sync bookkeeping. Device-local for the same reasons as `pendingChanges`, and a
+ * singleton — there is one `sync-state` document, keyed by a constant.
+ *
+ * `checkpoints` is a map keyed by table name with no required keys, so adding a table to
+ * `SYNCED_TABLES` is not a schema change. A missing key reads as "cloud position unknown", which
+ * the next peek resolves by starting from the epoch.
+ */
+export const syncStateSchema: RxJsonSchema<SyncState> = {
+  version: 0,
+  primaryKey: 'id',
+  type: 'object',
+  properties: {
+    id: { type: 'string', maxLength: 100 },
+    checkpoints: { type: 'object', additionalProperties: true },
+    lastSyncedAt: { type: ['string', 'null'] },
+    autosync: { type: 'boolean' },
+    cloudChanged: { type: 'boolean' },
+  },
+  required: ['id', 'checkpoints', 'autosync', 'cloudChanged'],
 }

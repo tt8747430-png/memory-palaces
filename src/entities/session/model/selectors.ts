@@ -1,4 +1,9 @@
+import type { SessionKind } from './types'
 import type { SessionState } from './store'
+
+/** Guest, account, or nobody — what the sync surfaces branch on before anything else. */
+export const selectSessionKind = (state: SessionState): SessionKind | null =>
+  state.session?.kind ?? null
 
 /**
  * The signed-in account's id, or null for a guest or nobody. Storage prefixes and replication

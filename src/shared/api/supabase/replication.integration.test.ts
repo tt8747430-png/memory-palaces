@@ -1,6 +1,6 @@
 // @vitest-environment node
 /**
- * Two-client convergence against a real Supabase stack.
+ * Two-client convergence against a real Supabase stack, one Sync cycle at a time.
  *
  * Skipped unless a stack is pointed at:
  *   SUPABASE_TEST_URL=http://127.0.0.1:54321 \
@@ -16,9 +16,9 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { RxCollection, RxJsonSchema } from 'rxdb'
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import type { Identifiable } from '@/shared/api'
+import type { Identifiable, RemoteChangeEvent } from '@/shared/api'
 import { openRxdbCollection } from '@/shared/api/rxdb/database'
-import { createCollectionReplication } from './replication'
+import { SyncManager } from './sync-manager'
 
 const URL = process.env.SUPABASE_TEST_URL
 const KEY = process.env.SUPABASE_TEST_KEY
@@ -108,45 +108,65 @@ describe.skipIf(!URL || !KEY)('supabase replication (two clients)', () => {
     if (supabase && created.length) await supabase.from(TABLE).delete().in('id', created)
   }, TIMEOUT)
 
+  /** One device: its collection and the manager that runs its cycles, signed in as the test user. */
+  async function device(onRemoteChange?: (event: RemoteChangeEvent) => void) {
+    const collection = await openCollection()
+    const manager = SyncManager.fromSupabase(supabase, [
+      { table: TABLE, collection: collection as unknown as RxCollection<Identifiable> },
+    ])
+    await manager.start(userId, onRemoteChange)
+    return { collection, manager }
+  }
+
   it(
-    'converges a write from client A to client B',
+    'converges a write from client A to client B across one cycle each',
     async () => {
-      const [a, b] = [await openCollection(), await openCollection()]
-      const repA = createCollectionReplication({ supabase, collection: a, table: TABLE, userId })
-      const repB = createCollectionReplication({ supabase, collection: b, table: TABLE, userId })
-      await Promise.all([repA.awaitInitialReplication(), repB.awaitInitialReplication()])
+      const [a, b] = [await device(), await device()]
 
       const id = newDeckId()
-      await a.upsert({ id, name: 'Hello', createdAt: 't1', updatedAt: 't1' })
-      await repA.awaitInSync()
-      repB.reSync()
-      await settle()
+      await a.collection.upsert({ id, name: 'Hello', createdAt: 't1', updatedAt: 't1' })
+      await a.manager.runCycle()
+      await b.manager.runCycle()
 
-      const onB = await b.findOne(id).exec()
-      expect(onB?.name).toBe('Hello')
+      expect((await b.collection.findOne(id).exec())?.name).toBe('Hello')
 
-      await Promise.all([repA.cancel(), repB.cancel()])
+      await Promise.all([a.manager.stop(), b.manager.stop()])
     },
     TIMEOUT,
   )
 
   it(
-    'streams a write to the other client without being asked to re-sync',
+    'tells the other client the cloud moved, and applies nothing until it syncs',
     async () => {
-      const [a, b] = [await openCollection(), await openCollection()]
-      const repA = createCollectionReplication({ supabase, collection: a, table: TABLE, userId })
-      const repB = createCollectionReplication({ supabase, collection: b, table: TABLE, userId })
-      await Promise.all([repA.awaitInitialReplication(), repB.awaitInitialReplication()])
+      const seen: RemoteChangeEvent[] = []
+      const a = await device()
+      const b = await device((event) => seen.push(event))
+      await settle()
 
       const id = newDeckId()
-      await a.upsert({ id, name: 'Live', createdAt: 't1', updatedAt: 't1' })
-      await repA.awaitInSync()
+      await a.collection.upsert({ id, name: 'Watched', createdAt: 't1', updatedAt: 't1' })
+      await a.manager.runCycle()
 
-      // Deliberately no repB.reSync(): only the Realtime channel can deliver this.
-      const onB = await until(() => b.findOne(id).exec())
-      expect(onB?.name).toBe('Live')
+      const event = await until(async () => seen.find((candidate) => candidate.id === id) ?? null)
+      expect(event?.table).toBe(TABLE)
+      expect(await b.collection.findOne(id).exec()).toBeNull()
 
-      await Promise.all([repA.cancel(), repB.cancel()])
+      await Promise.all([a.manager.stop(), b.manager.stop()])
+    },
+    TIMEOUT,
+  )
+
+  it(
+    'reports which rows a cycle pushed',
+    async () => {
+      const a = await device()
+      const id = newDeckId()
+      await a.collection.upsert({ id, name: 'Pushed', createdAt: 't1', updatedAt: 't1' })
+
+      const pushed = await a.manager.runCycle()
+
+      expect(pushed[TABLE]).toContain(id)
+      await a.manager.stop()
     },
     TIMEOUT,
   )
@@ -154,33 +174,26 @@ describe.skipIf(!URL || !KEY)('supabase replication (two clients)', () => {
   it(
     'resolves a concurrent edit with last-write-wins and propagates the tombstone',
     async () => {
-      const [a, b] = [await openCollection(), await openCollection()]
+      const a = await device()
       const id = newDeckId()
-
-      const repA = createCollectionReplication({ supabase, collection: a, table: TABLE, userId })
-      await repA.awaitInitialReplication()
-      await a.upsert({ id, name: 'from A', createdAt: 't1', updatedAt: 't1' })
-      await repA.awaitInSync()
+      await a.collection.upsert({ id, name: 'from A', createdAt: 't1', updatedAt: 't1' })
+      await a.manager.runCycle()
 
       // B starts cold, edits the same document with a newer clock, then syncs.
-      await b.upsert({ id, name: 'from B', createdAt: 't1', updatedAt: 't2' })
-      const repB = createCollectionReplication({ supabase, collection: b, table: TABLE, userId })
-      await repB.awaitInitialReplication()
-      await repB.awaitInSync()
-      repA.reSync()
-      await settle()
+      const b = await device()
+      await b.collection.upsert({ id, name: 'from B', createdAt: 't1', updatedAt: 't2' })
+      await b.manager.runCycle()
+      await a.manager.runCycle()
 
-      expect((await a.findOne(id).exec())?.name).toBe('from B')
+      expect((await a.collection.findOne(id).exec())?.name).toBe('from B')
 
-      const doc = await b.findOne(id).exec()
-      await doc?.remove()
-      await repB.awaitInSync()
-      repA.reSync()
-      await settle()
+      await (await b.collection.findOne(id).exec())?.remove()
+      await b.manager.runCycle()
+      await a.manager.runCycle()
 
-      expect(await a.findOne(id).exec()).toBeNull()
+      expect(await a.collection.findOne(id).exec()).toBeNull()
 
-      await Promise.all([repA.cancel(), repB.cancel()])
+      await Promise.all([a.manager.stop(), b.manager.stop()])
     },
     TIMEOUT,
   )

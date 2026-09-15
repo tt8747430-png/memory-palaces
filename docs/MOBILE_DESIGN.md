@@ -114,8 +114,10 @@ swipe-to-dismiss, `Escape`. Prefer them over hand-rolled overlays (`CardBrowser`
 
 All four on every async surface — a missing state reads as a crash.
 
-- **Loading** — skeleton/spinner, never blank (`widgets/splash` for first paint); skip for instant local writes (§6).
-- **Error** — the problem **plus a retry path**.
+- **Loading** — skeleton/spinner, never blank (`widgets/splash` for first paint — `app/Bootstrap.tsx` holds it until both
+  its animation and the services are ready); skip for instant local writes (§6).
+- **Error** — the problem **plus a retry path**. Startup itself has one: a database that will not open shows
+  `Bootstrap`'s terminal screen with Reload, never an empty shell.
 - **Empty** — `Empty` (`shared/ui/primitives/empty.tsx`, `panel`/`hero`); put "create" in the toolbar too.
 - **Offline** — §11.
 
@@ -123,8 +125,16 @@ All four on every async surface — a missing state reads as a crash.
 
 - **RxDB is the local source of truth** — reads never touch the network. **Never block UI on a round-trip.**
 - **Workbox precache** makes the shell available offline after first load.
-- **Caveat — no network-status UI yet** (no `navigator.onLine`). Fine today; add an indicator when sync/cloud/auth land,
-  don't retrofit into local-only flows.
+- **Sync is manual, and the banner is its network-status UI.** `widgets/sync` `SyncBanner` states what is waiting, and
+  says so offline (`useOnline`). Nothing leaves the device until Synchronise is pressed or Autosync — device-local, off
+  by default — asks.
+- **Gate only what the server must answer now** (ADR 0004): sign-in, sign-up, password reset and change, requesting
+  account deletion. `OfflineNotice` + a disabled control, before the press. Every content write stays ungated.
+- **Sign-out always succeeds locally**, online or not — the session store is cleared whatever the revoke does.
+- **Never block UI on a round-trip — one bounded exception.** A fresh sign-in waits at most 4 s for the
+  scheduled-deletion check (`AuthProvider`); offline or slow, the app opens and the check retries on reconnect.
+- **Images are read from the device.** Stored images are object paths in private buckets; `keepImagesCached` fetches the
+  bytes ahead of the read and `useImageSrc` reads only the cache — never a URL handed to the browser during render.
 
 ## 12. Install & manifest
 
@@ -151,7 +161,11 @@ Assume a low-end device.
 - **60fps:** `transform`/`opacity` only.
 - **Virtualize long lists** (`content-visibility` or windowing).
 - **Passive scroll/touch listeners.**
-- **Ship less JS:** route-split, keep the bundle lean.
+- **Ship less JS:** route-split, keep the bundle lean. RxDB, Dexie and supabase-js are dynamic imports inside
+  `createServices()`, fetched behind the splash — `npm run check:entry-graph` fails the build check if an import drags
+  them back into the entry preloads.
+- **Fonts:** every face ships latin + latin-ext only (`styles/fonts.css`), Lexend included — Workbox precaches every
+  `woff2` on disk, so each extra subset is a download on install. Other scripts fall back to the platform face.
 
 ## 15. Accessibility
 

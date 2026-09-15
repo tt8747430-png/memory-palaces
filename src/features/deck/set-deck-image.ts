@@ -12,7 +12,7 @@ export interface SetDeckImageDeps {
 
 /**
  * Sets a deck's cover. The picked image is saved inline first so the deck looks right immediately
- * and offline, then moved into storage and the hosted URL patched in. A failed upload leaves the
+ * and offline, then moved into storage and its object path patched in. A failed upload leaves the
  * inline copy in place; `reconcileInlineImages` retries it once there is a network again.
  *
  * Passing null clears the cover.
@@ -24,17 +24,14 @@ export async function setDeckImage(
 ): Promise<Deck> {
   const saved = await editDeck(store, deckId, { image: dataUrl ?? undefined })
   if (!userId) return saved
+  const ref = { bucket: 'deck-images', userId, entityId: deckId } as const
 
   if (!dataUrl) {
     // Nothing references the object once the deck stops pointing at it, so it should not linger.
-    await storage.remove('deck-images', `${userId}/${deckId}`).catch(() => {})
+    await storage.remove(ref).catch(() => {})
     return saved
   }
 
-  const url = await uploadInlineImage(storage, {
-    bucket: 'deck-images',
-    path: `${userId}/${deckId}`,
-    dataUrl,
-  })
-  return url ? await editDeck(store, deckId, { image: url }) : saved
+  const path = await uploadInlineImage(storage, ref, dataUrl)
+  return path ? await editDeck(store, deckId, { image: path }) : saved
 }

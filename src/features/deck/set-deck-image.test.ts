@@ -11,22 +11,23 @@ function setup(image?: string) {
   const deck = { ...makeDeck({ id: 'd1', createdAt: NOW, name: 'Deck' }), image } as Deck
   const store = started(createDeckStore(new InMemoryRepository<Deck>([deck])))
   const storage = {
-    upload: vi.fn().mockResolvedValue({ url: 'https://cdn/d1' }),
+    upload: vi.fn().mockResolvedValue({ path: 'u1/d1' }),
     remove: vi.fn().mockResolvedValue(undefined),
+    signedUrl: vi.fn().mockResolvedValue('https://cdn/signed'),
   }
   return { store, storage: storage as unknown as StoragePort & typeof storage }
 }
 
 describe('setDeckImage', () => {
-  it('saves the cover inline first, then patches in the hosted URL', async () => {
+  it('saves the cover inline first, then patches in its object path', async () => {
     const { store, storage } = setup()
 
     const deck = await setDeckImage({ store, storage, userId: 'u1' }, 'd1', INLINE)
 
     expect(storage.upload).toHaveBeenCalledWith(
-      expect.objectContaining({ bucket: 'deck-images', path: 'u1/d1' }),
+      expect.objectContaining({ bucket: 'deck-images', userId: 'u1', entityId: 'd1' }),
     )
-    expect(deck.image).toBe('https://cdn/d1')
+    expect(deck.image).toBe('u1/d1')
   })
 
   it('keeps the inline cover when the upload fails', async () => {
@@ -48,11 +49,15 @@ describe('setDeckImage', () => {
   })
 
   it('clears the cover and deletes the stored object', async () => {
-    const { store, storage } = setup('https://cdn/d1')
+    const { store, storage } = setup('u1/d1')
 
     const deck = await setDeckImage({ store, storage, userId: 'u1' }, 'd1', null)
 
     expect(deck.image).toBeUndefined()
-    expect(storage.remove).toHaveBeenCalledWith('deck-images', 'u1/d1')
+    expect(storage.remove).toHaveBeenCalledWith({
+      bucket: 'deck-images',
+      userId: 'u1',
+      entityId: 'd1',
+    })
   })
 })

@@ -6,7 +6,14 @@ import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
 import { type Folder, selectFolders, useFolderStore, useFolderStoreApi } from '@/entities/folder'
 import type { Card } from '@/entities/card'
 import { useHistoryStoreApi } from '@/entities/learning-history'
-import { archiveDecks, deleteDeck, duplicateDeck, moveDecks, restoreDecks } from '@/features/deck'
+import {
+  archiveDecks,
+  deleteDeck,
+  duplicateDeck,
+  moveDecks,
+  restoreDecks,
+  useDeleteDeckDeps,
+} from '@/features/deck'
 import { resetDeckSrs } from '@/features/card'
 import { exportCardsAnki, exportCardsCsv } from '@/features/content'
 import { type MoveDestination, placeOfDestination } from '@/widgets/deck-tree'
@@ -81,6 +88,7 @@ export function useDeckSettings(deckId: string, nav: DeckSettingsNav): DeckSetti
   const cardStore = useCardStoreApi()
   const folderStore = useFolderStoreApi()
   const historyStore = useHistoryStoreApi()
+  const deleteDeps = useDeleteDeckDeps()
   const importFile = useImportFile()
 
   const { decks, deck, settings, ready } = useDeck(deckId)
@@ -120,7 +128,7 @@ export function useDeckSettings(deckId: string, nav: DeckSettingsNav): DeckSetti
       toast.success(t('deckSettings.toast.reset'))
     },
     remove: () => {
-      void deleteDeck(deckStore, cardStore, deckId)
+      void deleteDeck(deleteDeps, deckId)
       nav.onDeleted?.()
     },
     exportCsv: () => exportWith(() => exportCardsCsv(deck?.name ?? '', cards)),

@@ -1,5 +1,5 @@
 import {
-  createRootRoute,
+  createRootRouteWithContext,
   createRoute,
   createRouter,
   redirect,
@@ -8,10 +8,16 @@ import {
 import { ROUTES } from '@/shared/config/routes'
 import { RootLayout } from './RootLayout'
 import { authRedirect } from './auth-guard'
-import { services } from './composition-root'
+import type { Services } from './composition-root'
 import { lazyScreen } from './lazy-screen'
 
-const rootRoute = createRootRoute({
+/** The object graph reaches the route tree as router context — there is no module-level singleton
+ *  to import, because `createServices()` resolves long after this module is evaluated. */
+export interface RouterContext {
+  services: Services
+}
+
+const rootRoute = createRootRouteWithContext<RouterContext>()({
   component: RootLayout,
   /**
    * A cloud session is restored asynchronously, so the first navigation has to wait for the
@@ -19,7 +25,8 @@ const rootRoute = createRootRoute({
    * the login screen. Every navigation after that reads the session store, which AuthProvider keeps
    * current, so routing never waits on the network again.
    */
-  beforeLoad: async ({ location }) => {
+  beforeLoad: async ({ context, location }) => {
+    const { services } = context
     const { session, status } = services.sessionStore.getState()
     const kind =
       status === 'ready'
@@ -99,6 +106,7 @@ const routeTree = rootRoute.addChildren([
     },
     component: settings('SettingsChangePasswordScreen'),
   }),
+  route(ROUTES.settingsSync, settings('SettingsSyncScreen')),
   route(ROUTES.settingsPrivacy, settings('SettingsPrivacyScreen')),
   route(ROUTES.settingsSwipe, settings('SettingsSwipeScreen')),
   route(ROUTES.settingsSelect, settings('SettingsSelectScreen')),
@@ -111,14 +119,18 @@ const routeTree = rootRoute.addChildren([
   ),
 ])
 
-export const router = createRouter({
-  routeTree,
-  defaultPreload: 'intent',
-  scrollRestoration: false,
-})
+export const createAppRouter = (services: Services) =>
+  createRouter({
+    routeTree,
+    defaultPreload: 'intent',
+    scrollRestoration: false,
+    context: { services },
+  })
+
+export type AppRouter = ReturnType<typeof createAppRouter>
 
 declare module '@tanstack/react-router' {
   interface Register {
-    router: typeof router
+    router: AppRouter
   }
 }

@@ -1,14 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import {
   checkViewport,
-  episodesToText,
   isKeyboardOpen,
   isSettled,
-  sampleToText,
   type KeyboardEpisode,
   type ProbeCheck,
   type ViewportSample,
 } from './viewport-sample'
+import { episodesToText, sampleToText } from './viewport-text'
 
 /** A healthy reading: anchored shell, no keyboard, nothing focused. */
 const RESTING: ViewportSample = {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { buildPullFilter, buildPushPayload, type Checkpoint, rowsToPullResult } from './replication'
+import type { Checkpoint } from '@/shared/api'
+import { buildPullFilter, buildPushPayload, rowsToPullResult } from './replication'
 
 describe('buildPushPayload', () => {
   it('maps documents to rows stamped with the user id', () => {

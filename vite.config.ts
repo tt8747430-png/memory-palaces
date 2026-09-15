@@ -8,9 +8,11 @@ import { VitePWA } from 'vite-plugin-pwa'
 const escapeForRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
 /**
- * Queue Supabase writes that were made while offline (or during the last moments of a closing tab)
- * and replay them once the browser is back. RxDB's own retry covers a live session; this covers the
- * case where the tab dies first. Absent a configured project, there is nothing to queue.
+ * Replay a Supabase write cut off mid-Sync once the browser is back. A Sync never starts offline, so
+ * what lands here is a push that lost the network — or the tab — part-way through a cycle. The
+ * cycle itself has already failed and left the pending log untouched, so the next Sync pushes the
+ * same rows again; `push_documents` applies equal clocks as a no-op, which is what makes the replay
+ * safe to overlap. Absent a configured project, there is nothing to queue.
  */
 function supabasePushQueue(supabaseUrl: string | undefined) {
   if (!supabaseUrl) return []

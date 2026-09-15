@@ -371,6 +371,15 @@ authorization_url_path = "/oauth/consent"
 # Allow dynamic client registration
 allow_dynamic_registration = false
 
+# Both functions authorize in code — a user JWT checked with `auth.getUser`, or the project's
+# secret key on `apikey` — because the platform's check only understands the legacy JWT keys and
+# this app is on publishable and secret keys. See `functions/_shared/secret-keys.ts`.
+[functions.request-account-deletion]
+verify_jwt = false
+
+[functions.purge-account]
+verify_jwt = false
+
 [edge_runtime]
 enabled = true
 # Supported request policies: `oneshot`, `per_worker`.

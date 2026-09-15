@@ -38,12 +38,16 @@ describe('recordHistoryBatch', () => {
     )
   })
 
+  // 2001 writes against `InMemoryRepository`, which re-clones the whole collection on every save:
+  // quadratic by construction, ~2.5s on its own and slower under a loaded suite. The cap is the
+  // thing being tested and it needs the real number, so the budget is raised rather than the cap
+  // lowered.
   it('trims past the cap even when the batch crosses it in one go', async () => {
     const store = historyStore()
     const drafts = Array.from({ length: HISTORY_CAP + 5 }, () => answered('c1'))
     await recordHistoryBatch(store, drafts, 1000)
     expect(entries(store)).toHaveLength(HISTORY_CAP)
-  })
+  }, 20_000)
 
   it('writes nothing for an empty batch', async () => {
     const store = historyStore()

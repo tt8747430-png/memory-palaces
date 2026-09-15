@@ -111,7 +111,7 @@ describe.skipIf(!URL || !KEY)('guest → account claim', () => {
         dataOwner: { read: () => null, claim: () => {} },
         resetLocal: () => Promise.reject(new Error('a claim must never wipe the guest’s data')),
       })
-      await managerA.flush()
+      await managerA.runCycle()
 
       const { data: rows } = await supabase.from('decks').select('id,data').in('id', guestDeckIds)
       expect(rows).toHaveLength(2)
@@ -122,7 +122,7 @@ describe.skipIf(!URL || !KEY)('guest → account claim', () => {
         { table: 'decks', collection: deviceB as unknown as RxCollection<Identifiable> },
       ])
       await managerB.start(userId)
-      await managerB.flush()
+      await managerB.runCycle()
       await settle()
 
       const pulled = await deviceB.find().exec()

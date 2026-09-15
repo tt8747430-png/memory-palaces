@@ -2,9 +2,12 @@ import type { ReactNode } from 'react'
 import { createElement } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, renderHook, waitFor } from '@testing-library/react'
-import { InMemoryRepository } from '@/shared/api'
+import { InMemoryRepository, LocalObjectUrlStorage } from '@/shared/api'
+import { StoragePortContext } from '@/shared/lib'
+import { createSessionStore, type Session, SessionStoreContext } from '@/entities/session'
 import { started } from '@/shared/test/started'
 import { type Card, CardStoreContext, createCardStore } from '@/entities/card'
+import { createQuestionStore, type Question, QuestionStoreContext } from '@/entities/question'
 import { createDeckStore, type Deck, DeckStoreContext, makeDeck } from '@/entities/deck'
 import { createFolderStore, type Folder, FolderStoreContext } from '@/entities/folder'
 import {
@@ -33,15 +36,27 @@ function setup(deckOverrides: { archived?: boolean } = {}) {
 
   const wrapper = ({ children }: { children: ReactNode }) =>
     createElement(
-      FolderStoreContext,
-      { value: folderStore },
+      StoragePortContext,
+      { value: new LocalObjectUrlStorage() },
       createElement(
-        CardStoreContext,
-        { value: cardStore },
+        SessionStoreContext,
+        { value: createSessionStore(new InMemoryRepository<Session>()) },
         createElement(
-          HistoryStoreContext,
-          { value: historyStore },
-          createElement(DeckStoreContext, { value: deckStore }, children),
+          FolderStoreContext,
+          { value: folderStore },
+          createElement(
+            CardStoreContext,
+            { value: cardStore },
+            createElement(
+              HistoryStoreContext,
+              { value: historyStore },
+              createElement(
+                QuestionStoreContext,
+                { value: started(createQuestionStore(new InMemoryRepository<Question>())) },
+                createElement(DeckStoreContext, { value: deckStore }, children),
+              ),
+            ),
+          ),
         ),
       ),
     )

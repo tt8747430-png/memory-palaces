@@ -1,0 +1,232 @@
+import { describe, expect, it } from 'vitest'
+import { makeCard } from '@/entities/card'
+import { makeDeck } from '@/entities/deck'
+import { makeFolder } from '@/entities/folder'
+import { makeQuestion } from '@/entities/question'
+import { selectSyncState } from '@/entities/sync-state'
+import { AT, NOW, syncFixture } from './testing/fake-cloud'
+import { syncNow } from './sync-now'
+
+const deck = (id: string, extra: { parentId?: string; folderId?: string } = {}) =>
+  makeDeck({ id, createdAt: AT, name: id, ...extra })
+const folder = (id: string) => makeFolder({ id, createdAt: AT, name: id, color: 'sky', icon: '📁' })
+const card = (id: string, deckId: string) =>
+  makeCard({ id, createdAt: AT, deckId, front: id, back: id })
+const question = (id: string, deckId: string) =>
+  makeQuestion({ id, createdAt: AT, deckId, prompt: id, options: ['a', 'b'], correctAnswer: 0 })
+
+const state = (deps: ReturnType<typeof syncFixture>['deps']) =>
+  selectSyncState(deps.syncStateStore.getState())
+
+describe('syncNow', () => {
+  it('refuses to start offline, and touches nothing', async () => {
+    const { deps, cloud, log } = syncFixture()
+    deps.isOnline = () => false
+    await deps.deckStore.getState().save(deck('d1'))
+
+    await expect(syncNow(deps)).resolves.toEqual({ kind: 'offline' })
+    expect(cloud.cycles).toBe(0)
+    expect(log()).toHaveLength(1)
+  })
+
+  it('is clean when the cloud has not moved, and confirms what it pushed', async () => {
+    const { deps, cloud, log } = syncFixture()
+    await deps.deckStore.getState().save(deck('d1'))
+
+    await expect(syncNow(deps)).resolves.toEqual({ kind: 'clean' })
+    expect(cloud.cycles).toBe(1)
+    expect(log()).toEqual([])
+    expect(state(deps).lastSyncedAt).toBe(NOW)
+  })
+
+  it('pushes deck and folder removals silently when the cloud has not moved', async () => {
+    const { deps, cloud, log } = syncFixture()
+    await deps.deckStore.getState().save(deck('d1'))
+    await deps.folderStore.getState().save(folder('f1'))
+    await deps.deckStore.getState().remove('d1')
+    await deps.folderStore.getState().remove('f1')
+
+    await expect(syncNow(deps)).resolves.toEqual({ kind: 'clean' })
+    expect(cloud.row('decks', 'd1')?.deleted).toBe(true)
+    expect(log()).toEqual([])
+  })
+
+  it('merges when the cloud moved on documents this device never touched', async () => {
+    const { deps, cloud } = syncFixture()
+    cloud.write('decks', deck('remote'))
+
+    await expect(syncNow(deps)).resolves.toEqual({ kind: 'merged' })
+  })
+
+  it('merges a document edited on both sides — the conflict handler settles it', async () => {
+    const { deps, cloud } = syncFixture()
+    await deps.deckStore.getState().save(deck('d1'))
+    cloud.write('decks', { ...deck('d1'), name: 'renamed elsewhere' })
+
+    await expect(syncNow(deps)).resolves.toEqual({ kind: 'merged' })
+  })
+
+  it('asks about a document deleted here and edited there, running no cycle', async () => {
+    const { deps, cloud } = syncFixture()
+    await deps.deckStore.getState().save(deck('d1'))
+    await deps.deckStore.getState().remove('d1')
+    cloud.write('decks', { ...deck('d1'), name: 'edited elsewhere' })
+
+    await expect(syncNow(deps)).resolves.toEqual({
+      kind: 'needs-review',
+      items: [{ collection: 'decks', id: 'd1' }],
+    })
+    expect(cloud.cycles).toBe(0)
+  })
+
+  it('asks nothing about a document deleted on both sides', async () => {
+    const { deps, cloud } = syncFixture()
+    await deps.deckStore.getState().save(deck('d1'))
+    await deps.deckStore.getState().remove('d1')
+    cloud.write('decks', deck('d1'), true)
+
+    await expect(syncNow(deps)).resolves.toEqual({ kind: 'merged' })
+  })
+
+  it('asks about a deleted deck another device added cards to — reading parents, not content', async () => {
+    const { deps, cloud } = syncFixture()
+    await deps.deckStore.getState().save(deck('d1'))
+    await deps.deckStore.getState().remove('d1')
+    cloud.write('cards', card('remote-card', 'd1'))
+
+    await expect(syncNow(deps)).resolves.toEqual({
+      kind: 'needs-review',
+      items: [
+        {
+          collection: 'decks',
+          id: 'd1',
+          descendants: [{ collection: 'cards', id: 'remote-card' }],
+        },
+      ],
+    })
+    expect(cloud.fetched).toEqual([])
+  })
+
+  it('finds another device’s additions at any depth under a deleted folder', async () => {
+    const { deps, cloud } = syncFixture()
+    await deps.folderStore.getState().save(folder('f1'))
+    await deps.folderStore.getState().remove('f1')
+    cloud.write('decks', deck('new-deck', { folderId: 'f1' }))
+    cloud.write('cards', card('deep-card', 'new-deck'))
+
+    const outcome = await syncNow(deps)
+
+    expect(outcome.kind).toBe('needs-review')
+    const [item] = outcome.kind === 'needs-review' ? outcome.items : []
+    expect(item?.id).toBe('f1')
+    expect(item?.descendants).toEqual(
+      expect.arrayContaining([
+        { collection: 'decks', id: 'new-deck' },
+        { collection: 'cards', id: 'deep-card' },
+      ]),
+    )
+  })
+
+  it('asks about a question under a deleted deck that another device edited', async () => {
+    const { deps, cloud } = syncFixture()
+    await deps.questionStore.getState().save(question('q1', 'd1'))
+    await deps.questionStore.getState().remove('q1')
+    cloud.write('questions', { ...question('q1', 'd1'), prompt: 'edited elsewhere' })
+
+    await expect(syncNow(deps)).resolves.toEqual({
+      kind: 'needs-review',
+      items: [{ collection: 'questions', id: 'q1' }],
+    })
+  })
+
+  it('does not ask again about a document already answered in this Sync', async () => {
+    const { deps, cloud } = syncFixture()
+    await deps.deckStore.getState().save(deck('d1'))
+    await deps.deckStore.getState().remove('d1')
+    cloud.write('decks', deck('d1'))
+
+    await expect(syncNow(deps, { answered: new Set(['decks:d1']) })).resolves.toEqual({
+      kind: 'merged',
+    })
+  })
+
+  it('still asks about a clash that was not among the answers', async () => {
+    const { deps, cloud } = syncFixture()
+    for (const id of ['d1', 'd2']) {
+      await deps.deckStore.getState().save(deck(id))
+      await deps.deckStore.getState().remove(id)
+      cloud.write('decks', deck(id))
+    }
+
+    await expect(syncNow(deps, { answered: new Set(['decks:d1']) })).resolves.toEqual({
+      kind: 'needs-review',
+      items: [{ collection: 'decks', id: 'd2' }],
+    })
+  })
+
+  describe('checkpoints', () => {
+    it('step over the rows this device pushed, so its own echo is not news', async () => {
+      const { deps, cloud } = syncFixture()
+      cloud.write('decks', deck('remote'))
+      await deps.deckStore.getState().save(deck('mine'))
+
+      await syncNow(deps)
+
+      expect(state(deps).checkpoints.decks).toEqual({
+        updated_at: cloud.row('decks', 'mine')?.updated_at,
+        id: 'mine',
+      })
+      expect(state(deps).cloudChanged).toBe(false)
+      await expect(cloud.peek('decks', state(deps).checkpoints.decks ?? null)).resolves.toEqual([])
+    })
+
+    it('stop short of another device’s row that landed during the cycle, and say the cloud moved', async () => {
+      const { deps, cloud } = syncFixture()
+      await deps.deckStore.getState().save(deck('mine'))
+      cloud.duringCycle = () => cloud.write('decks', deck('mid-sync'))
+
+      await syncNow(deps)
+
+      // That row was never classified, so the next Sync has to see it.
+      const next = await cloud.peek('decks', state(deps).checkpoints.decks ?? null)
+      expect(next.map((change) => change.id)).toContain('mid-sync')
+      expect(state(deps).cloudChanged).toBe(true)
+    })
+
+    it('never overwrite an Autosync toggle made while the cycle ran', async () => {
+      const { deps, cloud } = syncFixture()
+      cloud.duringCycle = async () => {
+        const current = selectSyncState(deps.syncStateStore.getState())
+        await deps.syncStateStore.getState().save({ ...current, autosync: true })
+      }
+
+      await syncNow(deps)
+
+      expect(state(deps).autosync).toBe(true)
+    })
+  })
+
+  it('leaves the log and the checkpoints untouched when the cycle fails', async () => {
+    const { deps, cloud, log } = syncFixture()
+    cloud.write('decks', deck('remote'))
+    await deps.deckStore.getState().save(deck('d1'))
+    cloud.failNextCycle('push refused')
+
+    await expect(syncNow(deps)).resolves.toEqual({ kind: 'failed', reason: 'push refused' })
+    expect(log()).toHaveLength(1)
+    expect(state(deps).checkpoints.decks).toBeUndefined()
+    expect(state(deps).lastSyncedAt).toBeNull()
+  })
+
+  it('keeps a write made during the cycle pending', async () => {
+    const { deps, cloud, log } = syncFixture()
+    await deps.deckStore.getState().save(deck('d1'))
+    cloud.duringCycle = async () => {
+      await deps.deckStore.getState().save(deck('d2'))
+    }
+
+    await syncNow(deps)
+
+    expect(log().map((row) => row.entityId)).toEqual(['d2'])
+  })
+})

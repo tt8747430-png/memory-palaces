@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { AuthRetryableFetchError } from '@supabase/supabase-js'
 import { SupabaseAuthGateway } from './supabase-auth-gateway'
 
 type Handler = (event: string, session: { user: unknown } | null) => void
@@ -116,6 +117,28 @@ describe('SupabaseAuthGateway', () => {
 
     expect(seen).toEqual(['account'])
     expect(localStorage.getItem('mindscape:guest')).toBeNull()
+  })
+
+  it('signs out locally when the revoke cannot reach the server', async () => {
+    const client = makeClient()
+    // auth-js removes the stored session first and returns the transport failure anyway.
+    client.auth.signOut.mockResolvedValue({
+      error: new AuthRetryableFetchError('Failed to fetch', 0),
+    })
+    const gateway = gatewayFor(client)
+    await gateway.persistGuest()
+
+    await expect(gateway.signOut()).resolves.toBeUndefined()
+    expect(localStorage.getItem('mindscape:guest')).toBeNull()
+  })
+
+  it('still rethrows a sign-out failure that is not the network', async () => {
+    const client = makeClient()
+    client.auth.signOut.mockResolvedValue({
+      error: { message: 'session_not_found', code: 'session_not_found' },
+    })
+
+    await expect(gatewayFor(client).signOut()).rejects.toThrow('session_not_found')
   })
 
   it('unsubscribes from the supabase listener', () => {

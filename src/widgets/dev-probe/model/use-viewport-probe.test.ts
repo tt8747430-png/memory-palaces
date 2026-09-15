@@ -1,6 +1,6 @@
 import { act, cleanup, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { useViewportProbe } from './viewport-sample'
+import { useViewportProbe } from './use-viewport-probe'
 
 /** One animation frame of the probe's sampling loop. */
 const frame = async () => {

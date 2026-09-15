@@ -7,6 +7,7 @@ import { SettingsPrivacyPage } from '@/pages/settings-privacy'
 import { SettingsProfilePage } from '@/pages/settings-profile'
 import { SettingsSelectPage } from '@/pages/settings-select'
 import { SettingsSwipePage } from '@/pages/settings-swipe'
+import { SettingsSyncPage } from '@/pages/settings-sync'
 import { useSessionStore } from '@/entities/session'
 import { useAuthActions } from '@/features/session'
 import { ROUTES } from '@/shared/config/routes'
@@ -20,6 +21,7 @@ export function SettingsScreen() {
     <SettingsPage
       onBack={useBackTo(ROUTES.profile)}
       onEditProfile={() => navigate({ to: ROUTES.settingsProfile })}
+      onSync={() => navigate({ to: ROUTES.settingsSync })}
       onPrivacy={() => navigate({ to: ROUTES.settingsPrivacy })}
       onSwipe={() => navigate({ to: ROUTES.settingsSwipe })}
       onSelectToolbar={() => navigate({ to: ROUTES.settingsSelect })}
@@ -56,6 +58,10 @@ export function SettingsChangePasswordScreen() {
   return (
     <SettingsChangePasswordPage recovery={recovery ?? false} onBack={useBackTo(ROUTES.settings)} />
   )
+}
+
+export function SettingsSyncScreen() {
+  return <SettingsSyncPage onBack={useBackTo(ROUTES.settings)} />
 }
 
 export function SettingsPrivacyScreen() {

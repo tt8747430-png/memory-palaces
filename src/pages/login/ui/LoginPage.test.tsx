@@ -11,8 +11,14 @@ import { createProfileStore, type Profile, ProfileStoreContext } from '@/entitie
 import { LocalAuthGateway } from '@/app/persistence/local-auth-gateway'
 import { LoginPage } from './LoginPage'
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  setOnline(true)
+})
 beforeEach(() => localStorage.clear())
+
+const setOnline = (value: boolean) =>
+  Object.defineProperty(navigator, 'onLine', { value, configurable: true })
 
 function renderLogin(props: Partial<Parameters<typeof LoginPage>[0]> = {}) {
   const gateway = new LocalAuthGateway(() => 'id-1')
@@ -100,6 +106,16 @@ describe('LoginPage', () => {
 
     await waitFor(() => expect(gateway.signIn).toHaveBeenCalled())
     expect(onAuthed).not.toHaveBeenCalled()
+  })
+
+  it('gates the email submit offline and says so before the press', () => {
+    setOnline(false)
+    renderLogin()
+
+    expect(screen.getByRole('button', { name: /^sign in$/i })).toBeDisabled()
+    expect(screen.getByRole('status')).toHaveTextContent(/you're offline/i)
+    // Guest entry is the device's own decision and stays available.
+    expect(screen.getByRole('button', { name: /continue as a guest/i })).toBeEnabled()
   })
 
   it('routes to signup and forgot', async () => {

@@ -5,6 +5,7 @@ import {
   Bell,
   CheckSquare,
   ChevronRight,
+  CloudUpload,
   FlaskConical,
   Globe,
   HelpCircle,
@@ -53,6 +54,7 @@ import {
 export interface SettingsPageProps {
   onBack?: () => void
   onEditProfile?: () => void
+  onSync?: () => void
   onPrivacy?: () => void
   onSwipe?: () => void
   onSelectToolbar?: () => void
@@ -67,6 +69,7 @@ export interface SettingsPageProps {
 export function SettingsPage({
   onBack,
   onEditProfile,
+  onSync,
   onPrivacy,
   onSwipe,
   onSelectToolbar,
@@ -254,6 +257,13 @@ export function SettingsPage({
         </SettingsSection>
 
         <SettingsSection title={t('settings.privacySection')}>
+          <SettingsRow
+            kind="nav"
+            icon={<CloudUpload />}
+            label={t('sync.settings.title')}
+            description={t('sync.settings.subtitle')}
+            onClick={() => onSync?.()}
+          />
           <SettingsRow
             kind="nav"
             icon={<Shield />}

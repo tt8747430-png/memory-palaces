@@ -1,4 +1,4 @@
-import type { StorageBucket, StoragePort } from '@/shared/api'
+import type { ObjectRef, StoragePort } from '@/shared/api'
 import { dataUrlToBlob } from './avatar'
 
 /**
@@ -12,24 +12,23 @@ export const isInlineImage = (value: string | null | undefined): value is string
   typeof value === 'string' && value.startsWith('data:')
 
 /**
- * Moves an inline image into storage, returning its hosted URL — or null if that could not happen,
- * in which case the caller keeps the inline copy and tries again later. Never throws: failing to
- * upload a picture must not fail the write that carried it.
+ * Moves an inline image into storage, returning its object **path** — or null if that could not
+ * happen, in which case the caller keeps the inline copy and tries again later. Never throws:
+ * failing to upload a picture must not fail the write that carried it.
+ *
+ * A path rather than a URL because the buckets are private: a signed URL expires, and a document
+ * that stored one would carry a dead link to every other device.
  */
 export async function uploadInlineImage(
   storage: StoragePort,
-  input: { bucket: StorageBucket; path: string; dataUrl: string },
+  ref: ObjectRef,
+  dataUrl: string,
 ): Promise<string | null> {
-  if (!isInlineImage(input.dataUrl)) return null
+  if (!isInlineImage(dataUrl)) return null
   try {
-    const file = dataUrlToBlob(input.dataUrl)
-    const { url } = await storage.upload({
-      bucket: input.bucket,
-      path: input.path,
-      file,
-      contentType: file.type,
-    })
-    return url
+    const file = dataUrlToBlob(dataUrl)
+    const { path } = await storage.upload({ ...ref, file, contentType: file.type })
+    return path
   } catch {
     return null
   }

@@ -10,8 +10,9 @@ const DATA_URL = `data:image/jpeg;base64,${btoa('photo')}`
 function setup() {
   const store: ProfileStore = started(createProfileStore(new InMemoryRepository<Profile>()))
   const storage = {
-    upload: vi.fn().mockResolvedValue({ url: 'https://cdn/avatars/u1/profile' }),
+    upload: vi.fn().mockResolvedValue({ path: 'u1/profile' }),
     remove: vi.fn().mockResolvedValue(undefined),
+    signedUrl: vi.fn().mockResolvedValue('https://cdn/signed'),
   }
   return { store, storage }
 }
@@ -19,16 +20,21 @@ function setup() {
 describe('setProfilePhoto', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('saves the local photo first, then patches in the hosted URL', async () => {
+  it('saves the local photo first, then patches in its object path', async () => {
     const { store, storage } = setup()
 
     const profile = await setProfilePhoto({ store, storage, userId: 'u1' }, DATA_URL, NOW)
 
     expect(storage.upload).toHaveBeenCalledWith(
-      expect.objectContaining({ bucket: 'avatars', path: 'u1/profile', contentType: 'image/jpeg' }),
+      expect.objectContaining({
+        bucket: 'avatars',
+        userId: 'u1',
+        entityId: 'profile',
+        contentType: 'image/jpeg',
+      }),
     )
-    expect(profile.avatar).toBe('https://cdn/avatars/u1/profile')
-    expect(store.getState().profile?.avatar).toBe('https://cdn/avatars/u1/profile')
+    expect(profile.avatar).toBe('u1/profile')
+    expect(store.getState().profile?.avatar).toBe('u1/profile')
   })
 
   it('keeps the local photo when the upload fails', async () => {
@@ -50,10 +56,10 @@ describe('setProfilePhoto', () => {
     expect(profile.avatar).toBe(DATA_URL)
   })
 
-  it('leaves an already-hosted photo alone', async () => {
+  it('leaves a photo that is already in storage alone', async () => {
     const { store, storage } = setup()
 
-    await setProfilePhoto({ store, storage, userId: 'u1' }, 'https://cdn/existing.jpg', NOW)
+    await setProfilePhoto({ store, storage, userId: 'u1' }, 'u1/profile', NOW)
 
     expect(storage.upload).not.toHaveBeenCalled()
   })

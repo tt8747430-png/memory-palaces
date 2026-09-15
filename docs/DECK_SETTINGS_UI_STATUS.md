@@ -24,7 +24,7 @@ _Invented_.**
 | Reset progress      | Works  | Behind a confirmation; `resetDeckSrs` clears every card's schedule.                           |
 | Archive / restore   | Works  | Archiving is confirmed, lifts the deck out of its folder or parent (ADR 0003); restore → top. |
 | Export              | Works  | CSV and Anki text. Disabled with no cards.                                                    |
-| Delete              | Works  | Behind a destructive confirmation.                                                            |
+| Delete              | Works  | Behind a destructive confirmation; `deleteDeck` takes subdecks, cards, questions and covers.  |
 
 ## Algorithm (`pages/deck-algorithm`)
 
@@ -60,14 +60,16 @@ double-tapped confirm cannot run the command twice. Never wire a `ConfirmDialog`
 ## Persisted shape
 
 `settings` is `Partial<DeckSettings>` on the deck document; a missing key resolves to the default at read time, so a
-new key needs no rewrite. The RxDB `decks` schema is at **version 3**. v1 and v2 are identity — v2 only widened the
+new key needs no rewrite. The RxDB `decks` schema is at **version 4**. v1 and v2 are identity — v2 only widened the
 card-style preset enum, and a widened enum still accepts everything the old one did. v3 is the first that rewrites:
 it widened the enum again (five new scenes, plus the `hand` font) but also **retired `outlined`**, so a deck still
-naming it is repainted `plain` and its font, size and alignment are kept. Any further change to the stored shape
-needs a version bump and a strategy in `app/persistence/database.ts` ([CLAUDE.md](../CLAUDE.md), "persisted data").
+naming it is repainted `plain` and its font, size and alignment are kept. v4 is the cover image, not the settings: the
+buckets went private, so a stored public URL becomes its `<userId>/<deckId>` object path (`completeDeck`, run both as
+the strategy and on every read). Any further change to the stored shape needs a version bump and a strategy in
+`app/persistence/database.ts` ([CLAUDE.md](../CLAUDE.md), "persisted data").
 
 **A migration is only half of retiring an id.** Migration strategies run over the documents already on this device;
 replication writes pulled rows straight into the collection and runs none, and no validator plugin is registered — so
 an un-upgraded second device goes on pushing the retired id after the migration has run. `coerceCardStyle`
-(`shared/lib/card-style.ts`) is the other half: `resolveDeckSettings` coerces on read so every consumer paints
+(`shared/lib/card-style/`) is the other half: `resolveDeckSettings` coerces on read so every consumer paints
 something, while `validateDeckSettings` stays strict for writes. Retire another id and both halves need the entry.

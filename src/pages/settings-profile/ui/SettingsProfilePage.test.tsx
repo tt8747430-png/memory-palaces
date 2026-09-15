@@ -6,8 +6,18 @@ import userEvent from '@testing-library/user-event'
 import type { ReactNode } from 'react'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
+import type { AccountDeletionPort, ScheduledDeletion } from '@/shared/api'
 import { InMemoryRepository, LocalObjectUrlStorage } from '@/shared/api'
-import { StoragePortContext } from '@/shared/lib'
+import {
+  AccountDeletionContext,
+  AuthGatewayContext,
+  ResetLocalDataContext,
+  StoragePortContext,
+  type SyncOutcome,
+  type SyncRunner,
+  SyncRunnerContext,
+} from '@/shared/lib'
+import { LocalAuthGateway } from '@/app/persistence/local-auth-gateway'
 import { createSessionStore, type Session, SessionStoreContext } from '@/entities/session'
 import {
   createProfileStore,
@@ -15,7 +25,7 @@ import {
   type Profile,
   ProfileStoreContext,
 } from '@/entities/profile'
-import { createDeckStore, type Deck, DeckStoreContext, makeDeck } from '@/entities/deck'
+import { createDeckStore, type Deck, DeckStoreContext } from '@/entities/deck'
 import { type Card, CardStoreContext, createCardStore } from '@/entities/card'
 import { createFolderStore, type Folder, FolderStoreContext } from '@/entities/folder'
 import { createQuestionStore, type Question, QuestionStoreContext } from '@/entities/question'
@@ -37,7 +47,19 @@ const seeded = makeProfile({
   email: 'ada@x.io',
 })
 
-function renderPage(opts: { profile?: Profile; decks?: Deck[] } = {}) {
+const scheduled: ScheduledDeletion = {
+  requestedAt: '2026-09-15T00:00:00.000Z',
+  purgeAfter: '2026-10-15T00:00:00.000Z',
+}
+
+function renderPage(
+  opts: {
+    profile?: Profile
+    decks?: Deck[]
+    deletion?: Partial<AccountDeletionPort>
+    runner?: Partial<SyncRunner>
+  } = {},
+) {
   const profileRepo = new InMemoryRepository<Profile>(opts.profile ? [opts.profile] : [])
   const deckRepo = new InMemoryRepository<Deck>(opts.decks ?? [])
   const handlers = {
@@ -45,41 +67,74 @@ function renderPage(opts: { profile?: Profile; decks?: Deck[] } = {}) {
     onChangePassword: vi.fn(),
     onDeleteAccount: vi.fn(),
   }
+  const deletion: AccountDeletionPort = {
+    scheduled: vi.fn().mockResolvedValue(null),
+    request: vi.fn().mockResolvedValue(scheduled),
+    cancel: vi.fn().mockResolvedValue(undefined),
+    ...opts.deletion,
+  }
+  const runner: SyncRunner = {
+    phase: 'idle',
+    error: null,
+    review: null,
+    run: vi.fn().mockResolvedValue({ kind: 'clean' }),
+    restore: vi.fn().mockResolvedValue({ kind: 'clean' }),
+    openReview: vi.fn().mockResolvedValue({ kind: 'clean' }),
+    resolve: vi.fn().mockResolvedValue({ kind: 'clean' }),
+    dismiss: vi.fn(),
+    reloadReview: vi.fn(),
+    ...opts.runner,
+  }
+  const resetLocalData = vi.fn().mockResolvedValue(undefined)
   const wrap = (children: ReactNode) => (
     <I18nextProvider i18n={i18n}>
-      <StoragePortContext value={new LocalObjectUrlStorage()}>
-        <SessionStoreContext value={createSessionStore(new InMemoryRepository<Session>())}>
-          <ProfileStoreContext value={started(createProfileStore(profileRepo))}>
-            <DeckStoreContext value={started(createDeckStore(deckRepo))}>
-              <CardStoreContext value={started(createCardStore(new InMemoryRepository<Card>()))}>
-                <FolderStoreContext
-                  value={started(createFolderStore(new InMemoryRepository<Folder>()))}
-                >
-                  <QuestionStoreContext
-                    value={started(createQuestionStore(new InMemoryRepository<Question>()))}
-                  >
-                    <ProgressStoreContext
-                      value={started(createProgressStore(new InMemoryRepository<Progress>()))}
-                    >
-                      <NotificationStoreContext
-                        value={started(
-                          createNotificationStore(new InMemoryRepository<AppNotification>()),
-                        )}
+      <AuthGatewayContext value={new LocalAuthGateway()}>
+        <StoragePortContext value={new LocalObjectUrlStorage()}>
+          <AccountDeletionContext value={deletion}>
+            <ResetLocalDataContext value={resetLocalData}>
+              <SyncRunnerContext value={runner}>
+                <SessionStoreContext value={createSessionStore(new InMemoryRepository<Session>())}>
+                  <ProfileStoreContext value={started(createProfileStore(profileRepo))}>
+                    <DeckStoreContext value={started(createDeckStore(deckRepo))}>
+                      <CardStoreContext
+                        value={started(createCardStore(new InMemoryRepository<Card>()))}
                       >
-                        {children}
-                      </NotificationStoreContext>
-                    </ProgressStoreContext>
-                  </QuestionStoreContext>
-                </FolderStoreContext>
-              </CardStoreContext>
-            </DeckStoreContext>
-          </ProfileStoreContext>
-        </SessionStoreContext>
-      </StoragePortContext>
+                        <FolderStoreContext
+                          value={started(createFolderStore(new InMemoryRepository<Folder>()))}
+                        >
+                          <QuestionStoreContext
+                            value={started(createQuestionStore(new InMemoryRepository<Question>()))}
+                          >
+                            <ProgressStoreContext
+                              value={started(
+                                createProgressStore(new InMemoryRepository<Progress>()),
+                              )}
+                            >
+                              <NotificationStoreContext
+                                value={started(
+                                  createNotificationStore(
+                                    new InMemoryRepository<AppNotification>(),
+                                  ),
+                                )}
+                              >
+                                {children}
+                              </NotificationStoreContext>
+                            </ProgressStoreContext>
+                          </QuestionStoreContext>
+                        </FolderStoreContext>
+                      </CardStoreContext>
+                    </DeckStoreContext>
+                  </ProfileStoreContext>
+                </SessionStoreContext>
+              </SyncRunnerContext>
+            </ResetLocalDataContext>
+          </AccountDeletionContext>
+        </StoragePortContext>
+      </AuthGatewayContext>
     </I18nextProvider>
   )
   render(wrap(<SettingsProfilePage {...handlers} />))
-  return { profileRepo, deckRepo, ...handlers }
+  return { profileRepo, deckRepo, deletion, runner, resetLocalData, ...handlers }
 }
 
 describe('SettingsProfilePage', () => {
@@ -132,19 +187,90 @@ describe('SettingsProfilePage', () => {
     expect(screen.queryByRole('button', { name: /log out/i })).not.toBeInTheDocument()
   })
 
-  it('deletes the account only after confirming — wiping decks and signing out', async () => {
+  const openDelete = async (user: ReturnType<typeof userEvent.setup>) => {
+    await user.click(await screen.findByRole('button', { name: /delete account/i }))
+    return screen.findByRole('dialog')
+  }
+
+  it('is gated offline before the press — deleting needs the server to answer now', async () => {
+    Object.defineProperty(navigator, 'onLine', { value: false, configurable: true })
+    try {
+      const { runner, deletion } = renderPage({ profile: seeded })
+
+      const row = await screen.findByRole('button', { name: /delete account/i })
+      expect(row).toBeDisabled()
+      expect(row).toHaveTextContent(/you're offline/i)
+      expect(runner.run).not.toHaveBeenCalled()
+      expect(deletion.request).not.toHaveBeenCalled()
+    } finally {
+      Object.defineProperty(navigator, 'onLine', { value: true, configurable: true })
+    }
+  })
+
+  it('synchronises first, and only then asks for the word', async () => {
     const user = userEvent.setup()
-    const deck = makeDeck({ id: 'd1', createdAt: new Date(0).toISOString(), name: 'Home' })
-    const { deckRepo, onDeleteAccount } = renderPage({ profile: seeded, decks: [deck] })
+    let finish: (outcome: SyncOutcome) => void = () => {}
+    const { runner, deletion } = renderPage({
+      profile: seeded,
+      runner: { run: vi.fn(() => new Promise<SyncOutcome>((resolve) => (finish = resolve))) },
+    })
+
+    const sheet = await openDelete(user)
+    expect(within(sheet).getByRole('status')).toHaveTextContent(/synchronising your decks/i)
+    expect(within(sheet).queryByPlaceholderText('DELETE')).not.toBeInTheDocument()
+    expect(runner.run).toHaveBeenCalledTimes(1)
+
+    finish({ kind: 'clean' })
+
+    expect(await within(sheet).findByPlaceholderText('DELETE')).toBeInTheDocument()
+    expect(within(sheet).getByRole('button', { name: /schedule deletion/i })).toBeDisabled()
+    expect(deletion.request).not.toHaveBeenCalled()
+  })
+
+  it('schedules the purge and wipes the device once the word matches', async () => {
+    const user = userEvent.setup()
+    const { deletion, runner, resetLocalData, onDeleteAccount } = renderPage({ profile: seeded })
+
+    const sheet = await openDelete(user)
+    await user.type(await within(sheet).findByPlaceholderText('DELETE'), 'DELETE')
+    await user.click(within(sheet).getByRole('button', { name: /schedule deletion/i }))
+
+    await waitFor(() => expect(deletion.request).toHaveBeenCalled())
+    // Once to open the confirmation, once more right before the wipe.
+    expect(runner.run).toHaveBeenCalledTimes(2)
+    expect(resetLocalData).toHaveBeenCalled()
+    expect(onDeleteAccount).toHaveBeenCalled()
+  })
+
+  it('stops and explains when the Sync could not finish — nothing is wiped, nothing scheduled', async () => {
+    const user = userEvent.setup()
+    const { deletion, resetLocalData, onDeleteAccount } = renderPage({
+      profile: seeded,
+      runner: { run: vi.fn().mockResolvedValue({ kind: 'failed', reason: 'push refused' }) },
+    })
+
+    const sheet = await openDelete(user)
+
+    expect(await within(sheet).findByRole('alert')).toHaveTextContent(/nothing was deleted/i)
+    expect(within(sheet).queryByPlaceholderText('DELETE')).not.toBeInTheDocument()
+    expect(within(sheet).getByRole('button', { name: /try again/i })).toBeEnabled()
+    expect(deletion.request).not.toHaveBeenCalled()
+    expect(resetLocalData).not.toHaveBeenCalled()
+    expect(onDeleteAccount).not.toHaveBeenCalled()
+  })
+
+  it('gets out of the way when the Sync stops to ask about deletions', async () => {
+    const user = userEvent.setup()
+    const { deletion } = renderPage({
+      profile: seeded,
+      runner: {
+        run: vi.fn().mockResolvedValue({ kind: 'needs-review', items: [] }),
+      },
+    })
 
     await user.click(await screen.findByRole('button', { name: /delete account/i }))
-    expect(onDeleteAccount).not.toHaveBeenCalled()
-    expect(await deckRepo.getAll()).toHaveLength(1)
 
-    const sheet = await screen.findByRole('alertdialog')
-    await user.click(within(sheet).getByRole('button', { name: /delete account/i }))
-
-    await waitFor(async () => expect(await deckRepo.getAll()).toEqual([]))
-    expect(onDeleteAccount).toHaveBeenCalled()
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    expect(deletion.request).not.toHaveBeenCalled()
   })
 })

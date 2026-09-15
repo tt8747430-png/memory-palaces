@@ -20,7 +20,7 @@ import {
   restoreDecks,
   toggleDeckFavorite,
 } from '@/features/deck'
-import { deleteFolder, reorderFolders } from '@/features/folder'
+import { deleteFolder, reorderFolders, useDeleteFolderDeps } from '@/features/folder'
 import {
   canReparent,
   findEntity,
@@ -76,6 +76,7 @@ export function useLibraryActions({
   const deckStore = useDeckStoreApi()
   const folderStore = useFolderStoreApi()
   const cardStore = useCardStoreApi()
+  const deleteDeps = useDeleteFolderDeps()
 
   const deckById = (id: string) => findEntity(decks, id)
   const folderName = (id: string | null) => findEntity(folders, id)?.name
@@ -162,10 +163,10 @@ export function useLibraryActions({
 
   const moveDeckTo = (deck: Deck, dest: MoveDestination) => moveDecksTo([deck.id], dest)
 
-  const removeDeck = (deckId: string) => void deleteDeck(deckStore, cardStore, deckId)
+  const removeDeck = (deckId: string) => void deleteDeck(deleteDeps, deckId)
 
   const removeFolder = (id: string) => {
-    void deleteFolder(folderStore, deckStore, cardStore, id)
+    void deleteFolder(deleteDeps, id)
     if (folderId === id) onFolderGone()
   }
 
@@ -221,8 +222,8 @@ export function useLibraryActions({
 
   const confirmBulkDelete = () => {
     const folderIds = [...selection.ids].filter((id) => folders.some((f) => f.id === id))
-    folderIds.forEach((id) => void deleteFolder(folderStore, deckStore, cardStore, id))
-    carrierIds.forEach((id) => void deleteDeck(deckStore, cardStore, id))
+    folderIds.forEach((id) => void deleteFolder(deleteDeps, id))
+    carrierIds.forEach((id) => void deleteDeck(deleteDeps, id))
     if (folderId && folderIds.includes(folderId)) onFolderGone()
     selection.exit()
   }

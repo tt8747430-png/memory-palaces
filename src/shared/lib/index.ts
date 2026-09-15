@@ -37,6 +37,18 @@ export {
 } from './motion'
 export { coverSquare, dataUrlToBlob, fileToSquareImage, DECK_IMAGE_PX } from './avatar'
 export { isInlineImage, uploadInlineImage } from './inline-image'
+export { coerceImagePath } from './image-path'
+export {
+  IMAGE_CACHE,
+  imageCacheKey,
+  isImageSettled,
+  markImageMissing,
+  onImageSettled,
+  readCachedImage,
+  writeCachedImage,
+  type CachedImage,
+} from './image-cache'
+export { useImageSrc, type ImageSrc } from './use-image-src'
 export { downloadText } from './download'
 export { useStickyHeader, type StickyHeader } from './sticky-header/use-sticky-header'
 export { HeaderElevationContext, useHeaderElevation } from './sticky-header/header-elevation'
@@ -91,6 +103,22 @@ export { useVirtualKeyboard, type VirtualKeyboard } from './use-virtual-keyboard
 export { useSortableSensors } from './use-sortable-sensors'
 export { shuffle } from './shuffle'
 export { nextOrder, reorderById, byOrderThenCreated, byNewestFirst, byOldestFirst } from './order'
+export { classifyChange, descendantsOf, parentIdsOf } from './sync-divergence'
+export type { Divergence, Parented, PendingLike } from './sync-divergence'
+export { errorMessage } from './error-message'
+export { daysFrom, longDate } from './long-date'
+export { SyncRunnerContext, useSyncRunner } from './sync-runner'
+export type {
+  SyncDocumentRef,
+  SyncOutcome,
+  SyncPhase,
+  SyncReview,
+  SyncReviewDecision,
+  SyncReviewItem,
+  SyncReviewRow,
+  SyncReviewRows,
+  SyncRunner,
+} from './sync-runner'
 export { CONTENT_SORTS, sortContent, type ContentSort, type SortableContent } from './content-order'
 export {
   ContentImportError,
@@ -122,8 +150,11 @@ export { AuthGatewayContext, useAuthGateway } from './auth-gateway-context'
 export { authErrorKey, authErrorMessage } from './auth-error-copy'
 export { parseAuthCallback, type AuthCallback } from './auth-callback'
 export { StoragePortContext, useStorage } from './storage-context'
+export { AccountDeletionContext, useAccountDeletion } from './account-deletion-context'
+export { ResetLocalDataContext, useResetLocalData } from './reset-local-data-context'
 export { useValidatedSubmit, type FieldErrors, type ValidatedSubmit } from './use-validated-submit'
-export { useOnline } from './use-online'
+export { readOnline, useOnline } from './use-online'
+export { useLatest } from './use-latest'
 export { newest, type Clocked } from './newest'
 export { mergeProgress, type MergeableProgress } from './merge-progress'
 export { mergeCard, type MergeableCard } from './merge-srs'
@@ -144,6 +175,8 @@ export {
   createSingletonStore,
   selectIsReady,
   type CollectionState,
+  type CollectionStoreOptions,
+  type PendingChangePort,
   type SingletonState,
   type StoreStatus,
 } from './entity-store'

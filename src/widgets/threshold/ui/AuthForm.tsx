@@ -4,7 +4,7 @@ import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { authErrorMessage, authRise, authStagger, cn, useOnline } from '@/shared/lib'
 import type { OAuthProvider } from '@/shared/api'
-import { AuthScreen, Button, SocialButtons } from '@/shared/ui'
+import { AuthScreen, Button, OfflineNotice, SocialButtons } from '@/shared/ui'
 import { useAuthActions } from '@/features/session'
 import { AuthHeader } from './AuthHeader'
 
@@ -72,6 +72,15 @@ export function AuthForm({
           <AuthHeader title={title} subtitle={subtitle} />
         </motion.div>
 
+        {/* Signing in and signing up both need the server to answer *now*, so they say so before
+            the press rather than letting the transport fail into a toast. Continuing as a guest
+            below stays available: that decision is the device's alone. */}
+        {online ? null : (
+          <motion.div variants={authRise} className="pb-4">
+            <OfflineNotice />
+          </motion.div>
+        )}
+
         <motion.form
           variants={authRise}
           className="flex flex-col gap-4"
@@ -79,7 +88,7 @@ export function AuthForm({
           noValidate
         >
           {children}
-          <Button type="submit" size="lg" className="w-full" disabled={busy}>
+          <Button type="submit" size="lg" className="w-full" disabled={busy || !online}>
             {submitLabel}
           </Button>
         </motion.form>

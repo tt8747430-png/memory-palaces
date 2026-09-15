@@ -24,8 +24,10 @@ Non-trivial plan → suggest a grill first (user runs it): `/grill-me`, `/grill-
 
 **Zero legacy in _code_.** Latest stable deps. No polyfills, fallback branches, deprecated APIs, dead shims.
 **Exception — persisted data:** RxDB schemas + anything on-device need real back-compat → migrate
-(`app/persistence/schemas.ts`), never orphan stored decks/cards/reviews. A repair one document can't decide alone
-(it must see others) is a keeper in `app/persistence/` the composition root starts — `keep-archive-detached.ts`.
+(`app/persistence/schemas.ts`), never orphan stored decks/cards/reviews. A migration only repairs _this_ device —
+replication writes pulled rows unmigrated — so pair it with a read-side twin in the entity (`completeDeck`,
+`coerceCardStyle`). A repair one document can't decide alone (it must see others) is a keeper in `app/persistence/` the
+composition root starts — `keep-archive-detached.ts`, `keep-history-capped.ts`.
 
 **Staged is deliberate — never restore it.** Anything in the git index was put there on purpose. A staged deletion is a
 decision, not damage: don't `git checkout`/`git restore` it, don't re-add the content, don't "fix" it as an
@@ -42,13 +44,15 @@ By kind:
 - **Design** — every surface handles loading, error, empty, **offline**. Motion communicates, never decorates. Honor
   `prefers-reduced-motion` + safe areas. Semantic tokens only.
 - **Completeness** — no placeholders, no `// ...`, no stubs unless asked. Wire end-to-end: command + store, i18n keys (
-  `shared/i18n/locales/en.ts`), barrel exports, all states. Verify `npm run typecheck && npm run lint && npm run test`
-  before claiming done.
+  `shared/i18n/locales/en/`, one file per domain), barrel exports, all states. Verify
+  `npm run typecheck && npm run lint && npm run test` before claiming done; after touching startup or imports, also
+  `npm run build && npm run check:entry-graph`.
 
 ## Commands
 
-`dev` · `build` (`tsc --noEmit && vite build`) · `typecheck` · `lint` (also FSD boundaries) · `test` / `test:watch` /
-`test:cov`.
+`dev` · `build` (`tsc --noEmit && vite build`) · `check:entry-graph` (after `build`: RxDB/supabase off the entry
+preloads) · `typecheck` · `lint` (also FSD boundaries) · `test` / `test:watch` / `test:cov`. Supabase integration suites
+skip unless `SUPABASE_TEST_URL`/`SUPABASE_TEST_KEY` are set (`SUPABASE_TEST_SECRET_KEY` for the purge).
 One file: `npx vitest run src/shared/lib/srs.test.ts` · one test: `npx vitest run -t "creates a new card"`.
 **Never `npm run format`** (whole repo) — `npx prettier --write <files you touched>`.
 
@@ -60,18 +64,22 @@ One file: `npx vitest run src/shared/lib/srs.test.ts` · one test: `npx vitest r
 **Entities** (`src/entities/<x>/`, reference `card/`) — framework-agnostic:
 
 - `model/types.ts` — types + `makeX()`/`updateX()`: trim, validate, **throw on invariant violation**. No IO, no React.
-- `model/store.ts` — `createCollectionStore(key, repo, compare)` or `createSingletonStore(key, repo)` from `shared/lib`;
-  the slice declares only its state key and ordering. Never hand-roll the lifecycle.
+- `model/store.ts` — `createCollectionStore(key, repo, compare, { pending, complete })` or
+  `createSingletonStore(key, repo, complete)` from `shared/lib`; the slice declares only its state key, ordering and
+  read-side repair. Never hand-roll the lifecycle. `pending` (a `PendingChangePort`) goes to the four content stores
+  only — decks, folders, cards, questions — so their writes land in the pending-change log.
 - `model/selectors.ts` pure reads (readiness is the shared `selectIsReady`) · `model/context.ts` →
   `createStoreContext<XState>('X')` re-exported as `useXStore(selector)` / `useXStoreApi()` · `api/<x>-repository.ts`
   port · `index.ts` barrel.
 
 **DI** — port `shared/api/base-repository.ts` (`Repository<T>`: save/remove/observe); adapters
 `shared/api/rxdb/rxdb-repository.ts` (prod) and `in-memory-repository.ts` (tests + live `session` store).
-`app/composition-root.ts` builds the DB (`app/persistence/`), wires repo→store, **calls `start()` on every mirroring
-store** (`session` is deliberately absent — it owns its writes; `AuthProvider` restores it), starts the persisted-data
-keepers, exports `services`;
-`ServicesProvider` injects via context. Screens never start a store — they read, and gate on
+`app/composition-root.ts` exports **async** `createServices()`: it `await import`s RxDB, Dexie and supabase-js (kept
+off the entry graph — `npm run check:entry-graph` after `build`), builds the DB (`app/persistence/`), wires repo→store,
+**calls `start()` on every mirroring store** (`session` is deliberately absent — it owns its writes; `AuthProvider`
+restores it), starts the persisted-data keepers and `keepImagesCached` (`features/media`). There is no `services`
+singleton: `app/Bootstrap.tsx` awaits it behind the splash (error screen on rejection) and passes it to `App`, the router
+gets it as context, and `ServicesProvider` injects via context. Screens never start a store — they read, and gate on
 `selectIsReady`. Tests wire their own stores through `shared/test/started.ts`.
 
 **Features = commands (CQRS-lite)** — `src/features/<x>/`, one use-case per file: async fn (entity store, input), e.g.
@@ -79,11 +87,19 @@ keepers, exports `services`;
 the store from `useXStoreApi()` and pass it in. New mutation → new file + export from `features/<x>/index.ts`.
 
 **`shared/lib`** — unit-tested domain logic (`srs`, `streak`, `stats`, `recall`, `deck-tree`, `achievements`, `badges`,
-`order`, `naming`) + `use-long-press`, `gestures`, `haptics`, `motion`, `cn()`, `EventBus`.
+`order`, `naming`, `sync-divergence`, `card-style/`) + `use-long-press`, `gestures`, `haptics`, `motion`, `cn()`,
+`EventBus`, `useOnline`/`readOnline`, `useImageSrc`.
+
+**Sync (manual)** — nothing leaves the device until Synchronise or Autosync (device-local, off by default).
+`features/sync/sync-now.ts` = peek → classify → cycle → confirm; the only question ever put to the learner is a
+**destructive divergence** (deleted here, changed elsewhere). `SyncManager` owns the one-shot cycle + Realtime watcher;
+`SyncProvider` owns the runner + Autosync; `widgets/sync` = banner + review dialog. Device-local bookkeeping:
+`entities/pending-change`, `entities/sync-state`. Images: private buckets, documents store object **paths**, bytes cached
+ahead of the read. Account deletion: `features/account` (sync first, 30-day grace, purge by Edge Function).
 
 **UI/routing/i18n/PWA** — `shared/ui/` design system, Tailwind v4 + semantic tokens + `data-theme`; `@dnd-kit`,
 `motion`, `sonner`, `lucide-react`. TanStack Router in `app/router.tsx`, `app/auth-guard.ts`. i18next, one locale
-`shared/i18n/locales/en.ts`. `vite-plugin-pwa` (`registerType: 'prompt'`), `UpdatePrompt`.
+`shared/i18n/locales/en/` (one file per domain). `vite-plugin-pwa` (`registerType: 'prompt'`), `UpdatePrompt`.
 
 ## Read before you touch
 
@@ -105,14 +121,19 @@ the store from `useXStoreApi()` and pass it in. New mutation → new file + expo
 - **Archive, moving decks, subdeck settings** → [ADR 0003](docs/adr/0003-the-archive-is-a-place.md) (archive is a place
   outside every folder/deck; a batch never acts on a subdeck its selected parent carries, `idsWithoutDescendants`;
   placement from one snapshot, `placeDecks`; the main deck owns `MAIN_DECK_SETTINGS`).
+- **Anything that needs the network, sync, images, account deletion** →
+  [ADR 0004](docs/adr/0004-what-needs-the-network.md) (gate only what the server must answer _now_; every content write
+  stays ungated), then the design spec `docs/superpowers/specs/2026-09-15-offline-sync-and-account-lifecycle-design.md`.
+  Reads never touch the network: an image is `useImageSrc`, never a URL minted in render.
 - **Naming anything** → [UBIQUITOUS_LANGUAGE](docs/UBIQUITOUS_LANGUAGE.md). "Session" = auth, never a study pass;
-  `known` ≠ Memorized.
+  "Sync" = one cycle, never a study pass or a login; `known` ≠ Memorized.
 
 ## Conventions
 
 - Strict TS: `noUncheckedIndexedAccess`, `noUnusedLocals/Parameters`, `verbatimModuleSyntax` → `import type`.
 - Tests colocated `*.test.ts(x)`; Vitest + jsdom, **`globals: false`**, `fake-indexeddb`, setup
-  `src/shared/test/setup.ts`.
+  `src/shared/test/setup.ts`. Test-only doubles: `shared/test/` (`started`, `fake-cache-storage`),
+  `features/sync/testing/fake-cloud.ts` (clock-accurate cloud for Sync tests).
 - Prettier: no semicolons, single quotes, trailing comma `all`, printWidth 100.
 
 ## Agent skills

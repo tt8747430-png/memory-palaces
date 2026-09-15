@@ -1,4 +1,4 @@
-import type { Entity } from '@/shared/lib'
+import { coerceImagePath, type Entity } from '@/shared/lib'
 
 export interface Profile extends Entity {
   name: string
@@ -48,9 +48,17 @@ export function makeProfile(input: MakeProfileInput): Profile {
  * migration only rewrites documents already on this device, and one pulled from an account that a
  * second device last wrote is stored as it arrives. Fill the gaps, but keep `updatedAt` — that
  * clock decides sync conflicts, and completing a document is not an edit.
+ *
+ * The avatar is narrowed here for the same reason `completeDeck` narrows a cover: the bucket went
+ * private, and a device still on profile v1 pushes a full public URL that no migration on this
+ * device will ever see. `profileMigrations` 2 is the other half.
  */
 export function completeProfile(profile: Profile): Profile {
-  return { ...makeProfile(profile), updatedAt: profile.updatedAt }
+  return {
+    ...makeProfile(profile),
+    avatar: coerceImagePath(profile.avatar),
+    updatedAt: profile.updatedAt,
+  }
 }
 
 export type ProfileChanges = Partial<

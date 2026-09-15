@@ -77,3 +77,26 @@ describe('keepHistoryCapped', () => {
     expect(await repo.getAll()).toHaveLength(1)
   })
 })
+
+describe('a history entry pulled from the cloud', () => {
+  it('does not resurrect one this device trimmed — trimming is by recency', async () => {
+    // The cap is two here by construction: the store holds the newest first, and the keeper drops
+    // everything past `HISTORY_CAP`. What matters is that an *older* arrival is dropped again
+    // rather than pushing a newer entry out.
+    const newest = Array.from({ length: HISTORY_CAP }, (_, i) => entry(`h${i}`, 1000 + i))
+    const repo = new InMemoryRepository<HistoryEntry>(newest)
+    const store = createHistoryStore(repo)
+    store.getState().start()
+    const stop = keepHistoryCapped(store)
+    await flush()
+
+    // An entry from another device, older than everything the device already holds.
+    await store.getState().save(entry('from-elsewhere', 1))
+    await flush()
+    await flush()
+
+    expect(store.getState().history).toHaveLength(HISTORY_CAP)
+    expect(store.getState().history.some((e) => e.id === 'from-elsewhere')).toBe(false)
+    stop()
+  }, 20_000)
+})

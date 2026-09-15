@@ -41,7 +41,10 @@ for the flashcard modes) + `model/` + barrel.
 
 - Several pieces changing together, or distinct phases → reducer or discriminated-union machine, kept **pure and outside
   the component** in feature/model: [`features/review/study-session-machine.ts`](../src/features/review/study-session-machine.ts), [
-  `features/quiz/quiz-machine.ts`](../src/features/quiz/quiz-machine.ts) (each `*.test.ts`). Component dispatches.
+  `features/quiz/quiz-machine.ts`](../src/features/quiz/quiz-machine.ts), [
+  `app/providers/sync-runner-state.ts`](../src/app/providers/sync-runner-state.ts), [
+  `pages/settings-profile/model/delete-account-machine.ts`](../src/pages/settings-profile/model/delete-account-machine.ts)
+  (each `*.test.ts`). Component dispatches.
 - `useReducer` for multi-field interdependent UI state (`QuizSession`, `MatchBoard`, `FlashcardsPanel`).
 - Lone toggle stays `useState`.
 
@@ -57,7 +60,8 @@ A page reading several stores + holding a Selection + doing a dozen acts present
 - **The interface is the test surface** — `renderHook` over in-memory repos, not by rendering the page. A test reaching
   past it means the module is the wrong shape.
 - **Confirmations are one `pending` value, never a flag each.** One `PendingAct` union + `request`/`dismiss`/`confirm`;
-  separate booleans make "delete dialog over the move sheet" reachable.
+  separate booleans make "delete dialog over the move sheet" reachable. A multi-step flow is the same rule as a stage
+  union — `DeleteAccountStage` (`preparing` → `confirm` → `submitting`, or a `problem`), never `open` + `busy` flags.
 - **One `set(key, value)`, not a setter per setting** — [
   `use-study-settings.ts`](../src/widgets/study-session/model/use-study-settings.ts) cut `GearSheet` 27 props → 7 and
   hid which store each lands in.
@@ -138,14 +142,14 @@ v4, two-layer tokens: primitives (`--p-navy-900`…) → semantic roles (`--prim
     above it, `rounded-tile` for a 36px glyph tile and `rounded-tile-slot` for the outline standing in for one.
 - **Dark mode is automatic** (`[data-theme='dark']` remap). No scattered `dark:`, no hardcoded light/dark colors.
   - **One sanctioned exception:** the printed card-style presets in
-    [`shared/lib/card-style.ts`](../src/shared/lib/card-style.ts) — every preset but `plain`. Those are _printed
+    [`shared/lib/card-style/presets.ts`](../src/shared/lib/card-style/presets.ts) — every preset but `plain`. Those are _printed
     materials_ a learner picks, not app chrome — slate, ruled paper, kraft stock, a survey map, a sky and a meadow look
     the same under any theme, and remapping their ink would make "chalk" mean something different in dark mode. They
     are literal by design and stay confined to that file's `PRESETS` map: the card's paper, ink, border and the
     backdrop behind it, nothing else. `plain` is the one that follows the tokens like everything else.
     - `outlined` was the second such preset until deck schema v3. It stroked the theme's own ink around the theme's
       own paper, which in dark mode is a white rectangle drawn around a dark card — the tokens followed, and the
-      result still read as a fault. `bold` is that idea as a *material* instead, and `deckMigrations[3]` repaints
+      result still read as a fault. `bold` is that idea as a _material_ instead, and `deckMigrations[3]` repaints
       any deck still carrying the old id. **Retiring a preset id is a migration**, not a deletion: it is persisted
       deck settings, and `validateDeckSettings` throws on an id it does not know.
   - A preset is a **scene**, so it also carries the screen behind the card and the chrome over it. `CardScene` marks
@@ -154,7 +158,7 @@ v4, two-layer tokens: primitives (`--p-navy-900`…) → semantic roles (`--prim
     beside the theme whose role colours they mirror; the TypeScript names which of the two a preset picks and nothing
     more. That is how `StudySessionHeader`, the buttons on the card and the study session's grade buttons stay legible on
     slate without knowing a scene exists.
-    - The set a scene block must cover is `CHROME_TOKENS`, exported from `card-style.ts`. **Remap the paper with the
+    - The set a scene block must cover is `CHROME_TOKENS`, exported from `card-style/presets.ts`. **Remap the paper with the
       ink:** `bg-card` resolves to `--surface`; remapping `--text-*` without it is how the type-answer field became
       white-on-white. The tinted pairs (`--success-surface`, `--danger-surface`, …) are the same trap one step out —
       the grade buttons are painted from them.
@@ -196,11 +200,19 @@ Ordered by impact.
   `app/routes/*-screens.tsx` modules are the split points and each becomes its own chunk, so a cold start on the login
   screen carries neither the study engine nor the drag-and-drop stack. Same for heavy, rarely-opened widgets.
 - **The heavy dependencies are their own chunks** (`vite.config.ts` → `advancedChunks`): `persistence` (RxDB + Dexie),
-  `supabase`, `react`. Not to shrink the first load — the app cannot paint without its database — but so a deploy that
-  touches app code does not invalidate ~300 kB the service worker already precached.
+  `supabase`, `react`, so a deploy that touches app code does not invalidate ~500 kB the service worker already
+  precached. **And they are off the first paint:** `createServices()` reaches RxDB, Dexie and supabase-js through
+  `await import(...)`, `app/Bootstrap.tsx` paints the splash before they load, and `npm run check:entry-graph` fails if
+  any static import pulls them back into `dist/index.html`'s preloads. Type-only imports are free
+  (`verbatimModuleSyntax`); a value import from `@/shared/api/supabase` or `@/shared/api/rxdb` anywhere under the entry
+  is not.
 - **Keep FSD barrels** — they're our public API. The tree-shaking caveat is about _third-party_ barrels: import large
   libs by name; no intra-slice re-export chains pulling in heavy modules.
 - **Reserve image space (CLS)** — explicit `width`/`height` or `aspect-ratio`.
+- **Stored images go through `useImageSrc`, never straight into `src`.** A deck cover or avatar field holds an object
+  path in a private bucket (or an inline `data:` image while offline). `DeckCover` and `Avatar` resolve it from the
+  device's image cache and render their placeholder while it is `pending` — a signed URL minted in render would put a
+  round-trip in front of every cover.
 - **Never define a component inside a component** — it remounts every render.
 - **Derive during render, don't mirror state with effects.** `useEffect` = outside-world sync; interaction logic in
   handlers.
@@ -210,7 +222,9 @@ Ordered by impact.
 - **Ternary, not `cond && <X/>`** (falsy `0`/`''` renders as text). Hoist static JSX. `content-visibility`/windowing for
   long lists.
 - **JS micro-perf stays in `shared/lib`** (`Map`/`Set`, `toSorted()`, early exit) where it's tested.
-- **Server state (future):** when a cloud layer lands, use a query library, not ad-hoc `useEffect` + `useState`.
+- **Server state:** there is almost none, by design — domain data is RxDB, and a Sync writes into it. The few true
+  server reads (the Sync's peek, a scheduled account deletion) live behind ports in feature commands or providers,
+  never in a component's `useEffect`. Reach for a query library only for a genuinely server-authoritative screen.
 
 ## 8. Vite build & SPA deploy
 

@@ -6,6 +6,7 @@ import { i18n } from '@/shared/i18n'
 import { InMemoryRepository, LocalObjectUrlStorage } from '@/shared/api'
 import { started } from '@/shared/test/started'
 import { type Card, CardStoreContext, createCardStore } from '@/entities/card'
+import { createQuestionStore, type Question, QuestionStoreContext } from '@/entities/question'
 import {
   createDeckStore,
   type Deck,
@@ -58,9 +59,13 @@ function renderPage(
               <HistoryStoreContext
                 value={started(createHistoryStore(new InMemoryRepository<HistoryEntry>()))}
               >
-                <DeckStoreContext value={started(createDeckStore(repo))}>
-                  <DeckSettingsPage deckId="d1" onBack={() => {}} {...props} />
-                </DeckStoreContext>
+                <QuestionStoreContext
+                  value={started(createQuestionStore(new InMemoryRepository<Question>()))}
+                >
+                  <DeckStoreContext value={started(createDeckStore(repo))}>
+                    <DeckSettingsPage deckId="d1" onBack={() => {}} {...props} />
+                  </DeckStoreContext>
+                </QuestionStoreContext>
               </HistoryStoreContext>
             </CardStoreContext>
           </FolderStoreContext>

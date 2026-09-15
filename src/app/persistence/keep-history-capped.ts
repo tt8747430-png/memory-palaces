@@ -17,6 +17,11 @@ import { selectIsReady } from '@/shared/lib'
  * cap — which is what puts it here rather than in a migration strategy (CLAUDE.md).
  *
  * One pass runs at a time; its own writes wake the check again, which then finds nothing.
+ *
+ * The server has a cap of its own now (`trim_history`, the same 2000), and neither is sufficient
+ * alone: this one cannot see another device's entries, and that one cannot run while a device is
+ * offline. Both trim by recency, so an entry pulled from the cloud that is older than the boundary
+ * is simply dropped again rather than resurrecting anything.
  */
 export function keepHistoryCapped(store: HistoryStore): () => void {
   let running = false

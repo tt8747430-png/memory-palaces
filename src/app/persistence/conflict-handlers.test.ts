@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import type { Card } from '@/entities/card'
 import type { Progress } from '@/entities/progress'
-import { lastWriteWins, mergeCardConflict, mergeProgressConflict } from './conflict-handlers'
+import type { HistoryEntry } from '@/entities/learning-history'
+import {
+  firstWriteWins,
+  lastWriteWins,
+  mergeCardConflict,
+  mergeProgressConflict,
+} from './conflict-handlers'
 
 const CTX = 'test'
 
@@ -132,5 +138,54 @@ describe('mergeCardConflict', () => {
     )
 
     expect(resolved._deleted).toBe(true)
+  })
+})
+
+describe('firstWriteWins', () => {
+  const entry = (createdAt: string): HistoryEntry => ({
+    id: 'h1',
+    createdAt,
+    updatedAt: createdAt,
+    cardId: 'c1',
+    deckId: 'd1',
+    kind: 'answered',
+    outcome: 'gotIt',
+  })
+
+  it('keeps the copy already in the cloud — two copies of an id are the same answer', async () => {
+    const resolved = await firstWriteWins<HistoryEntry>().resolve(
+      {
+        realMasterState: doc(entry('2026-01-01T00:00:00.000Z')),
+        newDocumentState: doc(entry('2026-01-02T00:00:00.000Z')),
+      },
+      CTX,
+    )
+
+    expect(resolved).toMatchObject({ createdAt: '2026-01-01T00:00:00.000Z' })
+  })
+
+  it('converges: two devices writing the same entry id produce one document, not two', async () => {
+    const handler = firstWriteWins<HistoryEntry>()
+    const server = doc(entry('2026-01-01T00:00:00.000Z'))
+
+    const first = await handler.resolve(
+      { realMasterState: server, newDocumentState: doc(entry('2026-01-02T00:00:00.000Z')) },
+      CTX,
+    )
+    const second = await handler.resolve(
+      { realMasterState: server, newDocumentState: doc(entry('2026-01-03T00:00:00.000Z')) },
+      CTX,
+    )
+
+    expect(first).toEqual(second)
+    expect(first.id).toBe('h1')
+  })
+
+  it('still reports two genuinely different writes as unequal', () => {
+    const handler = firstWriteWins<HistoryEntry>()
+    const a = doc({ ...entry('2026-01-01T00:00:00.000Z'), outcome: 'gotIt' as const })
+    const b = doc({ ...entry('2026-01-01T00:00:00.000Z'), outcome: 'notQuite' as const })
+
+    expect(handler.isEqual(a, b, CTX)).toBe(false)
   })
 })

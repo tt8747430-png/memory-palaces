@@ -33,6 +33,7 @@ export const ROUTES = {
   settings: '/settings',
   settingsProfile: '/settings/profile',
   settingsChangePassword: '/settings/change-password',
+  settingsSync: '/settings/sync',
   settingsPrivacy: '/settings/privacy',
   settingsSwipe: '/settings/swipe',
   settingsSelect: '/settings/select-toolbar',

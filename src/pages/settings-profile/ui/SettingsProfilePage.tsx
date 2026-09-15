@@ -1,11 +1,9 @@
-import { useState } from 'react'
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Trash2 } from 'lucide-react'
 import {
   AppScreen,
   Button,
-  ConfirmDialog,
   Input,
   LabelledField,
   ScreenHeader,
@@ -15,8 +13,9 @@ import {
 import { BIO_MAX, useProfileForm } from '../model/use-profile-form'
 import { useDeleteAccount } from '../model/use-delete-account'
 import { AvatarPicker } from './AvatarPicker'
+import { DeleteAccountSheet } from './DeleteAccountSheet'
 import { PasswordRow } from './PasswordRow'
-import { EASE_OUT } from '@/shared/lib'
+import { EASE_OUT, useOnline } from '@/shared/lib'
 
 export interface SettingsProfilePageProps {
   onBack?: () => void
@@ -31,8 +30,8 @@ export function SettingsProfilePage({
 }: SettingsProfilePageProps) {
   const { t } = useTranslation()
   const form = useProfileForm(onBack)
-  const deleteAccount = useDeleteAccount()
-  const [confirmDelete, setConfirmDelete] = useState(false)
+  const online = useOnline()
+  const deleteAccount = useDeleteAccount(() => void onDeleteAccount())
   const { value, set } = form
 
   return (
@@ -154,27 +153,18 @@ export function SettingsProfilePage({
             tone="danger"
             icon={<Trash2 />}
             label={t('settings.profileEdit.deleteAccount')}
-            description={t('settings.profileEdit.deleteAccountHint')}
-            onClick={() => setConfirmDelete(true)}
+            description={
+              online ? t('settings.profileEdit.deleteAccountHint') : t('account.delete.offline')
+            }
+            // Deleting needs the server to answer now (ADR 0004), so it is gated before the press.
+            disabled={!online || !deleteAccount.available}
+            onClick={deleteAccount.open}
           />
         </SettingsSection>
       </motion.div>
 
-      <ConfirmDialog
-        open={confirmDelete}
-        onOpenChange={setConfirmDelete}
-        destructive
-        icon={<Trash2 className="size-6" aria-hidden />}
-        title={t('settings.profileEdit.deleteConfirmTitle')}
-        description={t('settings.profileEdit.deleteConfirmBody')}
-        confirmLabel={t('settings.profileEdit.deleteConfirmCta')}
-        cancelLabel={t('common.cancel')}
-        onConfirm={() =>
-          void deleteAccount().then(() => {
-            void onDeleteAccount()
-          })
-        }
-      />
+      <DeleteAccountSheet flow={deleteAccount} />
+      {/* A Sync run before deleting may stop to ask about deletions; the question is asked here. */}
     </AppScreen>
   )
 }

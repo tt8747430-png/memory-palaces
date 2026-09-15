@@ -9,7 +9,15 @@ import { PreferencesStoreContext } from '@/entities/preferences'
 import { ProfileStoreContext } from '@/entities/profile'
 import { NotificationStoreContext } from '@/entities/notification'
 import { HistoryStoreContext } from '@/entities/learning-history'
-import { AuthGatewayContext, EventBusContext, StoragePortContext } from '@/shared/lib'
+import { PendingChangeStoreContext } from '@/entities/pending-change'
+import { SyncStateStoreContext } from '@/entities/sync-state'
+import {
+  AccountDeletionContext,
+  AuthGatewayContext,
+  EventBusContext,
+  ResetLocalDataContext,
+  StoragePortContext,
+} from '@/shared/lib'
 import type { Services } from '../composition-root'
 
 export function ServicesProvider({
@@ -31,11 +39,19 @@ export function ServicesProvider({
                     <ProfileStoreContext value={services.profileStore}>
                       <NotificationStoreContext value={services.notificationStore}>
                         <HistoryStoreContext value={services.historyStore}>
-                          <EventBusContext value={services.eventBus}>
-                            <StoragePortContext value={services.storage}>
-                              {children}
-                            </StoragePortContext>
-                          </EventBusContext>
+                          <PendingChangeStoreContext value={services.pendingChangeStore}>
+                            <SyncStateStoreContext value={services.syncStateStore}>
+                              <EventBusContext value={services.eventBus}>
+                                <StoragePortContext value={services.storage}>
+                                  <AccountDeletionContext value={services.accountDeletion}>
+                                    <ResetLocalDataContext value={services.resetLocalData}>
+                                      {children}
+                                    </ResetLocalDataContext>
+                                  </AccountDeletionContext>
+                                </StoragePortContext>
+                              </EventBusContext>
+                            </SyncStateStoreContext>
+                          </PendingChangeStoreContext>
                         </HistoryStoreContext>
                       </NotificationStoreContext>
                     </ProfileStoreContext>

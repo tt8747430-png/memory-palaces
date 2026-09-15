@@ -2,7 +2,7 @@ import type { RxCollection, RxStorage } from 'rxdb'
 import { addRxPlugin, createRxDatabase } from 'rxdb'
 import { RxDBMigrationSchemaPlugin } from 'rxdb/plugins/migration-schema'
 import type { Folder } from '@/entities/folder'
-import type { CardStylePreset, Deck } from '@/entities/deck'
+import { type CardStylePreset, completeDeck, type Deck } from '@/entities/deck'
 import type { Card } from '@/entities/card'
 import type { Question } from '@/entities/question'
 import type { Progress } from '@/entities/progress'
@@ -10,19 +10,29 @@ import { DEFAULT_PREFERENCES, type Preferences } from '@/entities/preferences'
 import type { Profile } from '@/entities/profile'
 import type { AppNotification } from '@/entities/notification'
 import type { HistoryEntry } from '@/entities/learning-history'
+import type { PendingChange } from '@/entities/pending-change'
+import type { SyncState } from '@/entities/sync-state'
+import { coerceImagePath } from '@/shared/lib'
 import { STORAGE_PREFIX } from '@/shared/config/constants'
 import { DEFAULT_SELECT_TOOLBAR } from '@/shared/config/select-toolbar'
-import { lastWriteWins, mergeCardConflict, mergeProgressConflict } from './conflict-handlers'
+import {
+  firstWriteWins,
+  lastWriteWins,
+  mergeCardConflict,
+  mergeProgressConflict,
+} from './conflict-handlers'
 import {
   cardSchema,
   deckSchema,
   folderSchema,
   notificationSchema,
+  pendingChangeSchema,
   preferencesSchema,
   profileSchema,
   progressSchema,
   historySchema,
   questionSchema,
+  syncStateSchema,
 } from './schemas'
 
 export interface AppCollections {
@@ -35,6 +45,8 @@ export interface AppCollections {
   profiles: RxCollection<Profile>
   notifications: RxCollection<AppNotification>
   history: RxCollection<HistoryEntry>
+  pendingChanges: RxCollection<PendingChange>
+  syncState: RxCollection<SyncState>
 }
 
 addRxPlugin(RxDBMigrationSchemaPlugin)
@@ -79,6 +91,12 @@ const RETIRED_PRESETS: Record<string, CardStylePreset> = { outlined: 'plain' }
  * straight into the collection without running a migration strategy, so a second device that has
  * not upgraded can still deliver `outlined` afterwards; `coerceCardStyle` is what catches that, and
  * the two are deliberate halves of the same guarantee.
+ *
+ * v4 is the same shape of change for a different field. The buckets went private, so a cover is
+ * stored as its `<userId>/<entityId>` object path rather than a public URL. An inline `data:` value
+ * is left alone — it is a waypoint, not a URL — and an unrecognised string is preserved rather than
+ * discarded. The strategy *is* the read-side repair, `completeDeck` — one function run on the way in
+ * for pulled rows and once here for stored ones, so the two can never disagree.
  */
 export const deckMigrations = {
   1: (doc: Deck) => doc,
@@ -89,6 +107,7 @@ export const deckMigrations = {
     if (!preset) return doc
     return { ...doc, settings: { ...doc.settings, cardStyle: { ...style, preset } } }
   },
+  4: completeDeck,
 }
 
 /** Frozen and reversed are required, so every card that predates them is given the quiet answer. */
@@ -104,12 +123,14 @@ const LEGACY_PHONE_KEY = 'mindscape:phone'
  * second device. It is a profile field now: the migration lifts whatever was stored into the
  * document that syncs, and drops the key behind it.
  */
-const profileMigrations = {
+export const profileMigrations = {
   1: (doc: Profile) => {
     const phone = localStorage.getItem(LEGACY_PHONE_KEY) ?? ''
     localStorage.removeItem(LEGACY_PHONE_KEY)
     return { ...doc, phone }
   },
+  /** The avatar bucket went private: a stored public URL becomes its object path. See `deckMigrations` 4. */
+  2: (doc: Profile) => ({ ...doc, avatar: coerceImagePath(doc.avatar) }),
 }
 
 export async function createAppDatabase<Internals, InstanceCreationOptions>(
@@ -117,8 +138,8 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
 ): Promise<AppCollections> {
   const database = await createRxDatabase({ name: STORAGE_PREFIX, storage })
   // Conflict handlers only ever run for replicated collections, but they belong to the collection,
-  // not the replication — so they are declared once here. `notifications` and `history` are
-  // device-local and deliberately keep RxDB's default.
+  // not the replication — so they are declared once here. `notifications`, `pendingChanges` and
+  // `syncState` are device-local and deliberately keep RxDB's default.
   const collections = await database.addCollections({
     decks: {
       schema: deckSchema,
@@ -147,7 +168,9 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
       conflictHandler: lastWriteWins<Profile>(),
     },
     notifications: { schema: notificationSchema },
-    history: { schema: historySchema },
+    history: { schema: historySchema, conflictHandler: firstWriteWins<HistoryEntry>() },
+    pendingChanges: { schema: pendingChangeSchema },
+    syncState: { schema: syncStateSchema },
   })
   return {
     decks: collections.decks,
@@ -159,5 +182,7 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
     profiles: collections.profiles,
     notifications: collections.notifications,
     history: collections.history,
+    pendingChanges: collections.pendingChanges,
+    syncState: collections.syncState,
   }
 }

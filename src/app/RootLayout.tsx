@@ -1,10 +1,9 @@
 import { lazy, Suspense, useEffect } from 'react'
 import { Outlet } from '@tanstack/react-router'
-import { AnimatePresence } from 'motion/react'
 import { useKeyboardInset, useSplashStore } from '@/shared/lib'
 import { AppNav } from '@/widgets/bottom-nav'
 import { ProbeOverlay } from '@/widgets/dev-probe'
-import { SplashOverlay } from '@/widgets/splash'
+import { SyncReviewDialog } from '@/widgets/sync'
 
 const Devtools = import.meta.env.DEV
   ? lazy(() =>
@@ -14,9 +13,10 @@ const Devtools = import.meta.env.DEV
     )
   : () => null
 
+/** The overlay itself lives in `Bootstrap`, above the services boundary; this only reads whether
+ *  it has lifted, so nothing behind it can be focused or touched while it is up. */
 export function RootLayout() {
   const splashDone = useSplashStore((state) => state.done)
-  const finishSplash = useSplashStore((state) => state.finish)
   useKeyboardInset()
 
   useEffect(() => {
@@ -30,10 +30,10 @@ export function RootLayout() {
       <div inert={!splashDone} className="contents">
         <Outlet />
         <AppNav />
+        {/* Once, for every route: Autosync can stop to ask from any screen, and a question that
+            only had a dialog on three of them would wait unseen on the rest. */}
+        <SyncReviewDialog />
       </div>
-      <AnimatePresence>
-        {splashDone ? null : <SplashOverlay onDone={finishSplash} />}
-      </AnimatePresence>
       <ProbeOverlay />
       <Suspense>
         <Devtools />

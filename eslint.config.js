@@ -12,7 +12,10 @@ const fsdDependencyRules = FSD_LAYERS.map((from) => ({
 }))
 
 export default tseslint.config(
-  { ignores: ['dist', 'dev-dist', 'coverage', 'node_modules'] },
+  // `supabase/functions` is Deno, not the app: different globals, different module resolution
+  // (`jsr:` specifiers), and outside `tsconfig.json`'s `include`. Linting it here would only ever
+  // report that it is not a browser bundle.
+  { ignores: ['dist', 'dev-dist', 'coverage', 'node_modules', 'supabase/functions'] },
   {
     files: ['**/*.{ts,tsx}'],
     extends: [js.configs.recommended, ...tseslint.configs.recommended],

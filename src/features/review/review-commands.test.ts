@@ -135,6 +135,10 @@ describe('answerCard', () => {
 })
 
 describe('recordHistory', () => {
+  // 2001 writes against `InMemoryRepository`, which re-clones the whole collection on every save:
+  // quadratic by construction, ~2.5s on its own and slower under a loaded suite. The cap is the
+  // thing being tested and it needs the real number, so the budget is raised rather than the cap
+  // lowered.
   it('holds the history at its cap, dropping the oldest answers', async () => {
     const history = historyStore()
     for (let i = 0; i <= HISTORY_CAP; i++) {
@@ -146,7 +150,7 @@ describe('recordHistory', () => {
     }
     expect(entries(history)).toHaveLength(HISTORY_CAP)
     expect(entries(history)[0]?.createdAt).toBe(new Date(HISTORY_CAP).toISOString())
-  })
+  }, 20_000)
 })
 
 describe('restoreAnswer', () => {

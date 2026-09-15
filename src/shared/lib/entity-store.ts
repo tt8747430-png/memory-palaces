@@ -28,6 +28,34 @@ export const selectIsReady = (state: Pick<Lifecycle, 'status'>): boolean => stat
 type SetPartial = (partial: object) => void
 
 /**
+ * Where a store reports the writes a Sync has not carried yet.
+ *
+ * A port rather than a direct write, because `entity-store` is generic over every slice and must
+ * stay ignorant of any particular collection — the collection is bound when the composition root
+ * builds the port, so nothing here knows a `decks` from a `questions`. A test supplies a fake
+ * instead of a database.
+ *
+ * Only the four content stores are given one. Everything else — the singletons that always merge,
+ * and the device-local collections with nowhere to push — passes `undefined` and records nothing.
+ */
+export interface PendingChangePort {
+  save: (entityId: string) => Promise<void>
+  remove: (entityId: string) => Promise<void>
+}
+
+export interface CollectionStoreOptions<T> {
+  /** Records writes the cloud has not confirmed. Only the four content stores are given one. */
+  pending?: PendingChangePort
+  /**
+   * Repairs a document on the way in. Same contract as `createSingletonStore`'s: a schema
+   * migration only fixes what is already on this device, and a document arriving over replication
+   * was written by whichever build the other device runs. So the entity — not the screen reading
+   * it — decides what an unrecognised value means, once, here.
+   */
+  complete?: (entity: T) => T
+}
+
+/**
  * The half of a store every slice shares: hold `key` at `empty` until `start()`, then keep it equal
  * to whatever `project` makes of the repository's latest snapshot; `save` passes straight through.
  *
@@ -40,6 +68,7 @@ function mirrorSlice<T extends Identifiable, Held>(
   repo: Repository<T>,
   empty: Held,
   project: (entities: readonly T[]) => Held,
+  pending?: PendingChangePort,
 ) {
   let unsubscribe: Unsubscribe | null = null
 
@@ -58,7 +87,13 @@ function mirrorSlice<T extends Identifiable, Held>(
       unsubscribe = null
     },
 
-    save: (entity: T) => repo.save(entity),
+    // Recorded *after* the write lands: a save that threw changed nothing, and a log entry for it
+    // would inflate the banner with a change no Sync could ever carry.
+    async save(entity: T) {
+      const saved = await repo.save(entity)
+      await pending?.save(entity.id)
+      return saved
+    },
   })
 }
 
@@ -66,14 +101,22 @@ export function createCollectionStore<Key extends string, T extends Identifiable
   key: Key,
   repo: Repository<T>,
   compare: (a: T, b: T) => number,
+  { pending, complete }: CollectionStoreOptions<T> = {},
 ): StoreApi<CollectionState<Key, T>> {
-  const mirror = mirrorSlice<T, T[]>(key, repo, [], (entities) => [...entities].sort(compare))
+  const mirror = mirrorSlice<T, T[]>(
+    key,
+    repo,
+    [],
+    (entities) => (complete ? entities.map(complete) : [...entities]).sort(compare),
+    pending,
+  )
   return createStore<CollectionState<Key, T>>(
     (set) =>
       ({
         ...mirror(set as SetPartial),
         async remove(id: string) {
           await repo.remove(id)
+          await pending?.remove(id)
         },
       }) as unknown as CollectionState<Key, T>,
   )

@@ -15,6 +15,7 @@ export type {
   MainDeckSetting,
 } from './model/types'
 export {
+  completeDeck,
   makeDeck,
   updateDeck,
   validateDeckSettings,

@@ -22,3 +22,9 @@ export interface AppLanguage {
 }
 
 export const AVAILABLE_LANGUAGES: readonly AppLanguage[] = [{ code: 'en', label: 'English' }]
+
+/**
+ * Days between requesting an account's deletion and its purge. Signing in during them cancels it.
+ * The `request-account-deletion` Edge Function schedules by the same number.
+ */
+export const ACCOUNT_DELETION_GRACE_DAYS = 30

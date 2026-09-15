@@ -9,7 +9,7 @@ import {
   resolveCardScene,
   resolveCardStyle,
   sameCardStyle,
-} from './card-style'
+} from './index'
 
 const plain = { preset: 'plain', font: 'default', textSize: 30, alignment: 'center' } as const
 

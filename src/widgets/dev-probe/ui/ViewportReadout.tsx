@@ -1,10 +1,6 @@
 import { cn } from '@/shared/lib'
-import {
-  checkViewport,
-  SAMPLE_ROWS,
-  type ProbeCheck,
-  type ViewportSample,
-} from '../model/viewport-sample'
+import { checkViewport, type ProbeCheck, type ViewportSample } from '../model/viewport-sample'
+import { SAMPLE_ROWS } from '../model/viewport-text'
 
 const STATE: Record<ProbeCheck['state'], string> = {
   ok: 'text-(--success-on-surface)',

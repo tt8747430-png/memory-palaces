@@ -344,7 +344,7 @@
  * navy tint, because a chalkboard is not a navy screen. Keeping both here rather than in TypeScript
  * is what lets the mirroring, and the deliberate departures from it, be read side by side.
  *
- * The set is `CHROME_TOKENS` in `shared/lib/card-style.ts`; `card-style.test.ts` holds these blocks
+ * The set is `CHROME_TOKENS` in `shared/lib/card-style/presets.ts`; `card-style/card-style.test.ts` holds these blocks
  * to it in both directions.
  */
 [data-scene='dark'] {

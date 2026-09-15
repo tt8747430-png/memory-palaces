@@ -36,6 +36,23 @@ export const mergeProgressConflict: RxConflictHandler<Progress> = {
   },
 }
 
+/**
+ * The Learning history: **first write wins**.
+ *
+ * Named for what it means rather than reusing `lastWriteWins`, because the reason is different. An
+ * entry records one answer given at one moment and is never edited, so two copies of an id are the
+ * same event and either is correct — there is no later version to prefer. Reaching for a merge here
+ * would imply a mutability the entity does not have.
+ */
+export function firstWriteWins<T extends Clocked>(): RxConflictHandler<T> {
+  return {
+    isEqual: sameWrite,
+    async resolve(input) {
+      return input.realMasterState
+    },
+  }
+}
+
 /** Cards are content plus a review schedule; each half resolves on its own clock. */
 export const mergeCardConflict: RxConflictHandler<Card> = {
   isEqual: sameWrite,

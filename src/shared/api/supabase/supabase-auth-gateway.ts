@@ -86,10 +86,22 @@ export class SupabaseAuthGateway implements AuthGateway {
     return guest
   }
 
+  /**
+   * Signing out always succeeds locally.
+   *
+   * `auth-js` removes the stored session *before* it tries to revoke the refresh token, and returns
+   * the transport failure anyway. Rethrowing it left the app believing it was signed in with no
+   * session behind it — every later request 401s and there is no way back out. The local session is
+   * the part this device needs gone, and it is already gone by the time we get here.
+   *
+   * The scope stays `'global'`. Switching to `'local'` when offline buys nothing: `_signOut` issues
+   * the same `admin.signOut(accessToken, scope)` fetch either way, so it fails identically — and
+   * keeping `'global'` means the refresh token really is revoked whenever the network allows it.
+   */
   async signOut(): Promise<void> {
     this.forgetGuest()
     const { error } = await this.client.auth.signOut()
-    if (error) fail(error)
+    if (error && !isAuthRetryableFetchError(error)) fail(error)
   }
 
   async requestPasswordReset(email: string): Promise<void> {

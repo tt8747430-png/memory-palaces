@@ -3,9 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Archive, ArchiveRestore, Trash2 } from 'lucide-react'
 import { selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
-import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
+import { selectCards, useCardStore } from '@/entities/card'
 import { useFolderStoreApi } from '@/entities/folder'
-import { deleteDeck, restoreDecks } from '@/features/deck'
+import { deleteDeck, restoreDecks, useDeleteDeckDeps } from '@/features/deck'
 import { cardsInSubtree, findEntity, selectIsReady } from '@/shared/lib'
 import {
   AppScreen,
@@ -25,7 +25,7 @@ export interface ArchivedDecksPageProps {
 export function ArchivedDecksPage({ onBack }: ArchivedDecksPageProps) {
   const { t } = useTranslation()
   const deckStore = useDeckStoreApi()
-  const cardStore = useCardStoreApi()
+  const deleteDeps = useDeleteDeckDeps()
   const folderStore = useFolderStoreApi()
 
   const decks = useDeckStore(selectDecks)
@@ -123,7 +123,7 @@ export function ArchivedDecksPage({ onBack }: ArchivedDecksPageProps) {
         cancelLabel={t('common.cancel')}
         destructive
         onConfirm={() => {
-          if (pendingDelete) void deleteDeck(deckStore, cardStore, pendingDelete)
+          if (pendingDelete) void deleteDeck(deleteDeps, pendingDelete)
           setPendingDelete(null)
         }}
       />

@@ -6,6 +6,7 @@ import {
   type CardFontId,
   type CardStyleInput,
   type CardStylePresetId,
+  coerceImagePath,
   type Entity,
 } from '@/shared/lib'
 
@@ -215,6 +216,21 @@ export function makeDeck(input: MakeDeckInput): Deck {
     archived: input.archived ?? false,
     settings: settingsAt(parentId, input.settings ?? {}),
   }
+}
+
+/**
+ * Repairs a deck on the way into the store.
+ *
+ * The cover is the one field that can arrive wrong from a device this build does not control:
+ * replication writes pulled rows straight into the collection without running a migration strategy,
+ * so a device still on deck v3 pushes a full public URL after the buckets went private. Narrowing
+ * it here — `coerceImagePath` — is `deckMigrations` 4's read-side twin, exactly as `coerceCardStyle`
+ * is v3's. Without it, an un-migrated device's cover renders as unavailable on every other device.
+ */
+export function completeDeck(deck: Deck): Deck {
+  if (!deck.image) return deck
+  const image = coerceImagePath(deck.image)
+  return image === deck.image ? deck : { ...deck, image: image ?? undefined }
 }
 
 export type DeckChanges = Partial<Omit<Deck, 'id' | 'createdAt' | 'updatedAt'>>

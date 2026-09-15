@@ -43,7 +43,9 @@ fast-review answers are not Reviews at all (see below), yet both belong on the h
 
 An entry is written once and never edited. Undoing an answer removes it; **Reset progress** removes
 every entry for the Cards it resets, because the history describes schedules those Cards no longer
-have. The history is device-local and capped (`HISTORY_CAP`) — a rolling window, not an archive.
+have. The history syncs to every device (first write wins — two copies of an entry are the same answer) and is
+capped at `HISTORY_CAP` on the device and by a daily trim on the server — a rolling window, not an archive. It records no
+Pending change: an entry is never edited, so it can never be part of a Destructive divergence.
 
 ## Learning algorithms
 
@@ -107,6 +109,21 @@ Every Deck follows exactly one: its Main deck's. A Subdeck never holds the algor
 | **Preferences**   | Global settings (haptics, swipe actions, theme)            | settings, config     |
 | **Deck settings** | Per-Deck options (timer, direction, shuffle, TTS)          | settings, config     |
 
+## Sync
+
+| Term                       | Means                                                                                       | Avoid                  |
+| -------------------------- | ------------------------------------------------------------------------------------------- | ---------------------- |
+| **Sync**                   | One peek → classify → cycle → confirm pass (`syncNow`). Never a study pass, never a login   | sync session, refresh  |
+| **Synchronise**            | The user-facing verb — the banner button, and every sentence in UI copy                     | sync (as a verb in UI) |
+| **Autosync**               | The **device-local** setting that runs a Sync without being asked. Off by default           | auto-sync, background  |
+| **Pending change**         | One content write (deck, folder, card, question) a Sync has not confirmed. `pendingChanges` | dirty, unsaved         |
+| **Checkpoint**             | Where this device's last Sync got to in a table — `(updated_at, id)`. Ours, not RxDB's      | cursor, bookmark       |
+| **Divergence**             | The cloud and the device both changed since this device's last Sync                         | conflict               |
+| **Destructive divergence** | A divergence no merge can settle — deleted here, changed elsewhere. The only question asked | conflict               |
+| **Review** _(of a Sync)_   | The dialog that answers a Destructive divergence: **Delete** (default) or **Keep**          | conflict dialog, merge |
+| **Restoring**              | The forced Sync after a cancelled account deletion, shown on the banner                     | recovery, reload       |
+| **Purge**                  | The irreversible server-side destruction of an account, 30 days after the request           | delete, wipe           |
+
 ## Relationships
 
 - Folder groups zero-or-more top-level Decks.
@@ -119,6 +136,12 @@ Every Deck follows exactly one: its Main deck's. A Subdeck never holds the algor
 - A Selection holds one kind of row at a time. Selecting a Deck takes its Subdecks — select mode is flat, so a Subdeck
   is never on screen there.
 - A Learner has one Progress record and one active Session.
+- A device has one sync state and zero-or-more Pending changes; neither ever leaves it.
+- A Pending change belongs to exactly one content document; repeated writes to it collapse onto one entry.
+- Deleting a Deck deletes its Subdecks, Cards and Questions. A Destructive divergence on a Deck or Folder carries, as
+  its descendants, what another device added inside it — Keep brings them in, Delete tombstones them too.
+- An Account has at most one scheduled Purge; signing in before its date cancels it.
+- Every RxDB **conflict** is inside a Divergence; most Divergences contain no conflict at all.
 
 ## Ambiguities — resolved
 
@@ -129,6 +152,12 @@ Every Deck follows exactly one: its Main deck's. A Subdeck never holds the algor
   Deck / Card / Question** — types, stores, routes, i18n keys, in-app copy, commits. A palace is never an entity.
 - **`known` vs Memorized** — `known` is SRS-derived from the interval; **Memorized** is a manual boolean. Don't
   conflate. In learner-facing copy `known` reads **Mastered**; the field name stays `known`.
+- **"Review"** — unqualified, a **Review** is grading a Card. The Sync dialog is the **review of a Sync** in prose and
+  `SyncReviewDialog` in code; never call a Card review a sync review or the reverse.
+- **"conflict" vs Divergence** — a **conflict** is RxDB's: one document arriving with two versions,
+  settled by a `conflictHandler` without anyone being asked. A **Divergence** is the user-facing
+  situation: both sides moved since the last Sync. Only a **destructive divergence** — a document
+  deleted here and edited there — is ever put to the learner.
 - **"algorithm"** — a **Learning algorithm** is the Deck-level choice (Fast review / Spaced repetition). The SRS
   scheduler itself is the **SRS**. Never call the scheduler "the algorithm".
 - **"preset"** — in _code and types_ an algorithm is never a "preset"; a **preset** is one of the Card style scenes

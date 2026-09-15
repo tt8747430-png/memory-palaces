@@ -1,7 +1,8 @@
-import { cn } from '@/shared/lib'
+import { cn, useImageSrc } from '@/shared/lib'
 
 export interface AvatarProps {
   name: string
+  /** The stored avatar: an object path in the private bucket, or an inline `data:` image. */
   src?: string | null
   className?: string
 }
@@ -14,11 +15,15 @@ function initials(name: string): string {
 }
 
 export function Avatar({ name, src, className }: AvatarProps) {
-  if (src) {
+  // Read from the device's image cache, never fetched during render — the bucket is private and
+  // `pending` falls through to the initials rather than to a broken image.
+  const photo = useImageSrc('avatars', src)
+
+  if (photo.state === 'inline' || photo.state === 'cached') {
     return (
       <img
         data-slot="avatar"
-        src={src}
+        src={photo.src}
         alt=""
         aria-hidden
         className={cn('size-10 rounded-full object-cover', className)}

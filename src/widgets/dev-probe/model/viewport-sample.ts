@@ -1,4 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+/**
+ * Measurement: what the viewport is doing right now, and which ADR 0002 rule each number breaks.
+ * Formatting lives in `viewport-text.ts` and the per-frame sampler in `use-viewport-probe.ts`.
+ */
 import {
   CHROME,
   isTextField,
@@ -257,64 +260,6 @@ export function checkViewport(sample: ViewportSample): ProbeCheck[] {
   ]
 }
 
-export const SAMPLE_ROWS: [keyof ViewportSample, string][] = [
-  ['route', 'route'],
-  ['mode', 'display mode'],
-  ['layoutHeight', 'layout viewport h'],
-  ['layoutWidth', 'layout viewport w'],
-  ['vvHeight', 'visualViewport h'],
-  ['vvOffsetTop', 'visualViewport top'],
-  ['vvScale', 'visualViewport scale'],
-  ['appHeight', '--app-height'],
-  ['kbInset', '--kb-inset'],
-  ['kbRange', '--kb-range'],
-  ['kbMeasured', '--kb-inset measured'],
-  ['keyboardAttr', 'data-keyboard'],
-  ['stored', 'remembered kb'],
-  ['scroller', 'scroll body'],
-  ['scrollTop', 'scrollTop'],
-  ['scrollMax', 'scrollTop max'],
-  ['padBottom', 'scroll padding-bottom'],
-  ['htmlRectTop', 'html rect top'],
-  ['rootRectTop', '#root rect top'],
-  ['headerTop', 'header top'],
-  ['headerBottom', 'header bottom'],
-  ['footerTop', 'footer top'],
-  ['bandTop', 'reveal band top'],
-  ['bandBottom', 'reveal band bottom'],
-  ['visibleBottom', 'visibleBottom()'],
-  ['focused', 'focused element'],
-  ['focusedTop', 'focused top'],
-  ['focusedBottom', 'focused bottom'],
-  ['revealDelta', 'reveal delta'],
-]
-
-const MARK: Record<ProbeCheck['state'], string> = { ok: 'ok  ', bad: 'FAIL', idle: '--  ' }
-
-const LABEL_WIDTH = Math.max(...SAMPLE_ROWS.map(([, label]) => label.length))
-
-const rowLines = (sample: ViewportSample) =>
-  SAMPLE_ROWS.map(([key, label]) => `${label.padEnd(LABEL_WIDTH)}  ${String(sample[key])}`)
-
-const checkLines = (sample: ViewportSample) =>
-  checkViewport(sample).map(
-    (check) => `${MARK[check.state]}  ${check.label.padEnd(18)}  ${check.detail}`,
-  )
-
-/** The whole reading as pasteable text: every row, every verdict, and what was holding it. */
-export function sampleToText(sample: ViewportSample): string {
-  return [
-    'mindscape viewport probe',
-    new Date(sample.at).toISOString(),
-    navigator.userAgent,
-    '',
-    ...rowLines(sample),
-    '',
-    ...checkLines(sample),
-    '',
-  ].join('\n')
-}
-
 /**
  * One keyboard, from the resting reading it interrupted to the one it settled into. The pair is the
  * unit worth reading: every number here is a difference — pan, inset, rects, scroll position — so a
@@ -335,9 +280,6 @@ export interface KeyboardEpisode {
   live: boolean
 }
 
-/** How many keyboards are kept. Older ones fall off the front. */
-export const EPISODE_LIMIT = 5
-
 export function isKeyboardOpen(sample: ViewportSample): boolean {
   return sample.keyboardAttr
 }
@@ -351,184 +293,4 @@ export function isKeyboardOpen(sample: ViewportSample): boolean {
 export function isSettled(sample: ViewportSample): boolean {
   const app = px(sample.appHeight) || sample.layoutHeight
   return sample.vvOffsetTop + sample.vvHeight + px(sample.kbInset) === app
-}
-
-function diffLines(before: ViewportSample, after: ViewportSample): string[] {
-  const changed = SAMPLE_ROWS.filter(([key]) => String(before[key]) !== String(after[key]))
-  if (changed.length === 0) return ['(nothing moved)']
-  return changed.map(
-    ([key, label]) =>
-      `${label.padEnd(LABEL_WIDTH)}  ${String(before[key])} → ${String(after[key])}`,
-  )
-}
-
-function episodeToText(episode: KeyboardEpisode, index: number, total: number): string {
-  const { before, after, live } = episode
-  const head = `═══ keyboard ${index + 1} of ${total}${live ? ' (live)' : ''} · ${new Date(after.at).toISOString()}`
-  const body = before
-    ? [
-        `─── before (keyboard closed) ───`,
-        ...rowLines(before),
-        '',
-        `─── after (+${after.at - before.at}ms) ───`,
-        ...rowLines(after),
-        '',
-        '─── what the keyboard moved ───',
-        ...diffLines(before, after),
-      ]
-    : [
-        '─── before ───',
-        '(none: the probe started with the keyboard already up)',
-        '',
-        '─── after ───',
-        ...rowLines(after),
-      ]
-  return [head, '', ...body, '', ...checkLines(after)].join('\n')
-}
-
-/** Every kept keyboard, newest last, each as its own before/after block. */
-export function episodesToText(episodes: KeyboardEpisode[]): string {
-  if (episodes.length === 0) {
-    return 'mindscape viewport probe\nno keyboard opened yet — focus a field, then copy.\n'
-  }
-  return [
-    `mindscape viewport probe — ${episodes.length} keyboard${episodes.length === 1 ? '' : 's'}, oldest first`,
-    navigator.userAgent,
-    '',
-    ...episodes.map((episode, index) => episodeToText(episode, index, episodes.length)),
-    '',
-  ].join('\n\n')
-}
-
-/** Enough to cover a focus, a keyboard animation and a long drag at ~60fps. */
-const TRACE_LIMIT = 900
-
-const TRACE_COLUMNS = [
-  'at',
-  'vvOffsetTop',
-  'vvHeight',
-  'kbInset',
-  'kbRange',
-  'scrollTop',
-  'scrollMax',
-  'padBottom',
-  'htmlRectTop',
-  'rootRectTop',
-  'headerTop',
-  'bandTop',
-  'bandBottom',
-  'visibleBottom',
-  'focusedTop',
-  'focusedBottom',
-  'revealDelta',
-] as const satisfies readonly (keyof ViewportSample)[]
-
-export function traceToTsv(trace: ViewportSample[]): string {
-  if (trace.length === 0) return ''
-  const start = trace[0]?.at ?? 0
-  const rows = trace.map((sample) =>
-    TRACE_COLUMNS.map((key) => (key === 'at' ? sample.at - start : sample[key])).join('\t'),
-  )
-  return [TRACE_COLUMNS.join('\t'), ...rows].join('\n')
-}
-
-export interface ViewportProbe {
-  sample: ViewportSample
-  trace: ViewportSample[]
-  recording: boolean
-  /**
-   * Read at press time, not held in state: the pairs update every frame, and re-rendering the panel
-   * for a history nobody reads until they tap `copy` buys nothing.
-   */
-  episodes: () => KeyboardEpisode[]
-  /** How many pairs `episodes()` would return, including the live one. For the button label. */
-  episodeCount: number
-  toggleRecording: () => void
-  clear: () => void
-}
-
-/**
- * Samples every frame; keeps the last `EPISODE_LIMIT` keyboards as before/after pairs. The trace is
- * what makes it worth having: none of these faults show in a still reading — they live in how the
- * numbers move against a finger.
- */
-export function useViewportProbe(): ViewportProbe {
-  const [sample, setSample] = useState<ViewportSample>(() => readViewport())
-  const [trace, setTrace] = useState<ViewportSample[]>([])
-  const [recording, setRecording] = useState(false)
-  const recordingRef = useRef(recording)
-  recordingRef.current = recording
-
-  const sealed = useRef<KeyboardEpisode[]>([])
-  const resting = useRef<ViewportSample | null>(null)
-  const opened = useRef<ViewportSample | null>(null)
-  const latest = useRef<ViewportSample | null>(null)
-  const settled = useRef<ViewportSample | null>(null)
-  const [episodeCount, setEpisodeCount] = useState(0)
-
-  useEffect(() => {
-    let open = false
-    let frame = 0
-
-    const tick = () => {
-      const next = readViewport()
-      setSample(next)
-      if (recordingRef.current) {
-        setTrace((current) => (current.length >= TRACE_LIMIT ? current : [...current, next]))
-      }
-
-      // The reserve raises `--kb-inset` on `focusin`, a frame or more before the keyboard reports
-      // itself, so this edge is the focus — exactly the boundary worth pairing across.
-      const nowOpen = isKeyboardOpen(next)
-      if (nowOpen && !open) {
-        opened.current = resting.current
-        setEpisodeCount(Math.min(sealed.current.length + 1, EPISODE_LIMIT))
-      } else if (!nowOpen && open) {
-        // Settled frame if there was one, last frame otherwise: a keyboard reported badly beats a
-        // keyboard dropped, and "nothing ever settled" is itself the reading.
-        const after = settled.current ?? latest.current
-        if (after) {
-          sealed.current = [
-            ...sealed.current,
-            { before: opened.current, after, live: false },
-          ].slice(-EPISODE_LIMIT)
-        }
-        setEpisodeCount(sealed.current.length)
-        opened.current = null
-        latest.current = null
-        settled.current = null
-      }
-      open = nowOpen
-      if (nowOpen) {
-        latest.current = next
-        if (isSettled(next)) settled.current = next
-      } else resting.current = next
-
-      frame = window.requestAnimationFrame(tick)
-    }
-
-    frame = window.requestAnimationFrame(tick)
-    return () => window.cancelAnimationFrame(frame)
-  }, [])
-
-  const episodes = useCallback((): KeyboardEpisode[] => {
-    const after = settled.current ?? latest.current
-    const live = after ? [{ before: opened.current, after, live: true }] : []
-    return [...sealed.current, ...live].slice(-EPISODE_LIMIT)
-  }, [])
-
-  const toggleRecording = useCallback(() => {
-    setRecording((current) => {
-      if (!current) setTrace([])
-      return !current
-    })
-  }, [])
-
-  const clear = useCallback(() => {
-    setTrace([])
-    sealed.current = []
-    setEpisodeCount(latest.current ? 1 : 0)
-  }, [])
-
-  return { sample, trace, recording, episodes, episodeCount, toggleRecording, clear }
 }

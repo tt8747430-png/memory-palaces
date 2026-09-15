@@ -10,6 +10,7 @@ import { createDeck, createSubdeck } from '@/features/deck'
 import { createFolder, editFolder } from '@/features/folder'
 import { DeckTree, LibrarySelectList, MoveSheet } from '@/widgets/deck-tree'
 import { HomeHeader } from '@/widgets/home-header'
+import { SyncBanner } from '@/widgets/sync'
 import { useImportFile } from '@/widgets/content-editor'
 import { nextDefaultName, useHideAppNav } from '@/shared/lib'
 import {
@@ -223,6 +224,9 @@ export function DeckLibraryPage({
         )
       }
     >
+      {/* Above the library, because this is where a change is made and where its fate belongs. */}
+      <SyncBanner className="mt-2" />
+
       {!library.ready ? (
         <LibrarySkeleton />
       ) : library.isEmpty ? (

@@ -1,21 +1,16 @@
 import type { RxCollection } from 'rxdb'
-import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie'
 import {
+  type AccountDeletionPort,
   type AuthGateway,
+  type CloudSyncPort,
   type Identifiable,
   InMemoryRepository,
   LocalObjectUrlStorage,
   type StoragePort,
 } from '@/shared/api'
-import { RxdbRepository } from '@/shared/api/rxdb'
-import {
-  isSupabaseConfigured,
-  supabase,
-  SupabaseStorage,
-  SyncManager,
-  type SyncTarget,
-} from '@/shared/api/supabase'
-import { type AppEvents, EventBus } from '@/shared/lib'
+import type { SyncManager, SyncTarget } from '@/shared/api/supabase'
+import { type AppEvents, EventBus, nowIso } from '@/shared/lib'
+import { type ContentCollection, SYNCED_TABLES } from '@/shared/config/sync-tables'
 import { createSessionStore, type Session, type SessionStore } from '@/entities/session'
 import { createDeckStore, type Deck, type DeckStore } from '@/entities/deck'
 import { type Card, type CardStore, createCardStore } from '@/entities/card'
@@ -38,9 +33,15 @@ import {
   type HistoryEntry,
   type HistoryStore,
 } from '@/entities/learning-history'
-import { createAppDatabase } from './persistence/database'
+import {
+  createPendingChangeStore,
+  type PendingChange,
+  type PendingChangeStore,
+} from '@/entities/pending-change'
+import { createSyncStateStore, type SyncState, type SyncStateStore } from '@/entities/sync-state'
+import { createPendingChangePort } from '@/features/sync'
+import { keepImagesCached } from '@/features/media'
 import { resetLocalDatabase } from './persistence/reset-local-database'
-import { createAuthGateway } from './persistence/create-auth-gateway'
 import { keepArchiveDetached } from './persistence/keep-archive-detached'
 import { keepHistoryCapped } from './persistence/keep-history-capped'
 
@@ -56,30 +57,43 @@ export interface Services {
   profileStore: ProfileStore
   notificationStore: NotificationStore
   historyStore: HistoryStore
+  pendingChangeStore: PendingChangeStore
+  syncStateStore: SyncStateStore
   eventBus: EventBus<AppEvents>
   storage: StoragePort
   /** Null when no Supabase project is configured: the app then runs entirely on-device. */
+  accountDeletion: AccountDeletionPort | null
+  /** Null when no Supabase project is configured: the app then runs entirely on-device. */
   syncManager: SyncManager | null
+  /** What a Sync talks to. Null exactly when `syncManager` is. */
+  cloudSync: CloudSyncPort | null
   /** Wipes the device's database and reloads — only when a different account signs in. */
   resetLocalData: () => Promise<void>
 }
 
 /**
- * Everything that mirrors to the cloud. `notifications` is ephemeral UI state and stays local, and
- * so does `history`: there is no mirror table for the Learning history, so each device records the
- * answers given on it.
+ * Builds the app's object graph.
+ *
+ * Async, and deliberately so: RxDB, Dexie and supabase-js are the three heaviest dependencies in
+ * the bundle and nothing above this function needs them to paint. They are reached through
+ * `await import(...)` so they stay out of the entry graph and are fetched behind the splash. Type
+ * imports stay static — `verbatimModuleSyntax` erases them, so they cost nothing at runtime.
  */
-const SYNCED_TABLES = [
-  'decks',
-  'cards',
-  'folders',
-  'questions',
-  'progress',
-  'preferences',
-  'profiles',
-] as const
+export async function createServices(): Promise<Services> {
+  const [
+    { getRxStorageDexie },
+    { createAppDatabase },
+    { RxdbRepository },
+    cloud,
+    { createAuthGateway },
+  ] = await Promise.all([
+    import('rxdb/plugins/storage-dexie'),
+    import('./persistence/database'),
+    import('@/shared/api/rxdb'),
+    import('@/shared/api/supabase'),
+    import('./persistence/create-auth-gateway'),
+  ])
 
-export function createServices(): Services {
   const collections = createAppDatabase(getRxStorageDexie())
   const authGateway = createAuthGateway()
   const sessionRepo = new InMemoryRepository<Session>()
@@ -87,6 +101,16 @@ export function createServices(): Services {
   const cardRepo = new RxdbRepository<Card>(collections.then((c) => c.cards))
   const folderRepo = new RxdbRepository<Folder>(collections.then((c) => c.folders))
   const questionRepo = new RxdbRepository<Question>(collections.then((c) => c.questions))
+  const pendingChangeRepo = new RxdbRepository<PendingChange>(
+    collections.then((c) => c.pendingChanges),
+  )
+  const syncStateRepo = new RxdbRepository<SyncState>(collections.then((c) => c.syncState))
+  const pendingChangeStore = createPendingChangeStore(pendingChangeRepo)
+  // Only the four content stores get a port. The singletons always merge and can never diverge
+  // destructively; everything else is device-local and has nowhere to push. So the log holds
+  // exactly what the banner counts and exactly what the classifier examines.
+  const pending = (collection: ContentCollection) =>
+    createPendingChangePort(pendingChangeStore, collection, nowIso)
   const progressRepo = new RxdbRepository<Progress>(collections.then((c) => c.progress))
   const preferencesRepo = new RxdbRepository<Preferences>(collections.then((c) => c.preferences))
   const profileRepo = new RxdbRepository<Profile>(collections.then((c) => c.profiles))
@@ -100,21 +124,29 @@ export function createServices(): Services {
       collection: c[table] as unknown as RxCollection<Identifiable>,
     })),
   )
+  const configured = cloud.isSupabaseConfigured()
+  const syncManager = configured
+    ? cloud.SyncManager.fromSupabase(cloud.supabase, syncTargets)
+    : null
   const services: Services = {
     authGateway,
     sessionStore: createSessionStore(sessionRepo),
-    deckStore: createDeckStore(deckRepo),
-    cardStore: createCardStore(cardRepo),
-    folderStore: createFolderStore(folderRepo),
-    questionStore: createQuestionStore(questionRepo),
+    deckStore: createDeckStore(deckRepo, pending('decks')),
+    cardStore: createCardStore(cardRepo, pending('cards')),
+    folderStore: createFolderStore(folderRepo, pending('folders')),
+    questionStore: createQuestionStore(questionRepo, pending('questions')),
     progressStore: createProgressStore(progressRepo),
     preferencesStore: createPreferencesStore(preferencesRepo),
     profileStore: createProfileStore(profileRepo),
     notificationStore: createNotificationStore(notificationRepo),
     historyStore: createHistoryStore(historyRepo),
+    pendingChangeStore,
+    syncStateStore: createSyncStateStore(syncStateRepo),
     eventBus: new EventBus<AppEvents>(),
-    storage: isSupabaseConfigured() ? new SupabaseStorage(supabase) : new LocalObjectUrlStorage(),
-    syncManager: isSupabaseConfigured() ? SyncManager.fromSupabase(supabase, syncTargets) : null,
+    storage: configured ? new cloud.SupabaseStorage(cloud.supabase) : new LocalObjectUrlStorage(),
+    accountDeletion: configured ? new cloud.SupabaseAccountDeletion(cloud.supabase) : null,
+    syncManager,
+    cloudSync: syncManager ? cloud.createSupabaseCloudSync(cloud.supabase, syncManager) : null,
     resetLocalData: () => resetLocalDatabase({ collections }),
   }
 
@@ -131,14 +163,21 @@ export function createServices(): Services {
     services.profileStore,
     services.notificationStore,
     services.historyStore,
+    services.pendingChangeStore,
+    services.syncStateStore,
   ]) {
     store.getState().start()
   }
 
   keepArchiveDetached(services.deckStore)
   keepHistoryCapped(services.historyStore)
+  // The buckets are private, so the bytes behind a stored path have to be fetched ahead of the
+  // read. `useImageSrc` looks only at what this leaves in the cache.
+  keepImagesCached({
+    deckStore: services.deckStore,
+    profileStore: services.profileStore,
+    storage: services.storage,
+  })
 
   return services
 }
-
-export const services: Services = createServices()

@@ -3,8 +3,17 @@ import { InMemoryRepository } from '@/shared/api'
 import { createFolderStore, type Folder } from '@/entities/folder'
 import { createDeckStore, type Deck, makeDeck } from '@/entities/deck'
 import { type Card, createCardStore, makeCard } from '@/entities/card'
+import { createQuestionStore, type Question } from '@/entities/question'
+import { LocalObjectUrlStorage } from '@/shared/api'
 import { createFolder } from './create-folder'
 import { deleteFolder } from './delete-folder'
+
+/** Everything `deleteFolder` needs beyond the three stores. No cloud, so no object to orphan. */
+const cleanup = {
+  storage: new LocalObjectUrlStorage(),
+  userId: null,
+  questionStore: createQuestionStore(new InMemoryRepository<Question>()),
+}
 
 function folderStore() {
   const store = createFolderStore(new InMemoryRepository<Folder>())
@@ -62,7 +71,10 @@ describe('deleteFolder', () => {
     ])
     const cards = cardStore([card('c1', 'p1'), card('c2', 'p1-sub'), card('c3', 'p3')])
 
-    await deleteFolder(folders, decks, cards, created.id)
+    await deleteFolder(
+      { folderStore: folders, deckStore: decks, cardStore: cards, ...cleanup },
+      created.id,
+    )
 
     expect(folders.getState().folders).toHaveLength(0)
     expect(decks.getState().decks.map((d) => d.id)).toEqual(['p3'])
@@ -73,7 +85,10 @@ describe('deleteFolder', () => {
     const folders = folderStore()
     const decks = deckStore([{ ...deck('old', null), archived: true }, deck('p1', 'f1')])
 
-    await deleteFolder(folders, decks, cardStore(), 'f1')
+    await deleteFolder(
+      { folderStore: folders, deckStore: decks, cardStore: cardStore(), ...cleanup },
+      'f1',
+    )
 
     expect(decks.getState().decks.map((d) => d.id)).toEqual(['old'])
   })
@@ -82,7 +97,10 @@ describe('deleteFolder', () => {
     const folders = folderStore()
     const decks = deckStore([deck('p1', 'other')])
 
-    await deleteFolder(folders, decks, cardStore(), 'ghost')
+    await deleteFolder(
+      { folderStore: folders, deckStore: decks, cardStore: cardStore(), ...cleanup },
+      'ghost',
+    )
 
     expect(decks.getState().decks.find((p) => p.id === 'p1')?.folderId).toBe('other')
   })

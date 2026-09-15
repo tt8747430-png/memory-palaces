@@ -1,18 +1,9 @@
 import type { RxCollection } from 'rxdb'
 import { replicateRxCollection, type RxReplicationState } from 'rxdb/plugins/replication'
-import { Subject } from 'rxjs'
 import type { RxReplicationWriteToMasterRow, WithDeleted } from 'rxdb'
-import type { RealtimePostgresChangesPayload, SupabaseClient } from '@supabase/supabase-js'
-import type { Identifiable } from '@/shared/api'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { type Checkpoint, EPOCH, type Identifiable } from '@/shared/api'
 import { docToRow, type PushRow, type Row, rowToDoc } from './document-mapping'
-
-/** Where the last pull stopped. `id` breaks ties between rows written in the same transaction. */
-export interface Checkpoint {
-  updated_at: string
-  id: string
-}
-
-const EPOCH = '1970-01-01T00:00:00Z'
 
 /**
  * `user_id` travels for readability only — `push_documents` takes the owner from `auth.uid()`, so a
@@ -30,7 +21,7 @@ export function buildPushPayload<T extends Identifiable>(
  * transaction with the same `now()`, so a push of more rows than the pull batch size would leave
  * the rest of that transaction permanently behind the checkpoint.
  */
-export function buildPullFilter(checkpoint: Checkpoint | undefined): string {
+export function buildPullFilter(checkpoint: Checkpoint | undefined | null): string {
   // The first pull has nothing to tie-break against, so it asks for no id bound at all: an empty
   // string is not a "lowest id", and against the original uuid column it was a hard type error.
   if (!checkpoint) return `updated_at.gt."${EPOCH}"`
@@ -54,55 +45,34 @@ export interface CollectionReplicationOptions<T> {
   collection: RxCollection<T>
   table: string
   userId: string
+  /** Told the ids of every batch the server accepted or refused — the rows this cycle wrote. */
+  onPushed?: (ids: readonly string[]) => void
 }
 
 /**
- * One collection's half of the sync. RxDB owns the retry loop and the checkpoint; this only maps
- * documents to rows, asks PostgREST for what changed, and forwards Realtime events.
+ * One collection's half of one Sync cycle. RxDB owns the retry loop and its own checkpoint; this
+ * only maps documents to rows, asks PostgREST for what changed, and hands the writes to
+ * `push_documents`, which declines to overwrite a document whose server copy is newer and hands
+ * those rows back. RxDB takes them as conflicts and runs the collection's conflict handler, so a
+ * device returning from a week offline merges with what happened meanwhile instead of flattening it.
  *
- * The push goes through `push_documents`, which declines to overwrite a document whose server copy
- * is newer and hands those rows back. RxDB takes them as conflicts and runs the collection's
- * conflict handler, so a device returning from a week offline merges with what happened meanwhile
- * instead of flattening it.
+ * **`live: false`, and no Realtime channel.** Sync is user-initiated: a replication exists only for
+ * the length of a cycle, so a channel inside it would be torn down between syncs and miss exactly
+ * the events the banner needs. Watching the cloud is `createCloudWatcher`'s job — one long-lived
+ * subscription, which is also why the random-topic workaround this function used to need is gone.
  */
 export function createCollectionReplication<T extends Identifiable>({
   supabase,
   collection,
   table,
   userId,
+  onPushed,
 }: CollectionReplicationOptions<T>): RxReplicationState<T, Checkpoint> {
-  const pullStream$ = new Subject<
-    { documents: WithDeleted<T>[]; checkpoint: Checkpoint } | 'RESYNC'
-  >()
-
-  // The topic must be unique per replication: supabase-js hands back the *existing* channel for a
-  // repeated topic, and callbacks cannot be added to one that has already subscribed. Two
-  // replications for the same table and user are ordinary — a restart, or a second device
-  // simulated in one process — so uniqueness cannot come from the table and user alone.
-  const channel = supabase
-    .channel(`sync:${table}:${userId}:${crypto.randomUUID()}`)
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table },
-      (payload: RealtimePostgresChangesPayload<Row>) => {
-        const row = payload.new as Row | undefined
-        if (!row?.id) return
-        pullStream$.next({
-          documents: [rowToDoc<T>(row) as WithDeleted<T>],
-          checkpoint: { updated_at: row.updated_at ?? EPOCH, id: row.id },
-        })
-      },
-    )
-    .subscribe((status) => {
-      // Any (re)connect may have missed events; RESYNC makes RxDB re-pull from its checkpoint.
-      if (status === 'SUBSCRIBED') pullStream$.next('RESYNC')
-    })
-
-  const replication = replicateRxCollection<T, Checkpoint>({
+  return replicateRxCollection<T, Checkpoint>({
     collection,
     replicationIdentifier: `supabase-${table}`,
     deletedField: '_deleted',
-    live: true,
+    live: false,
     push: {
       async handler(rows) {
         const { data, error } = await supabase.rpc('push_documents', {
@@ -110,6 +80,7 @@ export function createCollectionReplication<T extends Identifiable>({
           p_rows: buildPushPayload(rows, userId),
         })
         if (error) throw new Error(error.message)
+        onPushed?.(rows.map((row) => row.newDocumentState.id))
         // Whatever the server refused is newer than what we sent; RxDB resolves and re-pushes.
         return ((data ?? []) as Row[]).map((row) => rowToDoc<T>(row) as WithDeleted<T>)
       },
@@ -126,15 +97,6 @@ export function createCollectionReplication<T extends Identifiable>({
         if (error) throw new Error(error.message)
         return rowsToPullResult<T>((data ?? []) as Row[], checkpoint)
       },
-      stream$: pullStream$.asObservable(),
     },
   })
-
-  // The channel outlives the replication otherwise, and a signed-out user keeps a socket open.
-  replication.onCancel.push(() => {
-    pullStream$.complete()
-    void supabase.removeChannel(channel)
-  })
-
-  return replication
 }

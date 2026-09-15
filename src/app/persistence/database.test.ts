@@ -8,8 +8,9 @@ import {
   createAppDatabase,
   deckMigrations,
   preferencesMigrations,
+  profileMigrations,
 } from './database'
-import { cardSchema, deckSchema, preferencesSchema } from './schemas'
+import { cardSchema, deckSchema, preferencesSchema, profileSchema } from './schemas'
 
 describe('createAppDatabase', () => {
   it('registers a profiles collection that round-trips a Profile through RxDB', async () => {
@@ -99,9 +100,40 @@ describe('schema migrations', () => {
     expect(preferencesMigrations[2](v1 as never).studyTypeInitialsOnly).toBe(true)
   })
 
+  it('narrows a v3 deck cover from a public URL to its object path', () => {
+    const v3 = {
+      id: 'd1',
+      name: 'Deck',
+      image: 'https://abc.supabase.co/storage/v1/object/public/deck-images/u1/d1',
+    }
+    expect(deckMigrations[4](v3 as never).image).toBe('u1/d1')
+  })
+
+  it('leaves an inline cover and a coverless deck alone', () => {
+    const inline = { id: 'd1', name: 'Deck', image: `data:image/jpeg;base64,${btoa('x')}` }
+    expect(deckMigrations[4](inline as never)).toBe(inline)
+
+    const none = { id: 'd2', name: 'Deck' }
+    expect(deckMigrations[4](none as never)).toBe(none)
+  })
+
+  it('preserves an unrecognised cover value rather than discarding it', () => {
+    const odd = { id: 'd1', name: 'Deck', image: 'https://elsewhere.example/x.jpg' }
+    expect(deckMigrations[4](odd as never)).toBe(odd)
+  })
+
+  it('narrows a v1 avatar from a public URL to its object path', () => {
+    const v1 = {
+      id: 'profile',
+      avatar: 'https://abc.supabase.co/storage/v1/object/public/avatars/u1/profile',
+    }
+    expect(profileMigrations[2](v1 as never).avatar).toBe('u1/profile')
+  })
+
   it('versions the collections', () => {
-    expect(deckSchema.version).toBe(3)
+    expect(deckSchema.version).toBe(4)
     expect(cardSchema.version).toBe(1)
     expect(preferencesSchema.version).toBe(2)
+    expect(profileSchema.version).toBe(2)
   })
 })

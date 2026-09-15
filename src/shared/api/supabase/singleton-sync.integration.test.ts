@@ -16,7 +16,8 @@ import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import type { Identifiable } from '@/shared/api'
 import { openRxdbCollection } from '@/shared/api/rxdb/database'
-import { createCollectionReplication } from './replication'
+import type { SyncedTable } from '@/shared/config/sync-tables'
+import { SyncManager } from './sync-manager'
 
 const URL = process.env.SUPABASE_TEST_URL
 const KEY = process.env.SUPABASE_TEST_KEY
@@ -57,7 +58,6 @@ async function openSingleton(collectionName: string): Promise<RxCollection<Singl
   return opened.collection
 }
 
-const settle = (ms = 1500) => new Promise((resolve) => setTimeout(resolve, ms))
 const TIMEOUT = 60_000
 
 describe.skipIf(!URL || !KEY)('singleton entities sync', () => {
@@ -80,20 +80,22 @@ describe.skipIf(!URL || !KEY)('singleton entities sync', () => {
     }
   }, TIMEOUT)
 
+  /** One cycle for one collection, as the app runs it. */
+  async function syncOnce(table: SyncedTable, collection: RxCollection<Singleton>) {
+    const manager = SyncManager.fromSupabase(supabase, [
+      { table, collection: collection as unknown as RxCollection<Identifiable> },
+    ])
+    await manager.start(userId)
+    await manager.runCycle()
+    await manager.stop()
+  }
+
   it.each(SINGLETONS)(
     'pushes and pulls $table, whose id is the word "$id"',
     async ({ table, id }) => {
       const local = await openSingleton(table)
-      const replication = createCollectionReplication({
-        supabase,
-        collection: local as unknown as RxCollection<Identifiable>,
-        table,
-        userId,
-      })
-      await replication.awaitInitialReplication()
-
       await local.upsert({ id, updatedAt: '2026-08-12T10:00:00Z', xp: 120 })
-      await replication.awaitInSync()
+      await syncOnce(table, local)
 
       const { data, error } = await supabase
         .from(table)
@@ -107,18 +109,9 @@ describe.skipIf(!URL || !KEY)('singleton entities sync', () => {
 
       // A second, cold device must receive it — the row is keyed per user, not globally.
       const second = await openSingleton(table)
-      const secondReplication = createCollectionReplication({
-        supabase,
-        collection: second as unknown as RxCollection<Identifiable>,
-        table,
-        userId,
-      })
-      await secondReplication.awaitInitialReplication()
-      await settle(500)
+      await syncOnce(table, second)
 
       expect((await second.findOne(id).exec())?.xp).toBe(120)
-
-      await Promise.all([replication.cancel(), secondReplication.cancel()])
     },
     TIMEOUT,
   )
@@ -127,15 +120,6 @@ describe.skipIf(!URL || !KEY)('singleton entities sync', () => {
     'refuses a stale write and hands the newer document back as a conflict',
     async () => {
       const { table, id } = SINGLETONS[1]
-      const local = await openSingleton(table)
-      const replication = createCollectionReplication({
-        supabase,
-        collection: local as unknown as RxCollection<Identifiable>,
-        table,
-        userId,
-      })
-      await replication.awaitInitialReplication()
-
       // The server already holds a later write than the one about to be pushed.
       await supabase.from(table).upsert([
         {
@@ -163,8 +147,6 @@ describe.skipIf(!URL || !KEY)('singleton entities sync', () => {
         .eq('user_id', userId)
         .single()
       expect((data?.data as { xp: number } | undefined)?.xp).toBe(999)
-
-      await replication.cancel()
     },
     TIMEOUT,
   )

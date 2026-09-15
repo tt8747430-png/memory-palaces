@@ -12,7 +12,7 @@ export interface SetProfilePhotoDeps {
 
 /**
  * Saves the picked photo immediately as an inline data URL, then tries to move it to storage and
- * patch in the hosted URL. The save never waits on the network: offline, the profile keeps a
+ * patch in its object path. The save never waits on the network: offline, the profile keeps a
  * perfectly good local image and syncs it inside the document, and `reconcileInlineImages` moves it
  * out once there is a network again.
  */
@@ -24,10 +24,10 @@ export async function setProfilePhoto(
   const saved = await setProfile(store, { avatar: dataUrl }, now)
   if (!userId) return saved
 
-  const url = await uploadInlineImage(storage, {
-    bucket: 'avatars',
-    path: `${userId}/${PROFILE_ID}`,
+  const path = await uploadInlineImage(
+    storage,
+    { bucket: 'avatars', userId, entityId: PROFILE_ID },
     dataUrl,
-  })
-  return url ? await setProfile(store, { avatar: url }, now) : saved
+  )
+  return path ? await setProfile(store, { avatar: path }, now) : saved
 }

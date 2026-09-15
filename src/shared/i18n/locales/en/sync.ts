@@ -1,0 +1,82 @@
+/** Sync: the banner, the review dialog, Settings → Sync, and an erase across accounts. */
+export const sync = {
+  unsyncedReset: {
+    title: 'Erase changes that were never synchronised?',
+    body_one:
+      'This device holds 1 change from another account that never reached the cloud. Signing in here erases it. To keep it, sign out, sign back in as that account and Synchronise.',
+    body_other:
+      'This device holds {{count}} changes from another account that never reached the cloud. Signing in here erases them. To keep them, sign out, sign back in as that account and Synchronise.',
+    proceed: 'Erase and continue',
+    signOut: 'Sign out',
+  },
+  banner: {
+    pending_one: '1 change is waiting on this device',
+    pending_other: '{{count}} changes are waiting on this device',
+    pendingAndCloud_one: '1 change here, and this account changed elsewhere',
+    pendingAndCloud_other: '{{count}} changes here, and this account changed elsewhere',
+    cloudChanged: 'This account changed on another device',
+    syncing: 'Synchronising…',
+    synced: 'Everything is synchronised',
+    failed: 'Sync did not finish',
+    offline_one: "1 change is waiting — you're offline",
+    offline_other: "{{count}} changes are waiting — you're offline",
+    restoring: 'Restoring your data…',
+  },
+  action: {
+    synchronise: 'Synchronise',
+    retry: 'Retry',
+  },
+  review: {
+    title: 'Deleted here, changed elsewhere',
+    body_one:
+      'You deleted 1 thing on this device, and another device has changed it since. Choose what wins.',
+    body_other:
+      'You deleted {{count}} things on this device, and another device has changed them since. Choose what wins.',
+    apply: 'Apply',
+    keepAll: 'Keep everything',
+    keep: 'Keep',
+    delete: 'Delete',
+    decide: 'Delete or keep',
+    alsoChanged_one: 'and 1 thing added or changed inside it on another device',
+    alsoChanged_other: 'and {{count}} things added or changed inside it on another device',
+    loadFailed: 'Could not load what changed. Check your connection and try again.',
+    retry: 'Try again',
+    nothingLeft: 'None of these are in the cloud any more, so the deletions simply stand.',
+    continue: 'Continue',
+    group: {
+      decks: 'Decks',
+      folders: 'Folders',
+      cards: 'Cards',
+      questions: 'Questions',
+    },
+  },
+  settings: {
+    title: 'Sync',
+    subtitle: 'What has left this device, and what has not.',
+    lastSyncedNever: 'Never synchronised from this device',
+    lastSynced: 'Last synchronised {{when}}',
+    waiting: 'Not yet synchronised',
+    nothingWaiting: 'Nothing is waiting — this device is up to date.',
+    syncNow: 'Synchronise now',
+    syncNowOffline: "You're offline. Reconnect to synchronise.",
+    reviewPending: 'Review pending changes',
+    reviewPendingHint: 'See what a Sync would ask you about.',
+    nothingToReview: 'Nothing needs your answer — no deletion here clashes with another device.',
+    reviewFailed: 'Could not check the cloud. Try again.',
+    autosync: 'Autosync',
+    autosyncHint:
+      'Synchronise without being asked, on this device only. A deletion that clashes with another device still asks first.',
+    guest: 'Guest sessions stay on this device. Create an account to synchronise.',
+    unavailable: 'This app is running without a cloud, so there is nothing to synchronise.',
+    counts: {
+      decks_one: '{{count}} deck',
+      decks_other: '{{count}} decks',
+      folders_one: '{{count}} folder',
+      folders_other: '{{count}} folders',
+      cards_one: '{{count}} card',
+      cards_other: '{{count}} cards',
+      questions_one: '{{count}} question',
+      questions_other: '{{count}} questions',
+    },
+  },
+} as const

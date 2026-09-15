@@ -54,6 +54,16 @@ describe('session commands', () => {
     await expect(gateway.getCurrent()).resolves.toBeNull()
   })
 
+  it('signOut clears the session even when the gateway fails', async () => {
+    const { gateway, sessionStore, deps } = setup()
+    await signUpWithEmail(deps, { name: 'Ada', email: 'a@b.com', password: 'pw' }, AT)
+    vi.spyOn(gateway, 'signOut').mockRejectedValue(new Error('revoke refused'))
+
+    // The failure still reaches the caller — but nothing can leave the app signed in locally.
+    await expect(signOut(deps)).rejects.toThrow('revoke refused')
+    expect(sessionStore.getState().session).toBeNull()
+  })
+
   it('restoreSession rehydrates a persisted account', async () => {
     const { gateway, deps } = setup()
     await gateway.signUp({ name: 'Ada', email: 'a@b.com', password: 'pw' })
