@@ -153,7 +153,7 @@ export async function findDestructive(
   const containers = pending.filter(
     (change) =>
       change.op === 'remove' &&
-      CONTAINER_COLLECTIONS.includes(change.collection) &&
+      CONTAINER_COLLECTIONS.includes(change.contentCollection) &&
       !answered.has(change.id),
   )
   if (!containers.length) return [...items.values()]
@@ -170,7 +170,9 @@ export async function findDestructive(
     }),
   )
 
-  const containerOf = new Map(containers.map((change) => [change.entityId, change.collection]))
+  const containerOf = new Map(
+    containers.map((change) => [change.entityId, change.contentCollection]),
+  )
   const found = await cloudDescendants(deps, [...containerOf.keys()], unseen)
   for (const descendant of found.values()) {
     const collection = containerOf.get(descendant.root)

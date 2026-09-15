@@ -11,6 +11,7 @@ import type { Profile } from '@/entities/profile'
 import type { AppNotification } from '@/entities/notification'
 import type { HistoryEntry } from '@/entities/learning-history'
 import type { PendingChange } from '@/entities/pending-change'
+import type { ContentCollection } from '@/shared/config/sync-tables'
 import type { SyncState } from '@/entities/sync-state'
 import { coerceImagePath } from '@/shared/lib'
 import { STORAGE_PREFIX } from '@/shared/config/constants'
@@ -62,6 +63,25 @@ export const preferencesMigrations = {
     ...doc,
     studyTypeInitialsOnly: doc.studyTypeInitialsOnly ?? DEFAULT_PREFERENCES.studyTypeInitialsOnly,
   }),
+}
+
+/**
+ * v1 renamed `collection` to `contentCollection`. A device that ran a build with the old field has
+ * rows on disk it could never read back — the rename is what makes them readable, so the entries
+ * are carried over rather than dropped: they are the only record of which local writes a Sync has
+ * not confirmed, and the destructive-divergence question is asked from them.
+ *
+ * No read-side twin, and that is the one case where the rule does not bite: `pendingChanges` is
+ * absent from `SYNCED_TABLES`, so no row of it ever arrives by replication and this device is the
+ * only writer there is to repair.
+ */
+export const pendingChangeMigrations = {
+  1: ({
+    collection,
+    ...rest
+  }: Omit<PendingChange, 'contentCollection'> & {
+    collection: ContentCollection
+  }): PendingChange => ({ ...rest, contentCollection: collection }),
 }
 
 /**
@@ -169,7 +189,7 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
     },
     notifications: { schema: notificationSchema },
     history: { schema: historySchema, conflictHandler: firstWriteWins<HistoryEntry>() },
-    pendingChanges: { schema: pendingChangeSchema },
+    pendingChanges: { schema: pendingChangeSchema, migrationStrategies: pendingChangeMigrations },
     syncState: { schema: syncStateSchema },
   })
   return {

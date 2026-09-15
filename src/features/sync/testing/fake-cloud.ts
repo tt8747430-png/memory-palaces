@@ -151,11 +151,16 @@ export function syncFixture(options: { state?: Partial<SyncState> } = {}) {
       for (const change of selectPendingChanges(pendingChangeStore.getState())) {
         const document =
           change.op === 'save'
-            ? await readLocal(repos, change.collection, change.entityId)
-            : (table(change.collection).get(change.entityId)?.data ?? { id: change.entityId })
+            ? await readLocal(repos, change.contentCollection, change.entityId)
+            : (table(change.contentCollection).get(change.entityId)?.data ?? {
+                id: change.entityId,
+              })
         if (!document) continue
-        cloud.write(change.collection, document, change.op === 'remove')
-        pushed[change.collection] = [...(pushed[change.collection] ?? []), change.entityId]
+        cloud.write(change.contentCollection, document, change.op === 'remove')
+        pushed[change.contentCollection] = [
+          ...(pushed[change.contentCollection] ?? []),
+          change.entityId,
+        ]
       }
       await cloud.pull?.(deps)
       return pushed

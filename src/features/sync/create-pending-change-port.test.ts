@@ -35,7 +35,7 @@ describe('the pending change log', () => {
     expect(rows()).toEqual([
       {
         id: 'decks:d1',
-        collection: 'decks',
+        contentCollection: 'decks',
         entityId: 'd1',
         op: 'save',
         at: '2026-01-01T00:00:00.000Z',

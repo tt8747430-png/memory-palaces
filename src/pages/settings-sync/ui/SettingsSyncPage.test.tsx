@@ -92,8 +92,8 @@ async function setup(
   return { runner: value, syncStateStore }
 }
 
-const change = (collection: PendingChange['collection'], entityId: string) =>
-  makePendingChange({ collection, entityId, op: 'save', at: AT })
+const change = (contentCollection: PendingChange['contentCollection'], entityId: string) =>
+  makePendingChange({ contentCollection, entityId, op: 'save', at: AT })
 
 describe('SettingsSyncPage', () => {
   it('tells a guest why there is nothing to synchronise', async () => {
