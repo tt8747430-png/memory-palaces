@@ -1,6 +1,14 @@
 import { actions, boot, common, nav, select, selection, swipe, update } from './core'
 import { archived, deck, folder, home, library, move, notifications } from './library'
-import { algorithm, cardActions, cardStyle, deckSettings, fastReview, tts } from './deck-settings'
+import {
+  algorithm,
+  cardActions,
+  cardProgress,
+  cardStyle,
+  deckSettings,
+  fastReview,
+  tts,
+} from './deck-settings'
 import { sync } from './sync'
 import { account } from './account'
 import { auth } from './auth'
@@ -28,6 +36,7 @@ export const en = {
   algorithm,
   cardStyle,
   cardActions,
+  cardProgress,
   fastReview,
   tts,
   sync,

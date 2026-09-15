@@ -87,6 +87,11 @@ export const deckMigrations = {
   4: completeDeck,
 }
 
+/** v1 widened `kind` with `adjusted`; every stored entry is already valid. */
+export const historyMigrations = {
+  1: (doc: HistoryEntry) => doc,
+}
+
 export const cardMigrations = {
   1: (doc: Card) => ({ ...doc, frozen: doc.frozen ?? false, reversed: doc.reversed ?? false }),
 }
@@ -134,7 +139,11 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
       conflictHandler: lastWriteWins<Profile>(),
     },
     notifications: { schema: notificationSchema },
-    history: { schema: historySchema, conflictHandler: firstWriteWins<HistoryEntry>() },
+    history: {
+      schema: historySchema,
+      migrationStrategies: historyMigrations,
+      conflictHandler: firstWriteWins<HistoryEntry>(),
+    },
     pendingChanges: { schema: pendingChangeSchema, migrationStrategies: pendingChangeMigrations },
     syncState: { schema: syncStateSchema, migrationStrategies: syncStateMigrations },
   })

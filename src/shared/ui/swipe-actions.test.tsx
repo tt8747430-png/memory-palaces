@@ -2,7 +2,8 @@ import { isValidElement } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import type { TFunction } from 'i18next'
 import type { SwipeConfig } from '@/shared/config/swipe'
-import { buildSwipeActions, type SwipeActionHandlers, swipeActionIcon } from './swipe-actions'
+import type { ActionHandlers } from './action-handlers'
+import { buildSwipeActions, swipeActionIcon } from './swipe-actions'
 
 const t = ((key: string) => key) as unknown as TFunction
 
@@ -17,7 +18,7 @@ describe('buildSwipeActions', () => {
     const config: SwipeConfig = { leading: ['flag'], trailing: ['delete', 'move'] }
     const onFlag = vi.fn()
     const onDelete = vi.fn()
-    const handlers: SwipeActionHandlers = {
+    const handlers: ActionHandlers = {
       flag: { onAction: onFlag, label: 'Flag it' },
       delete: { onAction: onDelete },
     }

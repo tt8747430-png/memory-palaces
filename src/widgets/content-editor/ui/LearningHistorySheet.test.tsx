@@ -38,6 +38,21 @@ function renderSheet(entries: HistoryEntry[], cardId: string | null = 'c1', star
 }
 
 describe('LearningHistorySheet', () => {
+  it('calls a hand-set schedule an adjustment, not a first review', async () => {
+    renderSheet([
+      entry({
+        id: 'h1',
+        createdAt: at(0),
+        kind: 'adjusted',
+        intervalAfter: 180,
+        dueAfter: at(180 * 86_400_000),
+      }),
+    ])
+    expect(await screen.findByText('Adjusted by hand')).toBeInTheDocument()
+    expect(screen.queryByText(/Marked mastered/)).toBeNull()
+    expect(screen.queryByText(/First review/)).toBeNull()
+  })
+
   it('says a card has no history rather than inventing one', async () => {
     renderSheet([])
     expect(await screen.findByText('No history yet')).toBeInTheDocument()

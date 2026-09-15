@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, screen } from '@testing-library/react'
+import { cleanup, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { makeCard } from '@/entities/card'
+import { type Card, makeCard } from '@/entities/card'
+import type { ActionHandlers } from '@/shared/ui'
 import { renderWithProviders } from '@/shared/test/render-with-providers'
 import { CardBrowser } from './CardBrowser'
 
@@ -33,24 +34,27 @@ const CARDS = [
   }),
 ]
 
+/** The filmstrip repeats every front, so face queries must skip it. */
+const face = (text: string) => screen.findByText(text, { ignore: '[role="tablist"] *' })
+
 function setup(overrides: Partial<Parameters<typeof CardBrowser>[0]> = {}) {
+  const onDelete = vi.fn()
   const handlers = {
     onClose: vi.fn(),
     onEdit: vi.fn(),
-    onToggleFlag: vi.fn(),
-    onDuplicate: vi.fn(),
-    onMarkKnown: vi.fn(),
-    onResetSrs: vi.fn(),
-    onDelete: vi.fn(),
+    actionsFor: (card: Card): ActionHandlers => ({
+      delete: { onAction: () => onDelete(card.id) },
+      flag: { onAction: () => {} },
+    }),
   }
   renderWithProviders(<CardBrowser open cards={CARDS} startId="c1" {...handlers} {...overrides} />)
-  return handlers
+  return { ...handlers, onDelete }
 }
 
 describe('CardBrowser', () => {
   it('opens at the starting card and shows the position', async () => {
     setup()
-    expect(await screen.findByText('First front')).toBeInTheDocument()
+    expect(await face('First front')).toBeInTheDocument()
     expect(screen.getByText('1 / 3 cards')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Previous card' })).toBeDisabled()
   })
@@ -60,12 +64,12 @@ describe('CardBrowser', () => {
     setup()
     await user.click(await screen.findByRole('button', { name: 'Next card' }))
     expect(await screen.findByText('2 / 3 cards')).toBeInTheDocument()
-    expect(await screen.findByText('Second front')).toBeInTheDocument()
+    expect(await face('Second front')).toBeInTheDocument()
   })
 
   it('peeks at the card the next swipe will actually promote', async () => {
     setup()
-    await screen.findByText('First front')
+    await face('First front')
 
     const queued = [...document.querySelectorAll<HTMLElement>('[aria-hidden][inert]')].filter(
       (node) => node.style.zIndex !== '',
@@ -78,10 +82,46 @@ describe('CardBrowser', () => {
     expect(nearest).not.toHaveTextContent('Third front')
   })
 
-  it('edits the current card', async () => {
+  it('edits the current card from the header', async () => {
     const user = userEvent.setup()
     const handlers = setup()
     await user.click(await screen.findByRole('button', { name: 'Edit' }))
     expect(handlers.onEdit).toHaveBeenCalledWith('c1')
+  })
+
+  it('jumps straight to a card from the filmstrip', async () => {
+    const user = userEvent.setup()
+    setup()
+    const strip = await screen.findByRole('tablist', { name: 'Jump to a card' })
+    await user.click(within(strip).getByRole('tab', { name: 'Card 3 of 3' }))
+    expect(await screen.findByText('3 / 3 cards')).toBeInTheDocument()
+    expect(await face('Third front')).toBeInTheDocument()
+  })
+
+  it('marks the card on screen as the selected thumbnail', async () => {
+    setup()
+    const strip = await screen.findByRole('tablist', { name: 'Jump to a card' })
+    expect(within(strip).getByRole('tab', { name: 'Card 1 of 3' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
+  })
+
+  it('runs the card catalog from its menu', async () => {
+    const user = userEvent.setup()
+    const handlers = setup()
+    await user.click(await screen.findByRole('button', { name: 'Card actions' }))
+    await user.click(await screen.findByRole('menuitem', { name: 'Delete' }))
+    expect(handlers.onDelete).toHaveBeenCalledWith('c1')
+  })
+
+  it('leaves Edit to the header rather than repeating it in the menu', async () => {
+    const user = userEvent.setup()
+    setup({
+      actionsFor: () => ({ edit: { onAction: () => {} }, delete: { onAction: () => {} } }),
+    })
+    await user.click(await screen.findByRole('button', { name: 'Card actions' }))
+    await screen.findByRole('menuitem', { name: 'Delete' })
+    expect(screen.queryByRole('menuitem', { name: 'Edit' })).toBeNull()
   })
 })

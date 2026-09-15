@@ -1,6 +1,6 @@
 import type { Entity, FastOutcome, Grade } from '@/shared/lib'
 
-export type HistoryKind = 'graded' | 'answered' | 'mastered'
+export type HistoryKind = 'graded' | 'answered' | 'mastered' | 'adjusted'
 
 export interface HistoryEntry extends Entity {
   cardId: string

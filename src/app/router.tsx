@@ -10,6 +10,7 @@ import { RootLayout } from './RootLayout'
 import { authRedirect } from './auth-guard'
 import type { Services } from './composition-root'
 import { lazyScreen } from './lazy-screen'
+import { validateRecoverySearch, validateStudySearch } from './routes/search'
 
 export interface RouterContext {
   services: Services
@@ -56,7 +57,12 @@ const routeTree = rootRoute.addChildren([
   route(ROUTES.deckAlgorithmAdvanced, deck('DeckAdvancedScreen')),
   route(ROUTES.deckCardStyle, deck('DeckCardStyleScreen')),
   route(ROUTES.deckTts, deck('DeckTtsScreen')),
-  route(ROUTES.deckStudy, deck('DeckStudyScreen')),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: ROUTES.deckStudy,
+    validateSearch: validateStudySearch,
+    component: deck('DeckStudyScreen'),
+  }),
   route(ROUTES.deckMatch, deck('DeckMatchScreen')),
   route(ROUTES.deckQuiz, deck('DeckQuizScreen')),
   route(ROUTES.deckQuestions, deck('DeckQuestionsScreen')),
@@ -80,11 +86,7 @@ const routeTree = rootRoute.addChildren([
   createRoute({
     getParentRoute: () => rootRoute,
     path: ROUTES.settingsChangePassword,
-    validateSearch: (search: Record<string, unknown>): { recovery?: boolean } => {
-      const recovery = search.recovery
-      const on = recovery === true || recovery === '1' || recovery === 'true'
-      return on ? { recovery: true } : {}
-    },
+    validateSearch: validateRecoverySearch,
     component: settings('SettingsChangePasswordScreen'),
   }),
   route(ROUTES.settingsSync, settings('SettingsSyncScreen')),

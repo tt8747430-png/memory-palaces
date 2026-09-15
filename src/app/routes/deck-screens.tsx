@@ -17,6 +17,7 @@ import { createDeck } from '@/features/deck'
 import { nextDefaultName } from '@/shared/lib'
 import { ROUTES } from '@/shared/config/routes'
 import { useBack } from './use-back'
+import { studyFilterFrom, useRouteSearch, validateStudySearch } from './search'
 
 function useDeckId(from: (typeof ROUTES)[keyof typeof ROUTES]) {
   return useParams({ from, select: (params) => (params as { deckId: string }).deckId })
@@ -41,6 +42,16 @@ export function DeckDetailScreen() {
       onTest={() => navigate({ to: ROUTES.deckQuestions, params: { deckId } })}
       onAddCard={() => navigate({ to: ROUTES.deckCardNew, params: { deckId } })}
       onEditCard={(cardId) => navigate({ to: ROUTES.deckCardEdit, params: { deckId, cardId } })}
+      onStudyFrom={(cardId) =>
+        navigate({ to: ROUTES.deckStudy, params: { deckId }, search: { from: cardId } })
+      }
+      onStudyFlagged={() =>
+        navigate({
+          to: ROUTES.deckStudy,
+          params: { deckId },
+          search: { filter: 'flagged' },
+        })
+      }
       onPasteNotes={() => navigate({ to: ROUTES.deckPaste, params: { deckId } })}
       onReviewImport={() => navigate({ to: ROUTES.deckImport, params: { deckId } })}
     />
@@ -122,7 +133,15 @@ export function DeckTtsScreen() {
 
 export function DeckStudyScreen() {
   const deckId = useDeckId(ROUTES.deckStudy)
-  return <StudyCardsPage scope={{ kind: 'deck', deckId }} onBack={useBackToDeck(deckId)} />
+  const search = useRouteSearch(validateStudySearch)
+  return (
+    <StudyCardsPage
+      scope={{ kind: 'deck', deckId }}
+      startCardId={search.from}
+      filter={studyFilterFrom(search)}
+      onBack={useBackToDeck(deckId)}
+    />
+  )
 }
 
 export function DeckMatchScreen() {

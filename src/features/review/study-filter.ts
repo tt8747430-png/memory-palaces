@@ -49,6 +49,12 @@ export interface QueueOptions {
   newCardsPerDay: number
   maxCardsPerDay: number
   random?: () => number
+  /**
+   * A card the learner asked for by name. It leads the queue even when the
+   * daily limits or a frozen flag would have left it out — an explicit ask is
+   * not the same as the deck's normal rotation.
+   */
+  startAt?: string
 }
 
 function withNewCardLimit(cards: Card[], newCardsPerDay: number): Card[] {
@@ -81,5 +87,11 @@ export function buildStudyQueue(cards: Card[], options: QueueOptions): string[] 
 
   const capped = chosen.slice(0, options.maxCardsPerDay)
   const ids = capped.map((card) => card.id)
-  return shouldShuffle ? shuffle(ids, random) : ids
+  const ordered = shouldShuffle ? shuffle(ids, random) : ids
+  return options.startAt ? leadWith(ordered, options.startAt, cards) : ordered
+}
+
+function leadWith(ids: string[], startAt: string, pool: Card[]): string[] {
+  if (!pool.some((card) => card.id === startAt)) return ids
+  return [startAt, ...ids.filter((id) => id !== startAt)]
 }

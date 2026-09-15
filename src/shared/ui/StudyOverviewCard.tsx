@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { motion } from 'motion/react'
-import { Check, GraduationCap } from 'lucide-react'
+import { Check, Flag, GraduationCap } from 'lucide-react'
 import { Button } from './primitives/button'
 import { GlassCard } from './GlassCard'
 import { EASE_OUT } from '@/shared/lib'
@@ -18,6 +18,9 @@ export interface StudyOverviewCardProps {
   stats: OverviewStat[]
   onStudy: () => void
   onStudyAhead?: () => void
+  /** Offered whenever the deck has flagged cards, caught up or not. */
+  flaggedCount?: number
+  onStudyFlagged?: () => void
 }
 
 export function StudyOverviewCard({
@@ -27,8 +30,18 @@ export function StudyOverviewCard({
   stats,
   onStudy,
   onStudyAhead,
+  flaggedCount = 0,
+  onStudyFlagged,
 }: StudyOverviewCardProps) {
   const { t } = useTranslation()
+
+  const flagged =
+    onStudyFlagged && flaggedCount > 0 ? (
+      <Button variant="secondary" className="w-full" onClick={onStudyFlagged}>
+        <Flag className="size-4.5" aria-hidden />
+        {t('study.studyFlagged', { count: flaggedCount })}
+      </Button>
+    ) : null
 
   if (variant === 'spaced' && count === 0) {
     return (
@@ -42,6 +55,7 @@ export function StudyOverviewCard({
             {t('study.studyAhead')}
           </Button>
         ) : null}
+        {flagged}
       </GlassCard>
     )
   }
@@ -73,10 +87,13 @@ export function StudyOverviewCard({
         ))}
       </dl>
 
-      <Button className="w-full" onClick={onStudy}>
-        <GraduationCap className="size-4.5" aria-hidden />
-        {t('study.studyCards')}
-      </Button>
+      <div className="flex flex-col gap-2">
+        <Button className="w-full" onClick={onStudy}>
+          <GraduationCap className="size-4.5" aria-hidden />
+          {t('study.studyCards')}
+        </Button>
+        {flagged}
+      </div>
     </GlassCard>
   )
 }

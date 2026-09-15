@@ -10,7 +10,7 @@ import {
   IconButton,
   SelectDot,
   type SheetAction,
-  type SwipeActionHandlers,
+  type ActionHandlers,
   SwipeRow,
 } from '@/shared/ui'
 
@@ -35,7 +35,7 @@ export type RowOverflow =
   { kind: 'menu'; actions: SheetAction[] } | { kind: 'sheet'; onOpen: () => void }
 
 export interface ContentRowProps extends RowFrameProps {
-  swipeHandlers: SwipeActionHandlers
+  swipeHandlers: ActionHandlers
   overflow: RowOverflow
   children: ReactNode
 }

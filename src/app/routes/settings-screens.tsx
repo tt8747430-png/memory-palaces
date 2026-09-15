@@ -1,4 +1,4 @@
-import { useNavigate, useSearch } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { SettingsAboutPage } from '@/pages/settings-about'
 import { SettingsChangePasswordPage } from '@/pages/settings-change-password'
 import { SettingsHelpPage } from '@/pages/settings-help'
@@ -11,6 +11,7 @@ import { SettingsSyncPage } from '@/pages/settings-sync'
 import { useSessionStore } from '@/entities/session'
 import { useAuthActions } from '@/features/session'
 import { ROUTES } from '@/shared/config/routes'
+import { useRouteSearch, validateRecoverySearch } from './search'
 import { useBackTo } from './use-back'
 
 export function SettingsScreen() {
@@ -54,7 +55,7 @@ export function SettingsProfileScreen() {
 }
 
 export function SettingsChangePasswordScreen() {
-  const { recovery } = useSearch({ from: ROUTES.settingsChangePassword })
+  const { recovery } = useRouteSearch(validateRecoverySearch)
   return (
     <SettingsChangePasswordPage recovery={recovery ?? false} onBack={useBackTo(ROUTES.settings)} />
   )

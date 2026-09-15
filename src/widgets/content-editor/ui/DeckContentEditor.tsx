@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { toast } from 'sonner'
 import { Plus, Trash2, Upload } from 'lucide-react'
 import { type Card, selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
 import { type LearningAlgorithm, selectDecks, useDeckStore } from '@/entities/deck'
 import { selectFolders, useFolderStore } from '@/entities/folder'
-import { reorderCards, toggleCardFrozen, toggleCardReversed } from '@/features/card'
+import { reorderCards } from '@/features/card'
 import {
   type ContentSort,
   selectEffectivePreferences,
@@ -31,6 +30,7 @@ import {
 } from '@/shared/ui'
 import { type MoveDestination, MoveSheet } from '@/widgets/deck-tree'
 import { filterCards, sortCards } from '../model/card-list'
+import { useCardActions } from '../model/use-card-actions'
 import { useCardCommands } from '../model/use-card-commands'
 import { useImportFile } from '../model/use-import-file'
 import { useCardFilter } from '../model/use-card-filter'
@@ -38,6 +38,7 @@ import { CardBrowser } from './CardBrowser'
 import { CardFilterSheet, FilterButton } from './CardFilterSheet'
 import { EmptyCards, FilterEmpty, NoResults } from './CardListStates'
 import { CardActionsSheet } from './CardActionsSheet'
+import { CardProgressSheet } from './CardProgressSheet'
 import { CardRow } from './CardRow'
 import { LearningHistorySheet } from './LearningHistorySheet'
 import type { RowDragHandle } from './ContentRow'
@@ -54,6 +55,8 @@ export interface DeckContentEditorProps {
   onSortChange: (sort: ContentSort) => void
   onAddCard: () => void
   onEditCard: (cardId: string) => void
+  /** Starts a study session for this deck with the given card at the front. */
+  onStudyFrom?: (cardId: string) => void
   onPasteNotes: () => void
   onReviewImport: () => void
 }
@@ -69,6 +72,7 @@ export function DeckContentEditor({
   onSortChange,
   onAddCard,
   onEditCard,
+  onStudyFrom,
   onPasteNotes,
   onReviewImport,
 }: DeckContentEditorProps) {
@@ -87,7 +91,10 @@ export function DeckContentEditor({
   const [browserCardId, setBrowserCardId] = useState<string | null>(null)
   const [moveIds, setMoveIds] = useState<readonly string[] | null>(null)
   const [cardSheet, setCardSheet] = useState<
-    { kind: 'actions'; id: string } | { kind: 'history'; id: string } | null
+    | { kind: 'actions'; id: string }
+    | { kind: 'history'; id: string }
+    | { kind: 'progress'; id: string }
+    | null
   >(null)
 
   const pending = usePendingAct<PendingCardAct>()
@@ -130,6 +137,19 @@ export function DeckContentEditor({
     setMoveIds(null)
   }
 
+  const actionsFor = useCardActions({
+    commands,
+    selection,
+    surfaces: {
+      move: setMoveIds,
+      progress: (id) => setCardSheet({ kind: 'progress', id }),
+      history: (id) => setCardSheet({ kind: 'history', id }),
+      confirmDelete: (id) => pending.request({ kind: 'delete-card', id }),
+    },
+    onEditCard,
+    onStudyFrom,
+  })
+
   const renderCard = (card: Card, dragHandle?: RowDragHandle, dragging = false) => (
     <CardRow
       key={card.id}
@@ -141,15 +161,10 @@ export function DeckContentEditor({
       dragHandle={dragHandle}
       dragging={dragging}
       swipe={prefs.swipe.card}
+      handlers={actionsFor(card)}
       onToggleSelect={() => selection.toggle(card.id)}
       onRequestSelect={() => selection.begin(card.id)}
       onOpen={() => setBrowserCardId(card.id)}
-      onMove={() => setMoveIds([card.id])}
-      onDuplicate={() => commands.duplicate(card.id)}
-      onDelete={() => pending.request({ kind: 'delete-card', id: card.id })}
-      onToggleFlag={() => commands.toggleFlag(card.id)}
-      onMarkKnown={() => commands.markKnown(card.id)}
-      onResetSrs={() => commands.resetSrs(card.id)}
       onOpenActions={() => setCardSheet({ kind: 'actions', id: card.id })}
       algorithm={algorithm}
     />
@@ -222,33 +237,22 @@ export function DeckContentEditor({
 
       {sheetCard && cardSheet?.kind === 'actions' ? (
         <CardActionsSheet
-          card={sheetCard}
           open
           onOpenChange={(open) => {
             if (!open) setCardSheet(null)
           }}
-          handlers={{
-            onSelect: () => selection.begin(sheetCard.id),
-            onEdit: () => onEditCard(sheetCard.id),
-            onFreeze: () => {
-              void toggleCardFrozen(cardStore, sheetCard.id)
-              toast.success(
-                sheetCard.frozen ? t('cardActions.unfrozeToast') : t('cardActions.frozeToast'),
-              )
-            },
-            onMove: () => setMoveIds([sheetCard.id]),
-            onReverse: () => {
-              void toggleCardReversed(cardStore, sheetCard.id)
-              toast.success(
-                sheetCard.reversed
-                  ? t('cardActions.unreversedToast')
-                  : t('cardActions.reversedToast'),
-              )
-            },
-            onDuplicate: () => commands.duplicate(sheetCard.id),
-            onHistory: () => setCardSheet({ kind: 'history', id: sheetCard.id }),
-            onDelete: () => pending.request({ kind: 'delete-card', id: sheetCard.id }),
+          handlers={actionsFor(sheetCard)}
+        />
+      ) : null}
+
+      {sheetCard && cardSheet?.kind === 'progress' ? (
+        <CardProgressSheet
+          card={sheetCard}
+          algorithm={algorithm}
+          onOpenChange={(open) => {
+            if (!open) setCardSheet(null)
           }}
+          onApply={(change) => commands.setProgress(sheetCard.id, change)}
         />
       ) : null}
 
@@ -329,14 +333,7 @@ export function DeckContentEditor({
           setBrowserCardId(null)
           onEditCard(id)
         }}
-        onToggleFlag={commands.toggleFlag}
-        onDuplicate={commands.duplicate}
-        onMarkKnown={commands.markKnown}
-        onResetSrs={commands.resetSrs}
-        onDelete={(id) => {
-          setBrowserCardId(null)
-          pending.request({ kind: 'delete-card', id })
-        }}
+        actionsFor={(card) => actionsFor(card, () => setBrowserCardId(null))}
       />
     </div>
   )

@@ -142,16 +142,6 @@ export const cardStyle = {
 
 export const cardActions = {
   title: 'Card actions',
-  select: 'Select',
-  edit: 'Edit',
-  freeze: 'Freeze',
-  unfreeze: 'Unfreeze',
-  move: 'Move',
-  reverse: 'Reverse',
-  unreverse: 'Unreverse',
-  duplicate: 'Duplicate',
-  history: 'Learning history',
-  delete: 'Delete',
   reversedChip: 'Reversed',
   frozenChip: 'Frozen',
   frozeToast: 'Card frozen',
@@ -169,6 +159,23 @@ export const cardActions = {
   historyFirstReview: 'First review',
   historyFast: 'Fast review',
   historyMastered: 'Marked mastered',
+  historyAdjusted: 'Adjusted by hand',
+} as const
+
+export const cardProgress = {
+  title: 'Card progress',
+  statusLabel: 'Status',
+  gradeLabel: 'How well do you know it?',
+  gradeHint: 'Picking a grade reschedules the card the way an answer in study would.',
+  dueLabel: 'Next review',
+  dueToday: 'Today',
+  dueIn: 'in {{interval}}',
+  duePick: 'Pick a day',
+  statsLabel: 'Reps {{reps}} · Lapses {{lapses}} · Ease {{ease}}',
+  newHint: 'Clears the schedule. The card comes back as if never studied — its history is kept.',
+  fastHint: 'Fast decks keep no schedule — only how the last pass went.',
+  apply: 'Apply',
+  applied: 'Progress updated',
 } as const
 
 export const fastReview = {

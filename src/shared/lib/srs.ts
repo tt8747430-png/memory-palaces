@@ -14,8 +14,12 @@ export interface SrsState {
 export type SrsStatus = 'new' | 'learning' | 'known'
 
 const MIN_EASE = 1.3
-const DEFAULT_EASE = 2.5
-const MATURE_INTERVAL = 21
+
+/** Where a card's ease starts, and what an unstudied card is shown as. */
+export const DEFAULT_EASE = 2.5
+
+/** At this interval a card stops being "learning" and counts as mastered. */
+const MATURE_INTERVAL_DAYS = 21
 
 function isoInDays(now: number, days: number): string {
   return new Date(now + days * DAY_MS).toISOString()
@@ -62,7 +66,47 @@ export function schedule(prev: SrsState | undefined, grade: Grade, now: number):
 
 export function srsStatus(srs: SrsState | undefined): SrsStatus {
   if (!srs || srs.reps === 0) return 'new'
-  return srs.interval >= MATURE_INTERVAL ? 'known' : 'learning'
+  return srs.interval >= MATURE_INTERVAL_DAYS ? 'known' : 'learning'
+}
+
+function carryOver(prev: SrsState | undefined, now: number): SrsState {
+  return {
+    ease: prev?.ease ?? DEFAULT_EASE,
+    reps: prev?.reps ?? 0,
+    lapses: prev?.lapses ?? 0,
+    interval: prev?.interval ?? 0,
+    due: prev?.due ?? nowIso(now),
+    lastReviewed: prev?.lastReviewed ?? nowIso(now),
+  }
+}
+
+/**
+ * Puts a card in the learning band by hand. It keeps the card's record — ease,
+ * reps, lapses — and only moves the interval to where `srsStatus` reads
+ * "learning", so a hand-set status and a studied one mean the same thing.
+ */
+export function markLearning(prev: SrsState | undefined, now: number): SrsState {
+  const base = carryOver(prev, now)
+  const interval = Math.min(Math.max(base.interval, 1), MATURE_INTERVAL_DAYS - 1)
+  return { ...base, reps: Math.max(base.reps, 1), interval, due: isoInDays(now, interval) }
+}
+
+/** Moves the next review to a chosen day, leaving ease, reps and lapses alone. */
+export function scheduleOn(prev: SrsState | undefined, dueMs: number, now: number): SrsState {
+  const base = carryOver(prev, now)
+  const interval = Math.max(0, Math.round((dueMs - now) / DAY_MS))
+  return {
+    ...base,
+    reps: Math.max(base.reps, 1),
+    interval,
+    due: new Date(dueMs).toISOString(),
+  }
+}
+
+/** Whole days from `now` to a scheduled review, floored at zero. */
+export function daysUntilDue(srs: SrsState | undefined, now: number): number {
+  if (!srs) return 0
+  return Math.max(0, Math.round((new Date(srs.due).getTime() - now) / DAY_MS))
 }
 
 export function markKnown(prev: SrsState | undefined, now: number): SrsState {

@@ -1,6 +1,7 @@
 import type { ReactNode, RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { X } from 'lucide-react'
+import { cn } from '@/shared/lib'
 import {
   Drawer,
   DrawerClose,
@@ -20,6 +21,8 @@ export interface SheetProps {
   description?: ReactNode
   footer?: ReactNode
   children: ReactNode
+  /** `tall` fills the drawer's own height cap, for a sheet that is a screen. */
+  size?: 'auto' | 'tall'
   className?: string
   initialFocus?: RefObject<HTMLElement | null> | boolean
 }
@@ -31,6 +34,7 @@ export function Sheet({
   description,
   footer,
   children,
+  size = 'auto',
   className,
   initialFocus,
 }: SheetProps) {
@@ -38,7 +42,10 @@ export function Sheet({
   return (
     <Drawer open={open} onOpenChange={(next) => onOpenChange(next)}>
       <DrawerVirtualKeyboardProvider>
-        <DrawerContent className={className} initialFocus={initialFocus}>
+        <DrawerContent
+          className={cn(size === 'tall' && 'h-(--sheet-max-h)', className)}
+          initialFocus={initialFocus}
+        >
           <DrawerHandle />
           <DrawerHeader>
             <div className="min-w-0">

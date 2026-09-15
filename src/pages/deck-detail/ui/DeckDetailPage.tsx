@@ -37,6 +37,8 @@ export interface DeckDetailPageProps {
   onTest?: () => void
   onAddCard: () => void
   onEditCard: (cardId: string) => void
+  onStudyFrom?: (cardId: string) => void
+  onStudyFlagged?: () => void
   onPasteNotes: () => void
   onReviewImport: () => void
 }
@@ -50,6 +52,8 @@ export function DeckDetailPage({
   onTest,
   onAddCard,
   onEditCard,
+  onStudyFrom,
+  onStudyFlagged,
   onPasteNotes,
   onReviewImport,
 }: DeckDetailPageProps) {
@@ -68,6 +72,10 @@ export function DeckDetailPage({
     [decks, allCards, deckId],
   )
   const questions = useMemo(() => questionsForDeck(allQuestions, deckId), [allQuestions, deckId])
+  const flaggedCount = useMemo(
+    () => subtreeCards.filter((card) => card.flagged).length,
+    [subtreeCards],
+  )
 
   const [now] = useState(() => Date.now())
   const fast = settings.algorithm === 'fast'
@@ -172,6 +180,8 @@ export function DeckDetailPage({
             stats={overview.stats}
             onStudy={() => onStudy?.()}
             onStudyAhead={fast ? undefined : onStudy}
+            flaggedCount={flaggedCount}
+            onStudyFlagged={onStudyFlagged}
           />
         ) : null}
 
@@ -197,6 +207,7 @@ export function DeckDetailPage({
             onSortChange={setContentSort}
             onAddCard={onAddCard}
             onEditCard={onEditCard}
+            onStudyFrom={onStudyFrom}
             onPasteNotes={onPasteNotes}
             onReviewImport={onReviewImport}
           />

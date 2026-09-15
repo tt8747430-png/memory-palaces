@@ -6,7 +6,7 @@ import type { Deck } from '@/entities/deck'
 import type { Card } from '@/entities/card'
 import type { SwipeConfig } from '@/shared/config/swipe'
 import { cn, dueCountsPerDeck, EASE_OUT, type FlatDeck, useLongPress } from '@/shared/lib'
-import { buildSwipeActions, type SwipeActionHandlers, SwipeRow } from '@/shared/ui'
+import { buildSwipeActions, type ActionHandlers, SwipeRow } from '@/shared/ui'
 import { DeckRowBody } from './deck-row'
 import { DECK_ROW_FRAME, TOGGLE_BASE, toggleFrame, toggleSurface } from './row-style'
 
@@ -21,7 +21,7 @@ export interface DeckTreeProps {
   onOpen: (deckId: string) => void
   onRequestSelect: (deckId: string) => void
   swipe?: SwipeConfig
-  swipeHandlers?: (deck: Deck) => SwipeActionHandlers
+  swipeHandlers?: (deck: Deck) => ActionHandlers
   now?: number
 }
 
@@ -75,7 +75,7 @@ interface DeckTreeRowProps {
   onOpen: (deckId: string) => void
   onRequestSelect: (deckId: string) => void
   swipe?: SwipeConfig
-  swipeHandlers?: (deck: Deck) => SwipeActionHandlers
+  swipeHandlers?: (deck: Deck) => ActionHandlers
 }
 
 function DeckTreeRow({

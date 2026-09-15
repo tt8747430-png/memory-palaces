@@ -20,7 +20,13 @@ import { cardsInSubtree, deckPath, findEntity, type Grade, selectIsReady } from 
 import { type HistoryEntry, useHistoryStoreApi } from '@/entities/learning-history'
 import { editCard } from '@/features/card'
 import { updateDeckSettings } from '@/features/deck'
-import { answerCard, type AnsweredCard, gradeCard, undoAnswer } from '@/features/review'
+import {
+  answerCard,
+  type AnsweredCard,
+  gradeCard,
+  type StudyFilter,
+  undoAnswer,
+} from '@/features/review'
 import { setPreferences } from '@/features/preferences'
 import {
   type DeckStudyPrefs,
@@ -42,10 +48,14 @@ export type StudyScope = { kind: 'deck'; deckId: string }
 
 export interface StudyCardsPageProps {
   scope: StudyScope
+  /** A card the learner picked out: the session opens on it. */
+  startCardId?: string
+  /** Opens the session narrowed, as Study flagged does. */
+  filter?: StudyFilter
   onBack?: () => void
 }
 
-export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
+export function StudyCardsPage({ scope, startCardId, filter, onBack }: StudyCardsPageProps) {
   const { t } = useTranslation()
   const deckStore = useDeckStoreApi()
   const cardStore = useCardStoreApi()
@@ -144,10 +154,12 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
   return (
     <StudySessionScreen>
       <FlashcardsPanel
-        key={`flashcards-${scope.deckId}`}
+        key={`flashcards-${scope.deckId}-${startCardId ?? ''}-${filter?.kind ?? ''}`}
         cards={cards}
         title={title}
         subtitle={subtitle}
+        startCardId={startCardId}
+        initialFilter={filter}
         deckPrefs={deckStudyPrefs(settings)}
         lockedPrefs={lockedDeckPrefs(deck)}
         algorithm={settings.algorithm}

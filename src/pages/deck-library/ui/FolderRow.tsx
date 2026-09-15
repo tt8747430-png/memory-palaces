@@ -3,7 +3,7 @@ import type { Folder } from '@/entities/folder'
 import { FOLDER_ROW_FRAME, FolderRowBody, ROW_HIT, ROW_SURFACE } from '@/widgets/deck-tree'
 import { cn, useLongPress } from '@/shared/lib'
 import type { SwipeConfig } from '@/shared/config/swipe'
-import { buildSwipeActions, type SwipeActionHandlers, SwipeRow } from '@/shared/ui'
+import { buildSwipeActions, type ActionHandlers, SwipeRow } from '@/shared/ui'
 
 export interface FolderRowProps {
   folder: Folder
@@ -11,7 +11,7 @@ export interface FolderRowProps {
   onOpen: () => void
   onRequestSelect: () => void
   swipe: SwipeConfig
-  swipeHandlers: SwipeActionHandlers
+  swipeHandlers: ActionHandlers
 }
 
 export function FolderRow({

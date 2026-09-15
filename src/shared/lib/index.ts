@@ -190,14 +190,28 @@ export { createStoreContext, type StoreContext } from './store-context'
 export {
   isDue,
   schedule,
+  scheduleOn,
   srsStatus,
   markKnown,
+  markLearning,
+  daysUntilDue,
   intervalLabel,
   nextIntervalLabel,
+  DEFAULT_EASE,
   type Grade,
   type SrsState,
   type SrsStatus,
 } from './srs'
+export {
+  draftDiffersFromCard,
+  draftFrom,
+  draftSchedule,
+  draftStatus,
+  withDue,
+  withGrade,
+  withStatus,
+  type CardProgressDraft,
+} from './card-progress'
 export {
   dayKey,
   recordTrainingDay,

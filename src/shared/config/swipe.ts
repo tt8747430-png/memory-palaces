@@ -1,15 +1,17 @@
+import { CARD_ACTIONS } from './actions'
 import type { ActionId } from './actions'
 
 export type SwipeItemType = 'deck' | 'folder' | 'card'
 
 export const SWIPE_ITEM_TYPES: readonly SwipeItemType[] = ['deck', 'folder', 'card']
 
-export type SwipeActionId = Exclude<ActionId, 'unfile'>
+/** An action id that may sit on a swipe rail. `SWIPE_ACTIONS` is the real gate. */
+export type SwipeActionId = ActionId
 
 export const SWIPE_ACTIONS: Record<SwipeItemType, readonly SwipeActionId[]> = {
   deck: ['favorite', 'move', 'settings', 'addSubdeck', 'duplicate', 'archive', 'delete'],
   folder: ['edit', 'addDeck', 'delete'],
-  card: ['move', 'flag', 'known', 'reset', 'duplicate', 'delete'],
+  card: CARD_ACTIONS,
 }
 
 export interface SwipeConfig {
@@ -27,7 +29,7 @@ export const SWIPE_SIDE_MAX: Record<keyof SwipeConfig, number> = {
 export const DEFAULT_SWIPE: SwipePreferences = {
   deck: { leading: ['favorite'], trailing: ['move', 'archive', 'delete'] },
   folder: { leading: ['edit'], trailing: ['addDeck', 'delete'] },
-  card: { leading: ['known'], trailing: ['flag', 'move', 'delete'] },
+  card: { leading: ['known'], trailing: ['flag', 'grade', 'move', 'delete'] },
 }
 
 export function withoutSwipeAction(config: SwipeConfig, id: SwipeActionId): SwipeConfig {

@@ -5,9 +5,11 @@ import { type HTMLMotionProps, motion, useReducedMotion } from 'motion/react'
 import { ChevronLeft, ChevronRight, MoreVertical, Pencil, X } from 'lucide-react'
 import type { Card } from '@/entities/card'
 import { cn } from '@/shared/lib'
-import { buildMenuActions, FlyoutMenu, FullscreenDialog, type SheetAction } from '@/shared/ui'
+import { type ActionHandlers, buildMenuActions, FlyoutMenu, FullscreenDialog } from '@/shared/ui'
 import { useCardBrowser } from '../model/use-card-browser'
+import { BROWSER_CARD_ACTIONS } from '../model/card-actions'
 import { CARD_EASE, DEPTH_POSE } from './browser-poses'
+import { CardFilmstrip } from './CardFilmstrip'
 import { PreviewFace, QueuedPreview } from './CardPreviewFace'
 
 export interface CardBrowserProps {
@@ -16,11 +18,8 @@ export interface CardBrowserProps {
   startId: string | null
   onClose: () => void
   onEdit: (id: string) => void
-  onToggleFlag: (id: string) => void
-  onDuplicate: (id: string) => void
-  onMarkKnown: (id: string) => void
-  onResetSrs: (id: string) => void
-  onDelete: (id: string) => void
+  /** The same catalog the row menu and swipe rails use, for the card on screen. */
+  actionsFor: (card: Card) => ActionHandlers
 }
 
 const CHROME_BUTTON =
@@ -32,11 +31,7 @@ export function CardBrowser({
   startId,
   onClose,
   onEdit,
-  onToggleFlag,
-  onDuplicate,
-  onMarkKnown,
-  onResetSrs,
-  onDelete,
+  actionsFor,
 }: CardBrowserProps) {
   const { t } = useTranslation()
   const reduce = useReducedMotion()
@@ -51,22 +46,7 @@ export function CardBrowser({
   })
   const { current } = deck
 
-  const menuActions: SheetAction[] = current
-    ? buildMenuActions(
-        ['flag', 'duplicate', 'known', 'reset', 'delete'],
-        {
-          flag: {
-            onAction: () => onToggleFlag(current.id),
-            label: current.flagged ? t('cards.row.unflag') : t('cards.row.flag'),
-          },
-          duplicate: { onAction: () => onDuplicate(current.id) },
-          known: { onAction: () => onMarkKnown(current.id) },
-          reset: { onAction: () => onResetSrs(current.id) },
-          delete: { onAction: () => onDelete(current.id) },
-        },
-        t,
-      )
-    : []
+  const menuActions = current ? buildMenuActions(BROWSER_CARD_ACTIONS, actionsFor(current), t) : []
 
   return (
     <FullscreenDialog
@@ -85,28 +65,38 @@ export function CardBrowser({
             <Dialog.Title className="rounded-full bg-card-glass px-4 py-1.5 text-label font-bold tabular-nums text-heading ring-1 ring-(--border-glass) shadow-rest">
               {t('cards.browser.position', { current: deck.index + 1, total: cards.length })}
             </Dialog.Title>
-            <FlyoutMenu
-              label={t('cards.browser.menu')}
-              actions={menuActions}
-              side="bottom"
-              align="end"
-              trigger={
-                <button
-                  type="button"
-                  aria-label={t('cards.browser.menu')}
-                  className={cn(CHROME_BUTTON, 'size-10')}
-                >
-                  <MoreVertical className="size-5" aria-hidden />
-                </button>
-              }
-            />
+            <span className="flex items-center gap-1.5">
+              <button
+                type="button"
+                aria-label={t('common.edit')}
+                onClick={() => onEdit(current.id)}
+                className={cn(CHROME_BUTTON, 'size-10')}
+              >
+                <Pencil className="size-5" aria-hidden />
+              </button>
+              <FlyoutMenu
+                label={t('cards.browser.menu')}
+                actions={menuActions}
+                side="bottom"
+                align="end"
+                trigger={
+                  <button
+                    type="button"
+                    aria-label={t('cards.browser.menu')}
+                    className={cn(CHROME_BUTTON, 'size-10')}
+                  >
+                    <MoreVertical className="size-5" aria-hidden />
+                  </button>
+                }
+              />
+            </span>
           </div>
 
           <div
             ref={shellRef}
             className="relative flex flex-1 items-center px-5 pb-2 perspective-[1400px]"
           >
-            <div className="relative h-[clamp(340px,calc(var(--app-height)*0.62),560px)] w-full">
+            <div className="relative h-[clamp(300px,calc(var(--app-height)*0.55),520px)] w-full">
               {deck.ahead.map((queued, i) => (
                 <QueuedPreview
                   key={queued.id}
@@ -149,7 +139,7 @@ export function CardBrowser({
             </div>
           </div>
 
-          <div className="flex items-center justify-between px-6 pb-(--p-safe-bottom) pt-2">
+          <div className="flex items-center gap-2 px-4 pb-(--p-safe-bottom) pt-2">
             <button
               type="button"
               onClick={() => deck.go(-1)}
@@ -157,19 +147,17 @@ export function CardBrowser({
               aria-label={t('cards.browser.prev')}
               className={cn(
                 CHROME_BUTTON,
-                'size-12 disabled:pointer-events-none disabled:opacity-35',
+                'size-11 shrink-0 disabled:pointer-events-none disabled:opacity-35',
               )}
             >
               <ChevronLeft className="size-5" aria-hidden />
             </button>
-            <button
-              type="button"
-              onClick={() => onEdit(current.id)}
-              className="flex h-12 items-center gap-2 rounded-control bg-primary px-6 text-body font-semibold text-primary-foreground shadow-interactive transition-transform active:scale-[0.97]"
-            >
-              <Pencil className="size-4.5" aria-hidden />
-              {t('common.edit')}
-            </button>
+            <CardFilmstrip
+              cards={cards}
+              index={deck.index}
+              reduce={Boolean(reduce)}
+              onPick={(at) => deck.go(at - deck.index)}
+            />
             <button
               type="button"
               onClick={() => deck.go(1)}
@@ -177,7 +165,7 @@ export function CardBrowser({
               aria-label={t('cards.browser.next')}
               className={cn(
                 CHROME_BUTTON,
-                'size-12 disabled:pointer-events-none disabled:opacity-35',
+                'size-11 shrink-0 disabled:pointer-events-none disabled:opacity-35',
               )}
             >
               <ChevronRight className="size-5" aria-hidden />

@@ -1,18 +1,24 @@
 import type { ReactNode } from 'react'
 import {
   Archive,
+  ArrowLeftRight,
+  CheckSquare,
   Copy,
   Flag,
   FolderInput,
   FolderMinus,
   FolderPlus,
+  Gauge,
   GraduationCap,
   Heart,
+  History,
   type LucideIcon,
   Pencil,
+  Play,
   Plus,
   RotateCcw,
   Settings,
+  Snowflake,
   Trash2,
 } from 'lucide-react'
 import type { ActionId } from '@/shared/config/actions'
@@ -30,6 +36,12 @@ const ACTION_ICON: Record<ActionId, LucideIcon> = {
   reset: RotateCcw,
   flag: Flag,
   known: GraduationCap,
+  select: CheckSquare,
+  grade: Gauge,
+  studyFrom: Play,
+  freeze: Snowflake,
+  reverse: ArrowLeftRight,
+  history: History,
   delete: Trash2,
 }
 

@@ -27,6 +27,14 @@ const ANSWER: Record<Grade | FastOutcome, { key: string; tone: PillTone }> = {
   gotIt: { key: 'fastReview.gotIt', tone: 'success' },
 }
 
+/** What a grade-less entry is called. Graded and answered entries show the answer. */
+const KIND_LABEL: Record<HistoryEntry['kind'], string> = {
+  graded: 'cardActions.historyMastered',
+  answered: 'cardActions.historyFast',
+  mastered: 'cardActions.historyMastered',
+  adjusted: 'cardActions.historyAdjusted',
+}
+
 export function LearningHistorySheet({ open, onOpenChange, cardId }: LearningHistorySheetProps) {
   const { t } = useTranslation()
   const entries = useHistoryStore(selectHistory)
@@ -76,7 +84,7 @@ function HistoryRow({ entry, t }: { entry: HistoryEntry; t: TFunction }) {
     <li className="flex items-center justify-between gap-3 rounded-card bg-info-surface px-4 py-2.5">
       <span className="flex min-w-0 flex-col items-start gap-1">
         <span className={pillSurface(answer ? answer.tone : 'primary')}>
-          {answer ? t(answer.key as never) : t('cardActions.historyMastered')}
+          {answer ? t(answer.key as never) : t(KIND_LABEL[entry.kind] as never)}
         </span>
         <time dateTime={entry.createdAt} className="text-label text-muted-foreground">
           {new Date(entry.createdAt).toLocaleString(undefined, {
@@ -95,6 +103,9 @@ function HistoryRow({ entry, t }: { entry: HistoryEntry; t: TFunction }) {
 function scheduleMove(entry: HistoryEntry, t: TFunction): string {
   if (entry.kind === 'answered') return t('cardActions.historyFast')
   const to = intervalLabel(entry.intervalAfter ?? 0)
-  if (entry.intervalBefore === undefined) return `${t('cardActions.historyFirstReview')} · ${to}`
+  // A hand-set schedule is never a "first review", even on a card with no past.
+  if (entry.intervalBefore === undefined) {
+    return entry.kind === 'adjusted' ? to : `${t('cardActions.historyFirstReview')} · ${to}`
+  }
   return t('cardActions.historyInterval', { from: intervalLabel(entry.intervalBefore), to })
 }

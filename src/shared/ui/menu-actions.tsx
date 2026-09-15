@@ -1,22 +1,12 @@
 import type { TFunction } from 'i18next'
 import { ACTION_META, type ActionId, actionLabelKey } from '@/shared/config/actions'
 import { actionIcon } from './action-icon'
+import type { ActionHandlers } from './action-handlers'
 import type { SheetAction } from './ActionSheet'
-
-export type MenuActionHandlers = Partial<
-  Record<
-    ActionId,
-    {
-      onAction: () => void
-      label?: string
-      disabled?: boolean
-    }
-  >
->
 
 export function buildMenuActions(
   ids: readonly ActionId[],
-  handlers: MenuActionHandlers,
+  handlers: ActionHandlers,
   t: TFunction,
 ): SheetAction[] {
   return ids.flatMap((id) => {
@@ -27,7 +17,7 @@ export function buildMenuActions(
       {
         id,
         label: handler.label ?? t(actionLabelKey(id, 'menu') as never),
-        icon: actionIcon(id),
+        icon: handler.icon ?? actionIcon(id),
         destructive: meta.destructive,
         disabled: handler.disabled,
         onSelect: handler.onAction,

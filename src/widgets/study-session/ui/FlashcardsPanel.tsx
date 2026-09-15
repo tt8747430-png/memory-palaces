@@ -53,6 +53,10 @@ export interface FlashcardsPanelProps {
   onModeChange?: (mode: StudyMode) => void
   title: string
   subtitle?: string
+  /** Starts the session on this card, wherever the daily limits would have put it. */
+  startCardId?: string
+  /** Opens the session on a narrower set — the flagged cards, say. */
+  initialFilter?: StudyFilter
   onGrade: (cardId: string, grade: Grade) => void
   onAnswer?: (cardId: string, outcome: FastOutcome) => void
   onRestoreCard?: (cardId: string, prior: PriorAnswer) => void
@@ -79,6 +83,8 @@ export function FlashcardsPanel({
   onModeChange,
   title,
   subtitle,
+  startCardId,
+  initialFilter,
   onGrade,
   onAnswer,
   onRestoreCard,
@@ -91,7 +97,7 @@ export function FlashcardsPanel({
   const { t } = useTranslation()
   const canSpeak = speechAvailable()
 
-  const [filter, setStudyFilter] = useState<StudyFilter>({ kind: 'all' })
+  const [filter, setStudyFilter] = useState<StudyFilter>(initialFilter ?? { kind: 'all' })
   const [gearOpen, setGearOpen] = useState(false)
   const [studySessionSettingsOpen, setStudySessionSettingsOpen] = useState(false)
   const [modeOpen, setModeOpen] = useState(false)
@@ -118,26 +124,32 @@ export function FlashcardsPanel({
   })
   const activeSwipe = settings.value.swipe
 
-  const buildIds = (activeFilter: StudyFilter): string[] =>
+  /**
+   * `seed` honours the card the session was opened on. Restarting keeps it —
+   * the session is still "from that card" — but narrowing the filter mid-way
+   * must not yank the learner back to it.
+   */
+  const buildIds = (activeFilter: StudyFilter, seed = false): string[] =>
     buildStudyQueue(applyStudyFilter(cardEntities, activeFilter, now), {
       now,
       algorithm,
       shuffle: deckPrefs.shuffle,
       newCardsPerDay: deckPrefs.newCardsPerDay,
       maxCardsPerDay: deckPrefs.maxCardsPerDay,
+      startAt: seed ? startCardId : undefined,
     })
 
   const [state, dispatch] = useReducer(studySessionReducer, undefined, () =>
-    initStudySession({ ids: buildIds({ kind: 'all' }), mode: algorithm }),
+    initStudySession({ ids: buildIds(initialFilter ?? { kind: 'all' }, true), mode: algorithm }),
   )
 
   const undoTrail = useRef<UndoEntry[]>([])
 
-  const rebuild = (activeFilter: StudyFilter) => {
+  const rebuild = (activeFilter: StudyFilter, seed = false) => {
     undoTrail.current = []
     dispatch({
       type: 'reset',
-      state: initStudySession({ ids: buildIds(activeFilter), mode: algorithm }),
+      state: initStudySession({ ids: buildIds(activeFilter, seed), mode: algorithm }),
     })
   }
 
@@ -260,7 +272,7 @@ export function FlashcardsPanel({
     onEdit: () => setEditing(true),
     onSpeak: speakFace,
     onSkip: applySkip,
-    onRestart: () => rebuild(filter),
+    onRestart: () => rebuild(filter, true),
   }
 
   return (

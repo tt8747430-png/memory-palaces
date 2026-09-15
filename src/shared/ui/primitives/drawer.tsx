@@ -52,7 +52,7 @@ function DrawerContent({ className, backdropClassName, children, ...props }: Dra
           data-slot="drawer-content"
           className={cn(
             'pointer-events-auto fixed inset-x-0 bottom-0 mx-auto flex w-full max-w-app flex-col',
-            'max-h-[calc(var(--app-height)*0.88)] touch-none rounded-t-card-featured bg-card pb-safe-keyboard shadow-elevated outline-none',
+            'max-h-(--sheet-max-h) touch-none rounded-t-card-featured bg-card pb-safe-keyboard shadow-elevated outline-none',
             'origin-bottom will-change-transform',
             '[--closed-transform:translate3d(0,calc(100%+2px),0)]',
             'transform-[translate3d(0,var(--drawer-swipe-movement-y,0px),0)]',

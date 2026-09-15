@@ -149,4 +149,25 @@ describe('buildStudyQueue', () => {
     const queue = buildStudyQueue(cards, { ...options, algorithm: 'fast', maxCardsPerDay: 4 })
     expect(queue).toHaveLength(4)
   })
+
+  it('leads with the card the learner asked for, keeping the rest in order', () => {
+    const cards = [card('a'), card('b'), card('c')]
+    expect(buildStudyQueue(cards, { ...options, startAt: 'c' })).toEqual(['c', 'a', 'b'])
+  })
+
+  it('takes in a frozen card when it is the one asked for', () => {
+    const cards = [card('a'), { ...card('b'), frozen: true }]
+    expect(buildStudyQueue(cards, { ...options, startAt: 'b' })).toEqual(['b', 'a'])
+  })
+
+  it('takes in a card the new-card allowance had left out', () => {
+    const cards = Array.from({ length: 5 }, (_, i) => card(`n${i}`))
+    const queue = buildStudyQueue(cards, { ...options, newCardsPerDay: 2, startAt: 'n4' })
+    expect(queue[0]).toBe('n4')
+    expect(queue).toHaveLength(3)
+  })
+
+  it('ignores a card that is not in this queue at all', () => {
+    expect(buildStudyQueue([card('a')], { ...options, startAt: 'elsewhere' })).toEqual(['a'])
+  })
 })

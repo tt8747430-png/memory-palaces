@@ -3,20 +3,16 @@ import { useTranslation } from 'react-i18next'
 import { ArrowLeftRight, Flag, Lightbulb, MapPin, Snowflake } from 'lucide-react'
 import type { Card } from '@/entities/card'
 import type { LearningAlgorithm } from '@/entities/deck'
-import { Chip, SrsStatusChip } from '@/shared/ui'
+import { type ActionHandlers, Chip, SrsStatusChip } from '@/shared/ui'
 import { ContentRow, type RowFrameProps, RowIndex } from './ContentRow'
 
 export interface CardRowProps extends RowFrameProps {
   card: Card
   index: number
   algorithm: LearningAlgorithm
+  /** The card's whole action catalog; the rails render whatever the learner picked. */
+  handlers: ActionHandlers
   onOpen: () => void
-  onMove: () => void
-  onDuplicate: () => void
-  onDelete: () => void
-  onToggleFlag: () => void
-  onMarkKnown: () => void
-  onResetSrs: () => void
   onOpenActions: () => void
 }
 
@@ -24,30 +20,17 @@ export function CardRow({
   card,
   index,
   algorithm,
-  onMove,
-  onDuplicate,
-  onDelete,
-  onToggleFlag,
-  onMarkKnown,
-  onResetSrs,
+  handlers,
   onOpenActions,
   ...frame
 }: CardRowProps) {
   const { t } = useTranslation()
-  const flagLabel = card.flagged ? t('cards.row.unflag') : t('cards.row.flag')
 
   return (
     <ContentRow
       {...frame}
       overflow={{ kind: 'sheet', onOpen: onOpenActions }}
-      swipeHandlers={{
-        move: { onAction: onMove },
-        flag: { onAction: onToggleFlag, label: flagLabel },
-        known: { onAction: onMarkKnown },
-        reset: { onAction: onResetSrs },
-        duplicate: { onAction: onDuplicate },
-        delete: { onAction: onDelete },
-      }}
+      swipeHandlers={handlers}
     >
       <div className="flex items-center gap-2">
         <RowIndex index={index} />

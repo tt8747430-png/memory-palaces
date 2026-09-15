@@ -10,9 +10,14 @@ import {
   moveCards,
   resetCardsSrs,
   restoreCardPlacements,
+  setCardProgress,
   toggleCardFlag,
+  toggleCardFrozen,
+  toggleCardReversed,
 } from '@/features/card'
+import { answerCard } from '@/features/review'
 import type { MultiSelect } from '@/shared/lib'
+import type { CardProgressChange } from './card-progress-change'
 import { bulkAction, type SelectActionHandlers } from '@/shared/ui'
 
 export interface CardCommands {
@@ -20,6 +25,9 @@ export interface CardCommands {
   toggleFlag: (id: string) => void
   markKnown: (id: string) => void
   resetSrs: (id: string) => void
+  toggleFreeze: (card: Card) => void
+  toggleReverse: (card: Card) => void
+  setProgress: (id: string, change: CardProgressChange) => void
   moveTo: (ids: readonly string[], deckId: string, deckName: string) => void
   remove: (id: string) => void
   removeSelected: () => void
@@ -49,6 +57,19 @@ export function useCardCommands(
   const resetSrs = (id: string) => {
     void resetCardsSrs(store, history, [id])
     toast.success(t('cards.row.scheduleReset'))
+  }
+  const toggleFreeze = (card: Card) => {
+    void toggleCardFrozen(store, card.id)
+    toast.success(card.frozen ? t('cardActions.unfrozeToast') : t('cardActions.frozeToast'))
+  }
+  const toggleReverse = (card: Card) => {
+    void toggleCardReversed(store, card.id)
+    toast.success(card.reversed ? t('cardActions.unreversedToast') : t('cardActions.reversedToast'))
+  }
+  const setProgress = (id: string, change: CardProgressChange) => {
+    if (change.kind === 'fastReview') void answerCard(store, history, id, change.outcome)
+    else void setCardProgress(store, history, id, { srs: change.srs, grade: change.grade })
+    toast.success(t('cardProgress.applied'))
   }
 
   const moveTo = (batch: readonly string[], deckId: string, deckName: string) => {
@@ -97,6 +118,9 @@ export function useCardCommands(
     toggleFlag: (id) => void toggleCardFlag(store, id),
     markKnown,
     resetSrs,
+    toggleFreeze,
+    toggleReverse,
+    setProgress,
     moveTo,
     remove: (id) => {
       void deleteCard(store, id)

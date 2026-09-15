@@ -54,6 +54,17 @@ export const actions = {
   flag: 'Flag',
   known: 'Mastered',
   knownMenu: 'Mark as mastered',
+  select: 'Select',
+  grade: 'Grade',
+  gradeMenu: 'Set grade & schedule',
+  studyFrom: 'Study',
+  studyFromMenu: 'Study from this card',
+  freeze: 'Freeze',
+  unfreeze: 'Unfreeze',
+  reverse: 'Reverse',
+  unreverse: 'Unreverse',
+  history: 'History',
+  historyMenu: 'Learning history',
   delete: 'Delete',
 } as const
 

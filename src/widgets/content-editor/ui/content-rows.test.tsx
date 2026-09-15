@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { makeCard } from '@/entities/card'
 import { makeQuestion } from '@/entities/question'
 import type { SwipeConfig } from '@/shared/config/swipe'
+import type { ActionHandlers } from '@/shared/ui'
 import { renderWithProviders } from '@/shared/test/render-with-providers'
 import { CardRow } from './CardRow'
 import { QuestionRow } from './QuestionRow'
@@ -12,6 +13,14 @@ afterEach(cleanup)
 
 const CREATED = new Date(0).toISOString()
 const NO_SWIPE: SwipeConfig = { leading: [], trailing: [] }
+
+const handlers = (over: ActionHandlers = {}): ActionHandlers => ({
+  flag: { onAction: vi.fn() },
+  known: { onAction: vi.fn() },
+  move: { onAction: vi.fn() },
+  delete: { onAction: vi.fn() },
+  ...over,
+})
 
 function cardProps(
   overrides: Partial<Parameters<typeof CardRow>[0]> = {},
@@ -30,16 +39,11 @@ function cardProps(
     selected: false,
     reorderable: false,
     swipe: NO_SWIPE,
+    handlers: handlers(),
     onToggleSelect: vi.fn(),
     onRequestSelect: vi.fn(),
     onOpen: vi.fn(),
-    onMove: vi.fn(),
-    onDuplicate: vi.fn(),
-    onDelete: vi.fn(),
-    onToggleFlag: vi.fn(),
-    onMarkKnown: vi.fn(),
     onOpenActions: vi.fn(),
-    onResetSrs: vi.fn(),
     ...overrides,
   }
 }
@@ -88,6 +92,21 @@ describe('CardRow', () => {
     )
     expect(screen.getByText('Reversed')).toBeInTheDocument()
     expect(screen.getByText('Frozen')).toBeInTheDocument()
+  })
+
+  it("puts the learner's chosen actions on the rails", () => {
+    const swipe: SwipeConfig = { leading: ['known'], trailing: ['flag', 'delete'] }
+    renderWithProviders(<CardRow {...cardProps({ swipe })} />)
+    expect(screen.getByLabelText('Mastered')).toBeInTheDocument()
+    expect(screen.getByLabelText('Flag')).toBeInTheDocument()
+    expect(screen.getByLabelText('Delete')).toBeInTheDocument()
+  })
+
+  it('leaves a rail action out when the card cannot do it', () => {
+    const swipe: SwipeConfig = { leading: [], trailing: ['grade', 'delete'] }
+    renderWithProviders(<CardRow {...cardProps({ swipe })} />)
+    expect(screen.queryByLabelText('Grade')).toBeNull()
+    expect(screen.getByLabelText('Delete')).toBeInTheDocument()
   })
 
   it('toggles selection in select mode and shows the flag indicator', async () => {

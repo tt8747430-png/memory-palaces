@@ -370,7 +370,7 @@ export const notificationSchema: RxJsonSchema<AppNotification> = {
 }
 
 export const historySchema: RxJsonSchema<HistoryEntry> = {
-  version: 0,
+  version: 1,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -379,7 +379,7 @@ export const historySchema: RxJsonSchema<HistoryEntry> = {
     updatedAt: { type: 'string' },
     cardId: { type: 'string', maxLength: 100 },
     deckId: { type: 'string', maxLength: 100 },
-    kind: { type: 'string', enum: ['graded', 'answered', 'mastered'] },
+    kind: { type: 'string', enum: ['graded', 'answered', 'mastered', 'adjusted'] },
     grade: { type: 'string', enum: ['again', 'hard', 'good', 'easy'] },
     outcome: { type: 'string', enum: ['notQuite', 'gotIt'] },
     intervalBefore: { type: 'number' },

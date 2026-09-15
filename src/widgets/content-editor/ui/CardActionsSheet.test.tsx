@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { useTranslation } from 'react-i18next'
 import { renderWithProviders } from '@/shared/test/render-with-providers'
 import { type Card, makeCard } from '@/entities/card'
-import { CardActionsSheet, type CardActionHandlers } from './CardActionsSheet'
+import { cardActionHandlers, type CardActionIntents } from '../model/card-actions'
+import { CardActionsSheet } from './CardActionsSheet'
 
 afterEach(cleanup)
 
@@ -18,61 +20,94 @@ const card = (over: Partial<Card> = {}): Card => ({
   ...over,
 })
 
-const noHandlers: CardActionHandlers = {
+const intents = (over: Partial<CardActionIntents> = {}): CardActionIntents => ({
   onSelect: () => {},
   onEdit: () => {},
-  onFreeze: () => {},
+  onGrade: () => {},
+  onStudyFrom: () => {},
+  onToggleFlag: () => {},
+  onMarkKnown: () => {},
+  onResetSrs: () => {},
+  onToggleFreeze: () => {},
+  onToggleReverse: () => {},
   onMove: () => {},
-  onReverse: () => {},
   onDuplicate: () => {},
   onHistory: () => {},
   onDelete: () => {},
+  ...over,
+})
+
+/** Builds the handler map the way a real screen does, with the real translator. */
+function Harness({
+  subject,
+  actions,
+  onOpenChange,
+}: {
+  subject: Card
+  actions: CardActionIntents
+  onOpenChange: (open: boolean) => void
+}) {
+  const { t } = useTranslation()
+  return (
+    <CardActionsSheet
+      open
+      onOpenChange={onOpenChange}
+      handlers={cardActionHandlers(subject, actions, t)}
+    />
+  )
 }
 
 function renderSheet(
-  subject: Card,
-  overrides: Partial<CardActionHandlers> & { onOpenChange?: (open: boolean) => void } = {},
+  subject: Card = card(),
+  over: Partial<CardActionIntents> = {},
+  onOpenChange: (open: boolean) => void = () => {},
 ) {
-  const { onOpenChange = () => {}, ...handlers } = overrides
   renderWithProviders(
-    <CardActionsSheet
-      card={subject}
-      open
-      onOpenChange={onOpenChange}
-      handlers={{ ...noHandlers, ...handlers }}
-    />,
+    <Harness subject={subject} actions={intents(over)} onOpenChange={onOpenChange} />,
   )
 }
 
 describe('CardActionsSheet', () => {
-  it('lists the eight actions in order', async () => {
-    renderSheet(card({ frozen: false, reversed: false }))
+  it('lists the whole card catalog in one order', async () => {
+    renderSheet()
     await screen.findByRole('button', { name: 'Select' })
     expect(screen.getAllByRole('button').map((b) => b.textContent)).toEqual([
       'Select',
       'Edit',
+      'Set grade & schedule',
+      'Study from this card',
+      'Flag',
+      'Mark as mastered',
+      'Reset schedule',
       'Freeze',
-      'Move',
       'Reverse',
+      'Move',
       'Duplicate',
       'Learning history',
       'Delete',
     ])
   })
 
-  it('flips the labels for a frozen, reversed card', async () => {
-    renderSheet(card({ frozen: true, reversed: true }))
+  it('flips the labels for a flagged, frozen, reversed card', async () => {
+    renderSheet(card({ flagged: true, frozen: true, reversed: true }))
     expect(await screen.findByRole('button', { name: 'Unfreeze' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Unreverse' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Unflag' })).toBeInTheDocument()
+  })
+
+  it('leaves Study out when the surface cannot start a session', async () => {
+    renderSheet(card(), { onStudyFrom: undefined })
+    await screen.findByRole('button', { name: 'Select' })
+    expect(screen.queryByRole('button', { name: 'Study from this card' })).toBeNull()
   })
 
   it('calls the handler and closes', async () => {
     const user = userEvent.setup()
-    const onFreeze = vi.fn()
+    const onToggleFreeze = vi.fn()
     const onOpenChange = vi.fn()
-    renderSheet(card(), { onFreeze, onOpenChange })
+    renderSheet(card(), { onToggleFreeze }, onOpenChange)
     await user.click(await screen.findByRole('button', { name: 'Freeze' }))
-    expect(onFreeze).toHaveBeenCalled()
+    expect(onToggleFreeze).toHaveBeenCalled()
     expect(onOpenChange).toHaveBeenCalledWith(false)
   })
 })

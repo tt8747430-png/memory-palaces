@@ -5,10 +5,11 @@ import userEvent from '@testing-library/user-event'
 import { MotionConfig } from 'motion/react'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
-import { type FastOutcome, makeCard } from '@/entities/card'
+import { type Card, type FastOutcome, makeCard } from '@/entities/card'
 import { DEFAULT_FLASHCARD_SWIPE_BY_MODE } from '@/shared/config/flashcard-swipe'
 import { DEFAULT_CARD_STYLE, type LearningAlgorithm } from '@/entities/deck'
 import type { StudyMode } from '@/entities/preferences'
+import type { StudyFilter } from '@/features/review'
 import { FlashcardsPanel } from './FlashcardsPanel'
 import type { DeckStudyPrefs, Grade, LearnerStudyPrefs, StudyCard } from '../model/types'
 
@@ -36,15 +37,18 @@ async function tap(name: RegExp | string) {
   fireEvent.click(await screen.findByRole('button', { name }, { timeout: 3000 }))
 }
 
-function studyCard(id: string): StudyCard {
+function studyCard(id: string, over: Partial<Card> = {}): StudyCard {
   return {
-    card: makeCard({
-      id,
-      createdAt: new Date(0).toISOString(),
-      deckId: 'd1',
-      front: `Front ${id}`,
-      back: `Back ${id}`,
-    }),
+    card: {
+      ...makeCard({
+        id,
+        createdAt: new Date(0).toISOString(),
+        deckId: 'd1',
+        front: `Front ${id}`,
+        back: `Back ${id}`,
+      }),
+      ...over,
+    },
     deckName: 'Forum',
     deckPath: 'Forum',
   }
@@ -59,6 +63,8 @@ function renderPanel(
     mode: StudyMode
     algorithm: LearningAlgorithm
     onAnswer: (id: string, outcome: FastOutcome) => void
+    startCardId: string
+    initialFilter: StudyFilter
   }> = {},
 ) {
   const onGrade = vi.fn(overrides.onGrade)
@@ -75,6 +81,8 @@ function renderPanel(
         algorithm={overrides.algorithm ?? 'spaced'}
         mode={mode}
         learnerPrefs={DEFAULT_LEARNER_PREFS}
+        startCardId={overrides.startCardId}
+        initialFilter={overrides.initialFilter}
         onGrade={onGrade}
         onAnswer={overrides.onAnswer}
         onModeChange={(next) => {
@@ -99,6 +107,38 @@ function renderPanel(
 }
 
 describe('FlashcardsPanel', () => {
+  it('opens on the card the learner picked out', async () => {
+    renderPanel([studyCard('a'), studyCard('b'), studyCard('c')], { startCardId: 'c' })
+    expect(await screen.findByRole('heading', { name: 'Front c' })).toBeInTheDocument()
+  })
+
+  it('brings a frozen card in when it is the one picked out', async () => {
+    renderPanel([studyCard('a'), studyCard('b', { frozen: true })], { startCardId: 'b' })
+    expect(await screen.findByRole('heading', { name: 'Front b' })).toBeInTheDocument()
+  })
+
+  it('opens narrowed when the session was started from a filter', async () => {
+    renderPanel([studyCard('a'), studyCard('b', { flagged: true })], {
+      initialFilter: { kind: 'flagged' },
+    })
+    expect(await screen.findByRole('heading', { name: 'Front b' })).toBeInTheDocument()
+    expect(screen.getByText('1')).toBeInTheDocument()
+  })
+
+  it('does not yank back to the seeded card when the filter narrows mid-session', async () => {
+    const user = userEvent.setup()
+    renderPanel([studyCard('a'), studyCard('b', { flagged: true }), studyCard('c')], {
+      startCardId: 'c',
+    })
+    expect(await screen.findByRole('heading', { name: 'Front c' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Study session settings' }))
+    await user.click(await screen.findByRole('button', { name: /^Flagged/ }))
+    await user.click(screen.getByRole('button', { name: 'Close settings' }))
+
+    expect(await screen.findByRole('heading', { name: 'Front b' })).toBeInTheDocument()
+  })
+
   it('reveals and grades a review session through to completion', async () => {
     const user = userEvent.setup()
     const { onGrade, onComplete } = renderPanel([studyCard('a'), studyCard('b')])

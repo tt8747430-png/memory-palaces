@@ -25,7 +25,7 @@ import {
   SelectToolbar,
   SelectToolbarDock,
   type SheetAction,
-  type SwipeActionHandlers,
+  type ActionHandlers,
 } from '@/shared/ui'
 import { isMove, movingDeck } from '../model/pending-act'
 import { useHomeHeaderData } from '../model/use-home-header-data'
@@ -150,7 +150,7 @@ export function DeckLibraryPage({
       onReviewDeck?.(deck.id)
     })
 
-  const deckSwipeHandlers = (deck: Deck): SwipeActionHandlers => ({
+  const deckSwipeHandlers = (deck: Deck): ActionHandlers => ({
     favorite: {
       onAction: () => act.toggleFavorite(deck),
       label: deck.favorite ? t('deck.unfavorite') : t('deck.favorite'),
@@ -166,7 +166,7 @@ export function DeckLibraryPage({
     delete: { onAction: () => library.request({ kind: 'delete-deck', deck }) },
   })
 
-  const folderSwipeHandlers = (folder: Folder): SwipeActionHandlers => ({
+  const folderSwipeHandlers = (folder: Folder): ActionHandlers => ({
     edit: { onAction: () => setFolderSheetTarget(folder) },
     addDeck: { onAction: () => setCreatePrompt({ kind: 'deck', folderId: folder.id }) },
     delete: { onAction: () => library.request({ kind: 'delete-folder', folder }) },
