@@ -17,15 +17,19 @@ const escapeForRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, 
 function supabasePushQueue(supabaseUrl: string | undefined) {
   if (!supabaseUrl) return []
   const rest = new RegExp(`^${escapeForRegExp(new URL(supabaseUrl).origin)}/rest/`)
-  const backgroundSync = {
-    name: 'supabase-push-queue',
-    options: { maxRetentionTime: 24 * 60 },
-  }
+  // A queue per method, because Workbox keys queues by name and throws `duplicate-queue-name` when
+  // a second one claims a name already taken. It throws from the service worker's module body, so
+  // one shared name costs every registration that follows it.
   return (['POST', 'PATCH'] as const).map((method) => ({
     urlPattern: rest,
     handler: 'NetworkOnly' as const,
     method,
-    options: { backgroundSync },
+    options: {
+      backgroundSync: {
+        name: `supabase-push-queue-${method.toLowerCase()}`,
+        options: { maxRetentionTime: 24 * 60 },
+      },
+    },
   }))
 }
 
