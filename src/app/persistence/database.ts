@@ -6,7 +6,7 @@ import type { CardStylePreset, Deck } from '@/entities/deck'
 import type { Card } from '@/entities/card'
 import type { Question } from '@/entities/question'
 import type { Progress } from '@/entities/progress'
-import type { Preferences } from '@/entities/preferences'
+import { DEFAULT_PREFERENCES, type Preferences } from '@/entities/preferences'
 import type { Profile } from '@/entities/profile'
 import type { AppNotification } from '@/entities/notification'
 import { STORAGE_PREFIX } from '@/shared/config/constants'
@@ -36,8 +36,17 @@ export interface AppCollections {
 
 addRxPlugin(RxDBMigrationSchemaPlugin)
 
-const preferencesMigrations = {
+/**
+ * v2 made Type mode's initials-only recall a stored preference instead of a toggle that lived and
+ * died with the study session. Required by the schema, so a document written before it has to be
+ * given the answer the toggle used to start on.
+ */
+export const preferencesMigrations = {
   1: (doc: Preferences) => ({ ...doc, selectToolbar: DEFAULT_SELECT_TOOLBAR }),
+  2: (doc: Preferences) => ({
+    ...doc,
+    studyTypeInitialsOnly: doc.studyTypeInitialsOnly ?? DEFAULT_PREFERENCES.studyTypeInitialsOnly,
+  }),
 }
 
 /**

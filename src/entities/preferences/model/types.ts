@@ -62,6 +62,8 @@ export interface Preferences extends Entity {
   contentSort: ContentSort
   studyMode: StudyMode
   studyWordSpaces: boolean
+  /** Type mode: recall the answer by its initials instead of typing it out in full. */
+  studyTypeInitialsOnly: boolean
   shakeToUndo: boolean
   swipe: SwipePreferences
   flashcardSwipe: FlashcardSwipeByMode
@@ -80,6 +82,7 @@ export const DEFAULT_PREFERENCES = {
   contentSort: 'manual',
   studyMode: 'blur',
   studyWordSpaces: true,
+  studyTypeInitialsOnly: false,
   shakeToUndo: true,
   swipe: DEFAULT_SWIPE,
   flashcardSwipe: DEFAULT_FLASHCARD_SWIPE_BY_MODE,
@@ -106,6 +109,7 @@ export interface MakePreferencesInput {
   contentSort?: ContentSort
   studyMode?: StudyMode
   studyWordSpaces?: boolean
+  studyTypeInitialsOnly?: boolean
   shakeToUndo?: boolean
   swipe?: SwipePreferences
   flashcardSwipe?: FlashcardSwipeByMode
@@ -150,6 +154,7 @@ export function makePreferences(input: MakePreferencesInput): Preferences {
         : DEFAULT_PREFERENCES.contentSort,
     studyMode: resolveStudyMode(input.studyMode),
     studyWordSpaces: input.studyWordSpaces ?? DEFAULT_PREFERENCES.studyWordSpaces,
+    studyTypeInitialsOnly: input.studyTypeInitialsOnly ?? DEFAULT_PREFERENCES.studyTypeInitialsOnly,
     shakeToUndo: input.shakeToUndo ?? DEFAULT_PREFERENCES.shakeToUndo,
     swipe: resolveSwipe(input.swipe),
     flashcardSwipe: normalizeFlashcardSwipe(input.flashcardSwipe),
@@ -181,6 +186,7 @@ export type PreferencesChanges = Partial<
     | 'contentSort'
     | 'studyMode'
     | 'studyWordSpaces'
+    | 'studyTypeInitialsOnly'
     | 'shakeToUndo'
     | 'swipe'
     | 'flashcardSwipe'

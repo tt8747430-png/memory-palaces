@@ -237,7 +237,7 @@ export const progressSchema: RxJsonSchema<Progress> = {
 }
 
 export const preferencesSchema: RxJsonSchema<Preferences> = {
-  version: 1,
+  version: 2,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -254,6 +254,7 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
     contentSort: { type: 'string', enum: ['manual', 'recent', 'name', 'due', 'flagged'] },
     studyMode: { type: 'string', enum: ['blur', 'words', 'initials', 'type'] },
     studyWordSpaces: { type: 'boolean' },
+    studyTypeInitialsOnly: { type: 'boolean' },
     shakeToUndo: { type: 'boolean' },
     swipe: {
       type: 'object',
@@ -319,6 +320,7 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
     'contentSort',
     'studyMode',
     'studyWordSpaces',
+    'studyTypeInitialsOnly',
     'shakeToUndo',
     'swipe',
     'flashcardSwipe',
@@ -362,3 +364,4 @@ export const notificationSchema: RxJsonSchema<AppNotification> = {
   },
   required: ['id', 'createdAt', 'updatedAt', 'type', 'read'],
 }
+

@@ -18,11 +18,7 @@ import {
   studyFilterCounts as computeFilterCounts,
   upcomingIds,
 } from '@/features/review'
-import {
-  type FlashcardSwipeByMode,
-  isGradeAction,
-  type SwipeDirection,
-} from '@/shared/config/flashcard-swipe'
+import { isGradeAction, type SwipeDirection } from '@/shared/config/flashcard-swipe'
 import { CardScene, IconButton, StudySessionHeader } from '@/shared/ui'
 import { CardDraftSheet } from '@/widgets/content-editor'
 import { studyFaces } from '../model/study-faces'
@@ -38,28 +34,27 @@ import type { QuickActionsModel } from './QuickActionRows'
 import { CompletionOverlay } from './CompletionOverlay'
 import type {
   CardChanges,
-  EditableStudyPref,
+  DeckStudyPrefs,
+  EditableDeckPref,
   Grade,
+  LearnerStudyPrefs,
   SessionSummary,
   StudyCard,
-  StudyPrefs,
 } from '../model/types'
 
 export interface FlashcardsPanelProps {
   cards: StudyCard[]
-  prefs: StudyPrefs
+  /** What the Deck decides. */
+  deckPrefs: DeckStudyPrefs
   /** Prefs the deck being studied does not own — a subdeck's main deck does. Shown, not changeable. */
-  lockedPrefs?: readonly EditableStudyPref[]
+  lockedPrefs?: readonly EditableDeckPref[]
   algorithm: LearningAlgorithm
   mode: StudyMode
-  wordSpaces: boolean
-  shakeToUndo: boolean
-  swipeByMode: FlashcardSwipeByMode
-  onPrefsChange?: (prefs: StudyPrefs) => void
-  onSwipeByModeChange?: (config: FlashcardSwipeByMode) => void
+  /** What the learner decides, the same in every Deck. */
+  learnerPrefs: LearnerStudyPrefs
+  onDeckPrefsChange?: (prefs: DeckStudyPrefs) => void
+  onLearnerPrefsChange?: (changes: Partial<LearnerStudyPrefs>) => void
   onModeChange?: (mode: StudyMode) => void
-  onWordSpacesChange?: (value: boolean) => void
-  onShakeToUndoChange?: (value: boolean) => void
   title: string
   subtitle?: string
   onGrade: (cardId: string, grade: Grade) => void
@@ -78,18 +73,14 @@ type UndoEntry = { cardId: string; prevSrs: SrsState | undefined } | null
 
 export function FlashcardsPanel({
   cards,
-  prefs,
+  deckPrefs,
   lockedPrefs,
   algorithm,
   mode,
-  wordSpaces,
-  shakeToUndo,
-  swipeByMode,
-  onPrefsChange,
-  onSwipeByModeChange,
+  learnerPrefs,
+  onDeckPrefsChange,
+  onLearnerPrefsChange,
   onModeChange,
-  onWordSpacesChange,
-  onShakeToUndoChange,
   title,
   subtitle,
   onGrade,
@@ -104,6 +95,9 @@ export function FlashcardsPanel({
   const { t } = useTranslation()
   const canSpeak = speechAvailable()
 
+  // Deliberately not persisted, and the one study setting that is not. A Study filter is the
+  // answer to "what am I doing in *this* sitting" — restoring "flagged only" a week later would
+  // silently hide the rest of the deck from a learner who never asked for that again.
   const [filter, setStudyFilter] = useState<StudyFilter>({ kind: 'all' })
   const [gearOpen, setGearOpen] = useState(false)
   const [studySessionSettingsOpen, setStudySessionSettingsOpen] = useState(false)
@@ -117,15 +111,11 @@ export function FlashcardsPanel({
 
   const settings = useStudySettings({
     mode,
-    prefs,
-    onPrefsChange,
+    deckPrefs,
+    onDeckPrefsChange,
     lockedPrefs,
-    wordSpaces,
-    onWordSpacesChange,
-    shakeToUndo,
-    onShakeToUndoChange,
-    swipeByMode,
-    onSwipeByModeChange,
+    learnerPrefs,
+    onLearnerPrefsChange,
     filter,
     filterCounts,
     onFilterChange: (next) => {
@@ -139,9 +129,9 @@ export function FlashcardsPanel({
     buildStudyQueue(applyStudyFilter(cardEntities, activeFilter, now), {
       now,
       algorithm,
-      shuffle: prefs.shuffle,
-      newCardsPerDay: prefs.newCardsPerDay,
-      maxCardsPerDay: prefs.maxCardsPerDay,
+      shuffle: deckPrefs.shuffle,
+      newCardsPerDay: deckPrefs.newCardsPerDay,
+      maxCardsPerDay: deckPrefs.maxCardsPerDay,
     })
 
   const [state, dispatch] = useReducer(studySessionReducer, undefined, () =>
@@ -187,18 +177,18 @@ export function FlashcardsPanel({
 
   const canEdit = Boolean(onEditCard || onToggleFlag)
 
-  const faces = card ? studyFaces(card.card, prefs.direction) : undefined
+  const faces = card ? studyFaces(card.card, deckPrefs.direction) : undefined
   const prompt = faces?.prompt ?? ''
   const answer = faces?.answer ?? ''
 
   // Speak on the events worth speaking on — arriving at a card, turning it over — not whenever the
   // text changes. On `prompt`/`answer` an edit mid-card would re-read it aloud.
   useEffect(() => {
-    if (prefs.textToSpeech && card && !flipped) speak(prompt)
+    if (deckPrefs.textToSpeech && card && !flipped) speak(prompt)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, prefs.textToSpeech])
+  }, [id, deckPrefs.textToSpeech])
   useEffect(() => {
-    if (prefs.textToSpeech && card && flipped) speak(answer)
+    if (deckPrefs.textToSpeech && card && flipped) speak(answer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [flipped])
 
@@ -245,7 +235,7 @@ export function FlashcardsPanel({
     else if (isGradeAction(action)) applyGrade(action)
   }
 
-  useShake(shakeToUndo && canUndo(state), handleUndo)
+  useShake(settings.value.shakeToUndo && canUndo(state), handleUndo)
 
   const speakFace = () => {
     if (card) speak(flipped ? answer : prompt)
@@ -286,7 +276,7 @@ export function FlashcardsPanel({
 
   return (
     <>
-      <CardScene style={prefs.cardStyle} className="flex min-h-0 flex-1 flex-col">
+      <CardScene style={deckPrefs.cardStyle} className="flex min-h-0 flex-1 flex-col">
         <StudySessionHeader
           title={title}
           subtitle={subtitle}
@@ -311,11 +301,11 @@ export function FlashcardsPanel({
             <StudyDeck
               key={mode}
               card={card}
-              cardStyle={prefs.cardStyle}
+              cardStyle={deckPrefs.cardStyle}
               upcoming={upcoming}
               mode={mode}
-              direction={prefs.direction}
-              wordSpaces={wordSpaces}
+              direction={deckPrefs.direction}
+              wordSpaces={settings.value.wordSpaces}
               typeInitialsOnly={settings.value.typeInitialsOnly}
               flipped={flipped}
               swipeConfig={activeSwipe}

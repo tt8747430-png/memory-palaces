@@ -27,6 +27,21 @@ describe('makePreferences — extended defaults', () => {
     expect(prefs.shakeToUndo).toBe(true)
   })
 
+  it('defaults Type mode to typing the answer out, not its initials', () => {
+    expect(makePreferences({ id: 'preferences', createdAt: at(0) }).studyTypeInitialsOnly).toBe(
+      false,
+    )
+  })
+
+  it('keeps a stored initials-only choice', () => {
+    const prefs = makePreferences({
+      id: 'preferences',
+      createdAt: at(0),
+      studyTypeInitialsOnly: true,
+    })
+    expect(prefs.studyTypeInitialsOnly).toBe(true)
+  })
+
   it('clamps a retired study mode (flip) back to the default', () => {
     const prefs = makePreferences({
       id: 'preferences',

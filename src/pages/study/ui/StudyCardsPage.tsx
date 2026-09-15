@@ -4,23 +4,32 @@ import { Layers } from 'lucide-react'
 import { type FastOutcome, selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
 import { useDeck, useDeckStoreApi } from '@/entities/deck'
 import {
-  type FlashcardSwipeByMode,
   resolveStudyMode,
   selectEffectivePreferences,
   type StudyMode,
   usePreferencesStore,
   usePreferencesStoreApi,
 } from '@/entities/preferences'
-import { cardsInSubtree, deckPath, findEntity, selectIsReady } from '@/shared/lib'
-import { normalizeFlashcardSwipe } from '@/shared/config/flashcard-swipe'
+import { cardsInSubtree, deckPath, findEntity, type Grade, selectIsReady } from '@/shared/lib'
 import { editCard, setCardFastReview } from '@/features/card'
 import { updateDeckSettings } from '@/features/deck'
 import { gradeCard, restoreSchedule } from '@/features/review'
 import { setPreferences } from '@/features/preferences'
-import { FlashcardsPanel, type StudyCard, type StudyPrefs } from '@/widgets/study-session'
+import {
+  type DeckStudyPrefs,
+  FlashcardsPanel,
+  type LearnerStudyPrefs,
+  type StudyCard,
+} from '@/widgets/study-session'
 import { useStudySessionReward } from '@/widgets/study-session-reward'
 import { Button, Empty, MissingScreen, ScreenLoading, StudySessionScreen } from '@/shared/ui'
-import { lockedStudyPrefs, studyPrefsFromSettings, studyPrefsPatch } from '../model/study-prefs'
+import {
+  deckStudyPrefs,
+  deckStudyPrefsPatch,
+  learnerStudyPrefs,
+  learnerStudyPrefsPatch,
+  lockedDeckPrefs,
+} from '../model/study-prefs'
 
 export type StudyScope = { kind: 'deck'; deckId: string }
 
@@ -44,10 +53,7 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
   const ready = decksReady && cardsReady && prefsReady
 
   const mode: StudyMode = resolveStudyMode(preferences.studyMode)
-  const swipeByMode = useMemo(
-    () => normalizeFlashcardSwipe(preferences.flashcardSwipe),
-    [preferences.flashcardSwipe],
-  )
+  const learnerPrefs = useMemo(() => learnerStudyPrefs(preferences), [preferences])
 
   const cards = useMemo<StudyCard[]>(() => {
     if (!deck) return []
@@ -61,7 +67,7 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
     }))
   }, [deck, decks, allCards, scope.deckId])
 
-  const handleGrade = (id: string, grade: Parameters<typeof gradeCard>[2]) => {
+  const handleGrade = (id: string, grade: Grade) => {
     void gradeCard(cardStore, id, grade)
   }
   const handleAnswer = (id: string, outcome: FastOutcome) => {
@@ -71,17 +77,16 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
     const card = findEntity(cardStore.getState().cards, id)
     if (card) void editCard(cardStore, id, { flagged: !card.flagged })
   }
-  const persistStudyPrefs = (prefs: StudyPrefs) => {
-    const patch = studyPrefsPatch(studyPrefsFromSettings(settings), prefs)
+  const persistDeckPrefs = (prefs: DeckStudyPrefs) => {
+    const patch = deckStudyPrefsPatch(deckStudyPrefs(settings), prefs)
     if (Object.keys(patch).length > 0) void updateDeckSettings(deckStore, scope.deckId, patch)
   }
-  const persistSwipe = (config: FlashcardSwipeByMode) =>
-    void setPreferences(preferencesStore, { flashcardSwipe: config })
+
+  const persistLearnerPrefs = (changes: Partial<LearnerStudyPrefs>) =>
+    void setPreferences(preferencesStore, learnerStudyPrefsPatch(changes))
   const changeMode = (next: StudyMode) => {
     void setPreferences(preferencesStore, { studyMode: next })
   }
-  const persistWordSpaces = (value: boolean) =>
-    void setPreferences(preferencesStore, { studyWordSpaces: value })
 
   if (!ready) {
     return <ScreenLoading />
@@ -118,20 +123,14 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
         cards={cards}
         title={title}
         subtitle={subtitle}
-        prefs={studyPrefsFromSettings(settings)}
-        lockedPrefs={lockedStudyPrefs(deck)}
+        deckPrefs={deckStudyPrefs(settings)}
+        lockedPrefs={lockedDeckPrefs(deck)}
         algorithm={settings.algorithm}
         mode={mode}
-        wordSpaces={preferences.studyWordSpaces}
-        shakeToUndo={preferences.shakeToUndo}
-        swipeByMode={swipeByMode}
-        onPrefsChange={persistStudyPrefs}
-        onSwipeByModeChange={persistSwipe}
+        learnerPrefs={learnerPrefs}
+        onDeckPrefsChange={persistDeckPrefs}
+        onLearnerPrefsChange={persistLearnerPrefs}
         onModeChange={changeMode}
-        onWordSpacesChange={persistWordSpaces}
-        onShakeToUndoChange={(value) =>
-          void setPreferences(preferencesStore, { shakeToUndo: value })
-        }
         onGrade={handleGrade}
         onAnswer={handleAnswer}
         onRestoreCard={(id, srs) => void restoreSchedule(cardStore, id, srs)}

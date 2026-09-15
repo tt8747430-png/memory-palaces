@@ -10,13 +10,20 @@ import { DEFAULT_FLASHCARD_SWIPE_BY_MODE } from '@/shared/config/flashcard-swipe
 import { DEFAULT_CARD_STYLE, type LearningAlgorithm } from '@/entities/deck'
 import type { StudyMode } from '@/entities/preferences'
 import { FlashcardsPanel } from './FlashcardsPanel'
-import type { Grade, StudyCard, StudyPrefs } from '../model/types'
+import type { DeckStudyPrefs, Grade, LearnerStudyPrefs, StudyCard } from '../model/types'
 
 afterEach(cleanup)
 
 const NOW = Date.UTC(2026, 0, 10)
 
-const DEFAULT_PREFS: StudyPrefs = {
+const DEFAULT_LEARNER_PREFS: LearnerStudyPrefs = {
+  wordSpaces: true,
+  typeInitialsOnly: false,
+  shakeToUndo: false,
+  swipeByMode: DEFAULT_FLASHCARD_SWIPE_BY_MODE,
+}
+
+const DEFAULT_DECK_PREFS: DeckStudyPrefs = {
   direction: 'front',
   shuffle: false,
   textToSpeech: false,
@@ -48,7 +55,7 @@ function renderPanel(
   overrides: Partial<{
     onGrade: (id: string, grade: Grade) => void
     onComplete: () => void
-    prefs: Partial<StudyPrefs>
+    deckPrefs: Partial<DeckStudyPrefs>
     mode: StudyMode
     algorithm: LearningAlgorithm
     onAnswer: (id: string, outcome: FastOutcome) => void
@@ -64,12 +71,10 @@ function renderPanel(
       <FlashcardsPanel
         cards={cards}
         title="Forum"
-        prefs={{ ...DEFAULT_PREFS, ...overrides.prefs }}
+        deckPrefs={{ ...DEFAULT_DECK_PREFS, ...overrides.deckPrefs }}
         algorithm={overrides.algorithm ?? 'spaced'}
         mode={mode}
-        wordSpaces
-        shakeToUndo={false}
-        swipeByMode={DEFAULT_FLASHCARD_SWIPE_BY_MODE}
+        learnerPrefs={DEFAULT_LEARNER_PREFS}
         onGrade={onGrade}
         onAnswer={overrides.onAnswer}
         onModeChange={(next) => {
@@ -271,7 +276,7 @@ describe('FlashcardsPanel study header', () => {
 describe('FlashcardsPanel scene', () => {
   it('studies the deck inside the preset it chose, printed chrome and all', async () => {
     renderPanel([studyCard('c1')], {
-      prefs: { cardStyle: { ...DEFAULT_CARD_STYLE, preset: 'parchment' } },
+      deckPrefs: { cardStyle: { ...DEFAULT_CARD_STYLE, preset: 'parchment' } },
     })
     const scene = await screen.findByTestId('card-scene')
     expect(scene.style.getPropertyValue('--scene-bg')).toBeTruthy()
@@ -280,7 +285,7 @@ describe('FlashcardsPanel scene', () => {
   })
 
   it('leaves the app chrome alone for a preset that follows the theme', async () => {
-    renderPanel([studyCard('c1')], { prefs: { cardStyle: DEFAULT_CARD_STYLE } })
+    renderPanel([studyCard('c1')], { deckPrefs: { cardStyle: DEFAULT_CARD_STYLE } })
     const scene = await screen.findByTestId('card-scene')
     expect(scene.style.getPropertyValue('--scene-bg')).toBe('var(--bg-daylight)')
     expect(scene).not.toHaveAttribute('data-scene')

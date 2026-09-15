@@ -3,8 +3,13 @@ import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie'
 import { describe, expect, it } from 'vitest'
 import { RxdbRepository } from '@/shared/api/rxdb'
 import { makeProfile, type Profile } from '@/entities/profile'
-import { cardMigrations, createAppDatabase, deckMigrations } from './database'
-import { cardSchema, deckSchema } from './schemas'
+import {
+  cardMigrations,
+  createAppDatabase,
+  deckMigrations,
+  preferencesMigrations,
+} from './database'
+import { cardSchema, deckSchema, preferencesSchema } from './schemas'
 
 describe('createAppDatabase', () => {
   it('registers a profiles collection that round-trips a Profile through RxDB', async () => {
@@ -84,8 +89,19 @@ describe('schema migrations', () => {
     expect(deckMigrations[3](styleless as never)).toEqual(styleless)
   })
 
-  it('versions both collections', () => {
+  it('gives a v1 preferences document the recall toggle it predates', () => {
+    const v1 = { id: 'preferences', studyMode: 'type', studyWordSpaces: true }
+    expect(preferencesMigrations[2](v1 as never).studyTypeInitialsOnly).toBe(false)
+  })
+
+  it('leaves a preferences document that already stated the toggle alone', () => {
+    const v1 = { id: 'preferences', studyTypeInitialsOnly: true }
+    expect(preferencesMigrations[2](v1 as never).studyTypeInitialsOnly).toBe(true)
+  })
+
+  it('versions the collections', () => {
     expect(deckSchema.version).toBe(3)
     expect(cardSchema.version).toBe(1)
+    expect(preferencesSchema.version).toBe(2)
   })
 })
