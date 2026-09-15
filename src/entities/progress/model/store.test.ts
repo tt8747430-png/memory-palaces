@@ -15,9 +15,6 @@ describe('progress store — Dependency Injection', () => {
   })
 
   it('completes a document written before a field existed', () => {
-    // A device on an older build pushed this; the schema migration never sees it, because
-    // replication writes at the current version. `mergeProgress` spreads `trainingDays`
-    // unguarded inside the conflict handler, so an absent one used to throw there.
     const legacy = withoutFields(
       makeProgress({ id: 'progress', createdAt: at(0), xp: 320, streakCount: 40 }),
       'trainingDays',

@@ -46,9 +46,6 @@ export function SettingsPrivacyPage({ onBack }: SettingsPrivacyPageProps) {
     },
   ]
 
-  // `selectEffectivePreferences` answers `DEFAULT_PREFERENCES` until the snapshot lands, so
-  // without this every control on this screen paints its default first and then flips — a learner
-  // with haptics off watches the switch turn itself on and back off on every cold start.
   if (!ready) return <ScreenLoading />
 
   return (
@@ -73,11 +70,6 @@ export function SettingsPrivacyPage({ onBack }: SettingsPrivacyPageProps) {
           </p>
         </div>
 
-        {/* Nothing reads `prefs.privacy`: `grep -rn "prefs.privacy"` finds one writer and no
-            reader, so every one of these was a switch over a feature that does not exist. The
-            banner below already hedged, but a switch rendered *on* is a stronger claim than a
-            hedge — "Data encryption" sat enabled over an unencrypted IndexedDB store. They stay
-            visible because the screen is planned; they stop being switches until it is built. */}
         <SettingsSection>
           {rows.map((row) => (
             <SettingsRow

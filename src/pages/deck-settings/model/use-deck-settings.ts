@@ -20,13 +20,10 @@ import { type MoveDestination, placeOfDestination } from '@/widgets/deck-tree'
 import { useImportFile } from '@/widgets/content-editor'
 import { cardsInSubtree, subtreeDeckIds, useOneOpen, usePendingAct } from '@/shared/lib'
 
-/** One open sheet at a time — a flag each makes "export over move" a reachable state. */
 export type DeckSettingsSheet = 'appearance' | 'move' | 'export' | 'import'
 
-/** And one pending confirmation, for the same reason (CODE_STYLE §3a). */
 export type DeckSettingsConfirm = 'duplicate' | 'archive' | 'reset' | 'delete'
 
-/** Every way this screen hands control back to the router. */
 export interface DeckSettingsNav {
   onBack?: () => void
   onDeleted?: () => void
@@ -45,24 +42,15 @@ export interface DeckSettingsModel {
   folders: Folder[]
   settings: DeckSettings
   cards: Card[]
-  /** A deck cannot be moved inside its own subtree, so every deck under it is off the table. */
   moveExcludeIds: ReadonlySet<string>
-  /** Whether the archive row would archive (rather than restore) the deck. */
   archiving: boolean
-  /** A subdeck's algorithm belongs to its main deck: the row explains that instead of opening. */
   algorithmLocked: boolean
   sheet: DeckSettingsSheet | null
   open: (sheet: DeckSettingsSheet) => void
-  /**
-   * `onOpenChange` for one sheet: it may only dismiss the sheet it belongs to. A sheet on its way
-   * out fires `onOpenChange(false)` after the next one has opened — `useOneOpen` owns the guard.
-   */
   onSheetOpenChange: (sheet: DeckSettingsSheet) => (open: boolean) => void
   confirming: DeckSettingsConfirm | null
   ask: (confirm: DeckSettingsConfirm) => void
-  /** Runs the pending act — through `usePendingAct`, so a double-tapped confirm runs it once. */
   confirm: () => void
-  /** `onOpenChange` for one dialog: it may only dismiss the confirmation it belongs to. */
   onConfirmOpenChange: (confirm: DeckSettingsConfirm) => (open: boolean) => void
   act: {
     duplicate: () => void
@@ -77,11 +65,6 @@ export interface DeckSettingsModel {
   }
 }
 
-/**
- * Everything the deck settings screen reads and every act it offers, behind one interface — the
- * page below it is markup. Which store a write lands in, and the fact that archiving from the move
- * sheet is the same act as archiving from its own row, stay in here.
- */
 export function useDeckSettings(deckId: string, nav: DeckSettingsNav): DeckSettingsModel {
   const { t } = useTranslation()
   const deckStore = useDeckStoreApi()
@@ -106,8 +89,6 @@ export function useDeckSettings(deckId: string, nav: DeckSettingsNav): DeckSetti
     if (archiving) void archiveDecks(deckStore, [deckId])
     else void restoreDecks(deckStore, folderStore, [{ id: deckId }])
     toast.success(archiving ? t('deckSettings.toast.archived') : t('deckSettings.toast.unarchived'))
-    // An archived deck is gone from the library it was reached through, so its settings screen has
-    // nothing left to describe. Restoring one — to the top of the library — leaves you where you are.
     if (archiving) nav.onArchived?.()
   }
 
@@ -135,9 +116,6 @@ export function useDeckSettings(deckId: string, nav: DeckSettingsNav): DeckSetti
     exportAnki: () => exportWith(() => exportCardsAnki(deck?.name ?? '', cards)),
     move: (destination) => {
       sheet.close()
-      // "Move to archive" is the archive act, so it asks the same question the row asks rather
-      // than archiving behind the learner's back. A deck already in the archive is already at that
-      // destination: picking it is the no-op picking your own folder is, never a silent restore.
       const place = placeOfDestination(destination)
       if (place === null) {
         if (archiving) pending.request('archive')
@@ -155,7 +133,6 @@ export function useDeckSettings(deckId: string, nav: DeckSettingsNav): DeckSetti
     },
   }
 
-  /** What each confirmation runs once the learner says yes. */
   const confirmed: Record<DeckSettingsConfirm, () => void> = {
     duplicate: act.duplicate,
     archive: act.toggleArchived,

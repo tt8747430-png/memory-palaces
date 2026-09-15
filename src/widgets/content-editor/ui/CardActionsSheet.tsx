@@ -30,10 +30,6 @@ export interface CardActionsSheetProps {
   handlers: CardActionHandlers
 }
 
-/**
- * Everything a single card can be told to do. Freeze and Reverse read off the card's own state, so
- * the sheet always offers the move the learner can actually make next.
- */
 export function CardActionsSheet({ card, open, onOpenChange, handlers }: CardActionsSheetProps) {
   const { t } = useTranslation()
 

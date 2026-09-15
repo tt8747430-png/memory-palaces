@@ -6,23 +6,14 @@ import { AuthScreen, Button } from '@/shared/ui'
 import { AuthHeader } from '@/widgets/threshold'
 
 export interface AuthCallbackPageProps {
-  /** True once a session has arrived through `onAuthChange` — the only success signal. */
   sessionReady: boolean
-  /** Where to continue: recovery links must reach a screen that can set a password. */
   onDone: (next: 'recovery' | 'home') => void
   onCancel: () => void
 }
 
-/**
- * Where Google, Apple and recovery links drop the browser back. `detectSessionInUrl` normally
- * exchanges the code before this renders, so the happy path is a beat of "signing you in" and a
- * redirect; the explicit exchange is the fallback when that has not happened.
- */
 export function AuthCallbackPage({ sessionReady, onDone, onCancel }: AuthCallbackPageProps) {
   const { t } = useTranslation()
   const gateway = useAuthGateway()
-  // An expired link and a dead network fail the same way here; only one of them is the link's
-  // fault, and telling a person to sign in again while they are on a train is a dead end.
   const online = useOnline()
   const [failed, setFailed] = useState(false)
 
@@ -52,8 +43,6 @@ export function AuthCallbackPage({ sessionReady, onDone, onCancel }: AuthCallbac
       <div className="flex flex-1 flex-col items-center justify-center gap-8 py-10 text-center">
         {failed ? (
           <>
-            {/* Never the provider's own words here: they are untranslated, and an expired link
-                reads the same to a person however it is phrased. */}
             <AuthHeader
               title={t('auth.callback.failedTitle')}
               subtitle={online ? t('auth.errors.callbackFailed') : t('auth.errors.network')}

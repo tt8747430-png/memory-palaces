@@ -7,7 +7,6 @@ export interface StudyOverview {
   isCaughtUp: boolean
 }
 
-/** A frozen card is not on offer, so it must not be counted as owed either. */
 export function studyOverview(
   cards: ReadonlyArray<{ srs?: SrsState; frozen?: boolean }>,
   now: number,
@@ -28,11 +27,6 @@ export interface FastOverview {
   breakdown: { notStudied: number; notQuite: number; gotIt: number }
 }
 
-/**
- * Fast review's face of a deck. There is no schedule to consult, so what is on offer is simply
- * every unfrozen card, capped by the day's ceiling — and the breakdown says how far the learner
- * has got with them rather than when each is next owed.
- */
 export function fastOverview(
   cards: ReadonlyArray<{ frozen?: boolean; fastReview?: FastOutcome }>,
   maxCardsPerDay: number,

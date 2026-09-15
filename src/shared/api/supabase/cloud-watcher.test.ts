@@ -43,7 +43,6 @@ describe('createCloudWatcher', () => {
     })
 
     expect(seen).toEqual([{ table: 'decks', id: 'd1', updated_at: '2026-02-01T00:00:00Z' }])
-    // `data` is deliberately not forwarded: applying documents is a Sync's job, not the watcher's.
     expect(Object.keys(seen[0] ?? {})).toEqual(['table', 'id', 'updated_at'])
   })
 
@@ -53,7 +52,6 @@ describe('createCloudWatcher', () => {
     createCloudWatcher(client, ['decks', 'cards', 'folders'], 'u1', () => {})
 
     expect(handlers.map((entry) => entry.table)).toEqual(['decks', 'cards', 'folders'])
-    // One long-lived channel, so there is no random topic to keep two replications apart.
     expect(topics).toEqual(['cloud:u1'])
     expect(subscribe).toHaveBeenCalledTimes(1)
   })

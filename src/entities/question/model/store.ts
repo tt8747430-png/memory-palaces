@@ -11,7 +11,6 @@ import type { Question } from './types'
 export type QuestionState = CollectionState<'questions', Question>
 export type QuestionStore = StoreApi<QuestionState>
 
-/** `pending` is what records a write the cloud has not confirmed; absent, the store syncs nothing. */
 export function createQuestionStore(
   repo: QuestionRepository,
   pending?: PendingChangePort,

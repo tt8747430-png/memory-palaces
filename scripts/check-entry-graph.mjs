@@ -1,22 +1,9 @@
 #!/usr/bin/env node
-/**
- * Asserts that the heavy dependencies stay out of the entry graph.
- *
- * `createServices()` reaches RxDB, Dexie and supabase-js through `await import(...)` so the first
- * paint does not wait on ~500 kB the splash is already covering. Nothing about that is visible in
- * a type check or a test: one accidental static import anywhere under the entry module puts them
- * back, silently, and Vite would happily emit a `modulepreload` for them. This is the check that
- * notices.
- *
- * It reads `dist/index.html` rather than the module graph, because the preload tags are exactly
- * what the browser acts on.
- */
 import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 
 const INDEX = fileURLToPath(new URL('../dist/index.html', import.meta.url))
 
-/** Chunk names from `build.rollupOptions.output.advancedChunks` in vite.config.ts. */
 const FORBIDDEN = ['persistence', 'supabase']
 
 const preloadedChunks = (html) =>

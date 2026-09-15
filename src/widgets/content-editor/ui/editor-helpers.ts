@@ -1,7 +1,3 @@
-/**
- * A question's fields as a command carries them. Blank `explanation` is `undefined` rather than
- * absent, matching `CardDraftEdit`, so clearing it reaches `updateQuestion` as a real change.
- */
 export interface QuestionData {
   prompt: string
   options: string[]

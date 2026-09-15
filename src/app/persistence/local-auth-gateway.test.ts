@@ -22,7 +22,6 @@ describe('LocalAuthGateway (mock auth)', () => {
     })
 
     expect(auth).toEqual({ id: 'id-1', kind: 'account', email: 'a@b.com', name: 'Ada' })
-    // Nothing to confirm offline, so the account is usable straight away.
     expect(sessionActive).toBe(true)
     await expect(gw.getCurrent()).resolves.toEqual(auth)
     expect(JSON.stringify(localStorage.getItem('mindscape:auth'))).not.toContain('sup3rSecret')

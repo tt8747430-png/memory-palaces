@@ -13,8 +13,6 @@ const Devtools = import.meta.env.DEV
     )
   : () => null
 
-/** The overlay itself lives in `Bootstrap`, above the services boundary; this only reads whether
- *  it has lifted, so nothing behind it can be focused or touched while it is up. */
 export function RootLayout() {
   const splashDone = useSplashStore((state) => state.done)
   useKeyboardInset()
@@ -30,8 +28,6 @@ export function RootLayout() {
       <div inert={!splashDone} className="contents">
         <Outlet />
         <AppNav />
-        {/* Once, for every route: Autosync can stop to ask from any screen, and a question that
-            only had a dialog on three of them would wait unseen on the rest. */}
         <SyncReviewDialog />
       </div>
       <ProbeOverlay />

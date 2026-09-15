@@ -80,7 +80,6 @@ describe('SyncManager', () => {
   })
 
   it('fails the cycle on the first replication error rather than waiting forever', async () => {
-    // RxDB retries a failed push forever and never rejects awaitInSync — the error only surfaces here.
     const { manager, created } = setup(['decks'], (replication) => {
       replication.awaitInSync.mockReturnValue(new Promise(() => {}))
       queueMicrotask(() => replication.error$.next(new Error('push refused')))

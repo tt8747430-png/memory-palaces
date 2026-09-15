@@ -9,7 +9,6 @@ import {
 } from './viewport-sample'
 import { episodesToText, sampleToText } from './viewport-text'
 
-/** A healthy reading: anchored shell, no keyboard, nothing focused. */
 const RESTING: ViewportSample = {
   route: '/library',
   mode: 'standalone',
@@ -64,9 +63,6 @@ describe('checkViewport', () => {
   })
 
   it('names the pan and the unrevealed field, and passes the inset the pan shrank', () => {
-    // The reading from the device: iOS panned 223 of a 403px keyboard, leaving 180px of the shell
-    // covered. That inset is *correct* — comparing it to the remembered full height instead is what
-    // made the probe call a healthy measurement a fault, and a live reserve clean.
     const checks = checkViewport(
       sample({
         vvHeight: 390,
@@ -99,14 +95,10 @@ describe('checkViewport', () => {
     expect(verdict(checks, 'inset').state).toBe('ok')
     expect(verdict(checks, 'inset').detail).toContain('223px is panned out')
     expect(verdict(checks, 'chrome').state).toBe('bad')
-    // Pan + visual viewport + inset is the whole shell, so a measurement always balances.
     expect(verdict(checks, 'balance').state).toBe('ok')
   })
 
   it('catches the reserve the keyboard never replaced, and says how far off the band is', () => {
-    // The device reading this whole check exists for: a 403px keyboard under a 289px pan measured
-    // 114, which the accessory-bar floor rejected, so `--kb-inset` stayed the remembered 462 for the
-    // entire keyboard and `visibleBottom()` put the reveal band 348px above the screen.
     const checks = checkViewport(
       sample({
         vvHeight: 390,
@@ -164,8 +156,6 @@ describe('checkViewport', () => {
   })
 
   it('does not call a straddled resize a pan when the reading says the pan is zero', () => {
-    // Four of the first five device readings: the viewport is back to full height and `--kb-inset`
-    // is a frame behind it. Every verdict that named a pan there was naming one the sample denies.
     const checks = checkViewport(
       sample({ kbInset: '403px', kbRange: '427px', kbMeasured: true, keyboardAttr: true }),
     )
@@ -221,7 +211,6 @@ describe('isKeyboardOpen', () => {
   it('reads the attribute, so the reserve counts and a fully panned keyboard is not lost', () => {
     expect(isKeyboardOpen(RESTING)).toBe(false)
     expect(isKeyboardOpen(sample({ kbInset: '403px', keyboardAttr: true }))).toBe(true)
-    // The pan can leave nothing of the shell covered; the keyboard is still up.
     expect(isKeyboardOpen(sample({ kbInset: '0px', keyboardAttr: true }))).toBe(true)
   })
 })
@@ -235,9 +224,7 @@ describe('isSettled', () => {
   })
 
   it('rejects the frame a keyboard is dismissed on, and a reserve nothing measured', () => {
-    // Viewport restored, inset a frame behind it.
     expect(isSettled(sample({ vvHeight: 793, kbInset: '403px', keyboardAttr: true }))).toBe(false)
-    // The reserve, with the real keyboard under it 348px smaller.
     expect(
       isSettled(sample({ vvHeight: 390, vvOffsetTop: 289, kbInset: '462px', keyboardAttr: true })),
     ).toBe(false)
@@ -278,7 +265,6 @@ describe('episodesToText', () => {
     const text = episodesToText([episode()])
     expect(text).toMatch(/visualViewport top\s+0 → 223/)
     expect(text).toMatch(/--kb-inset\s+0px → 180px/)
-    // Unchanged rows stay out of the diff.
     expect(text).not.toMatch(/layout viewport w\s+393 → 393/)
   })
 

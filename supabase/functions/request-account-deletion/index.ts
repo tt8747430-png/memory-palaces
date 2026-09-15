@@ -1,17 +1,6 @@
-// Schedules the caller's account for purging, 30 days out, and signs them out everywhere.
-//
-// A secret key, because both halves are beyond what a client may do: `account_deletions` grants no
-// insert to `authenticated`, and revoking every refresh token for a user is an admin call. The
-// caller's identity comes from the bearer token they sent, never from the request body — a user id
-// in a payload is a user id anyone can type. The platform does not check that token for us
-// (`verify_jwt = false`, see `_shared/secret-keys.ts`); `auth.getUser` does.
-//
-// Nothing is destroyed here. `purge-account` does that, 30 days later, and signing back in before
-// then cancels it.
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { secretKey } from '../_shared/secret-keys.ts'
 
-// Mirrors `ACCOUNT_DELETION_GRACE_DAYS` in `src/shared/config/constants.ts`, which the app states.
 const GRACE_DAYS = 30
 
 const json = (body: unknown, status = 200) =>
@@ -46,7 +35,6 @@ Deno.serve(async (request: Request) => {
     )
   if (upsertError) return json({ error: upsertError.message }, 500)
 
-  // Global, so a device the user no longer has cannot go on using the account during the grace.
   const { error: signOutError } = await admin.auth.admin.signOut(token, 'global')
   if (signOutError) return json({ error: signOutError.message }, 500)
 

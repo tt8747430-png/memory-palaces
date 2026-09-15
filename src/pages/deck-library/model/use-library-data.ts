@@ -16,10 +16,6 @@ import {
   usePersistedSet,
 } from '@/shared/lib'
 
-/**
- * Everything the library screen reads. Declared once and carried through `useLibrary` unchanged, so
- * a field cannot be added to the data hook and go missing from the screen's view of it.
- */
 export interface LibraryView {
   ready: boolean
   isEmpty: boolean
@@ -38,7 +34,6 @@ export interface LibraryView {
 
 export interface LibraryData {
   view: LibraryView
-  /** Folders alone settle whether an open folder is missing or merely unloaded. */
   foldersReady: boolean
   folderIds: ReadonlySet<string>
   patchFolders: (patches: Map<string, Partial<Folder>>) => void

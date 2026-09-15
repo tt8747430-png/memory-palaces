@@ -61,24 +61,12 @@ export interface Services {
   syncStateStore: SyncStateStore
   eventBus: EventBus<AppEvents>
   storage: StoragePort
-  /** Null when no Supabase project is configured: the app then runs entirely on-device. */
   accountDeletion: AccountDeletionPort | null
-  /** Null when no Supabase project is configured: the app then runs entirely on-device. */
   syncManager: SyncManager | null
-  /** What a Sync talks to. Null exactly when `syncManager` is. */
   cloudSync: CloudSyncPort | null
-  /** Wipes the device's database and reloads — only when a different account signs in. */
   resetLocalData: () => Promise<void>
 }
 
-/**
- * Builds the app's object graph.
- *
- * Async, and deliberately so: RxDB, Dexie and supabase-js are the three heaviest dependencies in
- * the bundle and nothing above this function needs them to paint. They are reached through
- * `await import(...)` so they stay out of the entry graph and are fetched behind the splash. Type
- * imports stay static — `verbatimModuleSyntax` erases them, so they cost nothing at runtime.
- */
 export async function createServices(): Promise<Services> {
   const [
     { getRxStorageDexie },
@@ -106,9 +94,6 @@ export async function createServices(): Promise<Services> {
   )
   const syncStateRepo = new RxdbRepository<SyncState>(collections.then((c) => c.syncState))
   const pendingChangeStore = createPendingChangeStore(pendingChangeRepo)
-  // Only the four content stores get a port. The singletons always merge and can never diverge
-  // destructively; everything else is device-local and has nowhere to push. So the log holds
-  // exactly what the banner counts and exactly what the classifier examines.
   const pending = (collection: ContentCollection) =>
     createPendingChangePort(pendingChangeStore, collection, nowIso)
   const progressRepo = new RxdbRepository<Progress>(collections.then((c) => c.progress))
@@ -150,9 +135,6 @@ export async function createServices(): Promise<Services> {
     resetLocalData: () => resetLocalDatabase({ collections }),
   }
 
-  // Every store observes its collection from here on. Screens read data and `selectIsReady`; none
-  // owns the subscription. Session is deliberately absent — AuthProvider restores it once the
-  // gateway answers.
   for (const store of [
     services.deckStore,
     services.cardStore,
@@ -171,8 +153,6 @@ export async function createServices(): Promise<Services> {
 
   keepArchiveDetached(services.deckStore)
   keepHistoryCapped(services.historyStore)
-  // The buckets are private, so the bytes behind a stored path have to be fetched ahead of the
-  // read. `useImageSrc` looks only at what this leaves in the cache.
   keepImagesCached({
     deckStore: services.deckStore,
     profileStore: services.profileStore,

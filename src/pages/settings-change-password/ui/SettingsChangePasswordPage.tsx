@@ -8,11 +8,6 @@ import { useAuthActions } from '@/features/session'
 
 export interface SettingsChangePasswordPageProps {
   onBack?: () => void
-  /**
-   * True when the user arrived from a recovery link. The link already proved they own the address,
-   * and they are here precisely because they do not know the old password — so asking for it would
-   * be a dead end.
-   */
   recovery?: boolean
 }
 
@@ -35,8 +30,6 @@ export function SettingsChangePasswordPage({
       : undefined
   const confirmError =
     confirm.length > 0 && confirm !== next ? t('settings.changePasswordScreen.mismatch') : undefined
-  // Changing a password is one of the few things in this app that cannot happen offline, so the
-  // submit says so before the press rather than letting the transport fail into a toast.
   const canSave =
     (recovery || current.length > 0) &&
     isLongEnoughPassword(next) &&
@@ -50,7 +43,6 @@ export function SettingsChangePasswordPage({
 
     setSaving(true)
     try {
-      // Off the recovery path the old password is verified, not merely collected.
       await setPassword({
         password: next,
         ...(recovery ? {} : { verify: { email, currentPassword: current } }),

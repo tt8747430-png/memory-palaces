@@ -25,7 +25,6 @@ describe('uploadInlineImage', () => {
 
     const path = await uploadInlineImage(storageThat(upload), deckRef, DATA_URL)
 
-    // A path, never a URL: the buckets are private and a signed URL expires.
     expect(path).toBe('u1/d1')
     expect(upload).toHaveBeenCalledWith(
       expect.objectContaining({ bucket: 'deck-images', entityId: 'd1', contentType: 'image/jpeg' }),

@@ -3,12 +3,6 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { Trash2 } from 'lucide-react'
 import { SwipeRow } from './SwipeRow'
 
-/**
- * Reduced motion, so the row settles in the same frame the gesture ends and the assertions are
- * about where the row went rather than about how many frames jsdom got around to running. Which
- * release springs and which jumps is `gesture-hold.test.tsx`'s question; this file's is whether the
- * row ends up back at rest at all.
- */
 beforeEach(() => {
   vi.stubGlobal('matchMedia', (media: string) => ({
     matches: media.includes('prefers-reduced-motion'),
@@ -39,14 +33,8 @@ function Row({ name, onAction }: { name: string; onAction: () => void }) {
   )
 }
 
-/** The element `useDrag` is bound to — the one that carries the row's travel. */
 const sledOf = (name: string) => screen.getByTestId(name).parentElement as HTMLElement
 
-/**
- * `pointerType` is load-bearing: `@use-gesture` picks its axis-intent threshold by pointer type,
- * and jsdom's default empty string finds none — the gesture stays blocked and the handler is never
- * called, so a test without it passes for the wrong reason. Every touch here is a finger.
- */
 const finger = (pointerId: number) => ({ pointerId, pointerType: 'touch', isPrimary: true })
 
 function touch(name: string, pointerId = 1) {
@@ -68,13 +56,8 @@ function swipe(name: string, to: number, end: 'up' | 'cancel' = 'up') {
   else fireEvent.pointerUp(sled, lift)
 }
 
-/**
- * `motion` writes a motion value to the DOM on its own frame, so every reading of the row's travel
- * is taken after one.
- */
 const painted = () => act(async () => void (await new Promise(requestAnimationFrame)))
 
-/** `motion` clears the property outright at rest, so `none` is the row back where it started. */
 const AT_REST = 'none'
 
 const displacement = (name: string) => sledOf(name).style.transform
@@ -87,11 +70,6 @@ describe('SwipeRow', () => {
     expect(onAction).toHaveBeenCalledOnce()
   })
 
-  /**
-   * `@use-gesture` routes a cancel through the same release path as a lift, so without asking which
-   * event ended the gesture a scroll takeover, an incoming call or the app going to the background
-   * deletes whatever the finger happened to be over.
-   */
   it('fires nothing when the platform cancels the gesture', () => {
     const onAction = vi.fn()
     render(<Row name="a" onAction={onAction} />)
@@ -99,10 +77,6 @@ describe('SwipeRow', () => {
     expect(onAction).not.toHaveBeenCalled()
   })
 
-  /**
-   * The open row is put back by the touch that starts on another row, before that row moves —
-   * two rows springing at once is the flicker, and the second one is already under the finger.
-   */
   it('puts an open row back the moment another row takes the touch', async () => {
     render(
       <>
@@ -135,11 +109,6 @@ describe('SwipeRow', () => {
     expect(displacement('a')).toBe(AT_REST)
   })
 
-  /**
-   * The guard against the click a drag leaves behind belongs to that drag. Left standing it is the
-   * next honest tap on the row that gets swallowed — and a locked axis means the drag engine
-   * reports nothing at all for that tap, so the guard cannot be cleared from inside the gesture.
-   */
   it('lets the next tap through after a swipe that clicked nothing', async () => {
     const onTap = vi.fn()
     render(
@@ -149,7 +118,6 @@ describe('SwipeRow', () => {
         </button>
       </SwipeRow>,
     )
-    // Short enough to settle closed, so what the next tap meets is the guard and not an open tray.
     swipe('a', 285)
     await painted()
 

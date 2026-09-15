@@ -7,7 +7,6 @@ const { toastError } = vi.hoisted(() => ({ toastError: vi.fn() }))
 
 vi.mock('sonner', () => ({ toast: { error: toastError, success: vi.fn() } }))
 
-/** A `File` whose text is whatever the test wants parsed. */
 const file = (text: string, name = 'deck.csv') =>
   ({ name, text: () => Promise.resolve(text) }) as unknown as File
 
@@ -29,7 +28,6 @@ describe('useImportFile', () => {
     expect(onReady).toHaveBeenCalledOnce()
   })
 
-  /** The review screen has nothing to show for an empty file, so it is never reached. */
   it('refuses a file with no cards out loud, and leaves the draft alone', async () => {
     const onReady = vi.fn()
     const { result } = renderHook(() => useImportFile())

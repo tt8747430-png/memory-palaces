@@ -37,11 +37,6 @@ export interface DeckCardStylePageProps {
 
 const SIZE_STEP = 2
 
-/**
- * The pinned pane keeps the card in view while the controls under it scroll. Its height is
- * `--preview-pane-height` (theme.css): a share of `--app-height`, the shell's own height
- * (CODE_STYLE §11), so this is not a second opinion about how tall the app is.
- */
 const PREVIEW_PANE = 'grid place-items-center h-(--preview-pane-height) px-5 py-4'
 
 const ALIGN_ICONS: Record<CardAlignment, typeof AlignLeft> = {
@@ -62,8 +57,6 @@ export function DeckCardStylePage({ deckId, onBack }: DeckCardStylePageProps) {
   const { deck, settings, ready } = useDeck(deckId)
   const [fontOpen, setFontOpen] = useState(false)
   const [fullscreen, setFullscreen] = useState(false)
-  // Edits are previewed, not saved: `null` means "showing what the deck already has". Leaving the
-  // screen drops the draft, which is the whole point of a separate Apply.
   const [draft, setDraft] = useState<CardStyle | null>(null)
 
   if (!ready || !deck) {
@@ -79,8 +72,6 @@ export function DeckCardStylePage({ deckId, onBack }: DeckCardStylePageProps) {
   const saved = settings.cardStyle
   const style = draft ?? saved
   const dirty = draft !== null && !sameCardStyle(draft, saved)
-  // Nothing to reset to when the style already is the default — an enabled button that silently
-  // does nothing is worse than one that says so.
   const canReset = !sameCardStyle(style, DEFAULT_CARD_STYLE)
 
   const edit = (patch: Partial<CardStyle>) => setDraft({ ...style, ...patch })
@@ -93,9 +84,6 @@ export function DeckCardStylePage({ deckId, onBack }: DeckCardStylePageProps) {
   }
 
   return (
-    // No `gutter`: the tab bar never renders on a deck route, and the footer dock below already
-    // owns the bottom inset. Its deck-settings siblings keep `gutter="end"` — that is the spacing
-    // they shipped with, not a rule this screen is breaking.
     <AppScreen
       fill
       header={
@@ -127,8 +115,6 @@ export function DeckCardStylePage({ deckId, onBack }: DeckCardStylePageProps) {
       }
       pinned={
         <CardScene style={style} className={PREVIEW_PANE}>
-          {/* `h-full`, not `max-h-full`: the frame is the pane's, so stepping the text size moves
-              the words inside a card that does not resize under the control that moved them. */}
           <StylePreview
             style={style}
             front={t('cardStyle.previewFront')}
@@ -146,11 +132,6 @@ export function DeckCardStylePage({ deckId, onBack }: DeckCardStylePageProps) {
             </Button>
           </FooterBar>
         ) : (
-          // The dock stays mounted with nothing in it. `AppScreen` reads the bottom inset off the
-          // footer's presence, so letting the slot empty out would re-pad the scroll body the
-          // instant the draft goes dirty — the controls would jump as the apply bar arrives, on
-          // top of the room the bar itself takes. Empty, it is only the home-indicator clearance
-          // that `FooterBar` would have carried anyway.
           <div aria-hidden className="h-(--app-bottom-inset)" />
         )
       }

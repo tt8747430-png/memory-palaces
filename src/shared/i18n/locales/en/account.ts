@@ -1,4 +1,3 @@
-/** The account lifecycle: requesting deletion, and a deletion already scheduled. */
 export const account = {
   scheduledTitle: 'Scheduled for deletion',
   scheduledBody:

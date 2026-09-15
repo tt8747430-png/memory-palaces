@@ -25,15 +25,6 @@ import { localIds } from '../content-collections'
 import { createPendingChangePort } from '../create-pending-change-port'
 import type { SyncDeps } from '../sync-deps'
 
-/**
- * A test double for the cloud a Sync talks to, shaped like the real one where it matters: every
- * write gets a fresh, strictly increasing server clock, a peek honours the `(updated_at, id)`
- * checkpoint, and a cycle pushes the device's pending log — so the rows it wrote come back on the
- * next peek, exactly as an echo does. The fake it replaces answered `[]` to any checkpoint at all,
- * which is how a checkpoint that skipped another device's rows passed every test.
- *
- * Test-only: nothing in the app imports it.
- */
 interface CloudRow {
   id: string
   updated_at: string
@@ -44,14 +35,10 @@ interface CloudRow {
 type CloudData = Identifiable & Record<string, unknown>
 
 export interface FakeCloud extends CloudSyncPort {
-  /** Another device's write, stamped with the next server clock. */
   write<T extends Identifiable>(table: SyncedTable, data: T, deleted?: boolean): void
   row(table: SyncedTable, id: string): CloudRow | undefined
-  /** Runs inside the cycle, before the push — where another write can land mid-Sync. */
   duringCycle?: () => void | Promise<void>
-  /** Runs after the push — the cycle's pull, for a test that needs documents to arrive. */
   pull?: (deps: SyncDeps) => void | Promise<void>
-  /** Makes the next cycle reject, as a replication error does. */
   failNextCycle(reason: string): void
   cycles: number
   fetched: { table: SyncedTable; ids: readonly string[] }[]
@@ -69,7 +56,6 @@ interface Repositories {
   questions: InMemoryRepository<Question>
 }
 
-/** What a content document looks like on the device right now, read through its repository. */
 const readLocal = async (
   repos: Repositories,
   collection: ContentCollection,
@@ -77,7 +63,6 @@ const readLocal = async (
 ): Promise<CloudData | null> =>
   (await (repos[collection] as unknown as InMemoryRepository<CloudData>).getById(id)) ?? null
 
-/** A whole Sync's worth of stores over in-memory repositories, bound to one fake cloud. */
 export function syncFixture(options: { state?: Partial<SyncState> } = {}) {
   const tables = new Map<SyncedTable, Map<string, CloudRow>>()
   const table = (name: SyncedTable) => {
@@ -182,7 +167,6 @@ export function syncFixture(options: { state?: Partial<SyncState> } = {}) {
     isOnline: () => true,
   }
 
-  /** The cycle's pull, as RxDB does it: every live cloud row lands in its repository, unlogged. */
   const pullEverything = async () => {
     for (const collection of ['folders', 'decks', 'cards', 'questions'] as const) {
       const here = localIds(deps, collection)

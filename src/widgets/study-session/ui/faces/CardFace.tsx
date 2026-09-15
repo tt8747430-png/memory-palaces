@@ -17,9 +17,7 @@ import { STUDY_MODE_META } from '../mode-meta'
 import { type FaceProps, stopPress } from './types'
 
 export interface CardFaceProps {
-  /** The face's own props — the chrome reads the card, mode and callbacks off it. */
   face: FaceProps
-  /** What the read-aloud button speaks: the prompt on a front, the answer on a back. */
   speakText: string
   back?: boolean
   align?: 'center' | 'start'
@@ -27,10 +25,6 @@ export interface CardFaceProps {
   children: ReactNode
 }
 
-/**
- * The shell every face wears: flag and read-aloud header, scrolling body, mode/gear footer, around
- * whatever aids the face offers.
- */
 export function CardFace({
   face,
   speakText,
@@ -84,11 +78,6 @@ export function CardFace({
         'absolute inset-0 flex flex-col rounded-card-featured shadow-elevated backface-hidden',
         CARD_STYLE_SURFACE,
         back && 'transform-[rotateY(180deg)]',
-        // Both faces stack on the same square and the turned-away one is only hidden by
-        // `backface-hidden` — which WebKit still hit-tests inside a `preserve-3d` parent. `inert`
-        // alone does not save the tap: it retargets the hit to the nearest non-inert ancestor (the
-        // drag layer), so the button underneath never sees the click and the card flips instead.
-        // `pointer-events-none` is what lets the hit fall through to the face that is facing you.
         !active && 'pointer-events-none',
       )}
       inert={!active}
@@ -118,8 +107,6 @@ export function CardFace({
           ref={contentRef}
           className={cn(
             'flex w-full shrink-0 flex-col gap-3',
-            // Only the card's own words follow the deck's style; the chrome around them keeps the
-            // app's tokens so a dark preset never swallows a control.
             CARD_STYLE_TEXT,
             align === 'center' ? 'my-auto' : 'mb-auto pt-1',
           )}
@@ -265,10 +252,6 @@ export function FlipZone({
   )
 }
 
-/**
- * The prompt as a working face states it — fixed at the top, tip and rule under it, so the answer
- * area below can grow.
- */
 export function WorkPrompt({ prompt, tip }: { prompt: string; tip?: string }) {
   return (
     <>

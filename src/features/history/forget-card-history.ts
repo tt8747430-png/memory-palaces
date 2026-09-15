@@ -1,10 +1,5 @@
 import { type HistoryStore, historyForCard, selectHistory } from '@/entities/learning-history'
 
-/**
- * Drops every entry for these Cards. Reset progress is what reaches here: it clears the schedule
- * and the Fast-review bucket, so leaving the history standing would leave a record describing a
- * schedule the Card no longer has.
- */
 export async function forgetCardHistory(
   store: HistoryStore,
   cardIds: readonly string[],

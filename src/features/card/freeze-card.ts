@@ -2,7 +2,6 @@ import { type Card, type CardStore, updateCard } from '@/entities/card'
 import { nowIso } from '@/shared/lib'
 import { requireCard } from './card-commands'
 
-/** A frozen card keeps its schedule and its place; it simply stops being offered. */
 export async function toggleCardFrozen(
   store: CardStore,
   id: string,

@@ -75,7 +75,6 @@ export function useProfileForm(onSaved?: () => void): ProfileFormControl {
   const save = async () => {
     if (!emailValid || !phoneValid || saving) return
     setSaving(true)
-    // A freshly picked photo is still inline; setProfilePhoto saves it, then moves it to storage.
     const pickedPhoto = isInlineImage(value.avatar) ? value.avatar : null
     await setProfile(store, {
       name: value.name.trim(),

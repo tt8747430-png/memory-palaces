@@ -89,10 +89,6 @@ describe('useDeckSettings', () => {
     await waitFor(async () => expect(await repo.getAll()).toHaveLength(2))
   })
 
-  /**
-   * The reason this goes through `usePendingAct`: `ConfirmDialog` fires `onConfirm` before it
-   * closes, so two taps landing in the same frame would otherwise copy the deck twice.
-   */
   it('runs a double-tapped confirm exactly once', async () => {
     const { hook, repo } = setup()
     await waitFor(() => expect(hook.result.current.ready).toBe(true))
@@ -129,7 +125,6 @@ describe('useDeckSettings', () => {
     expect(nav.onArchived).not.toHaveBeenCalled()
   })
 
-  /** Picking "archive" as a move destination is the archive act, so it asks the same question. */
   it('asks before archiving from the move sheet', async () => {
     const { hook, repo } = setup()
     await waitFor(() => expect(hook.result.current.ready).toBe(true))
@@ -142,10 +137,6 @@ describe('useDeckSettings', () => {
     await waitFor(async () => expect((await repo.getById('d1'))?.archived).toBe(true))
   })
 
-  /**
-   * The archive is where an archived deck already is, so picking it changes nothing — the row's
-   * label says "Archive", and confirming it would have restored the deck instead.
-   */
   it('does nothing when an archived deck is moved to the archive', async () => {
     const { hook, repo, nav } = setup({ archived: true })
     await waitFor(() => expect(hook.result.current.ready).toBe(true))
@@ -183,10 +174,6 @@ describe('useDeckSettings', () => {
     expect(hook.result.current.sheet).toBeNull()
   })
 
-  /**
-   * A sheet on its way out fires `onOpenChange(false)` after the next one has opened — the export
-   * sheet must not be able to close the move sheet that replaced it.
-   */
   it('lets a sheet close only itself', async () => {
     const { hook } = setup()
     await waitFor(() => expect(hook.result.current.ready).toBe(true))

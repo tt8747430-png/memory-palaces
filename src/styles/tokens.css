@@ -29,32 +29,12 @@
   --p-font-sans:
     'Lexend Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
-  /**
-   * The type scale. Five steps, each a different number and a different job — a size that repeats
-   * is not a role, it is a second name for one. `sub` used to sit here at 14px beside `body`'s
-   * 14px, so "which of the two does this line take" had no answer and the one place a step was
-   * actually wanted (a subdeck row against its parent) rendered identically to it. What separates
-   * a row's title from the line under it is weight and colour, and that is where it belongs.
-   *
-   *   headline — the one hero line on a screen
-   *   title    — a screen, section or card title
-   *   body     — every other line of type: row titles, prose, menu items, values
-   *   label    — a label, a caption, a piece of metadata under a title
-   *   tiny     — a count riding on a glyph
-   */
   --p-text-headline: 20px;
   --p-text-title: 16px;
   --p-text-body: 14px;
   --p-text-label: 12px;
   --p-text-tiny: 10px;
 
-  /**
-   * A glyph square. An emoji standing in for a deck, a folder or a person is not type — it is a
-   * pictograph sized to fill the box it sits in, and every one of these used to be a raw length
-   * (`text-2xl`, `text-[0.85rem]`, `text-[40px]`) chosen next to the box rather than from a scale.
-   * The steps are named for the square, so a `size-8` cover and a `size-8` folder take the same
-   * one instead of landing 1.6px apart.
-   */
   --p-glyph-sm: 14px;
   --p-glyph-md: 16px;
   --p-glyph-lg: 20px;
@@ -62,22 +42,11 @@
   --p-glyph-2xl: 30px;
   --p-glyph-3xl: 40px;
 
-  /**
-   * A display figure: one tabular number that *is* the content — a streak count, a tile's value,
-   * the cards left today. The type scale stops at 20px because it describes lines of type, and a
-   * number read across a room is not one, so these were raw pixels everywhere they appeared.
-   */
   --p-figure-sm: 22px;
   --p-figure-md: 28px;
   --p-figure-lg: 56px;
   --p-figure-xl: 64px;
 
-  /**
-   * The printed card's own type, and the only fluid sizes in the app. A study card carries one
-   * phrase and nothing else, so its type is sized to the viewport rather than to the app's scale —
-   * a prompt should fill a large phone and still fit a small one. Each step is the clamp its face
-   * already used; naming them is what stops the seventh face inventing an eighth clamp.
-   */
   --p-card-prompt: clamp(22px, 6vw, 28px);
   --p-card-title: clamp(18px, 5vw, 22px);
   --p-card-answer: clamp(17px, 4.6vw, 21px);
@@ -86,12 +55,6 @@
   --p-card-preview: clamp(24px, 6.5vw, 34px);
   --p-card-preview-back: clamp(18px, 5vw, 24px);
 
-  /**
-   * The one size a text-entry control may be. Below 16px, iOS zooms the visual viewport on focus,
-   * which changes `visualViewport.scale` underneath every measurement in `keyboard-viewport.ts` —
-   * so the app used to buy immunity with `user-scalable=no` and lose pinch-zoom for everyone.
-   * Sizing the fields instead is what lets the viewport meta stay zoomable. ADR 0002.
-   */
   --p-text-entry: 16px;
 
   --p-weight-medium: 500;
@@ -100,13 +63,6 @@
   --p-leading-tight: 1.4;
   --p-leading-body: 1.5;
 
-  /**
-   * Radii. `sm`…`xl` are the box scale every card, control and sheet is cut from; the four names
-   * around them are roles the scale has no step for, and each is the value its callers already
-   * used as a literal. They are here so nothing reaches for a raw length again — snapping them
-   * onto the scale instead would have redrawn the swipe caps, the streak week and the calendar
-   * legend, which is a design change and not a cleanup.
-   */
   --p-radius-hairline: 2px;
   --p-radius-swatch: 5px;
   --p-radius-mark: 6px;
@@ -129,27 +85,11 @@
     0 4px 10px -2px oklch(var(--p-tint-steel) / 0.16),
     0 18px 40px -10px oklch(var(--p-tint-steel) / 0.22);
 
-  /**
-   * The bare distance the bottom edge owes the device: the home indicator where there is one, a
-   * comfortable 12px where there is not. Every bottom-anchored thing in the app derives from this
-   * one number — `--app-bottom-inset` is it, `AppNav` writes it plus its own height, the dial and
-   * the study footer add their own gap to it. It exists because those four used to spell it out
-   * by hand with three different minimums, so changing the inset moved three of them and not the
-   * fourth.
-   */
   --p-safe-bottom: max(0.75rem, env(safe-area-inset-bottom));
 
   --p-blur-glass: 12px;
   --p-blur-card: 20px;
 
-  /**
-   * One ladder for every piece of chrome that stacks against other chrome — anything `fixed` or
-   * `sticky` — read as `z-(--z-nav)` and friends. Rungs are spaced so a pair (a scrim and the
-   * surface it dims) sits adjacent without a third layer squeezing between them. A bare
-   * `z-<number>` is for stacking *inside* one component, where the number is local to that
-   * element's own context and means nothing to the app; the moment two components have to agree,
-   * the answer belongs here, where the whole stack can be read top to bottom.
-   */
   --z-raised: 10;
   --z-header: 20;
   --z-nav: 200;
@@ -177,12 +117,6 @@
     radial-gradient(ellipse at center, oklch(var(--p-tint-sky) / 0.1) 0%, transparent 60%),
     var(--bg);
 
-  /**
-   * The brand's own descent, and the one gradient that is *not* a theme role: the splash and the
-   * welcome screen are the same moment in the product, and they carry white type over navy in both
-   * themes. Built from primitives on purpose — `--primary` inverts between themes, and this must
-   * not, or the white type lands on pale blue.
-   */
   --bg-threshold: linear-gradient(
     to bottom,
     var(--p-navy-900),
@@ -206,11 +140,6 @@
   --accent: var(--p-blue-500);
   --accent-foreground: var(--p-white);
 
-  /**
-   * Chrome that must read as chrome in either theme. A scrim always darkens what is under it, and
-   * the nav is a dark bar carrying white type. Both used to be built from `--primary`, which is
-   * navy in light and pale blue in dark — so both inverted, and their white content went with them.
-   */
   --scrim: var(--p-navy-900);
   --nav-surface: var(--p-navy-900);
   --nav-pill: var(--p-white);
@@ -289,7 +218,6 @@
   --accent: var(--p-blue-500);
   --accent-foreground: var(--p-white);
 
-  /* Chrome holds. Only the scrim deepens, because it now dims a dark app rather than a light one. */
   --scrim: oklch(12% 0.04 267);
 
   --info-surface: oklch(var(--p-tint-sky) / 0.14);
@@ -317,16 +245,6 @@
   --border-glass: oklch(100% 0 0 / 0.12);
   --divider: oklch(100% 0 0 / 0.1);
   --ring: var(--p-blue-300);
-  /**
-   * Elevation in the dark. A shadow is a hole in the light, and the light here is a 20 %-lightness
-   * navy — so the tinted primitives, which are a 29 %-lightness steel at ≤22 % alpha, are *lighter
-   * than the surface they fall on* and read as nothing at all. Every role therefore restates
-   * itself in black at the alpha the dark surface needs, keeping its own geometry: the offsets and
-   * blurs below are the light role's, only the colour and the opacity change.
-   *
-   * `--shadow-interactive` loses its navy tint for the same reason the others lose their steel:
-   * a navy glow under a control standing on navy is not a lift.
-   */
   --shadow-rest: 0 1px 2px oklch(0% 0 0 / 0.28), 0 4px 12px -2px oklch(0% 0 0 / 0.36);
   --shadow-featured: 0 2px 5px -1px oklch(0% 0 0 / 0.3), 0 12px 30px -6px oklch(0% 0 0 / 0.45);
   --shadow-interactive: 0 2px 5px -1px oklch(0% 0 0 / 0.4), 0 10px 24px -6px oklch(0% 0 0 / 0.55);
@@ -334,19 +252,6 @@
   --shadow-card: 0 2px 4px -1px oklch(0% 0 0 / 0.3), 0 8px 22px -4px oklch(0% 0 0 / 0.5);
 }
 
-/**
- * A printed scene's chrome. `CardScene` marks its subtree `data-scene`, and these two blocks are
- * what the controls over a slate or a parchment card then read — set on a descendant, so they win
- * over `:root` / `[data-theme]` by inheritance, whichever theme the app itself is in.
- *
- * The role colours are the theme's own, one block up: a scene changes the paper, not what "primary"
- * or "danger" mean. The surfaces, ink, border and glass are the material's — neutral, not the app's
- * navy tint, because a chalkboard is not a navy screen. Keeping both here rather than in TypeScript
- * is what lets the mirroring, and the deliberate departures from it, be read side by side.
- *
- * The set is `CHROME_TOKENS` in `shared/lib/card-style/presets.ts`; `card-style/card-style.test.ts` holds these blocks
- * to it in both directions.
- */
 [data-scene='dark'] {
   --surface: #222836;
   --text-heading: #f3f6fa;
@@ -375,7 +280,6 @@
   --danger-on-surface: oklch(82% 0.12 22);
 }
 
-/* The light one, so a paper scene stays paper even while the app is in dark mode. */
 [data-scene='light'] {
   --surface: #fffdf7;
   --text-heading: #2f2a22;

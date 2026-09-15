@@ -18,11 +18,6 @@ import { nextDefaultName } from '@/shared/lib'
 import { ROUTES } from '@/shared/config/routes'
 import { useBack } from './use-back'
 
-/**
- * Screens read their own params rather than taking them as props from `router.tsx`. That is what
- * lets every route in this module be a `lazyRouteComponent`: the router file no longer has to
- * import a screen in order to hand it a param, so none of this module is in the entry chunk.
- */
 function useDeckId(from: (typeof ROUTES)[keyof typeof ROUTES]) {
   return useParams({ from, select: (params) => (params as { deckId: string }).deckId })
 }

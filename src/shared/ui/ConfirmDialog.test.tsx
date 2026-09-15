@@ -68,7 +68,6 @@ describe('ConfirmDialog', () => {
 
 type Act = { kind: 'delete'; id: string }
 
-/** A screen that holds its pending delete the way every list screen does. */
 function PendingHarness({ onRun }: { onRun: (act: Act) => void }) {
   const pending = usePendingAct<Act>()
   return (

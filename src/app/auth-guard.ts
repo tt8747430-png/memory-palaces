@@ -1,8 +1,6 @@
 import type { AuthKind } from '@/shared/api'
 import { ROUTES } from '@/shared/config/routes'
 
-// `/auth/callback` is public on purpose: the OAuth return lands there *before* a session exists,
-// so guarding it would bounce every social sign-in to /login mid-flight.
 const AUTH_PATHS: readonly string[] = [
   ROUTES.login,
   ROUTES.signup,

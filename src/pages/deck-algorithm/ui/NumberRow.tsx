@@ -11,11 +11,6 @@ export interface NumberRowProps {
   onChange: (value: number) => void
 }
 
-/**
- * A whole-number settings row. The value reads on the row, and tapping it opens the prompt sheet
- * the rest of the app uses for short entry — a number pad on the page would fight the keyboard
- * rules in CODE_STYLE §11 for no gain. Anything unparseable is refused out loud, never silently.
- */
 export function NumberRow({ icon, label, value, onChange }: NumberRowProps) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)

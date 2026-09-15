@@ -144,7 +144,6 @@ export function DeckLibraryPage({
     setFolderSheetTarget(undefined)
   }
 
-  /** A file dropped on the library has no deck yet, so one is named after it on the way in. */
   const importIntoNewDeck = (file: File) =>
     importFile(file, async () => {
       const deck = await createDeck(deckStore, { name: deckNameFromFile(file.name) })
@@ -224,7 +223,6 @@ export function DeckLibraryPage({
         )
       }
     >
-      {/* Above the library, because this is where a change is made and where its fate belongs. */}
       <SyncBanner className="mt-2" />
 
       {!library.ready ? (

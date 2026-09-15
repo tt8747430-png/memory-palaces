@@ -13,21 +13,10 @@ export interface StyleFullscreenProps {
   back: string
 }
 
-/**
- * The style at the size it is actually studied at. The pinned pane on the screen below is a third
- * of the shell and has controls under it; a long card there is mostly scrollbar, and the only
- * honest answer to "does this read well" is the whole screen.
- *
- * It previews the draft, not the saved style — the same `style` the pane and the strip are showing
- * — so it can be opened mid-edit and closed without touching the deck.
- */
 export function StyleFullscreen({ open, onOpenChange, style, front, back }: StyleFullscreenProps) {
   const { t } = useTranslation()
   return (
     <FullscreenDialog open={open} onOpenChange={onOpenChange}>
-      {/* The scene is the room, so it runs under the safe areas and the close button sits on it —
-          inside `CardScene`, the button's glass and ink come from the scene's chrome rather than
-          the app's theme. */}
       <CardScene
         style={style}
         className="flex h-full w-full flex-col gap-4 px-5 pb-(--app-bottom-inset) pt-safe"

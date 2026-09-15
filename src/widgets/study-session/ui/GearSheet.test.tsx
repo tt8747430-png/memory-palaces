@@ -70,7 +70,6 @@ describe('GearSheet', () => {
   it('pins a close bar where the old finish bar was', async () => {
     const user = userEvent.setup()
     const props = setup()
-    // The header's icon dismiss answers to the same name; the pinned bar is the last of the two.
     const closers = await screen.findAllByRole('button', { name: 'Close' })
     await user.click(closers[closers.length - 1]!)
     expect(props.onClose).toHaveBeenCalledTimes(1)

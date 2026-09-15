@@ -33,7 +33,6 @@ describe('applyPendingDeletions', () => {
 
     await applyPendingDeletions(deps, [{ collection: 'decks', id: 'd1', keep: false }])
 
-    // The repository stamps `updatedAt` on every remove; a second remove is a fresh clock.
     expect(remove).toHaveBeenCalledWith('d1')
     expect(cloud.row('decks', 'd1')?.deleted).toBe(true)
     expect(deps.deckStore.getState().decks).toEqual([])

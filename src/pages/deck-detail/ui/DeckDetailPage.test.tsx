@@ -40,7 +40,6 @@ const card = (id: string, over: Partial<Card> = {}): Card => ({
   ...over,
 })
 
-/** `mainDeck` makes d1 a subdeck of a main deck holding those settings. */
 function renderPage(
   settings: Partial<DeckSettings> = {},
   cards: Card[] = [card('c1')],
@@ -157,8 +156,6 @@ describe('DeckDetailPage', () => {
     expect(screen.getByText('Entropy')).toBeInTheDocument()
     expect(screen.queryByText('Momentum')).toBeNull()
 
-    // A search that matches nothing has to offer its own exit — `NoResults` was unreachable
-    // before the screen passed `searchQuery` at all.
     await user.clear(screen.getByRole('searchbox', { name: /search cards/i }))
     await user.type(screen.getByRole('searchbox', { name: /search cards/i }), 'zzzz')
     expect(screen.getByText(/no matches/i)).toBeInTheDocument()

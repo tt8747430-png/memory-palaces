@@ -13,7 +13,6 @@ import {
 
 const plain = { preset: 'plain', font: 'default', textSize: 30, alignment: 'center' } as const
 
-/** Only this one follows the theme; every other preset is a printed material with fixed colours. */
 const TOKEN_PRESETS = ['plain'] as const
 
 const PRINTED_PRESETS = CARD_STYLE_PRESET_IDS.filter(
@@ -22,10 +21,8 @@ const PRINTED_PRESETS = CARD_STYLE_PRESET_IDS.filter(
 
 const tokens = readStylesheet('tokens.css')
 
-/** Every custom property the app declares anywhere — the vocabulary a `var()` may draw on. */
 const DECLARED = new Set([...tokens.matchAll(/^\s*(--[a-z0-9-]+)\s*:/gm)].map(([, name]) => name))
 
-/** The declarations inside one `[data-scene='…']` block, which is where a printed chrome lives. */
 function sceneBlock(chrome: 'dark' | 'light'): Map<string, string> {
   const body = new RegExp(`\\[data-scene='${chrome}'\\]\\s*\\{([^}]*)\\}`).exec(tokens)?.[1]
   expect(body, `tokens.css has no [data-scene='${chrome}'] block`).toBeTruthy()
@@ -59,12 +56,6 @@ describe('resolveCardStyle', () => {
     }
   })
 
-  /**
-   * A card painted from a custom property nothing defines is a transparent card with no border —
-   * which is exactly how the token-following presets shipped once. Every `var()` a preset names has to
-   * be one the app actually declares, so the list of those is read from the stylesheet rather than
-   * kept by hand beside it.
-   */
   it('names only custom properties the app defines', () => {
     expect(DECLARED.size).toBeGreaterThan(20)
     for (const preset of CARD_STYLE_PRESET_IDS) {
@@ -112,10 +103,6 @@ describe('cardSceneChrome', () => {
     }
   })
 
-  /**
-   * All of them, not a sample: a token left out keeps the app's own value inside a printed scene,
-   * which is how `bg-card` stayed white under `night` and the answer field became white-on-white.
-   */
   it('repaints every chrome token a printed scene would otherwise swallow', () => {
     for (const chrome of ['dark', 'light'] as const) {
       const block = sceneBlock(chrome)
@@ -134,7 +121,6 @@ describe('cardSceneChrome', () => {
     }
   })
 
-  /** A scene block painting from an undeclared primitive is a control with no colour at all. */
   it('paints a scene block only from primitives the app declares', () => {
     for (const chrome of ['dark', 'light'] as const) {
       for (const [token, value] of sceneBlock(chrome)) {
@@ -146,11 +132,6 @@ describe('cardSceneChrome', () => {
   })
 })
 
-/**
- * A retired preset can reach a device without passing `deckMigrations[3]`: replication writes pulled
- * rows straight into the collection, so a second device that has not upgraded still pushes
- * `outlined`. The types cannot see that, which is the whole reason these are written as strings.
- */
 describe('coerceCardStyle', () => {
   const retired = { ...plain, preset: 'outlined', font: 'comic' } as never
 
@@ -199,7 +180,6 @@ describe('sameCardStyle', () => {
     expect(sameCardStyle(plain, { ...plain, textSize: 22 })).toBe(false)
   })
 
-  /** The stored size is clamped, so a draft the clamp would flatten is not a change. */
   it('compares the size the card would actually be drawn at', () => {
     expect(sameCardStyle({ ...plain, textSize: 40 }, { ...plain, textSize: 99 })).toBe(true)
     expect(sameCardStyle({ ...plain, textSize: 14 }, { ...plain, textSize: 2 })).toBe(true)

@@ -151,9 +151,6 @@ function Stat({
     )
   }
 
-  // The one stat that opens a screen wears a control's surface — the glass and hairline of the
-  // avatar ring above it, so it lifts off the row without shouting over its neighbours — and a
-  // chevron saying where the press goes. The figures stay level with the other two.
   return (
     <div className="flex flex-1 px-1.5">
       <button
@@ -162,7 +159,6 @@ function Stat({
         aria-label={actionLabel}
         className={cn(
           'flex w-full flex-col items-center justify-center gap-1.5 rounded-card px-2 py-2.5',
-          // A border, not a ring: `shadow-rest` writes `box-shadow` outright and would erase one.
           'border border-(--border-glass) bg-card-glass shadow-rest',
           'transition-[transform,background-color] duration-150 ease-out hover:bg-info-surface active:scale-[0.96]',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',

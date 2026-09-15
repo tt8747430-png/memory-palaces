@@ -22,20 +22,11 @@ type WatcherFactory = (
   onRemoteChange: (event: RemoteChangeEvent) => void,
 ) => CloudWatcher
 
-/**
- * The replication lifecycle, as one unit: the Realtime watcher for as long as an account is signed
- * in, and one replication per table for the length of one cycle.
- *
- * Sync is user-initiated, so being signed in no longer means replicating: `start` only opens the
- * watcher that lights the banner. Scheduling belongs to `SyncProvider`, classification to `syncNow`
- * and the read-only cloud queries to `createSupabaseCloudSync`; this class absorbs none of them.
- */
 export class SyncManager {
   private userId: string | null = null
   private watcher: CloudWatcher | null = null
   private running: Promise<PushedIds> | null = null
 
-  /** Targets may still be opening — the RxDB collections exist a tick after the app boots. */
   constructor(
     private readonly targets: SyncTarget[] | Promise<SyncTarget[]>,
     private readonly makeReplication: ReplicationFactory,
@@ -61,10 +52,6 @@ export class SyncManager {
     )
   }
 
-  /**
-   * Idempotent for the same user; a different user replaces the subscription. Starts no
-   * replication — nothing leaves the device until a Sync asks.
-   */
   async start(
     userId: string,
     onRemoteChange: (event: RemoteChangeEvent) => void = () => {},
@@ -75,15 +62,6 @@ export class SyncManager {
     this.watcher = this.watch(userId, onRemoteChange)
   }
 
-  /**
-   * One apply-then-push pass. Concurrent callers join the pass already running rather than starting
-   * a second one — Autosync's reconnect and a pressed Synchronise can land in the same tick.
-   *
-   * Rejects before `start`, and never resolves empty instead: `syncNow` reads a resolved cycle as
-   * "everything pushed" and clears the pending log on the strength of it. Resolving `{}` here with
-   * nothing pushed was how a Sync fired during the unsynced-reset hold erased the previous
-   * account's log without a byte leaving the device.
-   */
   runCycle(): Promise<PushedIds> {
     const userId = this.userId
     if (!userId) return Promise.reject(new Error('No account is signed in to synchronise as'))
@@ -100,16 +78,8 @@ export class SyncManager {
     await watcher?.stop()
   }
 
-  /**
-   * RxDB retries a failed push or pull forever and reports each failure on `error$` alone —
-   * `awaitInSync()` has no error path, so awaiting it on its own turns an offline moment into a Sync
-   * that never ends. The first error of any table therefore fails the whole cycle, and every
-   * replication is cancelled either way.
-   */
   private async cycle(userId: string): Promise<PushedIds> {
     const targets = await this.targets
-    // A sign-out (or another user) may have landed while the collections were opening. Reject, for
-    // the same reason `runCycle` does: a cycle that pushed nothing must not read as one that did.
     if (this.userId !== userId) throw new Error('The account changed before the cycle could start')
 
     const pushed = new Map<SyncedTable, Set<string>>()

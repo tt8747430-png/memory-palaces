@@ -1,6 +1,5 @@
 import { Skeleton } from '@/shared/ui'
 
-/** Placeholder for a medallion grid while progress, decks and cards load. */
 export function RewardGridSkeleton() {
   return (
     <div className="grid grid-cols-3 gap-x-3 gap-y-7">

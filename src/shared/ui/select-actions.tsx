@@ -14,12 +14,6 @@ export interface SelectActionHandler {
 
 export type SelectActionHandlers = Partial<Record<SelectActionId, SelectActionHandler>>
 
-/**
- * A toolbar handler running a command over whatever is selected. Snapshots the ids, runs `run`,
- * then leaves select mode — in that order, so `run` can never read ids the exit already cleared —
- * and disables itself on an empty selection. Spread the result to override `disabled` where an
- * action needs a narrower rule than "something is selected".
- */
 export function bulkAction(
   selection: Pick<MultiSelect, 'ids' | 'exit'>,
   run: (ids: string[]) => void,

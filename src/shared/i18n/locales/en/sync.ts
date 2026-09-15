@@ -1,4 +1,3 @@
-/** Sync: the banner, the review dialog, Settings → Sync, and an erase across accounts. */
 export const sync = {
   unsyncedReset: {
     title: 'Erase changes that were never synchronised?',

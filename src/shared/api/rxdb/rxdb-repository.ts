@@ -31,14 +31,10 @@ export class RxdbRepository<T extends Identifiable> implements Repository<T> {
     const collection = await this.collection
     const doc = await collection.findOne(id).exec()
     if (!doc) return
-    // Collections whose schema has no clock are device-local and never replicate.
     if (!('updatedAt' in collection.schema.jsonSchema.properties)) {
       await doc.remove()
       return
     }
-    // A tombstone is a write, and it competes on the same clock as an edit. Removing without
-    // dating it leaves the delete carrying whenever the document was last *edited*, so another
-    // device's edit made before the delete but stamped later wins the merge and resurrects it.
     const clocked = doc as unknown as RxDocument<Identifiable & Clocked>
     const stamped = await clocked.incrementalPatch({ updatedAt: nowIso() })
     await stamped.remove()

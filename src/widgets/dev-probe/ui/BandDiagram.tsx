@@ -3,17 +3,11 @@ import type { ViewportSample } from '../model/viewport-sample'
 
 const LABEL = 'absolute text-tiny font-semibold tabular-nums'
 
-/**
- * The screen to scale, in the one coordinate space that matters: layout pixels below the anchored
- * shell's top. Rects convert through `html`'s own rect top — the bridge `visibleBottom()` uses — so
- * a field drawn outside the band really is outside it, not a space-conversion mistake drawn twice.
- */
 export function BandDiagram({ sample, className }: { sample: ViewportSample; className?: string }) {
   const app = Number.parseInt(sample.appHeight, 10) || sample.layoutHeight
   if (app <= 0) return null
 
   const inset = Number.parseInt(sample.kbInset, 10) || 0
-  // Rect → layout: `html`'s rect top is 0 where rects are layout-relative, −pan where they carry it.
   const toLayout = (rectY: number) => rectY - sample.htmlRectTop
   const pct = (layoutY: number) => (layoutY / app) * 100
   const clamped = (value: number) => Math.min(100, Math.max(0, value))
@@ -31,7 +25,6 @@ export function BandDiagram({ sample, className }: { sample: ViewportSample; cla
   return (
     <div className={cn('relative', className)}>
       <div className="relative h-40 overflow-hidden rounded-card border border-border bg-card">
-        {/* The keyboard: the bottom of the anchored shell, covered. */}
         {inset > 0 ? (
           <div
             className="absolute inset-x-0 bottom-0 border-t border-dashed border-border bg-muted/60"
@@ -43,7 +36,6 @@ export function BandDiagram({ sample, className }: { sample: ViewportSample; cla
           </div>
         ) : null}
 
-        {/* What iOS took for itself. Zero is the whole point of the design. */}
         {sample.vvOffsetTop > 0 ? (
           <div
             className="absolute inset-x-0 top-0 bg-(--danger-surface)"
@@ -55,7 +47,6 @@ export function BandDiagram({ sample, className }: { sample: ViewportSample; cla
           </div>
         ) : null}
 
-        {/* Where the reveal is allowed to put the field. */}
         {hasBand ? (
           <div
             className="absolute inset-x-0 border-y border-(--success-on-surface)/40 bg-(--success-surface)/70"
@@ -70,7 +61,6 @@ export function BandDiagram({ sample, className }: { sample: ViewportSample; cla
           </div>
         ) : null}
 
-        {/* The focused field, red the moment it leaves the band. */}
         {hasField && !offScale ? (
           <div
             className={cn(

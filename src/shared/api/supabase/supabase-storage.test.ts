@@ -27,7 +27,6 @@ describe('SupabaseStorage', () => {
 
     expect(path).toBe('u1/d1')
     expect(client.storage.from).toHaveBeenCalledWith('deck-images')
-    // Replacing an image must overwrite, not 409 — hence upsert.
     expect(bucket.upload).toHaveBeenCalledWith('u1/d1', expect.any(Blob), {
       upsert: true,
       contentType: undefined,

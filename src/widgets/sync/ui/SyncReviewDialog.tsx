@@ -14,25 +14,12 @@ type Answer = 'delete' | 'keep'
 const LOADING: SyncReviewRows = { state: 'loading' }
 const NONE_KEPT: ReadonlySet<string> = new Set()
 
-/**
- * What the user is asked when a merge genuinely cannot decide: a document deleted here that another
- * device went on editing, or a deck or folder deleted here that another device added to.
- *
- * Every row defaults to **Delete** — the user's own recent intent — with **Keep** as the deliberate
- * override. Grouped by kind, outermost first, and named from the cloud's copy, because this device's
- * is gone. The names are the runner's to fetch; this only renders what it has so far.
- *
- * Dismissing cancels the Sync entirely; nothing is half-applied, and the pending log is untouched,
- * so the banner still says exactly what is waiting.
- */
 export function SyncReviewDialog() {
   const { t } = useTranslation()
   const runner = useSyncRunner()
   const review = runner?.review ?? null
   const rows = review?.rows ?? LOADING
 
-  // The answers belong to one review: they are stored against its items, so a new review starts
-  // from every row on Delete without an effect having to notice the change.
   const [answers, setAnswers] = useState<{
     items: SyncReviewItem[] | null
     kept: ReadonlySet<string>

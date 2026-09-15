@@ -43,8 +43,6 @@ export function SignupPage({ onSuccess, onGuest, onLogin }: SignupPageProps) {
           email: email.trim(),
           password,
         })
-        // Email confirmation is on: the account exists but there is no session to use yet, so
-        // saying "welcome" and showing the app would be a lie — and would sync nothing.
         if (!sessionActive) {
           setAwaitingConfirmation(true)
           return

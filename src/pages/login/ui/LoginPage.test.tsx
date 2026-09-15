@@ -114,7 +114,6 @@ describe('LoginPage', () => {
 
     expect(screen.getByRole('button', { name: /^sign in$/i })).toBeDisabled()
     expect(screen.getByRole('status')).toHaveTextContent(/you're offline/i)
-    // Guest entry is the device's own decision and stays available.
     expect(screen.getByRole('button', { name: /continue as a guest/i })).toBeEnabled()
   })
 

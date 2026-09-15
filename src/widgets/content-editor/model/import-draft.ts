@@ -4,7 +4,6 @@ import { newId } from '@/shared/lib'
 
 export type ImportSource = 'paste' | 'mindscape' | 'anki'
 
-/** A parsed card the review screen can address, once it has an id to key on. */
 export type DraftCard = ParsedCard & { id: string }
 
 export interface ImportDraft {

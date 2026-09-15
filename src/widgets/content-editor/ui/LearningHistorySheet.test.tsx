@@ -44,7 +44,6 @@ describe('LearningHistorySheet', () => {
   })
 
   it('shows placeholders, not an empty state, until the store has mirrored', () => {
-    // Never started: the store is still idle, exactly as it is on the first frame after mount.
     renderSheet([entry({ id: 'h1', createdAt: at(0), kind: 'graded', grade: 'good' })], 'c1', false)
     expect(screen.queryByText('No history yet')).not.toBeInTheDocument()
     expect(screen.queryByText('Good')).not.toBeInTheDocument()
@@ -60,7 +59,6 @@ describe('LearningHistorySheet', () => {
         intervalBefore: 1,
         intervalAfter: 3,
       }),
-      // No intervalBefore at all: the card had no schedule, so this was its first review.
       entry({ id: 'h2', createdAt: at(0), kind: 'graded', grade: 'easy', intervalAfter: 2 }),
     ])
 
@@ -72,8 +70,6 @@ describe('LearningHistorySheet', () => {
 
   it('calls an answer after a lapse what it is, not a first review', async () => {
     renderSheet([
-      // `schedule()` zeroes the interval on 'again', so intervalBefore 0 is a lapsed card —
-      // a different thing from a card that never had a schedule.
       entry({
         id: 'h1',
         createdAt: at(0),

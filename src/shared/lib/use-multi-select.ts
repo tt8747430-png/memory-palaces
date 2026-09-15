@@ -15,10 +15,6 @@ export interface MultiSelect {
 }
 
 export interface MultiSelectOptions {
-  /**
-   * The ids moving with the one the user touched — a deck carries its subdecks, a card carries only
-   * itself. Must be stable across renders.
-   */
   expand?: (id: string) => readonly string[]
 }
 

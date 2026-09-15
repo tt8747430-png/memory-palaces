@@ -51,8 +51,6 @@ describe('CardFace', () => {
   })
 
   it('lets a tap fall through the face that is turned away', () => {
-    // Not just `inert`: an inert hit retargets to the drag layer, so the facing card's button never
-    // gets the click. The turned-away face has to be transparent to hit-testing as well.
     setup({ active: false })
     expect(screen.getByTestId('card-face')).toHaveClass('pointer-events-none')
   })

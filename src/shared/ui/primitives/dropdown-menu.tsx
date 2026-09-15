@@ -19,13 +19,6 @@ interface DropdownMenuContentProps extends Omit<ComponentProps<typeof Menu.Popup
   collisionPadding?: number
 }
 
-/**
- * The popup is portalled out of the DOM but not out of the React tree, and React bubbles synthetic
- * events along the tree it rendered — so a press inside the menu still reaches whatever the trigger
- * was rendered inside. On a content row that means choosing an action also long-presses and taps
- * the row it belongs to, opening the preview and select mode alongside whatever was chosen. The
- * menu is its own surface: nothing that happens in it is a press on the thing behind it.
- */
 const seal = (event: { stopPropagation: () => void }) => event.stopPropagation()
 
 function DropdownMenuContent({

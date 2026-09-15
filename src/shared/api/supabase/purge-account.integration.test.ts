@@ -1,18 +1,4 @@
 // @vitest-environment node
-/**
- * The purge leaves nothing behind, against a real Supabase stack.
- *
- * Skipped unless SUPABASE_TEST_URL / SUPABASE_TEST_KEY point at one **and**
- * SUPABASE_TEST_SECRET_KEY holds an `sb_secret_…` key — see `replication.integration.test.ts` for
- * the full run instructions. It is needed twice over: to invoke `purge-account` out of schedule,
- * which accepts that key and nothing else, and to look for rows afterwards that RLS would
- * otherwise hide from the deleted user. The legacy `service_role` JWT will not do: the function
- * checks the key against `SUPABASE_SECRET_KEYS`.
- *
- * It is the only check that the *order* inside `purge-account` is right. Storage has no cascade, so
- * emptying the buckets has to happen before the auth row goes — and nothing but this would notice
- * a version that deleted the user first and orphaned every image they ever uploaded.
- */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
@@ -59,7 +45,6 @@ run('purge-account', () => {
 
     await client.auth.signInWithPassword({ email, password })
 
-    // Something in every table, and an object in every bucket.
     for (const table of MIRROR_TABLES) {
       await client.rpc('push_documents', {
         p_table: table,
@@ -79,7 +64,6 @@ run('purge-account', () => {
         .upload(`${userId}/purge-fixture`, new Blob(['x']), { upsert: true })
     }
 
-    // Due immediately rather than in 30 days: the grace period is not what this is testing.
     await admin.from('account_deletions').upsert({
       user_id: userId,
       requested_at: new Date().toISOString(),
@@ -90,7 +74,6 @@ run('purge-account', () => {
   }, 120_000)
 
   afterAll(async () => {
-    // Nothing should be left, but a half-run purge must not leave a user behind either.
     await admin?.auth.admin.deleteUser(userId).catch(() => {})
   })
 

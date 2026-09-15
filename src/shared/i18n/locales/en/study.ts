@@ -1,4 +1,3 @@
-/** Studying: grades, SRS, practice modes, the card and question editors, quiz and match. */
 export const grade = {
   again: 'Again',
   hard: 'Hard',

@@ -1,4 +1,3 @@
-/** Signing in, signing up, the splash and password recovery. */
 export const auth = {
   emailLabel: 'Email',
   emailPlaceholder: 'you@example.com',

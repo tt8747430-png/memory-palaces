@@ -13,7 +13,6 @@ export interface DeckAlgorithmPageProps {
   deckId: string
   onBack?: () => void
   onOpenAdvanced?: () => void
-  /** A subdeck's algorithm screen is its main deck's; this goes there. */
   onOpenMainDeck?: (mainDeckId: string) => void
 }
 

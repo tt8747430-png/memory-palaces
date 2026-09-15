@@ -1,8 +1,3 @@
-/**
- * The kitchen sink: theme switch, section nav and scroll-spy. Each section is its own module under
- * `kitchen-sink/`, so adding a component state is an edit to one small file rather than to a
- * 700-line page. Ships in every build on purpose (CLAUDE.md, NEW_ARCHITECHTURE.md T11.G).
- */
 import { useEffect, useRef, useState } from 'react'
 import { cn } from '@/shared/lib'
 import {

@@ -1,4 +1,3 @@
-/** The profile, streak, achievements and badges. */
 export const profile = {
   guest: 'Exploring as a guest',
   achievements: 'Achievements',

@@ -3,7 +3,6 @@ import type { Checkpoint } from '@/shared/api'
 import { DEFAULT_SYNC_STATE, type SyncState } from './types'
 import type { SyncStateState } from './store'
 
-/** Until the first write there is no document; the defaults are what a new device means. */
 export const selectSyncState = (state: SyncStateState): SyncState =>
   state.syncState ?? DEFAULT_SYNC_STATE
 

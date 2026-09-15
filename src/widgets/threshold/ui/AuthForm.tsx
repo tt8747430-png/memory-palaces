@@ -11,22 +11,15 @@ import { AuthHeader } from './AuthHeader'
 export interface AuthFormProps {
   title: string
   subtitle: string
-  /** The fields, plus anything that belongs inside the form element. */
   children: ReactNode
   onSubmit: (event: SyntheticEvent) => void
   submitLabel: string
   busy?: boolean
-  /** Where to go once the guest session exists — the form opens it itself. */
   onGuest: () => void
-  /** The line offering the other way in — sign up from login, and back. */
   footer: ReactNode
   className?: string
 }
 
-/**
- * The shape both ways in share: logo and title, form, guest escape hatch, social buttons, a line
- * pointing at the other screen. Each band rises in turn.
- */
 export function AuthForm({
   title,
   subtitle,
@@ -48,8 +41,6 @@ export function AuthForm({
     onGuest()
   }
 
-  // The redirect leaves the app, so `pending` only ever clears on failure — a successful press
-  // never comes back to this component.
   const startProvider = async (provider: OAuthProvider) => {
     setPending(provider)
     try {
@@ -72,9 +63,6 @@ export function AuthForm({
           <AuthHeader title={title} subtitle={subtitle} />
         </motion.div>
 
-        {/* Signing in and signing up both need the server to answer *now*, so they say so before
-            the press rather than letting the transport fail into a toast. Continuing as a guest
-            below stays available: that decision is the device's alone. */}
         {online ? null : (
           <motion.div variants={authRise} className="pb-4">
             <OfflineNotice />

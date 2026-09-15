@@ -10,7 +10,6 @@ export interface RewardGridProps<T> {
   children: (item: T) => ReactNode
 }
 
-/** The three-across medallion grid, staggering its tiles in on first paint. */
 export function RewardGrid<T>({ items, keyOf, children }: RewardGridProps<T>) {
   return (
     <ul className="grid grid-cols-3 gap-x-3 gap-y-7">
@@ -34,7 +33,6 @@ export interface RewardTileProps {
   children: ReactNode
 }
 
-/** One grid cell — a button when it leads somewhere, plain text when it does not. */
 export function RewardTile({ onOpen, ariaLabel, children }: RewardTileProps) {
   const className = 'flex w-full flex-col items-center gap-2 text-center'
   if (!onOpen) return <div className={className}>{children}</div>

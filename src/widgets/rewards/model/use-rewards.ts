@@ -17,7 +17,6 @@ import { selectCards, useCardStore } from '@/entities/card'
 import { selectProgress, useProgressStore } from '@/entities/progress'
 
 export interface Rewards {
-  /** False while any of progress, decks or cards is still loading. */
   ready: boolean
   achievements: Achievement[]
   badges: Badge[]
@@ -31,11 +30,6 @@ export interface Rewards {
   daysTrained: number
 }
 
-/**
- * The single reading of what the learner has earned. Every screen showing a badge or achievement
- * takes it from here, so a change to how a milestone is counted lands on the profile, the grids and
- * the detail screens together.
- */
 export function useRewards(): Rewards {
   const progress = useProgressStore(selectProgress)
   const decks = useDeckStore(selectDecks)

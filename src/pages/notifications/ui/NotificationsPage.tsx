@@ -51,8 +51,6 @@ export function NotificationsPage({ onBack }: NotificationsPageProps = {}) {
     },
   ]
 
-  // Without this the "No notifications yet" empty state flashes on a cold start, and the header's
-  // overflow menu appears a beat later.
   if (!ready) return <ScreenLoading />
 
   return (

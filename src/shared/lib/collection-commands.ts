@@ -5,23 +5,15 @@ import { requireEntity } from './entity'
 import type { CollectionState } from './entity-store'
 import { reorderById } from './order'
 
-/** A collection store whose rows carry a manual `order`. */
 export type OrderedStore<Key extends string, T extends Entity & { order: number }> = StoreApi<
   CollectionState<Key, T>
 >
 
 export interface CollectionCommandSpec<T, Changes> {
-  /** How the subject is named in the error a stale id throws. */
   label: string
-  /** The slice's own validating updater — the only place invariants live. */
   update: (entity: T, changes: Changes, updatedAt: string) => T
 }
 
-/**
- * The four commands every ordered collection answers the same way. A slice hands over its state
- * key, name and updater; the rest — when `updatedAt` is stamped, which rows a reorder writes, what
- * a stale id throws — is decided here so it cannot drift between decks, cards, questions, folders.
- */
 export interface CollectionCommands<
   Key extends string,
   T extends Entity & { order: number },
@@ -62,8 +54,6 @@ export function collectionCommands<
 
     reorder(store, orderedIds, now = Date.now()) {
       const updatedAt = nowIso(now)
-      // `order` is optional on every slice's change type, but a generic cannot see that. The
-      // updater validates it either way.
       return reorderById(rows(store), orderedIds, (entity, order) =>
         store.getState().save(update(entity, { order } as Changes, updatedAt)),
       )

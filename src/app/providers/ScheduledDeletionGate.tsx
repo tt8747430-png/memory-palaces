@@ -8,15 +8,6 @@ import { useAuthActions } from '@/features/session'
 import { cancelAccountDeletion } from '@/features/account'
 import { useScheduledDeletion } from './scheduled-deletion'
 
-/**
- * What stands between a session and the app while `AuthProvider`'s deletion check is out, and once
- * it has found a scheduled deletion.
- *
- * Rendered inside the sync provider because cancelling forces a Sync, and outside the router
- * because an account on its way to being destroyed is not a state to browse decks in: the two
- * things worth doing — cancel, or leave — are the only two offered. Cancelling is the server's to
- * answer now (ADR 0004), so offline it is said before the press, not failed after it.
- */
 export function ScheduledDeletionGate({ children }: { children: ReactNode }) {
   const { t, i18n } = useTranslation()
   const { check, cancelled } = useScheduledDeletion()
@@ -41,7 +32,6 @@ export function ScheduledDeletionGate({ children }: { children: ReactNode }) {
     setBusy(true)
     try {
       await cancelAccountDeletion({ deletion, restore: runner.restore })
-      // Open the app now, with the restore still running, so its banner is on screen.
       cancelled()
     } catch {
       toast.error(t('account.cancelFailed'))

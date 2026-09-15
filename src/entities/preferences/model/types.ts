@@ -37,12 +37,6 @@ export interface PrivacySettings {
   dataEncryption: boolean
 }
 
-/**
- * None of these is honoured by anything yet — `/settings/privacy` renders them as "Soon" rows
- * until they are. `dataEncryption` defaults to **false** because the on-device store is a plain
- * IndexedDB database: a stored `true` was a claim the app could not back, and a default is the one
- * place that claim gets made for every new learner at once.
- */
 export const DEFAULT_PRIVACY: PrivacySettings = {
   profileVisibility: true,
   activitySharing: false,
@@ -62,7 +56,6 @@ export interface Preferences extends Entity {
   contentSort: ContentSort
   studyMode: StudyMode
   studyWordSpaces: boolean
-  /** Type mode: recall the answer by its initials instead of typing it out in full. */
   studyTypeInitialsOnly: boolean
   shakeToUndo: boolean
   swipe: SwipePreferences
@@ -163,12 +156,6 @@ export function makePreferences(input: MakePreferencesInput): Preferences {
   }
 }
 
-/**
- * The profile story, for preferences: a document written before this version added a field keeps
- * the old shape, because the RxDB migration only rewrites what is already on this device and a
- * document pulled from another one is stored as it arrives. `updatedAt` survives — that clock
- * decides sync conflicts, and completing a document is not an edit.
- */
 export function completePreferences(preferences: Preferences): Preferences {
   return { ...makePreferences(preferences), updatedAt: preferences.updatedAt }
 }

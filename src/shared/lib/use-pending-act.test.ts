@@ -44,10 +44,6 @@ describe('usePendingAct', () => {
     expect(run).not.toHaveBeenCalled()
   })
 
-  /**
-   * A dialog on its way out fires `onOpenChange(false)` after the next one has opened, in the same
-   * frame — so the guard has to read what is pending now, not what the closing dialog rendered on.
-   */
   it('dismisses only the act named, even before a re-render', () => {
     const { result } = renderHook(() => usePendingAct<Act>())
     const first = { kind: 'delete', id: 'a' } as const

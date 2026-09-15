@@ -14,20 +14,12 @@ import { CLOSED, deleteAccountReducer, type DeleteAccountStage } from './delete-
 
 export interface DeleteAccount {
   stage: DeleteAccountStage
-  /** False with no cloud, or for a guest: there is no account to delete. */
   available: boolean
   open: () => void
   close: () => void
   confirm: () => void
 }
 
-/**
- * Deleting the account, as the settings screen sees it: open → Synchronise → type the word →
- * schedule. Nothing is wiped until the cloud holds everything the device does.
- *
- * It used to wipe the local stores and blank the profile, and those writes replicated — blanking
- * the *server* row and tombstoning the content while the account itself survived.
- */
 export function useDeleteAccount(onScheduled: () => void): DeleteAccount {
   const { t, i18n } = useTranslation()
   const deletion = useAccountDeletion()

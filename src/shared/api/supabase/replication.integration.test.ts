@@ -1,16 +1,4 @@
 // @vitest-environment node
-/**
- * Two-client convergence against a real Supabase stack, one Sync cycle at a time.
- *
- * Skipped unless a stack is pointed at:
- *   SUPABASE_TEST_URL=http://127.0.0.1:54321 \
- *   SUPABASE_TEST_KEY=<publishable key> \
- *   SUPABASE_TEST_EMAIL=sync@example.com SUPABASE_TEST_PASSWORD=... \
- *   npx vitest run src/shared/api/supabase/replication.integration.test.ts
- *
- * `supabase start` + `supabase db reset` applies the phase-9 migrations; the test signs a real
- * user in, because every row is behind RLS and an anonymous client sees nothing.
- */
 import 'fake-indexeddb/auto'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { RxCollection, RxJsonSchema } from 'rxdb'
@@ -69,7 +57,6 @@ async function openCollection(): Promise<RxCollection<SyncDeck>> {
 
 const settle = (ms = 1500) => new Promise((resolve) => setTimeout(resolve, ms))
 
-/** Polls until `read` returns something, so a passing test never waits the full budget. */
 async function until<T>(read: () => Promise<T | null>, budgetMs = 20_000): Promise<T | null> {
   const deadline = Date.now() + budgetMs
   for (;;) {
@@ -79,15 +66,11 @@ async function until<T>(read: () => Promise<T | null>, budgetMs = 20_000): Promi
   }
 }
 
-/** Real network, real websockets: the default 5s is not a realistic budget. */
 const TIMEOUT = 60_000
 
 describe.skipIf(!URL || !KEY)('supabase replication (two clients)', () => {
   let supabase: SupabaseClient
   let userId: string
-  // Vitest runs files in parallel and they share one test account, so each suite cleans up only
-  // the rows it made. Deleting everything for the user would pull the ground out from under the
-  // other suite mid-assertion.
   const created: string[] = []
 
   const newDeckId = () => {
@@ -104,11 +87,9 @@ describe.skipIf(!URL || !KEY)('supabase replication (two clients)', () => {
   }, TIMEOUT)
 
   afterAll(async () => {
-    // beforeAll may have failed before the client existed; do not mask that error with another.
     if (supabase && created.length) await supabase.from(TABLE).delete().in('id', created)
   }, TIMEOUT)
 
-  /** One device: its collection and the manager that runs its cycles, signed in as the test user. */
   async function device(onRemoteChange?: (event: RemoteChangeEvent) => void) {
     const collection = await openCollection()
     const manager = SyncManager.fromSupabase(supabase, [
@@ -179,7 +160,6 @@ describe.skipIf(!URL || !KEY)('supabase replication (two clients)', () => {
       await a.collection.upsert({ id, name: 'from A', createdAt: 't1', updatedAt: 't1' })
       await a.manager.runCycle()
 
-      // B starts cold, edits the same document with a newer clock, then syncs.
       const b = await device()
       await b.collection.upsert({ id, name: 'from B', createdAt: 't1', updatedAt: 't2' })
       await b.manager.runCycle()

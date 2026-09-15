@@ -1,4 +1,3 @@
-/** The settings hub and every screen under it. */
 export const settings = {
   title: 'Settings',
   back: 'Back',

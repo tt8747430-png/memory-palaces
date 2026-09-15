@@ -8,7 +8,6 @@ import { LocalObjectUrlStorage } from '@/shared/api'
 import { createFolder } from './create-folder'
 import { deleteFolder } from './delete-folder'
 
-/** Everything `deleteFolder` needs beyond the three stores. No cloud, so no object to orphan. */
 const cleanup = {
   storage: new LocalObjectUrlStorage(),
   userId: null,

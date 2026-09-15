@@ -11,7 +11,6 @@ describe('resolveDataTransition', () => {
   })
 
   it('resets for a different account, however it got here', () => {
-    // Signing out in between clears the session but not the data, so the owner still answers.
     expect(resolveDataTransition('a', 'b')).toBe('reset')
   })
 })

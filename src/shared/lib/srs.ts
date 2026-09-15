@@ -77,10 +77,6 @@ export function markKnown(prev: SrsState | undefined, now: number): SrsState {
   }
 }
 
-/**
- * How long an interval reads as on a button or in a log — the one place days become words, so the
- * grade buttons and the learning history cannot describe the same schedule differently.
- */
 export function intervalLabel(days: number): string {
   if (days <= 0) return 'now'
   if (days === 1) return '1d'

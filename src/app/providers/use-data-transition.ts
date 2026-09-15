@@ -22,35 +22,16 @@ export interface DataTransitionDeps {
 }
 
 export interface UnsyncedReset {
-  /** How many changes the previous account never synchronised. */
   count: number
-  /** Erase them and continue into the account that just signed in. */
   proceed: () => Promise<void>
-  /** Sign back out, so the previous account can sign in and Synchronise first. */
   cancel: () => Promise<void>
 }
 
 export interface DataTransition {
-  /**
-   * The account the cloud watcher is open for, or null while nothing is — before the transition has
-   * settled, while the unsynced-reset question waits, and for a guest. This is what tells the
-   * provider a Sync may run at all: a cycle asked for before `start` has no account to push as.
-   */
   watchingFor: string | null
-  /** The question a wipe is waiting on, or null. */
   unsyncedReset: UnsyncedReset | null
 }
 
-/**
- * What happens to the device's data when an account signs in, and the watcher for as long as it
- * stays signed in.
- *
- * A different account signing in wipes the device. With Sync manual, that device may be holding
- * weeks of the previous account's work — and nothing can push it now, because that account's
- * session is gone and a push would carry its decks into the new one. So the wipe is not silent: when
- * the log is not empty, it waits for an answer, and the answer the person can act on is to sign out,
- * sign back into the previous account, and Synchronise.
- */
 export function useDataTransition({
   syncManager,
   auth,
@@ -67,7 +48,6 @@ export function useDataTransition({
   const [unsynced, setUnsynced] = useState<{ count: number; userId: string } | null>(null)
   const [watchingFor, setWatchingFor] = useState<string | null>(null)
 
-  // Held in a ref so a new callback identity does not tear down and restart the watcher.
   const remoteChange = useLatest(onRemoteChange)
 
   useEffect(() => {
@@ -75,8 +55,6 @@ export function useDataTransition({
     const userId = auth.id
     const transition = resolveDataTransition(dataOwner.read(), userId)
 
-    // Read once the log has mirrored — before that an empty log means "not loaded", not "nothing
-    // pending", and treating the two alike is exactly how weeks of work would be erased unasked.
     const count = selectPendingCount(pendingChangeStore.getState())
     if (transition === 'reset' && count > 0) {
       setUnsynced({ count, userId })
@@ -93,10 +71,8 @@ export function useDataTransition({
         resetLocal,
         onRemoteChange: (event) => remoteChange.current(event),
       })
-      // A reset reloads the page; nothing on this one is worth reconciling.
       if (transition === 'reset') return
       if (live) setWatchingFor(userId)
-      // Photos picked offline are still inline; this is the first connected moment to move them.
       await reconcileInlineImages({ profileStore, deckStore, storage, userId })
     })()
 

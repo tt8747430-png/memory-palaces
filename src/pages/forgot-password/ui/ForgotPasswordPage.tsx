@@ -31,8 +31,6 @@ function maskEmail(email: string): string {
 export function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) {
   const { t } = useTranslation()
   const gateway = useAuthGateway()
-  // A reset link is sent by the provider, so this is one of the few screens that cannot work
-  // offline. It says so before the press instead of letting the transport fail into a toast.
   const online = useOnline()
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)

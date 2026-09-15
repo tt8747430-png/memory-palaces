@@ -9,14 +9,8 @@ function subscribe(onChange: () => void): () => void {
   }
 }
 
-/** The same answer outside React — for a command deciding whether to try. */
 export const readOnline = (): boolean => navigator.onLine
 
-/**
- * Whether the browser currently believes it has a network. Offline-first means the app never waits
- * on this — it exists so the few surfaces that genuinely need the network (social sign-in, upload)
- * can say so instead of failing silently.
- */
 export function useOnline(): boolean {
   return useSyncExternalStore(subscribe, readOnline, () => true)
 }

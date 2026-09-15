@@ -1,4 +1,3 @@
-/** The words every screen shares: buttons, navigation, selection, and app-level states. */
 export const common = {
   appName: 'Mindscape',
   cancel: 'Cancel',

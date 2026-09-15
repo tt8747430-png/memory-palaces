@@ -8,19 +8,9 @@ import {
   type UploadInput,
 } from '@/shared/api'
 
-/** Storage answers a missing object with HTTP 400 and a `statusCode` of `'404'`. */
 const isNotFound = (error: { message: string; statusCode?: string; status?: number }): boolean =>
   error.statusCode === '404' || error.status === 404 || /not found/i.test(error.message)
 
-/**
- * Both buckets are **private**. Reads, writes, replacements and deletes are all scoped to the
- * caller's own `${userId}/` prefix by RLS, so a deck cover is no longer fetchable by anyone holding
- * the URL.
- *
- * Which is why `upload` answers with a path rather than a URL: a signed URL expires, and a document
- * that stored one would carry a dead link to every other device. The path is the durable name;
- * `signedUrl` is how the image keeper turns it into bytes.
- */
 export class SupabaseStorage implements StoragePort {
   constructor(private readonly client: SupabaseClient) {}
 

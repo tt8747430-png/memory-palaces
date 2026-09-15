@@ -35,8 +35,6 @@ export function PasteNotesPage({
   const setDraft = useImportDraft((s) => s.setDraft)
   const parsing = usePasteParsing()
 
-  // A pasted Bible chapter names the deck after itself, so the name follows what is in the box —
-  // until the reader types one. From then on the field is theirs and no paste overwrites it.
   const [typedName, setTypedName] = useState<string | null>(null)
   const deckName = typedName ?? (parsing.suggestedName || defaultDeckName)
 
@@ -47,10 +45,6 @@ export function PasteNotesPage({
     if (clip.status === 'text') return parsing.setText(clip.text)
     if (clip.status === 'empty') return void toast.error(t('cards.paste.clipboardEmpty'))
 
-    // The prompt the reader just answered arrives too late for the call that raised it, so the
-    // first attempt is expected to fail and the next one to work. The retry lives on the toast
-    // because that is where they are already looking, and because its tap is the fresh gesture
-    // the second read needs.
     toast.error(t('cards.paste.clipboardError'), {
       description: t('cards.paste.clipboardHint'),
       action: {

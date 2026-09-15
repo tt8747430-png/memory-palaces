@@ -17,11 +17,6 @@ const deck = (size: number, over: Partial<Card> = {}): Card[] =>
     ...over,
   }))
 
-/**
- * The deck screen promises a number and the study session has to deliver it. These two are computed by
- * different modules, so nothing but a test keeps them honest — this is the drift that shipped a
- * deck advertising 3000 cards and serving 10.
- */
 describe('fast review offers exactly what it counts', () => {
   const served = (cards: Card[], maxCardsPerDay: number, newCardsPerDay = 10) =>
     buildStudyQueue(cards, {

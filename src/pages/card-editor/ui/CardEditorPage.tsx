@@ -71,8 +71,6 @@ export function CardEditorPage({ deckId, cardId, onBack, onNavigateCard }: CardE
 
   const showNav = Boolean(editing && onNavigateCard && deckCards.length > 1)
 
-  // Editing an existing card off a cold start, `editing` is null until the snapshot lands, so the
-  // form paints as "new card" — empty fields, the wrong title — and then re-seeds underneath.
   if (!cardsReady || !decksReady) return <ScreenLoading />
 
   return (
@@ -193,7 +191,6 @@ function DeckNav({
             <span className="font-semibold text-muted-foreground"> / {total}</span>
           </span>
           <span className="block h-1 w-16 overflow-hidden rounded-full bg-border" aria-hidden>
-            {/* `scaleX`, not `width` — a transform does not relayout. CODE_STYLE §9. */}
             <span
               className="block h-full w-full origin-left rounded-full bg-accent transition-transform duration-300 ease-out"
               style={{ transform: `scaleX(${progress / 100})` }}

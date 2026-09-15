@@ -3,7 +3,6 @@ import type { FastOutcome } from '@/entities/card'
 import type { LearningAlgorithm } from '@/entities/deck'
 import { reinsertAhead } from './fast-review'
 
-/** A study session runs the deck's algorithm; there is no second vocabulary for the same choice. */
 export type StudySessionMode = LearningAlgorithm
 
 export interface Piles {
@@ -11,7 +10,6 @@ export interface Piles {
   known: number
 }
 
-/** Which cards the learner has put where. Fast review counts cards, not answers. */
 export interface Buckets {
   notQuite: string[]
   gotIt: string[]
@@ -83,13 +81,11 @@ function isLearningGrade(grade: Grade): boolean {
   return grade === 'again' || grade === 'hard'
 }
 
-/** A card belongs to one bucket at a time, so moving it means dropping it from where it was. */
 function withId(ids: string[], id: string, present: boolean): string[] {
   const without = ids.filter((each) => each !== id)
   return present ? [...without, id] : without
 }
 
-/** Every route out of a study session ends here, so a new field can only be forgotten once. */
 function complete(state: ReviewState, over: Partial<Omit<CompleteState, 'status'>>): CompleteState {
   return {
     status: 'complete',

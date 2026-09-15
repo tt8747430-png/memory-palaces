@@ -12,10 +12,6 @@ export interface OverviewStat {
 }
 
 export interface StudyOverviewCardProps {
-  /**
-   * `spaced` counts what is due today and can be caught up; `fast` counts what is on offer, and a
-   * deck under it is never caught up — every card is always available.
-   */
   variant: 'fast' | 'spaced'
   count: number
   countLabel: string

@@ -33,11 +33,6 @@ describe('useOneOpen', () => {
     expect(result.current.current).toBe('move')
   })
 
-  /**
-   * The frame the guard exists for: the outgoing sheet's `onOpenChange(false)` lands after its
-   * replacement has opened and before React has re-rendered, so a handler built from the old render
-   * still has to lose.
-   */
   it('ignores an outgoing member closing in the same frame as its replacement', () => {
     const { result } = renderHook(() => useOneOpen<Sheet>())
     act(() => result.current.open('export'))

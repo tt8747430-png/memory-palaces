@@ -15,15 +15,9 @@ import { Empty, type PillTone, pillSurface, Sheet, Skeleton } from '@/shared/ui'
 export interface LearningHistorySheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  /** Null while no card's sheet is open — the sheet still mounts, so it has to answer for that. */
   cardId: string | null
 }
 
-/**
- * What each answer is called, and how strongly it reads. Keyed by the union rather than `string`,
- * so adding a Grade or a Fast-review answer without naming it here fails to compile instead of
- * rendering an unlabelled row.
- */
 const ANSWER: Record<Grade | FastOutcome, { key: string; tone: PillTone }> = {
   again: { key: 'grade.again', tone: 'danger' },
   hard: { key: 'grade.hard', tone: 'warning' },
@@ -33,15 +27,6 @@ const ANSWER: Record<Grade | FastOutcome, { key: string; tone: PillTone }> = {
   gotIt: { key: 'fastReview.gotIt', tone: 'success' },
 }
 
-/**
- * Every answer this Card has been given, newest first — the history `gradeCard`, `answerCard` and
- * `markCardsKnown` write, `undoAnswer` takes back and Reset progress clears, so what is listed is
- * what actually stands.
- *
- * The store holds the whole history, so the per-card filter is a `useMemo` over one stable array
- * rather than a selector: a selector building a fresh array would never compare equal to the last
- * one.
- */
 export function LearningHistorySheet({ open, onOpenChange, cardId }: LearningHistorySheetProps) {
   const { t } = useTranslation()
   const entries = useHistoryStore(selectHistory)
@@ -75,11 +60,6 @@ export function LearningHistorySheet({ open, onOpenChange, cardId }: LearningHis
   )
 }
 
-/**
- * The store mirrors the collection asynchronously, so "not ready" and "no answers yet" are two
- * different things and only one of them is news. Showing the empty state for both told a learner
- * with a long history that they had none.
- */
 function LoadingRows() {
   return (
     <div aria-hidden className="flex flex-col gap-2">
@@ -112,15 +92,6 @@ function HistoryRow({ entry, t }: { entry: HistoryEntry; t: TFunction }) {
   )
 }
 
-/**
- * What the answer did to the schedule. A Fast-review answer has none to report, and a Card seen for
- * the first time has no interval to have come from — both say so rather than printing a bare
- * `0d → 1d`.
- *
- * The first-review test is `intervalBefore === undefined`, not falsiness. `schedule()` zeroes the
- * interval on `again`, so a falsy test called every answer after a lapse a first review, and two
- * lapses in a row both read "First review · now".
- */
 function scheduleMove(entry: HistoryEntry, t: TFunction): string {
   if (entry.kind === 'answered') return t('cardActions.historyFast')
   const to = intervalLabel(entry.intervalAfter ?? 0)

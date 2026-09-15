@@ -5,16 +5,13 @@ import { BadgeMedallion } from '@/shared/ui'
 
 export interface RewardHeroProps {
   icon: LucideIcon
-  /** The accent bloom behind the medallion — earned rewards get it, locked ones do not. */
   glow?: boolean
   locked?: boolean
   tier?: number
   shine?: boolean
-  /** Status chip, tally or note shown under the medallion. */
   children?: ReactNode
 }
 
-/** The top of a reward's detail screen: a medallion that springs in, and its status. */
 export function RewardHero({ icon, glow = false, locked, tier, shine, children }: RewardHeroProps) {
   return (
     <section className="relative flex flex-col items-center pt-3 text-center">

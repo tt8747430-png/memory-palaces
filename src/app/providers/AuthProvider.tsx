@@ -8,17 +8,8 @@ import {
   type ScheduledDeletionState,
 } from './scheduled-deletion'
 
-/**
- * How long a sign-in waits on the deletion check before the app opens anyway. A working network
- * answers well inside it; a bad one does not get to hold the whole app back.
- */
 const CHECK_BUDGET_MS = 4000
 
-/**
- * Restores the session, and owns the moment it becomes an account — which is when a pending account
- * deletion has to be found, on every sign-in path: email, OAuth return, and a session restored at
- * launch.
- */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const gateway = useAuthGateway()
   const sessionStore = useSessionStoreApi()
@@ -75,7 +66,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       )
     }
 
-    // Only a check that could not answer is worth repeating; a clear one stays clear.
     const retry = () => {
       if (status.current === 'unknown') run()
     }

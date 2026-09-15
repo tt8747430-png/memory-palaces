@@ -4,10 +4,6 @@ import { selectSyncState } from '@/entities/sync-state'
 import { findDestructive, peekAll } from './divergence'
 import type { SyncDeps } from './sync-deps'
 
-/**
- * The destructive divergences a Sync would stop to ask about, without running one. What Settings →
- * Sync's "Review pending changes" opens: the same question, asked on demand, with nothing applied.
- */
 export async function findReviewItems(deps: SyncDeps): Promise<SyncOutcome> {
   if (!deps.isOnline()) return { kind: 'offline' }
   try {

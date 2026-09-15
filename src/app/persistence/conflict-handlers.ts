@@ -4,21 +4,10 @@ import type { Card } from '@/entities/card'
 import type { Progress } from '@/entities/progress'
 import { type Clocked, mergeCard, mergeProgress, newest } from '@/shared/lib'
 
-/**
- * RxDB asks `isEqual` on every replicated document. The write clock and the tombstone decide almost
- * every case and are the cheap answer, but they cannot be the whole answer: two devices that write
- * the same document in the same millisecond produce different content under one clock, and calling
- * those equal makes replication skip the difference entirely — no conflict is raised, so the merges
- * below never run and one device's XP, streak or review schedule is dropped on the floor.
- */
 function sameWrite<T extends Clocked>(a: WithDeleted<T>, b: WithDeleted<T>): boolean {
   return a.updatedAt === b.updatedAt && a._deleted === b._deleted && deepEqual(a, b)
 }
 
-/**
- * Content collections: the later edit wins the whole document. A factory rather than one shared
- * value so each collection gets a handler typed to its own document — no casts at the call site.
- */
 export function lastWriteWins<T extends Clocked>(): RxConflictHandler<T> {
   return {
     isEqual: sameWrite,
@@ -28,7 +17,6 @@ export function lastWriteWins<T extends Clocked>(): RxConflictHandler<T> {
   }
 }
 
-/** Progress is counters, not content — merging keeps both devices' study. */
 export const mergeProgressConflict: RxConflictHandler<Progress> = {
   isEqual: sameWrite,
   async resolve(input) {
@@ -36,14 +24,6 @@ export const mergeProgressConflict: RxConflictHandler<Progress> = {
   },
 }
 
-/**
- * The Learning history: **first write wins**.
- *
- * Named for what it means rather than reusing `lastWriteWins`, because the reason is different. An
- * entry records one answer given at one moment and is never edited, so two copies of an id are the
- * same event and either is correct — there is no later version to prefer. Reaching for a merge here
- * would imply a mutability the entity does not have.
- */
 export function firstWriteWins<T extends Clocked>(): RxConflictHandler<T> {
   return {
     isEqual: sameWrite,
@@ -53,7 +33,6 @@ export function firstWriteWins<T extends Clocked>(): RxConflictHandler<T> {
   }
 }
 
-/** Cards are content plus a review schedule; each half resolves on its own clock. */
 export const mergeCardConflict: RxConflictHandler<Card> = {
   isEqual: sameWrite,
   async resolve(input) {

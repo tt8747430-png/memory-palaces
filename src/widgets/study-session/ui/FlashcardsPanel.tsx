@@ -43,13 +43,10 @@ import type {
 
 export interface FlashcardsPanelProps {
   cards: StudyCard[]
-  /** What the Deck decides. */
   deckPrefs: DeckStudyPrefs
-  /** Prefs the deck being studied does not own — a subdeck's main deck does. Shown, not changeable. */
   lockedPrefs?: readonly EditableDeckPref[]
   algorithm: LearningAlgorithm
   mode: StudyMode
-  /** What the learner decides, the same in every Deck. */
   learnerPrefs: LearnerStudyPrefs
   onDeckPrefsChange?: (prefs: DeckStudyPrefs) => void
   onLearnerPrefsChange?: (changes: Partial<LearnerStudyPrefs>) => void
@@ -68,10 +65,6 @@ export interface FlashcardsPanelProps {
 
 const COMPLETE_DELAY_MS = 2200
 
-/**
- * What an undo puts back. The whole answer state, not just the schedule: a Fast-review answer never
- * touches `srs`, so a trail carrying only that took nothing back.
- */
 type UndoEntry = { cardId: string; prior: PriorAnswer } | null
 
 export function FlashcardsPanel({
@@ -98,9 +91,6 @@ export function FlashcardsPanel({
   const { t } = useTranslation()
   const canSpeak = speechAvailable()
 
-  // Deliberately not persisted, and the one study setting that is not. A Study filter is the
-  // answer to "what am I doing in *this* sitting" — restoring "flagged only" a week later would
-  // silently hide the rest of the deck from a learner who never asked for that again.
   const [filter, setStudyFilter] = useState<StudyFilter>({ kind: 'all' })
   const [gearOpen, setGearOpen] = useState(false)
   const [studySessionSettingsOpen, setStudySessionSettingsOpen] = useState(false)
@@ -166,8 +156,6 @@ export function FlashcardsPanel({
     success()
     const handle = window.setTimeout(handoff, COMPLETE_DELAY_MS)
     return () => window.clearTimeout(handle)
-    // Completion fires once per run. `handoff` closes over the final tallies and guards itself with
-    // a ref, so re-running on its identity would only restart the delay.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [completed])
 
@@ -184,8 +172,6 @@ export function FlashcardsPanel({
   const prompt = faces?.prompt ?? ''
   const answer = faces?.answer ?? ''
 
-  // Speak on the events worth speaking on — arriving at a card, turning it over — not whenever the
-  // text changes. On `prompt`/`answer` an edit mid-card would re-read it aloud.
   useEffect(() => {
     if (deckPrefs.textToSpeech && card && !flipped) speak(prompt)
     // eslint-disable-next-line react-hooks/exhaustive-deps

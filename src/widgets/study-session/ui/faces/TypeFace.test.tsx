@@ -80,8 +80,6 @@ describe('TypeFace', () => {
     await user.click(input)
     await user.type(input, 'pah')
 
-    // Read-only, blurred and no longer asking for focus: nothing is left to type, so no keyboard
-    // opens over the finished card and `useKeyboardReveal` has nothing to lift.
     expect(input.readOnly).toBe(true)
     expect(input).not.toHaveFocus()
     await user.click(screen.getByText('Recalled — every initial'))

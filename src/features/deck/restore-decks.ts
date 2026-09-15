@@ -3,17 +3,11 @@ import { type FolderStore, selectFolders } from '@/entities/folder'
 import { canReparent } from '@/shared/lib'
 import { relocateDecks } from './relocate-decks'
 
-/** A deck coming out of the archive, and — for an undo — the place it was archived from. */
 export interface DeckRestore {
   id: string
   from?: DeckPlace
 }
 
-/**
- * Takes decks and their subdecks out of the archive, to the top of the library. A restore naming
- * `from` goes back there while that place is still in the library — a folder that was not deleted,
- * a parent deck neither gone nor archived itself — and to the top when it is not.
- */
 export async function restoreDecks(
   deckStore: DeckStore,
   folderStore: FolderStore,

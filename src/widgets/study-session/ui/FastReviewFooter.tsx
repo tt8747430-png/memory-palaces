@@ -18,10 +18,6 @@ const ANSWER =
   'text-label font-semibold transition-transform duration-150 ease-out ' +
   'active:scale-[0.96]'
 
-/**
- * Fast review's answer bar. The two tallies stay put whether the card is turned over or not, so the
- * learner can see the session's shape at a glance; only the answers themselves wait for the back.
- */
 export function FastReviewFooter({ flipped, notQuite, gotIt, onAnswer }: FastReviewFooterProps) {
   const { t } = useTranslation()
   const reduce = useReducedMotion()

@@ -100,7 +100,6 @@ describe('SettingsChangePasswordPage', () => {
     await user.click(screen.getByRole('button', { name: /update password/i }))
 
     await waitFor(() => expect(error).toHaveBeenCalled())
-    // The field is a check, not a decoration: a wrong answer must not reach `updatePassword`.
     expect(updatePassword).not.toHaveBeenCalled()
   })
 
@@ -127,7 +126,6 @@ describe('SettingsChangePasswordPage', () => {
     await user.click(screen.getByRole('button', { name: /update password/i }))
 
     await waitFor(() => expect(updatePassword).toHaveBeenCalledWith('secret123'))
-    // The link already proved they own the address, and they are here because they forgot it.
     expect(signIn).not.toHaveBeenCalled()
   })
 })

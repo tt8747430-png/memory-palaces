@@ -1,17 +1,11 @@
 import { type DeckMove, type DeckStore, placeDecks, selectDecks, updateDeck } from '@/entities/deck'
 import { idsWithoutDescendants, nowIso, subtreeDecks } from '@/shared/lib'
 
-/** Which side of the archive a relocation lands on, and when it was made. */
 interface Relocation {
   archived: boolean
   at: number
 }
 
-/**
- * Stands each deck of a batch at its place with `archived` set across everything under it — how
- * decks go into the archive and come out of it. A deck whose ancestor is also in the batch is
- * carried by it, not placed on its own.
- */
 export async function relocateDecks(
   store: DeckStore,
   moves: readonly DeckMove[],

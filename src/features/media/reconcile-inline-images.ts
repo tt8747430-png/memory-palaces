@@ -12,14 +12,6 @@ export interface ReconcileInlineImagesDeps {
   userId: string
 }
 
-/**
- * Moves any image still living inside a document into storage.
- *
- * A photo picked offline is saved inline so it works immediately, which leaves base64 travelling
- * through replication until something moves it out. That something is this: it runs when sync
- * starts, so the first connected moment after an offline session cleans up everything that piled
- * up. Anything that still fails simply stays inline and is retried next time.
- */
 export async function reconcileInlineImages({
   profileStore,
   deckStore,

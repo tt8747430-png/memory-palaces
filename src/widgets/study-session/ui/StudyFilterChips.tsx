@@ -11,15 +11,9 @@ export interface StudyFilterChipsProps {
   onPick: (filter: StudyFilter) => void
 }
 
-/**
- * Which of the deck's cards this study session runs over. A kind with nothing in it is not offered
- * — except All, which has to stay reachable as the way back from an emptied filter.
- */
 export function StudyFilterChips({ algorithm, counts, value, onPick }: StudyFilterChipsProps) {
   const { t } = useTranslation()
 
-  // Fast review schedules nothing, so "due" would name a state no card in the study session can be
-  // in.
   const kinds =
     algorithm === 'fast'
       ? (['all', 'new', 'learning', 'flagged'] as const)

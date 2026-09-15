@@ -18,20 +18,6 @@ export type HeaderProps = {
 } & HeaderSubject &
   HeaderBackProps
 
-/**
- * The one header frame in the app: the safe-area inset, what the bar is about, and the guard that
- * stops a control up here dropping an open keyboard. It paints nothing and renders no controls of
- * its own — the parts below fill it, and a screen composes the ones it needs.
- *
- * Bare, it is what a study session wants, where the card scene behind the bar already paints it
- * and a surface of the app's own would fight the scene's colour. `AppHeader` is the same frame
- * wearing the app's glass; `ScreenHeader`, `SelectHeader` and `StudySessionHeader` are the three
- * compositions worth naming. A screen that needs a fourth composes it from these parts rather than
- * hand-rolling a `<header>`: bespoke bars are how the heights drifted last time.
- *
- * `data-slot="header"` is a contract, not a debugging aid — `useKeyboardReveal` and the dev
- * viewport probe find the top of the reveal band with it. ADR 0002.
- */
 export function Header({
   children,
   title,
@@ -69,14 +55,6 @@ export function Header({
   )
 }
 
-/**
- * The row the controls sit in.
- *
- * `bar` is the app's own, and the reason §4a can promise a fixed height: every screen's chrome is
- * the same 64px, so a list does not jump when a selection swaps the contents. `study` is the row a
- * study session uses — deliberately not that height, because the count pill, the track and a chip
- * row stack inside the header rather than sitting beside each other in one line.
- */
 const LAYOUT = {
   bar: 'relative flex h-16 shrink-0 items-center gap-1 px-2',
   study: 'relative flex shrink-0 items-center justify-between gap-2 pt-3',
@@ -95,7 +73,6 @@ export function HeaderBar({ children, layout = 'bar', className }: HeaderBarProp
 }
 
 export interface HeaderBackButtonProps {
-  /** The glyph. A chevron by default; pass a cross where back means "leave", not "up a level". */
   children?: ReactNode
   className?: string
 }
@@ -124,11 +101,6 @@ export interface HeaderHeadingProps {
   className?: string
 }
 
-/**
- * The name block on a leading-aligned bar. It closes the gap the back control leaves — reading
- * that from context rather than from a prop is what keeps the padding right for any composition,
- * including one that decides on a back control after this block is written.
- */
 export function HeaderHeading({ children, className }: HeaderHeadingProps) {
   const { actions } = useHeader()
   return (
@@ -150,10 +122,6 @@ export function HeaderSubtitle({ className }: HeaderSlotProps) {
   ) : null
 }
 
-/**
- * How much of the study session is left. It stands in for the title, because a learner who started
- * a pass already knows what they are studying and does not know how much of it is left.
- */
 export function HeaderCount({ className }: HeaderSlotProps) {
   const { state } = useHeader()
   if (!state.progress) return null
@@ -167,11 +135,6 @@ export function HeaderCount({ className }: HeaderSlotProps) {
   )
 }
 
-/**
- * The fill is a `scaleX`, not a width: width is a layout property, and animating one on a bar that
- * moves with every graded card is the thrash CODE_STYLE §9 rules out. `origin-left` is what makes
- * the transform read as filling rather than growing out of the middle.
- */
 export function HeaderTrack({ className }: HeaderSlotProps) {
   const { state } = useHeader()
   const reduce = useReducedMotion()
@@ -194,12 +157,10 @@ export interface HeaderActionsProps {
   className?: string
 }
 
-/** The trailing cluster. */
 export function HeaderActions({ children, className }: HeaderActionsProps) {
   return <div className={cn('flex shrink-0 items-center gap-1', className)}>{children}</div>
 }
 
-/** What keeps a centred title centred on a bar whose trailing side is empty. */
 export function HeaderSpacer() {
   return <div className="size-10 shrink-0" aria-hidden />
 }

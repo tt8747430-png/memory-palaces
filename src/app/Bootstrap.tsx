@@ -9,19 +9,9 @@ import { SplashOverlay } from '@/widgets/splash'
 import { App } from './App'
 import { createServices, type Services } from './composition-root'
 
-/**
- * StrictMode mounts every effect twice in development, and two `createServices()` calls would open
- * the same RxDB database twice. Memoised here rather than at module scope, so the dynamic imports
- * inside `createServices` still stay out of the entry graph.
- */
 let pending: Promise<Services> | null = null
 const bootServices = (): Promise<Services> => (pending ??= createServices())
 
-/**
- * The one failure the app cannot recover from. Opening the database is the first thing that
- * happens and everything else depends on it, so there is no degraded mode to fall back to — an
- * empty shell would be a lie. Say so, and offer the only action that can help.
- */
 function BootFailure() {
   const { t } = useTranslation()
   return (
@@ -37,13 +27,6 @@ function BootFailure() {
   )
 }
 
-/**
- * Above the services boundary: paints the splash on the first frame, builds the object graph
- * behind it, and only then mounts the app.
- *
- * The splash lifts when *both* halves are done — its own animation, so a fast device does not
- * flash it, and `createServices()`, so a slow one does not show an empty shell behind it.
- */
 export function Bootstrap() {
   const [services, setServices] = useState<Services | null>(null)
   const [failed, setFailed] = useState(false)

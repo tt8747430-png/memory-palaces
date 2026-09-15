@@ -79,10 +79,6 @@ export function DeckDetailPage({
     void setPreferences(prefStore, { contentSort: value })
   const selection = useMultiSelect()
 
-  // Search is a mode, not a permanent field: a deck of six cards does not want a search box over
-  // it, and the band costs the list its height while it is open. `DeckContentEditor` has taken
-  // `searchQuery` / `searching` / `onClearSearch` since it was written — nothing ever passed them,
-  // so its filter, its `NoResults` state and both `!searching` gates were unreachable.
   const [searching, setSearching] = useState(false)
   const [query, setQuery] = useState('')
   const closeSearch = () => {

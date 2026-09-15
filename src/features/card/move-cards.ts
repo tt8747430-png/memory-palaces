@@ -1,7 +1,6 @@
 import { type Card, cardsForDeck, type CardStore, moveCard, selectCards } from '@/entities/card'
 import { findEntity, nextOrder, nowIso } from '@/shared/lib'
 
-/** Where a card sat before a move, so the surface that moved it can offer undo. */
 export interface CardPlacement {
   id: string
   deckId: string
@@ -14,12 +13,6 @@ const placementOf = (card: Card): CardPlacement => ({
   order: card.order,
 })
 
-/**
- * The one way cards change decks. Ids the store no longer holds and cards already in the target
- * deck are skipped, the rest land after the deck's last card in the order given, and what comes
- * back is where they were — the exact input `restoreCardPlacements` needs. Moving nothing returns
- * an empty list, so a caller can stay silent instead of toasting a no-op.
- */
 export async function moveCards(
   store: CardStore,
   ids: readonly string[],
@@ -42,7 +35,6 @@ export async function moveCards(
   return previous
 }
 
-/** Puts moved cards back where they were. Cards deleted since the move are skipped. */
 export async function restoreCardPlacements(
   store: CardStore,
   placements: readonly CardPlacement[],

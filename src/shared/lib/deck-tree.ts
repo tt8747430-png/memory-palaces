@@ -35,12 +35,6 @@ export function siblingDecks<T extends TreeDeck>(
     .sort(byOrder)
 }
 
-/**
- * Decks a new or moving deck shares a row with: same parent, or — at the root — same folder.
- * Unlike `siblingDecks`, keeps archived decks and skips the sort: it answers "what orders are
- * taken", and the archive stands at the top of the library, holding orders in that same row.
- * `exceptIds` leaves the decks being moved out of their own reckoning.
- */
 export function orderSiblings<T extends TreeDeck>(
   decks: readonly T[],
   parentId: string | null,
@@ -92,11 +86,6 @@ export function subtreeDecks<T extends TreeDeck>(decks: readonly T[], rootId: st
 
 export type SelectState = 'unchecked' | 'checked' | 'indeterminate'
 
-/**
- * Chain from the library root down to `deckId`, that deck last. The module's only parent-walk —
- * settings inheritance, due roll-up and selection roots all read ancestry through here — and a
- * cycle in `parentId` ends the walk rather than hanging it.
- */
 export function deckPath<T extends TreeDeck>(decks: readonly T[], deckId: string): T[] {
   const byId = new Map(decks.map((d) => [d.id, d]))
   const chain: T[] = []
@@ -128,11 +117,6 @@ export function canReparent(
   return !isDescendantOrSelf(decks, deckId, newParentId)
 }
 
-/**
- * `ids` without any deck whose ancestor is also in `ids`. A subdeck travels with its parent, so a
- * batch that also acted on the subdeck by itself would pull it out from under that parent — moving
- * a selected deck used to land every subdeck beside it. Batch order is kept.
- */
 export function idsWithoutDescendants(
   decks: readonly TreeDeck[],
   ids: readonly string[],
@@ -146,11 +130,6 @@ export function idsWithoutDescendants(
   )
 }
 
-/**
- * A deck's settings with its ancestors' choices folded in over `base`, nearest winning. A key in
- * `mainOnly` is read from the top of the tree alone, and whatever a deck below holds for it is
- * ignored rather than trusted. `entities/deck` says which keys those are.
- */
 export function inheritSettings<S extends object>(
   decks: readonly { id: string; parentId: string | null; settings: Partial<S> }[],
   deckId: string,

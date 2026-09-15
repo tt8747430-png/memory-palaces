@@ -37,8 +37,6 @@ export function ForgotScreen() {
 
 export function AuthCallbackScreen() {
   const navigate = useNavigate()
-  // AuthProvider already mirrors the gateway into the session store, so an account landing here is
-  // the signal that the OAuth exchange completed.
   const isAccount = useSessionStore((state) => state.session?.kind === 'account')
   return (
     <AuthCallbackPage

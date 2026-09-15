@@ -21,8 +21,6 @@ describe('completeDeck', () => {
   })
 
   it('runs on the read path, with no migration in sight', async () => {
-    // This is the case a schema migration cannot reach: replication writes a pulled row straight
-    // into the collection, so a device still on deck v3 delivers a full public URL.
     const store = started(createDeckStore(new InMemoryRepository<Deck>([deckWith(PUBLIC)])))
 
     expect(store.getState().decks[0]?.image).toBe('u1/d1')

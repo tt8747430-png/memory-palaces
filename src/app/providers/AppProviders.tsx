@@ -11,7 +11,6 @@ import { NotificationBridge } from './NotificationBridge'
 import { SyncProvider } from './SyncProvider'
 import { UpdatePrompt } from './UpdatePrompt'
 
-/** Replication follows the session store's identity — a guest's data never leaves the device. */
 function AppSync({ services, children }: { services: Services; children: ReactNode }) {
   const session = useSessionStore((state) => state.session)
   const auth = useMemo<PersistedAuth | null>(
@@ -37,17 +36,12 @@ export function AppProviders({ services, children }: { services: Services; child
       <PreferencesProvider>
         <AuthProvider>
           <AppSync services={services}>
-            {/* Inside AppSync, because cancelling a deletion forces a Sync — and outside the
-                router, because an account on its way to being destroyed is not a state to
-                browse decks in. */}
             <ScheduledDeletionGate>{children}</ScheduledDeletionGate>
           </AppSync>
         </AuthProvider>
       </PreferencesProvider>
       <NotificationBridge />
       <UpdatePrompt />
-      {/* Mounted from the first render: sonner drops anything published before
-          a Toaster subscribes, and the splash covers this one until it lifts. */}
       <Toaster
         position="top-center"
         richColors

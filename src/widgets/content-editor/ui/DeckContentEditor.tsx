@@ -86,8 +86,6 @@ export function DeckContentEditor({
   const [importOpen, setImportOpen] = useState(false)
   const [browserCardId, setBrowserCardId] = useState<string | null>(null)
   const [moveIds, setMoveIds] = useState<readonly string[] | null>(null)
-  // One open sheet at a time, never a flag each — two booleans can both be true, and "history over
-  // actions" is not a state this surface has.
   const [cardSheet, setCardSheet] = useState<
     { kind: 'actions'; id: string } | { kind: 'history'; id: string } | null
   >(null)
@@ -122,8 +120,6 @@ export function DeckContentEditor({
     if (sort !== 'manual') onSortChange('manual')
   }
 
-  // A card can only live in a deck, so the picker offers decks; the decks the cards already sit in
-  // are the only ones a move would achieve nothing from.
   const sheetCard = cardSheet ? cards.find((card) => card.id === cardSheet.id) : undefined
   const movingCards = moveIds ? cards.filter((card) => moveIds.includes(card.id)) : []
   const moveExcludeIds = new Set(movingCards.map((card) => card.deckId))
@@ -161,7 +157,6 @@ export function DeckContentEditor({
 
   return (
     <div>
-      {/* Maturity is an SRS shape; fast review has no maturities to bar-chart. */}
       {algorithm === 'spaced' && !searching && !selectMode && total > 0 ? (
         <div className="mb-3">
           <CardMaturityOverview total={total} counts={maturity} />
@@ -347,5 +342,4 @@ export function DeckContentEditor({
   )
 }
 
-/** The one delete a card list waits on the user to confirm. */
 type PendingCardAct = { kind: 'delete-card'; id: string } | { kind: 'delete-selection' }

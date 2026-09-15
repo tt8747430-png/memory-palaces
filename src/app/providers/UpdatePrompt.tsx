@@ -10,10 +10,6 @@ const TOAST_ID = 'app-update'
 
 let registration: Promise<ServiceWorkerRegistration | undefined> | undefined
 
-/**
- * Registers the service worker once per document. `registerSW` builds a Workbox instance that
- * refuses to register twice, and StrictMode runs effects twice.
- */
 function registerOnce() {
   registration ??= new Promise((resolve) => {
     registerSW({
@@ -37,8 +33,6 @@ export function UpdatePrompt() {
       if (!reg || cancelled) return
       const stopWatching = watchWaitingWorker(reg, setWaiting)
 
-      // An update published while the app is open is noticed only if we ask. So: on launch, on
-      // every return, on reconnect, and periodically for a window left open all day.
       const check = () => {
         if (!document.hidden) void reg.update().catch(() => {})
       }
@@ -69,10 +63,7 @@ export function UpdatePrompt() {
       reloaded = true
       window.location.reload()
     }
-    // The new worker claims its clients, so it takes over without a navigation.
     navigator.serviceWorker.addEventListener('controllerchange', reloadOnce, { once: true })
-    // Reload regardless if the handover goes unreported, so the prompt is never
-    // left looking like it did nothing.
     window.setTimeout(reloadOnce, RELOAD_FALLBACK)
     activateWaitingWorker(waiting)
   }, [waiting])
@@ -81,8 +72,6 @@ export function UpdatePrompt() {
     if (!waiting) return
     const show = () => {
       if (document.hidden) return
-      // A fixed id keeps this to a single toast: re-showing updates the one on
-      // screen, and recreates it if the user swiped it away.
       toast(t('update.available'), {
         id: TOAST_ID,
         description: t('update.description'),
@@ -91,8 +80,6 @@ export function UpdatePrompt() {
       })
     }
     show()
-    // The update is still pending after a dismissal, so offer it again whenever
-    // the user comes back to the app.
     document.addEventListener('visibilitychange', show)
     return () => {
       document.removeEventListener('visibilitychange', show)

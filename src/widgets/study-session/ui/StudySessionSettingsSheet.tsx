@@ -19,11 +19,6 @@ export interface StudySessionSettingsSheetProps {
   onFinish: () => void
 }
 
-/**
- * Settings for the study session as a whole — which cards are in it, which way round, shuffled or
- * not — as opposed to `GearSheet`'s this-card/this-mode settings. Reached from the study header,
- * not the card, because none of it is about the card currently on screen.
- */
 export function StudySessionSettingsSheet({
   open,
   onClose,
@@ -57,8 +52,6 @@ export function StudySessionSettingsSheet({
       onOpenChange={(next) => !next && onClose()}
       title={t('study.studySessionSettingsTitle')}
       footer={
-        // The bar is a dismiss, not a decision: stopping the study session is a deliberate button
-        // above, so the one thing pinned in thumb reach is the harmless way out of a tall sheet.
         <Button variant="secondary" className="w-full" onClick={onClose}>
           {t('study.closeSettings')}
         </Button>

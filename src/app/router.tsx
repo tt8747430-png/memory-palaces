@@ -11,20 +11,12 @@ import { authRedirect } from './auth-guard'
 import type { Services } from './composition-root'
 import { lazyScreen } from './lazy-screen'
 
-/** The object graph reaches the route tree as router context — there is no module-level singleton
- *  to import, because `createServices()` resolves long after this module is evaluated. */
 export interface RouterContext {
   services: Services
 }
 
 const rootRoute = createRootRouteWithContext<RouterContext>()({
   component: RootLayout,
-  /**
-   * A cloud session is restored asynchronously, so the first navigation has to wait for the
-   * gateway — a synchronous snapshot would be null on first paint and bounce a signed-in user to
-   * the login screen. Every navigation after that reads the session store, which AuthProvider keeps
-   * current, so routing never waits on the network again.
-   */
   beforeLoad: async ({ context, location }) => {
     const { services } = context
     const { session, status } = services.sessionStore.getState()
@@ -37,15 +29,6 @@ const rootRoute = createRootRouteWithContext<RouterContext>()({
   },
 })
 
-/**
- * Every screen is loaded on demand. The five `routes/*-screens` modules are the split points, so a
- * cold start on the login screen no longer carries the study engine, the drag-and-drop stack or
- * every settings page with it — `defaultPreload: 'intent'` fetches the chunk on hover or touch,
- * which lands well before the navigation does.
- *
- * Screens read their own params (`useParams({ from })`), which is what keeps this file free of
- * static imports of them.
- */
 const auth = lazyScreen(() => import('./routes/auth-screens'))
 const deck = lazyScreen(() => import('./routes/deck-screens'))
 const library = lazyScreen(() => import('./routes/library-screens'))
@@ -97,8 +80,6 @@ const routeTree = rootRoute.addChildren([
   createRoute({
     getParentRoute: () => rootRoute,
     path: ROUTES.settingsChangePassword,
-    // A recovery link lands here with no old password to give, so the screen must know it. Absent,
-    // the flag stays off the URL rather than being written out as `?recovery=false`.
     validateSearch: (search: Record<string, unknown>): { recovery?: boolean } => {
       const recovery = search.recovery
       const on = recovery === true || recovery === '1' || recovery === 'true'

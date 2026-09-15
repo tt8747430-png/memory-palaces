@@ -208,7 +208,6 @@ function Cap({ action, floating = false }: { action: SwipeActionId; floating?: b
       style={{ backgroundColor: accent.fill }}
       className={cn(
         'grid size-9 place-items-center rounded-tile [&_svg]:size-4',
-        // Lifted by shadow alone: a scale would morph on the drop (CODE_STYLE §10).
         floating && 'shadow-elevated',
         accent.ink === 'dark' ? 'text-(--p-navy-900)' : 'text-white',
       )}

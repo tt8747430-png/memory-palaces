@@ -8,19 +8,12 @@ export type MenuActionHandlers = Partial<
     ActionId,
     {
       onAction: () => void
-      /** Overrides the registry label where the row's own state renames it. */
       label?: string
       disabled?: boolean
     }
   >
 >
 
-/**
- * The overflow-menu twin of `buildSwipeActions`: icon, label and destructive styling come from the
- * one registry; the surface decides only which actions it offers and in what order. Ids without a
- * handler are dropped, so a caller can list every action a row might have and let the handlers it
- * passes decide what appears.
- */
 export function buildMenuActions(
   ids: readonly ActionId[],
   handlers: MenuActionHandlers,

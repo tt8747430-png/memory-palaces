@@ -6,10 +6,6 @@ export interface StudySessionScreenProps {
   className?: string
 }
 
-/**
- * The frame a study session lives in — a pass through a deck, a quiz, a match: one app-width
- * column that fills the shell and never scrolls itself, so the panel inside owns the scrolling.
- */
 export function StudySessionScreen({ children, className }: StudySessionScreenProps) {
   return (
     <main

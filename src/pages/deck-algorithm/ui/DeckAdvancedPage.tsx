@@ -17,11 +17,9 @@ import { NumberRow } from './NumberRow'
 export interface DeckAdvancedPageProps {
   deckId: string
   onBack?: () => void
-  /** A subdeck's advanced settings are its main deck's; this goes there. */
   onOpenMainDeck?: (mainDeckId: string) => void
 }
 
-/** Minutes, comma-separated. Anything that is not a positive number is dropped, not guessed at. */
 function parseLearningSteps(value: string): number[] {
   return value
     .split(',')

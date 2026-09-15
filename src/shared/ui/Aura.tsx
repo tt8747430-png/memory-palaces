@@ -7,7 +7,6 @@ const AURA_BG =
 const CLASS =
   'pointer-events-none absolute left-1/2 top-1/2 size-[120%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl'
 
-/** The sky-tinted bloom behind the threshold on the splash and welcome screens. */
 export function Aura() {
   const reduce = useReducedMotion()
   if (reduce) return <div aria-hidden className={CLASS} style={{ background: AURA_BG }} />

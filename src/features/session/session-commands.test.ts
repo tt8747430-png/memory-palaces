@@ -59,7 +59,6 @@ describe('session commands', () => {
     await signUpWithEmail(deps, { name: 'Ada', email: 'a@b.com', password: 'pw' }, AT)
     vi.spyOn(gateway, 'signOut').mockRejectedValue(new Error('revoke refused'))
 
-    // The failure still reaches the caller — but nothing can leave the app signed in locally.
     await expect(signOut(deps)).rejects.toThrow('revoke refused')
     expect(sessionStore.getState().session).toBeNull()
   })
@@ -82,7 +81,6 @@ describe('session commands', () => {
 
   it('requestPasswordReset hands the address to the gateway', async () => {
     const { gateway } = setup()
-    // Offline there is nothing to send from, so the gateway refuses; the command only forwards.
     const send = vi.spyOn(gateway, 'requestPasswordReset').mockResolvedValue(undefined)
 
     await expect(requestPasswordReset(gateway, 'a@b.com')).resolves.toBeUndefined()

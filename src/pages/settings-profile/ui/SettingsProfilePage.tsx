@@ -156,7 +156,6 @@ export function SettingsProfilePage({
             description={
               online ? t('settings.profileEdit.deleteAccountHint') : t('account.delete.offline')
             }
-            // Deleting needs the server to answer now (ADR 0004), so it is gated before the press.
             disabled={!online || !deleteAccount.available}
             onClick={deleteAccount.open}
           />
@@ -164,7 +163,6 @@ export function SettingsProfilePage({
       </motion.div>
 
       <DeleteAccountSheet flow={deleteAccount} />
-      {/* A Sync run before deleting may stop to ask about deletions; the question is asked here. */}
     </AppScreen>
   )
 }

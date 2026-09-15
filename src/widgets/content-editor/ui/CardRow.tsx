@@ -63,7 +63,6 @@ export function CardRow({
       </div>
       <p className="mt-1 text-body leading-relaxed text-muted-foreground">{card.back}</p>
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
-        {/* Fast review schedules nothing, so an SRS chip would report a state it never reaches. */}
         {algorithm === 'spaced' ? <SrsStatusChip srs={card.srs} /> : null}
         {card.reversed ? (
           <Chip>

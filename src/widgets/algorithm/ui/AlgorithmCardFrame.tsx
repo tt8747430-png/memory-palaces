@@ -19,13 +19,6 @@ export interface AlgorithmCardFrameProps extends Omit<
   variant: keyof typeof VARIANT
 }
 
-/**
- * The algorithm row both `AlgorithmCard` and `LockedAlgorithmCard` draw, wearing exactly the skin
- * `SettingsSection` gives every other card on those pages — `bg-card` over `shadow-rest`, no
- * border. The old tinted `bg-info-surface` fill sat a shade off the page gradient with no shadow to
- * lift it, which is what read as background rather than as a control. What a press does is the
- * variant's business: the frame spreads every other prop onto its button.
- */
 export function AlgorithmCardFrame({
   algorithm,
   hint,

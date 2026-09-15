@@ -1,8 +1,3 @@
-/**
- * The one locale, assembled from one file per domain. Still one locale, still one namespace — the
- * split only means a copy change touches a 200-line file instead of a 1,300-line one. Keys keep
- * the order they had in the single file.
- */
 import { actions, boot, common, nav, select, selection, swipe, update } from './core'
 import { archived, deck, folder, home, library, move, notifications } from './library'
 import { algorithm, cardActions, cardStyle, deckSettings, fastReview, tts } from './deck-settings'

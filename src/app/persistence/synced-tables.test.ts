@@ -5,7 +5,6 @@ import { SYNCED_TABLES } from '@/shared/config/sync-tables'
 
 const MIGRATIONS = join(process.cwd(), 'supabase', 'migrations')
 
-/** The last definition of `push_documents` wins, so the newest migration that declares it is the one. */
 function latestAllowList(): string[] {
   const files = readdirSync(MIGRATIONS)
     .filter((name) => name.endsWith('.sql'))

@@ -57,9 +57,7 @@ function stubViewport({ height, offsetTop, scale = 1 }: Viewport, layoutHeight: 
   }
 
   return {
-    /** The viewport changed size — the keyboard opened, closed or resized. */
     move: (next: Viewport & { layoutHeight?: number; width?: number }) => settle(next, 'resize'),
-    /** The viewport slid without resizing — the page scrolled under it. */
     slide: (next: Viewport) => settle(next, 'scroll'),
     subscribed: (type: string) => (listeners.get(type)?.size ?? 0) > 0,
   }
@@ -71,11 +69,6 @@ const shell = () => document.documentElement.style.getPropertyValue('--app-heigh
 
 const range = () => document.documentElement.style.getPropertyValue('--kb-range')
 
-/**
- * Where this UA puts the layout origin in rect coordinates: `0` when it reports rects
- * layout-relative, `-(pan)` when it reports them against the visual viewport. The only reason the
- * app still cares is that `visibleBottom()` has to name the same place in both.
- */
 function stubOrigin(top: number) {
   Object.defineProperty(document.documentElement, 'getBoundingClientRect', {
     value: () => ({ top }) as DOMRect,
@@ -121,7 +114,6 @@ describe('keyboard viewport', () => {
     const viewport = stubViewport({ height: 802, offsetTop: 0 }, 802)
     stop = startKeyboardViewport()
 
-    // Same geometry a 390px keyboard would produce, but the viewport is zoomed.
     await viewport.move({ height: 412, offsetTop: 113, scale: 2 })
 
     expect(inset()).toBe('0px')
@@ -154,8 +146,6 @@ describe('keyboard viewport', () => {
 
     await viewport.move({ height: 412, offsetTop: 113 })
 
-    // The pan is not published any more, but it is still part of the measurement: pan + visible
-    // viewport + keyboard is the whole anchored shell, or the inset is wrong.
     const total = 113 + 412 + parseInt(inset())
     expect(total).toBe(parseInt(shell()))
   })
@@ -203,9 +193,6 @@ describe('keyboard viewport', () => {
   })
 
   it('measures a keyboard the pan has left less than an accessory bar of', async () => {
-    // The device reading (iOS 26, standalone): a 403px keyboard under a 289px pan leaves 114px of
-    // the shell covered. Thresholding *that* rejects the keyboard outright — and since the reserve
-    // only ends at a measurement, the app then runs the whole keyboard on the remembered height.
     localStorage.setItem(STORAGE_KEY, '462')
     const viewport = stubViewport({ height: 793, offsetTop: 0 }, 793)
     stop = startKeyboardViewport()
@@ -220,10 +207,6 @@ describe('keyboard viewport', () => {
   })
 
   it('still reports the keyboard open when the pan has swallowed the whole inset', async () => {
-    // The focused field sitting at the very bottom: the pan equals the keyboard, so nothing of the
-    // shell is left covered and `--kb-inset` is 0. "Is a keyboard up" and "how much does it cover"
-    // are two numbers — deriving the first from the second answers `false` with a keyboard on
-    // screen, and the one consumer (`TypeWords`) then renders its feedback band inline, under it.
     localStorage.setItem(STORAGE_KEY, '462')
     const viewport = stubViewport({ height: 793, offsetTop: 0 }, 793)
     stop = startKeyboardViewport()
@@ -245,9 +228,6 @@ describe('keyboard viewport', () => {
     await viewport.move({ height: 390, offsetTop: 289 })
     stubOrigin(-289)
 
-    // The visible area *is* the visual viewport once the rects carry the pan. On the reserve this
-    // read 42 — 348px above the screen — so the reveal lifted every field clean off the top and iOS
-    // kept panning to reveal what the app had just scrolled away.
     expect(visibleBottom()).toBe(390)
   })
 
@@ -257,8 +237,6 @@ describe('keyboard viewport', () => {
 
     await viewport.move({ height: 390, offsetTop: 403 })
 
-    // Nothing of the shell is covered, but a keyboard is still on screen: the footer dock must stay
-    // `static` and the nav hidden, or WebKit floats them across the middle of the keyboard.
     expect(keyboardHeight()).toBe(0)
     expect(keyboardIsMeasured()).toBe(true)
     expect(document.documentElement.hasAttribute('data-keyboard')).toBe(true)
@@ -298,9 +276,6 @@ describe('keyboard viewport', () => {
     await viewport.move({ height: 466, offsetTop: 0 })
     expect(keyboardHeight()).toBe(336)
 
-    // The iOS swipe-down (or `Done` on the accessory bar) closes the keyboard without blurring, so
-    // nothing tells the app to stop expecting one. Re-reserving the remembered height here leaves a
-    // keyboard-shaped hole under the page for as long as the field holds focus.
     await viewport.move({ height: 802, offsetTop: 0 })
 
     expect(keyboardHeight()).toBe(0)
@@ -342,8 +317,6 @@ describe('keyboard viewport', () => {
     const viewport = stubViewport({ height: 793, offsetTop: 0 }, 793)
     stop = startKeyboardViewport()
 
-    // The reserve stands in for a keyboard measured before iOS has panned anything, so a keyboard
-    // only ever seen under a pan must still be remembered at its full height.
     await viewport.move({ height: 390, offsetTop: 289 })
 
     expect(localStorage.getItem(STORAGE_KEY)).toBe('403')
@@ -391,9 +364,6 @@ describe('keyboard viewport', () => {
     const listener = vi.fn()
     const unsubscribe = subscribeKeyboardHeight(listener)
 
-    // Every fault this module has had came from reading a frame of a rubber-band: the height read
-    // mid-flight resizes the scroll range under the finger, the pan read mid-flight moved chrome
-    // with it. Nothing positions itself from the pan now, so there is nothing to listen for.
     await viewport.slide({ height: 300, offsetTop: 300 })
 
     expect(viewport.subscribed('scroll')).toBe(false)
@@ -422,8 +392,6 @@ describe('keyboard viewport', () => {
     const listener = vi.fn()
     const unsubscribe = subscribeKeyboardHeight(listener)
 
-    // The inset does not move — the reserve was right — but the pan did, and where rects carry the
-    // pan that is the reveal band moving. A wake-up conditional on the inset misses it.
     await viewport.move({ height: 390, offsetTop: 113 })
 
     expect(inset()).toBe('290px')
@@ -438,8 +406,6 @@ describe('keyboard viewport', () => {
 
     await viewport.move({ height: 466, offsetTop: 0 })
 
-    // A scroll body with only `--kb-inset` of padding cannot lift its last field off the keyboard's
-    // edge — scrollTop clamps — and iOS pans the page to finish the reveal itself.
     expect(inset()).toBe('336px')
     expect(range()).toBe(`${336 + REVEAL_GAP}px`)
   })
@@ -458,14 +424,10 @@ describe('keyboard viewport', () => {
     const viewport = stubViewport({ height: 793, offsetTop: 0 }, 793)
     stop = startKeyboardViewport()
 
-    // Rects layout-relative: the visible area ends where the keyboard starts.
     stubOrigin(0)
     await viewport.move({ height: 390, offsetTop: 113 })
     expect(visibleBottom()).toBe(793 - 290)
 
-    // Same geometry reported against the visual viewport: the pan is already in the rects, so the
-    // visible area is exactly the visual viewport. Subtracting it twice parks fields under the
-    // keyboard, which is what provokes the pan in the first place.
     stubOrigin(-113)
     expect(visibleBottom()).toBe(390)
   })

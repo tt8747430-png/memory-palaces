@@ -70,8 +70,6 @@ describe('DEFAULT_PRIVACY', () => {
       activitySharing: false,
       locationAccess: false,
       notificationTracking: true,
-      // False, not true: the on-device store is a plain IndexedDB database, and a stored `true`
-      // was a claim the app could not back.
       dataEncryption: false,
     })
   })

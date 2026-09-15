@@ -10,7 +10,6 @@ export interface EmailFieldProps {
   id?: string
 }
 
-/** The email input every auth screen asks for, checkmark and all. */
 export function EmailField({ value, onValueChange, error, id = 'email' }: EmailFieldProps) {
   const { t } = useTranslation()
   return (

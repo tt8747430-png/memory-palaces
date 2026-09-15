@@ -1,12 +1,6 @@
 @theme inline {
   --font-sans: var(--p-font-sans);
 
-  /**
-   * The type scale, as utilities. Every size in the app is one of these five names — `text-body`,
-   * `text-label` — plus `text-entry`, the one size a field may be, and never a raw length. They
-   * map onto `--p-text-*` so the primitives stay the one place a size is a number. Adding a name
-   * here means adding it to `cn()`'s theme too, or the merge will file it as a colour.
-   */
   --text-tiny: var(--p-text-tiny);
   --text-label: var(--p-text-label);
   --text-body: var(--p-text-body);
@@ -14,7 +8,6 @@
   --text-headline: var(--p-text-headline);
   --text-entry: var(--p-text-entry);
 
-  /** A glyph filling a square — an emoji deck cover, a folder mark, an avatar. */
   --text-glyph-sm: var(--p-glyph-sm);
   --text-glyph-md: var(--p-glyph-md);
   --text-glyph-lg: var(--p-glyph-lg);
@@ -22,13 +15,11 @@
   --text-glyph-2xl: var(--p-glyph-2xl);
   --text-glyph-3xl: var(--p-glyph-3xl);
 
-  /** A display figure — one tabular number that is itself the content. */
   --text-figure-sm: var(--p-figure-sm);
   --text-figure-md: var(--p-figure-md);
   --text-figure-lg: var(--p-figure-lg);
   --text-figure-xl: var(--p-figure-xl);
 
-  /** The printed card's fluid type. See `--p-card-*`. */
   --text-card-prompt: var(--p-card-prompt);
   --text-card-title: var(--p-card-title);
   --text-card-answer: var(--p-card-answer);
@@ -67,23 +58,14 @@
   --color-rating: var(--rating);
   --color-rating-edge: var(--rating-edge);
 
-  /* The one width the app column is ever allowed to be — `max-w-app`. */
   --container-app: var(--p-container-app);
 
   --radius-hairline: var(--p-radius-hairline);
-  /** A 12px legend chip. */
   --radius-swatch: var(--p-radius-swatch);
-  /** An inline mark inside a line of type, and the 20px glyph square beside a label. */
   --radius-mark: var(--p-radius-mark);
-  /** A field editing text in place, cut tighter than a control so it reads as part of the line. */
   --radius-field: var(--p-radius-field);
   --radius-control: var(--p-radius-sm);
-  /** A 36px glyph tile — a swipe cap, a day of the streak week. */
   --radius-tile: var(--p-radius-tile);
-  /**
-   * The dashed outline standing where a tile would be. One pixel tighter than the tile itself so
-   * its 2px border reads level with the filled cap beside it.
-   */
   --radius-tile-slot: calc(var(--p-radius-tile) - 1px);
   --radius-card: var(--p-radius-md);
   --radius-squircle: var(--p-radius-lg);
@@ -98,28 +80,15 @@
     border-color: var(--border);
   }
 
-  /* `startKeyboardViewport` (shared/lib/keyboard-viewport) owns these three as inline styles on
-       the documentElement and removes them on teardown; the values here are what the app falls
-       back to before the first measurement and after that reset. See ADR 0002. */
   :root {
     --kb-inset: 0px;
 
-    /* The scroll range a keyboard costs: the inset plus the gap the reveal needs to land a
-           field *clear* of the keyboard rather than flush against it. A scroll body short of that
-           gap cannot lift its last field, so iOS pans the visual viewport to finish the job — and
-           the pan is what used to drag every piece of chrome in the app off the screen with it. */
     --kb-range: 0px;
 
-    /* Anchor height = LAYOUT viewport, held while unfocused. Not the visual one — that is
-           what the keyboard shrinks, and not following it is the whole point. */
     --app-height: 100%;
 
     --app-bottom-inset: var(--p-safe-bottom);
 
-    /* A pinned preview's share of the shell — the card-style screen's live card. Bounded in pixels
-           at both ends so a small phone still leaves room to edit and a tall one does not hand the
-           preview half the screen. Derived from `--app-height` so it is not a second opinion about
-           how tall the app is. */
     --preview-pane-height: clamp(190px, calc(var(--app-height) * 0.34), 340px);
   }
 
@@ -187,25 +156,11 @@
     color: var(--text-secondary);
   }
 
-  /**
-   * `outline`, not `box-shadow`. The ring used to be a box-shadow in this layer, which meant any
-   * control also carrying a `shadow-*` utility — every default Button, every glass IconButton, so
-   * the back arrow on 33 screens — overwrote it from the utilities layer and focused invisibly.
-   * An outline is a different property: it cannot be clobbered by an elevation, and it composes
-   * with the components that draw a `focus-visible:ring-*` of their own. It follows border-radius
-   * in every engine the app supports.
-   */
   :focus-visible {
     outline: 3px solid color-mix(in oklch, var(--ring) 60%, transparent);
     outline-offset: 2px;
   }
 
-  /**
-   * Below 16px, iOS zooms the visual viewport when a field takes focus, and every measurement in
-   * `keyboard-viewport.ts` is taken in an unzoomed frame. Sizing the fields is what buys that
-   * immunity in a browser tab, where the page stays zoomable on purpose and `user-scalable=no`
-   * would be ignored anyway. ADR 0002.
-   */
   input,
   textarea,
   select,
@@ -306,9 +261,6 @@
     padding-top: env(safe-area-inset-top);
   }
 
-  /* --kb-range, not --kb-inset: the padding is the room the reveal scrolls into, and it has to
-       clear the keyboard, not stop at it. `scroll-padding-bottom` stays the bare inset — that one
-       describes where the keyboard is, not how far past it a field may be lifted. */
   .pb-safe {
     padding-bottom: max(env(safe-area-inset-bottom), var(--kb-range));
     scroll-padding-bottom: var(--kb-inset);
@@ -319,10 +271,6 @@
     scroll-padding-bottom: var(--kb-inset);
   }
 
-  /* `--drawer-keyboard-inset` is Base UI's, published on the drawer viewport under
-       `Drawer.VirtualKeyboardProvider` — a sheet's own keyboard measurement, not this app's, and
-       absent while no sheet is open. `max()`, never `+`: the inset already measures to the
-       accessory bar. */
   .pb-safe-keyboard {
     padding-bottom: max(env(safe-area-inset-bottom), var(--drawer-keyboard-inset, 0px));
   }

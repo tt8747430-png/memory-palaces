@@ -27,7 +27,6 @@ export function StreakPage({ onBack }: StreakPageProps = {}) {
     return trainingDays.filter((day) => day.startsWith(prefix)).length
   }, [trainingDays, now])
 
-  // Without this, a cold start paints a 40-day streak as `0` and "Start today", then flips.
   if (!ready) return <ScreenLoading />
 
   return (

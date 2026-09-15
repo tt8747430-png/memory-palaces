@@ -10,16 +10,6 @@ export interface StylePreviewProps {
   compact?: boolean
 }
 
-/**
- * The card as the learner will meet it, painted from the same custom properties the study card
- * reads — so what the preview promises is what the study session delivers.
- *
- * The frame is the caller's size and never the text's: a card that grew a line every time the text
- * size stepped up would be reporting its own layout, not the style's. The words scroll inside the
- * border instead — an inner scroller, not a screen's scrollport, so it takes none of
- * `SCREEN_SCROLL`'s keyboard geometry and keeps the platform's own overlay bar (CODE_STYLE §11).
- * A thumbnail is too small to scroll and clips instead.
- */
 export function StylePreview({ style, front, back, className, compact }: StylePreviewProps) {
   const vars = resolveCardStyle(style) as CSSProperties
   return (

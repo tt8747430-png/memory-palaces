@@ -22,8 +22,6 @@ describe('profile store — Dependency Injection', () => {
   })
 
   it('completes a document written before a field existed', () => {
-    // What a device running an older build pushed, pulled back into this one: the schema migration
-    // never sees it, because replication writes at the current version.
     const legacy = withoutFields(
       makeProfile({ id: 'profile', createdAt: at(0), name: 'Ada' }),
       'phone',

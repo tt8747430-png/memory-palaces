@@ -35,7 +35,6 @@ function stubViewport({ height, offsetTop }: Viewport, layoutHeight: number) {
   const vv = {
     height,
     offsetTop,
-    // Unzoomed — keyboard-viewport suspends measuring while scale !== 1.
     scale: 1,
     addEventListener: (_type: string, fn: () => void) => listeners.add(fn),
     removeEventListener: (_type: string, fn: () => void) => listeners.delete(fn),
@@ -67,12 +66,6 @@ function stubRect(node: Element, top: number, bottom: number) {
   node.getBoundingClientRect = () => ({ top, bottom, height: bottom - top }) as DOMRect
 }
 
-/**
- * Which coordinate space this simulated platform reports rects in — where `keyboard-viewport` finds
- * the layout origin. `-pan` is a UA whose rects already carry the pan; `0` is one whose rects are
- * layout-relative. (The fixed probe it measures alongside stays at jsdom's 0, so the shell reads as
- * left at the layout origin in both.)
- */
 function stubRectSpace(htmlTop: number) {
   stubRect(document.documentElement, htmlTop, htmlTop)
 }
@@ -290,14 +283,11 @@ describe('useKeyboardReveal', () => {
     act(() => field.focus())
     expect(scroll.scrollTop).toBe(0)
 
-    // The pan arrives with the keyboard, and this UA reports rects against the visual viewport, so
-    // the layout origin moves with it.
     stubRectSpace(-113)
     await act(async () => {
       await viewport.move({ height: 390, offsetTop: 113 })
     })
 
-    // Visible area is now 390 tall, not 503: a field at 400 sits under the keyboard.
     expect(scroll.scrollTop).toBe(34)
   })
 
@@ -324,9 +314,6 @@ describe('useKeyboardReveal', () => {
       await viewport.move({ height: 390, offsetTop: 113 })
     })
 
-    // The same geometry, read in the other space: the pan is not in the rects, so the visible area
-    // ends at 503 and a field at 400 is already clear. Subtracting it here would scroll the field
-    // 113px further than the keyboard ever required.
     expect(scroll.scrollTop).toBe(0)
   })
 

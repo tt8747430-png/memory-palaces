@@ -32,23 +32,8 @@ export function revealOffset(view: RevealBand, field: RevealBand, gap = REVEAL_G
   return 0
 }
 
-/**
- * Marks the scroll node the reveal is attached to. The probe reads it rather than guessing at
- * `main`: "the field never moved" and "the field moved a node nobody watches" are the same still
- * reading, and only this attribute tells them apart.
- */
 export const REVEAL_SCROLL_ATTR = 'data-reveal-scroll'
 
-/**
- * A field the platform will raise a keyboard for. Read-only and disabled ones are not: they still
- * take focus and still answer to `HTMLInputElement`, but no keyboard comes — so reserving its
- * remembered height and revealing the field scrolls the page clear of a keyboard that never
- * arrives, and the reserve then stands until blur.
- *
- * The rule is general on purpose: it holds for every read-only field in the app, not the study
- * faces that prompted it. Any field the platform will not type into is a field the reveal has no
- * business scrolling to.
- */
 export function isTextField(node: EventTarget | null): node is HTMLElement {
   if (node instanceof HTMLTextAreaElement) return !node.readOnly && !node.disabled
   if (node instanceof HTMLInputElement) {
@@ -57,13 +42,6 @@ export function isTextField(node: EventTarget | null): node is HTMLElement {
   return node instanceof HTMLElement && node.isContentEditable
 }
 
-/**
- * How the reveal band finds its edges. The two bars publish these slots (`Header`, `FooterBar`) and
- * two readers look them up — here and the dev viewport probe — so the selector lives once. Renaming
- * a slot without its readers is a silent regression: the band quietly falls back to the scroller's
- * own top and a focused field can be revealed under the bar. `Header.test.tsx` asserts the shipped
- * header still answers to `CHROME.header`. ADR 0002.
- */
 export const CHROME = {
   header: '[data-slot="header"]',
   footer: '[data-slot="footer-bar"]',
@@ -77,11 +55,6 @@ export function useKeyboardReveal(): (node: HTMLElement | null) => void {
     detach.current = null
     if (!node) return
 
-    /**
-     * Lands the field between the chrome, clear of the keyboard by `REVEAL_GAP`. Doing it well is
-     * what keeps iOS from panning to do it instead: the pan is not a fact of the platform, it is
-     * what the platform does when the page has not revealed its own field.
-     */
     const reveal = (field: HTMLElement) => {
       const bounds = node.getBoundingClientRect()
       const chrome = node.parentElement?.querySelector(CHROME.header)

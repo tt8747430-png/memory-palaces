@@ -75,15 +75,6 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
     }))
   }, [deck, decks, allCards, scope.deckId])
 
-  /**
-   * The history entry each unfinished answer wrote, per card, so an undo can name the row it takes
-   * off instead of asking the store for "the newest one" — a question the store answers from a
-   * mirror that lags its own writes.
-   *
-   * A stack per card, because the session's undo trail is LIFO and a trail restricted to one card
-   * is LIFO too: a card graded twice before either is undone gets its second answer taken back
-   * first. The entry arrives asynchronously, so what is stacked is the write itself.
-   */
   const answered = useRef(new Map<string, Promise<AnsweredCard>[]>())
   const remember = (id: string, write: Promise<AnsweredCard>) => {
     const stack = answered.current.get(id) ?? []
@@ -102,8 +93,6 @@ export function StudyCardsPage({ scope, onBack }: StudyCardsPageProps) {
     void (async () => {
       const entry: HistoryEntry | undefined = await write?.then(
         (result) => result.entry,
-        // The write already failed; the undo still has a card to put back, and there is no entry
-        // to take off because none was ever recorded.
         () => undefined,
       )
       await undoAnswer(cardStore, historyStore, id, prior, entry?.id)

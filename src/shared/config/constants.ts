@@ -6,10 +6,6 @@ export const LEGAL_URLS = {
   licenses: 'https://mindscape.app/licenses',
 } as const
 
-/**
- * The longest name a deck or folder may carry. One limit, so a deck renamed into a folder's name is
- * never truncated.
- */
 export const NAME_MAX = 60
 
 export const DEFAULT_DAILY_GOAL = 5
@@ -23,8 +19,4 @@ export interface AppLanguage {
 
 export const AVAILABLE_LANGUAGES: readonly AppLanguage[] = [{ code: 'en', label: 'English' }]
 
-/**
- * Days between requesting an account's deletion and its purge. Signing in during them cancels it.
- * The `request-account-deletion` Edge Function schedules by the same number.
- */
 export const ACCOUNT_DELETION_GRACE_DAYS = 30

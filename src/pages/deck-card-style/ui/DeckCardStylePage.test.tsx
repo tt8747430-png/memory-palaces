@@ -101,7 +101,6 @@ describe('DeckCardStylePage', () => {
     await waitFor(async () => expect(await style()).toEqual(DEFAULT_CARD_STYLE))
   })
 
-  /** An enabled button that silently does nothing is worse than one that says it has nothing to do. */
   it('offers no reset when the style already is the default', async () => {
     renderPage()
     expect(await screen.findByRole('button', { name: 'Reset card style' })).toBeDisabled()
@@ -126,10 +125,6 @@ describe('DeckCardStylePage', () => {
     }
   })
 
-  /**
-   * The full-screen preview reads the same draft the pane does — open it mid-edit and it shows the
-   * edit, not what the deck last saved, and closing it leaves the draft where it was.
-   */
   it('previews the draft full screen and leaves it unsaved', async () => {
     const user = userEvent.setup()
     const { style } = renderPage()
@@ -147,11 +142,6 @@ describe('DeckCardStylePage', () => {
     expect(screen.getByRole('button', { name: 'Apply' })).toBeInTheDocument()
   })
 
-  /**
-   * The apply bar arriving is a layout change the spec asks for; the controls under it shifting a
-   * second time because the scroll body re-padded itself is not. `AppScreen` takes that inset from
-   * the footer's presence, so the dock stays mounted whether or not there is anything to apply.
-   */
   it('keeps the same bottom inset whether or not the bar is showing', async () => {
     const user = userEvent.setup()
     renderPage()

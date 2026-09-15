@@ -11,13 +11,6 @@ export interface DeckOverview {
   stats: OverviewStat[]
 }
 
-/**
- * One card, two faces. The algorithm decides what the number means and what its three stats are
- * called; the page just renders what it is handed.
- *
- * The fast count must stay in step with what `buildStudyQueue` serves under fast review — see
- * `features/review/offer-matches-count.test.ts`, which exists because they once disagreed.
- */
 export function useDeckOverview(
   cards: readonly Card[],
   algorithm: LearningAlgorithm,

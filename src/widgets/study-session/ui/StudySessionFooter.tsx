@@ -35,8 +35,6 @@ export function StudySessionFooter({
   const reduce = useReducedMotion()
   const crossfade = { duration: reduce ? 0 : 0.12 }
 
-  // Fast review has no schedule to grade against, so it gets its own two-answer bar rather than a
-  // disabled version of this one.
   if (mode === 'fast') {
     return (
       <FastReviewFooter

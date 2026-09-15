@@ -71,10 +71,6 @@ interface SelectRowProps {
   landingRef: (node: HTMLElement | null) => void
 }
 
-/**
- * A row in select mode: the whole frame is one toggle, and the drag handle is that same button —
- * press reorders, tap selects. Folders and decks differ only in frame and body.
- */
 function SelectRow({
   id,
   name,

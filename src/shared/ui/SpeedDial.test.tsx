@@ -24,8 +24,6 @@ describe('SpeedDial', () => {
     expect(trigger).toHaveAttribute('aria-expanded', 'false')
 
     await user.click(trigger)
-    // The trigger says `aria-haspopup="menu"`, so what opens has to be a menu of menu items —
-    // it used to be a plain list of buttons, and a screen reader landed on list items instead.
     expect(await screen.findByRole('menu', { name: 'Create' })).toBeInTheDocument()
     await user.click(screen.getByRole('menuitem', { name: 'New deck' }))
     expect(onDeck).toHaveBeenCalledTimes(1)

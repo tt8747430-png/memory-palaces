@@ -11,11 +11,6 @@ const toScheduled = (row: DeletionRow): ScheduledDeletion => ({
   purgeAfter: row.purge_after,
 })
 
-/**
- * `scheduled` and `cancel` go straight at the table — RLS already restricts both to the caller's
- * own row. `request` cannot: `account_deletions` grants no insert to `authenticated`, because
- * scheduling also revokes every refresh token, and that is the service role's to do.
- */
 export class SupabaseAccountDeletion implements AccountDeletionPort {
   constructor(private readonly client: SupabaseClient) {}
 

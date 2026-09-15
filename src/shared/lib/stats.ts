@@ -7,9 +7,7 @@ export interface LevelInfo {
   level: number
   xpInLevel: number
   xpForNextLevel: number
-  /** How far through the level, as the whole percent a progress bar wants. */
   fill: number
-  /** XP still owed before the next level. */
   remaining: number
 }
 

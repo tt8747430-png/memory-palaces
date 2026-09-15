@@ -7,7 +7,6 @@ export interface LabelledFieldProps {
   children: ReactNode
 }
 
-/** A control under its label, with the error message the field is showing. */
 export function LabelledField({ label, error, children }: LabelledFieldProps) {
   return (
     <Field invalid={Boolean(error)}>

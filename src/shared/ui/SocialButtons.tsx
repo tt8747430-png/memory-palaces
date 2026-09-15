@@ -8,9 +8,7 @@ import { cn } from '@/shared/lib'
 
 export interface SocialButtonsProps {
   onSelect?: (provider: OAuthProvider) => void
-  /** The provider whose redirect is in flight — both buttons wait for it. */
   pending?: OAuthProvider | null
-  /** Why the buttons are inert (offline). Shown under them and used as the toast on press. */
   unavailableReason?: string
 }
 
@@ -55,7 +53,6 @@ export function SocialButtons({
     if (onSelect) onSelect(provider)
     else toast(t('auth.socialSoon'))
   }
-  /** Dimmed while unavailable, and while the *other* provider's redirect is in flight. */
   const isMuted = (provider: OAuthProvider) =>
     Boolean(unavailableReason) || (pending !== null && pending !== provider)
 

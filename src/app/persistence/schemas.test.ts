@@ -4,7 +4,6 @@ import type { RxCollection } from 'rxdb'
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie'
 import { createAppDatabase } from './database'
 
-/** What a schema has to say for this sweep to build a document from it. */
 interface SchemaShape {
   primaryKey: unknown
   required?: readonly (string | number | symbol)[]
@@ -12,11 +11,6 @@ interface SchemaShape {
   properties: Record<string, { type?: unknown; enum?: readonly unknown[] } | undefined>
 }
 
-/**
- * Enough of a document to exercise a real write: every required field, plus every indexed one.
- * Built from the schema rather than by hand so a collection added later is covered by the schema
- * it ships with, without a fixture to remember.
- */
 function minimalDocument(schema: SchemaShape): Record<string, unknown> {
   const primaryPath = String(schema.primaryKey)
   const fields = new Set([
@@ -41,10 +35,6 @@ function minimalDocument(schema: SchemaShape): Record<string, unknown> {
   return document
 }
 
-/**
- * The members RxDB puts on every document — `collection` and `_data` are assigned onto the
- * instance, the rest live on the prototype it builds from the schema.
- */
 const DOCUMENT_MEMBERS = [
   'remove',
   'patch',
@@ -54,7 +44,6 @@ const DOCUMENT_MEMBERS = [
   'toMutableJSON',
 ] as const
 
-/** The first value an RxDB query observable emits, or the error that stops it emitting at all. */
 function firstEmission<T>(source: {
   subscribe: (observer: { next: (value: T) => void; error: (error: unknown) => void }) => {
     unsubscribe: () => void
@@ -91,20 +80,6 @@ async function roundTrip(collection: RxCollection): Promise<void> {
   await stored.remove()
 }
 
-/**
- * RxDB builds a document's prototype from its schema and *then* assigns `collection`, `_data`,
- * `_propertyCache` and `isInstanceOfRxDocument` onto the instance. A schema field by one of those
- * names becomes a getter the constructor cannot write through, so every document of that
- * collection throws on construction — after the write has already reached storage, which leaves a
- * collection that poisons itself on first use and never reads back, not even after a reload. That
- * is what `pendingChangeSchema`'s `collection` field did, and it presented as a Sync screen
- * claiming the app had no cloud at all.
- *
- * A schema field sharing a name with a document *method* is the quiet version of the same mistake:
- * the field wins the prototype merge and the method is gone. Nothing in RxDB's core warns about
- * either, so the rule is held here — against the collections `createAppDatabase` actually opens,
- * rather than a list beside it, so a collection added later cannot escape the sweep.
- */
 describe('every collection the app opens', () => {
   it('writes, reads and removes a document, shadowing none of RxDB’s own', async () => {
     const collections = await createAppDatabase(getRxStorageDexie())

@@ -12,8 +12,6 @@ describe('isConfigured', () => {
 
 describe('isSupabaseConfigured', () => {
   it('is false in the test environment, which is pinned to the offline path', () => {
-    // vite.config.ts blanks the two vars for the unit suite, so a developer's .env.local cannot
-    // change what is under test — or point these tests at a real project.
     expect(isSupabaseConfigured()).toBe(false)
   })
 

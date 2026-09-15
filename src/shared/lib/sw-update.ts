@@ -1,14 +1,3 @@
-/**
- * Detecting a downloaded-but-not-yet-active app update.
- *
- * `registration.waiting` is the ground truth: an installed worker sits there until told to take
- * over, so a watcher starting at any moment still sees a pending update. Never depends on having
- * witnessed the `updatefound` event — workbox-window calls any update found more than a minute
- * after registration "external" and stops listening, losing every update after the first in an app
- * left open.
- */
-
-/** The parts of `ServiceWorker` this module touches. */
 export interface WorkerLike {
   readonly state: string
   addEventListener: (type: 'statechange', listener: () => void) => void
@@ -16,7 +5,6 @@ export interface WorkerLike {
   postMessage: (message: unknown) => void
 }
 
-/** The parts of `ServiceWorkerRegistration` this module touches. */
 export interface RegistrationLike {
   readonly installing: WorkerLike | null
   readonly waiting: WorkerLike | null
@@ -24,13 +12,8 @@ export interface RegistrationLike {
   removeEventListener: (type: 'updatefound', listener: () => void) => void
 }
 
-/** The message the generated service worker listens for to hand over control. */
 const SKIP_WAITING = { type: 'SKIP_WAITING' }
 
-/**
- * Reports the worker waiting to take over — immediately if one already is, again whenever that
- * changes. Returns a detach function.
- */
 export function watchWaitingWorker(
   registration: RegistrationLike,
   onWaitingChange: (waiting: WorkerLike | null) => void,
@@ -52,8 +35,6 @@ export function watchWaitingWorker(
     watched.delete(worker)
   }
 
-  // A worker only reaches `waiting` through `installing` — follow each until it waits or goes
-  // redundant.
   const watchInstalling = () => {
     const installing = registration.installing
     if (stopped || !installing || watched.has(installing)) return
@@ -70,8 +51,6 @@ export function watchWaitingWorker(
   registration.addEventListener('updatefound', watchInstalling)
   watchInstalling()
 
-  // Already waiting — installed on an earlier run, or while this page booted — fires no observable
-  // event.
   const waiting = registration.waiting
   if (waiting) {
     const listener = () => {
@@ -90,7 +69,6 @@ export function watchWaitingWorker(
   }
 }
 
-/** Tells the waiting worker to take over. It then claims every open client. */
 export function activateWaitingWorker(waiting: WorkerLike): void {
   waiting.postMessage(SKIP_WAITING)
 }

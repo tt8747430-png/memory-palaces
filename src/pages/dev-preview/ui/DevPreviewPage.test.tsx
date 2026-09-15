@@ -4,7 +4,6 @@ import { renderWithProviders } from '@/shared/test/render-with-providers'
 import { DevPreviewPage } from './DevPreviewPage'
 
 beforeAll(() => {
-  // jsdom has neither; the page's scroll-spy and theme switch reach for both on mount.
   globalThis.IntersectionObserver ??= class {
     observe() {}
     unobserve() {}

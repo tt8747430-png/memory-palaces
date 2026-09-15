@@ -9,11 +9,6 @@ export interface AlgorithmLineProps {
   onChange: (value: LearningAlgorithm) => void
 }
 
-/**
- * The deck says out loud which algorithm it follows, because everything else on the screen — the
- * counts, the chips, the footer in the study session — reads differently depending on the answer.
- * Pressing the name opens the picker; a subdeck, whose main deck owns it, gets `LockedAlgorithmLine`.
- */
 export function AlgorithmLine({ value, onChange }: AlgorithmLineProps) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)

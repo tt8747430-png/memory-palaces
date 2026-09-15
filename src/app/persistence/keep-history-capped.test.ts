@@ -47,8 +47,6 @@ describe('keepHistoryCapped', () => {
   })
 
   it('trims a history that is already over the cap, dropping the oldest', async () => {
-    // Seeded rather than written one at a time: what this covers is the log a write-time trim
-    // never reaches — one that arrived over the cap, which is the whole reason the keeper exists.
     const over = Array.from({ length: HISTORY_CAP + 2 }, (_, i) => entry(`h${i}`, i + 1))
     const repo = new InMemoryRepository<HistoryEntry>(over)
     const store = createHistoryStore(repo)
@@ -80,9 +78,6 @@ describe('keepHistoryCapped', () => {
 
 describe('a history entry pulled from the cloud', () => {
   it('does not resurrect one this device trimmed — trimming is by recency', async () => {
-    // The cap is two here by construction: the store holds the newest first, and the keeper drops
-    // everything past `HISTORY_CAP`. What matters is that an *older* arrival is dropped again
-    // rather than pushing a newer entry out.
     const newest = Array.from({ length: HISTORY_CAP }, (_, i) => entry(`h${i}`, 1000 + i))
     const repo = new InMemoryRepository<HistoryEntry>(newest)
     const store = createHistoryStore(repo)
@@ -90,7 +85,6 @@ describe('a history entry pulled from the cloud', () => {
     const stop = keepHistoryCapped(store)
     await flush()
 
-    // An entry from another device, older than everything the device already holds.
     await store.getState().save(entry('from-elsewhere', 1))
     await flush()
     await flush()

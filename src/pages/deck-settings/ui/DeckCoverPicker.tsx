@@ -13,11 +13,6 @@ export interface DeckCoverPickerProps {
 
 const ACCEPT = 'image/*'
 
-/**
- * The deck's cover, chosen from a photo. The image is cropped and re-encoded here so what the
- * preview shows is exactly what gets stored — and so an enormous camera file never reaches the
- * document.
- */
 export function DeckCoverPicker({ icon, color, image, onChange }: DeckCoverPickerProps) {
   const { t } = useTranslation()
   const picker = useFilePicker(ACCEPT, (file) => {

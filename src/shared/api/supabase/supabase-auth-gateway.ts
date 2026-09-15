@@ -17,14 +17,6 @@ import {
 
 const GUEST_KEY = 'mindscape:guest'
 
-/**
- * Keeps the provider's code so the UI can say something better than the raw message.
- *
- * A request that never reached the provider has no provider code — `code` is undefined and the
- * message is whichever words the engine uses for a dead network ("Failed to fetch" on Chrome,
- * "Load failed" on Safari). Those were reaching people as toast copy on every auth screen, so the
- * transport case is named here, once, where it is still distinguishable.
- */
 const fail = (error: SupabaseAuthError): never => {
   if (isAuthRetryableFetchError(error)) throw new AuthError(error.message, 'network')
   throw new AuthError(error.message, error.code ?? 'unknown')
@@ -34,7 +26,6 @@ const toAuth = (user: User): PersistedAuth => ({
   id: user.id,
   kind: 'account',
   email: user.email ?? undefined,
-  // Apple's web flow returns no name — profile onboarding fills it in rather than blocking.
   name: (user.user_metadata?.name as string | undefined) ?? '',
 })
 
@@ -51,10 +42,8 @@ export class SupabaseAuthGateway implements AuthGateway {
       options: { data: { name: input.name } },
     })
     if (error) fail(error)
-    // With email confirmation on, `session` is null until confirmed; the user still exists.
     if (!data.user) throw new AuthError('Sign-up failed', 'signup_failed')
     const sessionActive = Boolean(data.session)
-    // A guest is only superseded once there is a real session to supersede it with.
     if (sessionActive) this.forgetGuest()
     return { auth: toAuth(data.user), sessionActive }
   }
@@ -86,18 +75,6 @@ export class SupabaseAuthGateway implements AuthGateway {
     return guest
   }
 
-  /**
-   * Signing out always succeeds locally.
-   *
-   * `auth-js` removes the stored session *before* it tries to revoke the refresh token, and returns
-   * the transport failure anyway. Rethrowing it left the app believing it was signed in with no
-   * session behind it — every later request 401s and there is no way back out. The local session is
-   * the part this device needs gone, and it is already gone by the time we get here.
-   *
-   * The scope stays `'global'`. Switching to `'local'` when offline buys nothing: `_signOut` issues
-   * the same `admin.signOut(accessToken, scope)` fetch either way, so it fails identically — and
-   * keeping `'global'` means the refresh token really is revoked whenever the network allows it.
-   */
   async signOut(): Promise<void> {
     this.forgetGuest()
     const { error } = await this.client.auth.signOut()
@@ -106,8 +83,6 @@ export class SupabaseAuthGateway implements AuthGateway {
 
   async requestPasswordReset(email: string): Promise<void> {
     const { error } = await this.client.auth.resetPasswordForEmail(email, {
-      // The callback hands recovery links to the set-password screen; landing them on the home
-      // screen would mean the reset email never actually resets anything.
       redirectTo: `${window.location.origin}/auth/callback?next=recovery`,
     })
     if (error) fail(error)
@@ -119,7 +94,6 @@ export class SupabaseAuthGateway implements AuthGateway {
   }
 
   async completeAuthRedirect(code: string): Promise<void> {
-    // `detectSessionInUrl` usually gets there first; this is the path when it did not.
     const { error } = await this.client.auth.exchangeCodeForSession(code)
     if (error) fail(error)
   }
@@ -133,13 +107,10 @@ export class SupabaseAuthGateway implements AuthGateway {
   onAuthChange(cb: (auth: PersistedAuth | null) => void): Unsubscribe {
     const { data } = this.client.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
-        // A cloud identity supersedes the guest — keeping both would resurrect the guest on the
-        // next sign-out and re-claim data that already belongs to an account.
         this.forgetGuest()
         cb(toAuth(session.user))
         return
       }
-      // No cloud session is not the same as no identity: a guest never had one.
       cb(this.readGuest())
     })
     return () => data.subscription.unsubscribe()

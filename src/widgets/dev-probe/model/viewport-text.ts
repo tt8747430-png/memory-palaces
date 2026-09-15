@@ -1,7 +1,3 @@
-/**
- * Formatting: a reading, a keyboard episode or a whole trace as text someone can paste into a bug
- * report. Pure string work over what `viewport-sample.ts` measured.
- */
 import {
   checkViewport,
   type KeyboardEpisode,
@@ -53,7 +49,6 @@ const checkLines = (sample: ViewportSample) =>
     (check) => `${MARK[check.state]}  ${check.label.padEnd(18)}  ${check.detail}`,
   )
 
-/** The whole reading as pasteable text: every row, every verdict, and what was holding it. */
 export function sampleToText(sample: ViewportSample): string {
   return [
     'mindscape viewport probe',
@@ -100,7 +95,6 @@ function episodeToText(episode: KeyboardEpisode, index: number, total: number): 
   return [head, '', ...body, '', ...checkLines(after)].join('\n')
 }
 
-/** Every kept keyboard, newest last, each as its own before/after block. */
 export function episodesToText(episodes: KeyboardEpisode[]): string {
   if (episodes.length === 0) {
     return 'mindscape viewport probe\nno keyboard opened yet — focus a field, then copy.\n'

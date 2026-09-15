@@ -16,7 +16,6 @@ import { DeckAlgorithmPage } from './DeckAlgorithmPage'
 
 afterEach(cleanup)
 
-/** `mainDeck` makes d1 a subdeck of a main deck holding those settings; `deckId` opens another. */
 function renderPage(
   settings: Partial<DeckSettings> = {},
   mainDeck?: Partial<DeckSettings>,

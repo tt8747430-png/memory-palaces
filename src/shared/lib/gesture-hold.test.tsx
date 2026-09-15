@@ -15,8 +15,6 @@ function Surface({
   surface?: boolean
 }) {
   const { surface: bundle, hold, drop } = useGestureHold(onRelease)
-  // A surface that declines the mark is not a thing the hook can produce — it is what every other
-  // element on the page is, and the registry has to tell a touch on one from a takeover.
   const marked = surface ? bundle : { ref: bundle.ref }
   return (
     <div data-testid={name} {...marked} onPointerDown={() => hold()}>
@@ -47,11 +45,6 @@ describe('useGestureHold', () => {
     expect(second).not.toHaveBeenCalled()
   })
 
-  /**
-   * The reason is the whole point of the registry: a row taken over jumps back, because the surface
-   * taking it over is already moving under the same finger and a spring here is the second thing
-   * moving. A row simply put down springs.
-   */
   it('calls a touch on empty space a release, not a claim', async () => {
     const user = userEvent.setup()
     const onRelease = vi.fn()
@@ -94,7 +87,6 @@ describe('useGestureHold', () => {
     expect(onRelease).not.toHaveBeenCalled()
   })
 
-  // A surface that has gone owns nothing, and its release would set state on a dead component.
   it('gives the claim up when the holder unmounts', async () => {
     const user = userEvent.setup()
     const onRelease = vi.fn()

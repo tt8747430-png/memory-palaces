@@ -8,24 +8,13 @@ import { Input } from './primitives/input'
 export interface SearchFieldProps {
   value: string
   onValueChange: (value: string) => void
-  /** What is being searched — "Search cards", "Search questions". Also the field's label. */
   placeholder: string
-  /** Dismisses the search entirely, not just the text. */
   onClose: () => void
   closeLabel: string
-  /** Takes focus on mount. The field appears in response to a press, so it should. */
   autoFocus?: boolean
   className?: string
 }
 
-/**
- * A band of search over a list.
- *
- * `type="search"` so an on-screen keyboard offers a search key and iOS draws its own clear affordance
- * inside the field; the explicit button beside it is what leaves search altogether. `text-entry` is
- * inherited from `Input` and is load-bearing — a field under 16px makes iOS zoom the visual viewport
- * on focus, which moves the ground under every keyboard measurement. ADR 0002.
- */
 export function SearchField({
   value,
   onValueChange,

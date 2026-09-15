@@ -51,11 +51,6 @@ export function useCardCommands(
     toast.success(t('cards.row.scheduleReset'))
   }
 
-  /**
-   * The one way cards change decks, whichever surface asked — row menu, swipe or the select
-   * toolbar. A move that lands nowhere new says nothing; anything else can be undone from the
-   * toast, which puts every card back in the deck and at the order it left.
-   */
   const moveTo = (batch: readonly string[], deckId: string, deckName: string) => {
     void (async () => {
       const previous = await moveCards(store, batch, deckId)

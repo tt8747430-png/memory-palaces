@@ -6,16 +6,9 @@ import { PROFILE_ID, setProfile } from './set-profile'
 export interface SetProfilePhotoDeps {
   store: ProfileStore
   storage: StoragePort
-  /** Null for a guest, or when no cloud is configured — the photo then stays inline. */
   userId: string | null
 }
 
-/**
- * Saves the picked photo immediately as an inline data URL, then tries to move it to storage and
- * patch in its object path. The save never waits on the network: offline, the profile keeps a
- * perfectly good local image and syncs it inside the document, and `reconcileInlineImages` moves it
- * out once there is a network again.
- */
 export async function setProfilePhoto(
   { store, storage, userId }: SetProfilePhotoDeps,
   dataUrl: string,

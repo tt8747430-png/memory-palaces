@@ -11,11 +11,6 @@ export interface MainDeckOnlyScreenProps {
   onOpenMainDeck?: (mainDeckId: string) => void
 }
 
-/**
- * What the algorithm screens show for a subdeck. Nothing in the app links a subdeck here — its
- * settings row opens `AlgorithmLockedNotice` — so this is the answer to a URL: the settings live on
- * the main deck, and here is the way to them.
- */
 export function MainDeckOnlyScreen({
   title,
   deck,

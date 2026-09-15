@@ -81,7 +81,6 @@ describe('SignupPage', () => {
   it('asks for confirmation instead of welcoming a session that does not exist', async () => {
     const user = userEvent.setup()
     const { onSuccess, gateway } = renderSignup()
-    // Email confirmation on: the account is created, but no session opens.
     vi.spyOn(gateway, 'signUp').mockResolvedValue({
       auth: { id: 'id-1', kind: 'account', email: 'ada@b.com', name: 'Ada' },
       sessionActive: false,

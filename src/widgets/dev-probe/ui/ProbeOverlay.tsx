@@ -11,12 +11,6 @@ import {
 } from '@/widgets/dev-probe'
 import { ViewportReadout } from './ViewportReadout'
 
-/**
- * The viewport probe, readable on the route that is misbehaving. `/dev/kitchen-sink` shows the same
- * numbers, but a keyboard fault only reproduces on the screen that has it — reading it elsewhere is
- * how three fixes shipped on inference. Nothing here carries a `data-slot`: `header`/`footer-bar`
- * are what the reveal band is built from, so an overlay wearing one would move the band it measures.
- */
 export function ProbeOverlay() {
   const visible = useProbeOverlay()
   if (!visible) return null
@@ -34,10 +28,6 @@ function ProbePanel() {
       onMouseDown={keepFieldFocused}
       className={cn(
         'fixed inset-x-2 z-(--z-dev-probe) max-h-[calc(var(--app-height)*0.7)] overflow-y-auto overscroll-contain rounded-card border border-border bg-card/95 p-2 shadow-elevated backdrop-blur-md',
-        // Both edges are measured from the inset, never from the display edge: a bare `top-2` put
-        // the readout under the clock wherever the web view runs full-bleed, and a bare `bottom-2`
-        // put it under the home indicator. The numbers this panel exists to show are unreadable
-        // exactly where they matter most.
         bottom
           ? 'bottom-[calc(var(--p-safe-bottom)+0.5rem)]'
           : 'top-[calc(env(safe-area-inset-top)+0.5rem)]',

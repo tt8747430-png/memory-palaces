@@ -1,7 +1,3 @@
-/**
- * Every badge, in display order. The one list — id union, tier tables, metric lookup and the
- * `isBadgeId` route guard all derive from it — so adding a badge is one edit the compiler chases.
- */
 export const BADGE_IDS = ['xp', 'streak', 'decks', 'library', 'cards', 'days'] as const
 
 export type BadgeId = (typeof BADGE_IDS)[number]
@@ -69,7 +65,6 @@ export function milestoneProgress(badge: Badge): number {
   return Math.min(1, Math.max(0, (badge.value - floor) / span))
 }
 
-/** A badge's progress towards its next tier, as the whole percent a bar wants. */
 export function milestonePercent(badge: Badge): number {
   return Math.round(milestoneProgress(badge) * 100)
 }

@@ -12,7 +12,6 @@ afterEach(cleanup)
 
 function renderForgot(props: Partial<Parameters<typeof ForgotPasswordPage>[0]> = {}) {
   const gateway = new LocalAuthGateway(() => 'id-1')
-  // Sending a reset link is a cloud-only operation; the offline gateway refuses it on purpose.
   const spy = vi.spyOn(gateway, 'requestPasswordReset').mockResolvedValue(undefined)
   const onBack = vi.fn()
   const wrap = (children: ReactNode) => (

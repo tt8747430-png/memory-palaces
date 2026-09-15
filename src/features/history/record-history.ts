@@ -11,13 +11,6 @@ import { newId, nowIso } from '@/shared/lib'
 
 export type HistoryDraft = Omit<MakeHistoryEntryInput, 'id' | 'createdAt'>
 
-/**
- * Writes one answer to the Learning history and keeps it inside its cap.
- *
- * Its own slice rather than a helper inside `features/review`, because two slices write history —
- * a Review and a Fast-review answer from `features/review`, a Mastered mark from `features/card` —
- * and a helper reached across from one of them would have closed a circular import between the two.
- */
 export async function recordHistory(
   store: HistoryStore,
   draft: HistoryDraft,
@@ -29,7 +22,6 @@ export async function recordHistory(
   return entry
 }
 
-/** The same write for a whole batch — marking a selection Mastered is one action, not N. */
 export async function recordHistoryBatch(
   store: HistoryStore,
   drafts: readonly HistoryDraft[],

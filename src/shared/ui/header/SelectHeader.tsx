@@ -4,7 +4,6 @@ import { AppHeader } from './AppHeader'
 import { HeaderBar } from './Header'
 
 export interface SelectHeaderProps {
-  /** The live selection — the header reads its count and ends it. */
   selection: Pick<MultiSelect, 'count' | 'allSelected' | 'toggleAll' | 'exit'>
   className?: string
 }
@@ -12,10 +11,6 @@ export interface SelectHeaderProps {
 const ACTION =
   '-mx-2 inline-flex min-h-11 items-center rounded-control px-2 text-body font-semibold text-accent transition-transform active:scale-[0.97]'
 
-/**
- * What the bar becomes while a selection is running. Same frame, same height — the contents swap,
- * so the list underneath does not jump when select mode opens.
- */
 export function SelectHeader({ selection, className }: SelectHeaderProps) {
   const { t } = useTranslation()
   return (

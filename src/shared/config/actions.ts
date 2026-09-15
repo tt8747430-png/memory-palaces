@@ -1,8 +1,3 @@
-/**
- * The one vocabulary of row actions. Swipe rows, the select toolbar and overflow menus all draw
- * from it, so an action keeps one label, accent and icon wherever it appears; a surface decides
- * only *which* it offers.
- */
 export type ActionId =
   | 'favorite'
   | 'move'
@@ -19,16 +14,7 @@ export type ActionId =
   | 'delete'
 
 export type ActionAccent =
-  | 'rose'
-  | 'plum'
-  | 'violet'
-  | 'indigo'
-  | 'blue'
-  | 'teal'
-  | 'emerald'
-  | 'gold'
-  | 'red'
-  | 'slate'
+  'rose' | 'plum' | 'violet' | 'indigo' | 'blue' | 'teal' | 'emerald' | 'gold' | 'red' | 'slate'
 
 export const ACTION_ACCENT: Record<ActionAccent, { fill: string; ink: 'light' | 'dark' }> = {
   rose: { fill: 'var(--sw-rose)', ink: 'light' },
@@ -45,12 +31,7 @@ export const ACTION_ACCENT: Record<ActionAccent, { fill: string; ink: 'light' | 
 
 export interface ActionMeta {
   id: ActionId
-  /** The short label a swipe chip or toolbar button shows. */
   labelKey: string
-  /**
-   * Longer label for an overflow menu, where there is room to say what the action does. Falls back
-   * to `labelKey` when the short one already reads as a full instruction.
-   */
   menuLabelKey?: string
   accent: ActionAccent
   destructive?: boolean
@@ -82,7 +63,6 @@ export const ACTION_META: Record<ActionId, ActionMeta> = {
   delete: { id: 'delete', labelKey: 'actions.delete', accent: 'red', destructive: true },
 }
 
-/** The label an action shows on a given surface. */
 export const actionLabelKey = (id: ActionId, surface: 'chip' | 'menu'): string => {
   const meta = ACTION_META[id]
   return surface === 'menu' ? (meta.menuLabelKey ?? meta.labelKey) : meta.labelKey

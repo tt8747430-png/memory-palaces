@@ -125,9 +125,6 @@ export function SettingsPage({
     icon: <Globe className="size-4.5" aria-hidden />,
   }))
 
-  // `selectEffectivePreferences` answers `DEFAULT_PREFERENCES` until the snapshot lands, so
-  // without this every control on this screen paints its default first and then flips — a learner
-  // with haptics off watches the switch turn itself on and back off on every cold start.
   if (!ready) return <ScreenLoading />
 
   return (
@@ -181,9 +178,6 @@ export function SettingsPage({
             checked={prefs.notifications}
             onCheckedChange={(value) => update({ notifications: value })}
           />
-          {/* Nothing in the app plays a sound — there is no `Audio`, no `AudioContext`, no asset.
-              The row stays because the feature is planned and its preference is already stored;
-              it stops being a switch because a switch that changes nothing is a lie. */}
           <SettingsRow
             kind="soon"
             icon={<Volume2 />}

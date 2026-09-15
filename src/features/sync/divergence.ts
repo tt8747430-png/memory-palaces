@@ -27,15 +27,12 @@ import type { SyncDeps } from './sync-deps'
 
 type Checkpoints = SyncState['checkpoints']
 
-/** What every synced table moved since the checkpoints it was asked from. */
 export type Peek = ReadonlyMap<SyncedTable, readonly RemoteChange[]>
 
-/** The descendant tables a container's subtree can reach. Folders hold decks, not folders. */
 const CHILD_COLLECTIONS: readonly ContentCollection[] = CONTENT_COLLECTIONS.filter(
   (collection) => collection !== 'folders',
 )
 
-/** Every table at once — the peeks are independent, and a Sync is only as fast as its slowest. */
 export async function peekAll(deps: SyncDeps, checkpoints: Checkpoints): Promise<Peek> {
   const found = await Promise.all(
     SYNCED_TABLES.map((table) => deps.cloud.peek(table, checkpoints[table] ?? null)),
@@ -46,7 +43,6 @@ export async function peekAll(deps: SyncDeps, checkpoints: Checkpoints): Promise
 export const peekedCount = (peek: Peek): number =>
   [...peek.values()].reduce((total, changes) => total + changes.length, 0)
 
-/** The checkpoints after everything `peek` saw — the highest `(updated_at, id)` per table. */
 export function advance(checkpoints: Checkpoints, peek: Peek): Checkpoints {
   const next: Checkpoints = { ...checkpoints }
   for (const [table, changes] of peek) {
@@ -55,16 +51,6 @@ export function advance(checkpoints: Checkpoints, peek: Peek): Checkpoints {
   return next
 }
 
-/**
- * Steps each table's checkpoint over the rows this device's own push just wrote, and no further.
- *
- * The push stamps every row it writes with a fresh server clock, so without this the next peek —
- * and the Realtime echo of the push — would report this device's own work as the cloud having
- * moved, and the banner would light up after every Sync. So after the cycle the table is peeked
- * again from where the first peek stopped, and the checkpoint walks forward through rows the push
- * carried. It stops at the first row it did *not* push: that one is another device's, was never
- * classified, and the next Sync has to see it. `foreignAhead` is whether any table stopped short.
- */
 export function stepOverOwnEcho(
   checkpoints: Checkpoints,
   settled: Peek,
@@ -87,12 +73,6 @@ export function stepOverOwnEcho(
   return { checkpoints: next, foreignAhead }
 }
 
-/**
- * The documents under the deleted containers in `roots`, as the cloud knows them.
- *
- * Reads parents only — three scalars per row — for the candidate ids, which is what keeps the
- * classifier from pulling a month's worth of card content to answer "whose child is this".
- */
 export async function cloudDescendants(
   deps: SyncDeps,
   roots: readonly string[],
@@ -116,21 +96,6 @@ export async function cloudDescendants(
   return found
 }
 
-/**
- * The documents the user has to be asked about.
- *
- * **Rule one** — a document deleted here that the cloud went on editing. A document deleted on both
- * sides is not a question.
- *
- * **Rule two** — a deck or folder deleted here, under which another device added or edited
- * documents this device has never seen. The question is about the container the person deleted,
- * not about children they never saw; those ride along as its `descendants`. Every child that *was*
- * on the device went with the container when it was deleted (`deleteDeck` takes subdecks, cards and
- * questions), so a remote edit to one of those is already a rule-one question of its own.
- *
- * `answered` suppresses documents the person has already decided about in this Sync, so resolving
- * the dialog cannot reopen it for the same rows.
- */
 export async function findDestructive(
   deps: SyncDeps,
   peek: Peek,

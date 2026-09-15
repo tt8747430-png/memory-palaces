@@ -10,11 +10,7 @@ export function SelectToolbarDock({ children, className }: SelectToolbarDockProp
   return (
     <div
       className={cn(
-        // Room on the top and left for the exit badge standing on the toolbar's corner.
         'pointer-events-none fixed inset-x-0 bottom-0 z-(--z-dock) mx-auto w-full max-w-app px-4 pt-3',
-        // WebKit re-clamps bottom-anchored fixed boxes to the visual viewport when the keyboard
-        // shows, which floats the toolbar mid-screen. AppNav, SpeedDial and AppScreen's footer
-        // dock yield for the same reason. CODE_STYLE §11.
         'in-data-keyboard:hidden',
         className,
       )}

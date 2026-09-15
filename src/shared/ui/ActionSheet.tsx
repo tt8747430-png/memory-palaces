@@ -13,7 +13,6 @@ const OPEN_GUARD_MS = 500
 
 type ActionSheetVariant = 'plain' | 'filled'
 
-/** Complete static strings per variant — Tailwind can't see a built-up class name (§4, §5). */
 const ROW_VARIANT: Record<ActionSheetVariant, string> = {
   plain: 'h-12 rounded-control px-3',
   filled: 'mb-1.5 h-14 rounded-card bg-info-surface px-4',
@@ -46,11 +45,8 @@ export interface ActionSheetProps {
   title: ReactNode
   description?: ReactNode
   actions: SheetAction[]
-  /** Omit to close the sheet by gesture alone — a card's actions need no Cancel row. */
   cancelLabel?: string
-  /** The title still names the sheet for assistive tech; it just stops taking up a line. */
   hideTitle?: boolean
-  /** `filled` gives every action its own tinted row, the way the card actions sheet reads. */
   variant?: ActionSheetVariant
 }
 

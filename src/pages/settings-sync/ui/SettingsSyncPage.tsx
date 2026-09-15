@@ -25,12 +25,6 @@ export interface SettingsSyncPageProps {
   onBack?: () => void
 }
 
-/**
- * Everything the banner says, plus the breakdown and the two controls it has no room for.
- *
- * `Review pending changes` opens the same dialog on demand rather than a second one, because two
- * surfaces answering the same question is two places for the answers to disagree.
- */
 export function SettingsSyncPage({ onBack }: SettingsSyncPageProps) {
   const { t } = useTranslation()
   const runner = useSyncRunner()
@@ -50,8 +44,6 @@ export function SettingsSyncPage({ onBack }: SettingsSyncPageProps) {
 
   if (!ready) return <ScreenLoading />
 
-  // Two ways there is nothing to show, and they are different sentences: a guest has no cloud to
-  // sync *to*, and an unconfigured build has no cloud at all.
   if (!runner) {
     return (
       <AppScreen gutter="end" fill header={header}>
@@ -66,7 +58,6 @@ export function SettingsSyncPage({ onBack }: SettingsSyncPageProps) {
 
   const busy = runner.phase === 'syncing' || runner.phase === 'restoring'
 
-  // Every answer but `needs-review` leaves the dialog shut, so each one says why.
   const reviewPending = async () => {
     const outcome = await runner.openReview()
     switch (outcome.kind) {
@@ -118,8 +109,6 @@ export function SettingsSyncPage({ onBack }: SettingsSyncPageProps) {
         </SettingsSection>
 
         <SettingsSection>
-          {/* A Sync needs the network now (ADR 0004): offline, the row says so instead of
-              silently doing nothing — the banner only speaks when something is pending. */}
           <SettingsRow
             kind="action"
             icon={<RefreshCw />}

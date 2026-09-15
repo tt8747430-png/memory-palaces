@@ -1,14 +1,4 @@
 // @vitest-environment node
-/**
- * Guest → account → second device, against a real Supabase stack.
- *
- * Skipped unless SUPABASE_TEST_URL / SUPABASE_TEST_KEY point at one — see
- * `replication.integration.test.ts` for the full run instructions.
- *
- * The claim is deliberately undramatic: the guest's documents are already on the device, so
- * "claiming" them is just starting replication under the new account id and letting the first push
- * stamp them. This test is what proves that.
- */
 import 'fake-indexeddb/auto'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { RxCollection, RxJsonSchema } from 'rxdb'
@@ -56,14 +46,11 @@ async function openDecks(): Promise<RxCollection<SyncDeck>> {
 
 const settle = (ms = 1500) => new Promise((resolve) => setTimeout(resolve, ms))
 
-/** Real network, real websockets: the default 5s is not a realistic budget. */
 const TIMEOUT = 60_000
 
 describe.skipIf(!URL || !KEY)('guest → account claim', () => {
   let supabase: SupabaseClient
   let userId: string
-  // Scoped to the ids this suite creates: the replication suite shares the test account and runs
-  // in parallel, so a blanket delete would break whichever suite is mid-assertion.
   const guestDeckIds: string[] = [crypto.randomUUID(), crypto.randomUUID()]
 
   beforeAll(async () => {
@@ -86,7 +73,6 @@ describe.skipIf(!URL || !KEY)('guest → account claim', () => {
   it(
     'pushes a guest’s decks into a fresh account and pulls them onto a second device',
     async () => {
-      // Device A studied as a guest.
       const deviceA = await openDecks()
       await deviceA.bulkUpsert(
         guestDeckIds.map((id, i) => ({
@@ -100,7 +86,6 @@ describe.skipIf(!URL || !KEY)('guest → account claim', () => {
       const managerA = SyncManager.fromSupabase(supabase, [
         { table: 'decks', collection: deviceA as unknown as RxCollection<Identifiable> },
       ])
-      // A guest owns nothing on the server, so the device has no owner to compare against.
       const transition = resolveDataTransition(null, userId)
       expect(transition).toBe('keep')
 
@@ -116,7 +101,6 @@ describe.skipIf(!URL || !KEY)('guest → account claim', () => {
       const { data: rows } = await supabase.from('decks').select('id,data').in('id', guestDeckIds)
       expect(rows).toHaveLength(2)
 
-      // Device B signs into the same account with an empty database.
       const deviceB = await openDecks()
       const managerB = SyncManager.fromSupabase(supabase, [
         { table: 'decks', collection: deviceB as unknown as RxCollection<Identifiable> },

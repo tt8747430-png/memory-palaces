@@ -3,10 +3,6 @@ import { useTranslation } from 'react-i18next'
 
 export type AlgorithmLineFrameProps = Omit<ComponentProps<'button'>, 'className'>
 
-/**
- * The sentence `AlgorithmLine` and `LockedAlgorithmLine` both say — "Learning algorithm:" and the
- * algorithm's name as a button. What pressing the name does is theirs: every prop lands on it.
- */
 export function AlgorithmLineFrame({ children, ...button }: AlgorithmLineFrameProps) {
   const { t } = useTranslation()
   return (

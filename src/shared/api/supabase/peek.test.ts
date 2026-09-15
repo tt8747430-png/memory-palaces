@@ -8,7 +8,6 @@ interface Call {
   filter: string
 }
 
-/** A PostgREST builder thin enough to record what was asked for and hand back rows. */
 function fakeSupabase(pages: Record<string, unknown[][]>) {
   const calls: Call[] = []
   const nextPage = new Map<string, number>()
@@ -154,7 +153,6 @@ describe('peek pagination', () => {
 
     expect(changes).toHaveLength(1000)
     expect(calls).toHaveLength(2)
-    // The second page continues from the last row, not from the original checkpoint.
     expect(calls[1]?.filter).toContain('d999')
   })
 })

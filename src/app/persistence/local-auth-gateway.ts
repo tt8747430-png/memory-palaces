@@ -11,12 +11,6 @@ import {
 
 const STORAGE_KEY = 'mindscape:auth'
 
-/**
- * The offline identity. Credentials are never checked and never stored — it exists so the app runs
- * with no Supabase project configured (offline dev, tests). Anything that needs a provider — social
- * sign-in, the redirect it lands on, and every password operation — throws rather than pretending to
- * succeed: a "password changed" toast for a password that was never set is worse than an error.
- */
 export class LocalAuthGateway implements AuthGateway {
   private readonly listeners = new Set<(auth: PersistedAuth | null) => void>()
 
@@ -29,7 +23,6 @@ export class LocalAuthGateway implements AuthGateway {
       email: input.email,
       name: input.name,
     })
-    // Nothing to confirm offline, so the session is open immediately.
     return { auth, sessionActive: true }
   }
 

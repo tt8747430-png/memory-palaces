@@ -9,23 +9,9 @@ export interface DeleteDeckDeps {
   cardStore: CardStore
   questionStore: QuestionStore
   storage: StoragePort
-  /** Null for a guest, or with no cloud configured — there is then no stored object to orphan. */
   userId: string | null
 }
 
-/**
- * Deletes a deck with everything inside it — subdecks, cards, questions — and the cover images none
- * of them point at any more.
- *
- * Questions used to be left behind: they belonged to a deck that no longer existed, invisible
- * everywhere, still counted by nothing and still synced. They also broke the Sync's promise that a
- * deleted deck took every child on the device with it, which is what lets a remote edit to one of
- * those children be asked about as a deletion of its own.
- *
- * The object cleanup is best-effort on purpose: offline there is nothing to delete against, and a
- * failure must not stop the deck from being deleted. Nothing is lost by leaving one behind, because
- * the account purge empties the whole prefix as its first step.
- */
 export async function deleteDeck(
   { deckStore, cardStore, questionStore, storage, userId }: DeleteDeckDeps,
   id: string,

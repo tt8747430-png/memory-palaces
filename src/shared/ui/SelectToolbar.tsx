@@ -8,11 +8,6 @@ import { type SelectActionHandlers, selectActionIcon } from './select-actions'
 export interface SelectToolbarProps {
   actions: SelectToolbarConfig
   handlers: SelectActionHandlers
-  /**
-   * The live selection — the toolbar ends it, the same way `SelectHeader` takes the selection it
-   * counts. Leaving select mode stands on the toolbar's corner so it is in reach with the actions,
-   * not only up in the header, without taking a column from them.
-   */
   selection: Pick<MultiSelect, 'exit'>
   className?: string
 }
@@ -31,8 +26,6 @@ export function SelectToolbar({ actions, handlers, selection, className }: Selec
       <CloseBadge
         size="md"
         corner="start"
-        // Not "Cancel": the header already offers one by that name, and two controls sharing a name
-        // on one screen leaves a screen reader with no way to tell them apart.
         label={t('selection.exitSelectMode')}
         onClick={selection.exit}
       />

@@ -16,8 +16,6 @@ vi.mock('@/widgets/splash', () => ({
   ),
 }))
 
-/** A fresh module registry per case: `Bootstrap` memoises the services promise at module scope so
- *  StrictMode's double mount cannot open the database twice. */
 async function renderBootstrap() {
   vi.resetModules()
   const { Bootstrap } = await import('./Bootstrap')
@@ -48,7 +46,6 @@ describe('Bootstrap', () => {
     await renderBootstrap()
     await screen.findByTestId('app')
 
-    // Services are ready but the animation is not: the splash stays, so a fast device does not flash.
     expect(screen.getByTestId('splash')).toBeInTheDocument()
 
     await finishAnimation()

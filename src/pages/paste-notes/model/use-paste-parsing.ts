@@ -39,10 +39,6 @@ export interface PasteParsing {
   skipHeader: boolean
   setSkipHeader: (value: boolean) => void
   cards: ParsedCard[]
-  /**
-   * What the paste suggests the deck be called — the first chapter header of pasted verses, empty
-   * for anything else. Several chapters in one paste still name the deck after the first.
-   */
   suggestedName: string
 }
 

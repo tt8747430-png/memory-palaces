@@ -38,8 +38,6 @@ export function DeckAppearanceSheet({ open, onOpenChange, deck }: DeckAppearance
     event?.preventDefault()
     if (!valid) return
     void editDeck(deckStore, deck.id, { name: name.trim(), color, icon })
-    // The cover is its own write: it may need to travel to storage, and the rest of the form must
-    // not wait on a network round-trip to close.
     if (image !== (deck.image ?? null)) {
       void setDeckImage({ store: deckStore, storage, userId }, deck.id, image)
     }

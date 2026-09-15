@@ -15,10 +15,6 @@ export type StudyDirection = 'front' | 'back'
 export const LEARNING_ALGORITHMS = ['fast', 'spaced'] as const
 export type LearningAlgorithm = (typeof LEARNING_ALGORITHMS)[number]
 
-/**
- * One list, not two: the shared resolver owns what a style may be, and the entity reuses it so a
- * new preset can never exist in the renderer without being valid in a deck's settings.
- */
 export const CARD_STYLE_PRESETS = CARD_STYLE_PRESET_IDS
 export type CardStylePreset = CardStylePresetId
 
@@ -33,15 +29,12 @@ export type TtsSide = (typeof TTS_SIDES)[number]
 
 export interface TtsSettings {
   side: TtsSide
-  /** Playback rate, 0.5–2. */
   rate: number
 }
 
-/** The card's body text is 14–40pt; `clampCardTextSize` is the shared enforcement. */
 export type CardStyle = CardStyleInput
 
 export interface SpacedAdvanced {
-  /** Minutes between the steps a new card walks before it graduates. */
   learningSteps: number[]
   graduatingInterval: number
   easyBonus: number
@@ -69,7 +62,6 @@ export interface DeckSettings {
   studyDirection: StudyDirection
   shuffleQuestions: boolean
   shuffleCards: boolean
-  /** The master switch for read-aloud; `tts` holds how it reads. */
   textToSpeech: boolean
   algorithm: LearningAlgorithm
   newCardsPerDay: number
@@ -79,11 +71,6 @@ export interface DeckSettings {
   advanced: SpacedAdvanced
 }
 
-/**
- * What a deck studies by — the whole algorithm screen. A subdeck's cards are queued in its main
- * deck's study session, so a subdeck following a schedule of its own would be studied by two at
- * once. These are read from the top of the tree (`resolveDeckSettings`); a subdeck never holds them.
- */
 export const MAIN_DECK_SETTINGS = [
   'algorithm',
   'newCardsPerDay',
@@ -108,10 +95,6 @@ export const DEFAULT_DECK_SETTINGS: DeckSettings = {
   advanced: DEFAULT_SPACED_ADVANCED,
 }
 
-/**
- * Deck settings arrive from forms, imports and replication alike, so the invariants live here
- * rather than in any one caller. Every factory runs them; nothing else has to remember to.
- */
 export function validateDeckSettings(settings: Partial<DeckSettings>): void {
   if (settings.algorithm !== undefined && !LEARNING_ALGORITHMS.includes(settings.algorithm)) {
     throw new Error(`Unknown learning algorithm: ${settings.algorithm}`)
@@ -175,19 +158,12 @@ export interface MakeDeckInput {
   settings?: Partial<DeckSettings>
 }
 
-/** `settings` with every key its main deck owns taken out. */
 export function withoutMainDeckSettings(settings: Partial<DeckSettings>): Partial<DeckSettings> {
   const kept = { ...settings }
   for (const key of MAIN_DECK_SETTINGS) delete kept[key]
   return kept
 }
 
-/**
- * The overrides a deck may hold where it stands. A subdeck sheds its main deck's settings the way it
- * sheds a folder: kept, they would sit unread under a value the learner cannot see. This is the
- * stored shape's rule, so it holds for every write; `updateDeckSettings` refuses a subdeck patch
- * carrying one outright, because a screen offering that change is a bug worth hearing about.
- */
 function settingsAt(parentId: string | null, settings: Partial<DeckSettings>) {
   return parentId === null ? { ...settings } : withoutMainDeckSettings(settings)
 }
@@ -218,15 +194,6 @@ export function makeDeck(input: MakeDeckInput): Deck {
   }
 }
 
-/**
- * Repairs a deck on the way into the store.
- *
- * The cover is the one field that can arrive wrong from a device this build does not control:
- * replication writes pulled rows straight into the collection without running a migration strategy,
- * so a device still on deck v3 pushes a full public URL after the buckets went private. Narrowing
- * it here — `coerceImagePath` — is `deckMigrations` 4's read-side twin, exactly as `coerceCardStyle`
- * is v3's. Without it, an un-migrated device's cover renders as unavailable on every other device.
- */
 export function completeDeck(deck: Deck): Deck {
   if (!deck.image) return deck
   const image = coerceImagePath(deck.image)

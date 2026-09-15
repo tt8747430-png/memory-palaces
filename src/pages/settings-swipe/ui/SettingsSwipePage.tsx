@@ -66,9 +66,6 @@ export function SettingsSwipePage({ onBack }: SettingsSwipePageProps) {
 
   const config = prefs.swipe[type]
 
-  // `selectEffectivePreferences` answers `DEFAULT_PREFERENCES` until the snapshot lands, so
-  // without this every control on this screen paints its default first and then flips — a learner
-  // with haptics off watches the switch turn itself on and back off on every cold start.
   if (!ready) return <ScreenLoading />
 
   return (

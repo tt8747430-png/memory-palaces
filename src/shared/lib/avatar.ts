@@ -10,11 +10,9 @@ export function coverSquare(width: number, height: number): CropRect {
 }
 
 const AVATAR_PX = 256
-/** Deck covers render larger than an avatar, so they get more pixels to work with. */
 export const DECK_IMAGE_PX = 512
 const AVATAR_QUALITY = 0.82
 
-/** Centre-crops to a square and re-encodes, so what is shown is exactly what gets uploaded. */
 export function fileToSquareImage(file: File, size: number = AVATAR_PX): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -41,10 +39,6 @@ export function fileToSquareImage(file: File, size: number = AVATAR_PX): Promise
   })
 }
 
-/**
- * Turns the data URL `fileToSquareImage` produced back into bytes, so the same processed image that
- * is shown locally is the one uploaded — no second, differently-cropped encode.
- */
 export function dataUrlToBlob(dataUrl: string): Blob {
   const [header, encoded] = dataUrl.split(',')
   if (!header || encoded === undefined) throw new Error('Not a data URL')

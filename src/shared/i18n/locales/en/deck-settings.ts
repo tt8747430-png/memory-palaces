@@ -1,4 +1,3 @@
-/** A deck's own settings: algorithm, card style, card actions, fast review, read-aloud. */
 export const deckSettings = {
   algorithmRow: 'Algorithm preset',
   cardStyle: 'Card style',

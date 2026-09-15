@@ -22,7 +22,6 @@ export interface DeckContentData {
   questions: ParsedQuestion[]
 }
 
-/** The least a card or question has to carry to be written out to a file. */
 export type CardLike = { front: string; back: string; hint?: string }
 export type QuestionLike = {
   prompt: string
@@ -33,10 +32,6 @@ export type QuestionLike = {
 
 export class ContentImportError extends Error {}
 
-/**
- * What a failed import says. Our own parse errors already explain themselves; anything else — a
- * read error, a bug — gets the caller's generic line rather than leaking a stack into a toast.
- */
 export function importErrorMessage(error: unknown, fallback: string): string {
   return error instanceof ContentImportError ? error.message : fallback
 }
@@ -289,7 +284,6 @@ export interface VerseChapter {
   cards: ParsedCard[]
 }
 
-/** What verses pasted before any "Book Chapter" header are filed under. */
 const UNTITLED_CHAPTER = 'Verses'
 
 function parseVerseChapters(text: string): VerseChapter[] {
@@ -342,10 +336,6 @@ export function parseVerses(text: string): ParsedCard[] {
   return parseVerseChapters(text).flatMap((c) => c.cards)
 }
 
-/**
- * The chapter headers a paste opened with, in the order they appeared — what a screen names a new
- * deck after. Verses pasted without a header contribute nothing to name a deck with.
- */
 export function verseChapterTitles(text: string): string[] {
   return parseVerseChapters(text)
     .map((c) => c.title)

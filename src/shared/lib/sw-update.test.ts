@@ -27,7 +27,6 @@ class FakeWorker {
   }
 }
 
-/** Mimics the parts of ServiceWorkerRegistration the watcher observes. */
 class FakeRegistration {
   installing: FakeWorker | null = null
   waiting: FakeWorker | null = null
@@ -51,7 +50,6 @@ class FakeRegistration {
     return Promise.resolve()
   }
 
-  /** A new worker is fetched and starts installing. */
   startInstall() {
     const worker = new FakeWorker()
     this.installing = worker
@@ -59,7 +57,6 @@ class FakeRegistration {
     return worker
   }
 
-  /** The browser moves the worker to `waiting` before firing `statechange`. */
   finishInstall(worker: FakeWorker) {
     this.installing = null
     this.waiting = worker
@@ -67,7 +64,6 @@ class FakeRegistration {
     worker.emitStateChange()
   }
 
-  /** The waiting worker is told to skip waiting and takes over. */
   activate(worker: FakeWorker) {
     this.waiting = null
     worker.state = 'activated'

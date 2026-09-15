@@ -2,13 +2,6 @@ import { describe, expect, it } from 'vitest'
 
 import { cn } from './cn'
 
-/**
- * `tailwind-merge` only knows Tailwind's own scales. Every size, radius and elevation in this app
- * is a custom name, so without being told the theme it filed all of them under whichever group its
- * fallback matched first — `text-label` as a *colour*, `rounded-card` as nothing at all. The result
- * was a merge that dropped a font size whenever a colour followed it and kept two radii that
- * cannot both apply. These tests are the theme, restated as behaviour.
- */
 describe('cn', () => {
   it('keeps a type size and a text colour side by side', () => {
     expect(cn('text-label', 'font-medium', 'text-heading')).toBe(

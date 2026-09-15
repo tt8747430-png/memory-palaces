@@ -1,4 +1,3 @@
-/** Sample values the kitchen-sink sections share. */
 import { DECK_COLOR_OPTIONS } from '@/entities/deck'
 
 export const FIRST_COLOR = DECK_COLOR_OPTIONS[0]?.value ?? ''

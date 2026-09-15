@@ -3,7 +3,6 @@ import { IconButton } from './primitives'
 
 export interface StepperRowProps {
   label: string
-  /** Already formatted — a point size, a rate with its multiplier sign. */
   value: string
   decreaseLabel: string
   increaseLabel: string
@@ -13,10 +12,6 @@ export interface StepperRowProps {
   canIncrease?: boolean
 }
 
-/**
- * A settings row that steps one number. Both settings surfaces that step a value use this, so the
- * two rows keep the same touch targets and the same reading order.
- */
 export function StepperRow({
   label,
   value,

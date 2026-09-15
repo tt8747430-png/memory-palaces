@@ -9,11 +9,6 @@ export interface StoreContext<State> {
   useStoreApiOptional: () => StoreApi<State> | null
 }
 
-/**
- * The context plumbing an entity slice exposes: a provider context, a selector hook, and the escape
- * hatch handing the store itself to commands. `name` only shapes the error thrown when a consumer
- * renders outside the provider.
- */
 export function createStoreContext<State>(name: string): StoreContext<State> {
   const StoreContext = createContext<StoreApi<State> | null>(null)
 

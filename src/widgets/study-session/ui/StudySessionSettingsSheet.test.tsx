@@ -78,7 +78,6 @@ describe('StudySessionSettingsSheet', () => {
   it('pins a close bar that only dismisses the sheet', async () => {
     const user = userEvent.setup()
     const props = setup()
-    // Named apart from the header's icon dismiss, so the two are distinguishable by name alone.
     await user.click(await screen.findByRole('button', { name: 'Close settings' }))
     expect(props.onClose).toHaveBeenCalledTimes(1)
     expect(props.onFinish).not.toHaveBeenCalled()

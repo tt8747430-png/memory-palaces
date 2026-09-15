@@ -23,9 +23,7 @@ export interface MatchState {
 }
 
 export type MatchAction =
-  | { type: 'pick'; tileId: string }
-  | { type: 'clearWrong' }
-  | { type: 'reset'; tiles: Tile[] }
+  { type: 'pick'; tileId: string } | { type: 'clearWrong' } | { type: 'reset'; tiles: Tile[] }
 
 export const MAX_PAIRS = 6
 

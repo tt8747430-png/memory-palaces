@@ -64,8 +64,6 @@ async function setup(
 
   Object.defineProperty(navigator, 'onLine', { value: online, configurable: true })
 
-  // The session store owns its own writes and is never `start()`ed, so it is set the way
-  // AuthProvider sets it.
   const sessionStore = createSessionStore(new InMemoryRepository<Session>())
   await sessionStore
     .getState()

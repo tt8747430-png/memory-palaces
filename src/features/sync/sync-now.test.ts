@@ -187,7 +187,6 @@ describe('syncNow', () => {
 
       await syncNow(deps)
 
-      // That row was never classified, so the next Sync has to see it.
       const next = await cloud.peek('decks', state(deps).checkpoints.decks ?? null)
       expect(next.map((change) => change.id)).toContain('mid-sync')
       expect(state(deps).cloudChanged).toBe(true)

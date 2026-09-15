@@ -51,7 +51,6 @@ describe('mergeProgress', () => {
     const merged = mergeProgress(local, remote)
 
     expect(merged.activeDayKey).toBe('2026-07-21')
-    // A new day restarts the counter, so yesterday's larger total is not today's.
     expect(merged.activeDayCount).toBe(2)
     expect(mergeProgress(remote, local)).toEqual(merged)
   })

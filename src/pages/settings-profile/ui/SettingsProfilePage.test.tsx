@@ -236,7 +236,6 @@ describe('SettingsProfilePage', () => {
     await user.click(within(sheet).getByRole('button', { name: /schedule deletion/i }))
 
     await waitFor(() => expect(deletion.request).toHaveBeenCalled())
-    // Once to open the confirmation, once more right before the wipe.
     expect(runner.run).toHaveBeenCalledTimes(2)
     expect(resetLocalData).toHaveBeenCalled()
     expect(onDeleteAccount).toHaveBeenCalled()

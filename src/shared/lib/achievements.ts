@@ -1,8 +1,3 @@
-/**
- * Every achievement, in display order. The one list — id union, earning rules and the
- * `isAchievementId` route guard all derive from it — so adding one is a single edit the compiler
- * chases.
- */
 export const ACHIEVEMENT_IDS = [
   'first-deck',
   'week-warrior',

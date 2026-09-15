@@ -23,7 +23,6 @@ import { StudySessionHeader } from './StudySessionHeader'
 
 afterEach(cleanup)
 
-/** The height utility the bar row actually resolves to, or `undefined` when it sets none. */
 const barHeight = (ui: ReactElement) => {
   const { container, unmount } = renderWithProviders(ui)
   const bar = container.querySelector('header > div')?.className ?? ''
@@ -87,18 +86,12 @@ describe('Header', () => {
   })
 
   it('gives a study session a row of its own height, and says so', () => {
-    // Not the app's 64px, and not by overriding it either: the count pill, the track and a chip
-    // row stack inside this header, so `study` is its own entry in `LAYOUT`.
     expect(
       barHeight(<StudySessionHeader title="Physics" backLabel="Back" onBack={() => {}} />),
     ).toBeUndefined()
   })
 
   it('answers to the selector the reveal band looks it up by', () => {
-    // The regression this catches is silent: rename the slot and `useKeyboardReveal` finds
-    // nothing, the band falls back to the scroller's own top, and a focused field is revealed
-    // under the bar. Rendering the real shell is the point — a hand-built DOM would pass either
-    // way. ADR 0002 / CODE_STYLE §11.
     const { container } = renderWithProviders(
       <AppScreen header={<ScreenHeader title="Deck" onBack={() => {}} backLabel="Back" />}>
         <input aria-label="Name" />

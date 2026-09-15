@@ -369,15 +369,6 @@ export const notificationSchema: RxJsonSchema<AppNotification> = {
   required: ['id', 'createdAt', 'updatedAt', 'type', 'read'],
 }
 
-/**
- * The Learning history. It mirrors to the cloud like the content collections, but records no
- * pending change: an entry is one answer at one moment and is never edited, so it cannot diverge
- * and there is nothing to ask anyone about. Its conflict handler is `firstWriteWins`.
- *
- * Only the four fields every entry has are required. The rest are decided by `kind`, and an absent
- * `intervalBefore` is load-bearing rather than merely optional: it is what says the Card had no
- * schedule yet, which `0` — where a lapse leaves a Card — does not.
- */
 export const historySchema: RxJsonSchema<HistoryEntry> = {
   version: 0,
   primaryKey: 'id',
@@ -399,20 +390,6 @@ export const historySchema: RxJsonSchema<HistoryEntry> = {
   indexes: ['cardId'],
 }
 
-/**
- * The device's log of writes a Sync has not confirmed yet.
- *
- * No `updatedAt`, and that is load-bearing twice over: it says the collection is device-local (it
- * is not in `SYNCED_TABLES`, and `RxdbRepository.remove` reads the absence of a clock as "no
- * tombstone needed"), and it keeps the log from competing on the same clock as the documents it
- * describes. `at` is when the write happened, for the user-facing ordering.
- *
- * `contentCollection` rather than the obvious `collection`: RxDB builds a document's prototype from
- * its schema and then assigns `this.collection` on the instance, so a field by that name shadows
- * the assignment with a getter and every document of this collection throws on construction. The
- * write still reaches storage and the read side dies afterwards, which is a log that poisons itself
- * on first use — v1 renames the field. See `schemas.test.ts`, which holds every schema to the rule.
- */
 export const pendingChangeSchema: RxJsonSchema<PendingChange> = {
   version: 1,
   primaryKey: 'id',
@@ -428,17 +405,6 @@ export const pendingChangeSchema: RxJsonSchema<PendingChange> = {
   indexes: ['contentCollection'],
 }
 
-/**
- * This device's sync bookkeeping. Device-local for the same reasons as `pendingChanges`, and a
- * singleton — there is one `sync-state` document, keyed by a constant.
- *
- * `checkpoints` is a map keyed by table name with no required keys, so adding a table to
- * `SYNCED_TABLES` is not a schema change. A missing key reads as "cloud position unknown", which
- * the next peek resolves by starting from the epoch.
- *
- * v1 carries the change of heart about Autosync onto devices that already hold a document: the
- * default moved from off to on, and a default only reaches a device that has never stored one.
- */
 export const syncStateSchema: RxJsonSchema<SyncState> = {
   version: 1,
   primaryKey: 'id',

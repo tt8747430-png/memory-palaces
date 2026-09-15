@@ -26,7 +26,6 @@ import { DeckSettingsPage, type DeckSettingsPageProps } from './DeckSettingsPage
 
 afterEach(cleanup)
 
-/** `mainDeck` makes d1 a subdeck of a main deck holding those settings. */
 function renderPage(
   settings: Partial<DeckSettings> = {},
   props: Partial<DeckSettingsPageProps> = {},
@@ -129,10 +128,6 @@ describe('DeckSettingsPage', () => {
     expect(onOpenTts).toHaveBeenCalled()
   })
 
-  /**
-   * The row used to navigate straight to the review screen, which renders nothing without a draft
-   * and bounced the learner back out. It opens the two import doors instead.
-   */
   it('opens the import sheet rather than an empty review screen', async () => {
     const user = userEvent.setup()
     const onPasteNotes = vi.fn()

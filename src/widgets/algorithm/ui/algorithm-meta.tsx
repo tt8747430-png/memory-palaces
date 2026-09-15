@@ -9,10 +9,6 @@ export interface AlgorithmMeta {
   bodyKey: string
 }
 
-/**
- * One description of each algorithm, shared by the picker, the settings rows and deck detail — so
- * the deck's face and the sheet that changes it can never name the same choice differently.
- */
 export const ALGORITHM_META: Record<LearningAlgorithm, AlgorithmMeta> = {
   fast: {
     icon: <Layers className="size-5 text-accent" aria-hidden />,

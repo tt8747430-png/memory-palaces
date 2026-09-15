@@ -45,12 +45,6 @@ describe('CardEditorPage', () => {
     await waitFor(async () => expect((await repo.getById('c1'))?.front).toBe('Newton'))
   })
 
-  /**
-   * The other half of the report the study screen's fixed card answered: long text must scroll,
-   * never grow the page and carry the bar off the bottom edge. Two things hold it — the fields do
-   * not grow (`Textarea` is a fixed `rows` with `resize-none`), and the bar lives in `AppScreen`'s
-   * sticky dock rather than at the end of the content, so the port keeps it whatever is above it.
-   */
   it('keeps the card nav docked under content too long to fit', async () => {
     renderPage([card('c1', 'Front', LONG), card('c2', 'Second')], {
       cardId: 'c1',
@@ -68,7 +62,6 @@ describe('CardEditorPage', () => {
     expect(back).toHaveClass('resize-none')
   })
 
-  /** The dock is the body's own last child, so the keyboard's range is scrolled, never padded. */
   it('gives the scroll body the keyboard range under the dock', async () => {
     renderPage([card('c1', 'Front'), card('c2', 'Second')], {
       cardId: 'c1',

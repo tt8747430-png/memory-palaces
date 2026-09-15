@@ -40,11 +40,6 @@ const DIRECTION_META: { direction: SwipeDirection; icon: ReactNode; labelKey: st
   },
 ]
 
-/**
- * The card's own settings — what this mode does, what this card does.
- * Study-session-wide settings (filters, orientation, shuffle, TTS…) live in
- * `StudySessionSettingsSheet`, reached from the header.
- */
 export function GearSheet({ open, onClose, mode, quick, settings }: GearSheetProps) {
   const { t } = useTranslation()
   const { value, set } = settings
@@ -62,9 +57,6 @@ export function GearSheet({ open, onClose, mode, quick, settings }: GearSheetPro
       onOpenChange={(next) => !next && onClose()}
       title={t('study.optionsTitle')}
       footer={
-        // Where the old Finish bar sat. Stopping the study session belongs to
-        // `StudySessionSettingsSheet`; what a long options list needs pinned in thumb reach is the
-        // way out of it.
         <Button variant="secondary" className="w-full" onClick={onClose}>
           {t('study.closeSettings')}
         </Button>

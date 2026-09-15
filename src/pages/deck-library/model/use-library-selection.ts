@@ -24,10 +24,6 @@ interface Args {
   folderId: string | null
 }
 
-/**
- * Library selection over the shared multi-select: a folder stands alone, touching a deck carries
- * its whole top-level branch. Changing folder clears it.
- */
 export function useLibrarySelection({
   decks,
   folderIds,

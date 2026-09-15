@@ -4,29 +4,10 @@
     <meta charset="UTF-8" />
     <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
     <link href="/apple-touch-icon.png" rel="apple-touch-icon" />
-    <!-- interactive-widget=resizes-visual: spec default, but load-bearing, not boilerplate.
-       keyboard-viewport.ts measures --app-height − vv.height − offsetTop — valid only while the
-       LAYOUT viewport holds. resizes-content shrinks both (Chrome 108+, FF 132+) → difference ~0
-       → keyboard never detected → no --kb-inset, no scroll range, no reveal. WebKit implements
-       none (webkit.org/b/259770), so this keeps iOS + Android on one path. Do not "modernise".
-       ADR 0002.
-
-       Zoom is decided at boot, not here: installed, the app locks it so a pinch reads as a
-       gesture the app owns rather than a page being scaled; in a browser tab it stays a page and
-       stays zoomable, which is where anyone who needs to magnify the content still can. The
-       script below switches this tag. `maximum-scale` + `user-scalable=no` are honoured exactly
-       where it matters — an iOS home-screen app and an Android install — and ignored only by
-       Safari in a tab (iOS 10+), which is the case deliberately left zoomable anyway.
-
-       Either way text-entry controls are 16px (--p-text-entry, theme.css) so iOS never zooms the
-       visual viewport on focus — a separate mechanism for a separate zoom, and that one would
-       move the ground under every measurement described above. -->
     <meta
       content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-visual"
       name="viewport"
     />
-    <!-- Android/Chrome only: iOS ignores theme-color in standalone and paints the status bar from
-       the style below instead. -->
     <meta content="#091A7A" media="(prefers-color-scheme: light)" name="theme-color" />
     <meta content="#0B1533" media="(prefers-color-scheme: dark)" name="theme-color" />
     <meta content="yes" name="mobile-web-app-capable" />
@@ -45,9 +26,6 @@
     <title>Mindscape — Your Memory Palace</title>
     <script>
       ;(function () {
-        /* Paints in the right theme. The preference itself lives in RxDB, which cannot be read
-         before first paint, so ThemeProvider mirrors the resolved theme to localStorage on every
-         change and this reads the mirror. Without it every launch painted light, then flipped. */
         try {
           var stored = localStorage.getItem('mindscape:theme')
           document.documentElement.dataset.theme =
@@ -60,10 +38,6 @@
           document.documentElement.dataset.theme = 'light'
         }
 
-        /* Installed, the app is an app: a pinch is not a page being scaled, and double-tap must
-         not cost a tap its response. In a browser tab it is still a page, so zoom stays — an
-         install is the user asking for the app, and the zoomable copy is one tab away.
-         iOS reports the home-screen case through navigator.standalone as well as display-mode. */
         try {
           var installed =
             window.matchMedia('(display-mode: standalone)').matches ||
@@ -74,9 +48,7 @@
               'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no,' +
               ' viewport-fit=cover, interactive-widget=resizes-visual'
           }
-        } catch (_) {
-          /* Leave the zoomable default in place. */
-        }
+        } catch (_) {}
       })()
     </script>
   </head>

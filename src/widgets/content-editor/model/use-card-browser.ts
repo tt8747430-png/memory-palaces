@@ -13,7 +13,6 @@ import {
 } from '@/shared/lib'
 import { CARD_EASE, SPRING } from '../ui/browser-poses'
 
-/** A page turn: far enough, or short and fast. Per axis — see `resolveFling`. */
 const TURN: FlingThresholds = { distance: 70, speed: 0.45 }
 
 export type EnterFrom = 'behind' | 'edge' | null
@@ -28,7 +27,6 @@ export interface CardBrowserState {
   rotate: ReturnType<typeof useTransform<number, number>>
   go: (delta: number) => void
   bind: ReturnType<typeof useDrag>
-  /** Spread beside `bind()`: the card is a swipe surface like any row. */
   surface: SurfaceProps
   offscreen: () => number
 }
@@ -66,8 +64,6 @@ export function useCardBrowser({
     setEnterFrom(null)
     animating.current = false
     x.set(0)
-    // Re-seeds per opening, not per list change: editing a card mid-browse must not throw the
-    // reader back to the card it opened on.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, startId])
 
@@ -77,17 +73,12 @@ export function useCardBrowser({
     else if (index > count - 1) setIndex(count - 1)
   }, [open, count, index, onClose])
 
-  // The browser owns the finger while a card is being turned, so anything left displaced behind it
-  // puts itself back; taken over, the card returns to its place in the deck — unless the turn is
-  // already under way, which nothing should interrupt.
   const { surface, hold, drop } = useGestureHold(() => {
     if (!animating.current) animate(x, 0, SPRING)
   })
 
   const offscreen = () => (shellRef.current?.offsetWidth ?? 430) + 48
 
-  // The claim is given up when the card has landed, not at the lift: a card still crossing the
-  // screen is displaced, and the next touch has to be able to put it back.
   const go = (delta: number) => {
     const next = index + delta
     if (animating.current || next < 0 || next > count - 1) {
@@ -131,7 +122,6 @@ export function useCardBrowser({
           setFlipped((value) => !value)
           return
 
-        // A gesture the platform cancelled turns no page.
         case 'canceled':
           animate(x, 0, SPRING)
           drop()

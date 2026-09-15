@@ -17,7 +17,6 @@ export function ViewportReadout({
 }: {
   sample: ViewportSample
   className?: string
-  /** The verdicts are the reading; the raw rows are the evidence, and the overlay hides them. */
   rows?: boolean
 }) {
   const checks = checkViewport(sample)

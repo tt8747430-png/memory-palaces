@@ -11,7 +11,6 @@ import type { Folder } from './types'
 export type FolderState = CollectionState<'folders', Folder>
 export type FolderStore = StoreApi<FolderState>
 
-/** `pending` is what records a write the cloud has not confirmed; absent, the store syncs nothing. */
 export function createFolderStore(
   repo: FolderRepository,
   pending?: PendingChangePort,

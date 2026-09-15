@@ -7,11 +7,6 @@ import { childDecks, cn, decksInFolder, findEntity, rootDecks, toggleInSet } fro
 import { Button, DeckCover, FolderGlyph, Sheet } from '@/shared/ui'
 import type { MoveDestination } from '../model/move-destination'
 
-/**
- * Which rows a picker offers. `any` is the library's own set — a deck can also live in a folder, at
- * home, or in the archive. `deck` is for content that only ever lives in a deck: folders still show
- * as groups to find a deck by, but they cannot be picked.
- */
 export type MoveTargets = 'any' | 'deck'
 
 function destKey(d: MoveDestination): string {
@@ -34,9 +29,7 @@ export interface MoveSheetProps {
   excludeIds: ReadonlySet<string>
   onPick: (dest: MoveDestination) => void
   targets?: MoveTargets
-  /** Overrides the sheet title. Defaults to "Select location". */
   title?: string
-  /** Offered only when folders are pickable. */
   onNewFolder?: () => void
 }
 
@@ -248,7 +241,6 @@ function Row({
   glyph: ReactNode
   label: string
   selected: boolean
-  /** A row that cannot be picked still opens and closes, so it works as a group header. */
   selectable?: boolean
   disabled?: boolean
   onSelect: () => void

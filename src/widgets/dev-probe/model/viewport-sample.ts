@@ -1,7 +1,3 @@
-/**
- * Measurement: what the viewport is doing right now, and which ADR 0002 rule each number breaks.
- * Formatting lives in `viewport-text.ts` and the per-frame sampler in `use-viewport-probe.ts`.
- */
 import {
   CHROME,
   isTextField,
@@ -22,7 +18,6 @@ export interface ViewportSample {
   appHeight: string
   kbInset: string
   kbRange: string
-  /** `false` while `--kb-inset` is the remembered height standing in for a measurement. */
   kbMeasured: boolean
   keyboardAttr: boolean
   scroller: string
@@ -54,10 +49,6 @@ const px = (value: string) => {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
-/**
- * The node the reveal is attached to, preferring the one holding the focused field — `AppScreen`,
- * `AuthScreen` and every open `CardFace` attach their own.
- */
 function revealScroller(active: Element | null): HTMLElement | null {
   const owner = active?.closest(`[${REVEAL_SCROLL_ATTR}]`)
   if (owner instanceof HTMLElement) return owner
@@ -72,7 +63,6 @@ export function readViewport(): ViewportSample {
   const active = document.activeElement
   const attached = revealScroller(active)
   const scroller = attached ?? document.querySelector('main')
-  // Exactly the lookups `useKeyboardReveal` makes, so the band below is the band it would use.
   const header =
     scroller?.parentElement?.querySelector(CHROME.header) ?? document.querySelector(CHROME.header)
   const footer = scroller?.querySelector(CHROME.footer)
@@ -131,16 +121,10 @@ export function readViewport(): ViewportSample {
 export interface ProbeCheck {
   id: string
   label: string
-  /** `idle` is "nothing to judge yet" — no keyboard, no field — not a pass. */
   state: 'ok' | 'bad' | 'idle'
   detail: string
 }
 
-/**
- * Readout says what the numbers are; this says which is the fault. Every check is one rule from
- * ADR 0002 as arithmetic, so a still reading can be pasted into a bug report and read by someone
- * who was not holding the phone.
- */
 export function checkViewport(sample: ViewportSample): ProbeCheck[] {
   const app = px(sample.appHeight) || sample.layoutHeight
   const inset = px(sample.kbInset)
@@ -148,10 +132,7 @@ export function checkViewport(sample: ViewportSample): ProbeCheck[] {
   const stored = Number.parseInt(sample.stored, 10)
   const sum = sample.vvOffsetTop + sample.vvHeight + inset
   const slack = sample.scrollMax - sample.scrollTop
-  /** Keyboard's own height, screen space — what the inset would be with no pan under it. */
   const keyboard = app - sample.vvHeight
-  // Attribute, not inset: a keyboard panned nearly out of the layout viewport is up, and covering
-  // almost none of the shell.
   const open = sample.keyboardAttr
   const delta = sample.revealDelta
   const available = delta > 0 ? slack : sample.scrollTop
@@ -179,8 +160,6 @@ export function checkViewport(sample: ViewportSample): ProbeCheck[] {
           : `${Math.abs(delta)}px ${delta < 0 ? 'above' : 'below'} the band ${sample.bandTop}…${sample.bandBottom}`,
     },
     {
-      // The reveal is `node.scrollTop += delta`, nothing more: without room to move it writes a
-      // number the scroller clamps away, and iOS finishes the job by panning.
       id: 'slack',
       label: 'scroll range',
       state: delta === 0 ? 'idle' : available >= Math.abs(delta) ? 'ok' : 'bad',
@@ -202,9 +181,6 @@ export function checkViewport(sample: ViewportSample): ProbeCheck[] {
           : `padding-bottom ${sample.padBottom} < --kb-range ${range}: this scroll body has no keyboard range`,
     },
     {
-      // Not "is the inset large enough" — under a pan an inset below the remembered height is
-      // *correct*, and comparing the two is what let the fault below read as clean. Asks the one
-      // question a still reading cannot answer for itself: measurement, or reserve?
       id: 'inset',
       label: 'keyboard measured',
       state: !open ? 'idle' : sample.kbMeasured ? 'ok' : 'bad',
@@ -217,10 +193,6 @@ export function checkViewport(sample: ViewportSample): ProbeCheck[] {
           : `${inset}px reserved${Number.isFinite(stored) ? ` from the remembered ${stored}px` : ''}: the keyboard never reported itself, so the reveal band sits ${sum - app}px above the screen`,
     },
     {
-      // The only check that catches a live reserve: `--kb-inset` balances by construction *while it
-      // is a measurement*, so the two states it breaks in — a reserve that never became one, and a
-      // sample read mid-resize — are exactly the two worth catching. Not a tautology; verified on
-      // device 2026-07-31.
       id: 'balance',
       label: 'top+vv+kb',
       state: sum === app ? 'ok' : 'bad',
@@ -260,23 +232,9 @@ export function checkViewport(sample: ViewportSample): ProbeCheck[] {
   ]
 }
 
-/**
- * One keyboard, from the resting reading it interrupted to the one it settled into. The pair is the
- * unit worth reading: every number here is a difference — pan, inset, rects, scroll position — so a
- * lone reading forces whoever gets it to guess the other half.
- */
 export interface KeyboardEpisode {
-  /** Last reading with no keyboard and no reserve. `null` if the probe started mid-open. */
   before: ViewportSample | null
-  /**
-   * The frame the keyboard **settled** on — the last open one whose numbers agree. Emphatically not
-   * the last open frame: iOS dismisses over several frames and the probe samples faster than the
-   * module re-measures, so the final frame carrying an inset is one frame into the close, a restored
-   * `visualViewport` against a stale inset. Four of the first five device readings were that frame,
-   * and every verdict on them was noise.
-   */
   after: ViewportSample
-  /** Still on screen: `after` is this keyboard's own reading, not the one it closed on. */
   live: boolean
 }
 
@@ -284,12 +242,6 @@ export function isKeyboardOpen(sample: ViewportSample): boolean {
   return sample.keyboardAttr
 }
 
-/**
- * Do a reading's three viewport numbers agree? They are one identity — pan + visual viewport +
- * inset = the anchored shell — so a reading that breaks it was taken mid-resize (fresh
- * `visualViewport`, inset a frame behind) or on a reserve that never became a measurement. Neither
- * describes the keyboard that was up.
- */
 export function isSettled(sample: ViewportSample): boolean {
   const app = px(sample.appHeight) || sample.layoutHeight
   return sample.vvOffsetTop + sample.vvHeight + px(sample.kbInset) === app

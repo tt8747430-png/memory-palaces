@@ -41,8 +41,6 @@ describe('SettingsPrivacyPage', () => {
 
   it('offers no switch, because nothing reads what a switch would write', () => {
     renderPage()
-    // A control that changes nothing must not look like one that does — "Data encryption"
-    // used to render already on, over an unencrypted IndexedDB store.
     expect(screen.queryAllByRole('switch')).toHaveLength(0)
     expect(screen.getByRole('button', { name: /data encryption/i })).toBeDisabled()
   })

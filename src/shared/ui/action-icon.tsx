@@ -33,7 +33,6 @@ const ACTION_ICON: Record<ActionId, LucideIcon> = {
   delete: Trash2,
 }
 
-/** Renders an action's icon; the surface picks the size via `className`. */
 export function actionIcon(id: ActionId, className = 'size-5'): ReactNode {
   const Icon = ACTION_ICON[id]
   return <Icon className={className} aria-hidden />

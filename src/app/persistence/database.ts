@@ -52,11 +52,6 @@ export interface AppCollections {
 
 addRxPlugin(RxDBMigrationSchemaPlugin)
 
-/**
- * v2 made Type mode's initials-only recall a stored preference instead of a toggle that lived and
- * died with the study session. Required by the schema, so a document written before it has to be
- * given the answer the toggle used to start on.
- */
 export const preferencesMigrations = {
   1: (doc: Preferences) => ({ ...doc, selectToolbar: DEFAULT_SELECT_TOOLBAR }),
   2: (doc: Preferences) => ({
@@ -65,38 +60,10 @@ export const preferencesMigrations = {
   }),
 }
 
-/**
- * v1 turns Autosync on. It ships as a migration rather than a default alone because a default is
- * only ever read by a device with no document, and any device that has synced once already has
- * one — it would keep the old answer forever while the app claimed the opposite.
- *
- * It overrides a stored `false`, and that includes one the user chose by turning the toggle on and
- * back off again. There is no way to tell that apart from a `false` nobody ever touched, because
- * the field records the setting and not whether anyone set it. Moving a default onto devices that
- * already hold a document costs exactly this, it is paid once, and the toggle is where it always
- * was: off after this release stays off.
- *
- * No read-side twin — and here one would be wrong rather than merely unnecessary. `syncState` is
- * absent from `SYNCED_TABLES`, so no row of it ever arrives by replication; and a twin coercing
- * `false` to `true` on the way in is precisely what would make the toggle impossible to turn off.
- *
- * The document's shape did not change, only the default did, so a v0 document is already a
- * `SyncState` — this is a version bump whose whole purpose is to re-answer one field.
- */
 export const syncStateMigrations = {
   1: (doc: SyncState): SyncState => ({ ...doc, autosync: true }),
 }
 
-/**
- * v1 renamed `collection` to `contentCollection`. A device that ran a build with the old field has
- * rows on disk it could never read back — the rename is what makes them readable, so the entries
- * are carried over rather than dropped: they are the only record of which local writes a Sync has
- * not confirmed, and the destructive-divergence question is asked from them.
- *
- * No read-side twin, and that is the one case where the rule does not bite: `pendingChanges` is
- * absent from `SYNCED_TABLES`, so no row of it ever arrives by replication and this device is the
- * only writer there is to repair.
- */
 export const pendingChangeMigrations = {
   1: ({
     collection,
@@ -106,40 +73,8 @@ export const pendingChangeMigrations = {
   }): PendingChange => ({ ...rest, contentCollection: collection }),
 }
 
-/**
- * The card-style presets a version has retired, each mapped to what it becomes. Keyed by `string`
- * because a retired id is by definition no longer a `CardStylePreset` — and a map rather than a
- * constant because one retirement is a list waiting to happen, and the next one should be a line
- * here rather than another shape.
- */
 const RETIRED_PRESETS: Record<string, CardStylePreset> = { outlined: 'plain' }
 
-/**
- * A deck written before this version simply lacks the new settings keys, and `resolveDeckSettings`
- * already answers a missing key with the default — so there is nothing to rewrite. The version bump
- * exists because the schema's shape changed, not because the documents did.
- *
- * v2 widened the card-style preset enum for the two new scenes. Nothing was renamed or removed, so
- * every preset a v1 deck can be carrying is still one v2 accepts, and this is identity too.
- *
- * v3 is the first that is not. It widened the enum again — five new scenes and a handwriting face —
- * but it also *removed* `outlined`, so a deck still carrying that preset names a value the schema
- * will not accept, and the collection would refuse to write it. Only the preset is replaced: the
- * font, size and alignment are the learner's own choices and survive the repaint, which is what the
- * spread says. A document missing some of those keys stays missing them, because that is already
- * answered a layer up — `resolveDeckSettings` fills an absent key with the default on read.
- *
- * This covers the documents on *this* device and nothing else. Replication writes pulled rows
- * straight into the collection without running a migration strategy, so a second device that has
- * not upgraded can still deliver `outlined` afterwards; `coerceCardStyle` is what catches that, and
- * the two are deliberate halves of the same guarantee.
- *
- * v4 is the same shape of change for a different field. The buckets went private, so a cover is
- * stored as its `<userId>/<entityId>` object path rather than a public URL. An inline `data:` value
- * is left alone — it is a waypoint, not a URL — and an unrecognised string is preserved rather than
- * discarded. The strategy *is* the read-side repair, `completeDeck` — one function run on the way in
- * for pulled rows and once here for stored ones, so the two can never disagree.
- */
 export const deckMigrations = {
   1: (doc: Deck) => doc,
   2: (doc: Deck) => doc,
@@ -152,26 +87,18 @@ export const deckMigrations = {
   4: completeDeck,
 }
 
-/** Frozen and reversed are required, so every card that predates them is given the quiet answer. */
 export const cardMigrations = {
   1: (doc: Card) => ({ ...doc, frozen: doc.frozen ?? false, reversed: doc.reversed ?? false }),
 }
 
-/** Where the phone number was kept back when it never left the device. */
 const LEGACY_PHONE_KEY = 'mindscape:phone'
 
-/**
- * The phone number used to live in localStorage, so it was lost on reinstall and invisible on a
- * second device. It is a profile field now: the migration lifts whatever was stored into the
- * document that syncs, and drops the key behind it.
- */
 export const profileMigrations = {
   1: (doc: Profile) => {
     const phone = localStorage.getItem(LEGACY_PHONE_KEY) ?? ''
     localStorage.removeItem(LEGACY_PHONE_KEY)
     return { ...doc, phone }
   },
-  /** The avatar bucket went private: a stored public URL becomes its object path. See `deckMigrations` 4. */
   2: (doc: Profile) => ({ ...doc, avatar: coerceImagePath(doc.avatar) }),
 }
 
@@ -179,9 +106,6 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
   storage: RxStorage<Internals, InstanceCreationOptions>,
 ): Promise<AppCollections> {
   const database = await createRxDatabase({ name: STORAGE_PREFIX, storage })
-  // Conflict handlers only ever run for replicated collections, but they belong to the collection,
-  // not the replication — so they are declared once here. `notifications`, `pendingChanges` and
-  // `syncState` are device-local and deliberately keep RxDB's default.
   const collections = await database.addCollections({
     decks: {
       schema: deckSchema,

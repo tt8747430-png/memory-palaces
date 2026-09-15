@@ -71,9 +71,6 @@ export function SettingsSelectPage({ onBack }: SettingsSelectPageProps) {
   }
   const resetAll = () => void setPreferences(store, { selectToolbar: DEFAULT_SELECT_TOOLBAR })
 
-  // `selectEffectivePreferences` answers `DEFAULT_PREFERENCES` until the snapshot lands, so
-  // without this every control on this screen paints its default first and then flips — a learner
-  // with haptics off watches the switch turn itself on and back off on every cold start.
   if (!ready) return <ScreenLoading />
 
   return (

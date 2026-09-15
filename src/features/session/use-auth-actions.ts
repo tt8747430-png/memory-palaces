@@ -12,14 +12,12 @@ import { requestPasswordReset } from './request-password-reset'
 import { setPassword, type SetPasswordInput } from './set-password'
 
 export interface AuthActions {
-  /** Resolves with `sessionActive: false` when the account still needs email confirmation. */
   signUp: (input: SignUpWithEmailInput) => Promise<{ sessionActive: boolean }>
   signIn: (input: SignInWithEmailInput) => Promise<void>
   signInWithProvider: (provider: OAuthProvider) => Promise<void>
   continueAsGuest: () => Promise<void>
   signOut: () => Promise<void>
   requestPasswordReset: (email: string) => Promise<void>
-  /** Pass `verify` whenever the person is signed in and knows the old password. */
   setPassword: (input: SetPasswordInput) => Promise<void>
 }
 
@@ -37,7 +35,6 @@ export function useAuthActions(): AuthActions {
         return result
       },
       signIn: (input) => signInWithEmail(deps, input),
-      // Redirect-based, and not a store write: the session lands on /auth/callback, not here.
       signInWithProvider: (provider) => gateway.signInWithProvider(provider),
       continueAsGuest: () => continueAsGuest(deps),
       signOut: () => signOut(deps),

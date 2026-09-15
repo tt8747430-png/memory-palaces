@@ -1,14 +1,4 @@
 // @vitest-environment node
-/**
- * The singleton entities — profile, progress, preferences — against a real Supabase stack.
- *
- * These exist because the first version of the schema could not store them at all: their document
- * ids are the words `profile`, `progress` and `preferences`, not uuids, so every push was rejected
- * and RxDB retried forever. Nothing caught it, because the other suites only ever synced `decks`.
- *
- * Skipped unless SUPABASE_TEST_URL / SUPABASE_TEST_KEY point at a project — see
- * `replication.integration.test.ts` for the run instructions.
- */
 import 'fake-indexeddb/auto'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { RxCollection, RxJsonSchema } from 'rxdb'
@@ -24,7 +14,6 @@ const KEY = process.env.SUPABASE_TEST_KEY
 const EMAIL = process.env.SUPABASE_TEST_EMAIL ?? 'sync@example.com'
 const PASSWORD = process.env.SUPABASE_TEST_PASSWORD ?? 'sync-test-password'
 
-/** The real ids these documents carry on the device. */
 const SINGLETONS = [
   { table: 'profiles', id: 'profile' },
   { table: 'progress', id: 'progress' },
@@ -80,7 +69,6 @@ describe.skipIf(!URL || !KEY)('singleton entities sync', () => {
     }
   }, TIMEOUT)
 
-  /** One cycle for one collection, as the app runs it. */
   async function syncOnce(table: SyncedTable, collection: RxCollection<Singleton>) {
     const manager = SyncManager.fromSupabase(supabase, [
       { table, collection: collection as unknown as RxCollection<Identifiable> },
@@ -107,7 +95,6 @@ describe.skipIf(!URL || !KEY)('singleton entities sync', () => {
       expect(error).toBeNull()
       expect((data?.data as { xp: number } | undefined)?.xp).toBe(120)
 
-      // A second, cold device must receive it — the row is keyed per user, not globally.
       const second = await openSingleton(table)
       await syncOnce(table, second)
 
@@ -120,7 +107,6 @@ describe.skipIf(!URL || !KEY)('singleton entities sync', () => {
     'refuses a stale write and hands the newer document back as a conflict',
     async () => {
       const { table, id } = SINGLETONS[1]
-      // The server already holds a later write than the one about to be pushed.
       await supabase.from(table).upsert([
         {
           id,
@@ -139,7 +125,6 @@ describe.skipIf(!URL || !KEY)('singleton entities sync', () => {
       expect(refused.data).toHaveLength(1)
       expect((refused.data as { data: { xp: number } }[])[0]?.data.xp).toBe(999)
 
-      // And the server kept the newer document rather than the stale one.
       const { data } = await supabase
         .from(table)
         .select('data')

@@ -10,10 +10,6 @@ export type ScreenHeaderProps = {
   className?: string
 } & HeaderBackProps
 
-/**
- * The bar every ordinary screen wears: a back chevron, a name aligned with the content under it,
- * and room for one control on the trailing side.
- */
 export function ScreenHeader(props: ScreenHeaderProps) {
   const { title, subtitle, action, className } = props
   return (

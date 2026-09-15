@@ -2,10 +2,6 @@ import { type ReactNode } from 'react'
 import { motion } from 'motion/react'
 import { cn, EASE_OUT } from '@/shared/lib'
 
-/**
- * `panel` sits in the flow of a scrolling screen. `hero` is the whole message a study session
- * screen shows when it has nothing to run, and leaves the centring to its container.
- */
 export type EmptyVariant = 'panel' | 'hero'
 
 export interface EmptyProps {

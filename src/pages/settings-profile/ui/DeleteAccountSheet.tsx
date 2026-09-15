@@ -5,13 +5,6 @@ import { daysFrom, longDate, useAutoSelect, useOnline } from '@/shared/lib'
 import { Button, Input, OfflineNotice, Sheet, Skeleton } from '@/shared/ui'
 import type { DeleteAccount } from '../model/use-delete-account'
 
-/**
- * Deleting an account, in the order the spec fixes: gate offline → Synchronise → type the word
- * with the purge date in front of you → schedule.
- *
- * Its own sheet rather than `PromptSheet`, which accepts any non-empty answer: here the word has to
- * match, because the point of typing it is that the press cannot be a reflex.
- */
 export function DeleteAccountSheet({ flow }: { flow: DeleteAccount }) {
   const { t, i18n } = useTranslation()
   const online = useOnline()

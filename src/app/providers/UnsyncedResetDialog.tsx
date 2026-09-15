@@ -4,13 +4,6 @@ import { CloudAlert } from 'lucide-react'
 import { ConfirmDialog } from '@/shared/ui'
 import type { UnsyncedReset } from './use-data-transition'
 
-/**
- * Asked before a different account's sign-in erases work the previous one never synchronised. The
- * safe answer is the cancel: sign out, sign in as the previous account, Synchronise.
- *
- * `ConfirmDialog` closes itself after a confirm, so a close is only a cancel when no confirm
- * preceded it — otherwise erasing would be followed by signing straight back out.
- */
 export function UnsyncedResetDialog({ reset }: { reset: UnsyncedReset | null }) {
   const { t } = useTranslation()
   const confirmed = useRef(false)

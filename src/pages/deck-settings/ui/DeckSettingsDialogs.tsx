@@ -8,11 +8,6 @@ export interface DeckSettingsDialogsProps {
   deckName: string
 }
 
-/**
- * Every yes/no this screen can ask, in one place — the same shape `LibraryDialogs` uses. Only one
- * can be open, because `confirming` is one value, and each answers with the same `page.confirm`:
- * `usePendingAct` holds which act is pending and hands it over exactly once.
- */
 export function DeckSettingsDialogs({ page, deckName }: DeckSettingsDialogsProps) {
   const { t } = useTranslation()
   return (

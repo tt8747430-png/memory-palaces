@@ -14,17 +14,10 @@ export interface SortableRowProps {
   id: string
   as?: 'li' | 'div'
   landingRef?: (node: HTMLElement | null) => void
-  /** Sizing for the wrapper — a chip in a row needs to flex, a list row does not. */
   className?: string
   children: (render: SortableRowRender) => ReactNode
 }
 
-/**
- * The one sortable element. Everything draggable — deck row, folder row, toolbar chip, swipe cap —
- * takes its transform, transition and drag handle from here, so `useSortable` is called in exactly
- * one place. The frame stays the row's own element: that is what `opacity-0` and the landing apply
- * to, and a wrapper silently changes what is hidden and what is animated.
- */
 export function SortableRow({ id, as = 'div', landingRef, className, children }: SortableRowProps) {
   const {
     attributes,

@@ -121,7 +121,6 @@ describe('SupabaseAuthGateway', () => {
 
   it('signs out locally when the revoke cannot reach the server', async () => {
     const client = makeClient()
-    // auth-js removes the stored session first and returns the transport failure anyway.
     client.auth.signOut.mockResolvedValue({
       error: new AuthRetryableFetchError('Failed to fetch', 0),
     })

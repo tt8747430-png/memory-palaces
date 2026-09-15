@@ -3,12 +3,6 @@ import type { StoreStatus } from '@/shared/lib'
 import type { SessionRepository } from '@/entities/session'
 import type { Session } from './types'
 
-/**
- * The one store that does not mirror its repository, and the one the composition root does not
- * `start()`. Nothing observes the signed-in session — `AuthProvider` writes it once the gateway
- * answers, every later change comes from a session command — so it keeps the mirroring stores'
- * `status` vocabulary while owning its own writes.
- */
 export interface SessionState {
   session: Session | null
   status: StoreStatus

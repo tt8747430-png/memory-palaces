@@ -64,7 +64,6 @@ function cloud(): CloudSyncPort & { [K in keyof CloudSyncPort]: ReturnType<typeo
   }
 }
 
-/** Stands in for the device's durable record of whose data is here. */
 function owner(initial: string | null = null): DataOwner {
   let current = initial
   return {
@@ -83,11 +82,9 @@ interface Options {
   dataOwner?: DataOwner
   autosync?: boolean
   pending?: number
-  /** Whether the pending log has reported its first snapshot. Defaults to yes. */
   pendingReady?: boolean
 }
 
-/** Hands the runner out of context, so a test can drive it the way a screen does. */
 function Probe({ onRunner }: { onRunner: (runner: SyncRunner | null) => void }) {
   const runner = useSyncRunner()
   useEffect(() => onRunner(runner), [runner, onRunner])

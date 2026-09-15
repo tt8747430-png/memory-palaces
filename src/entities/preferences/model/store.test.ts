@@ -16,8 +16,6 @@ describe('preferences store — Dependency Injection', () => {
   })
 
   it('completes a document written before a field existed', () => {
-    // A device on an older build pushed this; the schema migration never sees it, because
-    // replication writes at the current version.
     const legacy = withoutFields(
       makePreferences({ id: 'preferences', createdAt: at(0), dailyGoal: 42 }),
       'selectToolbar',

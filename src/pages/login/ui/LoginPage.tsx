@@ -67,8 +67,6 @@ export function LoginPage({ onAuthed, onGuest, onSignup, onForgot }: LoginPagePr
       />
 
       <div className="-my-2 flex justify-end">
-        {/* `min-h-11` and real padding: 12px type with none was a ~16px-tall target, well under the
-            44px floor. The negative margin keeps the form's own rhythm while the box grows. */}
         <button
           type="button"
           onClick={onForgot}

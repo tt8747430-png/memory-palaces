@@ -46,8 +46,6 @@ export function AppNav() {
           aria-label={t('nav.label')}
           className={cn(
             'fixed bottom-(--p-safe-bottom) left-1/2 z-(--z-nav) -translate-x-1/2',
-            // WebKit re-clamps bottom-anchored fixed boxes to the visual viewport when the
-            // keyboard shows, which floats the nav mid-screen over the content being typed into.
             'in-data-keyboard:hidden',
           )}
         >

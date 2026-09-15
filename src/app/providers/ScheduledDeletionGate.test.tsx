@@ -176,7 +176,6 @@ describe('the scheduled-deletion check', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Cancel deletion' }))
 
-    // The restore has not finished, and the app — with its Restoring banner — is already on screen.
     await waitFor(() => expect(screen.getByTestId('app')).toBeInTheDocument())
     expect(deletion.cancel).toHaveBeenCalled()
     expect(sync.restore).toHaveBeenCalled()

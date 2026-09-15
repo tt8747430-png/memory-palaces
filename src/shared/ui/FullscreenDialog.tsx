@@ -9,14 +9,6 @@ export interface FullscreenDialogProps {
   children: ReactNode
 }
 
-/**
- * A surface that takes the whole screen: the card browser, the card-style preview. One component
- * because the two are the same object — a blurred backdrop, a popup the width of the app, and the
- * scale-and-fade that says it came from the page underneath — and a second copy of that is a second
- * set of transitions to keep in step, which is how the first copy shipped without `trap-focus`.
- *
- * `Dialog.Close`, `Dialog.Title` and the rest work inside `children`: the context is this Root's.
- */
 export function FullscreenDialog({
   open,
   onOpenChange,

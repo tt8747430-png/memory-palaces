@@ -11,10 +11,6 @@ const META: Record<ContentSort, { labelKey: string; icon: typeof Clock }> = {
   flagged: { labelKey: 'cards.sort.flagged', icon: Flag },
 }
 
-/**
- * How each content sort is labelled and drawn. A list offers the subset it can honour — a question
- * has no schedule and no flag — but any list offering a sort names and draws it the same way.
- */
 export function useContentSortOptions<T extends ContentSort>(
   sorts: readonly T[],
 ): SortControlOption<T>[] {

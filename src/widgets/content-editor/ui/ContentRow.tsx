@@ -19,10 +19,6 @@ export interface RowDragHandle {
   props: Record<string, unknown>
 }
 
-/**
- * What every content row needs to sit in a list — how it is selected, dragged, swiped. A row type
- * adds only its own subject's fields on top and hands this frame through to `ContentRow`.
- */
 export interface RowFrameProps {
   selectMode: boolean
   selected: boolean
@@ -35,10 +31,6 @@ export interface RowFrameProps {
   onOpen?: () => void
 }
 
-/**
- * What the row's overflow control does. Cards open a full sheet of actions, questions keep the
- * flyout — one or the other, never a pair of optional props that could both arrive.
- */
 export type RowOverflow =
   { kind: 'menu'; actions: SheetAction[] } | { kind: 'sheet'; onOpen: () => void }
 

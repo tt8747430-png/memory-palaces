@@ -11,7 +11,6 @@ describe('document mapping', () => {
       data: { id: 'd1', name: 'Deck' },
       deleted: true,
     })
-    // The server clock owns updated_at — a client value would break the pull checkpoint.
     expect('updated_at' in row).toBe(false)
   })
 

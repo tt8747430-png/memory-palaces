@@ -91,13 +91,6 @@ export function useLibraryActions({
 
   const toggleFavorite = (deck: Deck) => void toggleDeckFavorite(deckStore, deck.id)
 
-  /**
-   * The one way decks change where they live. Every surface — swipe, move sheet, drop onto a
-   * folder, select toolbar — comes through here, so the subtree guard, optimistic patch, message
-   * and undo are decided once. A selection carries each deck with its subdecks, so only the decks
-   * no ancestor carries are moved; the rest come along under them. Decks already at the destination
-   * are left alone; a move that would put a deck inside its own subtree is dropped, not thrown.
-   */
   const moveDecksTo = (ids: readonly string[], dest: MoveDestination) => {
     const place = placeOfDestination(dest)
     const moving = idsWithoutDescendants(decks, ids)
@@ -121,9 +114,6 @@ export function useLibraryActions({
     }
 
     const moves = moving.map((deck) => ({ id: deck.id, to: place }))
-    // Land the rows where they end up before the writes resolve, so a drop onto a folder never
-    // shows the deck snapping back to its old row first. The patch is the very placement the
-    // command writes, so the held rows and the persisted ones agree to the order.
     patchDecks(placeDecks(decks, moves))
     void moveDecks(deckStore, moves)
     toast.success(moveMessage(moving, dest), {
@@ -137,7 +127,6 @@ export function useLibraryActions({
     })
   }
 
-  /** One deck is named; a batch is counted. */
   const archiveMessage = (moving: Deck[]): string =>
     moving.length === 1
       ? t('deck.archivedToast', { name: moving[0]!.name })
@@ -184,7 +173,6 @@ export function useLibraryActions({
     moveDecksTo(deckIds, { kind: 'folder', folderId: targetFolderId })
 
   const { deckIds, decks: selectedDecks } = selection
-  /** The selected decks no selected ancestor carries — what acts on a deck with its subdecks. */
   const carrierIds = idsWithoutDescendants(decks, deckIds)
 
   const bulkArchive = () => moveDecksTo(deckIds, { kind: 'archive' })
@@ -202,8 +190,6 @@ export function useLibraryActions({
     )
   }
 
-  // `duplicateDeck` copies a subtree, so a subdeck duplicated on its own as well would be a second
-  // copy standing beside its parent's.
   const bulkDuplicate = () => {
     carrierIds.forEach((id) => void duplicateDeck(deckStore, cardStore, id))
     toast.success(t('library.select.duplicatedToast', { count: carrierIds.length }))

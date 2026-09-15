@@ -95,10 +95,6 @@ describe('resolveFling', () => {
     expect(resolveFling(79, 0.49, 1, throwIt)).toBe(0)
   })
 
-  /**
-   * Velocity arrives unsigned, so a card that asked whether "the fastest axis" cleared the bar
-   * committed a horizontal grade off a fast vertical flick. Each axis answers for itself.
-   */
   it('does not lend one axis another axis speed', () => {
     expect(resolveFling(4, 0.9, 0, throwIt)).toBe(0)
   })
@@ -113,10 +109,11 @@ describe('dragFrame', () => {
 
   it('calls a lift a release and a cancel its own thing', () => {
     expect(dragFrame({ tap: false, last: true, event: released })).toBe('released')
-    expect(dragFrame({ tap: false, last: true, event: new Event('pointercancel') })).toBe('canceled')
+    expect(dragFrame({ tap: false, last: true, event: new Event('pointercancel') })).toBe(
+      'canceled',
+    )
   })
 
-  // A tap that ends in a cancel still moved nothing, and a surface acting on it acts on nothing.
   it('calls a tap a tap however it ended', () => {
     expect(dragFrame({ tap: true, last: true, event: new Event('pointercancel') })).toBe('tap')
   })
@@ -141,7 +138,6 @@ describe('resolveThrow', () => {
     })
   })
 
-  // Where the two grades live: a diagonal that cannot decide should not decide for the learner.
   it('keeps a tie on x', () => {
     expect(resolveThrow({ movement: [100, -100], ...still }, throwIt)).toEqual({
       axis: 'x',
@@ -149,11 +145,6 @@ describe('resolveThrow', () => {
     })
   })
 
-  /**
-   * The card over a scroller can be swiped sideways but not up, and the vertical travel is the
-   * evidence that this was the scroll it looks like. Without the test, reading a long answer with
-   * a little sideways drift grades the card — the false trigger this resolver exists to stop.
-   */
   it('refuses a locked-axis throw that wandered further across the axis than along it', () => {
     const scroll = { movement: [-90, 400], ...still, lockedTo: 'x' } as const
     expect(resolveThrow(scroll, throwIt)).toBeNull()

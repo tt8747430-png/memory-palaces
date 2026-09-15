@@ -10,7 +10,6 @@ import type { HistoryStore } from '@/entities/learning-history'
 import { forgetCardHistory, recordHistoryBatch } from '@/features/history'
 import { cardsInSubtree, markKnown, nowIso } from '@/shared/lib'
 
-/** What a card's learning state becomes, given the state it has now. */
 type ProgressPatch = (card: Card, now: number) => CardChanges
 
 async function patchCardsProgress(
@@ -27,7 +26,6 @@ async function patchCardsProgress(
   )
 }
 
-/** Every card under `deckId`, subdecks included. */
 function subtreeCardIds(deckStore: DeckStore, cardStore: CardStore, deckId: string): string[] {
   return cardsInSubtree(
     selectDecks(deckStore.getState()),
@@ -36,11 +34,6 @@ function subtreeCardIds(deckStore: DeckStore, cardStore: CardStore, deckId: stri
   ).map((card) => card.id)
 }
 
-/**
- * Marks Cards Mastered by hand. It moves the schedule without anyone recalling anything, so it goes
- * on the Learning history too — a Card pushed out to a 180-day interval that then reported "No
- * history yet" was the sheet disagreeing with the schedule it describes.
- */
 export async function markCardsKnown(
   store: CardStore,
   history: HistoryStore,
@@ -69,11 +62,6 @@ export async function markCardsKnown(
   ])
 }
 
-/**
- * Reset progress has to mean the same thing under both algorithms, so it drops the fast-review
- * bucket alongside the schedule — otherwise a reset deck still reports cards as "Got it". The
- * Learning history goes with them: it describes schedules these Cards no longer have.
- */
 export async function resetCardsSrs(
   store: CardStore,
   history: HistoryStore,

@@ -5,14 +5,9 @@ import { ALGORITHM_META, AlgorithmLockedNotice } from '@/widgets/algorithm'
 import { AlgorithmLineFrame } from './AlgorithmLineFrame'
 
 export interface LockedAlgorithmLineProps {
-  /** The main deck's algorithm, which the subdeck studies by. */
   value: LearningAlgorithm
 }
 
-/**
- * A subdeck's algorithm line: its main deck owns the algorithm, so the line names it with a lock and
- * a press explains where to change it instead of opening the picker.
- */
 export function LockedAlgorithmLine({ value }: LockedAlgorithmLineProps) {
   const { t } = useTranslation()
   const name = t(ALGORITHM_META[value].nameKey as never)

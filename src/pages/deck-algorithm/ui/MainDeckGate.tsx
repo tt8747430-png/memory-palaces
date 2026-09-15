@@ -10,15 +10,9 @@ export interface MainDeckGateProps {
   title: string
   onBack?: () => void
   onOpenMainDeck?: (mainDeckId: string) => void
-  /** The screen for a main deck. It reads the deck through `useGatedDeck`. */
   children: ReactNode
 }
 
-/**
- * The algorithm screens edit settings only a main deck holds (`MAIN_DECK_SETTINGS`). This is the one
- * place they wait for the store, meet a stale id, and turn a subdeck toward its main deck — so each
- * screen renders only for a main deck that is there.
- */
 export function MainDeckGate({
   deckId,
   title,

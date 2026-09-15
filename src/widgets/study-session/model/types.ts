@@ -11,10 +11,6 @@ export interface StudyCard {
 
 export type { StudyDirection }
 
-/**
- * What the **Deck** being studied decides, read off its `DeckSettings`. A Subdeck's Main deck may
- * own some of it, which is what `EditableDeckPref` and the session's `locked` set are about.
- */
 export interface DeckStudyPrefs {
   direction: StudyDirection
   shuffle: boolean
@@ -24,15 +20,8 @@ export interface DeckStudyPrefs {
   cardStyle: CardStyle
 }
 
-/** The Deck prefs the study session's settings sheet changes. */
 export type EditableDeckPref = 'direction' | 'shuffle' | 'textToSpeech'
 
-/**
- * What the **learner** decides, the same in every Deck, read off `entities/preferences`. One object
- * with one change channel rather than a value and an `onXChange` per field: every one of these is a
- * `Preferences` key, so four pairs said four times what `setPreferences` says once, and each new
- * learner-owned setting added a fifth.
- */
 export interface LearnerStudyPrefs {
   wordSpaces: boolean
   typeInitialsOnly: boolean

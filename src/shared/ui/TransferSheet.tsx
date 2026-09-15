@@ -22,10 +22,6 @@ export interface TransferSheetProps {
   options: TransferOption[]
 }
 
-/**
- * A sheet offering a short list of ways to move content in or out. Choosing an option dismisses the
- * sheet first, so the picker or page it opens is never stacked behind it.
- */
 export function TransferSheet({
   open,
   onOpenChange,

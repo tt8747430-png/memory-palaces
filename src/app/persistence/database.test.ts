@@ -26,10 +26,6 @@ import {
 
 const AT = '2026-09-15T16:07:00.000Z'
 
-/**
- * A device that stored documents under an older schema, reopened by this build. `seed` writes them
- * the way the old build did — including failing the way it failed, where that is the point.
- */
 async function reopenedAfterSeeding(
   name: string,
   schema: RxJsonSchema<Record<string, unknown>>,
@@ -87,11 +83,6 @@ describe('schema migrations', () => {
     expect(deckMigrations[2](v1 as never)).toEqual(v1)
   })
 
-  /**
-   * The first deck migration that rewrites anything. `outlined` left the enum with v3, so a deck
-   * still naming it would fail the schema and `validateDeckSettings` alike — it is repainted with
-   * the preset it was a stroked variant of, and the learner's font, size and alignment are kept.
-   */
   it('repaints a v2 deck off the retired preset and keeps the rest of its style', () => {
     const v2 = {
       id: 'd1',
@@ -183,13 +174,11 @@ describe('schema migrations', () => {
     const stored = await collections.syncState.findOne(SYNC_STATE_ID).exec()
 
     expect(stored?.get('autosync')).toBe(true)
-    // Everything else the device had is untouched.
     expect(stored?.get('lastSyncedAt')).toBe(AT)
 
     await collections.syncState.database.remove()
   })
 
-  /** The shape of a row written by the build whose field name collided with RxDB's own. */
   interface PendingChangeV0 {
     id: string
     collection: PendingChange['contentCollection']
@@ -220,8 +209,6 @@ describe('schema migrations', () => {
       'pendingChanges',
       v0PendingChangeSchema as unknown as RxJsonSchema<Record<string, unknown>>,
       async (pendingChanges) => {
-        // The broken build: the write reaches storage and *then* the document throws, which is how
-        // a device ends up holding rows it can never read back.
         await expect(pendingChanges.upsert(row)).rejects.toThrow(/collection/)
         expect(await pendingChanges.storageInstance.findDocumentsById([row.id], true)).toHaveLength(
           1,

@@ -38,13 +38,6 @@ export interface SyncBannerProps {
   className?: string
 }
 
-/**
- * The permanent, honest account of what has not left this device.
- *
- * It is the whole mitigation for manual sync, so it is never decorative and never hidden while
- * something is waiting. Motion communicates: it slides in once when a change makes it relevant and
- * does not re-animate as the count moves, because a row that jumps on every keystroke is noise.
- */
 export function SyncBanner({ className }: SyncBannerProps) {
   const { t } = useTranslation()
   const reduce = useReducedMotion()

@@ -61,7 +61,6 @@ describe('applyDataTransition', () => {
       resetLocal,
     })
 
-    // Reloading still owned by the previous account would wipe the incoming one all over again.
     expect(order).toEqual(['claim', 'reset'])
   })
 })

@@ -13,7 +13,6 @@ export interface RewardPreviewProps<T> {
   children: (item: T) => ReactNode
 }
 
-/** The profile's row of four medallions with a "see all" link. */
 export function RewardPreview<T>({
   title,
   ariaLabel,

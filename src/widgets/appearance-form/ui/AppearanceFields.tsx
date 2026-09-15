@@ -5,7 +5,6 @@ import { NAME_MAX } from '@/shared/config/constants'
 import { useAutoSelect } from '@/shared/lib'
 import { IconColorRow, Input } from '@/shared/ui'
 
-/** Which thing is being dressed — it only picks the wording. */
 export type AppearanceSubject = 'deck' | 'folder'
 
 export interface AppearanceFieldsProps {
@@ -20,10 +19,6 @@ export interface AppearanceFieldsProps {
   autoFocusName?: boolean
 }
 
-/**
- * The one name-icon-colour form. Decks and folders are dressed the same way and take the same name
- * length, so `subject` settles nothing but the wording of the labels.
- */
 export function AppearanceFields({
   subject,
   name,

@@ -57,8 +57,6 @@ export function QuizPanel({
       FEEDBACK_MS,
     )
     return () => window.clearTimeout(handle)
-    // The finish edge fires once. Depending on the score it reads would restart the delay on the
-    // last answer's own state change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [done])
 
@@ -107,7 +105,6 @@ export function QuizPanel({
       >
         <div className="mt-3 flex items-center gap-3">
           <div className="h-2 flex-1 overflow-hidden rounded-full bg-secondary/30">
-            {/* `scaleX`, not `width` — the bar moves on every answer. CODE_STYLE §9. */}
             <motion.div
               className="h-full w-full origin-left rounded-full bg-linear-to-r from-primary to-accent"
               animate={{ scaleX: reached / state.total }}

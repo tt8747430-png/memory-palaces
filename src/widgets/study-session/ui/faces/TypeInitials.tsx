@@ -6,18 +6,6 @@ import { cn, isReferenceMarker } from '@/shared/lib'
 import type { InitialsRecall } from '../../model/use-initials-recall'
 import { stopPress } from './types'
 
-/**
- * A solved recall has nothing left to type, so the field it is typed into stops being one: the
- * input goes read-only, the box stops asking for focus, and the keyboard is dismissed on the
- * solving keystroke.
- *
- * That last part is the whole of the scroll fix. The input is `sr-only` — a 1px proxy sitting at
- * the *top* of a box that, once solved, holds the entire answer — so every time a keyboard opened
- * over a finished card, `useKeyboardReveal` lifted that one pixel clear of it and took the card's
- * prompt off the top of the scroll body with it. Nothing should have been revealed at all.
- * `isTextField` no longer counts a read-only field, so the reveal and the height reserve both stay
- * out of it (CODE_STYLE §11).
- */
 export function TypeInitials({ recall }: { recall: InitialsRecall }) {
   const { t } = useTranslation()
   const inputRef = useRef<HTMLInputElement>(null)

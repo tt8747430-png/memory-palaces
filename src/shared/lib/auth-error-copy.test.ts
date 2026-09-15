@@ -15,8 +15,6 @@ describe('authErrorKey', () => {
   })
 
   it('maps a transport failure to the offline sentence, not to the raw fetch message', () => {
-    // Airplane mode on /login: the provider is never reached, so there is no provider code. The
-    // gateway classifies it at the boundary; a toast reading "Failed to fetch" is not copy.
     expect(authErrorKey(new AuthError('Failed to fetch', 'network'))).toBe('auth.errors.network')
     expect(authErrorMessage(new AuthError('Load failed', 'network'), translate, 'fallback')).toBe(
       'translated:auth.errors.network',

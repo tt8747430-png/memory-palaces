@@ -20,7 +20,6 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-/** jsdom has no speech synthesis, so every case states the device it is testing against. */
 function withVoices(available: boolean) {
   vi.spyOn(lib, 'speechAvailable').mockReturnValue(available)
 }

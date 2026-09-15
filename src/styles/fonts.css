@@ -1,25 +1,3 @@
-/**
- * Every face the app ships, latin and latin-ext only. Declared here rather than imported from each
- * package's own stylesheet, because those ship every subset the typeface has — Cyrillic, Greek,
- * Vietnamese — and a `unicode-range` only decides what a *browser* downloads. Workbox precaches by
- * glob (`vite.config.ts`, `**\/*.woff2`), so every subset on disk is a subset the phone downloads on
- * install whether anything ever needs it. That is the whole reason the cut is worth making.
- *
- * **The cost is real and is stated rather than hedged.** For the card faces it is a chosen face
- * lost gracefully: card text is the learner's own, so a card typed in Greek and set in Serif falls
- * back down its stack to the platform serif rather than rendering in Literata.
- *
- * For **Lexend** it is more than that, and this file used to say so as a reason to leave Lexend
- * whole. The decision has been taken the other way, with its cost named: Lexend is the app's own
- * typeface, worn by deck names and card text alike with no per-card choice behind it, so Cyrillic,
- * Greek and Vietnamese deck names and card text now fall back to the platform sans. Accepted,
- * because the alternative was every phone downloading the Vietnamese subset on install whether or
- * not a single deck is written in it.
- *
- * Variable, weight axis only — no italic file, because nothing sets one. `swap`, so text is
- * readable in the fallback stack from the first frame and reflows into its own face.
- */
-
 @font-face {
   font-family: 'Lexend Variable';
   font-style: normal;

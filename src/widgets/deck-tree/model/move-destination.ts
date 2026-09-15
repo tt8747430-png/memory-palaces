@@ -6,10 +6,6 @@ export type MoveDestination =
   | { kind: 'folder'; folderId: string }
   | { kind: 'deck'; deckId: string }
 
-/**
- * The place in the library a destination names. The archive is not one: sending a deck there is
- * the archive act (`archiveDecks`), which is why it answers `null` rather than a place.
- */
 export function placeOfDestination(dest: MoveDestination): DeckPlace | null {
   switch (dest.kind) {
     case 'home':

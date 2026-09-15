@@ -6,17 +6,9 @@ import { editDeck } from './deck-commands'
 export interface SetDeckImageDeps {
   store: DeckStore
   storage: StoragePort
-  /** Null for a guest, or with no cloud configured — the cover then stays inline. */
   userId: string | null
 }
 
-/**
- * Sets a deck's cover. The picked image is saved inline first so the deck looks right immediately
- * and offline, then moved into storage and its object path patched in. A failed upload leaves the
- * inline copy in place; `reconcileInlineImages` retries it once there is a network again.
- *
- * Passing null clears the cover.
- */
 export async function setDeckImage(
   { store, storage, userId }: SetDeckImageDeps,
   deckId: string,
@@ -27,7 +19,6 @@ export async function setDeckImage(
   const ref = { bucket: 'deck-images', userId, entityId: deckId } as const
 
   if (!dataUrl) {
-    // Nothing references the object once the deck stops pointing at it, so it should not linger.
     await storage.remove(ref).catch(() => {})
     return saved
   }

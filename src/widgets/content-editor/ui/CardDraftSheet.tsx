@@ -5,7 +5,6 @@ import { useCardDraft } from '../model/use-card-draft'
 import { CardFields } from './editor-fields'
 
 export interface CardDraftSheetProps {
-  /** The card under edit. `null` is what closes the sheet. */
   card: (CardDraftSource & { id: string }) | null
   title: string
   saveLabel: string
@@ -14,10 +13,6 @@ export interface CardDraftSheetProps {
   onClose: () => void
 }
 
-/**
- * The one sheet for editing a card's four fields, wherever the card is met — mid-study, or in an
- * import awaiting review.
- */
 export function CardDraftSheet({
   card,
   title,

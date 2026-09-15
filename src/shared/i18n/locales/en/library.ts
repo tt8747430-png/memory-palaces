@@ -1,4 +1,3 @@
-/** The library: decks, folders, moving them, the archive and the notification feed. */
 export const deck = {
   notFound: 'Deck not found',
   settings: 'Settings',

@@ -8,19 +8,12 @@ const TONE = {
 } as const
 
 export interface OutcomeOverlayProps {
-  /** The mark in the medallion — sized by the caller, coloured by `tone`. */
   icon: ReactNode
   title: string
   tone?: keyof typeof TONE
-  /** The score lines and whatever the user does next. */
   children: ReactNode
 }
 
-/**
- * The curtain a finished run drops over its panel: one medallion, one headline, then whatever that
- * run reports. Study, quiz and anything else that ends share it, so finishing looks the same
- * wherever the user got there.
- */
 export function OutcomeOverlay({ icon, title, tone = 'success', children }: OutcomeOverlayProps) {
   return (
     <motion.div

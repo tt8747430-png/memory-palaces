@@ -1,4 +1,3 @@
-/** The frame every kitchen-sink section is drawn in. Sample values live in `fixtures.ts`. */
 import { type ReactNode } from 'react'
 import { cn } from '@/shared/lib'
 

@@ -7,19 +7,9 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 const escapeForRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
-/**
- * Replay a Supabase write cut off mid-Sync once the browser is back. A Sync never starts offline, so
- * what lands here is a push that lost the network — or the tab — part-way through a cycle. The
- * cycle itself has already failed and left the pending log untouched, so the next Sync pushes the
- * same rows again; `push_documents` applies equal clocks as a no-op, which is what makes the replay
- * safe to overlap. Absent a configured project, there is nothing to queue.
- */
 function supabasePushQueue(supabaseUrl: string | undefined) {
   if (!supabaseUrl) return []
   const rest = new RegExp(`^${escapeForRegExp(new URL(supabaseUrl).origin)}/rest/`)
-  // A queue per method, because Workbox keys queues by name and throws `duplicate-queue-name` when
-  // a second one claims a name already taken. It throws from the service worker's module body, so
-  // one shared name costs every registration that follows it.
   return (['POST', 'PATCH'] as const).map((method) => ({
     urlPattern: rest,
     handler: 'NetworkOnly' as const,
@@ -78,15 +68,6 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       output: {
-        /**
-         * The three dependencies that dwarf everything else get their own chunks.
-         *
-         * Not to shrink the first load — the app cannot paint without its database, so these are
-         * fetched either way. It is so a deploy that touches app code does not invalidate them:
-         * the service worker precaches by file, and RxDB and Dexie together are ~300 kB that has
-         * not changed since the last release. Grouped by name rather than by importer so the
-         * boundary survives a refactor.
-         */
         advancedChunks: {
           groups: [
             { name: 'persistence', test: /node_modules\/(rxdb|dexie)\// },
@@ -103,8 +84,6 @@ export default defineConfig(({ mode }) => ({
     setupFiles: ['./src/shared/test/setup.ts'],
     css: false,
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
-    // A developer's .env.local must not change what the unit suite tests. The offline path is the
-    // one under test; the integration suites opt in through their own SUPABASE_TEST_* variables.
     env: { VITE_SUPABASE_URL: '', VITE_SUPABASE_PUBLISHABLE_KEY: '' },
   },
 }))

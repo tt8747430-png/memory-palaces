@@ -259,9 +259,6 @@ describe('FlashcardsPanel progress header', () => {
 describe('FlashcardsPanel study header', () => {
   it('opens study-session-wide settings from the header, and this-card options from the card', async () => {
     renderPanel([studyCard('a')])
-    // Grab both triggers before either sheet opens — an open sheet marks the rest of the page
-    // aria-hidden, which a role query (unlike fireEvent.click) respects. Both the front and back
-    // face render a "Study options" gear button (only one is ever `active`), so there are two.
     const settingsButton = await screen.findByRole('button', { name: 'Study session settings' })
     const cardOptionsButtons = await screen.findAllByRole('button', { name: 'Study options' })
 
@@ -280,7 +277,6 @@ describe('FlashcardsPanel scene', () => {
     })
     const scene = await screen.findByTestId('card-scene')
     expect(scene.style.getPropertyValue('--scene-bg')).toBeTruthy()
-    // `tokens.css` repaints the chrome off this; the panel's job is to ask for it.
     expect(scene).toHaveAttribute('data-scene', 'light')
   })
 

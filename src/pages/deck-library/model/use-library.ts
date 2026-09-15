@@ -8,7 +8,6 @@ import { type LibraryView, useLibraryData } from './use-library-data'
 
 import { type LibrarySelection, useLibrarySelection } from './use-library-selection'
 
-/** What the library screen reads, plus what it can do about it. */
 export interface Library extends LibraryView {
   selection: LibrarySelection
   act: Omit<LibraryActions, 'selectHandlers'>

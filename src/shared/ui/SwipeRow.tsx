@@ -86,18 +86,12 @@ export function SwipeRow({
     [reduce, x],
   )
 
-  /** Forget the tray — what is open, what is armed. Where the row sits is `settle`'s to say. */
   const clearTray = useCallback(() => {
     setOpen(null)
     setArmed(null)
     wasArmed.current = null
   }, [])
 
-  /**
-   * Put the row back and give the claim up in one act, so the registry never holds a row that has
-   * already closed. A row asked to release by a touch that is taking it over jumps instead of
-   * springing: the new surface is already moving, and a spring here is the second thing moving.
-   */
   const { surface, hold, drop } = useGestureHold((reason) => {
     clearTray()
     if (reason === 'claimed') x.jump(0)
@@ -119,12 +113,6 @@ export function SwipeRow({
 
   const suppressClick = useRef(false)
 
-  /**
-   * The guard against the click a finished drag leaves behind belongs to that drag, so the next
-   * touch clears it — left standing it is the row's next honest tap that gets swallowed. It has to
-   * be a real `pointerdown` and not the drag engine's first frame: with a locked axis the engine
-   * reports nothing at all until the finger has moved, which is exactly the tap that needs it gone.
-   */
   const onPointerDownCapture = () => {
     suppressClick.current = false
   }
@@ -132,15 +120,12 @@ export function SwipeRow({
   useDrag(
     (state) => {
       const [ox] = state.offset
-      // The row owns this touch from here: whatever was displaced before it goes back first.
       if (state.first) hold()
 
       switch (dragFrame(state)) {
         case 'tap':
           return
 
-        // The platform took the touch away, which is not the learner releasing it: put the row
-        // back and fire nothing.
         case 'canceled':
           wasArmed.current = null
           setArmed(null)
@@ -163,8 +148,6 @@ export function SwipeRow({
               leading[0]!.onAction()
               close()
               break
-            // The row stays displaced, so it stays the holder: the next touch anywhere is what
-            // puts it back.
             case 'open-trailing':
               setOpen('trailing')
               settle(release.settleTo)
@@ -225,11 +208,6 @@ export function SwipeRow({
     <div
       {...surface}
       onPointerDownCapture={onPointerDownCapture}
-      /**
-       * The clip is unconditional. It used to be a piece of state toggled from every frame of the
-       * drag, which re-rendered the row — and its children — on each one, for a class whose margin
-       * already leaves the resting row's shadow and ring untouched (CODE_STYLE §11).
-       */
       className={cn(
         'relative isolate overflow-x-clip [overflow-clip-margin:24px]',
         bleed && '-mx-5',

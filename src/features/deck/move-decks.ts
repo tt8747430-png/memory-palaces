@@ -2,11 +2,6 @@ import { type DeckMove, type DeckStore, placeDecks, selectDecks } from '@/entiti
 import { canReparent } from '@/shared/lib'
 import { editDeck, requireDeck } from './deck-commands'
 
-/**
- * Stands each deck of a batch at its place. Only the decks named are written: their subdecks come
- * along because they name them. Every order and carried setting is computed against one snapshot
- * (`placeDecks`), so the batch lands contiguously however late the store catches up with each write.
- */
 export async function moveDecks(
   store: DeckStore,
   moves: readonly DeckMove[],
