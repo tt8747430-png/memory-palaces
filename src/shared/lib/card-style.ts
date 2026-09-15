@@ -222,24 +222,6 @@ function granules(opacity: number): string {
 }
 
 /**
- * A hairline frame set in from the card's own edge — the printed rule a kraft index card or a sheet
- * of vellum carries inside its border. Four background layers rather than a second element, because
- * a preset owns the card's paint and nothing else: `CARD_STYLE_SURFACE` is one `background`, and the
- * shorthand takes a position and a size per layer.
- */
-function insetRule(color: string, inset: string): string {
-  const line = `linear-gradient(${color}, ${color})`
-  const span = `calc(100% - ${inset} - ${inset})`
-  const far = `calc(100% - ${inset} - 1px)`
-  return [
-    `${line} ${inset} ${inset}/${span} 1px no-repeat`,
-    `${line} ${inset} ${far}/${span} 1px no-repeat`,
-    `${line} ${inset} ${inset}/1px ${span} no-repeat`,
-    `${line} ${far} ${inset}/1px ${span} no-repeat`,
-  ].join(', ')
-}
-
-/**
  * The rule spacing of a ruled pad — the real thing is about 7mm, and it does not consult your
  * handwriting. This was briefly `calc(var(--card-style-size) * 1.375)` on the theory that the rules
  * could sit under the words, and the theory was wrong: only the style page's preview paints its text
@@ -341,7 +323,7 @@ const PRESETS: Record<CardStylePresetId, PresetSkin> = {
     scene: 'var(--bg-daylight)',
   },
   bold: {
-    bg: `${insetRule('rgba(20,20,22,0.16)', '8px')}, #fffdf6`,
+    bg: '#fffdf6',
     ink: '#141416',
     border: '3px solid #141416',
     scene: `${grain(0.09, '0.6')}, radial-gradient(125% 95% at 50% 0%, #ffb84d, #f2951f 52%, #d87208)`,
@@ -391,16 +373,16 @@ const PRESETS: Record<CardStylePresetId, PresetSkin> = {
     chrome: 'light',
   },
   paper: {
-    // A kraft index card pinned to a cork board: the rule inside its edge is what a printed card
-    // carries, and the granules behind it are the pressed board it hangs on.
-    bg: `${insetRule('rgba(122,88,42,0.32)', '9px')}, ${grain(0.15, '0.62')}, linear-gradient(170deg, #f7e9cf, #e7d3ae)`,
+    // A kraft index card pinned to a cork board, and the granules behind it are the pressed board
+    // it hangs on.
+    bg: `${grain(0.15, '0.62')}, linear-gradient(170deg, #f7e9cf, #e7d3ae)`,
     ink: '#4a3620',
     border: '1px solid rgba(120,90,50,0.3)',
     scene: `${granules(0.55)}, ${grain(0.16, '0.5')}, linear-gradient(165deg, #ca9c65, #a4753e)`,
     chrome: 'light',
   },
   parchment: {
-    bg: `${insetRule('rgba(122,88,40,0.3)', '10px')}, ${grain(0.11, '0.68')}, radial-gradient(118% 96% at 50% 42%, transparent 54%, rgba(120,90,50,0.2)), radial-gradient(130% 110% at 40% 0%, #fbf3e2, #ecdcbe)`,
+    bg: `${grain(0.11, '0.68')}, radial-gradient(118% 96% at 50% 42%, transparent 54%, rgba(120,90,50,0.2)), radial-gradient(130% 110% at 40% 0%, #fbf3e2, #ecdcbe)`,
     ink: '#5a4021',
     border: '2px solid rgba(255,252,242,0.75)',
     scene: `${contour(0.5)}, ${grain(0.13, '0.55')}, radial-gradient(130% 110% at 50% 10%, #ddc79c, #b99a68)`,
