@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { House, User } from 'lucide-react'
 import { type RoutePath, ROUTES } from '@/shared/config/routes'
-import { cn, EASE_EXPO, useAppNavHidden } from '@/shared/lib'
+import { cn, EASE_EXPO, useAppNavHidden, useBottomChrome } from '@/shared/lib'
 
 interface Tab {
   to: typeof ROUTES.home | typeof ROUTES.profile
@@ -27,6 +27,7 @@ export function AppNav() {
   const reduce = useReducedMotion()
   const pathname = useRouterState({ select: (state) => state.location.pathname })
   const hidden = useAppNavHidden()
+  const claimChrome = useBottomChrome()
   const showNav = TAB_PATHS.includes(pathname as RoutePath) && !hidden
 
   useLayoutEffect(() => {
@@ -43,6 +44,7 @@ export function AppNav() {
       {showNav ? (
         <nav
           key="app-nav"
+          ref={claimChrome}
           aria-label={t('nav.label')}
           className={cn(
             'fixed bottom-(--p-safe-bottom) left-1/2 z-(--z-nav) -translate-x-1/2',

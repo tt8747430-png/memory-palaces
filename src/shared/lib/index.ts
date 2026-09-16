@@ -90,6 +90,7 @@ export { useDevMode, setDevMode } from './dev-mode'
 export { useProbeOverlay, setProbeOverlay } from './probe-overlay'
 export { visibleBottom, keyboardIsMeasured, REVEAL_GAP } from './keyboard-viewport'
 export { useKeyboardInset } from './use-keyboard-inset'
+export { useBottomChrome } from './use-bottom-chrome'
 export {
   isTextField,
   revealOffset,

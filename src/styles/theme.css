@@ -89,6 +89,10 @@
 
     --app-bottom-inset: var(--p-safe-bottom);
 
+    --bottom-chrome: 0px;
+
+    --toast-inset: calc(max(var(--p-safe-bottom), var(--bottom-chrome)) + 1rem);
+
     --preview-pane-height: clamp(190px, calc(var(--app-height) * 0.34), 340px);
   }
 

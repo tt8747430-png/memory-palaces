@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { cn } from '@/shared/lib'
+import { cn, useBottomChrome } from '@/shared/lib'
 
 export interface SelectToolbarDockProps {
   children: ReactNode
@@ -7,8 +7,11 @@ export interface SelectToolbarDockProps {
 }
 
 export function SelectToolbarDock({ children, className }: SelectToolbarDockProps) {
+  const claimChrome = useBottomChrome()
+
   return (
     <div
+      ref={claimChrome}
       className={cn(
         'pointer-events-none fixed inset-x-0 bottom-0 z-(--z-dock) mx-auto w-full max-w-app px-4 pt-3',
         'in-data-keyboard:hidden',
