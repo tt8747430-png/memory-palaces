@@ -43,10 +43,11 @@ export function AppProviders({ services, children }: { services: Services; child
       <NotificationBridge />
       <UpdatePrompt />
       <Toaster
-        position="top-center"
+        position="bottom-center"
         richColors
         theme="system"
-        mobileOffset={{ top: 'calc(env(safe-area-inset-top) + 16px)' }}
+        offset={{ bottom: 'var(--toast-inset)' }}
+        mobileOffset={{ bottom: 'var(--toast-inset)' }}
         style={{ zIndex: 'var(--z-toast)' }}
       />
     </ServicesProvider>

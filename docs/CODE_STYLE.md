@@ -383,6 +383,17 @@ scrollbar-hide`. It is deliberately plain — a scrollport needs no keyboard geo
   `.pb-gutter`). Nothing bottom-anchored is still on screen to save room for — the footer dock has gone `static` and
   `AppNav` is hidden (`in-data-keyboard:hidden`; it is `fixed`, so it has no `static` to fall back to) — so subtracting
   only twitches bottom chrome on keyboard open.
+- **`--app-bottom-inset` is space reserved, `--toast-inset` is chrome cleared — never reuse one for the other.** Footers
+  and docks pad _by_ the inset, so their buttons sit **above** it: anchor a floating layer there and it lands on the
+  CTA. `SpeedDial`'s `above-nav` is literally `calc(var(--app-bottom-inset) + 1rem)`, so that expression is a bullseye
+  on the FAB, not a clearance. Anything floating over the app measures instead: every bottom-anchored surface claims its
+  own box with `useBottomChrome()` (`AppNav`, `SpeedDial`'s trigger, `SelectToolbarDock`, `AppScreen`'s footer dock),
+  `bottom-chrome.ts` publishes the tallest claim as `--bottom-chrome`, and `--toast-inset` floors that at
+  `--p-safe-bottom`. Claims are **measured, never declared** — footer and toolbar heights are content-driven, and a
+  guessed constant is wrong the first time a label wraps. A surface with no box claims nothing, so
+  `in-data-keyboard:hidden` releases itself; the store also publishes `0` outright while the keyboard is up, mirroring
+  `GUTTER_KEYBOARD`. Claim the **untransformed** outer box: `getBoundingClientRect()` sees a child's `motion` transform,
+  and `ResizeObserver` never fires for one, so claiming an animating node measures it mid-flight and then goes stale.
 - **A sheet's pinned footer must consume `--drawer-keyboard-inset`; the body doesn't lift it.** Base UI's
   `VirtualKeyboardProvider` never moves the sheet, so a `bottom-0` footer stays behind the keyboard → pad the popup with
   `.pb-safe-keyboard`. **Combine safe-area and keyboard insets with `max()`, never `+`** (the inset already measures to

@@ -72,9 +72,13 @@ export function keyboardIsMeasured(): boolean {
   return present
 }
 
-export function visibleBottom(): number {
+export function layoutBottom(): number {
   const originTop = document.documentElement.getBoundingClientRect().top
-  return originTop + viewportHeight() - keyboardHeight()
+  return originTop + viewportHeight()
+}
+
+export function visibleBottom(): number {
+  return layoutBottom() - keyboardHeight()
 }
 
 export function subscribeKeyboardHeight(listener: () => void): () => void {

@@ -3,6 +3,7 @@ import {
   cn,
   HeaderElevationContext,
   SCREEN_SCROLL,
+  useBottomChrome,
   useKeyboardReveal,
   useStickyHeader,
 } from '@/shared/lib'
@@ -56,6 +57,7 @@ export function AppScreen({
   const innerRef = useRef<HTMLElement | null>(null)
   const { ref: measureScroll, elevation } = useStickyHeader()
   const revealScroll = useKeyboardReveal()
+  const claimChrome = useBottomChrome()
 
   const setRef = useCallback(
     (node: HTMLElement | null) => {
@@ -111,7 +113,11 @@ export function AppScreen({
         >
           {content}
           {gutterBox}
-          {footer ? <div className={FOOTER_DOCK}>{footer}</div> : null}
+          {footer ? (
+            <div ref={claimChrome} className={FOOTER_DOCK}>
+              {footer}
+            </div>
+          ) : null}
         </main>
       </div>
     </HeaderElevationContext>

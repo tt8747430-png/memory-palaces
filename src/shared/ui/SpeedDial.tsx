@@ -1,7 +1,7 @@
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { Plus } from 'lucide-react'
-import { cn, EASE_OUT } from '@/shared/lib'
+import { cn, EASE_OUT, useBottomChrome } from '@/shared/lib'
 
 export interface SpeedDialAction {
   id: string
@@ -29,6 +29,15 @@ export function SpeedDial({ label, actions, placement = 'above-nav', className }
   const reduce = useReducedMotion()
   const triggerRef = useRef<HTMLButtonElement>(null)
   const firstActionRef = useRef<HTMLButtonElement>(null)
+  const claimChrome = useBottomChrome()
+
+  const setTrigger = useCallback(
+    (node: HTMLButtonElement | null) => {
+      triggerRef.current = node
+      claimChrome(node)
+    },
+    [claimChrome],
+  )
 
   const soleAction = actions.length === 1 ? actions[0]! : null
 
@@ -119,7 +128,7 @@ export function SpeedDial({ label, actions, placement = 'above-nav', className }
         </AnimatePresence>
 
         <motion.button
-          ref={triggerRef}
+          ref={setTrigger}
           type="button"
           aria-label={soleAction ? soleAction.label : label}
           aria-expanded={soleAction ? undefined : open}
