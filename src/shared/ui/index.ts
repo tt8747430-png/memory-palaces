@@ -52,8 +52,10 @@ export {
   HeaderActions,
   HeaderBack,
   HeaderBar,
+  HeaderChrome,
   HeaderCount,
   HeaderHeading,
+  HeaderSearch,
   HeaderSpacer,
   HeaderSubtitle,
   HeaderTitle,
@@ -65,6 +67,7 @@ export {
 } from './header'
 export type {
   HeaderBackProps,
+  HeaderChromeProps,
   HeaderContextValue,
   HeaderLayout,
   HeaderProgress,

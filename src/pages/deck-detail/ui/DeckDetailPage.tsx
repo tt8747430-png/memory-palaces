@@ -121,14 +121,25 @@ export function DeckDetailPage({
             title={deck.name}
             onBack={onBack}
             backLabel={t('common.back')}
+            search={
+              searching ? (
+                <SearchField
+                  className="w-full"
+                  value={query}
+                  onValueChange={setQuery}
+                  placeholder={t('cards.searchCards')}
+                  closeLabel={t('cards.closeSearch')}
+                  onClose={closeSearch}
+                />
+              ) : null
+            }
             action={
               <span className="flex items-center gap-1">
                 {hasContent ? (
                   <IconButton
                     variant="glass"
                     aria-label={t('cards.searchCards')}
-                    aria-expanded={searching}
-                    onClick={() => (searching ? closeSearch() : setSearching(true))}
+                    onClick={() => setSearching(true)}
                   >
                     <Search className="size-5" aria-hidden />
                   </IconButton>
@@ -146,20 +157,6 @@ export function DeckDetailPage({
             }
           />
         )
-      }
-      pinned={
-        searching && !selection.active ? (
-          <div className="px-5 py-3">
-            <SearchField
-              autoFocus
-              value={query}
-              onValueChange={setQuery}
-              placeholder={t('cards.searchCards')}
-              closeLabel={t('cards.closeSearch')}
-              onClose={closeSearch}
-            />
-          </div>
-        ) : null
       }
     >
       <div className="mt-2 space-y-4">

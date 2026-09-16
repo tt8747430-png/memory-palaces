@@ -73,6 +73,19 @@ describe('ActionSheet', () => {
     expect(screen.queryByRole('button', { name: 'Cancel' })).toBeNull()
   })
 
+  it('scrolls its own list, so a long catalog is not clipped by the sheet cap', async () => {
+    open(
+      Array.from({ length: 13 }, (_, i) => ({
+        id: `a${i}`,
+        label: `Action ${i}`,
+        onSelect: () => {},
+      })),
+    )
+    const last = await screen.findByRole('button', { name: 'Action 12' })
+    const list = last.closest('[data-slot="action-sheet-actions"]')
+    expect(list).toHaveClass('overflow-y-auto', 'min-h-0', 'flex-1')
+  })
+
   it('marks the selected action for assistive tech', async () => {
     renderWithProviders(
       <ActionSheet

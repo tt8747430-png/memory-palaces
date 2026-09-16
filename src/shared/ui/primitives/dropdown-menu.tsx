@@ -45,6 +45,7 @@ function DropdownMenuContent({
           onClick={seal}
           className={cn(
             'min-w-52 origin-(--transform-origin) rounded-card bg-card p-1.5',
+            'max-h-(--available-height) overflow-y-auto overscroll-contain',
             'shadow-elevated outline-none ring-1 ring-(--border-glass)',
             'transition-[transform,opacity] duration-150 ease-out motion-reduce:transition-none',
             'data-starting-style:scale-[0.96] data-starting-style:opacity-0',

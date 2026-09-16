@@ -32,6 +32,7 @@ export {
   EASE_EXPO,
   EASE_OUT,
   EASE_OUT_CSS,
+  SWAP_TRANSITION,
   poseAt,
   STACK_DEPTH,
 } from './motion'

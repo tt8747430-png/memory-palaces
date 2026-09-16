@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
@@ -162,6 +162,27 @@ describe('DeckDetailPage', () => {
 
     await user.click(screen.getByRole('button', { name: /clear search/i }))
     expect(screen.getByText('Momentum')).toBeInTheDocument()
-    expect(screen.queryByRole('searchbox')).toBeNull()
+    await waitFor(() => expect(screen.queryByRole('searchbox')).toBeNull())
+  })
+
+  it('takes over the header while searching, and gives it back on close', async () => {
+    const user = userEvent.setup()
+    renderPage({}, [card('c1', { front: 'Momentum', back: 'mass times velocity' })])
+
+    const header = (await screen.findByRole('button', { name: /search cards/i })).closest(
+      '[data-slot="header"]',
+    )
+    expect(header).not.toBeNull()
+
+    await user.click(await screen.findByRole('button', { name: /search cards/i }))
+
+    const field = screen.getByRole('searchbox', { name: /search cards/i })
+    expect(header).toContainElement(field)
+    expect(screen.getByRole('heading', { name: 'Physics' }).closest('[inert]')).not.toBeNull()
+
+    await user.click(screen.getByRole('button', { name: /close search/i }))
+
+    await waitFor(() => expect(screen.queryByRole('searchbox')).toBeNull())
+    expect(screen.getByRole('heading', { name: 'Physics' }).closest('[inert]')).toBeNull()
   })
 })
