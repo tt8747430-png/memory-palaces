@@ -5,6 +5,9 @@ export const EASE_EXPO: Bezier = [0.16, 1, 0.3, 1]
 
 export const EASE_OUT_CSS = 'cubic-bezier(0.22, 1, 0.36, 1)'
 
+/** One control giving the space up to another, in place. */
+export const SWAP_TRANSITION = { duration: 0.22, ease: EASE_OUT } as const
+
 export const authEntrance = {
   initial: { opacity: 0, y: 8 },
   animate: { opacity: 1, y: 0 },

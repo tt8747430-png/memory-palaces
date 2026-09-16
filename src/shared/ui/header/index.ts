@@ -12,6 +12,9 @@ export {
   HeaderTrack,
 } from './Header'
 export type { HeaderLayout, HeaderProps } from './Header'
+export { HeaderChrome } from './HeaderChrome'
+export type { HeaderChromeProps } from './HeaderChrome'
+export { HeaderSearch } from './HeaderSearch'
 export { useHeader } from './header-context'
 export type {
   HeaderBackProps,

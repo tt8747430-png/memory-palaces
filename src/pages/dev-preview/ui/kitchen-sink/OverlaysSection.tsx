@@ -1,8 +1,11 @@
 import { useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Clock, Copy, Flame, Pencil, Star, Trash2, Type } from 'lucide-react'
 import { AppearanceFields } from '@/widgets/appearance-form'
 import {
   ActionSheet,
+  type ActionHandlers,
+  buildMenuActions,
   Button,
   ConfirmDialog,
   FlyoutMenu,
@@ -10,6 +13,7 @@ import {
   Sheet,
   SortControl,
 } from '@/shared/ui'
+import { CARD_ACTIONS } from '@/shared/config/actions'
 import { Section, Cases, Case } from './layout'
 import { FIRST_COLOR } from './fixtures'
 
@@ -118,6 +122,32 @@ function ActionSheetDemo() {
   )
 }
 
+/** Every card action wired to nothing, so the demo builds the real catalog. */
+const INERT_CARD_HANDLERS: ActionHandlers = Object.fromEntries(
+  CARD_ACTIONS.map((id) => [id, { onAction: () => {} }]),
+)
+
+/** The card catalog, the longest menu the app builds — it must scroll, not clip. */
+function LongActionSheetDemo() {
+  const { t } = useTranslation()
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <Button variant="secondary" onClick={() => setOpen(true)}>
+        Long action sheet
+      </Button>
+      <ActionSheet
+        open={open}
+        onOpenChange={setOpen}
+        hideTitle
+        variant="filled"
+        title="Card actions"
+        actions={buildMenuActions(CARD_ACTIONS, INERT_CARD_HANDLERS, t)}
+      />
+    </>
+  )
+}
+
 function ConfirmDemo() {
   const [open, setOpen] = useState(false)
   return (
@@ -201,6 +231,9 @@ export function OverlaysSection() {
         </Case>
         <Case label="ActionSheet">
           <ActionSheetDemo />
+        </Case>
+        <Case label="ActionSheet (full catalog)">
+          <LongActionSheetDemo />
         </Case>
         <Case label="ConfirmDialog">
           <ConfirmDemo />

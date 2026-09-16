@@ -14,6 +14,8 @@ import {
 
 export type HeaderProps = {
   children: ReactNode
+  /** Hands the bar to a field for as long as it is passed. See `HeaderChrome`. */
+  search?: ReactNode
   className?: string
 } & HeaderSubject &
   HeaderBackProps
@@ -23,6 +25,7 @@ export function Header({
   title,
   subtitle,
   progress,
+  search,
   className,
   onBack,
   backLabel,
@@ -38,8 +41,9 @@ export function Header({
       actions: {
         back: onBack && backLabel !== undefined ? { go: onBack, label: backLabel } : undefined,
       },
+      search,
     }),
-    [title, subtitle, progress, onBack, backLabel],
+    [title, subtitle, progress, search, onBack, backLabel],
   )
 
   return (
@@ -55,8 +59,11 @@ export function Header({
   )
 }
 
+/** The bar's own row rhythm, shared with any part that lays a row inside it. */
+export const HEADER_ROW = 'flex items-center gap-1'
+
 const LAYOUT = {
-  bar: 'relative flex h-16 shrink-0 items-center gap-1 px-2',
+  bar: cn('relative h-16 shrink-0 px-2', HEADER_ROW),
   study: 'relative flex shrink-0 items-center justify-between gap-2 pt-3',
 } as const
 

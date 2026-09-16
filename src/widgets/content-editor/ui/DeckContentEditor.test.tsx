@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { started } from '@/shared/test/started'
-import { cleanup, render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { cleanup, render, screen, within } from '@testing-library/react'
+import userEvent, { type UserEvent } from '@testing-library/user-event'
 import { MotionConfig } from 'motion/react'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
@@ -109,5 +109,41 @@ describe('DeckContentEditor', () => {
   it('shows the cards empty state for a fresh deck', async () => {
     renderEditor()
     expect(await screen.findByRole('heading', { name: /no cards yet/i })).toBeInTheDocument()
+  })
+
+  /**
+   * Every surface that offers the card catalog must actually reach its far end
+   * — Learning history is the second-to-last entry, the first one a menu that
+   * cannot scroll drops.
+   */
+  describe('the card catalog reaches Learning history', () => {
+    const openRowMenu = async (user: UserEvent) => {
+      await user.click(await screen.findByRole('button', { name: 'Card actions' }))
+      return screen.findByRole('button', { name: 'Learning history' })
+    }
+
+    const openBrowserMenu = async (user: UserEvent) => {
+      await user.click(await screen.findByText('seed'))
+      const browser = await screen.findByRole('dialog')
+      await user.click(within(browser).getByRole('button', { name: 'Card actions' }))
+      return screen.findByRole('menuitem', { name: 'Learning history' })
+    }
+
+    it.each([
+      ['the row menu', openRowMenu],
+      ['the card browser menu', openBrowserMenu],
+    ])('opens the learning history sheet from %s', async (_name, open) => {
+      const user = userEvent.setup()
+      renderEditor({
+        cards: [
+          makeCard({ id: 'c1', createdAt: at(1), deckId: 'd1', front: 'seed', back: 'root' }),
+        ],
+      })
+      await screen.findByText('seed')
+
+      await user.click(await open(user))
+
+      expect(await screen.findByText('No history yet')).toBeInTheDocument()
+    })
   })
 })

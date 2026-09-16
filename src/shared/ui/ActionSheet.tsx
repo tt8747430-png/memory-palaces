@@ -89,13 +89,19 @@ export function ActionSheet({
         {hideTitle ? (
           <DrawerTitle className="sr-only">{title}</DrawerTitle>
         ) : (
-          <div className="px-2 pt-3 pb-1">
+          <div className="shrink-0 px-2 pt-3 pb-1">
             <DrawerTitle>{title}</DrawerTitle>
             {description ? <DrawerDescription>{description}</DrawerDescription> : null}
           </div>
         )}
 
-        <div className={cn('flex flex-col gap-0.5 pb-2', hideTitle ? 'mt-3' : 'mt-1')}>
+        <div
+          data-slot="action-sheet-actions"
+          className={cn(
+            'flex min-h-0 flex-1 touch-auto flex-col gap-0.5 overflow-y-auto overscroll-contain pb-2',
+            hideTitle ? 'mt-3' : 'mt-1',
+          )}
+        >
           {actions.map((action) => (
             <button
               key={action.id}
@@ -104,7 +110,7 @@ export function ActionSheet({
               aria-current={action.selected ? 'true' : undefined}
               onClick={() => select(action)}
               className={cn(
-                'flex items-center gap-3 text-left',
+                'flex shrink-0 items-center gap-3 text-left',
                 'text-body font-medium',
                 'transition-transform duration-150 ease-out active:scale-[0.99]',
                 'disabled:pointer-events-none disabled:opacity-50',
@@ -126,7 +132,7 @@ export function ActionSheet({
         {cancelLabel ? (
           <DrawerClose
             className={cn(
-              'mb-1 flex h-12 items-center justify-center rounded-control bg-info-surface',
+              'mb-1 flex h-12 shrink-0 items-center justify-center rounded-control bg-info-surface',
               'text-body font-semibold text-heading',
               'transition-transform duration-150 ease-out active:scale-[0.99]',
             )}

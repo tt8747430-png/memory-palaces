@@ -11,28 +11,33 @@ export interface SearchFieldProps {
   placeholder: string
   onClose: () => void
   closeLabel: string
-  autoFocus?: boolean
   className?: string
 }
 
+/**
+ * Mounts focused: nothing raises this field except a learner asking to search,
+ * so a second tap to reach it would be a step with no decision in it.
+ * `preventScroll` keeps that focus from scrolling the layout viewport — the
+ * field is chrome, not content, and moving the page under it is what skews the
+ * keyboard measurement (CODE_STYLE §11).
+ */
 export function SearchField({
   value,
   onValueChange,
   placeholder,
   onClose,
   closeLabel,
-  autoFocus = false,
   className,
 }: SearchFieldProps) {
   const { t } = useTranslation()
   const ref = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (autoFocus) ref.current?.focus()
-  }, [autoFocus])
+    ref.current?.focus({ preventScroll: true })
+  }, [])
 
   return (
-    <div className={cn('flex items-center gap-2', className)}>
+    <div className={cn('flex items-center gap-1', className)}>
       <span className="relative min-w-0 flex-1">
         <Search
           className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
@@ -55,7 +60,7 @@ export function SearchField({
           }}
         />
       </span>
-      <IconButton variant="ghost" aria-label={closeLabel} onClick={onClose}>
+      <IconButton variant="glass" aria-label={closeLabel} onClick={onClose}>
         <X className="size-5" aria-hidden />
       </IconButton>
       <span className="sr-only" role="status">

@@ -28,6 +28,12 @@ export interface HeaderHandlers {
 export interface HeaderContextValue {
   state: HeaderState
   actions: HeaderHandlers
+  /**
+   * A field that takes the whole bar for as long as it is here. Its presence
+   * *is* the bar's search mode — `HeaderChrome` stands the usual contents down
+   * while it is mounted, so the two can never disagree about which is showing.
+   */
+  search: ReactNode
 }
 
 export const HeaderContext = createContext<HeaderContextValue | null>(null)
