@@ -47,7 +47,8 @@
 | `src/extensions/bible/model/parse-verses.ts`                                     | The verse parser moved out of `shared/lib`, back without the reference.  |
 | `src/extensions/bible/model/strip-reference.ts`                                  | Removes a leading reference from a card back.                            |
 | `src/extensions/bible/model/verse.ts`                                            | The `BibleVerse` entity + `makeBibleVerse` / `completeBibleVerse`.       |
-| `src/extensions/bible/model/store.ts`                                            | `createBibleVerseStore` + context.                                       |
+| `src/extensions/bible/model/store.ts`                                            | `createBibleVerseStore`.                                                 |
+| `src/extensions/bible/model/context.ts`                                          | Its store context, split out the way `entities/card` splits it.          |
 | `src/extensions/bible/model/verse-text.ts`                                       | The `VerseTextSource` port + the deck-source adapter.                    |
 | `src/extensions/bible/api/verse-schema.ts`                                       | RxDB schema + collection spec.                                           |
 | `src/extensions/bible/features/add-verse-cards.ts`                               | Reference + text + target → import draft.                                |
@@ -1008,7 +1009,8 @@ git commit -m "feat(extensions): a settings screen for switching extensions on a
 **Interfaces:**
 
 - Consumes: nothing.
-- Produces: `BOOKS: readonly BibleBook[]`, `type BibleBook = { name: string; verses: readonly number[] }`, `chapterCount(book)`, `verseCount(book, chapter)`, `type VerseRef = { book: string; chapter: number; from: number; to: number }`, `formatRef(ref)`, `parseRef(text)`, `expandRange(ref)`, `refKey(book, chapter, verse)`.
+- Produces: `BOOKS: readonly BibleBook[]`, `type BibleBook = { name: string; verses: readonly number[] }`, `chapterCount(book)`, `verseCount(book, chapter)`, `type VerseRef = { book: string; chapter: number; from: number; to: number }`, `formatRef(ref)`, `formatPartial(parts)`, `parseRef(text)`, `expandRange(ref)`.
+  `refKey` belongs to the verse entity, not here — Task 6 defines it.
 
 - [ ] **Step 1: Teach ESLint about the layer**
 
@@ -1131,7 +1133,7 @@ Expected: PASS, 4 tests.
 ```ts
 // src/extensions/bible/model/reference.test.ts
 import { describe, expect, it } from 'vitest'
-import { expandRange, formatRef, parseRef, refKey } from './reference'
+import { expandRange, formatPartial, formatRef, parseRef } from './reference'
 
 describe('formatRef', () => {
   it('renders a single verse without a range', () => {
@@ -1168,9 +1170,21 @@ describe('expandRange', () => {
   })
 })
 
-describe('refKey', () => {
-  it('keys a verse so republishing updates in place', () => {
-    expect(refKey('web', 'Genesis', 1, 1)).toBe('web:Genesis:1:1')
+describe('formatPartial', () => {
+  it('renders the breadcrumb at every step the picker passes through', () => {
+    expect(formatPartial({ book: null, chapter: null, from: null, to: null })).toBe('')
+    expect(formatPartial({ book: 'Genesis', chapter: null, from: null, to: null })).toBe('Genesis')
+    expect(formatPartial({ book: 'Genesis', chapter: 1, from: null, to: null })).toBe('Genesis 1:')
+    expect(formatPartial({ book: 'Genesis', chapter: 1, from: 1, to: null })).toBe('Genesis 1:1')
+    expect(formatPartial({ book: 'Genesis', chapter: 1, from: 1, to: 31 })).toBe('Genesis 1:1-31')
+  })
+
+  it('collapses a range that ends where it starts', () => {
+    expect(formatPartial({ book: 'Jude', chapter: 1, from: 3, to: 3 })).toBe('Jude 1:3')
+  })
+
+  it('ignores a chapter picked without a book', () => {
+    expect(formatPartial({ book: null, chapter: 1, from: 1, to: 1 })).toBe('')
   })
 })
 ```
@@ -1213,15 +1227,25 @@ export function expandRange({ from, to }: VerseRef): number[] {
   return Array.from({ length: to - from + 1 }, (_, index) => from + index)
 }
 
-export function refKey(translation: string, book: string, chapter: number, verse: number): string {
-  return `${translation}:${book}:${chapter}:${verse}`
+/** The breadcrumb. `formatRef` cannot do this — it needs a complete reference. */
+export function formatPartial(parts: {
+  book: string | null
+  chapter: number | null
+  from: number | null
+  to: number | null
+}): string {
+  const { book, chapter, from, to } = parts
+  if (!book) return ''
+  if (!chapter) return book
+  if (!from) return `${book} ${chapter}:`
+  return formatRef({ book, chapter, from, to: to ?? from })
 }
 ```
 
 - [ ] **Step 9: Run it and watch it pass**
 
 Run: `npx vitest run src/extensions/bible/model/reference.test.ts`
-Expected: PASS, 7 tests.
+Expected: PASS, 10 tests.
 
 - [ ] **Step 10: Verify and commit**
 
@@ -1241,6 +1265,7 @@ git commit -m "feat(bible): the canon skeleton and verse references"
 - Create: `src/extensions/bible/model/verse.ts`
 - Create: `src/extensions/bible/model/verse.test.ts`
 - Create: `src/extensions/bible/model/store.ts`
+- Create: `src/extensions/bible/model/context.ts`
 - Create: `src/extensions/bible/api/verse-schema.ts`
 - Create: `src/extensions/bible/api/verse-repository.ts`
 - Create: `supabase/migrations/20260917120000_bible_verses.sql`
@@ -1250,15 +1275,15 @@ git commit -m "feat(bible): the canon skeleton and verse references"
 
 **Interfaces:**
 
-- Consumes: `refKey` (Task 5); `ExtensionCollectionSpec` (Task 1).
-- Produces: `interface BibleVerse extends Entity`, `makeBibleVerse(input)`, `completeBibleVerse(verse)`, `createBibleVerseStore(repo)`, `useBibleVerseStore`, `useBibleVerseStoreApi`, `bibleVerseCollection: ExtensionCollectionSpec`.
+- Consumes: `ExtensionCollectionSpec` (Task 1).
+- Produces: `interface BibleVerse extends Entity`, `refKey(translation, book, chapter, verse)`, `makeBibleVerse(input)`, `completeBibleVerse(verse)`, `createBibleVerseStore(repo)`, `useBibleVerseStore`, `useBibleVerseStoreApi`, `bibleVerseCollection: ExtensionCollectionSpec`.
 
 - [ ] **Step 1: Write the failing entity test**
 
 ```ts
 // src/extensions/bible/model/verse.test.ts
 import { describe, expect, it } from 'vitest'
-import { completeBibleVerse, makeBibleVerse } from './verse'
+import { completeBibleVerse, makeBibleVerse, refKey } from './verse'
 
 const at = new Date(0).toISOString()
 
@@ -1314,6 +1339,12 @@ describe('makeBibleVerse', () => {
   })
 })
 
+describe('refKey', () => {
+  it('keys a verse so republishing it updates in place', () => {
+    expect(refKey('web', 'Genesis', 1, 1)).toBe('web:Genesis:1:1')
+  })
+})
+
 describe('completeBibleVerse', () => {
   it('fills a row pulled from the cloud that predates a field', () => {
     const pulled = {
@@ -1340,9 +1371,13 @@ Expected: FAIL — cannot resolve `./verse`.
 ```ts
 // src/extensions/bible/model/verse.ts
 import type { Entity } from '@/shared/lib'
-import { refKey } from './reference'
 
 export const DEFAULT_TRANSLATION = 'web'
+
+/** A verse's primary key. It lives here, not in `reference.ts`, which knows nothing of translations. */
+export function refKey(translation: string, book: string, chapter: number, verse: number): string {
+  return `${translation}:${book}:${chapter}:${verse}`
+}
 
 export interface BibleVerse extends Entity {
   translation: string
@@ -1395,7 +1430,7 @@ export function completeBibleVerse(verse: BibleVerse): BibleVerse {
 - [ ] **Step 4: Run it and watch it pass**
 
 Run: `npx vitest run src/extensions/bible/model/verse.test.ts`
-Expected: PASS, 5 tests.
+Expected: PASS, 6 tests.
 
 - [ ] **Step 5: Write the store and its context**
 
@@ -1403,7 +1438,7 @@ Expected: PASS, 5 tests.
 // src/extensions/bible/model/store.ts
 import type { StoreApi } from 'zustand/vanilla'
 import type { Repository } from '@/shared/api'
-import { type CollectionState, createCollectionStore, createStoreContext } from '@/shared/lib'
+import { type CollectionState, createCollectionStore } from '@/shared/lib'
 import { type BibleVerse, completeBibleVerse } from './verse'
 
 export type BibleVerseState = CollectionState<'verses', BibleVerse>
@@ -1415,6 +1450,14 @@ const byPosition = (a: BibleVerse, b: BibleVerse): number =>
 export function createBibleVerseStore(repo: Repository<BibleVerse>): BibleVerseStore {
   return createCollectionStore('verses', repo, byPosition, { complete: completeBibleVerse })
 }
+```
+
+Its context goes in its own file, the way `entities/card` splits `store.ts` from `context.ts`:
+
+```ts
+// src/extensions/bible/model/context.ts
+import { createStoreContext } from '@/shared/lib'
+import type { BibleVerseState } from './store'
 
 const { StoreContext, useSelector, useStoreApi } = createStoreContext<BibleVerseState>('BibleVerse')
 
@@ -1519,8 +1562,77 @@ Composing the target list at startup is not enough: the spec says an extension's
 set **only while the extension is enabled**. Filter at cycle time rather than at startup, because
 preferences have not loaded when `createServices()` runs.
 
-Give `SyncManager.fromSupabase` a third argument — a predicate — and apply it where it enumerates
-targets:
+Two halves have to change, and the second is the one that is easy to miss: `fromSupabase` builds its
+watcher from the **module-level `SYNCED_TABLES` const** (`src/shared/api/supabase/sync-manager.ts:51`),
+not from `targets`. Filtering only `cycle()` leaves Realtime deaf to `bible_verses` forever.
+
+First widen the table type in `src/shared/config/sync-tables.ts`, keeping autocomplete for core names:
+
+```ts
+export type CoreSyncedTable = (typeof SYNCED_TABLES)[number]
+export type SyncedTable = CoreSyncedTable | (string & {})
+```
+
+Then, in `src/shared/api/supabase/sync-manager.ts`, give the watcher factory its tables and the
+manager a predicate:
+
+```ts
+type WatcherFactory = (
+  userId: string,
+  tables: readonly SyncedTable[],
+  onRemoteChange: (event: RemoteChangeEvent) => void,
+) => CloudWatcher
+
+  constructor(
+    private readonly targets: SyncTarget[] | Promise<SyncTarget[]>,
+    private readonly makeReplication: ReplicationFactory,
+    private readonly watch: WatcherFactory = () => ({ stop: async () => {} }),
+    private readonly isActive: (table: SyncedTable) => boolean = () => true,
+  ) {}
+
+  static fromSupabase(
+    supabase: SupabaseClient,
+    targets: SyncTarget[] | Promise<SyncTarget[]>,
+    isActive?: (table: SyncedTable) => boolean,
+  ): SyncManager {
+    return new SyncManager(
+      targets,
+      (userId, target, onPushed) =>
+        createCollectionReplication({
+          supabase,
+          userId,
+          table: target.table,
+          collection: target.collection,
+          onPushed,
+        }),
+      (userId, tables, onRemoteChange) =>
+        createCloudWatcher(supabase, tables, userId, onRemoteChange),
+      isActive,
+    )
+  }
+```
+
+`start()` now derives the watched tables from the active targets:
+
+```ts
+this.userId = userId
+const active = (await this.targets).filter((target) => this.isActive(target.table))
+this.watcher = this.watch(
+  userId,
+  active.map((target) => target.table),
+  onRemoteChange,
+)
+```
+
+and `cycle()` filters the same way:
+
+```ts
+const targets = (await this.targets).filter((target) => this.isActive(target.table))
+```
+
+Delete the now-unused `SYNCED_TABLES` import from `sync-manager.ts`.
+
+The predicate itself is built in `src/app/composition-root.ts`:
 
 ```ts
 const extensionTables = new Map(
@@ -1538,10 +1650,20 @@ const tableIsActive = (table: string): boolean => {
 }
 ```
 
-Test it in `src/shared/api/supabase/sync-manager.test.ts`: a cycle with the predicate rejecting
-`bible_verses` pushes and pulls every core table and never touches that one; with it accepting, the
-table is included. Re-enabling resumes from the stored checkpoint, so nothing is lost in between —
-assert that the checkpoint is untouched while the table is skipped.
+and passed as the third argument to `cloud.SyncManager.fromSupabase(cloud.supabase, syncTargets, tableIsActive)`.
+
+Because the watcher is built once per `start()`, the manager must be restarted when the enabled set
+changes. In `src/app/providers/SyncProvider.tsx`, add an effect keyed on the enabled-extension list
+that calls `syncManager.stop()` then `start(userId, onRemoteChange)` again.
+
+Test it in `src/shared/api/supabase/sync-manager.test.ts`:
+
+- a cycle with the predicate rejecting `bible_verses` pushes and pulls every core table and never
+  touches that one
+- with the predicate accepting, the table is included
+- `start()` hands the watcher factory exactly the active tables — assert `bible_verses` is absent
+  from the list while rejected and present while accepted
+- the skipped table's checkpoint is untouched, so re-enabling resumes rather than refetching
 
 - [ ] **Step 9: Write the Supabase migration**
 
@@ -1919,15 +2041,21 @@ export const bibleMessages = {
   verseText: 'Verse text',
   textImported: 'Text brought in from your Bible library.',
   textMissing: 'This passage is not in your Bible library yet — paste it in below.',
-  pasteInstead: 'Paste text instead',
   translation: 'Translation',
   target: 'Include in decks',
   targetExisting: 'Existing deck',
   targetNew: 'New deck',
   pickDeck: 'Choose a deck',
   newDeckTitle: 'Name the deck',
-  duplicates: 'You already have {{refs}} here',
+  duplicates: 'You already have {{refs}} in your library',
   duplicatesSkip: 'Skipped. Add them anyway?',
+  showMe: 'Show me',
+  split_one: 'Split into {{count}} individual verse',
+  split_other: 'Split into {{count}} individual verses',
+  splitUnavailable: 'Number the verses (1) 2) 3)) to split them into separate cards.',
+  keepText: 'Keep this text',
+  kept_one: 'Kept {{count}} verse in your Bible library',
+  kept_other: 'Kept {{count}} verses in your Bible library',
   addCount_one: 'Add {{count}} card',
   addCount_other: 'Add {{count}} cards',
   empty: 'Nothing to add yet',
@@ -1952,7 +2080,8 @@ import { type ReactNode, useEffect, useMemo } from 'react'
 import type { RxCollection } from 'rxdb'
 import { RxdbRepository } from '@/shared/api/rxdb'
 import { useExtensionCollections } from '@/shared/lib'
-import { BibleVerseStoreContext, createBibleVerseStore } from '../model/store'
+import { BibleVerseStoreContext } from '../model/context'
+import { createBibleVerseStore } from '../model/store'
 import type { BibleVerse } from '../model/verse'
 
 /** Mounted only while the extension is on: the store starts here and stops when it unmounts. */
@@ -2141,12 +2270,12 @@ describe('usePassagePicker', () => {
     expect(result.current.ref).toEqual({ book: 'Genesis', chapter: 1, from: 1, to: 31 })
   })
 
-  it('offers only verses at or after the start as an ending', () => {
+  it('offers only verses after the start — "Just verse N" covers the equal case, so no number repeats', () => {
     const { result } = renderHook(() => usePassagePicker())
     act(() => result.current.pickBook('Genesis'))
     act(() => result.current.pickChapter(1))
     act(() => result.current.pickFrom(30))
-    expect(result.current.endOptions).toEqual([30, 31])
+    expect(result.current.endOptions).toEqual([31])
   })
 
   it('start over clears everything', () => {
@@ -2219,7 +2348,7 @@ export function usePassagePicker(): PassagePicker {
     [book, chapter],
   )
   const endOptions = useMemo(
-    () => (from ? startOptions.filter((verse) => verse >= from) : []),
+    () => (from ? startOptions.filter((verse) => verse > from) : []),
     [startOptions, from],
   )
 
@@ -2410,6 +2539,12 @@ describe('BibleImportPage picker', () => {
     expect(screen.getByText('Genesis 1:1-31')).toBeInTheDocument()
   })
 
+  it('keeps the text box on screen before anything is picked', () => {
+    renderWithProviders(<BibleImportPage />)
+    expect(screen.getByText('Pick a Bible book')).toBeInTheDocument()
+    expect(screen.getByLabelText('Verse text')).toBeInTheDocument()
+  })
+
   it('start over returns to the book list', async () => {
     const user = userEvent.setup()
     renderWithProviders(<BibleImportPage />)
@@ -2427,12 +2562,20 @@ Export a plain `BibleImportPage` component beside the routed `BibleImportScreen`
 Run: `npx vitest run src/extensions/bible/ui/BibleImportPage.test.tsx`
 Expected: FAIL — the page still renders the Task 8 stub.
 
-Replace the stub with the picker: breadcrumb (`formatRef` of whatever is chosen so far), **Start over** always, **Change verses** once `step === 'done'`, then `BookPicker`, `NumberGrid` for chapters, `NumberGrid` for the start verse, and `NumberGrid` for the end verse with `lead={{ label: t('justVerse', { verse: from }), onPick: () => pickTo(from) }}`.
+Replace the stub with the picker: breadcrumb from `formatPartial({ book, chapter, from, to })`,
+**Start over** always, **Change verses** once `step === 'done'`, then `BookPicker`, `NumberGrid` for
+chapters, `NumberGrid` for the start verse, and `NumberGrid` for the end verse with
+`lead={{ label: t('justVerse', { verse: from }), onPick: () => pickTo(from) }}`.
+
+The verse-text panel renders **below the picker at every step, including the first** — the mockups
+show it from the chapter step onward, and keeping it on screen from the start is what makes pasting
+without picking a book work without a separate mode. Task 10 fills in its behaviour; this task just
+places it.
 
 - [ ] **Step 8: Run it and watch it pass**
 
 Run: `npx vitest run src/extensions/bible/ui/BibleImportPage.test.tsx`
-Expected: PASS, 4 tests.
+Expected: PASS, 5 tests.
 
 - [ ] **Step 9: Verify and commit**
 
@@ -2459,14 +2602,14 @@ git commit -m "feat(bible): pick a book, a chapter and a verse range"
 **Interfaces:**
 
 - Consumes: `VerseRef`, `formatRef`, `expandRange` (Task 5); `VerseTextSource` (Task 7); `useImportDraft`, `MoveSheet`, `PromptSheet`.
-- Produces: `buildVerseCards(ref, text): ParsedCard[]`, `findDuplicateRefs(cards, existing): string[]`.
+- Produces: `buildVerseCards(ref, text, { split }): ParsedCard[]`, `canSplit(text): boolean`, `findDuplicates(cards, held): HeldRef[]` where `HeldRef = { front: string; deckId: string }`.
 
 - [ ] **Step 1: Write the failing card-building test**
 
 ```ts
 // src/extensions/bible/features/build-verse-cards.test.ts
 import { describe, expect, it } from 'vitest'
-import { buildVerseCards, findDuplicateRefs } from './build-verse-cards'
+import { buildVerseCards, canSplit, findDuplicates } from './build-verse-cards'
 
 const ref = { book: 'Genesis', chapter: 1, from: 1, to: 2 }
 
@@ -2512,17 +2655,36 @@ describe('buildVerseCards', () => {
   })
 })
 
-describe('findDuplicateRefs', () => {
-  it('names the fronts the deck already holds', () => {
+describe('splitting', () => {
+  it('keeps the range as one card when splitting is off', () => {
+    const cards = buildVerseCards(ref, '1) In the beginning. 2) The earth.', { split: false })
+    expect(cards).toEqual([{ front: 'Genesis 1:1-2', back: '1) In the beginning. 2) The earth.' }])
+  })
+
+  it('knows whether the text can be split at all', () => {
+    expect(canSplit('1) In the beginning. 2) The earth.')).toBe(true)
+    expect(canSplit('(1:1) In the beginning.')).toBe(true)
+    expect(canSplit('In the beginning, plainly.')).toBe(false)
+  })
+})
+
+describe('findDuplicates', () => {
+  it('names references held anywhere in the library, with the deck holding them', () => {
     const cards = [
       { front: 'Genesis 1:1', back: 'a' },
       { front: 'Genesis 1:2', back: 'b' },
     ]
-    expect(findDuplicateRefs(cards, ['Genesis 1:1'])).toEqual(['Genesis 1:1'])
+    const held = [{ front: 'Genesis 1:1', deckId: 'deck-7' }]
+    expect(findDuplicates(cards, held)).toEqual([{ front: 'Genesis 1:1', deckId: 'deck-7' }])
   })
 
-  it('finds none in an empty deck', () => {
-    expect(findDuplicateRefs([{ front: 'Genesis 1:1', back: 'a' }], [])).toEqual([])
+  it('finds a duplicate that lives in a different deck from the target', () => {
+    const held = [{ front: 'Genesis 1:1', deckId: 'some-other-deck' }]
+    expect(findDuplicates([{ front: 'Genesis 1:1', back: 'a' }], held)).toHaveLength(1)
+  })
+
+  it('finds none in an empty library', () => {
+    expect(findDuplicates([{ front: 'Genesis 1:1', back: 'a' }], [])).toEqual([])
   })
 })
 ```
@@ -2561,11 +2723,20 @@ function splitByMarkers(text: string): Segment[] {
   return segments
 }
 
-export function buildVerseCards(ref: VerseRef, text: string): ParsedCard[] {
+/** Whether the text carries markers at all — the toggle is meaningless without them. */
+export function canSplit(text: string): boolean {
+  return splitByMarkers(text.trim()).length > 0
+}
+
+export function buildVerseCards(
+  ref: VerseRef,
+  text: string,
+  { split = true }: { split?: boolean } = {},
+): ParsedCard[] {
   const body = text.trim()
   if (!body) return []
 
-  const segments = splitByMarkers(body)
+  const segments = split ? splitByMarkers(body) : []
   if (segments.length > 0) {
     return segments.map(({ verse, text: verseText }) => ({
       front: formatRef({ ...ref, from: verse, to: verse }),
@@ -2576,19 +2747,28 @@ export function buildVerseCards(ref: VerseRef, text: string): ParsedCard[] {
   return [{ front: formatRef(ref), back: stripReference(body) }]
 }
 
-export function findDuplicateRefs(
-  cards: readonly ParsedCard[],
-  existingFronts: readonly string[],
-): string[] {
-  const held = new Set(existingFronts.map((front) => front.trim().toLowerCase()))
-  return cards.map((card) => card.front).filter((front) => held.has(front.trim().toLowerCase()))
+export interface HeldRef {
+  front: string
+  deckId: string
+}
+
+/**
+ * Checked across the whole library, not just the target deck: decks are shaped
+ * book -> chapter -> verse, so the passage being added may already live somewhere else.
+ */
+export function findDuplicates(cards: readonly ParsedCard[], held: readonly HeldRef[]): HeldRef[] {
+  const index = new Map(held.map((entry) => [entry.front.trim().toLowerCase(), entry]))
+  return cards.flatMap((card) => {
+    const match = index.get(card.front.trim().toLowerCase())
+    return match ? [match] : []
+  })
 }
 ```
 
 - [ ] **Step 4: Run it and watch it pass**
 
 Run: `npx vitest run src/extensions/bible/features/build-verse-cards.test.ts`
-Expected: PASS, 8 tests.
+Expected: PASS, 13 tests.
 
 - [ ] **Step 5: Widen the import draft by one neutral source**
 
@@ -2637,6 +2817,14 @@ describe('BibleImportPage text and target', () => {
     expect(screen.getByRole('button', { name: 'Add 2 cards' })).toBeEnabled()
   })
 
+  it('pastes without picking a book — the box needs no separate mode', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<BibleImportPage />)
+    await user.click(screen.getByLabelText('Verse text'))
+    await user.paste('(1:1) The elder, to Gaius\n(1:2) Beloved, I pray')
+    expect(screen.getByRole('button', { name: 'Add 2 cards' })).toBeEnabled()
+  })
+
   it('cannot add while the text box is empty', async () => {
     const user = userEvent.setup()
     renderWithProviders(<BibleImportPage />)
@@ -2651,14 +2839,45 @@ describe('BibleImportPage text and target', () => {
 
 - [ ] **Step 8: Finish the screen**
 
-Wire the pieces: on `step === 'done'`, read the source (`createStoredVerseSource(useBibleVerseStore((s) => s.verses))`), prefill the box by joining its verses, render `VerseTextPanel`, `TargetPicker`, the duplicate banner from `findDuplicateRefs`, and a `FooterBar` button labelled `t('addCount', { count })`.
+Wire the pieces. The text panel and the footer button are always rendered; the picker sits above them.
+
+**Prefill, when a complete range is chosen and the library covers it.** Read the source with
+`createStoredVerseSource(useBibleVerseStore((state) => state.verses))` and fill the box **with
+markers**, exactly as the mockup shows:
+
+```ts
+const prefill = (verses: StoredVerse[]): string =>
+  verses.map((held) => `${held.verse}) ${held.text}`).join(' ')
+```
+
+A plain join would round-trip through `buildVerseCards` into a single card covering the whole range —
+the one outcome this design must not produce. Prefill only when the reader has not already typed.
+
+**Split toggle.** A `ToggleRow` labelled `t('split', { count })`, default on, passed to
+`buildVerseCards(ref, text, { split })`. Disable it with the hint `t('splitUnavailable')` when
+`!canSplit(text)` and the range spans more than one verse, so it never silently does nothing.
+
+**Duplicates.** Feed `findDuplicates` every card in the library:
+
+```ts
+const held = useCardStore(selectCards).map((card) => ({ front: card.front, deckId: card.deckId }))
+```
+
+Render the banner with `t('duplicates', { refs })` and a **Show me** button that navigates to
+`ROUTES.deckDetail` for the first match's `deckId`, plus the toggle that adds them anyway.
+
+**Keep this text (admin).** Behind `useDevMode()`, a button beside the box reading `t('keepText')`
+that publishes what is in the box into the library — the path that fills the picker before the
+bundled translation exists. It calls `versesFromCards(buildVerseCards(ref, text), nowIso())` then
+`publishVerses` (both from Task 12), and toasts `t('kept', { count })`.
 
 The button writes the draft and navigates, mirroring `NewPasteScreen`:
 
 ```ts
 const add = async () => {
-  const cards = buildVerseCards(ref, text).filter(
-    (card) => keepDuplicates || !duplicates.includes(card.front),
+  const held = new Set(duplicates.map((entry) => entry.front))
+  const cards = buildVerseCards(ref, text, { split }).filter(
+    (card) => keepDuplicates || !held.has(card.front),
   )
   setDraft('extension', cards)
   const deckId =
@@ -2672,12 +2891,14 @@ const add = async () => {
 Render the translation as a static label under the text box — `t('translation')` and the one
 translation's name. No selector exists until there is a second translation.
 
-Add the **Paste text instead** entry at the top: it hides the picker, shows only the text box, and builds cards with `parseVerses` (Task 11 moves that parser in).
+There is deliberately **no "paste text instead" mode**. The box is always on screen, so pasting
+without touching the picker already works: `buildVerseCards` reads `(1:1)` and `n)` markers, and when
+no book has been picked the fronts come from the markers themselves via `parseVerses` (Task 11).
 
 - [ ] **Step 9: Run the whole file and watch it pass**
 
 Run: `npx vitest run src/extensions/bible/ui/BibleImportPage.test.tsx`
-Expected: PASS, 7 tests.
+Expected: PASS, 10 tests.
 
 - [ ] **Step 10: Verify and commit**
 
@@ -3020,6 +3241,12 @@ It shows:
 - **Publish a deck** — opens `MoveSheet targets="deck"`; on pick, `versesFromCards` over that deck's cards and its subdecks' cards, then `publishVerses`, then a `toast.success` with the count
 - **Clean references from backs** — opens the same sheet; on pick, `countReferenceBacks` feeds a `ConfirmDialog` reading `t('cleanBacksCount', { count })`, and confirming runs `cleanReferenceBacks` with a save wired to the core card command
 - empty state `t('empty')` when nothing is published
+
+The third admin action the spec names — **keep the text currently in the import box** — deliberately
+lives on the import screen instead (Task 10, Step 8), because that is where the text is. This task
+provides the command it calls: `versesFromCards(buildVerseCards(ref, text), nowIso())` piped into
+`publishVerses`. Add a test here that a box of `1) … 2) …` text for `Genesis 1:1-2` publishes exactly
+two verses, with the reference stripped from each.
 
 Test it with a started `BibleVerseStoreContext` over an `InMemoryRepository`, asserting: dev mode off hides the tools; publishing a two-card deck stores two verses; a deck of ordinary notes stores none.
 

@@ -57,15 +57,15 @@ and `useExtensionPoint(point)`. It contains no extension-specific vocabulary.
 
 Only the points this spec needs exist:
 
-| Point            | Shape                                                 | Host                             |
-| ---------------- | ----------------------------------------------------- | -------------------------------- |
-| `import.options` | `{ id, icon, tone, title, subtitle, to }`             | the page rendering `ImportSheet` |
-| routes           | `{ path, component }`                                 | `app/router.tsx`                 |
-| collections      | `{ key, table, schema, migrations, conflictHandler }` | `app/persistence/database.ts`    |
-| i18n             | a lazy namespace bundle                               | the extensions provider          |
+| Point           | Shape                                                 | Host                             |
+| --------------- | ----------------------------------------------------- | -------------------------------- |
+| `importOptions` | `{ id, icon, tone, title, subtitle, to }`             | the page rendering `ImportSheet` |
+| routes          | `{ path, component }`                                 | `app/router.tsx`                 |
+| collections     | `{ key, table, schema, migrations, conflictHandler }` | `app/persistence/database.ts`    |
+| i18n            | a lazy namespace bundle                               | the extensions provider          |
 
 `shared/ui/ImportSheet` stays prop-driven: it gains an optional `extraOptions` prop appended after
-its two built-in rows. The _page_ calls `useExtensionPoint('import.options')` and passes them
+its two built-in rows. The _page_ calls `useExtensionPoint('importOptions')` and passes them
 down. No context reaches into a `shared/ui` primitive.
 
 Nav tabs, settings rows and profile badge rows are **not** built now. They arrive with the
@@ -112,7 +112,11 @@ the database does not know is a schema replication can orphan rows against; the 
 cheap and the data must survive disabling.
 
 Replication is different: a table joins the sync set only while its extension is enabled. Disable
-stops it; re-enable resumes from its checkpoint, losing nothing. Because the toggle itself syncs,
+stops it; re-enable resumes from its checkpoint, losing nothing. Both halves must honour that:
+`SyncManager.cycle` filters its targets through the predicate, **and** `SyncManager.fromSupabase`
+stops handing `createCloudWatcher` the hardcoded `SYNCED_TABLES` const and passes the active tables
+instead — otherwise Realtime stays deaf to an enabled extension's table. Because the watcher is built
+once per `start()`, `SyncProvider` restarts the manager when the enabled set changes. Because the toggle itself syncs,
 enabling Bible on one device enables and syncs it everywhere.
 
 `SYNCED_TABLES` is currently a compile-time const in `shared/config/sync-tables.ts` feeding
@@ -205,19 +209,31 @@ A single scrolling screen with progressive disclosure, matching the reference mo
 1. **Pick a Bible book** — searchable list of all 66.
 2. **Pick a chapter** — number grid.
 3. **Pick a starting verse** — number grid.
-4. **Pick an ending verse** — `Just verse N` first, then the numbers above the start.
+4. **Pick an ending verse** — `Just verse N` first, then the numbers **above** the start. The grid
+   begins at `N+1`; the lead pill is the only way to pick the single-verse case, so no number is
+   offered twice.
 
 A breadcrumb shows the reference as it is built (`Genesis`, `Genesis 1:`, `Genesis 1:1`,
 `Genesis 1:1-31`) with **Start over** and, once complete, **Change verses**.
 
-**Verse text panel.** Prefilled from the source when one covers the range, with a quiet confirmation
-that the text was imported. Otherwise it opens empty with a line explaining that this passage is not
-in the library yet and can be pasted in. Editable in both cases.
+**Verse text panel.** On screen from the start and never hidden, as the mockups show — the picker
+appears above it, not instead of it. Prefilled once a range is complete and the library covers it,
+with a quiet confirmation that the text was imported; otherwise it stays empty with a line explaining
+that this passage is not in the library yet and can be pasted in. Editable throughout.
 
-**Paste text instead.** An entry at the top of the screen skips the picker entirely: paste raw
-scripture, and `(1:1)`-style markers are parsed exactly as Paste Notes used to. This is the
-stopgap route until the translation is bundled, and it is also where the admin publishes new text
-into the library.
+Because the box is always there, **pasting is not a separate mode**: paste raw scripture without
+touching the picker and the `(1:1)` and `n)` markers are parsed exactly as Paste Notes used to. That
+is the stopgap until the translation is bundled, and the text the admin publishes into the library.
+
+**The prefill emits markers.** When the library covers the range, the box is filled as
+`1) …  2) …` — the shape the mockup shows and the shape the parser reads back. A plain join would
+round-trip into a single card covering the whole range, which is the one outcome this design must
+not produce.
+
+**Split into individual verses.** An explicit toggle, default on, reading "Split into N individual
+verses". On, each verse becomes its own card. Off, the range becomes one card fronted
+`Genesis 1:1-31`. Leaving it implicit would silently collapse unmarked text into one card, against
+"each card is a verse".
 
 **Translation.** One translation, shown as a static label. No selector until there is a second.
 
@@ -227,8 +243,10 @@ into the library.
   a deck, subdecks and all.
 - _New_ opens `PromptSheet` prefilled with the chapter (`Genesis 1`), an ordinary deck creation.
 
-**Duplicates.** References already present in the target raise a banner naming the overlap
-("You already have Genesis 1:1-10 here"). They are skipped by default; a toggle adds them anyway.
+**Duplicates.** Checked across the **whole library**, not just the target deck — the mockup says
+"already in your account", and with decks shaped book → chapter → verse the same passage can already
+live elsewhere. References already held raise a banner naming the overlap and a **Show me** action
+that opens the deck holding the first one. They are skipped by default; a toggle adds them anyway.
 
 **Handing off.** Add writes the parsed cards into the existing import draft and navigates to the
 existing review screen at `/decks/$deckId/import`. Editing, removing and applying come free; there
@@ -236,6 +254,11 @@ is no second review UI. `ImportSource` widens by one neutral member, `'extension
 `'bible'`, which would put the word in core.
 
 For a new deck the flow mirrors `NewPasteScreen`: create the deck, then land on its review screen.
+
+**Two deliberate divergences from the mockups**, recorded so nobody "restores" them: their
+`Include in Collections` can be switched **off** (cards with no collection) and can target
+**several** collections at once. A Mindscape card must live in exactly one deck, so the control here
+chooses _which_ deck, never _whether_.
 
 ### 4.6 Commands
 
