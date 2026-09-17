@@ -52,6 +52,7 @@
 | `src/extensions/bible/model/verse-text.ts`                                       | The `VerseTextSource` port + the deck-source adapter.                    |
 | `src/extensions/bible/api/verse-schema.ts`                                       | RxDB schema + collection spec.                                           |
 | `src/extensions/bible/features/add-verse-cards.ts`                               | Reference + text + target → import draft.                                |
+| `src/extensions/bible/features/place-in-chapter-deck.ts`                         | Automatic placement: book deck → chapter subdeck, reused when present.   |
 | `src/extensions/bible/features/publish-source.ts`                                | Deck or pasted text → verse records.                                     |
 | `src/extensions/bible/features/clean-reference-backs.ts`                         | Opt-in repair of existing cards.                                         |
 | `src/extensions/bible/ui/BibleProvider.tsx`                                      | Starts/stops the verse store with the extension.                         |
@@ -2043,8 +2044,9 @@ export const bibleMessages = {
   textMissing: 'This passage is not in your Bible library yet — paste it in below.',
   translation: 'Translation',
   target: 'Include in decks',
-  targetExisting: 'Existing deck',
-  targetNew: 'New deck',
+  targetHint: 'A deck for the book, a subdeck for the chapter',
+  targetExisting: 'Choose a deck',
+  targetNew: 'Create a deck',
   pickDeck: 'Choose a deck',
   newDeckTitle: 'Name the deck',
   duplicates: 'You already have {{refs}} in your library',
@@ -2594,6 +2596,8 @@ git commit -m "feat(bible): pick a book, a chapter and a verse range"
 
 - Create: `src/extensions/bible/features/build-verse-cards.ts`
 - Test: `src/extensions/bible/features/build-verse-cards.test.ts`
+- Create: `src/extensions/bible/features/place-in-chapter-deck.ts`
+- Test: `src/extensions/bible/features/place-in-chapter-deck.test.ts`
 - Create: `src/extensions/bible/ui/VerseTextPanel.tsx`
 - Create: `src/extensions/bible/ui/TargetPicker.tsx`
 - Modify: `src/extensions/bible/ui/BibleImportPage.tsx` (+ its test)
@@ -2601,8 +2605,8 @@ git commit -m "feat(bible): pick a book, a chapter and a verse range"
 
 **Interfaces:**
 
-- Consumes: `VerseRef`, `formatRef`, `expandRange` (Task 5); `VerseTextSource` (Task 7); `useImportDraft`, `MoveSheet`, `PromptSheet`.
-- Produces: `buildVerseCards(ref, text, { split }): ParsedCard[]`, `canSplit(text): boolean`, `findDuplicates(cards, held): HeldRef[]` where `HeldRef = { front: string; deckId: string }`.
+- Consumes: `VerseRef`, `formatRef`, `expandRange` (Task 5); `VerseTextSource` (Task 7); `useImportDraft`, `MoveSheet`, `PromptSheet`; `createDeck` / `createSubdeck` from `@/features/deck`.
+- Produces: `buildVerseCards(ref, text, { split }): ParsedCard[]`, `canSplit(text): boolean`, `findDuplicates(cards, held): HeldRef[]` where `HeldRef = { front: string; deckId: string }`, `ensureChapterDeck(deckStore, book, chapter): Promise<string>`.
 
 - [ ] **Step 1: Write the failing card-building test**
 
@@ -2770,6 +2774,102 @@ export function findDuplicates(cards: readonly ParsedCard[], held: readonly Held
 Run: `npx vitest run src/extensions/bible/features/build-verse-cards.test.ts`
 Expected: PASS, 13 tests.
 
+- [ ] **Step 4b: Write the failing placement test**
+
+```ts
+// src/extensions/bible/features/place-in-chapter-deck.test.ts
+import { describe, expect, it } from 'vitest'
+import { startedDeckStore, storedDeck } from '@/features/deck/deck-fixtures'
+import { ensureChapterDeck } from './place-in-chapter-deck'
+
+const deckNames = (store: ReturnType<typeof startedDeckStore>) =>
+  store.getState().decks.map((deck) => deck.name)
+
+describe('ensureChapterDeck', () => {
+  it('creates the book deck and the chapter subdeck when neither exists', async () => {
+    const store = startedDeckStore([])
+    const deckId = await ensureChapterDeck(store, 'Genesis', 1)
+    expect(deckNames(store).sort()).toEqual(['Genesis', 'Genesis 1'])
+    const chapter = store.getState().decks.find((deck) => deck.id === deckId)
+    const book = store.getState().decks.find((deck) => deck.name === 'Genesis')
+    expect(chapter?.name).toBe('Genesis 1')
+    expect(chapter?.parentId).toBe(book?.id)
+  })
+
+  it('reuses a book deck that already exists', async () => {
+    const store = startedDeckStore([storedDeck('genesis', { name: 'Genesis' })])
+    await ensureChapterDeck(store, 'Genesis', 1)
+    expect(deckNames(store).filter((name) => name === 'Genesis')).toHaveLength(1)
+  })
+
+  it('reuses a book deck filed inside a folder, where it sits', async () => {
+    const store = startedDeckStore([
+      storedDeck('genesis', { name: 'Genesis', folderId: 'folder-1' }),
+    ])
+    const deckId = await ensureChapterDeck(store, 'Genesis', 1)
+    const chapter = store.getState().decks.find((deck) => deck.id === deckId)
+    expect(chapter?.parentId).toBe('genesis')
+    expect(deckNames(store).filter((name) => name === 'Genesis')).toHaveLength(1)
+  })
+
+  it('reuses the chapter subdeck, so a second import joins the first', async () => {
+    const store = startedDeckStore([
+      storedDeck('genesis', { name: 'Genesis' }),
+      storedDeck('genesis-1', { name: 'Genesis 1', parentId: 'genesis' }),
+    ])
+    expect(await ensureChapterDeck(store, 'Genesis', 1)).toBe('genesis-1')
+    expect(store.getState().decks).toHaveLength(2)
+  })
+
+  it('ignores an archived deck of the same name — the archive is a place outside the library', async () => {
+    const store = startedDeckStore([storedDeck('genesis', { name: 'Genesis', archived: true })])
+    await ensureChapterDeck(store, 'Genesis', 1)
+    expect(deckNames(store).filter((name) => name === 'Genesis')).toHaveLength(2)
+  })
+})
+```
+
+- [ ] **Step 4c: Run it, watch it fail, then write it**
+
+Run: `npx vitest run src/extensions/bible/features/place-in-chapter-deck.test.ts`
+Expected: FAIL — cannot resolve `./place-in-chapter-deck`.
+
+```ts
+// src/extensions/bible/features/place-in-chapter-deck.ts
+import type { Deck, DeckStore } from '@/entities/deck'
+import { createDeck, createSubdeck } from '@/features/deck'
+import { childDecks } from '@/shared/lib'
+
+const sameName = (a: string, b: string): boolean =>
+  a.trim().toLowerCase() === b.trim().toLowerCase()
+
+/** A book deck is any live top-level deck of that name — including one filed in a folder. */
+function findBookDeck(decks: readonly Deck[], book: string): Deck | undefined {
+  return decks.find((deck) => deck.parentId === null && !deck.archived && sameName(deck.name, book))
+}
+
+/**
+ * Automatic placement: a deck per book, a subdeck per chapter, both reused when they already
+ * exist so a second import joins the first instead of sitting beside a copy of it.
+ * Returns the id of the chapter subdeck the cards belong in.
+ */
+export async function ensureChapterDeck(
+  store: DeckStore,
+  book: string,
+  chapter: number,
+): Promise<string> {
+  const bookDeck =
+    findBookDeck(store.getState().decks, book) ?? (await createDeck(store, { name: book }))
+  const chapterName = `${book} ${chapter}`
+  const held = childDecks(store.getState().decks, bookDeck.id).find(
+    (deck) => !deck.archived && sameName(deck.name, chapterName),
+  )
+  return (held ?? (await createSubdeck(store, bookDeck.id, { name: chapterName }))).id
+}
+```
+
+Run it again: PASS, 5 tests.
+
 - [ ] **Step 5: Widen the import draft by one neutral source**
 
 In `src/widgets/content-editor/model/import-draft.ts`:
@@ -2784,7 +2884,16 @@ export type ImportSource = 'paste' | 'mindscape' | 'anki' | 'extension'
 
 `VerseTextPanel.tsx` — a labelled `Textarea` plus one line of status: `t('textImported')` when the source filled it, `t('textMissing')` when it opened empty. Props: `{ value, onChange, prefilled }`. Reuse `Textarea` from `@/shared/ui`.
 
-`TargetPicker.tsx` — a `SegmentedControl` of `t('targetExisting')` / `t('targetNew')`. Choosing _existing_ opens `MoveSheet` with `targets="deck"`, `decks` and `folders` read from `useDeckStore(selectDecks)` / `useFolderStore`, and `excludeIds={new Set()}`. Choosing _new_ opens `PromptSheet` with the chapter as its initial value. Props: `{ suggestedName, onPickDeck, onNameDeck }`.
+`TargetPicker.tsx` — a `ToggleRow` labelled `t('target')` with the hint `t('targetHint')`, default
+**on**, and a manual branch revealed when it is off.
+
+- **On** — nothing to choose. The footer button places the cards with `ensureChapterDeck`.
+- **Off** — two buttons: `t('targetExisting')` opens `MoveSheet` with `targets="deck"`, `decks` and
+  `folders` from `useDeckStore(selectDecks)` / `useFolderStore`, and `excludeIds={new Set()}`;
+  `t('targetNew')` opens `PromptSheet` with the chapter as its initial value. The chosen destination
+  is shown, so the reader sees where the cards will land before adding.
+
+Props: `{ auto, onAutoChange, suggestedName, destination, onPickDeck, onNameDeck }`.
 
 - [ ] **Step 7: Write the failing flow test**
 
@@ -2823,6 +2932,37 @@ describe('BibleImportPage text and target', () => {
     await user.click(screen.getByLabelText('Verse text'))
     await user.paste('(1:1) The elder, to Gaius\n(1:2) Beloved, I pray')
     expect(screen.getByRole('button', { name: 'Add 2 cards' })).toBeEnabled()
+  })
+
+  it('places the cards automatically, book then chapter, when the toggle is on', async () => {
+    const user = userEvent.setup()
+    const deckStore = startedDeckStore([])
+    renderWithProviders(
+      <DeckStoreContext value={deckStore}>
+        <BibleImportPage />
+      </DeckStoreContext>,
+    )
+    await user.click(screen.getByRole('button', { name: 'Genesis' }))
+    await user.click(screen.getByRole('button', { name: '1' }))
+    await user.click(screen.getByRole('button', { name: '1' }))
+    await user.click(screen.getByRole('button', { name: 'Just verse 1' }))
+    await user.click(screen.getByLabelText('Verse text'))
+    await user.paste('In the beginning.')
+    await user.click(screen.getByRole('button', { name: 'Add 1 card' }))
+    expect(
+      deckStore
+        .getState()
+        .decks.map((deck) => deck.name)
+        .sort(),
+    ).toEqual(['Genesis', 'Genesis 1'])
+  })
+
+  it('asks where the cards go when the toggle is off', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<BibleImportPage />)
+    await user.click(screen.getByRole('switch', { name: 'Include in decks' }))
+    expect(screen.getByRole('button', { name: 'Choose a deck' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Create a deck' })).toBeInTheDocument()
   })
 
   it('cannot add while the text box is empty', async () => {
@@ -2880,10 +3020,11 @@ const add = async () => {
     (card) => keepDuplicates || !held.has(card.front),
   )
   setDraft('extension', cards)
-  const deckId =
-    target.kind === 'existing'
-      ? target.deckId
-      : (await createDeck(deckStore, { name: target.name })).id
+  const deckId = auto
+    ? await ensureChapterDeck(deckStore, ref.book, ref.chapter)
+    : destination.kind === 'existing'
+      ? destination.deckId
+      : (await createDeck(deckStore, { name: destination.name })).id
   await navigate({ to: ROUTES.deckImport, params: { deckId }, replace: true })
 }
 ```
@@ -2898,7 +3039,7 @@ no book has been picked the fronts come from the markers themselves via `parseVe
 - [ ] **Step 9: Run the whole file and watch it pass**
 
 Run: `npx vitest run src/extensions/bible/ui/BibleImportPage.test.tsx`
-Expected: PASS, 10 tests.
+Expected: PASS, 12 tests.
 
 - [ ] **Step 10: Verify and commit**
 

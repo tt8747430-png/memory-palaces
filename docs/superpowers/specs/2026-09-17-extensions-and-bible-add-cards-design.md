@@ -237,11 +237,21 @@ verses". On, each verse becomes its own card. Off, the range becomes one card fr
 
 **Translation.** One translation, shown as a static label. No selector until there is a second.
 
-**Target — "Include in decks".** A segmented choice:
+**Target — "Include in decks".** A toggle, default on. It chooses between the app placing the cards
+and the reader placing them.
 
-- _Existing_ opens `MoveSheet targets="deck"` from `widgets/deck-tree` — the same drawer as moving
-  a deck, subdecks and all.
-- _New_ opens `PromptSheet` prefilled with the chapter (`Genesis 1`), an ordinary deck creation.
+_On_ — **automatic**. The cards go to a deck named after the book holding a subdeck named after the
+chapter, both created only if they are missing and otherwise reused: `Genesis` → `Genesis 1` →
+thirty-one verse cards. Adding `1:1-10` and later `1:11-31` lands both in the same subdeck rather
+than making a second one. A book deck already filed inside a folder counts as existing and is reused
+where it sits; an archived deck of the same name does not count, because the archive is a place
+outside every folder and deck (ADR 0003). This mirrors the shape the library already has — deck =
+book, subdeck = chapter, card = verse — which is what lets the reading tracker and the memorization
+overview be computed later without extra bookkeeping.
+
+_Off_ — **manual**. The reader places the cards: `MoveSheet targets="deck"` from `widgets/deck-tree`
+picks an existing deck or subdeck, or `PromptSheet` creates a new deck by name, an ordinary deck
+creation. Nothing is created without being asked for.
 
 **Duplicates.** Checked across the **whole library**, not just the target deck — the mockup says
 "already in your account", and with decks shaped book → chapter → verse the same passage can already
@@ -255,10 +265,9 @@ is no second review UI. `ImportSource` widens by one neutral member, `'extension
 
 For a new deck the flow mirrors `NewPasteScreen`: create the deck, then land on its review screen.
 
-**Two deliberate divergences from the mockups**, recorded so nobody "restores" them: their
-`Include in Collections` can be switched **off** (cards with no collection) and can target
-**several** collections at once. A Mindscape card must live in exactly one deck, so the control here
-chooses _which_ deck, never _whether_.
+**One deliberate divergence from the mockups**, recorded so nobody "restores" it: their
+`Include in Collections` can target **several** collections at once via checkboxes. A card here goes
+to exactly one deck, so both branches of the toggle resolve to a single destination.
 
 ### 4.6 Commands
 
