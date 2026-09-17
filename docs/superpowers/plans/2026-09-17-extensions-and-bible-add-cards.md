@@ -28,14 +28,14 @@
 
 **New — the mechanism (core, extension-agnostic):**
 
-| File                                               | Responsibility                                                                  |
-| -------------------------------------------------- | ------------------------------------------------------------------------------- |
-| `src/shared/lib/extension-manifest.ts`             | The manifest and contribution _types_. No behaviour.                            |
-| `src/shared/lib/extension-points-context.tsx`      | Context holding live contributions + `useExtensionPoint`.                       |
-| `src/shared/lib/extension-collections-context.tsx` | Context handing an extension its own RxDB collections.                          |
-| `src/app/extensions/registry.ts`                   | The static list of known manifests. The only core file that names an extension. |
-| `src/app/extensions/ExtensionsProvider.tsx`        | Reads enabled ids, mounts enabled extensions, publishes contributions.          |
-| `src/pages/settings-extensions/`                   | The Settings → Extensions screen.                                               |
+| File                                                | Responsibility                                                                  |
+| --------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `src/shared/lib/extension-manifest.ts`              | The manifest and contribution _types_. No behaviour.                            |
+| `src/shared/lib/extension-points-context.tsx`       | Context holding live contributions + `useExtensionPoint`.                       |
+| `src/shared/lib/extension-repositories-context.tsx` | Context handing an extension its own repositories.                              |
+| `src/app/extensions/registry.ts`                    | The static list of known manifests. The only core file that names an extension. |
+| `src/app/extensions/ExtensionsProvider.tsx`         | Reads enabled ids, mounts enabled extensions, publishes contributions.          |
+| `src/pages/settings-extensions/`                    | The Settings → Extensions screen.                                               |
 
 **New — the Bible extension:**
 
@@ -44,14 +44,14 @@
 | `src/extensions/bible/manifest.ts`                                               | Ids, lazy loaders, contributions. Stays tiny — it is in the entry graph. |
 | `src/extensions/bible/model/canon.ts`                                            | 66 books, chapters per book, verses per chapter.                         |
 | `src/extensions/bible/model/reference.ts`                                        | `VerseRef` + format/parse/expand.                                        |
-| `src/extensions/bible/model/parse-verses.ts`                                     | The verse parser moved out of `shared/lib`, back without the reference.  |
 | `src/extensions/bible/model/strip-reference.ts`                                  | Removes a leading reference from a card back.                            |
 | `src/extensions/bible/model/verse.ts`                                            | The `BibleVerse` entity + `makeBibleVerse` / `completeBibleVerse`.       |
 | `src/extensions/bible/model/store.ts`                                            | `createBibleVerseStore`.                                                 |
 | `src/extensions/bible/model/context.ts`                                          | Its store context, split out the way `entities/card` splits it.          |
 | `src/extensions/bible/model/verse-text.ts`                                       | The `VerseTextSource` port + the deck-source adapter.                    |
 | `src/extensions/bible/api/verse-schema.ts`                                       | RxDB schema + collection spec.                                           |
-| `src/extensions/bible/features/add-verse-cards.ts`                               | Reference + text + target → import draft.                                |
+| `src/extensions/bible/features/build-verse-cards.ts`                             | Reference + text + split → `ParsedCard[]`. Pure.                         |
+| `src/extensions/bible/features/add-verse-cards.ts`                               | Build, drop duplicates, resolve the target, write the import draft.      |
 | `src/extensions/bible/features/place-in-chapter-deck.ts`                         | Automatic placement: book deck → chapter subdeck, reused when present.   |
 | `src/extensions/bible/features/publish-source.ts`                                | Deck or pasted text → verse records.                                     |
 | `src/extensions/bible/features/clean-reference-backs.ts`                         | Opt-in repair of existing cards.                                         |
@@ -60,8 +60,16 @@
 | `src/extensions/bible/ui/BookPicker.tsx`, `NumberGrid.tsx`, `VerseTextPanel.tsx` | Flow pieces.                                                             |
 | `src/extensions/bible/ui/BibleLibraryPage.tsx`                                   | Dev-mode admin screen.                                                   |
 | `src/extensions/bible/i18n/en.ts`                                                | The `bible` namespace.                                                   |
+| `src/extensions/bible/testing/decks.ts`                                          | A started deck store for this extension's tests, built from the barrels. |
 
-**Modified:** `eslint.config.js`, `src/shared/lib/index.ts`, `src/shared/ui/ImportSheet.tsx`, `src/entities/preferences/model/{types,selectors}.ts`, `src/features/preferences/set-preferences.ts`, `src/app/persistence/{schemas,database}.ts`, `src/app/composition-root.ts`, `src/app/router.tsx`, `src/app/providers/AppProviders.tsx`, `src/app/routes/settings-screens.tsx`, `src/pages/settings/ui/SettingsPage.tsx`, `src/pages/deck-library/ui/DeckLibraryPage.tsx`, `src/pages/deck-detail/ui/DeckDetailPage.tsx`, `src/widgets/content-editor/ui/DeckContentEditor.tsx`, `src/widgets/content-editor/model/import-draft.ts`, `src/features/sync/divergence.ts`, `src/shared/config/sync-tables.ts`, `src/shared/lib/content-transfer.ts`, `src/pages/paste-notes/**`, `src/shared/i18n/locales/en/settings.ts`, `docs/UBIQUITOUS_LANGUAGE.md`.
+**Modified:** `eslint.config.js`, `src/shared/lib/index.ts`, `src/shared/lib/entity-store.ts`, `src/shared/ui/ImportSheet.tsx`, `src/entities/preferences/model/{types,selectors}.ts`, `src/entities/preferences/index.ts`, `src/features/preferences/set-preferences.ts`, `src/app/persistence/{schemas,database,conflict-handlers,synced-tables.test}.ts`, `src/shared/api/rxdb/index.ts`, `src/shared/api/supabase/sync-manager.ts`, `src/app/providers/SyncProvider.tsx`, `src/app/composition-root.ts`, `src/app/router.tsx`, `src/app/providers/{AppProviders,ServicesProvider}.tsx`, `src/app/routes/settings-screens.tsx`, `src/pages/settings/ui/SettingsPage.tsx`, `src/pages/deck-library/ui/DeckLibraryPage.tsx`, `src/pages/deck-detail/ui/DeckDetailPage.tsx`, `src/widgets/content-editor/ui/DeckContentEditor.tsx`, `src/widgets/content-editor/model/import-draft.ts`, `src/features/sync/divergence.ts`, `src/shared/config/sync-tables.ts`, `src/shared/lib/content-transfer.ts`, `src/pages/paste-notes/**`, `src/shared/i18n/locales/en/settings.ts`, `docs/UBIQUITOUS_LANGUAGE.md`, `CLAUDE.md`.
+
+**Two things this plan does to existing code, called out because they are easy to skip:**
+
+1. **`lastWriteWins` and `firstWriteWins` move** from `src/app/persistence/conflict-handlers.ts` to
+   `src/shared/api/rxdb/`. They are generic over `Clocked` and know no entity, and an extension that
+   declares a collection cannot import `app`. `mergeCardConflict` / `mergeProgressConflict` stay put.
+2. **`setPreferences` learns to merge** the extension list. Nothing else may write it.
 
 ---
 
@@ -71,14 +79,14 @@
 
 - Create: `src/shared/lib/extension-manifest.ts`
 - Create: `src/shared/lib/extension-points-context.tsx`
-- Create: `src/shared/lib/extension-collections-context.tsx`
+- Create: `src/shared/lib/extension-repositories-context.tsx`
 - Test: `src/shared/lib/extension-points-context.test.tsx`
-- Modify: `src/shared/lib/index.ts`
+- Modify: `src/shared/lib/index.ts`, `src/shared/lib/entity-store.ts`
 
 **Interfaces:**
 
 - Consumes: nothing.
-- Produces: `type ExtensionId`, `interface ExtensionManifest`, `interface ImportOptionContribution`, `interface ExtensionContributions`, `ExtensionPointsContext`, `useExtensionPoint(point)`, `ExtensionCollectionsContext`, `useExtensionCollections()`.
+- Produces: `type ExtensionId`, `interface ExtensionManifest`, `interface ImportOptionContribution`, `interface ExtensionContributions`, `ExtensionPointsContext`, `useExtensionPoint(point)`, `extensionRoute(...)`, `ExtensionRepositoriesContext`, `useExtensionRepository<T>(key)`, `whenStoreReady(store)`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -92,8 +100,8 @@ import type { ImportOptionContribution } from './extension-manifest'
 const bibleRow: ImportOptionContribution = {
   id: 'bible',
   icon: null,
-  title: 'Bible',
-  subtitle: 'Pick a passage',
+  titleKey: 'bible:label',
+  subtitleKey: 'bible:importSubtitle',
   to: '/import/bible',
 }
 
@@ -102,7 +110,7 @@ function Host() {
   return (
     <ul>
       {options.map((option) => (
-        <li key={option.id}>{option.title}</li>
+        <li key={option.id}>{option.titleKey}</li>
       ))}
     </ul>
   )
@@ -111,7 +119,7 @@ function Host() {
 describe('useExtensionPoint', () => {
   it('returns nothing when no extension has contributed', () => {
     render(<Host />)
-    expect(screen.queryByText('Bible')).not.toBeInTheDocument()
+    expect(screen.queryByText('bible:label')).not.toBeInTheDocument()
   })
 
   it('returns what the enabled extensions contributed', () => {
@@ -120,7 +128,7 @@ describe('useExtensionPoint', () => {
         <Host />
       </ExtensionPointsContext>,
     )
-    expect(screen.getByText('Bible')).toBeInTheDocument()
+    expect(screen.getByText('bible:label')).toBeInTheDocument()
   })
 
   it('is stable when the point has no contributions, so hosts can render it directly', () => {
@@ -145,19 +153,26 @@ Expected: FAIL — `Failed to resolve import "./extension-points-context"`.
 // src/shared/lib/extension-manifest.ts
 import type { ReactNode } from 'react'
 import type { RxCollectionCreator } from 'rxdb'
+import type { TransferOption } from '@/shared/ui'
 
-/** The id an extension is known by, in the registry and in `preferences.extensions`. */
+/**
+ * The id an extension is known by, in the registry and in `preferences.extensions`.
+ *
+ * A plain alias on purpose: the set is open, and `completePreferences` has to round-trip an id
+ * a newer build enabled on another device. A closed union would delete it.
+ */
 export type ExtensionId = string
 
-/** A row an extension adds to the import sheet. `to` is a route path. */
-export interface ImportOptionContribution {
-  id: string
-  icon: ReactNode
-  title: string
-  subtitle: string
+/**
+ * A row an extension adds to the import sheet. It carries **keys, not copy** — resolved by the
+ * host against the extension's own namespace — so no English ever lives in a manifest.
+ * `to` is a route path. The rest is the row shape `TransferSheet` already renders, so the two
+ * cannot drift.
+ */
+export type ImportOptionContribution = Omit<TransferOption, 'onSelect' | 'title' | 'subtitle'> & {
+  titleKey: string
+  subtitleKey: string
   to: string
-  tone?: 'brand' | 'accent' | 'positive' | 'warning' | 'danger' | 'neutral'
-  badge?: ReactNode
 }
 
 /** Everything the enabled extensions are currently offering, merged. */
@@ -171,7 +186,22 @@ export type ExtensionPoint = keyof ExtensionContributions
 export interface ExtensionRoute {
   path: string
   load: () => Promise<Record<string, unknown>>
-  export: string
+  name: string
+  validateSearch?: (search: Record<string, unknown>) => Record<string, unknown>
+}
+
+/**
+ * Declares one, binding `name` to what the module actually exports. Call this instead of writing
+ * the object literal: the stored shape has to forget the module's type, and this is where the
+ * check happens while it is still available.
+ */
+export function extensionRoute<Exports extends Record<string, unknown>>(
+  path: string,
+  load: () => Promise<Exports>,
+  name: keyof Exports & string,
+  validateSearch?: (search: Record<string, unknown>) => Record<string, unknown>,
+): ExtensionRoute {
+  return { path, load, name, validateSearch }
 }
 
 /**
@@ -193,14 +223,25 @@ export interface ExtensionManifest {
   namespace: string
   loadMessages: () => Promise<Record<string, unknown>>
   routes: ExtensionRoute[]
-  collections: ExtensionCollectionSpec[]
+  /**
+   * Lazy, like everything else here: the schemas are awaited in `createServices` before the
+   * database is built, so an extension's schema never reaches the entry graph.
+   */
+  loadCollections?: () => Promise<ExtensionCollectionSpec[]>
   contributions: ExtensionContributions
-  /** Mounted only while the extension is enabled — this is where its stores start and stop. */
+  /** The route of its detail screen, if it has one. The Extensions page links to it by path. */
+  detailPath?: string
+  /** Mounted only while the extension is enabled — this is where its stores and keepers live. */
   loadProvider?: () => Promise<{
     ExtensionProvider: (props: { children: ReactNode }) => ReactNode
   }>
 }
 ```
+
+`TransferOption` is imported **type-only**, so `verbatimModuleSyntax` erases it and no component
+from `shared/ui` reaches this module at runtime — there is no cycle, and nothing new lands in the
+entry graph. Deriving the row from it is what stops the contribution shape and the row the sheet
+actually renders from drifting apart.
 
 - [ ] **Step 4: Write the two contexts**
 
@@ -224,20 +265,58 @@ export function useExtensionPoint<Point extends ExtensionPoint>(
 ```
 
 ```tsx
-// src/shared/lib/extension-collections-context.tsx
+// src/shared/lib/extension-repositories-context.tsx
 import { createContext, use } from 'react'
+import type { Identifiable, Repository } from '@/shared/api'
 
-/** RxDB collections keyed by the manifest's collection key. Typed loosely so `shared` stays free of entity types. */
-export type ExtensionCollections = Record<string, unknown>
+/**
+ * The repositories the composition root built for the enabled extensions, keyed as their
+ * manifests named their collections.
+ *
+ * Repositories, not collections: `RxdbRepository` already takes a `Promise<RxCollection>`, so
+ * handing these over costs no `await` in `createServices` — the database stays the lazy promise
+ * every core repo is built from.
+ */
+export type ExtensionRepositories = Record<string, Repository<Identifiable>>
 
-const EMPTY: ExtensionCollections = {}
+const EMPTY: ExtensionRepositories = {}
 
-export const ExtensionCollectionsContext = createContext<ExtensionCollections>(EMPTY)
+export const ExtensionRepositoriesContext = createContext<ExtensionRepositories>(EMPTY)
 
-export function useExtensionCollections(): ExtensionCollections {
-  return use(ExtensionCollectionsContext)
+/**
+ * The extension knows its entity type and `app` cannot, so exactly one cast exists and it lives
+ * here rather than at every call site.
+ */
+export function useExtensionRepository<T extends Identifiable>(key: string): Repository<T> {
+  const held = use(ExtensionRepositoriesContext)[key]
+  if (!held) throw new Error(`No repository was provided for the extension collection ${key}`)
+  return held as Repository<T>
 }
 ```
+
+- [ ] **Step 4b: Let a guard wait for a store**
+
+`beforeLoad` runs before any provider has rendered, so it reads the store directly — and a store
+that has not loaded yet answers `undefined`, not "off". Add to `src/shared/lib/entity-store.ts`:
+
+```ts
+/** Resolves once the store has mirrored its first read. A guard that skips this reads `idle`. */
+export function whenStoreReady(store: {
+  getState: () => Pick<Lifecycle, 'status'>
+  subscribe: (listener: () => void) => () => void
+}): Promise<void> {
+  if (store.getState().status === 'ready') return Promise.resolve()
+  return new Promise((resolve) => {
+    const unsubscribe = store.subscribe(() => {
+      if (store.getState().status !== 'ready') return
+      unsubscribe()
+      resolve()
+    })
+  })
+}
+```
+
+Export it from `src/shared/lib/index.ts` beside `selectIsReady`.
 
 - [ ] **Step 5: Export from the barrel**
 
@@ -253,12 +332,13 @@ export type {
   ExtensionRoute,
   ImportOptionContribution,
 } from './extension-manifest'
+export { extensionRoute } from './extension-manifest'
 export { ExtensionPointsContext, useExtensionPoint } from './extension-points-context'
 export {
-  type ExtensionCollections,
-  ExtensionCollectionsContext,
-  useExtensionCollections,
-} from './extension-collections-context'
+  type ExtensionRepositories,
+  ExtensionRepositoriesContext,
+  useExtensionRepository,
+} from './extension-repositories-context'
 ```
 
 - [ ] **Step 6: Run the test and watch it pass**
@@ -270,7 +350,7 @@ Expected: PASS, 3 tests.
 
 ```bash
 npm run typecheck && npm run lint
-npx prettier --write src/shared/lib/extension-manifest.ts src/shared/lib/extension-points-context.tsx src/shared/lib/extension-collections-context.tsx src/shared/lib/extension-points-context.test.tsx src/shared/lib/index.ts
+npx prettier --write src/shared/lib/extension-manifest.ts src/shared/lib/extension-points-context.tsx src/shared/lib/extension-repositories-context.tsx src/shared/lib/extension-points-context.test.tsx src/shared/lib/entity-store.ts src/shared/lib/index.ts
 git add src/shared/lib
 git commit -m "feat(extensions): contribution types and the extension-points context"
 ```
@@ -364,7 +444,11 @@ Add inside `makePreferences`'s returned object:
     extensions: [...(input.extensions ?? [])],
 ```
 
-Add `'extensions'` to the `PreferencesChanges` `Pick<...>` union, and export the selector:
+**Do not** add `'extensions'` to the `PreferencesChanges` `Pick<...>` union. A whole array in the
+changes object is exactly the wholesale replacement the spec forbids; Step 6b gives it a merge
+shape of its own instead.
+
+Export the selector:
 
 ```ts
 export function isExtensionEnabled(
@@ -375,7 +459,15 @@ export function isExtensionEnabled(
 }
 ```
 
-Export `isExtensionEnabled` from `src/entities/preferences/index.ts`.
+From `src/entities/preferences/index.ts`, export `isExtensionEnabled`, and re-export the type the
+way this entity already re-exports `ContentSort` and `SwipePreferences` from `shared`:
+
+```ts
+export type { ExtensionId } from '@/shared/lib'
+```
+
+so a call site takes the id type from the entity it belongs to, and `shared/lib` stays the one
+place it is declared.
 
 - [ ] **Step 4: Run the entity tests and watch them pass**
 
@@ -424,13 +516,50 @@ function startedPreferencesStore(over: Partial<Preferences> = {}): PreferencesSt
 Run: `npx vitest run src/features/preferences/preferences-commands.test.ts`
 Expected: FAIL — `setExtensionEnabled` is not exported.
 
+- [ ] **Step 6b: Teach `setPreferences` to merge, so nothing can replace the list**
+
+This is the step the spec's "`setPreferences` **merges** the extension list; it never replaces it
+wholesale" actually lands in. In `src/features/preferences/set-preferences.ts`:
+
+```ts
+export interface SetPreferencesInput extends PreferencesChanges {
+  /**
+   * Applied to the ids already stored, never a replacement. A caller cannot hold a whole array
+   * and overwrite ids it never read — including ids this build has never heard of, which a newer
+   * build on another device enabled.
+   */
+  extensions?: (current: readonly ExtensionId[]) => ExtensionId[]
+}
+
+export async function setPreferences(
+  store: PreferencesStore,
+  input: SetPreferencesInput,
+  now: number = Date.now(),
+): Promise<Preferences> {
+  const base = currentPreferences(store, now)
+  const { extensions, ...changes } = input
+  const updated = updatePreferences(
+    base,
+    extensions ? { ...changes, extensions: extensions(base.extensions) } : changes,
+    nowIso(now),
+  )
+  await store.getState().save(updated)
+  return updated
+}
+```
+
+`updatePreferences` spreads `changes` over the base, so `extensions` still needs to be assignable
+there: widen its `changes` parameter to `PreferencesChanges & { extensions?: ExtensionId[] }`
+rather than adding the field to `PreferencesChanges` itself. Every existing caller passes a plain
+changes object and is untouched.
+
 - [ ] **Step 7: Write the command**
 
 Create `src/features/preferences/set-extension-enabled.ts`:
 
 ```ts
 import type { ExtensionId } from '@/shared/lib'
-import { isExtensionEnabled, type Preferences, type PreferencesStore } from '@/entities/preferences'
+import { type Preferences, type PreferencesStore } from '@/entities/preferences'
 import { setPreferences } from './set-preferences'
 
 /**
@@ -444,16 +573,24 @@ export async function setExtensionEnabled(
   enabled: boolean,
   now: number = Date.now(),
 ): Promise<Preferences> {
-  const current = store.getState().preferences?.extensions ?? []
-  if (enabled && current.includes(id)) return setPreferences(store, {}, now)
-  const extensions = enabled ? [...current, id] : current.filter((held) => held !== id)
-  return setPreferences(store, { extensions }, now)
+  return setPreferences(
+    store,
+    {
+      extensions: (current) =>
+        enabled
+          ? current.includes(id)
+            ? [...current]
+            : [...current, id]
+          : current.filter((held) => held !== id),
+    },
+    now,
+  )
 }
-
-export { isExtensionEnabled }
 ```
 
-Export `setExtensionEnabled` from `src/features/preferences/index.ts`.
+Export `setExtensionEnabled` from `src/features/preferences/index.ts`. Do **not** re-export
+`isExtensionEnabled` from here — it already leaves `entities/preferences`, and a second path to one
+symbol is two names for one thing.
 
 - [ ] **Step 8: Run it and watch it pass**
 
@@ -476,7 +613,23 @@ In `src/app/persistence/database.ts`, add to `preferencesMigrations`:
   3: (doc: Preferences) => ({ ...doc, extensions: doc.extensions ?? [] }),
 ```
 
-- [ ] **Step 10: Run the persistence tests**
+- [ ] **Step 10: Test the migration, then run the persistence suite**
+
+The spec asks for this one by name ("the v3 migration defaults to `[]`"). Append to
+`src/app/persistence/database.test.ts`, beside the other migration cases — `as never` is how that
+file already fakes a document from an older version:
+
+```ts
+it('gives a v2 preferences document an empty extension list', () => {
+  const v2 = { id: 'preferences', createdAt: at, updatedAt: at } as never
+  expect(preferencesMigrations[3](v2).extensions).toEqual([])
+})
+
+it('leaves a list that is somehow already there alone', () => {
+  const v2 = { id: 'preferences', extensions: ['bible'] } as never
+  expect(preferencesMigrations[3](v2).extensions).toEqual(['bible'])
+})
+```
 
 Run: `npx vitest run src/app/persistence`
 Expected: PASS. If a schema test asserts the version, update it to 3.
@@ -498,15 +651,15 @@ git commit -m "feat(extensions): store which extensions are enabled in preferenc
 
 - Create: `src/app/extensions/registry.ts`
 - Create: `src/app/extensions/ExtensionsProvider.tsx`
-- Create: `src/app/extensions/collections.ts`
+- Create: `src/app/extensions/repositories.ts`
 - Test: `src/app/extensions/ExtensionsProvider.test.tsx`
-- Modify: `src/app/providers/AppProviders.tsx`
+- Modify: `src/app/providers/AppProviders.tsx`, `src/app/providers/ServicesProvider.tsx`
 - Modify: `src/app/composition-root.ts`
 
 **Interfaces:**
 
-- Consumes: `ExtensionManifest`, `ExtensionPointsContext`, `ExtensionCollectionsContext` (Task 1); `isExtensionEnabled` (Task 2).
-- Produces: `EXTENSIONS: ExtensionManifest[]`, `<ExtensionsProvider manifests={…}>`, `Services.extensionCollections`.
+- Consumes: `ExtensionManifest`, `ExtensionPointsContext`, `ExtensionRepositoriesContext` (Task 1); `isExtensionEnabled` (Task 2).
+- Produces: `EXTENSIONS: ExtensionManifest[]`, `<ExtensionsProvider manifests={…}>`, `Services.extensionRepositories`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -533,16 +686,15 @@ const manifest: ExtensionManifest = {
   labelKey: 'label',
   descriptionKey: 'description',
   namespace: 'fake',
-  loadMessages: () => Promise.resolve({ label: 'Fake', description: 'A fake extension' }),
+  loadMessages: () => Promise.resolve({ label: 'Fake', importSubtitle: 'From the fake' }),
   routes: [],
-  collections: [],
   contributions: {
     importOptions: [
       {
         id: 'fake',
         icon: null,
-        title: 'Fake import',
-        subtitle: 'From the fake',
+        titleKey: 'fake:label',
+        subtitleKey: 'fake:importSubtitle',
         to: '/import/fake',
       },
     ],
@@ -551,7 +703,7 @@ const manifest: ExtensionManifest = {
 
 function Host() {
   const options = useExtensionPoint('importOptions')
-  return <span>{options.length === 0 ? 'no contributions' : options[0]!.title}</span>
+  return <span>{options.length === 0 ? 'no contributions' : options[0]!.titleKey}</span>
 }
 
 function renderWith(extensions: string[]) {
@@ -560,13 +712,14 @@ function renderWith(extensions: string[]) {
     extensions,
   }
   const store = started(createPreferencesStore(new InMemoryRepository<Preferences>([stored])))
-  return renderWithProviders(
+  renderWithProviders(
     <PreferencesStoreContext value={store}>
       <ExtensionsProvider manifests={[manifest]}>
         <Host />
       </ExtensionsProvider>
     </PreferencesStoreContext>,
   )
+  return store
 }
 
 describe('ExtensionsProvider', () => {
@@ -575,9 +728,23 @@ describe('ExtensionsProvider', () => {
     expect(screen.getByText('no contributions')).toBeInTheDocument()
   })
 
-  it('publishes the enabled extension contributions', async () => {
+  it('publishes the enabled extension contributions, once its namespace is in', async () => {
     renderWith(['fake'])
-    await waitFor(() => expect(screen.getByText('Fake import')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('fake:label')).toBeInTheDocument())
+    expect(i18n.getResourceBundle('en', 'fake')).toEqual({
+      label: 'Fake',
+      importSubtitle: 'From the fake',
+    })
+  })
+
+  it('withdraws everything when the extension is switched off', async () => {
+    const store = renderWith(['fake'])
+    await waitFor(() => expect(screen.getByText('fake:label')).toBeInTheDocument())
+    await act(async () => {
+      await setExtensionEnabled(store, 'fake', false)
+    })
+    await waitFor(() => expect(screen.getByText('no contributions')).toBeInTheDocument())
+    expect(i18n.getResourceBundle('en', 'fake')).toBeUndefined()
   })
 })
 ```
@@ -600,14 +767,18 @@ import type { ExtensionManifest } from '@/shared/lib'
 export const EXTENSIONS: ExtensionManifest[] = []
 ```
 
+Nothing else in core may name an extension: not the router, not the Settings screens, not a route
+constant. Task 11's grep is the acceptance test for that.
+
 - [ ] **Step 4: Write the provider**
 
 ```tsx
 // src/app/extensions/ExtensionsProvider.tsx
-import { type ReactNode, useEffect, useMemo, useState } from 'react'
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
 import { i18n } from '@/shared/i18n'
 import {
   type ExtensionContributions,
+  type ExtensionId,
   type ExtensionManifest,
   ExtensionPointsContext,
 } from '@/shared/lib'
@@ -619,12 +790,18 @@ function mergeContributions(manifests: ExtensionManifest[]): ExtensionContributi
   }
 }
 
-/** Mounts one enabled extension: its messages, then its own provider, which owns its stores. */
+/**
+ * Mounts one enabled extension: its messages first, then its own provider, which is where its
+ * stores and keepers live. Unmounting is the whole of disabling — React tears the provider down,
+ * and the namespace goes with it.
+ */
 function MountedExtension({
   manifest,
+  onReady,
   children,
 }: {
   manifest: ExtensionManifest
+  onReady: (id: ExtensionId) => void
   children: ReactNode
 }) {
   const [Provider, setProvider] = useState<((props: { children: ReactNode }) => ReactNode) | null>(
@@ -634,7 +811,9 @@ function MountedExtension({
   useEffect(() => {
     let live = true
     void manifest.loadMessages().then((messages) => {
-      if (live) i18n.addResourceBundle('en', manifest.namespace, messages, true, false)
+      if (!live) return
+      i18n.addResourceBundle('en', manifest.namespace, messages, true, false)
+      onReady(manifest.id)
     })
     if (manifest.loadProvider) {
       void manifest.loadProvider().then((module) => {
@@ -643,8 +822,9 @@ function MountedExtension({
     }
     return () => {
       live = false
+      i18n.removeResourceBundle('en', manifest.namespace)
     }
-  }, [manifest])
+  }, [manifest, onReady])
 
   return Provider ? <Provider>{children}</Provider> : children
 }
@@ -656,27 +836,35 @@ export function ExtensionsProvider({
   manifests: ExtensionManifest[]
   children: ReactNode
 }) {
-  const enabledIds = usePreferencesStore((state) =>
-    manifests
-      .filter((manifest) =>
-        state.preferences ? isExtensionEnabled(state.preferences, manifest.id) : false,
-      )
-      .map((manifest) => manifest.id)
-      .join(','),
-  )
+  // The stored array's identity only changes when preferences do, so this is a stable snapshot —
+  // no serialising the ids to compare them, which would break on an id containing a comma.
+  const enabledIds = usePreferencesStore((state) => state.preferences?.extensions)
 
   const enabled = useMemo(
-    () => manifests.filter((manifest) => enabledIds.split(',').includes(manifest.id)),
+    () =>
+      manifests.filter((manifest) =>
+        enabledIds ? isExtensionEnabled({ extensions: enabledIds }, manifest.id) : false,
+      ),
     [manifests, enabledIds],
   )
 
-  const contributions = useMemo(() => mergeContributions(enabled), [enabled])
+  // Contributions are published only once the namespace is in, so a host never paints a raw key.
+  const [ready, setReady] = useState<readonly ExtensionId[]>([])
+  const onReady = useCallback(
+    (id: ExtensionId) => setReady((held) => (held.includes(id) ? held : [...held, id])),
+    [],
+  )
+
+  const contributions = useMemo(
+    () => mergeContributions(enabled.filter((manifest) => ready.includes(manifest.id))),
+    [enabled, ready],
+  )
 
   return (
     <ExtensionPointsContext value={contributions}>
       {enabled.reduceRight<ReactNode>(
         (inner, manifest) => (
-          <MountedExtension key={manifest.id} manifest={manifest}>
+          <MountedExtension key={manifest.id} manifest={manifest} onReady={onReady}>
             {inner}
           </MountedExtension>
         ),
@@ -687,7 +875,9 @@ export function ExtensionsProvider({
 }
 ```
 
-The `join(',')` in the selector is deliberate: zustand compares selector output by reference, so returning a fresh array every render would loop.
+`ready` is never pruned on disable because the manifest list is static and a re-enabled extension
+re-adds its bundle before it is read; what matters is that `contributions` is derived from
+`enabled`, which the preferences drive, so a switched-off extension contributes nothing either way.
 
 - [ ] **Step 5: Run it and watch it pass**
 
@@ -704,41 +894,55 @@ In `src/app/providers/AppProviders.tsx`, wrap the children _inside_ `ServicesPro
 
 importing `EXTENSIONS` from `../extensions/registry` and `ExtensionsProvider` from `../extensions/ExtensionsProvider`.
 
-- [ ] **Step 7: Carry extension collections through services**
+- [ ] **Step 7: Carry extension repositories through services**
 
 In `src/app/composition-root.ts` add to `interface Services`:
 
 ```ts
-extensionCollections: Record<string, unknown>
+extensionRepositories: ExtensionRepositories
 ```
 
-and, in `createServices`, after `collections` is awaited into the other repos, populate it from the registry's manifests (empty for now — Task 6 fills it):
+`createServices` already awaits the extension collection specs (Task 6 adds that line; for now the
+list is empty), and the database stays the **unawaited** promise every core repository is built
+from — `collections.then((c) => c.decks)`. Extension repositories are built the same way, so this
+adds no `await` on the database and the splash is unaffected:
 
 ```ts
-const extensionCollections = await buildExtensionCollections(EXTENSIONS, collections)
+const extensionRepositories = buildExtensionRepositories(extensionSpecs, collections)
 ```
 
-Create that helper in `src/app/extensions/collections.ts`:
+Create that helper in `src/app/extensions/repositories.ts`:
 
 ```ts
-import type { ExtensionManifest } from '@/shared/lib'
+import type { RxCollection } from 'rxdb'
+import type { Identifiable } from '@/shared/api'
+import { RxdbRepository } from '@/shared/api/rxdb'
+import type { ExtensionCollectionSpec, ExtensionRepositories } from '@/shared/lib'
 import type { AppCollections } from '../persistence/database'
 
-/** Hands each extension the RxDB collections its manifest declared, keyed as the manifest named them. */
-export async function buildExtensionCollections(
-  manifests: ExtensionManifest[],
+/**
+ * One repository per declared collection, keyed as the manifest named it. Takes the database as a
+ * promise and keeps it one: `RxdbRepository` resolves it lazily, so `createServices` never blocks.
+ */
+export function buildExtensionRepositories(
+  specs: readonly ExtensionCollectionSpec[],
   collections: Promise<AppCollections>,
-): Promise<Record<string, unknown>> {
-  const held = (await collections) as unknown as Record<string, unknown>
+): ExtensionRepositories {
   return Object.fromEntries(
-    manifests.flatMap((manifest) =>
-      manifest.collections.map((spec) => [spec.key, held[spec.key]] as const),
-    ),
+    specs.map((spec) => [
+      spec.key,
+      new RxdbRepository<Identifiable>(
+        collections.then(
+          (held) => (held as unknown as Record<string, RxCollection<Identifiable>>)[spec.key]!,
+        ),
+      ),
+    ]),
   )
 }
 ```
 
-Provide it in `ServicesProvider` with `<ExtensionCollectionsContext value={services.extensionCollections}>`.
+Provide it in `ServicesProvider` with
+`<ExtensionRepositoriesContext value={services.extensionRepositories}>`.
 
 - [ ] **Step 8: Verify the entry graph is still clean**
 
@@ -757,6 +961,10 @@ git add src/app
 git commit -m "feat(extensions): registry and the provider that mounts enabled extensions"
 ```
 
+The test file needs `act` and `useCallback`'s consequences: import `act` from
+`@testing-library/react`, `setExtensionEnabled` from `@/features/preferences` and `i18n` from
+`@/shared/i18n`.
+
 ---
 
 ### Task 4: The Settings → Extensions screen
@@ -773,13 +981,13 @@ git commit -m "feat(extensions): registry and the provider that mounts enabled e
 **Interfaces:**
 
 - Consumes: `setExtensionEnabled`, `isExtensionEnabled` (Task 2); `ExtensionManifest` (Task 1).
-- Produces: `<SettingsExtensionsPage manifests={…} onBack={…} />`, `ROUTES.settingsExtensions`.
+- Produces: `<SettingsExtensionsPage manifests={…} highlight={…} onBack={…} />`, `ROUTES.settingsExtensions`, `validateExtensionsSearch`.
 
 The page takes its manifests as a prop so the test can pass fakes and core never depends on the registry.
 
 - [ ] **Step 1: Write the failing test**
 
-```tsx
+````tsx
 // src/pages/settings-extensions/ui/SettingsExtensionsPage.test.tsx
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, screen } from '@testing-library/react'
@@ -806,11 +1014,14 @@ const manifest: ExtensionManifest = {
   namespace: 'fake',
   loadMessages: () => Promise.resolve({}),
   routes: [],
-  collections: [],
   contributions: {},
 }
 
-function renderPage(manifests: ExtensionManifest[], extensions: string[] = []) {
+function renderPage(
+  manifests: ExtensionManifest[],
+  extensions: string[] = [],
+  highlight?: string,
+) {
   const stored: Preferences = {
     ...makePreferences({ id: 'preferences', createdAt: new Date(0).toISOString() }),
     extensions,
@@ -818,38 +1029,72 @@ function renderPage(manifests: ExtensionManifest[], extensions: string[] = []) {
   const store = started(createPreferencesStore(new InMemoryRepository<Preferences>([stored])))
   renderWithProviders(
     <PreferencesStoreContext value={store}>
-      <SettingsExtensionsPage manifests={manifests} onBack={vi.fn()} />
+      <SettingsExtensionsPage manifests={manifests} highlight={highlight} onBack={vi.fn()} />
     </PreferencesStoreContext>,
   )
   return store
 }
 
+Mock the toast at the top of the file, the way the other pages' tests do, and add `waitFor` to the
+`@testing-library/react` import and `toast` to the `sonner` one:
+
+```ts
+vi.mock('sonner', () => ({ toast: Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn() }) }))
+````
+
 describe('SettingsExtensionsPage', () => {
-  it('says so when the build carries no extensions', () => {
-    renderPage([])
-    expect(screen.getByText('No extensions yet')).toBeInTheDocument()
-  })
-
-  it('shows a switch per extension, off by default', () => {
-    renderPage([manifest])
-    expect(screen.getByRole('switch', { name: 'fake:label' })).not.toBeChecked()
-  })
-
-  it('turning one on writes it to preferences', async () => {
-    const user = userEvent.setup()
-    const store = renderPage([manifest])
-    await user.click(screen.getByRole('switch', { name: 'fake:label' }))
-    expect(store.getState().preferences?.extensions).toEqual(['fake'])
-  })
-
-  it('turning one off leaves the rest alone', async () => {
-    const user = userEvent.setup()
-    const store = renderPage([manifest], ['fake', 'from-the-future'])
-    await user.click(screen.getByRole('switch', { name: 'fake:label' }))
-    expect(store.getState().preferences?.extensions).toEqual(['from-the-future'])
-  })
+it('says so when the build carries no extensions', () => {
+renderPage([])
+expect(screen.getByText('No extensions yet')).toBeInTheDocument()
 })
-```
+
+it('shows a switch per extension, off by default', () => {
+renderPage([manifest])
+expect(screen.getByRole('switch', { name: 'fake:label' })).not.toBeChecked()
+})
+
+it('turning one on writes it to preferences', async () => {
+const user = userEvent.setup()
+const store = renderPage([manifest])
+await user.click(screen.getByRole('switch', { name: 'fake:label' }))
+expect(store.getState().preferences?.extensions).toEqual(['fake'])
+})
+
+it('turning one off leaves the rest alone', async () => {
+const user = userEvent.setup()
+const store = renderPage([manifest], ['fake', 'from-the-future'])
+await user.click(screen.getByRole('switch', { name: 'fake:label' }))
+expect(store.getState().preferences?.extensions).toEqual(['from-the-future'])
+})
+
+it('marks the row a guard sent the reader to', () => {
+renderPage([manifest], [], 'fake')
+expect(screen.getByRole('switch', { name: 'fake:label' }).closest('[data-highlighted]')).not.toBeNull()
+})
+
+it('says so when the write fails — the one error this page can have', async () => {
+const user = userEvent.setup()
+const failing = started(
+createPreferencesStore({
+observe: (emit: (all: Preferences[]) => void) => {
+emit([])
+return () => {}
+},
+save: () => Promise.reject(new Error('disk is full')),
+remove: () => Promise.resolve(),
+} as never),
+)
+renderWithProviders(
+<PreferencesStoreContext value={failing}>
+<SettingsExtensionsPage manifests={[manifest]} onBack={vi.fn()} />
+</PreferencesStoreContext>,
+)
+await user.click(screen.getByRole('switch', { name: 'fake:label' }))
+await waitFor(() => expect(toast.error).toHaveBeenCalled())
+})
+})
+
+````
 
 - [ ] **Step 2: Run it and watch it fail**
 
@@ -874,14 +1119,24 @@ import { AppScreen, ScreenHeader, ScreenLoading, SettingsRow, SettingsSection } 
 
 export interface SettingsExtensionsPageProps {
   manifests: ExtensionManifest[]
+  /** The id a route guard sent the reader here for, so the row can say which one they wanted. */
+  highlight?: string
   onBack: () => void
 }
 
-export function SettingsExtensionsPage({ manifests, onBack }: SettingsExtensionsPageProps) {
+export function SettingsExtensionsPage({
+  manifests,
+  highlight,
+  onBack,
+}: SettingsExtensionsPageProps) {
   const { t } = useTranslation()
   const ready = usePreferencesStore(selectIsReady)
   const prefs = usePreferencesStore(selectEffectivePreferences)
   const store = usePreferencesStoreApi()
+
+  const toggle = (id: string, value: boolean) => {
+    void setExtensionEnabled(store, id, value).catch(() => toast.error(t('settings.extensionsFailed')))
+  }
 
   return (
     <AppScreen
@@ -902,22 +1157,23 @@ export function SettingsExtensionsPage({ manifests, onBack }: SettingsExtensions
       ) : (
         <SettingsSection title={t('settings.extensionsSection')}>
           {manifests.map((manifest) => (
-            <SettingsRow
-              key={manifest.id}
-              kind="toggle"
-              icon={manifest.icon ?? <Blocks />}
-              label={t(manifest.labelKey as never)}
-              description={t(manifest.descriptionKey as never)}
-              checked={isExtensionEnabled(prefs, manifest.id)}
-              onCheckedChange={(value) => void setExtensionEnabled(store, manifest.id, value)}
-            />
+            <div key={manifest.id} data-highlighted={manifest.id === highlight ? '' : undefined}>
+              <SettingsRow
+                kind="toggle"
+                icon={manifest.icon ?? <Blocks />}
+                label={t(manifest.labelKey as never)}
+                description={t(manifest.descriptionKey as never)}
+                checked={isExtensionEnabled(prefs, manifest.id)}
+                onCheckedChange={(value) => toggle(manifest.id, value)}
+              />
+            </div>
           ))}
         </SettingsSection>
       )}
     </AppScreen>
   )
 }
-```
+````
 
 `src/pages/settings-extensions/index.ts`:
 
@@ -935,17 +1191,27 @@ In `src/shared/i18n/locales/en/settings.ts`, inside the `settings` object:
   extensionsHint: 'Switch features on and off',
   extensionsSection: 'Available',
   extensionsEmpty: 'No extensions yet',
+  extensionsFailed: 'That could not be saved. Try again.',
 ```
+
+`t(manifest.labelKey as never)` is how this codebase already resolves a key it only knows at
+runtime — `content-sort-options.tsx`, `swipe-actions.tsx`, `menu-actions.tsx`. Keep the cast;
+inventing a different escape here would make four patterns out of one.
 
 - [ ] **Step 5: Run the tests and watch them pass**
 
 Run: `npx vitest run src/pages/settings-extensions`
 Expected: PASS, 4 tests.
 
-The four states are covered: loading via `selectIsReady`, empty via the no-manifests branch, error by
-the store's own status. There is deliberately **no** offline branch — the toggle is a local write that
-works offline, and a network notice here would be a lie. Note that in a comment above the component so
-the next reader does not "fix" it.
+The four states are covered: **loading** via `selectIsReady`, **empty** via the no-manifests branch,
+**offline** by working — the toggle is a local write, so there is deliberately no network branch, and
+a notice here would be a lie — and **error** as a failed write, surfaced with `toast.error`.
+
+There is deliberately no error _screen_: `StoreStatus` is `idle | loading | ready`
+(`shared/lib/entity-store.ts`) and has no `error` member, so a store cannot report one to render.
+The only failure this page can have is `save()` rejecting, and every other local write in the app
+reports that with a toast. Put both of those facts in a comment above the component so the next
+reader neither "fixes" the missing offline branch nor invents a store error state for one page.
 
 - [ ] **Step 6: Route it**
 
@@ -955,21 +1221,49 @@ the next reader does not "fix" it.
   settingsExtensions: '/settings/extensions',
 ```
 
-`src/app/routes/settings-screens.tsx`:
+`src/pages/settings-extensions/index.ts` also exports the search validator, so the route and the
+reader cannot drift (`app/routes/search.ts` explains why this codebase validates rather than casts):
 
-```tsx
-import { SettingsExtensionsPage } from '@/pages/settings-extensions'
-import { EXTENSIONS } from '../extensions/registry'
+```ts
+export interface ExtensionsSearch {
+  highlight?: string
+}
 
-export function SettingsExtensionsScreen() {
-  return <SettingsExtensionsPage manifests={EXTENSIONS} onBack={useBackTo(ROUTES.settings)} />
+export function validateExtensionsSearch(search: Record<string, unknown>): ExtensionsSearch {
+  return typeof search.highlight === 'string' && search.highlight
+    ? { highlight: search.highlight }
+    : {}
 }
 ```
 
-`src/app/router.tsx` — add beside the other settings routes:
+`src/app/routes/settings-screens.tsx`:
+
+```tsx
+import { SettingsExtensionsPage, validateExtensionsSearch } from '@/pages/settings-extensions'
+import { EXTENSIONS } from '../extensions/registry'
+
+export function SettingsExtensionsScreen() {
+  const { highlight } = useRouteSearch(validateExtensionsSearch)
+  return (
+    <SettingsExtensionsPage
+      manifests={EXTENSIONS}
+      highlight={highlight}
+      onBack={useBackTo(ROUTES.settings)}
+    />
+  )
+}
+```
+
+`src/app/router.tsx` — add beside the other settings routes, with its validator, the way
+`settingsChangePassword` already does:
 
 ```ts
-  route(ROUTES.settingsExtensions, settings('SettingsExtensionsScreen')),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: ROUTES.settingsExtensions,
+    validateSearch: validateExtensionsSearch,
+    component: settings('SettingsExtensionsScreen'),
+  }),
 ```
 
 `src/pages/settings/ui/SettingsPage.tsx` — add an `onExtensions?: () => void` prop and a row in the same section as Privacy:
@@ -1268,11 +1562,13 @@ git commit -m "feat(bible): the canon skeleton and verse references"
 - Create: `src/extensions/bible/model/store.ts`
 - Create: `src/extensions/bible/model/context.ts`
 - Create: `src/extensions/bible/api/verse-schema.ts`
-- Create: `src/extensions/bible/api/verse-repository.ts`
+- Create: `src/app/extensions/collections.ts`
 - Create: `supabase/migrations/20260917120000_bible_verses.sql`
+- Move: `lastWriteWins` and `firstWriteWins` out of `src/app/persistence/conflict-handlers.ts` into `src/shared/api/rxdb/conflict-handlers.ts`
 - Modify: `src/app/persistence/database.ts`, `src/app/composition-root.ts`
 - Modify: `src/shared/config/sync-tables.ts`, `src/features/sync/divergence.ts`
-- Modify: `src/app/persistence/synced-tables.test.ts`
+- Modify: `src/shared/api/supabase/sync-manager.ts`, `src/app/providers/SyncProvider.tsx`, `src/app/providers/use-data-transition.ts`
+- Modify: `src/app/persistence/synced-tables.test.ts`, `src/app/persistence/database.test.ts`
 
 **Interfaces:**
 
@@ -1422,7 +1718,11 @@ export function makeBibleVerse(input: MakeBibleVerseInput): BibleVerse {
   }
 }
 
-/** Read-side twin: rows arrive from replication unmigrated. */
+/**
+ * Read-side twin: rows arrive from replication unmigrated, so a field the type calls required can
+ * genuinely be absent. The `??` looks dead to TypeScript and is not — `completeSyncState` defaults
+ * a required `checkpoints` for the same reason. Do not delete it; the test below is why.
+ */
 export function completeBibleVerse(verse: BibleVerse): BibleVerse {
   return { ...verse, translation: verse.translation ?? DEFAULT_TRANSLATION }
 }
@@ -1495,9 +1795,26 @@ export const bibleVerseSchema: RxJsonSchema<BibleVerse> = {
 export const bibleVerseCollection: ExtensionCollectionSpec = {
   key: 'bibleVerses',
   table: 'bible_verses',
-  creator: { schema: bibleVerseSchema },
+  creator: { schema: bibleVerseSchema, conflictHandler: lastWriteWins<BibleVerse>() },
 }
 ```
+
+- [ ] **Step 6b: Move the generic conflict handlers where an extension can reach them**
+
+`lastWriteWins` is the handler the spec names for this collection, and it lives in
+`src/app/persistence/conflict-handlers.ts` — which an extension may not import, and lint will say
+so. It is generic over `Clocked` and knows no entity, so it moves rather than being duplicated:
+
+- Create `src/shared/api/rxdb/conflict-handlers.ts` holding `sameWrite`, `lastWriteWins` and
+  `firstWriteWins`, exported from `src/shared/api/rxdb/index.ts`.
+- `mergeCardConflict` and `mergeProgressConflict` **stay** in `src/app/persistence/conflict-handlers.ts`
+  — they import entities, so they belong where they are. They import `sameWrite` from its new home.
+- `src/app/persistence/database.ts` imports the two generic ones from `@/shared/api/rxdb`.
+- Move `conflict-handlers.test.ts`'s cases for the two generic handlers with them.
+
+Do this move in its own commit — it is the only existing-code move in this plan that is not
+mechanical — and let `npm run test` prove nothing changed. Step 6's collection spec does not compile
+until it lands, so if the import above is red, this is the step you skipped.
 
 - [ ] **Step 7: Register extension collections in the database**
 
@@ -1506,7 +1823,7 @@ In `src/app/persistence/database.ts`, give `createAppDatabase` a second paramete
 ```ts
 export async function createAppDatabase<Internals, InstanceCreationOptions>(
   storage: RxStorage<Internals, InstanceCreationOptions>,
-  extensionCollections: ExtensionCollectionSpec[] = [],
+  extensionCollections: readonly ExtensionCollectionSpec[] = [],
 ): Promise<AppCollections> {
 ```
 
@@ -1519,6 +1836,56 @@ and inside, after the core collection map is built, add:
 ```
 
 Extension collections are registered whether or not the extension is enabled — a schema the database does not know is a schema replication can orphan rows against.
+
+The specs come from the manifests' `loadCollections()`, resolved once in one place. Create
+`src/app/extensions/collections.ts`:
+
+```ts
+import type { ExtensionCollectionSpec, ExtensionId, ExtensionManifest } from '@/shared/lib'
+import type { SyncTableSpec } from '@/shared/config/sync-tables'
+
+export interface LoadedExtensionCollections {
+  specs: ExtensionCollectionSpec[]
+  /** The ones that replicate, as `{ table, collectionKey }` — a table name is not a collection key. */
+  syncTables: SyncTableSpec[]
+  /** Which extension owns a table, so replication can follow its toggle. */
+  ownerOf: ReadonlyMap<string, ExtensionId>
+}
+
+/**
+ * Awaited once in `createServices`, before the database is built. Three call sites need this list
+ * and each used to derive it with its own `flatMap`; deriving it here is what keeps them equal.
+ */
+export async function loadExtensionCollections(
+  manifests: readonly ExtensionManifest[],
+): Promise<LoadedExtensionCollections> {
+  const loaded = await Promise.all(
+    manifests.map(async (manifest) => ({
+      id: manifest.id,
+      specs: (await manifest.loadCollections?.()) ?? [],
+    })),
+  )
+  const specs = loaded.flatMap((entry) => entry.specs)
+  const syncTables = specs.flatMap((spec) =>
+    spec.table ? [{ table: spec.table, collectionKey: spec.key }] : [],
+  )
+  const ownerOf = new Map(
+    loaded.flatMap((entry) =>
+      entry.specs.flatMap((spec) => (spec.table ? [[spec.table, entry.id] as const] : [])),
+    ),
+  )
+  return { specs, syncTables, ownerOf }
+}
+```
+
+In `createServices`, resolve it beside the other dynamic imports and hand the specs to the database.
+This awaits three tiny module imports, **not** the database — `collections` stays the unawaited
+promise every repository is built from:
+
+```ts
+const extensions = await loadExtensionCollections(EXTENSIONS)
+const collections = createAppDatabase(getRxStorageDexie(), extensions.specs)
+```
 
 - [ ] **Step 8: Compose the synced-table list**
 
@@ -1539,14 +1906,7 @@ export const CORE_SYNC_TABLES: readonly SyncTableSpec[] = SYNCED_TABLES.map((tab
 `src/app/composition-root.ts` — build `syncTargets` from the composed list rather than `SYNCED_TABLES`:
 
 ```ts
-const syncTableSpecs: SyncTableSpec[] = [
-  ...CORE_SYNC_TABLES,
-  ...EXTENSIONS.flatMap((manifest) =>
-    manifest.collections.flatMap((spec) =>
-      spec.table ? [{ table: spec.table, collectionKey: spec.key }] : [],
-    ),
-  ),
-]
+const syncTableSpecs: SyncTableSpec[] = [...CORE_SYNC_TABLES, ...extensions.syncTables]
 const syncTargets: Promise<SyncTarget[]> = collections.then((c) =>
   syncTableSpecs.map(({ table, collectionKey }) => ({
     table,
@@ -1570,7 +1930,18 @@ not from `targets`. Filtering only `cycle()` leaves Realtime deaf to `bible_vers
 First widen the table type in `src/shared/config/sync-tables.ts`, keeping autocomplete for core names:
 
 ```ts
+/** The core tables, closed — `SYNCED_TABLES` is still exactly these. */
 export type CoreSyncedTable = (typeof SYNCED_TABLES)[number]
+
+/**
+ * A table replication may carry, core or contributed. Open, because an extension's table name is
+ * not knowable at compile time; `(string & {})` keeps autocomplete for the core names.
+ *
+ * Nothing switches exhaustively on this — every consumer either keys a map by it
+ * (`SyncState['checkpoints']`, `PushedIds`, `Peek`) or takes it as a parameter (`peek`, `parents`,
+ * `createCloudWatcher`) — so widening it costs no exhaustiveness check. Check that again before
+ * adding a `switch` over a table name; the answer then is a map, not a union.
+ */
 export type SyncedTable = CoreSyncedTable | (string & {})
 ```
 
@@ -1636,15 +2007,8 @@ Delete the now-unused `SYNCED_TABLES` import from `sync-manager.ts`.
 The predicate itself is built in `src/app/composition-root.ts`:
 
 ```ts
-const extensionTables = new Map(
-  EXTENSIONS.flatMap((manifest) =>
-    manifest.collections.flatMap((spec) =>
-      spec.table ? [[spec.table, manifest.id] as const] : [],
-    ),
-  ),
-)
 const tableIsActive = (table: string): boolean => {
-  const owner = extensionTables.get(table)
+  const owner = extensions.ownerOf.get(table)
   if (!owner) return true
   const prefs = services.preferencesStore.getState().preferences
   return prefs ? isExtensionEnabled(prefs, owner) : false
@@ -1654,8 +2018,27 @@ const tableIsActive = (table: string): boolean => {
 and passed as the third argument to `cloud.SyncManager.fromSupabase(cloud.supabase, syncTargets, tableIsActive)`.
 
 Because the watcher is built once per `start()`, the manager must be restarted when the enabled set
-changes. In `src/app/providers/SyncProvider.tsx`, add an effect keyed on the enabled-extension list
-that calls `syncManager.stop()` then `start(userId, onRemoteChange)` again.
+changes. **Do not add a second effect that starts and stops it** — `useDataTransition` already owns
+that lifecycle, and its cleanup already calls `syncManager.stop()`. Two controllers over one manager
+is the bug, not the fix. Instead give that effect the enabled set as a dependency, so a toggle
+re-runs the transition it already knows how to run:
+
+- `src/app/providers/SyncProvider.tsx`: read the list and pass it down.
+
+  ```ts
+  const enabledExtensions = usePreferencesStore((state) => state.preferences?.extensions)
+  ```
+
+  The stored array's identity only changes when preferences do, so this cannot loop.
+
+- `src/app/providers/use-data-transition.ts`: add `enabledExtensions?: readonly ExtensionId[]` to
+  `DataTransitionDeps`, and add it to the effect's dependency array. Nothing inside the effect reads
+  it — it is there to make "which tables replicate" part of what the effect depends on. Say that in a
+  comment, or the next reader deletes it as unused.
+
+Test it in `src/app/providers/SyncProvider.test.tsx`: with an account signed in, switching an
+extension on stops and restarts the manager, and the second `start` is the one whose watcher carries
+the new table.
 
 Test it in `src/shared/api/supabase/sync-manager.test.ts`:
 
@@ -1668,28 +2051,78 @@ Test it in `src/shared/api/supabase/sync-manager.test.ts`:
 
 - [ ] **Step 9: Write the Supabase migration**
 
+Take the shape from `supabase/migrations/20260915130000_history_table.sql` — it is the ninth mirror
+table and must not invent a tenth shape:
+
 ```sql
 -- supabase/migrations/20260917120000_bible_verses.sql
+--
+-- The Bible extension's published verse text. A mirror table like the other eight: the whole RxDB
+-- document in `data`, plus `user_id`, `deleted` and the server-clock `updated_at` the pull
+-- checkpoint reads. It is registered whether or not the extension is enabled; only replication
+-- follows the toggle.
 create table if not exists public.bible_verses (
-  id text primary key,
-  user_id uuid not null references auth.users (id) on delete cascade,
-  data jsonb not null,
-  deleted boolean not null default false,
-  updated_at timestamptz not null default now()
+  id         text not null,
+  user_id    uuid not null default auth.uid() references auth.users on delete cascade,
+  data       jsonb not null,
+  deleted    boolean not null default false,
+  updated_at timestamptz not null default now(),
+  primary key (user_id, id)
 );
 
 create index if not exists bible_verses_user_updated_idx
   on public.bible_verses (user_id, updated_at, id);
 
+drop trigger if exists set_updated_at on public.bible_verses;
+create trigger set_updated_at before insert or update on public.bible_verses
+  for each row execute function public.set_updated_at();
+
+-- Per-user RLS, identical to the other eight.
 alter table public.bible_verses enable row level security;
+grant select, insert, update, delete on public.bible_verses to authenticated;
+revoke all on public.bible_verses from anon;
 
-create policy "bible_verses are private to their owner"
-  on public.bible_verses for all
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
+drop policy if exists own_select on public.bible_verses;
+create policy own_select on public.bible_verses for select to authenticated
+  using (user_id = (select auth.uid()));
 
-alter publication supabase_realtime add table public.bible_verses;
+drop policy if exists own_insert on public.bible_verses;
+create policy own_insert on public.bible_verses for insert to authenticated
+  with check (user_id = (select auth.uid()));
+
+drop policy if exists own_update on public.bible_verses;
+create policy own_update on public.bible_verses for update to authenticated
+  using (user_id = (select auth.uid()))
+  with check (user_id = (select auth.uid()));
+
+drop policy if exists own_delete on public.bible_verses;
+create policy own_delete on public.bible_verses for delete to authenticated
+  using (user_id = (select auth.uid()));
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'bible_verses'
+  ) then
+    alter publication supabase_realtime add table public.bible_verses;
+  end if;
+end $$;
 ```
+
+Four of those lines are the whole point, and the obvious-looking migration gets each one wrong:
+
+- **`primary key (user_id, id)`**, never `id text primary key`. The document id is
+  `web:Genesis:1:1` — the same string for every learner who publishes that verse — so a global
+  primary key lets the first account to publish it block every other one, and `push_documents`'
+  `on conflict (user_id, id)` would not even compile against it.
+- **`default auth.uid()`** on `user_id`, because `push_documents` inserts without naming an owner.
+- **the `set_updated_at` trigger**, because `updated_at` is the server clock the pull checkpoint
+  compares against. Without it the column keeps its insert-time default and pulls go stale.
+- **four per-operation policies, not one `for all`**, plus `grant`/`revoke` — that is what the
+  other eight tables declare, and RLS is not the place to be original.
+- **the `do $$` guard** on the publication: `alter publication … add table` throws if the table is
+  already a member, and migrations are re-run.
 
 Then copy the most recent `push_documents` function definition from `supabase/migrations/` and re-declare it with `'bible_verses'` added to its `if p_table not in (…)` allow-list. `synced-tables.test.ts` reads the newest allow-list in the directory, so the new file must contain the whole function, not a fragment.
 
@@ -1698,14 +2131,15 @@ Then copy the most recent `push_documents` function definition from `supabase/mi
 In `src/app/persistence/synced-tables.test.ts`, compare the allow-list against core tables plus every table the registry's manifests declare, so a manifest without a SQL grant fails:
 
 ```ts
-const expected = [
-  ...SYNCED_TABLES,
-  ...EXTENSIONS.flatMap((manifest) =>
-    manifest.collections.flatMap((spec) => (spec.table ? [spec.table] : [])),
-  ),
-]
-expect([...latestAllowList()].sort()).toEqual([...expected].sort())
+it('names every synced table, extensions included', async () => {
+  const { syncTables } = await loadExtensionCollections(EXTENSIONS)
+  const expected = [...SYNCED_TABLES, ...syncTables.map((spec) => spec.table)]
+  expect([...latestAllowList()].sort()).toEqual([...expected].sort())
+})
 ```
+
+The test derives the list the same way the composition root does, so a manifest that declares a
+table without a SQL grant fails here rather than silently never syncing.
 
 - [ ] **Step 11: Verify and commit**
 
@@ -1730,7 +2164,7 @@ git commit -m "feat(bible): the verse collection, its schema and its Supabase ta
 **Interfaces:**
 
 - Consumes: `VerseRef`, `expandRange` (Task 5); `BibleVerse` (Task 6).
-- Produces: `stripReference(back, ref?): string`, `interface VerseTextSource { read(ref): Promise<StoredVerse[]> }`, `type StoredVerse = { verse: number; text: string }`, `createStoredVerseSource(verses)`.
+- Produces: `stripReference(back): string`, `interface VerseTextSource { read(ref): Promise<StoredVerse[]> }`, `type StoredVerse = { verse: number; text: string }`, `createStoredVerseSource(verses)`.
 
 - [ ] **Step 1: Write the failing strip test**
 
@@ -1910,12 +2344,13 @@ git commit -m "feat(bible): verse text behind a port, and reference stripping"
 - Test: `src/shared/ui/ImportSheet.test.tsx`
 - Modify: `src/shared/ui/ImportSheet.tsx`
 - Modify: `src/pages/deck-library/ui/DeckLibraryPage.tsx`, `src/pages/deck-detail/ui/DeckDetailPage.tsx`, `src/widgets/content-editor/ui/DeckContentEditor.tsx`
+- Create: `src/app/extensions/extension-redirect.ts` + test
 - Modify: `src/app/extensions/registry.ts`, `src/app/router.tsx`
 
 **Interfaces:**
 
 - Consumes: everything from Tasks 1–7.
-- Produces: `bibleManifest: ExtensionManifest`, `BIBLE_IMPORT_PATH = '/import/bible'`, `ImportSheet`'s `extraOptions` prop.
+- Produces: `bibleManifest: ExtensionManifest`, `BIBLE_IMPORT_PATH = '/import/bible'`, `validateBibleImportSearch`, `ImportSheet`'s `extraOptions` prop, `extensionRedirect(...)`.
 
 - [ ] **Step 1: Write the failing import-sheet test**
 
@@ -1925,7 +2360,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders } from '@/shared/test/render-with-providers'
+import { i18n } from '@/shared/i18n'
 import { ImportSheet } from './ImportSheet'
+
+i18n.addResourceBundle('en', 'fake', { label: 'Bible', sub: 'Pick a passage' }, true, false)
 
 afterEach(cleanup)
 
@@ -1952,19 +2390,32 @@ describe('ImportSheet', () => {
     expect(screen.getAllByRole('button')).toHaveLength(2)
   })
 
-  it('appends a contributed row after the built-in ones', () => {
+  it('appends a contributed row after the built-in ones, resolving its keys', () => {
     renderSheet([
-      { id: 'bible', icon: null, title: 'Bible', subtitle: 'Pick a passage', to: '/import/bible' },
+      {
+        id: 'bible',
+        icon: null,
+        titleKey: 'fake:label',
+        subtitleKey: 'fake:sub',
+        to: '/import/bible',
+      },
     ])
     const rows = screen.getAllByRole('button')
     expect(rows).toHaveLength(3)
     expect(rows[2]).toHaveTextContent('Bible')
+    expect(rows[2]).toHaveTextContent('Pick a passage')
   })
 
   it('reports which contributed row was chosen', async () => {
     const user = userEvent.setup()
     const onSelect = renderSheet([
-      { id: 'bible', icon: null, title: 'Bible', subtitle: 'Pick a passage', to: '/import/bible' },
+      {
+        id: 'bible',
+        icon: null,
+        titleKey: 'fake:label',
+        subtitleKey: 'fake:sub',
+        to: '/import/bible',
+      },
     ])
     await user.click(screen.getByText('Bible'))
     expect(onSelect).toHaveBeenCalledWith('/import/bible')
@@ -1989,18 +2440,18 @@ In `src/shared/ui/ImportSheet.tsx`, add to `ImportSheetProps`:
 importing `type ImportOptionContribution` from `@/shared/lib`, and append after the two built-in options:
 
 ```ts
-          ...(extraOptions ?? []).map((option) => ({
-            id: option.id,
-            icon: option.icon,
-            tone: option.tone ?? ('brand' as const),
-            badge: option.badge,
-            title: option.title,
-            subtitle: option.subtitle,
-            onSelect: () => onSelectExtra?.(option.to),
+          ...(extraOptions ?? []).map(({ titleKey, subtitleKey, to, ...row }) => ({
+            ...row,
+            tone: row.tone ?? ('brand' as const),
+            title: t(titleKey as never),
+            subtitle: t(subtitleKey as never),
+            onSelect: () => onSelectExtra?.(to),
           })),
 ```
 
-The sheet stays prop-driven; it never reads a context.
+The sheet stays prop-driven; it never reads a context. It resolves the two keys itself because it
+already holds `t` — the contribution carries keys precisely so no English sits in a manifest, and
+`t(key as never)` is this codebase's existing way of resolving a key known only at runtime.
 
 - [ ] **Step 4: Run it and watch it pass**
 
@@ -2079,25 +2530,19 @@ export const bibleMessages = {
 ```tsx
 // src/extensions/bible/ui/BibleProvider.tsx
 import { type ReactNode, useEffect, useMemo } from 'react'
-import type { RxCollection } from 'rxdb'
-import { RxdbRepository } from '@/shared/api/rxdb'
-import { useExtensionCollections } from '@/shared/lib'
+import { useExtensionRepository } from '@/shared/lib'
 import { BibleVerseStoreContext } from '../model/context'
 import { createBibleVerseStore } from '../model/store'
 import type { BibleVerse } from '../model/verse'
 
-/** Mounted only while the extension is on: the store starts here and stops when it unmounts. */
+/**
+ * Mounted only while the extension is on. This is the extension's composition root: its store
+ * starts here and stops when this unmounts, and any keeper it ever grows is an effect in this
+ * file. Disabling the extension unmounts it, which is the whole of "backend off".
+ */
 export function ExtensionProvider({ children }: { children: ReactNode }) {
-  const collections = useExtensionCollections()
-  const store = useMemo(
-    () =>
-      createBibleVerseStore(
-        new RxdbRepository<BibleVerse>(
-          Promise.resolve(collections.bibleVerses as RxCollection<BibleVerse>),
-        ),
-      ),
-    [collections],
-  )
+  const repository = useExtensionRepository<BibleVerse>('bibleVerses')
+  const store = useMemo(() => createBibleVerseStore(repository), [repository])
 
   useEffect(() => {
     store.getState().start()
@@ -2108,17 +2553,28 @@ export function ExtensionProvider({ children }: { children: ReactNode }) {
 }
 ```
 
+No cast and no `RxCollection` in sight: the composition root built the repository, and the one cast
+this needs lives inside `useExtensionRepository`.
+
 - [ ] **Step 8: Write the manifest**
 
 ```tsx
 // src/extensions/bible/manifest.tsx
 import { BookOpen } from 'lucide-react'
-import type { ExtensionManifest } from '@/shared/lib'
-import { bibleVerseCollection } from './api/verse-schema'
+import { type ExtensionManifest, extensionRoute } from '@/shared/lib'
 
 export const BIBLE_ID = 'bible'
 export const BIBLE_IMPORT_PATH = '/import/bible'
 export const BIBLE_LIBRARY_PATH = '/settings/extensions/bible'
+
+/** What an import link may carry: the deck the reader was already in. */
+export interface BibleImportSearch {
+  deckId?: string
+}
+
+export function validateBibleImportSearch(search: Record<string, unknown>): BibleImportSearch {
+  return typeof search.deckId === 'string' && search.deckId ? { deckId: search.deckId } : {}
+}
 
 export const bibleManifest: ExtensionManifest = {
   id: BIBLE_ID,
@@ -2128,26 +2584,25 @@ export const bibleManifest: ExtensionManifest = {
   namespace: 'bible',
   loadMessages: () => import('./i18n/en').then((module) => module.bibleMessages),
   routes: [
-    {
-      path: BIBLE_IMPORT_PATH,
-      load: () => import('./ui/BibleImportPage'),
-      export: 'BibleImportScreen',
-    },
-    {
-      path: BIBLE_LIBRARY_PATH,
-      load: () => import('./ui/BibleLibraryPage'),
-      export: 'BibleLibraryScreen',
-    },
+    extensionRoute(
+      BIBLE_IMPORT_PATH,
+      () => import('./ui/BibleImportPage'),
+      'BibleImportScreen',
+      validateBibleImportSearch,
+    ),
+    extensionRoute(BIBLE_LIBRARY_PATH, () => import('./ui/BibleLibraryPage'), 'BibleLibraryScreen'),
   ],
-  collections: [bibleVerseCollection],
+  loadCollections: () =>
+    import('./api/verse-schema').then((module) => [module.bibleVerseCollection]),
+  detailPath: BIBLE_LIBRARY_PATH,
   contributions: {
     importOptions: [
       {
         id: 'bible',
         icon: <BookOpen className="size-5" aria-hidden />,
         tone: 'brand',
-        title: 'Bible',
-        subtitle: 'Pick a book, chapter and verses',
+        titleKey: 'bible:label',
+        subtitleKey: 'bible:importSubtitle',
         to: BIBLE_IMPORT_PATH,
       },
     ],
@@ -2156,9 +2611,15 @@ export const bibleManifest: ExtensionManifest = {
 }
 ```
 
-Keep it this small: it is imported by the registry and therefore lives in the entry graph — the screens behind `load` do not.
+Keep it this small, and keep **everything** behind a loader: the registry imports this file, so it is
+in the entry graph and anything it imports eagerly comes with it. That is why `loadCollections`
+imports the schema rather than the file importing `bibleVerseCollection` at the top — the spec says
+the manifest carries lazy loaders for routes, i18n **and** collections, and a schema object in the
+entry chunk is the same leak as a screen.
 
-The import row's title and subtitle are literal English here rather than `t(…)` because the sheet renders before the namespace resolves; they are the one exception, and Task 11's review should confirm nothing else in the manifest hardcodes copy.
+There is no English in here either: the row carries keys, and `ImportSheet` resolves them. The
+namespace is added before the contributions are published (Task 3), so the sheet never paints a raw
+key.
 
 - [ ] **Step 9: Stub the screen so the route resolves**
 
@@ -2179,7 +2640,7 @@ export function BibleImportScreen() {
 
 - [ ] **Step 10: Register and route**
 
-`src/app/extensions/registry.ts`:
+`src/app/extensions/registry.ts` — the **only** core file that may name an extension:
 
 ```ts
 import { bibleManifest } from '@/extensions/bible/manifest'
@@ -2187,20 +2648,57 @@ import { bibleManifest } from '@/extensions/bible/manifest'
 export const EXTENSIONS: ExtensionManifest[] = [bibleManifest]
 ```
 
-`src/app/router.tsx` — add the extension routes to `routeTree`, each guarded:
+First the decision, on its own, so it can be tested without a router —
+`src/app/extensions/extension-redirect.ts`:
+
+```ts
+import { ROUTES } from '@/shared/config/routes'
+import type { ExtensionId } from '@/shared/lib'
+import { isExtensionEnabled } from '@/entities/preferences'
+import type { Preferences } from '@/entities/preferences'
+
+export interface ExtensionRedirect {
+  to: string
+  search: { highlight: ExtensionId }
+}
+
+/**
+ * Where an extension route sends the reader, or null to let it render.
+ *
+ * `preferences` must be the value read **after** the store is ready — `undefined` here means
+ * "there are none stored", never "not loaded yet". Deciding on an unloaded store sends a cold deep
+ * link to Settings with the extension switched on, which is the silent redirect the design forbids.
+ */
+export function extensionRedirect(
+  preferences: Preferences | null | undefined,
+  id: ExtensionId,
+): ExtensionRedirect | null {
+  if (preferences && isExtensionEnabled(preferences, id)) return null
+  return { to: ROUTES.settingsExtensions, search: { highlight: id } }
+}
+```
+
+with `src/app/extensions/extension-redirect.test.ts` covering the spec's enable/disable contract:
+enabled → `null`; disabled → Settings → Extensions carrying `highlight`; no preferences stored →
+the same redirect.
+
+Then `src/app/router.tsx` — add the extension routes to `routeTree`, each guarded, and each
+**waiting for preferences before it decides**, the way `rootRoute.beforeLoad` already waits on the
+session:
 
 ```ts
 const extensionRoutes = EXTENSIONS.flatMap((manifest) =>
-  manifest.routes.map((extensionRoute) =>
+  manifest.routes.map((route) =>
     createRoute({
       getParentRoute: () => rootRoute,
-      path: extensionRoute.path,
-      component: lazyScreen(extensionRoute.load)(extensionRoute.export),
-      beforeLoad: ({ context }) => {
-        const prefs = context.services.preferencesStore.getState().preferences
-        if (!prefs || !isExtensionEnabled(prefs, manifest.id)) {
-          throw redirect({ to: ROUTES.settingsExtensions })
-        }
+      path: route.path,
+      validateSearch: route.validateSearch,
+      component: lazyScreen(route.load)(route.name),
+      beforeLoad: async ({ context }) => {
+        const store = context.services.preferencesStore
+        await whenStoreReady(store)
+        const target = extensionRedirect(store.getState().preferences, manifest.id)
+        if (target) throw redirect(target)
       },
     }),
   ),
@@ -2208,6 +2706,10 @@ const extensionRoutes = EXTENSIONS.flatMap((manifest) =>
 ```
 
 and spread `...extensionRoutes` into `rootRoute.addChildren([...])`.
+
+Without the `await`, a cold deep link to `/import/bible` — a shared link, a reopened PWA — reads
+`status: 'idle'`, sees no preferences, and redirects to Settings even though Bible is on. That is
+the failure the spec calls out by name.
 
 - [ ] **Step 11: Verify, including the entry graph**
 
@@ -2598,6 +3100,8 @@ git commit -m "feat(bible): pick a book, a chapter and a verse range"
 - Test: `src/extensions/bible/features/build-verse-cards.test.ts`
 - Create: `src/extensions/bible/features/place-in-chapter-deck.ts`
 - Test: `src/extensions/bible/features/place-in-chapter-deck.test.ts`
+- Create: `src/extensions/bible/features/add-verse-cards.ts` + test
+- Create: `src/extensions/bible/testing/decks.ts`
 - Create: `src/extensions/bible/ui/VerseTextPanel.tsx`
 - Create: `src/extensions/bible/ui/TargetPicker.tsx`
 - Modify: `src/extensions/bible/ui/BibleImportPage.tsx` (+ its test)
@@ -2606,7 +3110,12 @@ git commit -m "feat(bible): pick a book, a chapter and a verse range"
 **Interfaces:**
 
 - Consumes: `VerseRef`, `formatRef`, `expandRange` (Task 5); `VerseTextSource` (Task 7); `useImportDraft`, `MoveSheet`, `PromptSheet`; `createDeck` / `createSubdeck` from `@/features/deck`.
-- Produces: `buildVerseCards(ref, text, { split }): ParsedCard[]`, `canSplit(text): boolean`, `findDuplicates(cards, held): HeldRef[]` where `HeldRef = { front: string; deckId: string }`, `ensureChapterDeck(deckStore, book, chapter): Promise<string>`.
+- Produces: `buildVerseCards(ref | null, text, { split }): ParsedCard[]`, `canSplit(text): boolean`, `findDuplicates(cards, held): HeldRef[]` where `HeldRef = { front: string; deckId: string }`, `ensureChapterDeck(deckStore, book, chapter): Promise<string>`, `addVerseCards(deps, input): Promise<string>`.
+
+**This task depends on nothing later.** `buildVerseCards` takes a **nullable** reference, and with
+none it keys the fronts off the markers in the text — which is the whole of what the old
+`parseVerses` did. That is why Task 11 is a deletion and not a move, and why pasting without picking
+a book needs no second parser.
 
 - [ ] **Step 1: Write the failing card-building test**
 
@@ -2651,6 +3160,17 @@ describe('buildVerseCards', () => {
 
   it('makes nothing from empty text', () => {
     expect(buildVerseCards(ref, '   ')).toEqual([])
+  })
+
+  it('keys the fronts off the markers when no book has been picked', () => {
+    expect(buildVerseCards(null, '(1:1) The elder, to Gaius\n(1:2) Beloved, I pray')).toEqual([
+      { front: '1:1', back: 'The elder, to Gaius' },
+      { front: '1:2', back: 'Beloved, I pray' },
+    ])
+  })
+
+  it('makes nothing from unmarked text when no book has been picked — there is no front to give it', () => {
+    expect(buildVerseCards(null, 'In the beginning, plainly.')).toEqual([])
   })
 
   it('never leaves a reference on a back', () => {
@@ -2706,10 +3226,16 @@ import type { ParsedCard } from '@/shared/lib'
 import { formatRef, type VerseRef } from '../model/reference'
 import { stripReference } from '../model/strip-reference'
 
-/** `1)` or `(1:1)` — the two shapes verse text arrives in. */
+/**
+ * `1)` or `(1:1)` — the two shapes verse text arrives in. This is the app's only verse parser:
+ * the one that used to live in `shared/lib/content-transfer.ts` is deleted in Task 11, not moved,
+ * because two parsers for one format is one too many.
+ */
 const MARKER = /(?:\((\d+):(\d+)\)|(?:^|\s)(\d+)\))\s*/g
 
 interface Segment {
+  /** From a `(1:1)` marker; null when the text only numbered its verses. */
+  chapter: number | null
   verse: number
   text: string
 }
@@ -2718,11 +3244,12 @@ function splitByMarkers(text: string): Segment[] {
   const segments: Segment[] = []
   const matches = [...text.matchAll(MARKER)]
   matches.forEach((match, index) => {
+    const chapter = match[1] ? Number(match[1]) : null
     const verse = Number(match[2] ?? match[3])
     const start = (match.index ?? 0) + match[0].length
     const end = matches[index + 1]?.index ?? text.length
     const body = stripReference(text.slice(start, end).trim())
-    if (verse > 0 && body) segments.push({ verse, text: body })
+    if (verse > 0 && body) segments.push({ chapter, verse, text: body })
   })
   return segments
 }
@@ -2732,8 +3259,13 @@ export function canSplit(text: string): boolean {
   return splitByMarkers(text.trim()).length > 0
 }
 
+/**
+ * `ref` is nullable on purpose: the text box is always on screen, so a reader may paste marked-up
+ * scripture without touching the picker. With no reference the markers supply the fronts; with no
+ * reference *and* no markers there is nothing to put on a front, so nothing is made.
+ */
 export function buildVerseCards(
-  ref: VerseRef,
+  ref: VerseRef | null,
   text: string,
   { split = true }: { split?: boolean } = {},
 ): ParsedCard[] {
@@ -2742,13 +3274,17 @@ export function buildVerseCards(
 
   const segments = split ? splitByMarkers(body) : []
   if (segments.length > 0) {
-    return segments.map(({ verse, text: verseText }) => ({
-      front: formatRef({ ...ref, from: verse, to: verse }),
+    return segments.map(({ chapter, verse, text: verseText }) => ({
+      front: ref
+        ? formatRef({ ...ref, from: verse, to: verse })
+        : chapter
+          ? `${chapter}:${verse}`
+          : String(verse),
       back: verseText,
     }))
   }
 
-  return [{ front: formatRef(ref), back: stripReference(body) }]
+  return ref ? [{ front: formatRef(ref), back: stripReference(body) }] : []
 }
 
 export interface HeldRef {
@@ -2772,14 +3308,34 @@ export function findDuplicates(cards: readonly ParsedCard[], held: readonly Held
 - [ ] **Step 4: Run it and watch it pass**
 
 Run: `npx vitest run src/extensions/bible/features/build-verse-cards.test.ts`
-Expected: PASS, 13 tests.
+Expected: PASS, 15 tests.
 
 - [ ] **Step 4b: Write the failing placement test**
+
+First give this extension its own deck fixture. `@/features/deck/deck-fixtures` is not in that
+slice's barrel and every existing user of it is inside the slice, so reaching for it from here would
+be the deep cross-slice import the architecture rules ban — `boundaries/ignore` skips test files, so
+lint would not catch it either:
+
+```ts
+// src/extensions/bible/testing/decks.ts
+import { InMemoryRepository } from '@/shared/api'
+import { started } from '@/shared/test/started'
+import { createDeckStore, type Deck, type DeckStore, makeDeck } from '@/entities/deck'
+
+export function storedDeck(id: string, over: Partial<Deck> = {}): Deck {
+  return { ...makeDeck({ id, createdAt: new Date(0).toISOString(), name: id }), ...over }
+}
+
+export function startedDeckStore(decks: Deck[]): DeckStore {
+  return started(createDeckStore(new InMemoryRepository<Deck>(decks)))
+}
+```
 
 ```ts
 // src/extensions/bible/features/place-in-chapter-deck.test.ts
 import { describe, expect, it } from 'vitest'
-import { startedDeckStore, storedDeck } from '@/features/deck/deck-fixtures'
+import { startedDeckStore, storedDeck } from '../testing/decks'
 import { ensureChapterDeck } from './place-in-chapter-deck'
 
 const deckNames = (store: ReturnType<typeof startedDeckStore>) =>
@@ -2870,6 +3426,67 @@ export async function ensureChapterDeck(
 
 Run it again: PASS, 5 tests.
 
+- [ ] **Step 4d: Write the command that actually adds the cards**
+
+The screen decides _when_; a command does the writing. Create
+`src/extensions/bible/features/add-verse-cards.ts`:
+
+```ts
+import type { DeckStore } from '@/entities/deck'
+import { createDeck } from '@/features/deck'
+import type { ParsedCard } from '@/shared/lib'
+import type { VerseRef } from '../model/reference'
+import { buildVerseCards, findDuplicates, type HeldRef } from './build-verse-cards'
+import { ensureChapterDeck } from './place-in-chapter-deck'
+
+/** Where the cards are going: the reader's choice, or the app's. */
+export type VerseTarget =
+  { kind: 'automatic' } | { kind: 'deck'; deckId: string } | { kind: 'newDeck'; name: string }
+
+export interface AddVerseCardsDeps {
+  deckStore: DeckStore
+  setDraft: (source: 'extension', cards: ParsedCard[]) => void
+}
+
+export interface AddVerseCardsInput {
+  ref: VerseRef | null
+  text: string
+  split: boolean
+  target: VerseTarget
+  held: readonly HeldRef[]
+  keepDuplicates: boolean
+}
+
+/**
+ * Build, drop the duplicates, resolve the destination, hand the cards to the existing import
+ * draft. Returns the deck to review them in.
+ */
+export async function addVerseCards(
+  { deckStore, setDraft }: AddVerseCardsDeps,
+  { ref, text, split, target, held, keepDuplicates }: AddVerseCardsInput,
+): Promise<string> {
+  const built = buildVerseCards(ref, text, { split })
+  const duplicates = new Set(findDuplicates(built, held).map((entry) => entry.front))
+  const cards = keepDuplicates ? built : built.filter((card) => !duplicates.has(card.front))
+
+  const deckId =
+    target.kind === 'deck'
+      ? target.deckId
+      : target.kind === 'newDeck'
+        ? (await createDeck(deckStore, { name: target.name })).id
+        : ref
+          ? await ensureChapterDeck(deckStore, ref.book, ref.chapter)
+          : (await createDeck(deckStore, { name: cards[0]?.front ?? '' })).id
+
+  setDraft('extension', cards)
+  return deckId
+}
+```
+
+Automatic placement with no reference — a paste with markers and no book picked — has no book to
+name a deck after, so it falls back to an ordinary new deck. Test that case explicitly along with
+the three targets; `setDraft` is a `vi.fn()` and the deck store comes from `../testing/decks`.
+
 - [ ] **Step 5: Widen the import draft by one neutral source**
 
 In `src/widgets/content-editor/model/import-draft.ts`:
@@ -2883,6 +3500,10 @@ export type ImportSource = 'paste' | 'mindscape' | 'anki' | 'extension'
 - [ ] **Step 6: Write the text panel and the target picker**
 
 `VerseTextPanel.tsx` — a labelled `Textarea` plus one line of status: `t('textImported')` when the source filled it, `t('textMissing')` when it opened empty. Props: `{ value, onChange, prefilled }`. Reuse `Textarea` from `@/shared/ui`.
+
+**Never `autoFocus` it** (CODE_STYLE §11): on a full-page input it opens the keyboard over the
+page's own footer before the reader has seen it, and the mount-time pan lands before any keyboard
+height has been measured. It was removed from `PasteNotesPage` for exactly this.
 
 `TargetPicker.tsx` — a `ToggleRow` labelled `t('target')` with the hint `t('targetHint')`, default
 **on**, and a manual branch revealed when it is off.
@@ -2936,7 +3557,7 @@ describe('BibleImportPage text and target', () => {
 
   it('places the cards automatically, book then chapter, when the toggle is on', async () => {
     const user = userEvent.setup()
-    const deckStore = startedDeckStore([])
+    const deckStore = startedDeckStore([]) // from '../testing/decks'
     renderWithProviders(
       <DeckStoreContext value={deckStore}>
         <BibleImportPage />
@@ -2981,6 +3602,26 @@ describe('BibleImportPage text and target', () => {
 
 Wire the pieces. The text panel and the footer button are always rendered; the picker sits above them.
 
+**The Add button is `AppScreen`'s `footer`, not a bar of your own.** This screen has a textarea and a
+bottom-pinned action, which is the combination CODE_STYLE §11 is about: `AppScreen` already gives
+its scroll body the keyboard range (`.pb-keyboard` / `--kb-range`) that stops iOS panning the whole
+app, and puts the dock `static` under `data-keyboard` so the CTA does not ride the keyboard's edge.
+Hand-rolling a `fixed` or `sticky` footer here re-opens all four bugs that section records. The
+header must not move when the keyboard opens — that is the acceptance test.
+
+**`?deckId=`.** Read it with the manifest's own validator, and let it decide the opening target:
+
+```ts
+const { deckId } = useRouteSearch(validateBibleImportSearch)
+const [target, setTarget] = useState<VerseTarget>(
+  deckId ? { kind: 'deck', deckId } : { kind: 'automatic' },
+)
+```
+
+Arriving from a deck, the reader has already said where the cards go, so "Include in decks" opens
+**off** with that deck shown as the destination. Arriving from the library it opens on. Test both:
+the sheet host passes the id (Task 8, Step 5) and it must not be dropped on the floor here.
+
 **Prefill, when a complete range is chosen and the library covers it.** Read the source with
 `createStoredVerseSource(useBibleVerseStore((state) => state.verses))` and fill the box **with
 markers**, exactly as the mockup shows:
@@ -3011,20 +3652,15 @@ that publishes what is in the box into the library — the path that fills the p
 bundled translation exists. It calls `versesFromCards(buildVerseCards(ref, text), nowIso())` then
 `publishVerses` (both from Task 12), and toasts `t('kept', { count })`.
 
-The button writes the draft and navigates, mirroring `NewPasteScreen`:
+The button calls the command and navigates, mirroring `NewPasteScreen`. Everything it does lives in
+`addVerseCards` — the screen holds no write logic of its own:
 
 ```ts
 const add = async () => {
-  const held = new Set(duplicates.map((entry) => entry.front))
-  const cards = buildVerseCards(ref, text, { split }).filter(
-    (card) => keepDuplicates || !held.has(card.front),
+  const deckId = await addVerseCards(
+    { deckStore, setDraft },
+    { ref, text, split, target, held, keepDuplicates },
   )
-  setDraft('extension', cards)
-  const deckId = auto
-    ? await ensureChapterDeck(deckStore, ref.book, ref.chapter)
-    : destination.kind === 'existing'
-      ? destination.deckId
-      : (await createDeck(deckStore, { name: destination.name })).id
   await navigate({ to: ROUTES.deckImport, params: { deckId }, replace: true })
 }
 ```
@@ -3033,8 +3669,9 @@ Render the translation as a static label under the text box — `t('translation'
 translation's name. No selector exists until there is a second translation.
 
 There is deliberately **no "paste text instead" mode**. The box is always on screen, so pasting
-without touching the picker already works: `buildVerseCards` reads `(1:1)` and `n)` markers, and when
-no book has been picked the fronts come from the markers themselves via `parseVerses` (Task 11).
+without touching the picker already works: `buildVerseCards` reads `(1:1)` and `n)` markers, and with
+no reference picked the fronts come from the markers themselves. No other parser is involved, and
+nothing here waits on Task 11.
 
 - [ ] **Step 9: Run the whole file and watch it pass**
 
@@ -3052,12 +3689,11 @@ git commit -m "feat(bible): verse text, the target deck, and the handoff to impo
 
 ---
 
-### Task 11: Move the verse parser out of core, and make Paste Notes notes-only
+### Task 11: Delete the verse parser from core, and make Paste Notes notes-only
 
 **Files:**
 
-- Create: `src/extensions/bible/model/parse-verses.ts` (moved)
-- Create: `src/extensions/bible/model/parse-verses.test.ts` (moved and rewritten)
+- Modify: `src/extensions/bible/features/build-verse-cards.test.ts` (the cases worth keeping)
 - Modify: `src/shared/lib/content-transfer.ts`, `src/shared/lib/content-transfer.test.ts`, `src/shared/lib/index.ts`
 - Modify: `src/pages/paste-notes/model/use-paste-parsing.ts`
 - Delete: `src/pages/paste-notes/ui/FormatToggle.tsx`
@@ -3067,105 +3703,100 @@ git commit -m "feat(bible): verse text, the target deck, and the handoff to impo
 
 **Interfaces:**
 
-- Consumes: `stripReference` (Task 7).
-- Produces: `parseVerses(text): ParsedCard[]`, `parseVerseChapters(text): VerseChapter[]`, `verseChapterTitles(text): string[]` — all from the extension. `PasteFormat` and `detectPasteFormat` cease to exist.
+- Consumes: `buildVerseCards` (Task 10) — already written, already tested.
+- Produces: nothing. `parseVerses`, `parseVerseChapters`, `verseChapterTitles`, `detectPasteFormat` and the `PasteFormat` type cease to exist.
 
-- [ ] **Step 1: Write the moved test first, with the new back**
+**Deletion, not a move.** Task 10's `buildVerseCards` already reads `(1:1)` and `n)` markers, already
+strips references, and already handles a paste with no reference picked — it _is_ the verse parser,
+written against the card shape this design requires. Moving `parseVerses` into the extension as well
+would leave two parsers for one format, the second with no caller, which is the dead shim the change
+rules forbid. So the behaviour worth keeping moves into the extension's existing suite as test cases,
+and the core code goes.
+
+Two things to know before starting:
+
+- `parseVerseChapters` is **module-private** in `content-transfer.ts` today — it is not exported and
+  not in `src/shared/lib/index.ts`. Only `parseVerses`, `verseChapterTitles`, `detectPasteFormat` and
+  `PasteFormat` are barrel exports.
+- `use-paste-parsing.ts` is the only consumer of any of them.
+
+- [ ] **Step 1: Carry the surviving behaviour into the extension's suite**
+
+Append to `src/extensions/bible/features/build-verse-cards.test.ts`, so the deletion cannot quietly
+lose what the old parser did:
 
 ```ts
-// src/extensions/bible/model/parse-verses.test.ts
-import { describe, expect, it } from 'vitest'
-import { parseVerseChapters, parseVerses, verseChapterTitles } from './parse-verses'
-
-const CHAPTER = `3 John 1
-(1:1) The elder, to Gaius
-(1:2) Beloved, I pray`
-
-describe('parseVerses', () => {
-  it('puts the reference on the front and only the text on the back', () => {
-    expect(parseVerses(CHAPTER)).toEqual([
-      { front: '3 John 1:1', back: 'The elder, to Gaius' },
-      { front: '3 John 1:2', back: 'Beloved, I pray' },
-    ])
-  })
-
+describe('what the old core parser did', () => {
   it('joins a verse that wraps onto the next line', () => {
-    const wrapped = '3 John 1\n(1:1) The elder,\nto Gaius'
-    expect(parseVerses(wrapped)[0]?.back).toBe('The elder, to Gaius')
+    const cards = buildVerseCards(null, '3 John 1\n(1:1) The elder,\nto Gaius')
+    expect(cards[0]?.back).toBe('The elder, to Gaius')
   })
 
-  it('parses verses with no book header at all', () => {
-    expect(parseVerses('(1:1) In the beginning')).toEqual([
-      { front: '1:1', back: 'In the beginning' },
-    ])
+  it('ignores a book header line above the markers', () => {
+    const cards = buildVerseCards(
+      null,
+      '3 John 1\n(1:1) The elder, to Gaius\n(1:2) Beloved, I pray',
+    )
+    expect(cards).toHaveLength(2)
   })
 
   it('finds nothing in ordinary notes', () => {
-    expect(parseVerses('Zeus, King of the gods')).toEqual([])
-  })
-})
-
-describe('verseChapterTitles', () => {
-  it('names the chapters it found', () => {
-    expect(verseChapterTitles(CHAPTER)).toEqual(['3 John 1'])
-  })
-})
-
-describe('parseVerseChapters', () => {
-  it('groups verses under their chapter', () => {
-    const chapters = parseVerseChapters(CHAPTER)
-    expect(chapters).toHaveLength(1)
-    expect(chapters[0]?.cards).toHaveLength(2)
+    expect(buildVerseCards(null, 'Zeus, King of the gods')).toEqual([])
   })
 })
 ```
 
-- [ ] **Step 2: Run it and watch it fail**
+- [ ] **Step 2: Run it and watch it fail on the wrapped line**
 
-Run: `npx vitest run src/extensions/bible/model/parse-verses.test.ts`
-Expected: FAIL — cannot resolve `./parse-verses`.
+Run: `npx vitest run src/extensions/bible/features/build-verse-cards.test.ts`
+Expected: FAIL on the wrapping case — `splitByMarkers` takes the text between markers verbatim, so a
+newline survives. Collapse whitespace when it trims the body (`.replace(/\s+/g, ' ')`), which is what
+`parseVerseChapters` did. The other two should already pass; if the header case fails, the text before
+the first marker is being kept — it must be dropped.
 
-- [ ] **Step 3: Move the parser and change its back**
+- [ ] **Step 3: Delete the parser from core**
 
-Cut `UNTITLED_CHAPTER`, `VerseChapter`, `parseVerseChapters`, `parseVerses` and `verseChapterTitles` out of `src/shared/lib/content-transfer.ts` into `src/extensions/bible/model/parse-verses.ts`, importing `ParsedCard` from `@/shared/lib`. Change the one line that builds a card:
+- `src/shared/lib/content-transfer.ts`: delete `UNTITLED_CHAPTER`, `VerseChapter`,
+  `parseVerseChapters`, `parseVerses`, `verseChapterTitles`, `detectPasteFormat` and `PasteFormat`.
+- `src/shared/lib/content-transfer.test.ts`: delete the `parseVerses`, `verseChapterTitles` and
+  `detectPasteFormat` describe blocks.
+- `src/shared/lib/index.ts`: stop exporting `parseVerses`, `verseChapterTitles`, `detectPasteFormat`
+  and `PasteFormat`.
 
-```ts
-const card: ParsedCard = { front: ref, back: bodyText.trim() }
-```
+- [ ] **Step 4: Make Paste Notes notes-only**
 
-was `back: bodyText ? `${ref} ${bodyText}`.trim() : ref`. The back now holds verse text alone. Drop verses whose body is empty rather than emitting a card whose back repeats the front.
-
-- [ ] **Step 4: Run it and watch it pass**
-
-Run: `npx vitest run src/extensions/bible/model/parse-verses.test.ts`
-Expected: PASS, 6 tests.
-
-- [ ] **Step 5: Delete bible from core**
-
-- `src/shared/lib/content-transfer.ts`: also delete `PasteFormat` and `detectPasteFormat`. Delete their cases from `content-transfer.test.ts`.
-- `src/shared/lib/index.ts`: stop exporting `parseVerses`, `parseVerseChapters`, `verseChapterTitles`, `detectPasteFormat`, `PasteFormat`.
-- `src/pages/paste-notes/model/use-paste-parsing.ts`: delete `format`, `auto`, `setFormat`, `resetFormat`, `suggestedName` and every bible branch. Parsing is always `parseDelimitedNotes`.
+- `src/pages/paste-notes/model/use-paste-parsing.ts`: delete `format`, `auto`, `setFormat`,
+  `resetFormat`, `suggestedName` and every bible branch. Parsing is always `parseDelimitedNotes`.
 - Delete `src/pages/paste-notes/ui/FormatToggle.tsx`.
-- `PasteNotesPage.tsx`: delete the `FormatToggle` and `BibleHint` renders and the bible placeholder branch; `SeparatorSettings` always shows. The deck name falls back to `defaultDeckName`.
-- `PasteNotesPage.test.tsx`: delete the three bible naming tests ("names the deck after a pasted Bible chapter", "keeps a name the reader typed…", "falls back to the default…") — keep the first, rewritten to assert the default name, and let Task 9's tests cover the bible path.
+- `PasteNotesPage.tsx`: delete the `FormatToggle` and `BibleHint` renders and the bible placeholder
+  branch; `SeparatorSettings` always shows. The deck name falls back to `defaultDeckName`.
+- `PasteNotesPage.test.tsx`: of the three bible naming tests, rewrite the first in place to assert
+  the default name and delete the other two. Their subject — naming a deck after a pasted chapter —
+  no longer exists on this screen.
 - `deck-screens.tsx`: `NewPasteScreen` keeps `nextDefaultName` and drops nothing else.
-- i18n: delete `cards.paste.kindNotes`, `kindBible`, `formatLabel`, `autoDetected`, `resetAuto`, `biblePlaceholder`, `bibleHintTitle`, `bibleHint`.
+- i18n: delete `cards.paste.kindNotes`, `kindBible`, `formatLabel`, `autoDetected`, `resetAuto`,
+  `biblePlaceholder`, `bibleHintTitle`, `bibleHint`.
 
-- [ ] **Step 6: Prove core is clean**
+- [ ] **Step 5: Prove core is clean**
+
+This grep is the acceptance test for the whole design, so it has to be one that can actually return
+nothing — a plain `grep -i bible\|verse` matches `reverse`, `inverse` and `traverse`, and `Card`
+carries a `reversed` field, so the loose pattern can never come back empty and proves nothing:
 
 ```bash
-grep -rin "bible\|verse\|scripture" src/app src/pages src/widgets src/features src/entities src/shared --include='*.ts' --include='*.tsx'
+grep -rinE '\b(bible|verses?|scripture)\b' src/app src/pages src/widgets src/features src/entities src/shared --include='*.ts' --include='*.tsx'
 ```
 
-Expected: no matches except `src/app/extensions/registry.ts`'s manifest import. Anything else is a leak — fix it before committing.
+Expected: exactly one hit — the manifest import in `src/app/extensions/registry.ts`. Anything else
+is a leak: fix it before committing.
 
-- [ ] **Step 7: Verify and commit**
+- [ ] **Step 6: Verify and commit**
 
 ```bash
 npm run typecheck && npm run lint && npm run test
 npx prettier --write src/extensions src/shared src/pages/paste-notes src/app/routes/deck-screens.tsx
 git add -A src/extensions src/shared src/pages src/app
-git commit -m "refactor(paste): move the verse parser into the Bible extension"
+git commit -m "refactor(paste): Paste Notes is notes-only, and the verse parser lives in the extension"
 ```
 
 ---
@@ -3181,7 +3812,7 @@ git commit -m "refactor(paste): move the verse parser into the Bible extension"
 
 **Interfaces:**
 
-- Consumes: `makeBibleVerse` (Task 6), `stripReference` (Task 7), `parseVerses` (Task 11), `parseRef` (Task 5), `BibleVerseStore` (Task 6), the core `cardStore`.
+- Consumes: `makeBibleVerse` (Task 6), `stripReference` (Task 7), `buildVerseCards` (Task 10), `parseRef` (Task 5), `BibleVerseStore` (Task 6), the core `cardStore`.
 - Produces: `versesFromCards(cards, at)`, `publishVerses(store, verses)`, `countReferenceBacks(cards)`, `cleanReferenceBacks(cardStore, cards)`.
 
 - [ ] **Step 1: Write the failing publish test**
@@ -3393,7 +4024,13 @@ Test it with a started `BibleVerseStoreContext` over an `InMemoryRepository`, as
 
 - [ ] **Step 8: Reach it from Settings → Extensions**
 
-Give `SettingsExtensionsPage` an `onOpenExtension?: (id: string) => void` and render a nav row under an enabled extension when its manifest declares a settings route. Wire it in `SettingsExtensionsScreen` to `navigate({ to: BIBLE_LIBRARY_PATH })` — read from the manifest's routes, not hardcoded.
+Give `SettingsExtensionsPage` an `onOpenExtension?: (path: string) => void` and render a nav row
+under an enabled extension when its manifest carries a `detailPath` (Task 8 sets Bible's). Wire it in
+`SettingsExtensionsScreen` to `navigate({ to: path })`.
+
+The path comes from the manifest, never from an import: `import { BIBLE_LIBRARY_PATH } from '@/extensions/bible/manifest'`
+in a core screen would put the word _bible_ in `src/app/routes/`, which is precisely what Task 11's
+grep is there to catch, registry aside.
 
 - [ ] **Step 9: Verify and commit**
 
@@ -3410,7 +4047,7 @@ git commit -m "feat(bible): the admin library — publish sources and clean old 
 
 **Files:**
 
-- Modify: `docs/UBIQUITOUS_LANGUAGE.md`, `CLAUDE.md`, `docs/CODE_STYLE.md`
+- Modify: `docs/UBIQUITOUS_LANGUAGE.md`, `CLAUDE.md`
 
 - [ ] **Step 1: Add the vocabulary**
 
@@ -3426,7 +4063,7 @@ In `docs/UBIQUITOUS_LANGUAGE.md`, in the same table style as the existing entrie
 
 Add to the Architecture section, after the Entities paragraph:
 
-> **Extensions** (`src/extensions/<x>/`, reference `bible/`) — a self-contained feature behind a manifest. Reaches down like a page (widgets → features → entities → shared); **only `app` may import it**, and extensions never import each other. Contributions reach host surfaces through `useExtensionPoint`, never through an import. Enablement is `preferences.extensions`; disabling stops the stores, the keepers and the routes, and deletes nothing.
+> **Extensions** (`src/extensions/<x>/`, reference `bible/`) — a self-contained feature behind a manifest. Reaches down like a page (widgets → features → entities → shared); **only `app` may import it**, and extensions never import each other. Contributions reach host surfaces through `useExtensionPoint`, never through an import, and carry i18n keys rather than copy. The extension's own provider is its composition root: its stores and keepers start there, and disabling unmounts it. Enablement is `preferences.extensions`, changed only through `setExtensionEnabled`, and deletes nothing. `src/app/extensions/registry.ts` is the one core file allowed to name an extension.
 
 - [ ] **Step 3: Run everything**
 
@@ -3454,6 +4091,8 @@ git commit -m "docs: extensions layer, and the vocabulary that goes with it"
 ## Notes for whoever executes this
 
 - **The canon table in Task 5 is the one place you must not improvise.** Four assertions guard it; if any fails, the table is wrong, not the test.
-- **`grep` for bible in core after Task 11** is the acceptance test for the whole design. One hit outside `src/app/extensions/registry.ts` means the decoupling failed.
+- **`grep` for bible in core after Task 11** is the acceptance test for the whole design. One hit outside `src/app/extensions/registry.ts` means the decoupling failed. Use the word-boundary pattern in that step — the loose one matches `reverse` and `Card.reversed` and can never come back empty.
+- **Anything a guard reads before a provider has rendered must wait for the store.** `beforeLoad` runs first; an unloaded store says `undefined`, which is not the same as "off".
+- **The manifest is in the entry graph; everything it names must be behind a loader** — routes, messages, collections. `npm run check:entry-graph` after `npm run build` is what proves it.
 - **Every RxDB schema change needs both halves:** the migration in `database.ts` _and_ the `completeX` twin, because replication writes pulled rows unmigrated.
 - **Card backs never carry a reference.** If a test passes with a back like `Genesis 1:1 In the beginning`, the test is wrong.

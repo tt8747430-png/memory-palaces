@@ -57,12 +57,16 @@ and `useExtensionPoint(point)`. It contains no extension-specific vocabulary.
 
 Only the points this spec needs exist:
 
-| Point           | Shape                                                 | Host                             |
-| --------------- | ----------------------------------------------------- | -------------------------------- |
-| `importOptions` | `{ id, icon, tone, title, subtitle, to }`             | the page rendering `ImportSheet` |
-| routes          | `{ path, component }`                                 | `app/router.tsx`                 |
-| collections     | `{ key, table, schema, migrations, conflictHandler }` | `app/persistence/database.ts`    |
-| i18n            | a lazy namespace bundle                               | the extensions provider          |
+| Point           | Shape                                               | Host                             |
+| --------------- | --------------------------------------------------- | -------------------------------- |
+| `importOptions` | `{ id, icon, tone, titleKey, subtitleKey, to }`     | the page rendering `ImportSheet` |
+| routes          | `{ path, load, name, validateSearch? }`             | `app/router.tsx`                 |
+| collections     | `{ key, table, creator }`, behind `loadCollections` | `app/persistence/database.ts`    |
+| i18n            | a lazy namespace bundle                             | the extensions provider          |
+
+A contributed row carries **keys, not copy** — `titleKey` and `subtitleKey` inside the extension's
+own namespace — so no English ever lives in a manifest. The provider adds the namespace before it
+publishes the contributions, so a host never renders a raw key.
 
 `shared/ui/ImportSheet` stays prop-driven: it gains an optional `extraOptions` prop appended after
 its two built-in rows. The _page_ calls `useExtensionPoint('importOptions')` and passes them
@@ -81,17 +85,23 @@ renders reaches the entry graph. `npm run check:entry-graph` must stay green aft
 enabled extension:
 
 - adds its i18n namespace via `i18n.addResourceBundle`
-- starts its stores
-- starts any keepers it registers
-- publishes its contributions into the extension-points context
+- mounts the extension's own provider, which is where its stores and its keepers start
+- publishes its contributions into the extension-points context, once the namespace is in
 
-On disable it does the exact inverse — `store.getState().stop()`, keeper teardown, contributions
-withdrawn. "Backend off" means off, including background work; the symmetry is what stops a future
-tracker from running after its extension is switched off.
+On disable it does the exact inverse, and the inverse is **unmounting**. The extension's provider is
+the single place its stores and keepers start, so React's own teardown stops them; the namespace goes
+with `i18n.removeResourceBundle`; the contributions leave the context in the same render. "Backend
+off" means off, including background work; the symmetry is what stops a future tracker from running
+after its extension is switched off. There is deliberately **no keeper slot on the manifest** — a
+keeper is an effect inside the extension's provider, and unmounting is its teardown.
 
 Routes are **always** in the router tree, and always guarded. Opening `/import/bible` with Bible
 off lands on Settings → Extensions with that row highlighted — never a blank 404, never a silent
-redirect home. The tree is therefore static: toggling an extension never rebuilds the router.
+redirect home. The guard therefore **waits for preferences to be ready** before it decides, the way
+`rootRoute.beforeLoad` already waits on the session: reading a store that has not loaded would send
+a cold deep link to Settings with the extension switched **on**, which is exactly the silent
+redirect this rules out. The redirect carries `?highlight=<id>`, and the page highlights that row.
+The tree is static: toggling an extension never rebuilds the router.
 
 ### 3.4 Enablement state
 
@@ -100,24 +110,37 @@ redirect home. The tree is therefore static: toggling an extension never rebuild
 - `preferencesSchema` goes to **version 3**; the migration adds `extensions: []`.
 - `makePreferences` / `completePreferences` default and pass through the field, including ids the
   running build does not recognise. This is the read-side twin required for replicated rows.
-- `setPreferences` **merges** the extension list; it never replaces it wholesale. An older build
-  writing preferences must not switch off an extension it has never heard of.
-- `entities/preferences` exports `type ExtensionId` and `isExtensionEnabled(prefs, id)`. No call
-  site does array membership by hand.
+- `setPreferences` **merges** the extension list; it never replaces it wholesale. The list is not
+  an ordinary member of `PreferencesChanges`: it is changed by handing `setPreferences` a function
+  over the stored ids, so no caller can hold a whole array and overwrite ids it never read. An
+  older build writing preferences must not switch off an extension it has never heard of.
+- `type ExtensionId` is declared in `shared/lib` beside the manifest and re-exported from
+  `entities/preferences`, the way `ContentSort` and `SwipePreferences` already are. It stays a
+  string alias on purpose: the set of ids is open, and an id this build never heard of has to
+  round-trip.
+- `entities/preferences` exports `isExtensionEnabled(prefs, id)`. No call site does array membership
+  by hand, and no feature re-exports it a second time.
 
 ### 3.5 Persistence and sync composition
 
 Extension collections are registered in `createAppDatabase` **always**, enabled or not. A schema
 the database does not know is a schema replication can orphan rows against; the collections are
-cheap and the data must survive disabling.
+cheap and the data must survive disabling. The manifest hands them over behind `loadCollections()`,
+awaited in `createServices` before the database is built, so a schema never reaches the entry graph.
+
+The generic conflict handlers move with them: `lastWriteWins` and `firstWriteWins` are pure and
+generic over `Clocked`, but they sit in `app/persistence/conflict-handlers.ts`, which an extension
+may not import. They move to `shared/api/rxdb`; `mergeCardConflict` and `mergeProgressConflict` stay
+in `app`, since they know entities.
 
 Replication is different: a table joins the sync set only while its extension is enabled. Disable
 stops it; re-enable resumes from its checkpoint, losing nothing. Both halves must honour that:
 `SyncManager.cycle` filters its targets through the predicate, **and** `SyncManager.fromSupabase`
 stops handing `createCloudWatcher` the hardcoded `SYNCED_TABLES` const and passes the active tables
 instead — otherwise Realtime stays deaf to an enabled extension's table. Because the watcher is built
-once per `start()`, `SyncProvider` restarts the manager when the enabled set changes. Because the toggle itself syncs,
-enabling Bible on one device enables and syncs it everywhere.
+once per `start()`, `SyncProvider` restarts the manager when the enabled set changes — and restart
+means `stop()` then `start()`, because `start()` returns early when the account has not changed.
+Because the toggle itself syncs, enabling Bible on one device enables and syncs it everywhere.
 
 `SYNCED_TABLES` is currently a compile-time const in `shared/config/sync-tables.ts` feeding
 `SyncedTable`, the composition root's `syncTargets`, `features/sync/divergence.ts` and the cloud
@@ -138,8 +161,11 @@ prevent, so:
 New core page `src/pages/settings-extensions/`, route `/settings/extensions`, reached from a row
 in Settings. It lists every registered extension — name, one-line description, icon, toggle — and
 handles all four states: loading (gated on `selectIsReady` for preferences, like
-`SettingsPage.tsx`), error, empty ("No extensions yet"), and offline (toggling is a local write and
-works offline; the page says nothing misleading about the network).
+`SettingsPage.tsx`), empty ("No extensions yet"), offline (toggling is a local write and works
+offline, so the page says nothing misleading about the network) and error — which here is a **failed
+write**, surfaced with `toast.error` the way every other local write in the app surfaces one. There
+is no error _screen_, because `StoreStatus` has no `error` member: the stores are
+`idle | loading | ready`, and inventing a fourth state for one page would misdescribe every other.
 
 Each row can lead to an extension detail page contributed by the extension. Bible's holds the
 admin Bible library (§4.7).
@@ -167,7 +193,7 @@ verse and `Genesis 1:1-31` for a range.
 
 ```ts
 export interface VerseTextSource {
-  read(ref: VerseRef): Promise<Verse[]> // Verse = { chapter, verse, text }
+  read(ref: VerseRef): Promise<Verse[]> // Verse = { verse, text } — the ref already fixes the chapter
 }
 ```
 
@@ -186,9 +212,10 @@ back:  In the beginning God created the heavens and the earth.
 The back carries verse text and nothing else. A back that repeats the reference hands Match the
 answer and makes the game pointless. Three consequences:
 
-1. **The parser changes behaviour when it moves.** `parseVerseChapters` currently builds
-   `back: ref + body`; in the extension it builds `back: body`. Its tests move with it and are
-   rewritten to assert the reference is absent from the back.
+1. **The parser changes behaviour, and changes hands.** `parseVerseChapters` in
+   `shared/lib/content-transfer.ts` builds `back: ref + body`; the extension's `build-verse-cards.ts`
+   builds `back: body`. The cases worth keeping become cases in the extension's suite, asserting the
+   reference is absent from the back — see §5 for why this is a deletion rather than a move.
 2. **Deriving from a deck strips the reference.** Publishing a deck as a source removes a leading
    reference from each back (`^<book> <chapter>:<verse>\s*`, tolerant of punctuation and of the
    book name being absent) before storing, so sources are clean even though the existing cards are
@@ -201,8 +228,11 @@ answer and makes the game pointless. Three consequences:
 
 ### 4.5 The add-cards flow
 
-One route, `/import/bible`, optionally carrying `?deckId=`. It is reached from the Bible row the
-extension contributes to `ImportSheet`, from both the library and a deck.
+One route, `/import/bible`, optionally carrying `?deckId=`, validated by the manifest's own
+`validateSearch`. It is reached from the Bible row the extension contributes to `ImportSheet`, from
+both the library and a deck. Arriving **with** a deck id, the reader has already said where the
+cards go: the flow opens with "Include in decks" off and that deck as the destination. Arriving
+without one, the toggle opens on.
 
 A single scrolling screen with progressive disclosure, matching the reference mockups:
 
@@ -271,7 +301,13 @@ to exactly one deck, so both branches of the toggle resolve to a single destinat
 
 ### 4.6 Commands
 
-- `features/add-verse-cards.ts` — reference plus text plus target → `ParsedCard[]` → import draft.
+- `features/build-verse-cards.ts` — reference plus text plus the split toggle → `ParsedCard[]`.
+  Pure; no store, no draft.
+- `features/place-in-chapter-deck.ts` — `ensureChapterDeck`: the automatic placement above, book
+  deck then chapter subdeck, reused where they already sit.
+- `features/add-verse-cards.ts` — the command the screen calls: build, drop the duplicates, resolve
+  the destination, write the import draft. The screen does not do this inline — a write is a
+  command, and the screen only says when.
 - `features/publish-source.ts` — a deck, or the text in the paste box, → verse records, references
   stripped.
 - `features/clean-reference-backs.ts` — the opt-in repair of §4.4.3, routed through the core card
@@ -295,12 +331,25 @@ Paste Notes becomes notes-only. Removed from `src/pages/paste-notes/`: `FormatTo
 `BibleHint`, the `format === 'bible'` branch of `use-paste-parsing.ts`, `suggestedName` and the
 chapter-title deck naming it feeds, and the bible copy in `shared/i18n/locales/en/`.
 
-Moved out of `src/shared/lib/content-transfer.ts` into `src/extensions/bible/model/parse-verses.ts`,
-with their tests: `parseVerses`, `parseVerseChapters`, `verseChapterTitles`, `detectPasteFormat`,
-and the `PasteFormat` type. `src/shared/lib/index.ts` stops exporting them.
+**Deleted from `src/shared/lib/content-transfer.ts`, not moved:** `parseVerses`,
+`verseChapterTitles`, the module-private `parseVerseChapters` they are built on, `detectPasteFormat`
+and the `PasteFormat` type. `parseVerses` and `verseChapterTitles` leave
+`src/shared/lib/index.ts`; `parseVerseChapters` is not exported today, so nothing "stops exporting"
+it.
 
-`NewPasteScreen` keeps `nextDefaultName`; only the bible-derived name goes. The three bible naming
-tests in `PasteNotesPage.test.tsx` move to the extension and are rewritten against the new flow.
+Deletion rather than a move, because the extension already has the parser. `build-verse-cards.ts`
+reads the same `(1:1)` and `n)` markers, strips references, and — given no reference — keys the
+fronts off the markers, which is the whole of what `parseVerses` did. Carrying the old one across as
+well would leave two parsers for one format, the second with no caller: the dead shim the change
+rules forbid. The behaviour worth keeping crosses over as test cases instead, in
+`build-verse-cards.test.ts`.
+
+`detectPasteFormat` goes for the same reason and one more: Paste Notes is notes-only and has nothing
+left to detect, and the extension's box decides by markers (`canSplit`), not by format.
+
+`NewPasteScreen` keeps `nextDefaultName`; only the bible-derived name goes. Of the three bible
+naming tests in `PasteNotesPage.test.tsx`, one is rewritten in place to assert the default name and
+the other two go: the bible path they covered is covered by the extension's own tests.
 
 ## 6. Data and sync
 
@@ -320,9 +369,20 @@ interface BibleVerse extends Entity {
 other schema declares), so republishing the same verse updates in place instead of duplicating. Conflict handler: `lastWriteWins`. Schema version 0 — new collection,
 no migration.
 
-New `supabase/migrations/<timestamp>_bible_verses.sql`, following the existing phase-9 pattern:
-table, RLS by owner, realtime publication, and the `push_documents` allow-list entry that
-`synced-tables.test.ts` asserts against.
+New `supabase/migrations/<timestamp>_bible_verses.sql`, taking the shape every mirror table already
+has — `20260915130000_history_table.sql` is the one to copy:
+
+- **`primary key (user_id, id)`**. `id` alone would collide across accounts: `web:Genesis:1:1` is
+  the same string for every learner who ever publishes that verse.
+- `user_id uuid not null default auth.uid() references auth.users on delete cascade`, and the
+  `(user_id, updated_at, id)` index.
+- a `set_updated_at` trigger, because `updated_at` is the **server** clock the pull checkpoint reads.
+- `grant`/`revoke` plus the four per-operation RLS policies — `own_select`, `own_insert`,
+  `own_update`, `own_delete` — not one `for all`.
+- an idempotent `do $$` block for the realtime publication, since `alter publication … add table`
+  throws on a second run.
+- the whole `push_documents` function re-declared with `bible_verses` in its allow-list.
+  `synced-tables.test.ts` reads the newest definition in the directory, so a fragment will not do.
 
 ## 7. States and behaviour
 
@@ -339,7 +399,9 @@ Every new surface handles loading, error, empty and offline, per `docs/CODE_STYL
 Unit, colocated:
 
 - canon counts, reference formatting/parsing, range expansion
-- verse parsing after the move, asserting the back holds no reference
+- verse parsing in the extension, asserting the back holds no reference, including the cases
+  inherited from the core parser being deleted (a verse that wraps a line, a book header above the
+  markers, ordinary notes yielding nothing)
 - reference stripping, including backs that never had one
 - duplicate detection against a deck's existing cards
 - preferences: unknown extension ids survive a write-back; the v3 migration defaults to `[]`
@@ -360,7 +422,7 @@ npm run check:entry-graph`, since a new layer and a new manifest list touch the 
    Extensions settings page. No bible anywhere. Ships useful and inert.
 2. Canon, references, the verse-text port, the `bibleVerses` collection and its Supabase migration.
 3. The add-cards flow, including the paste-instead route and the handoff to import review.
-4. Paste Notes decoupling and the parser move.
+4. Paste Notes decoupling, and deleting the core verse parser the extension has replaced.
 5. The admin Bible library, including the opt-in back-cleaning.
 
 ## 10. Out of scope
@@ -371,7 +433,8 @@ lands behind the same manifest, adding the contribution point it needs.
 
 ## 11. Glossary additions
 
-To `docs/UBIQUITOUS_LANGUAGE.md`:
+To `docs/UBIQUITOUS_LANGUAGE.md`, plus a paragraph in `CLAUDE.md`'s Architecture section teaching
+the new layer and its one import rule:
 
 - **Extension** — a self-contained feature the learner switches on in Settings. Never "plugin",
   never "add-on". "Extensions Gallery" is a future browse surface, not the mechanism.
