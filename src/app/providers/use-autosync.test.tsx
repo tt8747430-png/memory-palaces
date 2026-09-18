@@ -25,7 +25,6 @@ import {
   useAutosync,
 } from './use-autosync'
 
-
 function renderAutosync({
   autosync = true,
   active = true,
