@@ -23,6 +23,8 @@ const verse = (number: number, text: string) =>
     verse: number,
     text,
   })
+/** Genesis has text *somewhere*, so the picker offers it; chapter 1 stays unheld. */
+const genesisCovered = { verses: [makeBibleVerse({ ...verse(1, 'Elsewhere.'), chapter: 2 })] }
 
 afterEach(() => {
   cleanup()
@@ -71,6 +73,31 @@ describe('BibleImportPage picker', () => {
     expect(screen.getByLabelText('Verse text')).toBeInTheDocument()
   })
 
+  it('disables the books the Bible library has no text for, and says why', async () => {
+    const user = userEvent.setup()
+    renderImportPage(<BibleImportPage />, genesisCovered)
+    expect(screen.getByText('Books without saved text are greyed out')).toBeInTheDocument()
+    const exodus = screen.getByRole('button', { name: 'Exodus' })
+    expect(exodus).toBeDisabled()
+    await user.click(exodus)
+    expect(screen.getByText('Pick a Bible book')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Genesis' })).toBeEnabled()
+  })
+
+  it('offers every book while the Bible library holds no text — pasting is the way in', () => {
+    renderImportPage(<BibleImportPage />)
+    expect(screen.getByRole('button', { name: 'Exodus' })).toBeEnabled()
+    expect(screen.queryByText('Books without saved text are greyed out')).not.toBeInTheDocument()
+  })
+
+  it('lets dev mode pick a book with no text — that is how its text gets published', async () => {
+    const user = userEvent.setup()
+    setDevMode(true)
+    renderImportPage(<BibleImportPage />, genesisCovered)
+    await user.click(screen.getByRole('button', { name: 'Exodus' }))
+    expect(screen.getByText('Pick a chapter')).toBeInTheDocument()
+  })
+
   it('start over returns to the book list', async () => {
     const user = userEvent.setup()
     renderImportPage(<BibleImportPage />)
@@ -81,17 +108,17 @@ describe('BibleImportPage picker', () => {
 })
 
 describe('BibleImportPage text and target', () => {
-  it('opens the text box empty when the library holds nothing, and says so', async () => {
+  it('opens the text box empty when the Bible library holds nothing, and says so', async () => {
     const user = userEvent.setup()
     renderImportPage(<BibleImportPage />)
     await pickGenesis11(user)
     expect(screen.getByLabelText('Verse text')).toHaveValue('')
     expect(
-      screen.getByText('This passage is not in your Bible library yet — paste it in below.'),
+      screen.getByText('No saved text for this passage yet — paste it in below.'),
     ).toBeInTheDocument()
   })
 
-  it('prefills with markers from the library, and says where the text came from', async () => {
+  it('prefills with markers from the Bible library, and says where the text came from', async () => {
     const user = userEvent.setup()
     renderImportPage(<BibleImportPage />, {
       verses: [verse(1, 'First.'), verse(2, 'Second.')],
@@ -100,7 +127,7 @@ describe('BibleImportPage text and target', () => {
     await user.click(screen.getByRole('button', { name: '1' }))
     await user.click(screen.getByRole('button', { name: '1' }))
     await user.click(screen.getByRole('button', { name: '2' }))
-    expect(await screen.findByText('Text brought in from your Bible library.')).toBeInTheDocument()
+    expect(await screen.findByText('Filled in from the saved Bible text.')).toBeInTheDocument()
     expect(screen.getByLabelText('Verse text')).toHaveValue('1) First. 2) Second.')
     expect(screen.getByRole('button', { name: 'Add 2 cards' })).toBeEnabled()
   })
@@ -148,7 +175,28 @@ describe('BibleImportPage text and target', () => {
     renderImportPage(<BibleImportPage />)
     await user.click(screen.getByRole('switch', { name: 'Include in decks' }))
     expect(screen.getByRole('button', { name: 'Choose a deck' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Create a deck' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'New deck' })).toBeInTheDocument()
+  })
+
+  it('picks a deck in words that say what picking does — nothing is moved or added yet', async () => {
+    const user = userEvent.setup()
+    renderImportPage(<BibleImportPage />, {
+      decks: [storedDeck('deck-1', { name: 'Memory work' })],
+    })
+    await user.click(screen.getByLabelText('Verse text'))
+    await user.paste('(1:1) In the beginning.')
+    await user.click(screen.getByRole('switch', { name: 'Include in decks' }))
+    await user.click(screen.getByRole('button', { name: 'Choose a deck' }))
+
+    const sheet = await screen.findByRole('dialog')
+    expect(within(sheet).getByText('Where the cards go when you add them')).toBeInTheDocument()
+    expect(within(sheet).getByRole('button', { name: 'Pick a deck' })).toBeDisabled()
+    await user.click(within(sheet).getByText('Memory work'))
+    await user.click(within(sheet).getByRole('button', { name: 'Use Memory work' }))
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    expect(screen.getByText('Memory work')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Add 1 card' })).toBeEnabled()
   })
 
   it('will not add to a new deck it has no name for — switched off before a book was picked', async () => {
@@ -173,15 +221,17 @@ describe('BibleImportPage text and target', () => {
     await user.click(screen.getByRole('switch', { name: 'Include in decks' }))
     expect(screen.getByRole('button', { name: 'Add 1 card' })).toBeDisabled()
 
-    await user.click(screen.getByRole('button', { name: 'Create a deck' }))
+    await user.click(screen.getByRole('button', { name: 'New deck' }))
     const sheet = await screen.findByRole('dialog')
-    await user.type(within(sheet).getByRole('textbox'), 'Memory work')
-    await user.click(within(sheet).getByRole('button', { name: 'Create a deck' }))
+    // The sheet names the deck; nothing is made until Add, and it says so.
+    expect(within(sheet).getByText('It is made when you add the cards')).toBeInTheDocument()
+    await user.type(within(sheet).getByRole('textbox', { name: 'Deck name' }), 'Memory work')
+    await user.click(within(sheet).getByRole('button', { name: 'Use this name' }))
 
     expect(screen.getByRole('button', { name: 'Add 1 card' })).toBeEnabled()
   })
 
-  it('opens on the deck the reader came from, with placement off', () => {
+  it('opens on the deck the learner came from, with placement off', () => {
     renderImportPage(<BibleImportPage deckId="deck-1" />, {
       decks: [storedDeck('deck-1', { name: 'Memory work' })],
     })
@@ -219,7 +269,7 @@ describe('BibleImportPage text and target', () => {
     expect(screen.getByRole('button', { name: /^Add/ })).toBeDisabled()
   })
 
-  it('keeps the text in the library when dev mode is on, so the picker can prefill next time', async () => {
+  it('keeps the text in the Bible library when dev mode is on, so the picker can prefill next time', async () => {
     const user = userEvent.setup()
     setDevMode(true)
     const { verseStore } = renderImportPage(<BibleImportPage />)

@@ -29,7 +29,7 @@ import {
   SpeedDial,
   useContentSortOptions,
 } from '@/shared/ui'
-import { type MoveDestination, MoveSheet } from '@/widgets/deck-tree'
+import { type Destination, DestinationSheet } from '@/widgets/deck-tree'
 import { filterCards, sortCards } from '../model/card-list'
 import { useCardActions } from '../model/use-card-actions'
 import { useCardCommands } from '../model/use-card-commands'
@@ -134,7 +134,7 @@ export function DeckContentEditor({
   const sheetCard = cardSheet ? cards.find((card) => card.id === cardSheet.id) : undefined
   const movingCards = moveIds ? cards.filter((card) => moveIds.includes(card.id)) : []
   const moveExcludeIds = new Set(movingCards.map((card) => card.deckId))
-  const pickMoveTarget = (dest: MoveDestination) => {
+  const pickMoveTarget = (dest: Destination) => {
     if (dest.kind === 'deck' && moveIds) {
       commands.moveTo(moveIds, dest.deckId, findEntity(decks, dest.deckId)?.name ?? '')
     }
@@ -270,7 +270,7 @@ export function DeckContentEditor({
         }}
       />
 
-      <MoveSheet
+      <DestinationSheet
         open={moveIds !== null}
         onOpenChange={(open) => {
           if (!open) setMoveIds(null)

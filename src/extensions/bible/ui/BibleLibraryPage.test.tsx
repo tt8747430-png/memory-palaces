@@ -35,15 +35,9 @@ const verseCard = (id: string, front: string, back: string) =>
   makeCard({ id, createdAt: at, deckId: 'deck-1', front, back })
 
 describe('BibleLibraryPage', () => {
-  it('shows nothing to act on while dev mode is off', () => {
-    setDevMode(false)
-    renderImportPage(<BibleLibraryPage />)
-    expect(screen.queryByRole('button', { name: /Publish a deck/ })).not.toBeInTheDocument()
-  })
-
   it('says the library is empty before anything is published', () => {
     renderImportPage(<BibleLibraryPage />)
-    expect(screen.getByText('Nothing to add yet')).toBeInTheDocument()
+    expect(screen.getByText('No Bible text published yet')).toBeInTheDocument()
   })
 
   it('lists each published book with how many verses it holds', () => {
@@ -71,8 +65,12 @@ describe('BibleLibraryPage', () => {
       ],
     })
     await user.click(screen.getByRole('button', { name: /Publish a deck/ }))
-    await user.click(await screen.findByText('Genesis 1'))
-    await user.click(screen.getByRole('button', { name: 'Move to Genesis 1' }))
+    const sheet = await screen.findByRole('dialog')
+    // The sheet says what picking does — it publishes, it moves nothing.
+    expect(within(sheet).getByText('Its verse cards join the Bible library')).toBeInTheDocument()
+    expect(within(sheet).getByRole('button', { name: 'Pick a deck' })).toBeDisabled()
+    await user.click(within(sheet).getByText('Genesis 1'))
+    await user.click(screen.getByRole('button', { name: 'Publish Genesis 1' }))
     await waitFor(() => expect(verseStore.getState().verses).toHaveLength(1))
     expect(verseStore.getState().verses[0]?.text).toBe('In the beginning.')
   })
@@ -87,8 +85,10 @@ describe('BibleLibraryPage', () => {
       ],
     })
     await user.click(screen.getByRole('button', { name: /Clean references/ }))
-    await user.click(await screen.findByText('Genesis 1'))
-    await user.click(screen.getByRole('button', { name: 'Move to Genesis 1' }))
+    const sheet = await screen.findByRole('dialog')
+    expect(within(sheet).getByText('Pick the deck whose backs to clean')).toBeInTheDocument()
+    await user.click(within(sheet).getByText('Genesis 1'))
+    await user.click(screen.getByRole('button', { name: 'Clean Genesis 1' }))
 
     const dialog = await screen.findByRole('alertdialog')
     expect(within(dialog).getByText('1 card would change')).toBeInTheDocument()

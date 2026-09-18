@@ -5,11 +5,11 @@ import { type Deck, DEFAULT_DECK_COLOR, DEFAULT_DECK_ICON } from '@/entities/dec
 import { DEFAULT_FOLDER_ICON, type Folder } from '@/entities/folder'
 import { childDecks, cn, decksInFolder, findEntity, rootDecks, toggleInSet } from '@/shared/lib'
 import { Button, DeckCover, FolderGlyph, Sheet } from '@/shared/ui'
-import type { MoveDestination } from '../model/move-destination'
+import type { Destination } from '../model/destination'
 
-export type MoveTargets = 'any' | 'deck'
+export type DestinationTargets = 'any' | 'deck'
 
-function destKey(d: MoveDestination): string {
+function destKey(d: Destination): string {
   if (d.kind === 'folder') return `folder:${d.folderId}`
   if (d.kind === 'deck') return `deck:${d.deckId}`
   return d.kind
@@ -20,7 +20,7 @@ interface DeckNode {
   children: DeckNode[]
 }
 
-export interface MoveSheetProps {
+export interface DestinationSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   subtitle: string
@@ -28,10 +28,21 @@ export interface MoveSheetProps {
   folders: Folder[]
   /** Decks that cannot be picked — what is being moved. Omitted when nothing is being moved. */
   excludeIds?: ReadonlySet<string>
-  onPick: (dest: MoveDestination) => void
-  targets?: MoveTargets
+  onPick: (dest: Destination) => void
+  targets?: DestinationTargets
   title?: string
+  /** What confirming does. Moving, unless the caller picks a place for something else. */
+  action?: DestinationAction
   onNewFolder?: () => void
+}
+
+/**
+ * The footer button's words: `prompt` before anything is picked, `confirm(name)` after. A caller
+ * picking a place for anything but a move says what it is for — otherwise the button lies.
+ */
+export interface DestinationAction {
+  prompt: string
+  confirm: (name: string) => string
 }
 
 const INDENT = 20
@@ -39,7 +50,7 @@ const INDENT = 20
 /** One frozen empty set, so a sheet that excludes nothing does not rebuild one every render. */
 const EXCLUDE_NOTHING: ReadonlySet<string> = new Set()
 
-export function MoveSheet({
+export function DestinationSheet({
   open,
   onOpenChange,
   subtitle,
@@ -49,10 +60,15 @@ export function MoveSheet({
   onPick,
   targets = 'any',
   title,
+  action,
   onNewFolder,
-}: MoveSheetProps) {
+}: DestinationSheetProps) {
   const { t } = useTranslation()
   const decksOnly = targets === 'deck'
+  const { prompt, confirm } = action ?? {
+    prompt: t('move.pickPrompt'),
+    confirm: (name: string) => t('move.moveTo', { name }),
+  }
 
   const buildDeckNode = (deck: Deck): DeckNode => ({
     deck,
@@ -80,7 +96,7 @@ export function MoveSheet({
   }, [folders, decks])
 
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(allExpandable))
-  const [selected, setSelected] = useState<MoveDestination | null>(null)
+  const [selected, setSelected] = useState<Destination | null>(null)
 
   useEffect(() => {
     if (open) {
@@ -146,7 +162,7 @@ export function MoveSheet({
           disabled={selected == null}
           onClick={() => selected && onPick(selected)}
         >
-          {selected == null ? t('move.pickPrompt') : t('move.moveTo', { name: selectedName })}
+          {selected == null ? prompt : confirm(selectedName)}
         </Button>
       }
     >

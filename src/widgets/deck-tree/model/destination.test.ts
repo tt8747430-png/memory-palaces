@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { placeOfDestination } from './move-destination'
+import { placeOfDestination } from './destination'
 
 describe('placeOfDestination', () => {
   it('names the place each destination stands a deck at', () => {

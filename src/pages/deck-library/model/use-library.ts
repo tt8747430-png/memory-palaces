@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { usePendingAct } from '@/shared/lib'
 import type { SelectActionHandlers } from '@/shared/ui'
-import type { MoveDestination } from '@/widgets/deck-tree'
+import type { Destination } from '@/widgets/deck-tree'
 import type { PendingAct } from './pending-act'
 import { type LibraryActions, moveExclusions, useLibraryActions } from './use-library-actions'
 import { type LibraryView, useLibraryData } from './use-library-data'
@@ -16,7 +16,7 @@ export interface Library extends LibraryView {
   pending: PendingAct | null
   request: (act: PendingAct) => void
   dismiss: () => void
-  confirm: (dest?: MoveDestination) => void
+  confirm: (dest?: Destination) => void
   moveExcludeIds: ReadonlySet<string>
 }
 
@@ -56,7 +56,7 @@ export function useLibrary(folderId: string | null, onFolderGone: () => void): L
     onRequestBulkDelete: () => pending.request({ kind: 'delete-selection' }),
   })
 
-  const confirm = (dest?: MoveDestination) =>
+  const confirm = (dest?: Destination) =>
     pending.resolve((current) => {
       switch (current.kind) {
         case 'move-deck':

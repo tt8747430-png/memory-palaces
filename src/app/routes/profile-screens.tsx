@@ -6,7 +6,7 @@ import { BadgesPage } from '@/pages/badges'
 import { ProfilePage } from '@/pages/profile'
 import { StreakPage } from '@/pages/streak'
 import { ROUTES } from '@/shared/config/routes'
-import { useBackTo } from './use-back'
+import { useBackTo } from '@/shared/lib'
 
 export function ProfileScreen() {
   const navigate = useNavigate()

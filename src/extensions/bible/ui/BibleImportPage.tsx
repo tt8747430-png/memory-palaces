@@ -9,7 +9,7 @@ import {
   ScreenLoading,
   ToggleRow,
 } from '@/shared/ui'
-import { MoveSheet } from '@/widgets/deck-tree'
+import { DestinationSheet } from '@/widgets/deck-tree'
 import { useBibleT } from '../i18n/use-bible-t'
 import { useBibleImport } from '../model/use-bible-import'
 import { BookPicker } from './BookPicker'
@@ -19,7 +19,7 @@ import { TargetPicker } from './TargetPicker'
 import { VerseTextPanel } from './VerseTextPanel'
 
 export interface BibleImportPageProps {
-  /** The deck the reader was already in, if they came from one. */
+  /** The deck the learner was already in, if they came from one. */
   deckId?: string
   onBack?: () => void
   onReview?: (deckId: string) => void
@@ -39,7 +39,7 @@ export function BibleImportPage({ deckId, onBack, onReview, onShowDeck }: BibleI
     <ScreenHeader title={t('importTitle')} onBack={onBack} backLabel={core('common.back')} />
   )
 
-  // Until every store has mirrored, "not in your library yet" and "0 duplicates" would both be
+  // Until every store has mirrored, "no saved text" and "0 duplicates" would both be
   // guesses dressed as facts, so the screen waits instead of saying them.
   if (!page.ready) {
     return (
@@ -80,7 +80,9 @@ export function BibleImportPage({ deckId, onBack, onReview, onShowDeck }: BibleI
           ) : null}
         </div>
 
-        {picker.step === 'book' ? <BookPicker onPick={picker.pickBook} /> : null}
+        {picker.step === 'book' ? (
+          <BookPicker onPick={picker.pickBook} isPickable={page.isBookPickable} />
+        ) : null}
         {picker.step === 'chapter' ? (
           <NumberGrid
             label={t('pickChapter')}
@@ -145,11 +147,12 @@ export function BibleImportPage({ deckId, onBack, onReview, onShowDeck }: BibleI
         />
       </div>
 
-      <MoveSheet
+      <DestinationSheet
         open={page.sheet === 'deck'}
         onOpenChange={(open) => page.showSheet(open ? 'deck' : null)}
         title={t('pickDeck')}
-        subtitle={t('targetHint')}
+        subtitle={t('pickDeckHint')}
+        action={{ prompt: t('pickDeckPrompt'), confirm: (name) => t('useDeck', { name }) }}
         targets="deck"
         decks={page.decks}
         folders={page.folders}
@@ -163,9 +166,10 @@ export function BibleImportPage({ deckId, onBack, onReview, onShowDeck }: BibleI
         open={page.sheet === 'name'}
         onOpenChange={(open) => page.showSheet(open ? 'name' : null)}
         title={t('newDeckTitle')}
-        fieldLabel={t('newDeckTitle')}
+        description={t('newDeckHint')}
+        fieldLabel={t('newDeckName')}
         initialValue={page.chapterName}
-        confirmLabel={t('targetNew')}
+        confirmLabel={t('useName')}
         onSubmit={(name) => {
           page.nameDeck(name)
           page.showSheet(null)

@@ -12,11 +12,10 @@ import { SettingsSyncPage } from '@/pages/settings-sync'
 import { useSessionStore } from '@/entities/session'
 import { useAuthActions } from '@/features/session'
 import { ROUTES } from '@/shared/config/routes'
-import { useRouteSearch } from '@/shared/lib'
+import { useBackTo, useRouteSearch } from '@/shared/lib'
 import { EXTENSIONS } from '../extensions/registry'
 import { validateRecoverySearch } from './search'
 import { useExtensionNavigate } from './use-extension-navigate'
-import { useBackTo } from './use-back'
 
 export function SettingsScreen() {
   const navigate = useNavigate()

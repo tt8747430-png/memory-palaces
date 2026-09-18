@@ -1,29 +1,30 @@
 import { describe, expect, it } from 'vitest'
-import { makePreferences, type Preferences } from '@/entities/preferences'
 import { ROUTES } from '@/shared/config/routes'
 import { extensionRedirect } from './extension-redirect'
 
-const stored = (extensions: string[]): Preferences => ({
-  ...makePreferences({ id: 'preferences', createdAt: new Date(0).toISOString() }),
-  extensions,
-})
+const toSettings = { to: ROUTES.settingsExtensions, search: { highlight: 'bible' } }
 
 describe('extensionRedirect', () => {
-  it('lets the route render while the extension is on', () => {
-    expect(extensionRedirect(stored(['bible']), 'bible')).toBeNull()
+  it('lets the route render while the extension is active', () => {
+    expect(extensionRedirect('bible', { active: true, admin: false, devMode: false })).toBeNull()
   })
 
-  it('sends a reader whose extension is off to Settings, saying which one', () => {
-    expect(extensionRedirect(stored([]), 'bible')).toEqual({
-      to: ROUTES.settingsExtensions,
-      search: { highlight: 'bible' },
-    })
+  it('sends a learner whose extension is off to Settings, saying which one', () => {
+    expect(extensionRedirect('bible', { active: false, admin: false, devMode: false })).toEqual(
+      toSettings,
+    )
   })
 
-  it('redirects the same way when nothing is stored at all', () => {
-    expect(extensionRedirect(null, 'bible')).toEqual({
-      to: ROUTES.settingsExtensions,
-      search: { highlight: 'bible' },
-    })
+  it('keeps an admin route to dev mode, even with the extension on', () => {
+    expect(extensionRedirect('bible', { active: true, admin: true, devMode: false })).toEqual(
+      toSettings,
+    )
+    expect(extensionRedirect('bible', { active: true, admin: true, devMode: true })).toBeNull()
+  })
+
+  it('does not open an admin route of an extension that is off, dev mode or not', () => {
+    expect(extensionRedirect('bible', { active: false, admin: true, devMode: true })).toEqual(
+      toSettings,
+    )
   })
 })

@@ -3,8 +3,8 @@ import { ArchivedDecksPage } from '@/pages/archived-decks'
 import { DeckLibraryPage } from '@/pages/deck-library'
 import { NotificationsPage } from '@/pages/notifications'
 import { ROUTES } from '@/shared/config/routes'
+import { useBack, useBackTo } from '@/shared/lib'
 import { useExtensionNavigate } from './use-extension-navigate'
-import { useBack, useBackTo } from './use-back'
 
 function Library({ folderId }: { folderId: string | null }) {
   const navigate = useNavigate()

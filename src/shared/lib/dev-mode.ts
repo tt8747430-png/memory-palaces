@@ -31,6 +31,11 @@ export function setDevMode(next: boolean) {
   listeners.forEach((listener) => listener())
 }
 
+/** The flag outside React — a route guard decides before anything has rendered. */
+export function readDevMode(): boolean {
+  return enabled
+}
+
 export function useDevMode(): boolean {
   return useSyncExternalStore(
     subscribe,

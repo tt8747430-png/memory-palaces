@@ -1,8 +1,7 @@
-import { useNavigate } from '@tanstack/react-router'
 import { ROUTES } from '@/shared/config/routes'
+import { useBackTo } from '@/shared/lib'
 import { BibleLibraryPage } from './BibleLibraryPage'
 
 export function BibleLibraryScreen() {
-  const navigate = useNavigate()
-  return <BibleLibraryPage onBack={() => void navigate({ to: ROUTES.settingsExtensions })} />
+  return <BibleLibraryPage onBack={useBackTo(ROUTES.settingsExtensions)} />
 }

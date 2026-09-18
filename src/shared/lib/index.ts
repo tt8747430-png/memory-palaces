@@ -86,7 +86,7 @@ export {
   type WorkerLike,
 } from './sw-update'
 export { useAutoSelect } from './use-auto-select'
-export { useDevMode, setDevMode } from './dev-mode'
+export { useDevMode, readDevMode, setDevMode } from './dev-mode'
 export { useProbeOverlay, setProbeOverlay } from './probe-overlay'
 export { visibleBottom, keyboardIsMeasured, REVEAL_GAP } from './keyboard-viewport'
 export { useKeyboardInset } from './use-keyboard-inset'
@@ -153,6 +153,7 @@ export { ResetLocalDataContext, useResetLocalData } from './reset-local-data-con
 export { useValidatedSubmit, type FieldErrors, type ValidatedSubmit } from './use-validated-submit'
 export { readOnline, useOnline } from './use-online'
 export { useRouteSearch } from './use-route-search'
+export { useBack, useBackTo } from './use-back'
 export { useLatest } from './use-latest'
 export { newest, type Clocked } from './newest'
 export { mergeProgress, type MergeableProgress } from './merge-progress'
@@ -188,22 +189,26 @@ export {
 } from './collection-commands'
 export { createStoreContext, type StoreContext } from './store-context'
 export type {
+  ExtensionActivation,
   ExtensionCollectionSpec,
+  ExtensionContext,
   ExtensionContributions,
   ExtensionId,
   ExtensionManifest,
   ExtensionPoint,
   ExtensionRoute,
+  ExtensionRuntimeModule,
   ImportOptionContribution,
 } from './extension-manifest'
 export { extensionRoute } from './extension-manifest'
 export { ExtensionPointsContext, useExtensionPoint } from './extension-points-context'
 export { type ContributedT, useContributedT } from './extension-i18n'
 export {
-  type ExtensionRepositories,
-  ExtensionRepositoriesContext,
-  useExtensionRepository,
-} from './extension-repositories-context'
+  type ActiveExtensions,
+  ExtensionServicesContext,
+  isExtensionActive,
+  useExtensionServices,
+} from './extension-services-context'
 export {
   isDue,
   schedule,

@@ -37,7 +37,7 @@ export function canSplit(text: string): boolean {
 }
 
 /**
- * `ref` is nullable on purpose: the text box is always on screen, so a reader may paste marked-up
+ * `ref` is nullable on purpose: the text box is always on screen, so a learner may paste marked-up
  * scripture without touching the picker. With no reference the markers supply the fronts; with no
  * reference *and* no markers there is nothing to put on a front, so nothing is made.
  */
@@ -82,7 +82,7 @@ export function findDuplicates(cards: readonly ParsedCard[], held: readonly Held
 }
 
 /**
- * The cards Add would make: the build with the duplicates dropped, unless the reader keeps them.
+ * The cards Add would make: the build with the duplicates dropped, unless the learner keeps them.
  * Its length labels the button, and it is exactly what the command is then handed.
  */
 export function addableCards(

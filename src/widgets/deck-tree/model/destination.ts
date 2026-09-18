@@ -1,12 +1,12 @@
 import { type DeckPlace, LIBRARY_TOP } from '@/entities/deck'
 
-export type MoveDestination =
+export type Destination =
   | { kind: 'home' }
   | { kind: 'archive' }
   | { kind: 'folder'; folderId: string }
   | { kind: 'deck'; deckId: string }
 
-export function placeOfDestination(dest: MoveDestination): DeckPlace | null {
+export function placeOfDestination(dest: Destination): DeckPlace | null {
   switch (dest.kind) {
     case 'home':
       return LIBRARY_TOP

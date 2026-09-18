@@ -1,11 +1,11 @@
 import { BookOpen } from 'lucide-react'
 import { type ExtensionManifest, extensionRoute } from '@/shared/lib'
+import { BIBLE_ID } from './ids'
 
-const BIBLE_ID = 'bible'
 const BIBLE_IMPORT_PATH = '/import/bible'
 const BIBLE_LIBRARY_PATH = '/settings/extensions/bible'
 
-/** What an import link may carry: the deck the reader was already in. */
+/** What an import link may carry: the deck the learner was already in. */
 interface BibleImportSearch extends Record<string, unknown> {
   deckId?: string
 }
@@ -28,19 +28,14 @@ export const bibleManifest: ExtensionManifest = {
       'BibleImportScreen',
       validateBibleImportSearch,
     ),
-    extensionRoute(
-      BIBLE_LIBRARY_PATH,
-      () => import('./ui/BibleLibraryScreen'),
-      'BibleLibraryScreen',
-    ),
   ],
   loadCollections: () =>
     import('./api/verse-schema').then((module) => [module.bibleVerseCollection]),
-  detailPath: BIBLE_LIBRARY_PATH,
+  loadRuntime: () => import('./runtime'),
   contributions: {
     importOptions: [
       {
-        id: 'bible',
+        id: BIBLE_ID,
         icon: <BookOpen className="size-5" aria-hidden />,
         tone: 'brand',
         titleKey: 'bible:label',
@@ -49,5 +44,13 @@ export const bibleManifest: ExtensionManifest = {
       },
     ],
   },
-  loadProvider: () => import('./ui/BibleProvider'),
+  // How Bible text is published before a bundled translation exists.
+  admin: {
+    labelKey: 'bible:libraryTitle',
+    route: extensionRoute(
+      BIBLE_LIBRARY_PATH,
+      () => import('./ui/BibleLibraryScreen'),
+      'BibleLibraryScreen',
+    ),
+  },
 }

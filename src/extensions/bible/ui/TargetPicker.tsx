@@ -12,7 +12,7 @@ export interface TargetPickerProps {
 
 /**
  * "Include in decks" is automatic **placement**, not which deck: on, a deck per book and a subdeck
- * per chapter; off, the reader says where.
+ * per chapter; off, the learner says where.
  */
 export function TargetPicker({
   auto,

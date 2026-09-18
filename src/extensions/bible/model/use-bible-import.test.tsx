@@ -47,7 +47,7 @@ function render(deckId?: string, harness: Parameters<typeof renderImportHook>[1]
 }
 
 describe('useBibleImport — the text box', () => {
-  it('prefills with markers once the library covers the passage', async () => {
+  it('prefills with markers once the Bible library covers the passage', async () => {
     const { result, pick } = render(undefined, { verses: genesis })
     await pick(1, 1, 2)
     await waitFor(() => expect(result.current.text).toBe('1) First. 2) Second.'))
@@ -78,7 +78,7 @@ describe('useBibleImport — the text box', () => {
     expect(result.current.prefilled).toBe(true)
   })
 
-  it('carries text the reader typed across a change of passage', async () => {
+  it('carries text the learner typed across a change of passage', async () => {
     const { result, pick } = render(undefined, { verses: genesis })
     act(() => result.current.setText('My own paste.'))
     await pick(1, 1, 2)
@@ -86,7 +86,7 @@ describe('useBibleImport — the text box', () => {
     expect(result.current.prefilled).toBe(false)
   })
 
-  it('fills an untouched box when the library learns the passage — sync arrives mid-screen', async () => {
+  it('fills an untouched box when the Bible library learns the passage — sync arrives mid-screen', async () => {
     const { result, pick, verseStore } = render()
     await pick(1, 1, 1)
     await waitFor(() => expect(result.current.ready).toBe(true))
@@ -112,7 +112,7 @@ describe('useBibleImport — splitting and keeping', () => {
     expect(result.current.splitCount).toBe(3)
   })
 
-  it('keeps every verse even with splitting off — the library stores one record per verse', async () => {
+  it('keeps every verse even with splitting off — the Bible library stores one record per verse', async () => {
     setDevMode(true)
     const { result, pick, verseStore } = render()
     await pick(1, 1, 3)
@@ -136,8 +136,22 @@ describe('useBibleImport — splitting and keeping', () => {
   })
 })
 
+describe('useBibleImport — which books the picker offers', () => {
+  it('offers the books the Bible library holds text for, from the first render', () => {
+    const { result } = render(undefined, { verses: genesis })
+    expect(result.current.isBookPickable('Genesis')).toBe(true)
+    expect(result.current.isBookPickable('Exodus')).toBe(false)
+  })
+
+  it('offers every book in dev mode — a book with no text is picked to publish its text', () => {
+    setDevMode(true)
+    const { result } = render(undefined, { verses: genesis })
+    expect(result.current.isBookPickable('Exodus')).toBe(true)
+  })
+})
+
 describe('useBibleImport — where the cards go', () => {
-  it('opens on the deck the reader came from, with placement off', () => {
+  it('opens on the deck the learner came from, with placement off', () => {
     const { result } = render('deck-1', { decks: [storedDeck('deck-1', { name: 'Memory work' })] })
     expect(result.current.auto).toBe(false)
     expect(result.current.destination).toBe('Memory work')
@@ -164,7 +178,7 @@ describe('useBibleImport — where the cards go', () => {
     expect(result.current.target).toEqual({ kind: 'newDeck', name: 'Genesis 2' })
   })
 
-  it('leaves a deck the reader named alone when the chapter changes', async () => {
+  it('leaves a deck the learner named alone when the chapter changes', async () => {
     const { result, pick } = render()
     await pick(1, 1, 1)
     act(() => result.current.set('auto', false))

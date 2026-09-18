@@ -1,5 +1,6 @@
-import type { ReactElement, ReactNode } from 'react'
+import type { ReactElement } from 'react'
 import type { RxCollectionCreator } from 'rxdb'
+import type { Identifiable, Repository } from '@/shared/api'
 import type { TransferOption } from '@/shared/ui'
 
 /**
@@ -51,6 +52,27 @@ export function extensionRoute<Exports extends Record<string, unknown>>(
   return { path, load, name, validateSearch }
 }
 
+/** What an extension is handed when it is switched on. */
+export interface ExtensionContext {
+  /** The repository built for a collection its manifest declared, by the key it declared. */
+  repository: <T extends Identifiable>(key: string) => Repository<T>
+}
+
+/**
+ * What switching an extension on produced: the services its own screens read, and how to stop
+ * them. `deactivate` is the whole of "backend off" — every store and keeper `activate` started, it
+ * stops.
+ */
+export interface ExtensionActivation<Services = unknown> {
+  services: Services
+  deactivate: () => void
+}
+
+/** The extension's composition root, loaded behind the splash and called when it is switched on. */
+export interface ExtensionRuntimeModule {
+  activate: (context: ExtensionContext) => ExtensionActivation
+}
+
 /**
  * An RxDB collection an extension owns. `table` names its Supabase table, or is null
  * when the collection never leaves the device.
@@ -69,6 +91,7 @@ export interface ExtensionManifest {
   labelKey: string
   descriptionKey: string
   namespace: string
+  /** Loaded behind the splash for every registered extension: Settings names them all, on or off. */
   loadMessages: () => Promise<Record<string, unknown>>
   routes: ExtensionRoute[]
   /**
@@ -76,11 +99,15 @@ export interface ExtensionManifest {
    * database is built, so an extension's schema never reaches the entry graph.
    */
   loadCollections?: () => Promise<ExtensionCollectionSpec[]>
+  /**
+   * Loaded behind the splash with its messages, on or off: switching it on then activates it at
+   * once, so no screen of its renders before the stores it reads exist.
+   */
+  loadRuntime: () => Promise<ExtensionRuntimeModule>
   contributions: ExtensionContributions
-  /** The route of its detail screen, if it has one. The Extensions page links to it by path. */
-  detailPath?: string
-  /** Mounted only while the extension is enabled — this is where its stores and keepers live. */
-  loadProvider?: () => Promise<{
-    ExtensionProvider: (props: { children: ReactNode }) => ReactNode
-  }>
+  /**
+   * Its admin screen, if it has one: reachable in dev mode only, and outside dev mode no trace of
+   * it is shown. The Extensions page links to it under `labelKey`, a key in its namespace.
+   */
+  admin?: { route: ExtensionRoute; labelKey: string }
 }

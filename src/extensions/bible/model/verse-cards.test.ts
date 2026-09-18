@@ -100,7 +100,7 @@ describe('addableCards', () => {
     expect(addableCards(built, duplicates, false)).toEqual([{ front: 'Genesis 1:2', back: 'b' }])
   })
 
-  it('keeps them when the reader says so', () => {
+  it('keeps them when the learner says so', () => {
     expect(addableCards(built, duplicates, true)).toEqual(built)
   })
 })

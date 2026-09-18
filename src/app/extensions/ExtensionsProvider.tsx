@@ -1,115 +1,46 @@
-import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
-import { toast } from 'sonner'
-import { i18n } from '@/shared/i18n'
+import { type ReactNode, useMemo } from 'react'
+import { useStore } from 'zustand'
 import {
+  type ActiveExtensions,
   type ExtensionContributions,
-  type ExtensionId,
   type ExtensionManifest,
   ExtensionPointsContext,
+  ExtensionServicesContext,
+  isExtensionActive,
 } from '@/shared/lib'
-import { isExtensionEnabled, usePreferencesStore } from '@/entities/preferences'
+import type { ExtensionRuntime } from './extension-runtime'
 
-function mergeContributions(manifests: ExtensionManifest[]): ExtensionContributions {
+function mergeContributions(
+  manifests: readonly ExtensionManifest[],
+  active: ActiveExtensions,
+): ExtensionContributions {
   return {
-    importOptions: manifests.flatMap((manifest) => manifest.contributions.importOptions ?? []),
+    importOptions: manifests
+      .filter((manifest) => isExtensionActive(active, manifest.id))
+      .flatMap((manifest) => manifest.contributions.importOptions ?? []),
   }
 }
 
 /**
- * Mounts one enabled extension: its messages and its own provider, which is where its stores and
- * keepers live. Unmounting is the whole of disabling — React tears the provider down,
- * and the namespace goes with it.
+ * Hands React what the runtime decided: each active extension's services, and what it contributes
+ * to core surfaces. Both are context values over a tree whose shape never changes — toggling an
+ * extension re-renders its readers and remounts nothing.
  */
-function MountedExtension({
-  manifest,
-  onReadiness,
-  children,
-}: {
-  manifest: ExtensionManifest
-  onReadiness: (id: ExtensionId, ready: boolean) => void
-  children: ReactNode
-}) {
-  const [Provider, setProvider] = useState<((props: { children: ReactNode }) => ReactNode) | null>(
-    null,
-  )
-
-  useEffect(() => {
-    let live = true
-    // Messages and provider together: readiness means both are in. Granted on the messages alone,
-    // a host could publish the import row before the store context it navigates into exists.
-    void Promise.all([manifest.loadMessages(), manifest.loadProvider?.()]).then(
-      ([messages, provided]) => {
-        if (!live) return
-        i18n.addResourceBundle('en', manifest.namespace, messages, true, false)
-        if (provided) setProvider(() => provided.ExtensionProvider)
-        onReadiness(manifest.id, true)
-      },
-      () => {
-        // A chunk that will not load — an offline first visit, a stale service worker — must not
-        // leave the extension silently half-mounted. Readiness is never granted, so its
-        // contributions stay withheld and no host paints a surface that cannot work; the reader
-        // is told, once.
-        if (live) toast.error(i18n.t('settings.extensionsBroken'))
-      },
-    )
-    return () => {
-      live = false
-      i18n.removeResourceBundle('en', manifest.namespace)
-      // The namespace goes with the unmount, so the readiness must too: switching an extension off
-      // and on again would otherwise publish its contributions against a bundle not yet re-added,
-      // and a host would paint the raw `<namespace>:key` instead of its copy.
-      onReadiness(manifest.id, false)
-    }
-  }, [manifest, onReadiness])
-
-  return Provider ? <Provider>{children}</Provider> : children
-}
-
 export function ExtensionsProvider({
-  manifests,
+  runtime,
   children,
 }: {
-  manifests: ExtensionManifest[]
+  runtime: ExtensionRuntime
   children: ReactNode
 }) {
-  // The stored array's identity only changes when preferences do, so this is a stable snapshot —
-  // no serialising the ids to compare them, which would break on an id containing a comma.
-  const enabledIds = usePreferencesStore((state) => state.preferences?.extensions)
-
-  const enabled = useMemo(
-    () =>
-      manifests.filter((manifest) =>
-        enabledIds ? isExtensionEnabled({ extensions: enabledIds }, manifest.id) : false,
-      ),
-    [manifests, enabledIds],
-  )
-
-  // Contributions are published only once the namespace is in, so a host never paints a raw key.
-  const [ready, setReady] = useState<readonly ExtensionId[]>([])
-  const onReadiness = useCallback(
-    (id: ExtensionId, isReady: boolean) =>
-      setReady((held) => {
-        if (held.includes(id) === isReady) return held
-        return isReady ? [...held, id] : held.filter((kept) => kept !== id)
-      }),
-    [],
-  )
-
+  const active = useStore(runtime.store, (state) => state.active)
   const contributions = useMemo(
-    () => mergeContributions(enabled.filter((manifest) => ready.includes(manifest.id))),
-    [enabled, ready],
+    () => mergeContributions(runtime.manifests, active),
+    [runtime, active],
   )
-
   return (
-    <ExtensionPointsContext value={contributions}>
-      {enabled.reduceRight<ReactNode>(
-        (inner, manifest) => (
-          <MountedExtension key={manifest.id} manifest={manifest} onReadiness={onReadiness}>
-            {inner}
-          </MountedExtension>
-        ),
-        children,
-      )}
-    </ExtensionPointsContext>
+    <ExtensionServicesContext value={active}>
+      <ExtensionPointsContext value={contributions}>{children}</ExtensionPointsContext>
+    </ExtensionServicesContext>
   )
 }

@@ -1,23 +1,27 @@
 import { ROUTES } from '@/shared/config/routes'
 import type { ExtensionId } from '@/shared/lib'
-import { isExtensionEnabled, type Preferences } from '@/entities/preferences'
 
 export interface ExtensionRedirect {
   to: string
   search: { highlight: ExtensionId }
 }
 
+/** Settings → Extensions, with the extension's row marked so the learner sees which one it was. */
+export function extensionSettings(id: ExtensionId): ExtensionRedirect {
+  return { to: ROUTES.settingsExtensions, search: { highlight: id } }
+}
+
 /**
- * Where an extension route sends the reader, or null to let it render.
+ * Where an extension route sends the learner, or null to let it render: never a blank 404, never a
+ * silent redirect home.
  *
- * `preferences` must be the value read **after** the store is ready — `undefined` here means
- * "there are none stored", never "not loaded yet". Deciding on an unloaded store sends a cold deep
- * link to Settings with the extension switched on, which is the silent redirect the design forbids.
+ * `active` must be read once the runtime has settled on loaded preferences — an unloaded store is
+ * not "off", and deciding on one bounces a cold deep link to an enabled extension. An `admin` route
+ * renders in dev mode only; there is nothing on it a learner should act on.
  */
 export function extensionRedirect(
-  preferences: Preferences | null | undefined,
   id: ExtensionId,
+  { active, admin, devMode }: { active: boolean; admin: boolean; devMode: boolean },
 ): ExtensionRedirect | null {
-  if (preferences && isExtensionEnabled(preferences, id)) return null
-  return { to: ROUTES.settingsExtensions, search: { highlight: id } }
+  return active && (!admin || devMode) ? null : extensionSettings(id)
 }

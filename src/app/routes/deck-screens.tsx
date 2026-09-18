@@ -14,10 +14,9 @@ import { QuizPage } from '@/pages/quiz'
 import { StudyCardsPage } from '@/pages/study'
 import { selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
 import { createDeck } from '@/features/deck'
-import { nextDefaultName, useRouteSearch } from '@/shared/lib'
+import { nextDefaultName, useBack, useRouteSearch } from '@/shared/lib'
 import { ROUTES } from '@/shared/config/routes'
 import { useExtensionNavigate } from './use-extension-navigate'
-import { useBack } from './use-back'
 import { studyFilterFrom, validateStudySearch } from './search'
 
 function useDeckId(from: (typeof ROUTES)[keyof typeof ROUTES]) {

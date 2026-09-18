@@ -6,7 +6,7 @@ import { LoginPage } from '@/pages/login'
 import { SignupPage } from '@/pages/signup'
 import { WelcomePage } from '@/pages/welcome'
 import { ROUTES } from '@/shared/config/routes'
-import { useBackTo } from './use-back'
+import { useBackTo } from '@/shared/lib'
 
 export function LoginScreen() {
   const navigate = useNavigate()

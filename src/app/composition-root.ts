@@ -7,7 +7,7 @@ import {
   type StoragePort,
 } from '@/shared/api'
 import type { SyncManager, SyncTarget } from '@/shared/api/supabase'
-import { type AppEvents, EventBus, type ExtensionRepositories, nowIso } from '@/shared/lib'
+import { type AppEvents, EventBus, nowIso } from '@/shared/lib'
 import {
   type ContentCollection,
   CORE_SYNC_TABLES,
@@ -44,6 +44,8 @@ import { createSyncStateStore, type SyncState, type SyncStateStore } from '@/ent
 import { createPendingChangePort } from '@/features/sync'
 import { keepImagesCached } from '@/features/media'
 import { loadExtensionCollections } from './extensions/collections'
+import { createExtensionRuntime, type ExtensionRuntime } from './extensions/extension-runtime'
+import { loadExtensions } from './extensions/load-extensions'
 import { EXTENSIONS } from './extensions/registry'
 import { resetLocalDatabase } from './persistence/reset-local-database'
 import { keepArchiveDetached } from './persistence/keep-archive-detached'
@@ -69,7 +71,8 @@ export interface Services {
   syncManager: SyncManager | null
   cloudSync: CloudSyncPort | null
   resetLocalData: () => Promise<void>
-  extensionRepositories: ExtensionRepositories
+  /** Switches extensions on and off as preferences say; what their screens and hosts read. */
+  extensions: ExtensionRuntime
   /**
    * Every table that could replicate, core plus contributed, in the order replication runs them.
    * Each carries the extension that owns it, so the live subset is derived where preferences are
@@ -95,8 +98,11 @@ export async function createServices(): Promise<Services> {
     import('./extensions/repositories'),
   ])
 
-  const extensions = await loadExtensionCollections(EXTENSIONS)
-  const collections = createAppDatabase(getRxStorageDexie(), extensions.specs)
+  const [extensionCollections, loadedExtensions] = await Promise.all([
+    loadExtensionCollections(EXTENSIONS),
+    loadExtensions(EXTENSIONS),
+  ])
+  const collections = createAppDatabase(getRxStorageDexie(), extensionCollections.specs)
   const authGateway = createAuthGateway()
   const sessionRepo = new InMemoryRepository<Session>()
   const deckRepo = new RxdbRepository<Deck>(collections.then((c) => c.decks))
@@ -117,7 +123,10 @@ export async function createServices(): Promise<Services> {
     collections.then((c) => c.notifications),
   )
   const historyRepo = new RxdbRepository<HistoryEntry>(collections.then((c) => c.history))
-  const syncTableSpecs: readonly SyncTableSpec[] = [...CORE_SYNC_TABLES, ...extensions.syncTables]
+  const syncTableSpecs: readonly SyncTableSpec[] = [
+    ...CORE_SYNC_TABLES,
+    ...extensionCollections.syncTables,
+  ]
   const syncTargets: Promise<SyncTarget[]> = collections.then((c) =>
     syncTableSpecs.map(({ table, collectionKey }) => ({
       table,
@@ -128,6 +137,7 @@ export async function createServices(): Promise<Services> {
   const syncManager = configured
     ? cloud.SyncManager.fromSupabase(cloud.supabase, syncTargets)
     : null
+  const preferencesStore = createPreferencesStore(preferencesRepo)
   const services: Services = {
     authGateway,
     sessionStore: createSessionStore(sessionRepo),
@@ -136,7 +146,7 @@ export async function createServices(): Promise<Services> {
     folderStore: createFolderStore(folderRepo, pending('folders')),
     questionStore: createQuestionStore(questionRepo, pending('questions')),
     progressStore: createProgressStore(progressRepo),
-    preferencesStore: createPreferencesStore(preferencesRepo),
+    preferencesStore,
     profileStore: createProfileStore(profileRepo),
     notificationStore: createNotificationStore(notificationRepo),
     historyStore: createHistoryStore(historyRepo),
@@ -148,7 +158,11 @@ export async function createServices(): Promise<Services> {
     syncManager,
     cloudSync: syncManager ? cloud.createSupabaseCloudSync(cloud.supabase, syncManager) : null,
     resetLocalData: () => resetLocalDatabase({ collections }),
-    extensionRepositories: buildExtensionRepositories(extensions.specs, collections),
+    extensions: createExtensionRuntime({
+      extensions: loadedExtensions,
+      preferences: preferencesStore,
+      repositories: buildExtensionRepositories(extensionCollections.specs, collections),
+    }),
     syncTables: syncTableSpecs,
   }
 
@@ -175,6 +189,8 @@ export async function createServices(): Promise<Services> {
     profileStore: services.profileStore,
     storage: services.storage,
   })
+  // After the stores: an extension activated on the preferences it follows reads core stores too.
+  services.extensions.start()
 
   return services
 }

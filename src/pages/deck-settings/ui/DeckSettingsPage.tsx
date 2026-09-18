@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 import { useExtensionPoint } from '@/shared/lib'
 import { AlgorithmCard, LockedAlgorithmCard } from '@/widgets/algorithm'
-import { MoveSheet } from '@/widgets/deck-tree'
+import { DestinationSheet } from '@/widgets/deck-tree'
 import {
   ActionSheet,
   AppScreen,
@@ -151,7 +151,7 @@ export function DeckSettingsPage({ deckId, ...nav }: DeckSettingsPageProps) {
         </SettingsSection>
       </div>
 
-      <MoveSheet
+      <DestinationSheet
         open={page.sheet === 'move'}
         onOpenChange={page.onSheetOpenChange('move')}
         subtitle={deck.name}

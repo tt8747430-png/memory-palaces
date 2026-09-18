@@ -16,7 +16,7 @@ import {
 } from '@/features/deck'
 import { resetDeckSrs } from '@/features/card'
 import { exportCardsAnki, exportCardsCsv } from '@/features/content'
-import { type MoveDestination, placeOfDestination } from '@/widgets/deck-tree'
+import { type Destination, placeOfDestination } from '@/widgets/deck-tree'
 import { useImportFile } from '@/widgets/content-editor'
 import { cardsInSubtree, subtreeDeckIds, useOneOpen, usePendingAct } from '@/shared/lib'
 
@@ -60,7 +60,7 @@ export interface DeckSettingsModel {
     remove: () => void
     exportCsv: () => void
     exportAnki: () => void
-    move: (destination: MoveDestination) => void
+    move: (destination: Destination) => void
     importFile: (file: File) => void
     pasteNotes: () => void
   }

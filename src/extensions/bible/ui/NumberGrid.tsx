@@ -1,6 +1,11 @@
 import { cn } from '@/shared/lib'
 import { FOCUS_RING } from '@/shared/ui'
 
+/**
+ * As many to a row as fit at 44px or more: Psalm 119 has 176 verses, and a fixed four to a row is a
+ * screen of scrolling before the number a learner wants. Six fit on most phones, five on the
+ * narrowest, and no target drops below MOBILE_DESIGN §3's 44px.
+ */
 export function NumberGrid({
   label,
   values,
@@ -30,7 +35,7 @@ export function NumberGrid({
           {lead.label}
         </button>
       ) : null}
-      <div className="grid grid-cols-4 gap-2.5">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(2.75rem,1fr))] gap-2">
         {values.map((value) => (
           <button
             key={value}

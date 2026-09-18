@@ -6,7 +6,7 @@ import { translationName } from '../model/translations'
 export interface VerseTextPanelProps {
   value: string
   onChange: (value: string) => void
-  /** True once the library filled the box, so the note says where the text came from. */
+  /** True once the Bible library filled the box, so the note says where the text came from. */
   prefilled: boolean
   /** Said only once a complete passage is chosen; before that there is nothing to report on. */
   note: boolean
@@ -21,7 +21,7 @@ export interface VerseTextPanelProps {
  * passage they already have without first walking the picker, and it needs no separate mode.
  *
  * Never `autoFocus`: on a full-page input that opens the keyboard over the page's own footer before
- * the reader has seen it, and the mount-time pan lands before any keyboard height is measured
+ * the learner has seen it, and the mount-time pan lands before any keyboard height is measured
  * (CODE_STYLE §11).
  */
 export function VerseTextPanel({

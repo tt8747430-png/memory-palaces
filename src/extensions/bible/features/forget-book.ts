@@ -1,7 +1,7 @@
 import type { BibleVerseStore } from '../model/store'
 
 /**
- * Drops every verse of one book from the on-device library. A write, so it is a command and not
+ * Drops every verse of one book from the Bible library. A write, so it is a command and not
  * something a screen reaches into the store to do — the admin screen calls this.
  */
 export async function forgetBook(store: BibleVerseStore, book: string): Promise<number> {

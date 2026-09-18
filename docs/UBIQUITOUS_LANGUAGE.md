@@ -132,6 +132,8 @@ Every Deck follows exactly one: its Main deck's. A Subdeck never holds the algor
 | **Extension**          | A self-contained feature the learner switches on in Settings          | plugin, add-on, module       |
 | **Contribution point** | The named slot a host surface renders on an extension's behalf        | hook, which here means React |
 | **Verse**              | One numbered line of scripture; its reference is not part of its text | passage, which is a range    |
+| **Bible library**      | The verse text an account holds, what the passage picker prefills     | library, which is the decks  |
+| **Admin screen**       | An extension's dev-mode-only screen; outside dev mode, no trace of it | settings, detail             |
 
 ## Relationships
 

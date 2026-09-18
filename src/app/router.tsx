@@ -1,4 +1,5 @@
 import {
+  type AnyRoute,
   createRootRouteWithContext,
   createRoute,
   createRouter,
@@ -6,10 +7,11 @@ import {
   type RouteComponent,
 } from '@tanstack/react-router'
 import { ROUTES } from '@/shared/config/routes'
-import { whenStoreReady } from '@/shared/lib'
+import { type ExtensionRoute, readDevMode } from '@/shared/lib'
 import { RootLayout } from './RootLayout'
 import { authRedirect } from './auth-guard'
 import type { Services } from './composition-root'
+import { ExtensionGate } from './extensions/ExtensionGate'
 import { extensionRedirect } from './extensions/extension-redirect'
 import { EXTENSIONS } from './extensions/registry'
 import { lazyScreen } from './lazy-screen'
@@ -44,27 +46,44 @@ const route = <Path extends string>(path: Path, component: RouteComponent) =>
   createRoute({ getParentRoute: () => rootRoute, path, component })
 
 /**
- * An extension owns its routes, and each is guarded by its own switch. The guard **waits for
- * preferences**: `beforeLoad` runs before any provider has rendered, and an unloaded store answers
- * `undefined`, which is not the same as "off" — without the wait a cold deep link to an enabled
- * extension would be bounced to Settings.
+ * An extension's routes render inside its gate, a pathless layout that swaps them for Settings if the
+ * extension goes off while one is open. Each is guarded on the way in: the guard **awaits the
+ * runtime settling on loaded preferences** — `beforeLoad` runs before any provider has rendered, and
+ * an unloaded store is not "off"; without the wait a cold deep link to an enabled extension would be
+ * bounced. An admin route renders in dev mode only. The screen itself stays a lazy route component,
+ * so the router preloads it on intent like any other.
+ *
+ * `AnyRoute`, because a manifest declares its paths at runtime: the type system cannot know them,
+ * and inferring from their `string` would blur every core route's params with them.
  */
-const extensionRoutes = EXTENSIONS.flatMap((manifest) =>
-  manifest.routes.map((extension) =>
+const extensionRoutes = EXTENSIONS.map((manifest): AnyRoute => {
+  const gate = createRoute({
+    getParentRoute: () => rootRoute,
+    id: `extension-${manifest.id}`,
+    component: () => <ExtensionGate id={manifest.id} />,
+  })
+  const screen = (declared: ExtensionRoute, admin: boolean) =>
     createRoute({
-      getParentRoute: () => rootRoute,
-      path: extension.path,
-      validateSearch: extension.validateSearch,
-      component: lazyScreen(extension.load)(extension.name),
+      getParentRoute: () => gate,
+      path: declared.path,
+      validateSearch: declared.validateSearch,
+      component: lazyScreen(declared.load)(declared.name),
       beforeLoad: async ({ context }) => {
-        const store = context.services.preferencesStore
-        await whenStoreReady(store)
-        const target = extensionRedirect(store.getState().preferences, manifest.id)
+        const { extensions } = context.services
+        await extensions.settled()
+        const target = extensionRedirect(manifest.id, {
+          active: extensions.isActive(manifest.id),
+          admin,
+          devMode: readDevMode(),
+        })
         if (target) throw redirect(target)
       },
-    }),
-  ),
-)
+    })
+  return gate.addChildren([
+    ...manifest.routes.map((declared) => screen(declared, false)),
+    ...(manifest.admin ? [screen(manifest.admin.route, true)] : []),
+  ])
+})
 
 const routeTree = rootRoute.addChildren([
   route(ROUTES.login, auth('LoginScreen')),

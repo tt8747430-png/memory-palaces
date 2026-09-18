@@ -15,7 +15,6 @@ import {
   AccountDeletionContext,
   AuthGatewayContext,
   EventBusContext,
-  ExtensionRepositoriesContext,
   ResetLocalDataContext,
   StoragePortContext,
 } from '@/shared/lib'
@@ -46,11 +45,7 @@ export function ServicesProvider({
                                 <StoragePortContext value={services.storage}>
                                   <AccountDeletionContext value={services.accountDeletion}>
                                     <ResetLocalDataContext value={services.resetLocalData}>
-                                      <ExtensionRepositoriesContext
-                                        value={services.extensionRepositories}
-                                      >
-                                        {children}
-                                      </ExtensionRepositoriesContext>
+                                      {children}
                                     </ResetLocalDataContext>
                                   </AccountDeletionContext>
                                 </StoragePortContext>

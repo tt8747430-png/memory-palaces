@@ -76,8 +76,10 @@ never deep paths. Alias `@` → `src`.
 **Extensions** (`src/extensions/<x>/`, reference `bible/`) — a self-contained feature behind a manifest. Reaches down
 like a page (widgets → features → entities → shared); **only `app` may import it**, and extensions never import each
 other. Contributions reach host surfaces through `useExtensionPoint`, never through an import, and carry i18n keys rather
-than copy. The extension's own provider is its composition root: its stores and keepers start there, and disabling
-unmounts it. Enablement is `preferences.extensions`, changed only through `setExtensionEnabled`, and deletes nothing.
+than copy. Its runtime's `activate` is its composition root: its stores and keepers start there, its screens read what
+it publishes through `useExtensionServices`, and disabling calls the `deactivate` it returned
+(`app/extensions/extension-runtime.ts`). Everything but its screens loads behind the splash. Enablement is
+`preferences.extensions`, changed only through `setExtensionEnabled`, and deletes nothing.
 `src/app/extensions/registry.ts` is the one core file allowed to name an extension.
 
 **DI** — port `shared/api/base-repository.ts` (`Repository<T>`: save/remove/observe); adapters

@@ -3,7 +3,7 @@ export interface ExtensionsSearch {
 }
 
 /**
- * Exported beside the page so the route and the reader cannot drift — see
+ * Exported beside the page so the route and the learner cannot drift — see
  * `app/routes/search.ts` for why this codebase validates rather than casts.
  */
 export function validateExtensionsSearch(search: Record<string, unknown>): ExtensionsSearch {

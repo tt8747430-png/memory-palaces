@@ -8,7 +8,7 @@ import { useFolderStoreApi } from '@/entities/folder'
 import { selectEffectivePreferences, usePreferencesStore } from '@/entities/preferences'
 import { createDeck, createSubdeck } from '@/features/deck'
 import { createFolder, editFolder } from '@/features/folder'
-import { DeckTree, LibrarySelectList, MoveSheet } from '@/widgets/deck-tree'
+import { DeckTree, LibrarySelectList, DestinationSheet } from '@/widgets/deck-tree'
 import { HomeHeader } from '@/widgets/home-header'
 import { SyncBanner } from '@/widgets/sync'
 import { useImportFile } from '@/widgets/content-editor'
@@ -346,7 +346,7 @@ export function DeckLibraryPage({
         onSubmit={submitFolder}
       />
 
-      <MoveSheet
+      <DestinationSheet
         open={isMove(library.pending)}
         onOpenChange={(open) => {
           if (!open) library.dismiss()

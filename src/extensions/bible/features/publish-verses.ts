@@ -1,7 +1,7 @@
 import type { BibleVerse } from '../model/verse'
 import type { BibleVerseStore } from '../model/store'
 
-/** Keeps verses in the on-device library. Returns how many were written. */
+/** Keeps verses in the Bible library. Returns how many were written. */
 export async function publishVerses(
   store: BibleVerseStore,
   verses: readonly BibleVerse[],

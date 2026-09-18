@@ -3109,7 +3109,7 @@ git commit -m "feat(bible): pick a book, a chapter and a verse range"
 
 **Interfaces:**
 
-- Consumes: `VerseRef`, `formatRef`, `expandRange` (Task 5); `VerseTextSource` (Task 7); `useImportDraft`, `MoveSheet`, `PromptSheet`; `createDeck` / `createSubdeck` from `@/features/deck`.
+- Consumes: `VerseRef`, `formatRef`, `expandRange` (Task 5); `VerseTextSource` (Task 7); `useImportDraft`, `DestinationSheet`, `PromptSheet`; `createDeck` / `createSubdeck` from `@/features/deck`.
 - Produces: `buildVerseCards(ref | null, text, { split }): ParsedCard[]`, `canSplit(text): boolean`, `findDuplicates(cards, held): HeldRef[]` where `HeldRef = { front: string; deckId: string }`, `ensureChapterDeck(deckStore, book, chapter): Promise<string>`, `addVerseCards(deps, input): Promise<string>`.
 
 **This task depends on nothing later.** `buildVerseCards` takes a **nullable** reference, and with
@@ -3509,7 +3509,7 @@ height has been measured. It was removed from `PasteNotesPage` for exactly this.
 **on**, and a manual branch revealed when it is off.
 
 - **On** — nothing to choose. The footer button places the cards with `ensureChapterDeck`.
-- **Off** — two buttons: `t('targetExisting')` opens `MoveSheet` with `targets="deck"`, `decks` and
+- **Off** — two buttons: `t('targetExisting')` opens `DestinationSheet` with `targets="deck"`, `decks` and
   `folders` from `useDeckStore(selectDecks)` / `useFolderStore`, and `excludeIds={new Set()}`;
   `t('targetNew')` opens `PromptSheet` with the chapter as its initial value. The chosen destination
   is shown, so the reader sees where the cards will land before adding.
@@ -4010,7 +4010,7 @@ Run it again: PASS, 3 tests.
 It shows:
 
 - a list of published books with `t('published', { count })` per book, each removable via `store.getState().remove(id)`
-- **Publish a deck** — opens `MoveSheet targets="deck"`; on pick, `versesFromCards` over that deck's cards and its subdecks' cards, then `publishVerses`, then a `toast.success` with the count
+- **Publish a deck** — opens `DestinationSheet targets="deck"`; on pick, `versesFromCards` over that deck's cards and its subdecks' cards, then `publishVerses`, then a `toast.success` with the count
 - **Clean references from backs** — opens the same sheet; on pick, `countReferenceBacks` feeds a `ConfirmDialog` reading `t('cleanBacksCount', { count })`, and confirming runs `cleanReferenceBacks` with a save wired to the core card command
 - empty state `t('empty')` when nothing is published
 

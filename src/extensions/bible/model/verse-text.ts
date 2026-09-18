@@ -7,11 +7,16 @@ export interface StoredVerse {
 }
 
 /**
- * Where verse text comes from. Today: what the reader published into the library.
+ * Where verse text comes from. Today: the Bible library, what was published into it in dev mode.
  * Later: a bundled translation, implementing this same port with nothing above it changing.
  */
 export interface VerseTextSource {
   read(ref: VerseRef): Promise<StoredVerse[]>
+  /**
+   * The books it holds any text for. Known up front — a source knows what it holds without reading
+   * it — so the picker derives what it offers rather than waiting on it.
+   */
+  books(): ReadonlySet<string>
 }
 
 export function createStoredVerseSource(
@@ -32,6 +37,10 @@ export function createStoredVerseSource(
         .sort((a, b) => a.verse - b.verse)
         .map(({ verse, text }) => ({ verse, text }))
       return Promise.resolve(found)
+    },
+    books() {
+      const held = verses.filter((verse) => verse.translation === translation)
+      return new Set(held.map((verse) => verse.book))
     },
   }
 }

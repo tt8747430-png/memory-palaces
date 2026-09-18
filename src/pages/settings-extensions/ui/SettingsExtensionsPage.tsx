@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { ChevronRight } from 'lucide-react'
+import { Wrench } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   isExtensionEnabled,
@@ -8,7 +8,13 @@ import {
   usePreferencesStoreApi,
 } from '@/entities/preferences'
 import { setExtensionEnabled } from '@/features/preferences'
-import { cn, type ExtensionManifest, selectIsReady, useContributedT } from '@/shared/lib'
+import {
+  cn,
+  type ExtensionManifest,
+  selectIsReady,
+  useContributedT,
+  useDevMode,
+} from '@/shared/lib'
 import {
   AppScreen,
   EmptyNotice,
@@ -20,9 +26,9 @@ import {
 
 export interface SettingsExtensionsPageProps {
   manifests: ExtensionManifest[]
-  /** The id a route guard sent the reader here for, so the row can say which one they wanted. */
+  /** The id a route guard sent the learner here for, so the row can say which one they wanted. */
   highlight?: string
-  /** The path comes from the manifest — no core file names an extension's screen. */
+  /** Opens an extension's admin screen. The path comes from the manifest — no core file names it. */
   onOpenExtension?: (path: string) => void
   onBack?: () => void
 }
@@ -42,6 +48,7 @@ export function SettingsExtensionsPage({
 }: SettingsExtensionsPageProps) {
   const { t } = useTranslation()
   const contributed = useContributedT()
+  const devMode = useDevMode()
   const ready = usePreferencesStore(selectIsReady)
   const prefs = usePreferencesStore(selectEffectivePreferences)
   const store = usePreferencesStoreApi()
@@ -71,8 +78,8 @@ export function SettingsExtensionsPage({
         ) : (
           <SettingsSection title={t('settings.extensionsSection')}>
             {manifests.map((manifest) => {
-              const label = contributed(manifest.labelKey)
-              const detailPath = manifest.detailPath
+              const enabled = isExtensionEnabled(prefs, manifest.id)
+              const admin = manifest.admin
               return (
                 <div
                   key={manifest.id}
@@ -82,17 +89,17 @@ export function SettingsExtensionsPage({
                   <SettingsRow
                     kind="toggle"
                     icon={manifest.icon}
-                    label={label}
+                    label={contributed(manifest.labelKey)}
                     description={contributed(manifest.descriptionKey)}
-                    checked={isExtensionEnabled(prefs, manifest.id)}
+                    checked={enabled}
                     onCheckedChange={(value) => toggle(manifest.id, value)}
                   />
-                  {detailPath && isExtensionEnabled(prefs, manifest.id) ? (
+                  {admin && enabled && devMode ? (
                     <SettingsRow
                       kind="nav"
-                      icon={<ChevronRight />}
-                      label={t('settings.extensionsOpen', { name: label })}
-                      onClick={() => onOpenExtension?.(detailPath)}
+                      icon={<Wrench />}
+                      label={contributed(admin.labelKey)}
+                      onClick={() => onOpenExtension?.(admin.route.path)}
                     />
                   ) : null}
                 </div>

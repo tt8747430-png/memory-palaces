@@ -25,13 +25,13 @@ describe('addVerseCards', () => {
     expect(setDraft).toHaveBeenCalledWith('extension', cards)
   })
 
-  it('uses the deck the reader chose', async () => {
+  it('uses the deck the learner chose', async () => {
     const { deckStore, run } = setup({ target: { kind: 'deck', deckId: 'deck-1' } })
     expect(await run()).toBe('deck-1')
     expect(deckStore.getState().decks).toHaveLength(1)
   })
 
-  it('creates the deck the reader named', async () => {
+  it('creates the deck the learner named', async () => {
     const { deckStore, run } = setup({ target: { kind: 'newDeck', name: 'Memory work' } })
     const deckId = await run()
     expect(deckStore.getState().decks.find((deck) => deck.id === deckId)?.name).toBe('Memory work')

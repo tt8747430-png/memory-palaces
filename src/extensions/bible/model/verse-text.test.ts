@@ -40,4 +40,15 @@ describe('createStoredVerseSource', () => {
       { verse: 3, text: 'third' },
     ])
   })
+
+  it('names the books it holds any text for, in this translation only', () => {
+    const source = createStoredVerseSource(
+      [
+        verse(1, 1, 'first'),
+        makeBibleVerse({ ...verse(1, 1, 'other'), book: 'Exodus', translation: 'kjv' }),
+      ],
+      DEFAULT_TRANSLATION,
+    )
+    expect([...source.books()]).toEqual(['Genesis'])
+  })
 })

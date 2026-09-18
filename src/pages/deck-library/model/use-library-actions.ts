@@ -29,7 +29,7 @@ import {
   subtreeDeckIds,
 } from '@/shared/lib'
 import { bulkAction, type SelectActionHandlers } from '@/shared/ui'
-import { type MoveDestination, placeOfDestination } from '@/widgets/deck-tree'
+import { type Destination, placeOfDestination } from '@/widgets/deck-tree'
 import type { LibrarySelection } from './use-library-selection'
 
 type Patch<T> = (patches: Map<string, Partial<T>>) => void
@@ -50,13 +50,13 @@ export interface LibraryActions {
   archiveDeck: (deck: Deck) => void
   duplicate: (deck: Deck) => void
   toggleFavorite: (deck: Deck) => void
-  moveDeckTo: (deck: Deck, dest: MoveDestination) => void
+  moveDeckTo: (deck: Deck, dest: Destination) => void
   removeDeck: (deckId: string) => void
   removeFolder: (folderId: string) => void
   reorderFolderIds: (ids: string[]) => void
   reorderDeckIds: (ids: string[]) => void
   fileDecksIntoFolder: (deckIds: string[], targetFolderId: string) => void
-  bulkMoveTo: (dest: MoveDestination) => void
+  bulkMoveTo: (dest: Destination) => void
   confirmBulkDelete: () => void
   selectHandlers: SelectActionHandlers
 }
@@ -91,7 +91,7 @@ export function useLibraryActions({
 
   const toggleFavorite = (deck: Deck) => void toggleDeckFavorite(deckStore, deck.id)
 
-  const moveDecksTo = (ids: readonly string[], dest: MoveDestination) => {
+  const moveDecksTo = (ids: readonly string[], dest: Destination) => {
     const place = placeOfDestination(dest)
     const moving = idsWithoutDescendants(decks, ids)
       .map(deckById)
@@ -132,7 +132,7 @@ export function useLibraryActions({
       ? t('deck.archivedToast', { name: moving[0]!.name })
       : t('library.select.archivedToast', { count: moving.length })
 
-  const moveMessage = (moving: Deck[], dest: MoveDestination): string => {
+  const moveMessage = (moving: Deck[], dest: Destination): string => {
     const one = moving.length === 1
     const count = moving.length
     if (dest.kind === 'deck') {
@@ -150,7 +150,7 @@ export function useLibraryActions({
       : t('library.select.movedToast', { count, folder })
   }
 
-  const moveDeckTo = (deck: Deck, dest: MoveDestination) => moveDecksTo([deck.id], dest)
+  const moveDeckTo = (deck: Deck, dest: Destination) => moveDecksTo([deck.id], dest)
 
   const removeDeck = (deckId: string) => void deleteDeck(deleteDeps, deckId)
 
@@ -201,7 +201,7 @@ export function useLibraryActions({
   })
   const bulkUnfile = () => moveDecksTo(filedIds, { kind: 'home' })
 
-  const bulkMoveTo = (dest: MoveDestination) => {
+  const bulkMoveTo = (dest: Destination) => {
     moveDecksTo(deckIds, dest)
     selection.exit()
   }

@@ -8,7 +8,9 @@ import { renderWithProviders } from '@/shared/test/render-with-providers'
 import { type Card, CardStoreContext, createCardStore } from '@/entities/card'
 import { type Deck, DeckStoreContext } from '@/entities/deck'
 import { createFolderStore, type Folder, FolderStoreContext } from '@/entities/folder'
-import { BibleVerseStoreContext } from '../model/context'
+import { ExtensionServicesContext } from '@/shared/lib'
+import { BIBLE_ID } from '../ids'
+import type { BibleServices } from '../model/context'
 import { createBibleVerseStore } from '../model/store'
 import type { BibleVerse } from '../model/verse'
 import { startedDeckStore } from './decks'
@@ -38,11 +40,16 @@ export function importStores(harness: ImportHarness = {}) {
 
 export type ImportStores = ReturnType<typeof importStores>
 
+/** What the runtime would have published for an active Bible extension over these stores. */
+const bibleServices = (stores: ImportStores): BibleServices => ({ verseStore: stores.verseStore })
+
 const inStores = (stores: ImportStores, children: ReactNode) => (
   <DeckStoreContext value={stores.deckStore}>
     <CardStoreContext value={stores.cardStore}>
       <FolderStoreContext value={stores.folderStore}>
-        <BibleVerseStoreContext value={stores.verseStore}>{children}</BibleVerseStoreContext>
+        <ExtensionServicesContext value={{ [BIBLE_ID]: bibleServices(stores) }}>
+          {children}
+        </ExtensionServicesContext>
       </FolderStoreContext>
     </CardStoreContext>
   </DeckStoreContext>

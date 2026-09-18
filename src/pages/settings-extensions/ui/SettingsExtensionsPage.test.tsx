@@ -12,16 +12,28 @@ import {
   type Preferences,
   PreferencesStoreContext,
 } from '@/entities/preferences'
-import type { ExtensionManifest } from '@/shared/lib'
+import { type ExtensionManifest, extensionRoute, setDevMode } from '@/shared/lib'
 import { SettingsExtensionsPage } from './SettingsExtensionsPage'
 
 vi.mock('sonner', () => ({ toast: Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn() }) }))
 
-// The host resolves a manifest's keys against the extension's own namespace, which
-// `ExtensionsProvider` adds when it mounts one. Adding it here is what makes the rows read as copy.
-i18n.addResourceBundle('en', 'fake', { label: 'Fake', description: 'A fake extension' }, true, true)
+// The host resolves a manifest's keys against the extension's own namespace, which the app adds
+// behind the splash for every registered extension. Adding it here is what makes the rows read as
+// copy.
+i18n.addResourceBundle(
+  'en',
+  'fake',
+  { label: 'Fake', description: 'A fake extension', admin: 'Fake library' },
+  true,
+  true,
+)
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  setDevMode(false)
+})
+
+const Screen = () => null
 
 const manifest: ExtensionManifest = {
   id: 'fake',
@@ -31,6 +43,7 @@ const manifest: ExtensionManifest = {
   namespace: 'fake',
   loadMessages: () => Promise.resolve({}),
   routes: [],
+  loadRuntime: () => Promise.resolve({ activate: () => ({ services: {}, deactivate: () => {} }) }),
   contributions: {},
 }
 
@@ -85,7 +98,7 @@ describe('SettingsExtensionsPage', () => {
     )
   })
 
-  it('marks the row a guard sent the reader to', () => {
+  it('marks the row a guard sent the learner to', () => {
     renderPage([manifest], [], 'fake')
     expect(
       screen.getByRole('switch', { name: 'Fake' }).closest('[data-highlighted]'),
@@ -113,18 +126,35 @@ describe('SettingsExtensionsPage', () => {
     await waitFor(() => expect(toast.error).toHaveBeenCalled())
   })
 
-  it('offers an enabled extension its own screen, by the path its manifest names', async () => {
+  const withAdmin: ExtensionManifest = {
+    ...manifest,
+    admin: {
+      labelKey: 'fake:admin',
+      route: extensionRoute(
+        '/settings/extensions/fake',
+        () => Promise.resolve({ Screen }),
+        'Screen',
+      ),
+    },
+  }
+
+  it('offers an enabled extension its admin screen in dev mode, by the path its manifest names', async () => {
     const user = userEvent.setup()
     const onOpen = vi.fn()
-    const withDetail = { ...manifest, detailPath: '/settings/extensions/fake' }
-    renderPage([withDetail], ['fake'], undefined, onOpen)
-    await user.click(screen.getByRole('button', { name: 'Open Fake settings' }))
+    setDevMode(true)
+    renderPage([withAdmin], ['fake'], undefined, onOpen)
+    await user.click(screen.getByRole('button', { name: 'Fake library' }))
     expect(onOpen).toHaveBeenCalledWith('/settings/extensions/fake')
   })
 
-  it('hides that row while the extension is off', () => {
-    const withDetail = { ...manifest, detailPath: '/settings/extensions/fake' }
-    renderPage([withDetail], [])
-    expect(screen.queryByRole('button', { name: 'Open Fake settings' })).not.toBeInTheDocument()
+  it('shows nothing of the admin screen outside dev mode', () => {
+    renderPage([withAdmin], ['fake'])
+    expect(screen.queryByRole('button', { name: 'Fake library' })).not.toBeInTheDocument()
+  })
+
+  it('hides the admin row while the extension is off', () => {
+    setDevMode(true)
+    renderPage([withAdmin], [])
+    expect(screen.queryByRole('button', { name: 'Fake library' })).not.toBeInTheDocument()
   })
 })

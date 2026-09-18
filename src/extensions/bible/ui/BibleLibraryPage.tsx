@@ -2,13 +2,12 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { BookOpen, Eraser, Trash2 } from 'lucide-react'
-import { cardsInSubtree, nowIso, selectIsReady, useDevMode } from '@/shared/lib'
+import { cardsInSubtree, nowIso, selectIsReady } from '@/shared/lib'
 import {
   AppScreen,
   Button,
   ConfirmDialog,
   EmptyNotice,
-  MissingScreen,
   ScreenHeader,
   ScreenLoading,
   SettingsSection,
@@ -17,8 +16,8 @@ import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
 import { selectDecks, useDeckStore } from '@/entities/deck'
 import { selectFolders, useFolderStore } from '@/entities/folder'
 import { editCard } from '@/features/card'
-import { MoveSheet } from '@/widgets/deck-tree'
-import { useBibleT } from '../i18n/use-bible-t'
+import { DestinationSheet } from '@/widgets/deck-tree'
+import { type BibleKey, useBibleT } from '../i18n/use-bible-t'
 import { useBibleVerseStore, useBibleVerseStoreApi } from '../model/context'
 import { cleanReferenceBacks } from '../features/clean-reference-backs'
 import { type CleanableCard, countReferenceBacks } from '../model/reference-backs'
@@ -31,14 +30,31 @@ export interface BibleLibraryPageProps {
   onBack?: () => void
 }
 
+type DeckSheet = 'publish' | 'clean'
+
+/** Each sheet's words, looked up once — the sheet says what picking a deck will do. */
+const DECK_SHEETS: Record<DeckSheet, { title: BibleKey; hint: BibleKey; confirm: BibleKey }> = {
+  publish: { title: 'publishFromDeck', hint: 'publishHint', confirm: 'publishDeck' },
+  clean: { title: 'cleanBacks', hint: 'cleanHint', confirm: 'cleanDeck' },
+}
+
 /**
- * Dev-mode admin. This is how the verse library is filled before a bundled translation exists;
- * with dev mode off there is nothing here a learner should act on, so the screen is empty.
+ * What an overlay shows, held apart from whether it is open: closing animates, and a sheet whose
+ * words were derived from `open` would read as the other sheet — or as "0 cards" — on its way out.
+ */
+interface Overlay<Subject> {
+  subject: Subject
+  open: boolean
+}
+
+/**
+ * Admin. This is how the verse library is filled before a bundled translation exists; there is
+ * nothing here a learner should act on, so its route is `devOnly` and the guard keeps everyone
+ * else out — the page itself does not ask again.
  */
 export function BibleLibraryPage({ onBack }: BibleLibraryPageProps) {
   const t = useBibleT()
   const { t: core } = useTranslation()
-  const devMode = useDevMode()
   const verses = useBibleVerseStore((state) => state.verses)
   const verseStore = useBibleVerseStoreApi()
   const decks = useDeckStore(selectDecks)
@@ -49,20 +65,15 @@ export function BibleLibraryPage({ onBack }: BibleLibraryPageProps) {
   const ready = useBibleVerseStore(selectIsReady)
   const cardsReady = useCardStore(selectIsReady)
   const decksReady = useDeckStore(selectIsReady)
-  const [sheet, setSheet] = useState<'publish' | 'clean' | null>(null)
-  const [pendingClean, setPendingClean] = useState<CleanableCard[] | null>(null)
+  const [sheet, setSheet] = useState<Overlay<DeckSheet>>({ subject: 'publish', open: false })
+  const [cleaning, setCleaning] = useState<Overlay<CleanableCard[]>>({ subject: [], open: false })
+  const sheetCopy = DECK_SHEETS[sheet.subject]
 
   const books = useMemo(() => {
     const counts = new Map<string, number>()
     for (const verse of verses) counts.set(verse.book, (counts.get(verse.book) ?? 0) + 1)
     return [...counts].sort(([a], [b]) => a.localeCompare(b))
   }, [verses])
-
-  if (!devMode) {
-    return (
-      <MissingScreen title={t('libraryTitle')} onBack={onBack} backLabel={core('common.back')} />
-    )
-  }
 
   if (!ready || !cardsReady || !decksReady) {
     return (
@@ -124,18 +135,26 @@ export function BibleLibraryPage({ onBack }: BibleLibraryPageProps) {
     >
       <div className="mt-4 flex flex-col gap-5">
         <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" size="sm" onClick={() => setSheet('publish')}>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setSheet({ subject: 'publish', open: true })}
+          >
             <BookOpen className="size-4" aria-hidden />
             {t('publishFromDeck')}
           </Button>
-          <Button variant="secondary" size="sm" onClick={() => setSheet('clean')}>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setSheet({ subject: 'clean', open: true })}
+          >
             <Eraser className="size-4" aria-hidden />
             {t('cleanBacks')}
           </Button>
         </div>
 
         {books.length === 0 ? (
-          <EmptyNotice>{t('empty')}</EmptyNotice>
+          <EmptyNotice>{t('libraryEmpty')}</EmptyNotice>
         ) : (
           <SettingsSection title={t('librarySubtitle')}>
             {books.map(([book, count]) => (
@@ -164,35 +183,37 @@ export function BibleLibraryPage({ onBack }: BibleLibraryPageProps) {
         <p className="text-label leading-snug text-muted-foreground">{t('offline')}</p>
       </div>
 
-      <MoveSheet
-        open={sheet !== null}
-        onOpenChange={(open) => setSheet(open ? sheet : null)}
-        title={sheet === 'clean' ? t('cleanBacks') : t('publishFromDeck')}
-        subtitle={t('librarySubtitle')}
+      <DestinationSheet
+        open={sheet.open}
+        onOpenChange={(open) => setSheet((held) => ({ ...held, open }))}
+        title={t(sheetCopy.title)}
+        subtitle={t(sheetCopy.hint)}
+        action={{
+          prompt: t('pickDeckPrompt'),
+          confirm: (name) => t(sheetCopy.confirm, { name }),
+        }}
         targets="deck"
         decks={decks}
         folders={folders}
         onPick={(dest) => {
           if (dest.kind !== 'deck') return
-          const picked = sheet
-          setSheet(null)
-          if (picked === 'publish') publish(dest.deckId)
-          else setPendingClean(deckCards(dest.deckId))
+          setSheet((held) => ({ ...held, open: false }))
+          if (sheet.subject === 'publish') publish(dest.deckId)
+          else setCleaning({ subject: deckCards(dest.deckId), open: true })
         }}
       />
 
       <ConfirmDialog
-        open={pendingClean !== null}
-        onOpenChange={(open) => setPendingClean(open ? pendingClean : null)}
+        open={cleaning.open}
+        onOpenChange={(open) => setCleaning((held) => ({ ...held, open }))}
         icon={<Eraser className="size-6" aria-hidden />}
         title={t('cleanBacks')}
-        description={t('cleanBacksCount', { count: countReferenceBacks(pendingClean ?? []) })}
+        description={t('cleanBacksCount', { count: countReferenceBacks(cleaning.subject) })}
         confirmLabel={t('cleanBacks')}
         cancelLabel={core('common.cancel')}
         onConfirm={() => {
-          const targets = pendingClean ?? []
-          setPendingClean(null)
-          clean(targets)
+          setCleaning((held) => ({ ...held, open: false }))
+          clean(cleaning.subject)
         }}
       />
     </AppScreen>

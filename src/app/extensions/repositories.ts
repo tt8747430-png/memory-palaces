@@ -1,7 +1,10 @@
-import type { Identifiable } from '@/shared/api'
+import type { Identifiable, Repository } from '@/shared/api'
 import { RxdbRepository } from '@/shared/api/rxdb'
-import type { ExtensionCollectionSpec, ExtensionRepositories } from '@/shared/lib'
+import type { ExtensionCollectionSpec } from '@/shared/lib'
 import { type AppCollections, collectionByKey } from '../persistence/database'
+
+/** The repositories built for the extensions' collections, keyed as their manifests named them. */
+export type ExtensionRepositories = Readonly<Record<string, Repository<Identifiable>>>
 
 /**
  * One repository per declared collection, keyed as the manifest named it. Takes the database as a

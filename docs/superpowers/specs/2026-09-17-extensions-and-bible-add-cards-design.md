@@ -24,7 +24,7 @@ Settings. The first is **Bible**. Two properties decide every choice below.
 | Where verse text comes from  | A bundled translation eventually; until then, decks the user explicitly publishes into the Bible library. Never derived automatically. Both sit behind one port. |
 | How an extension is packaged | Its own top-level layer with a manifest, contributions inverted through context.                                                                                 |
 | What "off" does to its decks | Nothing. They are ordinary decks the moment they exist.                                                                                                          |
-| What the picker shows        | The whole Bible, from a bundled structural skeleton. Ranges without text open an empty, editable box.                                                            |
+| What the picker shows        | The whole Bible, from a bundled structural skeleton. Books without text are disabled once the Bible library holds any; ranges without text open an empty box.    |
 | Where the on/off state lives | `preferences.extensions`, synced.                                                                                                                                |
 | Bible source data            | Synced, like every other collection. A partial Bible is fine.                                                                                                    |
 | Card shape                   | Front carries the reference, back carries **only** the verse text.                                                                                               |
@@ -62,11 +62,11 @@ Only the points this spec needs exist:
 | `importOptions` | `{ id, icon, tone, titleKey, subtitleKey, to }`     | the page rendering `ImportSheet` |
 | routes          | `{ path, load, name, validateSearch? }`             | `app/router.tsx`                 |
 | collections     | `{ key, table, creator }`, behind `loadCollections` | `app/persistence/database.ts`    |
-| i18n            | a lazy namespace bundle                             | the extensions provider          |
+| i18n            | a namespace bundle, loaded behind the splash        | `app/extensions/load-extensions` |
 
 A contributed row carries **keys, not copy** — `titleKey` and `subtitleKey` inside the extension's
-own namespace — so no English ever lives in a manifest. The provider adds the namespace before it
-publishes the contributions, so a host never renders a raw key.
+own namespace — so no English ever lives in a manifest. Every registered extension's namespace is
+added behind the splash, before the first render, so a host never renders a raw key.
 
 `shared/ui/ImportSheet` stays prop-driven: it gains an optional `extraOptions` prop appended after
 its two built-in rows. The _page_ calls `useExtensionPoint('importOptions')` and passes them
@@ -78,30 +78,46 @@ features that need them.
 ### 3.3 Registry and lifecycle
 
 `src/app/extensions/registry.ts` holds the static list of known manifests. A manifest is tiny —
-ids, labels, icon, and lazy loaders for routes, i18n and collections — so nothing an extension
-renders reaches the entry graph. `npm run check:entry-graph` must stay green after `npm run build`.
+ids, labels, icon, and lazy loaders for routes, i18n, collections and its runtime — so nothing an
+extension renders reaches the entry graph. `npm run check:entry-graph` must stay green after
+`npm run build`.
 
-`src/app/extensions/ExtensionsProvider.tsx` reads enabled ids from preferences and, for each
-enabled extension:
+**Behind the splash, for every registered extension, on or off**, `createServices` awaits its
+collections (the database is built from them), its messages and its runtime module
+(`app/extensions/load-extensions.ts`). The messages because the Extensions screen names every
+extension the build carries and a label is a key in the extension's own namespace — copy is not a
+backend. The runtime because switching an extension on must activate it at once: a chunk still in
+flight then is a screen rendered before the stores it reads exist. Only screens stay lazy, one chunk
+per route. A chunk that will not load fails boot onto `Bootstrap`'s error screen — the answer a
+collection chunk already gets — rather than leave an extension half there.
 
-- adds its i18n namespace via `i18n.addResourceBundle`
-- mounts the extension's own provider, which is where its stores and its keepers start
-- publishes its contributions into the extension-points context, once the namespace is in
+`src/app/extensions/extension-runtime.ts` follows `preferences.extensions`, outside React. Switched
+on, an extension's `activate(context)` runs — its **composition root**: its stores and keepers start
+there, handed the repositories its collections were given — and returns its `services` and a
+`deactivate`. Switched off, `deactivate` stops everything `activate` started; that is the whole of
+"backend off", including background work, and it is what stops a future tracker from running after
+its extension is switched off. There is deliberately **no keeper slot on the manifest** — a keeper
+starts in `activate` and stops in `deactivate`.
 
-On disable it does the exact inverse, and the inverse is **unmounting**. The extension's provider is
-the single place its stores and keepers start, so React's own teardown stops them; the namespace goes
-with `i18n.removeResourceBundle`; the contributions leave the context in the same render. "Backend
-off" means off, including background work; the symmetry is what stops a future tracker from running
-after its extension is switched off. There is deliberately **no keeper slot on the manifest** — a
-keeper is an effect inside the extension's provider, and unmounting is its teardown.
+`ExtensionsProvider` only hands React what the runtime decided: each active extension's services
+(read by its screens through `useExtensionServices`) and its contributions. Both are context values
+over a tree whose shape never changes, so toggling an extension re-renders their readers and
+remounts nothing — an extension provider wrapping the app would remount the whole router on every
+toggle.
 
 Routes are **always** in the router tree, and always guarded. Opening `/import/bible` with Bible
 off lands on Settings → Extensions with that row highlighted — never a blank 404, never a silent
-redirect home. The guard therefore **waits for preferences to be ready** before it decides, the way
-`rootRoute.beforeLoad` already waits on the session: reading a store that has not loaded would send
-a cold deep link to Settings with the extension switched **on**, which is exactly the silent
-redirect this rules out. The redirect carries `?highlight=<id>`, and the page highlights that row.
-The tree is static: toggling an extension never rebuilds the router.
+redirect home. The guard therefore **awaits the runtime settling on loaded preferences** before it
+decides, the way `rootRoute.beforeLoad` already waits on the session: reading a store that has not
+loaded would send a cold deep link to Settings with the extension switched **on**, which is exactly
+the silent redirect this rules out. The redirect carries `?highlight=<id>`, and the page highlights
+that row. The tree is static: toggling an extension never rebuilds the router.
+
+Each extension's routes sit inside its **gate**, a pathless layout route (`ExtensionGate`). The
+guard answers on the way in; the gate answers while the learner stays — switched off from another
+tab, the extension's services leave in the same render its screen would read them, and the gate
+swaps the screen for Settings instead of letting it throw. Screens stay lazy route components, so
+the router preloads them on intent like any core screen.
 
 ### 3.4 Enablement state
 
@@ -231,14 +247,18 @@ answer and makes the game pointless. Three consequences:
 
 One route, `/import/bible`, optionally carrying `?deckId=`, validated by the manifest's own
 `validateSearch`. It is reached from the Bible row the extension contributes to `ImportSheet`, from
-both the library and a deck. Arriving **with** a deck id, the reader has already said where the
+both the library and a deck. Arriving **with** a deck id, the learner has already said where the
 cards go: the flow opens with "Include in decks" off and that deck as the destination. Arriving
 without one, the toggle opens on.
 
 A single scrolling screen with progressive disclosure, matching the reference mockups:
 
-1. **Pick a Bible book** — searchable list of all 66.
-2. **Pick a chapter** — number grid.
+1. **Pick a Bible book** — searchable two-column grid of all 66, 44px rows. A book the Bible library
+   holds no text for is disabled, and a line says so — unless the Bible library holds no text at
+   all: then every book is pickable, because disabling all 66 leaves nothing to pick and pasting is
+   the way in for every passage (the library is per account, and only dev mode publishes into it).
+   In dev mode every book is pickable — that is how an admin publishes text for a new one.
+2. **Pick a chapter** — number grid, as many to a row as fit at 44px.
 3. **Pick a starting verse** — number grid.
 4. **Pick an ending verse** — `Just verse N` first, then the numbers **above** the start. The grid
    begins at `N+1`; the lead pill is the only way to pick the single-verse case, so no number is
@@ -280,9 +300,12 @@ outside every folder and deck (ADR 0003). This mirrors the shape the library alr
 book, subdeck = chapter, card = verse — which is what lets the reading tracker and the memorization
 overview be computed later without extra bookkeeping.
 
-_Off_ — **manual**. The reader places the cards: `MoveSheet targets="deck"` from `widgets/deck-tree`
-picks an existing deck or subdeck, or `PromptSheet` creates a new deck by name, an ordinary deck
-creation. Nothing is created without being asked for.
+_Off_ — **manual**. The learner places the cards: `DestinationSheet targets="deck"` from
+`widgets/deck-tree` picks an existing deck or subdeck, or `PromptSheet` names a new deck, created
+with the cards on Add — an ordinary deck creation. Nothing is created without being asked for. Both
+sheets say what confirming does, since neither moves nor adds anything yet: the deck sheet's footer
+reads "Use {deck}" (its `action`), and the naming sheet confirms with "Use this name" and says the
+deck is made when the cards are added.
 
 **Duplicates.** Checked across the **whole library**, not just the target deck — the mockup says
 "already in your account", and with decks shaped book → chapter → verse the same passage can already
@@ -316,10 +339,13 @@ to exactly one deck, so both branches of the toggle resolve to a single destinat
 
 ### 4.7 Admin
 
-Gated on `useDevMode()`, the device-local flag that already ships in every build. Settings →
-Extensions → Bible → **Bible library**:
+Gated on dev mode, the device-local flag that already ships in every build. The manifest declares
+the screen under `admin: { route, labelKey }` — one declaration, so the path and the dev-mode guard
+cannot drift. The router guards that route by dev mode and sends everyone else to Settings →
+Extensions; the Extensions page shows its row only in dev mode. Off dev mode there is no trace of
+it. Settings → Extensions → Bible → **Bible library**:
 
-- publish from a deck (pick it with `MoveSheet`; its subdecks and cards parse into verses)
+- publish from a deck (pick it with `DestinationSheet`; its subdecks and cards parse into verses)
 - keep the text currently in the import screen's paste box
 - see what is published, per book, and remove it
 - clean references from a deck's backs
