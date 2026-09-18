@@ -115,7 +115,7 @@ describe('BibleSettingsPage', () => {
       verses: [verse(3, 16)],
       devMode: true,
     })
-    await user.click(screen.getByRole('button', { name: 'Ioan — Delete' }))
+    await user.click(screen.getByRole('button', { name: 'Forget Ioan' }))
     const dialog = await screen.findByRole('alertdialog')
     expect(within(dialog).getByText('Forget Ioan?')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: 'Forget' }))
@@ -124,6 +124,6 @@ describe('BibleSettingsPage', () => {
 
   it('shows no Forget outside dev mode', () => {
     renderImportPage(<BibleSettingsPage />, { verses: [verse(3, 16)] })
-    expect(screen.queryByRole('button', { name: 'Ioan — Delete' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Forget Ioan' })).not.toBeInTheDocument()
   })
 })

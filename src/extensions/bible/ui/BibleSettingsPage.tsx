@@ -19,8 +19,10 @@ export interface BibleSettingsPageProps {
   onBack?: () => void
 }
 
-/** The confirm dialog's words for whatever is pending — derived, so closing never shows "0 verses". */
-function pendingCopy(t: BibleT, pending: BibleSettingsPending) {
+type Question = Exclude<BibleSettingsPending, { kind: 'pick-deck' }>
+
+/** The confirm dialog's words for the question open — derived, so closing never shows "0 verses". */
+function questionCopy(t: BibleT, pending: Question) {
   if (pending.kind === 'add') {
     const { fresh, held, cards } = pending.text
     return {
@@ -57,18 +59,18 @@ export function BibleSettingsPage({ onBack }: BibleSettingsPageProps) {
     )
   }
 
-  const copy = page.pending ? pendingCopy(t, page.pending) : null
+  const copy =
+    page.pending && page.pending.kind !== 'pick-deck' ? questionCopy(t, page.pending) : null
 
   return (
     <AppScreen gutter="end" header={header}>
       <div className="mt-4 flex flex-col gap-5">
         <SettingsSection title={t('translation')}>
           <SettingsRow
-            kind="value"
+            kind="info"
             icon={<BookOpen />}
             label={page.translation.name}
             description={t('translationLanguage')}
-            value=""
           />
         </SettingsSection>
 
@@ -85,7 +87,7 @@ export function BibleSettingsPage({ onBack }: BibleSettingsPageProps) {
             icon={<Layers />}
             label={t('addFromDeck')}
             description={t('addFromDeckHint')}
-            onClick={() => page.showDeckSheet(true)}
+            onClick={page.requestDeckPick}
           />
         </SettingsSection>
 
@@ -102,8 +104,10 @@ export function BibleSettingsPage({ onBack }: BibleSettingsPageProps) {
       </div>
 
       <DestinationSheet
-        open={page.deckSheet}
-        onOpenChange={page.showDeckSheet}
+        open={page.pending?.kind === 'pick-deck'}
+        onOpenChange={(open) => {
+          if (!open) page.dismiss()
+        }}
         title={t('addFromDeck')}
         subtitle={t('addFromDeckHint')}
         action={{ prompt: t('pickDeckPrompt'), confirm: (name) => t('addDeck', { name }) }}
@@ -111,15 +115,13 @@ export function BibleSettingsPage({ onBack }: BibleSettingsPageProps) {
         decks={page.decks}
         folders={page.folders}
         onPick={(dest) => {
-          if (dest.kind !== 'deck') return
-          page.showDeckSheet(false)
-          page.addFromDeck(dest.deckId)
+          if (dest.kind === 'deck') page.addFromDeck(dest.deckId)
         }}
       />
 
       {copy ? (
         <ConfirmDialog
-          open={page.pending !== null}
+          open
           onOpenChange={(open) => {
             if (!open) page.dismiss()
           }}

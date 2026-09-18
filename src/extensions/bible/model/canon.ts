@@ -1,4 +1,7 @@
-export type Testament = 'old' | 'new'
+/** The two shelves, in canon order. */
+export const TESTAMENTS = ['old', 'new'] as const
+
+export type Testament = (typeof TESTAMENTS)[number]
 
 /** How the books are grouped on the shelf — the picker tints each group its own colour. */
 export type Genre =

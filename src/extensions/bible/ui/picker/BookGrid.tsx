@@ -3,19 +3,15 @@ import { cn } from '@/shared/lib'
 import { FOCUS_RING } from '@/shared/ui'
 import { useBibleT } from '../../i18n/use-bible-t'
 import { bookAbbreviation, bookName } from '../../model/book-names'
-import { BOOKS, type BookCode, type Testament } from '../../model/canon'
+import { BOOKS, type BookCode, TESTAMENTS } from '../../model/canon'
 import type { LibraryIndex } from '../../model/library-index'
+import { TESTAMENT_TITLE } from '../testament-title'
 import { GENRE_SWATCH } from './genre-swatch'
 
 export interface BookGridProps {
   index: LibraryIndex
   onPick: (book: BookCode) => void
 }
-
-const TESTAMENTS: readonly { testament: Testament; key: 'oldTestament' | 'newTestament' }[] = [
-  { testament: 'old', key: 'oldTestament' },
-  { testament: 'new', key: 'newTestament' },
-]
 
 /**
  * All sixty-six books on one screen: six abbreviation tiles to a row, each shelf tinted its own
@@ -26,13 +22,13 @@ export function BookGrid({ index, onPick }: BookGridProps) {
   const t = useBibleT()
   return (
     <div className="flex flex-col gap-5">
-      {TESTAMENTS.map(({ testament, key }) => (
+      {TESTAMENTS.map((testament) => (
         <section key={testament} aria-labelledby={`bible-${testament}`}>
           <h2
             id={`bible-${testament}`}
             className="mb-2 text-label font-semibold text-muted-foreground"
           >
-            {t(key)}
+            {t(TESTAMENT_TITLE[testament])}
           </h2>
           <ul className="grid grid-cols-6 gap-1.5">
             {BOOKS.filter((book) => book.testament === testament).map((book) => {

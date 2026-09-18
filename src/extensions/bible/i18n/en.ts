@@ -88,6 +88,7 @@ export const bibleMessages = {
   showAllBooks: 'Show {{count}} books without text',
   hideEmptyBooks: 'Hide books without text',
   forgetBook: 'Forget {{name}}?',
+  forgetBookAction: 'Forget {{name}}',
   forgetPreview_one: 'Its {{count}} verse leaves your Bible library on every device.',
   forgetPreview_other: 'Its {{count}} verses leave your Bible library on every device.',
   forget: 'Forget',

@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { Trash2 } from 'lucide-react'
-import { Button, Progress, SettingsSection } from '@/shared/ui'
+import { Button, IconButton, Progress, SettingsSection } from '@/shared/ui'
 import { useBibleT } from '../../i18n/use-bible-t'
 import { bookName } from '../../model/book-names'
-import type { BookCode, Testament } from '../../model/canon'
+import { type BookCode, TESTAMENTS } from '../../model/canon'
 import type { BookCoverage } from '../../model/coverage'
+import { TESTAMENT_TITLE } from '../testament-title'
 
 export interface CoverageListProps {
   coverage: readonly BookCoverage[]
@@ -13,30 +13,24 @@ export interface CoverageListProps {
   onForget?: (book: BookCode) => void
 }
 
-const TESTAMENTS: readonly { testament: Testament; key: 'oldTestament' | 'newTestament' }[] = [
-  { testament: 'old', key: 'oldTestament' },
-  { testament: 'new', key: 'newTestament' },
-]
-
 /**
  * What the Bible library holds, book by book. Books with nothing are folded away behind one
  * button, so a learner who has published three letters sees three rows, not sixty-six.
  */
 export function CoverageList({ coverage, onForget }: CoverageListProps) {
   const t = useBibleT()
-  const { t: core } = useTranslation()
   const [showAll, setShowAll] = useState(false)
   const hidden = coverage.filter((book) => book.verses === 0).length
 
   return (
     <div className="flex flex-col gap-5">
-      {TESTAMENTS.map(({ testament, key }) => {
+      {TESTAMENTS.map((testament) => {
         const rows = coverage.filter(
           (book) => book.testament === testament && (showAll || book.verses > 0),
         )
         if (!rows.length) return null
         return (
-          <SettingsSection key={testament} title={t(key)}>
+          <SettingsSection key={testament} title={t(TESTAMENT_TITLE[testament])}>
             {rows.map((book) => (
               <div key={book.book} className="flex items-center gap-3 px-4 py-3">
                 <span className="min-w-0 flex-1">
@@ -58,14 +52,13 @@ export function CoverageList({ coverage, onForget }: CoverageListProps) {
                   />
                 </span>
                 {onForget && book.verses > 0 ? (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    aria-label={`${bookName(book.book)} — ${core('common.delete')}`}
+                  <IconButton
+                    variant="danger"
+                    aria-label={t('forgetBookAction', { name: bookName(book.book) })}
                     onClick={() => onForget(book.book)}
                   >
-                    <Trash2 className="size-4" aria-hidden />
-                  </Button>
+                    <Trash2 className="size-4.5" aria-hidden />
+                  </IconButton>
                 ) : null}
               </div>
             ))}
