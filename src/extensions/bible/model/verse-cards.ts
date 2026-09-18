@@ -80,3 +80,17 @@ export function findDuplicates(cards: readonly ParsedCard[], held: readonly Held
     return match ? [match] : []
   })
 }
+
+/**
+ * The cards Add would make: the build with the duplicates dropped, unless the reader keeps them.
+ * Its length labels the button, and it is exactly what the command is then handed.
+ */
+export function addableCards(
+  built: readonly ParsedCard[],
+  duplicates: readonly HeldRef[],
+  keepDuplicates: boolean,
+): ParsedCard[] {
+  if (keepDuplicates) return [...built]
+  const seen = new Set(duplicates.map((entry) => entry.front))
+  return built.filter((card) => !seen.has(card.front))
+}

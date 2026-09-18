@@ -4,9 +4,7 @@ import { useBibleT } from '../i18n/use-bible-t'
 export interface TargetPickerProps {
   auto: boolean
   onAutoChange: (value: boolean) => void
-  /** What a new deck would be called — the chapter, when one is picked. */
-  suggestedName: string
-  /** Where the cards will land, said plainly before they are added. */
+  /** Where the cards will land, said plainly before they are added; null while the app decides. */
   destination: string | null
   onPickDeck: () => void
   onNameDeck: () => void
@@ -19,7 +17,6 @@ export interface TargetPickerProps {
 export function TargetPicker({
   auto,
   onAutoChange,
-  suggestedName,
   destination,
   onPickDeck,
   onNameDeck,
@@ -45,8 +42,6 @@ export function TargetPicker({
       )}
       {destination ? (
         <p className="text-label leading-snug text-muted-foreground">{destination}</p>
-      ) : suggestedName && !auto ? (
-        <p className="text-label leading-snug text-muted-foreground">{suggestedName}</p>
       ) : null}
     </section>
   )

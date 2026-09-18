@@ -18,7 +18,7 @@ export interface BibleVerse extends Entity {
 
 export interface MakeBibleVerseInput {
   createdAt: string
-  translation?: string
+  translation: string
   book: string
   chapter: number
   verse: number
@@ -26,9 +26,10 @@ export interface MakeBibleVerseInput {
 }
 
 export function makeBibleVerse(input: MakeBibleVerseInput): BibleVerse {
-  const translation = (input.translation ?? DEFAULT_TRANSLATION).trim()
+  const translation = input.translation.trim()
   const book = input.book.trim()
   const text = input.text.trim()
+  if (!translation) throw new Error('A verse needs a translation')
   if (!book) throw new Error('A verse needs a book')
   if (!text) throw new Error('A verse needs text')
   if (!Number.isInteger(input.chapter) || input.chapter < 1) {

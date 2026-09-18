@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildVerseCards, canSplit, findDuplicates } from './verse-cards'
+import { addableCards, buildVerseCards, canSplit, findDuplicates } from './verse-cards'
 
 const ref = { book: 'Genesis', chapter: 1, from: 1, to: 2 }
 
@@ -86,6 +86,22 @@ describe('findDuplicates', () => {
 
   it('finds none in an empty library', () => {
     expect(findDuplicates([{ front: 'Genesis 1:1', back: 'a' }], [])).toEqual([])
+  })
+})
+
+describe('addableCards', () => {
+  const built = [
+    { front: 'Genesis 1:1', back: 'a' },
+    { front: 'Genesis 1:2', back: 'b' },
+  ]
+  const duplicates = [{ front: 'Genesis 1:1', deckId: 'somewhere' }]
+
+  it('drops the verses already held', () => {
+    expect(addableCards(built, duplicates, false)).toEqual([{ front: 'Genesis 1:2', back: 'b' }])
+  })
+
+  it('keeps them when the reader says so', () => {
+    expect(addableCards(built, duplicates, true)).toEqual(built)
   })
 })
 

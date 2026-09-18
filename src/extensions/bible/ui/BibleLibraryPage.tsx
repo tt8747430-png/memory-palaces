@@ -24,6 +24,7 @@ import { cleanReferenceBacks } from '../features/clean-reference-backs'
 import { type CleanableCard, countReferenceBacks } from '../model/reference-backs'
 import { forgetBook } from '../features/forget-book'
 import { publishVerses } from '../features/publish-verses'
+import { DEFAULT_TRANSLATION } from '../model/verse'
 import { versesFromCards } from '../model/verse-sources'
 
 export interface BibleLibraryPageProps {
@@ -84,7 +85,10 @@ export function BibleLibraryPage({ onBack }: BibleLibraryPageProps) {
   const deckCards = (deckId: string) => cardsInSubtree(decks, cards, deckId)
 
   const publish = (deckId: string) => {
-    void publishVerses(verseStore, versesFromCards(deckCards(deckId), nowIso())).then(
+    void publishVerses(
+      verseStore,
+      versesFromCards(deckCards(deckId), DEFAULT_TRANSLATION, nowIso()),
+    ).then(
       (published) => toast.success(t('kept', { count: published })),
       () => toast.error(t('keepFailed')),
     )

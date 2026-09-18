@@ -4,19 +4,15 @@ import { startedDeckStore, storedDeck } from '../testing/decks'
 import { addVerseCards, type AddVerseCardsInput } from './add-verse-cards'
 
 const ref = { book: 'Genesis', chapter: 1, from: 1, to: 2 }
+const cards: ParsedCard[] = [
+  { front: 'Genesis 1:1', back: 'In the beginning.' },
+  { front: 'Genesis 1:2', back: 'The earth.' },
+]
 
 function setup(over: Partial<AddVerseCardsInput> = {}) {
   const deckStore = startedDeckStore(over.target?.kind === 'deck' ? [storedDeck('deck-1')] : [])
   const setDraft = vi.fn<(source: 'extension', cards: ParsedCard[]) => void>()
-  const input: AddVerseCardsInput = {
-    ref,
-    text: '1) In the beginning. 2) The earth.',
-    split: true,
-    target: { kind: 'automatic' },
-    held: [],
-    keepDuplicates: false,
-    ...over,
-  }
+  const input: AddVerseCardsInput = { cards, ref, target: { kind: 'automatic' }, ...over }
   return { deckStore, setDraft, run: () => addVerseCards({ deckStore, setDraft }, input) }
 }
 
@@ -26,10 +22,7 @@ describe('addVerseCards', () => {
     const deckId = await run()
     const chapter = deckStore.getState().decks.find((deck) => deck.id === deckId)
     expect(chapter?.name).toBe('Genesis 1')
-    expect(setDraft).toHaveBeenCalledWith('extension', [
-      { front: 'Genesis 1:1', back: 'In the beginning.' },
-      { front: 'Genesis 1:2', back: 'The earth.' },
-    ])
+    expect(setDraft).toHaveBeenCalledWith('extension', cards)
   })
 
   it('uses the deck the reader chose', async () => {
@@ -47,23 +40,14 @@ describe('addVerseCards', () => {
   it('falls back to a plain new deck when a marked-up paste has no book', async () => {
     const { deckStore, run } = setup({
       ref: null,
-      text: '(1:1) The elder, to Gaius',
-      target: { kind: 'automatic' },
+      cards: [{ front: '1:1', back: 'The elder, to Gaius' }],
     })
     const deckId = await run()
     expect(deckStore.getState().decks.find((deck) => deck.id === deckId)?.name).toBe('1:1')
   })
 
-  it('drops the verses already held, unless the reader keeps them', async () => {
-    const held = [{ front: 'Genesis 1:1', deckId: 'somewhere' }]
-    const dropped = setup({ held })
-    await dropped.run()
-    expect(dropped.setDraft).toHaveBeenCalledWith('extension', [
-      { front: 'Genesis 1:2', back: 'The earth.' },
-    ])
-
-    const kept = setup({ held, keepDuplicates: true })
-    await kept.run()
-    expect(kept.setDraft.mock.lastCall?.[1]).toHaveLength(2)
+  it('refuses an unnamed new deck, and an empty hand-off', async () => {
+    await expect(setup({ target: { kind: 'newDeck', name: '' } }).run()).rejects.toThrow()
+    await expect(setup({ cards: [] }).run()).rejects.toThrow()
   })
 })
