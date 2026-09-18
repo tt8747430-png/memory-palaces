@@ -63,6 +63,12 @@ export interface Preferences extends Entity {
   selectToolbar: SelectToolbarPreferences
   privacy: PrivacySettings
   extensions: ExtensionId[]
+  /** Shows the admin screens. Follows the account, like every other setting. */
+  devMode: boolean
+  /** Synchronise without being asked. */
+  autosync: boolean
+  /** The Library rows left open, by deck id. */
+  libraryExpanded: string[]
 }
 
 export const DEFAULT_PREFERENCES = {
@@ -83,6 +89,9 @@ export const DEFAULT_PREFERENCES = {
   selectToolbar: DEFAULT_SELECT_TOOLBAR,
   privacy: DEFAULT_PRIVACY,
   extensions: [] as ExtensionId[],
+  devMode: false,
+  autosync: true,
+  libraryExpanded: [] as string[],
 } as const satisfies Omit<Preferences, keyof Entity>
 
 export function resolveStudyMode(value: string | undefined): StudyMode {
@@ -111,6 +120,9 @@ export interface MakePreferencesInput {
   selectToolbar?: SelectToolbarPreferences
   privacy?: PrivacySettings
   extensions?: ExtensionId[]
+  devMode?: boolean
+  autosync?: boolean
+  libraryExpanded?: string[]
 }
 
 function resolveSwipe(input?: SwipePreferences): SwipePreferences {
@@ -157,6 +169,9 @@ export function makePreferences(input: MakePreferencesInput): Preferences {
     selectToolbar: resolveSelectToolbar(input.selectToolbar),
     privacy: input.privacy ?? { ...DEFAULT_PRIVACY },
     extensions: [...(input.extensions ?? [])],
+    devMode: input.devMode ?? DEFAULT_PREFERENCES.devMode,
+    autosync: input.autosync ?? DEFAULT_PREFERENCES.autosync,
+    libraryExpanded: [...(input.libraryExpanded ?? [])],
   }
 }
 
@@ -190,6 +205,9 @@ export type PreferencesChanges = Partial<
     | 'flashcardSwipe'
     | 'selectToolbar'
     | 'privacy'
+    | 'devMode'
+    | 'autosync'
+    | 'libraryExpanded'
   >
 >
 

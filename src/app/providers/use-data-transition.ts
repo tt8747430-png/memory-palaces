@@ -15,7 +15,8 @@ import { reconcileInlineImages } from '@/features/media'
 
 export interface DataTransitionDeps {
   syncManager: Pick<SyncManager, 'start' | 'stop'> | null
-  auth: PersistedAuth | null
+  /** `undefined` while the session is still being restored — not known, which is not signed out. */
+  auth: PersistedAuth | null | undefined
   resetLocal: () => Promise<void>
   storage: StoragePort
   dataOwner: DataOwner
@@ -33,8 +34,16 @@ export interface UnsyncedReset {
   cancel: () => Promise<void>
 }
 
+/**
+ * Where the signed-in account's data transition stands. `deciding` — the pending log has not
+ * loaded, so whether switching would lose unsynced work is not known yet. `asking` — it would, and
+ * the learner is being asked. `settled` — applied, or nothing to decide (no account, no cloud).
+ */
+export type TransitionStatus = 'deciding' | 'asking' | 'settled'
+
 export interface DataTransition {
   watchingFor: string | null
+  status: TransitionStatus
   unsyncedReset: UnsyncedReset | null
 }
 
@@ -51,22 +60,33 @@ export function useDataTransition({
   const profileStore = useProfileStoreApi()
   const pendingChangeStore = usePendingChangeStoreApi()
   const pendingReady = usePendingChangeStore(selectIsReady)
+  const pendingCount = usePendingChangeStore(selectPendingCount)
   const { signOut } = useAuthActions()
-  const [unsynced, setUnsynced] = useState<{ count: number; userId: string } | null>(null)
   const [watchingFor, setWatchingFor] = useState<string | null>(null)
 
   const remoteChange = useLatest(onRemoteChange)
 
+  // The account whose question the learner has just answered "sign out" to. The dialog closes at
+  // once rather than waiting on the sign-out round-trip, and a second tap cannot sign out twice.
+  const [leaving, setLeaving] = useState<string | null>(null)
+
+  const accountId = syncManager && auth?.kind === 'account' ? auth.id : null
+  // Switching this device to another account clears it, so work that never reached the cloud is
+  // asked about first. Derived rather than set from the effect: the render that first knows the
+  // answer already shows the question, so nothing raised meanwhile — a first Sync's splash — can
+  // cover it.
+  const asking =
+    accountId !== null &&
+    pendingReady &&
+    pendingCount > 0 &&
+    resolveDataTransition(dataOwner.read(), accountId) === 'reset'
+  const status: TransitionStatus =
+    accountId === null ? 'settled' : !pendingReady ? 'deciding' : asking ? 'asking' : 'settled'
+
   useEffect(() => {
-    if (!syncManager || auth?.kind !== 'account' || !pendingReady) return
+    if (!syncManager || auth?.kind !== 'account' || !pendingReady || asking) return
     const userId = auth.id
     const transition = resolveDataTransition(dataOwner.read(), userId)
-
-    const count = selectPendingCount(pendingChangeStore.getState())
-    if (transition === 'reset' && count > 0) {
-      setUnsynced({ count, userId })
-      return
-    }
 
     let live = true
     void (async () => {
@@ -93,6 +113,7 @@ export function useDataTransition({
     syncManager,
     auth,
     pendingReady,
+    asking,
     resetLocal,
     storage,
     deckStore,
@@ -104,24 +125,30 @@ export function useDataTransition({
   ])
 
   const proceed = useCallback(async () => {
-    if (!syncManager || !unsynced) return
+    if (!syncManager || !accountId) return
     await applyDataTransition({
       transition: 'reset',
-      userId: unsynced.userId,
+      userId: accountId,
       syncManager,
       tables,
       dataOwner,
       resetLocal,
     })
-  }, [syncManager, unsynced, tables, dataOwner, resetLocal])
+  }, [syncManager, accountId, tables, dataOwner, resetLocal])
 
   const cancel = useCallback(async () => {
-    setUnsynced(null)
-    await signOut()
-  }, [signOut])
+    setLeaving(accountId)
+    try {
+      await signOut()
+    } finally {
+      setLeaving(null)
+    }
+  }, [accountId, signOut])
 
   return {
     watchingFor,
-    unsyncedReset: unsynced ? { count: unsynced.count, proceed, cancel } : null,
+    status,
+    unsyncedReset:
+      asking && leaving !== accountId ? { count: pendingCount, proceed, cancel } : null,
   }
 }

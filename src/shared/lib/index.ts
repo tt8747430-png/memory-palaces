@@ -74,11 +74,16 @@ export {
   useGestureHold,
 } from './gesture-hold'
 export { useLongPress, type LongPressHandlers, type LongPressOptions } from './use-long-press'
-export { usePersistedSet } from './use-persisted-set'
 export { toggleInSet } from './set'
 export { useMultiSelect, type MultiSelect } from './use-multi-select'
 export { useHideAppNav, useAppNavHidden } from './app-nav'
-export { useSplashStore, useSplashDone } from './app-splash'
+export {
+  selectSplashShown,
+  selectSplashWaitingOnSync,
+  type SplashHold,
+  useSplashShown,
+  useSplashStore,
+} from './app-splash'
 export {
   activateWaitingWorker,
   watchWaitingWorker,
@@ -86,7 +91,6 @@ export {
   type WorkerLike,
 } from './sw-update'
 export { useAutoSelect } from './use-auto-select'
-export { useDevMode, readDevMode, setDevMode } from './dev-mode'
 export { useProbeOverlay, setProbeOverlay } from './probe-overlay'
 export { visibleBottom, keyboardIsMeasured, REVEAL_GAP } from './keyboard-viewport'
 export { useKeyboardInset } from './use-keyboard-inset'
@@ -152,6 +156,7 @@ export { AccountDeletionContext, useAccountDeletion } from './account-deletion-c
 export { ResetLocalDataContext, useResetLocalData } from './reset-local-data-context'
 export { useValidatedSubmit, type FieldErrors, type ValidatedSubmit } from './use-validated-submit'
 export { readOnline, useOnline } from './use-online'
+export { structurallyEqual } from './structurally-equal'
 export { useRouteSearch } from './use-route-search'
 export { useBack, useBackTo } from './use-back'
 export { useLatest } from './use-latest'

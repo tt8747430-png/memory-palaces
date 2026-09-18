@@ -11,13 +11,9 @@ import {
   selectPendingChanges,
   usePendingChangeStore,
 } from '@/entities/pending-change'
-import {
-  selectLastSyncedAt,
-  useSyncStateStore,
-  useSyncStateStoreApi,
-  selectAutosync,
-} from '@/entities/sync-state'
-import { setAutosync } from '@/features/sync'
+import { selectLastSyncedAt, useSyncStateStore } from '@/entities/sync-state'
+import { selectAutosync, usePreferencesStore, usePreferencesStoreApi } from '@/entities/preferences'
+import { setPreferences } from '@/features/preferences'
 import { SyncBanner } from '@/widgets/sync'
 import { relativeTime } from '../model/relative-time'
 
@@ -30,11 +26,13 @@ export function SettingsSyncPage({ onBack }: SettingsSyncPageProps) {
   const runner = useSyncRunner()
   const online = useOnline()
   const kind = useSessionStore(selectSessionKind)
-  const ready = useSyncStateStore(selectIsReady)
+  const syncStateReady = useSyncStateStore(selectIsReady)
+  const preferencesReady = usePreferencesStore(selectIsReady)
+  const ready = syncStateReady && preferencesReady
   const changes = usePendingChangeStore(selectPendingChanges)
   const lastSyncedAt = useSyncStateStore(selectLastSyncedAt)
-  const autosync = useSyncStateStore(selectAutosync)
-  const syncStateStore = useSyncStateStoreApi()
+  const autosync = usePreferencesStore(selectAutosync)
+  const preferencesStore = usePreferencesStoreApi()
 
   const counts = useMemo(() => pendingByCollection(changes), [changes])
 
@@ -131,7 +129,7 @@ export function SettingsSyncPage({ onBack }: SettingsSyncPageProps) {
             label={t('sync.settings.autosync')}
             description={t('sync.settings.autosyncHint')}
             checked={autosync}
-            onCheckedChange={(value) => void setAutosync({ syncStateStore }, value)}
+            onCheckedChange={(value) => void setPreferences(preferencesStore, { autosync: value })}
           />
         </SettingsSection>
       </div>

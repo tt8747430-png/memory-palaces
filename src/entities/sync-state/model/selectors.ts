@@ -6,8 +6,6 @@ import type { SyncStateState } from './store'
 export const selectSyncState = (state: SyncStateState): SyncState =>
   state.syncState ?? DEFAULT_SYNC_STATE
 
-export const selectAutosync = (state: SyncStateState): boolean => selectSyncState(state).autosync
-
 export const selectLastSyncedAt = (state: SyncStateState): string | null =>
   selectSyncState(state).lastSyncedAt
 

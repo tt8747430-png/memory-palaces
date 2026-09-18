@@ -21,6 +21,7 @@ export {
   DEFAULT_PRIVACY,
   STUDY_MODES,
 } from './model/types'
+export { mergePreferences } from './model/merge'
 export { createPreferencesStore } from './model/store'
 export type { PreferencesState, PreferencesStore } from './model/store'
 export {
@@ -29,5 +30,10 @@ export {
   usePreferencesStoreApi,
   usePreferencesStoreApiOptional,
 } from './model/context'
-export { selectEffectivePreferences } from './model/selectors'
+export {
+  selectAutosync,
+  selectDevMode,
+  selectEffectivePreferences,
+  selectLibraryExpanded,
+} from './model/selectors'
 export type { PreferencesRepository } from './api/preferences-repository'

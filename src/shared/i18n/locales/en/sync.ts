@@ -64,7 +64,7 @@ export const sync = {
     reviewFailed: 'Could not check the cloud. Try again.',
     autosync: 'Autosync',
     autosyncHint:
-      'Synchronise without being asked, on this device only. A deletion that clashes with another device still asks first.',
+      'Synchronise without being asked, on every device you sign in on. A deletion that clashes with another device still asks first.',
     guest: 'Guest sessions stay on this device. Create an account to synchronise.',
     unavailable: 'This app is running without a cloud, so there is nothing to synchronise.',
     counts: {

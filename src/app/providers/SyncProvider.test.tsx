@@ -11,19 +11,21 @@ import {
   type PersistedAuth,
   type StoragePort,
 } from '@/shared/api'
-import { AuthGatewayContext, type DataOwner, type SyncRunner, useSyncRunner } from '@/shared/lib'
+import {
+  AuthGatewayContext,
+  type DataOwner,
+  type SyncRunner,
+  useSplashStore,
+  useSyncRunner,
+} from '@/shared/lib'
 import { started } from '@/shared/test/started'
 import { createDeckStore, type Deck, DeckStoreContext } from '@/entities/deck'
 import { type Card, CardStoreContext, createCardStore } from '@/entities/card'
 import { createFolderStore, type Folder, FolderStoreContext } from '@/entities/folder'
 import { createQuestionStore, type Question, QuestionStoreContext } from '@/entities/question'
 import { createProfileStore, type Profile, ProfileStoreContext } from '@/entities/profile'
-import {
-  createPreferencesStore,
-  makePreferences,
-  type Preferences,
-  PreferencesStoreContext,
-} from '@/entities/preferences'
+import { DEFAULT_PREFERENCES, PreferencesStoreContext } from '@/entities/preferences'
+import { preferencesStoreHolding } from '@/entities/preferences/testing/stored-preferences'
 import { setExtensionEnabled } from '@/features/preferences'
 import { CORE_SYNC_TABLES, type SyncTableSpec } from '@/shared/config/sync-tables'
 import { createSessionStore, type Session, SessionStoreContext } from '@/entities/session'
@@ -55,10 +57,20 @@ const CORE_TABLE_NAMES = CORE_SYNC_TABLES.map((spec) => spec.table)
 const otherAccount: PersistedAuth = { id: 'u2', kind: 'account' }
 const guest: PersistedAuth = { id: 'g1', kind: 'guest' }
 const storage: StoragePort = new LocalObjectUrlStorage()
+const SYNCED_BEFORE = '2026-09-01T00:00:00.000Z'
+
+/** The app is already open — its intro played, its services built — as when a learner signs in. */
+function openApp() {
+  useSplashStore.setState({ holds: new Set() })
+}
+
+const splashHolds = () => useSplashStore.getState().holds
 
 afterEach(() => {
   cleanup()
   setVisibility('visible')
+  Object.defineProperty(navigator, 'onLine', { value: true, configurable: true })
+  useSplashStore.setState(useSplashStore.getInitialState(), true)
 })
 
 function setVisibility(value: DocumentVisibilityState) {
@@ -98,6 +110,8 @@ interface Options {
   resetLocal?: () => Promise<void>
   dataOwner?: DataOwner
   autosync?: boolean
+  /** When this device last completed a Sync — a device that has synced before, unless null. */
+  lastSyncedAt?: string | null
   pending?: number
   pendingReady?: boolean
   extensions?: string[]
@@ -110,26 +124,22 @@ function Probe({ onRunner }: { onRunner: (runner: SyncRunner | null) => void }) 
 }
 
 async function stores({
-  autosync = DEFAULT_SYNC_STATE.autosync,
+  autosync = DEFAULT_PREFERENCES.autosync,
+  lastSyncedAt = SYNCED_BEFORE,
   pending = 0,
   pendingReady = true,
   extensions = [],
 }: Options) {
-  const syncStateRepo = new InMemoryRepository<SyncState>([{ ...DEFAULT_SYNC_STATE, autosync }])
+  const syncStateRepo = new InMemoryRepository<SyncState>([{ ...DEFAULT_SYNC_STATE, lastSyncedAt }])
   const pendingRepo = new InMemoryRepository<PendingChange>(
     Array.from({ length: pending }, (_, i) =>
       makePendingChange({ contentCollection: 'decks', entityId: `d${i}`, op: 'save', at: 't' }),
     ),
   )
   const pendingStore = createPendingChangeStore(pendingRepo)
-  const preferencesRepo = new InMemoryRepository<Preferences>([
-    {
-      ...makePreferences({ id: 'preferences', createdAt: new Date(0).toISOString() }),
-      extensions,
-    },
-  ])
+
   return {
-    preferences: started(createPreferencesStore(preferencesRepo)),
+    preferences: preferencesStoreHolding({ extensions, autosync }),
     syncState: started(createSyncStateStore(syncStateRepo)),
     pending: pendingReady ? started(pendingStore) : pendingStore,
     gateway: new LocalAuthGateway(),
@@ -486,19 +496,21 @@ describe('SyncProvider', () => {
 
   it('signs back out instead, when the person would rather keep them', async () => {
     const resetLocal = vi.fn().mockResolvedValue(undefined)
-    const { container } = await mount({
+    const options: Options = {
       auth: otherAccount,
       resetLocal,
       dataOwner: owner('u1'),
       pending: 1,
-    })
+    }
+    const view = await mount(options)
     await screen.findByRole('alertdialog')
 
     await userEvent.click(screen.getByRole('button', { name: 'Sign out' }))
+    // The question follows who is signed in: signing out clears the session, and with it `auth`.
+    view.rerenderWith({ ...options, auth: null })
 
     await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument())
     expect(resetLocal).not.toHaveBeenCalled()
-    expect(container).toBeTruthy()
   })
 
   it('keeps the data of the account that already owns this device', async () => {
@@ -534,5 +546,76 @@ describe('SyncProvider', () => {
     await mount({ auth: account })
 
     expect(persist).toHaveBeenCalled()
+  })
+})
+
+describe('the first Sync on this device', () => {
+  it('runs by itself for an account that never synced here, under the splash until it lands', async () => {
+    openApp()
+    const cloudSync = cloud()
+    let land!: () => void
+    cloudSync.runCycle.mockReturnValue(
+      new Promise((resolve) => {
+        land = () => resolve({})
+      }),
+    )
+    const view = await mount({ cloudSync, auth: account, lastSyncedAt: null })
+
+    await waitFor(() => expect(cloudSync.runCycle).toHaveBeenCalledTimes(1))
+    expect(splashHolds()).toEqual(new Set(['first-sync', 'intro']))
+
+    await act(async () => land())
+    await waitFor(() => expect(splashHolds().has('first-sync')).toBe(false))
+    expect(view.stores.syncState.getState().syncState?.lastSyncedAt).not.toBeNull()
+  })
+
+  it('lets the learner in at once when it is offline — Autosync pulls once it is back', async () => {
+    openApp()
+    Object.defineProperty(navigator, 'onLine', { value: false, configurable: true })
+    const cloudSync = cloud()
+    const view = await mount({ cloudSync, auth: account, lastSyncedAt: null })
+
+    await waitFor(() => expect(view.runner()).not.toBeNull())
+    await waitFor(() => expect(splashHolds().has('first-sync')).toBe(false))
+    expect(cloudSync.runCycle).not.toHaveBeenCalled()
+  })
+
+  it('lets the learner in when it fails, and does not try again under the splash', async () => {
+    openApp()
+    const cloudSync = cloud()
+    cloudSync.runCycle.mockRejectedValue(new Error('server down'))
+    const view = await mount({ cloudSync, auth: account, lastSyncedAt: null })
+
+    await waitFor(() => expect(view.runner()?.phase).toBe('failed'))
+    expect(splashHolds().has('first-sync')).toBe(false)
+    expect(cloudSync.runCycle).toHaveBeenCalledTimes(1)
+  })
+
+  it('goes straight in where this account has synced before', async () => {
+    openApp()
+    const cloudSync = cloud()
+    await mount({ cloudSync, auth: account })
+
+    await waitFor(() => expect(cloudSync.peek).not.toHaveBeenCalled())
+    expect(splashHolds().size).toBe(0)
+    expect(cloudSync.runCycle).not.toHaveBeenCalled()
+  })
+
+  it('never holds for a guest — there is nothing to bring in', async () => {
+    openApp()
+    await mount({ auth: guest, lastSyncedAt: null })
+    expect(splashHolds().size).toBe(0)
+  })
+
+  it('does not cover the question when unsynced work would be lost', async () => {
+    openApp()
+    await mount({
+      auth: otherAccount,
+      dataOwner: owner('u1'),
+      pending: 3,
+      lastSyncedAt: null,
+    })
+    expect(await screen.findByRole('alertdialog')).toBeInTheDocument()
+    expect(splashHolds().size).toBe(0)
   })
 })

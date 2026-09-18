@@ -1,6 +1,7 @@
 import { type ReactNode, useMemo } from 'react'
 import { Toaster } from 'sonner'
 import type { PersistedAuth } from '@/shared/api'
+import { selectIsReady } from '@/shared/lib'
 import { useSessionStore } from '@/entities/session'
 import type { Services } from '../composition-root'
 import { ExtensionsProvider } from '../extensions/ExtensionsProvider'
@@ -14,9 +15,11 @@ import { UpdatePrompt } from './UpdatePrompt'
 
 function AppSync({ services, children }: { services: Services; children: ReactNode }) {
   const session = useSessionStore((state) => state.session)
-  const auth = useMemo<PersistedAuth | null>(
-    () => (session ? { id: session.id, kind: session.kind } : null),
-    [session],
+  const restored = useSessionStore(selectIsReady)
+  // Undefined until the session is restored: "not known yet" must not read as "signed out".
+  const auth = useMemo<PersistedAuth | null | undefined>(
+    () => (!restored ? undefined : session ? { id: session.id, kind: session.kind } : null),
+    [restored, session],
   )
   return (
     <SyncProvider

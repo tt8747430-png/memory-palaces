@@ -31,13 +31,15 @@ import {
 } from '@/features/sync'
 import { INITIAL_RUNNER_STATE, runnerReducer } from './sync-runner-state'
 import { useAutosync } from './use-autosync'
+import { useFirstSync } from './use-first-sync'
 import { useDataTransition } from './use-data-transition'
 import { UnsyncedResetDialog } from './UnsyncedResetDialog'
 
 export interface SyncProviderProps {
   syncManager: Pick<SyncManager, 'start' | 'stop'> | null
   cloudSync: CloudSyncPort | null
-  auth: PersistedAuth | null
+  /** `undefined` while the session is still being restored — not known, which is not signed out. */
+  auth: PersistedAuth | null | undefined
   resetLocal: () => Promise<void>
   storage: StoragePort
   /**
@@ -89,7 +91,7 @@ export function SyncProvider({
     [syncStateStore],
   )
 
-  const { watchingFor, unsyncedReset } = useDataTransition({
+  const { watchingFor, status, unsyncedReset } = useDataTransition({
     syncManager,
     auth,
     resetLocal,
@@ -99,9 +101,17 @@ export function SyncProvider({
     tables,
   })
 
+  // The account this device can sync as — one derivation, read by every part below.
+  const account =
+    auth === undefined
+      ? undefined
+      : cloudSync && syncManager && auth?.kind === 'account'
+        ? auth.id
+        : null
+
   const deps = useMemo<SyncDeps | null>(
     () =>
-      cloudSync && auth?.kind === 'account' && watchingFor === auth.id
+      cloudSync && account && watchingFor === account
         ? {
             cloud: cloudSync,
             tables,
@@ -118,7 +128,7 @@ export function SyncProvider({
     [
       cloudSync,
       tables,
-      auth,
+      account,
       watchingFor,
       pendingChangeStore,
       syncStateStore,
@@ -207,6 +217,7 @@ export function SyncProvider({
 
   const autosync = useCallback(() => void run(), [run])
   useAutosync(Boolean(deps), autosync)
+  useFirstSync({ account, canSync: deps !== null, transition: status, tables, run })
 
   return (
     <SyncRunnerContext value={runner}>

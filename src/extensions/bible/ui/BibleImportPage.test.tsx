@@ -2,7 +2,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { i18n } from '@/shared/i18n'
-import { setDevMode } from '@/shared/lib'
 import { makeCard } from '@/entities/card'
 import { bibleMessages } from '../i18n/en'
 import { renderImportPage } from '../testing/render-import-page'
@@ -28,7 +27,6 @@ const genesisCovered = { verses: [makeBibleVerse({ ...verse(1, 'Elsewhere.'), ch
 
 afterEach(() => {
   cleanup()
-  setDevMode(false)
   useImportDraft.getState().clear()
 })
 
@@ -92,8 +90,7 @@ describe('BibleImportPage picker', () => {
 
   it('lets dev mode pick a book with no text — that is how its text gets published', async () => {
     const user = userEvent.setup()
-    setDevMode(true)
-    renderImportPage(<BibleImportPage />, genesisCovered)
+    renderImportPage(<BibleImportPage />, { ...genesisCovered, devMode: true })
     await user.click(screen.getByRole('button', { name: 'Exodus' }))
     expect(screen.getByText('Pick a chapter')).toBeInTheDocument()
   })
@@ -271,8 +268,7 @@ describe('BibleImportPage text and target', () => {
 
   it('keeps the text in the Bible library when dev mode is on, so the picker can prefill next time', async () => {
     const user = userEvent.setup()
-    setDevMode(true)
-    const { verseStore } = renderImportPage(<BibleImportPage />)
+    const { verseStore } = renderImportPage(<BibleImportPage />, { devMode: true })
     await pickGenesis11(user)
     await user.click(screen.getByLabelText('Verse text'))
     await user.paste('In the beginning.')

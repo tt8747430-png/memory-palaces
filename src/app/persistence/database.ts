@@ -18,7 +18,12 @@ import { coerceImagePath, type ExtensionCollectionSpec } from '@/shared/lib'
 import { STORAGE_PREFIX } from '@/shared/config/constants'
 import { DEFAULT_SELECT_TOOLBAR } from '@/shared/config/select-toolbar'
 import { firstWriteWins, lastWriteWins } from '@/shared/api/rxdb'
-import { mergeCardConflict, mergeProgressConflict } from './conflict-handlers'
+import { AUTOSYNC_OFF_HANDOFF_KEY } from './adopt-device-settings'
+import {
+  mergeCardConflict,
+  mergePreferencesConflict,
+  mergeProgressConflict,
+} from './conflict-handlers'
 import {
   cardSchema,
   deckSchema,
@@ -78,10 +83,31 @@ export const preferencesMigrations = {
     studyTypeInitialsOnly: doc.studyTypeInitialsOnly ?? DEFAULT_PREFERENCES.studyTypeInitialsOnly,
   }),
   3: (doc: Preferences) => ({ ...doc, extensions: doc.extensions ?? [] }),
+  /**
+   * Dev mode, Autosync and the Library's expanded rows follow the account now. The device's own
+   * values are moved in by `adoptDeviceSettings`, which also covers a device with no document.
+   */
+  4: (doc: Preferences): Preferences => ({
+    ...doc,
+    devMode: doc.devMode ?? DEFAULT_PREFERENCES.devMode,
+    autosync: doc.autosync ?? DEFAULT_PREFERENCES.autosync,
+    libraryExpanded: doc.libraryExpanded ?? [...DEFAULT_PREFERENCES.libraryExpanded],
+  }),
 }
 
+type SyncStateV1 = SyncState & { autosync: boolean }
+
 export const syncStateMigrations = {
-  1: (doc: SyncState): SyncState => ({ ...doc, autosync: true }),
+  1: (doc: SyncState): SyncStateV1 => ({ ...doc, autosync: true }),
+  /**
+   * Autosync moved into Preferences. The field goes, but a learner who had switched it off keeps
+   * that choice: the migration hands it to `adoptDeviceSettings`, which cannot read this collection
+   * once the field is gone.
+   */
+  2: ({ autosync, ...doc }: SyncStateV1): SyncState => {
+    if (!autosync) localStorage.setItem(AUTOSYNC_OFF_HANDOFF_KEY, '1')
+    return doc
+  },
 }
 
 export const pendingChangeMigrations = {
@@ -152,7 +178,7 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
     preferences: {
       schema: preferencesSchema,
       migrationStrategies: preferencesMigrations,
-      conflictHandler: lastWriteWins<Preferences>(),
+      conflictHandler: mergePreferencesConflict,
     },
     profiles: {
       schema: profileSchema,

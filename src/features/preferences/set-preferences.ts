@@ -1,4 +1,4 @@
-import { type ExtensionId, nowIso } from '@/shared/lib'
+import { type ExtensionId, nowIso, whenStoreReady } from '@/shared/lib'
 import {
   makePreferences,
   type Preferences,
@@ -24,11 +24,17 @@ export interface SetPreferencesInput extends PreferencesChanges {
   extensions?: (current: readonly ExtensionId[]) => ExtensionId[]
 }
 
+/**
+ * Applies a change to what is stored. It waits for the store to load first: an unloaded store reads
+ * as "nothing stored", and writing then would save a fresh set of defaults over every setting the
+ * account has — which the next Sync would carry to every device.
+ */
 export async function setPreferences(
   store: PreferencesStore,
   input: SetPreferencesInput,
   now: number = Date.now(),
 ): Promise<Preferences> {
+  await whenStoreReady(store)
   const base = currentPreferences(store, now)
   const { extensions, ...changes } = input
   const updated = updatePreferences(

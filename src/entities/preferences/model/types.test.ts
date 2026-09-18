@@ -118,3 +118,36 @@ describe('extensions', () => {
     expect(isExtensionEnabled(prefs, 'atlas')).toBe(false)
   })
 })
+
+describe('settings that used to live on the device', () => {
+  it('defaults dev mode off, Autosync on, and no Library row expanded', () => {
+    const prefs = makePreferences({ id: 'preferences', createdAt: at(0) })
+    expect(prefs.devMode).toBe(false)
+    expect(prefs.autosync).toBe(true)
+    expect(prefs.libraryExpanded).toEqual([])
+  })
+
+  it('completes a row an older build pushed without them', () => {
+    const older: Record<string, unknown> = {
+      ...makePreferences({ id: 'preferences', createdAt: at(0) }),
+    }
+    for (const field of ['devMode', 'autosync', 'libraryExpanded']) delete older[field]
+    const completed = completePreferences(older as never)
+    expect(completed.devMode).toBe(false)
+    expect(completed.autosync).toBe(true)
+    expect(completed.libraryExpanded).toEqual([])
+  })
+
+  it('keeps what was stored', () => {
+    const stored = {
+      ...makePreferences({ id: 'preferences', createdAt: at(0) }),
+      devMode: true,
+      autosync: false,
+      libraryExpanded: ['deck-1'],
+    }
+    const completed = completePreferences(stored)
+    expect(completed.devMode).toBe(true)
+    expect(completed.autosync).toBe(false)
+    expect(completed.libraryExpanded).toEqual(['deck-1'])
+  })
+})

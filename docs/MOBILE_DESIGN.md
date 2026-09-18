@@ -127,13 +127,15 @@ All four on every async surface — a missing state reads as a crash.
 - **RxDB is the local source of truth** — reads never touch the network. **Never block UI on a round-trip.**
 - **Workbox precache** makes the shell available offline after first load.
 - **Sync is manual, and the banner is its network-status UI.** `widgets/sync` `SyncBanner` states what is waiting, and
-  says so offline (`useOnline`). Nothing leaves the device until Synchronise is pressed or Autosync — device-local, on
+  says so offline (`useOnline`). Nothing leaves the device until Synchronise is pressed or Autosync — a preference, on
   by default — asks.
 - **Gate only what the server must answer now** (ADR 0004): sign-in, sign-up, password reset and change, requesting
   account deletion. `OfflineNotice` + a disabled control, before the press. Every content write stays ungated.
 - **Sign-out always succeeds locally**, online or not — the session store is cleared whatever the revoke does.
-- **Never block UI on a round-trip — one bounded exception.** A fresh sign-in waits at most 4 s for the
-  scheduled-deletion check (`AuthProvider`); offline or slow, the app opens and the check retries on reconnect.
+- **Never block UI on a round-trip — two bounded exceptions.** A fresh sign-in waits at most 4 s for the
+  scheduled-deletion check (`AuthProvider`); offline or slow, the app opens and the check retries on reconnect. And an
+  account's first Sync on a device holds the splash at most 10 s (`useFirstSync`); offline it lets the learner in at
+  once, and past the budget the cycle carries on under the banner.
 - **Images are read from the device.** Stored images are object paths in private buckets; `keepImagesCached` fetches the
   bytes ahead of the read and `useImageSrc` reads only the cache — never a URL handed to the browser during render.
 

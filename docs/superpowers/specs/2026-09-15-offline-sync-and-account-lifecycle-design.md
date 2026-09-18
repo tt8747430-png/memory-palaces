@@ -58,7 +58,9 @@ Settled during design; the implementation plans do not reopen them.
   deleted here and edited there, or a deck or folder deleted here whose descendants were edited
   there. A deletion pushed to a cloud that has not changed is never a question, however large.
 - **Sync is manual.** Nothing leaves the device until the user asks, or until Autosync is on.
-- **Autosync defaults to on, and is a property of the device, not the account.** It was specified
+- **Autosync defaults to on, and is a property of the device, not the account.** _Superseded 2026-09-18: Autosync is
+  a preference and follows the account, and an account's first Sync on a device runs by itself — see
+  `2026-09-18-first-sync-splash-and-synced-settings-design.md`._ It was specified
   off, and the reason it is not is the risk that reasoning named: a device lost or reinstalled
   before the user presses Synchronise loses everything since the last press. Defaulting on closes
   that gap by default and leaves the decision where it was — one device-local toggle, reaching no
@@ -89,7 +91,7 @@ Slice F edits `docs/UBIQUITOUS_LANGUAGE.md` to add these; the spec does not own 
 
 - **Sync** — one full peek-then-apply-then-push cycle. Never a study pass, never a login.
 - **Synchronise** — the user-facing verb on the banner button.
-- **Autosync** — the device-local setting that runs Sync without being asked.
+- **Autosync** — the setting that runs Sync without being asked (a preference since 2026-09-18).
 - **Pending change** — one recorded write not yet confirmed by a Sync. They live in `pendingChanges`.
 - **Divergence** — the cloud and the device both changed since this device's last Sync. Distinct from
   RxDB's **conflict**, which is one document arriving with two versions and is settled by a
@@ -269,7 +271,8 @@ type SyncState = {
 }
 ```
 
-Autosync lives here rather than on `preferences` because it is a property of _this device_.
+Autosync lived here rather than on `preferences` because it was a property of _this device_. _Superseded 2026-09-18:
+it moved to `preferences`, and `syncState` v2 drops the field._
 `preferencesSchema` is not touched.
 
 ### What records a pending change

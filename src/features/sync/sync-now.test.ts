@@ -191,18 +191,6 @@ describe('syncNow', () => {
       expect(next.map((change) => change.id)).toContain('mid-sync')
       expect(state(deps).cloudChanged).toBe(true)
     })
-
-    it('never overwrite an Autosync toggle made while the cycle ran', async () => {
-      const { deps, cloud } = syncFixture()
-      cloud.duringCycle = async () => {
-        const current = selectSyncState(deps.syncStateStore.getState())
-        await deps.syncStateStore.getState().save({ ...current, autosync: true })
-      }
-
-      await syncNow(deps)
-
-      expect(state(deps).autosync).toBe(true)
-    })
   })
 
   it('leaves the log and the checkpoints untouched when the cycle fails', async () => {

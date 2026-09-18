@@ -4,15 +4,14 @@ import userEvent from '@testing-library/user-event'
 import { toast } from 'sonner'
 import { renderWithProviders } from '@/shared/test/render-with-providers'
 import { i18n } from '@/shared/i18n'
-import { InMemoryRepository } from '@/shared/api'
 import { started } from '@/shared/test/started'
 import {
   createPreferencesStore,
-  makePreferences,
   type Preferences,
   PreferencesStoreContext,
 } from '@/entities/preferences'
-import { type ExtensionManifest, extensionRoute, setDevMode } from '@/shared/lib'
+import { preferencesStoreHolding } from '@/entities/preferences/testing/stored-preferences'
+import { type ExtensionManifest, extensionRoute } from '@/shared/lib'
 import { SettingsExtensionsPage } from './SettingsExtensionsPage'
 
 vi.mock('sonner', () => ({ toast: Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn() }) }))
@@ -28,10 +27,7 @@ i18n.addResourceBundle(
   true,
 )
 
-afterEach(() => {
-  cleanup()
-  setDevMode(false)
-})
+afterEach(cleanup)
 
 const Screen = () => null
 
@@ -50,14 +46,13 @@ const manifest: ExtensionManifest = {
 function renderPage(
   manifests: ExtensionManifest[],
   extensions: string[] = [],
-  highlight?: string,
-  onOpenExtension?: (path: string) => void,
+  {
+    highlight,
+    onOpenExtension,
+    devMode = false,
+  }: { highlight?: string; onOpenExtension?: (path: string) => void; devMode?: boolean } = {},
 ) {
-  const stored: Preferences = {
-    ...makePreferences({ id: 'preferences', createdAt: new Date(0).toISOString() }),
-    extensions,
-  }
-  const store = started(createPreferencesStore(new InMemoryRepository<Preferences>([stored])))
+  const store = preferencesStoreHolding({ extensions, devMode })
   renderWithProviders(
     <PreferencesStoreContext value={store}>
       <SettingsExtensionsPage
@@ -99,7 +94,7 @@ describe('SettingsExtensionsPage', () => {
   })
 
   it('marks the row a guard sent the learner to', () => {
-    renderPage([manifest], [], 'fake')
+    renderPage([manifest], [], { highlight: 'fake' })
     expect(
       screen.getByRole('switch', { name: 'Fake' }).closest('[data-highlighted]'),
     ).not.toBeNull()
@@ -141,8 +136,7 @@ describe('SettingsExtensionsPage', () => {
   it('offers an enabled extension its admin screen in dev mode, by the path its manifest names', async () => {
     const user = userEvent.setup()
     const onOpen = vi.fn()
-    setDevMode(true)
-    renderPage([withAdmin], ['fake'], undefined, onOpen)
+    renderPage([withAdmin], ['fake'], { onOpenExtension: onOpen, devMode: true })
     await user.click(screen.getByRole('button', { name: 'Fake library' }))
     expect(onOpen).toHaveBeenCalledWith('/settings/extensions/fake')
   })
@@ -153,8 +147,7 @@ describe('SettingsExtensionsPage', () => {
   })
 
   it('hides the admin row while the extension is off', () => {
-    setDevMode(true)
-    renderPage([withAdmin], [])
+    renderPage([withAdmin], [], { devMode: true })
     expect(screen.queryByRole('button', { name: 'Fake library' })).not.toBeInTheDocument()
   })
 })

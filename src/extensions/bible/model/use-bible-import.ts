@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { nowIso, type ParsedCard, selectIsReady, useDevMode } from '@/shared/lib'
+import { nowIso, type ParsedCard, selectIsReady } from '@/shared/lib'
 import { selectCards, useCardStore } from '@/entities/card'
 import { type Deck, selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
 import { type Folder, selectFolders, useFolderStore } from '@/entities/folder'
+import { selectDevMode, usePreferencesStore } from '@/entities/preferences'
 import { useImportDraft } from '@/widgets/content-editor'
 import { useBibleT } from '../i18n/use-bible-t'
 import { addVerseCards } from '../features/add-verse-cards'
@@ -110,7 +111,7 @@ export function useBibleImport(
   const deckStore = useDeckStoreApi()
   const verseStore = useBibleVerseStoreApi()
   const setDraft = useImportDraft((draft) => draft.setDraft)
-  const devMode = useDevMode()
+  const devMode = usePreferencesStore(selectDevMode)
 
   // What the learner typed, and the reference they typed it under. Absent until they touch the box.
   const [own, setOwn] = useState<{ ref: string | null; text: string } | null>(null)

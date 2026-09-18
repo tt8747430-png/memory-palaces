@@ -48,6 +48,7 @@ import { createExtensionRuntime, type ExtensionRuntime } from './extensions/exte
 import { loadExtensions } from './extensions/load-extensions'
 import { EXTENSIONS } from './extensions/registry'
 import { resetLocalDatabase } from './persistence/reset-local-database'
+import { adoptDeviceSettings } from './persistence/adopt-device-settings'
 import { keepArchiveDetached } from './persistence/keep-archive-detached'
 import { keepHistoryCapped } from './persistence/keep-history-capped'
 
@@ -128,9 +129,10 @@ export async function createServices(): Promise<Services> {
     ...extensionCollections.syncTables,
   ]
   const syncTargets: Promise<SyncTarget[]> = collections.then((c) =>
-    syncTableSpecs.map(({ table, collectionKey }) => ({
+    syncTableSpecs.map(({ table, collectionKey, refuseUnseenOverwrites }) => ({
       table,
       collection: collectionByKey(c, collectionKey),
+      refuseUnseenOverwrites,
     })),
   )
   const configured = cloud.isSupabaseConfigured()
@@ -184,6 +186,10 @@ export async function createServices(): Promise<Services> {
 
   keepArchiveDetached(services.deckStore)
   keepHistoryCapped(services.historyStore)
+  // A failed write leaves the old keys for the next launch; it never fails boot.
+  await adoptDeviceSettings(services.preferencesStore).catch((error: unknown) =>
+    console.error('Device settings could not be adopted into preferences', error),
+  )
   keepImagesCached({
     deckStore: services.deckStore,
     profileStore: services.profileStore,

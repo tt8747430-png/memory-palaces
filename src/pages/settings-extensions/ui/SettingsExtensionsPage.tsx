@@ -8,13 +8,7 @@ import {
   usePreferencesStoreApi,
 } from '@/entities/preferences'
 import { setExtensionEnabled } from '@/features/preferences'
-import {
-  cn,
-  type ExtensionManifest,
-  selectIsReady,
-  useContributedT,
-  useDevMode,
-} from '@/shared/lib'
+import { cn, type ExtensionManifest, selectIsReady, useContributedT } from '@/shared/lib'
 import {
   AppScreen,
   EmptyNotice,
@@ -48,7 +42,6 @@ export function SettingsExtensionsPage({
 }: SettingsExtensionsPageProps) {
   const { t } = useTranslation()
   const contributed = useContributedT()
-  const devMode = useDevMode()
   const ready = usePreferencesStore(selectIsReady)
   const prefs = usePreferencesStore(selectEffectivePreferences)
   const store = usePreferencesStoreApi()
@@ -94,7 +87,7 @@ export function SettingsExtensionsPage({
                     checked={enabled}
                     onCheckedChange={(value) => toggle(manifest.id, value)}
                   />
-                  {admin && enabled && devMode ? (
+                  {admin && enabled && prefs.devMode ? (
                     <SettingsRow
                       kind="nav"
                       icon={<Wrench />}

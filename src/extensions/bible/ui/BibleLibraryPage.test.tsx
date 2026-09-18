@@ -1,8 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { i18n } from '@/shared/i18n'
-import { setDevMode } from '@/shared/lib'
 import { makeCard } from '@/entities/card'
 import { bibleMessages } from '../i18n/en'
 import { storedDeck } from '../testing/decks'
@@ -23,12 +22,9 @@ i18n.addResourceBundle('en', 'bible', bibleMessages, true, false)
 
 const at = new Date(0).toISOString()
 
-beforeEach(() => setDevMode(true))
-
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
-  setDevMode(false)
 })
 
 const verseCard = (id: string, front: string, back: string) =>

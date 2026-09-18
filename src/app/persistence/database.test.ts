@@ -24,6 +24,7 @@ import {
   profileSchema,
   syncStateSchema,
 } from './schemas'
+import { AUTOSYNC_OFF_HANDOFF_KEY } from './adopt-device-settings'
 
 const AT = '2026-09-15T16:07:00.000Z'
 
@@ -202,25 +203,56 @@ describe('schema migrations', () => {
   it('versions the collections', () => {
     expect(deckSchema.version).toBe(4)
     expect(cardSchema.version).toBe(1)
-    expect(preferencesSchema.version).toBe(3)
+    expect(preferencesSchema.version).toBe(4)
     expect(profileSchema.version).toBe(2)
     expect(pendingChangeSchema.version).toBe(1)
-    expect(syncStateSchema.version).toBe(1)
+    expect(syncStateSchema.version).toBe(2)
   })
 
-  it('turns Autosync on for a device that stored it off', async () => {
+  it('gives a v3 preferences document the settings that used to stay on the device', () => {
+    const v3 = { id: 'preferences', extensions: [] } as never
+    expect(preferencesMigrations[4](v3)).toMatchObject({
+      devMode: false,
+      autosync: true,
+      libraryExpanded: [],
+    })
+  })
+
+  it('moves Autosync out of sync-state, handing a switched-off choice over', async () => {
     const collections = await reopenedAfterSeeding(
       'syncState',
-      { ...syncStateSchema, version: 0 } as unknown as RxJsonSchema<Record<string, unknown>>,
+      {
+        ...syncStateSchema,
+        version: 1,
+        properties: { ...syncStateSchema.properties, autosync: { type: 'boolean' } },
+      } as unknown as RxJsonSchema<Record<string, unknown>>,
       async (syncState) => {
         await syncState.upsert({ ...DEFAULT_SYNC_STATE, autosync: false, lastSyncedAt: AT })
       },
     )
     const stored = await collections.syncState.findOne(SYNC_STATE_ID).exec()
 
-    expect(stored?.get('autosync')).toBe(true)
+    expect(stored?.toJSON()).not.toHaveProperty('autosync')
     expect(stored?.get('lastSyncedAt')).toBe(AT)
+    expect(localStorage.getItem(AUTOSYNC_OFF_HANDOFF_KEY)).toBe('1')
 
+    localStorage.clear()
+    await collections.syncState.database.remove()
+  })
+
+  it('hands nothing over for a v0 device — v1 had already switched Autosync on', async () => {
+    const collections = await reopenedAfterSeeding(
+      'syncState',
+      {
+        ...syncStateSchema,
+        version: 0,
+        properties: { ...syncStateSchema.properties, autosync: { type: 'boolean' } },
+      } as unknown as RxJsonSchema<Record<string, unknown>>,
+      async (syncState) => {
+        await syncState.upsert({ ...DEFAULT_SYNC_STATE, autosync: false })
+      },
+    )
+    expect(localStorage.getItem(AUTOSYNC_OFF_HANDOFF_KEY)).toBeNull()
     await collections.syncState.database.remove()
   })
 

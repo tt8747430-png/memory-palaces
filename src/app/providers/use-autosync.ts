@@ -1,11 +1,11 @@
 import { useEffect } from 'react'
 import { selectLatestPendingAt, usePendingChangeStore } from '@/entities/pending-change'
-import { selectAutosync, useSyncStateStore } from '@/entities/sync-state'
+import { selectAutosync, usePreferencesStore } from '@/entities/preferences'
 
 const AUTOSYNC_DEBOUNCE_MS = 4000
 
 export function useAutosync(active: boolean, sync: () => void): void {
-  const autosync = useSyncStateStore(selectAutosync) && active
+  const autosync = usePreferencesStore(selectAutosync) && active
   const latestWriteAt = usePendingChangeStore(selectLatestPendingAt)
 
   useEffect(() => {

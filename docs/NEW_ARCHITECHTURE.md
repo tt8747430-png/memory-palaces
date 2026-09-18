@@ -33,7 +33,8 @@ call the same use-cases as the UI is Phase 13 (T13.1), and is the reason one-use
   guest → account claim. Edge Functions shipped: `request-account-deletion` and `purge-account` (daily `pg_cron`). The
   Claude proxy Edge Function is still Phase 13.
 - **Manual sync (shipped) — replaces always-on replication.** Nothing leaves the device until the learner presses
-  Synchronise, or Autosync (device-local, on by default) runs one on reconnect, focus, leaving and after writes settle.
+  Synchronise, or Autosync (a preference, on by default) runs one on reconnect, focus, leaving and after writes settle.
+  An account's first Sync on a device runs by itself, under the splash.
   One Sync (`features/sync/sync-now.ts`) = peek ids since this device's checkpoint → classify against the pending-change
   log → one `live: false` cycle (`SyncManager.runCycle`) → confirm. Only a **destructive divergence** — deleted here,
   changed elsewhere — asks the learner anything. A Realtime watcher only lights the banner (`widgets/sync`). The risk is
@@ -106,10 +107,11 @@ Edge Functions, enable `pg_cron`/`pg_net`, store `project_url` + `service_role_k
   route (`ROUTES.devKitchenSink`) are deliberately built into **every** build, production included, because the iOS
   keyboard bugs behind [ADR 0002](adr/0002-keyboard-covers-the-app.md) are only reproducible in the installed PWA over
   HTTPS — a `import.meta.env.DEV` gate put the one diagnostic we needed out of reach of the one environment that shows
-  the bug. **That trade expires at 1.0.** The flag already exists (`useDevMode()`/`setDevMode()`,
-  `shared/lib/dev-mode.ts`) but **currently gates nothing** — it is a toggle _inside_ the Developer section, which
-  renders unconditionally. Ship it guarded: wrap that section in `useDevMode()`, give dev mode an unadvertised way in
-  (the convention is tapping the version on Settings → About seven times), and leave the route reachable but unlisted.
+  the bug. **That trade expires at 1.0.** The flag already exists — `preferences.devMode`, read with
+  `selectDevMode`, following the account — and gates extension admin screens, but it is still a toggle _inside_ the
+  Developer section, which renders unconditionally. Ship it guarded: wrap that section in `selectDevMode`, give dev
+  mode an unadvertised way in (the convention is tapping the version on Settings → About seven times), and leave the
+  route reachable but unlisted.
   Do _not_ simply delete the route — the probe is the reason three keyboard fixes stopped being guesswork.
 - **Checkpoint:** acceptance criteria met, Lighthouse installable + green, deployed, **no developer surface reachable
   from a first-run install**.

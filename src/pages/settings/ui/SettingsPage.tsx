@@ -35,13 +35,7 @@ import { profileHandle, selectEffectiveProfile, useProfileStore } from '@/entiti
 import type { SessionKind } from '@/entities/session'
 import { setPreferences } from '@/features/preferences'
 import { AVAILABLE_LANGUAGES, DAILY_GOAL_OPTIONS } from '@/shared/config/constants'
-import {
-  selectIsReady,
-  setDevMode,
-  setProbeOverlay,
-  useDevMode,
-  useProbeOverlay,
-} from '@/shared/lib'
+import { selectIsReady, setProbeOverlay, useProbeOverlay } from '@/shared/lib'
 import {
   AppScreen,
   Avatar,
@@ -84,7 +78,6 @@ export function SettingsPage({
   sessionKind = 'account',
 }: SettingsPageProps) {
   const { t, i18n } = useTranslation()
-  const devMode = useDevMode()
   const probeOverlay = useProbeOverlay()
   const prefsStore = usePreferencesStoreApi()
   const ready = usePreferencesStore(selectIsReady)
@@ -304,8 +297,8 @@ export function SettingsPage({
             icon={<Wrench />}
             label={t('settings.devMode')}
             description={t('settings.devModeHint')}
-            checked={devMode}
-            onCheckedChange={setDevMode}
+            checked={prefs.devMode}
+            onCheckedChange={(value) => update({ devMode: value })}
           />
           <SettingsRow
             kind="toggle"

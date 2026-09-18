@@ -5,7 +5,6 @@ export type { SyncStateState, SyncStateStore } from './model/store'
 export { SyncStateStoreContext, useSyncStateStore, useSyncStateStoreApi } from './model/context'
 export {
   checkpointFor,
-  selectAutosync,
   selectCloudChanged,
   selectLastSyncedAt,
   selectSyncState,

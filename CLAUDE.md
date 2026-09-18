@@ -100,7 +100,8 @@ the store from `useXStoreApi()` and pass it in. New mutation → new file + expo
 `order`, `naming`, `sync-divergence`, `card-style/`) + `use-long-press`, `gestures`, `haptics`, `motion`, `cn()`,
 `EventBus`, `useOnline`/`readOnline`, `useImageSrc`.
 
-**Sync (manual)** — nothing leaves the device until Synchronise or Autosync (device-local, on by default).
+**Sync (manual)** — nothing leaves the device until Synchronise or Autosync (a preference, on by default). An
+account's first Sync on a device runs by itself under the splash (`app/providers/use-first-sync.ts`, bounded, ADR 0004).
 `features/sync/sync-now.ts` = peek → classify → cycle → confirm; the only question ever put to the learner is a
 **destructive divergence** (deleted here, changed elsewhere). `SyncManager` owns the one-shot cycle + Realtime watcher;
 `SyncProvider` owns the runner + Autosync; `widgets/sync` = banner + review dialog. Device-local bookkeeping:

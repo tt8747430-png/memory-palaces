@@ -53,6 +53,16 @@ have nowhere to go, and the device's own bookkeeping about the cloud cannot itse
 history was in this category until it gained a mirror table; it is synced now, but still records no pending change,
 because an entry is never edited and so can never diverge.
 
+### The first Sync holds the splash — bounded
+
+An account's first Sync on a device (never completed one here: a fresh device, one just cleared of another account,
+guest data joining an account) runs by itself and holds the splash, so the learner lands on their decks rather than an
+empty Library. It is the one wait on the network besides the scheduled-deletion check, and it is bounded the same way:
+offline it releases at once, every outcome releases it, and past `FIRST_SYNC_BUDGET_MS` (10 s) the learner is let
+in while the cycle carries on under the banner. **Open now** lets them in sooner. With Autosync off it does not run at
+all — nothing leaves the device until the learner asks. Nothing is gated: the learner is only kept from an empty
+screen, never from a write.
+
 ### Synchronise is not gated — it declines
 
 A Sync is not an action that has to succeed when pressed; it is the device catching the cloud up. Offline, `syncNow`

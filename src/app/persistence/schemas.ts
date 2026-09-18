@@ -241,7 +241,7 @@ export const progressSchema: RxJsonSchema<Progress> = {
 }
 
 export const preferencesSchema: RxJsonSchema<Preferences> = {
-  version: 3,
+  version: 4,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -310,6 +310,9 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
       additionalProperties: false,
     },
     extensions: { type: 'array', items: { type: 'string' } },
+    devMode: { type: 'boolean' },
+    autosync: { type: 'boolean' },
+    libraryExpanded: { type: 'array', items: { type: 'string' } },
   },
   required: [
     'id',
@@ -332,6 +335,9 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
     'selectToolbar',
     'privacy',
     'extensions',
+    'devMode',
+    'autosync',
+    'libraryExpanded',
   ],
 }
 
@@ -408,15 +414,14 @@ export const pendingChangeSchema: RxJsonSchema<PendingChange> = {
 }
 
 export const syncStateSchema: RxJsonSchema<SyncState> = {
-  version: 1,
+  version: 2,
   primaryKey: 'id',
   type: 'object',
   properties: {
     id: { type: 'string', maxLength: 100 },
     checkpoints: { type: 'object', additionalProperties: true },
     lastSyncedAt: { type: ['string', 'null'] },
-    autosync: { type: 'boolean' },
     cloudChanged: { type: 'boolean' },
   },
-  required: ['id', 'checkpoints', 'autosync', 'cloudChanged'],
+  required: ['id', 'checkpoints', 'cloudChanged'],
 }

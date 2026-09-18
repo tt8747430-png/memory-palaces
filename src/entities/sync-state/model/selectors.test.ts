@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import { DEFAULT_SYNC_STATE } from './types'
 import {
   checkpointFor,
-  selectAutosync,
   selectCloudChanged,
   selectLastSyncedAt,
   selectSyncState,
@@ -14,7 +13,6 @@ const held: SyncStateState = {
   syncState: {
     ...DEFAULT_SYNC_STATE,
     checkpoints: { decks: at, cards: null },
-    autosync: true,
     cloudChanged: true,
     lastSyncedAt: '2026-02-02T00:00:00Z',
   },
@@ -28,13 +26,11 @@ const empty: SyncStateState = { ...held, syncState: null }
 describe('sync-state selectors', () => {
   it('reads the defaults until the first write — a new device has synced nothing', () => {
     expect(selectSyncState(empty)).toBe(DEFAULT_SYNC_STATE)
-    expect(selectAutosync(empty)).toBe(true)
     expect(selectCloudChanged(empty)).toBe(false)
     expect(selectLastSyncedAt(empty)).toBeNull()
   })
 
   it('reads the stored document once there is one', () => {
-    expect(selectAutosync(held)).toBe(true)
     expect(selectCloudChanged(held)).toBe(true)
     expect(selectLastSyncedAt(held)).toBe('2026-02-02T00:00:00Z')
   })

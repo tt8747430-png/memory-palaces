@@ -7,7 +7,8 @@ import {
   type RouteComponent,
 } from '@tanstack/react-router'
 import { ROUTES } from '@/shared/config/routes'
-import { type ExtensionRoute, readDevMode } from '@/shared/lib'
+import type { ExtensionRoute } from '@/shared/lib'
+import { selectDevMode } from '@/entities/preferences'
 import { RootLayout } from './RootLayout'
 import { authRedirect } from './auth-guard'
 import type { Services } from './composition-root'
@@ -50,8 +51,8 @@ const route = <Path extends string>(path: Path, component: RouteComponent) =>
  * extension goes off while one is open. Each is guarded on the way in: the guard **awaits the
  * runtime settling on loaded preferences** — `beforeLoad` runs before any provider has rendered, and
  * an unloaded store is not "off"; without the wait a cold deep link to an enabled extension would be
- * bounced. An admin route renders in dev mode only. The screen itself stays a lazy route component,
- * so the router preloads it on intent like any other.
+ * bounced. An admin route renders in dev mode only, read from the same settled preferences. The
+ * screen itself stays a lazy route component, so the router preloads it on intent like any other.
  *
  * `AnyRoute`, because a manifest declares its paths at runtime: the type system cannot know them,
  * and inferring from their `string` would blur every core route's params with them.
@@ -69,12 +70,12 @@ const extensionRoutes = EXTENSIONS.map((manifest): AnyRoute => {
       validateSearch: declared.validateSearch,
       component: lazyScreen(declared.load)(declared.name),
       beforeLoad: async ({ context }) => {
-        const { extensions } = context.services
+        const { extensions, preferencesStore } = context.services
         await extensions.settled()
         const target = extensionRedirect(manifest.id, {
           active: extensions.isActive(manifest.id),
           admin,
-          devMode: readDevMode(),
+          devMode: selectDevMode(preferencesStore.getState()),
         })
         if (target) throw redirect(target)
       },

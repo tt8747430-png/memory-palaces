@@ -7,7 +7,6 @@ export interface SyncState {
   id: typeof SYNC_STATE_ID
   checkpoints: Partial<Record<SyncedTable, Checkpoint | null>>
   lastSyncedAt: string | null
-  autosync: boolean
   cloudChanged: boolean
 }
 
@@ -15,7 +14,6 @@ export const DEFAULT_SYNC_STATE: SyncState = {
   id: SYNC_STATE_ID,
   checkpoints: {},
   lastSyncedAt: null,
-  autosync: true,
   cloudChanged: false,
 }
 

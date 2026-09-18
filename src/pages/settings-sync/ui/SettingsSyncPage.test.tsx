@@ -23,10 +23,11 @@ import {
 import {
   createSyncStateStore,
   DEFAULT_SYNC_STATE,
-  selectSyncState,
   type SyncState,
   SyncStateStoreContext,
 } from '@/entities/sync-state'
+import { PreferencesStoreContext } from '@/entities/preferences'
+import { preferencesStoreHolding } from '@/entities/preferences/testing/stored-preferences'
 import { SettingsSyncPage } from './SettingsSyncPage'
 
 const toast = vi.hoisted(() => Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn() }))
@@ -74,6 +75,7 @@ async function setup(
   const syncStateRepo = new InMemoryRepository<SyncState>()
   await syncStateRepo.save(DEFAULT_SYNC_STATE)
   const syncStateStore = started(createSyncStateStore(syncStateRepo))
+  const preferencesStore = preferencesStoreHolding(null)
 
   const wrap = (children: ReactNode) => (
     <I18nextProvider i18n={i18n}>
@@ -82,14 +84,16 @@ async function setup(
           value={started(createPendingChangeStore(new InMemoryRepository(pending)))}
         >
           <SyncStateStoreContext value={syncStateStore}>
-            <SyncRunnerContext value={value}>{children}</SyncRunnerContext>
+            <PreferencesStoreContext value={preferencesStore}>
+              <SyncRunnerContext value={value}>{children}</SyncRunnerContext>
+            </PreferencesStoreContext>
           </SyncStateStoreContext>
         </PendingChangeStoreContext>
       </SessionStoreContext>
     </I18nextProvider>
   )
   render(wrap(<SettingsSyncPage />))
-  return { runner: value, syncStateStore }
+  return { runner: value, preferencesStore }
 }
 
 const change = (contentCollection: PendingChange['contentCollection'], entityId: string) =>
@@ -149,12 +153,12 @@ describe('SettingsSyncPage', () => {
     expect(toast).toHaveBeenCalledWith(expect.stringMatching(/nothing needs your answer/i))
   })
 
-  it('turns Autosync off for this device', async () => {
-    const { syncStateStore } = await setup()
+  it('turns Autosync off for the account — it is a preference, and follows it', async () => {
+    const { preferencesStore } = await setup()
 
     expect(await screen.findByRole('switch', { name: /autosync/i })).toBeChecked()
     await userEvent.click(await screen.findByRole('switch', { name: /autosync/i }))
 
-    await waitFor(() => expect(selectSyncState(syncStateStore.getState()).autosync).toBe(false))
+    await waitFor(() => expect(preferencesStore.getState().preferences?.autosync).toBe(false))
   })
 })

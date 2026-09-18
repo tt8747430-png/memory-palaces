@@ -1,8 +1,7 @@
 import { vi } from 'vitest'
-import { InMemoryRepository } from '@/shared/api'
 import type { ExtensionContext, ExtensionManifest } from '@/shared/lib'
-import { started } from '@/shared/test/started'
-import { createPreferencesStore, makePreferences, type Preferences } from '@/entities/preferences'
+import type { Preferences } from '@/entities/preferences'
+import { preferencesStoreHolding } from '@/entities/preferences/testing/stored-preferences'
 import type { LoadedExtension } from '../load-extensions'
 
 export const FAKE_MESSAGES = { label: 'Fake', description: 'A fake extension', admin: 'Fake admin' }
@@ -49,15 +48,6 @@ export function loaded(manifest = fakeManifest(), activate = fakeActivate()): Lo
 }
 
 /** A started preferences store holding `extensions`, or holding nothing at all when null. */
-export function preferencesWith(extensions: string[] | null) {
-  const stored: Preferences[] =
-    extensions === null
-      ? []
-      : [
-          {
-            ...makePreferences({ id: 'preferences', createdAt: new Date(0).toISOString() }),
-            extensions,
-          },
-        ]
-  return started(createPreferencesStore(new InMemoryRepository<Preferences>(stored)))
+export function preferencesWith(extensions: string[] | null, overrides: Partial<Preferences> = {}) {
+  return preferencesStoreHolding(extensions === null ? null : { ...overrides, extensions })
 }

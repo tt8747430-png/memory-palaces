@@ -42,7 +42,7 @@ export const settings = {
   kitchenSink: 'Kitchen sink',
   kitchenSinkHint: 'Component states and the live keyboard & viewport probe.',
   devMode: 'Developer mode',
-  devModeHint: 'Unlocks diagnostics as they land. Nothing else uses it yet.',
+  devModeHint: 'Shows admin screens, such as the Bible library, on every device you sign in on.',
   probeOverlay: 'Viewport probe overlay',
   probeOverlayHint: 'Floats the keyboard readings over every screen, and records a trace.',
   signOut: 'Log out',

@@ -13,6 +13,8 @@ export const auth = {
   splash: {
     tagline: 'Remember everything',
     skip: 'Skip intro',
+    syncing: 'Bringing in your decks…',
+    openNow: 'Open now',
   },
   login: {
     title: 'Welcome back',

@@ -3,7 +3,7 @@ import { AnimatePresence } from 'motion/react'
 import { I18nextProvider, useTranslation } from 'react-i18next'
 import { CloudOff } from 'lucide-react'
 import { i18n } from '@/shared/i18n'
-import { useSplashStore } from '@/shared/lib'
+import { selectSplashShown, selectSplashWaitingOnSync, useSplashStore } from '@/shared/lib'
 import { Button, Curtain, Empty } from '@/shared/ui'
 import { SplashOverlay } from '@/widgets/splash'
 import { App } from './App'
@@ -30,9 +30,10 @@ function BootFailure() {
 export function Bootstrap() {
   const [services, setServices] = useState<Services | null>(null)
   const [failed, setFailed] = useState(false)
-  const [animationDone, setAnimationDone] = useState(false)
-  const splashDone = useSplashStore((state) => state.done)
-  const finishSplash = useSplashStore((state) => state.finish)
+  const shown = useSplashStore(selectSplashShown)
+  const waiting = useSplashStore(selectSplashWaitingOnSync)
+  const release = useSplashStore((state) => state.release)
+  const skip = useSplashStore((state) => state.skip)
 
   useEffect(() => {
     let live = true
@@ -51,14 +52,16 @@ export function Bootstrap() {
   }, [])
 
   useEffect(() => {
-    if (animationDone && services) finishSplash()
-  }, [animationDone, services, finishSplash])
+    if (services) release('boot')
+  }, [services, release])
 
   return (
     <I18nextProvider i18n={i18n}>
       {failed ? <BootFailure /> : services ? <App services={services} /> : null}
       <AnimatePresence>
-        {failed || splashDone ? null : <SplashOverlay onDone={() => setAnimationDone(true)} />}
+        {failed || !shown ? null : (
+          <SplashOverlay waiting={waiting} onIntroDone={() => release('intro')} onSkip={skip} />
+        )}
       </AnimatePresence>
     </I18nextProvider>
   )

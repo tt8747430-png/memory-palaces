@@ -11,10 +11,9 @@ import {
   flattenDecks,
   selectIsReady,
   siblingDecks,
-  toggleInSet,
   useOptimisticPatch,
-  usePersistedSet,
 } from '@/shared/lib'
+import { useLibraryExpanded } from './use-library-expanded'
 
 export interface LibraryView {
   ready: boolean
@@ -50,9 +49,7 @@ export function useLibraryData(folderId: string | null): LibraryData {
   const [unsorted, patchFolders] = useOptimisticPatch(storeFolders)
   const [decks, patchDecks] = useOptimisticPatch(storeDecks)
 
-  const [expanded, setExpanded] = usePersistedSet('mindscape.library.expanded')
-  const toggleExpanded = (id: string) => setExpanded((prev) => toggleInSet(prev, id))
-  const expand = (id: string) => setExpanded((prev) => new Set(prev).add(id))
+  const { ready: expandedReady, expanded, toggleExpanded, expand } = useLibraryExpanded()
 
   const folders = useMemo(() => [...unsorted].sort((a, b) => a.order - b.order), [unsorted])
   const openFolder = useMemo(() => findEntity(folders, folderId), [folders, folderId])
@@ -81,7 +78,7 @@ export function useLibraryData(folderId: string | null): LibraryData {
 
   return {
     view: {
-      ready: foldersReady && decksReady,
+      ready: foldersReady && decksReady && expandedReady,
       isEmpty: inFolder ? scopedDeckCount === 0 : folders.length === 0 && scopedDeckCount === 0,
       folders,
       decks,

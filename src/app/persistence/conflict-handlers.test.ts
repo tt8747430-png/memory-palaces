@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import type { Card } from '@/entities/card'
 import type { Progress } from '@/entities/progress'
-import { mergeCardConflict, mergeProgressConflict } from './conflict-handlers'
+import { storedPreferences } from '@/entities/preferences/testing/stored-preferences'
+import {
+  mergeCardConflict,
+  mergePreferencesConflict,
+  mergeProgressConflict,
+} from './conflict-handlers'
 
 const CTX = 'test'
 
@@ -88,5 +93,27 @@ describe('mergeCardConflict', () => {
     )
 
     expect(resolved._deleted).toBe(true)
+  })
+})
+
+describe('mergePreferencesConflict', () => {
+  const prefs = (updatedAt: string, over: Parameters<typeof storedPreferences>[0] = {}) =>
+    doc({ ...storedPreferences({ updatedAt, ...over }), _deleted: false })
+
+  it('keeps the setting another device changed while this one changed a different one', async () => {
+    const resolved = await mergePreferencesConflict.resolve(
+      {
+        assumedMasterState: prefs('t7'),
+        realMasterState: prefs('t8', { theme: 'dark' }),
+        newDocumentState: prefs('t9', { devMode: true }),
+      },
+      CTX,
+    )
+    expect(resolved).toMatchObject({
+      theme: 'dark',
+      devMode: true,
+      updatedAt: 't9',
+      _deleted: false,
+    })
   })
 })

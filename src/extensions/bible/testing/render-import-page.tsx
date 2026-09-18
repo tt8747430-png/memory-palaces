@@ -8,6 +8,8 @@ import { renderWithProviders } from '@/shared/test/render-with-providers'
 import { type Card, CardStoreContext, createCardStore } from '@/entities/card'
 import { type Deck, DeckStoreContext } from '@/entities/deck'
 import { createFolderStore, type Folder, FolderStoreContext } from '@/entities/folder'
+import { PreferencesStoreContext } from '@/entities/preferences'
+import { preferencesStoreHolding } from '@/entities/preferences/testing/stored-preferences'
 import { ExtensionServicesContext } from '@/shared/lib'
 import { BIBLE_ID } from '../ids'
 import type { BibleServices } from '../model/context'
@@ -20,6 +22,8 @@ export interface ImportHarness {
   cards?: Card[]
   folders?: Folder[]
   verses?: BibleVerse[]
+  /** Dev mode, as the account's preferences hold it. */
+  devMode?: boolean
 }
 
 /**
@@ -35,7 +39,8 @@ export function importStores(harness: ImportHarness = {}) {
   const verseStore = started(
     createBibleVerseStore(new InMemoryRepository<BibleVerse>(harness.verses ?? [])),
   )
-  return { deckStore, cardStore, folderStore, verseStore }
+  const preferencesStore = preferencesStoreHolding({ devMode: harness.devMode ?? false })
+  return { deckStore, cardStore, folderStore, verseStore, preferencesStore }
 }
 
 export type ImportStores = ReturnType<typeof importStores>
@@ -44,15 +49,17 @@ export type ImportStores = ReturnType<typeof importStores>
 const bibleServices = (stores: ImportStores): BibleServices => ({ verseStore: stores.verseStore })
 
 const inStores = (stores: ImportStores, children: ReactNode) => (
-  <DeckStoreContext value={stores.deckStore}>
-    <CardStoreContext value={stores.cardStore}>
-      <FolderStoreContext value={stores.folderStore}>
-        <ExtensionServicesContext value={{ [BIBLE_ID]: bibleServices(stores) }}>
-          {children}
-        </ExtensionServicesContext>
-      </FolderStoreContext>
-    </CardStoreContext>
-  </DeckStoreContext>
+  <PreferencesStoreContext value={stores.preferencesStore}>
+    <DeckStoreContext value={stores.deckStore}>
+      <CardStoreContext value={stores.cardStore}>
+        <FolderStoreContext value={stores.folderStore}>
+          <ExtensionServicesContext value={{ [BIBLE_ID]: bibleServices(stores) }}>
+            {children}
+          </ExtensionServicesContext>
+        </FolderStoreContext>
+      </CardStoreContext>
+    </DeckStoreContext>
+  </PreferencesStoreContext>
 )
 
 export function renderImportPage(page: ReactNode, harness: ImportHarness = {}): ImportStores {

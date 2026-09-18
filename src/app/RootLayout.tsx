@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect } from 'react'
 import { Outlet } from '@tanstack/react-router'
-import { useKeyboardInset, useSplashStore } from '@/shared/lib'
+import { useKeyboardInset, useSplashShown } from '@/shared/lib'
 import { AppNav } from '@/widgets/bottom-nav'
 import { ProbeOverlay } from '@/widgets/dev-probe'
 import { SyncReviewDialog } from '@/widgets/sync'
@@ -14,18 +14,18 @@ const Devtools = import.meta.env.DEV
   : () => null
 
 export function RootLayout() {
-  const splashDone = useSplashStore((state) => state.done)
+  const splashShown = useSplashShown()
   useKeyboardInset()
 
   useEffect(() => {
-    if (splashDone) return
+    if (!splashShown) return
     const active = document.activeElement
     if (active instanceof HTMLElement && active !== document.body) active.blur()
-  }, [splashDone])
+  }, [splashShown])
 
   return (
     <>
-      <div inert={!splashDone} className="contents">
+      <div inert={splashShown} className="contents">
         <Outlet />
         <AppNav />
         <SyncReviewDialog />

@@ -12,12 +12,12 @@ describe('completeSyncState', () => {
   })
 
   it('pins the singleton id and a checkpoints map, whatever was stored', () => {
-    const stored = { id: 'other', checkpoints: null, autosync: true } as unknown as SyncState
+    const stored = { id: 'other', checkpoints: null, cloudChanged: true } as unknown as SyncState
 
     expect(completeSyncState(stored)).toMatchObject({
       id: SYNC_STATE_ID,
       checkpoints: {},
-      autosync: true,
+      cloudChanged: true,
     })
   })
 })

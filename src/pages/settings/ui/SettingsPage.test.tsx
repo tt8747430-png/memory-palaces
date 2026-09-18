@@ -75,6 +75,20 @@ describe('SettingsPage', () => {
     })
   })
 
+  it('switches developer mode in the preferences, so it follows the account', async () => {
+    const user = userEvent.setup()
+    const { prefsRepo } = renderSettings()
+
+    const devMode = screen.getByRole('switch', { name: 'Developer mode' })
+    expect(devMode).toHaveAttribute('aria-checked', 'false')
+    await user.click(devMode)
+
+    await waitFor(async () => {
+      const [prefs] = await prefsRepo.getAll()
+      expect(prefs?.devMode).toBe(true)
+    })
+  })
+
   it('opens the Profile screen from the profile card', async () => {
     const user = userEvent.setup()
     const onEditProfile = vi.fn()

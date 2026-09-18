@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { InMemoryRepository } from '@/shared/api'
-import { setDevMode } from '@/shared/lib'
 import { ROUTES } from '@/shared/config/routes'
 import { i18n } from '@/shared/i18n'
 import { EXTENSIONS } from './extensions/registry'
@@ -13,29 +12,30 @@ import { createAppRouter } from './router'
 const IMPORT = '/import/bible'
 const LIBRARY = '/settings/extensions/bible'
 
-/** The router reads only the session and the extension runtime before it renders anything. */
-async function routerWith(extensions: string[]) {
+/** The router reads only the session, preferences and the runtime before it renders anything. */
+async function routerWith(extensions: string[], devMode = false) {
+  const preferencesStore = preferencesWith(extensions, { devMode })
   const runtime = createExtensionRuntime({
     extensions: await loadExtensions(EXTENSIONS),
-    preferences: preferencesWith(extensions),
+    preferences: preferencesStore,
     repositories: { bibleVerses: new InMemoryRepository([]) },
   })
   runtime.start()
   const services = {
     sessionStore: { getState: () => ({ status: 'ready', session: { kind: 'account' } }) },
+    preferencesStore,
     extensions: runtime,
   } as unknown as Services
   return createAppRouter(services)
 }
 
-async function open(extensions: string[], to: string) {
-  const router = await routerWith(extensions)
+async function open(extensions: string[], to: string, devMode = false) {
+  const router = await routerWith(extensions, devMode)
   await router.navigate({ to } as never)
   return router.state.location
 }
 
 afterEach(() => {
-  setDevMode(false)
   i18n.removeResourceBundle('en', 'bible')
 })
 
@@ -67,7 +67,6 @@ describe('extension routes', () => {
 
   it('keep the admin screen to dev mode', async () => {
     expect((await open(['bible'], LIBRARY)).pathname).toBe(ROUTES.settingsExtensions)
-    setDevMode(true)
-    expect((await open(['bible'], LIBRARY)).pathname).toBe(LIBRARY)
+    expect((await open(['bible'], LIBRARY, true)).pathname).toBe(LIBRARY)
   })
 })

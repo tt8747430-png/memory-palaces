@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, waitFor } from '@testing-library/react'
 import { i18n } from '@/shared/i18n'
-import { setDevMode } from '@/shared/lib'
 import { makeCard } from '@/entities/card'
 import { useImportDraft } from '@/widgets/content-editor'
 import { bibleMessages } from '../i18n/en'
@@ -29,7 +28,6 @@ const genesis = [verse(1, 1, 'First.'), verse(1, 2, 'Second.'), verse(1, 3, 'Thi
 
 afterEach(() => {
   cleanup()
-  setDevMode(false)
   useImportDraft.getState().clear()
 })
 
@@ -113,8 +111,7 @@ describe('useBibleImport — splitting and keeping', () => {
   })
 
   it('keeps every verse even with splitting off — the Bible library stores one record per verse', async () => {
-    setDevMode(true)
-    const { result, pick, verseStore } = render()
+    const { result, pick, verseStore } = render(undefined, { devMode: true })
     await pick(1, 1, 3)
     act(() => result.current.setText('1) A. 2) B. 3) C.'))
     act(() => result.current.set('split', false))
@@ -126,8 +123,7 @@ describe('useBibleImport — splitting and keeping', () => {
   })
 
   it('offers no Keep for text that names no single verse', async () => {
-    setDevMode(true)
-    const { result, pick } = render()
+    const { result, pick } = render(undefined, { devMode: true })
     await pick(1, 1, 3)
     // Unmarked text over a range is one card fronted `Genesis 1:1-3` — not a verse record.
     act(() => result.current.setText('In the beginning God created the heaven and the earth.'))
@@ -144,8 +140,7 @@ describe('useBibleImport — which books the picker offers', () => {
   })
 
   it('offers every book in dev mode — a book with no text is picked to publish its text', () => {
-    setDevMode(true)
-    const { result } = render(undefined, { verses: genesis })
+    const { result } = render(undefined, { verses: genesis, devMode: true })
     expect(result.current.isBookPickable('Exodus')).toBe(true)
   })
 })

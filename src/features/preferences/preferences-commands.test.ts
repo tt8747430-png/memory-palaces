@@ -18,6 +18,19 @@ function startedPreferencesStore(over: Partial<Preferences> = {}) {
 }
 
 describe('setPreferences', () => {
+  it('waits for what is stored before writing — an unloaded store is not "no settings"', async () => {
+    const stored = {
+      ...makePreferences({ id: PREFERENCES_ID, createdAt: new Date(0).toISOString() }),
+      theme: 'dark' as const,
+    }
+    const store = createPreferencesStore(new InMemoryRepository<Preferences>([stored]))
+    const written = setPreferences(store, { haptics: false }, NOW)
+    store.getState().start()
+    const prefs = await written
+    expect(prefs.theme).toBe('dark')
+    expect(prefs.haptics).toBe(false)
+  })
+
   it('creates the singleton and applies a change, keeping other defaults', async () => {
     const store = startedStore()
     const prefs = await setPreferences(store, { haptics: false }, NOW)
