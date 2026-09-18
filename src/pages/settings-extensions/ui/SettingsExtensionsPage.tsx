@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Blocks, ChevronRight } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   isExtensionEnabled,
@@ -76,7 +76,7 @@ export function SettingsExtensionsPage({
                 >
                   <SettingsRow
                     kind="toggle"
-                    icon={manifest.icon ?? <Blocks />}
+                    icon={manifest.icon}
                     label={label}
                     description={contributed(manifest.descriptionKey)}
                     checked={isExtensionEnabled(prefs, manifest.id)}
