@@ -6,6 +6,7 @@ interface Call {
   table: string
   columns: string
   filter: string
+  signal?: AbortSignal
 }
 
 function fakeSupabase(pages: Record<string, unknown[][]>) {
@@ -25,8 +26,16 @@ function fakeSupabase(pages: Record<string, unknown[][]>) {
           return builder
         },
         in(_column: string, ids: string[]) {
-          calls.push({ ...call, filter: `in:${ids.join(',')}` })
-          return Promise.resolve({ data: pages[table]?.[0] ?? [], error: null })
+          const index = nextPage.get(table) ?? 0
+          nextPage.set(table, index + 1)
+          const made: Call = { ...call, filter: `in:${ids.join(',')}` }
+          calls.push(made)
+          return {
+            abortSignal(signal: AbortSignal) {
+              made.signal = signal
+              return Promise.resolve({ data: pages[table]?.[index] ?? [], error: null })
+            },
+          }
         },
         order() {
           return builder
@@ -34,7 +43,12 @@ function fakeSupabase(pages: Record<string, unknown[][]>) {
         limit() {
           const index = nextPage.get(table) ?? 0
           nextPage.set(table, index + 1)
-          return Promise.resolve({ data: pages[table]?.[index] ?? [], error: null })
+          return {
+            abortSignal(signal: AbortSignal) {
+              call.signal = signal
+              return Promise.resolve({ data: pages[table]?.[index] ?? [], error: null })
+            },
+          }
         },
       }
       return builder
@@ -87,7 +101,9 @@ describe('peekRemoteChanges', () => {
           or: () => ({
             order: () => ({
               order: () => ({
-                limit: () => Promise.resolve({ data: null, error: { message: 'nope' } }),
+                limit: () => ({
+                  abortSignal: () => Promise.resolve({ data: null, error: { message: 'nope' } }),
+                }),
               }),
             }),
           }),
@@ -100,6 +116,28 @@ describe('peekRemoteChanges', () => {
 })
 
 describe('fetchRemoteDocuments', () => {
+  it('asks in batches of a hundred ids, and hands the answers back as one list', async () => {
+    const ids = Array.from({ length: 250 }, (_, i) => `d${i}`)
+    const row = (id: string) => ({ id, data: { id }, deleted: false })
+    const { client, calls } = fakeSupabase({
+      decks: [ids.slice(0, 100).map(row), ids.slice(100, 200).map(row), ids.slice(200).map(row)],
+    })
+
+    const documents = await fetchRemoteDocuments(client, 'decks', ids)
+
+    expect(calls).toHaveLength(3)
+    expect(calls[0]?.filter.split(',')).toHaveLength(100)
+    expect(calls[2]?.filter).toBe(`in:${ids.slice(200).join(',')}`)
+    expect(documents.map((document) => document.id)).toEqual(ids)
+  })
+
+  it('bounds every request, so a hung one cannot hold a Sync forever', async () => {
+    const { client, calls } = fakeSupabase({ decks: [[]] })
+    await fetchRemoteDocuments(client, 'decks', ['d1'])
+    await peekRemoteChanges(client, 'decks', null)
+    expect(calls.every((call) => call.signal instanceof AbortSignal)).toBe(true)
+  })
+
   it('asks for nothing when there are no ids', async () => {
     const { client, calls } = fakeSupabase({ decks: [[]] })
 

@@ -4,6 +4,7 @@ import type { RxReplicationWriteToMasterRow, WithDeleted } from 'rxdb'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { type Checkpoint, EPOCH, type Identifiable } from '@/shared/api'
 import { docToRow, type PushRow, type Row, rowToDoc } from './document-mapping'
+import { requestSignal } from './request-timeout'
 
 /** The clock of the server copy RxDB recorded when this device last pulled the document. */
 const baseOf = <T>(row: RxReplicationWriteToMasterRow<T>): string | null => {
@@ -62,10 +63,9 @@ export function createCollectionReplication<T extends Identifiable>({
     live: false,
     push: {
       async handler(rows) {
-        const { data, error } = await supabase.rpc('push_documents', {
-          p_table: table,
-          p_rows: buildPushPayload(rows, userId),
-        })
+        const { data, error } = await supabase
+          .rpc('push_documents', { p_table: table, p_rows: buildPushPayload(rows, userId) })
+          .abortSignal(requestSignal())
         if (error) throw new Error(error.message)
         const refused = ((data ?? []) as Row[]).map((row) => rowToDoc<T>(row) as WithDeleted<T>)
         const held = new Set(refused.map((row) => row.id))
@@ -86,6 +86,7 @@ export function createCollectionReplication<T extends Identifiable>({
           .order('updated_at', { ascending: true })
           .order('id', { ascending: true })
           .limit(batchSize)
+          .abortSignal(requestSignal())
         if (error) throw new Error(error.message)
         return rowsToPullResult<T>((data ?? []) as Row[], checkpoint)
       },

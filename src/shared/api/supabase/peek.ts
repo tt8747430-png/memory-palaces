@@ -8,10 +8,14 @@ import {
   type RemoteParents,
 } from '@/shared/api'
 import type { SyncedTable } from '@/shared/config/sync-tables'
+import { chunk } from '@/shared/lib'
 import { buildPullFilter } from './replication'
 import { type Row, rowToDoc } from './document-mapping'
+import { requestSignal } from './request-timeout'
 
 const PEEK_BATCH = 1000
+/** Ids per `in(...)` request: a URL carries the whole list, and a thousand of them is too long. */
+export const ID_BATCH = 100
 
 interface PeekRow {
   id: string
@@ -35,6 +39,7 @@ export async function peekRemoteChanges(
       .order('updated_at', { ascending: true })
       .order('id', { ascending: true })
       .limit(PEEK_BATCH)
+      .abortSignal(requestSignal())
     if (error) throw new Error(error.message)
 
     const rows = (data ?? []) as PeekRow[]
@@ -52,18 +57,34 @@ export async function peekRemoteChanges(
   }
 }
 
+/** `select` over the ids, a batch at a time, the batches concatenated in order. */
+async function byIds<T>(
+  supabase: SupabaseClient,
+  table: SyncedTable,
+  columns: string,
+  ids: readonly string[],
+): Promise<T[]> {
+  const batches = await Promise.all(
+    chunk(ids, ID_BATCH).map(async (batch) => {
+      const { data, error } = await supabase
+        .from(table)
+        .select(columns)
+        .in('id', batch)
+        .abortSignal(requestSignal())
+      if (error) throw new Error(error.message)
+      return (data ?? []) as unknown as T[]
+    }),
+  )
+  return batches.flat()
+}
+
 export async function fetchRemoteDocuments<T extends Identifiable>(
   supabase: SupabaseClient,
   table: SyncedTable,
   ids: readonly string[],
 ): Promise<CloudDocument<T>[]> {
-  if (!ids.length) return []
-  const { data, error } = await supabase
-    .from(table)
-    .select('id,data,deleted,updated_at')
-    .in('id', [...ids])
-  if (error) throw new Error(error.message)
-  return ((data ?? []) as Row[]).map((row) => rowToDoc<T>(row))
+  const rows = await byIds<Row>(supabase, table, 'id,data,deleted,updated_at', ids)
+  return rows.map((row) => rowToDoc<T>(row))
 }
 
 export async function fetchRemoteParents(
@@ -71,11 +92,10 @@ export async function fetchRemoteParents(
   table: SyncedTable,
   ids: readonly string[],
 ): Promise<RemoteParents[]> {
-  if (!ids.length) return []
-  const { data, error } = await supabase
-    .from(table)
-    .select('id,deckId:data->>deckId,parentId:data->>parentId,folderId:data->>folderId')
-    .in('id', [...ids])
-  if (error) throw new Error(error.message)
-  return (data ?? []) as unknown as RemoteParents[]
+  return byIds<RemoteParents>(
+    supabase,
+    table,
+    'id,deckId:data->>deckId,parentId:data->>parentId,folderId:data->>folderId',
+    ids,
+  )
 }

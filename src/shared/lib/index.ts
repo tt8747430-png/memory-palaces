@@ -157,6 +157,7 @@ export { ResetLocalDataContext, useResetLocalData } from './reset-local-data-con
 export { useValidatedSubmit, type FieldErrors, type ValidatedSubmit } from './use-validated-submit'
 export { readOnline, useOnline } from './use-online'
 export { structurallyEqual } from './structurally-equal'
+export { chunk } from './chunk'
 export { useRouteSearch } from './use-route-search'
 export { useBack, useBackTo } from './use-back'
 export { useLatest } from './use-latest'
