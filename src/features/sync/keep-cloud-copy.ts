@@ -16,9 +16,7 @@ export async function keepCloudCopy(
   const candidates = new Map(
     CONTENT_COLLECTIONS.map((collection) => [
       collection,
-      removed
-        .filter((change) => change.table === collection)
-        .map((change) => change.entityId),
+      removed.filter((change) => change.table === collection).map((change) => change.entityId),
     ]),
   )
   const subtree = await cloudDescendants(deps, [item.id], candidates)

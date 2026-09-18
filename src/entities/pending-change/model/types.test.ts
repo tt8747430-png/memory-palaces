@@ -40,11 +40,11 @@ describe('makePendingChange', () => {
   })
 
   it('refuses an entry with no document or no time', () => {
-    expect(() =>
-      makePendingChange({ table: 'decks', entityId: '', op: 'save', at: AT }),
-    ).toThrow('belongs to a document')
-    expect(() =>
-      makePendingChange({ table: 'decks', entityId: 'd1', op: 'save', at: '' }),
-    ).toThrow('happened at a time')
+    expect(() => makePendingChange({ table: 'decks', entityId: '', op: 'save', at: AT })).toThrow(
+      'belongs to a document',
+    )
+    expect(() => makePendingChange({ table: 'decks', entityId: 'd1', op: 'save', at: '' })).toThrow(
+      'happened at a time',
+    )
   })
 })

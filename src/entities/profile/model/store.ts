@@ -6,6 +6,9 @@ import { completeProfile, type Profile } from './types'
 export type ProfileState = SingletonState<'profile', Profile>
 export type ProfileStore = StoreApi<ProfileState>
 
-export function createProfileStore(repo: ProfileRepository, pending?: PendingChangePort): ProfileStore {
+export function createProfileStore(
+  repo: ProfileRepository,
+  pending?: PendingChangePort,
+): ProfileStore {
   return createSingletonStore('profile', repo, completeProfile, pending)
 }

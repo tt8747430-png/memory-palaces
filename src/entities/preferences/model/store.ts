@@ -6,6 +6,9 @@ import { completePreferences, type Preferences } from './types'
 export type PreferencesState = SingletonState<'preferences', Preferences>
 export type PreferencesStore = StoreApi<PreferencesState>
 
-export function createPreferencesStore(repo: PreferencesRepository, pending?: PendingChangePort): PreferencesStore {
+export function createPreferencesStore(
+  repo: PreferencesRepository,
+  pending?: PendingChangePort,
+): PreferencesStore {
   return createSingletonStore('preferences', repo, completePreferences, pending)
 }

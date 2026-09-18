@@ -1,5 +1,5 @@
 import type { RealtimePostgresChangesPayload, SupabaseClient } from '@supabase/supabase-js'
-import { EPOCH, type RemoteChangeEvent, type RemoteChangeHandlers } from '@/shared/api'
+import { EPOCH, type RemoteChangeHandlers } from '@/shared/api'
 import type { SyncedTable } from '@/shared/config/sync-tables'
 import type { Row } from './document-mapping'
 
@@ -45,5 +45,3 @@ export function createCloudWatcher(
     },
   }
 }
-
-export type { RemoteChangeEvent }

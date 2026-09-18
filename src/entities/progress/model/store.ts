@@ -6,6 +6,9 @@ import { completeProgress, type Progress } from './types'
 export type ProgressState = SingletonState<'progress', Progress>
 export type ProgressStore = StoreApi<ProgressState>
 
-export function createProgressStore(repo: ProgressRepository, pending?: PendingChangePort): ProgressStore {
+export function createProgressStore(
+  repo: ProgressRepository,
+  pending?: PendingChangePort,
+): ProgressStore {
   return createSingletonStore('progress', repo, completeProgress, pending)
 }
