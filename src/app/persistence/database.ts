@@ -16,12 +16,8 @@ import type { SyncState } from '@/entities/sync-state'
 import { coerceImagePath } from '@/shared/lib'
 import { STORAGE_PREFIX } from '@/shared/config/constants'
 import { DEFAULT_SELECT_TOOLBAR } from '@/shared/config/select-toolbar'
-import {
-  firstWriteWins,
-  lastWriteWins,
-  mergeCardConflict,
-  mergeProgressConflict,
-} from './conflict-handlers'
+import { firstWriteWins, lastWriteWins } from '@/shared/api/rxdb'
+import { mergeCardConflict, mergeProgressConflict } from './conflict-handlers'
 import {
   cardSchema,
   deckSchema,
