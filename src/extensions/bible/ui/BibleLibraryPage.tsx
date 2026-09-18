@@ -100,7 +100,7 @@ export function BibleLibraryPage({ onBack }: BibleLibraryPageProps) {
     void cleanReferenceBacks(targets, async (id, back) => {
       await editCard(cardStore, id, { back })
     }).then(
-      (changed) => toast.success(t('cleanBacksCount', { count: changed })),
+      (changed) => toast.success(t('cleanedBacks', { count: changed })),
       () => toast.error(t('cleanFailed')),
     )
   }

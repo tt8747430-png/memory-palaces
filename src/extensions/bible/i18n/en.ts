@@ -41,6 +41,8 @@ export const bibleMessages = {
   cleanBacks: 'Clean references from backs',
   cleanBacksCount_one: '{{count}} card would change',
   cleanBacksCount_other: '{{count}} cards would change',
+  cleanedBacks_one: 'Cleaned {{count}} card',
+  cleanedBacks_other: 'Cleaned {{count}} cards',
   published_one: '{{count}} verse',
   published_other: '{{count}} verses',
   addFailed: 'Those cards could not be added. Nothing was changed.',
