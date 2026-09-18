@@ -6,6 +6,6 @@ import type { BibleVerseStore } from '../model/store'
  */
 export async function forgetBook(store: BibleVerseStore, book: string): Promise<number> {
   const doomed = store.getState().verses.filter((verse) => verse.book === book)
-  for (const verse of doomed) await store.getState().remove(verse.id)
+  await Promise.all(doomed.map((verse) => store.getState().remove(verse.id)))
   return doomed.length
 }

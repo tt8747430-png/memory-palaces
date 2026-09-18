@@ -24,11 +24,15 @@ export const bibleManifest: ExtensionManifest = {
   routes: [
     extensionRoute(
       BIBLE_IMPORT_PATH,
-      () => import('./ui/BibleImportPage'),
+      () => import('./ui/BibleImportScreen'),
       'BibleImportScreen',
       validateBibleImportSearch,
     ),
-    extensionRoute(BIBLE_LIBRARY_PATH, () => import('./ui/BibleLibraryPage'), 'BibleLibraryScreen'),
+    extensionRoute(
+      BIBLE_LIBRARY_PATH,
+      () => import('./ui/BibleLibraryScreen'),
+      'BibleLibraryScreen',
+    ),
   ],
   loadCollections: () =>
     import('./api/verse-schema').then((module) => [module.bibleVerseCollection]),

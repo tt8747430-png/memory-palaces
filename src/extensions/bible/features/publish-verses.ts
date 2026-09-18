@@ -6,6 +6,6 @@ export async function publishVerses(
   store: BibleVerseStore,
   verses: readonly BibleVerse[],
 ): Promise<number> {
-  for (const verse of verses) await store.getState().save(verse)
+  await Promise.all(verses.map((verse) => store.getState().save(verse)))
   return verses.length
 }

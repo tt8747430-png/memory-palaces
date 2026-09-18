@@ -2,12 +2,12 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { BookOpen, Eraser, Trash2 } from 'lucide-react'
-import { useNavigate } from '@tanstack/react-router'
 import { cardsInSubtree, nowIso, selectIsReady, useDevMode } from '@/shared/lib'
 import {
   AppScreen,
   Button,
   ConfirmDialog,
+  EmptyNotice,
   MissingScreen,
   ScreenHeader,
   ScreenLoading,
@@ -18,7 +18,6 @@ import { selectDecks, useDeckStore } from '@/entities/deck'
 import { selectFolders, useFolderStore } from '@/entities/folder'
 import { editCard } from '@/features/card'
 import { MoveSheet } from '@/widgets/deck-tree'
-import { ROUTES } from '@/shared/config/routes'
 import { useBibleT } from '../i18n/use-bible-t'
 import { useBibleVerseStore, useBibleVerseStoreApi } from '../model/context'
 import { cleanReferenceBacks } from '../features/clean-reference-backs'
@@ -102,7 +101,7 @@ export function BibleLibraryPage({ onBack }: BibleLibraryPageProps) {
     void cleanReferenceBacks(targets, async (id, back) => {
       await editCard(cardStore, id, { back })
     }).then(
-      (changed) => toast.success(t('cleanBacksCount', { count: changed })),
+      (changed) => toast.success(t('cleanedBacks', { count: changed })),
       () => toast.error(t('cleanFailed')),
     )
   }
@@ -132,9 +131,7 @@ export function BibleLibraryPage({ onBack }: BibleLibraryPageProps) {
         </div>
 
         {books.length === 0 ? (
-          <p className="rounded-card bg-card p-6 text-center text-body text-muted-foreground shadow-rest">
-            {t('empty')}
-          </p>
+          <EmptyNotice>{t('empty')}</EmptyNotice>
         ) : (
           <SettingsSection title={t('librarySubtitle')}>
             {books.map(([book, count]) => (
@@ -196,9 +193,4 @@ export function BibleLibraryPage({ onBack }: BibleLibraryPageProps) {
       />
     </AppScreen>
   )
-}
-
-export function BibleLibraryScreen() {
-  const navigate = useNavigate()
-  return <BibleLibraryPage onBack={() => void navigate({ to: ROUTES.settingsExtensions })} />
 }

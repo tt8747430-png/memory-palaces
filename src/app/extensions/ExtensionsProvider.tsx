@@ -1,4 +1,5 @@
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
+import { toast } from 'sonner'
 import { i18n } from '@/shared/i18n'
 import {
   type ExtensionContributions,
@@ -34,15 +35,33 @@ function MountedExtension({
 
   useEffect(() => {
     let live = true
-    void manifest.loadMessages().then((messages) => {
-      if (!live) return
-      i18n.addResourceBundle('en', manifest.namespace, messages, true, false)
-      onReadiness(manifest.id, true)
-    })
-    if (manifest.loadProvider) {
-      void manifest.loadProvider().then((module) => {
-        if (live) setProvider(() => module.ExtensionProvider)
+    let reported = false
+    /**
+     * A chunk that will not load — an offline first visit, a stale service worker — must not leave
+     * the extension silently half-mounted. Readiness is never granted, so its contributions stay
+     * withheld and no host paints a surface that cannot work, and the reader is told once.
+     */
+    const broken = () => {
+      if (!live || reported) return
+      reported = true
+      toast.error(i18n.t('settings.extensionsBroken'))
+    }
+
+    void manifest
+      .loadMessages()
+      .then((messages) => {
+        if (!live) return
+        i18n.addResourceBundle('en', manifest.namespace, messages, true, false)
+        onReadiness(manifest.id, true)
       })
+      .catch(broken)
+    if (manifest.loadProvider) {
+      void manifest
+        .loadProvider()
+        .then((module) => {
+          if (live) setProvider(() => module.ExtensionProvider)
+        })
+        .catch(broken)
     }
     return () => {
       live = false

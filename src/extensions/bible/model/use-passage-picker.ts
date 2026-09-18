@@ -37,6 +37,13 @@ export function usePassagePicker(): PassagePicker {
     [startOptions, from],
   )
 
+  // Memoised by value: `ref` is an effect dependency on the import screen, and a fresh object
+  // every render would re-run the prefill read on every render.
+  const ref = useMemo(
+    () => (book && chapter && from && to ? { book, chapter, from, to } : null),
+    [book, chapter, from, to],
+  )
+
   const step: PickerStep = !book
     ? 'book'
     : !chapter
@@ -53,7 +60,7 @@ export function usePassagePicker(): PassagePicker {
     chapter,
     from,
     to,
-    ref: book && chapter && from && to ? { book, chapter, from, to } : null,
+    ref,
     chapterOptions,
     startOptions,
     endOptions,

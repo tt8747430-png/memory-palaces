@@ -12,7 +12,7 @@ export const SYNCED_TABLES = [
 ] as const
 
 /** The core tables, closed — `SYNCED_TABLES` is still exactly these. */
-export type CoreSyncedTable = (typeof SYNCED_TABLES)[number]
+type CoreSyncedTable = (typeof SYNCED_TABLES)[number]
 
 /**
  * A table replication may carry, core or contributed. Open, because an extension's table name is

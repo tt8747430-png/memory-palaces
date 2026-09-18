@@ -23,10 +23,6 @@ export function parseRef(text: string): VerseRef | null {
   }
 }
 
-export function expandRange({ from, to }: VerseRef): number[] {
-  return Array.from({ length: to - from + 1 }, (_, index) => from + index)
-}
-
 /**
  * A reference part-way through being picked. The four fields travel together everywhere — the
  * picker holds them, the breadcrumb reads them — so they are one type rather than four parameters.
