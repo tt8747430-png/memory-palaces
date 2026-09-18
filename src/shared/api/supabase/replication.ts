@@ -47,8 +47,11 @@ export interface CollectionReplicationOptions<T> {
   table: string
   userId: string
   onPushed?: (ids: readonly string[]) => void
-  /** Off for a state made only to be `remove()`d — forgetting needs no cycle. */
-  autoStart?: boolean
+  /**
+   * Pull from the first document rather than from the checkpoint. Only the checkpoint is passed
+   * over: what each document was based on stays, so a change waiting here still merges against it.
+   */
+  fromStart?: boolean
 }
 
 /**
@@ -62,14 +65,15 @@ export function createCollectionReplication<T extends Identifiable>({
   table,
   userId,
   onPushed,
-  autoStart = true,
+  fromStart = false,
 }: CollectionReplicationOptions<T>): RxReplicationState<T, Checkpoint> {
+  // Once a batch has come back, RxDB hands the handler the checkpoint that batch ended on.
+  let rereading = fromStart
   return replicateRxCollection<T, Checkpoint>({
     collection,
     replicationIdentifier: `supabase-${table}`,
     deletedField: '_deleted',
     live: false,
-    autoStart,
     push: {
       async handler(rows) {
         const { data, error } = await supabase
@@ -88,16 +92,18 @@ export function createCollectionReplication<T extends Identifiable>({
     },
     pull: {
       async handler(checkpoint, batchSize) {
+        const since = rereading ? undefined : checkpoint
         const { data, error } = await supabase
           .from(table)
           .select('id,data,deleted,updated_at')
-          .or(buildPullFilter(checkpoint))
+          .or(buildPullFilter(since))
           .order('updated_at', { ascending: true })
           .order('id', { ascending: true })
           .limit(batchSize)
           .abortSignal(requestSignal())
         if (error) throw new Error(error.message)
-        return rowsToPullResult<T>((data ?? []) as Row[], checkpoint)
+        rereading = false
+        return rowsToPullResult<T>((data ?? []) as Row[], since)
       },
     },
   })

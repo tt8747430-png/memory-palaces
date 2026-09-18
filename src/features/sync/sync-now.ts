@@ -75,15 +75,15 @@ export async function syncNow(deps: SyncDeps, options: SyncNowOptions = {}): Pro
 }
 
 /**
- * A Sync that starts from nothing: every replication forgets what it pulled and pushed, the
- * checkpoints go, and the cycle reads the whole cloud again — every local document reconciled
- * against its cloud copy through the conflict handlers, every unsynced write kept. For a device
- * that looks out of date when the log says otherwise.
+ * A Sync that reads the whole cloud again: the checkpoints go, every replication pulls from the
+ * first document, and each one lands through the conflict handlers — a change waiting here merged
+ * field by field against the copy it was based on, never dropped. For a device that looks out of
+ * date when the log says otherwise.
  */
 export async function repairSync(deps: SyncDeps): Promise<SyncOutcome> {
   if (!deps.isOnline()) return { kind: 'offline' }
   try {
-    await deps.cloud.forget()
+    await deps.cloud.rereadEverything()
     const fresh = selectSyncState(deps.syncStateStore.getState())
     await deps.syncStateStore.getState().save({ ...fresh, checkpoints: {} })
   } catch (error) {

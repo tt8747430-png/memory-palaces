@@ -11,8 +11,7 @@ function fakeReplication() {
     reSync: vi.fn(),
     awaitInSync: vi.fn().mockResolvedValue(true),
     cancel: vi.fn().mockResolvedValue(undefined),
-    remove: vi.fn().mockResolvedValue(undefined),
-    autoStart: true,
+    fromStart: false,
   }
 }
 
@@ -40,9 +39,9 @@ function setup(
   const targets: SyncTarget[] = tables.map((table) => ({ table, collection: {} as never }))
   const manager = new SyncManager(
     targets,
-    (_userId, target, onPushed, autoStart) => {
+    (_userId, target, { onPushed, fromStart }) => {
       const replication = fakeReplication()
-      replication.autoStart = autoStart
+      replication.fromStart = fromStart
       configure(replication, onPushed, target.table)
       created.push(replication)
       return replication as never
@@ -133,19 +132,73 @@ describe('SyncManager', () => {
     expect(created).toHaveLength(4)
   })
 
-  it('forgets every live replication without running one, and only for an account', async () => {
-    const { manager, created, start } = setup(['decks', 'cards', 'bible_verses'])
-    await expect(manager.forget()).rejects.toThrow(/no account/i)
-    await start('u1', ['decks', 'cards'])
+  describe('rereadEverything', () => {
+    it('has the next cycle pull every live table from the first, and only that one', async () => {
+      const { manager, created, start } = setup(['decks', 'cards', 'bible_verses'])
+      await expect(manager.rereadEverything()).rejects.toThrow(/no account/i)
+      await start('u1', ['decks', 'cards'])
 
-    await manager.forget()
+      await manager.rereadEverything()
+      expect(created).toHaveLength(0)
+      await manager.runCycle()
+      await manager.runCycle()
 
-    expect(created).toHaveLength(2)
-    for (const replication of created) {
-      expect(replication.autoStart).toBe(false)
-      expect(replication.remove).toHaveBeenCalled()
-      expect(replication.reSync).not.toHaveBeenCalled()
-    }
+      expect(created.map((replication) => replication.fromStart)).toEqual([
+        true,
+        true,
+        false,
+        false,
+      ])
+    })
+
+    it('holds until a cycle finishes — one that fails leaves the next to read from the first', async () => {
+      let failing = true
+      const { manager, created, start } = setup(['decks'], (replication) => {
+        if (failing) replication.awaitInSync.mockRejectedValue(new Error('offline'))
+      })
+      await start()
+
+      await manager.rereadEverything()
+      await expect(manager.runCycle()).rejects.toThrow('offline')
+      failing = false
+      await manager.runCycle()
+      await manager.runCycle()
+
+      expect(created.map((replication) => replication.fromStart)).toEqual([true, true, false])
+    })
+
+    it('waits out a running cycle, so the one after it is the fresh one that rereads', async () => {
+      let finish: () => void = () => {}
+      const { manager, created, start } = setup(['decks'], (replication) => {
+        if (created.length === 0) {
+          replication.awaitInSync.mockReturnValue(
+            new Promise((resolve) => (finish = () => resolve(true))),
+          )
+        }
+      })
+      await start()
+
+      const running = manager.runCycle()
+      await vi.waitFor(() => expect(created).toHaveLength(1))
+      const asked = manager.rereadEverything()
+      finish()
+      await Promise.all([running, asked])
+      await manager.runCycle()
+
+      expect(created.map((replication) => replication.fromStart)).toEqual([false, true])
+    })
+
+    it('is dropped with the account that asked for it', async () => {
+      const { manager, created, start } = setup(['decks'])
+      await start('u1')
+      await manager.rereadEverything()
+
+      await manager.stop()
+      await start('u2')
+      await manager.runCycle()
+
+      expect(created[0]?.fromStart).toBe(false)
+    })
   })
 
   it('refuses to run before an account signs in — a cycle that pushed nothing must not read as done', async () => {

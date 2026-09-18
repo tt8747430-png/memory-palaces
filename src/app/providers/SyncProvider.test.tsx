@@ -90,7 +90,7 @@ function cloud(): CloudSyncPort & { [K in keyof CloudSyncPort]: ReturnType<typeo
     parents: vi.fn().mockResolvedValue([]),
     fetch: vi.fn().mockResolvedValue([]),
     runCycle: vi.fn().mockResolvedValue({}),
-    forget: vi.fn().mockResolvedValue(undefined),
+    rereadEverything: vi.fn().mockResolvedValue(undefined),
   }
 }
 

@@ -274,7 +274,7 @@ describe('syncNow', () => {
   })
 
   describe('repairSync', () => {
-    it('forgets what was pulled, drops the checkpoints and syncs again from nothing', async () => {
+    it('drops the checkpoints and syncs again, reading the whole cloud from the first', async () => {
       const { deps, cloud } = syncFixture({
         state: { checkpoints: { decks: { updated_at: '2026-02-01T00:00:00.000Z', id: 'x' } } },
       })
@@ -282,7 +282,7 @@ describe('syncNow', () => {
 
       await expect(repairSync(deps)).resolves.toEqual({ kind: 'merged' })
 
-      expect(cloud.forgotten).toBe(1)
+      expect(cloud.rereads).toBe(1)
       expect(cloud.cycles).toBe(1)
       expect(state(deps).checkpoints.decks).toEqual({
         updated_at: cloud.row('decks', 'remote')?.updated_at,

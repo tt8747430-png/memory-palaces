@@ -5,13 +5,13 @@ import type { SyncManager } from './sync-manager'
 
 export function createSupabaseCloudSync(
   supabase: SupabaseClient,
-  manager: Pick<SyncManager, 'runCycle' | 'forget'>,
+  manager: Pick<SyncManager, 'runCycle' | 'rereadEverything'>,
 ): CloudSyncPort {
   return {
     peek: (table, checkpoint) => peekRemoteChanges(supabase, table, checkpoint),
     parents: (table, ids) => fetchRemoteParents(supabase, table, ids),
     fetch: (table, ids) => fetchRemoteDocuments(supabase, table, ids),
     runCycle: () => manager.runCycle(),
-    forget: () => manager.forget(),
+    rereadEverything: () => manager.rereadEverything(),
   }
 }

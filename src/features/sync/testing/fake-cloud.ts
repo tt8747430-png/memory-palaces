@@ -46,8 +46,8 @@ export interface FakeCloud extends CloudSyncPort {
   pull?: (deps: SyncDeps) => void | Promise<void>
   failNextCycle(reason: string): void
   cycles: number
-  /** How many times the replications were told to forget what they had pulled. */
-  forgotten: number
+  /** How many times the next cycle was told to read the whole cloud again. */
+  rereads: number
   fetched: { table: SyncedTable; ids: readonly string[] }[]
 }
 
@@ -94,10 +94,10 @@ export function syncFixture(options: { state?: Partial<SyncState> } = {}) {
 
   const cloud: FakeCloud = {
     cycles: 0,
-    forgotten: 0,
+    rereads: 0,
     fetched: [],
-    async forget() {
-      cloud.forgotten += 1
+    async rereadEverything() {
+      cloud.rereads += 1
     },
     write(name, data, deleted = false) {
       table(name).set(data.id, {

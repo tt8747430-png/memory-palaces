@@ -161,8 +161,10 @@ Inline stepper that collapses (chosen). Visual world inherited — no new tokens
 - **Recent syncs**: the last 10 cycles on this device — when, outcome, pushed and pulled counts. Stored in `syncState.log`
   (device-local; schema v3 adds `log: []`, `completeSyncState` defaults it).
 - **Autosync** toggle (unchanged).
-- **Repair · Check everything against the cloud**: confirm dialog, then `repairSync` — forgets every replication's
-  checkpoint (`replicationState.remove()` with `autoStart: false`), clears the sync-state checkpoints, and runs a Sync.
+- **Repair · Check everything against the cloud**: confirm dialog, then `repairSync` — has the next cycle pull every
+  replication from the first document (`SyncManager.rereadEverything`; the pull handler passes over the checkpoint,
+  never `replicationState.remove()`, which would drop every `assumedMasterState` with it — ADR 0005), clears the
+  sync-state checkpoints, and runs a Sync.
   Every document is pulled again and every local document reconciled through the merge above; unsynced changes are
   kept. **Review pending changes** moves here.
 

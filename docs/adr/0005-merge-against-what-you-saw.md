@@ -64,3 +64,7 @@ exists on the server and on a device that never synced it.
   this — RxDB resolves and re-pushes within the same cycle — but the cycle takes a round trip more when it happens.
 - An older build's rows carry no `base` and keep last-writer-wins against each other. Two devices on the new build
   never lose an update; one on each may, until the old one updates.
+- **Nothing may drop what a device saw.** `replicationState.remove()` deletes the checkpoint _and_ every
+  `assumedMasterState` with it, turning each change still waiting into a base-less push and every conflict into
+  "newer whole document". Repair (`SyncManager.rereadEverything`) therefore passes over only the checkpoint: the pull
+  handler reads from the first document for one cycle, and every base stays.
