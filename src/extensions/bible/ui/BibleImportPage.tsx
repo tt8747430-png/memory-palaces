@@ -1,33 +1,29 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BookOpen, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import { nowIso, selectIsReady, useDevMode } from '@/shared/lib'
-import { selectCards, useCardStore } from '@/entities/card'
+import { useCardStore } from '@/entities/card'
 import { selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
 import { selectFolders, useFolderStore } from '@/entities/folder'
 import {
   AppScreen,
   Button,
   FooterBar,
+  PromptSheet,
   ScreenHeader,
   ScreenLoading,
   ToggleRow,
-  PromptSheet,
 } from '@/shared/ui'
 import { useImportDraft } from '@/widgets/content-editor'
 import { MoveSheet } from '@/widgets/deck-tree'
 import { useBibleT } from '../i18n/use-bible-t'
-import { formatPartial } from '../model/reference'
-import { usePassagePicker } from '../model/use-passage-picker'
-import { createStoredVerseSource, type StoredVerse } from '../model/verse-text'
+import { useBibleImport } from '../model/use-bible-import'
 import { useBibleVerseStore, useBibleVerseStoreApi } from '../model/context'
 import { DEFAULT_TRANSLATION } from '../model/verse'
-import { addVerseCards } from '../features/add-verse-cards'
-import { buildVerseCards, canSplit, findDuplicates } from '../model/verse-cards'
-import { targetIsResolvable, type VerseTarget } from '../model/verse-target'
-import { publishVerses } from '../features/publish-verses'
 import { versesFromCards } from '../model/verse-sources'
+import { addVerseCards } from '../features/add-verse-cards'
+import { publishVerses } from '../features/publish-verses'
 import { BookPicker } from './BookPicker'
 import { NumberGrid } from './NumberGrid'
 import { TargetPicker } from './TargetPicker'
@@ -41,87 +37,32 @@ export interface BibleImportPageProps {
   onShowDeck?: (deckId: string) => void
 }
 
-/** Markers, not a plain join: a plain one would round-trip into a single card for the whole range. */
-const prefillFrom = (verses: readonly StoredVerse[]): string =>
-  verses.map((held) => `${held.verse}) ${held.text}`).join(' ')
-
 export function BibleImportPage({ deckId, onBack, onReview, onShowDeck }: BibleImportPageProps) {
   const t = useBibleT()
   // The back label is core copy, not the extension's — one word, one place.
   const { t: core } = useTranslation()
-  const picker = usePassagePicker()
-  const deckStore = useDeckStoreApi()
+  const state = useBibleImport(deckId)
+  const { picker } = state
+  // A local const, so the `to` step's lead pill narrows it instead of re-checking inside a closure.
+  const from = picker.from
+
   const decks = useDeckStore(selectDecks)
   const folders = useFolderStore(selectFolders)
-  const cards = useCardStore(selectCards)
-  const verses = useBibleVerseStore((state) => state.verses)
+  const deckStore = useDeckStoreApi()
   const verseStore = useBibleVerseStoreApi()
-  // Until all three have mirrored, "not in your library yet" and "0 duplicates" would both be
-  // guesses dressed as facts, so the screen waits instead of saying them.
-  const ready = useBibleVerseStore(selectIsReady)
-  const cardsReady = useCardStore(selectIsReady)
-  const decksReady = useDeckStore(selectIsReady)
+  const setDraft = useImportDraft((draft) => draft.setDraft)
   const devMode = useDevMode()
-  const setDraft = useImportDraft((state) => state.setDraft)
-
-  const [text, setText] = useState('')
-  const [prefilled, setPrefilled] = useState(false)
-  const [split, setSplit] = useState(true)
-  const [keepDuplicates, setKeepDuplicates] = useState(false)
-  const [auto, setAuto] = useState(!deckId)
-  const [target, setTarget] = useState<VerseTarget>(
-    deckId ? { kind: 'deck', deckId } : { kind: 'automatic' },
-  )
   const [sheet, setSheet] = useState<'deck' | 'name' | null>(null)
 
-  const { book, chapter, from, to, step, ref } = picker
-  const breadcrumb = formatPartial({ book, chapter, from, to })
-  const source = useMemo(() => createStoredVerseSource(verses), [verses])
-
-  // Prefill only what the reader has not typed: their own text always wins.
-  const untouched = text.trim().length === 0
-  useEffect(() => {
-    if (!ref || !untouched) return
-    let live = true
-    void source.read(ref).then((held) => {
-      if (!live || held.length === 0) return
-      setText(prefillFrom(held))
-      setPrefilled(true)
-    })
-    return () => {
-      live = false
-    }
-  }, [ref, source, untouched])
-
-  const built = buildVerseCards(ref, text, { split })
-  const held = useMemo(
-    () => cards.map((card) => ({ front: card.front, deckId: card.deckId })),
-    [cards],
-  )
-  const duplicates = findDuplicates(built, held)
-  const addable = keepDuplicates
-    ? built
-    : built.filter((card) => !duplicates.some((entry) => entry.front === card.front))
-
-  const spansRange = Boolean(from && to && to > from)
-  const splitAvailable = canSplit(text)
-  // What splitting would produce, asked of the text and not of the current toggle — with the
-  // toggle off `built` is the single range card, which would read "Split into 1 individual verse".
-  const splitCount = useMemo(
-    () => (splitAvailable ? buildVerseCards(ref, text, { split: true }).length : 0),
-    [splitAvailable, ref, text],
-  )
-  const chapterName = book && chapter ? `${book} ${chapter}` : ''
-  const destination =
-    target.kind === 'deck'
-      ? (decks.find((deck) => deck.id === target.deckId)?.name ?? null)
-      : target.kind === 'newDeck'
-        ? target.name
-        : null
+  // Until all three have mirrored, "not in your library yet" and "0 duplicates" would both be
+  // guesses dressed as facts, so the screen waits instead of saying them.
+  const versesReady = useBibleVerseStore(selectIsReady)
+  const cardsReady = useCardStore(selectIsReady)
+  const decksReady = useDeckStore(selectIsReady)
 
   /** Dev-mode only: this is how the verse library is filled before a bundled translation exists. */
   const keep = () => {
-    void publishVerses(verseStore, versesFromCards(built, nowIso())).then(
+    void publishVerses(verseStore, versesFromCards(state.keepable, nowIso())).then(
       (kept) => toast.success(t('kept', { count: kept })),
       () => toast.error(t('keepFailed')),
     )
@@ -130,14 +71,21 @@ export function BibleImportPage({ deckId, onBack, onReview, onShowDeck }: BibleI
   const add = () => {
     void addVerseCards(
       { deckStore, setDraft },
-      { ref, text, split, target, held, keepDuplicates },
+      {
+        ref: picker.ref,
+        text: state.text,
+        split: state.split,
+        target: state.target,
+        held: state.held,
+        keepDuplicates: state.keepDuplicates,
+      },
     ).then(
       (reviewIn) => onReview?.(reviewIn),
       () => toast.error(t('addFailed')),
     )
   }
 
-  if (!ready || !cardsReady || !decksReady) {
+  if (!versesReady || !cardsReady || !decksReady) {
     return (
       <AppScreen
         header={
@@ -157,22 +105,17 @@ export function BibleImportPage({ deckId, onBack, onReview, onShowDeck }: BibleI
       }
       footer={
         <FooterBar>
-          <Button
-            size="lg"
-            className="w-full"
-            disabled={addable.length === 0 || !targetIsResolvable(target)}
-            onClick={add}
-          >
+          <Button size="lg" className="w-full" disabled={!state.canAdd} onClick={add}>
             <Sparkles className="size-4.5" aria-hidden />
-            {t('addCount', { count: addable.length })}
+            {t('addCount', { count: state.addable.length })}
           </Button>
         </FooterBar>
       }
     >
       <div className="mt-4 flex flex-col gap-5 pb-6">
-        {breadcrumb ? (
+        {state.breadcrumb ? (
           <p className="text-center text-title font-semibold tabular-nums text-heading">
-            {breadcrumb}
+            {state.breadcrumb}
           </p>
         ) : null}
 
@@ -180,29 +123,29 @@ export function BibleImportPage({ deckId, onBack, onReview, onShowDeck }: BibleI
           <Button variant="secondary" size="sm" onClick={picker.startOver}>
             {t('startOver')}
           </Button>
-          {step === 'done' ? (
+          {picker.step === 'done' ? (
             <Button variant="secondary" size="sm" onClick={picker.changeVerses}>
               {t('changeVerses')}
             </Button>
           ) : null}
         </div>
 
-        {step === 'book' ? <BookPicker onPick={picker.pickBook} /> : null}
-        {step === 'chapter' ? (
+        {picker.step === 'book' ? <BookPicker onPick={picker.pickBook} /> : null}
+        {picker.step === 'chapter' ? (
           <NumberGrid
             label={t('pickChapter')}
             values={picker.chapterOptions}
             onPick={picker.pickChapter}
           />
         ) : null}
-        {step === 'from' ? (
+        {picker.step === 'from' ? (
           <NumberGrid
             label={t('pickStart')}
             values={picker.startOptions}
             onPick={picker.pickFrom}
           />
         ) : null}
-        {step === 'to' && from ? (
+        {picker.step === 'to' && from ? (
           <NumberGrid
             label={t('pickEnd')}
             values={picker.endOptions}
@@ -212,16 +155,13 @@ export function BibleImportPage({ deckId, onBack, onReview, onShowDeck }: BibleI
         ) : null}
 
         <VerseTextPanel
-          value={text}
-          onChange={(next) => {
-            setText(next)
-            setPrefilled(false)
-          }}
-          prefilled={prefilled}
-          note={step === 'done'}
+          value={state.text}
+          onChange={state.setText}
+          prefilled={state.prefilled}
+          note={picker.step === 'done'}
           translation={DEFAULT_TRANSLATION}
           action={
-            devMode && built.length > 0 ? (
+            devMode && state.canKeep ? (
               <Button variant="secondary" size="sm" onClick={keep}>
                 {t('keepText')}
               </Button>
@@ -229,26 +169,26 @@ export function BibleImportPage({ deckId, onBack, onReview, onShowDeck }: BibleI
           }
         />
 
-        {spansRange ? (
+        {state.spansRange ? (
           <ToggleRow
-            label={t('split', { count: splitCount })}
-            description={splitAvailable ? undefined : t('splitUnavailable')}
-            checked={split && splitAvailable}
-            disabled={!splitAvailable}
-            onChange={setSplit}
+            label={t('split', { count: state.splitCount })}
+            description={state.splitAvailable ? undefined : t('splitUnavailable')}
+            checked={state.split && state.splitAvailable}
+            disabled={!state.splitAvailable}
+            onChange={state.setSplit}
           />
         ) : null}
 
-        {duplicates.length > 0 ? (
+        {state.duplicates.length > 0 ? (
           <section className="flex flex-col gap-2 rounded-card bg-info-surface p-4">
             <p className="text-body font-semibold text-info-foreground">
-              {t('duplicates', { refs: duplicates.map((entry) => entry.front).join(', ') })}
+              {t('duplicates', { refs: state.duplicates.map((entry) => entry.front).join(', ') })}
             </p>
             <div className="flex flex-wrap items-center gap-2">
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => onShowDeck?.(duplicates[0]!.deckId)}
+                onClick={() => onShowDeck?.(state.duplicates[0]!.deckId)}
               >
                 <BookOpen className="size-4" aria-hidden />
                 {t('showMe')}
@@ -256,21 +196,18 @@ export function BibleImportPage({ deckId, onBack, onReview, onShowDeck }: BibleI
               <ToggleRow
                 surface="plain"
                 label={t('duplicatesSkip')}
-                checked={keepDuplicates}
-                onChange={setKeepDuplicates}
+                checked={state.keepDuplicates}
+                onChange={state.setKeepDuplicates}
               />
             </div>
           </section>
         ) : null}
 
         <TargetPicker
-          auto={auto}
-          onAutoChange={(next) => {
-            setAuto(next)
-            setTarget(next ? { kind: 'automatic' } : { kind: 'newDeck', name: chapterName })
-          }}
-          suggestedName={chapterName}
-          destination={auto ? null : destination}
+          auto={state.auto}
+          onAutoChange={state.setAuto}
+          suggestedName={state.chapterName}
+          destination={state.destination}
           onPickDeck={() => setSheet('deck')}
           onNameDeck={() => setSheet('name')}
         />
@@ -285,7 +222,7 @@ export function BibleImportPage({ deckId, onBack, onReview, onShowDeck }: BibleI
         decks={decks}
         folders={folders}
         onPick={(dest) => {
-          if (dest.kind === 'deck') setTarget({ kind: 'deck', deckId: dest.deckId })
+          if (dest.kind === 'deck') state.pickDeck(dest.deckId)
           setSheet(null)
         }}
       />
@@ -295,10 +232,10 @@ export function BibleImportPage({ deckId, onBack, onReview, onShowDeck }: BibleI
         onOpenChange={(open) => setSheet(open ? 'name' : null)}
         title={t('newDeckTitle')}
         fieldLabel={t('newDeckTitle')}
-        initialValue={chapterName}
+        initialValue={state.chapterName}
         confirmLabel={t('targetNew')}
         onSubmit={(name) => {
-          setTarget({ kind: 'newDeck', name })
+          state.nameDeck(name)
           setSheet(null)
         }}
       />

@@ -1,5 +1,5 @@
 import type { VerseRef } from './reference'
-import { type BibleVerse, DEFAULT_TRANSLATION } from './verse'
+import type { BibleVerse } from './verse'
 
 export interface StoredVerse {
   verse: number
@@ -16,7 +16,7 @@ export interface VerseTextSource {
 
 export function createStoredVerseSource(
   verses: readonly BibleVerse[],
-  translation: string = DEFAULT_TRANSLATION,
+  translation: string,
 ): VerseTextSource {
   return {
     read({ book, chapter, from, to }) {
