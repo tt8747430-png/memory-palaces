@@ -1,3 +1,5 @@
+import type { BookCode } from './canon'
+
 /**
  * Whether the passage picker lets the learner pick a book. One the Bible library holds text for,
  * always: its passages fill themselves. One it holds none for is disabled — unless the Bible
@@ -6,8 +8,8 @@
  * picking a book is how its text gets published.
  */
 export function isBookPickable(
-  book: string,
-  booksWithText: ReadonlySet<string>,
+  book: BookCode,
+  booksWithText: ReadonlySet<BookCode>,
   devMode: boolean,
 ): boolean {
   return booksWithText.has(book) || booksWithText.size === 0 || devMode

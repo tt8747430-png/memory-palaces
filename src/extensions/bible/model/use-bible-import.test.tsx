@@ -7,7 +7,8 @@ import { bibleMessages } from '../i18n/en'
 import { storedDeck } from '../testing/decks'
 import { renderImportHook } from '../testing/render-import-page'
 import { useBibleImport } from './use-bible-import'
-import { DEFAULT_TRANSLATION, makeBibleVerse } from './verse'
+import { makeBibleVerse } from './verse'
+import { DEFAULT_TRANSLATION } from './translations'
 
 vi.mock('sonner', () => ({ toast: Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn() }) }))
 
@@ -18,7 +19,7 @@ const verse = (chapter: number, number: number, text: string) =>
   makeBibleVerse({
     createdAt: at,
     translation: DEFAULT_TRANSLATION,
-    book: 'Genesis',
+    book: 'GEN',
     chapter,
     verse: number,
     text,
@@ -36,7 +37,7 @@ function render(deckId?: string, harness: Parameters<typeof renderImportHook>[1]
   const rendered = renderImportHook(() => useBibleImport(deckId, onReview), harness)
   const pick = (chapter: number, from: number, to: number) =>
     act(() => {
-      rendered.result.current.picker.pickBook('Genesis')
+      rendered.result.current.picker.pickBook('GEN')
       rendered.result.current.picker.pickChapter(chapter)
       rendered.result.current.picker.pickFrom(from)
       rendered.result.current.picker.pickTo(to)
@@ -135,13 +136,13 @@ describe('useBibleImport — splitting and keeping', () => {
 describe('useBibleImport — which books the picker offers', () => {
   it('offers the books the Bible library holds text for, from the first render', () => {
     const { result } = render(undefined, { verses: genesis })
-    expect(result.current.isBookPickable('Genesis')).toBe(true)
-    expect(result.current.isBookPickable('Exodus')).toBe(false)
+    expect(result.current.isBookPickable('GEN')).toBe(true)
+    expect(result.current.isBookPickable('EXO')).toBe(false)
   })
 
   it('offers every book in dev mode — a book with no text is picked to publish its text', () => {
     const { result } = render(undefined, { verses: genesis, devMode: true })
-    expect(result.current.isBookPickable('Exodus')).toBe(true)
+    expect(result.current.isBookPickable('EXO')).toBe(true)
   })
 })
 
@@ -164,13 +165,13 @@ describe('useBibleImport — where the cards go', () => {
     const { result, pick } = render()
     await pick(1, 1, 1)
     act(() => result.current.set('auto', false))
-    expect(result.current.destination).toBe('Genesis 1')
+    expect(result.current.destination).toBe('Geneza 1')
 
     act(() => result.current.picker.startOver())
     await pick(2, 1, 1)
 
-    expect(result.current.destination).toBe('Genesis 2')
-    expect(result.current.target).toEqual({ kind: 'newDeck', name: 'Genesis 2' })
+    expect(result.current.destination).toBe('Geneza 2')
+    expect(result.current.target).toEqual({ kind: 'newDeck', name: 'Geneza 2' })
   })
 
   it('leaves a deck the learner named alone when the chapter changes', async () => {
@@ -195,21 +196,21 @@ describe('useBibleImport — where the cards go', () => {
     const { result, pick, onReview, deckStore } = render(undefined, {
       decks: [storedDeck('deck-1')],
       cards: [
-        makeCard({ id: 'c1', createdAt: at, deckId: 'deck-1', front: 'Genesis 1:1', back: 'A.' }),
+        makeCard({ id: 'c1', createdAt: at, deckId: 'deck-1', front: 'Geneza 1:1', back: 'A.' }),
       ],
     })
     await pick(1, 1, 2)
     act(() => result.current.setText('1) A. 2) B.'))
-    expect(result.current.duplicates).toEqual([{ front: 'Genesis 1:1', deckId: 'deck-1' }])
-    expect(result.current.addable).toEqual([{ front: 'Genesis 1:2', back: 'B.' }])
+    expect(result.current.duplicates).toEqual([{ front: 'Geneza 1:1', deckId: 'deck-1' }])
+    expect(result.current.addable).toEqual([{ front: 'Geneza 1:2', back: 'B.' }])
 
     act(() => result.current.add())
 
     await waitFor(() => expect(onReview).toHaveBeenCalledTimes(1))
     const reviewIn = onReview.mock.calls[0]?.[0]
-    expect(deckStore.getState().decks.find((deck) => deck.id === reviewIn)?.name).toBe('Genesis 1')
+    expect(deckStore.getState().decks.find((deck) => deck.id === reviewIn)?.name).toBe('Geneza 1')
     expect(useImportDraft.getState().draft?.cards).toEqual([
-      expect.objectContaining({ front: 'Genesis 1:2', back: 'B.' }),
+      expect.objectContaining({ front: 'Geneza 1:2', back: 'B.' }),
     ])
   })
 })

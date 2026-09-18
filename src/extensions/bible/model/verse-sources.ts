@@ -1,3 +1,4 @@
+import type { BookCode } from './canon'
 import { parseRef } from './reference'
 import { stripReference } from './strip-reference'
 import { type BibleVerse, makeBibleVerse } from './verse'
@@ -9,7 +10,7 @@ export interface SourceCard {
 
 /** One verse's worth of a card, once the front has been read as a reference. */
 interface VerseSource {
-  book: string
+  book: BookCode
   chapter: number
   verse: number
   text: string
@@ -17,7 +18,7 @@ interface VerseSource {
 
 /**
  * The cards a source record can be made from: the front names exactly one verse and the back
- * carries text. A range front (`Genesis 1:1-31`) names no single verse, so it is not one.
+ * carries text. A range front (`Geneza 1:1-31`) names no single verse, so it is not one.
  * Exported so a screen can ask whether keeping the text would do anything before offering to.
  */
 export function verseSources(cards: readonly SourceCard[]): VerseSource[] {

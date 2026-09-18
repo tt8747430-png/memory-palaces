@@ -13,7 +13,8 @@ import { createBibleVerseStore } from '../model/store'
 import { BibleLibraryPage } from './BibleLibraryPage'
 import { InMemoryRepository } from '@/shared/api'
 import { started } from '@/shared/test/started'
-import { type BibleVerse, DEFAULT_TRANSLATION } from '../model/verse'
+import type { BibleVerse } from '../model/verse'
+import { DEFAULT_TRANSLATION } from '../model/translations'
 
 vi.mock('sonner', () => ({ toast: Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn() }) }))
 
@@ -39,23 +40,23 @@ describe('BibleLibraryPage', () => {
     renderImportPage(<BibleLibraryPage />, {
       verses: versesFromCards(
         [
-          { front: 'Genesis 1:1', back: 'First.' },
-          { front: 'Genesis 1:2', back: 'Second.' },
+          { front: 'Geneza 1:1', back: 'First.' },
+          { front: 'Geneza 1:2', back: 'Second.' },
         ],
         DEFAULT_TRANSLATION,
         at,
       ),
     })
-    expect(screen.getByText('Genesis')).toBeInTheDocument()
+    expect(screen.getByText('Geneza')).toBeInTheDocument()
     expect(screen.getByText('2 verses')).toBeInTheDocument()
   })
 
   it('publishes the verse cards of a deck and skips the ordinary notes', async () => {
     const user = userEvent.setup()
     const { verseStore } = renderImportPage(<BibleLibraryPage />, {
-      decks: [storedDeck('deck-1', { name: 'Genesis 1' })],
+      decks: [storedDeck('deck-1', { name: 'Geneza 1' })],
       cards: [
-        verseCard('c1', 'Genesis 1:1', 'In the beginning.'),
+        verseCard('c1', 'Geneza 1:1', 'In the beginning.'),
         verseCard('c2', 'Zeus', 'King of the gods'),
       ],
     })
@@ -64,8 +65,8 @@ describe('BibleLibraryPage', () => {
     // The sheet says what picking does — it publishes, it moves nothing.
     expect(within(sheet).getByText('Its verse cards join the Bible library')).toBeInTheDocument()
     expect(within(sheet).getByRole('button', { name: 'Pick a deck' })).toBeDisabled()
-    await user.click(within(sheet).getByText('Genesis 1'))
-    await user.click(screen.getByRole('button', { name: 'Publish Genesis 1' }))
+    await user.click(within(sheet).getByText('Geneza 1'))
+    await user.click(screen.getByRole('button', { name: 'Publish Geneza 1' }))
     await waitFor(() => expect(verseStore.getState().verses).toHaveLength(1))
     expect(verseStore.getState().verses[0]?.text).toBe('In the beginning.')
   })
@@ -75,7 +76,7 @@ describe('keeping the text in the import box', () => {
   it('publishes exactly the verses in the box, reference stripped from each', async () => {
     const store = started(createBibleVerseStore(new InMemoryRepository<BibleVerse>([])))
     const cards = buildVerseCards(
-      { book: 'Genesis', chapter: 1, from: 1, to: 2 },
+      { book: 'GEN', chapter: 1, from: 1, to: 2 },
       '1) First. 2) Second.',
     )
 

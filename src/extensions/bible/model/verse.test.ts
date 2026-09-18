@@ -1,77 +1,75 @@
 import { describe, expect, it } from 'vitest'
-import { completeBibleVerse, makeBibleVerse, refKey } from './verse'
+import { DEFAULT_TRANSLATION } from './translations'
+import { completeBibleVerse, LEGACY_TRANSLATION, makeBibleVerse, refKey } from './verse'
 
 const at = new Date(0).toISOString()
 
+const input = {
+  createdAt: at,
+  translation: DEFAULT_TRANSLATION,
+  book: 'JHN' as const,
+  chapter: 3,
+  verse: 16,
+  text: 'Fiindcă atât de mult a iubit Dumnezeu lumea',
+}
+
 describe('makeBibleVerse', () => {
-  it('keys itself by translation, book, chapter and verse', () => {
-    const verse = makeBibleVerse({
-      createdAt: at,
-      translation: 'web',
-      book: 'Genesis',
-      chapter: 1,
-      verse: 1,
-      text: 'In the beginning God created the heavens and the earth.',
-    })
-    expect(verse.id).toBe('web:Genesis:1:1')
+  it('keys itself by translation, book code, chapter and verse', () => {
+    expect(makeBibleVerse(input).id).toBe('cornilescu-2024:JHN:3:16')
   })
 
   it('trims the text', () => {
-    const verse = makeBibleVerse({
-      createdAt: at,
-      translation: 'web',
-      book: 'Genesis',
-      chapter: 1,
-      verse: 1,
-      text: '  In the beginning  ',
-    })
-    expect(verse.text).toBe('In the beginning')
+    expect(makeBibleVerse({ ...input, text: '  Fiindcă  ' }).text).toBe('Fiindcă')
   })
 
   it('throws on empty text — an empty verse is not a verse', () => {
-    expect(() =>
-      makeBibleVerse({
-        createdAt: at,
-        translation: 'web',
-        book: 'Genesis',
-        chapter: 1,
-        verse: 1,
-        text: '   ',
-      }),
-    ).toThrow()
+    expect(() => makeBibleVerse({ ...input, text: '   ' })).toThrow()
   })
 
   it('throws when the chapter or verse is not positive', () => {
-    expect(() =>
-      makeBibleVerse({
-        createdAt: at,
-        translation: 'web',
-        book: 'Genesis',
-        chapter: 0,
-        verse: 1,
-        text: 'x',
-      }),
-    ).toThrow()
+    expect(() => makeBibleVerse({ ...input, chapter: 0 })).toThrow()
+    expect(() => makeBibleVerse({ ...input, verse: -1 })).toThrow()
   })
 })
 
 describe('refKey', () => {
-  it('keys a verse so republishing it updates in place', () => {
-    expect(refKey('web', 'Genesis', 1, 1)).toBe('web:Genesis:1:1')
+  it('keys a verse so saving it again updates it in place', () => {
+    expect(refKey(DEFAULT_TRANSLATION, 'GEN', 1, 1)).toBe('cornilescu-2024:GEN:1:1')
   })
 })
 
 describe('completeBibleVerse', () => {
-  it('fills a row pulled from the cloud that predates a field', () => {
-    const pulled = {
-      id: 'web:Genesis:1:1',
-      createdAt: at,
-      updatedAt: at,
-      book: 'Genesis',
-      chapter: 1,
-      verse: 1,
-      text: 'In the beginning',
-    } as never
-    expect(completeBibleVerse(pulled).translation).toBe('web')
+  const legacy = {
+    id: 'web:1 Corinteni:8:9',
+    createdAt: at,
+    updatedAt: at,
+    translation: LEGACY_TRANSLATION,
+    book: '1 Corinteni',
+    chapter: 8,
+    verse: 9,
+    text: 'Luați seama',
+  }
+
+  it('reads a row published under the placeholder translation as Cornilescu', () => {
+    expect(completeBibleVerse(legacy).translation).toBe(DEFAULT_TRANSLATION)
+  })
+
+  it('reads a book stored by name as its code, and leaves the id to the keeper', () => {
+    const completed = completeBibleVerse(legacy)
+    expect(completed.book).toBe('1CO')
+    expect(completed.id).toBe(legacy.id)
+  })
+
+  it('reads an English name too — the picker once published under those', () => {
+    expect(completeBibleVerse({ ...legacy, book: '1 Thessalonians' }).book).toBe('1TH')
+  })
+
+  it('fills a row pulled from the cloud that predates the translation field', () => {
+    const { translation: _dropped, ...pulled } = legacy
+    expect(completeBibleVerse(pulled as never).translation).toBe(DEFAULT_TRANSLATION)
+  })
+
+  it('leaves a book it cannot name alone — nothing can address it, and nothing loses it', () => {
+    expect(completeBibleVerse({ ...legacy, book: 'Zeus' }).book).toBe('Zeus')
   })
 })

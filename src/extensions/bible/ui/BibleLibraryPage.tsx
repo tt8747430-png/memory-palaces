@@ -19,7 +19,9 @@ import { useBibleT } from '../i18n/use-bible-t'
 import { useBibleVerseStore, useBibleVerseStoreApi } from '../model/context'
 import { forgetBook } from '../features/forget-book'
 import { publishVerses } from '../features/publish-verses'
-import { DEFAULT_TRANSLATION } from '../model/verse'
+import { isBookCode } from '../model/canon'
+import { bookName } from '../model/book-names'
+import { DEFAULT_TRANSLATION } from '../model/translations'
 import { versesFromCards } from '../model/verse-sources'
 
 export interface BibleLibraryPageProps {
@@ -116,7 +118,7 @@ export function BibleLibraryPage({ onBack }: BibleLibraryPageProps) {
               <div key={book} className="flex items-center gap-3 px-4 py-3">
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-body font-semibold text-heading">
-                    {book}
+                    {isBookCode(book) ? bookName(book) : book}
                   </span>
                   <span className="block text-label text-muted-foreground">
                     {t('published', { count })}
@@ -125,7 +127,7 @@ export function BibleLibraryPage({ onBack }: BibleLibraryPageProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  aria-label={`${book} — ${core('common.delete')}`}
+                  aria-label={`${isBookCode(book) ? bookName(book) : book} — ${core('common.delete')}`}
                   onClick={() => forget(book)}
                 >
                   <Trash2 className="size-4" aria-hidden />

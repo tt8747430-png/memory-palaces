@@ -1,14 +1,21 @@
 import type { Deck, DeckStore } from '@/entities/deck'
 import { createDeck, createSubdeck } from '@/features/deck'
 import { childDecks } from '@/shared/lib'
+import type { BookCode } from '../model/canon'
+import { bookName, resolveBook } from '../model/book-names'
 import { chapterDeckName } from '../model/deck-names'
 
 const sameName = (a: string, b: string): boolean =>
   a.trim().toLowerCase() === b.trim().toLowerCase()
 
-/** A book deck is any live top-level deck of that name — including one filed in a folder. */
-function findBookDeck(decks: readonly Deck[], book: string): Deck | undefined {
-  return decks.find((deck) => deck.parentId === null && !deck.archived && sameName(deck.name, book))
+/**
+ * A book deck is any live top-level deck that names the book — under any of its names, so a deck
+ * the learner called `1 Cor` is found as surely as `1 Corinteni` — including one filed in a folder.
+ */
+function findBookDeck(decks: readonly Deck[], book: BookCode): Deck | undefined {
+  return decks.find(
+    (deck) => deck.parentId === null && !deck.archived && resolveBook(deck.name) === book,
+  )
 }
 
 /**
@@ -18,11 +25,12 @@ function findBookDeck(decks: readonly Deck[], book: string): Deck | undefined {
  */
 export async function ensureChapterDeck(
   store: DeckStore,
-  book: string,
+  book: BookCode,
   chapter: number,
 ): Promise<string> {
   const bookDeck =
-    findBookDeck(store.getState().decks, book) ?? (await createDeck(store, { name: book }))
+    findBookDeck(store.getState().decks, book) ??
+    (await createDeck(store, { name: bookName(book) }))
   const chapterName = chapterDeckName(book, chapter)
   const held = childDecks(store.getState().decks, bookDeck.id).find(
     (deck) => !deck.archived && sameName(deck.name, chapterName),

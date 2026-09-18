@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { chapterCount, verseCount } from './canon'
+import { type BookCode, chapterCount, verseCount } from './canon'
 import type { PartialVerseRef, VerseRef } from './reference'
 
 export type PickerStep = 'book' | 'chapter' | 'from' | 'to' | 'done'
@@ -11,7 +11,7 @@ export interface PassagePicker extends PartialVerseRef {
   chapterOptions: number[]
   startOptions: number[]
   endOptions: number[]
-  pickBook: (book: string) => void
+  pickBook: (book: BookCode) => void
   pickChapter: (chapter: number) => void
   pickFrom: (verse: number) => void
   pickTo: (verse: number) => void
@@ -22,7 +22,7 @@ export interface PassagePicker extends PartialVerseRef {
 const upTo = (count: number): number[] => Array.from({ length: count }, (_, index) => index + 1)
 
 export function usePassagePicker(): PassagePicker {
-  const [book, setBook] = useState<string | null>(null)
+  const [book, setBook] = useState<BookCode | null>(null)
   const [chapter, setChapter] = useState<number | null>(null)
   const [from, setFrom] = useState<number | null>(null)
   const [to, setTo] = useState<number | null>(null)

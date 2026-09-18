@@ -2,13 +2,14 @@ import { useMemo, useState } from 'react'
 import { Search } from 'lucide-react'
 import { cn } from '@/shared/lib'
 import { FOCUS_RING, Input } from '@/shared/ui'
-import { BOOKS } from '../model/canon'
+import { BOOKS, type BookCode } from '../model/canon'
+import { bookName, normalizeBookText } from '../model/book-names'
 import { useBibleT } from '../i18n/use-bible-t'
 
 export interface BookPickerProps {
-  onPick: (book: string) => void
+  onPick: (book: BookCode) => void
   /** Whether a book can be picked; the rest are shown disabled. */
-  isPickable: (book: string) => boolean
+  isPickable: (book: BookCode) => boolean
 }
 
 /**
@@ -22,11 +23,13 @@ export function BookPicker({ onPick, isPickable }: BookPickerProps) {
   const t = useBibleT()
   const [query, setQuery] = useState('')
   const books = useMemo(() => {
-    const needle = query.trim().toLowerCase()
-    return needle ? BOOKS.filter((book) => book.name.toLowerCase().includes(needle)) : BOOKS
+    const needle = normalizeBookText(query)
+    return needle
+      ? BOOKS.filter((book) => normalizeBookText(bookName(book.code)).includes(needle))
+      : BOOKS
   }, [query])
   // Said only when it is true: with every book open, a line about greyed-out books describes nothing.
-  const someDisabled = useMemo(() => BOOKS.some((book) => !isPickable(book.name)), [isPickable])
+  const someDisabled = useMemo(() => BOOKS.some((book) => !isPickable(book.code)), [isPickable])
 
   return (
     <section>
@@ -52,11 +55,11 @@ export function BookPicker({ onPick, isPickable }: BookPickerProps) {
       </span>
       <ul className="mt-3 grid grid-cols-2 gap-2">
         {books.map((book) => (
-          <li key={book.name}>
+          <li key={book.code}>
             <button
               type="button"
-              disabled={!isPickable(book.name)}
-              onClick={() => onPick(book.name)}
+              disabled={!isPickable(book.code)}
+              onClick={() => onPick(book.code)}
               className={cn(
                 'flex min-h-11 w-full items-center rounded-control bg-secondary/40 px-3 text-left',
                 'text-body font-semibold text-heading',
@@ -67,7 +70,7 @@ export function BookPicker({ onPick, isPickable }: BookPickerProps) {
                 'motion-reduce:transition-none',
               )}
             >
-              <span className="truncate">{book.name}</span>
+              <span className="truncate">{bookName(book.code)}</span>
             </button>
           </li>
         ))}

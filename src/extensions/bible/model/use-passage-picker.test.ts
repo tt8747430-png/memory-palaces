@@ -11,7 +11,7 @@ describe('usePassagePicker', () => {
 
   it('walks book, chapter, start, end', () => {
     const { result } = renderHook(() => usePassagePicker())
-    act(() => result.current.pickBook('Genesis'))
+    act(() => result.current.pickBook('GEN'))
     expect(result.current.step).toBe('chapter')
     act(() => result.current.pickChapter(1))
     expect(result.current.step).toBe('from')
@@ -19,12 +19,12 @@ describe('usePassagePicker', () => {
     expect(result.current.step).toBe('to')
     act(() => result.current.pickTo(31))
     expect(result.current.step).toBe('done')
-    expect(result.current.ref).toEqual({ book: 'Genesis', chapter: 1, from: 1, to: 31 })
+    expect(result.current.ref).toEqual({ book: 'GEN', chapter: 1, from: 1, to: 31 })
   })
 
   it('offers only verses after the start — "Just verse N" covers the equal case, so no number repeats', () => {
     const { result } = renderHook(() => usePassagePicker())
-    act(() => result.current.pickBook('Genesis'))
+    act(() => result.current.pickBook('GEN'))
     act(() => result.current.pickChapter(1))
     act(() => result.current.pickFrom(30))
     expect(result.current.endOptions).toEqual([31])
@@ -32,7 +32,7 @@ describe('usePassagePicker', () => {
 
   it('start over clears everything', () => {
     const { result } = renderHook(() => usePassagePicker())
-    act(() => result.current.pickBook('Genesis'))
+    act(() => result.current.pickBook('GEN'))
     act(() => result.current.pickChapter(1))
     act(() => result.current.startOver())
     expect(result.current.step).toBe('book')
@@ -41,13 +41,13 @@ describe('usePassagePicker', () => {
 
   it('change verses returns to the start step, keeping book and chapter', () => {
     const { result } = renderHook(() => usePassagePicker())
-    act(() => result.current.pickBook('Genesis'))
+    act(() => result.current.pickBook('GEN'))
     act(() => result.current.pickChapter(1))
     act(() => result.current.pickFrom(1))
     act(() => result.current.pickTo(5))
     act(() => result.current.changeVerses())
     expect(result.current.step).toBe('from')
-    expect(result.current.book).toBe('Genesis')
+    expect(result.current.book).toBe('GEN')
     expect(result.current.chapter).toBe(1)
   })
 })

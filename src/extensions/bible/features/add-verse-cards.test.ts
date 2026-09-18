@@ -3,10 +3,10 @@ import type { ParsedCard } from '@/shared/lib'
 import { startedDeckStore, storedDeck } from '../testing/decks'
 import { addVerseCards, type AddVerseCardsInput } from './add-verse-cards'
 
-const ref = { book: 'Genesis', chapter: 1, from: 1, to: 2 }
+const ref = { book: 'GEN' as const, chapter: 1, from: 1, to: 2 }
 const cards: ParsedCard[] = [
-  { front: 'Genesis 1:1', back: 'In the beginning.' },
-  { front: 'Genesis 1:2', back: 'The earth.' },
+  { front: 'Geneza 1:1', back: 'In the beginning.' },
+  { front: 'Geneza 1:2', back: 'The earth.' },
 ]
 
 function setup(over: Partial<AddVerseCardsInput> = {}) {
@@ -21,7 +21,7 @@ describe('addVerseCards', () => {
     const { deckStore, setDraft, run } = setup()
     const deckId = await run()
     const chapter = deckStore.getState().decks.find((deck) => deck.id === deckId)
-    expect(chapter?.name).toBe('Genesis 1')
+    expect(chapter?.name).toBe('Geneza 1')
     expect(setDraft).toHaveBeenCalledWith('extension', cards)
   })
 

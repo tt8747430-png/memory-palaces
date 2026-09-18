@@ -1,37 +1,37 @@
 import { describe, expect, it } from 'vitest'
 import { addableCards, buildVerseCards, canSplit, findDuplicates } from './verse-cards'
 
-const ref = { book: 'Genesis', chapter: 1, from: 1, to: 2 }
+const ref = { book: 'GEN' as const, chapter: 1, from: 1, to: 2 }
 
 describe('buildVerseCards', () => {
   it('puts the reference on the front and only the text on the back', () => {
     const cards = buildVerseCards(
-      { book: 'Genesis', chapter: 1, from: 1, to: 1 },
+      { book: 'GEN', chapter: 1, from: 1, to: 1 },
       'In the beginning.',
     )
-    expect(cards).toEqual([{ front: 'Genesis 1:1', back: 'In the beginning.' }])
+    expect(cards).toEqual([{ front: 'Geneza 1:1', back: 'In the beginning.' }])
   })
 
   it('splits numbered verses into one card each', () => {
     const cards = buildVerseCards(ref, '1) In the beginning. 2) The earth was without form.')
     expect(cards).toEqual([
-      { front: 'Genesis 1:1', back: 'In the beginning.' },
-      { front: 'Genesis 1:2', back: 'The earth was without form.' },
+      { front: 'Geneza 1:1', back: 'In the beginning.' },
+      { front: 'Geneza 1:2', back: 'The earth was without form.' },
     ])
   })
 
   it('splits bracketed chapter:verse markers too', () => {
     const cards = buildVerseCards(ref, '(1:1) In the beginning.\n(1:2) The earth was without form.')
     expect(cards).toEqual([
-      { front: 'Genesis 1:1', back: 'In the beginning.' },
-      { front: 'Genesis 1:2', back: 'The earth was without form.' },
+      { front: 'Geneza 1:1', back: 'In the beginning.' },
+      { front: 'Geneza 1:2', back: 'The earth was without form.' },
     ])
   })
 
   it('makes one card for the whole range when the text carries no markers', () => {
     const cards = buildVerseCards(ref, 'In the beginning the earth was without form.')
     expect(cards).toEqual([
-      { front: 'Genesis 1:1-2', back: 'In the beginning the earth was without form.' },
+      { front: 'Geneza 1:1-2', back: 'In the beginning the earth was without form.' },
     ])
   })
 
@@ -51,7 +51,7 @@ describe('buildVerseCards', () => {
   })
 
   it('never leaves a reference on a back', () => {
-    const cards = buildVerseCards(ref, '1) Genesis 1:1 In the beginning. 2) The earth.')
+    const cards = buildVerseCards(ref, '1) Geneza 1:1 In the beginning. 2) The earth.')
     expect(cards[0]?.back).toBe('In the beginning.')
   })
 })
@@ -59,7 +59,7 @@ describe('buildVerseCards', () => {
 describe('splitting', () => {
   it('keeps the range as one card when splitting is off', () => {
     const cards = buildVerseCards(ref, '1) In the beginning. 2) The earth.', { split: false })
-    expect(cards).toEqual([{ front: 'Genesis 1:1-2', back: '1) In the beginning. 2) The earth.' }])
+    expect(cards).toEqual([{ front: 'Geneza 1:1-2', back: '1) In the beginning. 2) The earth.' }])
   })
 
   it('knows whether the text can be split at all', () => {
@@ -72,32 +72,32 @@ describe('splitting', () => {
 describe('findDuplicates', () => {
   it('names references held anywhere in the library, with the deck holding them', () => {
     const cards = [
-      { front: 'Genesis 1:1', back: 'a' },
-      { front: 'Genesis 1:2', back: 'b' },
+      { front: 'Geneza 1:1', back: 'a' },
+      { front: 'Geneza 1:2', back: 'b' },
     ]
-    const held = [{ front: 'Genesis 1:1', deckId: 'deck-7' }]
-    expect(findDuplicates(cards, held)).toEqual([{ front: 'Genesis 1:1', deckId: 'deck-7' }])
+    const held = [{ front: 'Geneza 1:1', deckId: 'deck-7' }]
+    expect(findDuplicates(cards, held)).toEqual([{ front: 'Geneza 1:1', deckId: 'deck-7' }])
   })
 
   it('finds a duplicate that lives in a different deck from the target', () => {
-    const held = [{ front: 'Genesis 1:1', deckId: 'some-other-deck' }]
-    expect(findDuplicates([{ front: 'Genesis 1:1', back: 'a' }], held)).toHaveLength(1)
+    const held = [{ front: 'Geneza 1:1', deckId: 'some-other-deck' }]
+    expect(findDuplicates([{ front: 'Geneza 1:1', back: 'a' }], held)).toHaveLength(1)
   })
 
   it('finds none in an empty library', () => {
-    expect(findDuplicates([{ front: 'Genesis 1:1', back: 'a' }], [])).toEqual([])
+    expect(findDuplicates([{ front: 'Geneza 1:1', back: 'a' }], [])).toEqual([])
   })
 })
 
 describe('addableCards', () => {
   const built = [
-    { front: 'Genesis 1:1', back: 'a' },
-    { front: 'Genesis 1:2', back: 'b' },
+    { front: 'Geneza 1:1', back: 'a' },
+    { front: 'Geneza 1:2', back: 'b' },
   ]
-  const duplicates = [{ front: 'Genesis 1:1', deckId: 'somewhere' }]
+  const duplicates = [{ front: 'Geneza 1:1', deckId: 'somewhere' }]
 
   it('drops the verses already held', () => {
-    expect(addableCards(built, duplicates, false)).toEqual([{ front: 'Genesis 1:2', back: 'b' }])
+    expect(addableCards(built, duplicates, false)).toEqual([{ front: 'Geneza 1:2', back: 'b' }])
   })
 
   it('keeps them when the learner says so', () => {
