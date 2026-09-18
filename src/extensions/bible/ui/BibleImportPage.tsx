@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { BookOpen, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
-import { ROUTES } from '@/shared/config/routes'
 import { nowIso, selectIsReady, useDevMode } from '@/shared/lib'
 import { selectCards, useCardStore } from '@/entities/card'
 import { selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
@@ -30,7 +28,6 @@ import { buildVerseCards, canSplit, findDuplicates } from '../model/verse-cards'
 import { targetIsResolvable, type VerseTarget } from '../model/verse-target'
 import { publishVerses } from '../features/publish-verses'
 import { versesFromCards } from '../model/verse-sources'
-import { validateBibleImportSearch } from '../manifest'
 import { BookPicker } from './BookPicker'
 import { NumberGrid } from './NumberGrid'
 import { TargetPicker } from './TargetPicker'
@@ -306,23 +303,5 @@ export function BibleImportPage({ deckId, onBack, onReview, onShowDeck }: BibleI
         }}
       />
     </AppScreen>
-  )
-}
-
-export function BibleImportScreen() {
-  // Read through the manifest's own validator, so the route and the reader cannot drift. The
-  // core `useRouteSearch` lives in `app`, which an extension may not import.
-  const search = useSearch({ strict: false }) as Record<string, unknown>
-  const { deckId } = validateBibleImportSearch(search)
-  const navigate = useNavigate()
-  return (
-    <BibleImportPage
-      deckId={deckId}
-      onBack={() => void navigate({ to: ROUTES.home })}
-      onReview={(reviewIn) =>
-        void navigate({ to: ROUTES.deckImport, params: { deckId: reviewIn }, replace: true })
-      }
-      onShowDeck={(held) => void navigate({ to: ROUTES.deckDetail, params: { deckId: held } })}
-    />
   )
 }

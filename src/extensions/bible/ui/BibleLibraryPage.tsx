@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { BookOpen, Eraser, Trash2 } from 'lucide-react'
-import { useNavigate } from '@tanstack/react-router'
 import { cardsInSubtree, nowIso, selectIsReady, useDevMode } from '@/shared/lib'
 import {
   AppScreen,
@@ -18,7 +17,6 @@ import { selectDecks, useDeckStore } from '@/entities/deck'
 import { selectFolders, useFolderStore } from '@/entities/folder'
 import { editCard } from '@/features/card'
 import { MoveSheet } from '@/widgets/deck-tree'
-import { ROUTES } from '@/shared/config/routes'
 import { useBibleT } from '../i18n/use-bible-t'
 import { useBibleVerseStore, useBibleVerseStoreApi } from '../model/context'
 import { cleanReferenceBacks } from '../features/clean-reference-backs'
@@ -196,9 +194,4 @@ export function BibleLibraryPage({ onBack }: BibleLibraryPageProps) {
       />
     </AppScreen>
   )
-}
-
-export function BibleLibraryScreen() {
-  const navigate = useNavigate()
-  return <BibleLibraryPage onBack={() => void navigate({ to: ROUTES.settingsExtensions })} />
 }
