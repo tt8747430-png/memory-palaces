@@ -13,7 +13,6 @@ import { createBibleVerseStore } from '../model/store'
 import { BibleLibraryPage } from './BibleLibraryPage'
 import { InMemoryRepository } from '@/shared/api'
 import { started } from '@/shared/test/started'
-import { toast } from 'sonner'
 import { type BibleVerse, DEFAULT_TRANSLATION } from '../model/verse'
 
 vi.mock('sonner', () => ({ toast: Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn() }) }))
@@ -69,31 +68,6 @@ describe('BibleLibraryPage', () => {
     await user.click(screen.getByRole('button', { name: 'Publish Genesis 1' }))
     await waitFor(() => expect(verseStore.getState().verses).toHaveLength(1))
     expect(verseStore.getState().verses[0]?.text).toBe('In the beginning.')
-  })
-
-  it('previews what cleaning would change, then reports what it did', async () => {
-    const user = userEvent.setup()
-    const { cardStore } = renderImportPage(<BibleLibraryPage />, {
-      decks: [storedDeck('deck-1', { name: 'Genesis 1' })],
-      cards: [
-        verseCard('c1', 'Genesis 1:1', 'Genesis 1:1 In the beginning.'),
-        verseCard('c2', 'Genesis 1:2', 'The earth.'),
-      ],
-    })
-    await user.click(screen.getByRole('button', { name: /Clean references/ }))
-    const sheet = await screen.findByRole('dialog')
-    expect(within(sheet).getByText('Pick the deck whose backs to clean')).toBeInTheDocument()
-    await user.click(within(sheet).getByText('Genesis 1'))
-    await user.click(screen.getByRole('button', { name: 'Clean Genesis 1' }))
-
-    const dialog = await screen.findByRole('alertdialog')
-    expect(within(dialog).getByText('1 card would change')).toBeInTheDocument()
-    await user.click(within(dialog).getByRole('button', { name: /Clean references/ }))
-
-    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Cleaned 1 card'))
-    expect(cardStore.getState().cards.find((card) => card.id === 'c1')?.back).toBe(
-      'In the beginning.',
-    )
   })
 })
 
