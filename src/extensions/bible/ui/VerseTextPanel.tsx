@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Textarea } from '@/shared/ui'
 import { useBibleT } from '../i18n/use-bible-t'
+import { translationName } from '../model/translations'
 
 export interface VerseTextPanelProps {
   value: string
@@ -9,6 +10,7 @@ export interface VerseTextPanelProps {
   prefilled: boolean
   /** Said only once a complete passage is chosen; before that there is nothing to report on. */
   note: boolean
+  /** The translation's id; the panel shows its name. */
   translation: string
   /** An extra control beside the translation line — today the dev-mode publish button. */
   action?: ReactNode
@@ -47,7 +49,7 @@ export function VerseTextPanel({
       />
       <div className="flex items-center justify-between gap-3">
         <p className="text-label text-muted-foreground">
-          {t('translation')}: {translation}
+          {t('translation')}: {translationName(translation)}
         </p>
         {action}
       </div>
