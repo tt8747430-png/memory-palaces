@@ -136,7 +136,7 @@ describe('SettingsSyncPage', () => {
     await setup({ state: { lastSyncedAt: new Date().toISOString() } })
     expect(await screen.findByText('Everything is synchronised')).toBeInTheDocument()
     expect(screen.getByText(/last synchronised/i)).toBeInTheDocument()
-    expect(screen.getByText('Synchronising as Ada')).toBeInTheDocument()
+    expect(screen.getByText('Synchronising as ada@b.co')).toBeInTheDocument()
     expect(screen.getByText(/nothing is waiting/i)).toBeInTheDocument()
   })
 
@@ -146,7 +146,7 @@ describe('SettingsSyncPage', () => {
     expect(screen.getByText(/never synchronised from this device/i)).toBeInTheDocument()
   })
 
-  it('breaks the waiting changes down by table — study progress and settings included', async () => {
+  it('breaks the waiting changes down by table — progress and preferences included', async () => {
     await setup({
       pending: [
         change('decks', 'd1'),
@@ -158,7 +158,7 @@ describe('SettingsSyncPage', () => {
     const decks = await screen.findByRole('button', { name: /Decks/ })
     expect(decks).toHaveTextContent('1')
     expect(screen.getByRole('button', { name: /Cards/ })).toHaveTextContent('2')
-    expect(screen.getByText('Study progress')).toBeInTheDocument()
+    expect(screen.getByText('Progress')).toBeInTheDocument()
   })
 
   it('names a contributed table by the key its extension gave it', async () => {
@@ -183,7 +183,7 @@ describe('SettingsSyncPage', () => {
     })
     await userEvent.click(await screen.findByRole('button', { name: /Cards/ }))
     const sheet = await screen.findByRole('dialog')
-    expect(sheet).toHaveTextContent('Cards waiting to sync')
+    expect(sheet).toHaveTextContent('Cards waiting to synchronise')
     expect(sheet).toHaveTextContent('Ioan 3:16')
     expect(sheet).toHaveTextContent('c2')
   })

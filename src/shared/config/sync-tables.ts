@@ -12,7 +12,7 @@ export const SYNCED_TABLES = [
 ] as const
 
 /** The core tables, closed — `SYNCED_TABLES` is still exactly these. */
-type CoreSyncedTable = (typeof SYNCED_TABLES)[number]
+export type CoreSyncedTable = (typeof SYNCED_TABLES)[number]
 
 /**
  * A table replication may carry, core or contributed. Open, because an extension's table name is
@@ -36,6 +36,13 @@ export interface SyncTableSpec {
    * table is named by the app (`sync.tables.<table>`), so it carries none.
    */
   labelKey?: string
+}
+
+const CORE: ReadonlySet<string> = new Set(SYNCED_TABLES)
+
+/** A table the app itself declares — named by `sync.tables.<table>`, not by an extension's key. */
+export function isCoreSyncedTable(table: SyncedTable): table is CoreSyncedTable {
+  return CORE.has(table)
 }
 
 export const CORE_SYNC_TABLES: readonly SyncTableSpec[] = SYNCED_TABLES.map((table) => ({

@@ -1,12 +1,11 @@
 import { useTranslation } from 'react-i18next'
-import { CloudUpload } from 'lucide-react'
-import type { SyncedTable } from '@/shared/config/sync-tables'
+import { CloudCheck, CloudUpload } from 'lucide-react'
 import { SettingsRow, SettingsSection } from '@/shared/ui'
 import type { WaitingRow } from '../model/use-sync-settings'
 
 export interface WaitingSectionProps {
   rows: readonly WaitingRow[]
-  onOpen: (table: SyncedTable) => void
+  onOpen: (row: WaitingRow) => void
 }
 
 /** What has not left this device yet, one row per table — a content row opens the list. */
@@ -23,7 +22,7 @@ export function WaitingSection({ rows, onOpen }: WaitingSectionProps) {
               icon={<CloudUpload />}
               label={row.label}
               value={String(row.count)}
-              onClick={() => onOpen(row.table)}
+              onClick={() => onOpen(row)}
             />
           ) : (
             <SettingsRow
@@ -36,12 +35,7 @@ export function WaitingSection({ rows, onOpen }: WaitingSectionProps) {
           ),
         )
       ) : (
-        <SettingsRow
-          kind="value"
-          icon={<CloudUpload />}
-          label={t('sync.settings.nothingWaiting')}
-          value=""
-        />
+        <SettingsRow kind="info" icon={<CloudCheck />} label={t('sync.settings.nothingWaiting')} />
       )}
     </SettingsSection>
   )

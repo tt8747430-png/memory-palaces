@@ -41,7 +41,7 @@ export function SettingsSyncPage({ onBack }: SettingsSyncPageProps) {
   }
 
   const waitingCount = page.waiting.reduce((total, row) => total + row.count, 0)
-  const openedRow = page.waiting.find((row) => row.table === page.opened)
+  const opened = page.pending?.kind === 'waiting' ? page.pending : null
 
   return (
     <AppScreen gutter="end" header={header}>
@@ -57,7 +57,7 @@ export function SettingsSyncPage({ onBack }: SettingsSyncPageProps) {
           onSync={page.sync}
         />
 
-        <WaitingSection rows={page.waiting} onOpen={page.open} />
+        <WaitingSection rows={page.waiting} onOpen={page.openWaiting} />
 
         <RecentSyncs log={page.log} />
 
@@ -87,17 +87,17 @@ export function SettingsSyncPage({ onBack }: SettingsSyncPageProps) {
             label={t('sync.settings.checkEverything')}
             description={t('sync.settings.checkEverythingHint')}
             disabled={page.busy || !page.online}
-            onClick={page.askRepair}
+            onClick={page.requestRepair}
           />
         </SettingsSection>
       </div>
 
       <Sheet
-        open={page.opened !== null}
+        open={opened !== null}
         onOpenChange={(open) => {
-          if (!open) page.close()
+          if (!open) page.dismiss()
         }}
-        title={t('sync.settings.waitingSheet', { table: openedRow?.label ?? '' })}
+        title={t('sync.settings.waitingSheet', { table: opened?.label ?? '' })}
       >
         <ul className="divide-y divide-border">
           {page.openedItems.map((item) => (
@@ -114,9 +114,9 @@ export function SettingsSyncPage({ onBack }: SettingsSyncPageProps) {
       </Sheet>
 
       <ConfirmDialog
-        open={page.repairAsked}
+        open={page.pending?.kind === 'repair'}
         onOpenChange={(open) => {
-          if (!open) page.dismissRepair()
+          if (!open) page.dismiss()
         }}
         icon={<RefreshCcwDot className="size-6" aria-hidden />}
         title={t('sync.settings.checkEverythingTitle')}

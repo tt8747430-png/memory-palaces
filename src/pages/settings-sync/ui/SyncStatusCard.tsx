@@ -10,7 +10,8 @@ export interface SyncStatusCardProps {
   waiting: number
   error: string | null
   lastSyncedAt: string | null
-  account: string
+  /** The email the account signs in with. */
+  account: string | null
   online: boolean
   busy: boolean
   onSync: () => void
@@ -73,7 +74,7 @@ export function SyncStatusCard({
           </p>
           {account ? (
             <p className="text-label leading-snug text-muted-foreground">
-              {t('sync.settings.account', { name: account })}
+              {t('sync.settings.account', { email: account })}
             </p>
           ) : null}
         </div>
