@@ -43,4 +43,10 @@ export const bibleMessages = {
   cleanBacksCount_other: '{{count}} cards would change',
   published_one: '{{count}} verse',
   published_other: '{{count}} verses',
+  addFailed: 'Those cards could not be added. Nothing was changed.',
+  keepFailed: 'That text could not be kept in your Bible library.',
+  forgetFailed: 'That book could not be removed from your Bible library.',
+  cleanFailed: 'Those backs could not be cleaned. Nothing was changed.',
+  forgotten_one: 'Forgot {{count}} verse',
+  forgotten_other: 'Forgot {{count}} verses',
 } as const

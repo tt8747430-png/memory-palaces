@@ -4,11 +4,19 @@ import { useTranslation } from 'react-i18next'
 import { BookOpen, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import { ROUTES } from '@/shared/config/routes'
-import { nowIso, useDevMode } from '@/shared/lib'
+import { nowIso, selectIsReady, useDevMode } from '@/shared/lib'
 import { selectCards, useCardStore } from '@/entities/card'
 import { selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
 import { selectFolders, useFolderStore } from '@/entities/folder'
-import { AppScreen, Button, FooterBar, ScreenHeader, ToggleRow, PromptSheet } from '@/shared/ui'
+import {
+  AppScreen,
+  Button,
+  FooterBar,
+  ScreenHeader,
+  ScreenLoading,
+  ToggleRow,
+  PromptSheet,
+} from '@/shared/ui'
 import { useImportDraft } from '@/widgets/content-editor'
 import { MoveSheet } from '@/widgets/deck-tree'
 import { useBibleT } from '../i18n/use-bible-t'
@@ -54,6 +62,11 @@ export function BibleImportPage({ deckId, onBack, onReview, onShowDeck }: BibleI
   const cards = useCardStore(selectCards)
   const verses = useBibleVerseStore((state) => state.verses)
   const verseStore = useBibleVerseStoreApi()
+  // Until all three have mirrored, "not in your library yet" and "0 duplicates" would both be
+  // guesses dressed as facts, so the screen waits instead of saying them.
+  const ready = useBibleVerseStore(selectIsReady)
+  const cardsReady = useCardStore(selectIsReady)
+  const decksReady = useDeckStore(selectIsReady)
   const devMode = useDevMode()
   const setDraft = useImportDraft((state) => state.setDraft)
 
@@ -107,17 +120,33 @@ export function BibleImportPage({ deckId, onBack, onReview, onShowDeck }: BibleI
         : null
 
   /** Dev-mode only: this is how the verse library is filled before a bundled translation exists. */
-  const keep = async () => {
-    const kept = await publishVerses(verseStore, versesFromCards(built, nowIso()))
-    toast.success(t('kept', { count: kept }))
+  const keep = () => {
+    void publishVerses(verseStore, versesFromCards(built, nowIso())).then(
+      (kept) => toast.success(t('kept', { count: kept })),
+      () => toast.error(t('keepFailed')),
+    )
   }
 
-  const add = async () => {
-    const reviewIn = await addVerseCards(
+  const add = () => {
+    void addVerseCards(
       { deckStore, setDraft },
       { ref, text, split, target, held, keepDuplicates },
+    ).then(
+      (reviewIn) => onReview?.(reviewIn),
+      () => toast.error(t('addFailed')),
     )
-    onReview?.(reviewIn)
+  }
+
+  if (!ready || !cardsReady || !decksReady) {
+    return (
+      <AppScreen
+        header={
+          <ScreenHeader title={t('importTitle')} onBack={onBack} backLabel={core('common.back')} />
+        }
+      >
+        <ScreenLoading />
+      </AppScreen>
+    )
   }
 
   return (
@@ -132,7 +161,7 @@ export function BibleImportPage({ deckId, onBack, onReview, onShowDeck }: BibleI
             size="lg"
             className="w-full"
             disabled={addable.length === 0 || !targetIsResolvable(target)}
-            onClick={() => void add()}
+            onClick={add}
           >
             <Sparkles className="size-4.5" aria-hidden />
             {t('addCount', { count: addable.length })}
@@ -193,7 +222,7 @@ export function BibleImportPage({ deckId, onBack, onReview, onShowDeck }: BibleI
           translation={DEFAULT_TRANSLATION}
           action={
             devMode && built.length > 0 ? (
-              <Button variant="secondary" size="sm" onClick={() => void keep()}>
+              <Button variant="secondary" size="sm" onClick={keep}>
                 {t('keepText')}
               </Button>
             ) : null

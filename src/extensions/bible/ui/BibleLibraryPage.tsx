@@ -3,13 +3,14 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { BookOpen, Eraser, Trash2 } from 'lucide-react'
 import { useNavigate } from '@tanstack/react-router'
-import { cardsInSubtree, nowIso, useDevMode } from '@/shared/lib'
+import { cardsInSubtree, nowIso, selectIsReady, useDevMode } from '@/shared/lib'
 import {
   AppScreen,
   Button,
   ConfirmDialog,
   MissingScreen,
   ScreenHeader,
+  ScreenLoading,
   SettingsSection,
 } from '@/shared/ui'
 import { selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
@@ -21,6 +22,7 @@ import { ROUTES } from '@/shared/config/routes'
 import { useBibleT } from '../i18n/use-bible-t'
 import { useBibleVerseStore, useBibleVerseStoreApi } from '../model/context'
 import { cleanReferenceBacks } from '../features/clean-reference-backs'
+import { forgetBook } from '../features/forget-book'
 import { type CleanableCard, countReferenceBacks } from '../model/reference-backs'
 import { publishVerses } from '../features/publish-verses'
 import { versesFromCards } from '../model/verse-sources'
@@ -46,6 +48,10 @@ export function BibleLibraryPage({ onBack }: BibleLibraryPageProps) {
   const folders = useFolderStore(selectFolders)
   const cards = useCardStore(selectCards)
   const cardStore = useCardStoreApi()
+  // "Nothing here yet" is only true once the stores have mirrored; before that it is a guess.
+  const ready = useBibleVerseStore(selectIsReady)
+  const cardsReady = useCardStore(selectIsReady)
+  const decksReady = useDeckStore(selectIsReady)
   const [sheet, setSheet] = useState<'publish' | 'clean' | null>(null)
   const [pendingClean, setPendingClean] = useState<CleanableCard[] | null>(null)
 
@@ -61,24 +67,47 @@ export function BibleLibraryPage({ onBack }: BibleLibraryPageProps) {
     )
   }
 
+  if (!ready || !cardsReady || !decksReady) {
+    return (
+      <AppScreen
+        gutter="end"
+        header={
+          <ScreenHeader
+            title={t('libraryTitle')}
+            onBack={onBack}
+            backLabel={core('common.back')}
+            subtitle={t('librarySubtitle')}
+          />
+        }
+      >
+        <ScreenLoading />
+      </AppScreen>
+    )
+  }
+
   const deckCards = (deckId: string) => cardsInSubtree(decks, cards, deckId)
 
-  const publish = async (deckId: string) => {
-    const published = await publishVerses(verseStore, versesFromCards(deckCards(deckId), nowIso()))
-    toast.success(t('kept', { count: published }))
+  const publish = (deckId: string) => {
+    void publishVerses(verseStore, versesFromCards(deckCards(deckId), nowIso())).then(
+      (published) => toast.success(t('kept', { count: published })),
+      () => toast.error(t('keepFailed')),
+    )
   }
 
-  const forget = async (book: string) => {
-    for (const verse of verses.filter((held) => held.book === book)) {
-      await verseStore.getState().remove(verse.id)
-    }
+  const forget = (book: string) => {
+    void forgetBook(verseStore, book).then(
+      (forgotten) => toast.success(t('forgotten', { count: forgotten })),
+      () => toast.error(t('forgetFailed')),
+    )
   }
 
-  const clean = async (targets: readonly CleanableCard[]) => {
-    const changed = await cleanReferenceBacks(targets, async (id, back) => {
+  const clean = (targets: readonly CleanableCard[]) => {
+    void cleanReferenceBacks(targets, async (id, back) => {
       await editCard(cardStore, id, { back })
-    })
-    toast.success(t('cleanBacksCount', { count: changed }))
+    }).then(
+      (changed) => toast.success(t('cleanBacksCount', { count: changed })),
+      () => toast.error(t('cleanFailed')),
+    )
   }
 
   return (
@@ -125,7 +154,7 @@ export function BibleLibraryPage({ onBack }: BibleLibraryPageProps) {
                   variant="ghost"
                   size="sm"
                   aria-label={`${book} — ${core('common.delete')}`}
-                  onClick={() => void forget(book)}
+                  onClick={() => forget(book)}
                 >
                   <Trash2 className="size-4" aria-hidden />
                 </Button>
@@ -150,7 +179,7 @@ export function BibleLibraryPage({ onBack }: BibleLibraryPageProps) {
           if (dest.kind !== 'deck') return
           const picked = sheet
           setSheet(null)
-          if (picked === 'publish') void publish(dest.deckId)
+          if (picked === 'publish') publish(dest.deckId)
           else setPendingClean(deckCards(dest.deckId))
         }}
       />
@@ -166,7 +195,7 @@ export function BibleLibraryPage({ onBack }: BibleLibraryPageProps) {
         onConfirm={() => {
           const targets = pendingClean ?? []
           setPendingClean(null)
-          void clean(targets)
+          clean(targets)
         }}
       />
     </AppScreen>
