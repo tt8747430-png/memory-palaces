@@ -36,6 +36,7 @@ export const settings = {
   extensionsSection: 'Available',
   extensionsEmpty: 'No extensions yet',
   extensionsFailed: 'That could not be saved. Try again.',
+  extensionsBroken: 'An extension could not be loaded. Switch it off and on again, or reload.',
   extensionsOpen: 'Open {{name}} settings',
   helpCenter: 'Help center',
   about: 'About',
