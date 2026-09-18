@@ -25,7 +25,7 @@ import {
   PreferencesStoreContext,
 } from '@/entities/preferences'
 import { setExtensionEnabled } from '@/features/preferences'
-import { SYNCED_TABLES } from '@/shared/config/sync-tables'
+import { CORE_SYNC_TABLES, type SyncTableSpec } from '@/shared/config/sync-tables'
 import { createSessionStore, type Session, SessionStoreContext } from '@/entities/session'
 import {
   createPendingChangeStore,
@@ -43,6 +43,15 @@ import { LocalAuthGateway } from '@/app/persistence/local-auth-gateway'
 import { SyncProvider } from './SyncProvider'
 
 const account: PersistedAuth = { id: 'u1', kind: 'account' }
+
+/** A contributed table alongside the core ones, so a toggle actually changes the live set. */
+const BIBLE_TABLE: SyncTableSpec = {
+  table: 'bible_verses',
+  collectionKey: 'bibleVerses',
+  owner: 'bible',
+}
+const ALL_TABLES: readonly SyncTableSpec[] = [...CORE_SYNC_TABLES, BIBLE_TABLE]
+const CORE_TABLE_NAMES = CORE_SYNC_TABLES.map((spec) => spec.table)
 const otherAccount: PersistedAuth = { id: 'u2', kind: 'account' }
 const guest: PersistedAuth = { id: 'g1', kind: 'guest' }
 const storage: StoragePort = new LocalObjectUrlStorage()
@@ -175,7 +184,7 @@ function tree(options: Options, s: Stores, onRunner: (runner: SyncRunner | null)
       auth={auth}
       resetLocal={resetLocal}
       storage={storage}
-      syncTables={SYNCED_TABLES}
+      syncTables={ALL_TABLES}
       dataOwner={dataOwner}
     >
       <Probe onRunner={onRunner} />
@@ -204,21 +213,62 @@ describe('SyncProvider', () => {
     const cloudSync = cloud()
     await mount({ syncManager, cloudSync, auth: account })
 
-    await waitFor(() => expect(syncManager.start).toHaveBeenCalledWith('u1', expect.any(Function)))
+    await waitFor(() =>
+      expect(syncManager.start).toHaveBeenCalledWith('u1', CORE_TABLE_NAMES, expect.any(Function)),
+    )
     expect(cloudSync.runCycle).not.toHaveBeenCalled()
   })
 
   it('restarts the watcher when an extension is switched on, so its table joins', async () => {
     const syncManager = manager()
     const view = await mount({ syncManager, auth: account })
-    await waitFor(() => expect(syncManager.start).toHaveBeenCalledTimes(1))
+    await waitFor(() =>
+      expect(syncManager.start).toHaveBeenLastCalledWith(
+        'u1',
+        CORE_TABLE_NAMES,
+        expect.any(Function),
+      ),
+    )
 
     await act(async () => {
       await setExtensionEnabled(view.stores.preferences, 'bible', true)
     })
 
-    await waitFor(() => expect(syncManager.start).toHaveBeenCalledTimes(2))
+    await waitFor(() =>
+      expect(syncManager.start).toHaveBeenLastCalledWith(
+        'u1',
+        [...CORE_TABLE_NAMES, 'bible_verses'],
+        expect.any(Function),
+      ),
+    )
     expect(syncManager.stop).toHaveBeenCalled()
+  })
+
+  it('drops the table again when the extension is switched off', async () => {
+    const syncManager = manager()
+    const view = await mount({ syncManager, auth: account })
+    await act(async () => {
+      await setExtensionEnabled(view.stores.preferences, 'bible', true)
+    })
+    await waitFor(() =>
+      expect(syncManager.start).toHaveBeenLastCalledWith(
+        'u1',
+        [...CORE_TABLE_NAMES, 'bible_verses'],
+        expect.any(Function),
+      ),
+    )
+
+    await act(async () => {
+      await setExtensionEnabled(view.stores.preferences, 'bible', false)
+    })
+
+    await waitFor(() =>
+      expect(syncManager.start).toHaveBeenLastCalledWith(
+        'u1',
+        CORE_TABLE_NAMES,
+        expect.any(Function),
+      ),
+    )
   })
 
   it('does nothing for a guest — their data stays on-device until they sign up', async () => {
@@ -457,7 +507,9 @@ describe('SyncProvider', () => {
 
     await mount({ syncManager, auth: account, resetLocal, dataOwner: owner('u1'), pending: 2 })
 
-    await waitFor(() => expect(syncManager.start).toHaveBeenCalledWith('u1', expect.any(Function)))
+    await waitFor(() =>
+      expect(syncManager.start).toHaveBeenCalledWith('u1', CORE_TABLE_NAMES, expect.any(Function)),
+    )
     expect(resetLocal).not.toHaveBeenCalled()
   })
 
@@ -469,7 +521,9 @@ describe('SyncProvider', () => {
 
     rerenderWith({ syncManager, auth: account, resetLocal, dataOwner })
 
-    await waitFor(() => expect(syncManager.start).toHaveBeenCalledWith('u1', expect.any(Function)))
+    await waitFor(() =>
+      expect(syncManager.start).toHaveBeenCalledWith('u1', CORE_TABLE_NAMES, expect.any(Function)),
+    )
     expect(resetLocal).not.toHaveBeenCalled()
   })
 

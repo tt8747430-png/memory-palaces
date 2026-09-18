@@ -1,13 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { PersistedAuth, RemoteChangeEvent, StoragePort } from '@/shared/api'
 import type { SyncManager } from '@/shared/api/supabase'
-import {
-  type DataOwner,
-  type ExtensionId,
-  resolveDataTransition,
-  selectIsReady,
-  useLatest,
-} from '@/shared/lib'
+import type { SyncedTable } from '@/shared/config/sync-tables'
+import { type DataOwner, resolveDataTransition, selectIsReady, useLatest } from '@/shared/lib'
 import { useDeckStoreApi } from '@/entities/deck'
 import { useProfileStoreApi } from '@/entities/profile'
 import {
@@ -26,12 +21,10 @@ export interface DataTransitionDeps {
   dataOwner: DataOwner
   onRemoteChange: (event: RemoteChangeEvent) => void
   /**
-   * The enabled extensions. Nothing in the effect reads it — it is a dependency so that toggling
-   * one re-runs the transition, which is what rebuilds the manager's watcher over the new table
-   * set. Do not delete it as unused; a second effect starting and stopping the manager is the bug,
-   * not the fix.
+   * The tables live right now. Handed to `start`, so toggling an extension re-runs the transition
+   * and the watcher comes back over the new set — the list is read here, not merely depended on.
    */
-  enabledExtensions?: readonly ExtensionId[]
+  tables: readonly SyncedTable[]
 }
 
 export interface UnsyncedReset {
@@ -52,7 +45,7 @@ export function useDataTransition({
   storage,
   dataOwner,
   onRemoteChange,
-  enabledExtensions,
+  tables,
 }: DataTransitionDeps): DataTransition {
   const deckStore = useDeckStoreApi()
   const profileStore = useProfileStoreApi()
@@ -81,6 +74,7 @@ export function useDataTransition({
         transition,
         userId,
         syncManager,
+        tables,
         dataOwner,
         resetLocal,
         onRemoteChange: (event) => remoteChange.current(event),
@@ -106,7 +100,7 @@ export function useDataTransition({
     pendingChangeStore,
     dataOwner,
     remoteChange,
-    enabledExtensions,
+    tables,
   ])
 
   const proceed = useCallback(async () => {
@@ -115,10 +109,11 @@ export function useDataTransition({
       transition: 'reset',
       userId: unsynced.userId,
       syncManager,
+      tables,
       dataOwner,
       resetLocal,
     })
-  }, [syncManager, unsynced, dataOwner, resetLocal])
+  }, [syncManager, unsynced, tables, dataOwner, resetLocal])
 
   const cancel = useCallback(async () => {
     setUnsynced(null)

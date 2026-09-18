@@ -16,6 +16,10 @@ function fakeReplication() {
 
 type Fake = ReturnType<typeof fakeReplication>
 
+/**
+ * `tables` is what the database holds; what a session actually replicates is whatever `start` is
+ * given, which defaults to all of them. `start` here is the harness's, not the manager's.
+ */
 function setup(
   tables: SyncedTable[] = ['decks', 'cards'],
   configure: (
@@ -23,7 +27,6 @@ function setup(
     push: (ids: string[]) => void,
     table: SyncedTable,
   ) => void = () => {},
-  isActive?: (table: SyncedTable) => boolean,
 ) {
   const created: Fake[] = []
   const stop = vi.fn().mockResolvedValue(undefined)
@@ -37,7 +40,6 @@ function setup(
   const targets: SyncTarget[] = tables.map((table) => ({ table, collection: {} as never }))
   const manager = new SyncManager(
     targets,
-    tables,
     (_userId, target, onPushed) => {
       const replication = fakeReplication()
       configure(replication, onPushed, target.table)
@@ -45,24 +47,28 @@ function setup(
       return replication as never
     },
     watch,
-    isActive,
   )
-  return { manager, created, watch, stop }
+  const start = (
+    userId = 'u1',
+    active: readonly SyncedTable[] = tables,
+    onRemoteChange?: (event: RemoteChangeEvent) => void,
+  ) => manager.start(userId, active, onRemoteChange)
+  return { manager, created, watch, stop, start }
 }
 
 describe('SyncManager', () => {
   it('starts no replication when an account signs in — only the cloud watcher', async () => {
-    const { manager, created, watch } = setup()
+    const { created, watch, start } = setup()
 
-    await manager.start('u1')
+    await start()
 
     expect(created).toHaveLength(0)
     expect(watch).toHaveBeenCalledWith('u1', ['decks', 'cards'], expect.any(Function))
   })
 
   it('runs one replication per table for a cycle and cancels them all afterwards', async () => {
-    const { manager, created } = setup()
-    await manager.start('u1')
+    const { manager, created, start } = setup()
+    await start()
 
     await manager.runCycle()
 
@@ -74,42 +80,42 @@ describe('SyncManager', () => {
   })
 
   it('reports which rows the cycle pushed, per table', async () => {
-    const { manager } = setup(['decks', 'cards'], (replication, push, table) => {
+    const { manager, start } = setup(['decks', 'cards'], (replication, push, table) => {
       replication.awaitInSync.mockImplementation(async () => {
         push(table === 'decks' ? ['d1', 'd2'] : ['c1'])
         push(table === 'decks' ? ['d2'] : [])
         return true
       })
     })
-    await manager.start('u1')
+    await start()
 
     await expect(manager.runCycle()).resolves.toEqual({ decks: ['d1', 'd2'], cards: ['c1'] })
   })
 
   it('fails the cycle on the first replication error rather than waiting forever', async () => {
-    const { manager, created } = setup(['decks'], (replication) => {
+    const { manager, created, start } = setup(['decks'], (replication) => {
       replication.awaitInSync.mockReturnValue(new Promise(() => {}))
       queueMicrotask(() => replication.error$.next(new Error('push refused')))
     })
-    await manager.start('u1')
+    await start()
 
     await expect(manager.runCycle()).rejects.toThrow('push refused')
     expect(created[0]?.cancel).toHaveBeenCalled()
   })
 
   it('cancels the replications when awaiting them fails', async () => {
-    const { manager, created } = setup(['decks'], (replication) => {
+    const { manager, created, start } = setup(['decks'], (replication) => {
       replication.awaitInSync.mockRejectedValue(new Error('storage closed'))
     })
-    await manager.start('u1')
+    await start()
 
     await expect(manager.runCycle()).rejects.toThrow('storage closed')
     expect(created[0]?.cancel).toHaveBeenCalled()
   })
 
   it('joins a cycle already running rather than starting a second one', async () => {
-    const { manager, created } = setup()
-    await manager.start('u1')
+    const { manager, created, start } = setup()
+    await start()
 
     await Promise.all([manager.runCycle(), manager.runCycle()])
 
@@ -117,8 +123,8 @@ describe('SyncManager', () => {
   })
 
   it('starts a fresh cycle once the previous one has finished', async () => {
-    const { manager, created } = setup()
-    await manager.start('u1')
+    const { manager, created, start } = setup()
+    await start()
 
     await manager.runCycle()
     await manager.runCycle()
@@ -137,13 +143,12 @@ describe('SyncManager', () => {
     const created: string[] = []
     const manager = new SyncManager(
       new Promise<SyncTarget[]>((resolve) => (open = resolve)),
-      ['decks'],
       (_userId, target) => {
         created.push(target.table)
         return fakeReplication() as never
       },
     )
-    await manager.start('u1')
+    await manager.start('u1', ['decks'])
 
     const cycle = manager.runCycle()
     await manager.stop()
@@ -159,32 +164,32 @@ describe('SyncManager', () => {
       { table: 'decks', collection: {} as never },
       { table: 'cards', collection: {} as never },
     ])
-    const manager = new SyncManager(opening, ['decks', 'cards'], (_userId, target) => {
+    const manager = new SyncManager(opening, (_userId, target) => {
       tables.push(target.table)
       return fakeReplication() as never
     })
 
-    await manager.start('u1')
+    await manager.start('u1', ['decks', 'cards'])
     await manager.runCycle()
 
     expect(tables).toEqual(['decks', 'cards'])
   })
 
   it('ignores a repeated start for the same user, and replaces the watcher for another', async () => {
-    const { manager, watch, stop } = setup()
+    const { watch, stop, start } = setup()
 
-    await manager.start('u1')
-    await manager.start('u1')
+    await start()
+    await start()
     expect(watch).toHaveBeenCalledTimes(1)
 
-    await manager.start('u2')
+    await start('u2')
     expect(stop).toHaveBeenCalledTimes(1)
     expect(watch).toHaveBeenCalledTimes(2)
   })
 
   it('stops watching on stop, and stops cycling with it', async () => {
-    const { manager, created, stop } = setup()
-    await manager.start('u1')
+    const { manager, created, stop, start } = setup()
+    await start()
 
     await manager.stop()
 
@@ -195,9 +200,9 @@ describe('SyncManager', () => {
 
   it('hands the watcher’s events to whoever started it, applying nothing itself', async () => {
     const seen: RemoteChangeEvent[] = []
-    const { manager, watch } = setup()
+    const { watch, start } = setup()
 
-    await manager.start('u1', (event) => seen.push(event))
+    await start('u1', undefined, (event) => seen.push(event))
     const [, , forward] = watch.mock.lastCall ?? []
     forward?.({ table: 'decks', id: 'd1', updated_at: '2026-01-01T00:00:00Z' })
 
@@ -206,15 +211,14 @@ describe('SyncManager', () => {
 
   describe('a table that only replicates while its extension is on', () => {
     const TABLES: SyncedTable[] = ['decks', 'cards', 'bible_verses']
+    const WITHOUT_BIBLE: SyncedTable[] = ['decks', 'cards']
 
     it('leaves the switched-off table out of the cycle', async () => {
       const pushed: SyncedTable[] = []
-      const { manager, created } = setup(
-        TABLES,
-        (_replication, _push, table) => pushed.push(table),
-        (table) => table !== 'bible_verses',
+      const { manager, created, start } = setup(TABLES, (_replication, _push, table) =>
+        pushed.push(table),
       )
-      await manager.start('u1')
+      await start('u1', WITHOUT_BIBLE)
 
       await manager.runCycle()
 
@@ -222,49 +226,41 @@ describe('SyncManager', () => {
       expect(pushed).toEqual(['decks', 'cards'])
     })
 
-    it('includes it once the predicate accepts it', async () => {
+    it('includes it once the live set names it', async () => {
       const pushed: SyncedTable[] = []
-      const { manager } = setup(
-        TABLES,
-        (_replication, _push, table) => pushed.push(table),
-        () => true,
-      )
-      await manager.start('u1')
+      const { manager, start } = setup(TABLES, (_replication, _push, table) => pushed.push(table))
+      await start('u1', TABLES)
 
       await manager.runCycle()
 
       expect(pushed).toEqual(['decks', 'cards', 'bible_verses'])
     })
 
-    it('hands the watcher exactly the active tables', async () => {
-      const off = setup(
-        TABLES,
-        () => {},
-        (table) => table !== 'bible_verses',
-      )
-      await off.manager.start('u1')
-      expect(off.watch).toHaveBeenCalledWith('u1', ['decks', 'cards'], expect.any(Function))
+    it('rebuilds the watcher over the new set when the extension is switched on', async () => {
+      const { watch, stop, start } = setup(TABLES)
 
-      const on = setup(
-        TABLES,
-        () => {},
-        () => true,
-      )
-      await on.manager.start('u1')
-      expect(on.watch).toHaveBeenCalledWith(
-        'u1',
-        ['decks', 'cards', 'bible_verses'],
-        expect.any(Function),
-      )
+      await start('u1', WITHOUT_BIBLE)
+      expect(watch).toHaveBeenLastCalledWith('u1', WITHOUT_BIBLE, expect.any(Function))
+
+      await start('u1', TABLES)
+
+      expect(stop).toHaveBeenCalledTimes(1)
+      expect(watch).toHaveBeenLastCalledWith('u1', TABLES, expect.any(Function))
+    })
+
+    it('leaves the watcher alone when the same account restarts over the same set', async () => {
+      const { watch, stop, start } = setup(TABLES)
+
+      await start('u1', WITHOUT_BIBLE)
+      await start('u1', [...WITHOUT_BIBLE])
+
+      expect(watch).toHaveBeenCalledTimes(1)
+      expect(stop).not.toHaveBeenCalled()
     })
 
     it('never reports the skipped table as pushed, so its checkpoint is untouched', async () => {
-      const { manager } = setup(
-        TABLES,
-        (_replication, push, table) => push([`${table}-1`]),
-        (table) => table !== 'bible_verses',
-      )
-      await manager.start('u1')
+      const { manager, start } = setup(TABLES, (_replication, push, table) => push([`${table}-1`]))
+      await start('u1', WITHOUT_BIBLE)
 
       const result = await manager.runCycle()
 

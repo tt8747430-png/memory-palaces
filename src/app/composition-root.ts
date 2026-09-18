@@ -21,7 +21,6 @@ import { createQuestionStore, type Question, type QuestionStore } from '@/entiti
 import { createProgressStore, type Progress, type ProgressStore } from '@/entities/progress'
 import {
   createPreferencesStore,
-  isExtensionEnabled,
   type Preferences,
   type PreferencesStore,
 } from '@/entities/preferences'
@@ -71,8 +70,12 @@ export interface Services {
   cloudSync: CloudSyncPort | null
   resetLocalData: () => Promise<void>
   extensionRepositories: ExtensionRepositories
-  /** Core plus contributed, in the order replication runs them. */
-  syncTables: readonly string[]
+  /**
+   * Every table that could replicate, core plus contributed, in the order replication runs them.
+   * Each carries the extension that owns it, so the live subset is derived where preferences are
+   * readable rather than guessed at here, before they have loaded.
+   */
+  syncTables: readonly SyncTableSpec[]
 }
 
 export async function createServices(): Promise<Services> {
@@ -114,7 +117,7 @@ export async function createServices(): Promise<Services> {
     collections.then((c) => c.notifications),
   )
   const historyRepo = new RxdbRepository<HistoryEntry>(collections.then((c) => c.history))
-  const syncTableSpecs: SyncTableSpec[] = [...CORE_SYNC_TABLES, ...extensions.syncTables]
+  const syncTableSpecs: readonly SyncTableSpec[] = [...CORE_SYNC_TABLES, ...extensions.syncTables]
   const syncTargets: Promise<SyncTarget[]> = collections.then((c) =>
     syncTableSpecs.map(({ table, collectionKey }) => ({
       table,
@@ -122,23 +125,8 @@ export async function createServices(): Promise<Services> {
     })),
   )
   const configured = cloud.isSupabaseConfigured()
-  /**
-   * An extension's table joins the sync set only while the extension is enabled. Read at cycle
-   * time, not here: preferences have not loaded when `createServices()` runs.
-   */
-  const tableIsActive = (table: string): boolean => {
-    const owner = extensions.ownerOf.get(table)
-    if (!owner) return true
-    const prefs = services.preferencesStore.getState().preferences
-    return prefs ? isExtensionEnabled(prefs, owner) : false
-  }
   const syncManager = configured
-    ? cloud.SyncManager.fromSupabase(
-        cloud.supabase,
-        syncTargets,
-        syncTableSpecs.map((spec) => spec.table),
-        tableIsActive,
-      )
+    ? cloud.SyncManager.fromSupabase(cloud.supabase, syncTargets)
     : null
   const services: Services = {
     authGateway,
@@ -161,7 +149,7 @@ export async function createServices(): Promise<Services> {
     cloudSync: syncManager ? cloud.createSupabaseCloudSync(cloud.supabase, syncManager) : null,
     resetLocalData: () => resetLocalDatabase({ collections }),
     extensionRepositories: buildExtensionRepositories(extensions.specs, collections),
-    syncTables: syncTableSpecs.map((spec) => spec.table),
+    syncTables: syncTableSpecs,
   }
 
   for (const store of [

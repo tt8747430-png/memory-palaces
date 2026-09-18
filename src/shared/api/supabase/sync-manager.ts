@@ -23,38 +23,31 @@ type WatcherFactory = (
   onRemoteChange: (event: RemoteChangeEvent) => void,
 ) => CloudWatcher
 
+const sameTables = (a: readonly SyncedTable[], b: readonly SyncedTable[]): boolean =>
+  a.length === b.length && a.every((table, index) => table === b[index])
+
 export class SyncManager {
   private userId: string | null = null
   private watcher: CloudWatcher | null = null
   private running: Promise<PushedIds> | null = null
+  /**
+   * The tables this session replicates, as `start` was told. Empty until then — `runCycle` refuses
+   * without an account anyway, so there is no window where the manager has targets but no list.
+   */
+  private tables: readonly SyncedTable[] = []
 
   constructor(
     private readonly targets: SyncTarget[] | Promise<SyncTarget[]>,
-    /**
-     * The tables the watcher subscribes to. Held apart from `targets` on purpose: a table name is
-     * known before the database opens, and the watcher must not wait on it. Both come from the one
-     * list the composition root composes, so they cannot drift.
-     */
-    private readonly tables: readonly SyncedTable[],
     private readonly makeReplication: ReplicationFactory,
     private readonly watch: WatcherFactory = () => ({ stop: async () => {} }),
-    /**
-     * Whether a table replicates right now. A contributed table only does while the extension that
-     * owns it is on, and that is a preference the manager cannot see — hence a predicate, read at
-     * cycle time rather than captured at construction.
-     */
-    private readonly isActive: (table: SyncedTable) => boolean = () => true,
   ) {}
 
   static fromSupabase(
     supabase: SupabaseClient,
     targets: SyncTarget[] | Promise<SyncTarget[]>,
-    tables: readonly SyncedTable[],
-    isActive?: (table: SyncedTable) => boolean,
   ): SyncManager {
     return new SyncManager(
       targets,
-      tables,
       (userId, target, onPushed) =>
         createCollectionReplication({
           supabase,
@@ -65,18 +58,26 @@ export class SyncManager {
         }),
       (userId, tables, onRemoteChange) =>
         createCloudWatcher(supabase, tables, userId, onRemoteChange),
-      isActive,
     )
   }
 
+  /**
+   * `tables` is the live set, composed by the caller from the enabled extensions — the manager does
+   * not read preferences. Passing a different set restarts the watcher, which is what makes
+   * toggling an extension take effect; nothing is awaited here, so a watcher never waits on the
+   * database opening.
+   */
   async start(
     userId: string,
+    tables: readonly SyncedTable[],
     onRemoteChange: (event: RemoteChangeEvent) => void = () => {},
   ): Promise<void> {
-    if (this.userId === userId) return
+    const next = [...tables]
+    if (this.userId === userId && sameTables(this.tables, next)) return
     await this.stop()
     this.userId = userId
-    this.watcher = this.watch(userId, this.tables.filter(this.isActive), onRemoteChange)
+    this.tables = next
+    this.watcher = this.watch(userId, next, onRemoteChange)
   }
 
   runCycle(): Promise<PushedIds> {
@@ -92,11 +93,13 @@ export class SyncManager {
     const watcher = this.watcher
     this.watcher = null
     this.userId = null
+    this.tables = []
     await watcher?.stop()
   }
 
   private async cycle(userId: string): Promise<PushedIds> {
-    const targets = (await this.targets).filter((target) => this.isActive(target.table))
+    const live = new Set(this.tables)
+    const targets = (await this.targets).filter((target) => live.has(target.table))
     if (this.userId !== userId) throw new Error('The account changed before the cycle could start')
 
     const pushed = new Map<SyncedTable, Set<string>>()

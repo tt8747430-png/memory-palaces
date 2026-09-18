@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
+import type { SyncedTable } from '@/shared/config/sync-tables'
 import { applyDataTransition } from './apply-data-transition'
+
+const TABLES: readonly SyncedTable[] = ['decks', 'cards']
 
 function setup() {
   return {
@@ -21,12 +24,13 @@ describe('applyDataTransition', () => {
       transition: 'keep',
       userId: 'a',
       syncManager,
+      tables: TABLES,
       dataOwner,
       resetLocal,
       onRemoteChange,
     })
 
-    expect(syncManager.start).toHaveBeenCalledWith('a', onRemoteChange)
+    expect(syncManager.start).toHaveBeenCalledWith('a', TABLES, onRemoteChange)
     expect(dataOwner.claim).toHaveBeenCalledWith('a')
     expect(resetLocal).not.toHaveBeenCalled()
   })
@@ -38,6 +42,7 @@ describe('applyDataTransition', () => {
       transition: 'reset',
       userId: 'b',
       syncManager,
+      tables: TABLES,
       dataOwner,
       resetLocal,
     })
@@ -57,6 +62,7 @@ describe('applyDataTransition', () => {
       transition: 'reset',
       userId: 'b',
       syncManager,
+      tables: TABLES,
       dataOwner,
       resetLocal,
     })

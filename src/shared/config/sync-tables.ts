@@ -1,3 +1,5 @@
+import type { ExtensionId } from '@/shared/lib'
+
 export const SYNCED_TABLES = [
   'decks',
   'cards',
@@ -27,12 +29,31 @@ export interface SyncTableSpec {
   table: SyncedTable
   /** The RxDB collection key, which is not the table name for an extension's collection. */
   collectionKey: string
+  /** The extension that owns it; null for a core table, which always replicates. */
+  owner: ExtensionId | null
 }
 
 export const CORE_SYNC_TABLES: readonly SyncTableSpec[] = SYNCED_TABLES.map((table) => ({
   table,
   collectionKey: table,
+  owner: null,
 }))
+
+/**
+ * The tables a cycle covers right now: every core one, plus the contributed ones whose extension
+ * is enabled. The watcher, the replication cycle and the peek all read this one derivation, so
+ * they cannot disagree about which tables are live — a table the peek asks about but the cycle
+ * never pulls is a banner no Synchronise can clear.
+ *
+ * Takes a predicate rather than the stored ids: what "enabled" means belongs to the preferences
+ * entity, and `shared` may not reach it.
+ */
+export function activeSyncTables(
+  specs: readonly SyncTableSpec[],
+  isEnabled: (id: ExtensionId) => boolean,
+): readonly SyncedTable[] {
+  return specs.flatMap((spec) => (spec.owner === null || isEnabled(spec.owner) ? [spec.table] : []))
+}
 
 export const CONTENT_COLLECTIONS = ['folders', 'decks', 'cards', 'questions'] as const
 
