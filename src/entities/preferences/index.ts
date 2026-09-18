@@ -9,7 +9,6 @@ export type {
   FlashcardSwipeByMode,
   MakePreferencesInput,
   PreferencesChanges,
-  PreferencesUpdate,
 } from './model/types'
 export type { ExtensionId } from '@/shared/lib'
 export {

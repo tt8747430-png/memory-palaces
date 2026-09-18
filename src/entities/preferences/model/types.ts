@@ -198,7 +198,7 @@ export type PreferencesChanges = Partial<
  * can pass a whole array it never read; `setPreferences` resolves its updater and hands the result
  * here, which is the only way the list is ever replaced.
  */
-export type PreferencesUpdate = PreferencesChanges & { extensions?: ExtensionId[] }
+type PreferencesUpdate = PreferencesChanges & { extensions?: ExtensionId[] }
 
 export function updatePreferences(
   preferences: Preferences,
