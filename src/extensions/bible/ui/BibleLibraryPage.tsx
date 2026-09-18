@@ -20,12 +20,10 @@ import { MoveSheet } from '@/widgets/deck-tree'
 import { ROUTES } from '@/shared/config/routes'
 import { useBibleT } from '../i18n/use-bible-t'
 import { useBibleVerseStore, useBibleVerseStoreApi } from '../model/context'
-import {
-  cleanReferenceBacks,
-  countReferenceBacks,
-  type CleanableCard,
-} from '../features/clean-reference-backs'
-import { publishVerses, versesFromCards } from '../features/publish-source'
+import { cleanReferenceBacks } from '../features/clean-reference-backs'
+import { type CleanableCard, countReferenceBacks } from '../model/reference-backs'
+import { publishVerses } from '../features/publish-verses'
+import { versesFromCards } from '../model/verse-sources'
 
 /** Nothing is being moved, so the deck picker excludes nothing. */
 const EXCLUDE_NOTHING: ReadonlySet<string> = new Set()

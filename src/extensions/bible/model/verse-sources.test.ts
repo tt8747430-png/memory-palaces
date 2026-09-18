@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { versesFromCards } from './publish-source'
+import { versesFromCards } from './verse-sources'
 
 const at = new Date(0).toISOString()
 

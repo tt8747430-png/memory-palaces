@@ -2,7 +2,7 @@ import type { DeckStore } from '@/entities/deck'
 import { createDeck } from '@/features/deck'
 import type { ParsedCard } from '@/shared/lib'
 import type { VerseRef } from '../model/reference'
-import { buildVerseCards, findDuplicates, type HeldRef } from './build-verse-cards'
+import { buildVerseCards, findDuplicates, type HeldRef } from '../model/verse-cards'
 import { ensureChapterDeck } from './place-in-chapter-deck'
 
 /** Where the cards are going: the reader's choice, or the app's. */

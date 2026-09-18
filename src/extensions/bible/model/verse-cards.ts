@@ -1,6 +1,6 @@
 import type { ParsedCard } from '@/shared/lib'
-import { formatRef, type VerseRef } from '../model/reference'
-import { stripReference } from '../model/strip-reference'
+import { formatRef, type VerseRef } from './reference'
+import { stripReference } from './strip-reference'
 
 /**
  * `1)` or `(1:1)` — the two shapes verse text arrives in. This is the app's only verse parser:

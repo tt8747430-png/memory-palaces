@@ -1,17 +1,11 @@
 import { describe, expect, it, vi } from 'vitest'
-import { cleanReferenceBacks, countReferenceBacks } from './clean-reference-backs'
+import { cleanReferenceBacks } from './clean-reference-backs'
 
 const cards = [
   { id: 'a', front: 'Genesis 1:1', back: 'Genesis 1:1 In the beginning.' },
   { id: 'b', front: 'Genesis 1:2', back: 'The earth was without form.' },
   { id: 'c', front: 'Zeus', back: 'King of the gods' },
 ]
-
-describe('countReferenceBacks', () => {
-  it('counts only the backs that repeat their front', () => {
-    expect(countReferenceBacks(cards)).toBe(1)
-  })
-})
 
 describe('cleanReferenceBacks', () => {
   it('rewrites only those backs, through the caller-supplied save', async () => {

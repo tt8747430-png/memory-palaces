@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildVerseCards, canSplit, findDuplicates } from './build-verse-cards'
+import { buildVerseCards, canSplit, findDuplicates } from './verse-cards'
 
 const ref = { book: 'Genesis', chapter: 1, from: 1, to: 2 }
 

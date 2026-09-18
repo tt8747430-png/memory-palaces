@@ -1,7 +1,6 @@
-import { parseRef } from '../model/reference'
-import { stripReference } from '../model/strip-reference'
-import { type BibleVerse, makeBibleVerse } from '../model/verse'
-import type { BibleVerseStore } from '../model/store'
+import { parseRef } from './reference'
+import { stripReference } from './strip-reference'
+import { type BibleVerse, makeBibleVerse } from './verse'
 
 export interface SourceCard {
   front: string
@@ -27,12 +26,4 @@ export function versesFromCards(cards: readonly SourceCard[], at: string): Bible
     )
   }
   return verses
-}
-
-export async function publishVerses(
-  store: BibleVerseStore,
-  verses: readonly BibleVerse[],
-): Promise<number> {
-  for (const verse of verses) await store.getState().save(verse)
-  return verses.length
 }
