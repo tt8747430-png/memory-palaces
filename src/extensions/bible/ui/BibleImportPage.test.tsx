@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, screen, waitFor } from '@testing-library/react'
+import { cleanup, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { i18n } from '@/shared/i18n'
 import { setDevMode } from '@/shared/lib'
@@ -143,6 +143,36 @@ describe('BibleImportPage text and target', () => {
     await user.click(screen.getByRole('switch', { name: 'Include in decks' }))
     expect(screen.getByRole('button', { name: 'Choose a deck' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Create a deck' })).toBeInTheDocument()
+  })
+
+  it('will not add to a new deck it has no name for — switched off before a book was picked', async () => {
+    const user = userEvent.setup()
+    renderImportPage(<BibleImportPage />)
+    await user.click(screen.getByLabelText('Verse text'))
+    await user.paste('(1:1) In the beginning.')
+    expect(screen.getByRole('button', { name: 'Add 1 card' })).toBeEnabled()
+
+    await user.click(screen.getByRole('switch', { name: 'Include in decks' }))
+
+    // There is no chapter to name the deck after, so Add waits for a destination rather than
+    // asking `createDeck` for a deck called ''.
+    expect(screen.getByRole('button', { name: 'Add 1 card' })).toBeDisabled()
+  })
+
+  it('adds again once the new deck has been named', async () => {
+    const user = userEvent.setup()
+    renderImportPage(<BibleImportPage />)
+    await user.click(screen.getByLabelText('Verse text'))
+    await user.paste('(1:1) In the beginning.')
+    await user.click(screen.getByRole('switch', { name: 'Include in decks' }))
+    expect(screen.getByRole('button', { name: 'Add 1 card' })).toBeDisabled()
+
+    await user.click(screen.getByRole('button', { name: 'Create a deck' }))
+    const sheet = await screen.findByRole('dialog')
+    await user.type(within(sheet).getByRole('textbox'), 'Memory work')
+    await user.click(within(sheet).getByRole('button', { name: 'Create a deck' }))
+
+    expect(screen.getByRole('button', { name: 'Add 1 card' })).toBeEnabled()
   })
 
   it('opens on the deck the reader came from, with placement off', () => {

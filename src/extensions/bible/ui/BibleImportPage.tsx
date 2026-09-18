@@ -17,8 +17,9 @@ import { usePassagePicker } from '../model/use-passage-picker'
 import { createStoredVerseSource, type StoredVerse } from '../model/verse-text'
 import { useBibleVerseStore, useBibleVerseStoreApi } from '../model/context'
 import { DEFAULT_TRANSLATION } from '../model/verse'
-import { addVerseCards, type VerseTarget } from '../features/add-verse-cards'
+import { addVerseCards } from '../features/add-verse-cards'
 import { buildVerseCards, canSplit, findDuplicates } from '../model/verse-cards'
+import { targetIsResolvable, type VerseTarget } from '../model/verse-target'
 import { publishVerses } from '../features/publish-verses'
 import { versesFromCards } from '../model/verse-sources'
 import { validateBibleImportSearch } from '../manifest'
@@ -130,7 +131,7 @@ export function BibleImportPage({ deckId, onBack, onReview, onShowDeck }: BibleI
           <Button
             size="lg"
             className="w-full"
-            disabled={addable.length === 0}
+            disabled={addable.length === 0 || !targetIsResolvable(target)}
             onClick={() => void add()}
           >
             <Sparkles className="size-4.5" aria-hidden />

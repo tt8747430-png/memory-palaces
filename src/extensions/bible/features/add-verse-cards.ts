@@ -3,11 +3,10 @@ import { createDeck } from '@/features/deck'
 import type { ParsedCard } from '@/shared/lib'
 import type { VerseRef } from '../model/reference'
 import { buildVerseCards, findDuplicates, type HeldRef } from '../model/verse-cards'
+import { targetIsResolvable, type VerseTarget } from '../model/verse-target'
 import { ensureChapterDeck } from './place-in-chapter-deck'
 
-/** Where the cards are going: the reader's choice, or the app's. */
-export type VerseTarget =
-  { kind: 'automatic' } | { kind: 'deck'; deckId: string } | { kind: 'newDeck'; name: string }
+export type { VerseTarget }
 
 export interface AddVerseCardsDeps {
   deckStore: DeckStore
@@ -31,9 +30,12 @@ export async function addVerseCards(
   { deckStore, setDraft }: AddVerseCardsDeps,
   { ref, text, split, target, held, keepDuplicates }: AddVerseCardsInput,
 ): Promise<string> {
+  if (!targetIsResolvable(target)) throw new Error('This passage has no deck to go to yet')
+
   const built = buildVerseCards(ref, text, { split })
   const duplicates = new Set(findDuplicates(built, held).map((entry) => entry.front))
   const cards = keepDuplicates ? built : built.filter((card) => !duplicates.has(card.front))
+  if (cards.length === 0) throw new Error('There are no cards left to add')
 
   const deckId =
     target.kind === 'deck'
@@ -42,8 +44,9 @@ export async function addVerseCards(
         ? (await createDeck(deckStore, { name: target.name })).id
         : ref
           ? await ensureChapterDeck(deckStore, ref.book, ref.chapter)
-          : // A paste with markers and no book picked has no book to name a deck after.
-            (await createDeck(deckStore, { name: cards[0]?.front ?? '' })).id
+          : // A paste with markers and no book picked has no book to name a deck after, so the
+            // first card's own front stands in. `cards` is never empty by here.
+            (await createDeck(deckStore, { name: cards[0]!.front })).id
 
   setDraft('extension', cards)
   return deckId
