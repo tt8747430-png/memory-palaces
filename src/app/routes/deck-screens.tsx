@@ -14,11 +14,11 @@ import { QuizPage } from '@/pages/quiz'
 import { StudyCardsPage } from '@/pages/study'
 import { selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
 import { createDeck } from '@/features/deck'
-import { nextDefaultName } from '@/shared/lib'
+import { nextDefaultName, useRouteSearch } from '@/shared/lib'
 import { ROUTES } from '@/shared/config/routes'
 import { useExtensionNavigate } from './use-extension-navigate'
 import { useBack } from './use-back'
-import { studyFilterFrom, useRouteSearch, validateStudySearch } from './search'
+import { studyFilterFrom, validateStudySearch } from './search'
 
 function useDeckId(from: (typeof ROUTES)[keyof typeof ROUTES]) {
   return useParams({ from, select: (params) => (params as { deckId: string }).deckId })

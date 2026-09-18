@@ -16,8 +16,8 @@ function mergeContributions(manifests: ExtensionManifest[]): ExtensionContributi
 }
 
 /**
- * Mounts one enabled extension: its messages first, then its own provider, which is where its
- * stores and keepers live. Unmounting is the whole of disabling — React tears the provider down,
+ * Mounts one enabled extension: its messages and its own provider, which is where its stores and
+ * keepers live. Unmounting is the whole of disabling — React tears the provider down,
  * and the namespace goes with it.
  */
 function MountedExtension({
@@ -35,34 +35,23 @@ function MountedExtension({
 
   useEffect(() => {
     let live = true
-    let reported = false
-    /**
-     * A chunk that will not load — an offline first visit, a stale service worker — must not leave
-     * the extension silently half-mounted. Readiness is never granted, so its contributions stay
-     * withheld and no host paints a surface that cannot work, and the reader is told once.
-     */
-    const broken = () => {
-      if (!live || reported) return
-      reported = true
-      toast.error(i18n.t('settings.extensionsBroken'))
-    }
-
-    void manifest
-      .loadMessages()
-      .then((messages) => {
+    // Messages and provider together: readiness means both are in. Granted on the messages alone,
+    // a host could publish the import row before the store context it navigates into exists.
+    void Promise.all([manifest.loadMessages(), manifest.loadProvider?.()]).then(
+      ([messages, provided]) => {
         if (!live) return
         i18n.addResourceBundle('en', manifest.namespace, messages, true, false)
+        if (provided) setProvider(() => provided.ExtensionProvider)
         onReadiness(manifest.id, true)
-      })
-      .catch(broken)
-    if (manifest.loadProvider) {
-      void manifest
-        .loadProvider()
-        .then((module) => {
-          if (live) setProvider(() => module.ExtensionProvider)
-        })
-        .catch(broken)
-    }
+      },
+      () => {
+        // A chunk that will not load — an offline first visit, a stale service worker — must not
+        // leave the extension silently half-mounted. Readiness is never granted, so its
+        // contributions stay withheld and no host paints a surface that cannot work; the reader
+        // is told, once.
+        if (live) toast.error(i18n.t('settings.extensionsBroken'))
+      },
+    )
     return () => {
       live = false
       i18n.removeResourceBundle('en', manifest.namespace)

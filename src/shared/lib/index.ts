@@ -152,6 +152,7 @@ export { AccountDeletionContext, useAccountDeletion } from './account-deletion-c
 export { ResetLocalDataContext, useResetLocalData } from './reset-local-data-context'
 export { useValidatedSubmit, type FieldErrors, type ValidatedSubmit } from './use-validated-submit'
 export { readOnline, useOnline } from './use-online'
+export { useRouteSearch } from './use-route-search'
 export { useLatest } from './use-latest'
 export { newest, type Clocked } from './newest'
 export { mergeProgress, type MergeableProgress } from './merge-progress'

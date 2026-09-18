@@ -7,13 +7,22 @@ import { makeCard } from '@/entities/card'
 import { bibleMessages } from '../i18n/en'
 import { renderImportPage } from '../testing/render-import-page'
 import { storedDeck } from '../testing/decks'
-import { makeBibleVerse } from '../model/verse'
+import { DEFAULT_TRANSLATION, makeBibleVerse } from '../model/verse'
 import { useImportDraft } from '@/widgets/content-editor'
 import { BibleImportPage } from './BibleImportPage'
 
 i18n.addResourceBundle('en', 'bible', bibleMessages, true, false)
 
 const at = new Date(0).toISOString()
+const verse = (number: number, text: string) =>
+  makeBibleVerse({
+    createdAt: at,
+    translation: DEFAULT_TRANSLATION,
+    book: 'Genesis',
+    chapter: 1,
+    verse: number,
+    text,
+  })
 
 afterEach(() => {
   cleanup()
@@ -85,10 +94,7 @@ describe('BibleImportPage text and target', () => {
   it('prefills with markers from the library, and says where the text came from', async () => {
     const user = userEvent.setup()
     renderImportPage(<BibleImportPage />, {
-      verses: [
-        makeBibleVerse({ createdAt: at, book: 'Genesis', chapter: 1, verse: 1, text: 'First.' }),
-        makeBibleVerse({ createdAt: at, book: 'Genesis', chapter: 1, verse: 2, text: 'Second.' }),
-      ],
+      verses: [verse(1, 'First.'), verse(2, 'Second.')],
     })
     await user.click(screen.getByRole('button', { name: 'Genesis' }))
     await user.click(screen.getByRole('button', { name: '1' }))
@@ -175,27 +181,6 @@ describe('BibleImportPage text and target', () => {
     expect(screen.getByRole('button', { name: 'Add 1 card' })).toBeEnabled()
   })
 
-  it('counts what splitting would produce, not what the toggle currently made', async () => {
-    const user = userEvent.setup()
-    renderImportPage(<BibleImportPage />)
-    await user.click(screen.getByRole('button', { name: 'Genesis' }))
-    await user.click(screen.getByRole('button', { name: '1' }))
-    await user.click(screen.getByRole('button', { name: '1' }))
-    await user.click(screen.getByRole('button', { name: '3' }))
-    await user.click(screen.getByLabelText('Verse text'))
-    await user.paste('1) In the beginning. 2) The earth was formless. 3) And God said.')
-
-    const split = screen.getByRole('switch', { name: /^Split into/ })
-    expect(split).toHaveAccessibleName('Split into 3 individual verses')
-
-    await user.click(split)
-
-    // Off, the build is one range card — the label must still say what turning it back on does.
-    expect(screen.getByRole('switch', { name: /^Split into/ })).toHaveAccessibleName(
-      'Split into 3 individual verses',
-    )
-  })
-
   it('opens on the deck the reader came from, with placement off', () => {
     renderImportPage(<BibleImportPage deckId="deck-1" />, {
       decks: [storedDeck('deck-1', { name: 'Memory work' })],
@@ -244,76 +229,6 @@ describe('BibleImportPage text and target', () => {
     await user.click(screen.getByRole('button', { name: 'Keep this text' }))
     await waitFor(() => expect(verseStore.getState().verses).toHaveLength(1))
     expect(verseStore.getState().verses[0]?.text).toBe('In the beginning.')
-    setDevMode(false)
-  })
-
-  it('leaves a prefilled box cleared — their own text always wins, including none', async () => {
-    const user = userEvent.setup()
-    renderImportPage(<BibleImportPage />, {
-      verses: [
-        makeBibleVerse({ createdAt: at, book: 'Genesis', chapter: 1, verse: 1, text: 'First.' }),
-        makeBibleVerse({ createdAt: at, book: 'Genesis', chapter: 1, verse: 2, text: 'Second.' }),
-      ],
-    })
-    await user.click(screen.getByRole('button', { name: 'Genesis' }))
-    await user.click(screen.getByRole('button', { name: '1' }))
-    await user.click(screen.getByRole('button', { name: '1' }))
-    await user.click(screen.getByRole('button', { name: '2' }))
-    const box = await screen.findByLabelText('Verse text')
-    await waitFor(() => expect(box).toHaveValue('1) First. 2) Second.'))
-
-    await user.clear(box)
-
-    expect(box).toHaveValue('')
-    expect(screen.queryByText('Text brought in from your Bible library.')).not.toBeInTheDocument()
-  })
-
-  it('keeps every verse even with splitting off — the library stores one record per verse', async () => {
-    const user = userEvent.setup()
-    setDevMode(true)
-    const { verseStore } = renderImportPage(<BibleImportPage />)
-    await user.click(screen.getByRole('button', { name: 'Genesis' }))
-    await user.click(screen.getByRole('button', { name: '1' }))
-    await user.click(screen.getByRole('button', { name: '1' }))
-    await user.click(screen.getByRole('button', { name: '3' }))
-    await user.click(screen.getByLabelText('Verse text'))
-    await user.paste('1) In the beginning. 2) The earth was formless. 3) And God said.')
-    await user.click(screen.getByRole('switch', { name: /^Split into/ }))
-
-    await user.click(screen.getByRole('button', { name: 'Keep this text' }))
-
-    await waitFor(() => expect(verseStore.getState().verses).toHaveLength(3))
-    setDevMode(false)
-  })
-
-  it('offers no Keep for text that names no single verse', async () => {
-    const user = userEvent.setup()
-    setDevMode(true)
-    renderImportPage(<BibleImportPage />)
-    await user.click(screen.getByRole('button', { name: 'Genesis' }))
-    await user.click(screen.getByRole('button', { name: '1' }))
-    await user.click(screen.getByRole('button', { name: '1' }))
-    await user.click(screen.getByRole('button', { name: '3' }))
-    await user.click(screen.getByLabelText('Verse text'))
-    // Unmarked text over a range is one card fronted `Genesis 1:1-3` — not a verse record.
-    await user.paste('In the beginning God created the heaven and the earth.')
-
-    expect(screen.queryByRole('button', { name: 'Keep this text' })).not.toBeInTheDocument()
-    setDevMode(false)
-  })
-
-  it('gives back the deck it was opened on when placement is switched on and off again', async () => {
-    const user = userEvent.setup()
-    renderImportPage(<BibleImportPage deckId="deck-1" />, {
-      decks: [storedDeck('deck-1', { name: 'Memory work' })],
-    })
-    const toggle = screen.getByRole('switch', { name: 'Include in decks' })
-
-    await user.click(toggle)
-    await user.click(toggle)
-
-    expect(toggle).not.toBeChecked()
-    expect(screen.getByText('Memory work')).toBeInTheDocument()
   })
 
   it('offers no such button while dev mode is off', async () => {

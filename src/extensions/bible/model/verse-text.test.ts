@@ -4,7 +4,14 @@ import { DEFAULT_TRANSLATION, makeBibleVerse } from './verse'
 
 const at = new Date(0).toISOString()
 const verse = (chapter: number, number: number, text: string) =>
-  makeBibleVerse({ createdAt: at, book: 'Genesis', chapter, verse: number, text })
+  makeBibleVerse({
+    createdAt: at,
+    translation: DEFAULT_TRANSLATION,
+    book: 'Genesis',
+    chapter,
+    verse: number,
+    text,
+  })
 
 describe('createStoredVerseSource', () => {
   it('reads a range in verse order', async () => {

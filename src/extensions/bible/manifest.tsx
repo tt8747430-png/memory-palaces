@@ -1,12 +1,12 @@
 import { BookOpen } from 'lucide-react'
 import { type ExtensionManifest, extensionRoute } from '@/shared/lib'
 
-export const BIBLE_ID = 'bible'
-export const BIBLE_IMPORT_PATH = '/import/bible'
-export const BIBLE_LIBRARY_PATH = '/settings/extensions/bible'
+const BIBLE_ID = 'bible'
+const BIBLE_IMPORT_PATH = '/import/bible'
+const BIBLE_LIBRARY_PATH = '/settings/extensions/bible'
 
 /** What an import link may carry: the deck the reader was already in. */
-export interface BibleImportSearch extends Record<string, unknown> {
+interface BibleImportSearch extends Record<string, unknown> {
   deckId?: string
 }
 

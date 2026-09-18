@@ -1,6 +1,7 @@
 import type { Deck, DeckStore } from '@/entities/deck'
 import { createDeck, createSubdeck } from '@/features/deck'
 import { childDecks } from '@/shared/lib'
+import { chapterDeckName } from '../model/deck-names'
 
 const sameName = (a: string, b: string): boolean =>
   a.trim().toLowerCase() === b.trim().toLowerCase()
@@ -22,7 +23,7 @@ export async function ensureChapterDeck(
 ): Promise<string> {
   const bookDeck =
     findBookDeck(store.getState().decks, book) ?? (await createDeck(store, { name: book }))
-  const chapterName = `${book} ${chapter}`
+  const chapterName = chapterDeckName(book, chapter)
   const held = childDecks(store.getState().decks, bookDeck.id).find(
     (deck) => !deck.archived && sameName(deck.name, chapterName),
   )

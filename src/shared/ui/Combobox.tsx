@@ -2,6 +2,7 @@ import { type ReactNode } from 'react'
 import { Menu } from '@base-ui/react/menu'
 import { Check, ChevronsUpDown } from 'lucide-react'
 import { cn } from '@/shared/lib'
+import { FOCUS_RING } from './focus-ring'
 
 export interface ComboboxOption<T extends string> {
   value: T
@@ -44,7 +45,7 @@ export function Combobox<T extends string>({
             ? 'flex min-h-11 items-center gap-1 rounded-control pl-2 -mr-1.5 pr-1.5 text-right outline-none data-popup-open:text-accent'
             : 'flex h-11 w-full items-center gap-2.5 rounded-control border border-border bg-card px-3.5 text-left shadow-rest data-popup-open:border-[oklch(var(--p-tint-navy)/0.2)]',
           'outline-none transition-[color,border-color,box-shadow] duration-150 ease-out',
-          'focus-visible:ring-[3px] focus-visible:ring-ring/45',
+          FOCUS_RING,
           'disabled:pointer-events-none disabled:opacity-50',
           className,
         )}

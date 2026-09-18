@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, screen, waitFor } from '@testing-library/react'
+import { cleanup, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { i18n } from '@/shared/i18n'
 import { setDevMode } from '@/shared/lib'
@@ -14,7 +14,8 @@ import { createBibleVerseStore } from '../model/store'
 import { BibleLibraryPage } from './BibleLibraryPage'
 import { InMemoryRepository } from '@/shared/api'
 import { started } from '@/shared/test/started'
-import type { BibleVerse } from '../model/verse'
+import { toast } from 'sonner'
+import { type BibleVerse, DEFAULT_TRANSLATION } from '../model/verse'
 
 vi.mock('sonner', () => ({ toast: Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn() }) }))
 
@@ -26,6 +27,7 @@ beforeEach(() => setDevMode(true))
 
 afterEach(() => {
   cleanup()
+  vi.clearAllMocks()
   setDevMode(false)
 })
 
@@ -51,6 +53,7 @@ describe('BibleLibraryPage', () => {
           { front: 'Genesis 1:1', back: 'First.' },
           { front: 'Genesis 1:2', back: 'Second.' },
         ],
+        DEFAULT_TRANSLATION,
         at,
       ),
     })
@@ -73,6 +76,29 @@ describe('BibleLibraryPage', () => {
     await waitFor(() => expect(verseStore.getState().verses).toHaveLength(1))
     expect(verseStore.getState().verses[0]?.text).toBe('In the beginning.')
   })
+
+  it('previews what cleaning would change, then reports what it did', async () => {
+    const user = userEvent.setup()
+    const { cardStore } = renderImportPage(<BibleLibraryPage />, {
+      decks: [storedDeck('deck-1', { name: 'Genesis 1' })],
+      cards: [
+        verseCard('c1', 'Genesis 1:1', 'Genesis 1:1 In the beginning.'),
+        verseCard('c2', 'Genesis 1:2', 'The earth.'),
+      ],
+    })
+    await user.click(screen.getByRole('button', { name: /Clean references/ }))
+    await user.click(await screen.findByText('Genesis 1'))
+    await user.click(screen.getByRole('button', { name: 'Move to Genesis 1' }))
+
+    const dialog = await screen.findByRole('alertdialog')
+    expect(within(dialog).getByText('1 card would change')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /Clean references/ }))
+
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Cleaned 1 card'))
+    expect(cardStore.getState().cards.find((card) => card.id === 'c1')?.back).toBe(
+      'In the beginning.',
+    )
+  })
 })
 
 describe('keeping the text in the import box', () => {
@@ -83,7 +109,7 @@ describe('keeping the text in the import box', () => {
       '1) First. 2) Second.',
     )
 
-    expect(await publishVerses(store, versesFromCards(cards, at))).toBe(2)
+    expect(await publishVerses(store, versesFromCards(cards, DEFAULT_TRANSLATION, at))).toBe(2)
     expect(store.getState().verses.map((verse) => verse.text)).toEqual(['First.', 'Second.'])
   })
 })

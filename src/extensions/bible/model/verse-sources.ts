@@ -33,6 +33,12 @@ export function verseSources(cards: readonly SourceCard[]): VerseSource[] {
 }
 
 /** Turns cards that look like verses into source records. Anything else is left alone. */
-export function versesFromCards(cards: readonly SourceCard[], at: string): BibleVerse[] {
-  return verseSources(cards).map((source) => makeBibleVerse({ createdAt: at, ...source }))
+export function versesFromCards(
+  cards: readonly SourceCard[],
+  translation: string,
+  at: string,
+): BibleVerse[] {
+  return verseSources(cards).map((source) =>
+    makeBibleVerse({ createdAt: at, translation, ...source }),
+  )
 }
