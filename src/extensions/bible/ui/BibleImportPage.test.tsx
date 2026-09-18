@@ -175,6 +175,27 @@ describe('BibleImportPage text and target', () => {
     expect(screen.getByRole('button', { name: 'Add 1 card' })).toBeEnabled()
   })
 
+  it('counts what splitting would produce, not what the toggle currently made', async () => {
+    const user = userEvent.setup()
+    renderImportPage(<BibleImportPage />)
+    await user.click(screen.getByRole('button', { name: 'Genesis' }))
+    await user.click(screen.getByRole('button', { name: '1' }))
+    await user.click(screen.getByRole('button', { name: '1' }))
+    await user.click(screen.getByRole('button', { name: '3' }))
+    await user.click(screen.getByLabelText('Verse text'))
+    await user.paste('1) In the beginning. 2) The earth was formless. 3) And God said.')
+
+    const split = screen.getByRole('switch', { name: /^Split into/ })
+    expect(split).toHaveAccessibleName('Split into 3 individual verses')
+
+    await user.click(split)
+
+    // Off, the build is one range card — the label must still say what turning it back on does.
+    expect(screen.getByRole('switch', { name: /^Split into/ })).toHaveAccessibleName(
+      'Split into 3 individual verses',
+    )
+  })
+
   it('opens on the deck the reader came from, with placement off', () => {
     renderImportPage(<BibleImportPage deckId="deck-1" />, {
       decks: [storedDeck('deck-1', { name: 'Memory work' })],

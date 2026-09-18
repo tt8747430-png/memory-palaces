@@ -111,6 +111,12 @@ export function BibleImportPage({ deckId, onBack, onReview, onShowDeck }: BibleI
 
   const spansRange = Boolean(from && to && to > from)
   const splitAvailable = canSplit(text)
+  // What splitting would produce, asked of the text and not of the current toggle — with the
+  // toggle off `built` is the single range card, which would read "Split into 1 individual verse".
+  const splitCount = useMemo(
+    () => (splitAvailable ? buildVerseCards(ref, text, { split: true }).length : 0),
+    [splitAvailable, ref, text],
+  )
   const chapterName = book && chapter ? `${book} ${chapter}` : ''
   const destination =
     target.kind === 'deck'
@@ -231,7 +237,7 @@ export function BibleImportPage({ deckId, onBack, onReview, onShowDeck }: BibleI
 
         {spansRange ? (
           <ToggleRow
-            label={t('split', { count: built.length || 2 })}
+            label={t('split', { count: splitCount })}
             description={splitAvailable ? undefined : t('splitUnavailable')}
             checked={split && splitAvailable}
             disabled={!splitAvailable}
