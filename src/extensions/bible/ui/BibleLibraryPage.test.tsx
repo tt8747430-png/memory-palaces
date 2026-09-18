@@ -7,7 +7,7 @@ import { bibleMessages } from '../i18n/en'
 import { storedDeck } from '../testing/decks'
 import { renderImportPage } from '../testing/render-import-page'
 import { buildVerseCards } from '../model/verse-cards'
-import { publishVerses } from '../features/publish-verses'
+import { keepMissingVerses } from '../features/keep-missing-verses'
 import { versesFromCards } from '../model/verse-sources'
 import { createBibleVerseStore } from '../model/store'
 import { BibleLibraryPage } from './BibleLibraryPage'
@@ -76,11 +76,11 @@ describe('keeping the text in the import box', () => {
   it('publishes exactly the verses in the box, reference stripped from each', async () => {
     const store = started(createBibleVerseStore(new InMemoryRepository<BibleVerse>([])))
     const cards = buildVerseCards(
-      { book: 'GEN', chapter: 1, from: 1, to: 2 },
+      { book: 'GEN' as const, chapter: 1, from: 1, to: 2 },
       '1) First. 2) Second.',
     )
 
-    expect(await publishVerses(store, versesFromCards(cards, DEFAULT_TRANSLATION, at))).toBe(2)
+    expect(await keepMissingVerses(store, versesFromCards(cards, DEFAULT_TRANSLATION, at))).toBe(2)
     expect(store.getState().verses.map((verse) => verse.text)).toEqual(['First.', 'Second.'])
   })
 })

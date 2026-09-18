@@ -35,6 +35,14 @@ describe('buildVerseCards', () => {
     ])
   })
 
+  it('skips a verse left empty without swallowing the next one', () => {
+    const cards = buildVerseCards({ ...ref, to: 3 }, '1) A.\n2) \n3) C.')
+    expect(cards).toEqual([
+      { front: 'Geneza 1:1', back: 'A.' },
+      { front: 'Geneza 1:3', back: 'C.' },
+    ])
+  })
+
   it('makes nothing from empty text', () => {
     expect(buildVerseCards(ref, '   ')).toEqual([])
   })

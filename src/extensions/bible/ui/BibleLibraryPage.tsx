@@ -18,7 +18,7 @@ import { DestinationSheet } from '@/widgets/deck-tree'
 import { useBibleT } from '../i18n/use-bible-t'
 import { useBibleVerseStore, useBibleVerseStoreApi } from '../model/context'
 import { forgetBook } from '../features/forget-book'
-import { publishVerses } from '../features/publish-verses'
+import { keepMissingVerses } from '../features/keep-missing-verses'
 import { isBookCode } from '../model/canon'
 import { bookName } from '../model/book-names'
 import { DEFAULT_TRANSLATION } from '../model/translations'
@@ -74,7 +74,7 @@ export function BibleLibraryPage({ onBack }: BibleLibraryPageProps) {
   const deckCards = (deckId: string) => cardsInSubtree(decks, cards, deckId)
 
   const publish = (deckId: string) => {
-    void publishVerses(
+    void keepMissingVerses(
       verseStore,
       versesFromCards(deckCards(deckId), DEFAULT_TRANSLATION, nowIso()),
     ).then(

@@ -3,11 +3,12 @@ import { formatRef, type VerseRef } from './reference'
 import { stripReference } from './strip-reference'
 
 /**
- * `1)` or `(1:1)` — the two shapes verse text arrives in. This is the app's only verse parser:
- * the one that used to live in `shared/lib/content-transfer.ts` is deleted rather than moved,
- * because two parsers for one format is one too many.
+ * `1)` or `(1:1)` — the two shapes verse text arrives in. The space before `1)` is looked behind,
+ * not consumed: an empty verse's trailing whitespace is the next marker's leading space. This is
+ * the app's only verse parser: the one that used to live in `shared/lib/content-transfer.ts` is
+ * deleted rather than moved, because two parsers for one format is one too many.
  */
-const MARKER = /(?:\((\d+):(\d+)\)|(?:^|\s)(\d+)\))\s*/g
+const MARKER = /(?:\((\d+):(\d+)\)|(?<=^|\s)(\d+)\))\s*/g
 
 interface Segment {
   /** From a `(1:1)` marker; null when the text only numbered its verses. */

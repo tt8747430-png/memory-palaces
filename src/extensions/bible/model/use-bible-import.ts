@@ -1,20 +1,21 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { nowIso, type ParsedCard, selectIsReady } from '@/shared/lib'
 import { selectCards, useCardStore } from '@/entities/card'
 import { type Deck, selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
 import { type Folder, selectFolders, useFolderStore } from '@/entities/folder'
-import { selectDevMode, usePreferencesStore } from '@/entities/preferences'
 import { useImportDraft } from '@/widgets/content-editor'
 import { useBibleT } from '../i18n/use-bible-t'
 import { addVerseCards } from '../features/add-verse-cards'
-import { publishVerses } from '../features/publish-verses'
+import { keepMissingVerses } from '../features/keep-missing-verses'
 import { useBibleVerseStore, useBibleVerseStoreApi } from './context'
-import { isBookPickable } from './book-offer'
 import { chapterDeckName } from './deck-names'
-import { formatPartial, formatRef } from './reference'
-import { type PassagePicker, usePassagePicker } from './use-passage-picker'
 import { indexLibrary, type LibraryIndex } from './library-index'
+import { type PassageText, passagePrefill } from './passage-text'
+import { recentPassages, type RecentPassage } from './recents'
+import { formatRef, parseRef } from './reference'
+import { DEFAULT_TRANSLATION } from './translations'
+import { type PassagePicker, usePassagePicker } from './use-passage-picker'
 import {
   addableCards,
   buildVerseCards,
@@ -22,24 +23,12 @@ import {
   findDuplicates,
   type HeldRef,
 } from './verse-cards'
-import { verseSources, versesFromCards } from './verse-sources'
+import { verseSources } from './verse-sources'
+import { makeBibleVerse } from './verse'
 import { type VerseTarget, targetIsResolvable } from './verse-target'
-import { type BookCode, isBookCode } from './canon'
-import { DEFAULT_TRANSLATION } from './translations'
-import type { VerseRef } from './reference'
 
-/** Markers, not a plain join: a plain one would round-trip into a single card for the whole range. */
-const prefillFrom = (ref: VerseRef, index: LibraryIndex): string => {
-  const lines: string[] = []
-  for (let verse = ref.from; verse <= ref.to; verse += 1) {
-    const text = index.text(ref.book, ref.chapter, verse)
-    if (text) lines.push(`${verse}) ${text}`)
-  }
-  return lines.join(' ')
-}
-
-/** The three switches on the screen. The text box is the learner's own input, not a setting. */
-export type BibleImportToggle = 'split' | 'keepDuplicates' | 'auto'
+/** The switches on the screen. The text box is the learner's own input, not a setting. */
+export type BibleImportToggle = 'split' | 'keepDuplicates' | 'auto' | 'save'
 
 export type BibleImportSheet = 'deck' | 'name'
 
@@ -47,23 +36,28 @@ export interface BibleImport {
   /** The stores the screen reads have all mirrored, so what it says about either library is true. */
   ready: boolean
   picker: PassagePicker
-  /** Whether the book picker offers a book — see `isBookPickable`. */
-  isBookPickable: (book: BookCode) => boolean
-  /** The reference as far as it has been picked, for the heading above the pickers. */
-  breadcrumb: string
+  /** What the Bible library holds — the picker marks it, the summary counts it. */
+  index: LibraryIndex
+  recents: RecentPassage[]
+  /** How much of the confirmed passage the Bible library holds; null until one is confirmed. */
+  passage: PassageText | null
   /** `Geneza 1`, the name a chapter deck would take. Empty until book and chapter are picked. */
   chapterName: string
   translation: string
 
   text: string
   setText: (value: string) => void
-  /** The box holds text the Bible library supplied, not text the learner typed. */
+  /** The box holds exactly what the Bible library supplied, not text the learner typed. */
   prefilled: boolean
+  /** Verses of the passage the box still has no text for, while its verses are numbered. */
+  missing: number[]
 
   split: boolean
   keepDuplicates: boolean
   /** Include in decks: the app places the cards. Off hands the choice back to the learner. */
   auto: boolean
+  /** Save the verses the text supplies and the Bible library lacks, when the cards are added. */
+  save: boolean
   set: (key: BibleImportToggle, on: boolean) => void
   /** The text carries markers at all — without them the split toggle would silently do nothing. */
   splitAvailable: boolean
@@ -71,7 +65,11 @@ export interface BibleImport {
   splitCount: number
   /** More than one verse is picked, so there is something to split. */
   spansRange: boolean
+  /** How many verses Add would save into the Bible library; the save toggle shows only above 0. */
+  saveCount: number
 
+  /** The box makes at least one card — until then the options below it have nothing to act on. */
+  hasCards: boolean
   duplicates: HeldRef[]
   /** The cards Add would make, after duplicates are dropped. Its length labels the button. */
   addable: ParsedCard[]
@@ -88,14 +86,10 @@ export interface BibleImport {
   folders: Folder[]
   sheet: BibleImportSheet | null
   showSheet: (sheet: BibleImportSheet | null) => void
-
-  /**
-   * Dev mode only: whether keeping the text would store anything. The Bible library holds one record
-   * per verse, so a range front names nothing to keep.
-   */
-  keepOffered: boolean
-  keep: () => void
 }
+
+const range = (from: number, to: number): number[] =>
+  Array.from({ length: to - from + 1 }, (_, index) => from + index)
 
 /**
  * Everything the Bible import screen holds, in one surface: the screen reads it and renders. Every
@@ -107,7 +101,7 @@ export function useBibleImport(
 ): BibleImport {
   const t = useBibleT()
   const picker = usePassagePicker()
-  const { book, chapter, from, to, ref } = picker
+  const { book, chapter, ref } = picker
 
   const decks = useDeckStore(selectDecks)
   const folders = useFolderStore(selectFolders)
@@ -119,14 +113,14 @@ export function useBibleImport(
   const deckStore = useDeckStoreApi()
   const verseStore = useBibleVerseStoreApi()
   const setDraft = useImportDraft((draft) => draft.setDraft)
-  const devMode = usePreferencesStore(selectDevMode)
 
-  // What the learner typed, and the reference they typed it under. Absent until they touch the box.
+  // What the learner typed, and the passage they typed it under. Absent until they touch the box.
   const [own, setOwn] = useState<{ ref: string | null; text: string } | null>(null)
   const [toggles, setToggles] = useState<Record<BibleImportToggle, boolean>>({
     split: true,
     keepDuplicates: false,
     auto: !deckId,
+    save: true,
   })
   // The learner's own placement, remembered across the toggle. Switching "Include in decks" on and
   // straight off again must give back the deck they arrived with, not throw it away.
@@ -136,28 +130,21 @@ export function useBibleImport(
   const [sheet, setSheet] = useState<BibleImportSheet | null>(null)
 
   const index = useMemo(() => indexLibrary(verses), [verses])
-
-  const booksWithText = useMemo(
-    () => new Set(verses.flatMap((verse) => (isBookCode(verse.book) ? [verse.book] : []))),
-    [verses],
-  )
-  const pickable = useCallback(
-    (book: BookCode) => isBookPickable(book, booksWithText, devMode),
-    [booksWithText, devMode],
-  )
+  const recents = useMemo(() => recentPassages(cards), [cards])
+  // Read again whenever the passage or the library changes — a verse that arrives by Sync fills a
+  // box the learner has not touched.
+  const passage = useMemo(() => (ref ? passagePrefill(ref, index) : null), [ref, index])
 
   const key = ref ? formatRef(ref) : null
-  // What the Bible library supplies for the reference, read again whenever either changes — a verse
-  // that arrives by sync fills a box the learner has not touched.
-  const prefill = useMemo(() => (ref ? prefillFrom(ref, index) : ''), [ref, index])
   // The learner's text always wins. An empty one is an answer too — but only for the passage it was
   // cleared under: change verses, and the Bible library gets to speak again.
   const typed = own && (own.text !== '' || own.ref === key) ? own.text : null
+  const prefill = passage?.text ?? ''
   const text = typed ?? prefill
-  const prefilled = typed === null && prefill !== ''
+  const prefilled = prefill !== '' && text === prefill
 
   const chapterName = book && chapter ? chapterDeckName(book, chapter) : ''
-  const { split, keepDuplicates, auto } = toggles
+  const { split, keepDuplicates, auto, save } = toggles
   // An unnamed new deck takes the chapter's name and follows it: named once at the toggle, a deck
   // for chapter 2 would still be called "Geneza 1". A name the learner gave is left alone.
   const target: VerseTarget = auto
@@ -176,46 +163,64 @@ export function useBibleImport(
     () => addableCards(built, duplicates, keepDuplicates),
     [built, duplicates, keepDuplicates],
   )
-  // Every verse card the text makes, always split: the Bible library stores one record per verse, and
-  // a range card is not one. Keep publishes this whatever the toggle says.
+  // Every verse card the text makes, always split: the Bible library holds one record per verse,
+  // and a range card is not one. Saving reads this whatever the split toggle says.
   const keepable = useMemo(() => buildVerseCards(ref, text), [ref, text])
   const splitAvailable = canSplit(text)
+  const unheld = useMemo(
+    () =>
+      verseSources(keepable).filter(
+        (source) => !index.hasVerse(source.book, source.chapter, source.verse),
+      ),
+    [keepable, index],
+  )
+  const missing = useMemo(() => {
+    if (!ref || !splitAvailable) return []
+    const present = new Set(keepable.flatMap((card) => parseRef(card.front)?.from ?? []))
+    return range(ref.from, ref.to).filter((verse) => !present.has(verse))
+  }, [ref, splitAvailable, keepable])
 
   const add = () => {
+    const at = nowIso()
+    const fresh = save
+      ? unheld.map((source) =>
+          makeBibleVerse({ createdAt: at, translation: DEFAULT_TRANSLATION, ...source }),
+        )
+      : []
     void addVerseCards({ deckStore, setDraft }, { cards: addable, ref, target }).then(
       onReview,
       () => toast.error(t('addFailed')),
     )
-  }
-
-  /** Dev-mode only: this is how the Bible library is filled before a bundled translation exists. */
-  const keep = () => {
-    void publishVerses(verseStore, versesFromCards(keepable, DEFAULT_TRANSLATION, nowIso())).then(
-      (kept) => toast.success(t('kept', { count: kept })),
-      () => toast.error(t('keepFailed')),
-    )
+    if (fresh.length) {
+      void keepMissingVerses(verseStore, fresh).catch(() => toast.error(t('saveFailed')))
+    }
   }
 
   return {
     ready: versesReady && cardsReady && decksReady,
     picker,
-    isBookPickable: pickable,
-    breadcrumb: formatPartial({ book, chapter, from, to }),
+    index,
+    recents,
+    passage,
     chapterName,
     translation: DEFAULT_TRANSLATION,
 
     text,
     setText: (value) => setOwn({ ref: key, text: value }),
     prefilled,
+    missing,
 
     split,
     keepDuplicates,
     auto,
+    save,
     set: (toggle, on) => setToggles((current) => ({ ...current, [toggle]: on })),
     splitAvailable,
     splitCount: splitAvailable ? keepable.length : 0,
-    spansRange: Boolean(from && to && to > from),
+    spansRange: Boolean(ref && ref.to > ref.from),
+    saveCount: unheld.length,
 
+    hasCards: built.length > 0,
     duplicates,
     addable,
     canAdd: addable.length > 0 && targetIsResolvable(target),
@@ -234,8 +239,5 @@ export function useBibleImport(
     folders,
     sheet,
     showSheet: setSheet,
-
-    keepOffered: devMode && verseSources(keepable).length > 0,
-    keep,
   }
 }

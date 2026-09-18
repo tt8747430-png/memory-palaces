@@ -10,11 +10,11 @@ import {
   ToggleRow,
 } from '@/shared/ui'
 import { DestinationSheet } from '@/widgets/deck-tree'
-import { useBibleT } from '../i18n/use-bible-t'
-import { useBibleImport } from '../model/use-bible-import'
-import { BookPicker } from './BookPicker'
+import { type BibleT, useBibleT } from '../i18n/use-bible-t'
+import { type BibleImport, useBibleImport } from '../model/use-bible-import'
 import { DuplicatesBanner } from './DuplicatesBanner'
-import { NumberGrid } from './NumberGrid'
+import { PassagePicker } from './picker/PassagePicker'
+import { PassageSummary } from './picker/PassageSummary'
 import { TargetPicker } from './TargetPicker'
 import { VerseTextPanel } from './VerseTextPanel'
 
@@ -26,20 +26,28 @@ export interface BibleImportPageProps {
   onShowDeck?: (deckId: string) => void
 }
 
+/** What the line above the text box says: where the text came from, or what is still missing. */
+function textNote(t: BibleT, page: BibleImport): string | null {
+  if (page.missing.length) {
+    return t('missingNote', { verses: page.missing.join(', '), count: page.missing.length })
+  }
+  if (page.prefilled) return t('textImported')
+  if (!page.text.trim()) return t(page.picker.ref ? 'textMissing' : 'textPaste')
+  return null
+}
+
 export function BibleImportPage({ deckId, onBack, onReview, onShowDeck }: BibleImportPageProps) {
   const t = useBibleT()
   // The back label is core copy, not the extension's — one word, one place.
   const { t: core } = useTranslation()
   const page = useBibleImport(deckId, (reviewIn) => onReview?.(reviewIn))
   const { picker } = page
-  // A local const, so the `to` step's lead pill narrows it instead of re-checking inside a closure.
-  const from = picker.from
 
   const header = (
     <ScreenHeader title={t('importTitle')} onBack={onBack} backLabel={core('common.back')} />
   )
 
-  // Until every store has mirrored, "no saved text" and "0 duplicates" would both be
+  // Until every store has mirrored, "not in your Bible library" and "0 duplicates" would both be
   // guesses dressed as facts, so the screen waits instead of saying them.
   if (!page.ready) {
     return (
@@ -49,102 +57,76 @@ export function BibleImportPage({ deckId, onBack, onReview, onShowDeck }: BibleI
     )
   }
 
+  const choosing = picker.step === 'passage'
+
   return (
     <AppScreen
       fill
       header={header}
       footer={
-        <FooterBar>
-          <Button size="lg" className="w-full" disabled={!page.canAdd} onClick={page.add}>
-            <Sparkles className="size-4.5" aria-hidden />
-            {t('addCount', { count: page.addable.length })}
-          </Button>
-        </FooterBar>
+        choosing ? null : (
+          <FooterBar>
+            <Button size="lg" className="w-full" disabled={!page.canAdd} onClick={page.add}>
+              <Sparkles className="size-4.5" aria-hidden />
+              {t('addCount', { count: page.addable.length })}
+            </Button>
+          </FooterBar>
+        )
       }
     >
-      <div className="mt-4 flex flex-col gap-5 pb-6">
-        {page.breadcrumb ? (
-          <p className="text-center text-title font-semibold tabular-nums text-heading">
-            {page.breadcrumb}
-          </p>
-        ) : null}
+      <div className="mt-4 flex flex-col gap-6 pb-6">
+        {picker.ref && page.passage ? (
+          <PassageSummary passage={picker.ref} text={page.passage} onChange={picker.edit} />
+        ) : (
+          <PassagePicker picker={picker} index={page.index} recents={page.recents} />
+        )}
 
-        <div className="flex flex-wrap justify-center gap-2">
-          <Button variant="secondary" size="sm" onClick={picker.startOver}>
-            {t('startOver')}
-          </Button>
-          {picker.step === 'done' ? (
-            <Button variant="secondary" size="sm" onClick={picker.changeVerses}>
-              {t('changeVerses')}
-            </Button>
-          ) : null}
-        </div>
-
-        {picker.step === 'book' ? (
-          <BookPicker onPick={picker.pickBook} isPickable={page.isBookPickable} />
-        ) : null}
-        {picker.step === 'chapter' ? (
-          <NumberGrid
-            label={t('pickChapter')}
-            values={picker.chapterOptions}
-            onPick={picker.pickChapter}
+        {choosing ? null : (
+          <VerseTextPanel
+            value={page.text}
+            onChange={page.setText}
+            note={textNote(t, page)}
+            translation={page.translation}
           />
-        ) : null}
-        {picker.step === 'from' ? (
-          <NumberGrid
-            label={t('pickStart')}
-            values={picker.startOptions}
-            onPick={picker.pickFrom}
-          />
-        ) : null}
-        {picker.step === 'to' && from ? (
-          <NumberGrid
-            label={t('pickEnd')}
-            values={picker.endOptions}
-            onPick={picker.pickTo}
-            lead={{ label: t('justVerse', { verse: from }), onPick: () => picker.pickTo(from) }}
-          />
-        ) : null}
+        )}
 
-        <VerseTextPanel
-          value={page.text}
-          onChange={page.setText}
-          prefilled={page.prefilled}
-          note={picker.step === 'done'}
-          translation={page.translation}
-          action={
-            page.keepOffered ? (
-              <Button variant="secondary" size="sm" onClick={page.keep}>
-                {t('keepText')}
-              </Button>
-            ) : null
-          }
-        />
+        {!choosing && page.hasCards ? (
+          <div className="flex flex-col gap-4">
+            {page.spansRange ? (
+              <ToggleRow
+                label={t('split', { count: page.splitCount })}
+                description={page.splitAvailable ? undefined : t('splitUnavailable')}
+                checked={page.split && page.splitAvailable}
+                disabled={!page.splitAvailable}
+                onChange={(on) => page.set('split', on)}
+              />
+            ) : null}
 
-        {page.spansRange ? (
-          <ToggleRow
-            label={t('split', { count: page.splitCount })}
-            description={page.splitAvailable ? undefined : t('splitUnavailable')}
-            checked={page.split && page.splitAvailable}
-            disabled={!page.splitAvailable}
-            onChange={(on) => page.set('split', on)}
-          />
+            {page.saveCount > 0 ? (
+              <ToggleRow
+                label={t('saveToLibrary', { count: page.saveCount })}
+                description={t('saveToLibraryHint')}
+                checked={page.save}
+                onChange={(on) => page.set('save', on)}
+              />
+            ) : null}
+
+            <DuplicatesBanner
+              duplicates={page.duplicates}
+              keep={page.keepDuplicates}
+              onKeepChange={(on) => page.set('keepDuplicates', on)}
+              onShowDeck={(held) => onShowDeck?.(held)}
+            />
+
+            <TargetPicker
+              auto={page.auto}
+              onAutoChange={(on) => page.set('auto', on)}
+              destination={page.destination}
+              onPickDeck={() => page.showSheet('deck')}
+              onNameDeck={() => page.showSheet('name')}
+            />
+          </div>
         ) : null}
-
-        <DuplicatesBanner
-          duplicates={page.duplicates}
-          keep={page.keepDuplicates}
-          onKeepChange={(on) => page.set('keepDuplicates', on)}
-          onShowDeck={(held) => onShowDeck?.(held)}
-        />
-
-        <TargetPicker
-          auto={page.auto}
-          onAutoChange={(on) => page.set('auto', on)}
-          destination={page.destination}
-          onPickDeck={() => page.showSheet('deck')}
-          onNameDeck={() => page.showSheet('name')}
-        />
       </div>
 
       <DestinationSheet

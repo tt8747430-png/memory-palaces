@@ -26,6 +26,7 @@ const verse = (chapter: number, number: number, text: string) =>
   })
 
 const genesis = [verse(1, 1, 'First.'), verse(1, 2, 'Second.'), verse(1, 3, 'Third.')]
+const genesisOne = [verse(1, 1, 'First.'), verse(1, 3, 'Third.')]
 
 afterEach(() => {
   cleanup()
@@ -36,30 +37,37 @@ function render(deckId?: string, harness: Parameters<typeof renderImportHook>[1]
   const onReview = vi.fn<(deckId: string) => void>()
   const rendered = renderImportHook(() => useBibleImport(deckId, onReview), harness)
   const pick = (chapter: number, from: number, to: number) =>
-    act(() => {
-      rendered.result.current.picker.pickBook('GEN')
-      rendered.result.current.picker.pickChapter(chapter)
-      rendered.result.current.picker.pickFrom(from)
-      rendered.result.current.picker.pickTo(to)
-    })
+    act(() => rendered.result.current.picker.jump({ book: 'GEN', chapter, from, to }))
   return { ...rendered, onReview, pick }
 }
 
 describe('useBibleImport — the text box', () => {
-  it('prefills with markers once the Bible library covers the passage', async () => {
+  it('prefills one verse per line once the Bible library covers the passage', async () => {
     const { result, pick } = render(undefined, { verses: genesis })
     await pick(1, 1, 2)
-    await waitFor(() => expect(result.current.text).toBe('1) First. 2) Second.'))
+    expect(result.current.text).toBe('1) First.\n2) Second.')
     expect(result.current.prefilled).toBe(true)
+    expect(result.current.passage).toEqual({ text: '1) First.\n2) Second.', held: 2, missing: [] })
+  })
+
+  it('leaves a bare marker for a verse it lacks, and names it as missing', async () => {
+    const { result, pick } = render(undefined, { verses: genesisOne })
+    await pick(1, 1, 3)
+    expect(result.current.text).toBe('1) First.\n2) \n3) Third.')
+    expect(result.current.missing).toEqual([2])
+  })
+
+  it('stops calling a verse missing once the learner types it in', async () => {
+    const { result, pick } = render(undefined, { verses: genesisOne })
+    await pick(1, 1, 3)
+    act(() => result.current.setText('1) First.\n2) Second.\n3) Third.'))
+    expect(result.current.missing).toEqual([])
   })
 
   it('leaves a prefilled box cleared — their own text always wins, including none', async () => {
     const { result, pick } = render(undefined, { verses: genesis })
     await pick(1, 1, 2)
-    await waitFor(() => expect(result.current.prefilled).toBe(true))
-
     act(() => result.current.setText(''))
-
     expect(result.current.text).toBe('')
     expect(result.current.prefilled).toBe(false)
   })
@@ -67,13 +75,9 @@ describe('useBibleImport — the text box', () => {
   it('prefills again for a new passage — the clearing answered the old one', async () => {
     const { result, pick } = render(undefined, { verses: genesis })
     await pick(1, 1, 1)
-    await waitFor(() => expect(result.current.text).toBe('1) First.'))
     act(() => result.current.setText(''))
-
-    act(() => result.current.picker.changeVerses())
     await pick(1, 3, 3)
-
-    await waitFor(() => expect(result.current.text).toBe('3) Third.'))
+    expect(result.current.text).toBe('3) Third.')
     expect(result.current.prefilled).toBe(true)
   })
 
@@ -85,10 +89,10 @@ describe('useBibleImport — the text box', () => {
     expect(result.current.prefilled).toBe(false)
   })
 
-  it('fills an untouched box when the Bible library learns the passage — sync arrives mid-screen', async () => {
+  it('fills an untouched box when the Bible library learns the passage — Sync arrives mid-screen', async () => {
     const { result, pick, verseStore } = render()
-    await pick(1, 1, 1)
     await waitFor(() => expect(result.current.ready).toBe(true))
+    await pick(1, 1, 1)
     expect(result.current.text).toBe('')
 
     await act(() => verseStore.getState().save(verse(1, 1, 'First.')))
@@ -96,9 +100,16 @@ describe('useBibleImport — the text box', () => {
     await waitFor(() => expect(result.current.text).toBe('1) First.'))
     expect(result.current.prefilled).toBe(true)
   })
+
+  it('lists the chapters the learner last added from', () => {
+    const { result } = render(undefined, {
+      cards: [makeCard({ id: 'c1', createdAt: at, deckId: 'd', front: 'Ioan 3:16', back: 'x' })],
+    })
+    expect(result.current.recents).toEqual([{ book: 'JHN', chapter: 3 }])
+  })
 })
 
-describe('useBibleImport — splitting and keeping', () => {
+describe('useBibleImport — splitting', () => {
   it('counts what splitting would produce, not what the toggle currently made', async () => {
     const { result, pick } = render()
     await pick(1, 1, 3)
@@ -110,39 +121,52 @@ describe('useBibleImport — splitting and keeping', () => {
     expect(result.current.addable).toHaveLength(1)
     expect(result.current.splitCount).toBe(3)
   })
-
-  it('keeps every verse even with splitting off — the Bible library stores one record per verse', async () => {
-    const { result, pick, verseStore } = render(undefined, { devMode: true })
-    await pick(1, 1, 3)
-    act(() => result.current.setText('1) A. 2) B. 3) C.'))
-    act(() => result.current.set('split', false))
-    expect(result.current.keepOffered).toBe(true)
-
-    act(() => result.current.keep())
-
-    await waitFor(() => expect(verseStore.getState().verses).toHaveLength(3))
-  })
-
-  it('offers no Keep for text that names no single verse', async () => {
-    const { result, pick } = render(undefined, { devMode: true })
-    await pick(1, 1, 3)
-    // Unmarked text over a range is one card fronted `Genesis 1:1-3` — not a verse record.
-    act(() => result.current.setText('In the beginning God created the heaven and the earth.'))
-    expect(result.current.addable).toHaveLength(1)
-    expect(result.current.keepOffered).toBe(false)
-  })
 })
 
-describe('useBibleImport — which books the picker offers', () => {
-  it('offers the books the Bible library holds text for, from the first render', () => {
-    const { result } = render(undefined, { verses: genesis })
-    expect(result.current.isBookPickable('GEN')).toBe(true)
-    expect(result.current.isBookPickable('EXO')).toBe(false)
+describe('useBibleImport — saving to the Bible library', () => {
+  it('offers to save only the verses the library lacks', async () => {
+    const { result, pick } = render(undefined, { verses: genesisOne })
+    await pick(1, 1, 3)
+    act(() => result.current.setText('1) First.\n2) Second.\n3) Third.'))
+    expect(result.current.saveCount).toBe(1)
+    expect(result.current.save).toBe(true)
   })
 
-  it('offers every book in dev mode — a book with no text is picked to publish its text', () => {
-    const { result } = render(undefined, { verses: genesis, devMode: true })
-    expect(result.current.isBookPickable('EXO')).toBe(true)
+  it('offers nothing when the library holds the whole passage', async () => {
+    const { result, pick } = render(undefined, { verses: genesis })
+    await pick(1, 1, 3)
+    expect(result.current.saveCount).toBe(0)
+  })
+
+  it('saves the missing verses with the cards — every verse, even with splitting off', async () => {
+    const { result, pick, verseStore, onReview } = render(undefined, { verses: genesisOne })
+    await pick(1, 1, 3)
+    act(() => result.current.setText('1) Pasted over.\n2) Second.\n3) Third.'))
+    act(() => result.current.set('split', false))
+
+    act(() => result.current.add())
+
+    await waitFor(() => expect(onReview).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(verseStore.getState().verses).toHaveLength(3))
+    const texts = verseStore.getState().verses.map((held) => [held.verse, held.text])
+    // Verse 1 was held already and keeps its text; only verse 2 was new.
+    expect(texts).toEqual([
+      [1, 'First.'],
+      [2, 'Second.'],
+      [3, 'Third.'],
+    ])
+  })
+
+  it('saves nothing when the learner switches saving off', async () => {
+    const { result, pick, verseStore, onReview } = render()
+    await pick(1, 1, 1)
+    act(() => result.current.setText('1) First.'))
+    act(() => result.current.set('save', false))
+
+    act(() => result.current.add())
+
+    await waitFor(() => expect(onReview).toHaveBeenCalledTimes(1))
+    expect(verseStore.getState().verses).toEqual([])
   })
 })
 
@@ -167,7 +191,6 @@ describe('useBibleImport — where the cards go', () => {
     act(() => result.current.set('auto', false))
     expect(result.current.destination).toBe('Geneza 1')
 
-    act(() => result.current.picker.startOver())
     await pick(2, 1, 1)
 
     expect(result.current.destination).toBe('Geneza 2')
@@ -179,7 +202,6 @@ describe('useBibleImport — where the cards go', () => {
     await pick(1, 1, 1)
     act(() => result.current.set('auto', false))
     act(() => result.current.nameDeck('Memory work'))
-    act(() => result.current.picker.startOver())
     await pick(2, 1, 1)
     expect(result.current.destination).toBe('Memory work')
   })
