@@ -1,5 +1,6 @@
 import { useNavigate } from '@tanstack/react-router'
 import { SettingsAboutPage } from '@/pages/settings-about'
+import { SettingsExtensionsPage, validateExtensionsSearch } from '@/pages/settings-extensions'
 import { SettingsChangePasswordPage } from '@/pages/settings-change-password'
 import { SettingsHelpPage } from '@/pages/settings-help'
 import { SettingsPage } from '@/pages/settings'
@@ -11,6 +12,7 @@ import { SettingsSyncPage } from '@/pages/settings-sync'
 import { useSessionStore } from '@/entities/session'
 import { useAuthActions } from '@/features/session'
 import { ROUTES } from '@/shared/config/routes'
+import { EXTENSIONS } from '../extensions/registry'
 import { useRouteSearch, validateRecoverySearch } from './search'
 import { useBackTo } from './use-back'
 
@@ -24,6 +26,7 @@ export function SettingsScreen() {
       onEditProfile={() => navigate({ to: ROUTES.settingsProfile })}
       onSync={() => navigate({ to: ROUTES.settingsSync })}
       onPrivacy={() => navigate({ to: ROUTES.settingsPrivacy })}
+      onExtensions={() => navigate({ to: ROUTES.settingsExtensions })}
       onSwipe={() => navigate({ to: ROUTES.settingsSwipe })}
       onSelectToolbar={() => navigate({ to: ROUTES.settingsSelect })}
       onHelp={() => navigate({ to: ROUTES.settingsHelp })}
@@ -63,6 +66,17 @@ export function SettingsChangePasswordScreen() {
 
 export function SettingsSyncScreen() {
   return <SettingsSyncPage onBack={useBackTo(ROUTES.settings)} />
+}
+
+export function SettingsExtensionsScreen() {
+  const { highlight } = useRouteSearch(validateExtensionsSearch)
+  return (
+    <SettingsExtensionsPage
+      manifests={EXTENSIONS}
+      highlight={highlight}
+      onBack={useBackTo(ROUTES.settings)}
+    />
+  )
 }
 
 export function SettingsPrivacyScreen() {

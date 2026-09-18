@@ -10,6 +10,7 @@ import { RootLayout } from './RootLayout'
 import { authRedirect } from './auth-guard'
 import type { Services } from './composition-root'
 import { lazyScreen } from './lazy-screen'
+import { validateExtensionsSearch } from '@/pages/settings-extensions'
 import { validateRecoverySearch, validateStudySearch } from './routes/search'
 
 export interface RouterContext {
@@ -91,6 +92,12 @@ const routeTree = rootRoute.addChildren([
   }),
   route(ROUTES.settingsSync, settings('SettingsSyncScreen')),
   route(ROUTES.settingsPrivacy, settings('SettingsPrivacyScreen')),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: ROUTES.settingsExtensions,
+    validateSearch: validateExtensionsSearch,
+    component: settings('SettingsExtensionsScreen'),
+  }),
   route(ROUTES.settingsSwipe, settings('SettingsSwipeScreen')),
   route(ROUTES.settingsSelect, settings('SettingsSelectScreen')),
   route(ROUTES.settingsHelp, settings('SettingsHelpScreen')),

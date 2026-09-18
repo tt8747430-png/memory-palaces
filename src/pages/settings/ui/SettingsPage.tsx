@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import {
   ArrowLeftRight,
   Bell,
+  Blocks,
   CheckSquare,
   ChevronRight,
   CloudUpload,
@@ -56,6 +57,7 @@ export interface SettingsPageProps {
   onEditProfile?: () => void
   onSync?: () => void
   onPrivacy?: () => void
+  onExtensions?: () => void
   onSwipe?: () => void
   onSelectToolbar?: () => void
   onHelp?: () => void
@@ -71,6 +73,7 @@ export function SettingsPage({
   onEditProfile,
   onSync,
   onPrivacy,
+  onExtensions,
   onSwipe,
   onSelectToolbar,
   onHelp,
@@ -263,6 +266,13 @@ export function SettingsPage({
             icon={<Shield />}
             label={t('settings.privacy')}
             onClick={() => onPrivacy?.()}
+          />
+          <SettingsRow
+            kind="nav"
+            icon={<Blocks />}
+            label={t('settings.extensions')}
+            description={t('settings.extensionsHint')}
+            onClick={() => onExtensions?.()}
           />
         </SettingsSection>
 
