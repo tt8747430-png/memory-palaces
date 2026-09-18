@@ -27,13 +27,19 @@ export function expandRange({ from, to }: VerseRef): number[] {
   return Array.from({ length: to - from + 1 }, (_, index) => from + index)
 }
 
-/** The breadcrumb. `formatRef` cannot do this — it needs a complete reference. */
-export function formatPartial(parts: {
+/**
+ * A reference part-way through being picked. The four fields travel together everywhere — the
+ * picker holds them, the breadcrumb reads them — so they are one type rather than four parameters.
+ */
+export interface PartialVerseRef {
   book: string | null
   chapter: number | null
   from: number | null
   to: number | null
-}): string {
+}
+
+/** The breadcrumb. `formatRef` cannot do this — it needs a complete reference. */
+export function formatPartial(parts: PartialVerseRef): string {
   const { book, chapter, from, to } = parts
   if (!book) return ''
   if (!chapter) return book

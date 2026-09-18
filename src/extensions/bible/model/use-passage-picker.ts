@@ -1,15 +1,12 @@
 import { useMemo, useState } from 'react'
 import { chapterCount, verseCount } from './canon'
-import type { VerseRef } from './reference'
+import type { PartialVerseRef, VerseRef } from './reference'
 
 export type PickerStep = 'book' | 'chapter' | 'from' | 'to' | 'done'
 
-export interface PassagePicker {
+export interface PassagePicker extends PartialVerseRef {
   step: PickerStep
-  book: string | null
-  chapter: number | null
-  from: number | null
-  to: number | null
+  /** Complete once every part is picked; the breadcrumb reads the partial fields until then. */
   ref: VerseRef | null
   chapterOptions: number[]
   startOptions: number[]
