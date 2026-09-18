@@ -1,5 +1,9 @@
 # Offline sync and the account lifecycle
 
+> **2026-09-18:** conflict resolution is now field-level against the server copy each device last saw — see
+> [ADR 0005](../../adr/0005-merge-against-what-you-saw.md) and
+> `2026-09-18-bible-romanian-picker-and-sync-reliability-design.md`. Every synced table records pending changes.
+
 Date: 2026-09-15
 Status: **implemented** — all seven slices shipped on `main`
 Revision: 3 — updated to match the code as built, after a second two-axis review found places where the design itself

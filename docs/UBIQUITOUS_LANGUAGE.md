@@ -111,29 +111,36 @@ Every Deck follows exactly one: its Main deck's. A Subdeck never holds the algor
 
 ## Sync
 
-| Term                       | Means                                                                                                                                | Avoid                  |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------- |
-| **Sync**                   | One peek → classify → cycle → confirm pass (`syncNow`). Never a study pass, never a login                                            | sync session, refresh  |
-| **Synchronise**            | The user-facing verb — the banner button, and every sentence in UI copy                                                              | sync (as a verb in UI) |
-| **Autosync**               | The setting that runs a Sync without being asked. A preference: it follows the account. On by default                                | auto-sync, background  |
-| **Pending change**         | One content write (deck, folder, card, question) a Sync has not confirmed. `pendingChanges`                                          | dirty, unsaved         |
-| **Content collection**     | Which of the four a Pending change belongs to. Stored as `contentCollection` — never `collection`, which RxDB owns on every document | table, kind            |
-| **Checkpoint**             | Where this device's last Sync got to in a table — `(updated_at, id)`. Ours, not RxDB's                                               | cursor, bookmark       |
-| **Divergence**             | The cloud and the device both changed since this device's last Sync                                                                  | conflict               |
-| **Destructive divergence** | A divergence no merge can settle — deleted here, changed elsewhere. The only question asked                                          | conflict               |
-| **Review** _(of a Sync)_   | The dialog that answers a Destructive divergence: **Delete** (default) or **Keep**                                                   | conflict dialog, merge |
-| **Restoring**              | The forced Sync after a cancelled account deletion, shown on the banner                                                              | recovery, reload       |
-| **Purge**                  | The irreversible server-side destruction of an account, 30 days after the request                                                    | delete, wipe           |
+| Term                       | Means                                                                                                                            | Avoid                  |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| **Sync**                   | One peek → classify → cycle → confirm pass (`syncNow`). Never a study pass, never a login                                        | sync session, refresh  |
+| **Synchronise**            | The user-facing verb — the banner button, and every sentence in UI copy                                                          | sync (as a verb in UI) |
+| **Autosync**               | The setting that runs a Sync without being asked. A preference: it follows the account. On by default                            | auto-sync, background  |
+| **Pending change**         | One write to a synced document a Sync has not confirmed — any synced table, content or not. `pendingChanges`                     | dirty, unsaved         |
+| **Table** _(of a change)_  | The synced table a Pending change belongs to. Stored as `table` — never `collection`, which RxDB owns on every document          | kind, collection       |
+| **Content collection**     | One of the four tables a learner's content lives in (folders, decks, cards, questions) — the only ones a deletion can diverge on | table                  |
+| **Base**                   | The server copy a device last saw of a document. Travels with every push; a conflict is merged against it (ADR 0005)             | last seen, ancestor    |
+| **Repair**                 | The Sync page's tools: review pending changes, or check everything against the cloud                                             | reset, resync          |
+| **Sync log**               | The device's record of its last ten Syncs — when, outcome, pushed, pulled                                                        | history                |
+| **Checkpoint**             | Where this device's last Sync got to in a table — `(updated_at, id)`. Ours, not RxDB's                                           | cursor, bookmark       |
+| **Divergence**             | The cloud and the device both changed since this device's last Sync                                                              | conflict               |
+| **Destructive divergence** | A divergence no merge can settle — deleted here, changed elsewhere. The only question asked                                      | conflict               |
+| **Review** _(of a Sync)_   | The dialog that answers a Destructive divergence: **Delete** (default) or **Keep**                                               | conflict dialog, merge |
+| **Restoring**              | The forced Sync after a cancelled account deletion, shown on the banner                                                          | recovery, reload       |
+| **Purge**                  | The irreversible server-side destruction of an account, 30 days after the request                                                | delete, wipe           |
 
 ## Extensions
 
-| Term                   | Means                                                                 | Avoid                        |
-| ---------------------- | --------------------------------------------------------------------- | ---------------------------- |
-| **Extension**          | A self-contained feature the learner switches on in Settings          | plugin, add-on, module       |
-| **Contribution point** | The named slot a host surface renders on an extension's behalf        | hook, which here means React |
-| **Verse**              | One numbered line of scripture; its reference is not part of its text | passage, which is a range    |
-| **Bible library**      | The verse text an account holds, what the passage picker prefills     | library, which is the decks  |
-| **Admin screen**       | An extension's dev-mode-only screen; outside dev mode, no trace of it | settings, detail             |
+| Term                   | Means                                                                  | Avoid                          |
+| ---------------------- | ---------------------------------------------------------------------- | ------------------------------ |
+| **Extension**          | A self-contained feature the learner switches on in Settings           | plugin, add-on, module         |
+| **Contribution point** | The named slot a host surface renders on an extension's behalf         | hook, which here means React   |
+| **Verse**              | One numbered line of scripture; its reference is not part of its text  | passage, which is a range      |
+| **Bible library**      | The verse text an account holds, what the passage picker prefills      | library, which is the decks    |
+| **Book code**          | A book's stable identity (`JHN`, `1CO`), what a verse is stored under  | name, which a translation owns |
+| **Translation**        | Owns the book names and abbreviations the app shows — Cornilescu 2024  | version, language              |
+| **Recent passage**     | A chapter the learner last added verses from, derived from their cards | history                        |
+| **Extension settings** | An extension's own settings screen, reached from Settings → Extensions | admin screen                   |
 
 ## Relationships
 
@@ -148,7 +155,7 @@ Every Deck follows exactly one: its Main deck's. A Subdeck never holds the algor
   is never on screen there.
 - A Learner has one Progress record and one active Session.
 - A device has one sync state and zero-or-more Pending changes; neither ever leaves it.
-- A Pending change belongs to exactly one content document; repeated writes to it collapse onto one entry.
+- A Pending change belongs to exactly one synced document; repeated writes to it collapse onto one entry. Only the ones on the tables a Sync covers count as waiting.
 - Deleting a Deck deletes its Subdecks, Cards and Questions. A Destructive divergence on a Deck or Folder carries, as
   its descendants, what another device added inside it — Keep brings them in, Delete tombstones them too.
 - An Account has at most one scheduled Purge; signing in before its date cancels it.

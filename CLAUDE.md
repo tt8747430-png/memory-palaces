@@ -67,8 +67,9 @@ never deep paths. Alias `@` → `src`.
 - `model/types.ts` — types + `makeX()`/`updateX()`: trim, validate, **throw on invariant violation**. No IO, no React.
 - `model/store.ts` — `createCollectionStore(key, repo, compare, { pending, complete })` or
   `createSingletonStore(key, repo, complete)` from `shared/lib`; the slice declares only its state key, ordering and
-  read-side repair. Never hand-roll the lifecycle. `pending` (a `PendingChangePort`) goes to the four content stores
-  only — decks, folders, cards, questions — so their writes land in the pending-change log.
+  read-side repair. Never hand-roll the lifecycle. `pending` (a `PendingChangePort`) goes to **every synced store** —
+  the four content stores, the singletons (progress, preferences, profile), history, and an extension's synced
+  collection via `context.pending(key)` — so every write waits in the pending-change log until a Sync confirms it.
 - `model/selectors.ts` pure reads (readiness is the shared `selectIsReady`) · `model/context.ts` →
   `createStoreContext<XState>('X')` re-exported as `useXStore(selector)` / `useXStoreApi()` · `api/<x>-repository.ts`
   port · `index.ts` barrel.
@@ -80,14 +81,17 @@ than copy. Its runtime's `activate` is its composition root: its stores and keep
 it publishes through `useExtensionServices`, and disabling calls the `deactivate` it returned
 (`app/extensions/extension-runtime.ts`). Everything but its screens loads behind the splash. Enablement is
 `preferences.extensions`, changed only through `setExtensionEnabled`, and deletes nothing.
-`src/app/extensions/registry.ts` is the one core file allowed to name an extension.
+An extension with a settings screen declares `settings: { route }`; it is an ordinary route of its own, reached from
+Settings → Extensions. `src/app/extensions/registry.ts` is the one core file allowed to name an extension.
 
 **DI** — port `shared/api/base-repository.ts` (`Repository<T>`: save/remove/observe); adapters
 `shared/api/rxdb/rxdb-repository.ts` (prod) and `in-memory-repository.ts` (tests + live `session` store).
 `app/composition-root.ts` exports **async** `createServices()`: it `await import`s RxDB, Dexie and supabase-js (kept
 off the entry graph — `npm run check:entry-graph` after `build`), builds the DB (`app/persistence/`), wires repo→store,
 **calls `start()` on every mirroring store** (`session` is deliberately absent — it owns its writes; `AuthProvider`
-restores it), starts the persisted-data keepers and `keepImagesCached` (`features/media`). There is no `services`
+restores it), starts the persisted-data keepers and `keepImagesCached` (`features/media`). Conflict handlers merge
+**field by field against the server copy the device last saw** (`mergeAgainstBase`, ADR 0005); never add a
+last-write-wins handler. There is no `services`
 singleton: `app/Bootstrap.tsx` awaits it behind the splash (error screen on rejection) and passes it to `App`, the router
 gets it as context, and `ServicesProvider` injects via context. Screens never start a store — they read, and gate on
 `selectIsReady`. Tests wire their own stores through `shared/test/started.ts`.
@@ -135,6 +139,9 @@ ahead of the read. Account deletion: `features/account` (sync first, 30-day grac
 - **Anything that needs the network, sync, images, account deletion** →
   [ADR 0004](docs/adr/0004-what-needs-the-network.md) (gate only what the server must answer _now_; every content write
   stays ungated), then the design spec `docs/superpowers/specs/2026-09-15-offline-sync-and-account-lifecycle-design.md`.
+- **Conflict handlers, `push_documents`, anything that merges two devices' copies** →
+  [ADR 0005](docs/adr/0005-merge-against-what-you-saw.md): a push carries its base, the server refuses unseen
+  overwrites, handlers merge field by field against the base.
   Reads never touch the network: an image is `useImageSrc`, never a URL minted in render.
 - **Naming anything** → [UBIQUITOUS_LANGUAGE](docs/UBIQUITOUS_LANGUAGE.md). "Session" = auth, never a study pass;
   "Sync" = one cycle, never a study pass or a login; `known` ≠ Memorized.
