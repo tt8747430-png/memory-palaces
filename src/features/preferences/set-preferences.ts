@@ -1,4 +1,4 @@
-import { nowIso } from '@/shared/lib'
+import { type ExtensionId, nowIso } from '@/shared/lib'
 import {
   makePreferences,
   type Preferences,
@@ -15,13 +15,27 @@ function currentPreferences(store: PreferencesStore, now: number): Preferences {
   )
 }
 
+export interface SetPreferencesInput extends PreferencesChanges {
+  /**
+   * Applied to the ids already stored, never a replacement. A caller cannot hold a whole array
+   * and overwrite ids it never read — including ids this build has never heard of, which a newer
+   * build on another device enabled.
+   */
+  extensions?: (current: readonly ExtensionId[]) => ExtensionId[]
+}
+
 export async function setPreferences(
   store: PreferencesStore,
-  changes: PreferencesChanges,
+  input: SetPreferencesInput,
   now: number = Date.now(),
 ): Promise<Preferences> {
   const base = currentPreferences(store, now)
-  const updated = updatePreferences(base, changes, nowIso(now))
+  const { extensions, ...changes } = input
+  const updated = updatePreferences(
+    base,
+    extensions ? { ...changes, extensions: extensions(base.extensions) } : changes,
+    nowIso(now),
+  )
   await store.getState().save(updated)
   return updated
 }

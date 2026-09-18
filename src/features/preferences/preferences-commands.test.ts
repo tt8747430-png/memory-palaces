@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@/shared/api'
-import { createPreferencesStore, type Preferences } from '@/entities/preferences'
-import { setPreferences } from './index'
+import { createPreferencesStore, makePreferences, type Preferences } from '@/entities/preferences'
+import { setExtensionEnabled, setPreferences } from './index'
+import { PREFERENCES_ID } from './set-preferences'
 
 const NOW = Date.UTC(2026, 0, 10)
 
@@ -9,6 +10,11 @@ function startedStore(seed: Preferences[] = []) {
   const store = createPreferencesStore(new InMemoryRepository<Preferences>(seed))
   store.getState().start()
   return store
+}
+
+function startedPreferencesStore(over: Partial<Preferences> = {}) {
+  const base = makePreferences({ id: PREFERENCES_ID, createdAt: new Date(0).toISOString() })
+  return startedStore([{ ...base, ...over }])
 }
 
 describe('setPreferences', () => {
@@ -53,5 +59,25 @@ describe('setPreferences', () => {
     expect(prefs.privacy.activitySharing).toBe(true)
     expect(prefs.privacy.profileVisibility).toBe(true)
     expect(prefs.privacy.dataEncryption).toBe(false)
+  })
+})
+
+describe('setExtensionEnabled', () => {
+  it('turns one on without disturbing the others', async () => {
+    const store = startedPreferencesStore({ extensions: ['atlas'] })
+    const saved = await setExtensionEnabled(store, 'bible', true)
+    expect(saved.extensions.sort()).toEqual(['atlas', 'bible'])
+  })
+
+  it('turns one off and leaves ids this build does not know', async () => {
+    const store = startedPreferencesStore({ extensions: ['bible', 'from-the-future'] })
+    const saved = await setExtensionEnabled(store, 'bible', false)
+    expect(saved.extensions).toEqual(['from-the-future'])
+  })
+
+  it('enabling twice does not duplicate the id', async () => {
+    const store = startedPreferencesStore({ extensions: ['bible'] })
+    const saved = await setExtensionEnabled(store, 'bible', true)
+    expect(saved.extensions).toEqual(['bible'])
   })
 })

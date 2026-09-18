@@ -241,7 +241,7 @@ export const progressSchema: RxJsonSchema<Progress> = {
 }
 
 export const preferencesSchema: RxJsonSchema<Preferences> = {
-  version: 2,
+  version: 3,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -309,6 +309,7 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
       ],
       additionalProperties: false,
     },
+    extensions: { type: 'array', items: { type: 'string' } },
   },
   required: [
     'id',
@@ -330,6 +331,7 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
     'flashcardSwipe',
     'selectToolbar',
     'privacy',
+    'extensions',
   ],
 }
 

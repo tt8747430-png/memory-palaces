@@ -10,7 +10,9 @@ export type {
   MakePreferencesInput,
   PreferencesChanges,
 } from './model/types'
+export type { ExtensionId } from '@/shared/lib'
 export {
+  isExtensionEnabled,
   makePreferences,
   completePreferences,
   updatePreferences,

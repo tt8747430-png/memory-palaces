@@ -58,6 +58,7 @@ export const preferencesMigrations = {
     ...doc,
     studyTypeInitialsOnly: doc.studyTypeInitialsOnly ?? DEFAULT_PREFERENCES.studyTypeInitialsOnly,
   }),
+  3: (doc: Preferences) => ({ ...doc, extensions: doc.extensions ?? [] }),
 }
 
 export const syncStateMigrations = {

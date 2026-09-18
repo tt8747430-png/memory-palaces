@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_PRIVACY, makePreferences, updatePreferences } from './types'
+import {
+  completePreferences,
+  DEFAULT_PRIVACY,
+  isExtensionEnabled,
+  makePreferences,
+  updatePreferences,
+} from './types'
 
 const at = (ms: number) => new Date(ms).toISOString()
 
@@ -86,5 +92,29 @@ describe('updatePreferences — nested privacy', () => {
     expect(next.privacy.activitySharing).toBe(true)
     expect(next.privacy.profileVisibility).toBe(true)
     expect(base.privacy.activitySharing).toBe(false)
+  })
+})
+
+describe('extensions', () => {
+  it('defaults to none enabled', () => {
+    const prefs = makePreferences({ id: 'preferences', createdAt: at(0) })
+    expect(prefs.extensions).toEqual([])
+  })
+
+  it('keeps ids this build has never heard of — an older build must not switch them off', () => {
+    const stored = {
+      ...makePreferences({ id: 'preferences', createdAt: at(0) }),
+      extensions: ['bible', 'something-from-the-future'],
+    }
+    expect(completePreferences(stored).extensions).toEqual(['bible', 'something-from-the-future'])
+  })
+
+  it('reports whether one extension is on', () => {
+    const prefs = {
+      ...makePreferences({ id: 'preferences', createdAt: at(0) }),
+      extensions: ['bible'],
+    }
+    expect(isExtensionEnabled(prefs, 'bible')).toBe(true)
+    expect(isExtensionEnabled(prefs, 'atlas')).toBe(false)
   })
 })

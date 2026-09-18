@@ -124,6 +124,17 @@ describe('schema migrations', () => {
     expect(preferencesMigrations[2](v1 as never).studyTypeInitialsOnly).toBe(true)
   })
 
+  it('gives a v2 preferences document an empty extension list', () => {
+    const stamp = new Date(0).toISOString()
+    const v2 = { id: 'preferences', createdAt: stamp, updatedAt: stamp } as never
+    expect(preferencesMigrations[3](v2).extensions).toEqual([])
+  })
+
+  it('leaves a list that is somehow already there alone', () => {
+    const v2 = { id: 'preferences', extensions: ['bible'] } as never
+    expect(preferencesMigrations[3](v2).extensions).toEqual(['bible'])
+  })
+
   it('narrows a v3 deck cover from a public URL to its object path', () => {
     const v3 = {
       id: 'd1',
@@ -157,7 +168,7 @@ describe('schema migrations', () => {
   it('versions the collections', () => {
     expect(deckSchema.version).toBe(4)
     expect(cardSchema.version).toBe(1)
-    expect(preferencesSchema.version).toBe(2)
+    expect(preferencesSchema.version).toBe(3)
     expect(profileSchema.version).toBe(2)
     expect(pendingChangeSchema.version).toBe(1)
     expect(syncStateSchema.version).toBe(1)

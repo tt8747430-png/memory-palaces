@@ -1,4 +1,4 @@
-import { CONTENT_SORTS, type ContentSort, type Entity } from '@/shared/lib'
+import { CONTENT_SORTS, type ContentSort, type Entity, type ExtensionId } from '@/shared/lib'
 import { DEFAULT_DAILY_GOAL } from '@/shared/config/constants'
 import {
   DEFAULT_SWIPE,
@@ -62,6 +62,7 @@ export interface Preferences extends Entity {
   flashcardSwipe: FlashcardSwipeByMode
   selectToolbar: SelectToolbarPreferences
   privacy: PrivacySettings
+  extensions: ExtensionId[]
 }
 
 export const DEFAULT_PREFERENCES = {
@@ -81,6 +82,7 @@ export const DEFAULT_PREFERENCES = {
   flashcardSwipe: DEFAULT_FLASHCARD_SWIPE_BY_MODE,
   selectToolbar: DEFAULT_SELECT_TOOLBAR,
   privacy: DEFAULT_PRIVACY,
+  extensions: [] as ExtensionId[],
 } as const satisfies Omit<Preferences, keyof Entity>
 
 export function resolveStudyMode(value: string | undefined): StudyMode {
@@ -108,6 +110,7 @@ export interface MakePreferencesInput {
   flashcardSwipe?: FlashcardSwipeByMode
   selectToolbar?: SelectToolbarPreferences
   privacy?: PrivacySettings
+  extensions?: ExtensionId[]
 }
 
 function resolveSwipe(input?: SwipePreferences): SwipePreferences {
@@ -153,7 +156,15 @@ export function makePreferences(input: MakePreferencesInput): Preferences {
     flashcardSwipe: normalizeFlashcardSwipe(input.flashcardSwipe),
     selectToolbar: resolveSelectToolbar(input.selectToolbar),
     privacy: input.privacy ?? { ...DEFAULT_PRIVACY },
+    extensions: [...(input.extensions ?? [])],
   }
+}
+
+export function isExtensionEnabled(
+  preferences: Pick<Preferences, 'extensions'>,
+  id: ExtensionId,
+): boolean {
+  return preferences.extensions.includes(id)
 }
 
 export function completePreferences(preferences: Preferences): Preferences {
@@ -184,7 +195,7 @@ export type PreferencesChanges = Partial<
 
 export function updatePreferences(
   preferences: Preferences,
-  changes: PreferencesChanges,
+  changes: PreferencesChanges & { extensions?: ExtensionId[] },
   updatedAt: string,
 ): Preferences {
   return { ...preferences, ...changes, updatedAt }
