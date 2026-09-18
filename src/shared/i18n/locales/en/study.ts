@@ -128,26 +128,16 @@ export const cards = {
   },
   paste: {
     title: 'Paste',
-    kindNotes: 'Notes',
-    kindBible: 'Bible',
     deckNameLabel: 'Deck name',
     dataLabel: 'Paste your cards',
     notesPlaceholder:
       'Front side 1, Back side 1\nFront side 2, Back side 2\nFront side 3, Back side 3',
-    biblePlaceholder:
-      '3 John 1\n(1:1) The elder, to the beloved Gaius…\n(1:2) Beloved, I pray that all may go well…',
-    bibleHintTitle: 'Bible mode',
-    bibleHint:
-      'Paste a chapter — a “Book Chapter” header opens it, and each (chapter:verse) line becomes one card.',
     pasteFromClipboard: 'Paste from clipboard',
     clear: 'Clear',
     clipboardError: 'Couldn’t read the clipboard.',
     clipboardHint: 'Allow the paste when your browser asks, or paste straight into the box.',
     clipboardRetry: 'Try again',
     clipboardEmpty: 'Nothing on the clipboard.',
-    formatLabel: 'Format',
-    autoDetected: 'Auto-detected',
-    resetAuto: 'Reset to auto',
     fieldLabel: 'Between front and back',
     cardLabel: 'Between cards',
     sepAuto: 'Auto',

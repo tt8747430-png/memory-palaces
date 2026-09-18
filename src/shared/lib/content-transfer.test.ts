@@ -3,14 +3,11 @@ import {
   cardsToAnkiTsv,
   cardsToCsv,
   ContentImportError,
-  detectPasteFormat,
   guessFieldSeparator,
   parseAnkiText,
   parseDeckContent,
   parseDelimitedNotes,
   parsePastedCards,
-  parseVerses,
-  verseChapterTitles,
   questionsToCsv,
 } from './content-transfer'
 
@@ -33,37 +30,6 @@ describe('parseAnkiText', () => {
       { front: 'Front 1', back: 'Back 1' },
       { front: 'Front 2', back: 'Back 2' },
     ])
-  })
-})
-
-describe('parseVerses', () => {
-  it('turns (chapter:verse) lines into cards prefixed with the book', () => {
-    const cards = parseVerses('3 John 1\n(1:1) The elder, to Gaius\n(1:2) Beloved, I pray')
-    expect(cards).toEqual([
-      { front: '3 John 1:1', back: '3 John 1:1 The elder, to Gaius' },
-      { front: '3 John 1:2', back: '3 John 1:2 Beloved, I pray' },
-    ])
-  })
-})
-
-describe('verseChapterTitles', () => {
-  it('names the chapters a paste opened with, in order', () => {
-    const text = 'John 1\n(1:1) In the beginning\nJohn 2\n(2:1) There was a wedding'
-    expect(verseChapterTitles(text)).toEqual(['John 1', 'John 2'])
-  })
-
-  it('keeps the reference range a header carries', () => {
-    expect(verseChapterTitles('Psalm 23:1-6\n(23:1) The Lord is my shepherd')).toEqual([
-      'Psalm 23:1-6',
-    ])
-  })
-
-  it('offers no title for verses pasted without a header', () => {
-    expect(verseChapterTitles('(1:1) In the beginning')).toEqual([])
-  })
-
-  it('offers no title for text that holds no verses', () => {
-    expect(verseChapterTitles('front, back')).toEqual([])
   })
 })
 
@@ -109,22 +75,6 @@ describe('parseDelimitedNotes', () => {
       skipHeader: true,
     })
     expect(cards).toEqual([{ front: 'Zeus', back: 'King' }])
-  })
-})
-
-describe('detectPasteFormat', () => {
-  it('reads a dominant verse paste as bible', () => {
-    expect(detectPasteFormat('John 3\n(3:16) For God so loved…\n(3:17) For God sent…')).toBe(
-      'bible',
-    )
-  })
-
-  it('reads delimited pairs as notes', () => {
-    expect(detectPasteFormat('Zeus, King\nHera, Queen')).toBe('notes')
-  })
-
-  it('falls back to notes on empty text', () => {
-    expect(detectPasteFormat('   ')).toBe('notes')
   })
 })
 

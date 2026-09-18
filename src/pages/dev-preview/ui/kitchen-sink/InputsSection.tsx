@@ -5,7 +5,7 @@ import { Section, Cases, Case } from './layout'
 import { LONG_TEXT } from './fixtures'
 
 function ComboboxDemo() {
-  const [value, setValue] = useState<'bible' | 'notes' | 'csv'>('notes')
+  const [value, setValue] = useState<'anki' | 'notes' | 'csv'>('notes')
   return (
     <Combobox
       label="Import format"
@@ -13,7 +13,7 @@ function ComboboxDemo() {
       onChange={setValue}
       options={[
         { value: 'notes', label: 'Notes' },
-        { value: 'bible', label: 'Bible' },
+        { value: 'anki', label: 'Anki' },
         { value: 'csv', label: 'CSV' },
       ]}
     />

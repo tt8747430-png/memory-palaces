@@ -8,7 +8,7 @@ export const settings = {
   reducedMotion: 'Reduced motion',
   reducedMotionHint: 'Minimize animations across the app.',
   dailyGoal: 'Daily goal',
-  dailyGoalHint: 'Cards, questions, matches or verses to practise each day to keep your streak.',
+  dailyGoalHint: 'Cards, questions or matches to practise each day to keep your streak.',
   notifications: 'Notifications',
   notificationsHint: 'Show milestone toasts — XP, level-ups, and streaks.',
   comingSoon: 'Soon',

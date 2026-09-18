@@ -216,18 +216,6 @@ export function parseDelimitedNotes(
   })
 }
 
-export type PasteFormat = 'bible' | 'notes'
-
-export function detectPasteFormat(text: string): PasteFormat {
-  const lines = text
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter(Boolean)
-  if (lines.length === 0) return 'notes'
-  const verseLines = lines.filter((l) => /^\(\d+:\d+\)/.test(l)).length
-  return verseLines >= 2 && verseLines >= lines.length * 0.4 ? 'bible' : 'notes'
-}
-
 export function guessFieldSeparator(text: string): string {
   const first = text.split(/\r?\n/).find((l) => l.trim() !== '') ?? ''
   for (const sep of ['\t', ',', ';', '|']) if (first.includes(sep)) return sep
@@ -277,69 +265,6 @@ export function parseAnkiText(text: string): ParsedCard[] {
     if (front && back) cards.push({ front, back })
   }
   return cards
-}
-
-export interface VerseChapter {
-  title: string
-  cards: ParsedCard[]
-}
-
-const UNTITLED_CHAPTER = 'Verses'
-
-function parseVerseChapters(text: string): VerseChapter[] {
-  const verseRe = /^\((\d+):(\d+)\)\s*(.*)$/
-  const headerRe = /^(.*\p{L})\s+\d+(?:\s*[-–:]\s*\d+)*\.?$/u
-  const chapterTail = /\s+\d+(?:\s*[-–:]\s*\d+)*\.?$/u
-
-  const chapters: VerseChapter[] = []
-  let current: VerseChapter | null = null
-  let book = ''
-  let last: ParsedCard | null = null
-
-  const ensureChapter = (): VerseChapter => {
-    if (!current) {
-      current = { title: book || UNTITLED_CHAPTER, cards: [] }
-      chapters.push(current)
-    }
-    return current
-  }
-
-  for (const raw of text.split(/\r?\n/)) {
-    const line = raw.trim()
-    if (!line) continue
-
-    const verse = line.match(verseRe)
-    if (verse) {
-      const [, ch, vs, bodyText] = verse
-      const ref = `${book ? `${book} ` : ''}${ch}:${vs}`.trim()
-      const card: ParsedCard = { front: ref, back: bodyText ? `${ref} ${bodyText}`.trim() : ref }
-      ensureChapter().cards.push(card)
-      last = card
-      continue
-    }
-
-    if (headerRe.test(line)) {
-      book = line.replace(chapterTail, '').trim()
-      current = { title: line, cards: [] }
-      chapters.push(current)
-      last = null
-      continue
-    }
-
-    if (last) last.back = `${last.back} ${line}`.trim()
-  }
-
-  return chapters.filter((c) => c.cards.length > 0)
-}
-
-export function parseVerses(text: string): ParsedCard[] {
-  return parseVerseChapters(text).flatMap((c) => c.cards)
-}
-
-export function verseChapterTitles(text: string): string[] {
-  return parseVerseChapters(text)
-    .map((c) => c.title)
-    .filter((title) => title !== UNTITLED_CHAPTER)
 }
 
 export function parseDeckContent(text: string): DeckContentData {

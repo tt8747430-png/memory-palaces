@@ -131,15 +131,11 @@ export {
   cardsToAnkiTsv,
   parseDelimitedNotes,
   parseAnkiText,
-  parseVerses,
-  verseChapterTitles,
   parseDeckContent,
-  detectPasteFormat,
   guessFieldSeparator,
   type CardLike,
   type QuestionLike,
   type ParsedCard,
-  type PasteFormat,
   type DeckContentData,
 } from './content-transfer'
 export { speak, speechAvailable } from './speech'

@@ -6,8 +6,6 @@ import { PasteNotesPage } from './PasteNotesPage'
 
 afterEach(cleanup)
 
-const CHAPTER = '3 John 1\n(1:1) The elder, to Gaius\n(1:2) Beloved, I pray'
-
 function renderNewDeckPage() {
   renderWithProviders(
     <PasteNotesPage newDeck defaultDeckName="New Deck" onBack={vi.fn()} onReview={vi.fn()} />,
@@ -24,14 +22,14 @@ describe('PasteNotesPage deck name', () => {
     expect(page.name().value).toBe('New Deck')
   })
 
-  it('names the deck after a pasted Bible chapter', async () => {
+  it('keeps the default whatever is pasted — this screen reads notes, not a format', async () => {
     const user = userEvent.setup()
     const page = renderNewDeckPage()
 
     await user.click(page.box())
-    await user.paste(CHAPTER)
+    await user.paste('Zeus, King of the gods')
 
-    expect(page.name().value).toBe('3 John 1')
+    expect(page.name().value).toBe('New Deck')
   })
 
   it('keeps a name the reader typed, whatever is pasted afterwards', async () => {
@@ -41,18 +39,8 @@ describe('PasteNotesPage deck name', () => {
     await user.clear(page.name())
     await user.type(page.name(), 'Memory verses')
     await user.click(page.box())
-    await user.paste(CHAPTER)
-
-    expect(page.name().value).toBe('Memory verses')
-  })
-
-  it('falls back to the default when the paste holds no chapter header', async () => {
-    const user = userEvent.setup()
-    const page = renderNewDeckPage()
-
-    await user.click(page.box())
     await user.paste('Zeus, King of the gods')
 
-    expect(page.name().value).toBe('New Deck')
+    expect(page.name().value).toBe('Memory verses')
   })
 })

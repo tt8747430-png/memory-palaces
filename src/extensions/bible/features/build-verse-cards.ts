@@ -24,7 +24,8 @@ function splitByMarkers(text: string): Segment[] {
     const verse = Number(match[2] ?? match[3])
     const start = (match.index ?? 0) + match[0].length
     const end = matches[index + 1]?.index ?? text.length
-    const body = stripReference(text.slice(start, end).trim())
+    // Collapse the whitespace: a verse that wrapped onto the next line is one verse, not two.
+    const body = stripReference(text.slice(start, end).replace(/\s+/g, ' ').trim())
     if (verse > 0 && body) segments.push({ chapter, verse, text: body })
   })
   return segments

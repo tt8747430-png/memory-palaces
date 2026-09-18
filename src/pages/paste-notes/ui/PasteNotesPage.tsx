@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { BookOpen, ClipboardPaste, Eraser, Sparkles } from 'lucide-react'
+import { ClipboardPaste, Eraser, Sparkles } from 'lucide-react'
 import {
   AppScreen,
   Button,
@@ -14,7 +14,6 @@ import {
 import { useImportDraft } from '@/widgets/content-editor'
 import { canReadClipboard, readClipboardText } from '../model/clipboard'
 import { usePasteParsing } from '../model/use-paste-parsing'
-import { FormatToggle } from './FormatToggle'
 import { CountBadge, PastePreview } from './PastePreview'
 import { SeparatorSettings } from './SeparatorSettings'
 
@@ -36,7 +35,7 @@ export function PasteNotesPage({
   const parsing = usePasteParsing()
 
   const [typedName, setTypedName] = useState<string | null>(null)
-  const deckName = typedName ?? (parsing.suggestedName || defaultDeckName)
+  const deckName = typedName ?? defaultDeckName
 
   const showClipboardButton = canReadClipboard()
 
@@ -104,11 +103,7 @@ export function PasteNotesPage({
           <Textarea
             value={parsing.text}
             onChange={(e) => parsing.setText(e.target.value)}
-            placeholder={
-              parsing.format === 'bible'
-                ? t('cards.paste.biblePlaceholder')
-                : t('cards.paste.notesPlaceholder')
-            }
+            placeholder={t('cards.paste.notesPlaceholder')}
             rows={8}
             className="min-h-46 font-mono text-label leading-relaxed"
           />
@@ -133,14 +128,7 @@ export function PasteNotesPage({
           </div>
         </div>
 
-        <FormatToggle
-          value={parsing.format}
-          auto={parsing.auto}
-          onChange={parsing.setFormat}
-          onReset={parsing.resetFormat}
-        />
-
-        {parsing.format === 'bible' ? <BibleHint /> : <SeparatorSettings parsing={parsing} />}
+        <SeparatorSettings parsing={parsing} />
 
         {parsing.text.trim() ? (
           parsing.cards.length > 0 ? (
@@ -153,20 +141,5 @@ export function PasteNotesPage({
         ) : null}
       </div>
     </AppScreen>
-  )
-}
-
-function BibleHint() {
-  const { t } = useTranslation()
-  return (
-    <div className="flex items-start gap-3 rounded-card bg-info-surface p-4">
-      <BookOpen className="mt-0.5 size-5 shrink-0 text-accent" aria-hidden />
-      <div>
-        <p className="text-body font-semibold text-heading">{t('cards.paste.bibleHintTitle')}</p>
-        <p className="mt-0.5 text-label leading-snug text-info-foreground">
-          {t('cards.paste.bibleHint')}
-        </p>
-      </div>
-    </div>
   )
 }

@@ -1,13 +1,5 @@
 import { useMemo, useState } from 'react'
-import {
-  detectPasteFormat,
-  guessFieldSeparator,
-  type ParsedCard,
-  parseDelimitedNotes,
-  parseVerses,
-  type PasteFormat,
-  verseChapterTitles,
-} from '@/shared/lib'
+import { guessFieldSeparator, type ParsedCard, parseDelimitedNotes } from '@/shared/lib'
 
 export type FieldSep = 'auto' | 'tab' | 'comma' | 'custom'
 export type CardSep = 'newline' | 'semicolon' | 'custom'
@@ -21,10 +13,6 @@ export const displaySep = (value: string) => SEP_GLYPH[value] ?? value
 export interface PasteParsing {
   text: string
   setText: (value: string) => void
-  format: PasteFormat
-  auto: boolean
-  setFormat: (format: PasteFormat) => void
-  resetFormat: () => void
   guessedField: string
   fieldSep: FieldSep
   setFieldSep: (value: FieldSep) => void
@@ -39,12 +27,11 @@ export interface PasteParsing {
   skipHeader: boolean
   setSkipHeader: (value: boolean) => void
   cards: ParsedCard[]
-  suggestedName: string
 }
 
+/** Notes only. Anything with a format of its own belongs to the extension that owns that format. */
 export function usePasteParsing(): PasteParsing {
   const [text, setText] = useState('')
-  const [override, setOverride] = useState<PasteFormat | null>(null)
   const [fieldSep, setFieldSep] = useState<FieldSep>('auto')
   const [cardSep, setCardSep] = useState<CardSep>('newline')
   const [customField, setCustomField] = useState('')
@@ -52,32 +39,20 @@ export function usePasteParsing(): PasteParsing {
   const [swap, setSwap] = useState(false)
   const [skipHeader, setSkipHeader] = useState(false)
 
-  const detected = useMemo(() => detectPasteFormat(text), [text])
-  const format = override ?? detected
   const guessedField = useMemo(() => guessFieldSeparator(text), [text])
   const field =
     fieldSep === 'auto' ? guessedField : fieldSep === 'custom' ? customField : FIELD_VALUE[fieldSep]
   const card = cardSep === 'custom' ? customCard || '\n' : CARD_VALUE[cardSep]
 
-  const suggestedName = useMemo(
-    () => (format === 'bible' ? (verseChapterTitles(text)[0] ?? '') : ''),
-    [format, text],
-  )
-
   const cards = useMemo(() => {
     if (!text.trim()) return []
-    if (format === 'bible') return parseVerses(text)
     if (!field) return []
     return parseDelimitedNotes(text, { field, card, swap, skipHeader })
-  }, [text, format, field, card, swap, skipHeader])
+  }, [text, field, card, swap, skipHeader])
 
   return {
     text,
     setText,
-    format,
-    auto: override === null,
-    setFormat: setOverride,
-    resetFormat: () => setOverride(null),
     guessedField,
     fieldSep,
     setFieldSep,
@@ -92,6 +67,5 @@ export function usePasteParsing(): PasteParsing {
     skipHeader,
     setSkipHeader,
     cards,
-    suggestedName,
   }
 }

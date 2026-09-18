@@ -88,3 +88,22 @@ describe('findDuplicates', () => {
     expect(findDuplicates([{ front: 'Genesis 1:1', back: 'a' }], [])).toEqual([])
   })
 })
+
+describe('what the old core parser did', () => {
+  it('joins a verse that wraps onto the next line', () => {
+    const cards = buildVerseCards(null, '3 John 1\n(1:1) The elder,\nto Gaius')
+    expect(cards[0]?.back).toBe('The elder, to Gaius')
+  })
+
+  it('ignores a book header line above the markers', () => {
+    const cards = buildVerseCards(
+      null,
+      '3 John 1\n(1:1) The elder, to Gaius\n(1:2) Beloved, I pray',
+    )
+    expect(cards).toHaveLength(2)
+  })
+
+  it('finds nothing in ordinary notes', () => {
+    expect(buildVerseCards(null, 'Zeus, King of the gods')).toEqual([])
+  })
+})
