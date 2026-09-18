@@ -10,7 +10,7 @@ import type { Services } from './composition-root'
 import { createAppRouter } from './router'
 
 const IMPORT = '/import/bible'
-const LIBRARY = '/settings/extensions/bible'
+const SETTINGS = '/settings/extensions/bible'
 
 /** The router reads only the session, preferences and the runtime before it renders anything. */
 async function routerWith(extensions: string[], devMode = false) {
@@ -53,7 +53,7 @@ describe('extension routes', () => {
     vi.resetModules()
     const fresh = await import('./router')
     const router = fresh.createAppRouter({} as Services)
-    for (const path of [IMPORT, LIBRARY]) {
+    for (const path of [IMPORT, SETTINGS]) {
       const route = router.routesByPath[path as keyof typeof router.routesByPath]
       expect((route?.options.component as { preload?: unknown }).preload).toBeTypeOf('function')
     }
@@ -65,8 +65,8 @@ describe('extension routes', () => {
     expect(location.search).toEqual({ highlight: 'bible' })
   })
 
-  it('keep the admin screen to dev mode', async () => {
-    expect((await open(['bible'], LIBRARY)).pathname).toBe(ROUTES.settingsExtensions)
-    expect((await open(['bible'], LIBRARY, true)).pathname).toBe(LIBRARY)
+  it('serve the settings screen to anyone with the extension on, dev mode or not', async () => {
+    expect((await open(['bible'], SETTINGS)).pathname).toBe(SETTINGS)
+    expect((await open([], SETTINGS)).pathname).toBe(ROUTES.settingsExtensions)
   })
 })

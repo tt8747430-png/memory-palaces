@@ -3,7 +3,7 @@ import { type ExtensionManifest, extensionRoute } from '@/shared/lib'
 import { BIBLE_ID } from './ids'
 
 const BIBLE_IMPORT_PATH = '/import/bible'
-const BIBLE_LIBRARY_PATH = '/settings/extensions/bible'
+const BIBLE_SETTINGS_PATH = '/settings/extensions/bible'
 
 /** What an import link may carry: the deck the learner was already in. */
 interface BibleImportSearch extends Record<string, unknown> {
@@ -44,11 +44,9 @@ export const bibleManifest: ExtensionManifest = {
       },
     ],
   },
-  // How Bible text is published before a bundled translation exists.
-  admin: {
-    labelKey: 'bible:libraryTitle',
+  settings: {
     route: extensionRoute(
-      BIBLE_LIBRARY_PATH,
+      BIBLE_SETTINGS_PATH,
       () => import('./ui/BibleLibraryScreen'),
       'BibleLibraryScreen',
     ),

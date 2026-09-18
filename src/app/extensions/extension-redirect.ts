@@ -16,12 +16,8 @@ export function extensionSettings(id: ExtensionId): ExtensionRedirect {
  * silent redirect home.
  *
  * `active` must be read once the runtime has settled on loaded preferences — an unloaded store is
- * not "off", and deciding on one bounces a cold deep link to an enabled extension. An `admin` route
- * renders in dev mode only; there is nothing on it a learner should act on.
+ * not "off", and deciding on one bounces a cold deep link to an enabled extension.
  */
-export function extensionRedirect(
-  id: ExtensionId,
-  { active, admin, devMode }: { active: boolean; admin: boolean; devMode: boolean },
-): ExtensionRedirect | null {
-  return active && (!admin || devMode) ? null : extensionSettings(id)
+export function extensionRedirect(id: ExtensionId, active: boolean): ExtensionRedirect | null {
+  return active ? null : extensionSettings(id)
 }

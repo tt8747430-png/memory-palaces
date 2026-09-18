@@ -106,8 +106,9 @@ export interface ExtensionManifest {
   loadRuntime: () => Promise<ExtensionRuntimeModule>
   contributions: ExtensionContributions
   /**
-   * Its admin screen, if it has one: reachable in dev mode only, and outside dev mode no trace of
-   * it is shown. The Extensions page links to it under `labelKey`, a key in its namespace.
+   * Its settings screen, if it has one: an ordinary screen of its own, which the Extensions page
+   * links to under the extension's label while it is enabled. Gated like every other route of
+   * its — on the extension being active, and nothing else.
    */
-  admin?: { route: ExtensionRoute; labelKey: string }
+  settings?: { route: ExtensionRoute }
 }

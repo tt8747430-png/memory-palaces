@@ -19,13 +19,7 @@ vi.mock('sonner', () => ({ toast: Object.assign(vi.fn(), { error: vi.fn(), succe
 // The host resolves a manifest's keys against the extension's own namespace, which the app adds
 // behind the splash for every registered extension. Adding it here is what makes the rows read as
 // copy.
-i18n.addResourceBundle(
-  'en',
-  'fake',
-  { label: 'Fake', description: 'A fake extension', admin: 'Fake library' },
-  true,
-  true,
-)
+i18n.addResourceBundle('en', 'fake', { label: 'Fake', description: 'A fake extension' }, true, true)
 
 afterEach(cleanup)
 
@@ -49,10 +43,9 @@ function renderPage(
   {
     highlight,
     onOpenExtension,
-    devMode = false,
-  }: { highlight?: string; onOpenExtension?: (path: string) => void; devMode?: boolean } = {},
+  }: { highlight?: string; onOpenExtension?: (path: string) => void } = {},
 ) {
-  const store = preferencesStoreHolding({ extensions, devMode })
+  const store = preferencesStoreHolding({ extensions })
   renderWithProviders(
     <PreferencesStoreContext value={store}>
       <SettingsExtensionsPage
@@ -121,10 +114,9 @@ describe('SettingsExtensionsPage', () => {
     await waitFor(() => expect(toast.error).toHaveBeenCalled())
   })
 
-  const withAdmin: ExtensionManifest = {
+  const withSettings: ExtensionManifest = {
     ...manifest,
-    admin: {
-      labelKey: 'fake:admin',
+    settings: {
       route: extensionRoute(
         '/settings/extensions/fake',
         () => Promise.resolve({ Screen }),
@@ -133,21 +125,21 @@ describe('SettingsExtensionsPage', () => {
     },
   }
 
-  it('offers an enabled extension its admin screen in dev mode, by the path its manifest names', async () => {
+  it('offers an enabled extension its settings, by the path its manifest names', async () => {
     const user = userEvent.setup()
     const onOpen = vi.fn()
-    renderPage([withAdmin], ['fake'], { onOpenExtension: onOpen, devMode: true })
-    await user.click(screen.getByRole('button', { name: 'Fake library' }))
+    renderPage([withSettings], ['fake'], { onOpenExtension: onOpen })
+    await user.click(screen.getByRole('button', { name: 'Fake settings' }))
     expect(onOpen).toHaveBeenCalledWith('/settings/extensions/fake')
   })
 
-  it('shows nothing of the admin screen outside dev mode', () => {
-    renderPage([withAdmin], ['fake'])
-    expect(screen.queryByRole('button', { name: 'Fake library' })).not.toBeInTheDocument()
+  it('hides the settings row while the extension is off', () => {
+    renderPage([withSettings], [])
+    expect(screen.queryByRole('button', { name: 'Fake settings' })).not.toBeInTheDocument()
   })
 
-  it('hides the admin row while the extension is off', () => {
-    renderPage([withAdmin], [], { devMode: true })
-    expect(screen.queryByRole('button', { name: 'Fake library' })).not.toBeInTheDocument()
+  it('offers no settings row to an extension without a settings screen', () => {
+    renderPage([manifest], ['fake'])
+    expect(screen.queryByRole('button', { name: /settings/ })).not.toBeInTheDocument()
   })
 })

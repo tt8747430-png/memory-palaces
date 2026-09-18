@@ -4,7 +4,7 @@ import type { Preferences } from '@/entities/preferences'
 import { preferencesStoreHolding } from '@/entities/preferences/testing/stored-preferences'
 import type { LoadedExtension } from '../load-extensions'
 
-export const FAKE_MESSAGES = { label: 'Fake', description: 'A fake extension', admin: 'Fake admin' }
+export const FAKE_MESSAGES = { label: 'Fake', description: 'A fake extension' }
 
 /** A manifest with every loader resolved, and one import row keyed into its namespace. */
 export function fakeManifest(overrides: Partial<ExtensionManifest> = {}): ExtensionManifest {

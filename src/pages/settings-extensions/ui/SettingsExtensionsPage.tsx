@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Wrench } from 'lucide-react'
+import { SlidersHorizontal } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   isExtensionEnabled,
@@ -22,7 +22,7 @@ export interface SettingsExtensionsPageProps {
   manifests: ExtensionManifest[]
   /** The id a route guard sent the learner here for, so the row can say which one they wanted. */
   highlight?: string
-  /** Opens an extension's admin screen. The path comes from the manifest — no core file names it. */
+  /** Opens an extension's settings screen. The path comes from the manifest — no core file names it. */
   onOpenExtension?: (path: string) => void
   onBack?: () => void
 }
@@ -72,7 +72,7 @@ export function SettingsExtensionsPage({
           <SettingsSection title={t('settings.extensionsSection')}>
             {manifests.map((manifest) => {
               const enabled = isExtensionEnabled(prefs, manifest.id)
-              const admin = manifest.admin
+              const settings = manifest.settings
               return (
                 <div
                   key={manifest.id}
@@ -87,12 +87,14 @@ export function SettingsExtensionsPage({
                     checked={enabled}
                     onCheckedChange={(value) => toggle(manifest.id, value)}
                   />
-                  {admin && enabled && prefs.devMode ? (
+                  {settings && enabled ? (
                     <SettingsRow
                       kind="nav"
-                      icon={<Wrench />}
-                      label={contributed(admin.labelKey)}
-                      onClick={() => onOpenExtension?.(admin.route.path)}
+                      icon={<SlidersHorizontal />}
+                      label={t('settings.extensionSettings', {
+                        name: contributed(manifest.labelKey),
+                      })}
+                      onClick={() => onOpenExtension?.(settings.route.path)}
                     />
                   ) : null}
                 </div>
