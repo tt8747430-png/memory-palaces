@@ -184,7 +184,8 @@ verses; Psalm 117 has 2; the canon has 1189 chapters).
 ### 4.2 References
 
 `model/reference.ts` — `VerseRef { book, chapter, from, to }` plus `formatRef`, `parseRef`,
-`expandRange`, `refKey`. Pure, colocated tests. `formatRef` renders `Genesis 1:1` for a single
+`formatPartial`. Pure, colocated tests. `refKey` lives in `model/verse.ts`, which knows about
+translations; `reference.ts` does not. `formatRef` renders `Genesis 1:1` for a single
 verse and `Genesis 1:1-31` for a range.
 
 ### 4.3 Verse text behind a port
@@ -398,7 +399,7 @@ Every new surface handles loading, error, empty and offline, per `docs/CODE_STYL
 
 Unit, colocated:
 
-- canon counts, reference formatting/parsing, range expansion
+- canon counts, reference formatting/parsing
 - verse parsing in the extension, asserting the back holds no reference, including the cases
   inherited from the core parser being deleted (a verse that wraps a line, a book header above the
   markers, ordinary notes yielding nothing)

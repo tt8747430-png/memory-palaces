@@ -118,7 +118,8 @@ All four on every async surface — a missing state reads as a crash.
   its animation and the services are ready); skip for instant local writes (§6).
 - **Error** — the problem **plus a retry path**. Startup itself has one: a database that will not open shows
   `Bootstrap`'s terminal screen with Reload, never an empty shell.
-- **Empty** — `Empty` (`shared/ui/primitives/empty.tsx`, `panel`/`hero`); put "create" in the toolbar too.
+- **Empty** — `Empty` (`shared/ui/primitives/empty.tsx`, `panel`/`hero`); put "create" in the toolbar too. A
+  list inside a settings-style screen says it with one line — `EmptyNotice` — not a hero.
 - **Offline** — §11.
 
 ## 11. Offline-first
