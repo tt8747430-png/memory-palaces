@@ -10,6 +10,7 @@ import { DEFAULT_SYNC_STATE, SYNC_STATE_ID } from '@/entities/sync-state'
 import {
   type AppCollections,
   cardMigrations,
+  collectionByKey,
   createAppDatabase,
   deckMigrations,
   preferencesMigrations,
@@ -40,6 +41,39 @@ async function reopenedAfterSeeding(
   await before.close()
   return createAppDatabase(storage)
 }
+
+const extensionSchema: RxJsonSchema<Record<string, unknown>> = {
+  version: 0,
+  primaryKey: 'id',
+  type: 'object',
+  properties: {
+    id: { type: 'string', maxLength: 100 },
+    updatedAt: { type: 'string' },
+  },
+  required: ['id'],
+}
+
+describe('a registered extension collection', () => {
+  it('comes back on the collections, so its repository has something to write to', async () => {
+    const collections = await createAppDatabase(getRxStorageDexie(), [
+      { key: 'bibleVerses', table: 'bible_verses', creator: { schema: extensionSchema } },
+    ])
+
+    expect(collections.extensions.bibleVerses).toBeDefined()
+    expect(collectionByKey(collections, 'bibleVerses')).toBe(collections.extensions.bibleVerses)
+
+    await collections.decks.database.remove()
+  })
+
+  it('is reached by the same key a core collection is', async () => {
+    const collections = await createAppDatabase(getRxStorageDexie())
+
+    expect(collectionByKey(collections, 'decks')).toBe(collections.decks)
+    expect(() => collectionByKey(collections, 'nothing')).toThrow(/nothing/)
+
+    await collections.decks.database.remove()
+  })
+})
 
 describe('createAppDatabase', () => {
   it('registers a profiles collection that round-trips a Profile through RxDB', async () => {

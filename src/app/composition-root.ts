@@ -1,9 +1,7 @@
-import type { RxCollection } from 'rxdb'
 import {
   type AccountDeletionPort,
   type AuthGateway,
   type CloudSyncPort,
-  type Identifiable,
   InMemoryRepository,
   LocalObjectUrlStorage,
   type StoragePort,
@@ -80,7 +78,7 @@ export interface Services {
 export async function createServices(): Promise<Services> {
   const [
     { getRxStorageDexie },
-    { createAppDatabase },
+    { createAppDatabase, collectionByKey },
     { RxdbRepository },
     cloud,
     { createAuthGateway },
@@ -120,7 +118,7 @@ export async function createServices(): Promise<Services> {
   const syncTargets: Promise<SyncTarget[]> = collections.then((c) =>
     syncTableSpecs.map(({ table, collectionKey }) => ({
       table,
-      collection: (c as unknown as Record<string, RxCollection<Identifiable>>)[collectionKey]!,
+      collection: collectionByKey(c, collectionKey),
     })),
   )
   const configured = cloud.isSupabaseConfigured()

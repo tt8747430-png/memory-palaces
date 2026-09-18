@@ -1,4 +1,5 @@
 import type { RxCollection, RxStorage } from 'rxdb'
+import type { Identifiable } from '@/shared/api'
 import { addRxPlugin, createRxDatabase } from 'rxdb'
 import { RxDBMigrationSchemaPlugin } from 'rxdb/plugins/migration-schema'
 import type { Folder } from '@/entities/folder'
@@ -44,6 +45,28 @@ export interface AppCollections {
   history: RxCollection<HistoryEntry>
   pendingChanges: RxCollection<PendingChange>
   syncState: RxCollection<SyncState>
+  /**
+   * The registered extensions' collections, keyed as their manifests named them. Held apart from
+   * the core ones rather than spread among them: the set is open, so nothing can type it per key,
+   * and a caller that means to reach one should have to say so.
+   */
+  extensions: Readonly<Record<string, RxCollection<Identifiable>>>
+}
+
+/**
+ * The collection a sync spec or an extension repository names — a core collection's own key, or
+ * an extension's. The one place that widens the typed record, so no caller casts; the two
+ * namespaces cannot collide, because `addCollections` throws on a duplicate key.
+ */
+export function collectionByKey(
+  collections: AppCollections,
+  key: string,
+): RxCollection<Identifiable> {
+  const { extensions, ...core } = collections
+  const found =
+    extensions[key] ?? (core as unknown as Record<string, RxCollection<Identifiable>>)[key]
+  if (!found) throw new Error(`No collection is registered as "${key}"`)
+  return found
 }
 
 addRxPlugin(RxDBMigrationSchemaPlugin)
@@ -160,5 +183,16 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
     history: collections.history,
     pendingChanges: collections.pendingChanges,
     syncState: collections.syncState,
+    // `addCollections` types only the literal keys it was handed, so the contributed ones are read
+    // back through one widening here — the same shape `collectionByKey` hands out.
+    extensions: Object.fromEntries(
+      extensionCollections.map(
+        (spec) =>
+          [
+            spec.key,
+            (collections as unknown as Record<string, RxCollection<Identifiable>>)[spec.key]!,
+          ] as const,
+      ),
+    ),
   }
 }

@@ -2,6 +2,8 @@ import 'fake-indexeddb/auto'
 import { describe, expect, it } from 'vitest'
 import type { RxCollection } from 'rxdb'
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie'
+import { loadExtensionCollections } from '../extensions/collections'
+import { EXTENSIONS } from '../extensions/registry'
 import { createAppDatabase } from './database'
 
 interface SchemaShape {
@@ -82,17 +84,20 @@ async function roundTrip(collection: RxCollection): Promise<void> {
 
 describe('every collection the app opens', () => {
   it('writes, reads and removes a document, shadowing none of RxDB’s own', async () => {
-    const collections = await createAppDatabase(getRxStorageDexie())
+    // The registry's own collections too: an extension's schema is opened by the same database, so
+    // it is held to the same round-trip as a core one.
+    const { specs } = await loadExtensionCollections(EXTENSIONS)
+    const { extensions, ...core } = await createAppDatabase(getRxStorageDexie(), specs)
 
     const broken: string[] = []
-    for (const [name, collection] of Object.entries(collections)) {
+    for (const [name, collection] of [...Object.entries(core), ...Object.entries(extensions)]) {
       try {
-        await roundTrip(collection)
+        await roundTrip(collection as RxCollection)
       } catch (error) {
         broken.push(`${name}: ${error instanceof Error ? error.message : String(error)}`)
       }
     }
-    await collections.decks.database.remove()
+    await core.decks.database.remove()
 
     expect(broken).toEqual([])
   })
