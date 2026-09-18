@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react'
-import type { ContentCollection } from '@/shared/config/sync-tables'
+import type { ContentCollection, SyncedTable } from '@/shared/config/sync-tables'
 
 export interface SyncDocumentRef {
   collection: ContentCollection
@@ -39,6 +39,8 @@ export interface SyncRunner {
   phase: SyncPhase
   error: string | null
   review: SyncReview | null
+  /** The tables a Sync covers right now — what counts as waiting, and what a cycle carries. */
+  tables: readonly SyncedTable[]
   run: () => Promise<SyncOutcome>
   restore: () => Promise<SyncOutcome>
   openReview: () => Promise<SyncOutcome>

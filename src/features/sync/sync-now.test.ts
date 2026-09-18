@@ -3,6 +3,7 @@ import { makeCard } from '@/entities/card'
 import { makeDeck } from '@/entities/deck'
 import { makeFolder } from '@/entities/folder'
 import { makeQuestion } from '@/entities/question'
+import { makePendingChange } from '@/entities/pending-change'
 import { selectSyncState } from '@/entities/sync-state'
 import { AT, NOW, syncFixture } from './testing/fake-cloud'
 import { syncNow } from './sync-now'
@@ -215,5 +216,18 @@ describe('syncNow', () => {
     await syncNow(deps)
 
     expect(log().map((row) => row.entityId)).toEqual(['d2'])
+  })
+
+  it('leaves a change on a table the cycle does not cover waiting — an extension that is off', async () => {
+    const { deps, log } = syncFixture()
+    await deps.deckStore.getState().save(deck('d1'))
+    await deps.pendingChangeStore
+      .getState()
+      .save(makePendingChange({ table: 'bible_verses', entityId: 'v1', op: 'save', at: AT }))
+    deps.tables = deps.tables.filter((table) => table !== 'bible_verses')
+
+    await expect(syncNow(deps)).resolves.toEqual({ kind: 'clean' })
+
+    expect(log().map((row) => row.id)).toEqual(['bible_verses:v1'])
   })
 })

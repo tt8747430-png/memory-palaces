@@ -7,12 +7,8 @@ import {
   type StoragePort,
 } from '@/shared/api'
 import type { SyncManager, SyncTarget } from '@/shared/api/supabase'
-import { type AppEvents, EventBus, nowIso } from '@/shared/lib'
-import {
-  type ContentCollection,
-  CORE_SYNC_TABLES,
-  type SyncTableSpec,
-} from '@/shared/config/sync-tables'
+import { type AppEvents, EventBus, NO_PENDING, nowIso } from '@/shared/lib'
+import { CORE_SYNC_TABLES, type SyncedTable, type SyncTableSpec } from '@/shared/config/sync-tables'
 import { createSessionStore, type Session, type SessionStore } from '@/entities/session'
 import { createDeckStore, type Deck, type DeckStore } from '@/entities/deck'
 import { type Card, type CardStore, createCardStore } from '@/entities/card'
@@ -115,8 +111,7 @@ export async function createServices(): Promise<Services> {
   )
   const syncStateRepo = new RxdbRepository<SyncState>(collections.then((c) => c.syncState))
   const pendingChangeStore = createPendingChangeStore(pendingChangeRepo)
-  const pending = (collection: ContentCollection) =>
-    createPendingChangePort(pendingChangeStore, collection, nowIso)
+  const pending = (table: SyncedTable) => createPendingChangePort(pendingChangeStore, table, nowIso)
   const progressRepo = new RxdbRepository<Progress>(collections.then((c) => c.progress))
   const preferencesRepo = new RxdbRepository<Preferences>(collections.then((c) => c.preferences))
   const profileRepo = new RxdbRepository<Profile>(collections.then((c) => c.profiles))
@@ -138,7 +133,7 @@ export async function createServices(): Promise<Services> {
   const syncManager = configured
     ? cloud.SyncManager.fromSupabase(cloud.supabase, syncTargets)
     : null
-  const preferencesStore = createPreferencesStore(preferencesRepo)
+  const preferencesStore = createPreferencesStore(preferencesRepo, pending('preferences'))
   const services: Services = {
     authGateway,
     sessionStore: createSessionStore(sessionRepo),
@@ -146,11 +141,11 @@ export async function createServices(): Promise<Services> {
     cardStore: createCardStore(cardRepo, pending('cards')),
     folderStore: createFolderStore(folderRepo, pending('folders')),
     questionStore: createQuestionStore(questionRepo, pending('questions')),
-    progressStore: createProgressStore(progressRepo),
+    progressStore: createProgressStore(progressRepo, pending('progress')),
     preferencesStore,
-    profileStore: createProfileStore(profileRepo),
+    profileStore: createProfileStore(profileRepo, pending('profiles')),
     notificationStore: createNotificationStore(notificationRepo),
-    historyStore: createHistoryStore(historyRepo),
+    historyStore: createHistoryStore(historyRepo, pending('history')),
     pendingChangeStore,
     syncStateStore: createSyncStateStore(syncStateRepo),
     eventBus: new EventBus<AppEvents>(),
@@ -163,6 +158,11 @@ export async function createServices(): Promise<Services> {
       extensions: loadedExtensions,
       preferences: preferencesStore,
       repositories: buildExtensionRepositories(extensionCollections.specs, collections),
+      // A contributed collection with a table syncs, so its writes wait like every core write.
+      pending: (key) => {
+        const table = extensionCollections.syncTables.find((spec) => spec.collectionKey === key)
+        return table ? pending(table.table) : NO_PENDING
+      },
     }),
     syncTables: syncTableSpecs,
   }

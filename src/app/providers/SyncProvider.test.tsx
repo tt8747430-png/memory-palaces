@@ -133,7 +133,7 @@ async function stores({
   const syncStateRepo = new InMemoryRepository<SyncState>([{ ...DEFAULT_SYNC_STATE, lastSyncedAt }])
   const pendingRepo = new InMemoryRepository<PendingChange>(
     Array.from({ length: pending }, (_, i) =>
-      makePendingChange({ contentCollection: 'decks', entityId: `d${i}`, op: 'save', at: 't' }),
+      makePendingChange({ table: 'decks', entityId: `d${i}`, op: 'save', at: 't' }),
     ),
   )
   const pendingStore = createPendingChangeStore(pendingRepo)
@@ -395,7 +395,7 @@ describe('SyncProvider', () => {
     await stores.pending
       .getState()
       .save(
-        makePendingChange({ contentCollection: 'decks', entityId: 'd1', op: 'remove', at: 't' }),
+        makePendingChange({ table: 'decks', entityId: 'd1', op: 'remove', at: 't' }),
       )
 
     await expect(runner()!.run()).resolves.toMatchObject({ kind: 'needs-review' })
@@ -424,7 +424,7 @@ describe('SyncProvider', () => {
     await stores.pending
       .getState()
       .save(
-        makePendingChange({ contentCollection: 'decks', entityId: 'd1', op: 'remove', at: 't' }),
+        makePendingChange({ table: 'decks', entityId: 'd1', op: 'remove', at: 't' }),
       )
 
     await runner()!.openReview()
@@ -444,7 +444,7 @@ describe('SyncProvider', () => {
       const edit = (at: string) =>
         stores.pending
           .getState()
-          .save(makePendingChange({ contentCollection: 'cards', entityId: 'c1', op: 'save', at }))
+          .save(makePendingChange({ table: 'cards', entityId: 'c1', op: 'save', at }))
 
       await edit('t1')
       await vi.advanceTimersByTimeAsync(3000)

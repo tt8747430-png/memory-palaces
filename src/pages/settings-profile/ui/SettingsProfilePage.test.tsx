@@ -1,3 +1,4 @@
+import { SYNCED_TABLES } from '@/shared/config/sync-tables'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { started } from '@/shared/test/started'
 import { withoutFields } from '@/shared/test/legacy-document'
@@ -77,6 +78,7 @@ function renderPage(
     phase: 'idle',
     error: null,
     review: null,
+    tables: SYNCED_TABLES,
     run: vi.fn().mockResolvedValue({ kind: 'clean' }),
     restore: vi.fn().mockResolvedValue({ kind: 'clean' }),
     openReview: vi.fn().mockResolvedValue({ kind: 'clean' }),

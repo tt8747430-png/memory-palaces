@@ -110,13 +110,19 @@ export const syncStateMigrations = {
   },
 }
 
+type PendingChangeV0 = Omit<PendingChange, 'table'> & { collection: ContentCollection }
+type PendingChangeV1 = Omit<PendingChange, 'table'> & { contentCollection: ContentCollection }
+
 export const pendingChangeMigrations = {
-  1: ({
-    collection,
-    ...rest
-  }: Omit<PendingChange, 'contentCollection'> & {
-    collection: ContentCollection
-  }): PendingChange => ({ ...rest, contentCollection: collection }),
+  1: ({ collection, ...rest }: PendingChangeV0): PendingChangeV1 => ({
+    ...rest,
+    contentCollection: collection,
+  }),
+  /** The log covers every synced table now, so the field names a table rather than a content kind. */
+  2: ({ contentCollection, ...rest }: PendingChangeV1): PendingChange => ({
+    ...rest,
+    table: contentCollection,
+  }),
 }
 
 const RETIRED_PRESETS: Record<string, CardStylePreset> = { outlined: 'plain' }

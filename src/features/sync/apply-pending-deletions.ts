@@ -1,4 +1,4 @@
-import { contentKey } from '@/shared/config/sync-tables'
+import { pendingKey } from '@/shared/config/sync-tables'
 import type { SyncOutcome, SyncReviewDecision, SyncReviewItem } from '@/shared/lib'
 import { contentWriter, fetchCloudCopies } from './content-collections'
 import { keepCloudCopy } from './keep-cloud-copy'
@@ -8,7 +8,7 @@ import { syncNow } from './sync-now'
 const keysOf = (items: readonly SyncReviewItem[]): Set<string> =>
   new Set(
     items.flatMap((item) =>
-      [item, ...(item.descendants ?? [])].map((ref) => contentKey(ref.collection, ref.id)),
+      [item, ...(item.descendants ?? [])].map((ref) => pendingKey(ref.collection, ref.id)),
     ),
   )
 

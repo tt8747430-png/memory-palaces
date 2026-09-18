@@ -1,4 +1,4 @@
-import { CONTENT_COLLECTIONS, contentKey } from '@/shared/config/sync-tables'
+import { CONTENT_COLLECTIONS, pendingKey } from '@/shared/config/sync-tables'
 import type { SyncReviewItem } from '@/shared/lib'
 import { selectPendingChanges } from '@/entities/pending-change'
 import { contentWriter, fetchCloudCopies } from './content-collections'
@@ -17,17 +17,17 @@ export async function keepCloudCopy(
     CONTENT_COLLECTIONS.map((collection) => [
       collection,
       removed
-        .filter((change) => change.contentCollection === collection)
+        .filter((change) => change.table === collection)
         .map((change) => change.entityId),
     ]),
   )
   const subtree = await cloudDescendants(deps, [item.id], candidates)
   const restore = [item, ...subtree.values()].filter(
-    (ref) => !deleted.has(contentKey(ref.collection, ref.id)),
+    (ref) => !deleted.has(pendingKey(ref.collection, ref.id)),
   )
 
   for (const { collection, document } of await fetchCloudCopies(deps, restore)) {
     await contentWriter(deps, collection).save(document)
-    await deps.pendingChangeStore.getState().remove(contentKey(collection, document.id))
+    await deps.pendingChangeStore.getState().remove(pendingKey(collection, document.id))
   }
 }

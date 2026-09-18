@@ -1,3 +1,4 @@
+import { NO_PENDING } from '@/shared/lib'
 import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@/shared/api'
 import { createPreferencesStore, type Preferences } from '@/entities/preferences'
@@ -12,6 +13,7 @@ function runtimeWith(preferences = preferencesWith(['fake']), activate = fakeAct
     extensions: [loaded(fakeManifest(), activate)],
     preferences,
     repositories,
+    pending: () => NO_PENDING,
   })
   runtime.start()
   return { runtime, activate, preferences }

@@ -7,7 +7,7 @@ import { selectIsReady, useOnline, useSyncRunner } from '@/shared/lib'
 import { AppScreen, ScreenHeader, ScreenLoading, SettingsRow, SettingsSection } from '@/shared/ui'
 import { selectSessionKind, useSessionStore } from '@/entities/session'
 import {
-  pendingByCollection,
+  pendingByTable,
   selectPendingChanges,
   usePendingChangeStore,
 } from '@/entities/pending-change'
@@ -34,7 +34,7 @@ export function SettingsSyncPage({ onBack }: SettingsSyncPageProps) {
   const autosync = usePreferencesStore(selectAutosync)
   const preferencesStore = usePreferencesStoreApi()
 
-  const counts = useMemo(() => pendingByCollection(changes), [changes])
+  const counts = useMemo(() => pendingByTable(changes), [changes])
 
   const header = (
     <ScreenHeader title={t('sync.settings.title')} onBack={onBack} backLabel={t('settings.back')} />
@@ -87,7 +87,7 @@ export function SettingsSyncPage({ onBack }: SettingsSyncPageProps) {
 
         <SettingsSection title={t('sync.settings.waiting')}>
           {changes.length ? (
-            CONTENT_COLLECTIONS.filter((collection) => counts[collection] > 0).map((collection) => (
+            CONTENT_COLLECTIONS.filter((collection) => counts[collection]).map((collection) => (
               <SettingsRow
                 key={collection}
                 kind="value"

@@ -201,8 +201,9 @@ export function SyncProvider({
   }, [review, describe])
 
   const runner = useMemo<SyncRunner | null>(
-    () => (deps ? { ...state, run, restore, openReview, resolve, dismiss, reloadReview } : null),
-    [deps, state, run, restore, openReview, resolve, dismiss, reloadReview],
+    () =>
+      deps ? { ...state, tables, run, restore, openReview, resolve, dismiss, reloadReview } : null,
+    [deps, state, tables, run, restore, openReview, resolve, dismiss, reloadReview],
   )
 
   useEffect(() => {

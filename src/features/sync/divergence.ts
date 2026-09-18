@@ -9,7 +9,8 @@ import {
   CONTAINER_COLLECTIONS,
   CONTENT_COLLECTIONS,
   type ContentCollection,
-  contentKey,
+  isContentCollection,
+  pendingKey,
   type SyncedTable,
 } from '@/shared/config/sync-tables'
 import {
@@ -106,7 +107,7 @@ export async function findDestructive(
 
   for (const collection of CONTENT_COLLECTIONS) {
     for (const change of peek.get(collection) ?? []) {
-      const key = contentKey(collection, change.id)
+      const key = pendingKey(collection, change.id)
       if (answered.has(key)) continue
       if (classifyChange(byKey.get(key), change) === 'destructive') {
         items.set(key, { collection, id: change.id })
@@ -117,7 +118,8 @@ export async function findDestructive(
   const containers = pending.filter(
     (change) =>
       change.op === 'remove' &&
-      CONTAINER_COLLECTIONS.includes(change.contentCollection) &&
+      isContentCollection(change.table) &&
+      CONTAINER_COLLECTIONS.includes(change.table) &&
       !answered.has(change.id),
   )
   if (!containers.length) return [...items.values()]
@@ -127,21 +129,22 @@ export async function findDestructive(
       const here = localIds(deps, collection)
       const ids = (peek.get(collection) ?? [])
         .filter((change) => !change.deleted)
-        .filter((change) => !byKey.has(contentKey(collection, change.id)))
+        .filter((change) => !byKey.has(pendingKey(collection, change.id)))
         .filter((change) => !here.has(change.id))
         .map((change) => change.id)
       return [collection, ids] as const
     }),
   )
 
-  const containerOf = new Map(
-    containers.map((change) => [change.entityId, change.contentCollection]),
-  )
+  const containerOf = new Map<string, ContentCollection>()
+  for (const change of containers) {
+    if (isContentCollection(change.table)) containerOf.set(change.entityId, change.table)
+  }
   const found = await cloudDescendants(deps, [...containerOf.keys()], unseen)
   for (const descendant of found.values()) {
     const collection = containerOf.get(descendant.root)
     if (!collection) continue
-    const key = contentKey(collection, descendant.root)
+    const key = pendingKey(collection, descendant.root)
     const item = items.get(key) ?? { collection, id: descendant.root }
     items.set(key, {
       ...item,

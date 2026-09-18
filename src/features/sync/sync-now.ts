@@ -1,5 +1,5 @@
 import { errorMessage, type SyncOutcome } from '@/shared/lib'
-import { type PendingChange, selectPendingChanges } from '@/entities/pending-change'
+import { type PendingChange, pendingIn, selectPendingChanges } from '@/entities/pending-change'
 import { selectSyncState } from '@/entities/sync-state'
 import { advance, findDestructive, peekAll, peekedCount, stepOverOwnEcho } from './divergence'
 import type { SyncDeps } from './sync-deps'
@@ -20,7 +20,9 @@ export async function syncNow(deps: SyncDeps, options: SyncNowOptions = {}): Pro
   if (!deps.isOnline()) return { kind: 'offline' }
 
   const started = selectSyncState(deps.syncStateStore.getState())
-  const snapshot = [...selectPendingChanges(deps.pendingChangeStore.getState())]
+  // Only what this cycle carries: a disabled extension's changes wait in the log for its return,
+  // and must not be cleared by a cycle that never pushed them.
+  const snapshot = pendingIn(selectPendingChanges(deps.pendingChangeStore.getState()), deps.tables)
 
   try {
     const peeked = await peekAll(deps, started.checkpoints)

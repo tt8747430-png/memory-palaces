@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CONTENT_COLLECTIONS, contentKey } from '@/shared/config/sync-tables'
+import { CONTENT_COLLECTIONS, pendingKey } from '@/shared/config/sync-tables'
 import {
   type SyncReviewItem,
   type SyncReviewRow,
@@ -40,7 +40,7 @@ export function SyncReviewDialog() {
   const answer = (row: SyncReviewRow, next: Answer) => {
     if (!review) return
     const updated = new Set(kept)
-    const key = contentKey(row.collection, row.id)
+    const key = pendingKey(row.collection, row.id)
     if (next === 'keep') updated.add(key)
     else updated.delete(key)
     setAnswers({ items: review.items, kept: updated })
@@ -50,7 +50,7 @@ export function SyncReviewDialog() {
     rows.state === 'ready'
       ? rows.rows.map((row) => ({
           ...row,
-          keep: keepAll || kept.has(contentKey(row.collection, row.id)),
+          keep: keepAll || kept.has(pendingKey(row.collection, row.id)),
         }))
       : []
 
@@ -120,7 +120,7 @@ export function SyncReviewDialog() {
               </h3>
               <ul className="flex flex-col gap-2">
                 {group.rows.map((row) => {
-                  const key = contentKey(row.collection, row.id)
+                  const key = pendingKey(row.collection, row.id)
                   const affected = row.descendants?.length ?? 0
                   return (
                     <li key={key} className="flex flex-col gap-2 rounded-card bg-info-surface p-3">

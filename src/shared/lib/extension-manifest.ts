@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react'
 import type { RxCollectionCreator } from 'rxdb'
 import type { Identifiable, Repository } from '@/shared/api'
+import type { PendingChangePort } from './entity-store'
 import type { TransferOption } from '@/shared/ui'
 
 /**
@@ -56,6 +57,11 @@ export function extensionRoute<Exports extends Record<string, unknown>>(
 export interface ExtensionContext {
   /** The repository built for a collection its manifest declared, by the key it declared. */
   repository: <T extends Identifiable>(key: string) => Repository<T>
+  /**
+   * The pending-change port for one of its collections, so its writes wait for a Sync like every
+   * core write. A collection that never leaves the device gets a port that logs nothing.
+   */
+  pending: (key: string) => PendingChangePort
 }
 
 /**

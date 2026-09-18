@@ -11,6 +11,7 @@ import {
 } from '@/shared/api'
 import {
   type ContentCollection,
+  isContentCollection,
   type SyncedTable,
   SYNCED_TABLES,
 } from '@/shared/config/sync-tables'
@@ -138,18 +139,16 @@ export function syncFixture(options: { state?: Partial<SyncState> } = {}) {
       }
       const pushed: Partial<Record<SyncedTable, string[]>> = {}
       for (const change of selectPendingChanges(pendingChangeStore.getState())) {
+        // The fixture holds the four content stores; a change on any other table has nothing
+        // here to read, and the tests that need one write the cloud row themselves.
+        if (!isContentCollection(change.table)) continue
         const document =
           change.op === 'save'
-            ? await readLocal(repos, change.contentCollection, change.entityId)
-            : (table(change.contentCollection).get(change.entityId)?.data ?? {
-                id: change.entityId,
-              })
+            ? await readLocal(repos, change.table, change.entityId)
+            : (table(change.table).get(change.entityId)?.data ?? { id: change.entityId })
         if (!document) continue
-        cloud.write(change.contentCollection, document, change.op === 'remove')
-        pushed[change.contentCollection] = [
-          ...(pushed[change.contentCollection] ?? []),
-          change.entityId,
-        ]
+        cloud.write(change.table, document, change.op === 'remove')
+        pushed[change.table] = [...(pushed[change.table] ?? []), change.entityId]
       }
       await cloud.pull?.(deps)
       return pushed

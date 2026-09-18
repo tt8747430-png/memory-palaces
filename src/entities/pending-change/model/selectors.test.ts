@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { makePendingChange } from './types'
-import { pendingByCollection, selectLatestPendingAt, selectPendingCount } from './selectors'
+import { pendingByTable, pendingIn, selectLatestPendingAt, selectPendingCount } from './selectors'
 import type { PendingChangeState } from './store'
 
-const change = (contentCollection: 'decks' | 'cards', entityId: string, at: string) =>
-  makePendingChange({ contentCollection, entityId, op: 'save', at })
+const change = (table: string, entityId: string, at = 't1') =>
+  makePendingChange({ table, entityId, op: 'save', at })
 
 const holding = (pendingChanges: PendingChangeState['pendingChanges']): PendingChangeState => ({
   pendingChanges,
@@ -16,9 +16,9 @@ const holding = (pendingChanges: PendingChangeState['pendingChanges']): PendingC
 })
 
 describe('pending-change selectors', () => {
-  it('counts every entry — each one is a content document', () => {
+  it('counts every entry — each one is a synced document', () => {
     expect(
-      selectPendingCount(holding([change('decks', 'd1', 't1'), change('cards', 'c1', 't2')])),
+      selectPendingCount(holding([change('decks', 'd1'), change('progress', 'progress')])),
     ).toBe(2)
   })
 
@@ -26,27 +26,20 @@ describe('pending-change selectors', () => {
     expect(selectLatestPendingAt(holding([]))).toBeNull()
     expect(
       selectLatestPendingAt(
-        holding([
-          change('decks', 'd1', 't3'),
-          change('cards', 'c1', 't9'),
-          change('cards', 'c2', 't5'),
-        ]),
+        holding([change('decks', 'd1', 't3'), change('cards', 'c1', 't9'), change('cards', 'c2', 't5')]),
       ),
     ).toBe('t9')
   })
 
-  it('breaks the log down by collection, naming every collection even at zero', () => {
+  it('keeps only the changes a Sync over the live tables would carry', () => {
+    const changes = [change('decks', 'd1'), change('bible_verses', 'v1')]
+    expect(pendingIn(changes, ['decks', 'cards'])).toEqual([changes[0]])
+    expect(pendingIn(changes, ['decks', 'bible_verses'])).toEqual(changes)
+  })
+
+  it('breaks the log down by table, naming only the tables that have something waiting', () => {
     expect(
-      pendingByCollection([
-        change('decks', 'd1', 't1'),
-        change('cards', 'c1', 't1'),
-        change('cards', 'c2', 't1'),
-      ]),
-    ).toEqual({
-      folders: 0,
-      decks: 1,
-      cards: 2,
-      questions: 0,
-    })
+      pendingByTable([change('decks', 'd1'), change('cards', 'c1'), change('cards', 'c2')]),
+    ).toEqual({ decks: 1, cards: 2 })
   })
 })

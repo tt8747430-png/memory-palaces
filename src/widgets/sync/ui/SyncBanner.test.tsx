@@ -1,3 +1,4 @@
+import { SYNCED_TABLES } from '@/shared/config/sync-tables'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -36,6 +37,7 @@ const runner = (overrides: Partial<SyncRunner> = {}): SyncRunner => ({
   phase: 'idle',
   error: null,
   review: null,
+  tables: SYNCED_TABLES,
   run: vi.fn().mockResolvedValue(undefined),
   restore: vi.fn().mockResolvedValue(undefined),
   openReview: vi.fn().mockResolvedValue({ kind: 'clean' }),
@@ -48,6 +50,8 @@ const runner = (overrides: Partial<SyncRunner> = {}): SyncRunner => ({
 async function setup(
   options: {
     runner?: SyncRunner | null
+    /** Changes on a table the runner does not cover — a disabled extension's. */
+    pendingElsewhere?: number
     kind?: 'account' | 'guest'
     pending?: number
     cloudChanged?: boolean
@@ -58,6 +62,7 @@ async function setup(
     runner: value = runner(),
     kind = 'account',
     pending = 0,
+    pendingElsewhere = 0,
     cloudChanged = false,
     online = true,
   } = options
@@ -75,7 +80,12 @@ async function setup(
   const pendingRepo = new InMemoryRepository<PendingChange>()
   for (let i = 0; i < pending; i++) {
     await pendingRepo.save(
-      makePendingChange({ contentCollection: 'decks', entityId: `d${i}`, op: 'save', at: AT }),
+      makePendingChange({ table: 'decks', entityId: `d${i}`, op: 'save', at: AT }),
+    )
+  }
+  for (let i = 0; i < pendingElsewhere; i++) {
+    await pendingRepo.save(
+      makePendingChange({ table: 'bible_verses', entityId: `v${i}`, op: 'save', at: AT }),
     )
   }
   const syncStateRepo = new InMemoryRepository<SyncState>()
@@ -120,6 +130,16 @@ describe('SyncBanner', () => {
 
     expect(await screen.findByRole('status')).toHaveTextContent('2 changes are waiting')
     expect(screen.getByRole('button', { name: 'Synchronise' })).toBeInTheDocument()
+  })
+
+  it('counts only the tables a Sync covers — a disabled extension’s rows are not waiting', async () => {
+    await setup({ pending: 1, pendingElsewhere: 3, runner: runner({ tables: ['decks'] }) })
+    expect(await screen.findByRole('status')).toHaveTextContent('1 change is waiting')
+  })
+
+  it('is hidden when everything waiting belongs to an extension that is off', async () => {
+    await setup({ pendingElsewhere: 3, runner: runner({ tables: ['decks'] }) })
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
   })
 
   it('runs a Sync when Synchronise is pressed', async () => {

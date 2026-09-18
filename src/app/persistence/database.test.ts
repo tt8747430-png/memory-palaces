@@ -205,7 +205,7 @@ describe('schema migrations', () => {
     expect(cardSchema.version).toBe(1)
     expect(preferencesSchema.version).toBe(4)
     expect(profileSchema.version).toBe(2)
-    expect(pendingChangeSchema.version).toBe(1)
+    expect(pendingChangeSchema.version).toBe(2)
     expect(syncStateSchema.version).toBe(2)
   })
 
@@ -258,7 +258,7 @@ describe('schema migrations', () => {
 
   interface PendingChangeV0 {
     id: string
-    collection: PendingChange['contentCollection']
+    collection: 'folders' | 'decks' | 'cards' | 'questions'
     entityId: string
     op: PendingChange['op']
     at: string
@@ -279,7 +279,7 @@ describe('schema migrations', () => {
     indexes: ['collection'],
   }
 
-  it('carries a pending change written under the old field name across the rename', async () => {
+  it('carries a pending change written under the old field names across both renames', async () => {
     const row = { id: 'cards:c1', collection: 'cards', entityId: 'c1', op: 'save', at: AT }
 
     const collections = await reopenedAfterSeeding(
@@ -295,7 +295,7 @@ describe('schema migrations', () => {
     const migrated = await collections.pendingChanges.find().exec()
 
     expect(migrated.map((document) => document.toMutableJSON() as PendingChange)).toEqual([
-      { id: 'cards:c1', contentCollection: 'cards', entityId: 'c1', op: 'save', at: AT },
+      { id: 'cards:c1', table: 'cards', entityId: 'c1', op: 'save', at: AT },
     ])
 
     await collections.pendingChanges.database.remove()

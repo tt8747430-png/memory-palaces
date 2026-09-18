@@ -1,3 +1,4 @@
+import { SYNCED_TABLES } from '@/shared/config/sync-tables'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -34,6 +35,7 @@ function runner(restore: () => Promise<SyncOutcome>): SyncRunner {
     phase: 'idle',
     error: null,
     review: null,
+    tables: SYNCED_TABLES,
     run: vi.fn().mockResolvedValue({ kind: 'clean' }),
     restore: vi.fn(restore),
     openReview: vi.fn().mockResolvedValue({ kind: 'clean' }),

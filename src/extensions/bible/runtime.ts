@@ -11,7 +11,10 @@ import type { BibleVerse } from './model/verse'
  * off — it stops what this started, which is the whole of "backend off".
  */
 export function activate(context: ExtensionContext): ExtensionActivation<BibleServices> {
-  const verseStore = createBibleVerseStore(context.repository<BibleVerse>(BIBLE_VERSES))
+  const verseStore = createBibleVerseStore(
+    context.repository<BibleVerse>(BIBLE_VERSES),
+    context.pending(BIBLE_VERSES),
+  )
   verseStore.getState().start()
   const stopKeeping = keepVersesCanonical(verseStore)
   return {

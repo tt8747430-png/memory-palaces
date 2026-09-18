@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { InMemoryRepository } from '@/shared/api'
 import { ROUTES } from '@/shared/config/routes'
 import { i18n } from '@/shared/i18n'
+import { NO_PENDING } from '@/shared/lib'
 import { EXTENSIONS } from './extensions/registry'
 import { createExtensionRuntime } from './extensions/extension-runtime'
 import { loadExtensions } from './extensions/load-extensions'
@@ -19,6 +20,7 @@ async function routerWith(extensions: string[], devMode = false) {
     extensions: await loadExtensions(EXTENSIONS),
     preferences: preferencesStore,
     repositories: { bibleVerses: new InMemoryRepository([]) },
+    pending: () => NO_PENDING,
   })
   runtime.start()
   const services = {

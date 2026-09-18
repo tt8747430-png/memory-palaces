@@ -8,7 +8,8 @@ export {
   usePendingChangeStoreApi,
 } from './model/context'
 export {
-  pendingByCollection,
+  pendingByTable,
+  pendingIn,
   selectLatestPendingAt,
   selectPendingChanges,
   selectPendingCount,

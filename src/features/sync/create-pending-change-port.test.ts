@@ -35,7 +35,7 @@ describe('the pending change log', () => {
     expect(rows()).toEqual([
       {
         id: 'decks:d1',
-        contentCollection: 'decks',
+        table: 'decks',
         entityId: 'd1',
         op: 'save',
         at: '2026-01-01T00:00:00.000Z',
@@ -84,17 +84,53 @@ describe('the pending change log', () => {
     expect(rows().map((row) => row.id)).toEqual(['decks:d1', 'decks:d2'])
   })
 
-  it('records nothing for a singleton store — it always merges and cannot diverge', async () => {
+  it('records a singleton write against its own table — it waits for a Sync like any other', async () => {
     const { log, rows } = setup()
-    const progress = started(createProgressStore(new InMemoryRepository<Progress>()))
+    let tick = 0
+    const now = () => `2026-02-0${++tick}T00:00:00.000Z`
+    const progress = started(
+      createProgressStore(
+        new InMemoryRepository<Progress>(),
+        createPendingChangePort(log, 'progress', now),
+      ),
+    )
 
     await progress.getState().save(makeProgress({ id: 'progress', createdAt: AT, xp: 10 }))
 
-    expect(log.getState().pendingChanges).toEqual([])
-    expect(rows()).toEqual([])
+    expect(rows()).toEqual([
+      {
+        id: 'progress:progress',
+        table: 'progress',
+        entityId: 'progress',
+        op: 'save',
+        at: '2026-02-01T00:00:00.000Z',
+      },
+    ])
   })
 
-  it('records nothing for a device-local store — there is nowhere to push it', async () => {
+  it('records a history entry — history syncs too', async () => {
+    const { log, rows } = setup()
+    const history = started(
+      createHistoryStore(
+        new InMemoryRepository<HistoryEntry>(),
+        createPendingChangePort(log, 'history', () => AT),
+      ),
+    )
+
+    await history.getState().save({
+      id: 'h1',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+      cardId: 'c1',
+      deckId: 'd1',
+      kind: 'answered',
+      outcome: 'gotIt',
+    })
+
+    expect(rows().map((row) => row.id)).toEqual(['history:h1'])
+  })
+
+  it('records nothing for a store given no port — a device-local collection', async () => {
     const { rows } = setup()
     const history = started(createHistoryStore(new InMemoryRepository<HistoryEntry>()))
 

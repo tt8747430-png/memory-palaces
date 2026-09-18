@@ -10,7 +10,6 @@ import type { AppNotification } from '@/entities/notification'
 import type { HistoryEntry } from '@/entities/learning-history'
 import type { PendingChange } from '@/entities/pending-change'
 import type { SyncState } from '@/entities/sync-state'
-import { CONTENT_COLLECTIONS } from '@/shared/config/sync-tables'
 
 export const deckSchema: RxJsonSchema<Deck> = {
   version: 4,
@@ -399,18 +398,19 @@ export const historySchema: RxJsonSchema<HistoryEntry> = {
 }
 
 export const pendingChangeSchema: RxJsonSchema<PendingChange> = {
-  version: 1,
+  version: 2,
   primaryKey: 'id',
   type: 'object',
   properties: {
     id: { type: 'string', maxLength: 140 },
-    contentCollection: { type: 'string', enum: [...CONTENT_COLLECTIONS] },
+    /** Open: an extension's table is not knowable here, and `SyncedTable` is open for the same reason. */
+    table: { type: 'string', maxLength: 100 },
     entityId: { type: 'string', maxLength: 100 },
     op: { type: 'string', enum: ['save', 'remove'] },
     at: { type: 'string' },
   },
-  required: ['id', 'contentCollection', 'entityId', 'op', 'at'],
-  indexes: ['contentCollection'],
+  required: ['id', 'table', 'entityId', 'op', 'at'],
+  indexes: ['table'],
 }
 
 export const syncStateSchema: RxJsonSchema<SyncState> = {

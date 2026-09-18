@@ -29,6 +29,12 @@ export interface PendingChangePort {
   remove: (entityId: string) => Promise<void>
 }
 
+/** The port of a collection that never leaves the device: nothing to log. */
+export const NO_PENDING: PendingChangePort = {
+  save: () => Promise.resolve(),
+  remove: () => Promise.resolve(),
+}
+
 export interface CollectionStoreOptions<T> {
   pending?: PendingChangePort
   complete?: (entity: T) => T
@@ -95,11 +101,18 @@ export function createSingletonStore<Key extends string, T extends Identifiable>
   key: Key,
   repo: Repository<T>,
   complete: (entity: T) => T = (entity) => entity,
+  pending?: PendingChangePort,
 ): StoreApi<SingletonState<Key, T>> {
-  const mirror = mirrorSlice<T, T | null>(key, repo, null, (entities) => {
-    const entity = entities[0]
-    return entity ? complete(entity) : null
-  })
+  const mirror = mirrorSlice<T, T | null>(
+    key,
+    repo,
+    null,
+    (entities) => {
+      const entity = entities[0]
+      return entity ? complete(entity) : null
+    },
+    pending,
+  )
   return createStore<SingletonState<Key, T>>(
     (set) => mirror(set as SetPartial) as unknown as SingletonState<Key, T>,
   )

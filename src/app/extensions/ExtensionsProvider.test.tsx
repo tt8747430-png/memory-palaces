@@ -1,3 +1,4 @@
+import { NO_PENDING } from '@/shared/lib'
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, screen } from '@testing-library/react'
 import { useState } from 'react'
@@ -32,6 +33,7 @@ function renderWith(extensions: string[], children = <Host />) {
     extensions: [loaded(fakeManifest())],
     preferences,
     repositories: {},
+    pending: () => NO_PENDING,
   })
   runtime.start()
   renderWithProviders(<ExtensionsProvider runtime={runtime}>{children}</ExtensionsProvider>)

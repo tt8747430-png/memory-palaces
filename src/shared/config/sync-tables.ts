@@ -61,5 +61,12 @@ export type ContentCollection = (typeof CONTENT_COLLECTIONS)[number]
 
 export const CONTAINER_COLLECTIONS: readonly ContentCollection[] = ['decks', 'folders']
 
-export const contentKey = (collection: ContentCollection, id: string): string =>
-  `${collection}:${id}`
+const CONTENT: ReadonlySet<string> = new Set(CONTENT_COLLECTIONS)
+
+/** The four collections a learner's content lives in — the ones a deletion can diverge on. */
+export function isContentCollection(table: SyncedTable): table is ContentCollection {
+  return CONTENT.has(table)
+}
+
+/** How a Pending change names its document: `cards:c1`. One document, one entry. */
+export const pendingKey = (table: SyncedTable, id: string): string => `${table}:${id}`

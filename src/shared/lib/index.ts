@@ -179,6 +179,7 @@ export { cloneEntity, findEntity, newId, requireEntity, type Entity } from './en
 export {
   createCollectionStore,
   createSingletonStore,
+  NO_PENDING,
   selectIsReady,
   whenStoreReady,
   type CollectionState,

@@ -12,7 +12,7 @@ import {
 import { cn, EASE_OUT, useOnline, useSyncRunner } from '@/shared/lib'
 import { Button } from '@/shared/ui'
 import { selectSessionKind, useSessionStore } from '@/entities/session'
-import { selectPendingCount, usePendingChangeStore } from '@/entities/pending-change'
+import { pendingIn, selectPendingChanges, usePendingChangeStore } from '@/entities/pending-change'
 import { selectCloudChanged, useSyncStateStore } from '@/entities/sync-state'
 import { bannerView, type SyncBannerMessage, type SyncBannerTone } from '../model/banner-state'
 
@@ -44,20 +44,21 @@ export function SyncBanner({ className }: SyncBannerProps) {
   const runner = useSyncRunner()
   const online = useOnline()
   const kind = useSessionStore(selectSessionKind)
-  const pendingCount = usePendingChangeStore(selectPendingCount)
+  const changes = usePendingChangeStore(selectPendingChanges)
   const cloudChanged = useSyncStateStore(selectCloudChanged)
 
+  // Waiting means waiting on a table a Sync covers: a disabled extension's rows are not.
   const view = useMemo(
     () =>
       runner && kind === 'account'
         ? bannerView({
             phase: runner.phase,
-            pendingCount,
+            pendingCount: pendingIn(changes, runner.tables).length,
             cloudChanged,
             online,
           })
         : null,
-    [runner, kind, pendingCount, cloudChanged, online],
+    [runner, kind, changes, cloudChanged, online],
   )
 
   const Icon = view ? ICON[view.message] : AlertTriangle

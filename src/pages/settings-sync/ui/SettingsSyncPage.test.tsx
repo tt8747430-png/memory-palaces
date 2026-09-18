@@ -1,3 +1,4 @@
+import { SYNCED_TABLES } from '@/shared/config/sync-tables'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -45,6 +46,7 @@ const runner = (overrides: Partial<SyncRunner> = {}): SyncRunner => ({
   phase: 'idle',
   error: null,
   review: null,
+  tables: SYNCED_TABLES,
   run: vi.fn().mockResolvedValue({ kind: 'clean' }),
   restore: vi.fn().mockResolvedValue({ kind: 'clean' }),
   openReview: vi.fn().mockResolvedValue({ kind: 'clean' }),
@@ -96,8 +98,8 @@ async function setup(
   return { runner: value, preferencesStore }
 }
 
-const change = (contentCollection: PendingChange['contentCollection'], entityId: string) =>
-  makePendingChange({ contentCollection, entityId, op: 'save', at: AT })
+const change = (table: PendingChange['table'], entityId: string) =>
+  makePendingChange({ table, entityId, op: 'save', at: AT })
 
 describe('SettingsSyncPage', () => {
   it('tells a guest why there is nothing to synchronise', async () => {

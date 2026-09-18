@@ -6,6 +6,7 @@ import {
   type ExtensionId,
   type ExtensionManifest,
   isExtensionActive,
+  type PendingChangePort,
   whenStoreReady,
 } from '@/shared/lib'
 import { isExtensionEnabled, type PreferencesStore } from '@/entities/preferences'
@@ -40,10 +41,13 @@ export function createExtensionRuntime({
   extensions,
   preferences,
   repositories,
+  pending,
 }: {
   extensions: readonly LoadedExtension[]
   preferences: PreferencesStore
   repositories: ExtensionRepositories
+  /** The pending-change port for a contributed collection, by its key. */
+  pending: (key: string) => PendingChangePort
 }): ExtensionRuntime {
   const store = createStore<ExtensionRuntimeState>(() => ({ active: {} }))
   const deactivations = new Map<ExtensionId, () => void>()
@@ -56,6 +60,7 @@ export function createExtensionRuntime({
       if (!held) throw new Error(`No repository was built for the extension collection ${key}`)
       return held as Repository<T>
     },
+    pending,
   }
 
   /** Brings the active set up to date with preferences. Before they load it decides nothing. */
