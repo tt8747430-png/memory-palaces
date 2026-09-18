@@ -2,7 +2,7 @@ import type { RxCollection } from 'rxdb'
 import type { RxReplicationState } from 'rxdb/plugins/replication'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Checkpoint, Identifiable, PushedIds, RemoteChangeEvent } from '@/shared/api'
-import { SYNCED_TABLES, type SyncedTable } from '@/shared/config/sync-tables'
+import type { SyncedTable } from '@/shared/config/sync-tables'
 import { createCollectionReplication } from './replication'
 import { type CloudWatcher, createCloudWatcher } from './cloud-watcher'
 
@@ -19,6 +19,7 @@ type ReplicationFactory = (
 ) => ReplicationState
 type WatcherFactory = (
   userId: string,
+  tables: readonly SyncedTable[],
   onRemoteChange: (event: RemoteChangeEvent) => void,
 ) => CloudWatcher
 
@@ -29,16 +30,31 @@ export class SyncManager {
 
   constructor(
     private readonly targets: SyncTarget[] | Promise<SyncTarget[]>,
+    /**
+     * The tables the watcher subscribes to. Held apart from `targets` on purpose: a table name is
+     * known before the database opens, and the watcher must not wait on it. Both come from the one
+     * list the composition root composes, so they cannot drift.
+     */
+    private readonly tables: readonly SyncedTable[],
     private readonly makeReplication: ReplicationFactory,
     private readonly watch: WatcherFactory = () => ({ stop: async () => {} }),
+    /**
+     * Whether a table replicates right now. A contributed table only does while the extension that
+     * owns it is on, and that is a preference the manager cannot see — hence a predicate, read at
+     * cycle time rather than captured at construction.
+     */
+    private readonly isActive: (table: SyncedTable) => boolean = () => true,
   ) {}
 
   static fromSupabase(
     supabase: SupabaseClient,
     targets: SyncTarget[] | Promise<SyncTarget[]>,
+    tables: readonly SyncedTable[],
+    isActive?: (table: SyncedTable) => boolean,
   ): SyncManager {
     return new SyncManager(
       targets,
+      tables,
       (userId, target, onPushed) =>
         createCollectionReplication({
           supabase,
@@ -47,8 +63,9 @@ export class SyncManager {
           collection: target.collection,
           onPushed,
         }),
-      (userId, onRemoteChange) =>
-        createCloudWatcher(supabase, SYNCED_TABLES, userId, onRemoteChange),
+      (userId, tables, onRemoteChange) =>
+        createCloudWatcher(supabase, tables, userId, onRemoteChange),
+      isActive,
     )
   }
 
@@ -59,7 +76,7 @@ export class SyncManager {
     if (this.userId === userId) return
     await this.stop()
     this.userId = userId
-    this.watcher = this.watch(userId, onRemoteChange)
+    this.watcher = this.watch(userId, this.tables.filter(this.isActive), onRemoteChange)
   }
 
   runCycle(): Promise<PushedIds> {
@@ -79,7 +96,7 @@ export class SyncManager {
   }
 
   private async cycle(userId: string): Promise<PushedIds> {
-    const targets = await this.targets
+    const targets = (await this.targets).filter((target) => this.isActive(target.table))
     if (this.userId !== userId) throw new Error('The account changed before the cycle could start')
 
     const pushed = new Map<SyncedTable, Set<string>>()

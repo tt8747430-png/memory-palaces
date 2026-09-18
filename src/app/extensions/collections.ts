@@ -1,12 +1,36 @@
-import type { ExtensionCollectionSpec, ExtensionManifest } from '@/shared/lib'
+import type { ExtensionCollectionSpec, ExtensionId, ExtensionManifest } from '@/shared/lib'
+import type { SyncTableSpec } from '@/shared/config/sync-tables'
+
+export interface LoadedExtensionCollections {
+  specs: ExtensionCollectionSpec[]
+  /** The ones that replicate, as `{ table, collectionKey }` — a table name is not a collection key. */
+  syncTables: SyncTableSpec[]
+  /** Which extension owns a table, so replication can follow its toggle. */
+  ownerOf: ReadonlyMap<string, ExtensionId>
+}
 
 /**
- * Awaited once in `createServices`, before the database is built. The manifests stay in the entry
- * graph; the schemas they name do not, so resolving them is what pulls them in.
+ * Awaited once in `createServices`, before the database is built. Three call sites need this list
+ * and each would otherwise derive it with its own `flatMap`; deriving it here is what keeps them
+ * equal.
  */
 export async function loadExtensionCollections(
   manifests: readonly ExtensionManifest[],
-): Promise<ExtensionCollectionSpec[]> {
-  const loaded = await Promise.all(manifests.map((manifest) => manifest.loadCollections?.() ?? []))
-  return loaded.flat()
+): Promise<LoadedExtensionCollections> {
+  const loaded = await Promise.all(
+    manifests.map(async (manifest) => ({
+      id: manifest.id,
+      specs: (await manifest.loadCollections?.()) ?? [],
+    })),
+  )
+  const specs = loaded.flatMap((entry) => entry.specs)
+  const syncTables = specs.flatMap((spec) =>
+    spec.table ? [{ table: spec.table, collectionKey: spec.key }] : [],
+  )
+  const ownerOf = new Map(
+    loaded.flatMap((entry) =>
+      entry.specs.flatMap((spec) => (spec.table ? [[spec.table, entry.id] as const] : [])),
+    ),
+  )
+  return { specs, syncTables, ownerOf }
 }

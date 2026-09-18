@@ -9,7 +9,11 @@ import {
   type RemoteChange,
   type RemoteParents,
 } from '@/shared/api'
-import { type ContentCollection, type SyncedTable } from '@/shared/config/sync-tables'
+import {
+  type ContentCollection,
+  type SyncedTable,
+  SYNCED_TABLES,
+} from '@/shared/config/sync-tables'
 import { started } from '@/shared/test/started'
 import { createDeckStore, type Deck } from '@/entities/deck'
 import { type Card, createCardStore } from '@/entities/card'
@@ -157,6 +161,7 @@ export function syncFixture(options: { state?: Partial<SyncState> } = {}) {
   ])
   const deps: SyncDeps = {
     cloud,
+    tables: SYNCED_TABLES,
     pendingChangeStore,
     syncStateStore: started(createSyncStateStore(syncStateRepo)),
     deckStore: started(createDeckStore(repos.decks, port('decks'))),

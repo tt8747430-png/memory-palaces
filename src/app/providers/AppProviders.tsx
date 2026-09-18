@@ -26,6 +26,7 @@ function AppSync({ services, children }: { services: Services; children: ReactNo
       auth={auth}
       resetLocal={services.resetLocalData}
       storage={services.storage}
+      syncTables={services.syncTables}
     >
       {children}
     </SyncProvider>

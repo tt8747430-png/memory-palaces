@@ -10,7 +10,6 @@ import {
   CONTENT_COLLECTIONS,
   type ContentCollection,
   contentKey,
-  SYNCED_TABLES,
   type SyncedTable,
 } from '@/shared/config/sync-tables'
 import {
@@ -35,9 +34,9 @@ const CHILD_COLLECTIONS: readonly ContentCollection[] = CONTENT_COLLECTIONS.filt
 
 export async function peekAll(deps: SyncDeps, checkpoints: Checkpoints): Promise<Peek> {
   const found = await Promise.all(
-    SYNCED_TABLES.map((table) => deps.cloud.peek(table, checkpoints[table] ?? null)),
+    deps.tables.map((table) => deps.cloud.peek(table, checkpoints[table] ?? null)),
   )
-  return new Map(SYNCED_TABLES.map((table, index) => [table, found[index] ?? []]))
+  return new Map(deps.tables.map((table, index) => [table, found[index] ?? []]))
 }
 
 export const peekedCount = (peek: Peek): number =>

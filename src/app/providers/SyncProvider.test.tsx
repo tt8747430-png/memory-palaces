@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { type ReactNode, useEffect } from 'react'
 import { I18nextProvider } from 'react-i18next'
@@ -18,6 +18,14 @@ import { type Card, CardStoreContext, createCardStore } from '@/entities/card'
 import { createFolderStore, type Folder, FolderStoreContext } from '@/entities/folder'
 import { createQuestionStore, type Question, QuestionStoreContext } from '@/entities/question'
 import { createProfileStore, type Profile, ProfileStoreContext } from '@/entities/profile'
+import {
+  createPreferencesStore,
+  makePreferences,
+  type Preferences,
+  PreferencesStoreContext,
+} from '@/entities/preferences'
+import { setExtensionEnabled } from '@/features/preferences'
+import { SYNCED_TABLES } from '@/shared/config/sync-tables'
 import { createSessionStore, type Session, SessionStoreContext } from '@/entities/session'
 import {
   createPendingChangeStore,
@@ -83,6 +91,7 @@ interface Options {
   autosync?: boolean
   pending?: number
   pendingReady?: boolean
+  extensions?: string[]
 }
 
 function Probe({ onRunner }: { onRunner: (runner: SyncRunner | null) => void }) {
@@ -95,6 +104,7 @@ async function stores({
   autosync = DEFAULT_SYNC_STATE.autosync,
   pending = 0,
   pendingReady = true,
+  extensions = [],
 }: Options) {
   const syncStateRepo = new InMemoryRepository<SyncState>([{ ...DEFAULT_SYNC_STATE, autosync }])
   const pendingRepo = new InMemoryRepository<PendingChange>(
@@ -103,7 +113,14 @@ async function stores({
     ),
   )
   const pendingStore = createPendingChangeStore(pendingRepo)
+  const preferencesRepo = new InMemoryRepository<Preferences>([
+    {
+      ...makePreferences({ id: 'preferences', createdAt: new Date(0).toISOString() }),
+      extensions,
+    },
+  ])
   return {
+    preferences: started(createPreferencesStore(preferencesRepo)),
     syncState: started(createSyncStateStore(syncStateRepo)),
     pending: pendingReady ? started(pendingStore) : pendingStore,
     gateway: new LocalAuthGateway(),
@@ -135,9 +152,13 @@ function tree(options: Options, s: Stores, onRunner: (runner: SyncRunner | null)
               <FolderStoreContext value={s.folder}>
                 <QuestionStoreContext value={s.question}>
                   <ProfileStoreContext value={s.profile}>
-                    <PendingChangeStoreContext value={s.pending}>
-                      <SyncStateStoreContext value={s.syncState}>{children}</SyncStateStoreContext>
-                    </PendingChangeStoreContext>
+                    <PreferencesStoreContext value={s.preferences}>
+                      <PendingChangeStoreContext value={s.pending}>
+                        <SyncStateStoreContext value={s.syncState}>
+                          {children}
+                        </SyncStateStoreContext>
+                      </PendingChangeStoreContext>
+                    </PreferencesStoreContext>
                   </ProfileStoreContext>
                 </QuestionStoreContext>
               </FolderStoreContext>
@@ -154,6 +175,7 @@ function tree(options: Options, s: Stores, onRunner: (runner: SyncRunner | null)
       auth={auth}
       resetLocal={resetLocal}
       storage={storage}
+      syncTables={SYNCED_TABLES}
       dataOwner={dataOwner}
     >
       <Probe onRunner={onRunner} />
@@ -184,6 +206,19 @@ describe('SyncProvider', () => {
 
     await waitFor(() => expect(syncManager.start).toHaveBeenCalledWith('u1', expect.any(Function)))
     expect(cloudSync.runCycle).not.toHaveBeenCalled()
+  })
+
+  it('restarts the watcher when an extension is switched on, so its table joins', async () => {
+    const syncManager = manager()
+    const view = await mount({ syncManager, auth: account })
+    await waitFor(() => expect(syncManager.start).toHaveBeenCalledTimes(1))
+
+    await act(async () => {
+      await setExtensionEnabled(view.stores.preferences, 'bible', true)
+    })
+
+    await waitFor(() => expect(syncManager.start).toHaveBeenCalledTimes(2))
+    expect(syncManager.stop).toHaveBeenCalled()
   })
 
   it('does nothing for a guest — their data stays on-device until they sign up', async () => {

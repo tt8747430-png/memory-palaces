@@ -83,9 +83,11 @@ describe.skipIf(!URL || !KEY)('guest → account claim', () => {
         })),
       )
 
-      const managerA = SyncManager.fromSupabase(supabase, [
-        { table: 'decks', collection: deviceA as unknown as RxCollection<Identifiable> },
-      ])
+      const managerA = SyncManager.fromSupabase(
+        supabase,
+        [{ table: 'decks', collection: deviceA as unknown as RxCollection<Identifiable> }],
+        ['decks'],
+      )
       const transition = resolveDataTransition(null, userId)
       expect(transition).toBe('keep')
 
@@ -102,9 +104,11 @@ describe.skipIf(!URL || !KEY)('guest → account claim', () => {
       expect(rows).toHaveLength(2)
 
       const deviceB = await openDecks()
-      const managerB = SyncManager.fromSupabase(supabase, [
-        { table: 'decks', collection: deviceB as unknown as RxCollection<Identifiable> },
-      ])
+      const managerB = SyncManager.fromSupabase(
+        supabase,
+        [{ table: 'decks', collection: deviceB as unknown as RxCollection<Identifiable> }],
+        ['decks'],
+      )
       await managerB.start(userId)
       await managerB.runCycle()
       await settle()

@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { PersistedAuth, RemoteChangeEvent, StoragePort } from '@/shared/api'
 import type { SyncManager } from '@/shared/api/supabase'
-import { type DataOwner, resolveDataTransition, selectIsReady, useLatest } from '@/shared/lib'
+import {
+  type DataOwner,
+  type ExtensionId,
+  resolveDataTransition,
+  selectIsReady,
+  useLatest,
+} from '@/shared/lib'
 import { useDeckStoreApi } from '@/entities/deck'
 import { useProfileStoreApi } from '@/entities/profile'
 import {
@@ -19,6 +25,13 @@ export interface DataTransitionDeps {
   storage: StoragePort
   dataOwner: DataOwner
   onRemoteChange: (event: RemoteChangeEvent) => void
+  /**
+   * The enabled extensions. Nothing in the effect reads it — it is a dependency so that toggling
+   * one re-runs the transition, which is what rebuilds the manager's watcher over the new table
+   * set. Do not delete it as unused; a second effect starting and stopping the manager is the bug,
+   * not the fix.
+   */
+  enabledExtensions?: readonly ExtensionId[]
 }
 
 export interface UnsyncedReset {
@@ -39,6 +52,7 @@ export function useDataTransition({
   storage,
   dataOwner,
   onRemoteChange,
+  enabledExtensions,
 }: DataTransitionDeps): DataTransition {
   const deckStore = useDeckStoreApi()
   const profileStore = useProfileStoreApi()
@@ -92,6 +106,7 @@ export function useDataTransition({
     pendingChangeStore,
     dataOwner,
     remoteChange,
+    enabledExtensions,
   ])
 
   const proceed = useCallback(async () => {

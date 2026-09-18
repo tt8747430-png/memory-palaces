@@ -13,7 +13,7 @@ import type { HistoryEntry } from '@/entities/learning-history'
 import type { PendingChange } from '@/entities/pending-change'
 import type { ContentCollection } from '@/shared/config/sync-tables'
 import type { SyncState } from '@/entities/sync-state'
-import { coerceImagePath } from '@/shared/lib'
+import { coerceImagePath, type ExtensionCollectionSpec } from '@/shared/lib'
 import { STORAGE_PREFIX } from '@/shared/config/constants'
 import { DEFAULT_SELECT_TOOLBAR } from '@/shared/config/select-toolbar'
 import { firstWriteWins, lastWriteWins } from '@/shared/api/rxdb'
@@ -106,6 +106,7 @@ export const profileMigrations = {
 
 export async function createAppDatabase<Internals, InstanceCreationOptions>(
   storage: RxStorage<Internals, InstanceCreationOptions>,
+  extensionCollections: readonly ExtensionCollectionSpec[] = [],
 ): Promise<AppCollections> {
   const database = await createRxDatabase({ name: STORAGE_PREFIX, storage })
   const collections = await database.addCollections({
@@ -143,6 +144,9 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
     },
     pendingChanges: { schema: pendingChangeSchema, migrationStrategies: pendingChangeMigrations },
     syncState: { schema: syncStateSchema, migrationStrategies: syncStateMigrations },
+    // Registered whether or not the extension is enabled: a schema the database does not know is
+    // a schema replication can orphan rows against. Only replication follows the toggle.
+    ...Object.fromEntries(extensionCollections.map((spec) => [spec.key, spec.creator] as const)),
   })
   return {
     decks: collections.decks,

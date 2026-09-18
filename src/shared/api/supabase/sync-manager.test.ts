@@ -23,15 +23,21 @@ function setup(
     push: (ids: string[]) => void,
     table: SyncedTable,
   ) => void = () => {},
+  isActive?: (table: SyncedTable) => boolean,
 ) {
   const created: Fake[] = []
   const stop = vi.fn().mockResolvedValue(undefined)
-  const watch = vi.fn((_userId: string, _onRemoteChange: (event: RemoteChangeEvent) => void) => ({
-    stop,
-  }))
+  const watch = vi.fn(
+    (
+      _userId: string,
+      _tables: readonly SyncedTable[],
+      _onRemoteChange: (event: RemoteChangeEvent) => void,
+    ) => ({ stop }),
+  )
   const targets: SyncTarget[] = tables.map((table) => ({ table, collection: {} as never }))
   const manager = new SyncManager(
     targets,
+    tables,
     (_userId, target, onPushed) => {
       const replication = fakeReplication()
       configure(replication, onPushed, target.table)
@@ -39,6 +45,7 @@ function setup(
       return replication as never
     },
     watch,
+    isActive,
   )
   return { manager, created, watch, stop }
 }
@@ -50,7 +57,7 @@ describe('SyncManager', () => {
     await manager.start('u1')
 
     expect(created).toHaveLength(0)
-    expect(watch).toHaveBeenCalledWith('u1', expect.any(Function))
+    expect(watch).toHaveBeenCalledWith('u1', ['decks', 'cards'], expect.any(Function))
   })
 
   it('runs one replication per table for a cycle and cancels them all afterwards', async () => {
@@ -130,6 +137,7 @@ describe('SyncManager', () => {
     const created: string[] = []
     const manager = new SyncManager(
       new Promise<SyncTarget[]>((resolve) => (open = resolve)),
+      ['decks'],
       (_userId, target) => {
         created.push(target.table)
         return fakeReplication() as never
@@ -151,7 +159,7 @@ describe('SyncManager', () => {
       { table: 'decks', collection: {} as never },
       { table: 'cards', collection: {} as never },
     ])
-    const manager = new SyncManager(opening, (_userId, target) => {
+    const manager = new SyncManager(opening, ['decks', 'cards'], (_userId, target) => {
       tables.push(target.table)
       return fakeReplication() as never
     })
@@ -190,9 +198,78 @@ describe('SyncManager', () => {
     const { manager, watch } = setup()
 
     await manager.start('u1', (event) => seen.push(event))
-    const [, forward] = watch.mock.lastCall ?? []
+    const [, , forward] = watch.mock.lastCall ?? []
     forward?.({ table: 'decks', id: 'd1', updated_at: '2026-01-01T00:00:00Z' })
 
     expect(seen).toEqual([{ table: 'decks', id: 'd1', updated_at: '2026-01-01T00:00:00Z' }])
+  })
+
+  describe('a table that only replicates while its extension is on', () => {
+    const TABLES: SyncedTable[] = ['decks', 'cards', 'bible_verses']
+
+    it('leaves the switched-off table out of the cycle', async () => {
+      const pushed: SyncedTable[] = []
+      const { manager, created } = setup(
+        TABLES,
+        (_replication, _push, table) => pushed.push(table),
+        (table) => table !== 'bible_verses',
+      )
+      await manager.start('u1')
+
+      await manager.runCycle()
+
+      expect(created).toHaveLength(2)
+      expect(pushed).toEqual(['decks', 'cards'])
+    })
+
+    it('includes it once the predicate accepts it', async () => {
+      const pushed: SyncedTable[] = []
+      const { manager } = setup(
+        TABLES,
+        (_replication, _push, table) => pushed.push(table),
+        () => true,
+      )
+      await manager.start('u1')
+
+      await manager.runCycle()
+
+      expect(pushed).toEqual(['decks', 'cards', 'bible_verses'])
+    })
+
+    it('hands the watcher exactly the active tables', async () => {
+      const off = setup(
+        TABLES,
+        () => {},
+        (table) => table !== 'bible_verses',
+      )
+      await off.manager.start('u1')
+      expect(off.watch).toHaveBeenCalledWith('u1', ['decks', 'cards'], expect.any(Function))
+
+      const on = setup(
+        TABLES,
+        () => {},
+        () => true,
+      )
+      await on.manager.start('u1')
+      expect(on.watch).toHaveBeenCalledWith(
+        'u1',
+        ['decks', 'cards', 'bible_verses'],
+        expect.any(Function),
+      )
+    })
+
+    it('never reports the skipped table as pushed, so its checkpoint is untouched', async () => {
+      const { manager } = setup(
+        TABLES,
+        (_replication, push, table) => push([`${table}-1`]),
+        (table) => table !== 'bible_verses',
+      )
+      await manager.start('u1')
+
+      const result = await manager.runCycle()
+
+      expect(result).toEqual({ decks: ['decks-1'], cards: ['cards-1'] })
+      expect(result).not.toHaveProperty('bible_verses')
+    })
   })
 })

@@ -1,6 +1,7 @@
 import { type ReactNode, useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
 import type { CloudSyncPort, PersistedAuth, RemoteChangeEvent, StoragePort } from '@/shared/api'
 import type { SyncManager } from '@/shared/api/supabase'
+import type { SyncedTable } from '@/shared/config/sync-tables'
 import {
   type DataOwner,
   localDataOwner,
@@ -18,6 +19,7 @@ import { useCardStoreApi } from '@/entities/card'
 import { useFolderStoreApi } from '@/entities/folder'
 import { useQuestionStoreApi } from '@/entities/question'
 import { usePendingChangeStoreApi } from '@/entities/pending-change'
+import { usePreferencesStore } from '@/entities/preferences'
 import { useSyncStateStoreApi } from '@/entities/sync-state'
 import {
   applyPendingDeletions,
@@ -38,6 +40,8 @@ export interface SyncProviderProps {
   auth: PersistedAuth | null
   resetLocal: () => Promise<void>
   storage: StoragePort
+  /** Core plus contributed, composed at startup. A cycle peeks exactly these. */
+  syncTables: readonly SyncedTable[]
   dataOwner?: DataOwner
   children?: ReactNode
 }
@@ -50,6 +54,7 @@ export function SyncProvider({
   auth,
   resetLocal,
   storage,
+  syncTables,
   dataOwner = localDataOwner,
   children,
 }: SyncProviderProps) {
@@ -60,6 +65,9 @@ export function SyncProvider({
   const pendingChangeStore = usePendingChangeStoreApi()
   const syncStateStore = useSyncStateStoreApi()
   const [state, dispatch] = useReducer(runnerReducer, INITIAL_RUNNER_STATE)
+  // Which tables replicate follows the enabled set. The stored array's identity only changes when
+  // preferences do, so handing it to the transition effect cannot loop.
+  const enabledExtensions = usePreferencesStore((state) => state.preferences?.extensions)
 
   const inFlight = useRef<Promise<SyncOutcome> | null>(null)
 
@@ -77,6 +85,7 @@ export function SyncProvider({
     storage,
     dataOwner,
     onRemoteChange,
+    enabledExtensions,
   })
 
   const deps = useMemo<SyncDeps | null>(
@@ -84,6 +93,7 @@ export function SyncProvider({
       cloudSync && auth?.kind === 'account' && watchingFor === auth.id
         ? {
             cloud: cloudSync,
+            tables: syncTables,
             pendingChangeStore,
             syncStateStore,
             deckStore,
@@ -96,6 +106,7 @@ export function SyncProvider({
         : null,
     [
       cloudSync,
+      syncTables,
       auth,
       watchingFor,
       pendingChangeStore,

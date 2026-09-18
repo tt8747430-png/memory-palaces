@@ -10,7 +10,11 @@ import {
 } from '@/shared/api'
 import type { SyncManager, SyncTarget } from '@/shared/api/supabase'
 import { type AppEvents, EventBus, type ExtensionRepositories, nowIso } from '@/shared/lib'
-import { type ContentCollection, SYNCED_TABLES } from '@/shared/config/sync-tables'
+import {
+  type ContentCollection,
+  CORE_SYNC_TABLES,
+  type SyncTableSpec,
+} from '@/shared/config/sync-tables'
 import { createSessionStore, type Session, type SessionStore } from '@/entities/session'
 import { createDeckStore, type Deck, type DeckStore } from '@/entities/deck'
 import { type Card, type CardStore, createCardStore } from '@/entities/card'
@@ -19,6 +23,7 @@ import { createQuestionStore, type Question, type QuestionStore } from '@/entiti
 import { createProgressStore, type Progress, type ProgressStore } from '@/entities/progress'
 import {
   createPreferencesStore,
+  isExtensionEnabled,
   type Preferences,
   type PreferencesStore,
 } from '@/entities/preferences'
@@ -68,6 +73,8 @@ export interface Services {
   cloudSync: CloudSyncPort | null
   resetLocalData: () => Promise<void>
   extensionRepositories: ExtensionRepositories
+  /** Core plus contributed, in the order replication runs them. */
+  syncTables: readonly string[]
 }
 
 export async function createServices(): Promise<Services> {
@@ -87,8 +94,8 @@ export async function createServices(): Promise<Services> {
     import('./extensions/repositories'),
   ])
 
-  const extensionSpecs = await loadExtensionCollections(EXTENSIONS)
-  const collections = createAppDatabase(getRxStorageDexie())
+  const extensions = await loadExtensionCollections(EXTENSIONS)
+  const collections = createAppDatabase(getRxStorageDexie(), extensions.specs)
   const authGateway = createAuthGateway()
   const sessionRepo = new InMemoryRepository<Session>()
   const deckRepo = new RxdbRepository<Deck>(collections.then((c) => c.decks))
@@ -109,15 +116,31 @@ export async function createServices(): Promise<Services> {
     collections.then((c) => c.notifications),
   )
   const historyRepo = new RxdbRepository<HistoryEntry>(collections.then((c) => c.history))
+  const syncTableSpecs: SyncTableSpec[] = [...CORE_SYNC_TABLES, ...extensions.syncTables]
   const syncTargets: Promise<SyncTarget[]> = collections.then((c) =>
-    SYNCED_TABLES.map((table) => ({
+    syncTableSpecs.map(({ table, collectionKey }) => ({
       table,
-      collection: c[table] as unknown as RxCollection<Identifiable>,
+      collection: (c as unknown as Record<string, RxCollection<Identifiable>>)[collectionKey]!,
     })),
   )
   const configured = cloud.isSupabaseConfigured()
+  /**
+   * An extension's table joins the sync set only while the extension is enabled. Read at cycle
+   * time, not here: preferences have not loaded when `createServices()` runs.
+   */
+  const tableIsActive = (table: string): boolean => {
+    const owner = extensions.ownerOf.get(table)
+    if (!owner) return true
+    const prefs = services.preferencesStore.getState().preferences
+    return prefs ? isExtensionEnabled(prefs, owner) : false
+  }
   const syncManager = configured
-    ? cloud.SyncManager.fromSupabase(cloud.supabase, syncTargets)
+    ? cloud.SyncManager.fromSupabase(
+        cloud.supabase,
+        syncTargets,
+        syncTableSpecs.map((spec) => spec.table),
+        tableIsActive,
+      )
     : null
   const services: Services = {
     authGateway,
@@ -139,7 +162,8 @@ export async function createServices(): Promise<Services> {
     syncManager,
     cloudSync: syncManager ? cloud.createSupabaseCloudSync(cloud.supabase, syncManager) : null,
     resetLocalData: () => resetLocalDatabase({ collections }),
-    extensionRepositories: buildExtensionRepositories(extensionSpecs, collections),
+    extensionRepositories: buildExtensionRepositories(extensions.specs, collections),
+    syncTables: syncTableSpecs.map((spec) => spec.table),
   }
 
   for (const store of [

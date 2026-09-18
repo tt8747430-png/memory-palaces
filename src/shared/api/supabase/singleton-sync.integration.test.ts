@@ -70,9 +70,11 @@ describe.skipIf(!URL || !KEY)('singleton entities sync', () => {
   }, TIMEOUT)
 
   async function syncOnce(table: SyncedTable, collection: RxCollection<Singleton>) {
-    const manager = SyncManager.fromSupabase(supabase, [
-      { table, collection: collection as unknown as RxCollection<Identifiable> },
-    ])
+    const manager = SyncManager.fromSupabase(
+      supabase,
+      [{ table, collection: collection as unknown as RxCollection<Identifiable> }],
+      [table],
+    )
     await manager.start(userId)
     await manager.runCycle()
     await manager.stop()
