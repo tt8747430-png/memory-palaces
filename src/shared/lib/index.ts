@@ -197,6 +197,7 @@ export type {
 } from './extension-manifest'
 export { extensionRoute } from './extension-manifest'
 export { ExtensionPointsContext, useExtensionPoint } from './extension-points-context'
+export { type ContributedT, useContributedT } from './extension-i18n'
 export {
   type ExtensionRepositories,
   ExtensionRepositoriesContext,

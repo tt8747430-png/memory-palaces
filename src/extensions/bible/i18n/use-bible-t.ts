@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next'
+import { useContributedT } from '@/shared/lib'
 import type { bibleMessages } from './en'
 
 /** `kept_one` / `kept_other` are one key to a caller: i18next picks the form from `count`. */
@@ -9,11 +9,10 @@ export type BibleKey = Singular<keyof typeof bibleMessages & string>
 export type BibleT = (key: BibleKey, options?: Record<string, unknown>) => string
 
 /**
- * The extension's own `t`. i18next's key types come from `CustomTypeOptions`, which core declares
- * over the `translation` namespace alone — and core may not name an extension's namespace, so the
- * one cast that reconnects the two lives here instead of at every call site.
+ * The extension's own `t`, typed to its own message keys. The namespace is applied here, so a
+ * caller writes `t('label')` and never the `bible:` prefix — and nothing in the extension casts.
  */
 export function useBibleT(): BibleT {
-  const { t } = useTranslation('bible' as 'translation')
-  return t as unknown as BibleT
+  const t = useContributedT()
+  return (key, options) => t(`bible:${key}`, options)
 }

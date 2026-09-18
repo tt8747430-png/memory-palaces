@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { ClipboardPaste, FileText } from 'lucide-react'
-import type { ImportOptionContribution } from '@/shared/lib'
+import { type ImportOptionContribution, useContributedT } from '@/shared/lib'
 import { TransferSheet } from './TransferSheet'
 import { useFilePicker } from './use-file-picker'
 
@@ -29,6 +29,7 @@ export function ImportSheet({
   onSelectExtra,
 }: ImportSheetProps) {
   const { t } = useTranslation()
+  const contributed = useContributedT()
   const file = useFilePicker(ACCEPT, onPickFile)
 
   return (
@@ -59,8 +60,8 @@ export function ImportSheet({
           ...(extraOptions ?? []).map(({ titleKey, subtitleKey, to, ...row }) => ({
             ...row,
             tone: row.tone ?? ('brand' as const),
-            title: t(titleKey as never),
-            subtitle: t(subtitleKey as never),
+            title: contributed(titleKey),
+            subtitle: contributed(subtitleKey),
             onSelect: () => onSelectExtra?.(to),
           })),
         ]}
