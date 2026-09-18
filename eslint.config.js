@@ -37,6 +37,7 @@ export default tseslint.config(
         { type: 'widgets', pattern: 'src/widgets/*' },
         { type: 'features', pattern: 'src/features/*' },
         { type: 'entities', pattern: 'src/entities/*' },
+        { type: 'extensions', pattern: 'src/extensions/*' },
         { type: 'shared', pattern: 'src/shared' },
       ],
       'boundaries/ignore': ['**/*.{test,spec}.{ts,tsx}'],
@@ -50,7 +51,27 @@ export default tseslint.config(
         'warn',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
-      'boundaries/dependencies': ['error', { default: 'disallow', rules: fsdDependencyRules }],
+      'boundaries/dependencies': [
+        'error',
+        {
+          default: 'disallow',
+          rules: [
+            ...fsdDependencyRules,
+            // only the app may reach an extension
+            { from: { type: 'app' }, allow: [{ to: { type: 'extensions' } }] },
+            // an extension reaches down like a page does, and never sideways
+            {
+              from: { type: 'extensions' },
+              allow: [
+                { to: { type: 'widgets' } },
+                { to: { type: 'features' } },
+                { to: { type: 'entities' } },
+                { to: { type: 'shared' } },
+              ],
+            },
+          ],
+        },
+      ],
     },
   },
   {
