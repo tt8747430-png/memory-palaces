@@ -36,6 +36,7 @@ export const settings = {
   extensionsSection: 'Available',
   extensionsEmpty: 'No extensions yet',
   extensionsFailed: 'That could not be saved. Try again.',
+  extensionsOpen: 'Open {{name}} settings',
   helpCenter: 'Help center',
   about: 'About',
   developerSection: 'Developer',

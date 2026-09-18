@@ -3,6 +3,7 @@ import { type ExtensionManifest, extensionRoute } from '@/shared/lib'
 
 export const BIBLE_ID = 'bible'
 export const BIBLE_IMPORT_PATH = '/import/bible'
+export const BIBLE_LIBRARY_PATH = '/settings/extensions/bible'
 
 /** What an import link may carry: the deck the reader was already in. */
 export interface BibleImportSearch extends Record<string, unknown> {
@@ -27,9 +28,11 @@ export const bibleManifest: ExtensionManifest = {
       'BibleImportScreen',
       validateBibleImportSearch,
     ),
+    extensionRoute(BIBLE_LIBRARY_PATH, () => import('./ui/BibleLibraryPage'), 'BibleLibraryScreen'),
   ],
   loadCollections: () =>
     import('./api/verse-schema').then((module) => [module.bibleVerseCollection]),
+  detailPath: BIBLE_LIBRARY_PATH,
   contributions: {
     importOptions: [
       {

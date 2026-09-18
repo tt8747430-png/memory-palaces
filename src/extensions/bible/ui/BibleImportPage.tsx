@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { BookOpen, Sparkles } from 'lucide-react'
+import { toast } from 'sonner'
 import { ROUTES } from '@/shared/config/routes'
+import { nowIso, useDevMode } from '@/shared/lib'
 import { selectCards, useCardStore } from '@/entities/card'
 import { selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
 import { selectFolders, useFolderStore } from '@/entities/folder'
@@ -13,10 +15,11 @@ import { useBibleT } from '../i18n/use-bible-t'
 import { formatPartial } from '../model/reference'
 import { usePassagePicker } from '../model/use-passage-picker'
 import { createStoredVerseSource, type StoredVerse } from '../model/verse-text'
-import { useBibleVerseStore } from '../model/context'
+import { useBibleVerseStore, useBibleVerseStoreApi } from '../model/context'
 import { DEFAULT_TRANSLATION } from '../model/verse'
 import { addVerseCards, type VerseTarget } from '../features/add-verse-cards'
 import { buildVerseCards, canSplit, findDuplicates } from '../features/build-verse-cards'
+import { publishVerses, versesFromCards } from '../features/publish-source'
 import { validateBibleImportSearch } from '../manifest'
 import { BookPicker } from './BookPicker'
 import { NumberGrid } from './NumberGrid'
@@ -48,6 +51,8 @@ export function BibleImportPage({ deckId, onBack, onReview, onShowDeck }: BibleI
   const folders = useFolderStore(selectFolders)
   const cards = useCardStore(selectCards)
   const verses = useBibleVerseStore((state) => state.verses)
+  const verseStore = useBibleVerseStoreApi()
+  const devMode = useDevMode()
   const setDraft = useImportDraft((state) => state.setDraft)
 
   const [text, setText] = useState('')
@@ -98,6 +103,12 @@ export function BibleImportPage({ deckId, onBack, onReview, onShowDeck }: BibleI
       : target.kind === 'newDeck'
         ? target.name
         : null
+
+  /** Dev-mode only: this is how the verse library is filled before a bundled translation exists. */
+  const keep = async () => {
+    const kept = await publishVerses(verseStore, versesFromCards(built, nowIso()))
+    toast.success(t('kept', { count: kept }))
+  }
 
   const add = async () => {
     const reviewIn = await addVerseCards(
@@ -178,6 +189,13 @@ export function BibleImportPage({ deckId, onBack, onReview, onShowDeck }: BibleI
           prefilled={prefilled}
           note={step === 'done'}
           translation={DEFAULT_TRANSLATION}
+          action={
+            devMode && built.length > 0 ? (
+              <Button variant="secondary" size="sm" onClick={() => void keep()}>
+                {t('keepText')}
+              </Button>
+            ) : null
+          }
         />
 
         {spansRange ? (

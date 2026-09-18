@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Textarea } from '@/shared/ui'
 import { useBibleT } from '../i18n/use-bible-t'
 
@@ -9,7 +10,8 @@ export interface VerseTextPanelProps {
   /** Said only once a complete passage is chosen; before that there is nothing to report on. */
   note: boolean
   translation: string
-  action?: React.ReactNode
+  /** An extra control beside the translation line — today the dev-mode publish button. */
+  action?: ReactNode
 }
 
 /**

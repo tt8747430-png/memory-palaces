@@ -14,6 +14,7 @@ import { useAuthActions } from '@/features/session'
 import { ROUTES } from '@/shared/config/routes'
 import { EXTENSIONS } from '../extensions/registry'
 import { useRouteSearch, validateRecoverySearch } from './search'
+import { useExtensionNavigate } from './use-extension-navigate'
 import { useBackTo } from './use-back'
 
 export function SettingsScreen() {
@@ -70,10 +71,12 @@ export function SettingsSyncScreen() {
 
 export function SettingsExtensionsScreen() {
   const { highlight } = useRouteSearch(validateExtensionsSearch)
+  const extensionNavigate = useExtensionNavigate()
   return (
     <SettingsExtensionsPage
       manifests={EXTENSIONS}
       highlight={highlight}
+      onOpenExtension={(path) => extensionNavigate(path)}
       onBack={useBackTo(ROUTES.settings)}
     />
   )

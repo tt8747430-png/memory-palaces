@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Blocks } from 'lucide-react'
+import { Blocks, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   isExtensionEnabled,
@@ -15,6 +15,8 @@ export interface SettingsExtensionsPageProps {
   manifests: ExtensionManifest[]
   /** The id a route guard sent the reader here for, so the row can say which one they wanted. */
   highlight?: string
+  /** The path comes from the manifest — no core file names an extension's screen. */
+  onOpenExtension?: (path: string) => void
   onBack?: () => void
 }
 
@@ -28,6 +30,7 @@ export interface SettingsExtensionsPageProps {
 export function SettingsExtensionsPage({
   manifests,
   highlight,
+  onOpenExtension,
   onBack,
 }: SettingsExtensionsPageProps) {
   const { t } = useTranslation()
@@ -75,6 +78,14 @@ export function SettingsExtensionsPage({
                   checked={isExtensionEnabled(prefs, manifest.id)}
                   onCheckedChange={(value) => toggle(manifest.id, value)}
                 />
+                {manifest.detailPath && isExtensionEnabled(prefs, manifest.id) ? (
+                  <SettingsRow
+                    kind="nav"
+                    icon={<ChevronRight />}
+                    label={t('settings.extensionsOpen', { name: t(manifest.labelKey as never) })}
+                    onClick={() => onOpenExtension?.(manifest.detailPath as string)}
+                  />
+                ) : null}
               </div>
             ))}
           </SettingsSection>

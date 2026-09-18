@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, screen } from '@testing-library/react'
+import { cleanup, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { i18n } from '@/shared/i18n'
+import { setDevMode } from '@/shared/lib'
 import { makeCard } from '@/entities/card'
 import { bibleMessages } from '../i18n/en'
 import { renderImportPage } from '../testing/render-import-page'
@@ -16,6 +17,7 @@ const at = new Date(0).toISOString()
 
 afterEach(() => {
   cleanup()
+  setDevMode(false)
   useImportDraft.getState().clear()
 })
 
@@ -179,5 +181,27 @@ describe('BibleImportPage text and target', () => {
     renderImportPage(<BibleImportPage />)
     await pickGenesis11(user)
     expect(screen.getByRole('button', { name: /^Add/ })).toBeDisabled()
+  })
+
+  it('keeps the text in the library when dev mode is on, so the picker can prefill next time', async () => {
+    const user = userEvent.setup()
+    setDevMode(true)
+    const { verseStore } = renderImportPage(<BibleImportPage />)
+    await pickGenesis11(user)
+    await user.click(screen.getByLabelText('Verse text'))
+    await user.paste('In the beginning.')
+    await user.click(screen.getByRole('button', { name: 'Keep this text' }))
+    await waitFor(() => expect(verseStore.getState().verses).toHaveLength(1))
+    expect(verseStore.getState().verses[0]?.text).toBe('In the beginning.')
+    setDevMode(false)
+  })
+
+  it('offers no such button while dev mode is off', async () => {
+    const user = userEvent.setup()
+    renderImportPage(<BibleImportPage />)
+    await pickGenesis11(user)
+    await user.click(screen.getByLabelText('Verse text'))
+    await user.paste('In the beginning.')
+    expect(screen.queryByRole('button', { name: 'Keep this text' })).not.toBeInTheDocument()
   })
 })

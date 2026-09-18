@@ -34,7 +34,12 @@ const manifest: ExtensionManifest = {
   contributions: {},
 }
 
-function renderPage(manifests: ExtensionManifest[], extensions: string[] = [], highlight?: string) {
+function renderPage(
+  manifests: ExtensionManifest[],
+  extensions: string[] = [],
+  highlight?: string,
+  onOpenExtension?: (path: string) => void,
+) {
   const stored: Preferences = {
     ...makePreferences({ id: 'preferences', createdAt: new Date(0).toISOString() }),
     extensions,
@@ -42,7 +47,12 @@ function renderPage(manifests: ExtensionManifest[], extensions: string[] = [], h
   const store = started(createPreferencesStore(new InMemoryRepository<Preferences>([stored])))
   renderWithProviders(
     <PreferencesStoreContext value={store}>
-      <SettingsExtensionsPage manifests={manifests} highlight={highlight} onBack={vi.fn()} />
+      <SettingsExtensionsPage
+        manifests={manifests}
+        highlight={highlight}
+        onOpenExtension={onOpenExtension}
+        onBack={vi.fn()}
+      />
     </PreferencesStoreContext>,
   )
   return store
@@ -101,5 +111,20 @@ describe('SettingsExtensionsPage', () => {
     )
     await user.click(screen.getByRole('switch', { name: 'Fake' }))
     await waitFor(() => expect(toast.error).toHaveBeenCalled())
+  })
+
+  it('offers an enabled extension its own screen, by the path its manifest names', async () => {
+    const user = userEvent.setup()
+    const onOpen = vi.fn()
+    const withDetail = { ...manifest, detailPath: '/settings/extensions/fake' }
+    renderPage([withDetail], ['fake'], undefined, onOpen)
+    await user.click(screen.getByRole('button', { name: 'Open Fake settings' }))
+    expect(onOpen).toHaveBeenCalledWith('/settings/extensions/fake')
+  })
+
+  it('hides that row while the extension is off', () => {
+    const withDetail = { ...manifest, detailPath: '/settings/extensions/fake' }
+    renderPage([withDetail], [])
+    expect(screen.queryByRole('button', { name: 'Open Fake settings' })).not.toBeInTheDocument()
   })
 })
