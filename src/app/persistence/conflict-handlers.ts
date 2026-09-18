@@ -19,10 +19,7 @@ export const mergeCardConflict: RxConflictHandler<Card> = {
   },
 }
 
-/**
- * Setting by setting, against the copy this device last saw — so the push reaches it at all,
- * preferences sync with `refuseUnseenOverwrites` (`shared/config/sync-tables.ts`).
- */
+/** Setting by setting, against the copy this device last saw. */
 export const mergePreferencesConflict: RxConflictHandler<Preferences> = {
   isEqual: sameWrite,
   async resolve({ newDocumentState, realMasterState, assumedMasterState }) {

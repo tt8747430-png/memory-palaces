@@ -3,19 +3,20 @@ import { docToRow, rowToDoc } from './document-mapping'
 
 describe('document mapping', () => {
   it('strips _deleted into the deleted column and never sends updated_at', () => {
-    const row = docToRow({ id: 'd1', name: 'Deck', _deleted: true }, 'u1')
+    const row = docToRow({ id: 'd1', name: 'Deck', _deleted: true }, 'u1', 't1')
 
     expect(row).toEqual({
       id: 'd1',
       user_id: 'u1',
       data: { id: 'd1', name: 'Deck' },
       deleted: true,
+      base: 't1',
     })
     expect('updated_at' in row).toBe(false)
   })
 
   it('treats a document with no tombstone as live', () => {
-    expect(docToRow({ id: 'd1', name: 'Deck' }, 'u1').deleted).toBe(false)
+    expect(docToRow({ id: 'd1', name: 'Deck' }, 'u1', null).deleted).toBe(false)
   })
 
   it('reconstitutes _deleted from the deleted column on pull', () => {
@@ -30,7 +31,7 @@ describe('document mapping', () => {
   })
 
   it('round-trips a tombstone', () => {
-    const row = docToRow({ id: 'd1', name: 'Deck', _deleted: true }, 'u1')
+    const row = docToRow({ id: 'd1', name: 'Deck', _deleted: true }, 'u1', null)
     expect(rowToDoc({ ...row, updated_at: 't' })._deleted).toBe(true)
   })
 })

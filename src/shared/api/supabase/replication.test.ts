@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Checkpoint } from '@/shared/api'
-import {
-  buildPullFilter,
-  buildPushPayload,
-  rowsToPullResult,
-  splitUnseenOverwrites,
-} from './replication'
+import { buildPullFilter, buildPushPayload, rowsToPullResult } from './replication'
 
 describe('buildPushPayload', () => {
   it('maps documents to rows stamped with the user id', () => {
@@ -15,8 +10,22 @@ describe('buildPushPayload', () => {
     )
 
     expect(rows).toEqual([
-      { id: 'd1', user_id: 'u1', data: { id: 'd1', name: 'x' }, deleted: false },
+      { id: 'd1', user_id: 'u1', data: { id: 'd1', name: 'x' }, deleted: false, base: null },
     ])
+  })
+
+  it('says which server copy each row was based on — the one this device last pulled', () => {
+    const rows = buildPushPayload(
+      [
+        {
+          newDocumentState: { id: 'd1', name: 'mine', updatedAt: 't9', _deleted: false },
+          assumedMasterState: { id: 'd1', name: 'theirs', updatedAt: 't7', _deleted: false },
+        },
+      ] as never,
+      'u1',
+    )
+
+    expect(rows[0]?.base).toBe('t7')
   })
 
   it('sends tombstones as ordinary rows', () => {
@@ -75,45 +84,5 @@ describe('rowsToPullResult', () => {
     )
 
     expect(result.documents[0]).toMatchObject({ _deleted: true })
-  })
-})
-
-describe('splitUnseenOverwrites', () => {
-  const doc = (updatedAt: string, theme = 'light') => ({
-    id: 'preferences',
-    updatedAt,
-    theme,
-    _deleted: false,
-  })
-  const server = (updatedAt: string, theme = 'dark') => ({
-    id: 'preferences',
-    data: { id: 'preferences', updatedAt, theme },
-    deleted: false,
-  })
-
-  it('pushes a write over the very copy this device last saw', () => {
-    const row = { newDocumentState: doc('t9'), assumedMasterState: doc('t7') }
-    const split = splitUnseenOverwrites([row] as never, [server('t7')])
-    expect(split.pushable).toEqual([row])
-    expect(split.refused).toEqual([])
-  })
-
-  it('refuses a write over a copy another device changed since, and hands that copy back to merge', () => {
-    const row = { newDocumentState: doc('t9'), assumedMasterState: doc('t7') }
-    const split = splitUnseenOverwrites([row] as never, [server('t8')])
-    expect(split.pushable).toEqual([])
-    expect(split.refused).toEqual([
-      { id: 'preferences', updatedAt: 't8', theme: 'dark', _deleted: false },
-    ])
-  })
-
-  it('refuses a write from a device that never saw the server’s copy at all', () => {
-    const split = splitUnseenOverwrites([{ newDocumentState: doc('t9') }] as never, [server('t8')])
-    expect(split.refused).toHaveLength(1)
-  })
-
-  it('pushes a document the server does not hold yet', () => {
-    const row = { newDocumentState: doc('t9') }
-    expect(splitUnseenOverwrites([row] as never, []).pushable).toEqual([row])
   })
 })

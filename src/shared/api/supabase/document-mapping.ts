@@ -12,14 +12,20 @@ export interface PushRow {
   user_id: string
   data: Record<string, unknown>
   deleted: boolean
+  /**
+   * The `updatedAt` of the server copy this device last saw, or null when it never pulled one. The
+   * server applies the row only over that copy; anything else comes back to be merged against it.
+   */
+  base: string | null
 }
 
 export function docToRow<T extends Identifiable>(
   doc: T & { _deleted?: boolean },
   userId: string,
+  base: string | null,
 ): PushRow {
   const { _deleted, ...data } = doc
-  return { id: doc.id, user_id: userId, data, deleted: Boolean(_deleted) }
+  return { id: doc.id, user_id: userId, data, deleted: Boolean(_deleted), base }
 }
 
 export function rowToDoc<T extends Identifiable>(row: Row): T & { _deleted: boolean } {

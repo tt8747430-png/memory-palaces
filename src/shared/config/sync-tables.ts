@@ -31,19 +31,12 @@ export interface SyncTableSpec {
   collectionKey: string
   /** The extension that owns it; null for a core table, which always replicates. */
   owner: ExtensionId | null
-  /**
-   * A write over a server copy this device never saw comes back as a conflict, for the collection's
-   * handler to merge. Only preferences: its handler merges setting by setting, so a stale device
-   * cannot undo a setting another changed — the other tables' handlers pick a whole document anyway.
-   */
-  refuseUnseenOverwrites?: boolean
 }
 
 export const CORE_SYNC_TABLES: readonly SyncTableSpec[] = SYNCED_TABLES.map((table) => ({
   table,
   collectionKey: table,
   owner: null,
-  ...(table === 'preferences' && { refuseUnseenOverwrites: true }),
 }))
 
 /**

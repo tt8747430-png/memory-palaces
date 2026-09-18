@@ -9,8 +9,6 @@ import { type CloudWatcher, createCloudWatcher } from './cloud-watcher'
 export interface SyncTarget {
   table: SyncedTable
   collection: RxCollection<Identifiable>
-  /** See `CollectionReplicationOptions.refuseUnseenOverwrites`. */
-  refuseUnseenOverwrites?: boolean
 }
 
 type ReplicationState = RxReplicationState<Identifiable, Checkpoint>
@@ -56,7 +54,6 @@ export class SyncManager {
           userId,
           table: target.table,
           collection: target.collection,
-          refuseUnseenOverwrites: target.refuseUnseenOverwrites,
           onPushed,
         }),
       (userId, tables, onRemoteChange) =>

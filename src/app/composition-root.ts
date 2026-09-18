@@ -129,10 +129,9 @@ export async function createServices(): Promise<Services> {
     ...extensionCollections.syncTables,
   ]
   const syncTargets: Promise<SyncTarget[]> = collections.then((c) =>
-    syncTableSpecs.map(({ table, collectionKey, refuseUnseenOverwrites }) => ({
+    syncTableSpecs.map(({ table, collectionKey }) => ({
       table,
       collection: collectionByKey(c, collectionKey),
-      refuseUnseenOverwrites,
     })),
   )
   const configured = cloud.isSupabaseConfigured()

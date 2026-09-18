@@ -177,4 +177,61 @@ describe.skipIf(!URL || !KEY)('supabase replication (two clients)', () => {
     },
     TIMEOUT,
   )
+
+  describe('push_documents with a base', () => {
+    const push = async (id: string, updatedAt: string, name: string, base?: string | null) => {
+      const { data, error } = await supabase.rpc('push_documents', {
+        p_table: TABLE,
+        p_rows: [
+          {
+            id,
+            user_id: userId,
+            data: { id, name, createdAt: 't1', updatedAt },
+            deleted: false,
+            ...(base === undefined ? {} : { base }),
+          },
+        ],
+      })
+      if (error) throw new Error(error.message)
+      return data as { id: string; data: { name: string } }[]
+    }
+
+    it(
+      'applies a write over the copy it was based on, and refuses one over a copy it never saw',
+      async () => {
+        const id = newDeckId()
+        expect(await push(id, 't1', 'first', null)).toEqual([])
+        expect(await push(id, 't2', 'edited elsewhere', 't1')).toEqual([])
+
+        // Based on t1, but the server moved to t2: refused, and the t2 copy comes back to merge.
+        const refused = await push(id, 't3', 'stale', 't1')
+        expect(refused.map((row) => row.data.name)).toEqual(['edited elsewhere'])
+
+        // Based on t2: applies, whatever its clock.
+        expect(await push(id, 't3', 'merged', 't2')).toEqual([])
+      },
+      TIMEOUT,
+    )
+
+    it(
+      'applies a re-push of exactly what the server holds, whatever it was based on',
+      async () => {
+        const id = newDeckId()
+        await push(id, 't1', 'same', null)
+        expect(await push(id, 't1', 'same', 'never')).toEqual([])
+      },
+      TIMEOUT,
+    )
+
+    it(
+      'keeps the clock rule for a row with no base — a build shipped before bases',
+      async () => {
+        const id = newDeckId()
+        await push(id, 't2', 'newer', null)
+        expect((await push(id, 't1', 'older')).map((row) => row.data.name)).toEqual(['newer'])
+        expect(await push(id, 't3', 'newest')).toEqual([])
+      },
+      TIMEOUT,
+    )
+  })
 })
