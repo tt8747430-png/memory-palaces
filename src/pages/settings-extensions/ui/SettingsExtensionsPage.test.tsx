@@ -25,7 +25,7 @@ afterEach(cleanup)
 
 const manifest: ExtensionManifest = {
   id: 'fake',
-  icon: null,
+  icon: <span />,
   labelKey: 'fake:label',
   descriptionKey: 'fake:description',
   namespace: 'fake',

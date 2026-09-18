@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { ReactElement, ReactNode } from 'react'
 import type { RxCollectionCreator } from 'rxdb'
 import type { TransferOption } from '@/shared/ui'
 
@@ -63,7 +63,8 @@ export interface ExtensionCollectionSpec {
 
 export interface ExtensionManifest {
   id: ExtensionId
-  icon: ReactNode
+  /** An element, not a node: the Extensions row always has a tile to fill, so null is not an icon. */
+  icon: ReactElement
   /** Keys inside the extension's own i18n namespace. */
   labelKey: string
   descriptionKey: string
