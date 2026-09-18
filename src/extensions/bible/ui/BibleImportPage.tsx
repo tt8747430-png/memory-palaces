@@ -44,9 +44,6 @@ export interface BibleImportPageProps {
   onShowDeck?: (deckId: string) => void
 }
 
-/** The picker offers every deck: nothing here is being moved, so nothing is excluded. */
-const EXCLUDE_NOTHING: ReadonlySet<string> = new Set()
-
 /** Markers, not a plain join: a plain one would round-trip into a single card for the whole range. */
 const prefillFrom = (verses: readonly StoredVerse[]): string =>
   verses.map((held) => `${held.verse}) ${held.text}`).join(' ')
@@ -290,7 +287,6 @@ export function BibleImportPage({ deckId, onBack, onReview, onShowDeck }: BibleI
         targets="deck"
         decks={decks}
         folders={folders}
-        excludeIds={EXCLUDE_NOTHING}
         onPick={(dest) => {
           if (dest.kind === 'deck') setTarget({ kind: 'deck', deckId: dest.deckId })
           setSheet(null)

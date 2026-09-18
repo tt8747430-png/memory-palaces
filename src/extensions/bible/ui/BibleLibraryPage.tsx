@@ -22,13 +22,10 @@ import { ROUTES } from '@/shared/config/routes'
 import { useBibleT } from '../i18n/use-bible-t'
 import { useBibleVerseStore, useBibleVerseStoreApi } from '../model/context'
 import { cleanReferenceBacks } from '../features/clean-reference-backs'
-import { forgetBook } from '../features/forget-book'
 import { type CleanableCard, countReferenceBacks } from '../model/reference-backs'
+import { forgetBook } from '../features/forget-book'
 import { publishVerses } from '../features/publish-verses'
 import { versesFromCards } from '../model/verse-sources'
-
-/** Nothing is being moved, so the deck picker excludes nothing. */
-const EXCLUDE_NOTHING: ReadonlySet<string> = new Set()
 
 export interface BibleLibraryPageProps {
   onBack?: () => void
@@ -174,7 +171,6 @@ export function BibleLibraryPage({ onBack }: BibleLibraryPageProps) {
         targets="deck"
         decks={decks}
         folders={folders}
-        excludeIds={EXCLUDE_NOTHING}
         onPick={(dest) => {
           if (dest.kind !== 'deck') return
           const picked = sheet

@@ -26,7 +26,8 @@ export interface MoveSheetProps {
   subtitle: string
   decks: Deck[]
   folders: Folder[]
-  excludeIds: ReadonlySet<string>
+  /** Decks that cannot be picked — what is being moved. Omitted when nothing is being moved. */
+  excludeIds?: ReadonlySet<string>
   onPick: (dest: MoveDestination) => void
   targets?: MoveTargets
   title?: string
@@ -35,13 +36,16 @@ export interface MoveSheetProps {
 
 const INDENT = 20
 
+/** One frozen empty set, so a sheet that excludes nothing does not rebuild one every render. */
+const EXCLUDE_NOTHING: ReadonlySet<string> = new Set()
+
 export function MoveSheet({
   open,
   onOpenChange,
   subtitle,
   decks,
   folders,
-  excludeIds,
+  excludeIds = EXCLUDE_NOTHING,
   onPick,
   targets = 'any',
   title,
