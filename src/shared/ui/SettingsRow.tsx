@@ -20,6 +20,8 @@ export type SettingsRowProps = BaseProps &
     | { kind: 'nav'; onClick: () => void; value?: string; disabled?: boolean }
     | { kind: 'action'; onClick: () => void; disabled?: boolean }
     | { kind: 'value'; value: string }
+    /** States something — a fact or an empty state — with nothing trailing and nothing to press. */
+    | { kind: 'info' }
     | {
         kind: 'select'
         value: string
@@ -154,6 +156,8 @@ export function SettingsRow(props: SettingsRowProps) {
       </button>
     )
   }
+
+  if (props.kind === 'info') return <div className={ROW}>{body}</div>
 
   return (
     <div className={ROW}>

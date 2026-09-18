@@ -43,4 +43,14 @@ describe('SettingsRow', () => {
     expect(screen.getByText('ada@x.io')).toBeInTheDocument()
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
+
+  it('info kind states its label and description, with nothing trailing and nothing to press', () => {
+    const { container } = render(
+      <SettingsRow kind="info" icon={<Bell />} label="Up to date" description="Nothing waits" />,
+    )
+    expect(screen.getByText('Up to date')).toBeInTheDocument()
+    expect(screen.getByText('Nothing waits')).toBeInTheDocument()
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
+    expect(container.querySelector('.shrink-0.text-label')).toBeNull()
+  })
 })
