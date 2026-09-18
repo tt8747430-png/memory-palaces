@@ -125,6 +125,14 @@ Every Deck follows exactly one: its Main deck's. A Subdeck never holds the algor
 | **Restoring**              | The forced Sync after a cancelled account deletion, shown on the banner                                                              | recovery, reload       |
 | **Purge**                  | The irreversible server-side destruction of an account, 30 days after the request                                                    | delete, wipe           |
 
+## Extensions
+
+| Term                   | Means                                                                 | Avoid                        |
+| ---------------------- | --------------------------------------------------------------------- | ---------------------------- |
+| **Extension**          | A self-contained feature the learner switches on in Settings          | plugin, add-on, module       |
+| **Contribution point** | The named slot a host surface renders on an extension's behalf        | hook, which here means React |
+| **Verse**              | One numbered line of scripture; its reference is not part of its text | passage, which is a range    |
+
 ## Relationships
 
 - Folder groups zero-or-more top-level Decks.

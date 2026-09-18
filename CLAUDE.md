@@ -58,8 +58,9 @@ One file: `npx vitest run src/shared/lib/srs.test.ts` · one test: `npx vitest r
 
 ## Architecture — FSD (lint-enforced)
 
-`app → pages → widgets → features → entities → shared`. Import only from strictly lower layers (
-`eslint-plugin-boundaries`). Cross-slice via the slice's `index.ts`, never deep paths. Alias `@` → `src`.
+`app → pages → widgets → features → entities → shared`, plus `extensions` off to the side (`app → extensions →
+widgets…`). Import only from strictly lower layers (`eslint-plugin-boundaries`). Cross-slice via the slice's `index.ts`,
+never deep paths. Alias `@` → `src`.
 
 **Entities** (`src/entities/<x>/`, reference `card/`) — framework-agnostic:
 
@@ -71,6 +72,13 @@ One file: `npx vitest run src/shared/lib/srs.test.ts` · one test: `npx vitest r
 - `model/selectors.ts` pure reads (readiness is the shared `selectIsReady`) · `model/context.ts` →
   `createStoreContext<XState>('X')` re-exported as `useXStore(selector)` / `useXStoreApi()` · `api/<x>-repository.ts`
   port · `index.ts` barrel.
+
+**Extensions** (`src/extensions/<x>/`, reference `bible/`) — a self-contained feature behind a manifest. Reaches down
+like a page (widgets → features → entities → shared); **only `app` may import it**, and extensions never import each
+other. Contributions reach host surfaces through `useExtensionPoint`, never through an import, and carry i18n keys rather
+than copy. The extension's own provider is its composition root: its stores and keepers start there, and disabling
+unmounts it. Enablement is `preferences.extensions`, changed only through `setExtensionEnabled`, and deletes nothing.
+`src/app/extensions/registry.ts` is the one core file allowed to name an extension.
 
 **DI** — port `shared/api/base-repository.ts` (`Repository<T>`: save/remove/observe); adapters
 `shared/api/rxdb/rxdb-repository.ts` (prod) and `in-memory-repository.ts` (tests + live `session` store).
