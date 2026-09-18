@@ -7,6 +7,7 @@ import {
   AppScreen,
   Button,
   ConfirmDialog,
+  EmptyNotice,
   MissingScreen,
   ScreenHeader,
   ScreenLoading,
@@ -130,9 +131,7 @@ export function BibleLibraryPage({ onBack }: BibleLibraryPageProps) {
         </div>
 
         {books.length === 0 ? (
-          <p className="rounded-card bg-card p-6 text-center text-body text-muted-foreground shadow-rest">
-            {t('empty')}
-          </p>
+          <EmptyNotice>{t('empty')}</EmptyNotice>
         ) : (
           <SettingsSection title={t('librarySubtitle')}>
             {books.map(([book, count]) => (

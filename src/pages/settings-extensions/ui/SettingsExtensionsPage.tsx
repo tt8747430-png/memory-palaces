@@ -9,7 +9,14 @@ import {
 } from '@/entities/preferences'
 import { setExtensionEnabled } from '@/features/preferences'
 import { cn, type ExtensionManifest, selectIsReady, useContributedT } from '@/shared/lib'
-import { AppScreen, ScreenHeader, ScreenLoading, SettingsRow, SettingsSection } from '@/shared/ui'
+import {
+  AppScreen,
+  EmptyNotice,
+  ScreenHeader,
+  ScreenLoading,
+  SettingsRow,
+  SettingsSection,
+} from '@/shared/ui'
 
 export interface SettingsExtensionsPageProps {
   manifests: ExtensionManifest[]
@@ -60,9 +67,7 @@ export function SettingsExtensionsPage({
         {!ready ? (
           <ScreenLoading />
         ) : manifests.length === 0 ? (
-          <p className="rounded-card bg-card p-6 text-center text-body text-muted-foreground shadow-rest">
-            {t('settings.extensionsEmpty')}
-          </p>
+          <EmptyNotice>{t('settings.extensionsEmpty')}</EmptyNotice>
         ) : (
           <SettingsSection title={t('settings.extensionsSection')}>
             {manifests.map((manifest) => {
