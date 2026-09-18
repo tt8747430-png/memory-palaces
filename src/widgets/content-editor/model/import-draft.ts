@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import type { ParsedCard } from '@/shared/lib'
 import { newId } from '@/shared/lib'
 
-export type ImportSource = 'paste' | 'mindscape' | 'anki'
+export type ImportSource = 'paste' | 'mindscape' | 'anki' | 'extension'
 
 export type DraftCard = ParsedCard & { id: string }
 
