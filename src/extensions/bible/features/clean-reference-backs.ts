@@ -8,12 +8,10 @@ export async function cleanReferenceBacks(
   cards: readonly CleanableCard[],
   save: (id: string, back: string) => Promise<void>,
 ): Promise<number> {
-  let changed = 0
-  for (const card of cards) {
+  const edits = cards.flatMap((card) => {
     const back = cleanedBack(card)
-    if (!back) continue
-    await save(card.id, back)
-    changed += 1
-  }
-  return changed
+    return back ? [{ id: card.id, back }] : []
+  })
+  await Promise.all(edits.map((edit) => save(edit.id, edit.back)))
+  return edits.length
 }
