@@ -41,6 +41,7 @@ export interface DeckDetailPageProps {
   onStudyFlagged?: () => void
   onPasteNotes: () => void
   onReviewImport: () => void
+  onExtensionImport?: (to: string) => void
 }
 
 export function DeckDetailPage({
@@ -56,6 +57,7 @@ export function DeckDetailPage({
   onStudyFlagged,
   onPasteNotes,
   onReviewImport,
+  onExtensionImport,
 }: DeckDetailPageProps) {
   const { t } = useTranslation()
   const prefStore = usePreferencesStoreApi()
@@ -207,6 +209,7 @@ export function DeckDetailPage({
             onStudyFrom={onStudyFrom}
             onPasteNotes={onPasteNotes}
             onReviewImport={onReviewImport}
+            onExtensionImport={onExtensionImport}
           />
         </section>
       </div>

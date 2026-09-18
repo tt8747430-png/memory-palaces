@@ -3,10 +3,12 @@ import { ArchivedDecksPage } from '@/pages/archived-decks'
 import { DeckLibraryPage } from '@/pages/deck-library'
 import { NotificationsPage } from '@/pages/notifications'
 import { ROUTES } from '@/shared/config/routes'
+import { useExtensionNavigate } from './use-extension-navigate'
 import { useBack, useBackTo } from './use-back'
 
 function Library({ folderId }: { folderId: string | null }) {
   const navigate = useNavigate()
+  const extensionNavigate = useExtensionNavigate()
   const leaveFolder = useBack(() => void navigate({ to: ROUTES.home }))
   return (
     <DeckLibraryPage
@@ -17,6 +19,7 @@ function Library({ folderId }: { folderId: string | null }) {
       onOpenDeck={(deckId) => navigate({ to: ROUTES.deckDetail, params: { deckId } })}
       onOpenDeckSettings={(deckId) => navigate({ to: ROUTES.deckSettings, params: { deckId } })}
       onImportPaste={() => navigate({ to: ROUTES.newPaste })}
+      onExtensionImport={(to) => extensionNavigate(to)}
       onReviewDeck={(deckId) => navigate({ to: ROUTES.deckImport, params: { deckId } })}
       onOpenProfile={() => navigate({ to: ROUTES.profile })}
       onOpenNotifications={() => navigate({ to: ROUTES.notifications })}

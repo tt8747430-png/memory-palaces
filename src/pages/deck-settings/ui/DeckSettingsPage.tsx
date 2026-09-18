@@ -14,6 +14,7 @@ import {
   Trash2,
   Upload,
 } from 'lucide-react'
+import { useExtensionPoint } from '@/shared/lib'
 import { AlgorithmCard, LockedAlgorithmCard } from '@/widgets/algorithm'
 import { MoveSheet } from '@/widgets/deck-tree'
 import {
@@ -35,6 +36,7 @@ export interface DeckSettingsPageProps extends DeckSettingsNav {
 export function DeckSettingsPage({ deckId, ...nav }: DeckSettingsPageProps) {
   const { t } = useTranslation()
   const page = useDeckSettings(deckId, nav)
+  const extensionImports = useExtensionPoint('importOptions')
   const { deck, act } = page
 
   if (!page.ready || !deck) {
@@ -172,6 +174,8 @@ export function DeckSettingsPage({ deckId, ...nav }: DeckSettingsPageProps) {
         description={t('cards.transfer.importSubtitle')}
         onPasteNotes={act.pasteNotes}
         onPickFile={act.importFile}
+        extraOptions={extensionImports}
+        onSelectExtra={(to) => nav.onExtensionImport?.(to)}
       />
 
       <ActionSheet

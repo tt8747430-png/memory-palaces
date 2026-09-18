@@ -12,7 +12,7 @@ import { DeckTree, LibrarySelectList, MoveSheet } from '@/widgets/deck-tree'
 import { HomeHeader } from '@/widgets/home-header'
 import { SyncBanner } from '@/widgets/sync'
 import { useImportFile } from '@/widgets/content-editor'
-import { nextDefaultName, useHideAppNav } from '@/shared/lib'
+import { nextDefaultName, useExtensionPoint, useHideAppNav } from '@/shared/lib'
 import {
   ActionSheet,
   AppScreen,
@@ -45,6 +45,7 @@ export interface DeckLibraryPageProps {
   onOpenDeck: (deckId: string) => void
   onOpenDeckSettings?: (deckId: string) => void
   onImportPaste?: () => void
+  onExtensionImport?: (to: string) => void
   onReviewDeck?: (deckId: string) => void
   onOpenProfile?: () => void
   onOpenNotifications?: () => void
@@ -75,6 +76,7 @@ export function DeckLibraryPage({
   onOpenDeck,
   onOpenDeckSettings,
   onImportPaste,
+  onExtensionImport,
   onReviewDeck,
   onOpenProfile,
   onOpenNotifications,
@@ -86,6 +88,7 @@ export function DeckLibraryPage({
   const folderStore = useFolderStoreApi()
   const importFile = useImportFile()
   const canImport = Boolean(onImportPaste)
+  const extensionImports = useExtensionPoint('importOptions')
   const inFolder = folderId !== null
 
   const library = useLibrary(folderId, onFolderGone)
@@ -328,6 +331,8 @@ export function DeckLibraryPage({
         description={t('deck.importSheetHint')}
         onPasteNotes={() => onImportPaste?.()}
         onPickFile={(file) => void importIntoNewDeck(file)}
+        extraOptions={extensionImports}
+        onSelectExtra={(to) => onExtensionImport?.(to)}
       />
 
       <FolderSheet

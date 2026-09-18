@@ -31,7 +31,7 @@ export function TransferSheet({
 }: TransferSheetProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange} title={title} description={description}>
-      <div className="flex flex-col gap-2.5 pb-2">
+      <div data-slot="transfer-options" className="flex flex-col gap-2.5 pb-2">
         {options.map(({ id, onSelect, ...row }) => (
           <ImportRow
             key={id}

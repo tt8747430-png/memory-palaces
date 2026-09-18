@@ -16,6 +16,7 @@ import { selectDecks, useDeckStore, useDeckStoreApi } from '@/entities/deck'
 import { createDeck } from '@/features/deck'
 import { nextDefaultName } from '@/shared/lib'
 import { ROUTES } from '@/shared/config/routes'
+import { useExtensionNavigate } from './use-extension-navigate'
 import { useBack } from './use-back'
 import { studyFilterFrom, useRouteSearch, validateStudySearch } from './search'
 
@@ -31,6 +32,7 @@ function useBackToDeck(deckId: string, replace = false) {
 export function DeckDetailScreen() {
   const deckId = useDeckId(ROUTES.deckDetail)
   const navigate = useNavigate()
+  const extensionNavigate = useExtensionNavigate()
   const back = useBack(() => void navigate({ to: ROUTES.home }))
   return (
     <DeckDetailPage
@@ -54,6 +56,7 @@ export function DeckDetailScreen() {
       }
       onPasteNotes={() => navigate({ to: ROUTES.deckPaste, params: { deckId } })}
       onReviewImport={() => navigate({ to: ROUTES.deckImport, params: { deckId } })}
+      onExtensionImport={(to) => extensionNavigate(to, { deckId })}
     />
   )
 }
@@ -61,6 +64,7 @@ export function DeckDetailScreen() {
 export function DeckSettingsScreen() {
   const deckId = useDeckId(ROUTES.deckSettings)
   const navigate = useNavigate()
+  const extensionNavigate = useExtensionNavigate()
   return (
     <DeckSettingsPage
       deckId={deckId}
@@ -72,6 +76,7 @@ export function DeckSettingsScreen() {
       onOpenTts={() => navigate({ to: ROUTES.deckTts, params: { deckId } })}
       onPasteNotes={() => navigate({ to: ROUTES.deckPaste, params: { deckId } })}
       onReviewImport={() => navigate({ to: ROUTES.deckImport, params: { deckId } })}
+      onExtensionImport={(to) => extensionNavigate(to, { deckId })}
     />
   )
 }

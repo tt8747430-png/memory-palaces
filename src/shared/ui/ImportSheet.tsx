@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { ClipboardPaste, FileText } from 'lucide-react'
+import type { ImportOptionContribution } from '@/shared/lib'
 import { TransferSheet } from './TransferSheet'
 import { useFilePicker } from './use-file-picker'
 
@@ -10,6 +11,9 @@ export interface ImportSheetProps {
   description: string
   onPasteNotes: () => void
   onPickFile: (file: File) => void
+  /** Rows the enabled extensions contributed. Keys, not copy — resolved here, where `t` already is. */
+  extraOptions?: ImportOptionContribution[]
+  onSelectExtra?: (to: string) => void
 }
 
 const ACCEPT = '.csv,.tsv,.txt'
@@ -21,6 +25,8 @@ export function ImportSheet({
   description,
   onPasteNotes,
   onPickFile,
+  extraOptions,
+  onSelectExtra,
 }: ImportSheetProps) {
   const { t } = useTranslation()
   const file = useFilePicker(ACCEPT, onPickFile)
@@ -50,6 +56,13 @@ export function ImportSheet({
             subtitle: t('cards.transfer.importAnkiSub'),
             onSelect: file.open,
           },
+          ...(extraOptions ?? []).map(({ titleKey, subtitleKey, to, ...row }) => ({
+            ...row,
+            tone: row.tone ?? ('brand' as const),
+            title: t(titleKey as never),
+            subtitle: t(subtitleKey as never),
+            onSelect: () => onSelectExtra?.(to),
+          })),
         ]}
       />
       {file.input}

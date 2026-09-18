@@ -2,6 +2,8 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { SYNCED_TABLES } from '@/shared/config/sync-tables'
+import { loadExtensionCollections } from '../extensions/collections'
+import { EXTENSIONS } from '../extensions/registry'
 
 const MIGRATIONS = join(process.cwd(), 'supabase', 'migrations')
 
@@ -19,7 +21,9 @@ function latestAllowList(): string[] {
 }
 
 describe('the push_documents allow-list', () => {
-  it('names every synced table — one missing is a collection that silently never syncs', () => {
-    expect([...latestAllowList()].sort()).toEqual([...SYNCED_TABLES].sort())
+  it('names every synced table, extensions included — one missing never syncs', async () => {
+    const { syncTables } = await loadExtensionCollections(EXTENSIONS)
+    const expected = [...SYNCED_TABLES, ...syncTables.map((spec) => spec.table)]
+    expect([...latestAllowList()].sort()).toEqual([...expected].sort())
   })
 })

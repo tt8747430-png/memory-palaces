@@ -30,6 +30,7 @@ export interface DeckSettingsNav {
   onArchived?: () => void
   onPasteNotes?: () => void
   onReviewImport?: () => void
+  onExtensionImport?: (to: string) => void
   onOpenAlgorithm?: () => void
   onOpenCardStyle?: () => void
   onOpenTts?: () => void

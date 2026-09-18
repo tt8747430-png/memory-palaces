@@ -6,9 +6,12 @@ import {
   type RouteComponent,
 } from '@tanstack/react-router'
 import { ROUTES } from '@/shared/config/routes'
+import { whenStoreReady } from '@/shared/lib'
 import { RootLayout } from './RootLayout'
 import { authRedirect } from './auth-guard'
 import type { Services } from './composition-root'
+import { extensionRedirect } from './extensions/extension-redirect'
+import { EXTENSIONS } from './extensions/registry'
 import { lazyScreen } from './lazy-screen'
 import { validateExtensionsSearch } from '@/pages/settings-extensions'
 import { validateRecoverySearch, validateStudySearch } from './routes/search'
@@ -39,6 +42,29 @@ const settings = lazyScreen(() => import('./routes/settings-screens'))
 
 const route = <Path extends string>(path: Path, component: RouteComponent) =>
   createRoute({ getParentRoute: () => rootRoute, path, component })
+
+/**
+ * An extension owns its routes, and each is guarded by its own switch. The guard **waits for
+ * preferences**: `beforeLoad` runs before any provider has rendered, and an unloaded store answers
+ * `undefined`, which is not the same as "off" — without the wait a cold deep link to an enabled
+ * extension would be bounced to Settings.
+ */
+const extensionRoutes = EXTENSIONS.flatMap((manifest) =>
+  manifest.routes.map((extension) =>
+    createRoute({
+      getParentRoute: () => rootRoute,
+      path: extension.path,
+      validateSearch: extension.validateSearch,
+      component: lazyScreen(extension.load)(extension.name),
+      beforeLoad: async ({ context }) => {
+        const store = context.services.preferencesStore
+        await whenStoreReady(store)
+        const target = extensionRedirect(store.getState().preferences, manifest.id)
+        if (target) throw redirect(target)
+      },
+    }),
+  ),
+)
 
 const routeTree = rootRoute.addChildren([
   route(ROUTES.login, auth('LoginScreen')),
@@ -107,6 +133,8 @@ const routeTree = rootRoute.addChildren([
     ROUTES.devKitchenSink,
     lazyScreen(() => import('./routes/kitchen-sink-screen'))('KitchenSinkScreen'),
   ),
+
+  ...extensionRoutes,
 ])
 
 export const createAppRouter = (services: Services) =>

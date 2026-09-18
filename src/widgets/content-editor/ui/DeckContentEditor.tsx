@@ -16,6 +16,7 @@ import {
   CONTENT_SORTS,
   findEntity,
   type MultiSelect,
+  useExtensionPoint,
   usePendingAct,
 } from '@/shared/lib'
 import {
@@ -59,6 +60,7 @@ export interface DeckContentEditorProps {
   onStudyFrom?: (cardId: string) => void
   onPasteNotes: () => void
   onReviewImport: () => void
+  onExtensionImport?: (to: string) => void
 }
 
 export function DeckContentEditor({
@@ -75,11 +77,13 @@ export function DeckContentEditor({
   onStudyFrom,
   onPasteNotes,
   onReviewImport,
+  onExtensionImport,
 }: DeckContentEditorProps) {
   const { t } = useTranslation()
   const cardStore = useCardStoreApi()
   const allCards = useCardStore(selectCards)
   const importFile = useImportFile()
+  const extensionImports = useExtensionPoint('importOptions')
 
   const prefs = usePreferencesStore(selectEffectivePreferences)
   const decks = useDeckStore(selectDecks)
@@ -231,6 +235,8 @@ export function DeckContentEditor({
         description={t('cards.transfer.importSubtitle')}
         onPasteNotes={onPasteNotes}
         onPickFile={(file) => void importFile(file, onReviewImport)}
+        extraOptions={extensionImports}
+        onSelectExtra={(to) => onExtensionImport?.(to)}
       />
 
       <CardFilterSheet filter={filter} counts={maturity} />
