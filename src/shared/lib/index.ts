@@ -176,6 +176,7 @@ export {
   createCollectionStore,
   createSingletonStore,
   selectIsReady,
+  whenStoreReady,
   type CollectionState,
   type CollectionStoreOptions,
   type PendingChangePort,
@@ -189,6 +190,22 @@ export {
   type OrderedStore,
 } from './collection-commands'
 export { createStoreContext, type StoreContext } from './store-context'
+export type {
+  ExtensionCollectionSpec,
+  ExtensionContributions,
+  ExtensionId,
+  ExtensionManifest,
+  ExtensionPoint,
+  ExtensionRoute,
+  ImportOptionContribution,
+} from './extension-manifest'
+export { extensionRoute } from './extension-manifest'
+export { ExtensionPointsContext, useExtensionPoint } from './extension-points-context'
+export {
+  type ExtensionRepositories,
+  ExtensionRepositoriesContext,
+  useExtensionRepository,
+} from './extension-repositories-context'
 export {
   isDue,
   schedule,

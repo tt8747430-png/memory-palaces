@@ -104,3 +104,18 @@ export function createSingletonStore<Key extends string, T extends Identifiable>
     (set) => mirror(set as SetPartial) as unknown as SingletonState<Key, T>,
   )
 }
+
+/** Resolves once the store has mirrored its first read. A guard that skips this reads `idle`. */
+export function whenStoreReady(store: {
+  getState: () => Pick<Lifecycle, 'status'>
+  subscribe: (listener: () => void) => () => void
+}): Promise<void> {
+  if (store.getState().status === 'ready') return Promise.resolve()
+  return new Promise((resolve) => {
+    const unsubscribe = store.subscribe(() => {
+      if (store.getState().status !== 'ready') return
+      unsubscribe()
+      resolve()
+    })
+  })
+}
