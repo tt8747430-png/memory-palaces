@@ -86,4 +86,26 @@ describe('ExtensionsProvider', () => {
     await waitFor(() => expect(screen.getByText('no contributions')).toBeInTheDocument())
     expect(i18n.getResourceBundle('en', 'fake')).toBeUndefined()
   })
+
+  it('waits for the namespace again when it is switched back on', async () => {
+    const store = renderWith(['fake'])
+    await waitFor(() => expect(screen.getByText('fake:label')).toBeInTheDocument())
+
+    await act(async () => {
+      await setExtensionEnabled(store, 'fake', false)
+    })
+    await waitFor(() => expect(screen.getByText('no contributions')).toBeInTheDocument())
+
+    await act(async () => {
+      await setExtensionEnabled(store, 'fake', true)
+    })
+
+    // The contribution comes back only with its bundle: publishing it against a namespace that
+    // the switch-off removed is what paints a raw key.
+    await waitFor(() => expect(screen.getByText('fake:label')).toBeInTheDocument())
+    expect(i18n.getResourceBundle('en', 'fake')).toEqual({
+      label: 'Fake',
+      importSubtitle: 'From the fake',
+    })
+  })
 })

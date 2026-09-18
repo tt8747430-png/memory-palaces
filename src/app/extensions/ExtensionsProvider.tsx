@@ -21,11 +21,11 @@ function mergeContributions(manifests: ExtensionManifest[]): ExtensionContributi
  */
 function MountedExtension({
   manifest,
-  onReady,
+  onReadiness,
   children,
 }: {
   manifest: ExtensionManifest
-  onReady: (id: ExtensionId) => void
+  onReadiness: (id: ExtensionId, ready: boolean) => void
   children: ReactNode
 }) {
   const [Provider, setProvider] = useState<((props: { children: ReactNode }) => ReactNode) | null>(
@@ -37,7 +37,7 @@ function MountedExtension({
     void manifest.loadMessages().then((messages) => {
       if (!live) return
       i18n.addResourceBundle('en', manifest.namespace, messages, true, false)
-      onReady(manifest.id)
+      onReadiness(manifest.id, true)
     })
     if (manifest.loadProvider) {
       void manifest.loadProvider().then((module) => {
@@ -47,8 +47,12 @@ function MountedExtension({
     return () => {
       live = false
       i18n.removeResourceBundle('en', manifest.namespace)
+      // The namespace goes with the unmount, so the readiness must too: switching an extension off
+      // and on again would otherwise publish its contributions against a bundle not yet re-added,
+      // and a host would paint the raw `<namespace>:key` instead of its copy.
+      onReadiness(manifest.id, false)
     }
-  }, [manifest, onReady])
+  }, [manifest, onReadiness])
 
   return Provider ? <Provider>{children}</Provider> : children
 }
@@ -74,8 +78,12 @@ export function ExtensionsProvider({
 
   // Contributions are published only once the namespace is in, so a host never paints a raw key.
   const [ready, setReady] = useState<readonly ExtensionId[]>([])
-  const onReady = useCallback(
-    (id: ExtensionId) => setReady((held) => (held.includes(id) ? held : [...held, id])),
+  const onReadiness = useCallback(
+    (id: ExtensionId, isReady: boolean) =>
+      setReady((held) => {
+        if (held.includes(id) === isReady) return held
+        return isReady ? [...held, id] : held.filter((kept) => kept !== id)
+      }),
     [],
   )
 
@@ -88,7 +96,7 @@ export function ExtensionsProvider({
     <ExtensionPointsContext value={contributions}>
       {enabled.reduceRight<ReactNode>(
         (inner, manifest) => (
-          <MountedExtension key={manifest.id} manifest={manifest} onReady={onReady}>
+          <MountedExtension key={manifest.id} manifest={manifest} onReadiness={onReadiness}>
             {inner}
           </MountedExtension>
         ),
