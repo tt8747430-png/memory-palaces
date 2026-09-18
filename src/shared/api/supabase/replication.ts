@@ -3,13 +3,18 @@ import { replicateRxCollection, type RxReplicationState } from 'rxdb/plugins/rep
 import type { RxReplicationWriteToMasterRow, WithDeleted } from 'rxdb'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { type Checkpoint, EPOCH, type Identifiable } from '@/shared/api'
-import { docToRow, type PushRow, type Row, rowToDoc } from './document-mapping'
+import { docToRow, type PushBase, type PushRow, type Row, rowToDoc } from './document-mapping'
 import { requestSignal } from './request-timeout'
 
-/** The clock of the server copy RxDB recorded when this device last pulled the document. */
-const baseOf = <T>(row: RxReplicationWriteToMasterRow<T>): string | null => {
-  const seen = (row.assumedMasterState as { updatedAt?: unknown } | undefined)?.updatedAt
-  return typeof seen === 'string' ? seen : null
+/**
+ * The server copy RxDB recorded when this device last pulled the document: its clock, and whether
+ * it was a deletion — which keeps the clock, so the clock alone cannot tell.
+ */
+const baseOf = <T>(row: RxReplicationWriteToMasterRow<T>): PushBase | null => {
+  const seen = row.assumedMasterState as { updatedAt?: unknown; _deleted?: boolean } | undefined
+  return typeof seen?.updatedAt === 'string'
+    ? { updatedAt: seen.updatedAt, deleted: Boolean(seen._deleted) }
+    : null
 }
 
 export function buildPushPayload<T extends Identifiable>(

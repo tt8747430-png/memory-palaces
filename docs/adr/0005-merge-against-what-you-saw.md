@@ -2,7 +2,8 @@
 
 - **Status:** accepted · **Date:** 2026-09-18
 
-The implementation is `supabase/migrations/20260918120000_push_documents_base.sql`, `base` on `PushRow`
+The implementation is `supabase/migrations/20260918131048_push_documents_base.sql` and
+`…/20260918142455_push_documents_deletion_and_first_push.sql`, `base` and `base_deleted` on `PushRow`
 (`shared/api/supabase/document-mapping.ts`, `buildPushPayload`), `mergeFields` (`shared/lib/merge-fields.ts`),
 `mergeAgainstBase` (`shared/api/rxdb/conflict-handlers.ts`) and the three entity handlers in
 `app/persistence/conflict-handlers.ts`. Each carries the reasoning per site; this records the rule they follow.
@@ -31,11 +32,14 @@ Three parts, each necessary:
 
 1. **The base travels with the push.** RxDB records, on every pull, the server copy a device last saw
    (`assumedMasterState`). Its `updatedAt` goes with the row as `base` (`null` when the device never pulled the
-   document). This is the one fact the server lacked.
+   document), and whether it was a deletion as `base_deleted` — a deletion keeps its clock, so the clock alone
+   cannot tell the two copies apart. This is the one fact the server lacked.
 2. **The server applies a row only over its base.** `push_documents` accepts a based row when it holds no copy, holds
-   exactly this data (an idempotent re-push), or holds the copy the row names; anything else it hands back, and the
-   rows it names are locked for the statement so the check and the write see the same copy. A row without a base keeps
-   the clock rule — that branch serves builds shipped before this ADR and goes with a later migration.
+   exactly this data (an idempotent re-push), or holds the copy the row names; anything else it hands back. Every
+   document a push names is held by a transaction-scoped advisory lock, taken in id order before the check, so the
+   check and the write see the same copy — including a document nobody holds yet, which has no row to lock. A row
+   without a base keeps the clock rule — that branch serves builds shipped before this ADR and goes with a later
+   migration.
 3. **The handler merges against the base.** What comes back is a conflict with three versions in hand: mine, theirs,
    and what both started from. `mergeFields` keeps the field only one side changed, settles a field both changed by a
    rule (`srs` merged, XP summed as deltas, a preference to the device making the write) or by the newer clock, carries

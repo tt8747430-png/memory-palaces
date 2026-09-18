@@ -10,7 +10,14 @@ describe('buildPushPayload', () => {
     )
 
     expect(rows).toEqual([
-      { id: 'd1', user_id: 'u1', data: { id: 'd1', name: 'x' }, deleted: false, base: null },
+      {
+        id: 'd1',
+        user_id: 'u1',
+        data: { id: 'd1', name: 'x' },
+        deleted: false,
+        base: null,
+        base_deleted: false,
+      },
     ])
   })
 
@@ -25,7 +32,21 @@ describe('buildPushPayload', () => {
       'u1',
     )
 
-    expect(rows[0]?.base).toBe('t7')
+    expect(rows[0]).toMatchObject({ base: 't7', base_deleted: false })
+  })
+
+  it('says when that copy was a deletion — a deletion keeps its clock, so the clock cannot', () => {
+    const rows = buildPushPayload(
+      [
+        {
+          newDocumentState: { id: 'd1', name: 'again', updatedAt: 't9', _deleted: false },
+          assumedMasterState: { id: 'd1', name: 'gone', updatedAt: 't7', _deleted: true },
+        },
+      ] as never,
+      'u1',
+    )
+
+    expect(rows[0]).toMatchObject({ base: 't7', base_deleted: true })
   })
 
   it('sends tombstones as ordinary rows', () => {

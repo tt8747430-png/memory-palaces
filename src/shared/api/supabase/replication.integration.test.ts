@@ -179,7 +179,17 @@ describe.skipIf(!URL || !KEY)('supabase replication (two clients)', () => {
   )
 
   describe('push_documents with a base', () => {
-    const push = async (id: string, updatedAt: string, name: string, base?: string | null) => {
+    interface Push {
+      deleted?: boolean
+      base?: string | null
+      baseDeleted?: boolean
+    }
+    const push = async (
+      id: string,
+      updatedAt: string,
+      name: string,
+      { deleted = false, base, baseDeleted }: Push = {},
+    ) => {
       const { data, error } = await supabase.rpc('push_documents', {
         p_table: TABLE,
         p_rows: [
@@ -187,28 +197,29 @@ describe.skipIf(!URL || !KEY)('supabase replication (two clients)', () => {
             id,
             user_id: userId,
             data: { id, name, createdAt: 't1', updatedAt },
-            deleted: false,
+            deleted,
             ...(base === undefined ? {} : { base }),
+            ...(baseDeleted === undefined ? {} : { base_deleted: baseDeleted }),
           },
         ],
       })
       if (error) throw new Error(error.message)
-      return data as { id: string; data: { name: string } }[]
+      return data as { id: string; data: { name: string }; deleted: boolean }[]
     }
 
     it(
       'applies a write over the copy it was based on, and refuses one over a copy it never saw',
       async () => {
         const id = newDeckId()
-        expect(await push(id, 't1', 'first', null)).toEqual([])
-        expect(await push(id, 't2', 'edited elsewhere', 't1')).toEqual([])
+        expect(await push(id, 't1', 'first', { base: null })).toEqual([])
+        expect(await push(id, 't2', 'edited elsewhere', { base: 't1' })).toEqual([])
 
         // Based on t1, but the server moved to t2: refused, and the t2 copy comes back to merge.
-        const refused = await push(id, 't3', 'stale', 't1')
+        const refused = await push(id, 't3', 'stale', { base: 't1' })
         expect(refused.map((row) => row.data.name)).toEqual(['edited elsewhere'])
 
         // Based on t2: applies, whatever its clock.
-        expect(await push(id, 't3', 'merged', 't2')).toEqual([])
+        expect(await push(id, 't3', 'merged', { base: 't2' })).toEqual([])
       },
       TIMEOUT,
     )
@@ -217,8 +228,42 @@ describe.skipIf(!URL || !KEY)('supabase replication (two clients)', () => {
       'applies a re-push of exactly what the server holds, whatever it was based on',
       async () => {
         const id = newDeckId()
-        await push(id, 't1', 'same', null)
-        expect(await push(id, 't1', 'same', 'never')).toEqual([])
+        await push(id, 't1', 'same', { base: null })
+        expect(await push(id, 't1', 'same', { base: 'never' })).toEqual([])
+      },
+      TIMEOUT,
+    )
+
+    it(
+      'refuses an edit based on the live copy once another device has deleted it',
+      async () => {
+        const id = newDeckId()
+        await push(id, 't1', 'live', { base: null, baseDeleted: false })
+        // The deletion keeps the clock: only `base_deleted` tells the two copies apart.
+        await push(id, 't1', 'live', { deleted: true, base: 't1', baseDeleted: false })
+
+        const refused = await push(id, 't2', 'edited', { base: 't1', baseDeleted: false })
+        expect(refused.map((row) => row.deleted)).toEqual([true])
+
+        // Based on the deletion it saw: a deliberate re-creation, and it applies.
+        expect(await push(id, 't3', 'again', { base: 't1', baseDeleted: true })).toEqual([])
+      },
+      TIMEOUT,
+    )
+
+    it(
+      'lets exactly one of two concurrent first pushes land, and hands the other what it wrote',
+      async () => {
+        const id = newDeckId()
+        const [first, second] = await Promise.all([
+          push(id, 't1', 'from A', { base: null, baseDeleted: false }),
+          push(id, 't1', 'from B', { base: null, baseDeleted: false }),
+        ])
+        const { data } = await supabase.from(TABLE).select('data').eq('id', id).single()
+        const held = (data as { data: { name: string } }).data.name
+
+        expect([first, second].filter((refused) => refused.length === 0)).toHaveLength(1)
+        expect([...first, ...second].map((row) => row.data.name)).toEqual([held])
       },
       TIMEOUT,
     )
@@ -227,7 +272,7 @@ describe.skipIf(!URL || !KEY)('supabase replication (two clients)', () => {
       'keeps the clock rule for a row with no base — a build shipped before bases',
       async () => {
         const id = newDeckId()
-        await push(id, 't2', 'newer', null)
+        await push(id, 't2', 'newer', { base: null })
         expect((await push(id, 't1', 'older')).map((row) => row.data.name)).toEqual(['newer'])
         expect(await push(id, 't3', 'newest')).toEqual([])
       },

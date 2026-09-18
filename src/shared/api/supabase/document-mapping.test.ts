@@ -3,7 +3,10 @@ import { docToRow, rowToDoc } from './document-mapping'
 
 describe('document mapping', () => {
   it('strips _deleted into the deleted column and never sends updated_at', () => {
-    const row = docToRow({ id: 'd1', name: 'Deck', _deleted: true }, 'u1', 't1')
+    const row = docToRow({ id: 'd1', name: 'Deck', _deleted: true }, 'u1', {
+      updatedAt: 't1',
+      deleted: false,
+    })
 
     expect(row).toEqual({
       id: 'd1',
@@ -11,6 +14,7 @@ describe('document mapping', () => {
       data: { id: 'd1', name: 'Deck' },
       deleted: true,
       base: 't1',
+      base_deleted: false,
     })
     expect('updated_at' in row).toBe(false)
   })
