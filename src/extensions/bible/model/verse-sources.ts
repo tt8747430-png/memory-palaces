@@ -9,7 +9,7 @@ export interface SourceCard {
 }
 
 /** One verse's worth of a card, once the front has been read as a reference. */
-interface VerseSource {
+export interface VerseSource {
   book: BookCode
   chapter: number
   verse: number

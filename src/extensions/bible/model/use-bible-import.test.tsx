@@ -157,6 +157,29 @@ describe('useBibleImport — saving to the Bible library', () => {
     ])
   })
 
+  it('has the verses in the library before it hands the cards to review', async () => {
+    const { result, pick, verseStore, onReview } = render(undefined, { verses: genesisOne })
+    // A library slower to write than the deck: review must still wait for it.
+    const save = verseStore.getState().save
+    verseStore.setState({
+      save: async (held) => {
+        await new Promise((resolve) => setTimeout(resolve, 20))
+        return save(held)
+      },
+    })
+    let heldAtReview: number | null = null
+    onReview.mockImplementation(() => {
+      heldAtReview = verseStore.getState().verses.length
+    })
+    await pick(1, 1, 3)
+    act(() => result.current.setText('1) First.\n2) Second.\n3) Third.'))
+
+    act(() => result.current.add())
+
+    await waitFor(() => expect(onReview).toHaveBeenCalledTimes(1))
+    expect(heldAtReview).toBe(3)
+  })
+
   it('saves nothing when the learner switches saving off', async () => {
     const { result, pick, verseStore, onReview } = render()
     await pick(1, 1, 1)

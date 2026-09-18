@@ -11,26 +11,19 @@ import { keepMissingVerses } from '../features/keep-missing-verses'
 import { useBibleVerseStore, useBibleVerseStoreApi } from './context'
 import { chapterDeckName } from './deck-names'
 import { indexLibrary, type LibraryIndex } from './library-index'
-import { type PassageText, passagePrefill } from './passage-text'
+import type { PassageText } from './passage-text'
 import { recentPassages, type RecentPassage } from './recents'
-import { formatRef, parseRef } from './reference'
 import { DEFAULT_TRANSLATION } from './translations'
 import { type PassagePicker, usePassagePicker } from './use-passage-picker'
-import {
-  addableCards,
-  buildVerseCards,
-  canSplit,
-  findDuplicates,
-  type HeldRef,
-} from './verse-cards'
-import { verseSources } from './verse-sources'
+import { useVerseCards } from './use-verse-cards'
+import { type BibleImportSheet, useVersePlacement } from './use-verse-placement'
+import { useVerseText } from './use-verse-text'
+import type { HeldRef } from './verse-cards'
 import { makeBibleVerse } from './verse'
 import { type VerseTarget, targetIsResolvable } from './verse-target'
 
 /** The switches on the screen. The text box is the learner's own input, not a setting. */
 export type BibleImportToggle = 'split' | 'keepDuplicates' | 'auto' | 'save'
-
-export type BibleImportSheet = 'deck' | 'name'
 
 export interface BibleImport {
   /** The stores the screen reads have all mirrored, so what it says about either library is true. */
@@ -88,12 +81,10 @@ export interface BibleImport {
   showSheet: (sheet: BibleImportSheet | null) => void
 }
 
-const range = (from: number, to: number): number[] =>
-  Array.from({ length: to - from + 1 }, (_, index) => from + index)
-
 /**
- * Everything the Bible import screen holds, in one surface: the screen reads it and renders. Every
- * write goes through a command, called from here.
+ * Everything the Bible import screen holds, in one surface: the screen reads it and renders. The
+ * text box, the cards it makes and where they go are seams of their own (`useVerseText`,
+ * `useVerseCards`, `useVersePlacement`); every write goes through a command, called from here.
  */
 export function useBibleImport(
   deckId: string | undefined,
@@ -114,86 +105,48 @@ export function useBibleImport(
   const verseStore = useBibleVerseStoreApi()
   const setDraft = useImportDraft((draft) => draft.setDraft)
 
-  // What the learner typed, and the passage they typed it under. Absent until they touch the box.
-  const [own, setOwn] = useState<{ ref: string | null; text: string } | null>(null)
   const [toggles, setToggles] = useState<Record<BibleImportToggle, boolean>>({
     split: true,
     keepDuplicates: false,
     auto: !deckId,
     save: true,
   })
-  // The learner's own placement, remembered across the toggle. Switching "Include in decks" on and
-  // straight off again must give back the deck they arrived with, not throw it away.
-  const [choice, setChoice] = useState<VerseTarget>(
-    deckId ? { kind: 'deck', deckId } : { kind: 'newDeck', name: '' },
-  )
-  const [sheet, setSheet] = useState<BibleImportSheet | null>(null)
+  const { split, keepDuplicates, auto, save } = toggles
 
   const index = useMemo(() => indexLibrary(verses), [verses])
   const recents = useMemo(() => recentPassages(cards), [cards])
-  // Read again whenever the passage or the library changes — a verse that arrives by Sync fills a
-  // box the learner has not touched.
-  const passage = useMemo(() => (ref ? passagePrefill(ref, index) : null), [ref, index])
-
-  const key = ref ? formatRef(ref) : null
-  // The learner's text always wins. An empty one is an answer too — but only for the passage it was
-  // cleared under: change verses, and the Bible library gets to speak again.
-  const typed = own && (own.text !== '' || own.ref === key) ? own.text : null
-  const prefill = passage?.text ?? ''
-  const text = typed ?? prefill
-  const prefilled = prefill !== '' && text === prefill
-
   const chapterName = book && chapter ? chapterDeckName(book, chapter) : ''
-  const { split, keepDuplicates, auto, save } = toggles
-  // An unnamed new deck takes the chapter's name and follows it: named once at the toggle, a deck
-  // for chapter 2 would still be called "Geneza 1". A name the learner gave is left alone.
-  const target: VerseTarget = auto
-    ? { kind: 'automatic' }
-    : choice.kind === 'newDeck' && !choice.name.trim()
-      ? { kind: 'newDeck', name: chapterName }
-      : choice
 
-  const held = useMemo(
-    () => cards.map((card) => ({ front: card.front, deckId: card.deckId })),
-    [cards],
-  )
-  const built = useMemo(() => buildVerseCards(ref, text, { split }), [ref, text, split])
-  const duplicates = useMemo(() => findDuplicates(built, held), [built, held])
-  const addable = useMemo(
-    () => addableCards(built, duplicates, keepDuplicates),
-    [built, duplicates, keepDuplicates],
-  )
-  // Every verse card the text makes, always split: the Bible library holds one record per verse,
-  // and a range card is not one. Saving reads this whatever the split toggle says.
-  const keepable = useMemo(() => buildVerseCards(ref, text), [ref, text])
-  const splitAvailable = canSplit(text)
-  const unheld = useMemo(
-    () =>
-      verseSources(keepable).filter(
-        (source) => !index.hasVerse(source.book, source.chapter, source.verse),
-      ),
-    [keepable, index],
-  )
-  const missing = useMemo(() => {
-    if (!ref || !splitAvailable) return []
-    const present = new Set(keepable.flatMap((card) => parseRef(card.front)?.from ?? []))
-    return range(ref.from, ref.to).filter((verse) => !present.has(verse))
-  }, [ref, splitAvailable, keepable])
+  const box = useVerseText(ref, index)
+  const made = useVerseCards({ ref, text: box.text, split, keepDuplicates, cards, index })
+  const placement = useVersePlacement(deckId, auto, chapterName, decks)
 
+  // The Bible library and the deck are written side by side, and review opens only once both
+  // have landed: the passage it shows is already kept. A library that fails to keep the text says
+  // so and still hands the cards over — they are what the learner pressed Add for.
   const add = () => {
     const at = nowIso()
     const fresh = save
-      ? unheld.map((source) =>
+      ? made.unheld.map((source) =>
           makeBibleVerse({ createdAt: at, translation: DEFAULT_TRANSLATION, ...source }),
         )
       : []
-    void addVerseCards({ deckStore, setDraft }, { cards: addable, ref, target }).then(
-      onReview,
+    const keeping = fresh.length
+      ? keepMissingVerses(verseStore, fresh).then(
+          () => {},
+          () => {
+            toast.error(t('saveFailed'))
+          },
+        )
+      : Promise.resolve()
+    const placing = addVerseCards(
+      { deckStore, setDraft },
+      { cards: made.addable, ref, target: placement.target },
+    )
+    void Promise.all([placing, keeping]).then(
+      ([reviewIn]) => onReview(reviewIn),
       () => toast.error(t('addFailed')),
     )
-    if (fresh.length) {
-      void keepMissingVerses(verseStore, fresh).catch(() => toast.error(t('saveFailed')))
-    }
   }
 
   return {
@@ -201,43 +154,38 @@ export function useBibleImport(
     picker,
     index,
     recents,
-    passage,
+    passage: box.passage,
     chapterName,
     translation: DEFAULT_TRANSLATION,
 
-    text,
-    setText: (value) => setOwn({ ref: key, text: value }),
-    prefilled,
-    missing,
+    text: box.text,
+    setText: box.setText,
+    prefilled: box.prefilled,
+    missing: made.missing,
 
     split,
     keepDuplicates,
     auto,
     save,
     set: (toggle, on) => setToggles((current) => ({ ...current, [toggle]: on })),
-    splitAvailable,
-    splitCount: splitAvailable ? keepable.length : 0,
+    splitAvailable: made.splitAvailable,
+    splitCount: made.splitCount,
     spansRange: Boolean(ref && ref.to > ref.from),
-    saveCount: unheld.length,
+    saveCount: made.unheld.length,
 
-    hasCards: built.length > 0,
-    duplicates,
-    addable,
-    canAdd: addable.length > 0 && targetIsResolvable(target),
+    hasCards: made.built.length > 0,
+    duplicates: made.duplicates,
+    addable: made.addable,
+    canAdd: made.addable.length > 0 && targetIsResolvable(placement.target),
     add,
 
-    target,
-    destination:
-      target.kind === 'deck'
-        ? (decks.find((deck) => deck.id === target.deckId)?.name ?? null)
-        : target.kind === 'newDeck'
-          ? target.name
-          : null,
-    pickDeck: (picked) => setChoice({ kind: 'deck', deckId: picked }),
-    nameDeck: (name) => setChoice({ kind: 'newDeck', name }),
+    target: placement.target,
+    destination: placement.destination,
+    pickDeck: placement.pickDeck,
+    nameDeck: placement.nameDeck,
     decks,
     folders,
-    sheet,
-    showSheet: setSheet,
+    sheet: placement.sheet,
+    showSheet: placement.showSheet,
   }
 }
