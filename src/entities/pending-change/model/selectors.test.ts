@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { makePendingChange } from './types'
-import { pendingByTable, pendingIn, selectLatestPendingAt, selectPendingCount } from './selectors'
+import {
+  pendingByTable,
+  pendingIn,
+  selectLatestPendingAt,
+  selectPendingCount,
+  selectPendingCountIn,
+} from './selectors'
 import type { PendingChangeState } from './store'
 
 const change = (table: string, entityId: string, at = 't1') =>
@@ -26,7 +32,11 @@ describe('pending-change selectors', () => {
     expect(selectLatestPendingAt(holding([]))).toBeNull()
     expect(
       selectLatestPendingAt(
-        holding([change('decks', 'd1', 't3'), change('cards', 'c1', 't9'), change('cards', 'c2', 't5')]),
+        holding([
+          change('decks', 'd1', 't3'),
+          change('cards', 'c1', 't9'),
+          change('cards', 'c2', 't5'),
+        ]),
       ),
     ).toBe('t9')
   })
@@ -35,6 +45,16 @@ describe('pending-change selectors', () => {
     const changes = [change('decks', 'd1'), change('bible_verses', 'v1')]
     expect(pendingIn(changes, ['decks', 'cards'])).toEqual([changes[0]])
     expect(pendingIn(changes, ['decks', 'bible_verses'])).toEqual(changes)
+  })
+
+  it('counts only what a Sync over the live tables would carry — a number, so a subscriber re-renders on the count', () => {
+    const state = holding([
+      change('decks', 'd1'),
+      change('bible_verses', 'v1'),
+      change('cards', 'c1'),
+    ])
+    expect(selectPendingCountIn(['decks', 'cards'])(state)).toBe(2)
+    expect(selectPendingCountIn([])(state)).toBe(0)
   })
 
   it('breaks the log down by table, naming only the tables that have something waiting', () => {

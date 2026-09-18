@@ -23,6 +23,12 @@ export const pendingIn = (
   return changes.filter((change) => live.has(change.table))
 }
 
+/** How many changes a Sync over `tables` would carry — for a subscriber that shows only the count. */
+export const selectPendingCountIn =
+  (tables: readonly SyncedTable[]) =>
+  (state: PendingChangeState): number =>
+    pendingIn(state.pendingChanges, tables).length
+
 /** How many changes wait per table, in first-seen order; a table with none is absent. */
 export function pendingByTable(
   changes: readonly PendingChange[],

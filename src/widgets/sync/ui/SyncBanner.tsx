@@ -10,9 +10,10 @@ import {
   WifiOff,
 } from 'lucide-react'
 import { cn, EASE_OUT, useOnline, useSyncRunner } from '@/shared/lib'
+import type { SyncedTable } from '@/shared/config/sync-tables'
 import { Button } from '@/shared/ui'
 import { selectSessionKind, useSessionStore } from '@/entities/session'
-import { pendingIn, selectPendingChanges, usePendingChangeStore } from '@/entities/pending-change'
+import { selectPendingCountIn, usePendingChangeStore } from '@/entities/pending-change'
 import { selectCloudChanged, useSyncStateStore } from '@/entities/sync-state'
 import { bannerView, type SyncBannerMessage, type SyncBannerTone } from '../model/banner-state'
 
@@ -34,6 +35,8 @@ const ICON: Record<SyncBannerMessage, typeof RefreshCw> = {
   cloudChanged: CloudAlert,
 }
 
+const NO_TABLES: readonly SyncedTable[] = []
+
 export interface SyncBannerProps {
   className?: string
 }
@@ -44,22 +47,15 @@ export function SyncBanner({ className }: SyncBannerProps) {
   const runner = useSyncRunner()
   const online = useOnline()
   const kind = useSessionStore(selectSessionKind)
-  const changes = usePendingChangeStore(selectPendingChanges)
+  // Waiting means waiting on a table a Sync covers: a disabled extension's rows are not.
+  const tables = runner?.tables ?? NO_TABLES
+  const pendingCount = usePendingChangeStore(useMemo(() => selectPendingCountIn(tables), [tables]))
   const cloudChanged = useSyncStateStore(selectCloudChanged)
 
-  // Waiting means waiting on a table a Sync covers: a disabled extension's rows are not.
-  const view = useMemo(
-    () =>
-      runner && kind === 'account'
-        ? bannerView({
-            phase: runner.phase,
-            pendingCount: pendingIn(changes, runner.tables).length,
-            cloudChanged,
-            online,
-          })
-        : null,
-    [runner, kind, changes, cloudChanged, online],
-  )
+  const view =
+    runner && kind === 'account'
+      ? bannerView({ phase: runner.phase, pendingCount, cloudChanged, online })
+      : null
 
   const Icon = view ? ICON[view.message] : AlertTriangle
 

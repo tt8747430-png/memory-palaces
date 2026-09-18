@@ -13,5 +13,6 @@ export {
   selectLatestPendingAt,
   selectPendingChanges,
   selectPendingCount,
+  selectPendingCountIn,
 } from './model/selectors'
 export type { PendingChangeRepository } from './api/pending-change-repository'
