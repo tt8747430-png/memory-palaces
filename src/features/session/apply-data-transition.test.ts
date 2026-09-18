@@ -18,7 +18,7 @@ function setup() {
 describe('applyDataTransition', () => {
   it('starts watching and keeps local data on keep — that is the guest claim', async () => {
     const { syncManager, dataOwner, resetLocal } = setup()
-    const onRemoteChange = vi.fn()
+    const watcher = { onChange: vi.fn(), onReconnect: vi.fn() }
 
     await applyDataTransition({
       transition: 'keep',
@@ -27,10 +27,10 @@ describe('applyDataTransition', () => {
       tables: TABLES,
       dataOwner,
       resetLocal,
-      onRemoteChange,
+      watcher,
     })
 
-    expect(syncManager.start).toHaveBeenCalledWith('a', TABLES, onRemoteChange)
+    expect(syncManager.start).toHaveBeenCalledWith('a', TABLES, watcher)
     expect(dataOwner.claim).toHaveBeenCalledWith('a')
     expect(resetLocal).not.toHaveBeenCalled()
   })

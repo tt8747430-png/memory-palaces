@@ -30,6 +30,12 @@ export type {
   PushedIds,
   RemoteChange,
   RemoteChangeEvent,
+  RemoteChangeHandlers,
   RemoteParents,
 } from './cloud-sync-port'
-export { EPOCH, highestCheckpoint, isAfterCheckpoint } from './cloud-sync-port'
+export {
+  EPOCH,
+  highestCheckpoint,
+  isAfterCheckpoint,
+  NO_REMOTE_CHANGE_HANDLERS,
+} from './cloud-sync-port'

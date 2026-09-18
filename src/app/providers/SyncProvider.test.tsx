@@ -224,7 +224,7 @@ describe('SyncProvider', () => {
     await mount({ syncManager, cloudSync, auth: account })
 
     await waitFor(() =>
-      expect(syncManager.start).toHaveBeenCalledWith('u1', CORE_TABLE_NAMES, expect.any(Function)),
+      expect(syncManager.start).toHaveBeenCalledWith('u1', CORE_TABLE_NAMES, expect.any(Object)),
     )
     expect(cloudSync.runCycle).not.toHaveBeenCalled()
   })
@@ -236,7 +236,7 @@ describe('SyncProvider', () => {
       expect(syncManager.start).toHaveBeenLastCalledWith(
         'u1',
         CORE_TABLE_NAMES,
-        expect.any(Function),
+        expect.any(Object),
       ),
     )
 
@@ -248,7 +248,7 @@ describe('SyncProvider', () => {
       expect(syncManager.start).toHaveBeenLastCalledWith(
         'u1',
         [...CORE_TABLE_NAMES, 'bible_verses'],
-        expect.any(Function),
+        expect.any(Object),
       ),
     )
     expect(syncManager.stop).toHaveBeenCalled()
@@ -264,7 +264,7 @@ describe('SyncProvider', () => {
       expect(syncManager.start).toHaveBeenLastCalledWith(
         'u1',
         [...CORE_TABLE_NAMES, 'bible_verses'],
-        expect.any(Function),
+        expect.any(Object),
       ),
     )
 
@@ -276,7 +276,7 @@ describe('SyncProvider', () => {
       expect(syncManager.start).toHaveBeenLastCalledWith(
         'u1',
         CORE_TABLE_NAMES,
-        expect.any(Function),
+        expect.any(Object),
       ),
     )
   })
@@ -394,9 +394,7 @@ describe('SyncProvider', () => {
     await stores.deck.getState().save({ id: 'd1' } as never)
     await stores.pending
       .getState()
-      .save(
-        makePendingChange({ table: 'decks', entityId: 'd1', op: 'remove', at: 't' }),
-      )
+      .save(makePendingChange({ table: 'decks', entityId: 'd1', op: 'remove', at: 't' }))
 
     await expect(runner()!.run()).resolves.toMatchObject({ kind: 'needs-review' })
 
@@ -423,9 +421,7 @@ describe('SyncProvider', () => {
     await waitFor(() => expect(runner()).not.toBeNull())
     await stores.pending
       .getState()
-      .save(
-        makePendingChange({ table: 'decks', entityId: 'd1', op: 'remove', at: 't' }),
-      )
+      .save(makePendingChange({ table: 'decks', entityId: 'd1', op: 'remove', at: 't' }))
 
     await runner()!.openReview()
     await waitFor(() => expect(runner()!.review?.rows).toEqual({ state: 'failed' }))
@@ -520,7 +516,7 @@ describe('SyncProvider', () => {
     await mount({ syncManager, auth: account, resetLocal, dataOwner: owner('u1'), pending: 2 })
 
     await waitFor(() =>
-      expect(syncManager.start).toHaveBeenCalledWith('u1', CORE_TABLE_NAMES, expect.any(Function)),
+      expect(syncManager.start).toHaveBeenCalledWith('u1', CORE_TABLE_NAMES, expect.any(Object)),
     )
     expect(resetLocal).not.toHaveBeenCalled()
   })
@@ -534,7 +530,7 @@ describe('SyncProvider', () => {
     rerenderWith({ syncManager, auth: account, resetLocal, dataOwner })
 
     await waitFor(() =>
-      expect(syncManager.start).toHaveBeenCalledWith('u1', CORE_TABLE_NAMES, expect.any(Function)),
+      expect(syncManager.start).toHaveBeenCalledWith('u1', CORE_TABLE_NAMES, expect.any(Object)),
     )
     expect(resetLocal).not.toHaveBeenCalled()
   })

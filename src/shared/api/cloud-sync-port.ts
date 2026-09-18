@@ -16,6 +16,21 @@ export interface RemoteChangeEvent extends Checkpoint {
   table: SyncedTable
 }
 
+/** What the cloud watcher reports: a row that moved, and a channel that came back. */
+export interface RemoteChangeHandlers {
+  onChange: (event: RemoteChangeEvent) => void
+  /**
+   * The Realtime channel subscribed again after a drop. Events may have gone by unheard, so the
+   * cloud may have moved without a single `onChange` saying so.
+   */
+  onReconnect: () => void
+}
+
+export const NO_REMOTE_CHANGE_HANDLERS: RemoteChangeHandlers = {
+  onChange: () => {},
+  onReconnect: () => {},
+}
+
 export const EPOCH = '1970-01-01T00:00:00Z'
 
 export function isAfterCheckpoint(at: Checkpoint, checkpoint: Checkpoint | null): boolean {

@@ -90,12 +90,12 @@ describe.skipIf(!URL || !KEY)('supabase replication (two clients)', () => {
     if (supabase && created.length) await supabase.from(TABLE).delete().in('id', created)
   }, TIMEOUT)
 
-  async function device(onRemoteChange?: (event: RemoteChangeEvent) => void) {
+  async function device(onChange?: (event: RemoteChangeEvent) => void) {
     const collection = await openCollection()
     const manager = SyncManager.fromSupabase(supabase, [
       { table: TABLE, collection: collection as unknown as RxCollection<Identifiable> },
     ])
-    await manager.start(userId, [TABLE], onRemoteChange)
+    await manager.start(userId, [TABLE], onChange ? { onChange, onReconnect: () => {} } : undefined)
     return { collection, manager }
   }
 

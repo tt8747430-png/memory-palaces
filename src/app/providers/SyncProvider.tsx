@@ -1,5 +1,13 @@
-import { type ReactNode, useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
-import type { CloudSyncPort, PersistedAuth, RemoteChangeEvent, StoragePort } from '@/shared/api'
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from 'react'
+import type { CloudSyncPort, PersistedAuth, RemoteChangeHandlers, StoragePort } from '@/shared/api'
 import type { SyncManager } from '@/shared/api/supabase'
 import { activeSyncTables, type SyncTableSpec } from '@/shared/config/sync-tables'
 import {
@@ -83,11 +91,18 @@ export function SyncProvider({
   )
 
   const inFlight = useRef<Promise<SyncOutcome> | null>(null)
+  // The watcher came back after a drop: whatever moved meanwhile went unheard, so Autosync pulls.
+  const [reconnects, setReconnects] = useState(0)
 
-  const onRemoteChange = useCallback(
-    (event: RemoteChangeEvent) => {
-      if (!inFlight.current) void noteCloudChange({ syncStateStore }, event)
-    },
+  const watcher = useMemo<RemoteChangeHandlers>(
+    () => ({
+      // An event during a cycle is the cycle's own echo or a change the cycle's second peek will
+      // see; either way the cycle's outcome says whether the cloud is ahead.
+      onChange: (event) => {
+        if (!inFlight.current) void noteCloudChange({ syncStateStore }, event)
+      },
+      onReconnect: () => setReconnects((count) => count + 1),
+    }),
     [syncStateStore],
   )
 
@@ -97,7 +112,7 @@ export function SyncProvider({
     resetLocal,
     storage,
     dataOwner,
-    onRemoteChange,
+    watcher,
     tables,
   })
 
@@ -216,8 +231,7 @@ export function SyncProvider({
     void navigator.storage?.persist?.()
   }, [])
 
-  const autosync = useCallback(() => void run(), [run])
-  useAutosync(Boolean(deps), autosync)
+  useAutosync({ active: deps !== null, run, reconnects })
   useFirstSync({ account, canSync: deps !== null, transition: status, tables, run })
 
   return (

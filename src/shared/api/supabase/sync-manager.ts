@@ -1,7 +1,13 @@
 import type { RxCollection } from 'rxdb'
 import type { RxReplicationState } from 'rxdb/plugins/replication'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Checkpoint, Identifiable, PushedIds, RemoteChangeEvent } from '@/shared/api'
+import {
+  type Checkpoint,
+  type Identifiable,
+  NO_REMOTE_CHANGE_HANDLERS,
+  type PushedIds,
+  type RemoteChangeHandlers,
+} from '@/shared/api'
 import type { SyncedTable } from '@/shared/config/sync-tables'
 import { createCollectionReplication } from './replication'
 import { type CloudWatcher, createCloudWatcher } from './cloud-watcher'
@@ -20,7 +26,7 @@ type ReplicationFactory = (
 type WatcherFactory = (
   userId: string,
   tables: readonly SyncedTable[],
-  onRemoteChange: (event: RemoteChangeEvent) => void,
+  handlers: RemoteChangeHandlers,
 ) => CloudWatcher
 
 const sameTables = (a: readonly SyncedTable[], b: readonly SyncedTable[]): boolean =>
@@ -56,8 +62,7 @@ export class SyncManager {
           collection: target.collection,
           onPushed,
         }),
-      (userId, tables, onRemoteChange) =>
-        createCloudWatcher(supabase, tables, userId, onRemoteChange),
+      (userId, tables, handlers) => createCloudWatcher(supabase, tables, userId, handlers),
     )
   }
 
@@ -70,14 +75,14 @@ export class SyncManager {
   async start(
     userId: string,
     tables: readonly SyncedTable[],
-    onRemoteChange: (event: RemoteChangeEvent) => void = () => {},
+    handlers: RemoteChangeHandlers = NO_REMOTE_CHANGE_HANDLERS,
   ): Promise<void> {
     const next = [...tables]
     if (this.userId === userId && sameTables(this.tables, next)) return
     await this.stop()
     this.userId = userId
     this.tables = next
-    this.watcher = this.watch(userId, next, onRemoteChange)
+    this.watcher = this.watch(userId, next, handlers)
   }
 
   runCycle(): Promise<PushedIds> {

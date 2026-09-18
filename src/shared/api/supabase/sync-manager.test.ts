@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { Subject } from 'rxjs'
-import type { RemoteChangeEvent } from '@/shared/api'
+import type { RemoteChangeEvent, RemoteChangeHandlers } from '@/shared/api'
 import type { SyncedTable } from '@/shared/config/sync-tables'
 import { SyncManager, type SyncTarget } from './sync-manager'
 
@@ -31,11 +31,9 @@ function setup(
   const created: Fake[] = []
   const stop = vi.fn().mockResolvedValue(undefined)
   const watch = vi.fn(
-    (
-      _userId: string,
-      _tables: readonly SyncedTable[],
-      _onRemoteChange: (event: RemoteChangeEvent) => void,
-    ) => ({ stop }),
+    (_userId: string, _tables: readonly SyncedTable[], _handlers: RemoteChangeHandlers) => ({
+      stop,
+    }),
   )
   const targets: SyncTarget[] = tables.map((table) => ({ table, collection: {} as never }))
   const manager = new SyncManager(
@@ -51,8 +49,8 @@ function setup(
   const start = (
     userId = 'u1',
     active: readonly SyncedTable[] = tables,
-    onRemoteChange?: (event: RemoteChangeEvent) => void,
-  ) => manager.start(userId, active, onRemoteChange)
+    handlers?: RemoteChangeHandlers,
+  ) => manager.start(userId, active, handlers)
   return { manager, created, watch, stop, start }
 }
 
@@ -63,7 +61,7 @@ describe('SyncManager', () => {
     await start()
 
     expect(created).toHaveLength(0)
-    expect(watch).toHaveBeenCalledWith('u1', ['decks', 'cards'], expect.any(Function))
+    expect(watch).toHaveBeenCalledWith('u1', ['decks', 'cards'], expect.any(Object))
   })
 
   it('runs one replication per table for a cycle and cancels them all afterwards', async () => {
@@ -202,9 +200,9 @@ describe('SyncManager', () => {
     const seen: RemoteChangeEvent[] = []
     const { watch, start } = setup()
 
-    await start('u1', undefined, (event) => seen.push(event))
+    await start('u1', undefined, { onChange: (event) => seen.push(event), onReconnect: () => {} })
     const [, , forward] = watch.mock.lastCall ?? []
-    forward?.({ table: 'decks', id: 'd1', updated_at: '2026-01-01T00:00:00Z' })
+    forward?.onChange({ table: 'decks', id: 'd1', updated_at: '2026-01-01T00:00:00Z' })
 
     expect(seen).toEqual([{ table: 'decks', id: 'd1', updated_at: '2026-01-01T00:00:00Z' }])
   })
@@ -240,12 +238,12 @@ describe('SyncManager', () => {
       const { watch, stop, start } = setup(TABLES)
 
       await start('u1', WITHOUT_BIBLE)
-      expect(watch).toHaveBeenLastCalledWith('u1', WITHOUT_BIBLE, expect.any(Function))
+      expect(watch).toHaveBeenLastCalledWith('u1', WITHOUT_BIBLE, expect.any(Object))
 
       await start('u1', TABLES)
 
       expect(stop).toHaveBeenCalledTimes(1)
-      expect(watch).toHaveBeenLastCalledWith('u1', TABLES, expect.any(Function))
+      expect(watch).toHaveBeenLastCalledWith('u1', TABLES, expect.any(Object))
     })
 
     it('leaves the watcher alone when the same account restarts over the same set', async () => {

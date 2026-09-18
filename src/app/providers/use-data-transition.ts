@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { PersistedAuth, RemoteChangeEvent, StoragePort } from '@/shared/api'
+import type { PersistedAuth, RemoteChangeHandlers, StoragePort } from '@/shared/api'
 import type { SyncManager } from '@/shared/api/supabase'
 import type { SyncedTable } from '@/shared/config/sync-tables'
 import { type DataOwner, resolveDataTransition, selectIsReady, useLatest } from '@/shared/lib'
@@ -20,7 +20,7 @@ export interface DataTransitionDeps {
   resetLocal: () => Promise<void>
   storage: StoragePort
   dataOwner: DataOwner
-  onRemoteChange: (event: RemoteChangeEvent) => void
+  watcher: RemoteChangeHandlers
   /**
    * The tables live right now. Handed to `start`, so toggling an extension re-runs the transition
    * and the watcher comes back over the new set — the list is read here, not merely depended on.
@@ -53,7 +53,7 @@ export function useDataTransition({
   resetLocal,
   storage,
   dataOwner,
-  onRemoteChange,
+  watcher,
   tables,
 }: DataTransitionDeps): DataTransition {
   const deckStore = useDeckStoreApi()
@@ -64,7 +64,7 @@ export function useDataTransition({
   const { signOut } = useAuthActions()
   const [watchingFor, setWatchingFor] = useState<string | null>(null)
 
-  const remoteChange = useLatest(onRemoteChange)
+  const handlers = useLatest(watcher)
 
   // The account whose question the learner has just answered "sign out" to. The dialog closes at
   // once rather than waiting on the sign-out round-trip, and a second tap cannot sign out twice.
@@ -97,7 +97,10 @@ export function useDataTransition({
         tables,
         dataOwner,
         resetLocal,
-        onRemoteChange: (event) => remoteChange.current(event),
+        watcher: {
+          onChange: (event) => handlers.current.onChange(event),
+          onReconnect: () => handlers.current.onReconnect(),
+        },
       })
       if (transition === 'reset') return
       if (live) setWatchingFor(userId)
@@ -120,7 +123,7 @@ export function useDataTransition({
     profileStore,
     pendingChangeStore,
     dataOwner,
-    remoteChange,
+    handlers,
     tables,
   ])
 
