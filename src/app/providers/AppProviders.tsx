@@ -3,6 +3,8 @@ import { Toaster } from 'sonner'
 import type { PersistedAuth } from '@/shared/api'
 import { useSessionStore } from '@/entities/session'
 import type { Services } from '../composition-root'
+import { ExtensionsProvider } from '../extensions/ExtensionsProvider'
+import { EXTENSIONS } from '../extensions/registry'
 import { ServicesProvider } from './ServicesProvider'
 import { PreferencesProvider } from './PreferencesProvider'
 import { AuthProvider } from './AuthProvider'
@@ -36,7 +38,9 @@ export function AppProviders({ services, children }: { services: Services; child
       <PreferencesProvider>
         <AuthProvider>
           <AppSync services={services}>
-            <ScheduledDeletionGate>{children}</ScheduledDeletionGate>
+            <ScheduledDeletionGate>
+              <ExtensionsProvider manifests={EXTENSIONS}>{children}</ExtensionsProvider>
+            </ScheduledDeletionGate>
           </AppSync>
         </AuthProvider>
       </PreferencesProvider>

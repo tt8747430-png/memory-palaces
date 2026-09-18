@@ -9,7 +9,7 @@ import {
   type StoragePort,
 } from '@/shared/api'
 import type { SyncManager, SyncTarget } from '@/shared/api/supabase'
-import { type AppEvents, EventBus, nowIso } from '@/shared/lib'
+import { type AppEvents, EventBus, type ExtensionRepositories, nowIso } from '@/shared/lib'
 import { type ContentCollection, SYNCED_TABLES } from '@/shared/config/sync-tables'
 import { createSessionStore, type Session, type SessionStore } from '@/entities/session'
 import { createDeckStore, type Deck, type DeckStore } from '@/entities/deck'
@@ -41,6 +41,8 @@ import {
 import { createSyncStateStore, type SyncState, type SyncStateStore } from '@/entities/sync-state'
 import { createPendingChangePort } from '@/features/sync'
 import { keepImagesCached } from '@/features/media'
+import { loadExtensionCollections } from './extensions/collections'
+import { EXTENSIONS } from './extensions/registry'
 import { resetLocalDatabase } from './persistence/reset-local-database'
 import { keepArchiveDetached } from './persistence/keep-archive-detached'
 import { keepHistoryCapped } from './persistence/keep-history-capped'
@@ -65,6 +67,7 @@ export interface Services {
   syncManager: SyncManager | null
   cloudSync: CloudSyncPort | null
   resetLocalData: () => Promise<void>
+  extensionRepositories: ExtensionRepositories
 }
 
 export async function createServices(): Promise<Services> {
@@ -74,14 +77,17 @@ export async function createServices(): Promise<Services> {
     { RxdbRepository },
     cloud,
     { createAuthGateway },
+    { buildExtensionRepositories },
   ] = await Promise.all([
     import('rxdb/plugins/storage-dexie'),
     import('./persistence/database'),
     import('@/shared/api/rxdb'),
     import('@/shared/api/supabase'),
     import('./persistence/create-auth-gateway'),
+    import('./extensions/repositories'),
   ])
 
+  const extensionSpecs = await loadExtensionCollections(EXTENSIONS)
   const collections = createAppDatabase(getRxStorageDexie())
   const authGateway = createAuthGateway()
   const sessionRepo = new InMemoryRepository<Session>()
@@ -133,6 +139,7 @@ export async function createServices(): Promise<Services> {
     syncManager,
     cloudSync: syncManager ? cloud.createSupabaseCloudSync(cloud.supabase, syncManager) : null,
     resetLocalData: () => resetLocalDatabase({ collections }),
+    extensionRepositories: buildExtensionRepositories(extensionSpecs, collections),
   }
 
   for (const store of [
