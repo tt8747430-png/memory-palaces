@@ -414,7 +414,7 @@ export const pendingChangeSchema: RxJsonSchema<PendingChange> = {
 }
 
 export const syncStateSchema: RxJsonSchema<SyncState> = {
-  version: 2,
+  version: 3,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -422,6 +422,20 @@ export const syncStateSchema: RxJsonSchema<SyncState> = {
     checkpoints: { type: 'object', additionalProperties: true },
     lastSyncedAt: { type: ['string', 'null'] },
     cloudChanged: { type: 'boolean' },
+    log: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          at: { type: 'string' },
+          outcome: { type: 'string', enum: ['clean', 'merged', 'needs-review', 'failed'] },
+          pushed: { type: 'number' },
+          pulled: { type: 'number' },
+          reason: { type: 'string' },
+        },
+        required: ['at', 'outcome', 'pushed', 'pulled'],
+      },
+    },
   },
-  required: ['id', 'checkpoints', 'cloudChanged'],
+  required: ['id', 'checkpoints', 'cloudChanged', 'log'],
 }

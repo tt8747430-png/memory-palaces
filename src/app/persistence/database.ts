@@ -95,19 +95,22 @@ export const preferencesMigrations = {
   }),
 }
 
-type SyncStateV1 = SyncState & { autosync: boolean }
+type SyncStateV2 = Omit<SyncState, 'log'>
+type SyncStateV1 = SyncStateV2 & { autosync: boolean }
 
 export const syncStateMigrations = {
-  1: (doc: SyncState): SyncStateV1 => ({ ...doc, autosync: true }),
+  1: (doc: SyncStateV2): SyncStateV1 => ({ ...doc, autosync: true }),
   /**
    * Autosync moved into Preferences. The field goes, but a learner who had switched it off keeps
    * that choice: the migration hands it to `adoptDeviceSettings`, which cannot read this collection
    * once the field is gone.
    */
-  2: ({ autosync, ...doc }: SyncStateV1): SyncState => {
+  2: ({ autosync, ...doc }: SyncStateV1): SyncStateV2 => {
     if (!autosync) localStorage.setItem(AUTOSYNC_OFF_HANDOFF_KEY, '1')
     return doc
   },
+  /** The device starts remembering its recent Syncs. */
+  3: (doc: SyncStateV2): SyncState => ({ ...doc, log: [] }),
 }
 
 type PendingChangeV0 = Omit<PendingChange, 'table'> & { collection: ContentCollection }

@@ -206,7 +206,7 @@ describe('schema migrations', () => {
     expect(preferencesSchema.version).toBe(4)
     expect(profileSchema.version).toBe(2)
     expect(pendingChangeSchema.version).toBe(2)
-    expect(syncStateSchema.version).toBe(2)
+    expect(syncStateSchema.version).toBe(3)
   })
 
   it('gives a v3 preferences document the settings that used to stay on the device', () => {

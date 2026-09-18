@@ -71,4 +71,9 @@ export interface CloudSyncPort {
     ids: readonly string[],
   ): Promise<CloudDocument<T>[]>
   runCycle(): Promise<PushedIds>
+  /**
+   * Forgets every replication's record of what it has pulled and pushed, so the next cycle reads
+   * the whole cloud again and reconciles every local document against it. Local writes are kept.
+   */
+  forget(): Promise<void>
 }

@@ -11,6 +11,8 @@ function fakeReplication() {
     reSync: vi.fn(),
     awaitInSync: vi.fn().mockResolvedValue(true),
     cancel: vi.fn().mockResolvedValue(undefined),
+    remove: vi.fn().mockResolvedValue(undefined),
+    autoStart: true,
   }
 }
 
@@ -38,8 +40,9 @@ function setup(
   const targets: SyncTarget[] = tables.map((table) => ({ table, collection: {} as never }))
   const manager = new SyncManager(
     targets,
-    (_userId, target, onPushed) => {
+    (_userId, target, onPushed, autoStart) => {
       const replication = fakeReplication()
+      replication.autoStart = autoStart
       configure(replication, onPushed, target.table)
       created.push(replication)
       return replication as never
@@ -128,6 +131,21 @@ describe('SyncManager', () => {
     await manager.runCycle()
 
     expect(created).toHaveLength(4)
+  })
+
+  it('forgets every live replication without running one, and only for an account', async () => {
+    const { manager, created, start } = setup(['decks', 'cards', 'bible_verses'])
+    await expect(manager.forget()).rejects.toThrow(/no account/i)
+    await start('u1', ['decks', 'cards'])
+
+    await manager.forget()
+
+    expect(created).toHaveLength(2)
+    for (const replication of created) {
+      expect(replication.autoStart).toBe(false)
+      expect(replication.remove).toHaveBeenCalled()
+      expect(replication.reSync).not.toHaveBeenCalled()
+    }
   })
 
   it('refuses to run before an account signs in — a cycle that pushed nothing must not read as done', async () => {

@@ -1,6 +1,6 @@
 import type { SyncedTable } from '@/shared/config/sync-tables'
 import type { Checkpoint } from '@/shared/api'
-import { DEFAULT_SYNC_STATE, type SyncState } from './types'
+import { DEFAULT_SYNC_STATE, type SyncLogEntry, type SyncState } from './types'
 import type { SyncStateState } from './store'
 
 export const selectSyncState = (state: SyncStateState): SyncState =>
@@ -11,6 +11,8 @@ export const selectLastSyncedAt = (state: SyncStateState): string | null =>
 
 export const selectCloudChanged = (state: SyncStateState): boolean =>
   selectSyncState(state).cloudChanged
+
+export const selectSyncLog = (state: SyncStateState): SyncLogEntry[] => selectSyncState(state).log
 
 export const checkpointFor = (state: SyncState, table: SyncedTable): Checkpoint | null =>
   state.checkpoints[table] ?? null

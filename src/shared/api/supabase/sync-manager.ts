@@ -22,6 +22,7 @@ type ReplicationFactory = (
   userId: string,
   target: SyncTarget,
   onPushed: (ids: readonly string[]) => void,
+  autoStart: boolean,
 ) => ReplicationState
 type WatcherFactory = (
   userId: string,
@@ -54,13 +55,14 @@ export class SyncManager {
   ): SyncManager {
     return new SyncManager(
       targets,
-      (userId, target, onPushed) =>
+      (userId, target, onPushed, autoStart) =>
         createCollectionReplication({
           supabase,
           userId,
           table: target.table,
           collection: target.collection,
           onPushed,
+          autoStart,
         }),
       (userId, tables, handlers) => createCloudWatcher(supabase, tables, userId, handlers),
     )
@@ -94,6 +96,22 @@ export class SyncManager {
     return this.running
   }
 
+  /**
+   * Forgets what every live replication has pulled and pushed — its checkpoint and its record of
+   * which server copy each document was based on — so the next cycle reads the whole cloud again.
+   * Waits for a running cycle rather than pulling the meta out from under it.
+   */
+  async forget(): Promise<void> {
+    const userId = this.userId
+    if (!userId) throw new Error('No account is signed in to synchronise as')
+    await this.running?.catch(() => {})
+    const live = new Set(this.tables)
+    const targets = (await this.targets).filter((target) => live.has(target.table))
+    await Promise.all(
+      targets.map((target) => this.makeReplication(userId, target, () => {}, false).remove()),
+    )
+  }
+
   async stop(): Promise<void> {
     const watcher = this.watcher
     this.watcher = null
@@ -109,11 +127,16 @@ export class SyncManager {
 
     const pushed = new Map<SyncedTable, Set<string>>()
     const states = targets.map((target) =>
-      this.makeReplication(userId, target, (ids) => {
-        const seen = pushed.get(target.table) ?? new Set<string>()
-        for (const id of ids) seen.add(id)
-        pushed.set(target.table, seen)
-      }),
+      this.makeReplication(
+        userId,
+        target,
+        (ids) => {
+          const seen = pushed.get(target.table) ?? new Set<string>()
+          for (const id of ids) seen.add(id)
+          pushed.set(target.table, seen)
+        },
+        true,
+      ),
     )
 
     const subscriptions: { unsubscribe: () => void }[] = []

@@ -1,7 +1,8 @@
 import { errorMessage, type SyncOutcome } from '@/shared/lib'
 import { type PendingChange, pendingIn, selectPendingChanges } from '@/entities/pending-change'
-import { selectSyncState } from '@/entities/sync-state'
+import { appendSyncLog, selectSyncState, type SyncLogEntry } from '@/entities/sync-state'
 import { advance, findDestructive, peekAll, peekedCount, stepOverOwnEcho } from './divergence'
+import type { PushedIds } from '@/shared/api'
 import type { SyncDeps } from './sync-deps'
 
 export interface SyncNowOptions {
@@ -16,6 +17,18 @@ async function clearConfirmed(deps: SyncDeps, snapshot: readonly PendingChange[]
   await Promise.all(confirmed.map((change) => deps.pendingChangeStore.getState().remove(change.id)))
 }
 
+const pushedCount = (pushed: PushedIds): number =>
+  Object.values(pushed).reduce((total, ids) => total + (ids?.length ?? 0), 0)
+
+/** Writes one line of the device's Sync log. The log is bookkeeping: failing to write it is not a failed Sync. */
+async function logSync(deps: SyncDeps, entry: Omit<SyncLogEntry, 'at'>): Promise<void> {
+  const fresh = selectSyncState(deps.syncStateStore.getState())
+  await deps.syncStateStore
+    .getState()
+    .save({ ...fresh, log: appendSyncLog(fresh.log, { at: deps.now(), ...entry }) })
+    .catch(() => {})
+}
+
 export async function syncNow(deps: SyncDeps, options: SyncNowOptions = {}): Promise<SyncOutcome> {
   if (!deps.isOnline()) return { kind: 'offline' }
 
@@ -27,23 +40,54 @@ export async function syncNow(deps: SyncDeps, options: SyncNowOptions = {}): Pro
   try {
     const peeked = await peekAll(deps, started.checkpoints)
     const items = await findDestructive(deps, peeked, snapshot, options.answered)
-    if (items.length) return { kind: 'needs-review', items }
+    if (items.length) {
+      await logSync(deps, { outcome: 'needs-review', pushed: 0, pulled: 0 })
+      return { kind: 'needs-review', items }
+    }
 
     const pushed = await deps.cloud.runCycle()
     const seen = advance(started.checkpoints, peeked)
     const { checkpoints, foreignAhead } = stepOverOwnEcho(seen, await peekAll(deps, seen), pushed)
 
     await clearConfirmed(deps, snapshot)
+    const pulled = peekedCount(peeked)
+    const outcome = pulled ? 'merged' : 'clean'
     const fresh = selectSyncState(deps.syncStateStore.getState())
     await deps.syncStateStore.getState().save({
       ...fresh,
       checkpoints,
       lastSyncedAt: deps.now(),
       cloudChanged: foreignAhead,
+      log: appendSyncLog(fresh.log, {
+        at: deps.now(),
+        outcome,
+        pushed: pushedCount(pushed),
+        pulled,
+      }),
     })
 
-    return peekedCount(peeked) ? { kind: 'merged' } : { kind: 'clean' }
+    return { kind: outcome }
+  } catch (error) {
+    const reason = errorMessage(error)
+    await logSync(deps, { outcome: 'failed', pushed: 0, pulled: 0, reason })
+    return { kind: 'failed', reason }
+  }
+}
+
+/**
+ * A Sync that starts from nothing: every replication forgets what it pulled and pushed, the
+ * checkpoints go, and the cycle reads the whole cloud again — every local document reconciled
+ * against its cloud copy through the conflict handlers, every unsynced write kept. For a device
+ * that looks out of date when the log says otherwise.
+ */
+export async function repairSync(deps: SyncDeps): Promise<SyncOutcome> {
+  if (!deps.isOnline()) return { kind: 'offline' }
+  try {
+    await deps.cloud.forget()
+    const fresh = selectSyncState(deps.syncStateStore.getState())
+    await deps.syncStateStore.getState().save({ ...fresh, checkpoints: {} })
   } catch (error) {
     return { kind: 'failed', reason: errorMessage(error) }
   }
+  return syncNow(deps)
 }

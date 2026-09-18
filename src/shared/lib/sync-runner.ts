@@ -43,6 +43,8 @@ export interface SyncRunner {
   tables: readonly SyncedTable[]
   run: () => Promise<SyncOutcome>
   restore: () => Promise<SyncOutcome>
+  /** Reads the whole cloud again and reconciles every local document against it. */
+  repair: () => Promise<SyncOutcome>
   openReview: () => Promise<SyncOutcome>
   resolve: (decisions: readonly SyncReviewDecision[]) => Promise<SyncOutcome>
   dismiss: () => void

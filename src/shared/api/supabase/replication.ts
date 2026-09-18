@@ -42,6 +42,8 @@ export interface CollectionReplicationOptions<T> {
   table: string
   userId: string
   onPushed?: (ids: readonly string[]) => void
+  /** Off for a state made only to be `remove()`d — forgetting needs no cycle. */
+  autoStart?: boolean
 }
 
 /**
@@ -55,12 +57,14 @@ export function createCollectionReplication<T extends Identifiable>({
   table,
   userId,
   onPushed,
+  autoStart = true,
 }: CollectionReplicationOptions<T>): RxReplicationState<T, Checkpoint> {
   return replicateRxCollection<T, Checkpoint>({
     collection,
     replicationIdentifier: `supabase-${table}`,
     deletedField: '_deleted',
     live: false,
+    autoStart,
     push: {
       async handler(rows) {
         const { data, error } = await supabase

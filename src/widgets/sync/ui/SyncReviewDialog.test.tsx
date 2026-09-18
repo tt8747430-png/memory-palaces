@@ -43,6 +43,7 @@ function mount(rows: SyncReviewRows = READY, items: SyncReviewItem[] = ITEMS) {
     tables: SYNCED_TABLES,
     run: vi.fn().mockResolvedValue({ kind: 'clean' }),
     restore: vi.fn().mockResolvedValue({ kind: 'clean' }),
+    repair: vi.fn().mockResolvedValue({ kind: 'clean' }),
     openReview: vi.fn().mockResolvedValue({ kind: 'clean' }),
     resolve: vi.fn().mockResolvedValue({ kind: 'clean' }),
     dismiss: vi.fn(),

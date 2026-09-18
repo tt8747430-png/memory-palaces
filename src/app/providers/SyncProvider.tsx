@@ -34,6 +34,7 @@ import {
   describeReviewItems,
   findReviewItems,
   noteCloudChange,
+  repairSync,
   type SyncDeps,
   syncNow,
 } from '@/features/sync'
@@ -189,6 +190,7 @@ export function SyncProvider({
 
   const run = useCallback(() => runSync('syncing', syncNow), [runSync])
   const restore = useCallback(() => runSync('restoring', syncNow), [runSync])
+  const repair = useCallback(() => runSync('syncing', repairSync), [runSync])
   const resolve = useCallback(
     (decisions: readonly SyncReviewDecision[]) =>
       runSync('syncing', (current) => applyPendingDeletions(current, decisions)),
@@ -217,8 +219,10 @@ export function SyncProvider({
 
   const runner = useMemo<SyncRunner | null>(
     () =>
-      deps ? { ...state, tables, run, restore, openReview, resolve, dismiss, reloadReview } : null,
-    [deps, state, tables, run, restore, openReview, resolve, dismiss, reloadReview],
+      deps
+        ? { ...state, tables, run, restore, repair, openReview, resolve, dismiss, reloadReview }
+        : null,
+    [deps, state, tables, run, restore, repair, openReview, resolve, dismiss, reloadReview],
   )
 
   useEffect(() => {

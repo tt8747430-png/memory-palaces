@@ -6,7 +6,7 @@ import { makeQuestion } from '@/entities/question'
 import { makePendingChange } from '@/entities/pending-change'
 import { selectSyncState } from '@/entities/sync-state'
 import { AT, NOW, syncFixture } from './testing/fake-cloud'
-import { syncNow } from './sync-now'
+import { repairSync, syncNow } from './sync-now'
 
 const deck = (id: string, extra: { parentId?: string; folderId?: string } = {}) =>
   makeDeck({ id, createdAt: AT, name: id, ...extra })
@@ -229,5 +229,75 @@ describe('syncNow', () => {
     await expect(syncNow(deps)).resolves.toEqual({ kind: 'clean' })
 
     expect(log().map((row) => row.id)).toEqual(['bible_verses:v1'])
+  })
+
+  describe('the device’s log of its Syncs', () => {
+    it('records a landed cycle with how much it pushed and pulled', async () => {
+      const { deps, cloud } = syncFixture()
+      cloud.write('decks', deck('remote'))
+      await deps.deckStore.getState().save(deck('d1'))
+
+      await syncNow(deps)
+
+      expect(state(deps).log).toEqual([{ at: NOW, outcome: 'merged', pushed: 1, pulled: 1 }])
+    })
+
+    it('records a failed cycle with its reason, touching nothing else', async () => {
+      const { deps, cloud } = syncFixture()
+      cloud.failNextCycle('push refused')
+
+      await syncNow(deps)
+
+      expect(state(deps).log).toEqual([
+        { at: NOW, outcome: 'failed', pushed: 0, pulled: 0, reason: 'push refused' },
+      ])
+      expect(state(deps).lastSyncedAt).toBeNull()
+    })
+
+    it('records a cycle that stopped to ask', async () => {
+      const { deps, cloud } = syncFixture()
+      cloud.write('decks', deck('d1'))
+      await deps.deckStore.getState().save(deck('d1'))
+      await deps.deckStore.getState().remove('d1')
+      cloud.write('decks', { ...deck('d1'), name: 'edited elsewhere' })
+
+      await syncNow(deps)
+
+      expect(state(deps).log[0]?.outcome).toBe('needs-review')
+    })
+
+    it('keeps the newest ten', async () => {
+      const { deps } = syncFixture()
+      for (let i = 0; i < 12; i += 1) await syncNow(deps)
+      expect(state(deps).log).toHaveLength(10)
+    })
+  })
+
+  describe('repairSync', () => {
+    it('forgets what was pulled, drops the checkpoints and syncs again from nothing', async () => {
+      const { deps, cloud } = syncFixture({
+        state: { checkpoints: { decks: { updated_at: '2026-02-01T00:00:00.000Z', id: 'x' } } },
+      })
+      cloud.write('decks', deck('remote'))
+
+      await expect(repairSync(deps)).resolves.toEqual({ kind: 'merged' })
+
+      expect(cloud.forgotten).toBe(1)
+      expect(cloud.cycles).toBe(1)
+      expect(state(deps).checkpoints.decks).toEqual({
+        updated_at: cloud.row('decks', 'remote')?.updated_at,
+        id: 'remote',
+      })
+    })
+
+    it('keeps the writes that were waiting', async () => {
+      const { deps, log } = syncFixture()
+      await deps.deckStore.getState().save(deck('d1'))
+      deps.isOnline = () => false
+
+      await expect(repairSync(deps)).resolves.toEqual({ kind: 'offline' })
+
+      expect(log()).toHaveLength(1)
+    })
   })
 })
