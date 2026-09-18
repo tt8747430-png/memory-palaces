@@ -1,4 +1,5 @@
 import { cn } from '@/shared/lib'
+import { FOCUS_RING } from '@/shared/ui'
 
 export function NumberGrid({
   label,
@@ -22,7 +23,7 @@ export function NumberGrid({
             'mx-auto mb-3 block rounded-control bg-info-surface px-5 py-2.5 text-body font-semibold text-heading',
             'shadow-rest transition-[transform,box-shadow] duration-150 ease-out',
             'hover:shadow-interactive active:scale-[0.97]',
-            'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/45',
+            FOCUS_RING,
             'motion-reduce:transition-none',
           )}
         >
@@ -40,7 +41,7 @@ export function NumberGrid({
               'text-body font-semibold tabular-nums text-heading',
               'shadow-rest transition-[transform,background-color] duration-150 ease-out',
               'hover:bg-info-surface active:scale-[0.94]',
-              'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/45',
+              FOCUS_RING,
               'motion-reduce:transition-none',
             )}
           >

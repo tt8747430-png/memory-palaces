@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { cn } from '@/shared/lib'
+import { FOCUS_RING } from './focus-ring'
 
 export type ImportRowTone = 'brand' | 'accent' | 'positive' | 'warning' | 'danger' | 'neutral'
 
@@ -43,7 +44,7 @@ export function ImportRow({
         'group flex w-full items-center gap-3.5 rounded-card border border-border bg-card px-4 py-3 text-left',
         'shadow-rest transition-[transform,box-shadow,border-color] duration-150 ease-out',
         'hover:border-[oklch(var(--p-tint-navy)/0.14)] active:scale-[0.985]',
-        'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/45',
+        FOCUS_RING,
         'disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none',
       )}
     >
