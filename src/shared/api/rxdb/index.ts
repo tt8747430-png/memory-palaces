@@ -1,4 +1,5 @@
 export { RxdbRepository } from './rxdb-repository'
 export { openRxdbCollection } from './database'
 export type { OpenRxdbCollectionConfig } from './database'
-export { firstWriteWins, lastWriteWins, sameWrite } from './conflict-handlers'
+export { firstWriteWins, mergeAgainstBase, sameWrite } from './conflict-handlers'
+export type { MergeAgainstBase } from './conflict-handlers'

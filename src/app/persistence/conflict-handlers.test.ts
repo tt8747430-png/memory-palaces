@@ -31,6 +31,18 @@ describe('mergeProgressConflict', () => {
       ...over,
     })
 
+  it('adds up what each device earned when it knows what both had seen', async () => {
+    const resolved = await mergeProgressConflict.resolve(
+      {
+        assumedMasterState: progress({ updatedAt: 't1', xp: 100 }),
+        realMasterState: progress({ updatedAt: 't2', xp: 120 }),
+        newDocumentState: progress({ updatedAt: 't3', xp: 110 }),
+      },
+      CTX,
+    )
+    expect(resolved.xp).toBe(130)
+  })
+
   it('counter-merges instead of dropping a device worth of study', async () => {
     const resolved = await mergeProgressConflict.resolve(
       {
@@ -61,6 +73,23 @@ describe('mergeCardConflict', () => {
       _deleted: false,
       ...over,
     })
+
+  it('keeps the edit made elsewhere and the study made here — the lost update', async () => {
+    const seen = card({ updatedAt: 't1', back: 'old text' })
+    const resolved = await mergeCardConflict.resolve(
+      {
+        assumedMasterState: seen,
+        realMasterState: card({ updatedAt: 't2', back: 'fixed elsewhere' }),
+        newDocumentState: card({
+          updatedAt: 't3',
+          back: 'old text',
+          srs: { due: 'd', interval: 1, ease: 2.5, reps: 1, lapses: 0, lastReviewed: 'r' },
+        }),
+      },
+      CTX,
+    )
+    expect(resolved).toMatchObject({ back: 'fixed elsewhere', srs: { reps: 1 }, updatedAt: 't3' })
+  })
 
   it('keeps the newest content and the merged review counters', async () => {
     const resolved = await mergeCardConflict.resolve(

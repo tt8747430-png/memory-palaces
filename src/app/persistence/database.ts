@@ -17,7 +17,7 @@ import type { SyncState } from '@/entities/sync-state'
 import { coerceImagePath, type ExtensionCollectionSpec } from '@/shared/lib'
 import { STORAGE_PREFIX } from '@/shared/config/constants'
 import { DEFAULT_SELECT_TOOLBAR } from '@/shared/config/select-toolbar'
-import { firstWriteWins, lastWriteWins } from '@/shared/api/rxdb'
+import { firstWriteWins, mergeAgainstBase } from '@/shared/api/rxdb'
 import { AUTOSYNC_OFF_HANDOFF_KEY } from './adopt-device-settings'
 import {
   mergeCardConflict,
@@ -162,17 +162,17 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
     decks: {
       schema: deckSchema,
       migrationStrategies: deckMigrations,
-      conflictHandler: lastWriteWins<Deck>(),
+      conflictHandler: mergeAgainstBase<Deck>(),
     },
     cards: {
       schema: cardSchema,
       migrationStrategies: cardMigrations,
       conflictHandler: mergeCardConflict,
     },
-    folders: { schema: folderSchema, conflictHandler: lastWriteWins<Folder>() },
+    folders: { schema: folderSchema, conflictHandler: mergeAgainstBase<Folder>() },
     questions: {
       schema: questionSchema,
-      conflictHandler: lastWriteWins<Question>(),
+      conflictHandler: mergeAgainstBase<Question>(),
     },
     progress: { schema: progressSchema, conflictHandler: mergeProgressConflict },
     preferences: {
@@ -183,7 +183,7 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
     profiles: {
       schema: profileSchema,
       migrationStrategies: profileMigrations,
-      conflictHandler: lastWriteWins<Profile>(),
+      conflictHandler: mergeAgainstBase<Profile>(),
     },
     notifications: { schema: notificationSchema },
     history: {

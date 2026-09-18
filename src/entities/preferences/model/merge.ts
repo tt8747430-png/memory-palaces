@@ -1,9 +1,5 @@
-import { structurallyEqual } from '@/shared/lib'
-import { DEFAULT_PREFERENCES, makePreferences, type Preferences } from './types'
-
-type Setting = keyof typeof DEFAULT_PREFERENCES
-
-const SETTINGS = Object.keys(DEFAULT_PREFERENCES) as Setting[]
+import { mergeFields } from '@/shared/lib'
+import { makePreferences, type Preferences } from './types'
 
 /**
  * Two devices' preferences, merged a setting at a time against the version this device last saw
@@ -21,12 +17,5 @@ export function mergePreferences(
   base: Preferences | undefined,
 ): Preferences {
   const seen = base ?? makePreferences({ id: mine.id, createdAt: mine.createdAt })
-  const merged: Preferences = { ...theirs }
-  for (const setting of SETTINGS) {
-    if (!structurallyEqual(mine[setting], seen[setting])) {
-      Object.assign(merged, { [setting]: mine[setting] })
-    }
-  }
-  merged.updatedAt = mine.updatedAt > theirs.updatedAt ? mine.updatedAt : theirs.updatedAt
-  return merged
+  return mergeFields(mine, theirs, seen, { tie: 'mine' })
 }

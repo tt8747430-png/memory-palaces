@@ -1,5 +1,5 @@
 import type { RxJsonSchema } from 'rxdb'
-import { lastWriteWins } from '@/shared/api/rxdb'
+import { mergeAgainstBase } from '@/shared/api/rxdb'
 import type { ExtensionCollectionSpec } from '@/shared/lib'
 import { BIBLE_VERSES } from '../ids'
 import type { BibleVerse } from '../model/verse'
@@ -24,5 +24,5 @@ export const bibleVerseSchema: RxJsonSchema<BibleVerse> = {
 export const bibleVerseCollection: ExtensionCollectionSpec = {
   key: BIBLE_VERSES,
   table: 'bible_verses',
-  creator: { schema: bibleVerseSchema, conflictHandler: lastWriteWins<BibleVerse>() },
+  creator: { schema: bibleVerseSchema, conflictHandler: mergeAgainstBase<BibleVerse>() },
 }
