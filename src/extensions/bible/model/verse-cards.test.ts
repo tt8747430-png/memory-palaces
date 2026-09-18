@@ -5,10 +5,7 @@ const ref = { book: 'GEN' as const, chapter: 1, from: 1, to: 2 }
 
 describe('buildVerseCards', () => {
   it('puts the reference on the front and only the text on the back', () => {
-    const cards = buildVerseCards(
-      { book: 'GEN', chapter: 1, from: 1, to: 1 },
-      'In the beginning.',
-    )
+    const cards = buildVerseCards({ book: 'GEN', chapter: 1, from: 1, to: 1 }, 'In the beginning.')
     expect(cards).toEqual([{ front: 'Geneza 1:1', back: 'In the beginning.' }])
   })
 

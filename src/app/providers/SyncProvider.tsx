@@ -9,7 +9,7 @@ import {
 } from 'react'
 import type { CloudSyncPort, PersistedAuth, RemoteChangeHandlers, StoragePort } from '@/shared/api'
 import type { SyncManager } from '@/shared/api/supabase'
-import { activeSyncTables, type SyncTableSpec } from '@/shared/config/sync-tables'
+import { activeSyncTables, type SyncedTable, type SyncTableSpec } from '@/shared/config/sync-tables'
 import {
   type DataOwner,
   localDataOwner,
@@ -89,6 +89,13 @@ export function SyncProvider({
         isExtensionEnabled({ extensions: enabledExtensions ?? [] }, id),
       ),
     [syncTables, enabledExtensions],
+  )
+  const labelKeys = useMemo(
+    () =>
+      Object.fromEntries(
+        syncTables.flatMap((spec) => (spec.labelKey ? [[spec.table, spec.labelKey]] : [])),
+      ) as Partial<Record<SyncedTable, string>>,
+    [syncTables],
   )
 
   const inFlight = useRef<Promise<SyncOutcome> | null>(null)
@@ -220,9 +227,32 @@ export function SyncProvider({
   const runner = useMemo<SyncRunner | null>(
     () =>
       deps
-        ? { ...state, tables, run, restore, repair, openReview, resolve, dismiss, reloadReview }
+        ? {
+            ...state,
+            tables,
+            labelKeys,
+            run,
+            restore,
+            repair,
+            openReview,
+            resolve,
+            dismiss,
+            reloadReview,
+          }
         : null,
-    [deps, state, tables, run, restore, repair, openReview, resolve, dismiss, reloadReview],
+    [
+      deps,
+      state,
+      tables,
+      labelKeys,
+      run,
+      restore,
+      repair,
+      openReview,
+      resolve,
+      dismiss,
+      reloadReview,
+    ],
   )
 
   useEffect(() => {

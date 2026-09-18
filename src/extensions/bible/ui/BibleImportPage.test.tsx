@@ -81,7 +81,10 @@ describe('BibleImportPage picker', () => {
   it('jumps straight to a passage typed in the field', async () => {
     const user = userEvent.setup()
     renderImportPage(<BibleImportPage />)
-    await user.type(screen.getByRole('searchbox', { name: 'Go to a passage' }), 'ioan 3 16-18{Enter}')
+    await user.type(
+      screen.getByRole('searchbox', { name: 'Go to a passage' }),
+      'ioan 3 16-18{Enter}',
+    )
     expect(screen.getByText('Ioan 3:16-18')).toBeInTheDocument()
   })
 
@@ -89,7 +92,9 @@ describe('BibleImportPage picker', () => {
     const user = userEvent.setup()
     renderImportPage(<BibleImportPage />, {
       decks: [storedDeck('deck-1')],
-      cards: [makeCard({ id: 'c1', createdAt: at, deckId: 'deck-1', front: 'Ioan 3:16', back: 'x' })],
+      cards: [
+        makeCard({ id: 'c1', createdAt: at, deckId: 'deck-1', front: 'Ioan 3:16', back: 'x' }),
+      ],
     })
     await user.click(screen.getByRole('button', { name: 'Ioan 3' }))
     expect(screen.getByRole('heading', { name: 'Verses' })).toBeInTheDocument()
@@ -271,7 +276,10 @@ describe('BibleImportPage text and target', () => {
     expect(save).toBeChecked()
     await user.click(screen.getByRole('button', { name: 'Add 1 card' }))
     await waitFor(() => expect(verseStore.getState().verses).toHaveLength(1))
-    expect(verseStore.getState().verses[0]).toMatchObject({ book: 'GEN', text: 'In the beginning.' })
+    expect(verseStore.getState().verses[0]).toMatchObject({
+      book: 'GEN',
+      text: 'In the beginning.',
+    })
   })
 
   it('names the verses a partly held passage still needs', async () => {

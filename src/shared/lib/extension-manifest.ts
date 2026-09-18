@@ -87,6 +87,8 @@ export interface ExtensionCollectionSpec {
   key: string
   table: string | null
   creator: RxCollectionCreator
+  /** Names the table to a learner on the Sync page — a key in the extension's namespace. */
+  labelKey?: string
 }
 
 export interface ExtensionManifest {

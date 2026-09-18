@@ -17,7 +17,9 @@ const verse = (number: number, text: string) =>
 
 describe('keepMissingVerses', () => {
   it('saves only the verses the library does not hold, and never overwrites one it does', async () => {
-    const store = started(createBibleVerseStore(new InMemoryRepository<BibleVerse>([verse(16, 'held')])))
+    const store = started(
+      createBibleVerseStore(new InMemoryRepository<BibleVerse>([verse(16, 'held')])),
+    )
 
     const saved = await keepMissingVerses(store, [verse(16, 'pasted'), verse(17, 'new')])
 

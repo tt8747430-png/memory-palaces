@@ -85,8 +85,7 @@ export function usePassagePicker(): PassagePicker {
         return { ...held, to: verse, confirmed: false }
       }),
     justFrom: () => setPicked((held) => (held.from ? { ...held, to: held.from } : held)),
-    confirm: () =>
-      setPicked((held) => (complete(held) ? { ...held, confirmed: true } : held)),
+    confirm: () => setPicked((held) => (complete(held) ? { ...held, confirmed: true } : held)),
     edit: () => setPicked((held) => ({ ...held, confirmed: false })),
     toBooks: () => setPicked({ ...EMPTY, confirmed: false }),
     jump: (target) => setPicked({ ...target, confirmed: complete(target) !== null }),

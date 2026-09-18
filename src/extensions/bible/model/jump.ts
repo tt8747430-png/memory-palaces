@@ -30,7 +30,8 @@ export function parseJump(text: string): Jump {
 
   const books = matchBooks(groups.name)
   const typedChapter = groups.chapter !== undefined
-  const book = resolveBook(groups.name) ?? (books.length === 1 || typedChapter ? books[0] : undefined)
+  const book =
+    resolveBook(groups.name) ?? (books.length === 1 || typedChapter ? books[0] : undefined)
   if (!book) return { books, target: null }
 
   const chapter = within(Number(groups.chapter ?? NaN), chapterCount(book))

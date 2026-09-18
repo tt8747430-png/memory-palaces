@@ -41,6 +41,8 @@ export interface SyncRunner {
   review: SyncReview | null
   /** The tables a Sync covers right now — what counts as waiting, and what a cycle carries. */
   tables: readonly SyncedTable[]
+  /** The key naming each contributed table to a learner; a core table is named by the app. */
+  labelKeys: Readonly<Partial<Record<SyncedTable, string>>>
   run: () => Promise<SyncOutcome>
   restore: () => Promise<SyncOutcome>
   /** Reads the whole cloud again and reconciles every local document against it. */

@@ -13,5 +13,8 @@ export function createBibleVerseStore(
   repo: Repository<BibleVerse>,
   pending?: PendingChangePort,
 ): BibleVerseStore {
-  return createCollectionStore('verses', repo, byPosition, { pending, complete: completeBibleVerse })
+  return createCollectionStore('verses', repo, byPosition, {
+    pending,
+    complete: completeBibleVerse,
+  })
 }

@@ -24,5 +24,6 @@ export const bibleVerseSchema: RxJsonSchema<BibleVerse> = {
 export const bibleVerseCollection: ExtensionCollectionSpec = {
   key: BIBLE_VERSES,
   table: 'bible_verses',
+  labelKey: 'bible:versesTable',
   creator: { schema: bibleVerseSchema, conflictHandler: mergeAgainstBase<BibleVerse>() },
 }

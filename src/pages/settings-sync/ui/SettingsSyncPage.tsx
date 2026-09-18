@@ -1,21 +1,18 @@
-import { useMemo } from 'react'
-import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
-import { CloudUpload, ListChecks, RefreshCw } from 'lucide-react'
-import { CONTENT_COLLECTIONS } from '@/shared/config/sync-tables'
-import { selectIsReady, useOnline, useSyncRunner } from '@/shared/lib'
-import { AppScreen, ScreenHeader, ScreenLoading, SettingsRow, SettingsSection } from '@/shared/ui'
-import { selectSessionKind, useSessionStore } from '@/entities/session'
+import { CloudUpload, ListChecks, RefreshCcwDot, Trash2 } from 'lucide-react'
 import {
-  pendingByTable,
-  selectPendingChanges,
-  usePendingChangeStore,
-} from '@/entities/pending-change'
-import { selectLastSyncedAt, useSyncStateStore } from '@/entities/sync-state'
-import { selectAutosync, usePreferencesStore, usePreferencesStoreApi } from '@/entities/preferences'
-import { setPreferences } from '@/features/preferences'
-import { SyncBanner } from '@/widgets/sync'
-import { relativeTime } from '../model/relative-time'
+  AppScreen,
+  ConfirmDialog,
+  ScreenHeader,
+  ScreenLoading,
+  SettingsRow,
+  SettingsSection,
+  Sheet,
+} from '@/shared/ui'
+import { useSyncSettings } from '../model/use-sync-settings'
+import { RecentSyncs } from './RecentSyncs'
+import { SyncStatusCard } from './SyncStatusCard'
+import { WaitingSection } from './WaitingSection'
 
 export interface SettingsSyncPageProps {
   onBack?: () => void
@@ -23,116 +20,111 @@ export interface SettingsSyncPageProps {
 
 export function SettingsSyncPage({ onBack }: SettingsSyncPageProps) {
   const { t } = useTranslation()
-  const runner = useSyncRunner()
-  const online = useOnline()
-  const kind = useSessionStore(selectSessionKind)
-  const syncStateReady = useSyncStateStore(selectIsReady)
-  const preferencesReady = usePreferencesStore(selectIsReady)
-  const ready = syncStateReady && preferencesReady
-  const changes = usePendingChangeStore(selectPendingChanges)
-  const lastSyncedAt = useSyncStateStore(selectLastSyncedAt)
-  const autosync = usePreferencesStore(selectAutosync)
-  const preferencesStore = usePreferencesStoreApi()
-
-  const counts = useMemo(() => pendingByTable(changes), [changes])
+  const page = useSyncSettings()
 
   const header = (
     <ScreenHeader title={t('sync.settings.title')} onBack={onBack} backLabel={t('settings.back')} />
   )
 
-  if (!ready) return <ScreenLoading />
+  if (!page.ready) return <ScreenLoading />
 
-  if (!runner) {
+  if (!page.runner) {
     return (
       <AppScreen gutter="end" fill header={header}>
         <div className="mt-4 rounded-card bg-info-surface p-4">
           <p className="text-label leading-snug text-info-foreground">
-            {t(kind === 'guest' ? 'sync.settings.guest' : 'sync.settings.unavailable')}
+            {t(page.guest ? 'sync.settings.guest' : 'sync.settings.unavailable')}
           </p>
         </div>
       </AppScreen>
     )
   }
 
-  const busy = runner.phase === 'syncing' || runner.phase === 'restoring'
-
-  const reviewPending = async () => {
-    const outcome = await runner.openReview()
-    switch (outcome.kind) {
-      case 'needs-review':
-        return
-      case 'clean':
-      case 'merged':
-        toast(t('sync.settings.nothingToReview'))
-        return
-      case 'offline':
-        toast.error(t('common.offline'))
-        return
-      case 'failed':
-        toast.error(t('sync.settings.reviewFailed'))
-        return
-    }
-  }
+  const waitingCount = page.waiting.reduce((total, row) => total + row.count, 0)
+  const openedRow = page.waiting.find((row) => row.table === page.opened)
 
   return (
-    <AppScreen gutter="end" fill header={header}>
-      <SyncBanner className="mt-2" />
-
+    <AppScreen gutter="end" header={header}>
       <div className="mt-4 flex flex-col gap-5">
-        <p className="text-label leading-snug text-muted-foreground">
-          {lastSyncedAt
-            ? t('sync.settings.lastSynced', { when: relativeTime(lastSyncedAt, Date.now()) })
-            : t('sync.settings.lastSyncedNever')}
-        </p>
+        <SyncStatusCard
+          status={page.status}
+          waiting={waitingCount}
+          error={page.error}
+          lastSyncedAt={page.lastSyncedAt}
+          account={page.account}
+          online={page.online}
+          busy={page.busy}
+          onSync={page.sync}
+        />
 
-        <SettingsSection title={t('sync.settings.waiting')}>
-          {changes.length ? (
-            CONTENT_COLLECTIONS.filter((collection) => counts[collection]).map((collection) => (
-              <SettingsRow
-                key={collection}
-                kind="value"
-                icon={<CloudUpload />}
-                label={t(`sync.review.group.${collection}`, { count: counts[collection] })}
-                value={t(`sync.settings.counts.${collection}`, { count: counts[collection] })}
-              />
-            ))
-          ) : (
-            <SettingsRow
-              kind="value"
-              icon={<CloudUpload />}
-              label={t('sync.settings.nothingWaiting')}
-              value=""
-            />
-          )}
-        </SettingsSection>
+        <WaitingSection rows={page.waiting} onOpen={page.open} />
+
+        <RecentSyncs log={page.log} />
 
         <SettingsSection>
-          <SettingsRow
-            kind="action"
-            icon={<RefreshCw />}
-            label={t('sync.settings.syncNow')}
-            description={online ? undefined : t('sync.settings.syncNowOffline')}
-            disabled={busy || !online}
-            onClick={() => void runner.run()}
-          />
-          <SettingsRow
-            kind="action"
-            icon={<ListChecks />}
-            label={t('sync.settings.reviewPending')}
-            description={t('sync.settings.reviewPendingHint')}
-            disabled={busy}
-            onClick={() => void reviewPending()}
-          />
           <SettingsRow
             kind="toggle"
             icon={<CloudUpload />}
             label={t('sync.settings.autosync')}
             description={t('sync.settings.autosyncHint')}
-            checked={autosync}
-            onCheckedChange={(value) => void setPreferences(preferencesStore, { autosync: value })}
+            checked={page.autosync}
+            onCheckedChange={page.setAutosync}
+          />
+        </SettingsSection>
+
+        <SettingsSection title={t('sync.settings.repair')}>
+          <SettingsRow
+            kind="action"
+            icon={<ListChecks />}
+            label={t('sync.settings.reviewPending')}
+            description={t('sync.settings.reviewPendingHint')}
+            disabled={page.busy}
+            onClick={() => void page.review()}
+          />
+          <SettingsRow
+            kind="action"
+            icon={<RefreshCcwDot />}
+            label={t('sync.settings.checkEverything')}
+            description={t('sync.settings.checkEverythingHint')}
+            disabled={page.busy || !page.online}
+            onClick={page.askRepair}
           />
         </SettingsSection>
       </div>
+
+      <Sheet
+        open={page.opened !== null}
+        onOpenChange={(open) => {
+          if (!open) page.close()
+        }}
+        title={t('sync.settings.waitingSheet', { table: openedRow?.label ?? '' })}
+      >
+        <ul className="divide-y divide-border">
+          {page.openedItems.map((item) => (
+            <li key={item.id} className="flex items-center gap-3 py-3">
+              {item.op === 'remove' ? (
+                <Trash2 className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+              ) : (
+                <CloudUpload className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+              )}
+              <span className="min-w-0 flex-1 truncate text-body text-heading">{item.label}</span>
+            </li>
+          ))}
+        </ul>
+      </Sheet>
+
+      <ConfirmDialog
+        open={page.repairAsked}
+        onOpenChange={(open) => {
+          if (!open) page.dismissRepair()
+        }}
+        icon={<RefreshCcwDot className="size-6" aria-hidden />}
+        title={t('sync.settings.checkEverythingTitle')}
+        description={t('sync.settings.checkEverythingBody')}
+        confirmLabel={t('sync.settings.checkEverythingConfirm')}
+        cancelLabel={t('common.cancel')}
+        onConfirm={() => void page.repair()}
+      />
     </AppScreen>
   )
 }

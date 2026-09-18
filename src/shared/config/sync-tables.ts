@@ -31,6 +31,11 @@ export interface SyncTableSpec {
   collectionKey: string
   /** The extension that owns it; null for a core table, which always replicates. */
   owner: ExtensionId | null
+  /**
+   * The key naming the table to a learner, in the owner's namespace (`bible:versesTable`). A core
+   * table is named by the app (`sync.tables.<table>`), so it carries none.
+   */
+  labelKey?: string
 }
 
 export const CORE_SYNC_TABLES: readonly SyncTableSpec[] = SYNCED_TABLES.map((table) => ({

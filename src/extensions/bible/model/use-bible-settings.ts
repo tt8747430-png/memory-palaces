@@ -17,8 +17,7 @@ import { CORNILESCU_2024, type Translation } from './translations'
 
 /** What the page is asking the learner to confirm, or nothing. One value, never a flag each. */
 export type BibleSettingsPending =
-  | { kind: 'add'; text: TextFromCards }
-  | { kind: 'forget'; book: BookCode; verses: number }
+  { kind: 'add'; text: TextFromCards } | { kind: 'forget'; book: BookCode; verses: number }
 
 export interface BibleSettings {
   ready: boolean

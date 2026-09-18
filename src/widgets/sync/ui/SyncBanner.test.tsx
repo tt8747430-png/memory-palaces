@@ -38,6 +38,7 @@ const runner = (overrides: Partial<SyncRunner> = {}): SyncRunner => ({
   error: null,
   review: null,
   tables: SYNCED_TABLES,
+  labelKeys: {},
   run: vi.fn().mockResolvedValue(undefined),
   restore: vi.fn().mockResolvedValue(undefined),
   repair: vi.fn().mockResolvedValue({ kind: 'clean' }),

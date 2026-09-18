@@ -28,7 +28,16 @@ export async function loadExtensionCollections(
     specs: loaded.flatMap((entry) => entry.specs),
     syncTables: loaded.flatMap((entry) =>
       entry.specs.flatMap((spec) =>
-        spec.table ? [{ table: spec.table, collectionKey: spec.key, owner: entry.id }] : [],
+        spec.table
+          ? [
+              {
+                table: spec.table,
+                collectionKey: spec.key,
+                owner: entry.id,
+                labelKey: spec.labelKey,
+              },
+            ]
+          : [],
       ),
     ),
   }

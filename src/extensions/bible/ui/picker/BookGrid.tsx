@@ -28,7 +28,10 @@ export function BookGrid({ index, onPick }: BookGridProps) {
     <div className="flex flex-col gap-5">
       {TESTAMENTS.map(({ testament, key }) => (
         <section key={testament} aria-labelledby={`bible-${testament}`}>
-          <h2 id={`bible-${testament}`} className="mb-2 text-label font-semibold text-muted-foreground">
+          <h2
+            id={`bible-${testament}`}
+            className="mb-2 text-label font-semibold text-muted-foreground"
+          >
             {t(key)}
           </h2>
           <ul className="grid grid-cols-6 gap-1.5">

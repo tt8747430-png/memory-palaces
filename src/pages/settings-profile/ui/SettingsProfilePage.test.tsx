@@ -79,6 +79,7 @@ function renderPage(
     error: null,
     review: null,
     tables: SYNCED_TABLES,
+    labelKeys: {},
     run: vi.fn().mockResolvedValue({ kind: 'clean' }),
     restore: vi.fn().mockResolvedValue({ kind: 'clean' }),
     repair: vi.fn().mockResolvedValue({ kind: 'clean' }),

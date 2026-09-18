@@ -64,6 +64,7 @@ export const bibleMessages = {
   offline: 'Everything here works offline.',
 
   settingsTitle: 'Bible',
+  versesTable: 'Bible verses',
   translation: 'Translation',
   translationLanguage: 'Romanian',
   libraryTitle: 'Bible library',
