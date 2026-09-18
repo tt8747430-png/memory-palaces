@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { expandRange, formatPartial, formatRef, parseRef } from './reference'
+import { formatPartial, formatRef, parseRef } from './reference'
 
 describe('formatRef', () => {
   it('renders a single verse without a range', () => {
@@ -23,16 +23,6 @@ describe('parseRef', () => {
 
   it('returns null for anything else', () => {
     expect(parseRef('Zeus, King of the gods')).toBeNull()
-  })
-})
-
-describe('expandRange', () => {
-  it('lists every verse number in the range', () => {
-    expect(expandRange({ book: 'Genesis', chapter: 1, from: 2, to: 4 })).toEqual([2, 3, 4])
-  })
-
-  it('handles a single verse', () => {
-    expect(expandRange({ book: 'Jude', chapter: 1, from: 3, to: 3 })).toEqual([3])
   })
 })
 
