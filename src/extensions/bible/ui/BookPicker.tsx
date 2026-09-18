@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Search } from 'lucide-react'
+import { cn } from '@/shared/lib'
 import { Input } from '@/shared/ui'
 import { BOOKS } from '../model/canon'
 import { useBibleT } from '../i18n/use-bible-t'
@@ -39,7 +40,13 @@ export function BookPicker({ onPick }: { onPick: (book: string) => void }) {
             <button
               type="button"
               onClick={() => onPick(book.name)}
-              className="w-full rounded-control bg-secondary/40 px-4 py-3 text-left text-body font-semibold text-heading transition-transform duration-150 ease-out active:scale-[0.99] motion-reduce:transition-none"
+              className={cn(
+                'w-full rounded-control bg-secondary/40 px-4 py-3 text-left text-body font-semibold text-heading',
+                'transition-[transform,background-color] duration-150 ease-out',
+                'hover:bg-secondary/70 active:scale-[0.99]',
+                'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/45',
+                'motion-reduce:transition-none',
+              )}
             >
               {book.name}
             </button>
