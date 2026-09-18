@@ -37,7 +37,6 @@ export const bibleMessages = {
   libraryTitle: 'Bible library',
   librarySubtitle: 'What this device can prefill',
   publishFromDeck: 'Publish a deck',
-  publishText: 'Keep this text',
   cleanBacks: 'Clean references from backs',
   cleanBacksCount_one: '{{count}} card would change',
   cleanBacksCount_other: '{{count}} cards would change',
