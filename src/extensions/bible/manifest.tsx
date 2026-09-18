@@ -47,8 +47,8 @@ export const bibleManifest: ExtensionManifest = {
   settings: {
     route: extensionRoute(
       BIBLE_SETTINGS_PATH,
-      () => import('./ui/BibleLibraryScreen'),
-      'BibleLibraryScreen',
+      () => import('./ui/BibleSettingsScreen'),
+      'BibleSettingsScreen',
     ),
   },
 }
