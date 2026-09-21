@@ -25,6 +25,8 @@ export function studyOverview(
 export interface FastOverview {
   count: number
   breakdown: { notStudied: number; notQuite: number; gotIt: number }
+  /** Every live card has been got right: the pass is complete, and the next one starts over. */
+  isCaughtUp: boolean
 }
 
 export function fastOverview(
@@ -38,5 +40,11 @@ export function fastOverview(
     else if (card.fastReview === 'notQuite') breakdown.notQuite += 1
     else breakdown.notStudied += 1
   }
-  return { count: Math.min(live.length, maxCardsPerDay), breakdown }
+  // What the next session will offer — the same set `buildStudyQueue` takes under fast review.
+  const left = breakdown.notStudied + breakdown.notQuite
+  return {
+    count: Math.min(left, maxCardsPerDay),
+    breakdown,
+    isCaughtUp: live.length > 0 && left === 0,
+  }
 }

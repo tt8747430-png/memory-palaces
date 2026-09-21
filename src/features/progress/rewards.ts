@@ -8,7 +8,9 @@ const STUDY_XP_MAX = 150
 const XP_PER_CORRECT = 20
 export const XP_MATCH = 60
 
+/** The floor rewards a session, not an exit: a session that graded nothing earns nothing. */
 export function studyXp(graded: number): number {
+  if (graded <= 0) return 0
   return clamp(graded * STUDY_XP_PER_CARD, STUDY_XP_MIN, STUDY_XP_MAX)
 }
 

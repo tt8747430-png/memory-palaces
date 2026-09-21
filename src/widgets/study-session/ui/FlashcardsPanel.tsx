@@ -155,10 +155,29 @@ export function FlashcardsPanel({
 
   const completed = state.status === 'complete'
   const handedOff = useRef(false)
+  const tally = (): SessionSummary => ({
+    graded: state.graded,
+    learning: state.piles.learning,
+    known: state.piles.known,
+  })
   const handoff = () => {
     if (handedOff.current || state.status !== 'complete') return
     handedOff.current = true
-    onComplete({ graded: state.graded, learning: state.piles.learning, known: state.piles.known })
+    onComplete(tally())
+  }
+  /**
+   * Leaving is not losing: every grade was saved as it was given, so a session the learner
+   * walks out of after grading hands its tally over like a finished one. One that graded
+   * nothing has nothing to hand over and just goes back.
+   */
+  const leave = () => {
+    if (handedOff.current) return
+    if (state.graded === 0) {
+      onBack()
+      return
+    }
+    handedOff.current = true
+    onComplete(tally())
   }
   useEffect(() => {
     if (!completed) {
@@ -248,9 +267,7 @@ export function FlashcardsPanel({
   }
 
   const summaryNow: SessionSummary =
-    state.status === 'complete'
-      ? { graded: state.graded, learning: state.piles.learning, known: state.piles.known }
-      : { graded: 0, learning: 0, known: 0 }
+    state.status === 'complete' ? tally() : { graded: 0, learning: 0, known: 0 }
 
   const remaining = useMemo<RemainingTally>(() => {
     const tally: RemainingTally = { new: 0, learning: 0, known: 0 }
@@ -283,7 +300,7 @@ export function FlashcardsPanel({
           subtitle={subtitle}
           progress={{ done: state.graded, total: state.total }}
           backLabel={t('study.goBack')}
-          onBack={onBack}
+          onBack={leave}
           action={
             card ? (
               <IconButton
@@ -325,7 +342,7 @@ export function FlashcardsPanel({
               filtered={filter.kind !== 'all'}
               onChangeSelection={() => setStudySessionSettingsOpen(true)}
               onStudyAll={() => settings.set('filter', { kind: 'all' })}
-              onDone={onBack}
+              onDone={leave}
             />
           ) : null}
         </div>

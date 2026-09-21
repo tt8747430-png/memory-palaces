@@ -1,8 +1,8 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Minus, Plus } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import type { Deck } from '@/entities/deck'
+import { type Deck, resolveDeckSettings } from '@/entities/deck'
 import type { Card } from '@/entities/card'
 import type { SwipeConfig } from '@/shared/config/swipe'
 import { cn, dueCountsPerDeck, EASE_OUT, type FlatDeck, useLongPress } from '@/shared/lib'
@@ -37,7 +37,15 @@ export function DeckTree({
   swipeHandlers,
   now = Date.now(),
 }: DeckTreeProps) {
-  const dueCounts = useMemo(() => dueCountsPerDeck(decks, cards, now), [decks, cards, now])
+  // A deck's own settings decide what it counts as waiting; a subdeck follows its main deck.
+  const algorithmOf = useCallback(
+    (deckId: string) => resolveDeckSettings(decks, deckId).algorithm,
+    [decks],
+  )
+  const dueCounts = useMemo(
+    () => dueCountsPerDeck(decks, cards, now, algorithmOf),
+    [decks, cards, now, algorithmOf],
+  )
   const byId = useMemo(() => new Map(decks.map((d) => [d.id, d])), [decks])
 
   return (

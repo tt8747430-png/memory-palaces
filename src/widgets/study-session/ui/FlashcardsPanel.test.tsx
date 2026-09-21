@@ -59,6 +59,7 @@ function renderPanel(
   overrides: Partial<{
     onGrade: (id: string, grade: Grade) => void
     onComplete: () => void
+    onBack: () => void
     deckPrefs: Partial<DeckStudyPrefs>
     mode: StudyMode
     algorithm: LearningAlgorithm
@@ -69,6 +70,7 @@ function renderPanel(
 ) {
   const onGrade = vi.fn(overrides.onGrade)
   const onComplete = vi.fn(overrides.onComplete)
+  const onBack = vi.fn(overrides.onBack)
   const onModeChange = vi.fn()
 
   function Harness() {
@@ -89,7 +91,7 @@ function renderPanel(
           onModeChange(next)
           setMode(next)
         }}
-        onBack={() => {}}
+        onBack={onBack}
         onComplete={onComplete}
         now={NOW}
       />
@@ -103,7 +105,7 @@ function renderPanel(
       </MotionConfig>
     </I18nextProvider>,
   )
-  return { onGrade, onComplete, onModeChange }
+  return { onGrade, onComplete, onModeChange, onBack }
 }
 
 describe('FlashcardsPanel', () => {
@@ -156,6 +158,26 @@ describe('FlashcardsPanel', () => {
     expect(await screen.findByText(/session complete/i)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /^done$/i }))
     expect(onComplete).toHaveBeenCalledTimes(1)
+  })
+
+  it('hands the tally over when the learner leaves after grading — the cards count', async () => {
+    const { onComplete, onBack } = renderPanel([studyCard('a'), studyCard('b'), studyCard('c')])
+
+    await tap(/show answer/i)
+    await tap(/good/i)
+    await tap(/go back/i)
+
+    expect(onComplete).toHaveBeenCalledWith({ graded: 1, learning: 0, known: 1 })
+    expect(onBack).not.toHaveBeenCalled()
+  })
+
+  it('just goes back when the learner leaves before grading anything', async () => {
+    const { onComplete, onBack } = renderPanel([studyCard('a'), studyCard('b')])
+
+    await tap(/go back/i)
+
+    expect(onComplete).not.toHaveBeenCalled()
+    expect(onBack).toHaveBeenCalledTimes(1)
   })
 
   it("requeues a card graded 'again' to the back of the session", async () => {

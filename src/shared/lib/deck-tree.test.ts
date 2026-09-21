@@ -179,16 +179,34 @@ describe('cardsInSubtree', () => {
 describe('dueCountsPerDeck', () => {
   it('rolls a due card up to every ancestor', () => {
     const cards: TreeCard[] = [due]
-    const counts = dueCountsPerDeck(forest, cards, Date.now())
+    const counts = dueCountsPerDeck(forest, cards, Date.now(), () => 'spaced')
     expect(counts.get('C')).toBe(1)
     expect(counts.get('B')).toBe(1)
     expect(counts.get('A')).toBe(1)
     expect(counts.get('D')).toBeUndefined()
     expect(counts.get('E')).toBeUndefined()
   })
+  it('counts a fast deck by what is left to get right, as that deck reports itself', () => {
+    // The deck page counts a Fast deck's not-yet-got-right cards; a badge counting due dates
+    // instead would contradict the page the learner opens from it.
+    const cards: TreeCard[] = [
+      { deckId: 'C', fastReview: 'gotIt' },
+      { deckId: 'C', fastReview: 'notQuite' },
+      { deckId: 'C' },
+    ]
+    const counts = dueCountsPerDeck(forest, cards, Date.now(), () => 'fast')
+    expect(counts.get('C')).toBe(2)
+    expect(counts.get('A')).toBe(2)
+  })
+
+  it('counts nothing for a fast deck whose every card has been got right', () => {
+    const cards: TreeCard[] = [{ deckId: 'C', fastReview: 'gotIt' }]
+    expect(dueCountsPerDeck(forest, cards, Date.now(), () => 'fast').get('C')).toBeUndefined()
+  })
+
   it('skips cards under an archived deck or archived ancestor', () => {
     const archivedForest: TreeDeck[] = [deck('A', null, { archived: true }), deck('B', 'A')]
-    const counts = dueCountsPerDeck(archivedForest, [{ deckId: 'B' }], Date.now())
+    const counts = dueCountsPerDeck(archivedForest, [{ deckId: 'B' }], Date.now(), () => 'spaced')
     expect(counts.size).toBe(0)
   })
 })

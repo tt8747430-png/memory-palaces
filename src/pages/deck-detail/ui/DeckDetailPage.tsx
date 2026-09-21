@@ -80,7 +80,6 @@ export function DeckDetailPage({
   )
 
   const [now] = useState(() => Date.now())
-  const fast = settings.algorithm === 'fast'
 
   const overview = useDeckOverview(subtreeCards, settings.algorithm, settings.maxCardsPerDay, now)
 
@@ -175,10 +174,11 @@ export function DeckDetailPage({
           <StudyOverviewCard
             variant={settings.algorithm}
             count={overview.count}
+            caughtUp={overview.caughtUp}
             countLabel={overview.countLabel}
             stats={overview.stats}
             onStudy={() => onStudy?.()}
-            onStudyAhead={fast ? undefined : onStudy}
+            onStudyAhead={onStudy}
             flaggedCount={flaggedCount}
             onStudyFlagged={onStudyFlagged}
           />

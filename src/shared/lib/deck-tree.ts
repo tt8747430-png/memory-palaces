@@ -1,3 +1,4 @@
+import type { FastOutcome } from './fast-outcome'
 import { isDue, type SrsState } from './srs'
 
 export interface TreeDeck {
@@ -11,7 +12,11 @@ export interface TreeDeck {
 export interface TreeCard {
   deckId: string
   srs?: SrsState
+  fastReview?: FastOutcome
 }
+
+/** What a deck counts as waiting depends on how it is studied; the caller resolves the settings. */
+export type DeckAlgorithm = 'fast' | 'spaced'
 
 const byOrder = (a: TreeDeck, b: TreeDeck): number =>
   (a.order ?? 0) - (b.order ?? 0) || a.id.localeCompare(b.id)
@@ -157,14 +162,22 @@ export function cardsInSubtree<C extends TreeCard>(
   return cards.filter((c) => ids.has(c.deckId))
 }
 
+/**
+ * What each deck has waiting, rolled up to its ancestors. A fast deck counts the cards it has not
+ * got right yet and a spaced one counts what is due, because that is what each deck's own page
+ * says — a badge that counted due dates under fast review contradicted the page it opens.
+ */
 export function dueCountsPerDeck(
   decks: readonly TreeDeck[],
   cards: readonly TreeCard[],
   now: number,
+  algorithmOf: (deckId: string) => DeckAlgorithm,
 ): Map<string, number> {
   const counts = new Map<string, number>()
   for (const card of cards) {
-    if (!isDue(card.srs, now)) continue
+    const waiting =
+      algorithmOf(card.deckId) === 'fast' ? card.fastReview !== 'gotIt' : isDue(card.srs, now)
+    if (!waiting) continue
     const chain = deckPath(decks, card.deckId)
     if (chain.some((deck) => deck.archived)) continue
     for (const deck of chain) counts.set(deck.id, (counts.get(deck.id) ?? 0) + 1)

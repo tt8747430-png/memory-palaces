@@ -127,6 +127,23 @@ describe('buildStudyQueue', () => {
     expect(buildStudyQueue(cards, { ...options, algorithm: 'fast' })).toEqual(['f', 'a'])
   })
 
+  it('leaves out the cards already got right — a Fast pass remembers', () => {
+    const cards = [
+      { ...card('a'), fastReview: 'gotIt' as const },
+      { ...card('b'), fastReview: 'notQuite' as const },
+      card('c'),
+    ]
+    expect(buildStudyQueue(cards, { ...options, algorithm: 'fast' })).toEqual(['b', 'c'])
+  })
+
+  it('offers the whole deck again once every card has been got right', () => {
+    const cards = [
+      { ...card('a'), fastReview: 'gotIt' as const },
+      { ...card('b'), fastReview: 'gotIt' as const },
+    ]
+    expect(buildStudyQueue(cards, { ...options, algorithm: 'fast' })).toEqual(['a', 'b'])
+  })
+
   it('ignores the new-card allowance under fast review — the count must match the queue', () => {
     const cards = Array.from({ length: 9 }, (_, i) => card(`n${i}`))
     expect(
@@ -150,21 +167,51 @@ describe('buildStudyQueue', () => {
     expect(queue).toHaveLength(4)
   })
 
-  it('leads with the card the learner asked for, keeping the rest in order', () => {
+  it('runs on from the card the learner asked for, in deck order, to the end', () => {
     const cards = [card('a'), card('b'), card('c')]
-    expect(buildStudyQueue(cards, { ...options, startAt: 'c' })).toEqual(['c', 'a', 'b'])
+    expect(buildStudyQueue(cards, { ...options, startAt: 'b' })).toEqual(['b', 'c'])
+    expect(buildStudyQueue(cards, { ...options, startAt: 'a' })).toEqual(['a', 'b', 'c'])
+    expect(buildStudyQueue(cards, { ...options, startAt: 'c' })).toEqual(['c'])
   })
 
-  it('takes in a frozen card when it is the one asked for', () => {
-    const cards = [card('a'), { ...card('b'), frozen: true }]
-    expect(buildStudyQueue(cards, { ...options, startAt: 'b' })).toEqual(['b', 'a'])
+  it('keeps the cards after it whatever their schedule says — a run is not a review', () => {
+    const cards = [card('a'), learning, known, card('b')]
+    expect(buildStudyQueue(cards, { ...options, startAt: 'a' })).toEqual([
+      'a',
+      'learning',
+      'known',
+      'b',
+    ])
   })
 
-  it('takes in a card the new-card allowance had left out', () => {
+  it('takes in a frozen card when it is the one asked for, and skips the frozen ones after', () => {
+    const cards = [
+      card('a'),
+      { ...card('b'), frozen: true },
+      { ...card('c'), frozen: true },
+      card('d'),
+    ]
+    expect(buildStudyQueue(cards, { ...options, startAt: 'b' })).toEqual(['b', 'd'])
+  })
+
+  it('ignores the new-card allowance — the run is the cards, not the day’s budget', () => {
     const cards = Array.from({ length: 5 }, (_, i) => card(`n${i}`))
-    const queue = buildStudyQueue(cards, { ...options, newCardsPerDay: 2, startAt: 'n4' })
-    expect(queue[0]).toBe('n4')
-    expect(queue).toHaveLength(3)
+    const queue = buildStudyQueue(cards, { ...options, newCardsPerDay: 2, startAt: 'n2' })
+    expect(queue).toEqual(['n2', 'n3', 'n4'])
+  })
+
+  it('does not shuffle a run — the order is the point', () => {
+    const cards = [card('a'), card('b'), card('c'), card('d')]
+    const queue = buildStudyQueue(cards, { ...options, shuffle: true, startAt: 'b' })
+    expect(queue).toEqual(['b', 'c', 'd'])
+  })
+
+  it('still caps a run at the daily maximum', () => {
+    const cards = [card('a'), card('b'), card('c')]
+    expect(buildStudyQueue(cards, { ...options, maxCardsPerDay: 2, startAt: 'a' })).toEqual([
+      'a',
+      'b',
+    ])
   })
 
   it('ignores a card that is not in this queue at all', () => {

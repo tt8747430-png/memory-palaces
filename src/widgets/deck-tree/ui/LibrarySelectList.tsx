@@ -9,7 +9,7 @@ import {
 } from '@dnd-kit/core'
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import type { Deck } from '@/entities/deck'
+import { type Deck, resolveDeckSettings } from '@/entities/deck'
 import type { Folder } from '@/entities/folder'
 import type { Card } from '@/entities/card'
 import { dueCountsPerDeck, impact, useSortableBlock, useSortableSensors } from '@/shared/lib'
@@ -49,7 +49,15 @@ export function LibrarySelectList({
 
   const [fileIntoId, setFileIntoId] = useState<string | null>(null)
 
-  const dueCounts = useMemo(() => dueCountsPerDeck(allDecks, cards, now), [allDecks, cards, now])
+  // A deck's own settings decide what it counts as waiting; a subdeck follows its main deck.
+  const algorithmOf = useCallback(
+    (deckId: string) => resolveDeckSettings(allDecks, deckId).algorithm,
+    [allDecks],
+  )
+  const dueCounts = useMemo(
+    () => dueCountsPerDeck(allDecks, cards, now, algorithmOf),
+    [allDecks, cards, now, algorithmOf],
+  )
   const folderIds = useMemo(() => folders.map((f) => f.id), [folders])
   const deckIds = useMemo(() => decks.map((d) => d.id), [decks])
 

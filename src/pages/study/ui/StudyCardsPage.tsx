@@ -16,7 +16,14 @@ import {
   usePreferencesStore,
   usePreferencesStoreApi,
 } from '@/entities/preferences'
-import { cardsInSubtree, deckPath, findEntity, type Grade, selectIsReady } from '@/shared/lib'
+import {
+  cardsInSubtree,
+  deckPath,
+  findEntity,
+  type Grade,
+  selectIsReady,
+  sortContent,
+} from '@/shared/lib'
 import { type HistoryEntry, useHistoryStoreApi } from '@/entities/learning-history'
 import { editCard } from '@/features/card'
 import { updateDeckSettings } from '@/features/deck'
@@ -73,9 +80,18 @@ export function StudyCardsPage({ scope, startCardId, filter, onBack }: StudyCard
   const mode: StudyMode = resolveStudyMode(preferences.studyMode)
   const learnerPrefs = useMemo(() => learnerStudyPrefs(preferences), [preferences])
 
+  /**
+   * The cards in the order the learner is looking at. A session opened from a card is a run from
+   * it — "card 14, then 15" — and 15 is whichever card the list showed next, so the queue is built
+   * from the same sort the deck's content list uses, not from the order the store happens to keep.
+   */
   const cards = useMemo<StudyCard[]>(() => {
     if (!deck) return []
-    const subtree = cardsInSubtree(decks, allCards, scope.deckId)
+    const subtree = sortContent(
+      cardsInSubtree(decks, allCards, scope.deckId),
+      preferences.contentSort,
+      (card) => card.front,
+    )
     return subtree.map((card) => ({
       card,
       deckName: deck.name,
@@ -83,7 +99,7 @@ export function StudyCardsPage({ scope, startCardId, filter, onBack }: StudyCard
         .map((each) => each.name)
         .join(' › '),
     }))
-  }, [deck, decks, allCards, scope.deckId])
+  }, [deck, decks, allCards, scope.deckId, preferences.contentSort])
 
   const answered = useRef(new Map<string, Promise<AnsweredCard>[]>())
   const remember = (id: string, write: Promise<AnsweredCard>) => {

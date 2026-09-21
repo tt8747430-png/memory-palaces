@@ -11,9 +11,21 @@ export interface OverviewStat {
   value: number
 }
 
+/** What a variant calls the state where it has nothing left to offer, and the way out of it. */
+const DONE = {
+  spaced: { headingKey: 'study.caughtUp', aheadKey: 'study.studyAhead' },
+  fast: { headingKey: 'study.passComplete', aheadKey: 'study.studyAgain' },
+} as const
+
 export interface StudyOverviewCardProps {
   variant: 'fast' | 'spaced'
   count: number
+  /**
+   * Nothing left to offer *and* that is the whole story — everything due is done, or every card
+   * has been got right. A count of zero on its own is not: a deck of frozen cards offers nothing
+   * either, and telling that learner they are caught up would be a lie.
+   */
+  caughtUp: boolean
   countLabel: string
   stats: OverviewStat[]
   onStudy: () => void
@@ -26,6 +38,7 @@ export interface StudyOverviewCardProps {
 export function StudyOverviewCard({
   variant,
   count,
+  caughtUp,
   countLabel,
   stats,
   onStudy,
@@ -43,16 +56,19 @@ export function StudyOverviewCard({
       </Button>
     ) : null
 
-  if (variant === 'spaced' && count === 0) {
+  // Done, under either algorithm: due today for spaced, every card got right for fast. The
+  // buckets would all read zero, so the card says the one thing that is true instead.
+  if (caughtUp) {
+    const done = DONE[variant]
     return (
       <GlassCard className="flex flex-col items-center gap-3 py-7 text-center">
         <span className="grid size-12 place-items-center rounded-card-featured bg-card text-(--success-foreground) shadow-rest">
           <Check className="size-6" aria-hidden />
         </span>
-        <p className="text-body font-semibold text-heading">{t('study.caughtUp')}</p>
+        <p className="text-body font-semibold text-heading">{t(done.headingKey)}</p>
         {onStudyAhead ? (
           <Button variant="secondary" onClick={onStudyAhead}>
-            {t('study.studyAhead')}
+            {t(done.aheadKey)}
           </Button>
         ) : null}
         {flagged}

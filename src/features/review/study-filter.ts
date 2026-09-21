@@ -50,9 +50,10 @@ export interface QueueOptions {
   maxCardsPerDay: number
   random?: () => number
   /**
-   * A card the learner asked for by name. It leads the queue even when the
-   * daily limits or a frozen flag would have left it out — an explicit ask is
-   * not the same as the deck's normal rotation.
+   * A card the learner asked for by name. The session is a run from it: that card and every
+   * live card after it, in deck order, whatever their schedules say and however the deck would
+   * shuffle — an explicit ask is not the deck's normal rotation. The card itself comes in even
+   * frozen; the frozen ones after it do not. Only the daily maximum still applies.
    */
   startAt?: string
 }
@@ -69,11 +70,22 @@ function withNewCardLimit(cards: Card[], newCardsPerDay: number): Card[] {
 
 export function buildStudyQueue(cards: Card[], options: QueueOptions): string[] {
   const { now, algorithm, shuffle: shouldShuffle, random = Math.random } = options
+  const from = options.startAt === undefined ? -1 : cards.findIndex((c) => c.id === options.startAt)
+  if (from >= 0) {
+    return cards
+      .filter((card, i) => i === from || (i > from && !card.frozen))
+      .slice(0, options.maxCardsPerDay)
+      .map((card) => card.id)
+  }
   const live = cards.filter((card) => !card.frozen)
 
   let chosen: Card[]
   if (algorithm === 'fast') {
-    chosen = live
+    // A Fast pass remembers: a card got right is done with until the learner resets it or the
+    // pass is complete. Otherwise every session re-offers the whole deck, and answering a card
+    // changes nothing the learner can see.
+    const left = live.filter((card) => card.fastReview !== 'gotIt')
+    chosen = left.length > 0 ? left : live
   } else {
     const due = [
       ...live.filter((card) => srsStatus(card.srs) !== 'new' && isDue(card.srs, now)),
@@ -85,13 +97,6 @@ export function buildStudyQueue(cards: Card[], options: QueueOptions): string[] 
     chosen = due.length > 0 ? due : withNewCardLimit(live, options.newCardsPerDay)
   }
 
-  const capped = chosen.slice(0, options.maxCardsPerDay)
-  const ids = capped.map((card) => card.id)
-  const ordered = shouldShuffle ? shuffle(ids, random) : ids
-  return options.startAt ? leadWith(ordered, options.startAt, cards) : ordered
-}
-
-function leadWith(ids: string[], startAt: string, pool: Card[]): string[] {
-  if (!pool.some((card) => card.id === startAt)) return ids
-  return [startAt, ...ids.filter((id) => id !== startAt)]
+  const ids = chosen.slice(0, options.maxCardsPerDay).map((card) => card.id)
+  return shouldShuffle ? shuffle(ids, random) : ids
 }

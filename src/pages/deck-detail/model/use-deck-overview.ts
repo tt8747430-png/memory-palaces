@@ -8,6 +8,8 @@ import type { OverviewStat } from '@/shared/ui'
 export interface DeckOverview {
   count: number
   countLabel: string
+  /** Nothing left to offer because the work is done — not merely nothing to offer. */
+  caughtUp: boolean
   stats: OverviewStat[]
 }
 
@@ -24,6 +26,7 @@ export function useDeckOverview(
       const view = fastOverview(cards, maxCardsPerDay)
       return {
         count: view.count,
+        caughtUp: view.isCaughtUp,
         countLabel: t(
           view.count === 1 ? 'fastReview.cardsToStudy_one' : 'fastReview.cardsToStudy_other',
           { count: view.count },
@@ -39,6 +42,7 @@ export function useDeckOverview(
     const view = studyOverview(cards, now)
     return {
       count: view.count,
+      caughtUp: view.isCaughtUp,
       countLabel: t(view.count === 1 ? 'study.cardsForTodayOne' : 'study.cardsForTodayOther', {
         count: view.count,
       }),

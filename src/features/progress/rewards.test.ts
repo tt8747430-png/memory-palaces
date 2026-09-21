@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vitest'
 import { outcomeToReward, quizXp, studyXp, XP_MATCH } from './rewards'
 
 describe('outcomeToReward', () => {
+  it('pays nothing for a session that graded nothing — the floor is for sessions, not exits', () => {
+    expect(studyXp(0)).toBe(0)
+    expect(studyXp(1)).toBe(20)
+  })
+
   it('maps a study outcome to xp by cards graded, items = graded', () => {
     expect(outcomeToReward({ kind: 'study', graded: 8 })).toEqual({
       xp: studyXp(8),

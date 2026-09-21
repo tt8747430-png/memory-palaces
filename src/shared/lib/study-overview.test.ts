@@ -41,6 +41,20 @@ describe('fastOverview', () => {
     expect(fastOverview(cards, 3000).breakdown).toEqual({ notStudied: 1, notQuite: 1, gotIt: 1 })
   })
 
+  it('counts what is left to get right, not the size of the deck', () => {
+    const cards = [{}, { fastReview: 'notQuite' as const }, { fastReview: 'gotIt' as const }]
+    const overview = fastOverview(cards, 3000)
+    expect(overview.count).toBe(2)
+    expect(overview.isCaughtUp).toBe(false)
+  })
+
+  it('reports caught up once every card has been got right', () => {
+    const cards = [{ fastReview: 'gotIt' as const }, { fastReview: 'gotIt' as const }]
+    const overview = fastOverview(cards, 3000)
+    expect(overview.count).toBe(0)
+    expect(overview.isCaughtUp).toBe(true)
+  })
+
   it('offers no more than the daily maximum', () => {
     const cards = Array.from({ length: 10 }, () => ({}))
     expect(fastOverview(cards, 4).count).toBe(4)
