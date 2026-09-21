@@ -11,6 +11,11 @@ export interface CloudWatcher {
  * One Realtime channel over the account's rows in every live table. It reports positions, never
  * documents: applying anything is a Sync's job. A channel that subscribes a second time has been
  * down in between, and says so — whatever moved meanwhile went unheard.
+ *
+ * The filter is the account, so a table whose rows are not scoped to one — a corpus every account
+ * reads — raises nothing here. That is deliberate: what this watcher feeds is "this account
+ * changed on another device", and a corpus being published is not that. Such a table arrives with
+ * the next Sync like everything else.
  */
 export function createCloudWatcher(
   supabase: SupabaseClient,
