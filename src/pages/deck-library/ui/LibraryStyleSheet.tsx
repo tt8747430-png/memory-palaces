@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Check } from 'lucide-react'
@@ -26,6 +26,10 @@ export interface LibraryStyleSheetProps {
  * A card style for the decks that are selected. It composes the same whole `CardStyle` the deck's
  * own style screen does, and starts from the style the first selected deck already shows, so the
  * sheet opens on something recognisable rather than on the default.
+ *
+ * The draft is `null` until something is edited and the seed is derived from the props — the same
+ * `draft ?? saved` shape the style page uses — so closing the sheet is the one event that forgets
+ * an edit, and nothing has to mirror props into state.
  */
 export function LibraryStyleSheet({
   open,
@@ -36,28 +40,35 @@ export function LibraryStyleSheet({
 }: LibraryStyleSheetProps) {
   const { t } = useTranslation()
   const deckStore = useDeckStoreApi()
-  const [style, setStyle] = useState<CardStyle>(DEFAULT_CARD_STYLE)
+  const [draft, setDraft] = useState<CardStyle | null>(null)
 
   const first = deckIds[0]
+  const seed = useMemo(
+    () => (first ? resolveDeckSettings(decks, first).cardStyle : DEFAULT_CARD_STYLE),
+    [decks, first],
+  )
+  const style = draft ?? seed
 
-  useEffect(() => {
-    if (!open) return
-    setStyle(first ? resolveDeckSettings(decks, first).cardStyle : DEFAULT_CARD_STYLE)
-    // The style is seeded once, when the sheet opens; editing it afterwards is the point.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, first])
+  const change = (next: boolean) => {
+    if (!next) setDraft(null)
+    onOpenChange(next)
+  }
 
   const apply = async () => {
-    const changed = await applyCardStyle(deckStore, style, { kind: 'ids', ids: deckIds })
-    onOpenChange(false)
-    onApplied()
-    toast.success(t('cardStyle.appliedToDecks', { count: changed }))
+    try {
+      const changed = await applyCardStyle(deckStore, style, { kind: 'ids', ids: deckIds })
+      change(false)
+      onApplied()
+      toast.success(t('cardStyle.appliedToDecks', { count: changed }))
+    } catch {
+      toast.error(t('cardStyle.applyFailed'))
+    }
   }
 
   return (
     <Sheet
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={change}
       title={t('cardStyle.title')}
       description={t('library.select.styleCount', { count: deckIds.length })}
       footer={
@@ -82,7 +93,7 @@ export function LibraryStyleSheet({
           />
         </CardScene>
 
-        <CardStyleFields style={style} onChange={setStyle} />
+        <CardStyleFields style={style} onChange={setDraft} />
       </div>
     </Sheet>
   )

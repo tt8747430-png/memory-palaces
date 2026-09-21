@@ -7,9 +7,12 @@ export type PendingAct =
   | { kind: 'delete-deck'; deck: Deck }
   | { kind: 'delete-folder'; folder: Folder }
   | { kind: 'delete-selection' }
+  | { kind: 'style-selection' }
 
 export const isMove = (act: PendingAct | null): boolean =>
   act?.kind === 'move-deck' || act?.kind === 'move-selection'
 
 export const movingDeck = (act: PendingAct | null): Deck | undefined =>
   act?.kind === 'move-deck' ? act.deck : undefined
+
+export const isStyle = (act: PendingAct | null): boolean => act?.kind === 'style-selection'

@@ -10,7 +10,7 @@ import {
   ScreenLoading,
   SelectHeader,
   SelectToolbar,
-  SelectToolbarDock,
+  BottomDock,
   SortControl,
   SpeedDial,
   useContentSortOptions,
@@ -127,13 +127,13 @@ export function DeckQuestionsPage({
         </section>
       </div>
 
-      <SelectToolbarDock open={selection.active}>
+      <BottomDock open={selection.active}>
         <SelectToolbar
           actions={prefs.selectToolbar.question}
           handlers={page.selectHandlers}
           selection={selection}
         />
-      </SelectToolbarDock>
+      </BottomDock>
 
       <QuestionDialogs
         pending={page.pending}

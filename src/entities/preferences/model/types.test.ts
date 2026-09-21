@@ -3,8 +3,10 @@ import {
   completePreferences,
   DEFAULT_PRIVACY,
   isExtensionEnabled,
+  isExtensionFeatureOn,
   makePreferences,
   updatePreferences,
+  withExtensionFeature,
 } from './types'
 
 const at = (ms: number) => new Date(ms).toISOString()
@@ -116,6 +118,39 @@ describe('extensions', () => {
     }
     expect(isExtensionEnabled(prefs, 'bible')).toBe(true)
     expect(isExtensionEnabled(prefs, 'atlas')).toBe(false)
+  })
+})
+
+describe('extension features', () => {
+  const base = () => makePreferences({ id: 'preferences', createdAt: at(0) })
+
+  it('is on by default — an id nobody has switched off, even one this build never declared', () => {
+    expect(isExtensionFeatureOn(base(), 'bible', 'import')).toBe(true)
+    expect(isExtensionFeatureOn(base(), 'bible', 'something-from-the-future')).toBe(true)
+  })
+
+  it('is off exactly when the negative list names it', () => {
+    const prefs = { ...base(), disabledFeatures: { bible: ['reader'] } }
+    expect(isExtensionFeatureOn(prefs, 'bible', 'reader')).toBe(false)
+    expect(isExtensionFeatureOn(prefs, 'bible', 'import')).toBe(true)
+  })
+
+  it('writes the negative list, and drops the key once nothing is off', () => {
+    const off = withExtensionFeature({}, 'bible', 'reader', false)
+    expect(off).toEqual({ bible: ['reader'] })
+
+    const twice = withExtensionFeature(off, 'bible', 'reader', false)
+    expect(twice).toEqual({ bible: ['reader'] })
+
+    expect(withExtensionFeature(off, 'bible', 'reader', true)).toEqual({})
+  })
+
+  it('carries an id from a newer build through untouched', () => {
+    const held = { bible: ['from-the-future'] }
+    expect(withExtensionFeature(held, 'bible', 'reader', false)).toEqual({
+      bible: ['from-the-future', 'reader'],
+    })
+    expect(withExtensionFeature(held, 'bible', 'reader', true)).toEqual(held)
   })
 })
 

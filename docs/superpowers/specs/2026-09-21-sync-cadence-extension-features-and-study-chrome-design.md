@@ -146,7 +146,7 @@ already follows.
 
 | Feature            | Provides                                                           | Off means                                                   |
 | ------------------ | ------------------------------------------------------------------ | ----------------------------------------------------------- |
-| **Passage import** | The Add-a-passage screen and its tile in the import sheet          | The tile is withdrawn; the route redirects to Extensions    |
+| **Passage import** | The Add-a-passage screen and its tile in the import sheet          | The tile is withdrawn; the route redirects to the overview  |
 | **Verse library**  | Saving verse text, filling a picked passage in from it, coverage   | Import still works; it neither reads nor writes stored text |
 | **Chapter decks**  | Placing cards in a deck for the book and a subdeck for the chapter | Import asks for one destination deck, like any other import |
 
@@ -245,3 +245,20 @@ A pure helper in `extensions/bible/model/` collapses held references into ranges
 banner counts first and caps the list: `12 of these are already in your library: Efeseni 3:6–9, 3:12 +2 more.` The
 toggle beside it stops reading backwards: **Add them again anyway**, under a line saying they are skipped by default.
 The import summary and "nothing new" get the same treatment.
+
+## 10. As built
+
+Where the build settled differently from the sections above, deliberately:
+
+- A route whose feature is off redirects to the extension's **overview** — the screen that holds the switch — rather
+  than to Settings → Extensions. `FeatureGate` answers while the learner stays, as `ExtensionGate` does for the
+  extension itself, so a feature switched off under a mounted screen (including by a quiet pull) withdraws it.
+- The prompt face no longer carries an on-card "Tap to reveal" chip; the footer pill is the one reveal control, and
+  the card's own header carries a flip button (see the bottom-slot design of the same date).
+- The Spaced repetition remaining-count chips show numbers with their labels for assistive tech, not printed
+  labels; the row is narrower than the reference and the counts read at a glance.
+- Recent syncs sit below the Autosync and quiet-sync sections, so the settings a learner changes come before the
+  record of what they caused.
+- The "nothing new" toast and the passage summary name the verses (`Nothing new — Ioan 3:16 is already in your
+  Bible library.` · `2 of 3 verses are in your Bible library — missing Geneza 1:2`) through the same collapsing
+  helper as the banner. Ranges use an en dash.

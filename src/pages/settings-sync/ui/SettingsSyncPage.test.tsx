@@ -177,7 +177,7 @@ describe('SettingsSyncPage', () => {
     await setup({ pending: [change('preferences', 'preferences')] })
 
     expect(await screen.findByText(/1 setting is waiting for a connection/i)).toBeInTheDocument()
-    expect(screen.getByText(/your decks and cards are up to date/i)).toBeInTheDocument()
+    expect(screen.getByText(/your work is up to date/i)).toBeInTheDocument()
   })
 
   it('names a contributed table by the key its extension gave it', async () => {

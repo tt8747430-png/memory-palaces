@@ -1,7 +1,7 @@
 import { useNavigate } from '@tanstack/react-router'
 import { ROUTES } from '@/shared/config/routes'
 import { useBack, useRouteSearch } from '@/shared/lib'
-import { validateBibleImportSearch } from '../manifest'
+import { validateBibleImportSearch } from '../model/import-search'
 import { BibleImportPage } from './BibleImportPage'
 
 export function BibleImportScreen() {

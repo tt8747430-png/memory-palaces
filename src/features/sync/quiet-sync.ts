@@ -1,7 +1,7 @@
 import { errorMessage, type SyncOutcome } from '@/shared/lib'
 import { pendingIn, selectPendingChanges } from '@/entities/pending-change'
 import { selectSyncState } from '@/entities/sync-state'
-import { advance, peekAll, peekedCount, stepOverOwnEcho } from './divergence'
+import { advance, peekAll, peekedCount, scopedCheckpoints, stepOverOwnEcho } from './divergence'
 import { clearConfirmed } from './clear-confirmed'
 import type { SyncDeps } from './sync-deps'
 
@@ -40,10 +40,7 @@ export async function quietSync(deps: SyncDeps): Promise<SyncOutcome> {
     const fresh = selectSyncState(deps.syncStateStore.getState())
     await deps.syncStateStore.getState().save({
       ...fresh,
-      checkpoints: {
-        ...fresh.checkpoints,
-        ...Object.fromEntries(deps.quiet.map((table) => [table, checkpoints[table] ?? null])),
-      },
+      checkpoints: { ...fresh.checkpoints, ...scopedCheckpoints(checkpoints, deps.quiet) },
     })
 
     return { kind: peekedCount(peeked) ? 'merged' : 'clean' }

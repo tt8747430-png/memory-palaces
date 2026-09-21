@@ -7,8 +7,9 @@ import { type Folder, selectFolders, useFolderStore } from '@/entities/folder'
 import { useBibleT } from '../i18n/use-bible-t'
 import { keepMissingVerses } from '../features/keep-missing-verses'
 import { useBibleVerseStore, useBibleVerseStoreApi } from './context'
-import { type BookCoverage, libraryCoverage } from './coverage'
+import { libraryCoverage } from './coverage'
 import { indexLibrary } from './library-index'
+import { summariseVerseRefs } from './summarise-refs'
 import { type TextFromCards, textFromCards } from './text-from-cards'
 import { CORNILESCU_2024, type Translation } from './translations'
 
@@ -21,8 +22,7 @@ export type BibleLibraryPending = { kind: 'pick-deck' } | { kind: 'add'; text: T
 export interface BibleLibrary {
   ready: boolean
   translation: Translation
-  coverage: BookCoverage[]
-  /** The library holds no text at all — the coverage list has nothing to show. */
+  /** The library holds no text at all. */
   empty: boolean
   /** Books with text, and verses held: the one-line answer to "how much have I got?". */
   totals: { books: number; verses: number }
@@ -78,7 +78,12 @@ export function useBibleLibrary(): BibleLibrary {
     const text = textFromCards(source, index, nowIso())
     if (text.fresh.length === 0) {
       pending.dismiss()
-      toast(t(text.cards ? 'nothingNew' : 'noVerseCards', { count: text.held }))
+      if (!text.cards) {
+        toast(t('noVerseCards'))
+        return
+      }
+      const { text: refs, more } = summariseVerseRefs(text.heldRefs)
+      toast(t(more ? 'nothingNewMore' : 'nothingNew', { count: text.held, refs, more }))
       return
     }
     pending.request({ kind: 'add', text })
@@ -96,7 +101,6 @@ export function useBibleLibrary(): BibleLibrary {
   return {
     ready: versesReady && cardsReady && decksReady,
     translation: CORNILESCU_2024,
-    coverage,
     empty: totals.verses === 0,
     totals,
     addFromAllCards: () => preview(cards),

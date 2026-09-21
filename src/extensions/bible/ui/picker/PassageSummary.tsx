@@ -3,6 +3,7 @@ import { Button } from '@/shared/ui'
 import { useBibleT } from '../../i18n/use-bible-t'
 import type { PassageText } from '../../model/passage-text'
 import { formatRef, type VerseRef } from '../../model/reference'
+import { summariseVerseRefs } from '../../model/summarise-refs'
 
 export interface PassageSummaryProps {
   passage: VerseRef
@@ -19,7 +20,7 @@ export function PassageSummary({ passage, text, onChange }: PassageSummaryProps)
       ? t('summaryAll', { count })
       : text.held === 0
         ? t('summaryNone', { count })
-        : t('summarySome', { held: text.held, count })
+        : t('summarySome', { held: text.held, count, missing: missingRefs(passage, text) })
   const Icon = text.held === count ? BookOpenCheck : BookOpen
 
   return (
@@ -41,4 +42,11 @@ export function PassageSummary({ passage, text, onChange }: PassageSummaryProps)
       </Button>
     </section>
   )
+}
+
+/** The verses the library lacks, named as runs — `3:2–4, 3:7` — rather than counted. */
+function missingRefs(passage: VerseRef, text: PassageText): string {
+  const refs = text.missing.map((verse) => ({ ...passage, from: verse, to: verse }))
+  const { text: named, more } = summariseVerseRefs(refs)
+  return more ? `${named} +${more}` : named
 }

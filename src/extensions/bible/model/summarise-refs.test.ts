@@ -7,12 +7,12 @@ describe('summariseRefs', () => {
   })
 
   it('collapses consecutive verses into a run', () => {
-    expect(summariseRefs(['Efeseni 3:6', 'Efeseni 3:7', 'Efeseni 3:8']).text).toBe('Efeseni 3:6-8')
+    expect(summariseRefs(['Efeseni 3:6', 'Efeseni 3:7', 'Efeseni 3:8']).text).toBe('Efeseni 3:6–8')
   })
 
   it('starts another run at a gap, and states the book once', () => {
     expect(summariseRefs(['Efeseni 3:6', 'Efeseni 3:7', 'Efeseni 3:12']).text).toBe(
-      'Efeseni 3:6-7, 3:12',
+      'Efeseni 3:6–7, 3:12',
     )
   })
 
@@ -21,11 +21,11 @@ describe('summariseRefs', () => {
   })
 
   it('sorts what arrives out of order', () => {
-    expect(summariseRefs(['Efeseni 3:8', 'Efeseni 3:6', 'Efeseni 3:7']).text).toBe('Efeseni 3:6-8')
+    expect(summariseRefs(['Efeseni 3:8', 'Efeseni 3:6', 'Efeseni 3:7']).text).toBe('Efeseni 3:6–8')
   })
 
   it('joins a range reference to the run it continues', () => {
-    expect(summariseRefs(['Efeseni 3:6-8', 'Efeseni 3:9']).text).toBe('Efeseni 3:6-9')
+    expect(summariseRefs(['Efeseni 3:6-8', 'Efeseni 3:9']).text).toBe('Efeseni 3:6–9')
   })
 
   it('caps the list and counts what it left out', () => {

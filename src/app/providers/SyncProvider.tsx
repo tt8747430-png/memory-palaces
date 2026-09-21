@@ -9,7 +9,7 @@ import {
 } from 'react'
 import type { CloudSyncPort, PersistedAuth, RemoteChangeHandlers, StoragePort } from '@/shared/api'
 import type { SyncManager } from '@/shared/api/supabase'
-import { activeSyncTables, type SyncedTable, type SyncTableSpec } from '@/shared/config/sync-tables'
+import { syncScope, type SyncedTable, type SyncTableSpec } from '@/shared/config/sync-tables'
 import {
   type DataOwner,
   localDataOwner,
@@ -91,15 +91,8 @@ export function SyncProvider({
     (id: string) => isExtensionEnabled({ extensions: enabledExtensions ?? [] }, id),
     [enabledExtensions],
   )
-  const tables = useMemo(() => activeSyncTables(syncTables, isEnabled), [syncTables, isEnabled])
-  // The two cadences, from the same derivation as the whole list: what waits to be asked, and what
-  // goes on its own. A table in neither would be a table nothing ever pushes.
-  const held = useMemo(
-    () => activeSyncTables(syncTables, isEnabled, 'held'),
-    [syncTables, isEnabled],
-  )
-  const quiet = useMemo(
-    () => activeSyncTables(syncTables, isEnabled, 'quiet'),
+  const { tables, held, quiet } = useMemo(
+    () => syncScope(syncTables, isEnabled),
     [syncTables, isEnabled],
   )
   const labelKeys = useMemo(
@@ -126,7 +119,9 @@ export function SyncProvider({
       // see; either way the cycle's outcome says whether the cloud is ahead.
       onChange: (event) => {
         if (quietRef.current.includes(event.table)) {
-          setQuietMoved((count) => count + 1)
+          // The same rule as the held path: during a quiet cycle the event is the cycle's own echo,
+          // and counting it would send one more empty cycle after every settings push.
+          if (!quietInFlight.current) setQuietMoved((count) => count + 1)
           return
         }
         if (!inFlight.current) void noteCloudChange({ syncStateStore }, event)

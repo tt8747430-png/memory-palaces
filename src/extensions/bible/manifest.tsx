@@ -1,29 +1,7 @@
 import { BookOpen, FolderTree, Library } from 'lucide-react'
 import { type ExtensionManifest, extensionRoute } from '@/shared/lib'
-import { BIBLE_ID } from './ids'
-
-const BIBLE_IMPORT_PATH = '/import/bible'
-const BIBLE_OVERVIEW_PATH = '/settings/extensions/bible'
-const BIBLE_DEVELOPER_PATH = '/settings/extensions/bible/developer'
-
-/**
- * The parts a learner may switch off one at a time. Switching one off never deletes anything: the
- * verses stay, their table keeps replicating, and switching it back on finds them where they were.
- */
-export const BIBLE_FEATURES = {
-  import: 'import',
-  library: 'library',
-  chapterDecks: 'chapterDecks',
-} as const
-
-/** What an import link may carry: the deck the learner was already in. */
-interface BibleImportSearch extends Record<string, unknown> {
-  deckId?: string
-}
-
-export function validateBibleImportSearch(search: Record<string, unknown>): BibleImportSearch {
-  return typeof search.deckId === 'string' && search.deckId ? { deckId: search.deckId } : {}
-}
+import { BIBLE_FEATURES, BIBLE_ID, BIBLE_PATHS } from './ids'
+import { validateBibleImportSearch } from './model/import-search'
 
 export const bibleManifest: ExtensionManifest = {
   id: BIBLE_ID,
@@ -33,12 +11,17 @@ export const bibleManifest: ExtensionManifest = {
   namespace: 'bible',
   loadMessages: () => import('./i18n/en').then((module) => module.bibleMessages),
   routes: [
-    extensionRoute(BIBLE_IMPORT_PATH, () => import('./ui/BibleImportScreen'), 'BibleImportScreen', {
-      validateSearch: validateBibleImportSearch,
-      feature: BIBLE_FEATURES.import,
-    }),
     extensionRoute(
-      BIBLE_DEVELOPER_PATH,
+      BIBLE_PATHS.import,
+      () => import('./ui/BibleImportScreen'),
+      'BibleImportScreen',
+      {
+        validateSearch: validateBibleImportSearch,
+        feature: BIBLE_FEATURES.import,
+      },
+    ),
+    extensionRoute(
+      BIBLE_PATHS.developer,
       () => import('./ui/BibleDeveloperScreen'),
       'BibleDeveloperScreen',
     ),
@@ -54,7 +37,7 @@ export const bibleManifest: ExtensionManifest = {
         tone: 'brand',
         titleKey: 'bible:label',
         subtitleKey: 'bible:importSubtitle',
-        to: BIBLE_IMPORT_PATH,
+        to: BIBLE_PATHS.import,
         feature: BIBLE_FEATURES.import,
       },
     ],
@@ -81,7 +64,7 @@ export const bibleManifest: ExtensionManifest = {
   ],
   overview: {
     route: extensionRoute(
-      BIBLE_OVERVIEW_PATH,
+      BIBLE_PATHS.overview,
       () => import('./ui/BibleOverviewScreen'),
       'BibleOverviewScreen',
     ),

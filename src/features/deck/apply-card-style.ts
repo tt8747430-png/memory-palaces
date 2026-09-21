@@ -1,4 +1,4 @@
-import { type CardStyle, type DeckStore, selectDecks } from '@/entities/deck'
+import { type CardStyle, type Deck, type DeckStore, selectDecks } from '@/entities/deck'
 import { sameCardStyle, subtreeDeckIds } from '@/shared/lib'
 import { updateDeckSettings } from './update-deck-settings'
 
@@ -9,8 +9,8 @@ export type CardStyleScope =
   | { kind: 'all' }
   | { kind: 'ids'; ids: readonly string[] }
 
-function targetIds(store: DeckStore, scope: CardStyleScope): string[] {
-  const decks = selectDecks(store.getState())
+/** The decks a scope names, in the library as it stands. Pure, so a screen can count them first. */
+export function cardStyleTargets(decks: readonly Deck[], scope: CardStyleScope): string[] {
   switch (scope.kind) {
     case 'deck':
       return [scope.deckId]
@@ -43,7 +43,7 @@ export async function applyCardStyle(
   const decks = selectDecks(store.getState())
   const byId = new Map(decks.map((deck) => [deck.id, deck]))
 
-  const changing = targetIds(store, scope).filter((id) => {
+  const changing = cardStyleTargets(decks, scope).filter((id) => {
     const own = byId.get(id)?.settings.cardStyle
     return byId.has(id) && (own === undefined || !sameCardStyle(own, style))
   })

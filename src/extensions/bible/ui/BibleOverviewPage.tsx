@@ -9,7 +9,7 @@ import {
   usePreferencesStoreApi,
 } from '@/entities/preferences'
 import { setExtensionEnabled, setExtensionFeature } from '@/features/preferences'
-import { cn } from '@/shared/lib'
+import { cn, useContributedT } from '@/shared/lib'
 import {
   AppScreen,
   cardSurface,
@@ -21,13 +21,13 @@ import {
 } from '@/shared/ui'
 import { DestinationSheet } from '@/widgets/deck-tree'
 import { useBibleT } from '../i18n/use-bible-t'
-import { BIBLE_ID } from '../ids'
-import { bibleManifest, BIBLE_FEATURES } from '../manifest'
+import { BIBLE_FEATURES, BIBLE_ID } from '../ids'
+import { bibleManifest } from '../manifest'
 import { useBibleLibrary } from '../model/use-bible-library'
 
 export interface BibleOverviewPageProps {
   onBack?: () => void
-  /** Opens the developer tools screen; its path comes from the manifest, not from here. */
+  /** Opens the developer tools screen. Shown only in dev mode. */
   onOpenDeveloper?: () => void
   /** Where switching the extension off leaves the learner — Settings → Extensions. */
   onSwitchedOff?: () => void
@@ -43,6 +43,8 @@ export function BibleOverviewPage({
   onSwitchedOff,
 }: BibleOverviewPageProps) {
   const t = useBibleT()
+  // The keys a feature declares are already namespaced — they are what a host surface would read.
+  const contributed = useContributedT()
   const { t: core } = useTranslation()
   const store = usePreferencesStoreApi()
   const disabledFeatures = usePreferencesStore(selectDisabledFeatures)
@@ -79,7 +81,7 @@ export function BibleOverviewPage({
           </div>
           <p className="flex items-center gap-2 text-label text-muted-foreground">
             <BookOpen className="size-4 shrink-0" aria-hidden />
-            {t('overviewTranslation', { name: page.translation.name })}
+            {page.translation.name}
           </p>
           <p className="flex items-center gap-2 text-label text-muted-foreground">
             <WifiOff className="size-4 shrink-0" aria-hidden />
@@ -93,8 +95,8 @@ export function BibleOverviewPage({
               key={feature.id}
               kind="toggle"
               icon={feature.icon}
-              label={t(`features.${feature.id}.label` as never)}
-              description={t(`features.${feature.id}.description` as never)}
+              label={contributed(feature.labelKey)}
+              description={contributed(feature.descriptionKey)}
               checked={featureOn(feature.id)}
               onCheckedChange={(on) => toggleFeature(feature.id, on)}
             />

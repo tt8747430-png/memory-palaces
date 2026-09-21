@@ -5,13 +5,14 @@ import type { Deck } from '@/entities/deck'
 import { resolveDeckSettings, selectDecks, useDeckStore } from '@/entities/deck'
 import type { Folder } from '@/entities/folder'
 import { selectFolders, useFolderStore } from '@/entities/folder'
-import { selectEffectivePreferences, usePreferencesStore } from '@/entities/preferences'
+import { selectDeckSort, selectDeckSortSubdecks, usePreferencesStore } from '@/entities/preferences'
 import {
   type DeckSort,
   dueCountsPerDeck,
   findEntity,
   type FlatDeck,
   flattenDecks,
+  FOLDER_SORTS,
   selectIsReady,
   siblingDecks,
   sortDecks,
@@ -49,7 +50,8 @@ export interface LibraryData {
 
 export function useLibraryData(folderId: string | null): LibraryData {
   const storeFolders = useFolderStore(selectFolders)
-  const { deckSort, deckSortSubdecks } = usePreferencesStore(selectEffectivePreferences)
+  const deckSort = usePreferencesStore(selectDeckSort)
+  const deckSortSubdecks = usePreferencesStore(selectDeckSortSubdecks)
   const storeDecks = useDeckStore(selectDecks)
   const cards = useCardStore(selectCards)
   const foldersReady = useFolderStore(selectIsReady)
@@ -60,13 +62,9 @@ export function useLibraryData(folderId: string | null): LibraryData {
 
   const { ready: expandedReady, expanded, toggleExpanded, expand } = useLibraryExpanded()
 
-  /**
-   * A folder follows the order too, but only where the question makes sense for a shelf: it has no
-   * due date of its own, so under `due` it keeps the order it was dragged into.
-   */
   const folders = useMemo(() => {
-    const placed = [...unsorted].sort((a, b) => a.order - b.order)
-    return deckSort === 'name' || deckSort === 'recent' ? sortDecks(placed, deckSort) : placed
+    const placed = unsorted.toSorted((a, b) => a.order - b.order)
+    return FOLDER_SORTS.has(deckSort) ? sortDecks(placed, deckSort) : placed
   }, [unsorted, deckSort])
   const openFolder = useMemo(() => findEntity(folders, folderId), [folders, folderId])
   const folderIds = useMemo(() => new Set(folders.map((f) => f.id)), [folders])

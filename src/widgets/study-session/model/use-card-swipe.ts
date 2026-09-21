@@ -3,9 +3,8 @@ import { animate, type MotionValue, useMotionValue, useTransform } from 'motion/
 import { useDrag } from '@use-gesture/react'
 import {
   type FlashcardInput,
-  type FlashcardSwipeAction,
   type FlashcardSwipeConfig,
-  isGradeAction,
+  isAdvancingAction,
   isModeAction,
   type ModeSwipeAction,
   type SwipeDirection,
@@ -45,10 +44,6 @@ interface Args {
   onLongPress?: () => void
   onCommit: (direction: SwipeDirection) => void
   onMechanic: (action: ModeSwipeAction) => void
-}
-
-function advances(action: FlashcardSwipeAction): boolean {
-  return isGradeAction(action) || action === 'skip'
 }
 
 function controlOf(target: EventTarget | null): HTMLElement | null {
@@ -142,7 +137,7 @@ export function useCardSwipe({
       snapBack()
       return drop()
     }
-    if (!advances(action)) {
+    if (!isAdvancingAction(action)) {
       onCommit(dir)
       tick()
       snapBack()

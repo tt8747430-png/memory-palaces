@@ -7,14 +7,14 @@ import {
   type RouteComponent,
 } from '@tanstack/react-router'
 import { ROUTES } from '@/shared/config/routes'
-import type { ExtensionRoute } from '@/shared/lib'
+import type { ExtensionManifest, ExtensionRoute } from '@/shared/lib'
 import { RootLayout } from './RootLayout'
 import { authRedirect } from './auth-guard'
 import type { Services } from './composition-root'
 import { isExtensionFeatureOn, selectEffectivePreferences } from '@/entities/preferences'
 import { ExtensionGate } from './extensions/ExtensionGate'
-import { extensionOverview } from './extensions/extension-redirect'
-import { extensionRedirect } from './extensions/extension-redirect'
+import { FeatureGate } from './extensions/FeatureGate'
+import { extensionOverview, extensionRedirect } from './extensions/extension-redirect'
 import { EXTENSIONS } from './extensions/registry'
 import { lazyScreen } from './lazy-screen'
 import { validateExtensionsSearch } from '@/pages/settings-extensions'
@@ -48,6 +48,28 @@ const route = <Path extends string>(path: Path, component: RouteComponent) =>
   createRoute({ getParentRoute: () => rootRoute, path, component })
 
 /**
+ * The route's screen, wrapped in its feature's gate when it has one. Built once per route as the
+ * router is assembled — never inside a render — so the wrapper is as stable as the screen it wraps.
+ */
+function featureGated(manifest: ExtensionManifest, declared: ExtensionRoute): RouteComponent {
+  const Screen = lazyScreen(declared.load)(declared.name)
+  const feature = declared.feature
+  if (feature === undefined) return Screen
+  // A function declaration does not narrow a captured `const` the way an arrow does.
+  const gatedBy: string = feature
+  function GatedScreen() {
+    return (
+      <FeatureGate manifest={manifest} feature={gatedBy}>
+        <Screen />
+      </FeatureGate>
+    )
+  }
+  // The router preloads a lazy screen on intent through this hook; the gate must not hide it.
+  GatedScreen.preload = Screen.preload
+  return GatedScreen
+}
+
+/**
  * An extension's routes render inside its gate, a pathless layout that swaps them for Settings if the
  * extension goes off while one is open. Each is guarded on the way in: the guard **awaits the
  * runtime settling on loaded preferences** — `beforeLoad` runs before any provider has rendered, and
@@ -71,7 +93,7 @@ const extensionRoutes = EXTENSIONS.map((manifest): AnyRoute => {
       getParentRoute: () => gate,
       path: declared.path,
       validateSearch: declared.validateSearch,
-      component: lazyScreen(declared.load)(declared.name),
+      component: featureGated(manifest, declared),
       beforeLoad: async ({ context }) => {
         const { extensions, preferencesStore } = context.services
         await extensions.settled()

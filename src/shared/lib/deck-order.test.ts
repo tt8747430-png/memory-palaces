@@ -54,3 +54,16 @@ describe('resolveDeckSort', () => {
     expect(resolveDeckSort(7)).toBe(DEFAULT_DECK_SORT)
   })
 })
+
+describe('sortDecks stability', () => {
+  it('keeps decks that compare equal in the order they arrived', () => {
+    const twins: Row[] = [
+      { name: 'Same', createdAt: '2026-01-01T00:00:00.000Z', due: 0 },
+      { name: 'Same', createdAt: '2026-01-01T00:00:00.000Z', due: 0 },
+    ]
+    const tagged = twins.map((row, i) => ({ ...row, tag: i }))
+    expect(sortDecks(tagged, 'name').map((r) => r.tag)).toEqual([0, 1])
+    expect(sortDecks(tagged, 'recent').map((r) => r.tag)).toEqual([0, 1])
+    expect(sortDecks(tagged, 'due', (r) => r.due).map((r) => r.tag)).toEqual([0, 1])
+  })
+})

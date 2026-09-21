@@ -124,6 +124,12 @@ export const cardStyle = {
   appliedToDecks_zero: 'Every deck already had this style',
   appliedToDecks_one: 'Card style applied to 1 deck',
   appliedToDecks_other: 'Card style applied to {{count}} decks',
+  applyFailed: 'The style could not be applied. Try again.',
+  applyEverywhereTitle: 'Apply to every deck?',
+  applyEverywhereBody_one: 'This gives {{count}} deck this style. Each deck keeps it as its own.',
+  applyEverywhereBody_other:
+    'This gives all {{count}} decks this style. Each deck keeps it as its own.',
+  applyEverywhereConfirm: 'Apply to all',
   fullscreen: 'Preview full screen',
   preview: 'Preview',
   previewFront: 'What are the 3 different types of equilibrium in physics?',

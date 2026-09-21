@@ -47,6 +47,22 @@ describe('syncNow', () => {
     expect(state(deps).cloudChanged).toBe(false)
   })
 
+  it('saves only the held checkpoints — a quiet one read at the start would be stale', async () => {
+    const { deps } = syncFixture()
+    // A quiet checkpoint another cycle wrote after this Sync read its starting point.
+    const started = state(deps)
+    const later = { id: 'p1', updated_at: NOW }
+    const moved = { ...started, checkpoints: { ...started.checkpoints, preferences: later } }
+    deps.cloud.peek = async (table) => {
+      if (table === 'decks') await deps.syncStateStore.getState().save(moved)
+      return []
+    }
+
+    await expect(syncNow(deps)).resolves.toEqual({ kind: 'clean' })
+
+    expect(state(deps).checkpoints.preferences).toEqual(later)
+  })
+
   it('refuses to start offline, and touches nothing', async () => {
     const { deps, cloud, log } = syncFixture()
     deps.isOnline = () => false

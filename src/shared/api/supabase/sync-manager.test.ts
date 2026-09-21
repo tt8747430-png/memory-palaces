@@ -131,6 +131,35 @@ describe('SyncManager', () => {
     expect(created).toHaveLength(2)
   })
 
+  it('lets a narrower request join a cycle that already covers its tables', async () => {
+    const { manager, created, start } = setup()
+    await start()
+
+    // A quiet cycle over decks joins the held one, which carries decks and cards already.
+    await Promise.all([manager.runCycle(ALL_TABLES), manager.runCycle(['decks'])])
+
+    expect(created).toHaveLength(2)
+  })
+
+  it('chains a wider request behind a narrower one rather than letting them interleave', async () => {
+    const order: string[] = []
+    const { manager, created, start } = setup(['decks', 'cards'], (replication, _push, table) => {
+      replication.awaitInSync.mockImplementation(async () => {
+        order.push(`${table}:sync`)
+        return true
+      })
+    })
+    await start()
+
+    // A held Synchronise tapped during a quiet push waits for it: the quiet cycle's one
+    // replication finishes before the held cycle builds its two.
+    await Promise.all([manager.runCycle(['decks']), manager.runCycle(ALL_TABLES)])
+
+    expect(created).toHaveLength(3)
+    expect(order[0]).toBe('decks:sync')
+    expect(order.slice(1).sort()).toEqual(['cards:sync', 'decks:sync'])
+  })
+
   it('starts a fresh cycle once the previous one has finished', async () => {
     const { manager, created, start } = setup()
     await start()

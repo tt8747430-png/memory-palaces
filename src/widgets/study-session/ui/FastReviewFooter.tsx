@@ -91,7 +91,7 @@ export function FastReviewFooter({
                 onReveal={onReveal}
                 onUndo={onUndo}
                 canUndo={canUndo}
-                trailing={tallies}
+                counts={tallies}
               />
             </motion.div>
           )}

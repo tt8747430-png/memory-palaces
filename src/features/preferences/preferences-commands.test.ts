@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@/shared/api'
 import { createPreferencesStore, makePreferences, type Preferences } from '@/entities/preferences'
-import { setExtensionEnabled, setPreferences } from './index'
+import { setExtensionEnabled, setExtensionFeature, setPreferences } from './index'
 import { PREFERENCES_ID } from './set-preferences'
 
 const NOW = Date.UTC(2026, 0, 10)
@@ -92,5 +92,24 @@ describe('setExtensionEnabled', () => {
     const store = startedPreferencesStore({ extensions: ['bible'] })
     const saved = await setExtensionEnabled(store, 'bible', true)
     expect(saved.extensions).toEqual(['bible'])
+  })
+})
+
+describe('setExtensionFeature', () => {
+  it('writes the negative list — what is off — and nothing for what is on', async () => {
+    const store = startedPreferencesStore()
+
+    const off = await setExtensionFeature(store, 'bible', 'reader', false, NOW)
+    expect(off.disabledFeatures).toEqual({ bible: ['reader'] })
+
+    const on = await setExtensionFeature(store, 'bible', 'reader', true, NOW + 1)
+    expect(on.disabledFeatures).toEqual({})
+  })
+
+  it('leaves a feature another build switched off exactly where it was', async () => {
+    const store = startedPreferencesStore({ disabledFeatures: { bible: ['from-the-future'] } })
+
+    const prefs = await setExtensionFeature(store, 'bible', 'reader', false, NOW)
+    expect(prefs.disabledFeatures).toEqual({ bible: ['from-the-future', 'reader'] })
   })
 })

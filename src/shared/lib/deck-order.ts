@@ -8,6 +8,12 @@ export type DeckSort = (typeof DECK_SORTS)[number]
 
 export const DEFAULT_DECK_SORT: DeckSort = 'manual'
 
+/**
+ * The orders a folder can follow. A folder is a shelf: it has a name and a birthday but no due
+ * date of its own, so under `due` it keeps the order it was dragged into.
+ */
+export const FOLDER_SORTS: ReadonlySet<DeckSort> = new Set<DeckSort>(['name', 'recent'])
+
 export interface SortableDeck {
   name: string
   createdAt: string

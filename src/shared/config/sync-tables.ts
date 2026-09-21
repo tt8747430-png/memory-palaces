@@ -119,3 +119,28 @@ export function isContentCollection(table: SyncedTable): table is ContentCollect
 
 /** How a Pending change names its document: `cards:c1`. One document, one entry. */
 export const pendingKey = (table: SyncedTable, id: string): string => `${table}:${id}`
+
+/** The tables a session replicates, and the two cadences they fall into. */
+export interface SyncScope {
+  tables: readonly SyncedTable[]
+  /** What waits to be asked. */
+  held: readonly SyncedTable[]
+  /** What goes on its own. */
+  quiet: readonly SyncedTable[]
+}
+
+/**
+ * All three lists from one pass over the same specs, so the watcher, the peek and both cycles
+ * cannot disagree about which table is whose. A table in neither cadence would be a table nothing
+ * ever pushes, which the split by cadence makes impossible.
+ */
+export function syncScope(
+  specs: readonly SyncTableSpec[],
+  isEnabled: (id: ExtensionId) => boolean,
+): SyncScope {
+  return {
+    tables: activeSyncTables(specs, isEnabled),
+    held: activeSyncTables(specs, isEnabled, 'held'),
+    quiet: activeSyncTables(specs, isEnabled, 'quiet'),
+  }
+}

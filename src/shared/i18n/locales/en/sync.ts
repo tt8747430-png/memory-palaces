@@ -81,7 +81,7 @@ export const sync = {
     syncNow: 'Synchronise now',
     syncNowOffline: 'Reconnect to synchronise.',
     waiting: 'Your work, waiting on this device',
-    nothingWaiting: 'Nothing is waiting — your decks and cards are up to date.',
+    nothingWaiting: 'Nothing is waiting — your work is up to date.',
     waitingSheet: '{{table}} waiting to synchronise',
     recent: 'Recent syncs',
     recentEmpty: 'No Sync has run from this device yet.',
@@ -92,7 +92,7 @@ export const sync = {
       failed: 'Did not finish',
     },
     moved: '↑ {{pushed}} · ↓ {{pulled}}',
-    autosyncSection: 'Your decks, cards and study results',
+    autosyncSection: 'Your decks, cards, folders, questions and study history',
     autosync: 'Autosync',
     autosyncHint:
       'Send your work without being asked, on every device you sign in on. A deletion that clashes with another device still asks first. With it off, nothing leaves this device until you tap Synchronise.',

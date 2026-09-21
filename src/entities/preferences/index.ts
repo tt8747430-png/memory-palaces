@@ -35,10 +35,13 @@ export {
 } from './model/context'
 export {
   selectAutosync,
+  selectDeckSort,
+  selectDeckSortSubdecks,
   selectDevMode,
   selectDisabledFeatures,
   selectExtensionFeature,
   selectEffectivePreferences,
+  selectFlashcardInput,
   selectLibraryExpanded,
 } from './model/selectors'
 export type { PreferencesRepository } from './api/preferences-repository'

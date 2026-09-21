@@ -286,7 +286,9 @@ describe('BibleImportPage text and target', () => {
     const user = userEvent.setup()
     renderImportPage(<BibleImportPage />, { verses: [verse(1, 'First.'), verse(3, 'Third.')] })
     await user.type(screen.getByRole('searchbox', { name: 'Go to a passage' }), 'gen 1 1-3{Enter}')
-    expect(screen.getByText('2 of 3 verses are in your Bible library')).toBeInTheDocument()
+    expect(
+      screen.getByText('2 of 3 verses are in your Bible library — missing Geneza 1:2'),
+    ).toBeInTheDocument()
     expect(
       screen.getByText('Verse 2 has no text yet — type or paste it after its number.'),
     ).toBeInTheDocument()

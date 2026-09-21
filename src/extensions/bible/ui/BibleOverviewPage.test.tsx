@@ -125,9 +125,8 @@ describe('BibleOverviewPage', () => {
     })
     await user.click(screen.getByRole('button', { name: /Add text from your cards/ }))
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
-    expect(toast).toHaveBeenCalledWith(
-      'Nothing new — its 1 verse is already in your Bible library.',
-    )
+    // Named, not counted: the message says which verse it already has.
+    expect(toast).toHaveBeenCalledWith('Nothing new — Ioan 3:16 is already in your Bible library.')
   })
 
   it('offers the developer tools only in dev mode', () => {

@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { ACTION_META } from '@/shared/config/actions'
 import type { SelectToolbarConfig } from '@/shared/config/select-toolbar'
 import { cn, type MultiSelect } from '@/shared/lib'
-import { DockPill } from './BottomDock'
+import { DockPill } from './DockPill'
 import { CloseBadge } from './CloseBadge'
 import { type SelectActionHandlers, selectActionIcon } from './select-actions'
 

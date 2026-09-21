@@ -2,7 +2,14 @@ import { authFailure, errorMessage, type SyncOutcome } from '@/shared/lib'
 import type { SyncedTable } from '@/shared/config/sync-tables'
 import { pendingIn, selectPendingChanges } from '@/entities/pending-change'
 import { appendSyncLog, selectSyncState, type SyncLogEntry } from '@/entities/sync-state'
-import { advance, findDestructive, peekAll, peekedCount, stepOverOwnEcho } from './divergence'
+import {
+  advance,
+  findDestructive,
+  peekAll,
+  peekedCount,
+  scopedCheckpoints,
+  stepOverOwnEcho,
+} from './divergence'
 import { clearConfirmed } from './clear-confirmed'
 import type { PushedIds } from '@/shared/api'
 import type { SyncDeps } from './sync-deps'
@@ -66,7 +73,8 @@ async function attemptSync(deps: SyncDeps, options: SyncNowOptions): Promise<Syn
     const fresh = selectSyncState(deps.syncStateStore.getState())
     await deps.syncStateStore.getState().save({
       ...fresh,
-      checkpoints: { ...fresh.checkpoints, ...checkpoints },
+      // Only this cycle's tables: a quiet checkpoint read at the start would be stale by now.
+      checkpoints: { ...fresh.checkpoints, ...scopedCheckpoints(checkpoints, tables) },
       lastSyncedAt: deps.now(),
       cloudChanged: foreignAhead,
       log: appendSyncLog(fresh.log, {

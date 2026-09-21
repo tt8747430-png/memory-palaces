@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   actionsFor,
   DEFAULT_FLASHCARD_SWIPE,
+  isAdvancingAction,
   isFastAction,
   isGradeAction,
   normalizeFlashcardSwipe,
@@ -27,6 +28,28 @@ describe('actionsFor', () => {
     expect(actionsFor('fast', 'type')).toEqual(expect.arrayContaining(['nextWord', 'reset']))
     expect(actionsFor('spaced', 'initials')).toContain('showWords')
     expect(actionsFor('spaced', 'blur')).not.toContain('nextWord')
+  })
+})
+
+describe('isAdvancingAction', () => {
+  it('sends the card away for a Grade, a Fast review answer and a skip', () => {
+    for (const action of ['again', 'hard', 'good', 'easy', 'gotIt', 'notQuite', 'skip'] as const) {
+      expect(isAdvancingAction(action)).toBe(true)
+    }
+  })
+
+  it('keeps the card for a flag, a mode mechanic and Off', () => {
+    for (const action of [
+      'flag',
+      'none',
+      'hideMore',
+      'showAll',
+      'showWords',
+      'reset',
+      'nextWord',
+    ] as const) {
+      expect(isAdvancingAction(action)).toBe(false)
+    }
   })
 })
 

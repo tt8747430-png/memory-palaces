@@ -55,3 +55,21 @@ describe('SelectToolbar', () => {
     expect(exit).toHaveBeenCalledTimes(1)
   })
 })
+
+describe('SelectToolbar in the bottom slot', () => {
+  it('fits the configurable maximum of four actions, each with its label, beside the close badge', () => {
+    const noop = { onAction: () => {} }
+    renderWithProviders(
+      <SelectToolbar
+        actions={['move', 'flag', 'known', 'delete']}
+        handlers={{ move: noop, flag: noop, known: noop, delete: noop }}
+        selection={{ exit: () => {} }}
+      />,
+    )
+    for (const name of ['Move', 'Flag', 'Mastered', 'Delete']) {
+      expect(screen.getByRole('button', { name })).toHaveTextContent(name)
+    }
+    // Four slots plus the exit control, and nothing was dropped to make room.
+    expect(screen.getAllByRole('button')).toHaveLength(5)
+  })
+})

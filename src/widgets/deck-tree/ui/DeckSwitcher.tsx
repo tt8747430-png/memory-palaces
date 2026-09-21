@@ -21,8 +21,8 @@ export interface DeckSwitcherProps {
  */
 export function DeckSwitcher({ deck, decks, folders, onSwitch }: DeckSwitcherProps) {
   const { t } = useTranslation()
-  const [listOpen, setListOpen] = useState(false)
-  const [moreOpen, setMoreOpen] = useState(false)
+  /** Which sheet is up: the short list, the whole tree, or neither. Never both. */
+  const [open, setOpen] = useState<'list' | 'more' | null>(null)
 
   const children = childDecks(decks, deck.id).filter((d) => !d.archived)
 
@@ -44,7 +44,7 @@ export function DeckSwitcher({ deck, decks, folders, onSwitch }: DeckSwitcherPro
       id: 'more',
       label: t('deck.moreDecks'),
       icon: <Layers className="size-4.5" aria-hidden />,
-      onSelect: () => setMoreOpen(true),
+      onSelect: () => setOpen('more'),
     },
   ]
 
@@ -52,7 +52,7 @@ export function DeckSwitcher({ deck, decks, folders, onSwitch }: DeckSwitcherPro
     <>
       <button
         type="button"
-        onClick={() => setListOpen(true)}
+        onClick={() => setOpen('list')}
         aria-haspopup="dialog"
         aria-label={t('deck.switchFrom', { name: deck.name })}
         className="flex min-w-0 items-center gap-1 rounded-control text-left transition-transform active:scale-[0.98] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/40"
@@ -62,8 +62,8 @@ export function DeckSwitcher({ deck, decks, folders, onSwitch }: DeckSwitcherPro
       </button>
 
       <ActionSheet
-        open={listOpen}
-        onOpenChange={setListOpen}
+        open={open === 'list'}
+        onOpenChange={(next) => setOpen(next ? 'list' : null)}
         title={deck.name}
         description={children.length > 0 ? t('deck.switchHint') : t('deck.switchHintNoSubdecks')}
         actions={actions}
@@ -71,8 +71,8 @@ export function DeckSwitcher({ deck, decks, folders, onSwitch }: DeckSwitcherPro
       />
 
       <DestinationSheet
-        open={moreOpen}
-        onOpenChange={setMoreOpen}
+        open={open === 'more'}
+        onOpenChange={(next) => setOpen(next ? 'more' : null)}
         title={t('deck.openAnotherDeck')}
         subtitle={deck.name}
         decks={decks}
@@ -83,7 +83,7 @@ export function DeckSwitcher({ deck, decks, folders, onSwitch }: DeckSwitcherPro
           confirm: (name) => t('deck.openNamed', { name }),
         }}
         onPick={(destination) => {
-          setMoreOpen(false)
+          setOpen(null)
           // `targets="deck"` leaves nothing else pickable, but the type still allows it.
           if (destination.kind === 'deck') onSwitch(destination.deckId)
         }}

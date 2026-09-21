@@ -1,8 +1,13 @@
-import { useEffect, useEffectEvent, useMemo } from 'react'
+import { useMemo } from 'react'
 import type { SyncOutcome } from '@/shared/lib'
 import type { SyncedTable } from '@/shared/config/sync-tables'
 import { selectLatestPendingAtIn, usePendingChangeStore } from '@/entities/pending-change'
-import { CLOUD_DEBOUNCE_MS, useQuietFire, WRITE_DEBOUNCE_MS } from './use-quiet-fire'
+import {
+  CLOUD_DEBOUNCE_MS,
+  usePageEventFire,
+  useQuietFire,
+  WRITE_DEBOUNCE_MS,
+} from './use-quiet-fire'
 
 export interface QuietSyncDeps {
   /** A runner exists for this account: a cycle can run at all. */
@@ -34,19 +39,7 @@ export function useQuietSync({ active, quiet, run, moved }: QuietSyncDeps): void
     void run()
   }
 
-  const onPageEvent = useEffectEvent(sync)
-  useEffect(() => {
-    if (!on) return
-    const trigger = () => onPageEvent()
-    window.addEventListener('online', trigger)
-    document.addEventListener('visibilitychange', trigger)
-    window.addEventListener('pagehide', trigger)
-    return () => {
-      window.removeEventListener('online', trigger)
-      document.removeEventListener('visibilitychange', trigger)
-      window.removeEventListener('pagehide', trigger)
-    }
-  }, [on])
+  usePageEventFire(on, sync)
 
   useQuietFire(on && latestWriteAt !== null, latestWriteAt, WRITE_DEBOUNCE_MS, sync)
   useQuietFire(on && moved > 0, moved, CLOUD_DEBOUNCE_MS, sync)

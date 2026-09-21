@@ -57,6 +57,19 @@ export function advance(checkpoints: Checkpoints, peek: Peek): Checkpoints {
 }
 
 /**
+ * The checkpoints of these tables and no others. A cycle reads every checkpoint when it starts and
+ * carries all of them through `advance` and `stepOverOwnEcho`, but it may only *save* the ones it
+ * covered: a table another cycle moved in the meantime would otherwise be written back to where
+ * this one first saw it.
+ */
+export function scopedCheckpoints(
+  checkpoints: Checkpoints,
+  tables: readonly SyncedTable[],
+): Checkpoints {
+  return Object.fromEntries(tables.map((table) => [table, checkpoints[table] ?? null]))
+}
+
+/**
  * Where each table's checkpoint lands after a cycle, stepping over the rows the cycle itself
  * pushed and stopping at the first row it did not.
  *

@@ -54,15 +54,15 @@ decks are a **held** table, so a bulk style write is reported as waiting until S
 `shared/ui/BottomDock.tsx` is the geometry, and the only thing that knows it:
 
 ```
-fixed bottom-(--p-safe-bottom) left-1/2 -translate-x-1/2 h-16 w-64 z-(--z-nav)
+fixed inset-x-0 bottom-(--p-safe-bottom) z-(--z-nav) mx-auto h-16 w-64
 in-data-keyboard:hidden
 ```
 
 It claims `claimBottomChrome` for the `--bottom-chrome` measurement that already exists, and it owns
 `--app-bottom-inset` — `calc(var(--p-safe-bottom) + 4rem)` — by **refcount**, because during the crossfade two
-docks are mounted and the one that unmounts second must not clear an inset the other still needs. The refcount
-lives beside the existing suppression count in `shared/lib/app-nav.ts`, which already does this shape of
-bookkeeping for the nav itself.
+docks are mounted and the one that unmounts second must not clear an inset the other still needs. The refcount is
+`claimBottomInset` in `shared/lib/bottom-dock.ts`, claimed by the box that is on screen — a box still playing its
+exit keeps holding the slot open until it has actually gone.
 
 That single move is what removes the jump. The nav and the toolbar are the same height, so the inset never
 changes while they swap, so the list beneath them never moves.
@@ -79,9 +79,10 @@ of `flex-1` holding a `size-5` icon over a `text-tiny` label. After `px-4` the i
 `gap-1.5` each of four slots is 51 px — enough for the longest configurable label. `SELECT_TOOLBAR_MAX` stays 4.
 `CloseBadge corner="start"` still rides the pill's corner.
 
-`SelectToolbarDock` keeps its name and its three call sites but becomes a thin wrapper over `BottomDock`, and
-takes `open` rather than being rendered conditionally — a component that is torn out of the tree cannot animate
-out. The three pages change from `{active ? <Dock>…</Dock> : null}` to `<Dock open={active}>…</Dock>`.
+`SelectToolbarDock` goes: it would only have forwarded to `BottomDock`. The three pages render `BottomDock`
+directly and hand it `open` rather than rendering it conditionally — a component that is torn out of the tree
+cannot animate out. They change from `{active ? <Dock>…</Dock> : null}` to `<BottomDock open={active}>…</BottomDock>`.
+`DockPill` is the shared surface — glow, glass, rounding — and lives in its own file.
 
 Both animations are 0.2 s; under `prefers-reduced-motion` both are 0.
 
@@ -91,7 +92,8 @@ Both animations are 0.2 s; under `prefers-reduced-motion` both are 0.
 
 `preferences.flashcardInput: 'swipe' | 'tap'`, default `'swipe'`. It says how an answer is **given**, never what
 the answers are: the four directions keep the actions `flashcardSwipe` already holds, per algorithm and per
-display mode. The settings screen that configures them does not change at all.
+display mode. The gear sheet that configures them gains one toggle, **Answer by tapping**, and names each direction
+for how it is given — "Swipe left" becomes "Tap the left" — so the same four rows configure both.
 
 Schema 5 → 6, with `resolveFlashcardInput` as the read-side twin in `makePreferences`, because replication writes
 pulled rows unmigrated.
@@ -155,10 +157,13 @@ sortDecks<T>(decks: readonly T[], sort: DeckSort, dueCount: (deck: T) => number)
 `manual` returns the input untouched, so the existing `order` remains the only thing a drag writes.
 
 Two preferences, in the same schema bump as §4.1: `deckSort` (default `'manual'`) and `deckSortSubdecks`
-(default **`true`**). `use-library-data` applies the order to the folders, to `sectionDecks`, and — when the
-toggle is on — passes a comparator into `flattenDecks` so every nested row sorts too.
+(default **`true`**). `use-library-data` applies the order to `sectionDecks` and — when the toggle is on — passes
+a comparator into `flattenDecks` so every nested row sorts too. Folders follow the order where it makes sense for
+a shelf — `name` and `recent` (`FOLDER_SORTS`) — and keep their dragged order under `due`, since a folder has no
+due date of its own.
 
-The control is the `SortControl` the content editor already uses, with the toggle beside it, above the rows.
+The control is the `SortControl` the content editor already uses, above the rows, with the toggle beside it once
+an order is chosen — under Manual there is nothing for it to reach.
 
 A drag sets `deckSort` back to `'manual'` before it reorders, exactly as `DeckContentEditor` already does for
 cards. ADR 0001 is untouched: a drag still only reorders, and every reachable row is still a peer.
@@ -185,14 +190,17 @@ type StyleScope =
 applyCardStyle(store: DeckStore, style: CardStyle, scope: StyleScope): Promise<number>
 ```
 
-`subtree` resolves through `subtreeDeckIds`. Decks whose style already equals the one being applied are skipped —
-`sameCardStyle` exists — so the count it returns is the number of decks that actually changed, and the pending
-change log only grows by that much.
+`subtree` resolves through `subtreeDeckIds`; `all` is every deck that is not archived — the archive is a place
+outside the Library (ADR 0003), and a style is given to what is on the shelves. Decks whose stored style already
+equals the one being applied are skipped — `sameCardStyle` exists — so the count it returns is the number of decks
+that actually changed, and the pending change log only grows by that much. `cardStyleTargets` is the pure half, so
+a screen can count before it asks.
 
 ### 7.3 The two doors
 
-The card style page gains **Apply to…** beside Save: this deck, this deck and its subdecks, or every deck. The
-last one confirms, naming the count.
+The card style page gains **Apply to…** in the footer beside Save — always there, since a saved style is as
+worth spreading as an edited one: this deck, this deck and its subdecks, or every deck. The last one confirms,
+naming the count. A rejected write says so in a toast on both doors.
 
 The Library select toolbar gains a `style` action — a seventh candidate for four configurable slots, not one of
 the three defaults. It opens the form seeded from the first selected deck's style and applies to

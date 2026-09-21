@@ -134,6 +134,7 @@ export { CONTENT_SORTS, sortContent, type ContentSort, type SortableContent } fr
 export {
   DECK_SORTS,
   DEFAULT_DECK_SORT,
+  FOLDER_SORTS,
   resolveDeckSort,
   sortDecks,
   type DeckSort,

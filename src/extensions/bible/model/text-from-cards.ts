@@ -1,4 +1,5 @@
 import type { LibraryIndex } from './library-index'
+import type { VerseRef } from './reference'
 import { DEFAULT_TRANSLATION } from './translations'
 import { type BibleVerse, makeBibleVerse } from './verse'
 import { type SourceCard, verseSources } from './verse-sources'
@@ -8,6 +9,8 @@ export interface TextFromCards {
   fresh: BibleVerse[]
   /** How many of the cards' verses it already holds — kept as they are. */
   held: number
+  /** Which ones, so a message can name them rather than count them. */
+  heldRefs: VerseRef[]
   /** How many cards were verse cards at all. */
   cards: number
 }
@@ -23,14 +26,19 @@ export function textFromCards(
 ): TextFromCards {
   const sources = verseSources(cards)
   const fresh = new Map<string, BibleVerse>()
-  let held = 0
+  const heldRefs: VerseRef[] = []
   for (const source of sources) {
     if (index.hasVerse(source.book, source.chapter, source.verse)) {
-      held += 1
+      heldRefs.push({
+        book: source.book,
+        chapter: source.chapter,
+        from: source.verse,
+        to: source.verse,
+      })
       continue
     }
     const verse = makeBibleVerse({ createdAt: at, translation: DEFAULT_TRANSLATION, ...source })
     if (!fresh.has(verse.id)) fresh.set(verse.id, verse)
   }
-  return { fresh: [...fresh.values()], held, cards: sources.length }
+  return { fresh: [...fresh.values()], held: heldRefs.length, heldRefs, cards: sources.length }
 }

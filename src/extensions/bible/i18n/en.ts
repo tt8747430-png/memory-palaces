@@ -24,7 +24,7 @@ export const bibleMessages = {
   change: 'Change',
   summaryAll_one: 'In your Bible library',
   summaryAll_other: 'All {{count}} verses are in your Bible library',
-  summarySome: '{{held}} of {{count}} verses are in your Bible library',
+  summarySome: '{{held}} of {{count}} verses are in your Bible library — missing {{missing}}',
   summaryNone_one: 'Not in your Bible library yet — paste it below',
   summaryNone_other: 'Not in your Bible library yet — paste the verses below',
 
@@ -67,10 +67,8 @@ export const bibleMessages = {
 
   offline: 'Everything here works offline.',
 
-  settingsTitle: 'Bible',
   overviewWhat:
     'A passage importer with a verse library of its own. Pick a book, chapter and verses, and it makes a card of each — keeping the text so the next passage from that chapter fills itself in.',
-  overviewTranslation: '{{name}}',
   overviewFeatures: 'What it provides',
   overviewManage: 'Manage',
   overviewHolding: 'Text saved',
@@ -113,8 +111,11 @@ export const bibleMessages = {
   addDeck: 'Add from {{name}}',
   addPreview:
     '{{fresh}} new verses from {{cards}} cards. {{held}} already in your Bible library are kept as they are.',
-  nothingNew_one: 'Nothing new — its {{count}} verse is already in your Bible library.',
-  nothingNew_other: 'Nothing new — all {{count}} verses are already in your Bible library.',
+  nothingNew_one: 'Nothing new — {{refs}} is already in your Bible library.',
+  nothingNew_other: 'Nothing new — all {{count}} are already in your Bible library: {{refs}}',
+  // Only ever reached past the cap, so always more than one — no plural form to pick.
+  nothingNewMore:
+    'Nothing new — all {{count}} are already in your Bible library: {{refs}} +{{more}} more',
   noVerseCards: 'No verse cards there. A verse card has a reference on its front, like Ioan 3:16.',
   addVerses_one: 'Add {{count}} verse',
   addVerses_other: 'Add {{count}} verses',

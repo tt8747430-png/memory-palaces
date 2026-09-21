@@ -1,10 +1,15 @@
-import { useEffect, useEffectEvent, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { SyncOutcome } from '@/shared/lib'
 import type { SyncedTable } from '@/shared/config/sync-tables'
 import { selectLatestPendingAtIn, usePendingChangeStore } from '@/entities/pending-change'
 import { selectAutosync, usePreferencesStore } from '@/entities/preferences'
 import { selectCloudChanged, useSyncStateStore } from '@/entities/sync-state'
-import { CLOUD_DEBOUNCE_MS, useQuietFire, WRITE_DEBOUNCE_MS } from './use-quiet-fire'
+import {
+  CLOUD_DEBOUNCE_MS,
+  usePageEventFire,
+  useQuietFire,
+  WRITE_DEBOUNCE_MS,
+} from './use-quiet-fire'
 
 /** After a cycle fails, before the next try; the last delay repeats. */
 export const RETRY_DELAYS_MS: readonly number[] = [15_000, 60_000, 300_000]
@@ -50,19 +55,7 @@ export function useAutosync({ active, held, run, reconnects }: AutosyncDeps): vo
     })
   }
 
-  const onPageEvent = useEffectEvent(sync)
-  useEffect(() => {
-    if (!autosync) return
-    const trigger = () => onPageEvent()
-    window.addEventListener('online', trigger)
-    document.addEventListener('visibilitychange', trigger)
-    window.addEventListener('pagehide', trigger)
-    return () => {
-      window.removeEventListener('online', trigger)
-      document.removeEventListener('visibilitychange', trigger)
-      window.removeEventListener('pagehide', trigger)
-    }
-  }, [autosync])
+  usePageEventFire(autosync, sync)
 
   useQuietFire(autosync && latestWriteAt !== null, latestWriteAt, WRITE_DEBOUNCE_MS, sync)
   useQuietFire(autosync && cloudChanged, cloudChanged, CLOUD_DEBOUNCE_MS, sync)

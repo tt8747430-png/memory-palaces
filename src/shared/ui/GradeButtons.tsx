@@ -47,7 +47,7 @@ export function GradeButtons({
           onClick={() => onGrade(grade)}
           className={cn(
             'flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-control px-2 py-2',
-            'font-medium transition-transform duration-150 ease-out active:scale-[0.96]',
+            'font-medium shadow-rest transition-transform duration-150 ease-out active:scale-[0.96]',
             tone,
             selected === grade && 'ring-2 ring-accent ring-offset-2 ring-offset-card',
           )}

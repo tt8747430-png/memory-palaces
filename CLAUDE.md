@@ -81,8 +81,11 @@ than copy. Its runtime's `activate` is its composition root: its stores and keep
 it publishes through `useExtensionServices`, and disabling calls the `deactivate` it returned
 (`app/extensions/extension-runtime.ts`). Everything but its screens loads behind the splash. Enablement is
 `preferences.extensions`, changed only through `setExtensionEnabled`, and deletes nothing.
-An extension with a settings screen declares `settings: { route }`; it is an ordinary route of its own, reached from
-Settings → Extensions. `src/app/extensions/registry.ts` is the one core file allowed to name an extension.
+An extension with a front door declares `overview: { route }`; it is an ordinary route of its own, reached from
+Settings → Extensions, and it holds the switches for the `features` the manifest declares (`preferences.disabledFeatures`,
+changed only through `setExtensionFeature`). A route that names a `feature` is withdrawn while that feature is off — the
+router guard on the way in, `FeatureGate` while the learner stays. `src/app/extensions/registry.ts` is the one core file
+allowed to name an extension.
 
 **DI** — port `shared/api/base-repository.ts` (`Repository<T>`: save/remove/observe); adapters
 `shared/api/rxdb/rxdb-repository.ts` (prod) and `in-memory-repository.ts` (tests + live `session` store).

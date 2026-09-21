@@ -85,7 +85,7 @@ export function StudySessionFooter({
                 onReveal={onReveal}
                 onUndo={onUndo}
                 canUndo={canUndo}
-                trailing={<RemainingCounts remaining={remaining} current={srsStatus(srs)} />}
+                counts={<RemainingCounts remaining={remaining} current={srsStatus(srs)} />}
               />
             </motion.div>
           )}

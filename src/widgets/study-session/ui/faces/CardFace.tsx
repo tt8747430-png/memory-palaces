@@ -17,6 +17,10 @@ import { pillSurface } from '@/shared/ui'
 import { STUDY_MODE_META } from '../mode-meta'
 import { type FaceProps, stopPress } from './types'
 
+/** The small controls in the card's header row — flip and read aloud — one shape, one place. */
+const HEADER_CONTROL =
+  'grid size-7 shrink-0 place-items-center rounded-control bg-info-surface text-heading transition-transform active:scale-90'
+
 export interface CardFaceProps {
   face: FaceProps
   speakText: string
@@ -96,7 +100,7 @@ export function CardFace({
               onPointerDown={stopPress}
               onClick={() => onSpeak(speakText)}
               aria-label={t('study.readAloud')}
-              className="grid size-7 place-items-center rounded-control bg-info-surface text-heading transition-transform active:scale-90"
+              className={HEADER_CONTROL}
             >
               <Volume2 className="size-3.5" aria-hidden />
             </button>
@@ -192,7 +196,7 @@ function FlipButton({ onClick }: { onClick: () => void }) {
       aria-label={t('study.turnCard')}
       onPointerDown={stopPress}
       onClick={onClick}
-      className="grid size-7 shrink-0 place-items-center rounded-control bg-info-surface text-heading transition-transform active:scale-90"
+      className={HEADER_CONTROL}
     >
       <FlipHorizontal2 className="size-3.5" aria-hidden />
     </button>

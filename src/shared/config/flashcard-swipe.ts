@@ -62,6 +62,14 @@ export function isFastAction(action: FlashcardSwipeAction): action is FastSwipeA
   return action === 'gotIt' || action === 'notQuite'
 }
 
+/**
+ * Whether the action sends the card away. A Grade, a Fast review answer and a skip all move the
+ * queue on; a flag, a mode mechanic and Off act on the card that stays.
+ */
+export function isAdvancingAction(action: FlashcardSwipeAction): boolean {
+  return isGradeAction(action) || isFastAction(action) || action === 'skip'
+}
+
 export function isModeAction(action: FlashcardSwipeAction): action is ModeSwipeAction {
   return (
     action === 'hideMore' ||

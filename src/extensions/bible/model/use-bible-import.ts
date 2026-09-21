@@ -6,7 +6,7 @@ import { type Deck, selectDecks, useDeckStore, useDeckStoreApi } from '@/entitie
 import { type Folder, selectFolders, useFolderStore } from '@/entities/folder'
 import { useImportDraft } from '@/widgets/content-editor'
 import { useBibleT } from '../i18n/use-bible-t'
-import { BIBLE_FEATURES } from '../manifest'
+import { BIBLE_FEATURES } from '../ids'
 import { useBibleFeature } from './use-bible-feature'
 import { addVerseCards } from '../features/add-verse-cards'
 import { keepMissingVerses } from '../features/keep-missing-verses'

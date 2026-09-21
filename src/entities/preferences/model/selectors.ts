@@ -1,4 +1,4 @@
-import type { Preferences } from './types'
+import type { DeckSort, FlashcardInput, Preferences } from './types'
 import { DEFAULT_PREFERENCES } from './types'
 import type { PreferencesState } from './store'
 
@@ -14,6 +14,15 @@ export const selectAutosync = (state: PreferencesState): boolean =>
 
 export const selectLibraryExpanded = (state: PreferencesState): readonly string[] =>
   selectEffectivePreferences(state).libraryExpanded
+
+export const selectDeckSort = (state: PreferencesState): DeckSort =>
+  selectEffectivePreferences(state).deckSort
+
+export const selectDeckSortSubdecks = (state: PreferencesState): boolean =>
+  selectEffectivePreferences(state).deckSortSubdecks
+
+export const selectFlashcardInput = (state: PreferencesState): FlashcardInput =>
+  selectEffectivePreferences(state).flashcardInput
 
 /**
  * The map of switched-off extension features. The stored object, not a copy — a subscriber can

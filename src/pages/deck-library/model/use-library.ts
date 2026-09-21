@@ -34,11 +34,7 @@ function moveTargets(pending: PendingAct | null, selectedDeckIds: string[]): str
   return []
 }
 
-export function useLibrary(
-  folderId: string | null,
-  onFolderGone: () => void,
-  onRequestBulkStyle: () => void = () => {},
-): Library {
+export function useLibrary(folderId: string | null, onFolderGone: () => void): Library {
   const data = useLibraryData(folderId)
   const view = data.view
   const pending = usePendingAct<PendingAct>()
@@ -74,7 +70,7 @@ export function useLibrary(
     patchFolders: data.patchFolders,
     onFolderGone,
     onManualOrder,
-    onRequestBulkStyle,
+    onRequestBulkStyle: () => pending.request({ kind: 'style-selection' }),
     onRequestBulkMove: () => pending.request({ kind: 'move-selection' }),
     onRequestBulkDelete: () => pending.request({ kind: 'delete-selection' }),
   })
@@ -96,6 +92,10 @@ export function useLibrary(
           return
         case 'delete-selection':
           act.confirmBulkDelete()
+          return
+        case 'style-selection':
+          // The sheet applies the style itself; confirming only closes it.
+          return
       }
     })
 

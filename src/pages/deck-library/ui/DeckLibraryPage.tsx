@@ -23,11 +23,11 @@ import {
   ScreenHeader,
   SelectHeader,
   SelectToolbar,
-  SelectToolbarDock,
+  BottomDock,
   type SheetAction,
   type ActionHandlers,
 } from '@/shared/ui'
-import { isMove, movingDeck } from '../model/pending-act'
+import { isMove, isStyle, movingDeck } from '../model/pending-act'
 import { useHomeHeaderData } from '../model/use-home-header-data'
 import { useLibrary } from '../model/use-library'
 import { FolderRow } from './FolderRow'
@@ -93,9 +93,7 @@ export function DeckLibraryPage({
   const extensionImports = useExtensionPoint('importOptions')
   const inFolder = folderId !== null
 
-  const [styleOpen, setStyleOpen] = useState(false)
-
-  const library = useLibrary(folderId, onFolderGone, () => setStyleOpen(true))
+  const library = useLibrary(folderId, onFolderGone)
   const { decks, folders, selection, act } = library
   const header = useHomeHeaderData()
   const prefs = usePreferencesStore(selectEffectivePreferences)
@@ -289,13 +287,13 @@ export function DeckLibraryPage({
         </div>
       )}
 
-      <SelectToolbarDock open={selection.active}>
+      <BottomDock open={selection.active}>
         <SelectToolbar
           actions={prefs.selectToolbar.library}
           handlers={library.selectHandlers}
           selection={selection}
         />
-      </SelectToolbarDock>
+      </BottomDock>
 
       {!library.isEmpty && !selection.active ? (
         <LibrarySpeedDial
@@ -372,8 +370,10 @@ export function DeckLibraryPage({
       />
 
       <LibraryStyleSheet
-        open={styleOpen}
-        onOpenChange={setStyleOpen}
+        open={isStyle(library.pending)}
+        onOpenChange={(open) => {
+          if (!open) library.dismiss()
+        }}
         decks={decks}
         deckIds={selection.deckIds}
         onApplied={selection.exit}
