@@ -24,6 +24,7 @@ const learnerPrefs: LearnerStudyPrefs = {
   typeInitialsOnly: false,
   shakeToUndo: false,
   swipePreferences,
+  flashcardInput: 'swipe',
 }
 
 function setup(overrides: Partial<Parameters<typeof useStudySettings>[0]> = {}) {
@@ -53,6 +54,7 @@ describe('useStudySettings', () => {
       typeInitialsOnly: false,
       shakeToUndo: false,
       swipe: spaced.blur,
+      flashcardInput: 'swipe',
       filter: { kind: 'all' },
     })
   })

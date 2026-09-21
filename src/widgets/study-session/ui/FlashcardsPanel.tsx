@@ -333,6 +333,7 @@ export function FlashcardsPanel({
               typeInitialsOnly={settings.value.typeInitialsOnly}
               flipped={flipped}
               swipeConfig={activeSwipe}
+              input={settings.value.flashcardInput}
               canSpeak={canSpeak}
               onFlip={() => dispatch({ type: 'flip' })}
               onReveal={() => dispatch({ type: 'reveal' })}

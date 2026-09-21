@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { animate, type MotionValue, useMotionValue, useTransform } from 'motion/react'
 import { useDrag } from '@use-gesture/react'
 import {
+  type FlashcardInput,
   type FlashcardSwipeAction,
   type FlashcardSwipeConfig,
   isGradeAction,
@@ -18,6 +19,7 @@ import {
   tick,
   useGestureHold,
 } from '@/shared/lib'
+import { zoneFor } from './tap-zones'
 
 const LONG_PRESS_MS = 450
 const LONG_PRESS_SLOP = 12
@@ -36,6 +38,8 @@ export interface CardSwipe {
 
 interface Args {
   swipeConfig: FlashcardSwipeConfig
+  /** Whether an answer is thrown or tapped. It changes how an action is given, never which ones. */
+  input: FlashcardInput
   reduce: boolean
   onFlip: () => void
   onLongPress?: () => void
@@ -67,6 +71,7 @@ const swipeAllowed = (target: EventTarget | null) => {
 
 export function useCardSwipe({
   swipeConfig,
+  input,
   reduce,
   onFlip,
   onLongPress,
@@ -76,6 +81,7 @@ export function useCardSwipe({
   const x = useMotionValue(0)
   const y = useMotionValue(0)
   const rotate = useTransform(x, [-260, 0, 260], [-10, 0, 10])
+  const card = useRef<HTMLElement | null>(null)
 
   const [locked, setLocked] = useState(false)
   const armedRef = useRef(true)
@@ -96,12 +102,32 @@ export function useCardSwipe({
     animate(y, 0, SNAP)
   }
 
-  const { surface, hold, drop } = useGestureHold(() => {
+  const {
+    surface: holdSurface,
+    hold,
+    drop,
+  } = useGestureHold(() => {
     if (locked) return
     clearHold()
     heldRef.current = false
     snapBack()
   })
+
+  /**
+   * The gesture surface, told to keep hold of the node as well. A tap is resolved against the
+   * card's own box, so the zones follow it wherever it is laid out — and one ref on one element
+   * beats two that could disagree.
+   */
+  const surface = useMemo<SurfaceProps>(
+    () => ({
+      ...holdSurface,
+      ref: (node: HTMLElement | null) => {
+        holdSurface.ref(node)
+        card.current = node
+      },
+    }),
+    [holdSurface],
+  )
 
   const commit = async (dir: SwipeDirection) => {
     if (locked) return drop()
@@ -146,6 +172,7 @@ export function useCardSwipe({
       movement: [mx, my],
       velocity: [vx, vy],
       direction: [dx, dy],
+      xy,
       tap,
       event,
     }) => {
@@ -173,11 +200,38 @@ export function useCardSwipe({
           heldRef.current = false
           return
         }
-        if (!isControl(event.target)) onFlip()
+        // A control under the finger always wins: that is what keeps the zones safe in every
+        // display mode, because every mode's own work — a blurred word, a token, the type field,
+        // an aid button — is a control.
+        if (isControl(event.target)) return
+        if (input === 'swipe') {
+          onFlip()
+          return
+        }
+        const box = card.current?.getBoundingClientRect()
+        const zone = box
+          ? zoneFor(
+              { x: xy[0], y: xy[1] },
+              { left: box.left, top: box.top, width: box.width, height: box.height },
+            )
+          : 'centre'
+        if (zone === 'centre') onFlip()
+        else void commit(zone)
         return
       }
       if (!armedRef.current) {
         if (frame !== 'moving') drop()
+        return
+      }
+      if (input === 'tap') {
+        // Nothing is thrown in this mode, so the card never follows the finger. The hold still
+        // stands, which is why the slop check survives.
+        if (Math.abs(mx) > LONG_PRESS_SLOP || Math.abs(my) > LONG_PRESS_SLOP) clearHold()
+        if (frame !== 'moving') {
+          clearHold()
+          heldRef.current = false
+          drop()
+        }
         return
       }
 

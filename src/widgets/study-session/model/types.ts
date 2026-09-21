@@ -1,7 +1,7 @@
 import type { Card, CardChanges } from '@/entities/card'
 import type { Grade } from '@/shared/lib'
 import type { CardStyle, StudyDirection } from '@/entities/deck'
-import type { FlashcardSwipePreferences } from '@/shared/config/flashcard-swipe'
+import type { FlashcardInput, FlashcardSwipePreferences } from '@/shared/config/flashcard-swipe'
 
 export interface StudyCard {
   card: Card
@@ -27,6 +27,8 @@ export interface LearnerStudyPrefs {
   typeInitialsOnly: boolean
   shakeToUndo: boolean
   swipePreferences: FlashcardSwipePreferences
+  /** How an answer is given. The actions themselves stay in `swipePreferences`. */
+  flashcardInput: FlashcardInput
 }
 
 export interface SessionSummary {

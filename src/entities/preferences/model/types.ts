@@ -1,4 +1,12 @@
-import { CONTENT_SORTS, type ContentSort, type Entity, type ExtensionId } from '@/shared/lib'
+import {
+  CONTENT_SORTS,
+  type ContentSort,
+  type DeckSort,
+  type Entity,
+  type ExtensionId,
+  DEFAULT_DECK_SORT,
+  resolveDeckSort,
+} from '@/shared/lib'
 import { DEFAULT_DAILY_GOAL } from '@/shared/config/constants'
 import {
   DEFAULT_SWIPE,
@@ -7,9 +15,12 @@ import {
   type SwipePreferences,
 } from '@/shared/config/swipe'
 import {
+  DEFAULT_FLASHCARD_INPUT,
   DEFAULT_FLASHCARD_SWIPE_PREFERENCES,
+  type FlashcardInput,
   type FlashcardSwipePreferences,
   normalizeFlashcardSwipe,
+  resolveFlashcardInput,
 } from '@/shared/config/flashcard-swipe'
 import {
   DEFAULT_SELECT_TOOLBAR,
@@ -26,7 +37,8 @@ export type {
   FlashcardSwipePreferences,
 } from '@/shared/config/flashcard-swipe'
 
-export type { ContentSort }
+export type { ContentSort, DeckSort }
+export type { FlashcardInput }
 
 export const STUDY_MODES = ['blur', 'initials', 'words', 'type'] as const
 export type StudyMode = (typeof STUDY_MODES)[number]
@@ -64,7 +76,13 @@ export interface Preferences extends Entity {
   shakeToUndo: boolean
   swipe: SwipePreferences
   flashcardSwipe: FlashcardSwipePreferences
+  /** Whether a flashcard is answered by throwing it or by tapping the edge that carries the action. */
+  flashcardInput: FlashcardInput
   selectToolbar: SelectToolbarPreferences
+  /** How the Library arranges decks. `manual` is the order a drag writes. */
+  deckSort: DeckSort
+  /** Whether that order reaches the rows nested under a deck, or only the level being looked at. */
+  deckSortSubdecks: boolean
   privacy: PrivacySettings
   extensions: ExtensionId[]
   /**
@@ -97,7 +115,10 @@ export const DEFAULT_PREFERENCES = {
   shakeToUndo: true,
   swipe: DEFAULT_SWIPE,
   flashcardSwipe: DEFAULT_FLASHCARD_SWIPE_PREFERENCES,
+  flashcardInput: DEFAULT_FLASHCARD_INPUT,
   selectToolbar: DEFAULT_SELECT_TOOLBAR,
+  deckSort: DEFAULT_DECK_SORT,
+  deckSortSubdecks: true,
   privacy: DEFAULT_PRIVACY,
   extensions: [] as ExtensionId[],
   disabledFeatures: {} as Record<ExtensionId, string[]>,
@@ -129,7 +150,10 @@ export interface MakePreferencesInput {
   shakeToUndo?: boolean
   swipe?: SwipePreferences
   flashcardSwipe?: FlashcardSwipePreferences
+  flashcardInput?: FlashcardInput
   selectToolbar?: SelectToolbarPreferences
+  deckSort?: DeckSort
+  deckSortSubdecks?: boolean
   privacy?: PrivacySettings
   extensions?: ExtensionId[]
   disabledFeatures?: Record<ExtensionId, string[]>
@@ -179,7 +203,10 @@ export function makePreferences(input: MakePreferencesInput): Preferences {
     shakeToUndo: input.shakeToUndo ?? DEFAULT_PREFERENCES.shakeToUndo,
     swipe: resolveSwipe(input.swipe),
     flashcardSwipe: normalizeFlashcardSwipe(input.flashcardSwipe),
+    flashcardInput: resolveFlashcardInput(input.flashcardInput),
     selectToolbar: resolveSelectToolbar(input.selectToolbar),
+    deckSort: resolveDeckSort(input.deckSort),
+    deckSortSubdecks: input.deckSortSubdecks ?? DEFAULT_PREFERENCES.deckSortSubdecks,
     privacy: input.privacy ?? { ...DEFAULT_PRIVACY },
     extensions: [...(input.extensions ?? [])],
     disabledFeatures: normalizeDisabledFeatures(input.disabledFeatures),
@@ -260,7 +287,10 @@ export type PreferencesChanges = Partial<
     | 'shakeToUndo'
     | 'swipe'
     | 'flashcardSwipe'
+    | 'flashcardInput'
     | 'selectToolbar'
+    | 'deckSort'
+    | 'deckSortSubdecks'
     | 'privacy'
     | 'devMode'
     | 'autosync'

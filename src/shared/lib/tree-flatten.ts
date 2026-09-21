@@ -9,14 +9,22 @@ export interface FlatDeck {
   expanded: boolean
 }
 
-export function flattenDecks(
-  decks: readonly TreeDeck[],
+/**
+ * Rearranges one row of peers before they are laid out. It is handed the depth so a caller can
+ * order the level being looked at without disturbing the rows nested beneath it.
+ */
+export type ArrangeRow<T extends TreeDeck> = (peers: T[], depth: number) => T[]
+
+export function flattenDecks<T extends TreeDeck>(
+  decks: readonly T[],
   expanded: ReadonlySet<string>,
   folderId: string | null,
+  arrange?: ArrangeRow<T>,
 ): FlatDeck[] {
   const out: FlatDeck[] = []
   const walk = (parentId: string | null, depth: number, scopeFolderId: string | null) => {
-    for (const deck of siblingDecks(decks, parentId, scopeFolderId)) {
+    const peers = siblingDecks(decks, parentId, scopeFolderId)
+    for (const deck of arrange ? arrange(peers, depth) : peers) {
       const children = siblingDecks(decks, deck.id)
       const isExpanded = expanded.has(deck.id)
       out.push({

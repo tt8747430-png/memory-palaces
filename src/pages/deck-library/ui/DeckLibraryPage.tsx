@@ -35,6 +35,8 @@ import { FolderSheet } from './FolderSheet'
 import { LibraryDialogs } from './LibraryDialogs'
 import { LibraryEmpty } from './LibraryEmpty'
 import { LibrarySkeleton } from './LibrarySkeleton'
+import { LibrarySortBar } from './LibrarySortBar'
+import { LibraryStyleSheet } from './LibraryStyleSheet'
 import { LibrarySpeedDial } from './LibrarySpeedDial'
 
 export interface DeckLibraryPageProps {
@@ -91,7 +93,9 @@ export function DeckLibraryPage({
   const extensionImports = useExtensionPoint('importOptions')
   const inFolder = folderId !== null
 
-  const library = useLibrary(folderId, onFolderGone)
+  const [styleOpen, setStyleOpen] = useState(false)
+
+  const library = useLibrary(folderId, onFolderGone, () => setStyleOpen(true))
   const { decks, folders, selection, act } = library
   const header = useHomeHeaderData()
   const prefs = usePreferencesStore(selectEffectivePreferences)
@@ -252,6 +256,13 @@ export function DeckLibraryPage({
         />
       ) : (
         <div className="flex flex-col gap-2 pt-2">
+          <LibrarySortBar
+            sort={library.deckSort}
+            onSortChange={library.setDeckSort}
+            subdecks={library.deckSortSubdecks}
+            onSubdecksChange={library.setDeckSortSubdecks}
+          />
+
           {library.sectionFolders.map((folder) => (
             <FolderRow
               key={folder.id}
@@ -278,15 +289,13 @@ export function DeckLibraryPage({
         </div>
       )}
 
-      {selection.active ? (
-        <SelectToolbarDock>
-          <SelectToolbar
-            actions={prefs.selectToolbar.library}
-            handlers={library.selectHandlers}
-            selection={selection}
-          />
-        </SelectToolbarDock>
-      ) : null}
+      <SelectToolbarDock open={selection.active}>
+        <SelectToolbar
+          actions={prefs.selectToolbar.library}
+          handlers={library.selectHandlers}
+          selection={selection}
+        />
+      </SelectToolbarDock>
 
       {!library.isEmpty && !selection.active ? (
         <LibrarySpeedDial
@@ -360,6 +369,14 @@ export function DeckLibraryPage({
           library.dismiss()
           setFolderSheetTarget(null)
         }}
+      />
+
+      <LibraryStyleSheet
+        open={styleOpen}
+        onOpenChange={setStyleOpen}
+        decks={decks}
+        deckIds={selection.deckIds}
+        onApplied={selection.exit}
       />
 
       <LibraryDialogs

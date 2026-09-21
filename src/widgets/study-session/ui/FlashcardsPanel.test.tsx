@@ -22,6 +22,7 @@ const DEFAULT_LEARNER_PREFS: LearnerStudyPrefs = {
   typeInitialsOnly: false,
   shakeToUndo: false,
   swipePreferences: DEFAULT_FLASHCARD_SWIPE_PREFERENCES,
+  flashcardInput: 'swipe',
 }
 
 const DEFAULT_DECK_PREFS: DeckStudyPrefs = {

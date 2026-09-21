@@ -177,3 +177,20 @@ export function normalizeFlashcardSwipe(stored?: unknown): FlashcardSwipePrefere
     fast: normalizeByMode('fast', stored.fast),
   }
 }
+
+/** How a flashcard is answered: by throwing it, or by tapping the edge that carries the action. */
+export const FLASHCARD_INPUTS = ['swipe', 'tap'] as const
+
+export type FlashcardInput = (typeof FLASHCARD_INPUTS)[number]
+
+export const DEFAULT_FLASHCARD_INPUT: FlashcardInput = 'swipe'
+
+/**
+ * The read-side twin of the schema step that added the setting: replication writes pulled rows
+ * unmigrated, so a document from a device that has never heard of it arrives without the field.
+ */
+export function resolveFlashcardInput(stored?: unknown): FlashcardInput {
+  return (FLASHCARD_INPUTS as readonly unknown[]).includes(stored)
+    ? (stored as FlashcardInput)
+    : DEFAULT_FLASHCARD_INPUT
+}

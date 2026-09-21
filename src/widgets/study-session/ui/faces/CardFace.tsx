@@ -2,7 +2,7 @@ import type { CSSProperties, ReactNode } from 'react'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-import { Flag, Lightbulb, MapPin, SlidersHorizontal, Volume2 } from 'lucide-react'
+import { Flag, FlipHorizontal2, Lightbulb, MapPin, SlidersHorizontal, Volume2 } from 'lucide-react'
 import type { StudyMode } from '@/entities/preferences'
 import {
   CARD_STYLE_SURFACE,
@@ -84,19 +84,24 @@ export function CardFace({
       )}
       inert={!active}
     >
-      <header className="flex h-9 shrink-0 touch-none items-center justify-end gap-1.5 px-4 pt-2.5">
-        {flagged ? <Flag className="size-4 fill-rating text-(--rating-edge)" aria-hidden /> : null}
-        {canSpeak ? (
-          <button
-            type="button"
-            onPointerDown={stopPress}
-            onClick={() => onSpeak(speakText)}
-            aria-label={t('study.readAloud')}
-            className="grid size-7 place-items-center rounded-control bg-info-surface text-heading transition-transform active:scale-90"
-          >
-            <Volume2 className="size-3.5" aria-hidden />
-          </button>
-        ) : null}
+      <header className="flex h-9 shrink-0 touch-none items-center justify-between gap-1.5 px-4 pt-2.5">
+        <FlipButton onClick={face.onFlip} />
+        <span className="flex items-center gap-1.5">
+          {flagged ? (
+            <Flag className="size-4 fill-rating text-(--rating-edge)" aria-hidden />
+          ) : null}
+          {canSpeak ? (
+            <button
+              type="button"
+              onPointerDown={stopPress}
+              onClick={() => onSpeak(speakText)}
+              aria-label={t('study.readAloud')}
+              className="grid size-7 place-items-center rounded-control bg-info-surface text-heading transition-transform active:scale-90"
+            >
+              <Volume2 className="size-3.5" aria-hidden />
+            </button>
+          ) : null}
+        </span>
       </header>
 
       <div
@@ -169,6 +174,27 @@ function ModeButton({ mode, onClick }: { mode: StudyMode; onClick: () => void })
       className="grid size-11 shrink-0 place-items-center rounded-control bg-info-surface text-heading transition-transform active:scale-[0.97]"
     >
       <Icon className="size-4.5" aria-hidden />
+    </button>
+  )
+}
+
+/**
+ * Turning the card over, in the one place it is always reachable. A tap on the face cannot be
+ * relied on for this: in tap mode the edges answer the card, and on a face full of blurred words
+ * or tokens there may be no background left to hit.
+ */
+function FlipButton({ onClick }: { onClick: () => void }) {
+  const { t } = useTranslation()
+  return (
+    <button
+      type="button"
+      data-flip
+      aria-label={t('study.turnCard')}
+      onPointerDown={stopPress}
+      onClick={onClick}
+      className="grid size-7 shrink-0 place-items-center rounded-control bg-info-surface text-heading transition-transform active:scale-90"
+    >
+      <FlipHorizontal2 className="size-3.5" aria-hidden />
     </button>
   )
 }

@@ -2,6 +2,8 @@ export { DeckTree } from './ui/DeckTree'
 export type { DeckTreeProps } from './ui/DeckTree'
 export { LibrarySelectList } from './ui/LibrarySelectList'
 export type { LibrarySelectListProps } from './ui/LibrarySelectList'
+export { DeckSwitcher } from './ui/DeckSwitcher'
+export type { DeckSwitcherProps } from './ui/DeckSwitcher'
 export { DestinationSheet } from './ui/DestinationSheet'
 export type {
   DestinationAction,

@@ -52,7 +52,7 @@ describe('AppNav', () => {
     expect(container).toBeEmptyDOMElement()
   })
 
-  it('steps aside — and gives its inset back — while a surface claims the bottom edge', async () => {
+  it('holds the slot open until it has actually gone, then gives it back', async () => {
     const inset = () => document.documentElement.style.getPropertyValue('--app-bottom-inset')
     function Selecting({ on }: { on: boolean }) {
       useHideAppNav(on)
@@ -64,8 +64,10 @@ describe('AppNav', () => {
     expect(screen.getByRole('navigation', { name: 'Primary' })).toBeInTheDocument()
 
     rerender(<Selecting on />)
-    expect(inset()).toBe('')
+    // Still fading: the toolbar arriving in the same box must not find the slot collapsed.
+    expect(inset()).toContain('4rem')
     await waitForElementToBeRemoved(() => screen.queryByRole('navigation', { name: 'Primary' }))
+    expect(inset()).toBe('')
 
     rerender(<Selecting on={false} />)
     expect(screen.getByRole('navigation', { name: 'Primary' })).toBeInTheDocument()

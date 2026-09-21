@@ -203,7 +203,7 @@ describe('schema migrations', () => {
   it('versions the collections', () => {
     expect(deckSchema.version).toBe(4)
     expect(cardSchema.version).toBe(1)
-    expect(preferencesSchema.version).toBe(5)
+    expect(preferencesSchema.version).toBe(6)
     expect(profileSchema.version).toBe(2)
     expect(pendingChangeSchema.version).toBe(2)
     expect(syncStateSchema.version).toBe(3)
@@ -230,6 +230,26 @@ describe('schema migrations', () => {
     expect(migrated.flashcardSwipe.spaced.blur.right).toBe('easy')
     expect(migrated.flashcardSwipe.fast.blur.right).toBe('gotIt')
     expect(migrated.disabledFeatures).toEqual({})
+  })
+
+  it('leaves a v5 preferences document answering and ordering exactly as it already did', () => {
+    const v5 = { id: 'preferences' } as never
+
+    const migrated = preferencesMigrations[6](v5)
+
+    // Both start where the app has always behaved, so nobody's device changes under them.
+    expect(migrated.flashcardInput).toBe('swipe')
+    expect(migrated.deckSort).toBe('manual')
+    expect(migrated.deckSortSubdecks).toBe(true)
+  })
+
+  it('keeps what a v5 document already held for the two new settings', () => {
+    const v5 = { id: 'preferences', flashcardInput: 'tap', deckSort: 'name' } as never
+
+    const migrated = preferencesMigrations[6](v5)
+
+    expect(migrated.flashcardInput).toBe('tap')
+    expect(migrated.deckSort).toBe('name')
   })
 
   it('moves Autosync out of sync-state, handing a switched-off choice over', async () => {

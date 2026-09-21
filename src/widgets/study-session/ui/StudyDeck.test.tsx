@@ -31,6 +31,7 @@ function baseProps(
     typeInitialsOnly: false,
     flipped: false,
     swipeConfig: DEFAULT_FLASHCARD_SWIPE.spaced,
+    input: 'swipe',
     canSpeak: false,
     onFlip: vi.fn(),
     onReveal: vi.fn(),
@@ -118,5 +119,31 @@ describe('StudyDeck reversed cards', () => {
     }
     renderWithProviders(<StudyDeck {...baseProps({ card: reversed, direction: 'front' })} />)
     expect(screen.getByRole('heading', { name: 'Answer back' })).toBeInTheDocument()
+  })
+})
+
+describe('StudyDeck answering by tap', () => {
+  it('names what each edge does — the swipe chips cannot, the card never moves', () => {
+    renderWithProviders(<StudyDeck {...baseProps({ input: 'tap' })} />)
+    // The spaced defaults: left Again, right Good, up Flag, down Skip.
+    for (const label of ['Again', 'Good', 'Flag', 'Skip']) {
+      expect(screen.getByText(label)).toBeInTheDocument()
+    }
+  })
+
+  it('leaves the edges unnamed while answers are thrown — the chips light on the drag', () => {
+    renderWithProviders(<StudyDeck {...baseProps({ input: 'swipe' })} />)
+    // The chips exist, but as drag-lit labels rather than the static edge hints.
+    expect(screen.getAllByText('Again').length).toBe(1)
+    expect(document.querySelector('[class*="writing-mode"]')).toBeNull()
+  })
+
+  it('offers turning the card over from the card itself, in both input modes', () => {
+    const { unmount } = renderWithProviders(<StudyDeck {...baseProps({ input: 'tap' })} />)
+    expect(screen.getAllByRole('button', { name: 'Turn the card over' }).length).toBeGreaterThan(0)
+    unmount()
+
+    renderWithProviders(<StudyDeck {...baseProps({ input: 'swipe' })} />)
+    expect(screen.getAllByRole('button', { name: 'Turn the card over' }).length).toBeGreaterThan(0)
   })
 })

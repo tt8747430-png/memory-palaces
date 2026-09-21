@@ -11,7 +11,7 @@ import { type Card, CardStoreContext, createCardStore } from '@/entities/card'
 import { createQuestionStore, type Question, QuestionStoreContext } from '@/entities/question'
 import { createDeckStore, type Deck, DeckStoreContext, makeDeck } from '@/entities/deck'
 import { createFolderStore, type Folder, FolderStoreContext, makeFolder } from '@/entities/folder'
-import { PreferencesStoreContext } from '@/entities/preferences'
+import { type Preferences, PreferencesStoreContext } from '@/entities/preferences'
 import { preferencesStoreHolding } from '@/entities/preferences/testing/stored-preferences'
 import { useLibrary } from './use-library'
 
@@ -39,8 +39,9 @@ function renderLibrary({
   folders = [] as Folder[],
   folderId = null as string | null,
   onFolderGone = vi.fn(),
+  prefs = null as Partial<Preferences> | null,
 } = {}) {
-  const preferences = preferencesStoreHolding(null)
+  const preferences = preferencesStoreHolding(prefs)
   function Wrapper({ children }: { children: ReactNode }) {
     return (
       <I18nextProvider i18n={i18n}>
@@ -211,5 +212,62 @@ describe('useLibrary', () => {
     await waitFor(() => expect(result.current.ready).toBe(true))
     expect(result.current.isEmpty).toBe(true)
     expect(result.current.sectionFolders).toEqual([])
+  })
+})
+
+describe('useLibrary ordering', () => {
+  const named = (id: string, name: string, order: number, createdAt = 0) => ({
+    ...makeDeck({ id, createdAt: at(createdAt), name }),
+    order,
+  })
+
+  it('leaves the rows where they were dragged under the manual order', async () => {
+    const { result } = renderLibrary({
+      decks: [named('v', 'Verbs', 0), named('a', 'Adjectives', 1)],
+    })
+    await waitFor(() => expect(result.current.ready).toBe(true))
+    expect(result.current.sectionDecks.map((d) => d.name)).toEqual(['Verbs', 'Adjectives'])
+  })
+
+  it('arranges the rows by the order that was chosen', async () => {
+    const { result } = renderLibrary({
+      decks: [named('v', 'Verbs', 0), named('a', 'Adjectives', 1)],
+      prefs: { deckSort: 'name' },
+    })
+    await waitFor(() => expect(result.current.ready).toBe(true))
+    expect(result.current.sectionDecks.map((d) => d.name)).toEqual(['Adjectives', 'Verbs'])
+  })
+
+  it('reaches the rows nested under a deck, and stops at the top when told to', async () => {
+    const decks = [
+      named('root', 'Root', 0),
+      { ...named('v', 'Verbs', 0), parentId: 'root' },
+      { ...named('a', 'Adjectives', 1), parentId: 'root' },
+    ]
+    const nested = renderLibrary({ decks, prefs: { deckSort: 'name' } })
+    await waitFor(() => expect(nested.result.current.ready).toBe(true))
+    act(() => nested.result.current.toggleExpanded('root'))
+    expect(nested.result.current.rows.map((r) => r.id)).toEqual(['root', 'a', 'v'])
+    nested.unmount()
+
+    const topOnly = renderLibrary({
+      decks,
+      prefs: { deckSort: 'name', deckSortSubdecks: false },
+    })
+    await waitFor(() => expect(topOnly.result.current.ready).toBe(true))
+    act(() => topOnly.result.current.toggleExpanded('root'))
+    expect(topOnly.result.current.rows.map((r) => r.id)).toEqual(['root', 'v', 'a'])
+  })
+
+  it('drops back to the manual order when a row is dragged — the drag wrote one', async () => {
+    const { result } = renderLibrary({
+      decks: [named('v', 'Verbs', 0), named('a', 'Adjectives', 1)],
+      prefs: { deckSort: 'name' },
+    })
+    await waitFor(() => expect(result.current.ready).toBe(true))
+    expect(result.current.deckSort).toBe('name')
+
+    act(() => result.current.act.reorderDeckIds(['a', 'v']))
+    await waitFor(() => expect(result.current.deckSort).toBe('manual'))
   })
 })

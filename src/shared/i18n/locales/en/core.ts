@@ -41,6 +41,7 @@ export const nav = {
 
 export const actions = {
   favorite: 'Favorite',
+  style: 'Style',
   move: 'Move',
   archive: 'Archive',
   unfile: 'Unfile',

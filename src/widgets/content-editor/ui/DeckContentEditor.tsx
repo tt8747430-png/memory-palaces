@@ -218,15 +218,13 @@ export function DeckContentEditor({
         )}
       </div>
 
-      {selectMode ? (
-        <SelectToolbarDock>
-          <SelectToolbar
-            actions={prefs.selectToolbar.card}
-            handlers={commands.selectHandlers}
-            selection={selection}
-          />
-        </SelectToolbarDock>
-      ) : null}
+      <SelectToolbarDock open={selectMode}>
+        <SelectToolbar
+          actions={prefs.selectToolbar.card}
+          handlers={commands.selectHandlers}
+          selection={selection}
+        />
+      </SelectToolbarDock>
 
       <ImportSheet
         open={importOpen}

@@ -35,6 +35,9 @@ export function DeckDetailScreen() {
   const back = useBack(() => void navigate({ to: ROUTES.home }))
   return (
     <DeckDetailPage
+      // Switching decks replaces the route, so the screen has to be told it is a different deck:
+      // the search field and the selection both belonged to the one being left.
+      key={deckId}
       deckId={deckId}
       onBack={back}
       onOpenSettings={() => navigate({ to: ROUTES.deckSettings, params: { deckId } })}
@@ -56,6 +59,9 @@ export function DeckDetailScreen() {
       onPasteNotes={() => navigate({ to: ROUTES.deckPaste, params: { deckId } })}
       onReviewImport={() => navigate({ to: ROUTES.deckImport, params: { deckId } })}
       onExtensionImport={(to) => extensionNavigate(to, { deckId })}
+      onSwitchDeck={(next) =>
+        navigate({ to: ROUTES.deckDetail, params: { deckId: next }, replace: true })
+      }
     />
   )
 }

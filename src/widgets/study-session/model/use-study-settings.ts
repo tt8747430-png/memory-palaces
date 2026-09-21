@@ -1,5 +1,6 @@
 import type { LearningAlgorithm } from '@/shared/config/algorithms'
 import type {
+  FlashcardInput,
   FlashcardSwipeAction,
   FlashcardSwipeConfig,
   SwipeDirection,
@@ -16,6 +17,7 @@ export interface StudySettings {
   typeInitialsOnly: boolean
   shakeToUndo: boolean
   swipe: FlashcardSwipeConfig
+  flashcardInput: FlashcardInput
   filter: StudyFilter
 }
 
@@ -42,7 +44,12 @@ interface Args {
 }
 
 const DECK_PREF = new Set<keyof StudySettings>(['direction', 'shuffle', 'textToSpeech'])
-const LEARNER_PREF = new Set<keyof StudySettings>(['wordSpaces', 'typeInitialsOnly', 'shakeToUndo'])
+const LEARNER_PREF = new Set<keyof StudySettings>([
+  'wordSpaces',
+  'typeInitialsOnly',
+  'shakeToUndo',
+  'flashcardInput',
+])
 
 export function useStudySettings({
   mode,
@@ -66,6 +73,7 @@ export function useStudySettings({
     typeInitialsOnly: learnerPrefs.typeInitialsOnly,
     shakeToUndo: learnerPrefs.shakeToUndo,
     swipe: learnerPrefs.swipePreferences[algorithm][mode],
+    flashcardInput: learnerPrefs.flashcardInput,
     filter,
   }
 

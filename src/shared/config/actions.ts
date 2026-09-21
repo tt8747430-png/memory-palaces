@@ -17,6 +17,7 @@ export type ActionId =
   | 'freeze'
   | 'reverse'
   | 'history'
+  | 'style'
   | 'delete'
 
 export type ActionAccent =
@@ -102,6 +103,7 @@ export const ACTION_META: Record<ActionId, ActionMeta> = {
     menuLabelKey: 'actions.historyMenu',
     accent: 'slate',
   },
+  style: { id: 'style', labelKey: 'actions.style', accent: 'plum' },
   delete: { id: 'delete', labelKey: 'actions.delete', accent: 'red', destructive: true },
 }
 

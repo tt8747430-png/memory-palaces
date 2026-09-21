@@ -94,6 +94,7 @@ export { useAutoSelect } from './use-auto-select'
 export { useProbeOverlay, setProbeOverlay } from './probe-overlay'
 export { visibleBottom, keyboardIsMeasured, REVEAL_GAP } from './keyboard-viewport'
 export { useKeyboardInset } from './use-keyboard-inset'
+export { claimBottomInset } from './bottom-dock'
 export { useBottomChrome } from './use-bottom-chrome'
 export {
   isTextField,
@@ -130,6 +131,14 @@ export type {
   SyncRunner,
 } from './sync-runner'
 export { CONTENT_SORTS, sortContent, type ContentSort, type SortableContent } from './content-order'
+export {
+  DECK_SORTS,
+  DEFAULT_DECK_SORT,
+  resolveDeckSort,
+  sortDecks,
+  type DeckSort,
+  type SortableDeck,
+} from './deck-order'
 export {
   ContentImportError,
   importErrorMessage,
@@ -316,7 +325,7 @@ export {
   type SortableBlockDrop,
   type SortableBlockOptions,
 } from './use-sortable-block'
-export { flattenDecks, type FlatDeck } from './tree-flatten'
+export { flattenDecks, type ArrangeRow, type FlatDeck } from './tree-flatten'
 export {
   childDecks,
   siblingDecks,

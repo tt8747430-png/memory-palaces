@@ -6,11 +6,20 @@ export const SELECT_SURFACES: readonly SelectSurface[] = ['library', 'card', 'qu
 
 export type SelectActionId = Extract<
   ActionId,
-  'move' | 'favorite' | 'duplicate' | 'archive' | 'unfile' | 'flag' | 'known' | 'reset' | 'delete'
+  | 'move'
+  | 'favorite'
+  | 'duplicate'
+  | 'archive'
+  | 'unfile'
+  | 'flag'
+  | 'known'
+  | 'reset'
+  | 'style'
+  | 'delete'
 >
 
 export const SELECT_ACTIONS: Record<SelectSurface, readonly SelectActionId[]> = {
-  library: ['move', 'favorite', 'duplicate', 'archive', 'unfile', 'delete'],
+  library: ['move', 'favorite', 'duplicate', 'archive', 'unfile', 'style', 'delete'],
   card: ['move', 'flag', 'known', 'reset', 'duplicate', 'delete'],
   question: ['duplicate', 'delete'],
 }

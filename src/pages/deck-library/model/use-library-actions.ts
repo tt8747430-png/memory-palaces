@@ -42,6 +42,10 @@ interface Args {
   patchDecks: Patch<Deck>
   patchFolders: Patch<Folder>
   onFolderGone: () => void
+  /** Puts the Library back into the manual order, because a drag has just written one. */
+  onManualOrder: () => void
+  /** Opens the style sheet over the selection; the page owns that sheet. */
+  onRequestBulkStyle: () => void
   onRequestBulkMove: () => void
   onRequestBulkDelete: () => void
 }
@@ -69,6 +73,8 @@ export function useLibraryActions({
   patchDecks,
   patchFolders,
   onFolderGone,
+  onManualOrder,
+  onRequestBulkStyle,
   onRequestBulkMove,
   onRequestBulkDelete,
 }: Args): LibraryActions {
@@ -159,12 +165,16 @@ export function useLibraryActions({
     if (folderId === id) onFolderGone()
   }
 
+  // A drag writes the manual order, so it is the manual order the Library must then be in —
+  // otherwise the row springs back under the finger. The same rule the content editor uses.
   const reorderFolderIds = (ids: string[]) => {
+    onManualOrder()
     patchFolders(orderPatch(ids))
     void reorderFolders(folderStore, ids)
   }
 
   const reorderDeckIds = (ids: string[]) => {
+    onManualOrder()
     patchDecks(orderPatch(ids))
     void reorderDecks(deckStore, ids)
   }
@@ -221,6 +231,7 @@ export function useLibraryActions({
     duplicate: { ...bulkAction(selection, bulkDuplicate), disabled: noDecks },
     archive: { ...bulkAction(selection, bulkArchive), disabled: noDecks },
     unfile: { ...bulkAction(selection, bulkUnfile), disabled: filedIds.length === 0 },
+    style: { onAction: onRequestBulkStyle, disabled: noDecks },
     delete: { onAction: onRequestBulkDelete, disabled: selection.count === 0 },
   }
 

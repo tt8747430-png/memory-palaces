@@ -127,15 +127,13 @@ export function DeckQuestionsPage({
         </section>
       </div>
 
-      {selection.active ? (
-        <SelectToolbarDock>
-          <SelectToolbar
-            actions={prefs.selectToolbar.question}
-            handlers={page.selectHandlers}
-            selection={selection}
-          />
-        </SelectToolbarDock>
-      ) : null}
+      <SelectToolbarDock open={selection.active}>
+        <SelectToolbar
+          actions={prefs.selectToolbar.question}
+          handlers={page.selectHandlers}
+          selection={selection}
+        />
+      </SelectToolbarDock>
 
       <QuestionDialogs
         pending={page.pending}

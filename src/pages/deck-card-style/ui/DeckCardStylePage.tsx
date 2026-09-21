@@ -1,18 +1,11 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { AlignCenter, AlignLeft, AlignRight, Check, Maximize2, RotateCcw, Type } from 'lucide-react'
-import {
-  CARD_FONTS,
-  CARD_ALIGNMENTS,
-  type CardAlignment,
-  type CardStyle,
-  DEFAULT_CARD_STYLE,
-  useDeck,
-  useDeckStoreApi,
-} from '@/entities/deck'
-import { updateDeckSettings } from '@/features/deck'
-import { clampCardTextSize, sameCardStyle } from '@/shared/lib'
+import { Check, Layers, Maximize2, RotateCcw } from 'lucide-react'
+import { type CardStyle, DEFAULT_CARD_STYLE, useDeck, useDeckStoreApi } from '@/entities/deck'
+import { applyCardStyle, type CardStyleScope, updateDeckSettings } from '@/features/deck'
+import { sameCardStyle, subtreeDeckIds } from '@/shared/lib'
+import { CardStyleFields, StylePreview } from '@/widgets/card-style-form'
 import {
   ActionSheet,
   AppScreen,
@@ -21,42 +14,23 @@ import {
   FooterBar,
   IconButton,
   ScreenHeader,
-  SegmentedControl,
-  SettingsRow,
-  SettingsSection,
-  StepperRow,
+  type SheetAction,
 } from '@/shared/ui'
-import { PresetStrip } from './PresetStrip'
 import { StyleFullscreen } from './StyleFullscreen'
-import { StylePreview } from './StylePreview'
 
 export interface DeckCardStylePageProps {
   deckId: string
   onBack?: () => void
 }
 
-const SIZE_STEP = 2
-
 const PREVIEW_PANE = 'grid place-items-center h-(--preview-pane-height) px-5 py-4'
-
-const ALIGN_ICONS: Record<CardAlignment, typeof AlignLeft> = {
-  left: AlignLeft,
-  center: AlignCenter,
-  right: AlignRight,
-}
-
-const ALIGN_LABEL_KEYS: Record<CardAlignment, string> = {
-  left: 'cardStyle.alignLeft',
-  center: 'cardStyle.alignCenter',
-  right: 'cardStyle.alignRight',
-}
 
 export function DeckCardStylePage({ deckId, onBack }: DeckCardStylePageProps) {
   const { t } = useTranslation()
   const deckStore = useDeckStoreApi()
-  const { deck, settings, ready } = useDeck(deckId)
-  const [fontOpen, setFontOpen] = useState(false)
+  const { decks, deck, settings, ready } = useDeck(deckId)
   const [fullscreen, setFullscreen] = useState(false)
+  const [scopeOpen, setScopeOpen] = useState(false)
   const [draft, setDraft] = useState<CardStyle | null>(null)
 
   if (!ready || !deck) {
@@ -74,14 +48,42 @@ export function DeckCardStylePage({ deckId, onBack }: DeckCardStylePageProps) {
   const dirty = draft !== null && !sameCardStyle(draft, saved)
   const canReset = !sameCardStyle(style, DEFAULT_CARD_STYLE)
 
-  const edit = (patch: Partial<CardStyle>) => setDraft({ ...style, ...patch })
-  const step = (delta: number) => edit({ textSize: clampCardTextSize(style.textSize + delta) })
+  const subtreeCount = subtreeDeckIds(decks, deckId).length
+  const libraryCount = decks.filter((d) => !d.archived).length
 
   const apply = () => {
     void updateDeckSettings(deckStore, deckId, { cardStyle: style })
     setDraft(null)
     toast.success(t('cardStyle.applied'))
   }
+
+  const applyTo = async (scope: CardStyleScope) => {
+    const changed = await applyCardStyle(deckStore, style, scope)
+    setDraft(null)
+    toast.success(t('cardStyle.appliedToDecks', { count: changed }))
+  }
+
+  const scopeActions: SheetAction[] = [
+    {
+      id: 'deck',
+      label: t('cardStyle.scopeThisDeck'),
+      onSelect: () => void applyTo({ kind: 'deck', deckId }),
+    },
+    ...(subtreeCount > 1
+      ? [
+          {
+            id: 'subtree',
+            label: t('cardStyle.scopeSubtree', { count: subtreeCount }),
+            onSelect: () => void applyTo({ kind: 'subtree', deckId }),
+          },
+        ]
+      : []),
+    {
+      id: 'all',
+      label: t('cardStyle.scopeEveryDeck', { count: libraryCount }),
+      onSelect: () => void applyTo({ kind: 'all' }),
+    },
+  ]
 
   return (
     <AppScreen
@@ -94,6 +96,13 @@ export function DeckCardStylePage({ deckId, onBack }: DeckCardStylePageProps) {
           backLabel={t('common.back')}
           action={
             <div className="flex items-center gap-1">
+              <IconButton
+                variant="glass"
+                aria-label={t('cardStyle.applyTo')}
+                onClick={() => setScopeOpen(true)}
+              >
+                <Layers className="size-5" aria-hidden />
+              </IconButton>
               <IconButton
                 variant="glass"
                 aria-label={t('cardStyle.fullscreen')}
@@ -137,44 +146,7 @@ export function DeckCardStylePage({ deckId, onBack }: DeckCardStylePageProps) {
       }
     >
       <div className="mt-4 flex flex-col gap-6 pb-8">
-        <PresetStrip style={style} value={style.preset} onChange={(preset) => edit({ preset })} />
-
-        <SettingsSection>
-          <SettingsRow
-            kind="nav"
-            icon={<Type />}
-            label={t('cardStyle.font')}
-            value={t(`cardStyle.fontName.${style.font}` as never)}
-            onClick={() => setFontOpen(true)}
-          />
-          <StepperRow
-            label={t('cardStyle.textSize')}
-            value={String(style.textSize)}
-            decreaseLabel={t('cardStyle.decrease')}
-            increaseLabel={t('cardStyle.increase')}
-            onDecrease={() => step(-SIZE_STEP)}
-            onIncrease={() => step(SIZE_STEP)}
-          />
-        </SettingsSection>
-
-        <section className="flex flex-col gap-2">
-          <h2 className="px-1 text-label font-semibold text-muted-foreground">
-            {t('cardStyle.alignment')}
-          </h2>
-          <SegmentedControl
-            aria-label={t('cardStyle.alignment')}
-            value={style.alignment}
-            onChange={(alignment) => edit({ alignment })}
-            options={CARD_ALIGNMENTS.map((alignment) => {
-              const Icon = ALIGN_ICONS[alignment]
-              return {
-                value: alignment,
-                ariaLabel: t(ALIGN_LABEL_KEYS[alignment] as never),
-                label: <Icon className="size-4.5" aria-hidden />,
-              }
-            })}
-          />
-        </section>
+        <CardStyleFields style={style} onChange={setDraft} />
       </div>
 
       <StyleFullscreen
@@ -186,16 +158,12 @@ export function DeckCardStylePage({ deckId, onBack }: DeckCardStylePageProps) {
       />
 
       <ActionSheet
-        open={fontOpen}
-        onOpenChange={setFontOpen}
-        title={t('cardStyle.fontTitle')}
+        open={scopeOpen}
+        onOpenChange={setScopeOpen}
+        title={t('cardStyle.applyTo')}
+        description={t('cardStyle.applyToHint')}
+        actions={scopeActions}
         cancelLabel={t('common.cancel')}
-        actions={CARD_FONTS.map((font) => ({
-          id: font,
-          label: t(`cardStyle.fontName.${font}` as never),
-          selected: font === style.font,
-          onSelect: () => edit({ font }),
-        }))}
       />
     </AppScreen>
   )

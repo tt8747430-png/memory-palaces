@@ -14,6 +14,7 @@ const OUTSIDE_THE_SCENE =
 
 const INSIDE_THE_SCENE = [
   '/src/widgets/study-session/',
+  '/src/widgets/card-style-form/',
   '/src/pages/deck-card-style/',
   '/src/shared/ui/',
   '/src/shared/lib/',
@@ -28,7 +29,7 @@ const ROOTS = [
   ),
   '/src/shared/ui/StudySessionScreen.tsx',
   '/src/shared/ui/header/StudySessionHeader.tsx',
-  '/src/pages/deck-card-style/ui/StylePreview.tsx',
+  '/src/widgets/card-style-form/ui/StylePreview.tsx',
 ]
 
 const IMPORT = /import\s+(?:[\s\S]*?)\s+from\s+'([^']+)'/g
@@ -127,7 +128,7 @@ describe('scene chrome', () => {
     const paths = [...scanned.keys()]
     expect(paths.length).toBeGreaterThan(20)
     expect(paths).toContain('/src/widgets/study-session/ui/FlashcardsPanel.tsx')
-    expect(paths).toContain('/src/pages/deck-card-style/ui/StylePreview.tsx')
+    expect(paths).toContain('/src/widgets/card-style-form/ui/StylePreview.tsx')
     expect(paths).toContain('/src/shared/ui/primitives/pill.ts')
     expect(paths).toContain('/src/shared/ui/GradeButtons.tsx')
     expect(paths).not.toContain('/src/widgets/study-session/ui/GearSheet.tsx')

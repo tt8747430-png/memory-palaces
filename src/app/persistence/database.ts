@@ -8,7 +8,8 @@ import type { Card } from '@/entities/card'
 import type { Question } from '@/entities/question'
 import type { Progress } from '@/entities/progress'
 import { DEFAULT_PREFERENCES, type Preferences } from '@/entities/preferences'
-import { normalizeFlashcardSwipe } from '@/shared/config/flashcard-swipe'
+import { resolveDeckSort } from '@/shared/lib'
+import { normalizeFlashcardSwipe, resolveFlashcardInput } from '@/shared/config/flashcard-swipe'
 import type { Profile } from '@/entities/profile'
 import type { AppNotification } from '@/entities/notification'
 import type { HistoryEntry } from '@/entities/learning-history'
@@ -107,6 +108,20 @@ export const preferencesMigrations = {
     ...doc,
     flashcardSwipe: normalizeFlashcardSwipe(doc.flashcardSwipe),
     disabledFeatures: doc.disabledFeatures ?? {},
+  }),
+  /**
+   * A flashcard can be answered by tapping an edge rather than throwing the card, and the Library
+   * can be put in an order other than the one a drag wrote. Both start where the app has always
+   * behaved — a swipe, and the manual order — so nobody's device changes under them.
+   *
+   * `resolveFlashcardInput` and `resolveDeckSort` are the read-side twins: replication writes
+   * pulled rows unmigrated, so a document from a device still on version 5 arrives without either.
+   */
+  6: (doc: Preferences): Preferences => ({
+    ...doc,
+    flashcardInput: resolveFlashcardInput(doc.flashcardInput),
+    deckSort: resolveDeckSort(doc.deckSort),
+    deckSortSubdecks: doc.deckSortSubdecks ?? DEFAULT_PREFERENCES.deckSortSubdecks,
   }),
 }
 

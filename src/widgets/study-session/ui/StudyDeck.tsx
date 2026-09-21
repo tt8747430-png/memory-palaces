@@ -3,11 +3,16 @@ import { type HTMLMotionProps, motion, useReducedMotion } from 'motion/react'
 import type { CardStyle } from '@/entities/deck'
 import type { StudyMode } from '@/entities/preferences'
 import { EASE_EXPO, STACK_DEPTH } from '@/shared/lib'
-import type { FlashcardSwipeConfig, SwipeDirection } from '@/shared/config/flashcard-swipe'
+import type {
+  FlashcardInput,
+  FlashcardSwipeConfig,
+  SwipeDirection,
+} from '@/shared/config/flashcard-swipe'
 import { BackFace, type FaceProps, FrontFace, type MechanicHandlers } from './faces'
 import { DEPTH_POSE, PROMOTION } from './deck-poses'
 import { DirectionChip } from './DirectionChip'
 import { QueuedCard } from './QueuedCard'
+import { ZoneHints } from './ZoneHints'
 import { useCardSwipe } from '../model/use-card-swipe'
 import { studyFaces } from '../model/study-faces'
 import type { StudyCard, StudyDirection } from '../model/types'
@@ -31,6 +36,8 @@ export interface StudyDeckProps {
   typeInitialsOnly: boolean
   flipped: boolean
   swipeConfig: FlashcardSwipeConfig
+  /** Whether an answer is thrown or tapped. The actions are the same either way. */
+  input: FlashcardInput
   canSpeak: boolean
   onFlip: () => void
   onReveal: () => void
@@ -52,6 +59,7 @@ export function StudyDeck({
   typeInitialsOnly,
   flipped,
   swipeConfig,
+  input,
   canSpeak,
   onFlip,
   onReveal,
@@ -82,6 +90,7 @@ export function StudyDeck({
 
   const swipe = useCardSwipe({
     swipeConfig,
+    input,
     reduce: Boolean(reduce),
     onFlip: handleFlip,
     onLongPress,
@@ -133,16 +142,20 @@ export function StudyDeck({
         />
       ))}
 
-      {CHIPS.map(({ dir, className }) => (
-        <DirectionChip
-          key={dir}
-          action={swipeConfig[dir]}
-          x={swipe.x}
-          y={swipe.y}
-          dir={dir}
-          className={className}
-        />
-      ))}
+      {input === 'tap' ? (
+        <ZoneHints config={swipeConfig} />
+      ) : (
+        CHIPS.map(({ dir, className }) => (
+          <DirectionChip
+            key={dir}
+            action={swipeConfig[dir]}
+            x={swipe.x}
+            y={swipe.y}
+            dir={dir}
+            className={className}
+          />
+        ))
+      )}
 
       <motion.div
         {...(swipe.bind() as unknown as HTMLMotionProps<'div'>)}

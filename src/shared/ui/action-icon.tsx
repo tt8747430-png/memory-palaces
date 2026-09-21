@@ -16,6 +16,7 @@ import {
   Pencil,
   Play,
   Plus,
+  Palette,
   RotateCcw,
   Settings,
   Snowflake,
@@ -42,6 +43,7 @@ const ACTION_ICON: Record<ActionId, LucideIcon> = {
   freeze: Snowflake,
   reverse: ArrowLeftRight,
   history: History,
+  style: Palette,
   delete: Trash2,
 }
 

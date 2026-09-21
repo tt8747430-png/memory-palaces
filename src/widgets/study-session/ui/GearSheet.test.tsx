@@ -31,6 +31,7 @@ function settingsControl(): StudySettingsControl {
       wordSpaces: false,
       typeInitialsOnly: false,
       shakeToUndo: false,
+      flashcardInput: 'swipe',
       swipe: DEFAULT_FLASHCARD_SWIPE.spaced,
       filter: { kind: 'all' },
     },

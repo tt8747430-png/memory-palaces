@@ -1,10 +1,11 @@
-import { type ComponentType, useLayoutEffect } from 'react'
+import { type ComponentType } from 'react'
 import { useNavigate, useRouterState } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { motion } from 'motion/react'
 import { House, User } from 'lucide-react'
 import { type RoutePath, ROUTES } from '@/shared/config/routes'
-import { cn, EASE_EXPO, useAppNavHidden, useBottomChrome } from '@/shared/lib'
+import { cn, useAppNavHidden } from '@/shared/lib'
+import { BottomDock, DockPill } from '@/shared/ui'
 
 interface Tab {
   to: typeof ROUTES.home | typeof ROUTES.profile
@@ -24,105 +25,54 @@ const navySpring = { type: 'spring', stiffness: 500, damping: 40, mass: 0.6 } as
 export function AppNav() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const reduce = useReducedMotion()
   const pathname = useRouterState({ select: (state) => state.location.pathname })
   const hidden = useAppNavHidden()
-  const claimChrome = useBottomChrome()
   const showNav = TAB_PATHS.includes(pathname as RoutePath) && !hidden
 
-  useLayoutEffect(() => {
-    if (!showNav) return
-    const root = document.documentElement
-    root.style.setProperty('--app-bottom-inset', 'calc(var(--p-safe-bottom) + 4rem)')
-    return () => {
-      root.style.removeProperty('--app-bottom-inset')
-    }
-  }, [showNav])
-
   return (
-    <AnimatePresence>
-      {showNav ? (
-        <nav
-          key="app-nav"
-          ref={claimChrome}
-          aria-label={t('nav.label')}
-          className={cn(
-            'fixed bottom-(--p-safe-bottom) left-1/2 z-(--z-nav) -translate-x-1/2',
-            'in-data-keyboard:hidden',
-          )}
-        >
-          <motion.div
-            initial={reduce ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.94 }}
-            animate={reduce ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
-            exit={reduce ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.94 }}
-            transition={reduce ? { duration: 0 } : { duration: 0.24, ease: EASE_EXPO }}
-            className="relative"
-          >
-            <div
-              aria-hidden
-              className="absolute inset-0 -z-10 scale-110 opacity-60 blur-2xl"
-              style={{
-                background:
-                  'linear-gradient(to top, color-mix(in oklch, var(--nav-surface) 26%, transparent), color-mix(in oklch, var(--accent) 12%, transparent), transparent)',
-              }}
-            />
-
-            <div className="relative flex h-16 w-64 items-center justify-around overflow-hidden rounded-nav px-4 shadow-elevated">
-              <div
-                aria-hidden
-                className="absolute inset-0 backdrop-blur-2xl"
-                style={{
-                  background:
-                    'linear-gradient(135deg, color-mix(in oklch, var(--nav-surface) 62%, transparent), color-mix(in oklch, var(--nav-surface) 50%, transparent))',
-                }}
-              />
-              <div
-                aria-hidden
-                className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-nav bg-linear-to-b from-white/15 to-transparent"
-              />
-
-              {TABS.map(({ to, Icon, labelKey }) => {
-                const isActive = pathname === to
-                return (
-                  <motion.button
-                    key={to}
-                    type="button"
-                    onClick={() => void navigate({ to })}
-                    aria-current={isActive ? 'page' : undefined}
-                    whileTap={{ scale: 0.92 }}
-                    className="relative flex h-full min-w-18 items-center justify-center"
+    <BottomDock open={showNav}>
+      <nav aria-label={t('nav.label')} className="h-full w-full">
+        <DockPill className="justify-around px-4">
+          {TABS.map(({ to, Icon, labelKey }) => {
+            const isActive = pathname === to
+            return (
+              <motion.button
+                key={to}
+                type="button"
+                onClick={() => void navigate({ to })}
+                aria-current={isActive ? 'page' : undefined}
+                whileTap={{ scale: 0.92 }}
+                className="relative flex h-full min-w-18 items-center justify-center"
+              >
+                {isActive ? (
+                  <motion.span
+                    layoutId="navPill"
+                    transition={navySpring}
+                    aria-hidden
+                    className="absolute size-12 rounded-squircle bg-(--nav-pill) shadow-[inset_0_2px_8px_rgba(0,0,0,0.12),inset_0_-2px_6px_rgba(255,255,255,0.25)]"
+                  />
+                ) : null}
+                <span className="relative z-10 flex flex-col items-center gap-1">
+                  <Icon
+                    className={cn(
+                      'size-6',
+                      isActive ? 'text-(--nav-ink-active)' : 'text-(--nav-ink)',
+                    )}
+                  />
+                  <span
+                    className={cn(
+                      'text-tiny font-medium',
+                      isActive ? 'text-(--nav-ink-active)' : 'text-(--nav-ink)/75',
+                    )}
                   >
-                    {isActive ? (
-                      <motion.span
-                        layoutId="navPill"
-                        transition={navySpring}
-                        aria-hidden
-                        className="absolute size-12 rounded-squircle bg-(--nav-pill) shadow-[inset_0_2px_8px_rgba(0,0,0,0.12),inset_0_-2px_6px_rgba(255,255,255,0.25)]"
-                      />
-                    ) : null}
-                    <span className="relative z-10 flex flex-col items-center gap-1">
-                      <Icon
-                        className={cn(
-                          'size-6',
-                          isActive ? 'text-(--nav-ink-active)' : 'text-(--nav-ink)',
-                        )}
-                      />
-                      <span
-                        className={cn(
-                          'text-tiny font-medium',
-                          isActive ? 'text-(--nav-ink-active)' : 'text-(--nav-ink)/75',
-                        )}
-                      >
-                        {t(labelKey)}
-                      </span>
-                    </span>
-                  </motion.button>
-                )
-              })}
-            </div>
-          </motion.div>
-        </nav>
-      ) : null}
-    </AnimatePresence>
+                    {t(labelKey)}
+                  </span>
+                </span>
+              </motion.button>
+            )
+          })}
+        </DockPill>
+      </nav>
+    </BottomDock>
   )
 }

@@ -1,5 +1,7 @@
-import { useEffect } from 'react'
-import { usePendingAct } from '@/shared/lib'
+import { useCallback, useEffect } from 'react'
+import { usePreferencesStoreApi } from '@/entities/preferences'
+import { setPreferences } from '@/features/preferences'
+import { type DeckSort, usePendingAct } from '@/shared/lib'
 import type { SelectActionHandlers } from '@/shared/ui'
 import type { Destination } from '@/widgets/deck-tree'
 import type { PendingAct } from './pending-act'
@@ -18,6 +20,12 @@ export interface Library extends LibraryView {
   dismiss: () => void
   confirm: (dest?: Destination) => void
   moveExcludeIds: ReadonlySet<string>
+
+  /** The order the rows are in, and the two ways of changing it. */
+  deckSort: DeckSort
+  setDeckSort: (sort: DeckSort) => void
+  deckSortSubdecks: boolean
+  setDeckSortSubdecks: (on: boolean) => void
 }
 
 function moveTargets(pending: PendingAct | null, selectedDeckIds: string[]): string[] {
@@ -26,10 +34,23 @@ function moveTargets(pending: PendingAct | null, selectedDeckIds: string[]): str
   return []
 }
 
-export function useLibrary(folderId: string | null, onFolderGone: () => void): Library {
+export function useLibrary(
+  folderId: string | null,
+  onFolderGone: () => void,
+  onRequestBulkStyle: () => void = () => {},
+): Library {
   const data = useLibraryData(folderId)
   const view = data.view
   const pending = usePendingAct<PendingAct>()
+  const prefStore = usePreferencesStoreApi()
+
+  const setDeckSort = useCallback(
+    (sort: DeckSort) => void setPreferences(prefStore, { deckSort: sort }),
+    [prefStore],
+  )
+  const onManualOrder = useCallback(() => {
+    if (data.deckSort !== 'manual') setDeckSort('manual')
+  }, [data.deckSort, setDeckSort])
 
   const missing = folderId !== null && data.foldersReady && !view.openFolder
   useEffect(() => {
@@ -52,6 +73,8 @@ export function useLibrary(folderId: string | null, onFolderGone: () => void): L
     patchDecks: data.patchDecks,
     patchFolders: data.patchFolders,
     onFolderGone,
+    onManualOrder,
+    onRequestBulkStyle,
     onRequestBulkMove: () => pending.request({ kind: 'move-selection' }),
     onRequestBulkDelete: () => pending.request({ kind: 'delete-selection' }),
   })
@@ -86,5 +109,9 @@ export function useLibrary(folderId: string | null, onFolderGone: () => void): L
     dismiss: pending.dismiss,
     confirm,
     moveExcludeIds: moveExclusions(view.decks, moveTargets(pending.act, selection.deckIds)),
+    deckSort: data.deckSort,
+    setDeckSort,
+    deckSortSubdecks: data.deckSortSubdecks,
+    setDeckSortSubdecks: (on: boolean) => void setPreferences(prefStore, { deckSortSubdecks: on }),
   }
 }

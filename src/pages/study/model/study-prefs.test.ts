@@ -53,12 +53,14 @@ describe('learnerStudyPrefs', () => {
       studyWordSpaces: false,
       studyTypeInitialsOnly: true,
       shakeToUndo: false,
+      flashcardInput: 'swipe' as const,
       flashcardSwipe: DEFAULT_FLASHCARD_SWIPE_PREFERENCES,
     })
     expect(prefs).toEqual({
       wordSpaces: false,
       typeInitialsOnly: true,
       shakeToUndo: false,
+      flashcardInput: 'swipe' as const,
       swipePreferences: DEFAULT_FLASHCARD_SWIPE_PREFERENCES,
     })
   })
@@ -68,6 +70,7 @@ describe('learnerStudyPrefs', () => {
       studyWordSpaces: true,
       studyTypeInitialsOnly: false,
       shakeToUndo: true,
+      flashcardInput: 'swipe' as const,
       flashcardSwipe: { blur: DEFAULT_FLASHCARD_SWIPE_PREFERENCES.spaced.blur } as never,
     })
     expect(Object.keys(prefs.swipePreferences).sort()).toEqual(['fast', 'spaced'])
@@ -84,6 +87,7 @@ describe('learnerStudyPrefs', () => {
       studyWordSpaces: true,
       studyTypeInitialsOnly: false,
       shakeToUndo: true,
+      flashcardInput: 'swipe' as const,
       flashcardSwipe: { up: 'flag', down: 'skip', left: 'again', right: 'easy' } as never,
     })
     expect(prefs.swipePreferences.spaced.blur.right).toBe('easy')
@@ -103,11 +107,13 @@ describe('learnerStudyPrefsPatch', () => {
       learnerStudyPrefsPatch({
         wordSpaces: false,
         shakeToUndo: false,
+        flashcardInput: 'swipe' as const,
         swipePreferences: DEFAULT_FLASHCARD_SWIPE_PREFERENCES,
       }),
     ).toEqual({
       studyWordSpaces: false,
       shakeToUndo: false,
+      flashcardInput: 'swipe' as const,
       flashcardSwipe: DEFAULT_FLASHCARD_SWIPE_PREFERENCES,
     })
   })

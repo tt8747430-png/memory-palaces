@@ -3,7 +3,7 @@ import { Dialog } from '@base-ui/react/dialog'
 import { X } from 'lucide-react'
 import type { CardStyle } from '@/entities/deck'
 import { CardScene, FullscreenDialog } from '@/shared/ui'
-import { StylePreview } from './StylePreview'
+import { StylePreview } from '@/widgets/card-style-form'
 
 export interface StyleFullscreenProps {
   open: boolean

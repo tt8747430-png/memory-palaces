@@ -1,16 +1,20 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import type { Card } from '@/entities/card'
 import { selectCards, useCardStore } from '@/entities/card'
 import type { Deck } from '@/entities/deck'
-import { selectDecks, useDeckStore } from '@/entities/deck'
+import { resolveDeckSettings, selectDecks, useDeckStore } from '@/entities/deck'
 import type { Folder } from '@/entities/folder'
 import { selectFolders, useFolderStore } from '@/entities/folder'
+import { selectEffectivePreferences, usePreferencesStore } from '@/entities/preferences'
 import {
+  type DeckSort,
+  dueCountsPerDeck,
   findEntity,
   type FlatDeck,
   flattenDecks,
   selectIsReady,
   siblingDecks,
+  sortDecks,
   useOptimisticPatch,
 } from '@/shared/lib'
 import { useLibraryExpanded } from './use-library-expanded'
@@ -35,12 +39,17 @@ export interface LibraryData {
   view: LibraryView
   foldersReady: boolean
   folderIds: ReadonlySet<string>
+  /** The order the rows are in, so a drag can put it back to manual before it reorders. */
+  deckSort: DeckSort
+  /** Whether that order reaches the rows nested under a deck. */
+  deckSortSubdecks: boolean
   patchFolders: (patches: Map<string, Partial<Folder>>) => void
   patchDecks: (patches: Map<string, Partial<Deck>>) => void
 }
 
 export function useLibraryData(folderId: string | null): LibraryData {
   const storeFolders = useFolderStore(selectFolders)
+  const { deckSort, deckSortSubdecks } = usePreferencesStore(selectEffectivePreferences)
   const storeDecks = useDeckStore(selectDecks)
   const cards = useCardStore(selectCards)
   const foldersReady = useFolderStore(selectIsReady)
@@ -51,7 +60,14 @@ export function useLibraryData(folderId: string | null): LibraryData {
 
   const { ready: expandedReady, expanded, toggleExpanded, expand } = useLibraryExpanded()
 
-  const folders = useMemo(() => [...unsorted].sort((a, b) => a.order - b.order), [unsorted])
+  /**
+   * A folder follows the order too, but only where the question makes sense for a shelf: it has no
+   * due date of its own, so under `due` it keeps the order it was dragged into.
+   */
+  const folders = useMemo(() => {
+    const placed = [...unsorted].sort((a, b) => a.order - b.order)
+    return deckSort === 'name' || deckSort === 'recent' ? sortDecks(placed, deckSort) : placed
+  }, [unsorted, deckSort])
   const openFolder = useMemo(() => findEntity(folders, folderId), [folders, folderId])
   const folderIds = useMemo(() => new Set(folders.map((f) => f.id)), [folders])
   const inFolder = folderId !== null
@@ -73,8 +89,35 @@ export function useLibraryData(folderId: string | null): LibraryData {
     [decks, folderId],
   )
 
-  const sectionDecks = useMemo(() => siblingDecks(decks, null, folderId), [decks, folderId])
-  const rows = useMemo(() => flattenDecks(decks, expanded, folderId), [decks, expanded, folderId])
+  const dueCounts = useMemo(
+    () =>
+      deckSort === 'due'
+        ? dueCountsPerDeck(
+            decks,
+            cards,
+            Date.now(),
+            (id) => resolveDeckSettings(decks, id).algorithm,
+          )
+        : null,
+    [deckSort, decks, cards],
+  )
+
+  const arrange = useCallback(
+    (peers: Deck[], depth: number): Deck[] =>
+      depth > 0 && !deckSortSubdecks
+        ? peers
+        : sortDecks(peers, deckSort, (deck) => dueCounts?.get(deck.id) ?? 0),
+    [deckSort, deckSortSubdecks, dueCounts],
+  )
+
+  const sectionDecks = useMemo(
+    () => arrange(siblingDecks(decks, null, folderId), 0),
+    [arrange, decks, folderId],
+  )
+  const rows = useMemo(
+    () => flattenDecks(decks, expanded, folderId, arrange),
+    [decks, expanded, folderId, arrange],
+  )
 
   return {
     view: {
@@ -94,6 +137,8 @@ export function useLibraryData(folderId: string | null): LibraryData {
     },
     foldersReady,
     folderIds,
+    deckSort,
+    deckSortSubdecks,
     patchFolders,
     patchDecks,
   }

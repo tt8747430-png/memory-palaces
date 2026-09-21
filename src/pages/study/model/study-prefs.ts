@@ -1,6 +1,6 @@
 import { type Deck, type DeckSettings, isSubdeck, MAIN_DECK_SETTINGS } from '@/entities/deck'
 import type { Preferences, PreferencesChanges } from '@/entities/preferences'
-import { normalizeFlashcardSwipe } from '@/shared/config/flashcard-swipe'
+import { normalizeFlashcardSwipe, resolveFlashcardInput } from '@/shared/config/flashcard-swipe'
 import type { DeckStudyPrefs, EditableDeckPref, LearnerStudyPrefs } from '@/widgets/study-session'
 
 const SETTING_OF = {
@@ -45,6 +45,7 @@ const PREFERENCE_OF = {
   typeInitialsOnly: 'studyTypeInitialsOnly',
   shakeToUndo: 'shakeToUndo',
   swipePreferences: 'flashcardSwipe',
+  flashcardInput: 'flashcardInput',
 } as const satisfies Record<keyof LearnerStudyPrefs, keyof PreferencesChanges>
 
 export function learnerStudyPrefs(
@@ -55,6 +56,7 @@ export function learnerStudyPrefs(
     typeInitialsOnly: preferences[PREFERENCE_OF.typeInitialsOnly],
     shakeToUndo: preferences[PREFERENCE_OF.shakeToUndo],
     swipePreferences: normalizeFlashcardSwipe(preferences[PREFERENCE_OF.swipePreferences]),
+    flashcardInput: resolveFlashcardInput(preferences[PREFERENCE_OF.flashcardInput]),
   }
 }
 
