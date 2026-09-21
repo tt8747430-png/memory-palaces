@@ -25,12 +25,24 @@ export type CoreSyncedTable = (typeof SYNCED_TABLES)[number]
  */
 export type SyncedTable = CoreSyncedTable | (string & {})
 
+/**
+ * How a table's changes leave the device.
+ *
+ * - `held` — they wait to be asked. Synchronise sends them; Autosync asks on the learner's behalf.
+ * - `quiet` — they go on their own as soon as they can, and are never reported as waiting.
+ *
+ * The split is the learner's, not the schema's: what they would call their work is held, and the
+ * furniture around it — how the app looks, which rows are open, who they are — is quiet.
+ */
+export type SyncCadence = 'held' | 'quiet'
+
 export interface SyncTableSpec {
   table: SyncedTable
   /** The RxDB collection key, which is not the table name for an extension's collection. */
   collectionKey: string
   /** The extension that owns it; null for a core table, which always replicates. */
   owner: ExtensionId | null
+  cadence: SyncCadence
   /**
    * The key naming the table to a learner, in the owner's namespace (`bible:versesTable`). A core
    * table is named by the app (`sync.tables.<table>`), so it carries none.
@@ -45,17 +57,24 @@ export function isCoreSyncedTable(table: SyncedTable): table is CoreSyncedTable 
   return CORE.has(table)
 }
 
+/** The core tables whose changes never wait to be asked. Everything else a learner made is held. */
+const QUIET_CORE: ReadonlySet<CoreSyncedTable> = new Set<CoreSyncedTable>([
+  'preferences',
+  'profiles',
+])
+
 export const CORE_SYNC_TABLES: readonly SyncTableSpec[] = SYNCED_TABLES.map((table) => ({
   table,
   collectionKey: table,
   owner: null,
+  cadence: QUIET_CORE.has(table) ? 'quiet' : 'held',
 }))
 
 /**
- * The tables a cycle covers right now: every core one, plus the contributed ones whose extension
- * is enabled. The watcher, the replication cycle and the peek all read this one derivation, so
- * they cannot disagree about which tables are live — a table the peek asks about but the cycle
- * never pulls is a banner no Synchronise can clear.
+ * The tables live right now: every core one, plus the contributed ones whose extension is enabled.
+ * With a `cadence` it narrows to that half. The watcher, both cycles and the peek all read this one
+ * derivation, so they cannot disagree about which tables are live — a table the peek asks about but
+ * no cycle pulls is a banner no Synchronise can clear.
  *
  * Takes a predicate rather than the stored ids: what "enabled" means belongs to the preferences
  * entity, and `shared` may not reach it.
@@ -63,9 +82,27 @@ export const CORE_SYNC_TABLES: readonly SyncTableSpec[] = SYNCED_TABLES.map((tab
 export function activeSyncTables(
   specs: readonly SyncTableSpec[],
   isEnabled: (id: ExtensionId) => boolean,
+  cadence?: SyncCadence,
 ): readonly SyncedTable[] {
-  return specs.flatMap((spec) => (spec.owner === null || isEnabled(spec.owner) ? [spec.table] : []))
+  return specs.flatMap((spec) =>
+    (spec.owner === null || isEnabled(spec.owner)) &&
+    (cadence === undefined || spec.cadence === cadence)
+      ? [spec.table]
+      : [],
+  )
 }
+
+/** The core tables of each cadence, for a build with no extension on — and for tests. */
+export const CORE_HELD_TABLES: readonly SyncedTable[] = activeSyncTables(
+  CORE_SYNC_TABLES,
+  () => true,
+  'held',
+)
+export const CORE_QUIET_TABLES: readonly SyncedTable[] = activeSyncTables(
+  CORE_SYNC_TABLES,
+  () => true,
+  'quiet',
+)
 
 export const CONTENT_COLLECTIONS = ['folders', 'decks', 'cards', 'questions'] as const
 

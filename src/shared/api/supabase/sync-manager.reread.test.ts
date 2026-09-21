@@ -174,14 +174,14 @@ describe('SyncManager.rereadEverything — reading the whole cloud again', () =>
     const cloud = fakeCloud()
     cloud.pushAs(note(), 'none')
     const phone = await device(cloud)
-    await phone.manager.runCycle()
+    await phone.manager.runCycle([TABLE])
 
     // The tablet fixes the text; the phone, which has not pulled since, renames the note.
     cloud.pushAs(note({ body: 'fixed text', updatedAt: 't3' }), 't1')
     await phone.collection.upsert(note({ title: 'Romans 8:1', updatedAt: 't2' }))
 
     await phone.manager.rereadEverything()
-    await phone.manager.runCycle()
+    await phone.manager.runCycle([TABLE])
 
     expect(cloud.get('n1')?.data).toMatchObject({ title: 'Romans 8:1', body: 'fixed text' })
     expect(await phone.read('n1')).toMatchObject({ title: 'Romans 8:1', body: 'fixed text' })
@@ -191,14 +191,14 @@ describe('SyncManager.rereadEverything — reading the whole cloud again', () =>
     const cloud = fakeCloud()
     cloud.pushAs(note(), 'none')
     const phone = await device(cloud)
-    await phone.manager.runCycle()
+    await phone.manager.runCycle([TABLE])
 
     cloud.insertBehind(note({ id: 'n2', title: 'Late' }))
-    await phone.manager.runCycle()
+    await phone.manager.runCycle([TABLE])
     expect(await phone.read('n2')).toBeUndefined()
 
     await phone.manager.rereadEverything()
-    await phone.manager.runCycle()
+    await phone.manager.runCycle([TABLE])
 
     expect(await phone.read('n2')).toMatchObject({ title: 'Late' })
   })

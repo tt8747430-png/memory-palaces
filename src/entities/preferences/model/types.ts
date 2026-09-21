@@ -7,8 +7,8 @@ import {
   type SwipePreferences,
 } from '@/shared/config/swipe'
 import {
-  DEFAULT_FLASHCARD_SWIPE_BY_MODE,
-  type FlashcardSwipeByMode,
+  DEFAULT_FLASHCARD_SWIPE_PREFERENCES,
+  type FlashcardSwipePreferences,
   normalizeFlashcardSwipe,
 } from '@/shared/config/flashcard-swipe'
 import {
@@ -20,7 +20,11 @@ import {
 
 export type { SwipePreferences } from '@/shared/config/swipe'
 export type { SelectToolbarPreferences } from '@/shared/config/select-toolbar'
-export type { FlashcardSwipeConfig, FlashcardSwipeByMode } from '@/shared/config/flashcard-swipe'
+export type {
+  FlashcardSwipeConfig,
+  FlashcardSwipeByMode,
+  FlashcardSwipePreferences,
+} from '@/shared/config/flashcard-swipe'
 
 export type { ContentSort }
 
@@ -59,10 +63,17 @@ export interface Preferences extends Entity {
   studyTypeInitialsOnly: boolean
   shakeToUndo: boolean
   swipe: SwipePreferences
-  flashcardSwipe: FlashcardSwipeByMode
+  flashcardSwipe: FlashcardSwipePreferences
   selectToolbar: SelectToolbarPreferences
   privacy: PrivacySettings
   extensions: ExtensionId[]
+  /**
+   * The features each Extension has switched **off**, by its id. The negative is what is stored:
+   * a feature a newer build adds is on without anyone writing anything, and an id this build does
+   * not know survives instead of being deleted on the next write — the same reasoning as
+   * `extensions`.
+   */
+  disabledFeatures: Record<ExtensionId, string[]>
   /** Shows the admin screens. Follows the account, like every other setting. */
   devMode: boolean
   /** Synchronise without being asked. */
@@ -85,10 +96,11 @@ export const DEFAULT_PREFERENCES = {
   studyTypeInitialsOnly: false,
   shakeToUndo: true,
   swipe: DEFAULT_SWIPE,
-  flashcardSwipe: DEFAULT_FLASHCARD_SWIPE_BY_MODE,
+  flashcardSwipe: DEFAULT_FLASHCARD_SWIPE_PREFERENCES,
   selectToolbar: DEFAULT_SELECT_TOOLBAR,
   privacy: DEFAULT_PRIVACY,
   extensions: [] as ExtensionId[],
+  disabledFeatures: {} as Record<ExtensionId, string[]>,
   devMode: false,
   autosync: true,
   libraryExpanded: [] as string[],
@@ -116,10 +128,11 @@ export interface MakePreferencesInput {
   studyTypeInitialsOnly?: boolean
   shakeToUndo?: boolean
   swipe?: SwipePreferences
-  flashcardSwipe?: FlashcardSwipeByMode
+  flashcardSwipe?: FlashcardSwipePreferences
   selectToolbar?: SelectToolbarPreferences
   privacy?: PrivacySettings
   extensions?: ExtensionId[]
+  disabledFeatures?: Record<ExtensionId, string[]>
   devMode?: boolean
   autosync?: boolean
   libraryExpanded?: string[]
@@ -169,10 +182,26 @@ export function makePreferences(input: MakePreferencesInput): Preferences {
     selectToolbar: resolveSelectToolbar(input.selectToolbar),
     privacy: input.privacy ?? { ...DEFAULT_PRIVACY },
     extensions: [...(input.extensions ?? [])],
+    disabledFeatures: normalizeDisabledFeatures(input.disabledFeatures),
     devMode: input.devMode ?? DEFAULT_PREFERENCES.devMode,
     autosync: input.autosync ?? DEFAULT_PREFERENCES.autosync,
     libraryExpanded: [...(input.libraryExpanded ?? [])],
   }
+}
+
+/**
+ * Copies the stored map, keeping every id — including an extension or a feature this build has
+ * never heard of, which another device may have switched off on a newer version.
+ */
+function normalizeDisabledFeatures(
+  stored: Record<ExtensionId, string[]> | undefined,
+): Record<ExtensionId, string[]> {
+  if (!stored || typeof stored !== 'object') return {}
+  return Object.fromEntries(
+    Object.entries(stored).flatMap(([id, features]) =>
+      Array.isArray(features) ? [[id, features.filter((f) => typeof f === 'string')]] : [],
+    ),
+  )
 }
 
 export function isExtensionEnabled(
@@ -180,6 +209,34 @@ export function isExtensionEnabled(
   id: ExtensionId,
 ): boolean {
   return preferences.extensions.includes(id)
+}
+
+/**
+ * Whether one of an Extension's features is on. On is the default: a feature only a newer build
+ * declares has never been switched off, and a learner who never touched the switch gets all of it.
+ */
+export function isExtensionFeatureOn(
+  preferences: Pick<Preferences, 'disabledFeatures'>,
+  extensionId: ExtensionId,
+  featureId: string,
+): boolean {
+  return !preferences.disabledFeatures[extensionId]?.includes(featureId)
+}
+
+/** The stored map with one feature switched on or off. Switching the last one back on drops the key. */
+export function withExtensionFeature(
+  disabled: Record<ExtensionId, string[]>,
+  extensionId: ExtensionId,
+  featureId: string,
+  on: boolean,
+): Record<ExtensionId, string[]> {
+  const held = disabled[extensionId] ?? []
+  const next = on ? held.filter((id) => id !== featureId) : [...new Set([...held, featureId])]
+  if (next.length === 0) {
+    const { [extensionId]: _dropped, ...rest } = disabled
+    return rest
+  }
+  return { ...disabled, [extensionId]: next }
 }
 
 export function completePreferences(preferences: Preferences): Preferences {
@@ -212,11 +269,15 @@ export type PreferencesChanges = Partial<
 >
 
 /**
- * What one write may change. `extensions` is kept out of `PreferencesChanges` so no generic caller
- * can pass a whole array it never read; `setPreferences` resolves its updater and hands the result
- * here, which is the only way the list is ever replaced.
+ * What one write may change. `extensions` and `disabledFeatures` are kept out of
+ * `PreferencesChanges` so no generic caller can pass a whole list or map it never read;
+ * `setPreferences` resolves their updaters and hands the results here, which is the only way
+ * either is ever replaced.
  */
-type PreferencesUpdate = PreferencesChanges & { extensions?: ExtensionId[] }
+type PreferencesUpdate = PreferencesChanges & {
+  extensions?: ExtensionId[]
+  disabledFeatures?: Record<ExtensionId, string[]>
+}
 
 export function updatePreferences(
   preferences: Preferences,

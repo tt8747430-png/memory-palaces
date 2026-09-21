@@ -1,21 +1,19 @@
-import { useTranslation } from 'react-i18next'
-import { CardFace, FlipZone, TipRow } from './CardFace'
+import { CardFace, TipRow } from './CardFace'
 import type { FaceProps } from './types'
 
+/**
+ * The plain front: the prompt, and the card's tip if it has one. There is no "tap to reveal" chip
+ * on the card any more — the footer owns that affordance now, as a real button, in every mode.
+ * Tapping the card still turns it over.
+ */
 export function PromptFace(props: FaceProps) {
-  const { t } = useTranslation()
-  const { card, prompt, onFlip } = props
+  const { card, prompt } = props
   return (
     <CardFace face={props} speakText={prompt}>
       <h2 className="text-balance wrap-break-word text-center text-card-prompt font-bold leading-[1.15] tracking-[-0.01em] text-heading">
         {prompt}
       </h2>
       {card.card.tip ? <TipRow tip={card.card.tip} /> : null}
-      <FlipZone label={t('study.showAnswer')} onFlip={onFlip} className="mx-auto w-fit">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-info-surface px-3.5 py-1.5 text-label font-medium text-muted-foreground">
-          {t('study.tapToReveal')}
-        </span>
-      </FlipZone>
     </CardFace>
   )
 }

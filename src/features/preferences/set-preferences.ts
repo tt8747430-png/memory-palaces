@@ -22,6 +22,13 @@ export interface SetPreferencesInput extends PreferencesChanges {
    * build on another device enabled.
    */
   extensions?: (current: readonly ExtensionId[]) => ExtensionId[]
+  /**
+   * Applied to the map already stored, for the same reason: a caller changes one extension's one
+   * feature, and every other id — including a newer build's — is carried through as it was.
+   */
+  disabledFeatures?: (
+    current: Readonly<Record<ExtensionId, string[]>>,
+  ) => Record<ExtensionId, string[]>
 }
 
 /**
@@ -36,10 +43,14 @@ export async function setPreferences(
 ): Promise<Preferences> {
   await whenStoreReady(store)
   const base = currentPreferences(store, now)
-  const { extensions, ...changes } = input
+  const { extensions, disabledFeatures, ...changes } = input
   const updated = updatePreferences(
     base,
-    extensions ? { ...changes, extensions: extensions(base.extensions) } : changes,
+    {
+      ...changes,
+      ...(extensions ? { extensions: extensions(base.extensions) } : {}),
+      ...(disabledFeatures ? { disabledFeatures: disabledFeatures(base.disabledFeatures) } : {}),
+    },
     nowIso(now),
   )
   await store.getState().save(updated)

@@ -3,7 +3,7 @@ import { makeCard } from '@/entities/card'
 import { makeDeck } from '@/entities/deck'
 import { makeFolder } from '@/entities/folder'
 import { makeQuestion } from '@/entities/question'
-import { makePendingChange } from '@/entities/pending-change'
+import { makePendingChange, selectPendingChanges } from '@/entities/pending-change'
 import { selectSyncState } from '@/entities/sync-state'
 import { AT, NOW, syncFixture } from './testing/fake-cloud'
 import { repairSync, syncNow } from './sync-now'
@@ -20,6 +20,33 @@ const state = (deps: ReturnType<typeof syncFixture>['deps']) =>
   selectSyncState(deps.syncStateStore.getState())
 
 describe('syncNow', () => {
+  it('carries the held tables, and leaves a quiet change waiting', async () => {
+    const { deps, cloud } = syncFixture()
+    await deps.deckStore.getState().save(deck('d1'))
+    await deps.pendingChangeStore
+      .getState()
+      .save(makePendingChange({ table: 'preferences', entityId: 'p1', op: 'save', at: AT }))
+
+    await expect(syncNow(deps)).resolves.toEqual({ kind: 'clean' })
+
+    expect(cloud.scopes).toEqual([deps.held])
+    expect(cloud.scopes.flat()).not.toContain('preferences')
+    expect(log().map((change) => change.id)).toEqual(['preferences:p1'])
+
+    function log() {
+      return selectPendingChanges(deps.pendingChangeStore.getState())
+    }
+  })
+
+  it('does not raise the banner over a quiet table moving elsewhere', async () => {
+    const { deps } = syncFixture()
+    deps.cloud.peek = async (table) =>
+      table === 'preferences' ? [{ id: 'p1', updated_at: NOW, deleted: false }] : []
+
+    await expect(syncNow(deps)).resolves.toEqual({ kind: 'clean' })
+    expect(state(deps).cloudChanged).toBe(false)
+  })
+
   it('refuses to start offline, and touches nothing', async () => {
     const { deps, cloud, log } = syncFixture()
     deps.isOnline = () => false

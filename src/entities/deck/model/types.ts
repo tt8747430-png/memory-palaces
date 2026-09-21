@@ -1,4 +1,9 @@
 import {
+  isLearningAlgorithm,
+  LEARNING_ALGORITHMS,
+  type LearningAlgorithm,
+} from '@/shared/config/algorithms'
+import {
   CARD_ALIGNMENT_IDS,
   CARD_FONT_IDS,
   CARD_STYLE_PRESET_IDS,
@@ -12,8 +17,7 @@ import {
 
 export type StudyDirection = 'front' | 'back'
 
-export const LEARNING_ALGORITHMS = ['fast', 'spaced'] as const
-export type LearningAlgorithm = (typeof LEARNING_ALGORITHMS)[number]
+export { LEARNING_ALGORITHMS, type LearningAlgorithm }
 
 export const CARD_STYLE_PRESETS = CARD_STYLE_PRESET_IDS
 export type CardStylePreset = CardStylePresetId
@@ -96,7 +100,7 @@ export const DEFAULT_DECK_SETTINGS: DeckSettings = {
 }
 
 export function validateDeckSettings(settings: Partial<DeckSettings>): void {
-  if (settings.algorithm !== undefined && !LEARNING_ALGORITHMS.includes(settings.algorithm)) {
+  if (settings.algorithm !== undefined && !isLearningAlgorithm(settings.algorithm)) {
     throw new Error(`Unknown learning algorithm: ${settings.algorithm}`)
   }
   if (settings.newCardsPerDay !== undefined && settings.newCardsPerDay < 0) {

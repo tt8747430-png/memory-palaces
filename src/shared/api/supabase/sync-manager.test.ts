@@ -18,6 +18,12 @@ function fakeReplication() {
 type Fake = ReturnType<typeof fakeReplication>
 
 /**
+ * Every table any test here replicates. A cycle narrows its scope to what `start` was told, so
+ * asking for all of them is how a test says "carry everything this session has".
+ */
+const ALL_TABLES: SyncedTable[] = ['decks', 'cards', 'bible_verses']
+
+/**
  * `tables` is what the database holds; what a session actually replicates is whatever `start` is
  * given, which defaults to all of them. `start` here is the harness's, not the manager's.
  */
@@ -70,7 +76,7 @@ describe('SyncManager', () => {
     const { manager, created, start } = setup()
     await start()
 
-    await manager.runCycle()
+    await manager.runCycle(ALL_TABLES)
 
     expect(created).toHaveLength(2)
     for (const replication of created) {
@@ -89,7 +95,10 @@ describe('SyncManager', () => {
     })
     await start()
 
-    await expect(manager.runCycle()).resolves.toEqual({ decks: ['d1', 'd2'], cards: ['c1'] })
+    await expect(manager.runCycle(ALL_TABLES)).resolves.toEqual({
+      decks: ['d1', 'd2'],
+      cards: ['c1'],
+    })
   })
 
   it('fails the cycle on the first replication error rather than waiting forever', async () => {
@@ -99,7 +108,7 @@ describe('SyncManager', () => {
     })
     await start()
 
-    await expect(manager.runCycle()).rejects.toThrow('push refused')
+    await expect(manager.runCycle(ALL_TABLES)).rejects.toThrow('push refused')
     expect(created[0]?.cancel).toHaveBeenCalled()
   })
 
@@ -109,7 +118,7 @@ describe('SyncManager', () => {
     })
     await start()
 
-    await expect(manager.runCycle()).rejects.toThrow('storage closed')
+    await expect(manager.runCycle(ALL_TABLES)).rejects.toThrow('storage closed')
     expect(created[0]?.cancel).toHaveBeenCalled()
   })
 
@@ -117,7 +126,7 @@ describe('SyncManager', () => {
     const { manager, created, start } = setup()
     await start()
 
-    await Promise.all([manager.runCycle(), manager.runCycle()])
+    await Promise.all([manager.runCycle(ALL_TABLES), manager.runCycle(ALL_TABLES)])
 
     expect(created).toHaveLength(2)
   })
@@ -126,8 +135,8 @@ describe('SyncManager', () => {
     const { manager, created, start } = setup()
     await start()
 
-    await manager.runCycle()
-    await manager.runCycle()
+    await manager.runCycle(ALL_TABLES)
+    await manager.runCycle(ALL_TABLES)
 
     expect(created).toHaveLength(4)
   })
@@ -140,8 +149,8 @@ describe('SyncManager', () => {
 
       await manager.rereadEverything()
       expect(created).toHaveLength(0)
-      await manager.runCycle()
-      await manager.runCycle()
+      await manager.runCycle(ALL_TABLES)
+      await manager.runCycle(ALL_TABLES)
 
       expect(created.map((replication) => replication.fromStart)).toEqual([
         true,
@@ -159,10 +168,10 @@ describe('SyncManager', () => {
       await start()
 
       await manager.rereadEverything()
-      await expect(manager.runCycle()).rejects.toThrow('offline')
+      await expect(manager.runCycle(ALL_TABLES)).rejects.toThrow('offline')
       failing = false
-      await manager.runCycle()
-      await manager.runCycle()
+      await manager.runCycle(ALL_TABLES)
+      await manager.runCycle(ALL_TABLES)
 
       expect(created.map((replication) => replication.fromStart)).toEqual([true, true, false])
     })
@@ -178,12 +187,12 @@ describe('SyncManager', () => {
       })
       await start()
 
-      const running = manager.runCycle()
+      const running = manager.runCycle(ALL_TABLES)
       await vi.waitFor(() => expect(created).toHaveLength(1))
       const asked = manager.rereadEverything()
       finish()
       await Promise.all([running, asked])
-      await manager.runCycle()
+      await manager.runCycle(ALL_TABLES)
 
       expect(created.map((replication) => replication.fromStart)).toEqual([false, true])
     })
@@ -195,7 +204,7 @@ describe('SyncManager', () => {
 
       await manager.stop()
       await start('u2')
-      await manager.runCycle()
+      await manager.runCycle(ALL_TABLES)
 
       expect(created[0]?.fromStart).toBe(false)
     })
@@ -203,7 +212,7 @@ describe('SyncManager', () => {
 
   it('refuses to run before an account signs in — a cycle that pushed nothing must not read as done', async () => {
     const { manager, created } = setup()
-    await expect(manager.runCycle()).rejects.toThrow(/no account/i)
+    await expect(manager.runCycle(ALL_TABLES)).rejects.toThrow(/no account/i)
     expect(created).toHaveLength(0)
   })
 
@@ -219,7 +228,7 @@ describe('SyncManager', () => {
     )
     await manager.start('u1', ['decks'])
 
-    const cycle = manager.runCycle()
+    const cycle = manager.runCycle(ALL_TABLES)
     await manager.stop()
     open([{ table: 'decks', collection: {} as never }])
 
@@ -239,7 +248,7 @@ describe('SyncManager', () => {
     })
 
     await manager.start('u1', ['decks', 'cards'])
-    await manager.runCycle()
+    await manager.runCycle(ALL_TABLES)
 
     expect(tables).toEqual(['decks', 'cards'])
   })
@@ -263,7 +272,7 @@ describe('SyncManager', () => {
     await manager.stop()
 
     expect(stop).toHaveBeenCalled()
-    await expect(manager.runCycle()).rejects.toThrow(/no account/i)
+    await expect(manager.runCycle(ALL_TABLES)).rejects.toThrow(/no account/i)
     expect(created).toHaveLength(0)
   })
 
@@ -289,7 +298,7 @@ describe('SyncManager', () => {
       )
       await start('u1', WITHOUT_BIBLE)
 
-      await manager.runCycle()
+      await manager.runCycle(ALL_TABLES)
 
       expect(created).toHaveLength(2)
       expect(pushed).toEqual(['decks', 'cards'])
@@ -300,7 +309,7 @@ describe('SyncManager', () => {
       const { manager, start } = setup(TABLES, (_replication, _push, table) => pushed.push(table))
       await start('u1', TABLES)
 
-      await manager.runCycle()
+      await manager.runCycle(ALL_TABLES)
 
       expect(pushed).toEqual(['decks', 'cards', 'bible_verses'])
     })
@@ -331,7 +340,7 @@ describe('SyncManager', () => {
       const { manager, start } = setup(TABLES, (_replication, push, table) => push([`${table}-1`]))
       await start('u1', WITHOUT_BIBLE)
 
-      const result = await manager.runCycle()
+      const result = await manager.runCycle(ALL_TABLES)
 
       expect(result).toEqual({ decks: ['decks-1'], cards: ['cards-1'] })
       expect(result).not.toHaveProperty('bible_verses')

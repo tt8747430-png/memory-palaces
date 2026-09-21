@@ -39,8 +39,15 @@ export interface SyncRunner {
   phase: SyncPhase
   error: string | null
   review: SyncReview | null
-  /** The tables a Sync covers right now — what counts as waiting, and what a cycle carries. */
+  /** Every table live right now, both cadences — what a Repair reads. */
   tables: readonly SyncedTable[]
+  /**
+   * The live tables whose changes wait to be asked: what Synchronise carries, and the only thing
+   * the banner and the Sync page ever call waiting.
+   */
+  held: readonly SyncedTable[]
+  /** The live tables whose changes go on their own, unasked and unreported. */
+  quiet: readonly SyncedTable[]
   /** The key naming each contributed table to a learner; a core table is named by the app. */
   labelKeys: Readonly<Partial<Record<SyncedTable, string>>>
   run: () => Promise<SyncOutcome>

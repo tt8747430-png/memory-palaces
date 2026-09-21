@@ -74,7 +74,7 @@ describe.skipIf(!URL || !KEY)('singleton entities sync', () => {
       { table, collection: collection as unknown as RxCollection<Identifiable> },
     ])
     await manager.start(userId, [table])
-    await manager.runCycle()
+    await manager.runCycle([table])
     await manager.stop()
   }
 

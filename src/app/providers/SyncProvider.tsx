@@ -35,12 +35,14 @@ import {
   describeReviewItems,
   findReviewItems,
   noteCloudChange,
+  quietSync,
   repairSync,
   type SyncDeps,
   syncNow,
 } from '@/features/sync'
 import { INITIAL_RUNNER_STATE, runnerReducer } from './sync-runner-state'
 import { useAutosync } from './use-autosync'
+import { useQuietSync } from './use-quiet-sync'
 import { useFirstSync } from './use-first-sync'
 import { useDataTransition } from './use-data-transition'
 import { UnsyncedResetDialog } from './UnsyncedResetDialog'
@@ -85,12 +87,20 @@ export function SyncProvider({
   // preferences do, so handing the derived list to the transition effect cannot loop. The peek and
   // the watcher read the same list — a table only one of them knows about is the bug this prevents.
   const enabledExtensions = usePreferencesStore((state) => state.preferences?.extensions)
-  const tables = useMemo(
-    () =>
-      activeSyncTables(syncTables, (id) =>
-        isExtensionEnabled({ extensions: enabledExtensions ?? [] }, id),
-      ),
-    [syncTables, enabledExtensions],
+  const isEnabled = useCallback(
+    (id: string) => isExtensionEnabled({ extensions: enabledExtensions ?? [] }, id),
+    [enabledExtensions],
+  )
+  const tables = useMemo(() => activeSyncTables(syncTables, isEnabled), [syncTables, isEnabled])
+  // The two cadences, from the same derivation as the whole list: what waits to be asked, and what
+  // goes on its own. A table in neither would be a table nothing ever pushes.
+  const held = useMemo(
+    () => activeSyncTables(syncTables, isEnabled, 'held'),
+    [syncTables, isEnabled],
+  )
+  const quiet = useMemo(
+    () => activeSyncTables(syncTables, isEnabled, 'quiet'),
+    [syncTables, isEnabled],
   )
   const labelKeys = useMemo(
     () =>
@@ -101,19 +111,32 @@ export function SyncProvider({
   )
 
   const inFlight = useRef<Promise<SyncOutcome> | null>(null)
-  // The watcher came back after a drop: whatever moved meanwhile went unheard, so Autosync pulls.
+  const quietInFlight = useRef<Promise<SyncOutcome> | null>(null)
+  // The watcher came back after a drop: whatever moved meanwhile went unheard, so both cadences pull.
   const [reconnects, setReconnects] = useState(0)
+  // A quiet table moved elsewhere. Counted rather than flagged: it needs no answer from the learner
+  // and no banner, only the next Quiet sync.
+  const [quietMoved, setQuietMoved] = useState(0)
+  // Read through a ref so the handlers keep one identity — a new object here restarts the watcher.
+  const quietRef = useLatest(quiet)
 
   const watcher = useMemo<RemoteChangeHandlers>(
     () => ({
       // An event during a cycle is the cycle's own echo or a change the cycle's second peek will
       // see; either way the cycle's outcome says whether the cloud is ahead.
       onChange: (event) => {
+        if (quietRef.current.includes(event.table)) {
+          setQuietMoved((count) => count + 1)
+          return
+        }
         if (!inFlight.current) void noteCloudChange({ syncStateStore }, event)
       },
-      onReconnect: () => setReconnects((count) => count + 1),
+      onReconnect: () => {
+        setReconnects((count) => count + 1)
+        setQuietMoved((count) => count + 1)
+      },
     }),
-    [syncStateStore],
+    [syncStateStore, quietRef],
   )
 
   const { watchingFor, status, unsyncedReset } = useDataTransition({
@@ -140,6 +163,8 @@ export function SyncProvider({
         ? {
             cloud: cloudSync,
             tables,
+            held,
+            quiet,
             pendingChangeStore,
             syncStateStore,
             deckStore,
@@ -155,6 +180,8 @@ export function SyncProvider({
       cloudSync,
       gateway,
       tables,
+      held,
+      quiet,
       account,
       watchingFor,
       pendingChangeStore,
@@ -200,7 +227,18 @@ export function SyncProvider({
   )
 
   const run = useCallback(() => runSync('syncing', syncNow), [runSync])
-  const restore = useCallback(() => runSync('restoring', syncNow), [runSync])
+  /**
+   * A Sync over every live table, both cadences. Two moments ask for it: an account's first Sync on
+   * this device, which must bring the settings in with the decks, and the forced Sync after a
+   * cancelled deletion, which must bring back everything the account had.
+   */
+  const everything = useCallback(
+    (phase: 'syncing' | 'restoring') =>
+      runSync(phase, (current) => syncNow(current, { tables: current.tables })),
+    [runSync],
+  )
+  const restore = useCallback(() => everything('restoring'), [everything])
+  const firstSync = useCallback(() => everything('syncing'), [everything])
   const repair = useCallback(() => runSync('syncing', repairSync), [runSync])
   const resolve = useCallback(
     (decisions: readonly SyncReviewDecision[]) =>
@@ -228,12 +266,28 @@ export function SyncProvider({
     describe(review.items)
   }, [review, describe])
 
+  /**
+   * The Quiet sync runs beside the banner, never through it: it has no phase to show, no failure to
+   * report and no question to ask. Its own single-flight is all the serialising it needs on this
+   * side — the manager will not run two cycles at once anyway.
+   */
+  const runQuiet = useCallback((): Promise<SyncOutcome> => {
+    const current = depsRef.current
+    if (!current) return Promise.resolve<SyncOutcome>({ kind: 'offline' })
+    quietInFlight.current ??= quietSync(current).finally(() => {
+      quietInFlight.current = null
+    })
+    return quietInFlight.current
+  }, [depsRef])
+
   const runner = useMemo<SyncRunner | null>(
     () =>
       deps
         ? {
             ...state,
             tables,
+            held,
+            quiet,
             labelKeys,
             run,
             restore,
@@ -248,6 +302,8 @@ export function SyncProvider({
       deps,
       state,
       tables,
+      held,
+      quiet,
       labelKeys,
       run,
       restore,
@@ -269,8 +325,9 @@ export function SyncProvider({
     void navigator.storage?.persist?.()
   }, [])
 
-  useAutosync({ active: deps !== null, run, reconnects })
-  useFirstSync({ account, canSync: deps !== null, transition: status, tables, run })
+  useAutosync({ active: deps !== null, held, run, reconnects })
+  useQuietSync({ active: deps !== null, quiet, run: runQuiet, moved: quietMoved })
+  useFirstSync({ account, canSync: deps !== null, transition: status, tables, run: firstSync })
 
   return (
     <SyncRunnerContext value={runner}>

@@ -1,4 +1,4 @@
-import { SYNCED_TABLES } from '@/shared/config/sync-tables'
+import { CORE_HELD_TABLES, CORE_QUIET_TABLES, SYNCED_TABLES } from '@/shared/config/sync-tables'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { started } from '@/shared/test/started'
 import { withoutFields } from '@/shared/test/legacy-document'
@@ -79,6 +79,8 @@ function renderPage(
     error: null,
     review: null,
     tables: SYNCED_TABLES,
+    held: CORE_HELD_TABLES,
+    quiet: CORE_QUIET_TABLES,
     labelKeys: {},
     run: vi.fn().mockResolvedValue({ kind: 'clean' }),
     restore: vi.fn().mockResolvedValue({ kind: 'clean' }),

@@ -114,9 +114,9 @@ describe('SettingsExtensionsPage', () => {
     await waitFor(() => expect(toast.error).toHaveBeenCalled())
   })
 
-  const withSettings: ExtensionManifest = {
+  const withOverview: ExtensionManifest = {
     ...manifest,
-    settings: {
+    overview: {
       route: extensionRoute(
         '/settings/extensions/fake',
         () => Promise.resolve({ Screen }),
@@ -125,17 +125,17 @@ describe('SettingsExtensionsPage', () => {
     },
   }
 
-  it('offers an enabled extension its settings, by the path its manifest names', async () => {
+  it('offers an enabled extension its overview, by the path its manifest names', async () => {
     const user = userEvent.setup()
     const onOpen = vi.fn()
-    renderPage([withSettings], ['fake'], { onOpenExtension: onOpen })
-    await user.click(screen.getByRole('button', { name: 'Fake settings' }))
+    renderPage([withOverview], ['fake'], { onOpenExtension: onOpen })
+    await user.click(screen.getByRole('button', { name: 'About Fake' }))
     expect(onOpen).toHaveBeenCalledWith('/settings/extensions/fake')
   })
 
   it('hides the settings row while the extension is off', () => {
-    renderPage([withSettings], [])
-    expect(screen.queryByRole('button', { name: 'Fake settings' })).not.toBeInTheDocument()
+    renderPage([withOverview], [])
+    expect(screen.queryByRole('button', { name: 'About Fake' })).not.toBeInTheDocument()
   })
 
   it('offers no settings row to an extension without a settings screen', () => {

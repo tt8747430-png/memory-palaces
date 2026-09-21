@@ -10,10 +10,18 @@ import type { SyncStateStore } from '@/entities/sync-state'
 export interface SyncDeps {
   cloud: CloudSyncPort
   /**
-   * Every table a cycle covers, core plus whatever the enabled extensions contributed. Passed in
-   * rather than imported, because the list is composed at startup and this layer cannot see it.
+   * Every table live right now, core plus whatever the enabled extensions contributed — the union
+   * of the two cadences, and what a Repair reads. Passed in rather than imported, because the list
+   * is composed at startup and this layer cannot see it.
    */
   tables: readonly SyncedTable[]
+  /**
+   * The live tables whose changes wait to be asked. What a Sync carries, what the page calls
+   * waiting, and the only tables a destructive divergence can appear on.
+   */
+  held: readonly SyncedTable[]
+  /** The live tables whose changes go on their own, in a Quiet sync nobody is told about. */
+  quiet: readonly SyncedTable[]
   pendingChangeStore: PendingChangeStore
   syncStateStore: SyncStateStore
   deckStore: DeckStore

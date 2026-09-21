@@ -39,7 +39,11 @@ export function importStores(harness: ImportHarness = {}) {
   const verseStore = started(
     createBibleVerseStore(new InMemoryRepository<BibleVerse>(harness.verses ?? [])),
   )
-  const preferencesStore = preferencesStoreHolding({ devMode: harness.devMode ?? false })
+  // The extension is on: every screen of its renders behind that, and the overview can switch it off.
+  const preferencesStore = preferencesStoreHolding({
+    devMode: harness.devMode ?? false,
+    extensions: [BIBLE_ID],
+  })
   return { deckStore, cardStore, folderStore, verseStore, preferencesStore }
 }
 

@@ -30,7 +30,7 @@ function baseProps(
     wordSpaces: false,
     typeInitialsOnly: false,
     flipped: false,
-    swipeConfig: DEFAULT_FLASHCARD_SWIPE,
+    swipeConfig: DEFAULT_FLASHCARD_SWIPE.spaced,
     canSpeak: false,
     onFlip: vi.fn(),
     onReveal: vi.fn(),
@@ -93,7 +93,7 @@ describe('StudyDeck', () => {
     expect(queued!.querySelector('[aria-label="Change study mode"]')).not.toBeNull()
     expect(queued!.querySelector('[aria-label="Study options"]')).not.toBeNull()
     expect(queued!.querySelector('[aria-label="Read aloud"]')).not.toBeNull()
-    expect(queued).toHaveTextContent('Tap to reveal')
+    expect(queued).toHaveTextContent('Next up')
   })
 
   it('keeps queued cards out of reach — only the card in play can act', () => {

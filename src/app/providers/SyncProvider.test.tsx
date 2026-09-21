@@ -51,6 +51,7 @@ const BIBLE_TABLE: SyncTableSpec = {
   table: 'bible_verses',
   collectionKey: 'bibleVerses',
   owner: 'bible',
+  cadence: 'held',
 }
 const ALL_TABLES: readonly SyncTableSpec[] = [...CORE_SYNC_TABLES, BIBLE_TABLE]
 const CORE_TABLE_NAMES = CORE_SYNC_TABLES.map((spec) => spec.table)

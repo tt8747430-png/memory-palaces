@@ -47,8 +47,9 @@ export function SyncBanner({ className }: SyncBannerProps) {
   const runner = useSyncRunner()
   const online = useOnline()
   const kind = useSessionStore(selectSessionKind)
-  // Waiting means waiting on a table a Sync covers: a disabled extension's rows are not.
-  const tables = runner?.tables ?? NO_TABLES
+  // Waiting means waiting on a held table a Sync covers: a disabled extension's rows are not, and
+  // neither is a setting — those go up on their own and are never anyone's to send.
+  const tables = runner?.held ?? NO_TABLES
   const pendingCount = usePendingChangeStore(useMemo(() => selectPendingCountIn(tables), [tables]))
   const cloudChanged = useSyncStateStore(selectCloudChanged)
 

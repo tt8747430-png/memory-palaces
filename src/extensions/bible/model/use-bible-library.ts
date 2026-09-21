@@ -4,11 +4,8 @@ import { cardsInSubtree, nowIso, selectIsReady, usePendingAct } from '@/shared/l
 import { selectCards, useCardStore } from '@/entities/card'
 import { type Deck, selectDecks, useDeckStore } from '@/entities/deck'
 import { type Folder, selectFolders, useFolderStore } from '@/entities/folder'
-import { selectDevMode, usePreferencesStore } from '@/entities/preferences'
 import { useBibleT } from '../i18n/use-bible-t'
-import { forgetBook } from '../features/forget-book'
 import { keepMissingVerses } from '../features/keep-missing-verses'
-import type { BookCode } from './canon'
 import { useBibleVerseStore, useBibleVerseStoreApi } from './context'
 import { type BookCoverage, libraryCoverage } from './coverage'
 import { indexLibrary } from './library-index'
@@ -16,22 +13,19 @@ import { type TextFromCards, textFromCards } from './text-from-cards'
 import { CORNILESCU_2024, type Translation } from './translations'
 
 /**
- * What the page has open over itself, or nothing — one value, never a flag each, so a question can
- * never stand over the deck sheet. Picking a deck is the first step of adding from it.
+ * What the library screen has open over itself, or nothing — one value, never a flag each, so a
+ * question can never stand over the deck sheet. Picking a deck is the first step of adding from it.
  */
-export type BibleSettingsPending =
-  | { kind: 'pick-deck' }
-  | { kind: 'add'; text: TextFromCards }
-  | { kind: 'forget'; book: BookCode; verses: number }
+export type BibleLibraryPending = { kind: 'pick-deck' } | { kind: 'add'; text: TextFromCards }
 
-export interface BibleSettings {
+export interface BibleLibrary {
   ready: boolean
   translation: Translation
   coverage: BookCoverage[]
   /** The library holds no text at all — the coverage list has nothing to show. */
   empty: boolean
-  /** Destructive tools are for developers; a learner's library is never one tap from gone. */
-  devMode: boolean
+  /** Books with text, and verses held: the one-line answer to "how much have I got?". */
+  totals: { books: number; verses: number }
 
   /** Previews adding text from every card, then asks. */
   addFromAllCards: () => void
@@ -39,18 +33,21 @@ export interface BibleSettings {
   requestDeckPick: () => void
   /** Previews adding text from the picked deck's cards, then asks. */
   addFromDeck: (deckId: string) => void
-  requestForget: (book: BookCode) => void
   /** What the deck sheet offers. */
   decks: Deck[]
   folders: Folder[]
 
-  pending: BibleSettingsPending | null
-  /** Answers the question open: adds the previewed text, or forgets the book. */
+  pending: BibleLibraryPending | null
+  /** Answers the question open: adds the previewed text. */
   confirm: () => void
   dismiss: () => void
 }
 
-export function useBibleSettings(): BibleSettings {
+/**
+ * The Bible library as a learner manages it: what it holds, and the two ways to fill it from cards
+ * they already have. Nothing here destroys anything — forgetting a book is a developer tool.
+ */
+export function useBibleLibrary(): BibleLibrary {
   const t = useBibleT()
   const verses = useBibleVerseStore((state) => state.verses)
   const versesReady = useBibleVerseStore(selectIsReady)
@@ -60,11 +57,21 @@ export function useBibleSettings(): BibleSettings {
   const decks = useDeckStore(selectDecks)
   const decksReady = useDeckStore(selectIsReady)
   const folders = useFolderStore(selectFolders)
-  const devMode = usePreferencesStore(selectDevMode)
-  const pending = usePendingAct<BibleSettingsPending>()
+  const pending = usePendingAct<BibleLibraryPending>()
 
   const index = useMemo(() => indexLibrary(verses), [verses])
   const coverage = useMemo(() => libraryCoverage(index), [index])
+  const totals = useMemo(
+    () =>
+      coverage.reduce(
+        (sum, book) => ({
+          books: sum.books + (book.verses > 0 ? 1 : 0),
+          verses: sum.verses + book.verses,
+        }),
+        { books: 0, verses: 0 },
+      ),
+    [coverage],
+  )
 
   // Nothing to add is an answer, not a question: it is said at once, and no dialog opens on it.
   const preview = (source: typeof cards) => {
@@ -79,35 +86,22 @@ export function useBibleSettings(): BibleSettings {
 
   const confirm = () =>
     pending.resolve((act) => {
-      switch (act.kind) {
-        case 'add':
-          void keepMissingVerses(verseStore, act.text.fresh).then(
-            (kept) => toast.success(t('kept', { count: kept })),
-            () => toast.error(t('keepFailed')),
-          )
-          return
-        case 'forget':
-          void forgetBook(verseStore, act.book).then(
-            (forgotten) => toast.success(t('forgotten', { count: forgotten })),
-            () => toast.error(t('forgetFailed')),
-          )
-          return
-        case 'pick-deck':
-          return
-      }
+      if (act.kind !== 'add') return
+      void keepMissingVerses(verseStore, act.text.fresh).then(
+        (kept) => toast.success(t('kept', { count: kept })),
+        () => toast.error(t('keepFailed')),
+      )
     })
 
   return {
     ready: versesReady && cardsReady && decksReady,
     translation: CORNILESCU_2024,
     coverage,
-    empty: coverage.every((book) => book.verses === 0),
-    devMode,
+    empty: totals.verses === 0,
+    totals,
     addFromAllCards: () => preview(cards),
     requestDeckPick: () => pending.request({ kind: 'pick-deck' }),
     addFromDeck: (deckId) => preview(cardsInSubtree(decks, cards, deckId)),
-    requestForget: (book) =>
-      pending.request({ kind: 'forget', book, verses: index.coverage(book).verses }),
     decks,
     folders,
     pending: pending.act,

@@ -203,7 +203,7 @@ describe('schema migrations', () => {
   it('versions the collections', () => {
     expect(deckSchema.version).toBe(4)
     expect(cardSchema.version).toBe(1)
-    expect(preferencesSchema.version).toBe(4)
+    expect(preferencesSchema.version).toBe(5)
     expect(profileSchema.version).toBe(2)
     expect(pendingChangeSchema.version).toBe(2)
     expect(syncStateSchema.version).toBe(3)
@@ -216,6 +216,20 @@ describe('schema migrations', () => {
       autosync: true,
       libraryExpanded: [],
     })
+  })
+
+  it('gives a v4 preferences document a swipe map per algorithm, and no feature switched off', () => {
+    const v4 = {
+      id: 'preferences',
+      flashcardSwipe: { blur: { up: 'flag', down: 'skip', left: 'again', right: 'easy' } },
+    } as never
+
+    const migrated = preferencesMigrations[5](v4)
+
+    // What was stored was chosen where only Grades were on offer, so it is the Spaced setting.
+    expect(migrated.flashcardSwipe.spaced.blur.right).toBe('easy')
+    expect(migrated.flashcardSwipe.fast.blur.right).toBe('gotIt')
+    expect(migrated.disabledFeatures).toEqual({})
   })
 
   it('moves Autosync out of sync-state, handing a switched-off choice over', async () => {

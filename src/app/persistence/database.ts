@@ -8,6 +8,7 @@ import type { Card } from '@/entities/card'
 import type { Question } from '@/entities/question'
 import type { Progress } from '@/entities/progress'
 import { DEFAULT_PREFERENCES, type Preferences } from '@/entities/preferences'
+import { normalizeFlashcardSwipe } from '@/shared/config/flashcard-swipe'
 import type { Profile } from '@/entities/profile'
 import type { AppNotification } from '@/entities/notification'
 import type { HistoryEntry } from '@/entities/learning-history'
@@ -92,6 +93,20 @@ export const preferencesMigrations = {
     devMode: doc.devMode ?? DEFAULT_PREFERENCES.devMode,
     autosync: doc.autosync ?? DEFAULT_PREFERENCES.autosync,
     libraryExpanded: doc.libraryExpanded ?? [...DEFAULT_PREFERENCES.libraryExpanded],
+  }),
+  /**
+   * Two changes, one step. A flashcard swipe belongs to a Learning algorithm now: whatever was
+   * stored was chosen where only Grades were on offer, so it becomes the Spaced repetition setting
+   * and Fast review starts from its own defaults. And an extension can now have parts of it
+   * switched off, which nobody has done yet.
+   *
+   * `normalizeFlashcardSwipe` is the read-side twin of the first half: replication writes pulled
+   * rows unmigrated, so the entity recognises the old shapes too.
+   */
+  5: (doc: Preferences): Preferences => ({
+    ...doc,
+    flashcardSwipe: normalizeFlashcardSwipe(doc.flashcardSwipe),
+    disabledFeatures: doc.disabledFeatures ?? {},
   }),
 }
 

@@ -1,3 +1,4 @@
+import type { LearningAlgorithm } from '@/shared/config/algorithms'
 import type {
   FlashcardSwipeAction,
   FlashcardSwipeConfig,
@@ -28,6 +29,8 @@ export interface StudySettingsControl {
 
 interface Args {
   mode: StudyMode
+  /** The Deck's Learning algorithm: which answers this session's swipes may be set to. */
+  algorithm: LearningAlgorithm
   deckPrefs: DeckStudyPrefs
   onDeckPrefsChange?: (prefs: DeckStudyPrefs) => void
   lockedPrefs?: readonly EditableDeckPref[]
@@ -43,6 +46,7 @@ const LEARNER_PREF = new Set<keyof StudySettings>(['wordSpaces', 'typeInitialsOn
 
 export function useStudySettings({
   mode,
+  algorithm,
   deckPrefs,
   onDeckPrefsChange,
   lockedPrefs = [],
@@ -61,7 +65,7 @@ export function useStudySettings({
     wordSpaces: learnerPrefs.wordSpaces,
     typeInitialsOnly: learnerPrefs.typeInitialsOnly,
     shakeToUndo: learnerPrefs.shakeToUndo,
-    swipe: learnerPrefs.swipeByMode[mode],
+    swipe: learnerPrefs.swipePreferences[algorithm][mode],
     filter,
   }
 
@@ -78,8 +82,14 @@ export function useStudySettings({
       onFilterChange(next as StudyFilter)
       return
     }
+    // A swipe is set for the algorithm it was set under: the same gesture means Good in a Spaced
+    // repetition session and Got it in a Fast review, and neither overwrites the other.
+    const held = learnerPrefs.swipePreferences
     onLearnerPrefsChange?.({
-      swipeByMode: { ...learnerPrefs.swipeByMode, [mode]: next as FlashcardSwipeConfig },
+      swipePreferences: {
+        ...held,
+        [algorithm]: { ...held[algorithm], [mode]: next as FlashcardSwipeConfig },
+      },
     })
   }
 

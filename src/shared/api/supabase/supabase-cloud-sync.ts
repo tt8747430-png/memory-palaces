@@ -11,7 +11,7 @@ export function createSupabaseCloudSync(
     peek: (table, checkpoint) => peekRemoteChanges(supabase, table, checkpoint),
     parents: (table, ids) => fetchRemoteParents(supabase, table, ids),
     fetch: (table, ids) => fetchRemoteDocuments(supabase, table, ids),
-    runCycle: () => manager.runCycle(),
+    runCycle: (tables) => manager.runCycle(tables),
     rereadEverything: () => manager.rereadEverything(),
   }
 }

@@ -7,6 +7,7 @@ import { cn, srsStatus } from '@/shared/lib'
 import { GradeButtons } from '@/shared/ui'
 import type { Grade } from '@/shared/lib'
 import { FastReviewFooter } from './FastReviewFooter'
+import { ReviewPrompt } from './ReviewPrompt'
 import { StudySessionFooterShell } from './StudySessionFooterShell'
 
 export type RemainingTally = Record<SrsStatus, number>
@@ -20,6 +21,10 @@ export interface StudySessionFooterProps {
   buckets: Buckets
   onGrade: (grade: Grade) => void
   onAnswer: (outcome: FastOutcome) => void
+  /** Shows the answer — the same thing tapping the card does. */
+  onReveal: () => void
+  onUndo: () => void
+  canUndo: boolean
 }
 
 export function StudySessionFooter({
@@ -31,6 +36,9 @@ export function StudySessionFooter({
   buckets,
   onGrade,
   onAnswer,
+  onReveal,
+  onUndo,
+  canUndo,
 }: StudySessionFooterProps) {
   const reduce = useReducedMotion()
   const crossfade = { duration: reduce ? 0 : 0.12 }
@@ -42,6 +50,9 @@ export function StudySessionFooter({
         notQuite={buckets.notQuite.length}
         gotIt={buckets.gotIt.length}
         onAnswer={onAnswer}
+        onReveal={onReveal}
+        onUndo={onUndo}
+        canUndo={canUndo}
       />
     )
   }
@@ -68,9 +79,14 @@ export function StudySessionFooter({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={crossfade}
-              className="flex h-full items-center justify-center"
+              className="h-full"
             >
-              <RemainingCounts remaining={remaining} current={srsStatus(srs)} />
+              <ReviewPrompt
+                onReveal={onReveal}
+                onUndo={onUndo}
+                canUndo={canUndo}
+                trailing={<RemainingCounts remaining={remaining} current={srsStatus(srs)} />}
+              />
             </motion.div>
           )}
         </AnimatePresence>
@@ -87,6 +103,10 @@ const COUNT_CHIP: Record<SrsStatus, string> = {
 
 const ORDER = ['new', 'learning', 'known'] as const
 
+/**
+ * What is left, by card status — numbers only, so the row still holds a button beside them. Each
+ * carries its name for a screen reader, which is the one place the word is worth its width.
+ */
 function RemainingCounts({
   remaining,
   current,
@@ -96,18 +116,18 @@ function RemainingCounts({
 }) {
   const { t } = useTranslation()
   return (
-    <div className="flex items-center justify-center gap-2">
+    <div className="flex items-center gap-1">
       {ORDER.map((key) => (
         <span
           key={key}
           className={cn(
-            'inline-flex items-baseline gap-1.5 rounded-full px-3 py-1.5 text-label font-bold tabular-nums',
+            'inline-flex min-w-7 items-center justify-center rounded-full px-1.5 py-1 text-label font-bold tabular-nums shadow-rest',
             COUNT_CHIP[key],
             current === key && 'ring-2 ring-(--ring)/30',
           )}
         >
           {remaining[key]}
-          <span className="font-medium">{t(`srs.${key}` as never)}</span>
+          <span className="sr-only"> {t(`srs.${key}` as never)}</span>
         </span>
       ))}
     </div>

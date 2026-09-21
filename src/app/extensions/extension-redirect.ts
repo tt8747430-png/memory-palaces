@@ -1,5 +1,5 @@
 import { ROUTES } from '@/shared/config/routes'
-import type { ExtensionId } from '@/shared/lib'
+import type { ExtensionId, ExtensionManifest } from '@/shared/lib'
 
 export interface ExtensionRedirect {
   to: string
@@ -9,6 +9,14 @@ export interface ExtensionRedirect {
 /** Settings → Extensions, with the extension's row marked so the learner sees which one it was. */
 export function extensionSettings(id: ExtensionId): ExtensionRedirect {
   return { to: ROUTES.settingsExtensions, search: { highlight: id } }
+}
+
+/**
+ * Where a route whose feature is switched off sends the learner: the extension's own overview,
+ * which holds the switch — or Settings → Extensions when it has no overview to send them to.
+ */
+export function extensionOverview(manifest: ExtensionManifest): ExtensionRedirect | { to: string } {
+  return manifest.overview ? { to: manifest.overview.route.path } : extensionSettings(manifest.id)
 }
 
 /**

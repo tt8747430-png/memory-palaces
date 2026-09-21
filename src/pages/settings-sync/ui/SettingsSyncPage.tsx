@@ -10,6 +10,7 @@ import {
   Sheet,
 } from '@/shared/ui'
 import { useSyncSettings } from '../model/use-sync-settings'
+import { QuietSection } from './QuietSection'
 import { RecentSyncs } from './RecentSyncs'
 import { SyncStatusCard } from './SyncStatusCard'
 import { WaitingSection } from './WaitingSection'
@@ -59,9 +60,7 @@ export function SettingsSyncPage({ onBack }: SettingsSyncPageProps) {
 
         <WaitingSection rows={page.waiting} onOpen={page.openWaiting} />
 
-        <RecentSyncs log={page.log} />
-
-        <SettingsSection>
+        <SettingsSection title={t('sync.settings.autosyncSection')}>
           <SettingsRow
             kind="toggle"
             icon={<CloudUpload />}
@@ -71,6 +70,10 @@ export function SettingsSyncPage({ onBack }: SettingsSyncPageProps) {
             onCheckedChange={page.setAutosync}
           />
         </SettingsSection>
+
+        <QuietSection waiting={page.settingsWaiting} online={page.online} />
+
+        <RecentSyncs log={page.log} />
 
         <SettingsSection title={t('sync.settings.repair')}>
           <SettingsRow

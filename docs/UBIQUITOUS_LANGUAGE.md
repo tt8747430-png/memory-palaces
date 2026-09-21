@@ -117,6 +117,10 @@ Every Deck follows exactly one: its Main deck's. A Subdeck never holds the algor
 | **Synchronise**            | The user-facing verb — the banner button, and every sentence in UI copy                                                          | sync (as a verb in UI) |
 | **Autosync**               | The setting that runs a Sync without being asked. A preference: it follows the account. On by default                            | auto-sync, background  |
 | **Pending change**         | One write to a synced document a Sync has not confirmed — any synced table, content or not. `pendingChanges`                     | dirty, unsaved         |
+| **Cadence**                | How a table's changes leave the device: **Held** or **Quiet**. `SyncTableSpec.cadence`                                           | mode, policy           |
+| **Held table**             | Its changes wait to be asked — decks, cards, folders, questions, progress, learning history, an extension's own                  | manual table           |
+| **Quiet table**            | Its changes go on their own as soon as they can, and are never reported as waiting — preferences, profiles                       | auto table, background |
+| **Quiet sync**             | The unasked cycle over the Quiet tables (`quietSync`). No question, no Sync log line, no `lastSyncedAt`                          | background sync        |
 | **Table** _(of a change)_  | The synced table a Pending change belongs to. Stored as `table` — never `collection`, which RxDB owns on every document          | kind, collection       |
 | **Content collection**     | One of the four tables a learner's content lives in (folders, decks, cards, questions) — the only ones a deletion can diverge on | table                  |
 | **Base**                   | The server copy a device last saw of a document. Travels with every push; a conflict is merged against it (ADR 0005)             | last seen, ancestor    |
@@ -131,16 +135,18 @@ Every Deck follows exactly one: its Main deck's. A Subdeck never holds the algor
 
 ## Extensions
 
-| Term                   | Means                                                                  | Avoid                          |
-| ---------------------- | ---------------------------------------------------------------------- | ------------------------------ |
-| **Extension**          | A self-contained feature the learner switches on in Settings           | plugin, add-on, module         |
-| **Contribution point** | The named slot a host surface renders on an extension's behalf         | hook, which here means React   |
-| **Verse**              | One numbered line of scripture; its reference is not part of its text  | passage, which is a range      |
-| **Bible library**      | The verse text an account holds, what the passage picker prefills      | library, which is the decks    |
-| **Book code**          | A book's stable identity (`JHN`, `1CO`), what a verse is stored under  | name, which a translation owns |
-| **Translation**        | Owns the book names and abbreviations the app shows — Cornilescu 2024  | version, language              |
-| **Recent passage**     | A chapter the learner last added verses from, derived from their cards | history                        |
-| **Extension settings** | An extension's own settings screen, reached from Settings → Extensions | admin screen                   |
+| Term                   | Means                                                                                                      | Avoid                          |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| **Extension**          | A self-contained feature the learner switches on in Settings                                               | plugin, add-on, module         |
+| **Contribution point** | The named slot a host surface renders on an extension's behalf                                             | hook, which here means React   |
+| **Verse**              | One numbered line of scripture; its reference is not part of its text                                      | passage, which is a range      |
+| **Bible library**      | The verse text an account holds, what the passage picker prefills                                          | library, which is the decks    |
+| **Book code**          | A book's stable identity (`JHN`, `1CO`), what a verse is stored under                                      | name, which a translation owns |
+| **Translation**        | Owns the book names and abbreviations the app shows — Cornilescu 2024                                      | version, language              |
+| **Recent passage**     | A chapter the learner last added verses from, derived from their cards                                     | history                        |
+| **Extension overview** | An extension's own front door: what it is, what it provides, and its feature switches                      | settings screen                |
+| **Extension feature**  | One switchable part of an extension, declared in its manifest and stored in `preferences.disabledFeatures` | module, plugin                 |
+| **Developer tools**    | An extension's destructive and diagnostic screen, behind Developer mode                                    | admin screen, settings         |
 
 ## Relationships
 
@@ -177,7 +183,11 @@ Every Deck follows exactly one: its Main deck's. A Subdeck never holds the algor
   situation: both sides moved since the last Sync. Only a **destructive divergence** — a document
   deleted here and edited there — is ever put to the learner.
 - **"algorithm"** — a **Learning algorithm** is the Deck-level choice (Fast review / Spaced repetition). The SRS
-  scheduler itself is the **SRS**. Never call the scheduler "the algorithm".
+  scheduler itself is the **SRS**. Never call the scheduler "the algorithm". A flashcard swipe is stored **per
+  Learning algorithm**: a Grade can only be flung under Spaced repetition, Not quite / Got it only under Fast review.
+- **"Autosync" vs a Quiet sync** — **Autosync** is the preference that asks on the learner's behalf, and it governs
+  the **Held** tables only. A **Quiet sync** is not Autosync and no preference turns it off: settings and the profile
+  are not the learner's work to send.
 - **"preset"** — in _code and types_ an algorithm is never a "preset"; a **preset** is one of the Card style scenes
   (`CARD_STYLE_PRESET_IDS`, eleven of them). The Deck settings row is labelled "Algorithm preset" because the design
   spec fixes that string — the label is the exception, not the rule.

@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react'
 import type { RxCollectionCreator } from 'rxdb'
 import type { Identifiable, Repository } from '@/shared/api'
+import type { SyncCadence } from '@/shared/config/sync-tables'
 import type { PendingChangePort } from './entity-store'
 import type { TransferOption } from '@/shared/ui'
 
@@ -22,6 +23,8 @@ export type ImportOptionContribution = Omit<TransferOption, 'onSelect' | 'title'
   titleKey: string
   subtitleKey: string
   to: string
+  /** The extension feature this row belongs to; switched off, the row is withdrawn. */
+  feature?: string
 }
 
 /** Everything the enabled extensions are currently offering, merged. */
@@ -37,6 +40,11 @@ export interface ExtensionRoute {
   load: () => Promise<Record<string, unknown>>
   name: string
   validateSearch?: (search: Record<string, unknown>) => Record<string, unknown>
+  /**
+   * The extension feature this screen belongs to. Switched off, the route is not opened — the
+   * learner lands on the extension's overview instead, where the switch is.
+   */
+  feature?: string
 }
 
 /**
@@ -48,9 +56,25 @@ export function extensionRoute<Exports extends Record<string, unknown>>(
   path: string,
   load: () => Promise<Exports>,
   name: keyof Exports & string,
-  validateSearch?: (search: Record<string, unknown>) => Record<string, unknown>,
+  extra: {
+    validateSearch?: (search: Record<string, unknown>) => Record<string, unknown>
+    feature?: string
+  } = {},
 ): ExtensionRoute {
-  return { path, load, name, validateSearch }
+  return { path, load, name, ...extra }
+}
+
+/**
+ * One switchable part of an extension: what it provides, in the learner's words, with a switch of
+ * its own on the extension's overview. Switching one off withdraws its contributions and closes its
+ * screens; it never deletes anything the learner made with it.
+ */
+export interface ExtensionFeature {
+  id: string
+  icon: ReactElement
+  /** Keys inside the extension's own i18n namespace. */
+  labelKey: string
+  descriptionKey: string
 }
 
 /** What an extension is handed when it is switched on. */
@@ -87,6 +111,11 @@ export interface ExtensionCollectionSpec {
   key: string
   table: string | null
   creator: RxCollectionCreator
+  /**
+   * How its changes leave the device. Defaults to `held`: an extension holds a learner's content
+   * until it says otherwise, the way the four content collections do.
+   */
+  cadence?: SyncCadence
   /** Names the table to a learner on the Sync page — a key in the extension's namespace. */
   labelKey?: string
 }
@@ -114,9 +143,15 @@ export interface ExtensionManifest {
   loadRuntime: () => Promise<ExtensionRuntimeModule>
   contributions: ExtensionContributions
   /**
-   * Its settings screen, if it has one: an ordinary screen of its own, which the Extensions page
-   * links to under the extension's label while it is enabled. Gated like every other route of
-   * its — on the extension being active, and nothing else.
+   * The parts of itself a learner may switch off one at a time. Declaring none means the extension
+   * is all or nothing, which is what its own switch already says.
    */
-  settings?: { route: ExtensionRoute }
+  features?: ExtensionFeature[]
+  /**
+   * Its overview screen, if it has one: an ordinary screen of its own, which the Extensions page
+   * links to under the extension's label while it is enabled. It says what the extension is, what
+   * it provides, and holds the switches for its features. Gated like every other route of its — on
+   * the extension being active.
+   */
+  overview?: { route: ExtensionRoute }
 }

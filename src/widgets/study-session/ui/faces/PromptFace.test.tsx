@@ -1,6 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { renderWithProviders } from '@/shared/test/render-with-providers'
 import { makeFaceProps } from './face-fixtures'
 import { PromptFace } from './PromptFace'
@@ -13,11 +12,8 @@ describe('PromptFace', () => {
     expect(screen.getByRole('heading', { name: 'Capital of France?' })).toBeInTheDocument()
   })
 
-  it('flips to the answer from the reveal control', async () => {
-    const user = userEvent.setup()
-    const onFlip = vi.fn()
-    renderWithProviders(<PromptFace {...makeFaceProps({ onFlip })} />)
-    await user.click(screen.getByRole('button', { name: 'Show answer' }))
-    expect(onFlip).toHaveBeenCalledTimes(1)
+  it('carries no reveal control of its own — the footer owns that, in every mode', () => {
+    renderWithProviders(<PromptFace {...makeFaceProps({})} />)
+    expect(screen.queryByRole('button', { name: 'Show answer' })).toBeNull()
   })
 })

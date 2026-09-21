@@ -300,7 +300,7 @@ export const study = {
   initialsComplete: 'Recalled — every initial',
   wrongLetter: 'Not “{{letter}}”',
   revealWord: 'Reveal “{{word}}”',
-  tapToReveal: 'Tap to reveal',
+  tapToReveal: 'Tap to show answer',
   showFront: 'Show front',
   blur: 'Blur',
   showAll: 'Show all',
@@ -327,8 +327,11 @@ export const study = {
   orientation: 'Card orientation',
   orientationTerm: 'Term',
   orientationDefinition: 'Definition',
-  swipeActionsHint:
-    'Choose what a fling in each direction does. Set a direction to Off to disable it.',
+  swipeActionsHint: {
+    spaced:
+      'Choose what a fling in each direction does in a Spaced repetition session. Set a direction to Off to disable it.',
+    fast: 'Choose what a fling in each direction does in a Fast review. Set a direction to Off to disable it.',
+  },
   swipeUp: 'Swipe up',
   swipeDown: 'Swipe down',
   swipeLeft: 'Swipe left',
@@ -338,6 +341,8 @@ export const study = {
     hard: 'Hard',
     good: 'Good',
     easy: 'Easy',
+    gotIt: 'Got it',
+    notQuite: 'Not quite',
     flag: 'Flag',
     skip: 'Skip',
     none: 'Off',

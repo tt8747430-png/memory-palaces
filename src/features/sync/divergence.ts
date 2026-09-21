@@ -33,11 +33,16 @@ const CHILD_COLLECTIONS: readonly ContentCollection[] = CONTENT_COLLECTIONS.filt
   (collection) => collection !== 'folders',
 )
 
-export async function peekAll(deps: SyncDeps, checkpoints: Checkpoints): Promise<Peek> {
+/** What `tables` have moved to since `checkpoints` — the caller says which, because the two cadences peek apart. */
+export async function peekAll(
+  deps: SyncDeps,
+  checkpoints: Checkpoints,
+  tables: readonly SyncedTable[],
+): Promise<Peek> {
   const found = await Promise.all(
-    deps.tables.map((table) => deps.cloud.peek(table, checkpoints[table] ?? null)),
+    tables.map((table) => deps.cloud.peek(table, checkpoints[table] ?? null)),
   )
-  return new Map(deps.tables.map((table, index) => [table, found[index] ?? []]))
+  return new Map(tables.map((table, index) => [table, found[index] ?? []]))
 }
 
 export const peekedCount = (peek: Peek): number =>
@@ -51,19 +56,29 @@ export function advance(checkpoints: Checkpoints, peek: Peek): Checkpoints {
   return next
 }
 
+/**
+ * Where each table's checkpoint lands after a cycle, stepping over the rows the cycle itself
+ * pushed and stopping at the first row it did not.
+ *
+ * `reportsAhead` names the tables whose foreign movement is worth telling the learner about — the
+ * held ones. A quiet table moving on another device is answered by the next Quiet sync, never by a
+ * banner asking someone to Synchronise a theme.
+ */
 export function stepOverOwnEcho(
   checkpoints: Checkpoints,
   settled: Peek,
   pushed: PushedIds,
+  reportsAhead: readonly SyncedTable[],
 ): { checkpoints: Checkpoints; foreignAhead: boolean } {
   const next: Checkpoints = { ...checkpoints }
+  const reports = new Set(reportsAhead)
   let foreignAhead = false
   for (const [table, changes] of settled) {
     const own = new Set(pushed[table] ?? [])
     let at: Checkpoint | null = checkpoints[table] ?? null
     for (const change of changes) {
       if (!own.has(change.id)) {
-        foreignAhead = true
+        if (reports.has(table)) foreignAhead = true
         break
       }
       if (isAfterCheckpoint(change, at)) at = { updated_at: change.updated_at, id: change.id }

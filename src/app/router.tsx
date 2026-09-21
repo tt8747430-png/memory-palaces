@@ -11,7 +11,9 @@ import type { ExtensionRoute } from '@/shared/lib'
 import { RootLayout } from './RootLayout'
 import { authRedirect } from './auth-guard'
 import type { Services } from './composition-root'
+import { isExtensionFeatureOn, selectEffectivePreferences } from '@/entities/preferences'
 import { ExtensionGate } from './extensions/ExtensionGate'
+import { extensionOverview } from './extensions/extension-redirect'
 import { extensionRedirect } from './extensions/extension-redirect'
 import { EXTENSIONS } from './extensions/registry'
 import { lazyScreen } from './lazy-screen'
@@ -50,8 +52,10 @@ const route = <Path extends string>(path: Path, component: RouteComponent) =>
  * extension goes off while one is open. Each is guarded on the way in: the guard **awaits the
  * runtime settling on loaded preferences** — `beforeLoad` runs before any provider has rendered, and
  * an unloaded store is not "off"; without the wait a cold deep link to an enabled extension would be
- * bounced. An extension's settings screen is one of its routes like any other. The screen itself
- * stays a lazy route component, so the router preloads it on intent like any other.
+ * bounced. A route that names a feature is guarded on that too: switched off, it is not opened, and
+ * the learner lands on the extension's overview where the switch is. An extension's overview screen
+ * is one of its routes like any other, and each stays a lazy route component, so the router
+ * preloads it on intent like any other.
  *
  * `AnyRoute`, because a manifest declares its paths at runtime: the type system cannot know them,
  * and inferring from their `string` would blur every core route's params with them.
@@ -69,14 +73,24 @@ const extensionRoutes = EXTENSIONS.map((manifest): AnyRoute => {
       validateSearch: declared.validateSearch,
       component: lazyScreen(declared.load)(declared.name),
       beforeLoad: async ({ context }) => {
-        const { extensions } = context.services
+        const { extensions, preferencesStore } = context.services
         await extensions.settled()
         const target = extensionRedirect(manifest.id, extensions.isActive(manifest.id))
         if (target) throw redirect(target)
+        if (
+          declared.feature &&
+          !isExtensionFeatureOn(
+            selectEffectivePreferences(preferencesStore.getState()),
+            manifest.id,
+            declared.feature,
+          )
+        ) {
+          throw redirect(extensionOverview(manifest))
+        }
       },
     })
   return gate.addChildren(
-    [...manifest.routes, ...(manifest.settings ? [manifest.settings.route] : [])].map(screen),
+    [...manifest.routes, ...(manifest.overview ? [manifest.overview.route] : [])].map(screen),
   )
 })
 

@@ -106,8 +106,8 @@ describe.skipIf(!URL || !KEY)('supabase replication (two clients)', () => {
 
       const id = newDeckId()
       await a.collection.upsert({ id, name: 'Hello', createdAt: 't1', updatedAt: 't1' })
-      await a.manager.runCycle()
-      await b.manager.runCycle()
+      await a.manager.runCycle([TABLE])
+      await b.manager.runCycle([TABLE])
 
       expect((await b.collection.findOne(id).exec())?.name).toBe('Hello')
 
@@ -126,7 +126,7 @@ describe.skipIf(!URL || !KEY)('supabase replication (two clients)', () => {
 
       const id = newDeckId()
       await a.collection.upsert({ id, name: 'Watched', createdAt: 't1', updatedAt: 't1' })
-      await a.manager.runCycle()
+      await a.manager.runCycle([TABLE])
 
       const event = await until(async () => seen.find((candidate) => candidate.id === id) ?? null)
       expect(event?.table).toBe(TABLE)
@@ -144,7 +144,7 @@ describe.skipIf(!URL || !KEY)('supabase replication (two clients)', () => {
       const id = newDeckId()
       await a.collection.upsert({ id, name: 'Pushed', createdAt: 't1', updatedAt: 't1' })
 
-      const pushed = await a.manager.runCycle()
+      const pushed = await a.manager.runCycle([TABLE])
 
       expect(pushed[TABLE]).toContain(id)
       await a.manager.stop()
@@ -158,18 +158,18 @@ describe.skipIf(!URL || !KEY)('supabase replication (two clients)', () => {
       const a = await device()
       const id = newDeckId()
       await a.collection.upsert({ id, name: 'from A', createdAt: 't1', updatedAt: 't1' })
-      await a.manager.runCycle()
+      await a.manager.runCycle([TABLE])
 
       const b = await device()
       await b.collection.upsert({ id, name: 'from B', createdAt: 't1', updatedAt: 't2' })
-      await b.manager.runCycle()
-      await a.manager.runCycle()
+      await b.manager.runCycle([TABLE])
+      await a.manager.runCycle([TABLE])
 
       expect((await a.collection.findOne(id).exec())?.name).toBe('from B')
 
       await (await b.collection.findOne(id).exec())?.remove()
-      await b.manager.runCycle()
-      await a.manager.runCycle()
+      await b.manager.runCycle([TABLE])
+      await a.manager.runCycle([TABLE])
 
       expect(await a.collection.findOne(id).exec()).toBeNull()
 

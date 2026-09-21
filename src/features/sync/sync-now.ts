@@ -1,21 +1,24 @@
 import { authFailure, errorMessage, type SyncOutcome } from '@/shared/lib'
-import { type PendingChange, pendingIn, selectPendingChanges } from '@/entities/pending-change'
+import type { SyncedTable } from '@/shared/config/sync-tables'
+import { pendingIn, selectPendingChanges } from '@/entities/pending-change'
 import { appendSyncLog, selectSyncState, type SyncLogEntry } from '@/entities/sync-state'
 import { advance, findDestructive, peekAll, peekedCount, stepOverOwnEcho } from './divergence'
+import { clearConfirmed } from './clear-confirmed'
 import type { PushedIds } from '@/shared/api'
 import type { SyncDeps } from './sync-deps'
 
 export interface SyncNowOptions {
   answered?: ReadonlySet<string>
+  /**
+   * The tables this Sync covers. The held ones by default — the learner asked for their work to go
+   * up, not for the furniture. A Repair and the first Sync on a device pass every live table.
+   */
+  tables?: readonly SyncedTable[]
 }
 
-async function clearConfirmed(deps: SyncDeps, snapshot: readonly PendingChange[]): Promise<void> {
-  const current = new Map(
-    selectPendingChanges(deps.pendingChangeStore.getState()).map((change) => [change.id, change]),
-  )
-  const confirmed = snapshot.filter((change) => current.get(change.id)?.at === change.at)
-  await Promise.all(confirmed.map((change) => deps.pendingChangeStore.getState().remove(change.id)))
-}
+/** What this Sync carries: the held tables, unless the caller widened it. */
+const scopeOf = (deps: SyncDeps, options: SyncNowOptions): readonly SyncedTable[] =>
+  options.tables ?? deps.held
 
 const pushedCount = (pushed: PushedIds): number =>
   Object.values(pushed).reduce((total, ids) => total + (ids?.length ?? 0), 0)
@@ -35,21 +38,27 @@ async function logSync(deps: SyncDeps, entry: Omit<SyncLogEntry, 'at'>): Promise
  */
 async function attemptSync(deps: SyncDeps, options: SyncNowOptions): Promise<SyncOutcome> {
   const started = selectSyncState(deps.syncStateStore.getState())
-  // Only what this cycle carries: a disabled extension's changes wait in the log for its return,
-  // and must not be cleared by a cycle that never pushed them.
-  const snapshot = pendingIn(selectPendingChanges(deps.pendingChangeStore.getState()), deps.tables)
+  const tables = scopeOf(deps, options)
+  // Only what this cycle carries: a disabled extension's changes — and every quiet one — wait in
+  // the log, and must not be cleared by a cycle that never pushed them.
+  const snapshot = pendingIn(selectPendingChanges(deps.pendingChangeStore.getState()), tables)
 
   try {
-    const peeked = await peekAll(deps, started.checkpoints)
+    const peeked = await peekAll(deps, started.checkpoints, tables)
     const items = await findDestructive(deps, peeked, snapshot, options.answered)
     if (items.length) {
       await logSync(deps, { outcome: 'needs-review', pushed: 0, pulled: 0 })
       return { kind: 'needs-review', items }
     }
 
-    const pushed = await deps.cloud.runCycle()
+    const pushed = await deps.cloud.runCycle(tables)
     const seen = advance(started.checkpoints, peeked)
-    const { checkpoints, foreignAhead } = stepOverOwnEcho(seen, await peekAll(deps, seen), pushed)
+    const { checkpoints, foreignAhead } = stepOverOwnEcho(
+      seen,
+      await peekAll(deps, seen, tables),
+      pushed,
+      deps.held,
+    )
 
     await clearConfirmed(deps, snapshot)
     const pulled = peekedCount(peeked)
@@ -57,7 +66,7 @@ async function attemptSync(deps: SyncDeps, options: SyncNowOptions): Promise<Syn
     const fresh = selectSyncState(deps.syncStateStore.getState())
     await deps.syncStateStore.getState().save({
       ...fresh,
-      checkpoints,
+      checkpoints: { ...fresh.checkpoints, ...checkpoints },
       lastSyncedAt: deps.now(),
       cloudChanged: foreignAhead,
       log: appendSyncLog(fresh.log, {
@@ -110,5 +119,7 @@ export async function repairSync(deps: SyncDeps): Promise<SyncOutcome> {
   } catch (error) {
     return { kind: 'failed', reason: errorMessage(error) }
   }
-  return syncNow(deps)
+  // Everything means everything: the quiet tables are read again here, which is the one place a
+  // learner asks for them by name.
+  return syncNow(deps, { tables: deps.tables })
 }

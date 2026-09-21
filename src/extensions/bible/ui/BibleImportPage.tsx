@@ -121,6 +121,7 @@ export function BibleImportPage({ deckId, onBack, onReview, onShowDeck }: BibleI
             <TargetPicker
               auto={page.auto}
               onAutoChange={(on) => page.set('auto', on)}
+              autoAvailable={page.chapterDecksAvailable}
               destination={page.destination}
               onPickDeck={() => page.showSheet('deck')}
               onNameDeck={() => page.showSheet('name')}

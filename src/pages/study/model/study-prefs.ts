@@ -44,7 +44,7 @@ const PREFERENCE_OF = {
   wordSpaces: 'studyWordSpaces',
   typeInitialsOnly: 'studyTypeInitialsOnly',
   shakeToUndo: 'shakeToUndo',
-  swipeByMode: 'flashcardSwipe',
+  swipePreferences: 'flashcardSwipe',
 } as const satisfies Record<keyof LearnerStudyPrefs, keyof PreferencesChanges>
 
 export function learnerStudyPrefs(
@@ -54,7 +54,7 @@ export function learnerStudyPrefs(
     wordSpaces: preferences[PREFERENCE_OF.wordSpaces],
     typeInitialsOnly: preferences[PREFERENCE_OF.typeInitialsOnly],
     shakeToUndo: preferences[PREFERENCE_OF.shakeToUndo],
-    swipeByMode: normalizeFlashcardSwipe(preferences[PREFERENCE_OF.swipeByMode]),
+    swipePreferences: normalizeFlashcardSwipe(preferences[PREFERENCE_OF.swipePreferences]),
   }
 }
 

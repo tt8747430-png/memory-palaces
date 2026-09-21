@@ -4,9 +4,11 @@ import { act, cleanup, screen } from '@testing-library/react'
 import { useState } from 'react'
 import { renderWithProviders } from '@/shared/test/render-with-providers'
 import { useExtensionPoint, useExtensionServices } from '@/shared/lib'
-import { setExtensionEnabled } from '@/features/preferences'
+import { PreferencesStoreContext } from '@/entities/preferences'
+import { setExtensionEnabled, setExtensionFeature } from '@/features/preferences'
 import { createExtensionRuntime } from './extension-runtime'
 import { ExtensionsProvider } from './ExtensionsProvider'
+import type { Preferences } from '@/entities/preferences'
 import { fakeManifest, loaded, preferencesWith } from './testing/fake-extension'
 
 let mounts = 0
@@ -27,18 +29,52 @@ function Services() {
   return <span>activation {services.activation}</span>
 }
 
-function renderWith(extensions: string[], children = <Host />) {
-  const preferences = preferencesWith(extensions)
+function renderWith(
+  extensions: string[],
+  children = <Host />,
+  manifest = fakeManifest(),
+  stored: Partial<Preferences> = {},
+) {
+  const preferences = preferencesWith(extensions, stored)
   const runtime = createExtensionRuntime({
-    extensions: [loaded(fakeManifest())],
+    extensions: [loaded(manifest)],
     preferences,
     repositories: {},
     pending: () => NO_PENDING,
   })
   runtime.start()
-  renderWithProviders(<ExtensionsProvider runtime={runtime}>{children}</ExtensionsProvider>)
+  renderWithProviders(
+    <PreferencesStoreContext value={preferences}>
+      <ExtensionsProvider runtime={runtime}>{children}</ExtensionsProvider>
+    </PreferencesStoreContext>,
+  )
   return preferences
 }
+
+/** A manifest whose one import row belongs to a feature the learner can switch off. */
+const withFeature = () =>
+  fakeManifest({
+    features: [
+      {
+        id: 'rows',
+        icon: <span />,
+        labelKey: 'fake:label',
+        descriptionKey: 'fake:description',
+      },
+    ],
+    contributions: {
+      importOptions: [
+        {
+          id: 'fake',
+          icon: null,
+          titleKey: 'fake:label',
+          subtitleKey: 'fake:description',
+          to: '/import/fake',
+          feature: 'rows',
+        },
+      ],
+    },
+  })
 
 afterEach(() => {
   cleanup()
@@ -74,5 +110,27 @@ describe('ExtensionsProvider', () => {
     expect(screen.getByText('fake:label')).toBeInTheDocument()
     // The app under the provider kept its state: switching an extension is not a reload.
     expect(screen.getByTestId('mount')).toHaveTextContent('1')
+  })
+
+  it('withdraws a row whose feature is switched off, while the extension stays on', async () => {
+    const preferences = renderWith(['fake'], <Host />, withFeature())
+    expect(screen.getByText('fake:label')).toBeInTheDocument()
+
+    await act(() => setExtensionFeature(preferences, 'fake', 'rows', false))
+    expect(screen.getByText('no contributions')).toBeInTheDocument()
+
+    await act(() => setExtensionFeature(preferences, 'fake', 'rows', true))
+    expect(screen.getByText('fake:label')).toBeInTheDocument()
+  })
+
+  it('offers a row whose feature nobody has ever touched', () => {
+    renderWith(['fake'], <Host />, withFeature())
+    expect(screen.getByText('fake:label')).toBeInTheDocument()
+  })
+
+  it('leaves a row that belongs to no feature alone', async () => {
+    const preferences = renderWith(['fake'])
+    await act(() => setExtensionFeature(preferences, 'fake', 'rows', false))
+    expect(screen.getByText('fake:label')).toBeInTheDocument()
   })
 })

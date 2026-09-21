@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { DEFAULT_DECK_SETTINGS, makeDeck } from '@/entities/deck'
-import { DEFAULT_FLASHCARD_SWIPE_BY_MODE } from '@/shared/config/flashcard-swipe'
+import { DEFAULT_FLASHCARD_SWIPE_PREFERENCES } from '@/shared/config/flashcard-swipe'
 import {
   deckStudyPrefs,
   deckStudyPrefsPatch,
@@ -53,13 +53,13 @@ describe('learnerStudyPrefs', () => {
       studyWordSpaces: false,
       studyTypeInitialsOnly: true,
       shakeToUndo: false,
-      flashcardSwipe: DEFAULT_FLASHCARD_SWIPE_BY_MODE,
+      flashcardSwipe: DEFAULT_FLASHCARD_SWIPE_PREFERENCES,
     })
     expect(prefs).toEqual({
       wordSpaces: false,
       typeInitialsOnly: true,
       shakeToUndo: false,
-      swipeByMode: DEFAULT_FLASHCARD_SWIPE_BY_MODE,
+      swipePreferences: DEFAULT_FLASHCARD_SWIPE_PREFERENCES,
     })
   })
 
@@ -68,9 +68,26 @@ describe('learnerStudyPrefs', () => {
       studyWordSpaces: true,
       studyTypeInitialsOnly: false,
       shakeToUndo: true,
-      flashcardSwipe: { blur: DEFAULT_FLASHCARD_SWIPE_BY_MODE.blur } as never,
+      flashcardSwipe: { blur: DEFAULT_FLASHCARD_SWIPE_PREFERENCES.spaced.blur } as never,
     })
-    expect(Object.keys(prefs.swipeByMode).sort()).toEqual(['blur', 'initials', 'type', 'words'])
+    expect(Object.keys(prefs.swipePreferences).sort()).toEqual(['fast', 'spaced'])
+    expect(Object.keys(prefs.swipePreferences.spaced).sort()).toEqual([
+      'blur',
+      'initials',
+      'type',
+      'words',
+    ])
+  })
+
+  it('reads a map stored before Fast review had answers of its own as the Spaced one', () => {
+    const prefs = learnerStudyPrefs({
+      studyWordSpaces: true,
+      studyTypeInitialsOnly: false,
+      shakeToUndo: true,
+      flashcardSwipe: { up: 'flag', down: 'skip', left: 'again', right: 'easy' } as never,
+    })
+    expect(prefs.swipePreferences.spaced.blur.right).toBe('easy')
+    expect(prefs.swipePreferences.fast.blur.right).toBe('gotIt')
   })
 })
 
@@ -86,12 +103,12 @@ describe('learnerStudyPrefsPatch', () => {
       learnerStudyPrefsPatch({
         wordSpaces: false,
         shakeToUndo: false,
-        swipeByMode: DEFAULT_FLASHCARD_SWIPE_BY_MODE,
+        swipePreferences: DEFAULT_FLASHCARD_SWIPE_PREFERENCES,
       }),
     ).toEqual({
       studyWordSpaces: false,
       shakeToUndo: false,
-      flashcardSwipe: DEFAULT_FLASHCARD_SWIPE_BY_MODE,
+      flashcardSwipe: DEFAULT_FLASHCARD_SWIPE_PREFERENCES,
     })
   })
 

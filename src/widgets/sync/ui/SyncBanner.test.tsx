@@ -1,4 +1,4 @@
-import { SYNCED_TABLES } from '@/shared/config/sync-tables'
+import { CORE_HELD_TABLES, CORE_QUIET_TABLES, SYNCED_TABLES } from '@/shared/config/sync-tables'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -38,6 +38,8 @@ const runner = (overrides: Partial<SyncRunner> = {}): SyncRunner => ({
   error: null,
   review: null,
   tables: SYNCED_TABLES,
+  held: CORE_HELD_TABLES,
+  quiet: CORE_QUIET_TABLES,
   labelKeys: {},
   run: vi.fn().mockResolvedValue(undefined),
   restore: vi.fn().mockResolvedValue(undefined),
@@ -54,6 +56,8 @@ async function setup(
     runner?: SyncRunner | null
     /** Changes on a table the runner does not cover — a disabled extension's. */
     pendingElsewhere?: number
+    /** Changes on a quiet table — settings, which go up on their own. */
+    pendingQuiet?: number
     kind?: 'account' | 'guest'
     pending?: number
     cloudChanged?: boolean
@@ -65,6 +69,7 @@ async function setup(
     kind = 'account',
     pending = 0,
     pendingElsewhere = 0,
+    pendingQuiet = 0,
     cloudChanged = false,
     online = true,
   } = options
@@ -88,6 +93,11 @@ async function setup(
   for (let i = 0; i < pendingElsewhere; i++) {
     await pendingRepo.save(
       makePendingChange({ table: 'bible_verses', entityId: `v${i}`, op: 'save', at: AT }),
+    )
+  }
+  for (let i = 0; i < pendingQuiet; i++) {
+    await pendingRepo.save(
+      makePendingChange({ table: 'preferences', entityId: `p${i}`, op: 'save', at: AT }),
     )
   }
   const syncStateRepo = new InMemoryRepository<SyncState>()
@@ -120,6 +130,11 @@ describe('SyncBanner', () => {
   it('is hidden when no Supabase project is configured', async () => {
     await setup({ runner: null, pending: 3 })
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
+  })
+
+  it('stays down for a changed setting: nobody has to send one', async () => {
+    await setup({ pendingQuiet: 3 })
+    expect(screen.queryByRole('status')).toBeNull()
   })
 
   it('is hidden when nothing is pending and the cloud has not moved', async () => {

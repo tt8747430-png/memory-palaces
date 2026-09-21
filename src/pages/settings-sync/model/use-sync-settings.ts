@@ -72,6 +72,11 @@ export interface SyncSettings {
   /** The email the account signs in with; null for a guest. */
   account: string | null
   waiting: WaitingRow[]
+  /**
+   * How many quiet changes — settings, the profile — have not gone up yet. Never called waiting:
+   * they need no answer, and offline is the only reason there is ever more than none for long.
+   */
+  settingsWaiting: number
   log: SyncLogEntry[]
   autosync: boolean
 
@@ -110,10 +115,15 @@ export function useSyncSettings(): SyncSettings {
   const questionStore = useQuestionStoreApi()
   const pending = usePendingAct<SyncSettingsPending>()
 
-  const live = useMemo(() => pendingIn(changes, runner?.tables ?? []), [changes, runner])
+  // Only the held tables are ever called waiting. A changed theme is not the learner's work.
+  const live = useMemo(() => pendingIn(changes, runner?.held ?? []), [changes, runner])
+  const settingsWaiting = useMemo(
+    () => pendingIn(changes, runner?.quiet ?? []).length,
+    [changes, runner],
+  )
   const waiting = useMemo<WaitingRow[]>(() => {
     const counts = pendingByTable(live)
-    return (runner?.tables ?? []).flatMap((table) => {
+    return (runner?.held ?? []).flatMap((table) => {
       const count = counts[table]
       if (!count) return []
       const key = runner?.labelKeys[table]
@@ -198,6 +208,7 @@ export function useSyncSettings(): SyncSettings {
     lastSyncedAt,
     account: email,
     waiting,
+    settingsWaiting,
     log,
     autosync,
     sync: () => void runner?.run(),

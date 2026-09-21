@@ -39,6 +39,7 @@ export const bibleMessages = {
   saveToLibraryHint: 'Next time, these verses fill in by themselves. Text already saved is kept.',
   saveFailed: 'The cards were added, but the text could not be saved to your Bible library.',
 
+  chapterDecksOff: 'Chapter decks are switched off, so choose where these cards go.',
   target: 'Include in decks',
   targetHint: 'A deck for the book, a subdeck for the chapter',
   targetExisting: 'Choose a deck',
@@ -51,8 +52,11 @@ export const bibleMessages = {
   newDeckHint: 'It is made when you add the cards',
   newDeckName: 'Deck name',
   useName: 'Use this name',
-  duplicates: 'You already have {{refs}} in your library',
-  duplicatesSkip: 'Skipped. Add them anyway?',
+  duplicates_one: 'Already in your Bible library: {{refs}}.',
+  duplicates_other: '{{count}} of these are already in your Bible library: {{refs}}.',
+  duplicatesMore: '+{{count}} more',
+  duplicatesSkip: 'Add them again anyway',
+  duplicatesSkipHint: 'They are skipped by default, so nothing is duplicated.',
   showMe: 'Show me',
   split_one: 'Split into {{count}} individual verse',
   split_other: 'Split into {{count}} individual verses',
@@ -64,6 +68,39 @@ export const bibleMessages = {
   offline: 'Everything here works offline.',
 
   settingsTitle: 'Bible',
+  overviewWhat:
+    'A passage importer with a verse library of its own. Pick a book, chapter and verses, and it makes a card of each — keeping the text so the next passage from that chapter fills itself in.',
+  overviewTranslation: '{{name}}',
+  overviewFeatures: 'What it provides',
+  overviewManage: 'Manage',
+  overviewHolding: 'Text saved',
+  overviewHoldingNone: 'Nothing yet',
+  overviewHoldingCount_one: '{{count}} verse · {{books}} books',
+  overviewHoldingCount_other: '{{count}} verses · {{books}} books',
+  libraryOff:
+    'The verse library is switched off. Nothing is saved or filled in — your text is kept.',
+  switchOff: 'Switch off Bible',
+  switchOffHint: 'It disappears from the app. Nothing you made with it is deleted.',
+  featureFailed: 'That switch could not be saved. Try again.',
+  developerTitle: 'Bible developer tools',
+  developerHint: 'Destructive and diagnostic tools, shown because Developer mode is on.',
+  developerOff:
+    'These tools need Developer mode, which is off. Turn it on in Settings → Developer.',
+  features: {
+    import: {
+      label: 'Passage import',
+      description:
+        'Add a passage as cards, from a reference — and the Bible row in the import sheet',
+    },
+    library: {
+      label: 'Verse library',
+      description: 'Save verse text and fill a picked passage in from it, offline',
+    },
+    chapterDecks: {
+      label: 'Chapter decks',
+      description: 'Put the cards in a deck for the book and a subdeck for its chapter',
+    },
+  },
   versesTable: 'Bible verses',
   translation: 'Translation',
   translationLanguage: 'Romanian',

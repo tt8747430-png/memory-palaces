@@ -1,4 +1,4 @@
-import { SYNCED_TABLES } from '@/shared/config/sync-tables'
+import { CORE_HELD_TABLES, CORE_QUIET_TABLES, SYNCED_TABLES } from '@/shared/config/sync-tables'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -51,6 +51,8 @@ const runner = (overrides: Partial<SyncRunner> = {}): SyncRunner => ({
   error: null,
   review: null,
   tables: SYNCED_TABLES,
+  held: CORE_HELD_TABLES,
+  quiet: CORE_QUIET_TABLES,
   labelKeys: {},
   run: vi.fn().mockResolvedValue({ kind: 'clean' }),
   restore: vi.fn().mockResolvedValue({ kind: 'clean' }),
@@ -134,7 +136,7 @@ describe('SettingsSyncPage', () => {
 
   it('says everything is synchronised, when it was, and as whom', async () => {
     await setup({ state: { lastSyncedAt: new Date().toISOString() } })
-    expect(await screen.findByText('Everything is synchronised')).toBeInTheDocument()
+    expect(await screen.findByText('Your work is synchronised')).toBeInTheDocument()
     expect(screen.getByText(/last synchronised/i)).toBeInTheDocument()
     expect(screen.getByText('Synchronising as ada@b.co')).toBeInTheDocument()
     expect(screen.getByText(/nothing is waiting/i)).toBeInTheDocument()
@@ -161,12 +163,30 @@ describe('SettingsSyncPage', () => {
     expect(screen.getByText('Progress')).toBeInTheDocument()
   })
 
+  it('never calls a changed setting waiting, and says who looks after it', async () => {
+    await setup({ pending: [change('preferences', 'preferences'), change('decks', 'd1')] })
+
+    expect(await screen.findByText(/these look after themselves/i)).toBeInTheDocument()
+    expect(screen.getByText(/go up on their own as soon as they change/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Decks/ })).toHaveTextContent('1')
+    expect(screen.queryByText('Preferences')).toBeNull()
+  })
+
+  it('says a stranded setting is waiting for a connection, not for the learner', async () => {
+    Object.defineProperty(navigator, 'onLine', { value: false, configurable: true })
+    await setup({ pending: [change('preferences', 'preferences')] })
+
+    expect(await screen.findByText(/1 setting is waiting for a connection/i)).toBeInTheDocument()
+    expect(screen.getByText(/your decks and cards are up to date/i)).toBeInTheDocument()
+  })
+
   it('names a contributed table by the key its extension gave it', async () => {
     i18n.addResourceBundle('en', 'bible', { versesTable: 'Bible verses' }, true, false)
     await setup({
       pending: [change('bible_verses', 'v1')],
       runner: runner({
         tables: [...SYNCED_TABLES, 'bible_verses'],
+        held: [...CORE_HELD_TABLES, 'bible_verses'],
         labelKeys: { bible_verses: 'bible:versesTable' },
       }),
     })

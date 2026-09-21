@@ -1,10 +1,11 @@
 import { type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Keyboard, Type, WholeWord } from 'lucide-react'
+import type { LearningAlgorithm } from '@/entities/deck'
 import type { StudyMode } from '@/entities/preferences'
 import { Button, Combobox, type ComboboxOption, Sheet, ToggleRow } from '@/shared/ui'
 import {
-  actionsForMode,
+  actionsFor,
   FLASHCARD_SWIPE_ACTION_META,
   type FlashcardSwipeAction,
   type SwipeDirection,
@@ -17,6 +18,8 @@ export interface GearSheetProps {
   open: boolean
   onClose: () => void
   mode: StudyMode
+  /** The Deck's Learning algorithm: a Fast review offers its two answers, never the four Grades. */
+  algorithm: LearningAlgorithm
   quick: QuickActionsModel
   settings: StudySettingsControl
 }
@@ -40,11 +43,11 @@ const DIRECTION_META: { direction: SwipeDirection; icon: ReactNode; labelKey: st
   },
 ]
 
-export function GearSheet({ open, onClose, mode, quick, settings }: GearSheetProps) {
+export function GearSheet({ open, onClose, mode, algorithm, quick, settings }: GearSheetProps) {
   const { t } = useTranslation()
   const { value, set } = settings
 
-  const actionOptions: ComboboxOption<FlashcardSwipeAction>[] = actionsForMode(mode).map(
+  const actionOptions: ComboboxOption<FlashcardSwipeAction>[] = actionsFor(algorithm, mode).map(
     (action) => ({
       value: action,
       label: t(FLASHCARD_SWIPE_ACTION_META[action].labelKey as never),
@@ -90,7 +93,7 @@ export function GearSheet({ open, onClose, mode, quick, settings }: GearSheetPro
           <div className="rounded-card bg-info-surface">
             <p className="flex items-center gap-2 px-4 pt-3 text-label text-muted-foreground">
               <Keyboard className="size-4 shrink-0" aria-hidden />
-              {t('study.swipeActionsHint')}
+              {t(`study.swipeActionsHint.${algorithm}` as never)}
             </p>
             <div className="divide-y divide-border/60">
               {DIRECTION_META.map(({ direction: dir, icon, labelKey }) => (

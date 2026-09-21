@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, renderHook } from '@testing-library/react'
 import { DEFAULT_CARD_STYLE } from '@/entities/deck'
-import type { FlashcardSwipeByMode } from '@/shared/config/flashcard-swipe'
-import { DEFAULT_FLASHCARD_SWIPE } from '@/shared/config/flashcard-swipe'
+import type { FlashcardSwipePreferences } from '@/shared/config/flashcard-swipe'
+import { DEFAULT_FLASHCARD_SWIPE_PREFERENCES } from '@/shared/config/flashcard-swipe'
 import { useStudySettings } from './use-study-settings'
 import type { DeckStudyPrefs, LearnerStudyPrefs } from './types'
 
@@ -16,23 +16,20 @@ const deckPrefs: DeckStudyPrefs = {
   maxCardsPerDay: 3000,
   cardStyle: DEFAULT_CARD_STYLE,
 }
-const swipeByMode = {
-  blur: DEFAULT_FLASHCARD_SWIPE,
-  words: DEFAULT_FLASHCARD_SWIPE,
-  initials: DEFAULT_FLASHCARD_SWIPE,
-  type: DEFAULT_FLASHCARD_SWIPE,
-} as FlashcardSwipeByMode
+const swipePreferences: FlashcardSwipePreferences = DEFAULT_FLASHCARD_SWIPE_PREFERENCES
+const spaced = DEFAULT_FLASHCARD_SWIPE_PREFERENCES.spaced
 
 const learnerPrefs: LearnerStudyPrefs = {
   wordSpaces: false,
   typeInitialsOnly: false,
   shakeToUndo: false,
-  swipeByMode,
+  swipePreferences,
 }
 
 function setup(overrides: Partial<Parameters<typeof useStudySettings>[0]> = {}) {
   const args = {
     mode: 'blur' as const,
+    algorithm: 'spaced' as const,
     deckPrefs,
     onDeckPrefsChange: vi.fn(),
     learnerPrefs,
@@ -55,7 +52,7 @@ describe('useStudySettings', () => {
       wordSpaces: false,
       typeInitialsOnly: false,
       shakeToUndo: false,
-      swipe: DEFAULT_FLASHCARD_SWIPE,
+      swipe: spaced.blur,
       filter: { kind: 'all' },
     })
   })
@@ -101,15 +98,37 @@ describe('useStudySettings', () => {
     const { result, args } = setup({ mode: 'type' })
     act(() => result.current.setSwipe('up', 'skip'))
     expect(args.onLearnerPrefsChange).toHaveBeenCalledWith({
-      swipeByMode: { ...swipeByMode, type: { ...DEFAULT_FLASHCARD_SWIPE, up: 'skip' } },
+      swipePreferences: {
+        ...swipePreferences,
+        spaced: { ...spaced, type: { ...spaced.type, up: 'skip' } },
+      },
     })
   })
 
   it('carries the other modes’ swipe maps through untouched when one mode is set whole', () => {
     const { result, args } = setup({ mode: 'blur' })
-    act(() => result.current.set('swipe', { ...DEFAULT_FLASHCARD_SWIPE, down: 'flag' }))
+    act(() => result.current.set('swipe', { ...spaced.blur, down: 'flag' }))
     expect(args.onLearnerPrefsChange).toHaveBeenCalledWith({
-      swipeByMode: { ...swipeByMode, blur: { ...DEFAULT_FLASHCARD_SWIPE, down: 'flag' } },
+      swipePreferences: {
+        ...swipePreferences,
+        spaced: { ...spaced, blur: { ...spaced.blur, down: 'flag' } },
+      },
+    })
+  })
+
+  it('keeps the two algorithms apart: a Fast review swipe never touches the Spaced one', () => {
+    const { result, args } = setup({ mode: 'blur', algorithm: 'fast' })
+    expect(result.current.value.swipe.right).toBe('gotIt')
+
+    act(() => result.current.setSwipe('right', 'notQuite'))
+    expect(args.onLearnerPrefsChange).toHaveBeenCalledWith({
+      swipePreferences: {
+        ...swipePreferences,
+        fast: {
+          ...swipePreferences.fast,
+          blur: { ...swipePreferences.fast.blur, right: 'notQuite' },
+        },
+      },
     })
   })
 })

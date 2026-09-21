@@ -240,7 +240,7 @@ export const progressSchema: RxJsonSchema<Progress> = {
 }
 
 export const preferencesSchema: RxJsonSchema<Preferences> = {
-  version: 4,
+  version: 5,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -272,14 +272,13 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
     flashcardSwipe: {
       type: 'object',
       properties: {
-        blur: { type: 'object' },
-        words: { type: 'object' },
-        initials: { type: 'object' },
-        type: { type: 'object' },
+        spaced: { type: 'object' },
+        fast: { type: 'object' },
       },
-      required: ['blur', 'words', 'initials', 'type'],
+      required: ['spaced', 'fast'],
       additionalProperties: false,
     },
+    disabledFeatures: { type: 'object' },
     selectToolbar: {
       type: 'object',
       properties: {
@@ -334,6 +333,7 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
     'selectToolbar',
     'privacy',
     'extensions',
+    'disabledFeatures',
     'devMode',
     'autosync',
     'libraryExpanded',

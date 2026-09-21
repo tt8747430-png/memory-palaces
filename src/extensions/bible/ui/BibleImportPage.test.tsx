@@ -253,9 +253,9 @@ describe('BibleImportPage text and target', () => {
     await pickGenesis11(user)
     await user.click(screen.getByLabelText('Verse text'))
     await user.paste('In the beginning.')
-    expect(screen.getByText('You already have Geneza 1:1 in your library')).toBeInTheDocument()
+    expect(screen.getByText('Already in your Bible library: Geneza 1:1.')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^Add/ })).toBeDisabled()
-    await user.click(screen.getByRole('switch', { name: 'Skipped. Add them anyway?' }))
+    await user.click(screen.getByRole('switch', { name: 'Add them again anyway' }))
     expect(screen.getByRole('button', { name: 'Add 1 card' })).toBeEnabled()
   })
 

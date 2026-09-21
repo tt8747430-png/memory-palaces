@@ -6,7 +6,7 @@ import { MotionConfig } from 'motion/react'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
 import { type Card, type FastOutcome, makeCard } from '@/entities/card'
-import { DEFAULT_FLASHCARD_SWIPE_BY_MODE } from '@/shared/config/flashcard-swipe'
+import { DEFAULT_FLASHCARD_SWIPE_PREFERENCES } from '@/shared/config/flashcard-swipe'
 import { DEFAULT_CARD_STYLE, type LearningAlgorithm } from '@/entities/deck'
 import type { StudyMode } from '@/entities/preferences'
 import type { StudyFilter } from '@/features/review'
@@ -21,7 +21,7 @@ const DEFAULT_LEARNER_PREFS: LearnerStudyPrefs = {
   wordSpaces: true,
   typeInitialsOnly: false,
   shakeToUndo: false,
-  swipeByMode: DEFAULT_FLASHCARD_SWIPE_BY_MODE,
+  swipePreferences: DEFAULT_FLASHCARD_SWIPE_PREFERENCES,
 }
 
 const DEFAULT_DECK_PREFS: DeckStudyPrefs = {

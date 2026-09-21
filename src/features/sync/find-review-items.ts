@@ -9,7 +9,12 @@ export async function findReviewItems(deps: SyncDeps): Promise<SyncOutcome> {
   try {
     const state = selectSyncState(deps.syncStateStore.getState())
     const pending = selectPendingChanges(deps.pendingChangeStore.getState())
-    const items = await findDestructive(deps, await peekAll(deps, state.checkpoints), pending)
+    // Only a held table can hold a destructive divergence: the content collections are all held.
+    const items = await findDestructive(
+      deps,
+      await peekAll(deps, state.checkpoints, deps.held),
+      pending,
+    )
     return items.length ? { kind: 'needs-review', items } : { kind: 'clean' }
   } catch (error) {
     return { kind: 'failed', reason: errorMessage(error) }

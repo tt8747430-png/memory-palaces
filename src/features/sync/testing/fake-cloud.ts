@@ -11,6 +11,8 @@ import {
 } from '@/shared/api'
 import {
   type ContentCollection,
+  CORE_HELD_TABLES,
+  CORE_QUIET_TABLES,
   isContentCollection,
   type SyncedTable,
   SYNCED_TABLES,
@@ -46,6 +48,8 @@ export interface FakeCloud extends CloudSyncPort {
   pull?: (deps: SyncDeps) => void | Promise<void>
   failNextCycle(reason: string): void
   cycles: number
+  /** The tables each cycle was asked to carry, newest last — what proves a cadence stayed in its lane. */
+  scopes: SyncedTable[][]
   /** How many times the next cycle was told to read the whole cloud again. */
   rereads: number
   fetched: { table: SyncedTable; ids: readonly string[] }[]
@@ -94,6 +98,7 @@ export function syncFixture(options: { state?: Partial<SyncState> } = {}) {
 
   const cloud: FakeCloud = {
     cycles: 0,
+    scopes: [],
     rereads: 0,
     fetched: [],
     async rereadEverything() {
@@ -135,8 +140,10 @@ export function syncFixture(options: { state?: Partial<SyncState> } = {}) {
         return row ? [{ ...row.data, _deleted: row.deleted } as CloudDocument<T>] : []
       })
     },
-    async runCycle(): Promise<PushedIds> {
+    async runCycle(tables): Promise<PushedIds> {
       cloud.cycles += 1
+      cloud.scopes.push([...tables])
+      const scope = new Set(tables)
       await cloud.duringCycle?.()
       if (failure) {
         const reason = failure
@@ -145,6 +152,8 @@ export function syncFixture(options: { state?: Partial<SyncState> } = {}) {
       }
       const pushed: Partial<Record<SyncedTable, string[]>> = {}
       for (const change of selectPendingChanges(pendingChangeStore.getState())) {
+        // A cycle carries its scope and nothing else — the whole point of the two cadences.
+        if (!scope.has(change.table)) continue
         // The fixture holds the four content stores; a change on any other table has nothing
         // here to read, and the tests that need one write the cloud row themselves.
         if (!isContentCollection(change.table)) continue
@@ -167,6 +176,8 @@ export function syncFixture(options: { state?: Partial<SyncState> } = {}) {
   const deps: SyncDeps = {
     cloud,
     tables: SYNCED_TABLES,
+    held: CORE_HELD_TABLES,
+    quiet: CORE_QUIET_TABLES,
     pendingChangeStore,
     syncStateStore: started(createSyncStateStore(syncStateRepo)),
     deckStore: started(createDeckStore(repos.decks, port('decks'))),

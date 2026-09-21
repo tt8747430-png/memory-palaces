@@ -40,10 +40,18 @@ type WatcherFactory = (
 const sameTables = (a: readonly SyncedTable[], b: readonly SyncedTable[]): boolean =>
   a.length === b.length && a.every((table, index) => table === b[index])
 
+/** A cycle in flight, and the tables it covers — what lets a later request join it or queue behind. */
+interface RunningCycle {
+  tables: ReadonlySet<SyncedTable>
+  promise: Promise<PushedIds>
+}
+
 export class SyncManager {
   private userId: string | null = null
   private watcher: CloudWatcher | null = null
-  private running: Promise<PushedIds> | null = null
+  private running: RunningCycle | null = null
+  /** Names each cycle this manager has started, so only the newest clears `running`. */
+  private cycleId = 0
   /** Set by `rereadEverything`, cleared by the first cycle after it that finishes. */
   private rereading = false
   /**
@@ -96,13 +104,32 @@ export class SyncManager {
     this.watcher = this.watch(userId, next, handlers)
   }
 
-  runCycle(): Promise<PushedIds> {
+  /**
+   * One cycle over `tables`, narrowed to the ones this session replicates. One runs at a time: a
+   * request the running cycle already covers joins it, and any other waits it out rather than
+   * building a second replication over the same collection. That is what keeps a quiet push from
+   * carrying the held tables — and a Synchronise tapped during one from racing it.
+   */
+  runCycle(tables: readonly SyncedTable[]): Promise<PushedIds> {
     const userId = this.userId
     if (!userId) return Promise.reject(new Error('No account is signed in to synchronise as'))
-    this.running ??= this.cycle(userId).finally(() => {
-      this.running = null
-    })
-    return this.running
+    const live = new Set(this.tables)
+    const wanted = tables.filter((table) => live.has(table))
+    const running = this.running
+    if (running && wanted.every((table) => running.tables.has(table))) return running.promise
+
+    const id = ++this.cycleId
+    const promise = (async () => {
+      await running?.promise.catch(() => {})
+      try {
+        return await this.cycle(userId, wanted)
+      } finally {
+        // Only if nothing queued behind this one: a later request owns `running` from then on.
+        if (this.cycleId === id) this.running = null
+      }
+    })()
+    this.running = { tables: new Set(wanted), promise }
+    return promise
   }
 
   /**
@@ -118,7 +145,7 @@ export class SyncManager {
   async rereadEverything(): Promise<void> {
     if (!this.userId) throw new Error('No account is signed in to synchronise as')
     this.rereading = true
-    await this.running?.catch(() => {})
+    await this.running?.promise.catch(() => {})
   }
 
   async stop(): Promise<void> {
@@ -130,12 +157,15 @@ export class SyncManager {
     await watcher?.stop()
   }
 
-  private async cycle(userId: string): Promise<PushedIds> {
-    const live = new Set(this.tables)
-    const targets = (await this.targets).filter((target) => live.has(target.table))
+  private async cycle(userId: string, tables: readonly SyncedTable[]): Promise<PushedIds> {
+    const scope = new Set(tables)
+    const targets = (await this.targets).filter((target) => scope.has(target.table))
     if (this.userId !== userId) throw new Error('The account changed before the cycle could start')
 
-    const fromStart = this.rereading
+    // Only a cycle over every live table can answer `rereadEverything`; a scoped one leaves the
+    // flag standing, so the tables it never touched are still read from the first document.
+    const coversEverything = this.tables.every((table) => scope.has(table))
+    const fromStart = this.rereading && coversEverything
     const pushed = new Map<SyncedTable, Set<string>>()
     const states = targets.map((target) =>
       this.makeReplication(userId, target, {

@@ -12,6 +12,8 @@ const ACTION_TINT: Record<Exclude<FlashcardSwipeAction, 'none'>, string> = {
   hard: 'text-(--warning-foreground)',
   good: 'text-(--success-on-surface)',
   easy: 'text-(--accent)',
+  notQuite: 'text-(--warning-foreground)',
+  gotIt: 'text-(--success-on-surface)',
   flag: 'text-(--rating-edge)',
   skip: 'text-muted-foreground',
   hideMore: 'text-heading',

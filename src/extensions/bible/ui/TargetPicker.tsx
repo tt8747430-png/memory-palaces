@@ -4,6 +4,8 @@ import { useBibleT } from '../i18n/use-bible-t'
 export interface TargetPickerProps {
   auto: boolean
   onAutoChange: (value: boolean) => void
+  /** The Chapter decks feature is on. Off, the learner always says where the cards go. */
+  autoAvailable: boolean
   /** Where the cards will land, said plainly before they are added; null while the app decides. */
   destination: string | null
   onPickDeck: () => void
@@ -17,6 +19,7 @@ export interface TargetPickerProps {
 export function TargetPicker({
   auto,
   onAutoChange,
+  autoAvailable,
   destination,
   onPickDeck,
   onNameDeck,
@@ -24,12 +27,16 @@ export function TargetPicker({
   const t = useBibleT()
   return (
     <section className="flex flex-col gap-3">
-      <ToggleRow
-        label={t('target')}
-        description={t('targetHint')}
-        checked={auto}
-        onChange={onAutoChange}
-      />
+      {autoAvailable ? (
+        <ToggleRow
+          label={t('target')}
+          description={t('targetHint')}
+          checked={auto}
+          onChange={onAutoChange}
+        />
+      ) : (
+        <p className="text-label leading-snug text-muted-foreground">{t('chapterDecksOff')}</p>
+      )}
       {auto ? null : (
         <div className="flex flex-wrap gap-2">
           <Button variant="secondary" size="sm" onClick={onPickDeck}>

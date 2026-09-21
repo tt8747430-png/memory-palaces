@@ -11,6 +11,7 @@ export {
   pendingByTable,
   pendingIn,
   selectLatestPendingAt,
+  selectLatestPendingAtIn,
   selectPendingChanges,
   selectPendingCount,
   selectPendingCountIn,

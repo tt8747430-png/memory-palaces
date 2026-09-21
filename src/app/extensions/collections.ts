@@ -34,6 +34,7 @@ export async function loadExtensionCollections(
                 table: spec.table,
                 collectionKey: spec.key,
                 owner: entry.id,
+                cadence: spec.cadence ?? 'held',
                 labelKey: spec.labelKey,
               },
             ]

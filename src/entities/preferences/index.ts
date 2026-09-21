@@ -7,12 +7,15 @@ export type {
   SwipePreferences,
   FlashcardSwipeConfig,
   FlashcardSwipeByMode,
+  FlashcardSwipePreferences,
   MakePreferencesInput,
   PreferencesChanges,
 } from './model/types'
 export type { ExtensionId } from '@/shared/lib'
 export {
   isExtensionEnabled,
+  isExtensionFeatureOn,
+  withExtensionFeature,
   makePreferences,
   completePreferences,
   updatePreferences,
@@ -33,6 +36,8 @@ export {
 export {
   selectAutosync,
   selectDevMode,
+  selectDisabledFeatures,
+  selectExtensionFeature,
   selectEffectivePreferences,
   selectLibraryExpanded,
 } from './model/selectors'

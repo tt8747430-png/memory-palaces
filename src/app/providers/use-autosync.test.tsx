@@ -18,12 +18,9 @@ import {
   type SyncState,
   SyncStateStoreContext,
 } from '@/entities/sync-state'
-import {
-  AUTOSYNC_DEBOUNCE_MS,
-  CLOUD_CHANGE_DEBOUNCE_MS,
-  RETRY_DELAYS_MS,
-  useAutosync,
-} from './use-autosync'
+import { CORE_HELD_TABLES } from '@/shared/config/sync-tables'
+import { RETRY_DELAYS_MS, useAutosync } from './use-autosync'
+import { CLOUD_DEBOUNCE_MS, WRITE_DEBOUNCE_MS } from './use-quiet-fire'
 
 function renderAutosync({
   autosync = true,
@@ -52,7 +49,8 @@ function renderAutosync({
     </SyncStateStoreContext>
   )
   const hook = renderHook(
-    ({ reconnects }: { reconnects: number }) => useAutosync({ active, run, reconnects }),
+    ({ reconnects }: { reconnects: number }) =>
+      useAutosync({ active, held: CORE_HELD_TABLES, run, reconnects }),
     { wrapper, initialProps: { reconnects: 0 } },
   )
   const cloudMoved = () =>
@@ -84,7 +82,7 @@ describe('useAutosync', () => {
   it('pulls when the cloud is heard to move — the other device need not wait', async () => {
     const { run, cloudMoved } = renderAutosync()
     await cloudMoved()
-    await tick(CLOUD_CHANGE_DEBOUNCE_MS - 1)
+    await tick(CLOUD_DEBOUNCE_MS - 1)
     expect(run).not.toHaveBeenCalled()
     await tick(1)
     expect(run).toHaveBeenCalledTimes(1)
@@ -93,16 +91,16 @@ describe('useAutosync', () => {
   it('pulls when the watcher comes back after a drop', async () => {
     const { run, rerender } = renderAutosync()
     rerender({ reconnects: 1 })
-    await tick(CLOUD_CHANGE_DEBOUNCE_MS)
+    await tick(CLOUD_DEBOUNCE_MS)
     expect(run).toHaveBeenCalledTimes(1)
   })
 
   it('waits after the last local write, so a burst of edits is one Sync', async () => {
     const { run, wrote } = renderAutosync()
     await wrote('t1')
-    await tick(AUTOSYNC_DEBOUNCE_MS - 1000)
+    await tick(WRITE_DEBOUNCE_MS - 1000)
     await wrote('t2')
-    await tick(AUTOSYNC_DEBOUNCE_MS - 1000)
+    await tick(WRITE_DEBOUNCE_MS - 1000)
     expect(run).not.toHaveBeenCalled()
     await tick(1000)
     expect(run).toHaveBeenCalledTimes(1)
@@ -119,7 +117,7 @@ describe('useAutosync', () => {
       ],
     })
     await cloudMoved()
-    await tick(CLOUD_CHANGE_DEBOUNCE_MS)
+    await tick(CLOUD_DEBOUNCE_MS)
     expect(run).toHaveBeenCalledTimes(1)
 
     await tick(RETRY_DELAYS_MS[0]!)
@@ -133,7 +131,7 @@ describe('useAutosync', () => {
     await tick(RETRY_DELAYS_MS[2]!)
     expect(run).toHaveBeenCalledTimes(3)
     await cloudMoved()
-    await tick(CLOUD_CHANGE_DEBOUNCE_MS)
+    await tick(CLOUD_DEBOUNCE_MS)
     expect(run).toHaveBeenCalledTimes(4)
     await tick(RETRY_DELAYS_MS[0]!)
     expect(run).toHaveBeenCalledTimes(5)
@@ -142,7 +140,7 @@ describe('useAutosync', () => {
   it('does not retry while offline or in the background — the events that end that run a Sync', async () => {
     const { run, cloudMoved } = renderAutosync({ outcomes: [{ kind: 'failed', reason: 'x' }] })
     await cloudMoved()
-    await tick(CLOUD_CHANGE_DEBOUNCE_MS)
+    await tick(CLOUD_DEBOUNCE_MS)
     Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true })
     await tick(RETRY_DELAYS_MS[0]!)
     expect(run).toHaveBeenCalledTimes(1)
@@ -154,7 +152,7 @@ describe('useAutosync', () => {
     await wrote('t1')
     rerender({ reconnects: 1 })
     window.dispatchEvent(new Event('online'))
-    await tick(AUTOSYNC_DEBOUNCE_MS)
+    await tick(WRITE_DEBOUNCE_MS)
     expect(run).not.toHaveBeenCalled()
   })
 })

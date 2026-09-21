@@ -7,7 +7,7 @@ describe('createSupabaseCloudSync', () => {
     const rereadEverything = vi.fn().mockResolvedValue(undefined)
     const cloud = createSupabaseCloudSync({} as never, { runCycle, rereadEverything })
 
-    await expect(cloud.runCycle()).resolves.toEqual({ decks: ['d1'] })
+    await expect(cloud.runCycle(['decks'])).resolves.toEqual({ decks: ['d1'] })
     expect(runCycle).toHaveBeenCalled()
     await cloud.rereadEverything()
     expect(rereadEverything).toHaveBeenCalled()

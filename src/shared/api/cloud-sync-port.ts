@@ -70,7 +70,11 @@ export interface CloudSyncPort {
     table: SyncedTable,
     ids: readonly string[],
   ): Promise<CloudDocument<T>[]>
-  runCycle(): Promise<PushedIds>
+  /**
+   * One replication cycle over `tables` and nothing else. Scoped, because a cycle that always
+   * carried every table could not push a quiet change without dragging the held ones with it.
+   */
+  runCycle(tables: readonly SyncedTable[]): Promise<PushedIds>
   /**
    * The next cycle reads every cloud document again from the first, not from the checkpoint. What
    * each local document was based on is kept, so a change waiting here still merges against it.

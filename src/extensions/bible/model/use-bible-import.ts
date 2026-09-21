@@ -6,6 +6,8 @@ import { type Deck, selectDecks, useDeckStore, useDeckStoreApi } from '@/entitie
 import { type Folder, selectFolders, useFolderStore } from '@/entities/folder'
 import { useImportDraft } from '@/widgets/content-editor'
 import { useBibleT } from '../i18n/use-bible-t'
+import { BIBLE_FEATURES } from '../manifest'
+import { useBibleFeature } from './use-bible-feature'
 import { addVerseCards } from '../features/add-verse-cards'
 import { keepMissingVerses } from '../features/keep-missing-verses'
 import { useBibleVerseStore, useBibleVerseStoreApi } from './context'
@@ -60,6 +62,10 @@ export interface BibleImport {
   spansRange: boolean
   /** How many verses Add would save into the Bible library; the save toggle shows only above 0. */
   saveCount: number
+  /** The Verse library feature is on: text is filled in from it, and Add can save into it. */
+  libraryAvailable: boolean
+  /** The Chapter decks feature is on: the app can place the cards for the learner. */
+  chapterDecksAvailable: boolean
 
   /** The box makes at least one card — until then the options below it have nothing to act on. */
   hasCards: boolean
@@ -111,9 +117,19 @@ export function useBibleImport(
     auto: !deckId,
     save: true,
   })
-  const { split, keepDuplicates, auto, save } = toggles
+  const { split, keepDuplicates } = toggles
 
-  const index = useMemo(() => indexLibrary(verses), [verses])
+  const libraryAvailable = useBibleFeature(BIBLE_FEATURES.library)
+  const chapterDecksAvailable = useBibleFeature(BIBLE_FEATURES.chapterDecks)
+
+  // With the Verse library switched off the import reads and writes no text: the passage is not
+  // prefilled, nothing is marked as held, and Add saves nothing. The verses themselves stay.
+  const stored = useMemo(() => indexLibrary(verses), [verses])
+  const empty = useMemo(() => indexLibrary([]), [])
+  const index = libraryAvailable ? stored : empty
+  // A switched-off feature is not a setting the learner can override from the import screen.
+  const auto = toggles.auto && chapterDecksAvailable
+  const save = toggles.save && libraryAvailable
   const recents = useMemo(() => recentPassages(cards), [cards])
   const chapterName = book && chapter ? chapterDeckName(book, chapter) : ''
 
@@ -170,6 +186,8 @@ export function useBibleImport(
     set: (toggle, on) => setToggles((current) => ({ ...current, [toggle]: on })),
     splitAvailable: made.splitAvailable,
     splitCount: made.splitCount,
+    libraryAvailable,
+    chapterDecksAvailable,
     spansRange: Boolean(ref && ref.to > ref.from),
     saveCount: made.unheld.length,
 

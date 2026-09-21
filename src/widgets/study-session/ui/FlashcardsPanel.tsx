@@ -17,7 +17,7 @@ import {
   studyFilterCounts as computeFilterCounts,
   upcomingIds,
 } from '@/features/review'
-import { isGradeAction, type SwipeDirection } from '@/shared/config/flashcard-swipe'
+import { isFastAction, isGradeAction, type SwipeDirection } from '@/shared/config/flashcard-swipe'
 import { CardScene, IconButton, StudySessionHeader } from '@/shared/ui'
 import { CardDraftSheet } from '@/widgets/content-editor'
 import { studyFaces } from '../model/study-faces'
@@ -110,6 +110,7 @@ export function FlashcardsPanel({
 
   const settings = useStudySettings({
     mode,
+    algorithm,
     deckPrefs,
     onDeckPrefsChange,
     lockedPrefs,
@@ -248,11 +249,16 @@ export function FlashcardsPanel({
     if (id && canEdit) onToggleFlag?.(id)
   }
 
+  /**
+   * A swipe means what the Deck's algorithm can honour. The config is keyed by that algorithm, so
+   * a Grade cannot reach a Fast review session, nor a Fast review answer a Spaced repetition one.
+   */
   const handleCommit = (dir: SwipeDirection) => {
     const action = activeSwipe[dir]
     if (action === 'flag') handleFlag()
     else if (action === 'skip') applySkip()
     else if (isGradeAction(action)) applyGrade(action)
+    else if (isFastAction(action)) applyAnswer(action)
   }
 
   useShake(settings.value.shakeToUndo && canUndo(state), handleUndo)
@@ -357,6 +363,9 @@ export function FlashcardsPanel({
             buckets={state.buckets}
             onGrade={applyGrade}
             onAnswer={applyAnswer}
+            onReveal={() => dispatch({ type: 'flip' })}
+            onUndo={handleUndo}
+            canUndo={canUndo(state)}
           />
         ) : null}
       </CardScene>
@@ -377,6 +386,7 @@ export function FlashcardsPanel({
           open={gearOpen}
           onClose={() => setGearOpen(false)}
           mode={mode}
+          algorithm={algorithm}
           quick={quick}
           settings={settings}
         />

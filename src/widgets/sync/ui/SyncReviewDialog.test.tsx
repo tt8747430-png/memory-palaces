@@ -1,4 +1,4 @@
-import { SYNCED_TABLES } from '@/shared/config/sync-tables'
+import { CORE_HELD_TABLES, CORE_QUIET_TABLES, SYNCED_TABLES } from '@/shared/config/sync-tables'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -41,6 +41,8 @@ function mount(rows: SyncReviewRows = READY, items: SyncReviewItem[] = ITEMS) {
     error: null,
     review: { items, rows },
     tables: SYNCED_TABLES,
+    held: CORE_HELD_TABLES,
+    quiet: CORE_QUIET_TABLES,
     labelKeys: {},
     run: vi.fn().mockResolvedValue({ kind: 'clean' }),
     restore: vi.fn().mockResolvedValue({ kind: 'clean' }),

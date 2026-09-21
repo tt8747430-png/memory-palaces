@@ -1,4 +1,5 @@
 export { repairSync, syncNow, type SyncNowOptions } from './sync-now'
+export { quietSync } from './quiet-sync'
 export { findReviewItems } from './find-review-items'
 export { describeReviewItems } from './describe-review-items'
 export { applyPendingDeletions } from './apply-pending-deletions'

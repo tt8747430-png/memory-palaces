@@ -4,11 +4,12 @@ import userEvent from '@testing-library/user-event'
 import { toast } from 'sonner'
 import { i18n } from '@/shared/i18n'
 import { makeCard } from '@/entities/card'
+import { isExtensionFeatureOn, isExtensionEnabled } from '@/entities/preferences'
 import { bibleMessages } from '../i18n/en'
 import { storedDeck } from '../testing/decks'
 import { renderImportPage } from '../testing/render-import-page'
 import { makeBibleVerse } from '../model/verse'
-import { BibleSettingsPage } from './BibleSettingsPage'
+import { BibleOverviewPage } from './BibleOverviewPage'
 
 vi.mock('sonner', () => ({ toast: Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn() }) }))
 
@@ -34,29 +35,49 @@ const verse = (chapter: number, number: number, text = 'held') =>
 const verseCard = (id: string, front: string, back: string, deckId = 'deck-1') =>
   makeCard({ id, createdAt: at, deckId, front, back })
 
-describe('BibleSettingsPage', () => {
-  it('names the translation and says the library is empty before anything is added', () => {
-    renderImportPage(<BibleSettingsPage />)
-    expect(screen.getByText('Biblia Dumitru Cornilescu 2024')).toBeInTheDocument()
+describe('BibleOverviewPage', () => {
+  it('says what the extension is, what it provides and what its library holds', () => {
+    renderImportPage(<BibleOverviewPage />, { verses: [verse(3, 16), verse(3, 17)] })
+
     expect(
-      screen.getByText('No Bible text yet. Add a passage, or add text from your cards.'),
+      screen.getByText(/a passage importer with a verse library of its own/i),
     ).toBeInTheDocument()
+    expect(screen.getByRole('switch', { name: 'Passage import' })).toBeChecked()
+    expect(screen.getByRole('switch', { name: 'Verse library' })).toBeChecked()
+    expect(screen.getByRole('switch', { name: 'Chapter decks' })).toBeChecked()
+    expect(screen.getByText('2 verses · 1 books')).toBeInTheDocument()
   })
 
-  it('lists each held book with its coverage, and folds the rest away', async () => {
+  it('switches one feature off without touching the extension or the others', async () => {
     const user = userEvent.setup()
-    renderImportPage(<BibleSettingsPage />, { verses: [verse(3, 16), verse(3, 17), verse(14, 1)] })
-    expect(screen.getByText('Ioan')).toBeInTheDocument()
-    expect(screen.getByText('2 of 21 chapters · 3 verses')).toBeInTheDocument()
-    expect(screen.queryByText('Geneza')).not.toBeInTheDocument()
+    const { preferencesStore } = renderImportPage(<BibleOverviewPage />)
 
-    await user.click(screen.getByRole('button', { name: 'Show 65 books without text' }))
-    expect(screen.getByText('Geneza')).toBeInTheDocument()
+    await user.click(screen.getByRole('switch', { name: 'Chapter decks' }))
+
+    await waitFor(() => {
+      const stored = preferencesStore.getState().preferences!
+      expect(isExtensionFeatureOn(stored, 'bible', 'chapterDecks')).toBe(false)
+      expect(isExtensionFeatureOn(stored, 'bible', 'import')).toBe(true)
+      expect(isExtensionEnabled(stored, 'bible')).toBe(true)
+    })
+  })
+
+  it('stops offering the library tools when the verse library is switched off', async () => {
+    const user = userEvent.setup()
+    renderImportPage(<BibleOverviewPage />)
+    expect(screen.getByRole('button', { name: /Add text from your cards/ })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('switch', { name: 'Verse library' }))
+
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: /Add text from your cards/ })).toBeNull(),
+    )
+    expect(screen.getByText(/the verse library is switched off/i)).toBeInTheDocument()
   })
 
   it('previews adding text from every card, then adds only what is new', async () => {
     const user = userEvent.setup()
-    const { verseStore } = renderImportPage(<BibleSettingsPage />, {
+    const { verseStore } = renderImportPage(<BibleOverviewPage />, {
       verses: [verse(3, 16)],
       decks: [storedDeck('deck-1')],
       cards: [
@@ -81,7 +102,7 @@ describe('BibleSettingsPage', () => {
 
   it('adds text from one deck, picked in words that say what picking does', async () => {
     const user = userEvent.setup()
-    const { verseStore } = renderImportPage(<BibleSettingsPage />, {
+    const { verseStore } = renderImportPage(<BibleOverviewPage />, {
       decks: [storedDeck('deck-1', { name: 'Ioan' }), storedDeck('deck-2', { name: 'Other' })],
       cards: [verseCard('c1', 'Ioan 3:17', 'new'), verseCard('c2', 'Ioan 3:18', 'other', 'deck-2')],
     })
@@ -97,7 +118,7 @@ describe('BibleSettingsPage', () => {
 
   it('says so when there is nothing new, without asking', async () => {
     const user = userEvent.setup()
-    renderImportPage(<BibleSettingsPage />, {
+    renderImportPage(<BibleOverviewPage />, {
       verses: [verse(3, 16)],
       decks: [storedDeck('deck-1')],
       cards: [verseCard('c1', 'Ioan 3:16', 'x')],
@@ -109,21 +130,27 @@ describe('BibleSettingsPage', () => {
     )
   })
 
-  it('offers Forget only in dev mode, and asks before forgetting', async () => {
-    const user = userEvent.setup()
-    const { verseStore } = renderImportPage(<BibleSettingsPage />, {
-      verses: [verse(3, 16)],
-      devMode: true,
-    })
-    await user.click(screen.getByRole('button', { name: 'Forget Ioan' }))
-    const dialog = await screen.findByRole('alertdialog')
-    expect(within(dialog).getByText('Forget Ioan?')).toBeInTheDocument()
-    await user.click(within(dialog).getByRole('button', { name: 'Forget' }))
-    await waitFor(() => expect(verseStore.getState().verses).toHaveLength(0))
+  it('offers the developer tools only in dev mode', () => {
+    renderImportPage(<BibleOverviewPage />)
+    expect(screen.queryByRole('button', { name: /Bible developer tools/ })).toBeNull()
+
+    cleanup()
+    renderImportPage(<BibleOverviewPage />, { devMode: true })
+    expect(screen.getByRole('button', { name: /Bible developer tools/ })).toBeInTheDocument()
   })
 
-  it('shows no Forget outside dev mode', () => {
-    renderImportPage(<BibleSettingsPage />, { verses: [verse(3, 16)] })
-    expect(screen.queryByRole('button', { name: 'Forget Ioan' })).not.toBeInTheDocument()
+  it('switches the whole extension off from its own page', async () => {
+    const user = userEvent.setup()
+    const onSwitchedOff = vi.fn()
+    const { preferencesStore } = renderImportPage(
+      <BibleOverviewPage onSwitchedOff={onSwitchedOff} />,
+    )
+
+    await user.click(screen.getByRole('button', { name: /Switch off Bible/ }))
+
+    await waitFor(() =>
+      expect(isExtensionEnabled(preferencesStore.getState().preferences!, 'bible')).toBe(false),
+    )
+    expect(onSwitchedOff).toHaveBeenCalled()
   })
 })
