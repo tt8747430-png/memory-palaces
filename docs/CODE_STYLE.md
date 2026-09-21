@@ -143,10 +143,19 @@ v4, two-layer tokens: primitives (`--p-navy-900`…) → semantic roles (`--prim
 - **Dark mode is automatic** (`[data-theme='dark']` remap). No scattered `dark:`, no hardcoded light/dark colors.
   - **One sanctioned exception:** the printed card-style presets in
     [`shared/lib/card-style/presets.ts`](../src/shared/lib/card-style/presets.ts) — every preset but `plain`. Those are _printed
-    materials_ a learner picks, not app chrome — slate, ruled paper, kraft stock, a survey map, a sky and a meadow look
-    the same under any theme, and remapping their ink would make "chalk" mean something different in dark mode. They
-    are literal by design and stay confined to that file's `PRESETS` map: the card's paper, ink, border and the
-    backdrop behind it, nothing else. `plain` is the one that follows the tokens like everything else.
+    materials_ a learner picks, not app chrome, so their colours are literal by design and stay confined to that
+    file's `PRESETS` map: the card's paper, ink, border and the backdrop behind it, nothing else. `plain` is the one
+    that follows the tokens like everything else.
+    - **A material is literal, not fixed: every printed preset carries a `dark` rendition.** A slab of white paper is
+      a lamp in a dark room, and a learner who set the app to dark asked not to be handed one. The night skin is the
+      _same material_ dimmed and re-inked — chalk stays a blackboard, kraft stays kraft — never a different material,
+      and it always lights its chrome from the dark block. `resolveCardStyle` / `resolveCardScene` / `cardSceneChrome`
+      take the scheme; components read it from `useColorScheme()`, which watches `data-theme` on the document (the
+      attribute `index.html` sets before first paint and `ThemeProvider` keeps). `card-style.test.ts` walks every
+      preset in **both** schemes and fails a printed one that paints the same face by night as by day.
+    - **Anything else that picks a colour by scheme reads the same attribute.** Not `prefers-color-scheme` — that is
+      the OS's answer, and the learner's may differ: a media-matched `<meta name="theme-color">` and sonner's
+      `theme="system"` both handed a dark app a light bar and white toasts.
     - `outlined` was the second such preset until deck schema v3. It stroked the theme's own ink around the theme's
       own paper, which in dark mode is a white rectangle drawn around a dark card — the tokens followed, and the
       result still read as a fault. `bold` is that idea as a _material_ instead, and `deckMigrations[3]` repaints
@@ -180,6 +189,34 @@ v4, two-layer tokens: primitives (`--p-navy-900`…) → semantic roles (`--prim
     and a **menu item** whose selected state is drawn from `data-highlighted`. `focus-visible:outline-none` paired with
     a `focus-visible:ring-*` is always safe: the pseudo-class raises specificity above `.shadow-rest`, so the ring is
     not clobbered by the control's own elevation.
+- **A control's footprint includes its states.** The `:focus-visible` ring draws 3px on a 2px offset —
+  `FOCUS_RING_OVERSHOOT` (5px) outside the box, and `focus-ring.test.ts` holds the constant to the stylesheet.
+  Pressed scale, armed scale and a tray's revealed buttons are footprint too. So:
+  - **Siblings gap by at least the ring** — `gap-2`, never `gap-1`, between a field and the control beside it.
+    The header search field ran into its ✕ at `gap-1`.
+  - **Nothing on the way up cuts it.** An ancestor's `overflow: hidden`, `clip-path`, mask or wipe must inset
+    _outward_ by the ring in every pose it animates through — `HeaderSearch` wipes with
+    `inset(-5px -5px -5px 100%)` → `inset(-5px)`, not `inset(0 0 0 100%)` → `inset(0)`, because the end pose
+    of a clip is what the field wears for as long as it is open. A box that clips at `0` is a ring cut off on
+    three sides.
+  - **Verify every state, not the rest state**: focused, pressed, armed, mid-animation, end pose — on the
+    phone, where `:focus-visible` is true for every text field the moment it is tapped.
+- **Invisible is not absent: a transparent overlay still takes the press.** `opacity: 0` removes an
+  element from sight and from nothing else. An always-mounted overlay that covers the whole of
+  something — a swipe rail, a queued card stack, a fading layer — gives its pointers back whenever
+  it is not the one on top: drive `pointerEvents` off the same value as the opacity
+  (`useTransform`), or mark it `pointer-events-none` / `inert`. Both `SwipeRow` rails are
+  `absolute … w-full`, so before this the trailing rail — later in the DOM, therefore over the
+  other — swallowed every tap meant for an open leading action, and the leading rail looked broken
+  while the trailing one worked. **A rail is not tested until a tray button has been pressed**, not
+  merely rendered: the commit-swipe path fires the same handler and passes either way
+  (`SwipeRow.test.tsx`).
+- **A surface on the page gradient needs an edge.** `--bg` runs from lavender to white; a tinted surface
+  (`--success-surface` is L 97.9%) has nowhere to stand at the white end. A card gets `border-border`, a status
+  banner its tone's border token — never a fill alone. The sync banner's right half vanished this way.
+- **A printed card face is opaque.** The study stack draws cards _behind_ the front one; alpha in a preset's
+  `bg` shows them through. `card-style.test.ts` refuses a translucent face. A frosted look comes from the
+  border and the highlight, not from seeing through.
 - **Mobile-first** — base = smallest screen, layer upward. Verify at phone width.
 
 ## 6. TypeScript & imports
