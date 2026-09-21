@@ -1,11 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render } from '@testing-library/react'
+import { THEME_COLOR } from './theme-color'
 import { ThemeProvider } from './ThemeProvider'
 
 afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
   delete document.documentElement.dataset.theme
+  document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => meta.remove())
 })
 
 function mockMatchMedia(matches: boolean) {
@@ -20,7 +22,20 @@ function mockMatchMedia(matches: boolean) {
   return { mql, emit: () => listeners.forEach((cb) => cb()) }
 }
 
+const themeColor = () =>
+  document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.content
+
 describe('ThemeProvider', () => {
+  it('paints the status bar in the theme the learner chose, not the one the OS is in', () => {
+    mockMatchMedia(false)
+    document.head.insertAdjacentHTML('beforeend', '<meta name="theme-color" content="#000000" />')
+    const { rerender } = render(<ThemeProvider theme="dark">x</ThemeProvider>)
+    expect(themeColor()).toBe(THEME_COLOR.dark)
+
+    rerender(<ThemeProvider theme="light">x</ThemeProvider>)
+    expect(themeColor()).toBe(THEME_COLOR.light)
+  })
+
   it('applies an explicit theme to the document root', () => {
     render(<ThemeProvider theme="dark">x</ThemeProvider>)
     expect(document.documentElement.dataset.theme).toBe('dark')

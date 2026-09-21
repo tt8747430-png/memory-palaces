@@ -1,7 +1,7 @@
 import { type ReactNode, useMemo } from 'react'
 import { Toaster } from 'sonner'
 import type { PersistedAuth } from '@/shared/api'
-import { selectIsReady } from '@/shared/lib'
+import { selectIsReady, useColorScheme } from '@/shared/lib'
 import { useSessionStore } from '@/entities/session'
 import type { Services } from '../composition-root'
 import { ExtensionsProvider } from '../extensions/ExtensionsProvider'
@@ -35,6 +35,25 @@ function AppSync({ services, children }: { services: Services; children: ReactNo
   )
 }
 
+/**
+ * The learner's theme, not the OS's: sonner's `theme="system"` lights the toasts from
+ * `prefers-color-scheme` and hands a dark app a white toast. It subscribes here rather than in
+ * `AppProviders` so a theme change repaints the toasts alone, not every provider in the tree.
+ */
+function ThemedToaster() {
+  const scheme = useColorScheme()
+  return (
+    <Toaster
+      position="bottom-center"
+      richColors
+      theme={scheme}
+      offset={{ bottom: 'var(--toast-inset)' }}
+      mobileOffset={{ bottom: 'var(--toast-inset)' }}
+      style={{ zIndex: 'var(--z-toast)' }}
+    />
+  )
+}
+
 export function AppProviders({ services, children }: { services: Services; children: ReactNode }) {
   return (
     <ServicesProvider services={services}>
@@ -49,14 +68,7 @@ export function AppProviders({ services, children }: { services: Services; child
       </PreferencesProvider>
       <NotificationBridge />
       <UpdatePrompt />
-      <Toaster
-        position="bottom-center"
-        richColors
-        theme="system"
-        offset={{ bottom: 'var(--toast-inset)' }}
-        mobileOffset={{ bottom: 'var(--toast-inset)' }}
-        style={{ zIndex: 'var(--z-toast)' }}
-      />
+      <ThemedToaster />
     </ServicesProvider>
   )
 }

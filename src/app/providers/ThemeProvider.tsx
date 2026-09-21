@@ -1,5 +1,6 @@
 import { type ReactNode, useLayoutEffect } from 'react'
 import type { Theme } from '@/entities/preferences'
+import { THEME_COLOR } from './theme-color'
 
 const DARK_QUERY = '(prefers-color-scheme: dark)'
 
@@ -12,6 +13,8 @@ function resolve(theme: Theme): 'light' | 'dark' {
 
 function apply(resolved: 'light' | 'dark') {
   document.documentElement.dataset.theme = resolved
+  const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
+  if (meta) meta.content = THEME_COLOR[resolved]
   try {
     localStorage.setItem(THEME_MIRROR_KEY, resolved)
   } catch {}

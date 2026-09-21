@@ -13,6 +13,8 @@ import {
 
 const plain = { preset: 'plain', font: 'default', textSize: 30, alignment: 'center' } as const
 
+const SCHEMES = ['light', 'dark'] as const
+
 const TOKEN_PRESETS = ['plain'] as const
 
 const PRINTED_PRESETS = CARD_STYLE_PRESET_IDS.filter(
@@ -22,6 +24,24 @@ const PRINTED_PRESETS = CARD_STYLE_PRESET_IDS.filter(
 const tokens = readStylesheet('tokens.css')
 
 const DECLARED = new Set([...tokens.matchAll(/^\s*(--[a-z0-9-]+)\s*:/gm)].map(([, name]) => name))
+
+/** The bottom paint of a layered `background`: the last top-level comma-separated layer. */
+function lastLayer(value: string): string {
+  const layers: string[] = []
+  let depth = 0
+  let start = 0
+  for (let i = 0; i < value.length; i++) {
+    const ch = value[i]
+    if (ch === '(') depth += 1
+    else if (ch === ')') depth -= 1
+    else if (ch === ',' && depth === 0) {
+      layers.push(value.slice(start, i).trim())
+      start = i + 1
+    }
+  }
+  layers.push(value.slice(start).trim())
+  return layers[layers.length - 1] ?? ''
+}
 
 function sceneBlock(chrome: 'dark' | 'light'): Map<string, string> {
   const body = new RegExp(`\\[data-scene='${chrome}'\\]\\s*\\{([^}]*)\\}`).exec(tokens)?.[1]
@@ -35,7 +55,7 @@ function sceneBlock(chrome: 'dark' | 'light'): Map<string, string> {
 
 describe('resolveCardStyle', () => {
   it('turns a style into custom properties', () => {
-    const vars = resolveCardStyle(plain)
+    const vars = resolveCardStyle(plain, 'light')
     expect(vars['--card-style-size']).toBe('30px')
     expect(vars['--card-style-align']).toBe('center')
     expect(vars['--card-style-font']).toContain('system-ui')
@@ -45,45 +65,91 @@ describe('resolveCardStyle', () => {
     expect(clampCardTextSize(4)).toBe(14)
     expect(clampCardTextSize(400)).toBe(40)
     expect(clampCardTextSize(22)).toBe(22)
-    expect(resolveCardStyle({ ...plain, textSize: 400 })['--card-style-size']).toBe('40px')
+    expect(resolveCardStyle({ ...plain, textSize: 400 }, 'light')['--card-style-size']).toBe('40px')
   })
 
-  it('gives every preset a background and an ink colour', () => {
-    for (const preset of CARD_STYLE_PRESET_IDS) {
-      const vars = resolveCardStyle({ ...plain, preset })
-      expect(vars['--card-style-bg']).toBeTruthy()
-      expect(vars['--card-style-ink']).toBeTruthy()
+  it('gives every preset a background and an ink colour, in either scheme', () => {
+    for (const scheme of SCHEMES) {
+      for (const preset of CARD_STYLE_PRESET_IDS) {
+        const vars = resolveCardStyle({ ...plain, preset }, scheme)
+        expect(vars['--card-style-bg'], `${preset}/${scheme}`).toBeTruthy()
+        expect(vars['--card-style-ink'], `${preset}/${scheme}`).toBeTruthy()
+      }
+    }
+  })
+
+  it('paints every face on an opaque base — the stack behind must not show through', () => {
+    for (const scheme of SCHEMES) {
+      for (const preset of CARD_STYLE_PRESET_IDS) {
+        const base = lastLayer(
+          resolveCardStyle({ ...plain, preset }, scheme)['--card-style-bg'] ?? '',
+        )
+        expect(base, `${preset}/${scheme} has no base paint`).toBeTruthy()
+        expect(base, `${preset}/${scheme} base is translucent: ${base}`).not.toMatch(
+          /rgba\(|hsla\(|\/\s*0?\.\d|transparent/,
+        )
+      }
+    }
+  })
+
+  it('has a night rendition of every printed preset, and keeps them apart', () => {
+    for (const preset of PRINTED_PRESETS) {
+      const day = resolveCardStyle({ ...plain, preset }, 'light')
+      const night = resolveCardStyle({ ...plain, preset }, 'dark')
+      expect(
+        night['--card-style-bg'],
+        `${preset} paints the same face at night as by day`,
+      ).not.toBe(day['--card-style-bg'])
+      expect(resolveCardScene({ ...plain, preset }, 'dark')['--scene-bg']).not.toBe(
+        resolveCardScene({ ...plain, preset }, 'light')['--scene-bg'],
+      )
+    }
+  })
+
+  it('follows the theme for the presets that are made of tokens', () => {
+    for (const preset of TOKEN_PRESETS) {
+      expect(resolveCardStyle({ ...plain, preset }, 'dark')).toEqual(
+        resolveCardStyle({ ...plain, preset }, 'light'),
+      )
     }
   })
 
   it('names only custom properties the app defines', () => {
     expect(DECLARED.size).toBeGreaterThan(20)
-    for (const preset of CARD_STYLE_PRESET_IDS) {
-      const style = resolveCardStyle({ ...plain, preset })
-      const scene = resolveCardScene({ ...plain, preset })
-      const painted = [...Object.values(style), ...Object.values(scene)].join(' ')
-      for (const [, name] of painted.matchAll(/var\((--[a-z0-9-]+)/g)) {
-        expect(DECLARED, `${preset} paints from ${name}`).toContain(name)
+    for (const scheme of SCHEMES) {
+      for (const preset of CARD_STYLE_PRESET_IDS) {
+        const style = resolveCardStyle({ ...plain, preset }, scheme)
+        const scene = resolveCardScene({ ...plain, preset }, scheme)
+        const painted = [...Object.values(style), ...Object.values(scene)].join(' ')
+        for (const [, name] of painted.matchAll(/var\((--[a-z0-9-]+)/g)) {
+          expect(DECLARED, `${preset} paints from ${name}`).toContain(name)
+        }
       }
     }
   })
 
   it('serves each font family', () => {
-    expect(resolveCardStyle({ ...plain, font: 'serif' })['--card-style-font']).toContain('serif')
-    expect(resolveCardStyle({ ...plain, font: 'mono' })['--card-style-font']).toContain('mono')
+    expect(resolveCardStyle({ ...plain, font: 'serif' }, 'light')['--card-style-font']).toContain(
+      'serif',
+    )
+    expect(resolveCardStyle({ ...plain, font: 'mono' }, 'light')['--card-style-font']).toContain(
+      'mono',
+    )
   })
 })
 
 describe('resolveCardScene', () => {
-  it('gives every preset a backdrop', () => {
-    for (const preset of CARD_STYLE_PRESET_IDS) {
-      expect(resolveCardScene({ ...plain, preset })['--scene-bg']).toBeTruthy()
+  it('gives every preset a backdrop, in either scheme', () => {
+    for (const scheme of SCHEMES) {
+      for (const preset of CARD_STYLE_PRESET_IDS) {
+        expect(resolveCardScene({ ...plain, preset }, scheme)['--scene-bg']).toBeTruthy()
+      }
     }
   })
 
   it('carries nothing but the backdrop — the chrome is an attribute', () => {
     for (const preset of CARD_STYLE_PRESET_IDS) {
-      expect(Object.keys(resolveCardScene({ ...plain, preset }))).toEqual(['--scene-bg'])
+      expect(Object.keys(resolveCardScene({ ...plain, preset }, 'light'))).toEqual(['--scene-bg'])
     }
   })
 })
@@ -91,15 +157,23 @@ describe('resolveCardScene', () => {
 describe('cardSceneChrome', () => {
   it('leaves the app chrome alone for the presets that follow the theme', () => {
     for (const preset of TOKEN_PRESETS) {
-      expect(cardSceneChrome({ ...plain, preset })).toBeUndefined()
+      expect(cardSceneChrome({ ...plain, preset }, 'light')).toBeUndefined()
     }
   })
 
-  it('lights every printed preset from one of the two blocks', () => {
+  it('lights every printed preset from one of the two blocks, in either scheme', () => {
+    for (const scheme of SCHEMES) {
+      for (const preset of PRINTED_PRESETS) {
+        expect(['dark', 'light'], `${preset}/${scheme} has no printed chrome`).toContain(
+          cardSceneChrome({ ...plain, preset }, scheme),
+        )
+      }
+    }
+  })
+
+  it('lights a night rendition from the dark block — its paper is dark', () => {
     for (const preset of PRINTED_PRESETS) {
-      expect(['dark', 'light'], `${preset} has no printed chrome`).toContain(
-        cardSceneChrome({ ...plain, preset }),
-      )
+      expect(cardSceneChrome({ ...plain, preset }, 'dark'), `${preset} at night`).toBe('dark')
     }
   })
 
@@ -159,12 +233,14 @@ describe('coerceCardStyle', () => {
   })
 
   it('paints a retired preset instead of throwing — the study screen must not crash', () => {
-    expect(() => resolveCardStyle(retired)).not.toThrow()
-    expect(resolveCardStyle(retired)['--card-style-bg']).toBe(
-      resolveCardStyle(plain)['--card-style-bg'],
+    expect(() => resolveCardStyle(retired, 'light')).not.toThrow()
+    expect(resolveCardStyle(retired, 'light')['--card-style-bg']).toBe(
+      resolveCardStyle(plain, 'light')['--card-style-bg'],
     )
-    expect(resolveCardScene(retired)['--scene-bg']).toBe(resolveCardScene(plain)['--scene-bg'])
-    expect(cardSceneChrome(retired)).toBeUndefined()
+    expect(resolveCardScene(retired, 'light')['--scene-bg']).toBe(
+      resolveCardScene(plain, 'light')['--scene-bg'],
+    )
+    expect(cardSceneChrome(retired, 'light')).toBeUndefined()
   })
 })
 

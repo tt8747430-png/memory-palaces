@@ -163,6 +163,13 @@
   --rating: var(--p-gold-400);
   --rating-edge: var(--p-gold-700);
 
+  /* A tinted surface's edge, mixed from its own ink so the theme and scene remaps carry it along.
+     A fill alone has nowhere to stand at the white end of --bg (CODE_STYLE §5). */
+  --info-border: color-mix(in oklch, var(--info-foreground) 14%, transparent);
+  --success-border: color-mix(in oklch, var(--success-on-surface) 22%, transparent);
+  --warning-border: color-mix(in oklch, var(--warning-foreground) 22%, transparent);
+  --danger-border: color-mix(in oklch, var(--danger-on-surface) 22%, transparent);
+
   --sheet-max-h: calc(var(--app-height) * 0.88);
 
   --sw-rose: oklch(60% 0.196 14);
@@ -283,6 +290,11 @@
   --danger: var(--p-red-500);
   --danger-surface: color-mix(in oklch, var(--p-red-500) 18%, transparent);
   --danger-on-surface: oklch(82% 0.12 22);
+
+  --info-border: color-mix(in oklch, var(--info-foreground) 24%, transparent);
+  --success-border: color-mix(in oklch, var(--success-on-surface) 30%, transparent);
+  --warning-border: color-mix(in oklch, var(--warning-foreground) 30%, transparent);
+  --danger-border: color-mix(in oklch, var(--danger-on-surface) 30%, transparent);
 }
 
 [data-scene='light'] {
@@ -310,6 +322,11 @@
   --warning-foreground: var(--p-amber-700);
   --danger: var(--p-red-600);
   --danger-surface: var(--p-red-50);
+
+  --info-border: color-mix(in oklch, var(--info-foreground) 14%, transparent);
+  --success-border: color-mix(in oklch, var(--success-on-surface) 22%, transparent);
+  --warning-border: color-mix(in oklch, var(--warning-foreground) 22%, transparent);
+  --danger-border: color-mix(in oklch, var(--danger-on-surface) 22%, transparent);
   --danger-on-surface: var(--p-red-700);
 }
 

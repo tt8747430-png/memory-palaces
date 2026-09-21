@@ -1,6 +1,12 @@
 import type { CSSProperties } from 'react'
 import type { CardStyle } from '@/entities/deck'
-import { CARD_STYLE_SURFACE, CARD_STYLE_TEXT, cn, resolveCardStyle } from '@/shared/lib'
+import {
+  CARD_STYLE_SURFACE,
+  CARD_STYLE_TEXT,
+  cn,
+  resolveCardStyle,
+  useColorScheme,
+} from '@/shared/lib'
 
 export interface StylePreviewProps {
   style: CardStyle
@@ -11,7 +17,8 @@ export interface StylePreviewProps {
 }
 
 export function StylePreview({ style, front, back, className, compact }: StylePreviewProps) {
-  const vars = resolveCardStyle(style) as CSSProperties
+  const scheme = useColorScheme()
+  const vars = resolveCardStyle(style, scheme) as CSSProperties
   return (
     <div
       style={vars}

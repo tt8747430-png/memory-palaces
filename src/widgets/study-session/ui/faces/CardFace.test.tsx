@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders } from '@/shared/test/render-with-providers'
+import { PRESETS } from '@/shared/lib/card-style/presets'
 import { CardFace } from './CardFace'
 import { makeFaceProps } from './face-fixtures'
 import type { FaceProps } from './types'
@@ -30,6 +31,18 @@ describe('CardFace', () => {
     const shell = screen.getByTestId('card-face')
     expect(shell.style.getPropertyValue('--card-style-size')).toBe('22px')
     expect(shell.style.getPropertyValue('--card-style-align')).toBe('left')
+  })
+
+  it('takes the night rendition of that style when the app is dark', () => {
+    document.documentElement.dataset.theme = 'dark'
+    try {
+      setup({ cardStyle: { preset: 'paper', font: 'serif', textSize: 22, alignment: 'left' } })
+      const shell = screen.getByTestId('card-face')
+      expect(shell.style.getPropertyValue('--card-style-bg')).toBe(PRESETS.paper.dark?.bg)
+      expect(shell.style.getPropertyValue('--card-style-ink')).toBe(PRESETS.paper.dark?.ink)
+    } finally {
+      delete document.documentElement.dataset.theme
+    }
   })
 
   it('renders the children and footer slot', () => {

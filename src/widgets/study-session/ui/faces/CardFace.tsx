@@ -9,6 +9,7 @@ import {
   CARD_STYLE_TEXT,
   cn,
   resolveCardStyle,
+  useColorScheme,
   SCREEN_SCROLL,
   useKeyboardReveal,
 } from '@/shared/lib'
@@ -35,6 +36,7 @@ export function CardFace({
 }: CardFaceProps) {
   const { card, cardStyle, canSpeak, onSpeak, active, mode, onChangeMode, onOpenGear } = face
   const flagged = card.card.flagged
+  const scheme = useColorScheme()
   const { t } = useTranslation()
   const bodyRef = useRef<HTMLDivElement | null>(null)
   const contentRef = useRef<HTMLDivElement>(null)
@@ -73,7 +75,7 @@ export function CardFace({
   return (
     <div
       data-testid="card-face"
-      style={resolveCardStyle(cardStyle) as CSSProperties}
+      style={resolveCardStyle(cardStyle, scheme) as CSSProperties}
       className={cn(
         'absolute inset-0 flex flex-col rounded-card-featured shadow-elevated backface-hidden',
         CARD_STYLE_SURFACE,

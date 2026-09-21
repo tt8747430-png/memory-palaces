@@ -2,10 +2,20 @@ export * from './ids'
 export { clampCardTextSize, coerceCardStyle, sameCardStyle } from './coerce'
 export { CHROME_TOKENS, type SceneChrome } from './presets'
 
+import type { ColorScheme } from '../color-scheme'
 import type { CardSceneVars, CardStyleInput, CardStyleVars } from './ids'
 import { coerceCardStyle } from './coerce'
 import { FONTS } from './materials'
-import { PRESETS, type SceneChrome } from './presets'
+import { PRESETS, type PresetSkin, type SceneChrome } from './presets'
+
+/**
+ * The material as it is printed in the scheme the app is painted in. A preset with no night
+ * rendition is made of tokens, which the theme remaps on its own.
+ */
+function skinFor(input: CardStyleInput, scheme: ColorScheme): Omit<PresetSkin, 'dark'> {
+  const skin = PRESETS[coerceCardStyle(input).preset]
+  return scheme === 'dark' ? (skin.dark ?? skin) : skin
+}
 
 export const CARD_STYLE_SURFACE =
   '[background:var(--card-style-bg)] [border:var(--card-style-border)]'
@@ -16,9 +26,9 @@ export const CARD_STYLE_TEXT =
 
 export const CARD_SCENE_SURFACE = '[background:var(--scene-bg)]'
 
-export function resolveCardStyle(input: CardStyleInput): CardStyleVars {
+export function resolveCardStyle(input: CardStyleInput, scheme: ColorScheme): CardStyleVars {
   const style = coerceCardStyle(input)
-  const skin = PRESETS[style.preset]
+  const skin = skinFor(input, scheme)
   return {
     '--card-style-bg': skin.bg,
     '--card-style-ink': skin.ink,
@@ -29,10 +39,13 @@ export function resolveCardStyle(input: CardStyleInput): CardStyleVars {
   }
 }
 
-export function resolveCardScene(input: CardStyleInput): CardSceneVars {
-  return { '--scene-bg': PRESETS[coerceCardStyle(input).preset].scene }
+export function resolveCardScene(input: CardStyleInput, scheme: ColorScheme): CardSceneVars {
+  return { '--scene-bg': skinFor(input, scheme).scene }
 }
 
-export function cardSceneChrome(input: CardStyleInput): SceneChrome | undefined {
-  return PRESETS[coerceCardStyle(input).preset].chrome
+export function cardSceneChrome(
+  input: CardStyleInput,
+  scheme: ColorScheme,
+): SceneChrome | undefined {
+  return skinFor(input, scheme).chrome
 }
