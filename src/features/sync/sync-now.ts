@@ -1,4 +1,4 @@
-import { errorMessage, type SyncOutcome } from '@/shared/lib'
+import { authFailure, errorMessage, type SyncOutcome } from '@/shared/lib'
 import { type PendingChange, pendingIn, selectPendingChanges } from '@/entities/pending-change'
 import { appendSyncLog, selectSyncState, type SyncLogEntry } from '@/entities/sync-state'
 import { advance, findDestructive, peekAll, peekedCount, stepOverOwnEcho } from './divergence'
@@ -29,9 +29,11 @@ async function logSync(deps: SyncDeps, entry: Omit<SyncLogEntry, 'at'>): Promise
     .catch(() => {})
 }
 
-export async function syncNow(deps: SyncDeps, options: SyncNowOptions = {}): Promise<SyncOutcome> {
-  if (!deps.isOnline()) return { kind: 'offline' }
-
+/**
+ * One cycle, reported but not logged as failed: whether a failure is the end of the Sync is
+ * `syncNow`'s to decide, and a token it can refresh does not deserve a line in the log.
+ */
+async function attemptSync(deps: SyncDeps, options: SyncNowOptions): Promise<SyncOutcome> {
   const started = selectSyncState(deps.syncStateStore.getState())
   // Only what this cycle carries: a disabled extension's changes wait in the log for its return,
   // and must not be cleared by a cycle that never pushed them.
@@ -68,10 +70,29 @@ export async function syncNow(deps: SyncDeps, options: SyncNowOptions = {}): Pro
 
     return { kind: outcome }
   } catch (error) {
-    const reason = errorMessage(error)
+    return { kind: 'failed', reason: errorMessage(error) }
+  }
+}
+
+export async function syncNow(deps: SyncDeps, options: SyncNowOptions = {}): Promise<SyncOutcome> {
+  if (!deps.isOnline()) return { kind: 'offline' }
+
+  let outcome = await attemptSync(deps, options)
+  if (outcome.kind === 'failed') {
+    // A refused token is worth one more try behind a fresh one. A device clock the server reads
+    // as being in the future is not: every token it is handed looks issued ahead of time, and
+    // only the learner can put that right — so the Sync says so instead of trying again.
+    const failure = authFailure(outcome.reason)
+    if (failure === 'token' && (await deps.refreshAuth().catch(() => false))) {
+      outcome = await attemptSync(deps, options)
+    }
+  }
+  if (outcome.kind === 'failed') {
+    const reason = authFailure(outcome.reason) ?? outcome.reason
     await logSync(deps, { outcome: 'failed', pushed: 0, pulled: 0, reason })
     return { kind: 'failed', reason }
   }
+  return outcome
 }
 
 /**

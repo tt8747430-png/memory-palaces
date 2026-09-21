@@ -9,7 +9,7 @@ import {
   RefreshCw,
   WifiOff,
 } from 'lucide-react'
-import { cn, EASE_OUT, useOnline, useSyncRunner } from '@/shared/lib'
+import { cn, EASE_OUT, syncFailureMessage, useOnline, useSyncRunner } from '@/shared/lib'
 import type { SyncedTable } from '@/shared/config/sync-tables'
 import { Button } from '@/shared/ui'
 import { selectSessionKind, useSessionStore } from '@/entities/session'
@@ -18,10 +18,10 @@ import { selectCloudChanged, useSyncStateStore } from '@/entities/sync-state'
 import { bannerView, type SyncBannerMessage, type SyncBannerTone } from '../model/banner-state'
 
 const TONE: Record<SyncBannerTone, string> = {
-  info: 'bg-info-surface text-(--info-foreground)',
-  warning: 'bg-(--warning-surface) text-(--warning-foreground)',
-  success: 'bg-(--success-surface) text-(--success-on-surface)',
-  danger: 'bg-(--danger-surface) text-(--danger-on-surface)',
+  info: 'bg-info-surface text-(--info-foreground) border-(--info-border)',
+  warning: 'bg-(--warning-surface) text-(--warning-foreground) border-(--warning-border)',
+  success: 'bg-(--success-surface) text-(--success-on-surface) border-(--success-border)',
+  danger: 'bg-(--danger-surface) text-(--danger-on-surface) border-(--danger-border)',
 }
 
 const ICON: Record<SyncBannerMessage, typeof RefreshCw> = {
@@ -52,6 +52,8 @@ export function SyncBanner({ className }: SyncBannerProps) {
   const pendingCount = usePendingChangeStore(useMemo(() => selectPendingCountIn(tables), [tables]))
   const cloudChanged = useSyncStateStore(selectCloudChanged)
 
+  const failure = syncFailureMessage(t, runner?.error ?? null)
+
   const view =
     runner && kind === 'account'
       ? bannerView({ phase: runner.phase, pendingCount, cloudChanged, online })
@@ -70,7 +72,7 @@ export function SyncBanner({ className }: SyncBannerProps) {
           exit={reduce ? { opacity: 0 } : { opacity: 0, y: -8 }}
           transition={{ duration: 0.28, ease: EASE_OUT }}
           className={cn(
-            'flex items-center gap-3 rounded-card px-3.5 py-3',
+            'flex items-center gap-3 rounded-card border px-3.5 py-3',
             TONE[view.tone],
             view.muted && 'opacity-80',
             className,
@@ -84,8 +86,8 @@ export function SyncBanner({ className }: SyncBannerProps) {
             <p className="text-label leading-snug">
               {t(`sync.banner.${view.message}`, { count: view.count })}
             </p>
-            {view.tone === 'danger' && runner?.error ? (
-              <p className="truncate text-label opacity-80">{runner.error}</p>
+            {view.tone === 'danger' && failure ? (
+              <p className="text-label opacity-80">{failure}</p>
             ) : null}
           </div>
           {view.action ? (

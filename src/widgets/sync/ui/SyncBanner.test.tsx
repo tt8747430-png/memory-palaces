@@ -127,6 +127,18 @@ describe('SyncBanner', () => {
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
   })
 
+  it('wears its tone’s edge, so it holds against the white end of the page gradient', async () => {
+    await setup({ runner: runner({ phase: 'synced' }) })
+    const banner = await screen.findByRole('status')
+    expect(banner).toHaveClass('border')
+    expect(banner.className).toMatch(/border-\(--success-border\)/)
+  })
+
+  it('says what an expired sign-in means, instead of repeating the server', async () => {
+    await setup({ runner: runner({ phase: 'failed', error: 'token' }) })
+    expect(await screen.findByRole('status')).toHaveTextContent(/sign-in has expired/i)
+  })
+
   it('states the count and offers Synchronise', async () => {
     await setup({ pending: 2 })
 

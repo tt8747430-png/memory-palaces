@@ -36,5 +36,10 @@ export interface AuthGateway {
   updatePassword(password: string): Promise<void>
   completeAuthRedirect(code: string): Promise<void>
   getCurrent(): Promise<PersistedAuth | null>
+  /**
+   * Asks for a new access token. True when one came back — a Sync the server refused over the
+   * old token is worth one more try; anything else is not this device's to mend.
+   */
+  refreshSession(): Promise<boolean>
   onAuthChange(cb: (auth: PersistedAuth | null) => void): Unsubscribe
 }

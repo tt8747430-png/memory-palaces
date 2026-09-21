@@ -104,6 +104,11 @@ export class SupabaseAuthGateway implements AuthGateway {
     return this.readGuest()
   }
 
+  async refreshSession(): Promise<boolean> {
+    const { data, error } = await this.client.auth.refreshSession()
+    return !error && Boolean(data.session)
+  }
+
   onAuthChange(cb: (auth: PersistedAuth | null) => void): Unsubscribe {
     const { data } = this.client.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {

@@ -25,6 +25,11 @@ export const sync = {
     synchronise: 'Synchronise',
     retry: 'Retry',
   },
+  failure: {
+    token: 'Your sign-in has expired on this device. Sign in again to synchronise.',
+    clock:
+      "This device's date and time are wrong, so the server refuses its sign-in. Correct them, then synchronise.",
+  },
   review: {
     title: 'Deleted here, changed elsewhere',
     body_one:

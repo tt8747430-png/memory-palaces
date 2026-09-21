@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { cn } from '@/shared/lib'
+import { cn, syncFailureMessage } from '@/shared/lib'
 import { SettingsSection } from '@/shared/ui'
 import type { SyncLogEntry, SyncLogOutcome } from '@/entities/sync-state'
 import { relativeTime } from '../model/relative-time'
@@ -27,7 +27,7 @@ export function RecentSyncs({ log }: { log: readonly SyncLogEntry[] }) {
                 </span>
                 {entry.reason ? (
                   <span className="block truncate text-label text-muted-foreground">
-                    {entry.reason}
+                    {syncFailureMessage(t, entry.reason ?? null)}
                   </span>
                 ) : null}
               </span>

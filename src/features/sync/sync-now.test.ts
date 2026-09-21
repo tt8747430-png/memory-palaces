@@ -206,6 +206,65 @@ describe('syncNow', () => {
     expect(state(deps).lastSyncedAt).toBeNull()
   })
 
+  it('refreshes the session and tries once more when the server refused the token', async () => {
+    const { deps, cloud, log } = syncFixture()
+    await deps.deckStore.getState().save(deck('d1'))
+    cloud.failNextCycle('invalid JWT: unable to parse or verify signature')
+    let refreshed = 0
+    deps.refreshAuth = async () => {
+      refreshed += 1
+      return true
+    }
+
+    await expect(syncNow(deps)).resolves.toEqual({ kind: 'clean' })
+    expect(refreshed).toBe(1)
+    // The refused attempt and the one behind the new token, which pushed and confirmed the deck.
+    expect(cloud.cycles).toBe(2)
+    expect(log()).toEqual([])
+  })
+
+  it('gives up after one refresh rather than looping on a token it cannot mend', async () => {
+    const { deps, cloud } = syncFixture()
+    await deps.deckStore.getState().save(deck('d1'))
+    cloud.failNextCycle('JWT expired')
+    cloud.duringCycle = async () => {
+      cloud.failNextCycle('JWT expired')
+    }
+    let refreshed = 0
+    deps.refreshAuth = async () => {
+      refreshed += 1
+      return true
+    }
+
+    const outcome = await syncNow(deps)
+    expect(outcome.kind).toBe('failed')
+    expect(refreshed).toBe(1)
+  })
+
+  it('does not refresh for a failure that has nothing to do with the token', async () => {
+    const { deps, cloud } = syncFixture()
+    await deps.deckStore.getState().save(deck('d1'))
+    cloud.failNextCycle('Failed to fetch')
+    let refreshed = 0
+    deps.refreshAuth = async () => {
+      refreshed += 1
+      return true
+    }
+
+    await expect(syncNow(deps)).resolves.toEqual({ kind: 'failed', reason: 'Failed to fetch' })
+    expect(refreshed).toBe(0)
+  })
+
+  it('names a device clock the learner can fix instead of repeating the server', async () => {
+    const { deps, cloud } = syncFixture()
+    await deps.deckStore.getState().save(deck('d1'))
+    cloud.failNextCycle('invalid JWT: token used before issued')
+    deps.refreshAuth = async () => true
+
+    const outcome = await syncNow(deps)
+    expect(outcome).toEqual({ kind: 'failed', reason: 'clock' })
+  })
+
   it('keeps a write made during the cycle pending', async () => {
     const { deps, cloud, log } = syncFixture()
     await deps.deckStore.getState().save(deck('d1'))

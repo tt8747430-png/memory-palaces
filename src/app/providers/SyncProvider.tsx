@@ -20,6 +20,7 @@ import {
   type SyncReviewItem,
   type SyncRunner,
   SyncRunnerContext,
+  useAuthGateway,
   useLatest,
 } from '@/shared/lib'
 import { useDeckStoreApi } from '@/entities/deck'
@@ -72,6 +73,7 @@ export function SyncProvider({
   dataOwner = localDataOwner,
   children,
 }: SyncProviderProps) {
+  const gateway = useAuthGateway()
   const deckStore = useDeckStoreApi()
   const cardStore = useCardStoreApi()
   const folderStore = useFolderStoreApi()
@@ -146,10 +148,12 @@ export function SyncProvider({
             questionStore,
             now: nowIso,
             isOnline: readOnline,
+            refreshAuth: () => gateway.refreshSession(),
           }
         : null,
     [
       cloudSync,
+      gateway,
       tables,
       account,
       watchingFor,

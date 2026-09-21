@@ -61,6 +61,11 @@ export class LocalAuthGateway implements AuthGateway {
     return this.read()
   }
 
+  /** There is no token to refresh without a cloud: a local session never expires. */
+  async refreshSession(): Promise<boolean> {
+    return false
+  }
+
   onAuthChange(cb: (auth: PersistedAuth | null) => void): Unsubscribe {
     this.listeners.add(cb)
     return () => {

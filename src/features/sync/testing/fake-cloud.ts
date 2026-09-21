@@ -175,6 +175,8 @@ export function syncFixture(options: { state?: Partial<SyncState> } = {}) {
     questionStore: started(createQuestionStore(repos.questions, port('questions'))),
     now: () => NOW,
     isOnline: () => true,
+    // A fake account gateway: a Sync under test never has a token to mend.
+    refreshAuth: async () => false,
   }
 
   const pullEverything = async () => {

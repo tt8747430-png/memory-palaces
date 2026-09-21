@@ -22,4 +22,10 @@ export interface SyncDeps {
   questionStore: QuestionStore
   now: () => string
   isOnline: () => boolean
+  /**
+   * Asks the account gateway for a fresh access token. A cycle the server refused over the token
+   * it was handed gets exactly one more try behind a new one; without this, an expired token
+   * reads to the learner as "Sync did not finish" forever.
+   */
+  refreshAuth: () => Promise<boolean>
 }
