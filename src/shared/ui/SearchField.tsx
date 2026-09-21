@@ -37,7 +37,8 @@ export function SearchField({
   }, [])
 
   return (
-    <div className={cn('flex items-center gap-1', className)}>
+    // gap-2: the field's focus ring draws 5px outside it, and the close control must not sit in that.
+    <div className={cn('flex items-center gap-2', className)}>
       <span className="relative min-w-0 flex-1">
         <Search
           className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"

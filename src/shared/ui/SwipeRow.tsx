@@ -77,6 +77,14 @@ export function SwipeRow({
 
   const leadingOpacity = useTransform(x, (v) => (v > 0 ? 1 : 0))
   const trailingOpacity = useTransform(x, (v) => (v < 0 ? 1 : 0))
+  /**
+   * Both rails are full-width and always mounted, so at rest each one lies over the whole row —
+   * and a transparent element still takes the press. Whichever rail the row is not open on gives
+   * its pointers back, or the one on top (trailing, later in the DOM) swallows every tap meant
+   * for the other's buttons.
+   */
+  const leadingHits = useTransform(x, (v) => (v > 0 ? 'auto' : 'none'))
+  const trailingHits = useTransform(x, (v) => (v < 0 ? 'auto' : 'none'))
 
   const settle = useCallback(
     (to: number) => {
@@ -217,7 +225,7 @@ export function SwipeRow({
       {hasLeading ? (
         <motion.div
           aria-hidden
-          style={{ opacity: leadingOpacity }}
+          style={{ opacity: leadingOpacity, pointerEvents: leadingHits }}
           className={cn(
             'absolute inset-y-0 left-0 -z-10 flex w-full items-center justify-start',
             bleed && 'pl-5',
@@ -237,7 +245,7 @@ export function SwipeRow({
       {hasTrailing ? (
         <motion.div
           aria-hidden
-          style={{ opacity: trailingOpacity }}
+          style={{ opacity: trailingOpacity, pointerEvents: trailingHits }}
           className={cn(
             'absolute inset-y-0 right-0 -z-10 flex w-full items-center justify-end',
             bleed && 'pr-5',

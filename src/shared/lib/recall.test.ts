@@ -61,6 +61,12 @@ describe('wordInitial', () => {
   it('treats an apostrophe as an intra-word connector too', () => {
     expect(wordInitial('într’un')).toEqual({ lead: '', initial: 'î’u', hidden: 4, trail: '' })
   })
+
+  it('prints a token with no letters once, never as lead and trail both', () => {
+    expect(wordInitial('–')).toEqual({ lead: '–', initial: '', hidden: 0, trail: '' })
+    expect(wordInitial('—')).toEqual({ lead: '—', initial: '', hidden: 0, trail: '' })
+    expect(wordInitial('...')).toEqual({ lead: '...', initial: '', hidden: 0, trail: '' })
+  })
 })
 
 describe('normalizeInitial', () => {

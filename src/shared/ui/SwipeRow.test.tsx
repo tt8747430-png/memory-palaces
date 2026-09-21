@@ -62,6 +62,85 @@ const AT_REST = 'none'
 
 const displacement = (name: string) => sledOf(name).style.transform
 
+const bothRails = (onLeading: () => void, onTrailing: () => void) => ({
+  leading: [
+    {
+      id: 'known',
+      icon: <Trash2 aria-hidden />,
+      label: 'Known',
+      accent: 'teal' as const,
+      onAction: onLeading,
+    },
+  ],
+  trailing: trailing(onTrailing),
+})
+
+const trayOf = (label: string) =>
+  screen.getByRole('button', { name: label, hidden: true }).parentElement as HTMLElement
+
+describe('SwipeRow — a shut rail must not stand in the open one’s way', () => {
+  it('keeps both rails out of hit-testing while the row is at rest', () => {
+    render(
+      <SwipeRow {...bothRails(vi.fn(), vi.fn())}>
+        <div data-testid="a">a</div>
+      </SwipeRow>,
+    )
+    expect(trayOf('Known').style.pointerEvents).toBe('none')
+    expect(trayOf('Delete').style.pointerEvents).toBe('none')
+  })
+
+  it('hands pointers to the leading rail alone once it is open', async () => {
+    const onLeading = vi.fn()
+    render(
+      <SwipeRow {...bothRails(onLeading, vi.fn())}>
+        <div data-testid="a">a</div>
+      </SwipeRow>,
+    )
+    swipe('a', 400)
+    await painted()
+    expect(displacement('a')).toContain('translateX(60px)')
+
+    // The trailing tray is full-width and later in the DOM: left hit-testable it swallows
+    // every press meant for the leading buttons it covers.
+    expect(trayOf('Delete').style.pointerEvents).toBe('none')
+    expect(trayOf('Known').style.pointerEvents).toBe('auto')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Known', hidden: true }))
+    expect(onLeading).toHaveBeenCalledOnce()
+  })
+
+  it('hands pointers to the trailing rail alone once it is open', async () => {
+    const onTrailing = vi.fn()
+    render(
+      <SwipeRow {...bothRails(vi.fn(), onTrailing)}>
+        <div data-testid="a">a</div>
+      </SwipeRow>,
+    )
+    swipe('a', 240)
+    await painted()
+    expect(displacement('a')).toContain('translateX(-60px)')
+
+    expect(trayOf('Known').style.pointerEvents).toBe('none')
+    expect(trayOf('Delete').style.pointerEvents).toBe('auto')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete', hidden: true }))
+    expect(onTrailing).toHaveBeenCalledOnce()
+  })
+
+  it('shuts the rails to pointers again when the row settles back', async () => {
+    render(
+      <SwipeRow {...bothRails(vi.fn(), vi.fn())}>
+        <div data-testid="a">a</div>
+      </SwipeRow>,
+    )
+    swipe('a', 400)
+    await painted()
+    fireEvent.click(screen.getByRole('button', { name: 'Known', hidden: true }))
+    await painted()
+    expect(trayOf('Known').style.pointerEvents).toBe('none')
+  })
+})
+
 describe('SwipeRow', () => {
   it('fires the edge action on a swipe past the commit point', () => {
     const onAction = vi.fn()

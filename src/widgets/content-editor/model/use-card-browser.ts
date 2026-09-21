@@ -15,20 +15,24 @@ import { CARD_EASE, SPRING } from '../ui/browser-poses'
 
 const TURN: FlingThresholds = { distance: 70, speed: 0.45 }
 
-export type EnterFrom = 'behind' | 'edge' | null
-
 export interface CardBrowserState {
   index: number
   current: Card | null
-  ahead: Card[]
+  /**
+   * The two stacks behind the current card, nearest first. Both are rendered, and the view
+   * cross-fades between them from the card's own position — so whichever way the card goes, it
+   * uncovers the card that will take over, and nothing re-renders mid-drag (CODE_STYLE §12).
+   */
+  behindNext: Card[]
+  behindPrev: Card[]
   flipped: boolean
-  enterFrom: EnterFrom
+  /** The current card was just promoted from the stack and should rise from there. */
+  entering: boolean
   x: ReturnType<typeof useMotionValue<number>>
   rotate: ReturnType<typeof useTransform<number, number>>
   go: (delta: number) => void
   bind: ReturnType<typeof useDrag>
   surface: SurfaceProps
-  offscreen: () => number
 }
 
 interface Args {
@@ -50,7 +54,7 @@ export function useCardBrowser({
 }: Args): CardBrowserState {
   const [index, setIndex] = useState(0)
   const [flipped, setFlipped] = useState(false)
-  const [enterFrom, setEnterFrom] = useState<EnterFrom>(null)
+  const [entering, setEntering] = useState(false)
   const x = useMotionValue(0)
   const rotate = useTransform(x, [-240, 0, 240], [-6, 0, 6])
   const count = cards.length
@@ -61,7 +65,7 @@ export function useCardBrowser({
     const at = startId ? cards.findIndex((l) => l.id === startId) : 0
     setIndex(at < 0 ? 0 : at)
     setFlipped(false)
-    setEnterFrom(null)
+    setEntering(false)
     animating.current = false
     x.set(0)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -89,20 +93,21 @@ export function useCardBrowser({
     tick()
     if (reduce) {
       setFlipped(false)
-      setEnterFrom(null)
+      setEntering(true)
       setIndex(next)
       x.set(0)
       drop()
       return
     }
     animating.current = true
+    // The card leaves the way it was going and uncovers the stack on that side.
     const dir = delta > 0 ? -1 : 1
     animate(x, dir * offscreen(), {
       duration: 0.2,
       ease: CARD_EASE,
       onComplete: () => {
         setFlipped(false)
-        setEnterFrom(delta > 0 ? 'behind' : 'edge')
+        setEntering(true)
         setIndex(next)
         x.set(0)
         animating.current = false
@@ -145,17 +150,19 @@ export function useCardBrowser({
     { axis: 'x', filterTaps: true, pointer: { touch: true } },
   )
 
+  const at = Math.min(index, count - 1)
+
   return {
     index,
-    current: count > 0 ? cards[Math.min(index, count - 1)]! : null,
-    ahead: cards.slice(index + 1, index + 1 + STACK_DEPTH),
+    current: count > 0 ? cards[at]! : null,
+    behindNext: cards.slice(at + 1, at + 1 + STACK_DEPTH),
+    behindPrev: cards.slice(Math.max(0, at - STACK_DEPTH), at).reverse(),
     flipped,
-    enterFrom,
+    entering,
     x,
     rotate,
     go,
     bind,
     surface,
-    offscreen,
   }
 }

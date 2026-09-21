@@ -37,7 +37,7 @@ export function StreakPage({ onBack }: StreakPageProps = {}) {
       }
     >
       <div className="mt-2 flex flex-col gap-5">
-        <section className="relative overflow-hidden rounded-card-featured bg-(--warning-surface) p-6">
+        <section className="relative overflow-hidden rounded-card-featured border border-(--warning-border) bg-(--warning-surface) p-6">
           <Flame
             className="pointer-events-none absolute -right-4 -top-3 size-44 text-warning opacity-25"
             fill="currentColor"

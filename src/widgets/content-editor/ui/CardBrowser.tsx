@@ -1,7 +1,13 @@
 import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialog } from '@base-ui/react/dialog'
-import { type HTMLMotionProps, motion, useReducedMotion } from 'motion/react'
+import {
+  type HTMLMotionProps,
+  type MotionValue,
+  motion,
+  useReducedMotion,
+  useTransform,
+} from 'motion/react'
 import { ChevronLeft, ChevronRight, MoreVertical, Pencil, X } from 'lucide-react'
 import type { Card } from '@/entities/card'
 import { cn } from '@/shared/lib'
@@ -45,6 +51,13 @@ export function CardBrowser({
     onClose,
   })
   const { current } = deck
+  /**
+   * Which stack shows is the card's own position, read as a value rather than as state: a
+   * `useMotionValueEvent` that toggled here would re-render the browser on every frame of the
+   * drag (CODE_STYLE §12). Pulled back, the previous cards are behind; otherwise the next ones.
+   */
+  const nextBehind = useTransform<number, number>(deck.x, (value) => (value > 0 ? 0 : 1))
+  const prevBehind = useTransform<number, number>(deck.x, (value) => (value > 0 ? 1 : 0))
 
   const menuActions = current ? buildMenuActions(BROWSER_CARD_ACTIONS, actionsFor(current), t) : []
 
@@ -97,14 +110,8 @@ export function CardBrowser({
             className="relative flex flex-1 items-center px-5 pb-2 perspective-[1400px]"
           >
             <div className="relative h-[clamp(300px,calc(var(--app-height)*0.55),520px)] w-full">
-              {deck.ahead.map((queued, i) => (
-                <QueuedPreview
-                  key={queued.id}
-                  card={queued}
-                  depth={i + 1}
-                  reduce={Boolean(reduce)}
-                />
-              ))}
+              <BehindStack cards={deck.behindNext} opacity={nextBehind} reduce={Boolean(reduce)} />
+              <BehindStack cards={deck.behindPrev} opacity={prevBehind} reduce={Boolean(reduce)} />
 
               <motion.div
                 {...(deck.bind() as unknown as HTMLMotionProps<'div'>)}
@@ -114,13 +121,7 @@ export function CardBrowser({
               >
                 <motion.div
                   key={current.id}
-                  initial={
-                    reduce || deck.enterFrom === null
-                      ? false
-                      : deck.enterFrom === 'behind'
-                        ? DEPTH_POSE[1]
-                        : { ...DEPTH_POSE[0], x: -deck.offscreen() }
-                  }
+                  initial={reduce || !deck.entering ? false : DEPTH_POSE[1]}
                   animate={DEPTH_POSE[0]}
                   transition={reduce ? { duration: 0 } : { duration: 0.3, ease: CARD_EASE }}
                   className="size-full"
@@ -174,5 +175,30 @@ export function CardBrowser({
         </>
       ) : null}
     </FullscreenDialog>
+  )
+}
+
+/**
+ * One side's queued cards. Both sides are mounted and one is transparent, so the stack behind
+ * changes with the drag without anything re-rendering; `pointerEvents` follows the same value, or
+ * the transparent side would take the presses meant for the card over it.
+ */
+function BehindStack({
+  cards,
+  opacity,
+  reduce,
+}: {
+  cards: Card[]
+  opacity: MotionValue<number>
+  reduce: boolean
+}) {
+  const hits = useTransform(opacity, (value) => (value > 0 ? 'auto' : 'none'))
+  if (cards.length === 0) return null
+  return (
+    <motion.div aria-hidden style={{ opacity, pointerEvents: hits }} className="absolute inset-0">
+      {cards.map((card, depth) => (
+        <QueuedPreview key={card.id} card={card} depth={depth + 1} reduce={reduce} />
+      ))}
+    </motion.div>
   )
 }

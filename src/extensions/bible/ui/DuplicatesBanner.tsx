@@ -25,7 +25,7 @@ export function DuplicatesBanner({
   const first = duplicates[0]
   if (!first) return null
   return (
-    <section className="flex flex-col gap-2 rounded-card bg-info-surface p-4">
+    <section className="flex flex-col gap-2 rounded-card border border-(--info-border) bg-info-surface p-4">
       <p className="text-body font-semibold text-info-foreground">
         {t('duplicates', { refs: duplicates.map((entry) => entry.front).join(', ') })}
       </p>

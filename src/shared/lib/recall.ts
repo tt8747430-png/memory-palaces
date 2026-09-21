@@ -30,6 +30,8 @@ const WORD_CONNECTORS = /([-'’‑])/u
 
 export function wordInitial(token: string): WordInitial {
   const lead = token.match(/^[^\p{L}\p{N}]*/u)?.[0] ?? ''
+  // A token with no letter or digit is all lead: the trail regex would claim it a second time.
+  if (lead.length === token.length) return { lead, initial: '', hidden: 0, trail: '' }
   const trail = token.match(/[^\p{L}\p{N}]*$/u)?.[0] ?? ''
   const core = token.slice(lead.length, token.length - trail.length)
 
