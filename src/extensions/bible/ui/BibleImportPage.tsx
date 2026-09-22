@@ -43,83 +43,85 @@ export function BibleImportPage({ deckId, onBack, onReview, onShowDeck }: BibleI
   const page = useBibleImport(deckId, (reviewIn) => onReview?.(reviewIn))
   const { picker } = page
 
-  const header = (
-    <ScreenHeader title={t('importTitle')} onBack={onBack} backLabel={core('common.back')} />
-  )
-
-  // Until every store has mirrored, "not in your Bible library" and "0 duplicates" would both be
-  // guesses dressed as facts, so the screen waits instead of saying them.
-  if (!page.ready) {
-    return (
-      <AppScreen header={header}>
-        <ScreenLoading />
-      </AppScreen>
-    )
-  }
-
   const choosing = picker.step === 'passage'
 
   return (
+    // One shell for every state this page passes through. It used to return a bare `AppScreen` while
+    // the stores mirrored and then swap in one with a footer, and to drop the footer again while a
+    // passage was being chosen — and `AppScreen` reads its sizer and its scroll inset off whether a
+    // footer exists, so each swap re-laid out the scroll body under the learner. The bar stays and
+    // says nothing is addable yet, which is what it already said on the book step.
     <AppScreen
       fill
-      header={header}
+      header={
+        <ScreenHeader title={t('importTitle')} onBack={onBack} backLabel={core('common.back')} />
+      }
       footer={
-        choosing ? null : (
-          <FooterBar>
-            <Button size="lg" className="w-full" disabled={!page.canAdd} onClick={page.add}>
-              <Sparkles className="size-4.5" aria-hidden />
-              {t('addCount', { count: page.addable.length })}
-            </Button>
-          </FooterBar>
-        )
+        <FooterBar>
+          <Button
+            size="lg"
+            className="w-full"
+            disabled={!page.ready || !page.canAdd}
+            onClick={page.add}
+          >
+            <Sparkles className="size-4.5" aria-hidden />
+            {t('addCount', { count: page.ready ? page.addable.length : 0 })}
+          </Button>
+        </FooterBar>
       }
     >
-      <div className="mt-4 flex flex-col gap-6 pb-6">
-        {picker.ref && page.passage ? (
-          <PassageSummary passage={picker.ref} text={page.passage} onChange={picker.edit} />
-        ) : (
-          <PassagePicker picker={picker} index={page.index} recents={page.recents} />
-        )}
+      {/* Until every store has mirrored, "not in your Bible library" and "0 duplicates" would both
+          be guesses dressed as facts, so the body waits instead of saying them. */}
+      {!page.ready ? (
+        <ScreenLoading />
+      ) : (
+        <div className="mt-4 flex flex-col gap-6 pb-6">
+          {picker.ref && page.passage ? (
+            <PassageSummary passage={picker.ref} text={page.passage} onChange={picker.edit} />
+          ) : (
+            <PassagePicker picker={picker} index={page.index} recents={page.recents} />
+          )}
 
-        {choosing ? null : (
-          <VerseTextPanel
-            value={page.text}
-            onChange={page.setText}
-            note={textNote(t, page)}
-            translation={page.translation}
-          />
-        )}
+          {choosing ? null : (
+            <VerseTextPanel
+              value={page.text}
+              onChange={page.setText}
+              note={textNote(t, page)}
+              translation={page.translation}
+            />
+          )}
 
-        {!choosing && page.hasCards ? (
-          <div className="flex flex-col gap-4">
-            {page.spansRange ? (
-              <ToggleRow
-                label={t('split', { count: page.splitCount })}
-                description={page.splitAvailable ? undefined : t('splitUnavailable')}
-                checked={page.split && page.splitAvailable}
-                disabled={!page.splitAvailable}
-                onChange={(on) => page.set('split', on)}
+          {!choosing && page.hasCards ? (
+            <div className="flex flex-col gap-4">
+              {page.spansRange ? (
+                <ToggleRow
+                  label={t('split', { count: page.splitCount })}
+                  description={page.splitAvailable ? undefined : t('splitUnavailable')}
+                  checked={page.split && page.splitAvailable}
+                  disabled={!page.splitAvailable}
+                  onChange={(on) => page.set('split', on)}
+                />
+              ) : null}
+
+              <DuplicatesBanner
+                duplicates={page.duplicates}
+                keep={page.keepDuplicates}
+                onKeepChange={(on) => page.set('keepDuplicates', on)}
+                onShowDeck={(held) => onShowDeck?.(held)}
               />
-            ) : null}
 
-            <DuplicatesBanner
-              duplicates={page.duplicates}
-              keep={page.keepDuplicates}
-              onKeepChange={(on) => page.set('keepDuplicates', on)}
-              onShowDeck={(held) => onShowDeck?.(held)}
-            />
-
-            <TargetPicker
-              auto={page.auto}
-              onAutoChange={(on) => page.set('auto', on)}
-              autoAvailable={page.chapterDecksAvailable}
-              destination={page.destination}
-              onPickDeck={() => page.showSheet('deck')}
-              onNameDeck={() => page.showSheet('name')}
-            />
-          </div>
-        ) : null}
-      </div>
+              <TargetPicker
+                auto={page.auto}
+                onAutoChange={(on) => page.set('auto', on)}
+                autoAvailable={page.chapterDecksAvailable}
+                destination={page.destination}
+                onPickDeck={() => page.showSheet('deck')}
+                onNameDeck={() => page.showSheet('name')}
+              />
+            </div>
+          ) : null}
+        </div>
+      )}
 
       <DestinationSheet
         open={page.sheet === 'deck'}

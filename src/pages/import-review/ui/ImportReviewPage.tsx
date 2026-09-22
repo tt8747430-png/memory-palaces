@@ -77,8 +77,9 @@ export function ImportReviewPage({ deckId, onBack, onDone }: ImportReviewPagePro
     onDone()
   }
 
-  if (!draft) return null
-
+  // No draft means this screen is on its way out (the effect above has already sent it back). It
+  // still renders the same shell, footer included, so the scroll body is never laid out twice for
+  // one screen — `AppScreen` derives its sizer and inset from whether a footer exists.
   return (
     <AppScreen
       fill
@@ -103,82 +104,84 @@ export function ImportReviewPage({ deckId, onBack, onDone }: ImportReviewPagePro
         </FooterBar>
       }
     >
-      <div className="mt-4 flex flex-col gap-5 pb-6">
-        {isMindscape ? (
+      {draft ? (
+        <div className="mt-4 flex flex-col gap-5 pb-6">
+          {isMindscape ? (
+            <section>
+              <h2 className="mb-2 text-label font-bold uppercase tracking-wide text-muted-foreground">
+                {t('cards.review.restoreLabel')}
+              </h2>
+              <div className="overflow-hidden rounded-card border border-border bg-card shadow-rest">
+                <RestoreToggle
+                  label={t('cards.review.restoreCues')}
+                  checked={restore.cues}
+                  onChange={(v) => setRestore((r) => ({ ...r, cues: v }))}
+                />
+                <RestoreToggle
+                  label={t('cards.review.restoreFlags')}
+                  checked={restore.flags}
+                  onChange={(v) => setRestore((r) => ({ ...r, flags: v }))}
+                />
+                <RestoreToggle
+                  label={t('cards.review.restoreKnown')}
+                  checked={restore.known}
+                  onChange={(v) => setRestore((r) => ({ ...r, known: v }))}
+                />
+                <RestoreToggle
+                  label={t('cards.review.restoreSchedule')}
+                  checked={restore.schedule}
+                  onChange={(v) => setRestore((r) => ({ ...r, schedule: v }))}
+                  last
+                />
+              </div>
+            </section>
+          ) : null}
+
           <section>
-            <h2 className="mb-2 text-label font-bold uppercase tracking-wide text-muted-foreground">
-              {t('cards.review.restoreLabel')}
-            </h2>
-            <div className="overflow-hidden rounded-card border border-border bg-card shadow-rest">
-              <RestoreToggle
-                label={t('cards.review.restoreCues')}
-                checked={restore.cues}
-                onChange={(v) => setRestore((r) => ({ ...r, cues: v }))}
-              />
-              <RestoreToggle
-                label={t('cards.review.restoreFlags')}
-                checked={restore.flags}
-                onChange={(v) => setRestore((r) => ({ ...r, flags: v }))}
-              />
-              <RestoreToggle
-                label={t('cards.review.restoreKnown')}
-                checked={restore.known}
-                onChange={(v) => setRestore((r) => ({ ...r, known: v }))}
-              />
-              <RestoreToggle
-                label={t('cards.review.restoreSchedule')}
-                checked={restore.schedule}
-                onChange={(v) => setRestore((r) => ({ ...r, schedule: v }))}
-                last
-              />
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <h2 className="text-body font-bold text-heading">
+                {t('cards.review.generated', { count: cards.length })}
+              </h2>
+              {cards.length > 0 ? (
+                <IconButton
+                  variant="ghost"
+                  size="sm"
+                  aria-label={t('cards.review.clearAll')}
+                  onClick={() => setClearOpen(true)}
+                  className="text-(--danger-on-surface)"
+                >
+                  <Trash2 className="size-4" aria-hidden />
+                </IconButton>
+              ) : null}
             </div>
+
+            {cards.length === 0 ? (
+              <div className="rounded-card bg-card-glass p-6 text-center shadow-rest">
+                <p className="text-body text-muted-foreground">{t('cards.review.empty')}</p>
+                <button
+                  type="button"
+                  onClick={onDone}
+                  className="mt-2 text-label font-semibold text-accent"
+                >
+                  {t('cards.review.emptyBack')}
+                </button>
+              </div>
+            ) : (
+              <ul className="flex flex-col gap-2.5">
+                {cards.map((card) => (
+                  <li key={card.id}>
+                    <ReviewRow
+                      card={card}
+                      onEdit={() => setEditingId(card.id)}
+                      onDelete={() => removeCard(card.id)}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
-        ) : null}
-
-        <section>
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <h2 className="text-body font-bold text-heading">
-              {t('cards.review.generated', { count: cards.length })}
-            </h2>
-            {cards.length > 0 ? (
-              <IconButton
-                variant="ghost"
-                size="sm"
-                aria-label={t('cards.review.clearAll')}
-                onClick={() => setClearOpen(true)}
-                className="text-(--danger-on-surface)"
-              >
-                <Trash2 className="size-4" aria-hidden />
-              </IconButton>
-            ) : null}
-          </div>
-
-          {cards.length === 0 ? (
-            <div className="rounded-card bg-card-glass p-6 text-center shadow-rest">
-              <p className="text-body text-muted-foreground">{t('cards.review.empty')}</p>
-              <button
-                type="button"
-                onClick={onDone}
-                className="mt-2 text-label font-semibold text-accent"
-              >
-                {t('cards.review.emptyBack')}
-              </button>
-            </div>
-          ) : (
-            <ul className="flex flex-col gap-2.5">
-              {cards.map((card) => (
-                <li key={card.id}>
-                  <ReviewRow
-                    card={card}
-                    onEdit={() => setEditingId(card.id)}
-                    onDelete={() => removeCard(card.id)}
-                  />
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      </div>
+        </div>
+      ) : null}
 
       <CardDraftSheet
         card={editing}

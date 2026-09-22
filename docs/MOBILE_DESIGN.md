@@ -29,7 +29,7 @@ token, never a raw width. Breakpoints used in a handful of places by design.
   hand-rolling padding.
 - **Keyboard:** keep the **focused input and the header** visible — the scroll body reveals the field, the shell stays
   anchored to the screen and the keyboard covers its bottom ([ADR 0002](adr/0002-keyboard-covers-the-app.md)). A page
-  footer is `sticky bottom-0` with content passing behind it, but **goes `static` while the keyboard is up** and
+  footer is pinned beside the scroll body, but **moves to the end of the scroll content while the keyboard is up** and
   `AppNav` hides outright — WebKit re-clamps bottom-anchored boxes to the visual viewport, which would float them
   mid-screen. So the CTA rests at the end of the page, behind the keyboard, reached by scrolling. Put an action that
   must survive typing in the header (`CardEditorPage`'s Save), not the footer.

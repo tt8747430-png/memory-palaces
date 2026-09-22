@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/shared/i18n'
@@ -45,7 +45,7 @@ describe('CardEditorPage', () => {
     await waitFor(async () => expect((await repo.getById('c1'))?.front).toBe('Newton'))
   })
 
-  it('keeps the card nav docked under content too long to fit', async () => {
+  it('keeps the card nav pinned beside content too long to fit', async () => {
     renderPage([card('c1', 'Front', LONG), card('c2', 'Second')], {
       cardId: 'c1',
       onNavigateCard: vi.fn(),
@@ -53,9 +53,12 @@ describe('CardEditorPage', () => {
 
     const nav = await screen.findByRole('navigation')
     const dock = nav.parentElement
-    expect(dock).toHaveClass('sticky', 'bottom-0')
-    expect(dock?.parentElement).toBe(screen.getByRole('main'))
-    expect(dock).toBe(screen.getByRole('main').lastElementChild)
+    const main = screen.getByRole('main')
+    // Beside the scroll body, not the last thing inside it: the body scrolls under a box that
+    // cannot move, rather than sticking to an edge it eventually reaches.
+    expect(main).not.toContainElement(dock)
+    expect(dock?.parentElement).toBe(main.parentElement)
+    expect(dock).toHaveClass('shrink-0')
 
     const back = screen.getByLabelText(/^Back \(/) as HTMLTextAreaElement
     expect(back.value).toBe(LONG)
@@ -70,9 +73,13 @@ describe('CardEditorPage', () => {
     expect(await screen.findByRole('main')).toHaveClass('pb-keyboard')
   })
 
-  it('has no dock to protect when the deck holds a single card', async () => {
+  it('keeps its footer for a deck of one, with nowhere to go either way', async () => {
+    // The route decides the footer, not the card count: one that came and went with the data
+    // re-laid the scroll body out on the first paint of real content.
     renderPage([card('c1', 'Front')], { cardId: 'c1', onNavigateCard: vi.fn() })
     await screen.findByLabelText(/Front/)
-    expect(screen.queryByRole('navigation')).toBeNull()
+    const nav = screen.getByRole('navigation')
+    expect(nav).toHaveTextContent('1 / 1')
+    for (const button of within(nav).getAllByRole('button')) expect(button).toBeDisabled()
   })
 })

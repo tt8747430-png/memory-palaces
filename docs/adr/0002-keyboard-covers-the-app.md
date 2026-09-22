@@ -53,7 +53,10 @@ shell, and not iOS — reveals the focused field.**
 - **`resize` only; `scroll` is not subscribed to at all.** There is no correct sampling rate for a number nothing
   should be positioned from.
 - **Bottom-anchored chrome yields to the keyboard rather than floating above it.** WebKit re-clamps bottom-anchored
-  fixed/sticky boxes to the visual viewport, so the footer dock goes `static` and `AppNav` hides outright.
+  fixed/sticky boxes to the visual viewport, so the footer leaves its pinned place beside the scroll body for the end
+  of the scroll content, and `AppNav` hides outright. (Amended 2026-09-22: the footer used to be `sticky` inside the
+  scroll body with a `static` override under the keyboard; a sticky footer lifted at the end of a scroll and was
+  re-laid out on first paint, so it now has two real positions instead — CODE_STYLE §11.)
 
 ## Consequences
 

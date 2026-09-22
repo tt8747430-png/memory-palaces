@@ -1,7 +1,26 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, screen } from '@testing-library/react'
+import { expectKeyboard, startKeyboardViewport } from '@/shared/lib/keyboard-viewport'
 import { renderWithProviders } from '@/shared/test/render-with-providers'
 import { AppScreen } from './AppScreen'
+
+const KEYBOARD_HEIGHT_KEY = 'mindscape.keyboard-height'
+
+/**
+ * Raises a keyboard the way a focus does: the reserve is the height this device last measured, and
+ * `expectKeyboard` is what `useKeyboardReveal` calls on `focusin`, before the keyboard reports
+ * itself. Nothing here stubs `visualViewport` — the screen only asks whether one is up.
+ */
+function raiseKeyboard(): () => void {
+  localStorage.setItem(KEYBOARD_HEIGHT_KEY, '320')
+  const stop = startKeyboardViewport()
+  expectKeyboard(true)
+  return () => {
+    expectKeyboard(false)
+    stop()
+    localStorage.removeItem(KEYBOARD_HEIGHT_KEY)
+  }
+}
 
 afterEach(cleanup)
 
@@ -78,15 +97,15 @@ describe('AppScreen', () => {
     )
   })
 
-  it('keeps the gutter above a docked footer, never below it', () => {
+  it('keeps the gutter at the end of the scroll, with the footer outside it', () => {
     renderWithProviders(
       <AppScreen fill gutter="end" footer={<footer>Bottom</footer>}>
         Body
       </AppScreen>,
     )
     const main = screen.getByRole('main')
-    expect(main.lastElementChild).toHaveTextContent('Bottom')
-    expect(main.children[1]).toHaveClass('h-(--screen-gutter)')
+    expect(main.lastElementChild).toHaveClass('h-(--screen-gutter)')
+    expect(main).not.toHaveTextContent('Bottom')
   })
 
   it('keeps the safe-area padding, and no gutter box, when nothing floats over the screen', () => {
@@ -96,6 +115,39 @@ describe('AppScreen', () => {
     expect(main.children).toHaveLength(1)
   })
 
+  it('pins the footer beside the scroll body, so the page scrolls under it', () => {
+    renderWithProviders(
+      <AppScreen fill footer={<footer>Bottom</footer>}>
+        Body
+      </AppScreen>,
+    )
+    const main = screen.getByRole('main')
+    const footer = screen.getByText('Bottom').parentElement
+    expect(main).not.toContainElement(footer)
+    expect(main.parentElement).toContainElement(footer)
+    expect(footer).toHaveClass('shrink-0')
+    // Nothing anchors it to the viewport: it is a flex item, and the body is what shrinks.
+    expect(footer?.className).not.toContain('sticky')
+    expect(footer?.className).not.toContain('fixed')
+  })
+
+  it('puts the footer at the end of the scroll while the keyboard is up, to be scrolled to', () => {
+    const drop = raiseKeyboard()
+    try {
+      renderWithProviders(
+        <AppScreen fill footer={<footer>Bottom</footer>}>
+          Body
+        </AppScreen>,
+      )
+      const main = screen.getByRole('main')
+      const footer = screen.getByText('Bottom').parentElement
+      expect(main).toContainElement(footer)
+      expect(footer).toHaveClass('-mx-5', 'mt-auto')
+    } finally {
+      drop()
+    }
+  })
+
   it('lets a docked footer size the body instead', () => {
     renderWithProviders(
       <AppScreen bounce fill footer={<footer>Bottom</footer>}>
@@ -103,5 +155,27 @@ describe('AppScreen', () => {
       </AppScreen>,
     )
     expect(screen.getByRole('main').firstElementChild).toHaveClass('flex-1')
+  })
+
+  it('lays the scroll body out once: its inset and sizer do not change when the content becomes ready', () => {
+    const footer = <footer>Bottom</footer>
+    const { rerender } = renderWithProviders(
+      <AppScreen fill footer={footer}>
+        Loading
+      </AppScreen>,
+    )
+    const main = screen.getByRole('main')
+    const before = { inset: main.className, sizer: main.firstElementChild }
+
+    rerender(
+      <AppScreen fill footer={footer}>
+        Ready
+      </AppScreen>,
+    )
+
+    expect(screen.getByRole('main')).toBe(main)
+    expect(main.className).toBe(before.inset)
+    expect(main.firstElementChild).toBe(before.sizer)
+    expect(main).toHaveTextContent('Ready')
   })
 })

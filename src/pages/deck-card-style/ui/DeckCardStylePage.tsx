@@ -20,6 +20,7 @@ import {
   FooterBar,
   IconButton,
   ScreenHeader,
+  ScreenLoading,
   type SheetAction,
 } from '@/shared/ui'
 import { StyleFullscreen } from './StyleFullscreen'
@@ -40,15 +41,10 @@ export function DeckCardStylePage({ deckId, onBack }: DeckCardStylePageProps) {
   const [ask, setAsk] = useState<'scope' | 'everywhere' | null>(null)
   const [draft, setDraft] = useState<CardStyle | null>(null)
 
-  if (!ready || !deck) {
-    return (
-      <AppScreen
-        header={
-          <ScreenHeader title={t('cardStyle.title')} onBack={onBack} backLabel={t('common.back')} />
-        }
-      />
-    )
-  }
+  // One shell for every state this page passes through. `AppScreen` sizes its scroll body from
+  // whether a footer exists, so a loading shell without one and a loaded shell with it would be two
+  // layouts of the same screen — the body re-laid out on the first paint of real content.
+  const loaded = ready && deck !== undefined
 
   const saved = settings.cardStyle
   const style = draft ?? saved
@@ -104,39 +100,47 @@ export function DeckCardStylePage({ deckId, onBack }: DeckCardStylePageProps) {
       header={
         <ScreenHeader
           title={t('cardStyle.title')}
-          subtitle={deck.name}
+          subtitle={deck?.name}
           onBack={onBack}
           backLabel={t('common.back')}
           action={
-            <div className="flex items-center gap-1">
-              <IconButton
-                variant="glass"
-                aria-label={t('cardStyle.fullscreen')}
-                onClick={() => setFullscreen(true)}
-              >
-                <Maximize2 className="size-5" aria-hidden />
-              </IconButton>
-              <IconButton
-                variant="glass"
-                aria-label={t('cardStyle.reset')}
-                disabled={!canReset}
-                onClick={() => setDraft(DEFAULT_CARD_STYLE)}
-              >
-                <RotateCcw className="size-5" aria-hidden />
-              </IconButton>
-            </div>
+            loaded ? (
+              <div className="flex items-center gap-1">
+                <IconButton
+                  variant="glass"
+                  aria-label={t('cardStyle.fullscreen')}
+                  onClick={() => setFullscreen(true)}
+                >
+                  <Maximize2 className="size-5" aria-hidden />
+                </IconButton>
+                <IconButton
+                  variant="glass"
+                  aria-label={t('cardStyle.reset')}
+                  disabled={!canReset}
+                  onClick={() => setDraft(DEFAULT_CARD_STYLE)}
+                >
+                  <RotateCcw className="size-5" aria-hidden />
+                </IconButton>
+              </div>
+            ) : undefined
           }
         />
       }
       pinned={
-        <CardScene style={style} className={PREVIEW_PANE}>
-          <StylePreview
-            style={style}
-            front={t('cardStyle.previewFront')}
-            back={t('cardStyle.previewBack')}
-            className="h-full w-full"
-          />
-        </CardScene>
+        loaded ? (
+          <CardScene style={style} className={PREVIEW_PANE}>
+            <StylePreview
+              style={style}
+              front={t('cardStyle.previewFront')}
+              back={t('cardStyle.previewBack')}
+              className="h-full w-full"
+            />
+          </CardScene>
+        ) : (
+          // The pane keeps its height while the deck loads, so the scroll body under it is laid out
+          // once — a preview arriving later would shrink it on the first paint of real content.
+          <div aria-hidden className={PREVIEW_PANE} />
+        )
       }
       footer={
         <FooterBar className="flex gap-2">
@@ -144,6 +148,7 @@ export function DeckCardStylePage({ deckId, onBack }: DeckCardStylePageProps) {
             size="lg"
             variant="secondary"
             className={dirty ? 'flex-1' : 'w-full'}
+            disabled={!loaded}
             onClick={() => setAsk('scope')}
           >
             <Layers className="size-4.5" aria-hidden />
@@ -158,9 +163,13 @@ export function DeckCardStylePage({ deckId, onBack }: DeckCardStylePageProps) {
         </FooterBar>
       }
     >
-      <div className="mt-4 flex flex-col gap-6 pb-8">
-        <CardStyleFields style={style} onChange={setDraft} />
-      </div>
+      {loaded ? (
+        <div className="mt-4 flex flex-col gap-6 pb-8">
+          <CardStyleFields style={style} onChange={setDraft} />
+        </div>
+      ) : (
+        <ScreenLoading />
+      )}
 
       <StyleFullscreen
         open={fullscreen}

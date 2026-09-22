@@ -124,7 +124,7 @@ export {
   type StatusBarPaint,
 } from './status-bar'
 export { SCREEN_SCROLL } from './screen-scroll'
-export { useVirtualKeyboard, type VirtualKeyboard } from './use-virtual-keyboard'
+export { useKeyboardOpen, useVirtualKeyboard, type VirtualKeyboard } from './use-virtual-keyboard'
 export { useSortableSensors } from './use-sortable-sensors'
 export { shuffle } from './shuffle'
 export {

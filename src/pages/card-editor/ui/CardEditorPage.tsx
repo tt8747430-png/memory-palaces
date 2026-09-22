@@ -69,33 +69,37 @@ export function CardEditorPage({ deckId, cardId, onBack, onNavigateCard }: CardE
     onNavigateCard(target.id)
   }
 
-  const showNav = Boolean(editing && onNavigateCard && deckCards.length > 1)
-
-  if (!cardsReady || !decksReady) return <ScreenLoading />
+  const ready = cardsReady && decksReady
+  // Until the cards arrive, the route says which screen this is; after, the card itself does.
+  const editMode = ready ? editing !== null : cardId !== undefined
+  // Whether the screen has a footer is the route's to say, never the data's: a footer that came and
+  // went with the card count re-laid the scroll body out under the learner (CODE_STYLE §11). A deck
+  // of one shows "1 / 1" with both ways shut.
+  const navigable = cardId !== undefined && onNavigateCard !== undefined
 
   return (
     <AppScreen
       fill
       header={
         <ScreenHeader
-          title={editing ? t('cards.editor.editTitle') : t('cards.editor.newTitle')}
+          title={editMode ? t('cards.editor.editTitle') : t('cards.editor.newTitle')}
           subtitle={deck?.name}
           onBack={onBack}
           backLabel={t('common.back')}
           action={
             <SaveButton
-              adding={!editing}
+              adding={!editMode}
               saved={justSaved}
-              disabled={!draft.valid}
+              disabled={!ready || !draft.valid}
               onClick={() => void (editing ? saveEdit() : saveAndAdd())}
             />
           }
         />
       }
       footer={
-        showNav ? (
+        navigable ? (
           <DeckNav
-            position={position}
+            position={Math.max(position, 0)}
             total={deckCards.length}
             prevLabel={t('cards.editor.prevCard')}
             nextLabel={t('cards.editor.nextCard')}
@@ -107,19 +111,23 @@ export function CardEditorPage({ deckId, cardId, onBack, onNavigateCard }: CardE
         ) : undefined
       }
     >
-      <div className="mt-4 pb-8">
-        <CardFields
-          front={draft.front}
-          back={draft.back}
-          hint={draft.hint}
-          tip={draft.tip}
-          onFront={draft.setFront}
-          onBack={draft.setBack}
-          onHint={draft.setHint}
-          onTip={draft.setTip}
-          frontRef={frontRef}
-        />
-      </div>
+      {ready ? (
+        <div className="mt-4 pb-8">
+          <CardFields
+            front={draft.front}
+            back={draft.back}
+            hint={draft.hint}
+            tip={draft.tip}
+            onFront={draft.setFront}
+            onBack={draft.setBack}
+            onHint={draft.setHint}
+            onTip={draft.setTip}
+            frontRef={frontRef}
+          />
+        </div>
+      ) : (
+        <ScreenLoading />
+      )}
     </AppScreen>
   )
 }

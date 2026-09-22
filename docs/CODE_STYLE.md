@@ -378,7 +378,7 @@ dev-only **`/dev/kitchen-sink`**.
   _full_ height for the whole keyboard, `visibleBottom()` lands the reveal band a pan above the screen, and every field
   is scrolled off the top. Measured on device (2026-07-31, iOS 26 standalone): shell `793`, visual viewport `390`, pan
   `289` — a 403px keyboard that read as `114`, six pixels under the floor. `data-keyboard` follows the first number, so
-  the footer dock stays `static` and `AppNav` hidden even when the pan leaves nothing to cover; the remembered height is
+  the footer stays in the scroll and `AppNav` hidden even when the pan leaves nothing to cover; the remembered height is
   the first number too, or a keyboard only ever seen panned under-reserves every later focus.
 - **Nothing compensates for the pan — the pan is prevented.** iOS pans to reveal the focused field _only when the page
   has not revealed it itself_ ([ADR 0002](adr/0002-keyboard-covers-the-app.md)). Four successive fixes tried to survive
@@ -425,14 +425,16 @@ dev-only **`/dev/kitchen-sink`**.
 scrollbar-hide`. It is deliberately plain — a scrollport needs no keyboard geometry of its own, only the bottom range
   its `.pb-keyboard`/`.pb-safe` gives it. Inner scrollers that are not a screen's scrollport (a preview box, a popup
   list) are not this and should not take it.
-- **A page footer is `sticky bottom-0` inside the scroll body — a header, upside down — and goes `static` while the
-  keyboard is up.** Content passes behind it; it comes to rest at its flow position at the end of the scroll. WebKit
-  re-clamps bottom-anchored sticky boxes to the visual viewport when the keyboard shows — the dock would float above the
-  keyboard mid-screen — so `FOOTER_DOCK` carries `[[data-keyboard]_&]:static` (`useKeyboardInset` publishes the
-  `data-keyboard` attribute with `--kb-inset`), leaving the CTA at the end of the page, behind the keyboard until
-  scrolled to. Pin to a scrollport something can shrink and it lands on the keyboard's edge instead.
+- **A page footer has two places, and the keyboard picks one** (`AppScreen`, `useKeyboardOpen`). With no keyboard it
+  is a flex sibling of the scroll body — real layout space, the body shrinks above it and scrolls alone, so it cannot
+  lift at the end of a scroll or drift on the first paint. With the keyboard up it is the last thing _inside_ the
+  scroll body, `static`, reached by scrolling: WebKit re-clamps any bottom-anchored fixed/sticky box to the visual
+  viewport, so a pinned CTA would float above the keyboard mid-screen. Moving between the two remounts the footer's
+  subtree; a footer holds buttons, never focus, so nothing is lost. **A page keeps its footer mounted in every state
+  it passes through** — `AppScreen` derives its sizer and inset from whether a footer exists, so a loading shell
+  without one re-lays the body out on the first paint of real content. Disable the button instead.
 - **Bottom insets measured from the screen never subtract `--kb-inset`** (`--app-bottom-inset`, `.pb-safe`,
-  `.pb-gutter`). Nothing bottom-anchored is still on screen to save room for — the footer dock has gone `static` and
+  `.pb-gutter`). Nothing bottom-anchored is still on screen to save room for — the footer has moved into the scroll and
   `AppNav` is hidden (`in-data-keyboard:hidden`; it is `fixed`, so it has no `static` to fall back to) — so subtracting
   only twitches bottom chrome on keyboard open.
 - **`--app-bottom-inset` is space reserved, `--toast-inset` is chrome cleared — never reuse one for the other.** Footers
