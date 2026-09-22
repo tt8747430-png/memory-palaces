@@ -38,6 +38,7 @@ runRepositoryContract<Thing>(
       }).then((opened) => opened.collection),
     ),
   (id) => ({ id, value: 1 }),
+  (thing) => ({ ...thing, value: thing.value + 1 }),
 )
 
 const clockedThingSchema: RxJsonSchema<ClockedThing> = {

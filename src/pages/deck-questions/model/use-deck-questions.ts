@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { useCardStoreApi } from '@/entities/card'
@@ -20,6 +20,7 @@ import {
   selectIsReady,
   useMultiSelect,
   usePendingAct,
+  positionsById,
 } from '@/shared/lib'
 import { bulkAction, type SelectActionHandlers } from '@/shared/ui'
 import { type QuestionSort, sortQuestions } from './sort-questions'
@@ -33,6 +34,8 @@ export interface DeckQuestions {
   ready: boolean
   deckName: string
   questions: Question[]
+  /** Each question's place in the list, for the number on its row. */
+  positionOf: ReadonlyMap<string, number>
   sort: QuestionSort
   setSort: (sort: QuestionSort) => void
   selection: MultiSelect
@@ -61,18 +64,14 @@ export function useDeckQuestions(deckId: string): DeckQuestions {
 
   const [sort, setSort] = useState<QuestionSort>('manual')
   const pending = usePendingAct<PendingAct>()
-  const selection = useMultiSelect()
-
   const deckQuestions = useMemo(
     () => questionsForDeck(allQuestions, deckId),
     [allQuestions, deckId],
   )
   const questions = useMemo(() => sortQuestions(deckQuestions, sort), [deckQuestions, sort])
-
-  const { setVisibleIds } = selection
-  useEffect(() => {
-    setVisibleIds(questions.map((question) => question.id))
-  }, [questions, setVisibleIds])
+  const questionIds = useMemo(() => questions.map((question) => question.id), [questions])
+  const positionOf = useMemo(() => positionsById(questions), [questions])
+  const selection = useMultiSelect({ visibleIds: questionIds })
 
   const duplicate = (id: string) => {
     void duplicateQuestion(questionStore, id)
@@ -118,6 +117,7 @@ export function useDeckQuestions(deckId: string): DeckQuestions {
     ready: questionsReady && decksReady,
     deckName: findEntity(decks, deckId)?.name ?? '',
     questions,
+    positionOf,
     sort,
     setSort,
     selection,

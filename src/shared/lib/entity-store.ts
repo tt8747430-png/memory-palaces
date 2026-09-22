@@ -78,11 +78,25 @@ export function createCollectionStore<Key extends string, T extends Identifiable
   compare: (a: T, b: T) => number,
   { pending, complete }: CollectionStoreOptions<T> = {},
 ): StoreApi<CollectionState<Key, T>> {
+  // The repository hands back the same object for an entity a write did not touch, so the repair
+  // is remembered per object: an untouched entity stays the same object through `complete` too, and
+  // one write costs one repair rather than one per entity per emission.
+  const repaired = new WeakMap<T, T>()
+  const repair = complete
+    ? (entity: T): T => {
+        let done = repaired.get(entity)
+        if (!done) {
+          done = complete(entity)
+          repaired.set(entity, done)
+        }
+        return done
+      }
+    : null
   const mirror = mirrorSlice<T, T[]>(
     key,
     repo,
     [],
-    (entities) => (complete ? entities.map(complete) : [...entities]).sort(compare),
+    (entities) => (repair ? entities.map(repair) : [...entities]).sort(compare),
     pending,
   )
   return createStore<CollectionState<Key, T>>(

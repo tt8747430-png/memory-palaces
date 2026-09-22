@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Plus, Trash2, Upload } from 'lucide-react'
-import { type Card, selectCards, useCardStore, useCardStoreApi } from '@/entities/card'
-import { type LearningAlgorithm, selectDecks, useDeckStore } from '@/entities/deck'
+import { type Card, useCardStoreApi } from '@/entities/card'
+import { selectDecks, useDeckStore } from '@/entities/deck'
 import { selectFolders, useFolderStore } from '@/entities/folder'
 import { reorderCards } from '@/features/card'
 import {
@@ -11,13 +11,12 @@ import {
   usePreferencesStore,
 } from '@/entities/preferences'
 import {
-  cardMaturityCounts,
-  cardsInSubtree,
   CONTENT_SORTS,
   findEntity,
   type MultiSelect,
   useExtensionPoint,
   usePendingAct,
+  useStableHandlers,
 } from '@/shared/lib'
 import {
   CardMaturityOverview,
@@ -26,16 +25,16 @@ import {
   offeredOptions,
   SelectToolbar,
   BottomSlot,
+  type SortableHandle,
   SortControl,
   SpeedDial,
   useContentSortOptions,
 } from '@/shared/ui'
 import { type Destination, DestinationSheet } from '@/widgets/deck-tree'
-import { cardListOptions, filterCards, sortCards } from '../model/card-list'
 import { useCardActions } from '../model/use-card-actions'
+import type { CardList } from '../model/use-card-list'
 import { useCardCommands } from '../model/use-card-commands'
 import { useImportFile } from '../model/use-import-file'
-import { useCardFilter } from '../model/use-card-filter'
 import { CardBrowser } from './CardBrowser'
 import { CardFilterSheet, FilterButton } from './CardFilterSheet'
 import { EmptyCards, FilterEmpty, NoResults } from './CardListStates'
@@ -43,17 +42,17 @@ import { CardActionsSheet } from './CardActionsSheet'
 import { CardProgressSheet } from './CardProgressSheet'
 import { CardRow } from './CardRow'
 import { LearningHistorySheet } from './LearningHistorySheet'
-import type { RowDragHandle } from './ContentRow'
 import { ReorderableList } from './ReorderableList'
 
+/** A card row before it is measured: front, back and the chip line. */
+const CARD_ROW_ESTIMATE = 132
+
 export interface DeckContentEditorProps {
-  deckId: string
-  algorithm: LearningAlgorithm
-  searchQuery?: string
+  /** The deck's cards, as the page derived them (`useCardList`) — its sort and algorithm too. */
+  list: CardList
   searching?: boolean
   onClearSearch?: () => void
   selection: MultiSelect
-  sort: ContentSort
   onSortChange: (sort: ContentSort) => void
   onAddCard: () => void
   onEditCard: (cardId: string) => void
@@ -65,13 +64,10 @@ export interface DeckContentEditorProps {
 }
 
 export function DeckContentEditor({
-  deckId,
-  algorithm,
-  searchQuery,
+  list,
   searching = false,
   onClearSearch,
   selection,
-  sort,
   onSortChange,
   onAddCard,
   onEditCard,
@@ -82,15 +78,22 @@ export function DeckContentEditor({
 }: DeckContentEditorProps) {
   const { t } = useTranslation()
   const cardStore = useCardStoreApi()
-  const allCards = useCardStore(selectCards)
   const importFile = useImportFile()
   const extensionImports = useExtensionPoint('importOptions')
 
   const prefs = usePreferencesStore(selectEffectivePreferences)
   const decks = useDeckStore(selectDecks)
   const folders = useFolderStore(selectFolders)
-  const cards = useMemo(() => cardsInSubtree(decks, allCards, deckId), [decks, allCards, deckId])
-  const maturity = useMemo(() => cardMaturityCounts(cards), [cards])
+  const {
+    algorithm,
+    sort,
+    cards,
+    visible: visibleCards,
+    positionOf,
+    needle,
+    filter,
+    maturity,
+  } = list
 
   const [importOpen, setImportOpen] = useState(false)
   const [browserCardId, setBrowserCardId] = useState<string | null>(null)
@@ -103,9 +106,8 @@ export function DeckContentEditor({
   >(null)
 
   const pending = usePendingAct<PendingCardAct>()
-  const listOptions = useMemo(() => cardListOptions(cards, algorithm), [cards, algorithm])
+  const listOptions = list.options
   const sortOptions = offeredOptions(useContentSortOptions(CONTENT_SORTS), listOptions.sorts, sort)
-  const filter = useCardFilter()
   const commands = useCardCommands(
     cards,
     selection,
@@ -114,17 +116,6 @@ export function DeckContentEditor({
   )
 
   const selectMode = selection.active
-  const needle = (searchQuery ?? '').trim().toLowerCase()
-  const sortedCards = useMemo(() => sortCards(cards, sort), [cards, sort])
-  const visibleCards = useMemo(
-    () => filterCards(sortedCards, needle, filter.applied),
-    [sortedCards, needle, filter.applied],
-  )
-
-  const { setVisibleIds } = selection
-  useEffect(() => {
-    setVisibleIds(visibleCards.map((card) => card.id))
-  }, [visibleCards, setVisibleIds])
 
   const total = cards.length
   const reorderable = selectMode && !needle
@@ -164,22 +155,29 @@ export function DeckContentEditor({
     canMove: decks.filter((deck) => !deck.archived).length > 1,
   })
 
-  const renderCard = (card: Card, dragHandle?: RowDragHandle, dragging = false) => (
+  // Everything a row reports, by card id, in one object that never changes identity — the rows are
+  // memoized, and a fresh closure each per render would draw every one of them again.
+  const rowEvents = useStableHandlers({
+    toggleSelect: selection.toggle,
+    requestSelect: selection.begin,
+    open: setBrowserCardId,
+    openActions: (id: string) => setCardSheet({ kind: 'actions', id }),
+  })
+
+  const renderCard = (card: Card, dragHandle?: SortableHandle, dragging = false) => (
     <CardRow
       key={card.id}
       card={card}
-      index={sortedCards.indexOf(card)}
+      index={positionOf.get(card.id) ?? 0}
       selectMode={selectMode}
       selected={selection.has(card.id)}
       reorderable={reorderable}
       dragHandle={dragHandle}
       dragging={dragging}
       swipe={prefs.swipe.card}
-      handlers={actionsFor(card)}
-      onToggleSelect={() => selection.toggle(card.id)}
-      onRequestSelect={() => selection.begin(card.id)}
-      onOpen={() => setBrowserCardId(card.id)}
-      onOpenActions={() => setCardSheet({ kind: 'actions', id: card.id })}
+      events={rowEvents}
+      actionsFor={actionsFor}
+      onOpenActions={rowEvents.openActions}
       algorithm={algorithm}
     />
   )
@@ -224,6 +222,7 @@ export function DeckContentEditor({
             selectedIds={selection.ids}
             onReorder={reorder}
             renderItem={renderCard}
+            estimateSize={CARD_ROW_ESTIMATE}
           />
         )}
       </div>

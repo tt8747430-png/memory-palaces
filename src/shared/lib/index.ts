@@ -123,7 +123,7 @@ export {
   statusBarIsPainted,
   type StatusBarPaint,
 } from './status-bar'
-export { SCREEN_SCROLL } from './screen-scroll'
+export { SCREEN_SCROLL, ScreenScrollContext, useScreenScroll } from './screen-scroll'
 export { useKeyboardOpen, useVirtualKeyboard, type VirtualKeyboard } from './use-virtual-keyboard'
 export { useSortableSensors } from './use-sortable-sensors'
 export { shuffle } from './shuffle'
@@ -215,6 +215,7 @@ export { chunk } from './chunk'
 export { useRouteSearch } from './use-route-search'
 export { useBack, useBackTo } from './use-back'
 export { useLatest } from './use-latest'
+export { useStableHandlers } from './use-stable-handlers'
 export { newest, type Clocked } from './newest'
 export { mergeFields, type MergeFieldsOptions } from './merge-fields'
 export { mergeProgress, mergeProgressAgainst, type MergeableProgress } from './merge-progress'
@@ -230,7 +231,7 @@ export {
   type PasswordErrorKey,
 } from './validation'
 export { DAY_MS, systemClock, fixedClock, nowIso, type Clock } from './clock'
-export { cloneEntity, findEntity, newId, requireEntity, type Entity } from './entity'
+export { cloneEntity, findEntity, newId, positionsById, requireEntity, type Entity } from './entity'
 export {
   createCollectionStore,
   createSingletonStore,

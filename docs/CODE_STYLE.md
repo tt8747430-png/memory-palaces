@@ -247,6 +247,19 @@ Ordered by impact.
 - **Subscribe narrowly** — smallest slice via `useXStore(selector)`; prefer a derived boolean (`selectIsReady`) over a
   raw array. State used only in a callback → `useXStoreApi().getState()` at call time.
 - **Memoize deliberately** — `useMemo` for real derivations; `React.memo` around an expensive child under a hot parent.
+- **Entities keep their identity.** A repository hands back the same object for every entity a write did not touch
+  (`RxdbRepository` caches per RxDB document, `createCollectionStore` caches each `complete` repair), and nothing edits
+  an entity in place — `InMemoryRepository` freezes what it holds, so a test catches it. That is what lets a row be
+  `memo`ized on its entity: one write re-renders one row.
+- **A list row is `memo`ized, and everything it is handed is stable.** Handlers take an id and come from
+  `useStableHandlers` (identity fixed, latest version called); a catalog builder like `useCardActions` changes only
+  when what it _offers_ changes and reads what an action _does_ when pressed. An inline closure per row per render is
+  the one thing that re-renders every row.
+- **Long lists are windows** (`content-editor`'s `useListWindow`, `@tanstack/react-virtual`, on the screen's own scroll
+  element from `ScreenScrollContext`) — kept in the widget, so the virtualizer loads with the deck screens, never on the
+  first paint. A deck's cards and questions draw a screenful plus overscan, so opening one costs the same at
+  5,000 cards as at 50. A windowed row does not animate in — it would replay on every row a scroll brings in. Tests see
+  a screenful too: `shared/test/setup.ts` gives the scroll element and each windowed row a size, and nothing else.
 - **Split routes with `lazyRouteComponent`** (TanStack's, not bare `React.lazy` — it hooks the router's own pending
   states and `defaultPreload: 'intent'`). `app/router.tsx` loads **every** screen on demand: the
   `app/routes/*-screens.tsx` modules are the split points and each becomes its own chunk, so a cold start on the login
@@ -267,12 +280,12 @@ Ordered by impact.
   round-trip in front of every cover.
 - **Never define a component inside a component** — it remounts every render.
 - **Derive during render, don't mirror state with effects.** `useEffect` = outside-world sync; interaction logic in
-  handlers.
+  handlers. A child reporting a derived value up through an effect renders the parent twice — pass the derivation
+  down instead (`useCardList` → `useMultiSelect({ visibleIds })`).
 - **Passive scroll/touch listeners.** Horizontal swipes use **`@use-gesture`** (`axis: 'x'` + `touch-action: pan-y`),
   commit math in `shared/lib/gestures`; sheets never hand-roll drag (Base UI `Drawer` owns swipe-to-dismiss).
 - **`startTransition` / `useDeferredValue`** for expensive non-urgent updates (deck/card search).
-- **Ternary, not `cond && <X/>`** (falsy `0`/`''` renders as text). Hoist static JSX. `content-visibility`/windowing for
-  long lists.
+- **Ternary, not `cond && <X/>`** (falsy `0`/`''` renders as text). Hoist static JSX.
 - **JS micro-perf stays in `shared/lib`** (`Map`/`Set`, `toSorted()`, early exit) where it's tested.
 - **Server state:** there is almost none, by design — domain data is RxDB, and a Sync writes into it. The few true
   server reads (the Sync's peek, a scheduled account deletion) live behind ports in feature commands or providers,
@@ -329,8 +342,9 @@ each row on the compositor, nothing under `prefers-reduced-motion`.
 **All of it is `useSortableBlock()` (`shared/lib`) — don't rewrite it.** Headless; owns carry, pile, landing, drop
 placement, plus the two settings that must not vary (`drag.collision` → `DndContext`, `drag.dropAnimation` →
 `DragOverlay`). A surface supplies `sectionOf`, optional `scopeTo`, and markup. Rows go through `SortableRow`, which
-keeps the frame as the row's own element — that's what `opacity-0` and the landing apply to. The settings action
-editors are not blocks: one horizontal strip each, on `widgets/action-slots`' `useSortableList` (ADR 0001).
+keeps the frame as the row's own element — that's what `opacity-0` and the landing apply to — and hands out one
+memoized `handle`, so a `memo`ized row is not drawn again by the drag machinery. The settings action editors are not
+blocks: one horizontal strip each, on `widgets/action-slots`' `useSortableList` (ADR 0001).
 
 **`LibrarySelectList` is the reference — move other surfaces to it, never it to them.** Two rules easy to "improve" and
 not to be: `dropAnimation` is `null`, and reorderable rows have **no mount entrance**.

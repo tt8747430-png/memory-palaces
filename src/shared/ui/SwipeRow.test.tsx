@@ -79,14 +79,26 @@ const trayOf = (label: string) =>
   screen.getByRole('button', { name: label, hidden: true }).parentElement as HTMLElement
 
 describe('SwipeRow — a shut rail must not stand in the open one’s way', () => {
-  it('keeps both rails out of hit-testing while the row is at rest', () => {
+  it('draws no rail at all while a row has never been swiped — a list of them costs no trays', () => {
     render(
       <SwipeRow {...bothRails(vi.fn(), vi.fn())}>
         <div data-testid="a">a</div>
       </SwipeRow>,
     )
+    expect(screen.queryByRole('button', { name: 'Known', hidden: true })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Delete', hidden: true })).toBeNull()
+  })
+
+  it('draws both rails from the first movement, the shut one out of hit-testing', async () => {
+    render(
+      <SwipeRow {...bothRails(vi.fn(), vi.fn())}>
+        <div data-testid="a">a</div>
+      </SwipeRow>,
+    )
+    swipe('a', 240)
+    await painted()
     expect(trayOf('Known').style.pointerEvents).toBe('none')
-    expect(trayOf('Delete').style.pointerEvents).toBe('none')
+    expect(trayOf('Delete').style.pointerEvents).toBe('auto')
   })
 
   it('hands pointers to the leading rail alone once it is open', async () => {

@@ -1,8 +1,9 @@
-import { type ReactNode, useCallback, useLayoutEffect, useRef } from 'react'
+import { type ReactNode, useCallback, useLayoutEffect, useRef, useState } from 'react'
 import {
   cn,
   HeaderElevationContext,
   SCREEN_SCROLL,
+  ScreenScrollContext,
   useBottomChrome,
   useKeyboardOpen,
   useKeyboardReveal,
@@ -71,6 +72,7 @@ export function AppScreen({
   bounce?: boolean
 }) {
   const innerRef = useRef<HTMLElement | null>(null)
+  const [scrollElement, setScrollElement] = useState<HTMLElement | null>(null)
   const { ref: measureScroll, elevation } = useStickyHeader()
   const revealScroll = useKeyboardReveal()
   const claimChrome = useBottomChrome()
@@ -79,6 +81,7 @@ export function AppScreen({
   const setRef = useCallback(
     (node: HTMLElement | null) => {
       innerRef.current = node
+      setScrollElement(node)
       measureScroll(node)
       revealScroll(node)
       scrollRef?.(node)
@@ -110,38 +113,44 @@ export function AppScreen({
 
   if (!header && !footer && !pinned) {
     return (
-      <main
-        ref={setRef}
-        className={cn(
-          'mx-auto w-full max-w-app',
-          SHELL,
-          SCROLL,
-          scrollInset,
-          gutterScale,
-          className,
-        )}
-      >
-        {content}
-        {gutterBox}
-      </main>
+      <ScreenScrollContext value={scrollElement}>
+        <main
+          ref={setRef}
+          data-screen-scroll
+          className={cn(
+            'mx-auto w-full max-w-app',
+            SHELL,
+            SCROLL,
+            scrollInset,
+            gutterScale,
+            className,
+          )}
+        >
+          {content}
+          {gutterBox}
+        </main>
+      </ScreenScrollContext>
     )
   }
 
   return (
-    <HeaderElevationContext value={elevation}>
-      <div className={cn('mx-auto flex w-full max-w-app flex-col', SHELL)}>
-        {header}
-        {pinned ? <div className="shrink-0">{pinned}</div> : null}
-        <main
-          ref={setRef}
-          className={cn('min-h-0 flex-1', SCROLL, scrollInset, gutterScale, className)}
-        >
-          {content}
-          {gutterBox}
-          {keyboard ? footerBox : null}
-        </main>
-        {keyboard ? null : footerBox}
-      </div>
-    </HeaderElevationContext>
+    <ScreenScrollContext value={scrollElement}>
+      <HeaderElevationContext value={elevation}>
+        <div className={cn('mx-auto flex w-full max-w-app flex-col', SHELL)}>
+          {header}
+          {pinned ? <div className="shrink-0">{pinned}</div> : null}
+          <main
+            ref={setRef}
+            data-screen-scroll
+            className={cn('min-h-0 flex-1', SCROLL, scrollInset, gutterScale, className)}
+          >
+            {content}
+            {gutterBox}
+            {keyboard ? footerBox : null}
+          </main>
+          {keyboard ? null : footerBox}
+        </div>
+      </HeaderElevationContext>
+    </ScreenScrollContext>
   )
 }

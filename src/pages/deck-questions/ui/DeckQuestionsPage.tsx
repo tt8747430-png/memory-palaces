@@ -11,17 +11,22 @@ import {
   SelectHeader,
   SelectToolbar,
   BottomSlot,
+  type SortableHandle,
   SortControl,
   SpeedDial,
   useContentSortOptions,
 } from '@/shared/ui'
-import { QuestionRow, ReorderableList, type RowDragHandle } from '@/widgets/content-editor'
+import { useStableHandlers } from '@/shared/lib'
+import { QuestionRow, ReorderableList } from '@/widgets/content-editor'
 import { QUESTION_SORTS } from '../model/sort-questions'
 import { useDeckQuestions } from '../model/use-deck-questions'
 import { EmptyQuestions } from './EmptyQuestions'
 import { QuestionDialogs } from './QuestionDialogs'
 import { QuestionTransferSheets } from './QuestionTransferSheets'
 import { TestLaunchCard } from './TestLaunchCard'
+
+/** A question row before it is measured: the prompt and four options. */
+const QUESTION_ROW_ESTIMATE = 220
 
 export interface DeckQuestionsPageProps {
   deckId: string
@@ -40,7 +45,7 @@ export function DeckQuestionsPage({
 }: DeckQuestionsPageProps) {
   const { t } = useTranslation()
   const page = useDeckQuestions(deckId)
-  const { questions, selection } = page
+  const { questions, positionOf, selection } = page
   const prefs = usePreferencesStore(selectEffectivePreferences)
 
   const [importOpen, setImportOpen] = useState(false)
@@ -48,22 +53,29 @@ export function DeckQuestionsPage({
 
   const sortOptions = useContentSortOptions(QUESTION_SORTS)
 
-  const renderQuestion = (question: Question, dragHandle?: RowDragHandle, dragging = false) => (
+  const rowEvents = useStableHandlers({
+    toggleSelect: selection.toggle,
+    requestSelect: selection.begin,
+  })
+  const rowActions = useStableHandlers({
+    edit: onEditQuestion,
+    duplicate: page.duplicate,
+    remove: (question: Question) => page.request({ kind: 'delete-question', question }),
+  })
+
+  const renderQuestion = (question: Question, dragHandle?: SortableHandle, dragging = false) => (
     <QuestionRow
       key={question.id}
       question={question}
-      index={questions.indexOf(question)}
+      index={positionOf.get(question.id) ?? 0}
       selectMode={selection.active}
       selected={selection.has(question.id)}
       reorderable={selection.active}
       dragHandle={dragHandle}
       dragging={dragging}
       swipe={prefs.swipe.card}
-      onToggleSelect={() => selection.toggle(question.id)}
-      onRequestSelect={() => selection.begin(question.id)}
-      onEdit={() => onEditQuestion(question.id)}
-      onDuplicate={() => page.duplicate(question.id)}
-      onDelete={() => page.request({ kind: 'delete-question', question })}
+      events={rowEvents}
+      actions={rowActions}
     />
   )
 
@@ -122,6 +134,7 @@ export function DeckQuestionsPage({
               selectedIds={selection.ids}
               onReorder={page.reorder}
               renderItem={renderQuestion}
+              estimateSize={QUESTION_ROW_ESTIMATE}
             />
           )}
         </section>

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Search, Settings } from 'lucide-react'
 import { isSubdeck, useDeck, useDeckStoreApi } from '@/entities/deck'
-import { selectCards, useCardStore } from '@/entities/card'
+import { useCardStore } from '@/entities/card'
 import { selectFolders, useFolderStore } from '@/entities/folder'
 import { questionsForDeck, selectQuestions, useQuestionStore } from '@/entities/question'
 import {
@@ -13,8 +13,8 @@ import {
 } from '@/entities/preferences'
 import { updateDeckSettings } from '@/features/deck'
 import { setPreferences } from '@/features/preferences'
-import { cardsInSubtree, selectIsReady, useMultiSelect } from '@/shared/lib'
-import { DeckContentEditor } from '@/widgets/content-editor'
+import { selectIsReady, useMultiSelect } from '@/shared/lib'
+import { DeckContentEditor, useCardList } from '@/widgets/content-editor'
 import { DeckSwitcher } from '@/widgets/deck-tree'
 import { useDeckOverview } from '../model/use-deck-overview'
 import { AlgorithmLine } from './AlgorithmLine'
@@ -69,16 +69,33 @@ export function DeckDetailPage({
   const deckStore = useDeckStoreApi()
 
   const { decks, deck, settings, ready: decksReady } = useDeck(deckId)
-  const allCards = useCardStore(selectCards)
   const allQuestions = useQuestionStore(selectQuestions)
   const folders = useFolderStore(selectFolders)
   const cardsReady = useCardStore(selectIsReady)
   const ready = decksReady && cardsReady
 
-  const subtreeCards = useMemo(
-    () => cardsInSubtree(decks, allCards, deckId),
-    [decks, allCards, deckId],
-  )
+  const prefs = usePreferencesStore(selectEffectivePreferences)
+  const setContentSort = (value: ContentSort) =>
+    void setPreferences(prefStore, { contentSort: value })
+
+  const [searching, setSearching] = useState(false)
+  const [query, setQuery] = useState('')
+  const closeSearch = () => {
+    setSearching(false)
+    setQuery('')
+  }
+
+  // One derivation of the deck's cards for the whole screen: the overview counts them, the editor
+  // draws them, and select-all covers exactly the ones it draws.
+  const list = useCardList({
+    deckId,
+    algorithm: settings.algorithm,
+    sort: prefs.contentSort,
+    searchQuery: query,
+  })
+  const selection = useMultiSelect({ visibleIds: list.visibleIds })
+  const subtreeCards = list.cards
+
   const questions = useMemo(() => questionsForDeck(allQuestions, deckId), [allQuestions, deckId])
   const flaggedCount = useMemo(
     () => subtreeCards.filter((card) => card.flagged).length,
@@ -88,18 +105,6 @@ export function DeckDetailPage({
   const [now] = useState(() => Date.now())
 
   const overview = useDeckOverview(subtreeCards, settings.algorithm, settings.maxCardsPerDay, now)
-
-  const prefs = usePreferencesStore(selectEffectivePreferences)
-  const setContentSort = (value: ContentSort) =>
-    void setPreferences(prefStore, { contentSort: value })
-  const selection = useMultiSelect()
-
-  const [searching, setSearching] = useState(false)
-  const [query, setQuery] = useState('')
-  const closeSearch = () => {
-    setSearching(false)
-    setQuery('')
-  }
 
   if (!ready) {
     return <ScreenLoading />
@@ -208,13 +213,10 @@ export function DeckDetailPage({
 
         <section aria-label={t('deck.cards')} className="space-y-3 pt-1">
           <DeckContentEditor
-            deckId={deckId}
-            algorithm={settings.algorithm}
-            searchQuery={query}
+            list={list}
             searching={searching}
             onClearSearch={closeSearch}
             selection={selection}
-            sort={prefs.contentSort}
             onSortChange={setContentSort}
             onAddCard={onAddCard}
             onEditCard={onEditCard}

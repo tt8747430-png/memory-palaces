@@ -22,6 +22,8 @@ import {
   HistoryStoreContext,
   makeHistoryEntry,
 } from '@/entities/learning-history'
+import { AppScreen } from '@/shared/ui'
+import { useCardList } from '../model/use-card-list'
 import { DeckContentEditor } from './DeckContentEditor'
 
 afterEach(cleanup)
@@ -29,19 +31,20 @@ afterEach(cleanup)
 const at = (ms: number) => new Date(ms).toISOString()
 
 function Editor({ onAddCard }: { onAddCard: () => void }) {
-  const selection = useMultiSelect()
+  const list = useCardList({ deckId: 'd1', algorithm: 'spaced', sort: 'manual' })
+  const selection = useMultiSelect({ visibleIds: list.visibleIds })
   return (
-    <DeckContentEditor
-      deckId="d1"
-      algorithm="spaced"
-      selection={selection}
-      sort="manual"
-      onSortChange={() => {}}
-      onAddCard={onAddCard}
-      onEditCard={() => {}}
-      onPasteNotes={() => {}}
-      onReviewImport={() => {}}
-    />
+    <AppScreen>
+      <DeckContentEditor
+        list={list}
+        selection={selection}
+        onSortChange={() => {}}
+        onAddCard={onAddCard}
+        onEditCard={() => {}}
+        onPasteNotes={() => {}}
+        onReviewImport={() => {}}
+      />
+    </AppScreen>
   )
 }
 
@@ -163,9 +166,7 @@ describe('DeckContentEditor', () => {
 
       await user.click(await open(user))
 
-      expect(
-        await screen.findByRole('heading', { name: 'Learning history' }),
-      ).toBeInTheDocument()
+      expect(await screen.findByRole('heading', { name: 'Learning history' })).toBeInTheDocument()
     })
 
     it('is not offered at all for a card nothing has been recorded against', async () => {

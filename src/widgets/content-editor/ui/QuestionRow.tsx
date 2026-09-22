@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Check } from 'lucide-react'
 import type { Question } from '@/entities/question'
@@ -5,42 +6,48 @@ import { cn } from '@/shared/lib'
 import { buildMenuActions } from '@/shared/ui'
 import { ContentRow, type RowFrameProps, RowIndex } from './ContentRow'
 
-export interface QuestionRowProps extends RowFrameProps {
-  question: Question
-  index: number
-  onEdit: () => void
-  onDuplicate: () => void
-  onDelete: () => void
+/** What a question row can ask for, by question. Stable for the life of the list. */
+export interface QuestionRowActions {
+  edit: (id: string) => void
+  duplicate: (id: string) => void
+  remove: (question: Question) => void
 }
 
-export function QuestionRow({
+export interface QuestionRowProps extends Omit<RowFrameProps, 'id'> {
+  question: Question
+  index: number
+  actions: QuestionRowActions
+}
+
+/** A question in the deck's list. Memoized, like `CardRow`, for the same reason. */
+export const QuestionRow = memo(function QuestionRow({
   question,
   index,
-  onEdit,
-  onDuplicate,
-  onDelete,
+  actions,
   ...frame
 }: QuestionRowProps) {
   const { t } = useTranslation()
 
-  const menuActions = buildMenuActions(
-    ['edit', 'duplicate', 'delete'],
-    {
-      edit: { onAction: onEdit },
-      duplicate: { onAction: onDuplicate },
-      delete: { onAction: onDelete },
-    },
-    t,
-  )
+  const { menuActions, swipeHandlers } = useMemo(() => {
+    const edit = { onAction: () => actions.edit(question.id) }
+    const duplicate = { onAction: () => actions.duplicate(question.id) }
+    const remove = { onAction: () => actions.remove(question) }
+    return {
+      menuActions: buildMenuActions(
+        ['edit', 'duplicate', 'delete'],
+        { edit, duplicate, delete: remove },
+        t,
+      ),
+      swipeHandlers: { duplicate, delete: remove },
+    }
+  }, [actions, question, t])
 
   return (
     <ContentRow
       {...frame}
+      id={question.id}
       overflow={{ kind: 'menu', actions: menuActions }}
-      swipeHandlers={{
-        duplicate: { onAction: onDuplicate },
-        delete: { onAction: onDelete },
-      }}
+      swipeHandlers={swipeHandlers}
     >
       <div className="mb-2 flex items-center gap-2">
         <RowIndex index={index} tone="strong" />
@@ -55,7 +62,7 @@ export function QuestionRow({
       </ul>
     </ContentRow>
   )
-}
+})
 
 function Option({ label, letter, correct }: { label: string; letter: number; correct: boolean }) {
   return (

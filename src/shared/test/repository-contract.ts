@@ -5,6 +5,8 @@ export function runRepositoryContract<T extends Identifiable>(
   name: string,
   createRepository: () => Repository<T>,
   makeEntity: (id: string) => T,
+  /** The same entity with one field changed — what a single edit writes. */
+  revise: (entity: T) => T,
 ): void {
   describe(`Repository contract: ${name}`, () => {
     it('returns null for a missing id', async () => {
@@ -66,6 +68,29 @@ export function runRepositoryContract<T extends Identifiable>(
       await repo.save(makeEntity('b'))
       await new Promise((resolve) => setTimeout(resolve, 20))
       expect(emissions).toHaveLength(countBeforeUnsubscribe)
+    })
+
+    it('observe keeps the object of every entity a change did not touch', async () => {
+      const repo = createRepository()
+      await repo.save(makeEntity('a'))
+      await repo.save(makeEntity('b'))
+      const emissions: T[][] = []
+      const unsubscribe = repo.observe((entities) => emissions.push(entities))
+      await vi.waitFor(() => expect(emissions.at(-1)).toHaveLength(2))
+      const before = emissions.at(-1)!
+      const count = emissions.length
+
+      await repo.save(revise(makeEntity('b')))
+      await vi.waitFor(() => expect(emissions.length).toBeGreaterThan(count))
+      const after = emissions.at(-1)!
+      unsubscribe()
+
+      // Every emission is the whole collection. One write must cost one new object, or every
+      // subscriber's memo keyed on an entity breaks on every write anywhere in the collection.
+      const byId = (list: T[], id: string) => list.find((entity) => entity.id === id)
+      expect(byId(after, 'a')).toBe(byId(before, 'a'))
+      expect(byId(after, 'b')).not.toBe(byId(before, 'b'))
+      expect(byId(after, 'b')).toEqual(revise(makeEntity('b')))
     })
   })
 }

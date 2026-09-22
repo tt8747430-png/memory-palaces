@@ -29,3 +29,8 @@ export function requireEntity<T extends Identifiable>(
   if (!entity) throw new Error(`${label} not found: ${id}`)
   return entity
 }
+
+/** Each entity's place in `entities`, by id — for a row's number, read without a scan per row. */
+export function positionsById(entities: readonly Identifiable[]): ReadonlyMap<string, number> {
+  return new Map(entities.map((entity, position) => [entity.id, position]))
+}

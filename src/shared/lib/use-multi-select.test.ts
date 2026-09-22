@@ -38,28 +38,35 @@ describe('useMultiSelect', () => {
     expect(result.current.count).toBe(1)
   })
 
-  it('reports "all selected" against the rows currently on screen', () => {
-    const { result } = renderHook(() => useMultiSelect())
-    act(() => result.current.setVisibleIds(['a', 'b']))
+  it('reports "all selected" against the rows the list shows', () => {
+    const { result } = renderHook(() => useMultiSelect({ visibleIds: ['a', 'b'] }))
     act(() => result.current.begin('a'))
     expect(result.current.allSelected).toBe(false)
     act(() => result.current.toggle('b'))
     expect(result.current.allSelected).toBe(true)
   })
 
-  it('select-all covers what is on screen, and flips to clearing it once it is full', () => {
-    const { result } = renderHook(() => useMultiSelect())
-    act(() => result.current.setVisibleIds(['a', 'b', 'c']))
+  it('select-all covers what the list shows, and flips to clearing it once it is full', () => {
+    const { result } = renderHook(() => useMultiSelect({ visibleIds: ['a', 'b', 'c'] }))
     act(() => result.current.toggleAll())
     expect(result.current.count).toBe(3)
     act(() => result.current.toggleAll())
     expect(result.current.count).toBe(0)
   })
 
-  it('leaves rows that are off screen alone when clearing', () => {
-    const { result } = renderHook(() => useMultiSelect())
+  it('follows the list as it changes, with no render in between to catch up', () => {
+    const { result, rerender } = renderHook(({ ids }) => useMultiSelect({ visibleIds: ids }), {
+      initialProps: { ids: ['a'] as readonly string[] },
+    })
+    act(() => result.current.begin('a'))
+    expect(result.current.allSelected).toBe(true)
+    rerender({ ids: ['a', 'b'] })
+    expect(result.current.allSelected).toBe(false)
+  })
+
+  it('leaves rows the list does not show alone when clearing', () => {
+    const { result } = renderHook(() => useMultiSelect({ visibleIds: ['a'] }))
     act(() => result.current.begin('filtered-out'))
-    act(() => result.current.setVisibleIds(['a']))
     act(() => result.current.toggleAll())
     act(() => result.current.toggleAll())
     expect(result.current.has('filtered-out')).toBe(true)
@@ -73,11 +80,11 @@ describe('useMultiSelect', () => {
     expect(result.current.count).toBe(0)
   })
 
-  it('keeps the same object when the list reports identical rows', () => {
-    const { result } = renderHook(() => useMultiSelect())
-    act(() => result.current.setVisibleIds(['a', 'b']))
+  it('keeps the same object across renders while neither the list nor the selection changes', () => {
+    const ids: readonly string[] = ['a', 'b']
+    const { result, rerender } = renderHook(() => useMultiSelect({ visibleIds: ids }))
     const before = result.current
-    act(() => result.current.setVisibleIds(['a', 'b']))
+    rerender()
     expect(result.current).toBe(before)
   })
 })

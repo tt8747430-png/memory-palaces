@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cloneEntity, type Entity, newId } from './entity'
+import { cloneEntity, type Entity, newId, positionsById } from './entity'
 
 interface Sample extends Entity {
   label: string
@@ -24,5 +24,14 @@ describe('newId', () => {
   it('never hands out the same id twice', () => {
     const ids = new Set(Array.from({ length: 50 }, newId))
     expect(ids.size).toBe(50)
+  })
+})
+
+describe('positionsById', () => {
+  it('gives each entity its place in the list', () => {
+    const positions = positionsById([{ id: 'b' }, { id: 'a' }, { id: 'c' }])
+    expect(positions.get('b')).toBe(0)
+    expect(positions.get('c')).toBe(2)
+    expect(positions.get('missing')).toBeUndefined()
   })
 })

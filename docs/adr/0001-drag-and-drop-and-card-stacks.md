@@ -30,8 +30,12 @@ row anatomy. Surfaces differ in what they render, never in how a drag behaves.
 | Surface                             | Renders                             | Engine             |
 | ----------------------------------- | ----------------------------------- | ------------------ |
 | `deck-tree/ui/LibrarySelectList`    | two sections + folder drop target   | `useSortableBlock` |
-| `content-editor/ui/ReorderableList` | flat list, order held from props    | `useSortableBlock` |
+| `content-editor/ui/ReorderableList` | windowed list, order held by props | `useSortableBlock` |
 | `settings-select`, `settings-swipe` | the live bar / the row's two rails  | `useSortableList`  |
+
+`ReorderableList` draws only the rows in view (`useListWindow`). `SortableContext` still holds every id; rows out of
+view are not droppables until the drag's auto-scroll brings them in, and the dragged row is kept drawn wherever it is
+scrolled (`keep`), so the engine never loses its node.
 
 Settings pages stay out deliberately: one horizontal strip, no multi-select, no piles. `widgets/action-slots`'
 `useSortableList` is their small engine — sensors, held order, the one `dropAnimation`, and a drop that may be refused

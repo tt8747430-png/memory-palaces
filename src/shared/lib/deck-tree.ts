@@ -91,17 +91,24 @@ export function subtreeDecks<T extends TreeDeck>(decks: readonly T[], rootId: st
 
 export type SelectState = 'unchecked' | 'checked' | 'indeterminate'
 
-export function deckPath<T extends TreeDeck>(decks: readonly T[], deckId: string): T[] {
-  const byId = new Map(decks.map((d) => [d.id, d]))
+/**
+ * A deck and its ancestors, from the deck up — the one walk up the tree, cycle-safe, over a map the
+ * caller builds once however many chains it walks.
+ */
+function ancestry<T extends TreeDeck>(byId: ReadonlyMap<string, T>, deckId: string): T[] {
   const chain: T[] = []
   const seen = new Set<string>()
   let cur = byId.get(deckId)
   while (cur && !seen.has(cur.id)) {
     seen.add(cur.id)
-    chain.unshift(cur)
+    chain.push(cur)
     cur = cur.parentId ? byId.get(cur.parentId) : undefined
   }
   return chain
+}
+
+export function deckPath<T extends TreeDeck>(decks: readonly T[], deckId: string): T[] {
+  return ancestry(new Map(decks.map((d) => [d.id, d])), deckId).reverse()
 }
 
 export function isDescendantOrSelf(
@@ -173,13 +180,28 @@ export function dueCountsPerDeck(
   now: number,
   algorithmOf: (deckId: string) => DeckAlgorithm,
 ): Map<string, number> {
+  // Each deck's chain is walked once, not once per card: the Library recounts on every card write,
+  // and a path built from a fresh map of every deck per card made that cards × decks.
+  const byId = new Map(decks.map((deck) => [deck.id, deck]))
+  const chains = new Map<string, readonly TreeDeck[] | null>()
+  const countedChain = (deckId: string): readonly TreeDeck[] | null => {
+    let chain = chains.get(deckId)
+    if (chain === undefined) {
+      const walked = ancestry(byId, deckId)
+      // Under an archived deck anywhere up the chain, nothing is waiting.
+      chain = walked.some((deck) => deck.archived) ? null : walked
+      chains.set(deckId, chain)
+    }
+    return chain
+  }
+
   const counts = new Map<string, number>()
   for (const card of cards) {
     const waiting =
       algorithmOf(card.deckId) === 'fast' ? card.fastReview !== 'gotIt' : isDue(card.srs, now)
     if (!waiting) continue
-    const chain = deckPath(decks, card.deckId)
-    if (chain.some((deck) => deck.archived)) continue
+    const chain = countedChain(card.deckId)
+    if (!chain) continue
     for (const deck of chain) counts.set(deck.id, (counts.get(deck.id) ?? 0) + 1)
   }
   return counts

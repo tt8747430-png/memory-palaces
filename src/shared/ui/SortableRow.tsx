@@ -1,12 +1,21 @@
-import type { ReactNode } from 'react'
+import { type ReactNode, useMemo } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { cn } from '@/shared/lib'
 
+/** What makes an element the row's drag handle: its ref, and the props to spread onto it. */
+export interface SortableHandle {
+  ref: (node: HTMLElement | null) => void
+  props: Record<string, unknown>
+}
+
 export interface SortableRowRender {
   frameRef: (node: HTMLElement | null) => void
-  handleRef: (node: HTMLElement | null) => void
-  handleProps: Record<string, unknown>
+  /**
+   * The drag handle. One object for as long as the drag state holds still — dnd-kit keeps its
+   * attributes and listeners stable — so a memoized row handed it does not render again for it.
+   */
+  handle: SortableHandle
   isDragging: boolean
 }
 
@@ -38,6 +47,11 @@ export function SortableRow({
     isDragging,
   } = useSortable({ id, disabled })
 
+  const handle = useMemo<SortableHandle>(
+    () => ({ ref: setActivatorNodeRef, props: { ...attributes, ...listeners } }),
+    [setActivatorNodeRef, attributes, listeners],
+  )
+
   const Outer = as
   return (
     <Outer
@@ -47,8 +61,7 @@ export function SortableRow({
     >
       {children({
         frameRef: landingRef ?? (() => {}),
-        handleRef: setActivatorNodeRef,
-        handleProps: { ...attributes, ...listeners },
+        handle,
         isDragging,
       })}
     </Outer>

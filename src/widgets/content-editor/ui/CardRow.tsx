@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { memo, type ReactNode, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeftRight, Flag, Lightbulb, MapPin, Snowflake } from 'lucide-react'
 import type { Card } from '@/entities/card'
@@ -6,30 +6,40 @@ import type { LearningAlgorithm } from '@/entities/deck'
 import { type ActionHandlers, Chip, SrsStatusChip } from '@/shared/ui'
 import { ContentRow, type RowFrameProps, RowIndex } from './ContentRow'
 
-export interface CardRowProps extends RowFrameProps {
+export interface CardRowProps extends Omit<RowFrameProps, 'id'> {
   card: Card
   index: number
   algorithm: LearningAlgorithm
-  /** The card's whole action catalog; the rails render whatever the learner picked. */
-  handlers: ActionHandlers
-  onOpen: () => void
-  onOpenActions: () => void
+  /**
+   * Builds a card's whole action catalog; the rails render whatever the learner picked. One
+   * function for the list, changing only when what it offers changes, so the row can build its own
+   * catalog once per card instead of the list building one per row per render.
+   */
+  actionsFor: (card: Card) => ActionHandlers
+  /** Opens the card's action sheet. Stable for the life of the list. */
+  onOpenActions: (id: string) => void
 }
 
-export function CardRow({
+/**
+ * A card in the deck's list. Memoized: a write to one card re-renders that card's row, not the
+ * list — the store hands back the same object for every card the write did not touch.
+ */
+export const CardRow = memo(function CardRow({
   card,
   index,
   algorithm,
-  handlers,
+  actionsFor,
   onOpenActions,
   ...frame
 }: CardRowProps) {
   const { t } = useTranslation()
+  const handlers = useMemo(() => actionsFor(card), [actionsFor, card])
 
   return (
     <ContentRow
       {...frame}
-      overflow={{ kind: 'sheet', onOpen: onOpenActions }}
+      id={card.id}
+      overflow={{ kind: 'sheet', onOpen: () => onOpenActions(card.id) }}
       swipeHandlers={handlers}
     >
       <div className="flex items-center gap-2">
@@ -81,7 +91,7 @@ export function CardRow({
       ) : null}
     </ContentRow>
   )
-}
+})
 
 function Cue({ className, icon, text }: { className: string; icon: ReactNode; text: string }) {
   return (

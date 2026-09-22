@@ -13,27 +13,34 @@ export interface MultiSelect {
   toggle: (id: string) => void
   toggleAll: () => void
   exit: () => void
-  setVisibleIds: (ids: readonly string[]) => void
 }
 
 export interface MultiSelectOptions {
   expand?: (id: string) => readonly string[]
+  /**
+   * The rows the list shows right now — after its search and filter, not only the ones scrolled
+   * into view. What "all" means for select-all. An input rather than something the list reports
+   * back from an effect: reported, it started empty and the whole screen rendered a second time
+   * the moment it arrived.
+   */
+  visibleIds?: readonly string[]
 }
 
 const itself = (id: string): readonly string[] => [id]
 
-export function useMultiSelect({ expand = itself }: MultiSelectOptions = {}): MultiSelect {
+const NONE: readonly string[] = []
+
+export function useMultiSelect({
+  expand = itself,
+  visibleIds: visible = NONE,
+}: MultiSelectOptions = {}): MultiSelect {
   const [active, setActive] = useState(false)
   const [ids, setIds] = useState<ReadonlySet<string>>(() => new Set())
-  const [visible, setVisible] = useState<readonly string[]>([])
 
-  const setVisibleIds = useCallback((next: readonly string[]) => {
-    setVisible((prev) =>
-      prev.length === next.length && prev.every((id, i) => id === next[i]) ? prev : next,
-    )
-  }, [])
-
-  const allSelected = visible.length > 0 && visible.every((id) => ids.has(id))
+  const allSelected = useMemo(
+    () => visible.length > 0 && visible.every((id) => ids.has(id)),
+    [visible, ids],
+  )
 
   const begin = useCallback(
     (id: string) => {
@@ -94,8 +101,7 @@ export function useMultiSelect({ expand = itself }: MultiSelectOptions = {}): Mu
       toggle,
       toggleAll,
       exit,
-      setVisibleIds,
     }),
-    [active, ids, allSelected, has, begin, enter, toggle, toggleAll, exit, setVisibleIds],
+    [active, ids, allSelected, has, begin, enter, toggle, toggleAll, exit],
   )
 }

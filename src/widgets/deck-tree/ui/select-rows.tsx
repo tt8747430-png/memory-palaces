@@ -93,7 +93,7 @@ function SelectRow({
   const { t } = useTranslation()
   return (
     <SortableRow as="li" id={id} landingRef={landingRef} disabled={fixed}>
-      {({ frameRef, handleRef, handleProps, isDragging }) => (
+      {({ frameRef, handle, isDragging }) => (
         <div
           ref={frameRef}
           className={cn(
@@ -106,9 +106,9 @@ function SelectRow({
         >
           <button
             type="button"
-            ref={handleRef}
+            ref={handle.ref}
             onClick={() => onToggleSelect(id)}
-            {...handleProps}
+            {...handle.props}
             aria-label={t('library.select.toggle', { name })}
             aria-pressed={selected}
             className={cn(ROW_HIT, 'touch-pan-y')}

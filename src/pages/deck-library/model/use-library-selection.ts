@@ -48,11 +48,6 @@ export function useLibrarySelection({
     [folderIds, subtree, decks, scoped],
   )
 
-  const selection = useMultiSelect({ expand })
-  const { exit, setVisibleIds } = selection
-
-  useEffect(() => exit(), [folderId, exit])
-
   const selectable = useMemo(() => {
     const all: string[] = []
     for (const folder of sectionFolders) all.push(folder.id)
@@ -60,7 +55,10 @@ export function useLibrarySelection({
     return all
   }, [sectionFolders, sectionDecks, subtree])
 
-  useEffect(() => setVisibleIds(selectable), [selectable, setVisibleIds])
+  const selection = useMultiSelect({ expand, visibleIds: selectable })
+  const { exit } = selection
+
+  useEffect(() => exit(), [folderId, exit])
 
   const deckIds = useMemo(
     () => [...selection.ids].filter((id) => decksById.has(id)),

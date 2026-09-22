@@ -28,12 +28,12 @@ export function SortableActionSlot({
   const name = t(ACTION_META[action].labelKey as never)
   return (
     <SortableRow id={action} className={className}>
-      {({ handleRef, handleProps, isDragging }) => (
+      {({ handle, isDragging }) => (
         <>
           <button
-            ref={handleRef}
+            ref={handle.ref}
             type="button"
-            {...handleProps}
+            {...handle.props}
             aria-label={t('slots.reorder', { name })}
             className={cn(
               'relative flex h-full w-full cursor-grab touch-none rounded-tile active:cursor-grabbing',
