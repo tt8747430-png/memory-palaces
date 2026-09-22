@@ -5,6 +5,7 @@ import {
   EmptyNotice,
   FilterChip,
   offeredOptions,
+  OPTION_GROUP,
   SortControl,
   type SortControlOption,
   useDeckSortOptions,
@@ -68,17 +69,17 @@ export function LibrarySelectBar({
       ...CORE_LIBRARY_FILTERS.map((value) => {
         const Icon = FILTER_ICON[value]
         return {
-          value: value as LibraryFilter,
+          value,
           label: t(`deck.filter.${value}`),
           icon: <Icon className="size-4" />,
-          group: 'core',
+          group: OPTION_GROUP.core,
         }
       }),
       ...extra.map((each) => ({
         value: each.id,
         label: contributed(each.labelKey),
         icon: each.icon,
-        group: 'contributed',
+        group: OPTION_GROUP.contributed,
       })),
     ] satisfies SortControlOption<LibraryFilter>[],
     options.filters,

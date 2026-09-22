@@ -1,7 +1,7 @@
 import type { TFunction } from 'i18next'
 import type { Card } from '@/entities/card'
 import { type ActionId, CARD_ACTIONS } from '@/shared/config/actions'
-import type { ActionHandlers } from '@/shared/ui'
+import { offer, type ActionHandlers } from '@/shared/ui'
 
 /** Everything a single card can be asked to do, wherever the ask comes from. */
 export interface CardActionIntents {
@@ -62,7 +62,12 @@ export function cardActionHandlers(
   t: TFunction,
   context: CardActionContext,
 ): ActionHandlers {
-  const handlers: ActionHandlers = {
+  const { onSelect, onStudyFrom } = intents
+  // Reset clears the schedule, the Fast outcome and the reviews behind them at once, so it is
+  // offered while any of the three is there to clear.
+  const anyProgress = card.srs !== undefined || card.fastReview !== undefined || context.hasHistory
+
+  return {
     edit: { onAction: intents.onEdit },
     flag: {
       onAction: intents.onToggleFlag,
@@ -80,15 +85,10 @@ export function cardActionHandlers(
     duplicate: { onAction: intents.onDuplicate },
     grade: { onAction: intents.onGrade },
     delete: { onAction: intents.onDelete },
+    reset: offer(anyProgress, { onAction: intents.onResetSrs }),
+    history: offer(context.hasHistory, { onAction: intents.onHistory }),
+    move: offer(context.canMove, { onAction: intents.onMove }),
+    select: onSelect && { onAction: onSelect },
+    studyFrom: onStudyFrom && { onAction: onStudyFrom },
   }
-  // Reset clears the schedule, the Fast outcome and the reviews behind them at once, so it is
-  // offered while any of the three is there to clear.
-  if (card.srs !== undefined || card.fastReview !== undefined || context.hasHistory) {
-    handlers.reset = { onAction: intents.onResetSrs }
-  }
-  if (context.hasHistory) handlers.history = { onAction: intents.onHistory }
-  if (context.canMove) handlers.move = { onAction: intents.onMove }
-  if (intents.onSelect) handlers.select = { onAction: intents.onSelect }
-  if (intents.onStudyFrom) handlers.studyFrom = { onAction: intents.onStudyFrom }
-  return handlers
 }

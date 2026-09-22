@@ -1,4 +1,4 @@
-import { type CSSProperties, type ReactNode, useEffect, useState } from 'react'
+import { type CSSProperties, type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Plus } from 'lucide-react'
 import {
@@ -11,12 +11,15 @@ import {
 import { restrictToHorizontalAxis } from '@dnd-kit/modifiers'
 import { arrayMove, horizontalListSortingStrategy, SortableContext } from '@dnd-kit/sortable'
 import { accentStyleOf, ACTION_META, type ActionId } from '@/shared/config/actions'
-import { cn, EASE_OUT_CSS, useSortableSensors } from '@/shared/lib'
-import { actionIcon } from './action-icon'
-import { ActionSheet } from './ActionSheet'
-import { CLOSE_BADGE_ROW_GAP, CloseBadge } from './CloseBadge'
-import { SlotCount } from './SlotCount'
-import { SortableRow } from './SortableRow'
+import { cn, EASE_OUT_CSS, useHeldOrder, useSortableSensors } from '@/shared/lib'
+import {
+  actionIcon,
+  ActionSheet,
+  CLOSE_BADGE_ROW_GAP,
+  CloseBadge,
+  SlotCount,
+  SortableRow,
+} from '@/shared/ui'
 
 /** A slot's footprint: the tile, its name beneath, and the room the badge and the ring need. */
 const SLOT_BOX = 'flex min-w-0 flex-1 basis-0 max-w-18 flex-col items-center gap-1'
@@ -65,10 +68,9 @@ export function ActionSlots<T extends ActionId>({
   const [activeId, setActiveId] = useState<T | null>(null)
   const [picking, setPicking] = useState(false)
 
-  // The strip animates a drag from its own copy, then hands the settled order up: a store round
-  // trip mid-drag would snap the slots back under the finger.
-  const [items, setItems] = useState<readonly T[]>(ids)
-  useEffect(() => setItems(ids), [ids])
+  // A dropped order is held on screen until the preference store says the same, or the slots snap
+  // back under the finger for a frame (CODE_STYLE §10, cause 1).
+  const { order: items, hold } = useHeldOrder(ids)
 
   const full = items.length >= max
   const canRemove = items.length > min
@@ -81,7 +83,7 @@ export function ActionSlots<T extends ActionId>({
     const to = items.indexOf(over.id as T)
     if (from < 0 || to < 0) return
     const next = arrayMove([...items], from, to)
-    setItems(next)
+    hold(next)
     onReorder(next)
   }
 
@@ -105,10 +107,7 @@ export function ActionSlots<T extends ActionId>({
         modifiers={[restrictToHorizontalAxis]}
         onDragStart={(event: DragStartEvent) => setActiveId(event.active.id as T)}
         onDragEnd={handleDragEnd}
-        onDragCancel={() => {
-          setActiveId(null)
-          setItems(ids)
-        }}
+        onDragCancel={() => setActiveId(null)}
       >
         <SortableContext items={[...items]} strategy={horizontalListSortingStrategy}>
           {/* The gap is the close badge's overhang and the focus ring, not decoration (§5). */}

@@ -33,7 +33,7 @@ export const deck = {
   filterLabel: 'Show',
   filter: {
     all: 'All decks',
-    favorites: 'Favourites',
+    favorites: 'Favorites',
     due: 'Due today',
   },
   filterHidden: '{{shown}} of {{total}} shown',

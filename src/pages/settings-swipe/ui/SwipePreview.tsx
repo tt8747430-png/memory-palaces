@@ -2,7 +2,6 @@ import { useTranslation } from 'react-i18next'
 import { ChevronRight, Folder, Layers, WalletCards } from 'lucide-react'
 import { accentStyleOf } from '@/shared/config/actions'
 import type { SwipeActionId, SwipeConfig, SwipeItemType } from '@/shared/config/swipe'
-import { cn } from '@/shared/lib'
 import { swipeActionIcon } from '@/shared/ui'
 
 const TYPE_ICON: Record<SwipeItemType, typeof Layers> = {
@@ -60,11 +59,8 @@ function Cap({ action }: { action: SwipeActionId }) {
   const accent = accentStyleOf(action)
   return (
     <span
-      style={{ backgroundColor: accent.fill }}
-      className={cn(
-        'grid size-9 place-items-center rounded-tile [&_svg]:size-4',
-        accent.ink === 'dark' ? 'text-(--p-navy-900)' : 'text-white',
-      )}
+      style={{ backgroundColor: accent.fill, color: accent.ink }}
+      className="grid size-9 place-items-center rounded-tile [&_svg]:size-4"
     >
       {swipeActionIcon(action)}
     </span>

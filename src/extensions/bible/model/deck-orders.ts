@@ -19,11 +19,27 @@ export interface DeckPlace {
 const CHAPTER = /^(.+?)\s+(\d+)$/
 
 /**
+ * Answered once per name, for as long as the tab lives. Two orders and twelve filters all ask the
+ * same question of every deck on every render of the Library — without this, each ask is a regex
+ * and a name lookup, so one list of a few hundred decks costs thousands of them. Deck names are a
+ * small, bounded set, and the canon they are read against never changes.
+ */
+const PLACES = new Map<string, DeckPlace | null>()
+
+/**
  * Where a deck sits in the canon, read from its name: a book deck under any of the book's names,
  * a chapter deck as the app names them. A chapter the book does not have is not a place — the
  * deck is called something that happens to end in a number.
  */
 export function deckPlace(name: string): DeckPlace | null {
+  const known = PLACES.get(name)
+  if (known !== undefined || PLACES.has(name)) return known ?? null
+  const place = readPlace(name)
+  PLACES.set(name, place)
+  return place
+}
+
+function readPlace(name: string): DeckPlace | null {
   const book = resolveBook(name)
   if (book) return { book, chapter: null }
   const match = CHAPTER.exec(name.trim())
@@ -38,7 +54,10 @@ export function deckPlace(name: string): DeckPlace | null {
 /** Room for every chapter of every book, and a book's own deck ahead of its first chapter. */
 const CHAPTER_SPAN = 200
 
-const bookIndex = (book: BookCode): number => BOOK_CODES.indexOf(book)
+/** Canon position by code. `indexOf` is a scan, and ranking a list asks once per deck. */
+const BOOK_INDEX = new Map(BOOK_CODES.map((code, at) => [code, at]))
+
+const bookIndex = (book: BookCode): number => BOOK_INDEX.get(book) ?? 0
 
 const placeRank = (place: DeckPlace): number =>
   bookIndex(place.book) * CHAPTER_SPAN + (place.chapter ?? 0)
@@ -63,6 +82,9 @@ const GENRES: readonly Genre[] = [
   'general',
   'apocalyptic',
 ]
+
+/** Shelf position by kind — the same reason as `BOOK_INDEX`. */
+const GENRE_INDEX = new Map(GENRES.map((genre, at) => [genre, at]))
 
 const genreGroup = (genre: Genre): DeckGroup => ({
   id: genre,
@@ -89,7 +111,7 @@ export const BY_GENRE: DeckOrder = {
     const place = deckPlace(deck.name)
     if (!place) return null
     return (
-      GENRES.indexOf(findBook(place.book).genre) * BOOK_CODES.length * CHAPTER_SPAN +
+      (GENRE_INDEX.get(findBook(place.book).genre) ?? 0) * BOOK_CODES.length * CHAPTER_SPAN +
       placeRank(place)
     )
   },

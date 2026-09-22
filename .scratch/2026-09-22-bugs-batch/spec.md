@@ -36,3 +36,10 @@ Source: docs/3.Fixed_Bugs.md (top block, moved from docs/2.Bugs.md) + the design
 11. Swipe settings: one ActionPalette with a full-width "Add to" two-way segment (→ Swipe right / ← Swipe left with
     slot counts); chips wear the arrow of their side; tapping an on-chip removes it.
 12. DestinationSheet: gap-1.5 between the +/− toggle and the row so the selected tint clears the glyph.
+
+## Shipped alongside (not asked for above)
+
+- `app/persistence/keep-subdeck-orders-owned.ts` — forgets a `subdeckSorts` entry whose deck is deleted, keeps an
+  archived one. Item 2's map needed it: CLAUDE.md's keeper rule (a repair one document can't decide alone).
+- `mergeVisibleOrder` (`shared/lib/order.ts`) + the `siblingDecks` level lookup in `use-library-actions.ts` — a drag on
+  a *filtered* level writes back over the whole level. Item 2's transient filter created the case.

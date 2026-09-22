@@ -8,7 +8,7 @@ import { useFolderStoreApi } from '@/entities/folder'
 import { selectEffectivePreferences, usePreferencesStore } from '@/entities/preferences'
 import { createDeck, createSubdeck } from '@/features/deck'
 import { createFolder, editFolder } from '@/features/folder'
-import { DeckTree, LibrarySelectList, DestinationSheet } from '@/widgets/deck-tree'
+import { DeckTree, DestinationSheet } from '@/widgets/deck-tree'
 import { HomeHeader } from '@/widgets/home-header'
 import { SyncBanner } from '@/widgets/sync'
 import { useImportFile } from '@/widgets/content-editor'
@@ -19,6 +19,7 @@ import {
   buildMenuActions,
   IconButton,
   ImportSheet,
+  offer,
   PromptSheet,
   ScreenHeader,
   SelectHeader,
@@ -35,7 +36,7 @@ import { FolderSheet } from './FolderSheet'
 import { LibraryDialogs } from './LibraryDialogs'
 import { LibraryEmpty } from './LibraryEmpty'
 import { LibrarySkeleton } from './LibrarySkeleton'
-import { LibrarySelectBar } from './LibrarySelectBar'
+import { LibrarySelectView } from './LibrarySelectView'
 import { LibraryStyleSheet } from './LibraryStyleSheet'
 import { LibrarySpeedDial } from './LibrarySpeedDial'
 
@@ -153,18 +154,11 @@ export function DeckLibraryPage({
       onReviewDeck?.(deck.id)
     })
 
-  // Somewhere for a deck to go: another live deck to sit under, or a folder — which also covers
-  // the deck already in one, whose way out is the Library itself.
-  const canMoveDecks = folders.length > 0 || decks.filter((d) => !d.archived).length > 1
-
   const deckSwipeHandlers = (deck: Deck): ActionHandlers => ({
     favorite: {
       onAction: () => act.toggleFavorite(deck),
       label: deck.favorite ? t('deck.unfavorite') : t('deck.favorite'),
     },
-    ...(canMoveDecks
-      ? { move: { onAction: () => library.request({ kind: 'move-deck', deck }) } }
-      : {}),
     settings: { onAction: () => onOpenDeckSettings?.(deck.id) },
     addSubdeck: {
       onAction: () =>
@@ -172,11 +166,14 @@ export function DeckLibraryPage({
     },
     duplicate: { onAction: () => act.duplicate(deck) },
     archive: { onAction: () => act.archiveDeck(deck) },
-    // Only a deck with subdecks has any to sort; without them the rail leaves the slot out.
-    ...(decks.some((d) => d.parentId === deck.id && !d.archived)
-      ? { sortSubdecks: { onAction: () => library.sortSubdecks(deck.id) } }
-      : {}),
     delete: { onAction: () => library.request({ kind: 'delete-deck', deck }) },
+    move: offer(library.available.canMoveDecks, {
+      onAction: () => library.request({ kind: 'move-deck', deck }),
+    }),
+    // Only a deck with subdecks has any to sort; without them the rail leaves the slot out.
+    sortSubdecks: offer(library.available.hasSubdecks(deck.id), {
+      onAction: () => library.sortSubdecks(deck.id),
+    }),
   })
 
   const folderSwipeHandlers = (folder: Folder): ActionHandlers => ({
@@ -248,35 +245,7 @@ export function DeckLibraryPage({
           onImport={() => setImportOpen(true)}
         />
       ) : selection.active ? (
-        <div className="flex flex-col gap-1 pt-2">
-          <LibrarySelectBar
-            scopeName={library.scope?.name ?? null}
-            sort={library.deckSort}
-            onSortChange={library.setDeckSort}
-            filter={library.filter}
-            onFilterChange={library.setFilter}
-            allSubdecks={library.allSubdecks}
-            onAllSubdecksChange={library.setAllSubdecks}
-            shown={library.sectionDecks.length}
-            hidden={library.hidden}
-            options={library.arrange}
-          />
-          <LibrarySelectList
-            folders={library.sectionFolders}
-            decks={library.sectionDecks}
-            allDecks={decks}
-            cards={library.cards}
-            folderDeckCounts={library.folderDeckCounts}
-            selectedIds={selection.ids}
-            onToggleSelect={selection.toggle}
-            onReorderFolders={act.reorderFolderIds}
-            onReorderDecks={act.reorderDeckIds}
-            onFileDecks={act.fileDecksIntoFolder}
-            headings={library.headings}
-            canReorderDecks={library.canReorderDecks}
-            canReorderFolders={library.canReorderFolders}
-          />
-        </div>
+        <LibrarySelectView library={library} />
       ) : (
         <div className="flex flex-col gap-2 pt-2">
           {library.sectionFolders.map((folder) => (

@@ -19,11 +19,11 @@ export function sortContent<T extends SortableContent>(
     case 'name':
       return items.toSorted((a, b) => compareNatural(title(a), title(b)))
     case 'recent':
-      return [...items].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      return items.toSorted((a, b) => b.createdAt.localeCompare(a.createdAt))
     case 'due':
-      return [...items].sort((a, b) => (a.srs?.due ?? '').localeCompare(b.srs?.due ?? ''))
+      return items.toSorted((a, b) => (a.srs?.due ?? '').localeCompare(b.srs?.due ?? ''))
     case 'flagged':
-      return [...items].sort((a, b) => Number(b.flagged ?? false) - Number(a.flagged ?? false))
+      return items.toSorted((a, b) => Number(b.flagged ?? false) - Number(a.flagged ?? false))
     case 'manual':
       return items
   }

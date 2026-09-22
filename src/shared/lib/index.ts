@@ -148,9 +148,11 @@ export {
   CORE_DECK_SORTS,
   DEFAULT_DECK_SORT,
   filtersThatKeep,
-  FOLDER_SORTS,
+  folderOrderOf,
   headingsFor,
+  isCoreOrder,
   orderForChildren,
+  orderId,
   ordersThatPlace,
   resolveDeckOrder,
   resolveDeckSort,
@@ -160,6 +162,7 @@ export {
   type DeckGroup,
   type DeckOrder,
   type DeckSort,
+  type ResolvedOrder,
   type SortableDeck,
   type SubdeckOrderPreferences,
 } from './deck-order'
@@ -343,6 +346,7 @@ export { useOptimisticPatch, orderPatch } from './use-optimistic-patch'
 export { useOneOpen, type OneOpen } from './use-one-open'
 export { usePendingAct, type PendingAct } from './use-pending-act'
 export { reconcileHeldOrder } from './reconcile-order'
+export { useHeldOrder, type HeldOrder } from './use-held-order'
 export { moveBlock } from './move-block'
 export { useStackLanding, type StackLanding, type StackOrigin } from './use-stack-landing'
 export {

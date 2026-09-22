@@ -27,6 +27,10 @@ function baseProps(
     onReorderFolders: vi.fn(),
     onReorderDecks: vi.fn(),
     onFileDecks: vi.fn(),
+    headings: new Map(),
+    // The rows are in the manual order unless a test says otherwise.
+    canReorderDecks: true,
+    canReorderFolders: true,
     ...overrides,
   }
 }

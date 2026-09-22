@@ -17,3 +17,20 @@ export interface ActionHandler {
 }
 
 export type ActionHandlers = Partial<Record<ActionId, ActionHandler>>
+
+/**
+ * One action, offered only where it applies. `when` false yields `undefined`, which every renderer
+ * already treats as "not offered" — `buildSwipeActions`, `buildMenuActions` and `SelectToolbar` all
+ * skip a missing handler — so an action leaves the rails, the menus and the toolbar together.
+ *
+ * This is the whole vocabulary for availability in an action map. Where the condition *is* the
+ * handler's own optional callback, write `fn && { onAction: fn }` instead: same shape, and it lets
+ * the compiler narrow the callback rather than asserting it.
+ *
+ * Availability is about what the surface can do, not about what is selected right now. Something
+ * the learner is one tap away from enabling keeps its slot and sets `disabled` instead, so a bar
+ * never resizes under a thumb.
+ */
+export function offer(when: boolean, handler: ActionHandler): ActionHandler | undefined {
+  return when ? handler : undefined
+}

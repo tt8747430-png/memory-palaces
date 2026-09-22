@@ -15,6 +15,10 @@ export interface BottomSlotProps {
  * same pill, and on close they fade out as the nav fades back. Rendered from anywhere in the
  * tree — a page owns the toolbar's handlers, the dock owns the geometry — and always mounted, so
  * an occupant torn out of the tree can still play its exit.
+ *
+ * Presses follow the fade rather than the mount: a layer on its way out gives them back as it
+ * starts to leave, so the nav arriving underneath is pressable the moment it is the one to press
+ * (CODE_STYLE §5 — invisible is not absent).
  */
 export function BottomSlot({ open, children }: BottomSlotProps) {
   useWantBottomSlot(open)
@@ -27,9 +31,9 @@ export function BottomSlot({ open, children }: BottomSlotProps) {
       {open ? (
         <motion.div
           key="occupant"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          initial={{ opacity: 0, pointerEvents: 'none' }}
+          animate={{ opacity: 1, pointerEvents: 'auto' }}
+          exit={{ opacity: 0, pointerEvents: 'none' }}
           transition={{ duration: reduce ? 0 : FADE, ease: EASE_EXPO }}
           className="absolute inset-0"
         >

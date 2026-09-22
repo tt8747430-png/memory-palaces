@@ -34,6 +34,8 @@ export interface ArrangeOptionsArgs {
    * all — is worked out only then, so a Library nobody is arranging pays nothing for the answer.
    */
   enabled: boolean
+  /** The rows are one deck's subdecks rather than a whole level of the Library. */
+  scoped: boolean
 }
 
 const EMPTY: ReadonlySet<string> = new Set()
@@ -57,6 +59,7 @@ export function useArrangeOptions({
   decks,
   cards,
   enabled,
+  scoped,
 }: ArrangeOptionsArgs): ArrangeOptions {
   const orders = useExtensionPoint('deckSorts')
   const filters = useExtensionPoint('deckFilters')
@@ -91,7 +94,10 @@ export function useArrangeOptions({
       filters: offered,
       canSort: levelDecks.length > 1,
       canFilter: offered.size > 1,
-      canAllSubdecks: decks.some((deck) => deck.parentId !== null && !deck.archived),
+      // The switch is a statement about the whole Library — it writes `deckSortSubdecks` and wipes
+      // every per-deck order — so it asks a Library-wide question. But it is withheld inside a
+      // scope: there the learner is setting one deck's own order, and this would throw it away.
+      canAllSubdecks: !scoped && decks.some((deck) => deck.parentId !== null && !deck.archived),
     }
-  }, [enabled, anyDue, levelDecks, decks, orders, filters])
+  }, [enabled, anyDue, levelDecks, decks, orders, filters, scoped])
 }

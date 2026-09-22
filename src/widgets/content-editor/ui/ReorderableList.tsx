@@ -1,8 +1,8 @@
-import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
+import { type ReactNode, useCallback, useMemo } from 'react'
 import { DndContext, type DragEndEvent, DragOverlay, type DragStartEvent } from '@dnd-kit/core'
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { cn, reconcileHeldOrder, useSortableBlock, useSortableSensors } from '@/shared/lib'
+import { cn, useHeldOrder, useSortableBlock, useSortableSensors } from '@/shared/lib'
 import { SortableRow, StackedDragPreview } from '@/shared/ui'
 import type { RowDragHandle } from './ContentRow'
 
@@ -21,28 +21,14 @@ export function ReorderableList<T extends { id: string }>({
   renderItem: (item: T, dragHandle?: RowDragHandle, dragging?: boolean) => ReactNode
   selectedIds?: ReadonlySet<string>
 }) {
-  const [ordered, setOrdered] = useState(items)
-  const [pendingIds, setPendingIds] = useState<string[] | null>(null)
-  useEffect(() => {
-    if (!pendingIds) {
-      setOrdered(items)
-      return
-    }
-    const byId = new Map(items.map((item) => [item.id, item]))
-    const { order, settled } = reconcileHeldOrder(
-      pendingIds,
-      items.map((item) => item.id),
-    )
-    setOrdered(order.map((id) => byId.get(id)!))
-    if (settled) setPendingIds(null)
-  }, [items, pendingIds])
+  const byId = useMemo(() => new Map(items.map((item) => [item.id, item])), [items])
+  const itemIds = useMemo(() => items.map((item) => item.id), [items])
+  const { order: orderedIds, hold } = useHeldOrder(itemIds)
+  const ordered = useMemo(() => orderedIds.flatMap((id) => byId.get(id) ?? []), [orderedIds, byId])
 
   const sensors = useSortableSensors()
-  const orderedIds = useMemo(() => ordered.map((item) => item.id), [ordered])
   const sectionOf = useCallback(() => orderedIds, [orderedIds])
   const drag = useSortableBlock({ sectionOf, selectedIds })
-
-  const byId = useMemo(() => new Map(ordered.map((item) => [item.id, item])), [ordered])
   const front = drag.stackIds[0] ? byId.get(drag.stackIds[0]) : undefined
 
   const visible = useMemo(() => ordered.filter((item) => !drag.isHidden(item.id)), [ordered, drag])
@@ -52,8 +38,7 @@ export function ReorderableList<T extends { id: string }>({
   const handleDragEnd = (event: DragEndEvent) => {
     const result = drag.drop(event)
     if (!result) return
-    setOrdered(result.order.map((id) => byId.get(id)!).filter(Boolean) as T[])
-    setPendingIds(result.order)
+    hold(result.order)
     onReorder(result.order)
   }
 

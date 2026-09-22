@@ -36,20 +36,33 @@ export type ActionAccent =
   | 'slate'
   | 'stone'
 
-export const ACTION_ACCENT: Record<ActionAccent, { fill: string; ink: 'light' | 'dark' }> = {
-  rose: { fill: 'var(--sw-rose)', ink: 'light' },
-  plum: { fill: 'var(--sw-plum)', ink: 'light' },
-  violet: { fill: 'var(--sw-violet)', ink: 'light' },
-  indigo: { fill: 'var(--sw-indigo)', ink: 'light' },
-  blue: { fill: 'var(--sw-blue)', ink: 'light' },
-  cyan: { fill: 'var(--sw-cyan)', ink: 'light' },
-  teal: { fill: 'var(--sw-teal)', ink: 'light' },
-  emerald: { fill: 'var(--sw-emerald)', ink: 'light' },
-  gold: { fill: 'var(--sw-gold)', ink: 'dark' },
-  amber: { fill: 'var(--sw-amber)', ink: 'dark' },
-  red: { fill: 'var(--sw-red)', ink: 'light' },
-  slate: { fill: 'var(--sw-slate)', ink: 'light' },
-  stone: { fill: 'var(--sw-stone)', ink: 'light' },
+/**
+ * A fill and the ink that reads on it, both as CSS values. Resolved here rather than named `light`
+ * or `dark`, so that no surface drawing an accent has to branch — and so no component reaches for
+ * a primitive token to spell the dark one (CODE_STYLE §5).
+ */
+export interface AccentStyle {
+  fill: string
+  ink: string
+}
+
+const ON_FILL_LIGHT = 'var(--sw-ink-light)'
+const ON_FILL_DARK = 'var(--sw-ink-dark)'
+
+export const ACTION_ACCENT: Record<ActionAccent, AccentStyle> = {
+  rose: { fill: 'var(--sw-rose)', ink: ON_FILL_LIGHT },
+  plum: { fill: 'var(--sw-plum)', ink: ON_FILL_LIGHT },
+  violet: { fill: 'var(--sw-violet)', ink: ON_FILL_LIGHT },
+  indigo: { fill: 'var(--sw-indigo)', ink: ON_FILL_LIGHT },
+  blue: { fill: 'var(--sw-blue)', ink: ON_FILL_LIGHT },
+  cyan: { fill: 'var(--sw-cyan)', ink: ON_FILL_LIGHT },
+  teal: { fill: 'var(--sw-teal)', ink: ON_FILL_LIGHT },
+  emerald: { fill: 'var(--sw-emerald)', ink: ON_FILL_LIGHT },
+  gold: { fill: 'var(--sw-gold)', ink: ON_FILL_DARK },
+  amber: { fill: 'var(--sw-amber)', ink: ON_FILL_DARK },
+  red: { fill: 'var(--sw-red)', ink: ON_FILL_LIGHT },
+  slate: { fill: 'var(--sw-slate)', ink: ON_FILL_LIGHT },
+  stone: { fill: 'var(--sw-stone)', ink: ON_FILL_LIGHT },
 }
 
 export interface ActionMeta {

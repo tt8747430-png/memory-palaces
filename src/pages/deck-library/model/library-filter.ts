@@ -7,8 +7,8 @@ export const CORE_LIBRARY_FILTERS = ['all', 'favorites', 'due'] as const
 
 export type CoreLibraryFilter = (typeof CORE_LIBRARY_FILTERS)[number]
 
-/** A core filter, or the id of one an extension contributed. */
-export type LibraryFilter = string
+/** A core filter, or the id of one an extension contributed — open, but the three names complete. */
+export type LibraryFilter = CoreLibraryFilter | (string & {})
 
 export interface FilterableDeck {
   id: string

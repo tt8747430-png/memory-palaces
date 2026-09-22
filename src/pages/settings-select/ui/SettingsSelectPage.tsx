@@ -19,7 +19,6 @@ import {
 } from '@/shared/config/select-toolbar'
 import { cn, selectIsReady } from '@/shared/lib'
 import {
-  ActionSlots,
   AppScreen,
   Button,
   cardSurface,
@@ -30,6 +29,7 @@ import {
   SelectToolbarRow,
   SelectToolbarSlot,
 } from '@/shared/ui'
+import { ActionSlots } from '@/widgets/action-slots'
 
 const SURFACE_ICON: Record<SelectSurface, typeof Layers> = {
   library: Layers,
@@ -107,7 +107,7 @@ export function SettingsSelectPage({ onBack }: SettingsSelectPageProps) {
           <DockPill>
             <SelectToolbarRow>
               {config.map((id) => (
-                <SelectToolbarSlot key={id} action={id} inert />
+                <SelectToolbarSlot key={id} action={id} />
               ))}
             </SelectToolbarRow>
           </DockPill>

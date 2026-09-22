@@ -297,11 +297,10 @@ function TrayButton({
       <motion.span
         animate={{ scale: armed ? 1.14 : 1 }}
         transition={reduce ? { duration: 0 } : ARM_SPRING}
-        style={{ backgroundColor: accent.fill }}
+        style={{ backgroundColor: accent.fill, color: accent.ink }}
         className={cn(
           'grid size-11 place-items-center rounded-full shadow-interactive [&_svg]:size-5',
           'transition-[filter] active:brightness-95',
-          accent.ink === 'dark' ? 'text-(--p-navy-900)' : 'text-white',
         )}
       >
         {action.icon}

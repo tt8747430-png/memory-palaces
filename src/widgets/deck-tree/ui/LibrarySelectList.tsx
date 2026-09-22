@@ -36,14 +36,16 @@ export interface LibrarySelectListProps {
   onReorderDecks: (ids: string[]) => void
   onFileDecks: (deckIds: string[], folderId: string) => void
   /** The heading to print over a deck row, by id, when the order shelves the rows. */
-  headings?: ReadonlyMap<string, DeckGroup>
-  /** Whether a drag may reorder the rows — only where they are in the manual order. */
-  canReorderDecks?: boolean
-  canReorderFolders?: boolean
+  headings: ReadonlyMap<string, DeckGroup>
+  /**
+   * Whether a drag may reorder the rows — only where they are in the manual order (§10). Required
+   * rather than defaulted to true: a caller that forgot it would hand the learner a drag that
+   * writes an order the list is not showing.
+   */
+  canReorderDecks: boolean
+  canReorderFolders: boolean
   now?: number
 }
-
-const NO_HEADINGS: ReadonlyMap<string, DeckGroup> = new Map()
 
 export function LibrarySelectList({
   folders,
@@ -56,9 +58,9 @@ export function LibrarySelectList({
   onReorderFolders,
   onReorderDecks,
   onFileDecks,
-  headings = NO_HEADINGS,
-  canReorderDecks = true,
-  canReorderFolders = true,
+  headings,
+  canReorderDecks,
+  canReorderFolders,
   now = Date.now(),
 }: LibrarySelectListProps) {
   const { t } = useTranslation()

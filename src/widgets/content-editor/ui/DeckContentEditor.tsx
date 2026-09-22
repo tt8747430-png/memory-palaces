@@ -158,7 +158,10 @@ export function DeckContentEditor({
     },
     onEditCard,
     onStudyFrom,
-    canMove: decks.length > 1,
+    // A live deck other than this card's own to receive it. `selectDecks` hands back archived
+    // decks too, and `DestinationSheet` filters them out — so counting them offers Move and then
+    // opens an empty sheet.
+    canMove: decks.filter((deck) => !deck.archived).length > 1,
   })
 
   const renderCard = (card: Card, dragHandle?: RowDragHandle, dragging = false) => (

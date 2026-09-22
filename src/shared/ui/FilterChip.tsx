@@ -8,6 +8,7 @@ export interface FilterChipProps {
   offIcon?: ReactNode
   on: boolean
   onChange: (on: boolean) => void
+  disabled?: boolean
   className?: string
 }
 
@@ -16,18 +17,30 @@ export interface FilterChipProps {
  * "All subdecks". A card surface, not a tint: it stands on the page, and the page is already
  * tinted (CODE_STYLE §5). On, it takes the primary fill, so "on" reads at a glance.
  */
-export function FilterChip({ label, icon, offIcon, on, onChange, className }: FilterChipProps) {
+export function FilterChip({
+  label,
+  icon,
+  offIcon,
+  on,
+  onChange,
+  disabled,
+  className,
+}: FilterChipProps) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={on}
+      disabled={disabled}
       onClick={() => onChange(!on)}
       className={cn(
         'flex h-9 items-center gap-1.5 rounded-control px-2.5 text-label font-semibold shadow-rest',
         'transition-[transform,background-color,color] active:scale-[0.97]',
         'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/40',
-        on ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground',
+        'disabled:pointer-events-none disabled:opacity-40',
+        on
+          ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+          : 'bg-card text-muted-foreground hover:text-heading',
         className,
       )}
     >

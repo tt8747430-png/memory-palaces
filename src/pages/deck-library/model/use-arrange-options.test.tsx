@@ -33,6 +33,7 @@ interface ArrangeCase {
   decks?: Deck[]
   cards?: Card[]
   enabled?: boolean
+  scoped?: boolean
   deckSorts?: unknown[]
   deckFilters?: unknown[]
 }
@@ -42,6 +43,7 @@ function arrange({
   decks = levelDecks,
   cards = [],
   enabled = true,
+  scoped = false,
   deckSorts = [],
   deckFilters = [],
 }: ArrangeCase = {}) {
@@ -52,7 +54,7 @@ function arrange({
       </ExtensionPointsContext>
     )
   }
-  return renderHook(() => useArrangeOptions({ levelDecks, decks, cards, enabled }), {
+  return renderHook(() => useArrangeOptions({ levelDecks, decks, cards, enabled, scoped }), {
     wrapper: Wrapper,
   }).result
 }
@@ -127,5 +129,12 @@ describe('useArrangeOptions', () => {
 
     const archived = [...flat, deck('a1', { parentId: 'a', archived: true })]
     expect(arrange({ levelDecks: flat, decks: archived }).current.canAllSubdecks).toBe(false)
+  })
+
+  it('withholds the All-subdecks switch inside a scope — it would wipe the order set there', () => {
+    const nested = [deck('a'), deck('b'), deck('a1', { parentId: 'a' })]
+    expect(
+      arrange({ levelDecks: [nested[2]!], decks: nested, scoped: true }).current.canAllSubdecks,
+    ).toBe(false)
   })
 })

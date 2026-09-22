@@ -12,17 +12,16 @@ import {
   usePreferencesStore,
 } from '@/entities/preferences'
 import {
-  type CoreDeckSort,
   type DeckGroup,
-  type DeckOrder,
   type DeckSort,
   dueCountsPerDeck,
   findEntity,
   type FlatDeck,
   flattenDecks,
-  FOLDER_SORTS,
+  folderOrderOf,
   headingsFor,
   orderForChildren,
+  orderId,
   resolveDeckOrder,
   selectIsReady,
   siblingDecks,
@@ -79,9 +78,6 @@ export interface LibraryDataArgs {
   filter: LibraryFilter
 }
 
-const orderId = (order: CoreDeckSort | DeckOrder): DeckSort =>
-  typeof order === 'string' ? order : order.id
-
 export function useLibraryData({ folderId, scopeId, filter }: LibraryDataArgs): LibraryData {
   const storeFolders = useFolderStore(selectFolders)
   const deckSort = usePreferencesStore(selectDeckSort)
@@ -112,12 +108,13 @@ export function useLibraryData({ folderId, scopeId, filter }: LibraryDataArgs): 
   const scope = useMemo(() => findEntity(decks, scopeId) ?? null, [decks, scopeId])
   const lookedAt = scope ? orderAt(scope.id) : topOrder
 
+  // A folder follows the Library order only when it is one a shelf can follow; otherwise it keeps
+  // the order it was dragged into.
+  const folderOrder = folderOrderOf(topOrder)
   const folders = useMemo(() => {
     const placed = unsorted.toSorted((a, b) => a.order - b.order)
-    return typeof topOrder === 'string' && FOLDER_SORTS.has(topOrder)
-      ? sortDecks(placed, topOrder)
-      : placed
-  }, [unsorted, topOrder])
+    return folderOrder ? sortDecks(placed, folderOrder) : placed
+  }, [unsorted, folderOrder])
   const openFolder = useMemo(() => findEntity(folders, folderId), [folders, folderId])
   const folderIds = useMemo(() => new Set(folders.map((f) => f.id)), [folders])
   const inFolder = folderId !== null
@@ -139,8 +136,15 @@ export function useLibraryData({ folderId, scopeId, filter }: LibraryDataArgs): 
     [decks, folderId],
   )
 
-  // Only counted when something reads it: the due order, or the due filter.
-  const needsDue = filter === 'due' || [topOrder, lookedAt].includes('due')
+  /*
+   * Only counted when something reads it — but *everything* that reads it. `rows` flattens the
+   * whole expanded tree and sorts each level by `orderAt(parentId)`, so a per-deck `due` order in
+   * `subdeckSorts` needs the counts even when neither the top level nor the scoped level is in it.
+   * Miss one and `dueOf` answers 0 for every deck, which does not fail — it silently sorts that
+   * level by name instead.
+   */
+  const dueSubdeck = Object.values(subdeckSorts).some((order) => order === 'due')
+  const needsDue = filter === 'due' || topOrder === 'due' || lookedAt === 'due' || dueSubdeck
   const dueCounts = useMemo(
     () =>
       needsDue
@@ -201,7 +205,7 @@ export function useLibraryData({ folderId, scopeId, filter }: LibraryDataArgs): 
     deckSort: orderId(lookedAt),
     allSubdecks: deckSortSubdecks && Object.keys(subdeckSorts).length === 0,
     canReorderDecks: lookedAt === 'manual',
-    canReorderFolders: !(typeof topOrder === 'string' && FOLDER_SORTS.has(topOrder)),
+    canReorderFolders: folderOrder === null,
     patchFolders,
     patchDecks,
   }

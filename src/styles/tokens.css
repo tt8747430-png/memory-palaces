@@ -186,6 +186,12 @@
   --sw-amber: oklch(72% 0.162 62);
   --sw-stone: oklch(46% 0.018 275);
 
+  /* The ink that reads on an accent fill. Which of the two a fill takes is a property of the fill,
+     so it is declared here beside it rather than branched on by name in every surface that draws
+     one (CODE_STYLE §5 — no primitive tokens in components). */
+  --sw-ink-light: oklch(100% 0 0);
+  --sw-ink-dark: var(--p-navy-900);
+
   --border: oklch(var(--p-tint-navy) / 0.08);
   --border-glass: oklch(100% 0 0 / 0.3);
   --divider: var(--p-gray-100);

@@ -23,6 +23,7 @@ function baseProps(
     onToggle: vi.fn(),
     onOpen: vi.fn(),
     onRequestSelect: vi.fn(),
+    headings: new Map(),
     ...overrides,
     rows: flattenDecks(decks, expanded, null),
   }

@@ -15,9 +15,11 @@ interface SortMeta {
   icon: typeof Clock
 }
 
-/** The two runs a `SortControl` separates: what the app knows, then what an extension added. */
-const CORE = 'core'
-const CONTRIBUTED = 'contributed'
+/**
+ * The two runs a `SortControl` separates: what the app knows, then what an extension added. Any
+ * option list that mixes the two names its groups from here, so the separator lands the same way.
+ */
+export const OPTION_GROUP = { core: 'core', contributed: 'contributed' } as const
 
 /** One `SortControl` option list for any set of orders, given how each is named and drawn. */
 function useSortOptions<T extends string>(
@@ -27,7 +29,12 @@ function useSortOptions<T extends string>(
   const { t } = useTranslation()
   return sorts.map((value) => {
     const { labelKey, icon: Icon } = meta[value]
-    return { value, label: t(labelKey as never), icon: <Icon className="size-4" />, group: CORE }
+    return {
+      value,
+      label: t(labelKey as never),
+      icon: <Icon className="size-4" />,
+      group: OPTION_GROUP.core,
+    }
   })
 }
 
@@ -63,7 +70,7 @@ export function useDeckSortOptions(): SortControlOption<DeckSort>[] {
       value: order.id,
       label: contributed(order.labelKey),
       icon: order.icon,
-      group: CONTRIBUTED,
+      group: OPTION_GROUP.contributed,
     })),
   ]
 }

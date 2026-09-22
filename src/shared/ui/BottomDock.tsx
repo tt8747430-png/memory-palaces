@@ -41,9 +41,9 @@ export function BottomDock({ open, children }: BottomDockProps) {
               {open && !wanted ? (
                 <motion.div
                   key="default"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
+                  initial={{ opacity: 0, pointerEvents: 'none' }}
+                  animate={{ opacity: 1, pointerEvents: 'auto' }}
+                  exit={{ opacity: 0, pointerEvents: 'none' }}
                   transition={fade}
                   className="absolute inset-0"
                 >
@@ -87,7 +87,12 @@ function DockBox({
   )
 }
 
-/** The layer an occupant renders into, registered with the loan book while it exists. */
+/**
+ * The layer an occupant renders into, registered with the loan book while it exists. It takes no
+ * presses of its own — its empty area must not swallow taps meant for the nav beneath — and the
+ * occupant turns them on for itself while it is the one on top. `opacity: 0` hides a layer and
+ * nothing else, so both halves of a cross-fade would otherwise be pressable at once (§5).
+ */
 function SlotTarget() {
   const setTarget = useBottomSlotStore((state) => state.setTarget)
   return (
@@ -96,7 +101,7 @@ function SlotTarget() {
         setTarget(node)
         return () => setTarget(null)
       }}
-      className="pointer-events-none absolute inset-0 *:pointer-events-auto"
+      className="pointer-events-none absolute inset-0"
     />
   )
 }

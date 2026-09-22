@@ -129,6 +129,9 @@ mode button, the gear. A strip only ever receives a tap that reached the card's 
 In tap mode the four chips render instead as static, low-opacity hints pinned to their edges. They are the only
 thing that says what a strip does.
 
+**Superseded 2026-09-22** by the bugs batch (item 3): `ZoneHints` is deleted. What a strip does is read from the
+gear sheet's zone rows instead — and the centre gained its own setting there — so the card carries no hints at all.
+
 ### 4.4 Flip
 
 `CardFace`'s header goes `justify-between` and gains a flip button in the **top-left**, on both faces, in both

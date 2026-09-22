@@ -30,7 +30,7 @@ import {
   siblingDecks,
   subtreeDeckIds,
 } from '@/shared/lib'
-import { bulkAction, type SelectActionHandlers } from '@/shared/ui'
+import { bulkAction, offer, type SelectActionHandlers } from '@/shared/ui'
 import { type Destination, placeOfDestination } from '@/widgets/deck-tree'
 import type { LibrarySelection } from './use-library-selection'
 
@@ -247,12 +247,10 @@ export function useLibraryActions({
     archive: { ...bulkAction(selection, bulkArchive), disabled: noDecks },
     style: { onAction: onRequestBulkStyle, disabled: noDecks },
     delete: { onAction: onRequestBulkDelete, disabled: selection.count === 0 },
-  }
-  if (folders.length > 0) {
-    selectHandlers.unfile = {
+    unfile: offer(folders.length > 0, {
       ...bulkAction(selection, bulkUnfile),
       disabled: filedIds.length === 0,
-    }
+    }),
   }
 
   return {

@@ -12,20 +12,40 @@ export type CoreDeckSort = (typeof CORE_DECK_SORTS)[number]
  * What the preference holds: a core order, or the id of one an extension contributed. The id is
  * kept whether or not that extension is on — the Library resolves it to an order at read time,
  * and falls back to manual while the extension is off (`resolveDeckOrder`).
+ *
+ * `string & {}` keeps the set open without losing the four names the compiler can complete.
  */
-export type DeckSort = string
+export type DeckSort = CoreDeckSort | (string & {})
 
 export const DEFAULT_DECK_SORT: DeckSort = 'manual'
 
 export const isCoreDeckSort = (sort: string): sort is CoreDeckSort =>
   (CORE_DECK_SORTS as readonly string[]).includes(sort)
 
-/**
- * The orders a folder can follow. A folder is a shelf: it has a name and a birthday but no due
- * date of its own, so under `due` — or any contributed order — it keeps the order it was dragged
- * into.
- */
+/** The orders a folder can follow — see `folderOrderOf`. */
 export const FOLDER_SORTS: ReadonlySet<DeckSort> = new Set<DeckSort>(['name', 'recent'])
+
+/** An order the Library can apply: one of its own by name, or one an extension contributed. */
+export type ResolvedOrder = CoreDeckSort | DeckOrder
+
+/**
+ * The one place that tells the two apart. A core order is a name; a contributed one is an object
+ * with a `rank`. Every other question about an order — its id, whether folders follow it, whether
+ * a drag may write it — is asked of this, so no caller spells the discrimination itself.
+ */
+export const isCoreOrder = (order: ResolvedOrder): order is CoreDeckSort =>
+  typeof order === 'string'
+
+/** The id an order is stored and offered under. */
+export const orderId = (order: ResolvedOrder): DeckSort => (isCoreOrder(order) ? order : order.id)
+
+/**
+ * The order the folders on a level follow, if any. A folder is a shelf: it has a name and a
+ * birthday but no due date of its own, so under `due` — or any contributed order — it keeps the
+ * order it was dragged into.
+ */
+export const folderOrderOf = (order: ResolvedOrder): CoreDeckSort | null =>
+  isCoreOrder(order) && FOLDER_SORTS.has(order) ? order : null
 
 export interface SortableDeck {
   id: string
@@ -73,43 +93,41 @@ export function resolveDeckSort(stored?: unknown): DeckSort {
  * one from the extensions that are on. An id nobody is offering — its extension switched off, or
  * a newer build's — is manual until it is offered again.
  */
-export function resolveDeckOrder(
-  sort: DeckSort,
-  contributed: readonly DeckOrder[],
-): CoreDeckSort | DeckOrder {
+export function resolveDeckOrder(sort: DeckSort, contributed: readonly DeckOrder[]): ResolvedOrder {
   if (isCoreDeckSort(sort)) return sort
   return contributed.find((order) => order.id === sort) ?? 'manual'
 }
 
 /**
- * The contributed orders that place at least one of these decks, by id. An order that recognises
- * nothing on the list cannot change it, so the Library does not offer it — which is how the Bible's
- * two orders leave the menu on a device with no Bible decks, without the extension saying a word
- * about availability. `rank` is the whole test: it already returns null for a deck the order does
- * not know.
+ * The ids of the contributions that apply to at least one of these decks. A contribution that
+ * touches nothing on the list cannot change it, so the Library does not offer it — which is how the
+ * Bible's orders and book filters leave the menus on a device with no Bible decks, without the
+ * extension saying a word about availability.
  */
-export function ordersThatPlace<T extends SortableDeck>(
+function idsThatApply<T extends SortableDeck, C extends { id: string }>(
   decks: readonly T[],
-  contributed: readonly DeckOrder[],
+  contributed: readonly C[],
+  applies: (contribution: C, deck: T) => boolean,
 ): ReadonlySet<string> {
   const ids = new Set<string>()
-  for (const order of contributed) {
-    if (decks.some((deck) => order.rank(deck) !== null)) ids.add(order.id)
+  for (const each of contributed) {
+    if (decks.some((deck) => applies(each, deck))) ids.add(each.id)
   }
   return ids
 }
 
-/** The same test for the contributed filters: one that keeps nothing here is not offered. */
-export function filtersThatKeep<T extends SortableDeck>(
+/** The contributed orders that place at least one of these decks. `rank` is the whole test. */
+export const ordersThatPlace = <T extends SortableDeck>(
+  decks: readonly T[],
+  contributed: readonly DeckOrder[],
+): ReadonlySet<string> =>
+  idsThatApply(decks, contributed, (order, deck) => order.rank(deck) !== null)
+
+/** The contributed filters that keep at least one of these decks. `keep` is the whole test. */
+export const filtersThatKeep = <T extends SortableDeck>(
   decks: readonly T[],
   contributed: readonly DeckFilter[],
-): ReadonlySet<string> {
-  const ids = new Set<string>()
-  for (const filter of contributed) {
-    if (decks.some((deck) => filter.keep(deck))) ids.add(filter.id)
-  }
-  return ids
-}
+): ReadonlySet<string> => idsThatApply(decks, contributed, (filter, deck) => filter.keep(deck))
 
 export interface SubdeckOrderPreferences {
   deckSort: DeckSort
@@ -139,10 +157,10 @@ export function orderForChildren(
  */
 export function sortDecks<T extends SortableDeck>(
   decks: readonly T[],
-  order: CoreDeckSort | DeckOrder,
+  order: ResolvedOrder,
   dueCount: (deck: T) => number = () => 0,
 ): T[] {
-  if (typeof order !== 'string') return sortRanked(decks, order)
+  if (!isCoreOrder(order)) return sortRanked(decks, order)
   switch (order) {
     case 'name':
       return decks.toSorted((a, b) => compareNatural(a.name, b.name))
@@ -174,10 +192,10 @@ function sortRanked<T extends SortableDeck>(decks: readonly T[], order: DeckOrde
  */
 export function headingsFor<T extends SortableDeck>(
   decks: readonly T[],
-  order: CoreDeckSort | DeckOrder,
+  order: ResolvedOrder,
 ): ReadonlyMap<string, DeckGroup> {
   const headings = new Map<string, DeckGroup>()
-  if (typeof order === 'string' || !order.group) return headings
+  if (isCoreOrder(order) || !order.group) return headings
   const groups = new Set<string>()
   let last: string | null = null
   for (const deck of decks) {

@@ -49,7 +49,13 @@ rows **at the level being looked at** (`unfiltered`), not the whole library: the
 | `favorites`                       | some row is a favourite               |
 | `due` (filter)                    | some row has a due card               |
 | the 12 book filters               | some row falls in that testament/genre |
-| the All-subdecks chip             | some deck here has a live subdeck     |
+| the All-subdecks chip             | see below                             |
+
+**The All-subdecks chip is the one control that asks a Library-wide question**, because it writes a Library-wide
+preference: on, it sets `deckSortSubdecks` and wipes every per-deck order. So it is offered when any live subdeck
+exists anywhere — a level-local test would hide it exactly where the learner most wants to reach down. But it is
+withheld inside a `sortSubdecks` scope: there the learner is setting one deck's own order, and the chip's whole effect
+would be to throw that away.
 
 The pure half lives in `shared/lib/deck-order.ts` beside `resolveDeckOrder`, which is where a caller already goes to ask
 what an order is. The hook is tested through `renderHook`; the predicates are tested without React.
@@ -61,11 +67,13 @@ safe by construction.
 
 ### A2. Cards
 
-- Sorts: `due` only on a spaced deck that has at least one scheduled card; `flagged` only when some card is flagged.
-- Filter sheet: a maturity chip only at count > 0; the Flagged switch only when some card is flagged. **Nothing left to
-  offer means the Filter button itself goes.**
+- Sorts: `due` only on a spaced deck that has at least one scheduled card; `flagged` only when the flags are mixed.
+- Filter sheet: a maturity chip only when its bucket does not hold every card; the Flagged switch only when some cards
+  are flagged and some are not. The test in both cases is the rule's own: a bucket holding everything, or a flag on
+  everything, narrows nothing. **Nothing left to offer means the Filter button itself goes.**
 
-Pure `cardFilterOptions(cards)` in `widgets/content-editor/model/card-list.ts`, tested there.
+Pure `cardListOptions(cards, algorithm)` in `widgets/content-editor/model/card-list.ts`, tested there — one pass over
+the cards answers both the sorts and the filters.
 
 ### A3. Actions, rails included
 
@@ -124,8 +132,10 @@ re-export of `accentStyleOf`. `SlotCount` moves out of `ActionPill.tsx` into a f
 exported component in there, against CODE_STYLE §1 — and off the `shared/ui` barrel, since the strip is its only
 reader. `CLOSE_BADGE_ROW_GAP` keeps its one caller: the gap between slots is the badge's overhang, not decoration.
 
-Dead keys go with them: `swipe.addTo`, `swipe.paletteHint`, `swipe.sideFull`, `select.available`, `select.allInUse`,
-`select.full`.
+Dead keys go with them — ten, all retired into one shared `slots` namespace: `swipe.addTo`, `swipe.paletteHint`,
+`swipe.sideFull`, `swipe.sideCount`, `swipe.reorderLabel`, `swipe.removeLabel`, `select.available`, `select.allInUse`,
+`select.full`, `select.slots`, `select.addLabel`, `select.removeLabel`, `select.reorderLabel`. `select.inBar` stays as
+the strip's label.
 
 ## What is not in scope
 
@@ -141,3 +151,31 @@ knows, which is the only back-compat this needs.
   keeps the applied filter listed at zero; `ActionSlots` adds, removes and reorders.
 - Regression: `npm run typecheck && npm run lint && npm run test`, then `npm run build && npm run check:entry-graph`
   because barrels and page imports move.
+
+## Review amendments (2026-09-22)
+
+A two-axis review of the shipped commit changed the shape in five places. Each is recorded here because the spec above
+describes intent and the code now differs from the first cut.
+
+- **`ActionSlots` lives in `widgets/action-slots/`, not `shared/ui`.** It holds drag and sheet state for two pages;
+  CODE_STYLE §1 promotes to `shared/ui` only what is app-wide *and presentational*. `SlotCount` stays on the `shared/ui`
+  barrel — it is both.
+- **No props-into-state effect.** The strip held a working copy with `useEffect(() => setItems(ids), [ids])`, the
+  shape both retired editors had. §10 names the sanctioned one — a held order reconciled against the store
+  (`reconcileHeldOrder`) — so that is now `shared/lib/use-held-order.ts`, derived during render, and `ReorderableList`
+  is on the same hook rather than carrying its own copy of the pattern.
+- **One vocabulary for action availability.** The first cut said "offer only when it applies" five different ways.
+  Option lists use `ReadonlySet<id>`; action maps use `offer(when, handler)` from `shared/ui/action-handlers.ts`, or
+  `fn && { onAction: fn }` where the condition *is* the handler's own optional callback. The Library's row-action
+  availability moved out of the page into `pages/deck-library/model/use-row-availability.ts` (§3a), which also builds
+  the parent-id Set once instead of scanning per row.
+- **The accent ink is a token.** Four surfaces branched on `accent.ink === 'dark'` to spell `text-(--p-navy-900)` — a
+  primitive token in a component (§5). `ACTION_ACCENT` now carries a resolved `ink` beside `fill`, from
+  `--sw-ink-light` / `--sw-ink-dark` in `tokens.css`, and every surface writes `style={{ backgroundColor, color }}`.
+- **`SelectToolbar` is three files.** `SelectToolbar`, `SelectToolbarRow` and `SelectToolbarSlot` (§1, one exported
+  component per file). The slot's `inert` boolean — which collided with the HTML attribute — is gone; like
+  `CloseBadge`, no `onClick` means no button.
+
+Two bugs the review found, both fixed: `move` on a card counted archived decks and could open an empty destination
+sheet; and `use-library-data`'s `needsDue` read only the top and scoped orders, so a per-deck `due` order in
+`subdeckSorts` silently sorted that level by name.

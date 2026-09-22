@@ -28,7 +28,6 @@ import {
 } from '@/shared/config/swipe'
 import { cn, selectIsReady } from '@/shared/lib'
 import {
-  ActionSlots,
   AppScreen,
   Button,
   cardSurface,
@@ -36,6 +35,7 @@ import {
   ScreenLoading,
   SegmentedControl,
 } from '@/shared/ui'
+import { ActionSlots } from '@/widgets/action-slots'
 import { SwipePreview } from './SwipePreview'
 
 const TYPE_ICON: Record<SwipeItemType, typeof Layers> = {

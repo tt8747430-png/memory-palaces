@@ -49,6 +49,8 @@ interface Args {
   onMechanic: (action: ModeSwipeAction) => void
 }
 
+const EDGES: readonly SwipeDirection[] = ['right', 'left', 'up', 'down']
+
 /**
  * Where a card answered from its middle flies off to: the edge that carries the same answer, so
  * Good always leaves the way Good leaves, or to the right when no edge does.
@@ -56,8 +58,7 @@ interface Args {
 function flingFor(zone: TapZone, config: FlashcardSwipeConfig): SwipeDirection {
   if (zone !== 'centre') return zone
   const action = config.centre
-  const edges: readonly SwipeDirection[] = ['right', 'left', 'up', 'down']
-  return edges.find((dir) => config[dir] === action) ?? 'right'
+  return EDGES.find((dir) => config[dir] === action) ?? 'right'
 }
 
 function controlOf(target: EventTarget | null): HTMLElement | null {

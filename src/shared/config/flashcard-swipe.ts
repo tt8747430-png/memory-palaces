@@ -128,11 +128,6 @@ export const FLASHCARD_SWIPE_ACTION_META: Record<FlashcardSwipeAction, Flashcard
   nextWord: { id: 'nextWord', labelKey: 'study.swipeActions.nextWord' },
 }
 
-/**
- * What each zone does. The four edges answer by fling or by tap alike; the centre is read only
- * when answers are tapped and the card is showing its answer — the prompt side's middle always
- * turns the card over.
- */
 /** The centre's options are the edges' and one more, named alongside them. */
 export const CENTRE_TAP_ACTION_META: Record<
   CentreTapAction,
@@ -142,6 +137,11 @@ export const CENTRE_TAP_ACTION_META: Record<
   flip: { id: 'flip', labelKey: 'study.swipeActions.flip' },
 }
 
+/**
+ * What each zone does. The four edges answer by fling or by tap alike; the centre is read only
+ * when answers are tapped and the card is showing its answer — the prompt side's middle always
+ * turns the card over.
+ */
 export type FlashcardSwipeConfig = Record<SwipeDirection, FlashcardSwipeAction> & {
   centre: CentreTapAction
 }

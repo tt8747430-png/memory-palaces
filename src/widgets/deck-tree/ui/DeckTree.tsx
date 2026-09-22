@@ -31,11 +31,9 @@ export interface DeckTreeProps {
   swipe?: SwipeConfig
   swipeHandlers?: (deck: Deck) => ActionHandlers
   /** The heading to print over a top-level row, by id, when the order shelves the rows. */
-  headings?: ReadonlyMap<string, DeckGroup>
+  headings: ReadonlyMap<string, DeckGroup>
   now?: number
 }
-
-const NO_HEADINGS: ReadonlyMap<string, DeckGroup> = new Map()
 
 export function DeckTree({
   rows,
@@ -47,7 +45,7 @@ export function DeckTree({
   onRequestSelect,
   swipe,
   swipeHandlers,
-  headings = NO_HEADINGS,
+  headings,
   now = Date.now(),
 }: DeckTreeProps) {
   const contributed = useContributedT()
