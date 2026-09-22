@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { selectSubdeckSorts, usePreferencesStoreApi } from '@/entities/preferences'
+import {
+  selectDeckFilter,
+  selectSubdeckSorts,
+  usePreferencesStore,
+  usePreferencesStoreApi,
+} from '@/entities/preferences'
 import { setPreferences } from '@/features/preferences'
-import { type DeckSort, usePendingAct } from '@/shared/lib'
+import { type DeckFilterId, type DeckSort, usePendingAct } from '@/shared/lib'
 import type { SelectActionHandlers } from '@/shared/ui'
 import type { Destination } from '@/widgets/deck-tree'
 import { type ArrangeOptions, useArrangeOptions } from './use-arrange-options'
 import { type RowAvailability, useRowAvailability } from './use-row-availability'
-import type { LibraryFilter } from './library-filter'
 import type { PendingAct } from './pending-act'
 import { type LibraryActions, moveExclusions, useLibraryActions } from './use-library-actions'
 import { type LibraryView, useLibraryData } from './use-library-data'
@@ -34,8 +38,8 @@ export interface Library extends LibraryView {
   /** Opens a selection over one deck's subdecks, so they can be ordered on their own. */
   sortSubdecks: (deckId: string) => void
 
-  filter: LibraryFilter
-  setFilter: (filter: LibraryFilter) => void
+  filter: DeckFilterId
+  setFilter: (filter: DeckFilterId) => void
   /** Which orders and filters can change the list right now — the arrange bar offers only these. */
   arrange: ArrangeOptions
   /** Which row actions this library can offer at all. */
@@ -50,11 +54,18 @@ function moveTargets(pending: PendingAct | null, selectedDeckIds: string[]): str
 
 export function useLibrary(folderId: string | null, onFolderGone: () => void): Library {
   const [scopeId, setScopeId] = useState<string | null>(null)
-  const [filter, setFilter] = useState<LibraryFilter>('all')
+  const prefStore = usePreferencesStoreApi()
+  const filter = usePreferencesStore(selectDeckFilter)
   const data = useLibraryData({ folderId, scopeId, filter })
   const view = data.view
   const pending = usePendingAct<PendingAct>()
-  const prefStore = usePreferencesStoreApi()
+
+  // A setting, like the order beside it: chosen where the control is — while choosing among rows —
+  // and still in force once the choosing stops.
+  const setFilter = useCallback(
+    (next: DeckFilterId) => void setPreferences(prefStore, { deckFilter: next }),
+    [prefStore],
+  )
 
   // The top level takes the Library order. One deck's subdecks take an order of their own — and
   // the moment they do, the Library order no longer reaches every subdeck, and the switch says so.
@@ -94,15 +105,15 @@ export function useLibrary(folderId: string | null, onFolderGone: () => void): L
     folderId,
     scoped: scopeId !== null,
   })
-  // Leaving the selection leaves the scope and the filter with it: both were ways of looking at
-  // the rows while choosing among them.
+  // Leaving the selection leaves the scope with it — a scope is one deck's subdecks, looked at on
+  // their own, and there is nothing to look at once the rows are gone. The filter stays: it is a
+  // setting, and resetting it here was the whole reason a filter never survived being set.
   const selection = useMemo<LibrarySelection>(
     () => ({
       ...held,
       exit: () => {
         held.exit()
         setScopeId(null)
-        setFilter('all')
       },
     }),
     [held],

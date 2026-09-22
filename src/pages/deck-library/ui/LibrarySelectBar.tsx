@@ -1,8 +1,14 @@
 import { useTranslation } from 'react-i18next'
 import { Check, Heart, Layers, ListFilter, Sparkles, SquareStack } from 'lucide-react'
-import { type DeckSort, useContributedT, useExtensionPoint } from '@/shared/lib'
 import {
-  EmptyNotice,
+  CORE_DECK_FILTERS,
+  type CoreDeckFilterId,
+  type DeckFilterId,
+  type DeckSort,
+  useContributedT,
+  useExtensionPoint,
+} from '@/shared/lib'
+import {
   FilterChip,
   offeredOptions,
   OPTION_GROUP,
@@ -11,19 +17,15 @@ import {
   useDeckSortOptions,
 } from '@/shared/ui'
 import type { ArrangeOptions } from '../model/use-arrange-options'
-import {
-  CORE_LIBRARY_FILTERS,
-  type CoreLibraryFilter,
-  type LibraryFilter,
-} from '../model/library-filter'
+import { FilteredNotice } from './FilteredNotice'
 
 export interface LibrarySelectBarProps {
   /** The deck whose subdecks are on the list, while one is; the whole Library otherwise. */
   scopeName: string | null
   sort: DeckSort
   onSortChange: (sort: DeckSort) => void
-  filter: LibraryFilter
-  onFilterChange: (filter: LibraryFilter) => void
+  filter: DeckFilterId
+  onFilterChange: (filter: DeckFilterId) => void
   allSubdecks: boolean
   onAllSubdecksChange: (on: boolean) => void
   shown: number
@@ -32,7 +34,7 @@ export interface LibrarySelectBarProps {
   options: ArrangeOptions
 }
 
-const FILTER_ICON: Record<CoreLibraryFilter, typeof Heart> = {
+const FILTER_ICON: Record<CoreDeckFilterId, typeof Heart> = {
   all: ListFilter,
   favorites: Heart,
   due: Sparkles,
@@ -66,7 +68,7 @@ export function LibrarySelectBar({
   const sortOptions = offeredOptions(useDeckSortOptions(), options.sorts, sort)
   const filterOptions = offeredOptions(
     [
-      ...CORE_LIBRARY_FILTERS.map((value) => {
+      ...CORE_DECK_FILTERS.map((value) => {
         const Icon = FILTER_ICON[value]
         return {
           value,
@@ -81,7 +83,7 @@ export function LibrarySelectBar({
         icon: each.icon,
         group: OPTION_GROUP.contributed,
       })),
-    ] satisfies SortControlOption<LibraryFilter>[],
+    ] satisfies SortControlOption<DeckFilterId>[],
     options.filters,
     filter,
   )
@@ -128,16 +130,7 @@ export function LibrarySelectBar({
         </div>
       ) : null}
 
-      {hidden > 0 ? (
-        <p className="px-1 text-tiny font-semibold text-muted-foreground" role="status">
-          {t('deck.filterHidden', { shown, total: shown + hidden })}
-        </p>
-      ) : null}
-
-      {/* A filter that keeps nothing has to say so: an empty list beside a "0 of 8" would read
-          as a Library that had lost its decks. This is also where an applied filter that has run
-          out of rows lands — it stays on offer above, and this says why the list is bare. */}
-      {shown === 0 && hidden > 0 ? <EmptyNotice>{t('deck.filterEmpty')}</EmptyNotice> : null}
+      <FilteredNotice shown={shown} hidden={hidden} />
     </div>
   )
 }

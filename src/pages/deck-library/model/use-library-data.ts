@@ -12,6 +12,7 @@ import {
   usePreferencesStore,
 } from '@/entities/preferences'
 import {
+  type DeckFilterId,
   type DeckGroup,
   type DeckSort,
   dueCountsPerDeck,
@@ -29,7 +30,7 @@ import {
   useExtensionPoint,
   useOptimisticPatch,
 } from '@/shared/lib'
-import { filterDecks, type LibraryFilter } from './library-filter'
+import { filterDecks } from './library-filter'
 import { useLibraryExpanded } from './use-library-expanded'
 
 export interface LibraryView {
@@ -75,7 +76,7 @@ export interface LibraryDataArgs {
   folderId: string | null
   /** A deck whose subdecks are the rows being looked at, or null for the folder's top level. */
   scopeId: string | null
-  filter: LibraryFilter
+  filter: DeckFilterId
 }
 
 export function useLibraryData({ folderId, scopeId, filter }: LibraryDataArgs): LibraryData {
@@ -175,9 +176,21 @@ export function useLibraryData({ folderId, scopeId, filter }: LibraryDataArgs): 
     [unfiltered, filter, dueOf, filters],
   )
   const headings = useMemo(() => headingsFor(sectionDecks, lookedAt), [sectionDecks, lookedAt])
+
+  /*
+   * The tree, arranged and then narrowed — but narrowed at depth 0 only. The filter is about the
+   * list being looked at; applying it further down would drop a subdeck from the deck it belongs to
+   * rather than from the list, and a parent kept by the filter would open onto a hole. Depth 0 is
+   * the same set `sectionDecks` holds, so the two views of one Library agree by construction.
+   */
+  const arrangeRows = useCallback(
+    (peers: Deck[], depth: number): Deck[] =>
+      depth === 0 ? filterDecks(arrange(peers), filter, dueOf, filters) : arrange(peers),
+    [arrange, filter, dueOf, filters],
+  )
   const rows = useMemo(
-    () => flattenDecks(decks, expanded, folderId, arrange),
-    [decks, expanded, folderId, arrange],
+    () => flattenDecks(decks, expanded, folderId, arrangeRows),
+    [decks, expanded, folderId, arrangeRows],
   )
 
   return {

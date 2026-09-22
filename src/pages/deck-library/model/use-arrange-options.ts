@@ -2,19 +2,19 @@ import { useMemo } from 'react'
 import type { Card } from '@/entities/card'
 import { type Deck, resolveDeckSettings } from '@/entities/deck'
 import {
+  type DeckFilterId,
   type DeckSort,
   dueCountsPerDeck,
   filtersThatKeep,
   ordersThatPlace,
   useExtensionPoint,
 } from '@/shared/lib'
-import { type LibraryFilter } from './library-filter'
 
 export interface ArrangeOptions {
   /** The orders on offer, by id — an applied one the learner still has to be able to undo aside. */
   sorts: ReadonlySet<DeckSort>
   /** The filters on offer, by id. `all` is always one of them. */
-  filters: ReadonlySet<LibraryFilter>
+  filters: ReadonlySet<DeckFilterId>
   /** Fewer than two rows and there is no arrangement to pick: the control itself goes. */
   canSort: boolean
   /** Nothing beyond `all` narrows this list, so there is nothing to show a Show menu for. */
@@ -84,7 +84,7 @@ export function useArrangeOptions({
     if (anyDue) sorts.add('due')
     for (const id of ordersThatPlace(levelDecks, orders)) sorts.add(id)
 
-    const offered = new Set<LibraryFilter>(['all'])
+    const offered = new Set<DeckFilterId>(['all'])
     if (levelDecks.some((deck) => deck.favorite)) offered.add('favorites')
     if (anyDue) offered.add('due')
     for (const id of filtersThatKeep(levelDecks, filters)) offered.add(id)

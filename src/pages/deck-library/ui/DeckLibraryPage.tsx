@@ -34,6 +34,7 @@ import { useLibrary } from '../model/use-library'
 import { FolderRow } from './FolderRow'
 import { FolderSheet } from './FolderSheet'
 import { LibraryDialogs } from './LibraryDialogs'
+import { FilteredNotice } from './FilteredNotice'
 import { LibraryEmpty } from './LibraryEmpty'
 import { LibrarySkeleton } from './LibrarySkeleton'
 import { LibrarySelectView } from './LibrarySelectView'
@@ -248,6 +249,14 @@ export function DeckLibraryPage({
         <LibrarySelectView library={library} />
       ) : (
         <div className="flex flex-col gap-2 pt-2">
+          {/* The filter outlives the selection that set it, so a list being read has to account
+              for what it is hiding — and offer the way back to the control that set it. */}
+          <FilteredNotice
+            shown={library.sectionDecks.length}
+            hidden={library.hidden}
+            onArrange={selection.enter}
+          />
+
           {library.sectionFolders.map((folder) => (
             <FolderRow
               key={folder.id}

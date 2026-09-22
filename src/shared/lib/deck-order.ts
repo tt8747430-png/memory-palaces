@@ -88,6 +88,25 @@ export function resolveDeckSort(stored?: unknown): DeckSort {
   return typeof stored === 'string' && stored ? stored : DEFAULT_DECK_SORT
 }
 
+/** The filters the Library itself knows. */
+export const CORE_DECK_FILTERS = ['all', 'favorites', 'due'] as const
+
+export type CoreDeckFilterId = (typeof CORE_DECK_FILTERS)[number]
+
+/**
+ * Which rows the Library keeps: one of its own filters, or the id of one an extension contributed.
+ * Open for the same reason `DeckSort` is, and stored the same way — a filter is a setting, chosen
+ * while choosing among rows and still in force afterwards, not a mode that ends with the selection.
+ */
+export type DeckFilterId = CoreDeckFilterId | (string & {})
+
+export const DEFAULT_DECK_FILTER: DeckFilterId = 'all'
+
+/** The read-side twin of the schema step that added it — see `resolveDeckSort`. */
+export function resolveDeckFilter(stored?: unknown): DeckFilterId {
+  return typeof stored === 'string' && stored ? stored : DEFAULT_DECK_FILTER
+}
+
 /**
  * The stored id as an order the Library can apply right now: a core order by name, a contributed
  * one from the extensions that are on. An id nobody is offering — its extension switched off, or

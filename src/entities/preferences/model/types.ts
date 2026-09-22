@@ -1,10 +1,13 @@
 import {
   CONTENT_SORTS,
   type ContentSort,
+  type DeckFilterId,
   type DeckSort,
   type Entity,
   type ExtensionId,
+  DEFAULT_DECK_FILTER,
   DEFAULT_DECK_SORT,
+  resolveDeckFilter,
   resolveDeckSort,
 } from '@/shared/lib'
 import { DEFAULT_DAILY_GOAL } from '@/shared/config/constants'
@@ -37,7 +40,7 @@ export type {
   FlashcardSwipePreferences,
 } from '@/shared/config/flashcard-swipe'
 
-export type { ContentSort, DeckSort }
+export type { ContentSort, DeckFilterId, DeckSort }
 export type { FlashcardInput }
 
 export const STUDY_MODES = ['blur', 'initials', 'words', 'type'] as const
@@ -81,6 +84,12 @@ export interface Preferences extends Entity {
   selectToolbar: SelectToolbarPreferences
   /** How the Library arranges decks. `manual` is the order a drag writes. */
   deckSort: DeckSort
+  /**
+   * Which decks the Library shows. Set while choosing among rows, where the control for it lives,
+   * and still in force after the choosing stops — the list a learner arranged is the list they come
+   * back to. `all` hides nothing.
+   */
+  deckFilter: DeckFilterId
   /** Whether that order reaches the rows nested under a deck, or only the level being looked at. */
   deckSortSubdecks: boolean
   /**
@@ -124,6 +133,7 @@ export const DEFAULT_PREFERENCES = {
   flashcardInput: DEFAULT_FLASHCARD_INPUT,
   selectToolbar: DEFAULT_SELECT_TOOLBAR,
   deckSort: DEFAULT_DECK_SORT,
+  deckFilter: DEFAULT_DECK_FILTER,
   deckSortSubdecks: true,
   subdeckSorts: {} as Record<string, DeckSort>,
   privacy: DEFAULT_PRIVACY,
@@ -160,6 +170,7 @@ export interface MakePreferencesInput {
   flashcardInput?: FlashcardInput
   selectToolbar?: SelectToolbarPreferences
   deckSort?: DeckSort
+  deckFilter?: DeckFilterId
   deckSortSubdecks?: boolean
   subdeckSorts?: Record<string, DeckSort>
   privacy?: PrivacySettings
@@ -228,6 +239,7 @@ export function makePreferences(input: MakePreferencesInput): Preferences {
     flashcardInput: resolveFlashcardInput(input.flashcardInput),
     selectToolbar: resolveSelectToolbar(input.selectToolbar),
     deckSort: resolveDeckSort(input.deckSort),
+    deckFilter: resolveDeckFilter(input.deckFilter),
     deckSortSubdecks: input.deckSortSubdecks ?? DEFAULT_PREFERENCES.deckSortSubdecks,
     subdeckSorts: resolveSubdeckSorts(input.subdeckSorts),
     privacy: input.privacy ?? { ...DEFAULT_PRIVACY },
@@ -313,6 +325,7 @@ export type PreferencesChanges = Partial<
     | 'flashcardInput'
     | 'selectToolbar'
     | 'deckSort'
+    | 'deckFilter'
     | 'deckSortSubdecks'
     | 'subdeckSorts'
     | 'privacy'

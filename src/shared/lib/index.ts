@@ -154,7 +154,9 @@ export type {
 } from './sync-runner'
 export { CONTENT_SORTS, sortContent, type ContentSort, type SortableContent } from './content-order'
 export {
+  CORE_DECK_FILTERS,
   CORE_DECK_SORTS,
+  DEFAULT_DECK_FILTER,
   DEFAULT_DECK_SORT,
   filtersThatKeep,
   folderOrderOf,
@@ -163,11 +165,14 @@ export {
   orderForChildren,
   orderId,
   ordersThatPlace,
+  resolveDeckFilter,
   resolveDeckOrder,
   resolveDeckSort,
   sortDecks,
+  type CoreDeckFilterId,
   type CoreDeckSort,
   type DeckFilter,
+  type DeckFilterId,
   type DeckGroup,
   type DeckOrder,
   type DeckSort,

@@ -1,14 +1,4 @@
-import type { DeckFilter } from '@/shared/lib'
-
-export type { DeckFilter }
-
-/** The filters the Library itself knows. Transient: a way of finding rows, not a setting. */
-export const CORE_LIBRARY_FILTERS = ['all', 'favorites', 'due'] as const
-
-export type CoreLibraryFilter = (typeof CORE_LIBRARY_FILTERS)[number]
-
-/** A core filter, or the id of one an extension contributed — open, but the three names complete. */
-export type LibraryFilter = CoreLibraryFilter | (string & {})
+import type { DeckFilter, DeckFilterId } from '@/shared/lib'
 
 export interface FilterableDeck {
   id: string
@@ -21,10 +11,14 @@ export interface FilterableDeck {
  * The rows a filter keeps: the Library's own three by what it knows about a deck, a contributed
  * one by what the extension knows. A filter nobody is offering — its extension switched off since
  * it was picked — hides nothing.
+ *
+ * Only the behaviour lives here. Which filters exist, and which one is stored, is
+ * `shared/lib/deck-order.ts`, beside the order — both are settings the Library reads, and a
+ * preference cannot name a type that lives in a page.
  */
 export function filterDecks<T extends FilterableDeck>(
   decks: readonly T[],
-  filter: LibraryFilter,
+  filter: DeckFilterId,
   dueCount: (deck: T) => number,
   contributed: readonly DeckFilter[],
 ): T[] {
@@ -33,7 +27,7 @@ export function filterDecks<T extends FilterableDeck>(
 }
 
 function keepFor<T extends FilterableDeck>(
-  filter: LibraryFilter,
+  filter: DeckFilterId,
   dueCount: (deck: T) => number,
   contributed: readonly DeckFilter[],
 ): ((deck: T) => boolean) | null {

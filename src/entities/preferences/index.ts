@@ -37,6 +37,7 @@ export {
 export {
   selectAutosync,
   selectDailyGoal,
+  selectDeckFilter,
   selectDeckSort,
   selectDeckSortSubdecks,
   selectSubdeckSorts,

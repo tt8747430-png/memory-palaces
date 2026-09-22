@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { type DeckFilter, filterDecks } from './library-filter'
+import type { DeckFilter } from '@/shared/lib'
+import { filterDecks } from './library-filter'
 
 const deck = (id: string, favorite = false) => ({ id, name: id, createdAt: '', favorite })
 const decks = [deck('a', true), deck('b'), deck('c')]

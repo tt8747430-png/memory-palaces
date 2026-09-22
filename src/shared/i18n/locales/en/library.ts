@@ -37,6 +37,7 @@ export const deck = {
     due: 'Due today',
   },
   filterHidden: '{{shown}} of {{total}} shown',
+  filterChange: '{{shown}} of {{total}} shown — tap to change',
   filterEmpty: 'No deck matches that. Change what is shown to see the rest.',
   switchFrom: 'Switch from {{name}}',
   switchHint: 'Open one of this deck’s subdecks, or find another deck.',

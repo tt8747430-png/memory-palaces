@@ -8,7 +8,7 @@ import type { Card } from '@/entities/card'
 import type { Question } from '@/entities/question'
 import type { Progress } from '@/entities/progress'
 import { DEFAULT_PREFERENCES, type Preferences, resolveSubdeckSorts } from '@/entities/preferences'
-import { resolveDeckSort } from '@/shared/lib'
+import { resolveDeckFilter, resolveDeckSort } from '@/shared/lib'
 import { normalizeFlashcardSwipe, resolveFlashcardInput } from '@/shared/config/flashcard-swipe'
 import type { Profile } from '@/entities/profile'
 import type { AppNotification, Milestone } from '@/entities/notification'
@@ -131,6 +131,15 @@ export const preferencesMigrations = {
   7: (doc: Preferences): Preferences => ({
     ...doc,
     subdeckSorts: resolveSubdeckSorts(doc.subdeckSorts),
+  }),
+  /**
+   * Which decks the Library shows is a setting now, not a mode that ended with the selection that
+   * set it. Nobody has chosen one, and `all` hides nothing, so no device's Library changes under it.
+   * `resolveDeckFilter` is the read-side twin.
+   */
+  8: (doc: Preferences): Preferences => ({
+    ...doc,
+    deckFilter: resolveDeckFilter(doc.deckFilter),
   }),
 }
 

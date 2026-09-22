@@ -247,10 +247,20 @@ describe('schema migrations', () => {
     expect(deckSchema.version).toBe(4)
     expect(notificationSchema.version).toBe(1)
     expect(cardSchema.version).toBe(1)
-    expect(preferencesSchema.version).toBe(7)
+    expect(preferencesSchema.version).toBe(8)
     expect(profileSchema.version).toBe(2)
     expect(pendingChangeSchema.version).toBe(2)
     expect(syncStateSchema.version).toBe(3)
+  })
+
+  it('gives a v7 preferences document the Library filter, hiding nothing by default', () => {
+    const v7 = { id: 'preferences', deckSort: 'name' } as never
+    expect(preferencesMigrations[8](v7)).toMatchObject({ deckSort: 'name', deckFilter: 'all' })
+  })
+
+  it('keeps a filter a newer build stored, rather than resetting it to all', () => {
+    const stored = { id: 'preferences', deckFilter: 'bible:testament' } as never
+    expect(preferencesMigrations[8](stored)).toMatchObject({ deckFilter: 'bible:testament' })
   })
 
   it('gives a v3 preferences document the settings that used to stay on the device', () => {

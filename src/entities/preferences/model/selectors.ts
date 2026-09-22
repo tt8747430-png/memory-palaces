@@ -1,4 +1,4 @@
-import type { DeckSort, FlashcardInput, Preferences } from './types'
+import type { DeckFilterId, DeckSort, FlashcardInput, Preferences } from './types'
 import { DEFAULT_PREFERENCES } from './types'
 import type { PreferencesState } from './store'
 
@@ -20,6 +20,9 @@ export const selectLibraryExpanded = (state: PreferencesState): readonly string[
 
 export const selectDeckSort = (state: PreferencesState): DeckSort =>
   selectEffectivePreferences(state).deckSort
+
+export const selectDeckFilter = (state: PreferencesState): DeckFilterId =>
+  selectEffectivePreferences(state).deckFilter
 
 export const selectDeckSortSubdecks = (state: PreferencesState): boolean =>
   selectEffectivePreferences(state).deckSortSubdecks

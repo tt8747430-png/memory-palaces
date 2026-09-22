@@ -335,13 +335,34 @@ describe('useLibrary ordering', () => {
     expect(result.current.hidden).toBe(0)
 
     act(() => result.current.setFilter('favorites'))
-    expect(result.current.sectionDecks.map((d) => d.id)).toEqual(['a'])
+    await waitFor(() => expect(result.current.sectionDecks.map((d) => d.id)).toEqual(['a']))
     expect(result.current.hidden).toBe(2)
+    // The tree is narrowed with it — browse and select are two views of one Library.
+    expect(result.current.rows.map((r) => r.id)).toEqual(['a'])
 
     // Select all reaches only what is shown.
     act(() => result.current.selection.enter())
     act(() => result.current.selection.toggleAll())
     expect([...result.current.selection.ids]).toEqual(['a'])
+  })
+
+  it('keeps the filter when the selection that set it ends — it is a setting, not a mode', async () => {
+    const decks = [
+      named('v', 'Verbs', 0),
+      { ...named('a', 'Adjectives', 1), favorite: true },
+      named('n', 'Nouns', 2),
+    ]
+    const { result } = renderLibrary({ decks })
+    await waitFor(() => expect(result.current.ready).toBe(true))
+
+    act(() => result.current.selection.enter())
+    act(() => result.current.setFilter('favorites'))
+    await waitFor(() => expect(result.current.hidden).toBe(2))
+
+    act(() => result.current.selection.exit())
+    expect(result.current.filter).toBe('favorites')
+    expect(result.current.sectionDecks.map((d) => d.id)).toEqual(['a'])
+    expect(result.current.hidden).toBe(2)
   })
 
   it('writes a drag over the whole level, so a row the filter hid keeps its slot', async () => {
@@ -354,7 +375,7 @@ describe('useLibrary ordering', () => {
     const { result } = renderLibrary({ decks })
     await waitFor(() => expect(result.current.ready).toBe(true))
     act(() => result.current.setFilter('favorites'))
-    expect(result.current.sectionDecks.map((d) => d.id)).toEqual(['a', 'z'])
+    await waitFor(() => expect(result.current.sectionDecks.map((d) => d.id)).toEqual(['a', 'z']))
 
     // Dragged among what was on screen: Zebra above Adjectives. Verbs and Nouns were hidden.
     act(() => result.current.act.reorderDeckIds(['z', 'a']))
