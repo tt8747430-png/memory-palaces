@@ -9,7 +9,7 @@ export interface SelectHeaderProps {
 }
 
 const ACTION =
-  '-mx-2 inline-flex min-h-11 items-center rounded-control px-2 text-body font-semibold text-accent transition-transform active:scale-[0.97]'
+  '-mx-2 inline-flex min-h-11 items-center rounded-control px-2 text-body font-semibold text-heading transition-transform active:scale-[0.97]'
 
 export function SelectHeader({ selection, className }: SelectHeaderProps) {
   const { t } = useTranslation()
@@ -26,8 +26,10 @@ export function SelectHeader({ selection, className }: SelectHeaderProps) {
         <span className="text-body font-semibold tabular-nums text-heading">
           {t('selection.count', { count: selection.count })}
         </span>
+        {/* Done, not Cancel: every change made here is already saved, so leaving undoes nothing —
+            a Cancel after a reorder read as the way to take the reorder back. */}
         <button type="button" onClick={selection.exit} className={cn(ACTION, 'justify-self-end')}>
-          {t('common.cancel')}
+          {t('selection.done')}
         </button>
       </HeaderBar>
     </AppHeader>

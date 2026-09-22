@@ -12,13 +12,16 @@
   --p-white: oklch(100% 0 0);
   --p-gold-400: oklch(85.6% 0.17 87.3);
   --p-gold-700: oklch(65.2% 0.132 81.6);
+  --p-green-200: oklch(86% 0.11 160);
   --p-green-500: oklch(69.6% 0.149 162.5);
   --p-green-700: oklch(50.8% 0.105 165.6);
   --p-green-800: oklch(43.2% 0.087 166.9);
   --p-green-50: oklch(97.9% 0.021 166.1);
+  --p-amber-200: oklch(86% 0.13 80);
   --p-amber-500: oklch(76.9% 0.165 70.1);
   --p-amber-700: oklch(55.5% 0.146 49);
   --p-amber-50: oklch(98.7% 0.021 95.3);
+  --p-red-200: oklch(86% 0.09 22);
   --p-red-500: oklch(63.7% 0.208 25.3);
   --p-red-600: oklch(57.7% 0.215 27.3);
   --p-red-700: oklch(50.5% 0.19 27.5);
@@ -107,12 +110,30 @@
   --p-container-app: 430px;
 
   /*
-   * What the platform paints around the app: the status bar it tints from `theme-color`, and the
-   * canvas behind `#root` wherever the viewport is taller than `--app-height`. One value, so the
-   * two can never disagree — `index.html` carries a copy for the paint before this file loads, and
-   * `boot-paint.test.ts` holds the copies together.
+   * What the platform paints around the app: the status bar it tints from `theme-color`, the canvas
+   * behind `#root` wherever the viewport is taller than `--app-height`, and — since the header wears
+   * it too — the top of the app itself. One value, so the three can never disagree; `index.html`
+   * carries a copy for the paint before this file loads, and `boot-paint.test.ts` holds them
+   * together.
+   *
+   * The literal is the sRGB form of `oklch(46% 0.16 264)`, written out because `index.html` cannot
+   * evaluate `oklch()` — and there is no palette entry for it, because nothing else paints with it.
+   * Not the navy ink (`--p-navy-900`): a block that dark sat on the pale canvas as a hard band that
+   * pulled the eye off the content. This one still carries the platform's white glyphs at 7.3:1.
    */
-  --status-bar: #091a7a;
+  --status-bar: #2850b0;
+
+  /*
+   * Chrome: the app's own dark block, which the status bar is already part of. `.chrome` paints a
+   * box in it and redeclares the ink beneath — see `theme.css`. Only the surface differs per scheme;
+   * white reads on both navies, so the inks are written once.
+   */
+  --chrome-surface: var(--status-bar);
+  --chrome-ink: oklch(100% 0 0);
+  --chrome-ink-muted: oklch(100% 0 0 / 0.74);
+  --chrome-ink-faint: oklch(100% 0 0 / 0.52);
+  --chrome-fill: oklch(100% 0 0 / 0.12);
+  --chrome-edge: oklch(100% 0 0 / 0.16);
 
   --bg: linear-gradient(
     to bottom right,

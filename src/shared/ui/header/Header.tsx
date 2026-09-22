@@ -146,7 +146,7 @@ export function HeaderTrack({ className }: HeaderSlotProps) {
   const { state } = useHeader()
   const reduce = useReducedMotion()
   return (
-    <div className={cn('h-0.5 overflow-hidden rounded-full bg-primary/10', className)}>
+    <div className={cn('h-0.5 overflow-hidden rounded-full bg-info-surface', className)}>
       <div
         data-testid="header-progress-fill"
         className="h-full w-full origin-left rounded-full bg-(--success-foreground)"

@@ -41,6 +41,12 @@ describe('the status bar before first paint', () => {
   it('paints the canvas from the same token, for a platform that samples instead of reading it', () => {
     expect(readStylesheet('theme.css')).toContain('background: var(--status-bar)')
   })
+
+  it('paints the app’s own chrome from it too, so the bar and the header meet with no seam', () => {
+    const theme = readStylesheet('theme.css')
+    expect(theme).toContain('background: var(--chrome-surface)')
+    expect(readStylesheet('tokens.css')).toContain('--chrome-surface: var(--status-bar)')
+  })
 })
 
 describe('the mirrors the boot script reads', () => {

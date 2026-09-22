@@ -61,12 +61,14 @@ export function HomeHeader({
               {t(`home.${greetingKey(new Date().getHours())}`)}
             </span>
             <span className="flex items-center gap-2">
-              <span className="shrink-0 text-label font-semibold text-primary">
+              <span className="shrink-0 text-label font-semibold text-heading">
                 {t('home.level', { level })}
               </span>
+              {/* The track is the chrome fill, not a tinted one: `bg-secondary/40` here ended where
+                  the bar's own gradient ends, so a full bar and an empty one looked alike. */}
               <Progress
                 value={fill}
-                className="h-1.5 w-full max-w-35 bg-secondary/40"
+                className="h-1.5 w-full max-w-35 bg-info-surface"
                 label={xpToNext}
               />
             </span>
@@ -111,9 +113,7 @@ function StreakButton({
         done: streak.dayCount,
         goal: streak.dailyGoal,
       })}
-      className="inline-flex h-11 shrink-0 items-center gap-1 rounded-control bg-card-glass px-2.5
-
-      text-label font-semibold text-heading shadow-rest transition-transform active:scale-95"
+      className="inline-flex h-11 shrink-0 items-center gap-1 rounded-control bg-card-glass px-2.5 text-label font-semibold text-heading shadow-rest transition-transform active:scale-95"
     >
       <Flame
         className={cn('size-4', active ? 'text-warning' : 'text-muted-foreground')}

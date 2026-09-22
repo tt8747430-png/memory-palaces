@@ -35,7 +35,9 @@ export function StudySessionHeader({
 }: StudySessionHeaderProps) {
   return (
     <Header
-      className="px-5"
+      // `chrome`, like every other bar: a study session's header meets the status bar too
+      // (`theme.css`). Opaque now, so its last row needs padding inside the block.
+      className="chrome px-5 pb-3"
       title={title}
       subtitle={subtitle}
       progress={progress}

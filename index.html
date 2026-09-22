@@ -11,7 +11,7 @@
     <!-- One bar, repainted by ThemeProvider (and by the script below, before first paint) from
        `--status-bar`, the token that also paints the canvas. A media-matched pair would follow the
        OS instead of the theme the learner chose. -->
-    <meta content="#091a7a" name="theme-color" />
+    <meta content="#2850b0" name="theme-color" />
     <meta content="yes" name="mobile-web-app-capable" />
     <!-- Still the only spelling iOS honours. `black`, not `black-translucent`: translucent runs
        the web view under the status bar, and iOS then reports env(safe-area-inset-top) late and
@@ -40,7 +40,7 @@
                 : 'light'
           document.documentElement.dataset.theme = resolved
           var bar = document.querySelector('meta[name="theme-color"]')
-          if (bar) bar.setAttribute('content', resolved === 'dark' ? '#0b1533' : '#091a7a')
+          if (bar) bar.setAttribute('content', resolved === 'dark' ? '#0b1533' : '#2850b0')
         } catch (_) {
           document.documentElement.dataset.theme = 'light'
         }

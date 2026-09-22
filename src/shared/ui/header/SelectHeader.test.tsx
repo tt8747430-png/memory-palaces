@@ -32,11 +32,11 @@ describe('SelectHeader', () => {
     expect(screen.getByRole('button', { name: 'Clear all' })).toBeInTheDocument()
   })
 
-  it('ends the selection from cancel', async () => {
+  it('ends the selection from done — nothing here is left to undo', async () => {
     const user = userEvent.setup()
     const exit = vi.fn()
     renderWithProviders(<SelectHeader selection={selectionOf({ exit })} />)
-    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+    await user.click(screen.getByRole('button', { name: 'Done' }))
     expect(exit).toHaveBeenCalledTimes(1)
   })
 })

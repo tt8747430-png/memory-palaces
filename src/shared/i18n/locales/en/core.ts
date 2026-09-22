@@ -16,6 +16,7 @@ export const common = {
 export const selection = {
   selectAll: 'Select all',
   clearAll: 'Clear all',
+  done: 'Done',
   count: '{{count}} selected',
   exitSelectMode: 'Exit select mode',
 } as const

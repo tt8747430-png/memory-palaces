@@ -215,6 +215,78 @@
     backdrop-filter: blur(var(--glass-blur));
   }
 
+  /*
+   * A box that is the app's own chrome: the header, and the screen a finished study session ends
+   * on. It
+   * paints `--chrome-surface` — the very colour the platform paints the status bar — so the two meet
+   * with no seam, and then redeclares the ink beneath it.
+   *
+   * The redeclaration is the whole mechanism. `@theme inline` compiles `text-heading` to
+   * `var(--text-heading)` at the use site, so a child that already names a semantic token reads the
+   * chrome value here and the page value everywhere else. Nothing inside needs a chrome variant, and
+   * nothing can be half-converted: an override left behind would have to name a raw colour, which
+   * lint forbids (CODE_STYLE §5).
+   *
+   * Chrome is a dark context inside whatever theme is on, so every role takes its on-chrome value:
+   * ink, neutral surfaces, status foregrounds, and brand fills too. On a saturated blue block the
+   * fill that reads as "the action" is white, so `--primary` is the ink and `--primary-foreground`
+   * is the block — a CTA in a header is a white pill with the block's blue on it, which is also what the
+   * avatar's gradient and the level bar become, without either naming a colour.
+   */
+  .chrome {
+    background: var(--chrome-surface);
+    color: var(--chrome-ink);
+
+    --text-heading: var(--chrome-ink);
+    --text-primary: var(--chrome-ink);
+    --text-secondary: var(--chrome-ink-muted);
+    --text-muted: var(--chrome-ink-muted);
+    --text-faint: var(--chrome-ink-faint);
+
+    --surface: var(--chrome-fill);
+    --surface-sky: var(--chrome-fill);
+    --surface-glass: var(--chrome-fill);
+    --info-surface: var(--chrome-fill);
+    --info-foreground: var(--chrome-ink);
+
+    --surface-glass-sky: var(--chrome-fill);
+
+    --border: var(--chrome-edge);
+    --border-glass: var(--chrome-edge);
+    --divider: var(--chrome-edge);
+    --info-border: var(--chrome-edge);
+    --ring: var(--chrome-ink);
+
+    --primary: var(--chrome-ink);
+    --primary-foreground: var(--chrome-surface);
+    --secondary: var(--p-blue-300);
+    --secondary-foreground: var(--chrome-surface);
+    --accent: var(--p-blue-300);
+    --accent-foreground: var(--chrome-surface);
+
+    /*
+     * Status, as light tints: each reads at 4.5:1 or better on both blocks — the light theme's blue
+     * and the dark theme's navy. A tinted surface or edge is mixed from the tint here rather than
+     * inherited, because a token mixed at `:root` is computed there and would keep the page's ink.
+     */
+    --success: var(--p-green-200);
+    --success-foreground: var(--p-green-200);
+    --success-on-surface: var(--p-green-200);
+    --success-surface: color-mix(in oklch, var(--success) 18%, transparent);
+    --success-border: color-mix(in oklch, var(--success) 30%, transparent);
+    --warning: var(--p-amber-200);
+    --warning-foreground: var(--p-amber-200);
+    --warning-surface: color-mix(in oklch, var(--warning) 18%, transparent);
+    --warning-border: color-mix(in oklch, var(--warning) 30%, transparent);
+    --danger: var(--p-red-200);
+    --danger-foreground: var(--chrome-surface);
+    --danger-on-surface: var(--p-red-200);
+    --danger-surface: color-mix(in oklch, var(--danger) 18%, transparent);
+    --danger-border: color-mix(in oklch, var(--danger) 30%, transparent);
+
+    --notification-unseen-ring: color-mix(in oklch, var(--secondary) 55%, transparent);
+  }
+
   .bg-card-glass {
     background: var(--surface-glass);
     backdrop-filter: blur(var(--glass-blur-card));
