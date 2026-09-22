@@ -28,6 +28,16 @@ export const SELECT_TOOLBAR_MAX = 4
 
 export type SelectToolbarConfig = SelectActionId[]
 
+/** One more action would still fit on the bar. */
+export const selectToolbarHasRoom = (config: SelectToolbarConfig): boolean =>
+  config.length < SELECT_TOOLBAR_MAX
+
+/**
+ * An action may come off the bar. The bar keeps its last: a selection with nothing on its bar can
+ * be neither acted on nor, from the bar, left.
+ */
+export const selectToolbarCanShrink = (config: SelectToolbarConfig): boolean => config.length > 1
+
 export type SelectToolbarPreferences = Record<SelectSurface, SelectToolbarConfig>
 
 export const DEFAULT_SELECT_TOOLBAR: SelectToolbarPreferences = {

@@ -71,22 +71,19 @@ export const actions = {
   delete: 'Delete',
 } as const
 
-/** The strip of action slots both settings screens arrange, and the sheet its `+` opens. */
+/** The action slots both settings screens arrange: dragged to reorder, taken off by their badge. */
 export const slots = {
-  count: '{{count}} / {{max}}',
-  add: 'Add an action to {{strip}}',
-  pick: 'Add to {{strip}}',
   reorder: 'Reorder {{name}}',
   remove: 'Remove {{name}}',
-  empty: 'Empty — tap + to put an action here.',
-  allInUse: 'Every action is already in use.',
 } as const
 
 export const swipe = {
   title: 'Swipe actions',
   subtitle: 'Pick what a left or right swipe does on each kind of list row.',
-  leading: 'Swipe right',
-  trailing: 'Swipe left',
+  rails: 'Actions',
+  railsHint: 'A new action joins the right of the row. Drag it past the row to move it left.',
+  railsFull: 'Both swipes are full — take one off to add another.',
+  railsEmpty: 'No swipe actions on this kind of row. Tap one to add it.',
   reset: 'Reset to defaults',
   types: {
     deck: 'Decks',
@@ -105,6 +102,8 @@ export const select = {
   subtitle:
     'Choose the actions the toolbar offers while you have decks, cards or questions selected.',
   inBar: 'In the toolbar',
+  barHint: 'A new action joins the right of the bar. Drag a tile above to reorder it.',
+  barFull: 'The toolbar is full — take one off to add another.',
   reset: 'Reset to defaults',
   surfaces: {
     library: 'Decks',

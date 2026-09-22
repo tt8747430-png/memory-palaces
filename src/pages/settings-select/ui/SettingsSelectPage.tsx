@@ -12,24 +12,22 @@ import {
   normalizeSelectToolbar,
   SELECT_ACTIONS,
   SELECT_SURFACES,
-  SELECT_TOOLBAR_MAX,
   type SelectActionId,
   type SelectSurface,
   type SelectToolbarConfig,
+  selectToolbarCanShrink,
+  selectToolbarHasRoom,
 } from '@/shared/config/select-toolbar'
 import { cn, selectIsReady } from '@/shared/lib'
 import {
   AppScreen,
   Button,
   cardSurface,
-  DockPill,
   ScreenHeader,
   ScreenLoading,
   SegmentedControl,
-  SelectToolbarRow,
-  SelectToolbarSlot,
 } from '@/shared/ui'
-import { ActionSlots } from '@/widgets/action-slots'
+import { ActionsPalette, SelectToolbarBar } from '@/widgets/action-slots'
 
 const SURFACE_ICON: Record<SelectSurface, typeof Layers> = {
   library: Layers,
@@ -42,9 +40,10 @@ export interface SettingsSelectPageProps {
 }
 
 /**
- * The actions the toolbar offers while things are selected. One surface at a time, arranged on the
- * same slot strip as the swipe rails — and shown above it as the dock's own pill, so what is
- * arranged here is what appears at the bottom of the screen, tile for tile.
+ * The actions the toolbar offers while things are selected. One surface at a time, on two surfaces
+ * that answer different questions: the dock's own pill above says *where* — the real bar, its slots
+ * draggable, each badge taking one off — and the palette below says *which*, every action this surface has, on or off with one
+ * tap. What is arranged here is what appears at the bottom of the screen, tile for tile.
  */
 export function SettingsSelectPage({ onBack }: SettingsSelectPageProps) {
   const { t } = useTranslation()
@@ -54,7 +53,7 @@ export function SettingsSelectPage({ onBack }: SettingsSelectPageProps) {
   const [surface, setSurface] = useState<SelectSurface>('library')
 
   const config = prefs.selectToolbar[surface]
-  const spare = SELECT_ACTIONS[surface].filter((id) => !config.includes(id))
+  const hasRoom = selectToolbarHasRoom(config)
 
   const save = (next: SelectToolbarConfig) =>
     void setPreferences(store, {
@@ -63,8 +62,6 @@ export function SettingsSelectPage({ onBack }: SettingsSelectPageProps) {
         [surface]: normalizeSelectToolbar(surface, next),
       },
     })
-
-  const resetAll = () => void setPreferences(store, { selectToolbar: DEFAULT_SELECT_TOOLBAR })
 
   if (!ready) return <ScreenLoading />
 
@@ -102,32 +99,26 @@ export function SettingsSelectPage({ onBack }: SettingsSelectPageProps) {
           })}
         />
 
-        {/* The bar itself, at the dock's size — inert, like the swipe preview above its strips. */}
-        <div aria-hidden className="mx-auto h-16 w-64">
-          <DockPill>
-            <SelectToolbarRow>
-              {config.map((id) => (
-                <SelectToolbarSlot key={id} action={id} />
-              ))}
-            </SelectToolbarRow>
-          </DockPill>
-        </div>
+        <SelectToolbarBar config={config} onChange={save} />
 
         <div className={cn(cardSurface, 'p-3.5')}>
-          <ActionSlots
-            ids={config}
-            max={SELECT_TOOLBAR_MAX}
-            options={spare}
+          <ActionsPalette
             label={t('select.inBar')}
-            icon={<CheckSquare aria-hidden />}
-            min={1}
-            onReorder={save}
-            onAdd={(id) => save([...config, id as SelectActionId])}
+            actions={SELECT_ACTIONS[surface]}
+            placed={config}
+            hasRoom={hasRoom}
+            canRemove={selectToolbarCanShrink(config)}
+            onAdd={(id: SelectActionId) => save([...config, id])}
             onRemove={(id) => save(config.filter((each) => each !== id))}
+            hint={hasRoom ? t('select.barHint') : t('select.barFull')}
           />
         </div>
 
-        <Button variant="ghost" onClick={resetAll} className="self-start">
+        <Button
+          variant="ghost"
+          onClick={() => void setPreferences(store, { selectToolbar: DEFAULT_SELECT_TOOLBAR })}
+          className="self-start"
+        >
           <RotateCcw className="size-4.5" aria-hidden />
           {t('select.reset')}
         </Button>

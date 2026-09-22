@@ -3,6 +3,8 @@ import {
   DEFAULT_SELECT_TOOLBAR,
   normalizeSelectToolbar,
   SELECT_TOOLBAR_MAX,
+  selectToolbarCanShrink,
+  selectToolbarHasRoom,
   type SelectActionId,
 } from './select-toolbar'
 
@@ -29,5 +31,17 @@ describe('normalizeSelectToolbar', () => {
     expect(normalizeSelectToolbar('card', ['archive'] as unknown as SelectActionId[])).toEqual(
       DEFAULT_SELECT_TOOLBAR.card,
     )
+  })
+})
+
+describe('what the bar will hold', () => {
+  it('has room below its maximum and none at it', () => {
+    expect(selectToolbarHasRoom(['move', 'delete'])).toBe(true)
+    expect(selectToolbarHasRoom(['move', 'flag', 'known', 'delete'])).toBe(false)
+  })
+
+  it('lets an action come off while more than one is on, and keeps the last', () => {
+    expect(selectToolbarCanShrink(['move', 'delete'])).toBe(true)
+    expect(selectToolbarCanShrink(['delete'])).toBe(false)
   })
 })

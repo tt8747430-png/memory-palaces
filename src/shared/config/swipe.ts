@@ -48,6 +48,35 @@ export function withoutSwipeAction(config: SwipeConfig, id: SwipeActionId): Swip
   }
 }
 
+/** Whether both rails are within what a row has the width to open. */
+export function railsFit(config: SwipeConfig): boolean {
+  return (
+    config.leading.length <= SWIPE_SIDE_MAX.leading &&
+    config.trailing.length <= SWIPE_SIDE_MAX.trailing
+  )
+}
+
+/**
+ * Which rail an added action lands on. Always the trailing one while it has room — that is the run
+ * of caps on the right of the row, where a new action reads as "added at the end". Which side it
+ * finally sits on is a drag afterwards, not a question asked before the learner can see the result.
+ */
+export function railWithRoom(config: SwipeConfig): keyof SwipeConfig | null {
+  if (config.trailing.length < SWIPE_SIDE_MAX.trailing) return 'trailing'
+  if (config.leading.length < SWIPE_SIDE_MAX.leading) return 'leading'
+  return null
+}
+
+/**
+ * The rails with `id` added at the end of the rail that has room (`railWithRoom`), taken off
+ * wherever it was first so it is never on both. Unchanged when both rails are full.
+ */
+export function withSwipeAction(config: SwipeConfig, id: SwipeActionId): SwipeConfig {
+  const without = withoutSwipeAction(config, id)
+  const rail = railWithRoom(without)
+  return rail ? { ...without, [rail]: [...without[rail], id] } : config
+}
+
 export function normalizeSwipeConfig(type: SwipeItemType, config: SwipeConfig): SwipeConfig {
   const allowed = new Set(SWIPE_ACTIONS[type])
   const clean = (ids: SwipeActionId[], side: keyof SwipeConfig) =>

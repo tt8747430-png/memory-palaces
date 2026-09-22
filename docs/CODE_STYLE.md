@@ -329,8 +329,8 @@ each row on the compositor, nothing under `prefers-reduced-motion`.
 **All of it is `useSortableBlock()` (`shared/lib`) — don't rewrite it.** Headless; owns carry, pile, landing, drop
 placement, plus the two settings that must not vary (`drag.collision` → `DndContext`, `drag.dropAnimation` →
 `DragOverlay`). A surface supplies `sectionOf`, optional `scopeTo`, and markup. Rows go through `SortableRow`, which
-keeps the frame as the row's own element — that's what `opacity-0` and the landing apply to. Settings pages keep their
-own `DndContext` on purpose (horizontal single-item assignment ≠ reorder).
+keeps the frame as the row's own element — that's what `opacity-0` and the landing apply to. The settings action
+editors are not blocks: one horizontal strip each, on `widgets/action-slots`' `useSortableList` (ADR 0001).
 
 **`LibrarySelectList` is the reference — move other surfaces to it, never it to them.** Two rules easy to "improve" and
 not to be: `dropAnimation` is `null`, and reorderable rows have **no mount entrance**.

@@ -1,14 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import {
-  ArrowLeft,
-  ArrowLeftRight,
-  ArrowRight,
-  Folder,
-  Layers,
-  RotateCcw,
-  WalletCards,
-} from 'lucide-react'
+import { ArrowLeftRight, RotateCcw } from 'lucide-react'
 import {
   selectEffectivePreferences,
   usePreferencesStore,
@@ -19,12 +11,12 @@ import {
   DEFAULT_SWIPE,
   normalizeSwipeConfig,
   SWIPE_ACTIONS,
+  railWithRoom,
   SWIPE_ITEM_TYPES,
-  SWIPE_SIDE_MAX,
-  type SwipeActionId,
   type SwipeConfig,
   type SwipeItemType,
   withoutSwipeAction,
+  withSwipeAction,
 } from '@/shared/config/swipe'
 import { cn, selectIsReady } from '@/shared/lib'
 import {
@@ -35,30 +27,23 @@ import {
   ScreenLoading,
   SegmentedControl,
 } from '@/shared/ui'
-import { ActionSlots } from '@/widgets/action-slots'
-import { SwipePreview } from './SwipePreview'
+import { ActionsPalette, SWIPE_TYPE_ICON, SwipeRailsBar } from '@/widgets/action-slots'
 
-const TYPE_ICON: Record<SwipeItemType, typeof Layers> = {
-  deck: Layers,
-  folder: Folder,
-  card: WalletCards,
+/** What the line under the palette says: how to arrange what is on, or why nothing more goes on. */
+function railsHintKey(placed: number, hasRoom: boolean) {
+  if (placed === 0) return 'swipe.railsEmpty'
+  return hasRoom ? 'swipe.railsHint' : 'swipe.railsFull'
 }
-
-type Side = keyof SwipeConfig
-
-const SIDES: readonly Side[] = ['leading', 'trailing']
-
-/** Which way the finger travels to open each rail — the arrow the preview draws from. */
-const SIDE_ICON: Record<Side, typeof ArrowRight> = { leading: ArrowRight, trailing: ArrowLeft }
 
 export interface SettingsSwipePageProps {
   onBack?: () => void
 }
 
 /**
- * What a swipe on each kind of row does. One kind at a time, and for that kind the two rails
- * themselves: a slot is filled from a picker, dragged into place and taken off by its badge, so
- * every gesture has the thing it acts on under the thumb.
+ * What a swipe on each kind of row does. One kind at a time, on two surfaces that answer different
+ * questions: the row above says *where* — both swipes open, every cap draggable across it, its badge
+ * taking it off — and the palette below says *which*, every action this kind has, on or off with one
+ * tap. An action switched on joins the end of the right-hand swipe; from there it drags anywhere.
  */
 export function SettingsSwipePage({ onBack }: SettingsSwipePageProps) {
   const { t } = useTranslation()
@@ -74,17 +59,8 @@ export function SettingsSwipePage({ onBack }: SettingsSwipePageProps) {
       swipe: { ...prefs.swipe, [type]: normalizeSwipeConfig(type, next) },
     })
 
-  // Only actions on neither rail are on offer. Moving one across is taking it off and putting it
-  // back, which is two deliberate taps rather than a pick that silently empties the other side.
-  const spare = SWIPE_ACTIONS[type].filter(
-    (id) => !config.leading.includes(id) && !config.trailing.includes(id),
-  )
-
-  const add = (side: Side) => (id: SwipeActionId) => {
-    const without = withoutSwipeAction(config, id)
-    save({ ...without, [side]: [...without[side], id] })
-  }
-  const remove = (id: SwipeActionId) => save(withoutSwipeAction(config, id))
+  const placed = [...config.leading, ...config.trailing]
+  const hasRoom = railWithRoom(config) !== null
 
   if (!ready) return <ScreenLoading />
 
@@ -108,7 +84,7 @@ export function SettingsSwipePage({ onBack }: SettingsSwipePageProps) {
           onChange={setType}
           size="sm"
           options={SWIPE_ITEM_TYPES.map((value) => {
-            const Icon = TYPE_ICON[value]
+            const Icon = SWIPE_TYPE_ICON[value]
             return {
               value,
               ariaLabel: t(`swipe.types.${value}` as never),
@@ -122,25 +98,18 @@ export function SettingsSwipePage({ onBack }: SettingsSwipePageProps) {
           })}
         />
 
-        <SwipePreview type={type} config={config} />
+        <SwipeRailsBar type={type} config={config} onChange={save} />
 
-        <div className={cn(cardSurface, 'flex flex-col gap-5 p-3.5')}>
-          {SIDES.map((side) => {
-            const Icon = SIDE_ICON[side]
-            return (
-              <ActionSlots
-                key={side}
-                ids={config[side]}
-                max={SWIPE_SIDE_MAX[side]}
-                options={spare}
-                label={t(`swipe.${side}`)}
-                icon={<Icon aria-hidden />}
-                onReorder={(ids) => save({ ...config, [side]: ids })}
-                onAdd={add(side)}
-                onRemove={remove}
-              />
-            )
-          })}
+        <div className={cn(cardSurface, 'p-3.5')}>
+          <ActionsPalette
+            label={t('swipe.rails')}
+            actions={SWIPE_ACTIONS[type]}
+            placed={placed}
+            hasRoom={hasRoom}
+            onAdd={(id) => save(withSwipeAction(config, id))}
+            onRemove={(id) => save(withoutSwipeAction(config, id))}
+            hint={t(railsHintKey(placed.length, hasRoom))}
+          />
         </div>
 
         <Button

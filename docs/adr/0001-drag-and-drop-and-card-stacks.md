@@ -31,10 +31,13 @@ row anatomy. Surfaces differ in what they render, never in how a drag behaves.
 | ----------------------------------- | ----------------------------------- | ------------------ |
 | `deck-tree/ui/LibrarySelectList`    | two sections + folder drop target   | `useSortableBlock` |
 | `content-editor/ui/ReorderableList` | flat list, order held from props    | `useSortableBlock` |
-| `settings-select`, `settings-swipe` | horizontal chips across two buckets | own `DndContext`   |
+| `settings-select`, `settings-swipe` | the live bar / the row's two rails  | `useSortableList`  |
 
-Settings pages stay out deliberately: single-item assignment across two buckets, horizontal, no multi-select. Sharing
-`useSortableSensors` is the whole overlap.
+Settings pages stay out deliberately: one horizontal strip, no multi-select, no piles. `widgets/action-slots`'
+`useSortableList` is their small engine — sensors, held order, the one `dropAnimation`, and a drop that may be refused
+(a rail is full). A swipe's two rails are **one** list with the row standing between them (`action-rails.ts`, `ROW`),
+so crossing sides is an ordinary reorder, never a cross-container drag. Sharing `useSortableSensors` and
+`useHeldOrder` with `useSortableBlock` is the whole overlap.
 
 > **`LibrarySelectList` is the reference. Unifying means moving other surfaces towards it, never it towards them.** Its
 > feel is the one tuned against real use; every other list is a copy that drifted. (Learned 2026-07-26: "unify these" was
