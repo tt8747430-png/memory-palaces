@@ -3,7 +3,7 @@ import { cleanup, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { makeDeck } from '@/entities/deck'
 import { makeCard } from '@/entities/card'
-import { flattenDecks } from '@/shared/lib'
+import { arrangeLibrary } from '@/shared/lib'
 import { renderWithProviders } from '@/shared/test/render-with-providers'
 import { DeckTree } from './DeckTree'
 
@@ -25,7 +25,14 @@ function baseProps(
     onRequestSelect: vi.fn(),
     headings: new Map(),
     ...overrides,
-    rows: flattenDecks(decks, expanded, null),
+    rows: arrangeLibrary({
+      decks,
+      folders: [],
+      prefs: { deckSort: 'manual', deckSortSubdecks: false, subdeckSorts: {}, filter: 'all' },
+      orders: [],
+      filters: [],
+      dueOf: () => 0,
+    }).flatten({ folderId: null }, expanded),
   }
 }
 

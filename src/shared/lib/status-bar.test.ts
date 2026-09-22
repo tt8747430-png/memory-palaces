@@ -4,7 +4,6 @@ import {
   readStatusBarPaint,
   statusBarColor,
   statusBarIsDeclared,
-  statusBarIsPainted,
 } from './status-bar'
 
 function declare(color: string) {
@@ -62,15 +61,6 @@ describe('statusBarIsDeclared', () => {
   })
 })
 
-describe('statusBarIsPainted', () => {
-  it('fails when nothing opaque sits under the bar, which is when it turns white', () => {
-    declare('#091a7a')
-    tell('#091a7a')
-    // jsdom hits no pixels, which is the same answer as a page that paints nothing up there.
-    expect(statusBarIsPainted(readStatusBarPaint())).toBe(false)
-  })
-})
-
 describe('paintedBehind', () => {
   const mount = (html: string) => {
     const host = document.createElement('div')
@@ -100,6 +90,17 @@ describe('paintedBehind', () => {
     )
 
     expect(paintedBehind(host.querySelector('#leaf'))).toBe('rgb(9, 26, 122)')
+    host.remove()
+  })
+
+  it('reads a colour that kept its space, alpha and all — a backdrop is not opaque', () => {
+    const host = mount(
+      '<div style="background-color: rgb(9,26,122)">' +
+        '<div id="backdrop" style="background-color: oklch(0.294 0.16 266.1 / 0.38)"></div>' +
+        '</div>',
+    )
+
+    expect(paintedBehind(host.querySelector('#backdrop'))).toBe('rgb(9, 26, 122)')
     host.remove()
   })
 

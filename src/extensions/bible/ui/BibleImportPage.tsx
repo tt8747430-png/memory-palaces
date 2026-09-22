@@ -144,7 +144,7 @@ export function BibleImportPage({ deckId, onBack, onReview, onShowDeck }: BibleI
         title={t('newDeckTitle')}
         description={t('newDeckHint')}
         fieldLabel={t('newDeckName')}
-        initialValue={page.chapterName}
+        suggestion={page.chapterName}
         confirmLabel={t('useName')}
         onSubmit={(name) => {
           page.nameDeck(name)

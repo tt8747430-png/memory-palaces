@@ -28,7 +28,7 @@ export function NumberRow({ icon, label, value, onChange }: NumberRowProps) {
         onOpenChange={setOpen}
         title={label}
         fieldLabel={label}
-        initialValue={String(value)}
+        suggestion={String(value)}
         confirmLabel={t('deckSettings.appearanceSave')}
         onSubmit={(next) => {
           const parsed = Number.parseInt(next, 10)

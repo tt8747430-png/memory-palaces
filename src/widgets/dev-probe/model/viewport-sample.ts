@@ -3,9 +3,9 @@ import {
   isTextField,
   keyboardIsMeasured,
   readStatusBarPaint,
+  readTopInset,
   revealOffset,
   statusBarIsDeclared,
-  statusBarIsPainted,
   visibleBottom,
   REVEAL_SCROLL_ATTR,
 } from '@/shared/lib'
@@ -41,6 +41,9 @@ export interface ViewportSample {
   fieldInScroller: boolean
   revealDelta: number
   stored: string
+  statusStyle: string
+  safeTopHeld: number
+  safeTopReported: number
   statusBarDeclared: string
   statusBarMeta: string
   statusBarPainted: string
@@ -85,6 +88,7 @@ export function readViewport(): ViewportSample {
   }
   const fieldInScroller = Boolean(isTextField(active) && scroller?.contains(active))
   const statusBar = readStatusBarPaint()
+  const topInset = readTopInset()
 
   return {
     route: window.location.pathname,
@@ -121,6 +125,12 @@ export function readViewport(): ViewportSample {
     fieldInScroller,
     revealDelta: fieldInScroller && rect ? Math.round(revealOffset(band, rect)) : 0,
     stored: localStorage.getItem('mindscape.keyboard-height') ?? '(none)',
+    statusStyle:
+      document
+        .querySelector<HTMLMetaElement>('meta[name="apple-mobile-web-app-status-bar-style"]')
+        ?.content.trim() ?? '(none)',
+    safeTopHeld: topInset.held,
+    safeTopReported: topInset.reported,
     statusBarDeclared: statusBar.declared || '(unset)',
     statusBarMeta: statusBar.meta || '(none)',
     statusBarPainted: statusBar.painted || '(nothing painted)',
@@ -231,10 +241,16 @@ export function checkViewport(sample: ViewportSample): ProbeCheck[] {
         : `${sample.scroller}: no useKeyboardReveal on this scroll body`,
     },
     {
-      id: 'status-bar',
-      label: 'status bar',
-      state: statusBarState(sample),
-      detail: statusBarDetail(sample),
+      id: 'top-inset',
+      label: 'top inset',
+      state: topInsetState(sample),
+      detail: topInsetDetail(sample),
+    },
+    {
+      id: 'theme-color',
+      label: 'theme-color',
+      state: themeColorState(sample),
+      detail: themeColorDetail(sample),
     },
     {
       id: 'zoom',
@@ -248,38 +264,51 @@ export function checkViewport(sample: ViewportSample): ProbeCheck[] {
   ]
 }
 
+const TRANSLUCENT = 'black-translucent'
+
 /**
- * The bar is the platform's to paint, from `theme-color` or — where that is not honoured — from
- * whatever the page leaves under it. Both answers have to be the token's, or the theme breaks at
- * the top of the screen with nothing in the app looking wrong.
+ * The page paints under the clock (ADR 0006): installed, the style must let it, and the top every
+ * screen is padded by must clear what iOS reports — a held inset smaller than the live one draws
+ * the header under the clock.
  */
+function topInsetState(sample: ViewportSample): ProbeCheck['state'] {
+  if (sample.mode !== 'standalone')
+    return sample.safeTopHeld >= sample.safeTopReported ? 'idle' : 'bad'
+  if (sample.statusStyle !== TRANSLUCENT) return 'bad'
+  return sample.safeTopHeld >= sample.safeTopReported ? 'ok' : 'bad'
+}
+
+function topInsetDetail(sample: ViewportSample): string {
+  const { safeTopHeld: held, safeTopReported: reported } = sample
+  if (sample.mode === 'standalone' && sample.statusStyle !== TRANSLUCENT) {
+    return `status-bar style is ${sample.statusStyle}: iOS paints the bar itself, and nothing the app paints reaches it`
+  }
+  if (held < reported)
+    return `--safe-top holds ${held}px, iOS reports ${reported}px: the top is under the clock`
+  return `${held}px held, ${reported}px reported — the header clears the clock`
+}
+
+/** Android's half: the bar follows `theme-color`, which must name the token the chrome is painted with. */
+function themeColorState(sample: ViewportSample): ProbeCheck['state'] {
+  const paint = statusBarPaint(sample)
+  if (!paint.declared) return 'idle'
+  return statusBarIsDeclared(paint) ? 'ok' : 'bad'
+}
+
+function themeColorDetail(sample: ViewportSample): string {
+  const paint = statusBarPaint(sample)
+  if (!paint.declared) return 'no --status-bar token on the document'
+  return statusBarIsDeclared(paint)
+    ? `${paint.declared}, told`
+    : `theme-color is ${paint.meta || 'missing'}, the token says ${paint.declared}`
+}
+
 function statusBarPaint(sample: ViewportSample) {
   return {
     declared: sample.statusBarDeclared === '(unset)' ? '' : sample.statusBarDeclared,
     meta: sample.statusBarMeta === '(none)' ? '' : sample.statusBarMeta,
     painted: sample.statusBarPainted === '(nothing painted)' ? '' : sample.statusBarPainted,
   }
-}
-
-function statusBarState(sample: ViewportSample): ProbeCheck['state'] {
-  const paint = statusBarPaint(sample)
-  if (!paint.declared) return 'idle'
-  return statusBarIsDeclared(paint) && statusBarIsPainted(paint) ? 'ok' : 'bad'
-}
-
-function statusBarDetail(sample: ViewportSample): string {
-  const paint = statusBarPaint(sample)
-  if (!paint.declared) return 'no --status-bar token on the document'
-  if (!statusBarIsDeclared(paint)) {
-    return `theme-color is ${paint.meta || 'missing'}, the token says ${paint.declared}`
-  }
-  if (!paint.painted) {
-    return `nothing opaque under the top edge: a platform that samples paints its own ${paint.declared} guess`
-  }
-  if (!statusBarIsPainted(paint)) {
-    return `${paint.painted} sits under the bar, not ${paint.declared} — a sampling platform follows the pixels`
-  }
-  return `${paint.declared}, told and painted`
 }
 
 export interface KeyboardEpisode {

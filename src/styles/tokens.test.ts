@@ -19,6 +19,8 @@ const SAME_ON_CHROME: Record<string, string> = {
   'bg-daylight': 'the page canvas; never drawn inside the block',
   'bg-threshold': 'the page canvas; never drawn inside the block',
   scrim: 'an overlay over everything, the block included',
+  'status-scrim':
+    'a shade under the clock, drawn over light surfaces only — never inside the block',
   'nav-surface': 'the dock pill, its own material',
   'nav-pill': 'the dock pill, its own material',
   'nav-ink': 'the dock pill, its own material',
@@ -45,7 +47,7 @@ describe('tinted surfaces', () => {
 })
 
 describe('chrome', () => {
-  it('takes its surface from the token the platform paints the status bar with', () => {
+  it('takes its surface from the status bar’s token, so the header and Android’s bar agree', () => {
     expect(root).toContain('--chrome-surface: var(--status-bar)')
   })
 

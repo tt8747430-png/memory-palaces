@@ -125,7 +125,7 @@ function AdvancedScreen({ onBack }: { onBack?: () => void }) {
         onOpenChange={setBonusOpen}
         title={t('algorithm.easyBonus')}
         fieldLabel={t('algorithm.easyBonus')}
-        initialValue={String(settings.advanced.easyBonus)}
+        suggestion={String(settings.advanced.easyBonus)}
         confirmLabel={t('deckSettings.appearanceSave')}
         onSubmit={(value) => {
           const easyBonus = Number.parseFloat(value)
@@ -142,7 +142,7 @@ function AdvancedScreen({ onBack }: { onBack?: () => void }) {
         onOpenChange={setStepsOpen}
         title={t('algorithm.learningSteps')}
         fieldLabel={t('algorithm.learningSteps')}
-        initialValue={steps}
+        suggestion={steps}
         confirmLabel={t('deckSettings.appearanceSave')}
         onSubmit={(value) => {
           const learningSteps = parseLearningSteps(value)

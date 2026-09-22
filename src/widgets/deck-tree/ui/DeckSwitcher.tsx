@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { ChevronDown, Layers } from 'lucide-react'
 import { type Deck, DEFAULT_DECK_COLOR, DEFAULT_DECK_ICON } from '@/entities/deck'
 import type { Folder } from '@/entities/folder'
-import { childDecks } from '@/shared/lib'
 import { ActionSheet, DeckCover, type SheetAction } from '@/shared/ui'
+import { useLibraryArrangement } from '../model/use-library-arrangement'
 import { DestinationSheet } from './DestinationSheet'
 
 export interface DeckSwitcherProps {
@@ -24,7 +24,8 @@ export function DeckSwitcher({ deck, decks, folders, onSwitch }: DeckSwitcherPro
   /** Which sheet is up: the short list, the whole tree, or neither. Never both. */
   const [open, setOpen] = useState<'list' | 'more' | null>(null)
 
-  const children = childDecks(decks, deck.id).filter((d) => !d.archived)
+  // In the order the Library shows them under this deck — the one arrangement every list reads.
+  const children = useLibraryArrangement(decks, folders).subdecks(deck.id)
 
   const actions: SheetAction[] = [
     ...children.map((child): SheetAction => ({

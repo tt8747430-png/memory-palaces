@@ -86,9 +86,10 @@ that frame; what differs is which parts a screen composes into it.
   dropping an open keyboard, and what the bar is _about_ — `title`, `subtitle`, `progress`, the back pair — published
   on context. It paints nothing and renders no controls.
 - [`AppHeader`](../src/shared/ui/header/AppHeader.tsx) is that frame wearing the app's own chrome: stacked over the
-  scroller, opaque `.chrome` (`theme.css`) — the colour the platform paints the status bar, so the two are one block —
-  lifting a hairline and a shadow as the body passes under it. `.chrome` redeclares every semantic role at its
-  on-chrome value, so parts inside name the page tokens they always did; nothing gets a chrome variant.
+  scroller, opaque `.chrome` (`theme.css`), lifting a hairline and a shadow as the body passes under it. The page runs
+  under a translucent status bar ([ADR 0006](adr/0006-the-page-paints-the-status-bar.md)), so the header's `pt-safe`
+  band **is** the status bar: one block, in either theme, by construction. `.chrome` redeclares every semantic role at
+  its on-chrome value, so parts inside name the page tokens they always did; nothing gets a chrome variant.
 - **Parts** read the frame's context, never props: `HeaderBar`, `HeaderBack`, `HeaderHeading`, `HeaderTitle`,
   `HeaderSubtitle`, `HeaderCount`, `HeaderTrack`, `HeaderActions`, `HeaderSpacer`.
 - **Three compositions are named** — `ScreenHeader`, `SelectHeader`, `StudySessionHeader` — and three screens compose
@@ -96,14 +97,16 @@ that frame; what differs is which parts a screen composes into it.
 
 - **No screen hand-rolls a `<header>`** — compose the parts, or add a part. Bespoke bars are how the heights drifted.
 - **A one-off part calls `useHeader()`** rather than taking props: it then works in any bar without knowing which.
-- **`HeaderBar` has two layouts, and `LAYOUT` is the whole list.** `bar` is **fixed `h-16`** — every app screen's
-  chrome, so a list does not jump when a selection swaps the contents. `study` is the study session's, deliberately
-  auto-height because the count pill, the track and a chip row stack inside the header. A composition picks a layout;
-  it never overrides the height by `className`, which is how "one height" quietly stopped being true before.
-- **A study session gets `StudySessionHeader` — the bare `Header` wearing `.chrome` — never `AppHeader`.** The bar
-  is the status bar's block like every other, but the study layout, the scene underneath and the elevation are its
-  own. Glass stays out of the modules `widgets/study-session/ui/scene-chrome.test.ts` walks (§5): `bg-glass` resolves
-  to `--surface-glass-sky`, which no printed scene repaints.
+- **`HeaderBar` is one height: fixed `h-16`, on every screen — a study session's too** — so no screen's content starts
+  lower than another's and a list does not jump when a selection swaps the contents. Nothing stacks inside a bar: a
+  study session's progress track floats on the header's bottom edge (`absolute`), and a row of chips (Match's score)
+  sits under the header in the body. Never override the height by `className`; a second layout is how "one height"
+  quietly stopped being true before.
+- **A study session gets `StudySessionHeader` — the bare `Header`, painting nothing — never `AppHeader`.** The Card
+  style's scene runs under it and up under the clock, as it runs under the footer; a light scene shades the clock's
+  corner (`CardScene underStatusBar` → `StatusBarScrim`). Quiz and Match run their daylight there too and draw the
+  scrim themselves. Glass stays out of the modules `widgets/study-session/ui/scene-chrome.test.ts` walks (§5):
+  `bg-glass` resolves to `--surface-glass-sky`, which no printed scene repaints.
 - **`data-slot="header"` is a contract.** `useKeyboardReveal` and the dev viewport probe find the top of the reveal
   band by it, through the shared `CHROME` selectors in `shared/lib`. Rename it and a focused field is revealed _under_
   the bar, silently — `Header.test.tsx` renders the real `AppScreen` shell and asserts the lookup still resolves, so a
@@ -372,6 +375,10 @@ dev-only **`/dev/kitchen-sink`**.
   is unimplemented in WebKit as of iOS 26, so the meta in `index.html` is inert there and this is handled in JS or not
   at all. **Verify against `/dev/kitchen-sink`'s viewport probe before theorising** — three fixes shipped on inference
   here, each wrong.
+- **The top is padded by `--safe-top`, never raw `env(safe-area-inset-top)`** ([ADR
+  0006](adr/0006-the-page-paints-the-status-bar.md)). The page runs under a translucent status bar, and iOS reports the
+  inset late on first paint and drops it for a moment on keyboard dismiss; `top-inset.ts` holds it (`--safe-top-held`,
+  remembered for the boot script) and `--safe-top` takes the larger of held and live. `.pt-safe` is the utility.
 - **Anchor the shell, and measure against the anchor.** `#root` is `height: var(--app-height)` — the layout viewport
   sampled while no field is focused, re-anchored only on rotation or growth. Every keyboard number is derived from it,
   never from live `clientHeight`, so a platform that _does_ resize can't collapse the measurement to zero.
@@ -481,7 +488,11 @@ scrollbar-hide`. It is deliberately plain — a scrollport needs no keyboard geo
   selected, and without `touch-action: none` the browser scrolls instead. Chrome is `touch-none select-none`; the scroll
   body re-enables `touch-auto overscroll-contain`. The selection must be collapsed before the touch reaches the Popup —
   `DrawerContent` clears it for the whole interior, leaving fields and `.allow-select` alone (`clearSelectionForDrag`).
-  `useAutoSelect` is the usual source.
+- **A sheet never pre-selects a field's text.** A selection made for the learner before the keyboard is up is tapped
+  into by iOS's own text interaction, which bypasses Base UI's tap-to-focus (`focusKeyboardInputWithoutPageScroll`) —
+  so WebKit reveals the selection itself and pans the **whole app** up (probe: `no pan` fails, `#root` at `-pan`). A
+  suggested value is the field's placeholder and its fallback (`PromptSheet`'s `suggestion`, `AppearanceFields`'), never
+  text to select and replace. `useAutoSelect` did exactly this and is gone.
 
 - **A screen that fits must not scroll.** The gutter (`GUTTER`, above) is height at the end of the content, so a body
   sized to the whole port _plus_ a gutter under it scrolls by the gutter's height with every row already visible. The

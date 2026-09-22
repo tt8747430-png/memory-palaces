@@ -40,6 +40,9 @@ const RESTING: ViewportSample = {
   fieldInScroller: false,
   revealDelta: 0,
   stored: '403',
+  statusStyle: 'black-translucent',
+  safeTopHeld: 54,
+  safeTopReported: 54,
   statusBarDeclared: '#091a7a',
   statusBarMeta: '#091a7a',
   statusBarPainted: 'rgb(9, 26, 122)',
@@ -54,35 +57,51 @@ const verdict = (checks: ProbeCheck[], id: string) => {
   return check
 }
 
-describe('the status bar check', () => {
-  it('passes when the platform was told the token and the pixels under the bar agree', () => {
-    expect(verdict(checkViewport(RESTING), 'status-bar').state).toBe('ok')
+describe('the top inset check', () => {
+  it('passes when the page paints under the clock and the header clears it', () => {
+    expect(verdict(checkViewport(RESTING), 'top-inset').state).toBe('ok')
   })
 
-  it('fails when the meta is stale, whatever is painted', () => {
+  it('holds through a moment where iOS reports no inset at all', () => {
+    const dropped = sample({ safeTopReported: 0 })
+    expect(verdict(checkViewport(dropped), 'top-inset').state).toBe('ok')
+  })
+
+  it('fails when the held inset is short of what iOS reports — the header is under the clock', () => {
+    const short = sample({ safeTopHeld: 0 })
+    const check = verdict(checkViewport(short), 'top-inset')
+    expect(check.state).toBe('bad')
+    expect(check.detail).toContain('under the clock')
+  })
+
+  it('fails an installed app whose style lets iOS paint the bar', () => {
+    const black = sample({ statusStyle: 'black' })
+    const check = verdict(checkViewport(black), 'top-inset')
+    expect(check.state).toBe('bad')
+    expect(check.detail).toContain('black')
+  })
+
+  it('judges nothing in a tab, where Safari owns the top', () => {
+    const tab = sample({ mode: 'browser', safeTopHeld: 0, safeTopReported: 0 })
+    expect(verdict(checkViewport(tab), 'top-inset').state).toBe('idle')
+  })
+})
+
+describe('the theme-color check', () => {
+  it('passes when Android was told the token', () => {
+    expect(verdict(checkViewport(RESTING), 'theme-color').state).toBe('ok')
+  })
+
+  it('fails when the meta is stale', () => {
     const stale = sample({ statusBarMeta: '#ffffff' })
-    const check = verdict(checkViewport(stale), 'status-bar')
+    const check = verdict(checkViewport(stale), 'theme-color')
     expect(check.state).toBe('bad')
     expect(check.detail).toContain('#ffffff')
   })
 
-  it('fails when a white surface scrolled under the bar, though the meta is right', () => {
-    const white = sample({ statusBarPainted: 'rgb(255, 255, 255)' })
-    const check = verdict(checkViewport(white), 'status-bar')
-    expect(check.state).toBe('bad')
-    expect(check.detail).toContain('sits under the bar')
-  })
-
-  it('fails when nothing opaque is painted under the bar at all', () => {
-    const bare = sample({ statusBarPainted: '(nothing painted)' })
-    const check = verdict(checkViewport(bare), 'status-bar')
-    expect(check.state).toBe('bad')
-    expect(check.detail).toContain('nothing opaque')
-  })
-
   it('judges nothing before the stylesheet has declared the token', () => {
     const unset = sample({ statusBarDeclared: '(unset)' })
-    expect(verdict(checkViewport(unset), 'status-bar').state).toBe('idle')
+    expect(verdict(checkViewport(unset), 'theme-color').state).toBe('idle')
   })
 })
 

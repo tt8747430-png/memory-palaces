@@ -34,7 +34,7 @@ export function SplashOverlay({ waiting, onIntroDone, onSkip }: SplashOverlayPro
       <button
         type="button"
         onClick={onSkip}
-        className="absolute right-5 top-[calc(env(safe-area-inset-top)+1rem)] z-10 text-label font-medium text-white/75"
+        className="absolute right-5 top-[calc(var(--safe-top)+1rem)] z-10 text-label font-medium text-white/75"
       >
         {t(waiting ? 'auth.splash.openNow' : 'auth.splash.skip')}
       </button>

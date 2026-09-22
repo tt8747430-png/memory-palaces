@@ -30,7 +30,7 @@ function ProbePanel() {
         'fixed inset-x-2 z-(--z-dev-probe) max-h-[calc(var(--app-height)*0.7)] overflow-y-auto overscroll-contain rounded-card border border-border bg-card/95 p-2 shadow-elevated backdrop-blur-md',
         bottom
           ? 'bottom-[calc(var(--p-safe-bottom)+0.5rem)]'
-          : 'top-[calc(env(safe-area-inset-top)+0.5rem)]',
+          : 'top-[calc(var(--safe-top)+0.5rem)]',
       )}
     >
       <div className="flex items-center gap-1.5">

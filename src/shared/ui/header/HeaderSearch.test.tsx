@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, screen, waitFor } from '@testing-library/react'
-import { FOCUS_RING_OVERSHOOT } from '@/shared/lib'
 import { renderWithProviders } from '@/shared/test/render-with-providers'
 import { SearchField } from '../SearchField'
 import { ScreenHeader } from './ScreenHeader'
@@ -18,16 +17,14 @@ const field = (
 )
 
 describe('HeaderSearch', () => {
-  it('wipes in without cutting the focus ring off the field', async () => {
+  it('slides in whole — nothing clips the field or its focus ring on the way', async () => {
     renderWithProviders(<ScreenHeader title="Deck" search={field} />, { reducedMotion: 'never' })
     const overlay = screen.getByRole('searchbox').closest('[data-slot="header-search"]')
     expect(overlay).not.toBeNull()
-    const ring = `-${FOCUS_RING_OVERSHOOT}px`
-    await waitFor(() =>
-      expect((overlay as HTMLElement).style.clipPath).toBe(
-        `inset(${ring} ${ring} ${ring} ${ring})`,
-      ),
-    )
+    const style = (overlay as HTMLElement).style
+    expect(style.clipPath).toBe('')
+    await waitFor(() => expect(style.opacity).toBe('1'))
+    expect(style.clipPath).toBe('')
   })
 })
 

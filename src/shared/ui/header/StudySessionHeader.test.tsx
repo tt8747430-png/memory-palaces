@@ -20,7 +20,8 @@ describe('StudySessionHeader', () => {
         progress={{ done: 3, total: 10 }}
       />,
     )
-    expect(screen.queryByRole('heading', { name: 'Physics' })).toBeNull()
+    // Out of sight, not out of the page: the screen still has a name for a screen reader.
+    expect(screen.getByRole('heading', { name: 'Physics' })).toHaveClass('sr-only')
     expect(screen.getByText('3')).toBeInTheDocument()
     expect(screen.getByText('/10')).toBeInTheDocument()
     expect(screen.getByTestId('header-progress-fill')).toHaveStyle({ transform: 'scaleX(0.3)' })
@@ -36,5 +37,34 @@ describe('StudySessionHeader', () => {
       />,
     )
     expect(screen.getByTestId('header-progress-fill')).toHaveStyle({ transform: 'scaleX(0)' })
+  })
+
+  it('is the same one-height bar as every screen, painting nothing over the scene', () => {
+    renderWithProviders(
+      <StudySessionHeader
+        title="Physics"
+        backLabel="Back"
+        onBack={() => {}}
+        progress={{ done: 3, total: 10 }}
+      />,
+    )
+    const header = screen.getByRole('banner')
+    expect(header).not.toHaveClass('chrome')
+    const bar = screen.getByRole('button', { name: 'Back' }).parentElement
+    expect(bar).toHaveClass('h-16')
+  })
+
+  it('floats the progress track on its bottom edge instead of adding a row', () => {
+    renderWithProviders(
+      <StudySessionHeader
+        title="Physics"
+        backLabel="Back"
+        onBack={() => {}}
+        progress={{ done: 3, total: 10 }}
+      />,
+    )
+    const track = screen.getByTestId('header-progress-fill').parentElement
+    expect(track).toHaveClass('absolute')
+    expect(track).toHaveClass('bottom-0')
   })
 })

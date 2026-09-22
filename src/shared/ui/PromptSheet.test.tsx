@@ -40,8 +40,28 @@ describe('PromptSheet', () => {
 
   it('does not submit a blank value', async () => {
     const user = userEvent.setup()
-    const { onSubmit } = setup({ initialValue: '   ' })
-    await user.click(await screen.findByRole('button', { name: 'Create' }))
+    const { onSubmit } = setup()
+    await user.type(await screen.findByRole('textbox', { name: 'Deck name' }), '   ')
+    await user.click(screen.getByRole('button', { name: 'Create' }))
     expect(onSubmit).not.toHaveBeenCalled()
+  })
+
+  it('shows a suggestion without putting text in the field, and takes it when left empty', async () => {
+    const user = userEvent.setup()
+    const { onSubmit } = setup({ suggestion: 'New Deck 2' })
+    const field = await screen.findByRole('textbox', { name: 'Deck name' })
+    // Nothing to select: pre-filled text in a sheet is what lifted the whole app on iOS.
+    expect(field).toHaveValue('')
+    expect(field).toHaveAttribute('placeholder', 'New Deck 2')
+    await user.click(screen.getByRole('button', { name: 'Create' }))
+    expect(onSubmit).toHaveBeenCalledWith('New Deck 2')
+  })
+
+  it('takes what was typed over the suggestion', async () => {
+    const user = userEvent.setup()
+    const { onSubmit } = setup({ suggestion: 'New Deck 2' })
+    await user.type(await screen.findByRole('textbox', { name: 'Deck name' }), 'Psalms')
+    await user.click(screen.getByRole('button', { name: 'Create' }))
+    expect(onSubmit).toHaveBeenCalledWith('Psalms')
   })
 })

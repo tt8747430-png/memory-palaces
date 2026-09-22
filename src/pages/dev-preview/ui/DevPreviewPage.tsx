@@ -91,7 +91,7 @@ export function DevPreviewPage({ onBack }: { onBack?: () => void }) {
           subtitle="Component states — dev only · CODE_STYLE.md §11"
         >
           <div className="mx-auto w-full max-w-app px-5">
-            <HeaderBar layout="study" className="items-start gap-3">
+            <HeaderBar className="gap-3">
               <HeaderBack className="shrink-0" />
               <div className="flex min-w-0 flex-1 flex-col">
                 <HeaderTitle className="text-title font-bold" />

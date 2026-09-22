@@ -57,6 +57,31 @@ describe('applyPendingDeletions', () => {
     expect(deps.cardStore.getState().cards).toEqual([])
   })
 
+  it('takes the cards of a deck moved into the deleted folder with it — none are left behind', async () => {
+    const { deps, cloud } = syncFixture()
+    await deps.deckStore.getState().save(deck('book'))
+    await deps.cardStore.getState().save(card('verse', 'book'))
+    cloud.write('decks', { ...deck('book'), folderId: 'f1' })
+    cloud.write('cards', card('verse', 'book'))
+    cloud.write('folders', { id: 'f1' }, true)
+
+    await applyPendingDeletions(deps, [
+      {
+        collection: 'folders',
+        id: 'f1',
+        keep: false,
+        descendants: [
+          { collection: 'decks', id: 'book' },
+          { collection: 'cards', id: 'verse' },
+        ],
+      },
+    ])
+
+    expect(deps.deckStore.getState().decks).toEqual([])
+    expect(deps.cardStore.getState().cards).toEqual([])
+    expect(cloud.row('cards', 'verse')?.deleted).toBe(true)
+  })
+
   it('lets a Delete answer stand inside a kept deck, whichever answer lands first', async () => {
     const { deps, cloud } = syncFixture()
     await deps.deckStore.getState().save(deck('d1'))

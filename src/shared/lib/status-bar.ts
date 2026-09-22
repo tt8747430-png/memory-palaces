@@ -1,8 +1,10 @@
 /**
- * The status bar is not the app's to paint. The platform tints it — from `theme-color`, or, where
- * that is not honoured, by sampling whatever the page puts under it. So the app can only keep the
- * two answers the same and check that it has: a glass header over a white card samples white, and
- * the theme breaks at the top of the screen with nothing in the app looking wrong.
+ * What the app tells a platform about its status bar, and what it paints under it.
+ *
+ * On iOS the page runs under a `black-translucent` bar and paints what sits there itself (ADR
+ * 0006), so there is nothing to tell. Android reads `theme-color` and follows it as it changes:
+ * `--status-bar` names the colour per scheme and `ThemeProvider` writes it, so the bar and the
+ * header's chrome — painted from the same token — agree.
  */
 
 export interface StatusBarPaint {
@@ -10,7 +12,7 @@ export interface StatusBarPaint {
   declared: string
   /** What `<meta name="theme-color">` is telling the platform. */
   meta: string
-  /** The first opaque background actually painted at the top edge, or '' if nothing is. */
+  /** The first opaque fill actually painted at the top edge, under the clock, or '' if none is. */
   painted: string
 }
 
@@ -37,19 +39,32 @@ function resolved(color: string): string {
 }
 
 /**
- * Fully opaque, not merely visible. A glass header is the case this check exists for: it tints
- * whatever scrolled beneath it rather than replacing it, so the colour under the bar is the first
- * fill that stops the light — a white card behind the glass, not the glass.
+ * The alpha a computed colour carries. Engines serialise it three ways — `rgba(r, g, b, a)`, and
+ * `oklch(l c h / a)` or `color(srgb r g b / a)` for colours that kept their space — and a backdrop
+ * mixed at 38% read as opaque when only the first was understood.
  */
-function isOpaque(color: string): boolean {
-  if (!color || color === 'transparent') return false
-  const alpha = /^rgba\([^)]*,([\d.]+)\)$/.exec(color.replace(/\s+/g, ''))
-  return alpha?.[1] === undefined || Number.parseFloat(alpha[1]) === 1
+function alphaOf(color: string): number {
+  const slash = /\/\s*([\d.]+)(%?)\s*\)$/.exec(color)
+  if (slash) return Number(slash[1]) / (slash[2] ? 100 : 1)
+  const legacy = /^rgba\(([^)]*)\)$/.exec(color.replace(/\s+/g, ''))
+  const parts = legacy?.[1]?.split(',') ?? []
+  return parts.length === 4 ? Number(parts[3]) : 1
 }
 
 /**
- * The colour a sampler would land on from here: the first fill up the tree that stops the light.
- * '' when the whole ancestry is see-through, which is the page leaving the bar to the platform.
+ * Fully opaque, not merely visible. A translucent layer — glass, a backdrop — tints whatever lies
+ * beneath rather than replacing it, so the colour under the bar is the first fill that stops the
+ * light.
+ */
+function isOpaque(color: string): boolean {
+  if (!color || color === 'transparent') return false
+  return alphaOf(color) === 1
+}
+
+/**
+ * The fill under the clock from here: the first up the tree that stops the light. A gradient is
+ * an image, not a colour, so a scene reads as whatever opaque fill sits behind it. '' when the
+ * whole ancestry is see-through.
  */
 export function paintedBehind(element: Element | null): string {
   for (let node = element; node instanceof Element; node = node.parentElement) {
@@ -77,13 +92,4 @@ export function readStatusBarPaint(): StatusBarPaint {
 export function statusBarIsDeclared(paint: StatusBarPaint): boolean {
   if (!paint.declared || !paint.meta) return false
   return resolved(paint.declared) === resolved(paint.meta)
-}
-
-/**
- * Whether the pixels under the bar agree with it. A sampling platform reads these, not the meta, so
- * a `false` here is the white bar the learner sees over a correctly-configured app.
- */
-export function statusBarIsPainted(paint: StatusBarPaint): boolean {
-  if (!paint.painted) return false
-  return resolved(paint.declared) === paint.painted
 }

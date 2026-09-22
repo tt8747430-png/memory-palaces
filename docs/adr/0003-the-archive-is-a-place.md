@@ -58,3 +58,9 @@ drops every deck a selected ancestor already carries (`idsWithoutDescendants`).
 - **Two layers hold the settings rule, on purpose.** The entity drops a subdeck's main-deck settings on every write,
   because that is the stored shape. `updateDeckSettings` throws on a subdeck patch carrying one, because a screen
   offering that change is a bug to hear about, not to swallow.
+- **A live deck whose place is gone stands at the top of the Library** (amended 2026-09-23). Replication can leave a
+  deck naming a folder or parent another device deleted — one device files it, another deletes the folder while it
+  still looks empty there. The tree is read from the top down, so such a deck was on no list at all while its cards
+  still counted as held. `reachableDecks` (`shared/lib/deck-tree.ts`) stands it at the top, read-side only: a pull can
+  land a deck before its folder, and a repair that wrote would unfile it for good. Sync now asks about the case too:
+  `findDestructive` treats a held deck moved into a deleted container as a descendant, with everything inside it.

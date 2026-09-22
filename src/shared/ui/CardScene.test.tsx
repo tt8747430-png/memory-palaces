@@ -34,4 +34,30 @@ describe('CardScene', () => {
     expect(scene.style.getPropertyValue('--scene-bg')).toBe(PRESETS.plain.scene)
     expect(scene.dataset.scene).toBeUndefined()
   })
+
+  it('shades the clock over a light scene that runs under the status bar', () => {
+    document.documentElement.dataset.theme = 'light'
+    const { container } = render(
+      <CardScene style={style} underStatusBar>
+        card
+      </CardScene>,
+    )
+    expect(container.querySelector('[data-slot="status-scrim"]')).not.toBeNull()
+  })
+
+  it('leaves a dark scene’s clock alone — white already reads on it', () => {
+    document.documentElement.dataset.theme = 'dark'
+    const { container } = render(
+      <CardScene style={style} underStatusBar>
+        card
+      </CardScene>,
+    )
+    expect(container.querySelector('[data-slot="status-scrim"]')).toBeNull()
+  })
+
+  it('draws no shade in a scene that does not reach the status bar — a preview pane', () => {
+    document.documentElement.dataset.theme = 'light'
+    const { container } = render(<CardScene style={style}>card</CardScene>)
+    expect(container.querySelector('[data-slot="status-scrim"]')).toBeNull()
+  })
 })

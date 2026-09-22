@@ -11,7 +11,7 @@ export {
   HeaderTitle,
   HeaderTrack,
 } from './Header'
-export type { HeaderLayout, HeaderProps } from './Header'
+export type { HeaderProps } from './Header'
 export { HeaderChrome } from './HeaderChrome'
 export type { HeaderChromeProps } from './HeaderChrome'
 export { HeaderSearch } from './HeaderSearch'

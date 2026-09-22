@@ -392,7 +392,6 @@ export const quiz = {
   notFound: 'That deck could not be found.',
   empty: 'No questions yet',
   emptyHint: 'Add questions to this deck to start a quiz.',
-  questionCount: '{{current}} / {{total}}',
   selectAnswer: 'Select an answer',
   submit: 'Submit answer',
   continue: 'Continue',

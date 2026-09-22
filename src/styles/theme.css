@@ -87,6 +87,14 @@
 
     --app-height: 100%;
 
+    /*
+     * The status bar's height, which every screen's top is padded by: the page runs under the
+     * clock (ADR 0006). `--safe-top-held` is the anchored value `top-inset.ts` publishes — and the
+     * boot script remembers — so a late or dropped `env()` cannot move the top of the app.
+     */
+    --safe-top-held: 0px;
+    --safe-top: max(var(--safe-top-held), env(safe-area-inset-top));
+
     --app-bottom-inset: var(--p-safe-bottom);
 
     --bottom-chrome: 0px;
@@ -217,9 +225,8 @@
 
   /*
    * A box that is the app's own chrome: the header, and the screen a finished study session ends
-   * on. It
-   * paints `--chrome-surface` — the very colour the platform paints the status bar — so the two meet
-   * with no seam, and then redeclares the ink beneath it.
+   * on. It paints `--chrome-surface`, and runs up under the translucent status bar, so the bar and
+   * the header are one block (ADR 0006) — then redeclares the ink beneath it.
    *
    * The redeclaration is the whole mechanism. `@theme inline` compiles `text-heading` to
    * `var(--text-heading)` at the use site, so a child that already names a semantic token reads the
@@ -339,7 +346,7 @@
   }
 
   .pt-safe {
-    padding-top: env(safe-area-inset-top);
+    padding-top: var(--safe-top);
   }
 
   .pb-safe {

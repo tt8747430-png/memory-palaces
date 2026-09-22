@@ -71,7 +71,7 @@ export function CardBrowser({
     >
       {current ? (
         <>
-          <div className="flex min-h-14 w-full items-center justify-between gap-2 px-4 pb-1 pt-[max(0.5rem,env(safe-area-inset-top))]">
+          <div className="flex min-h-14 w-full items-center justify-between gap-2 px-4 pb-1 pt-[max(0.5rem,var(--safe-top))]">
             <Dialog.Close aria-label={t('common.close')} className={cn(CHROME_BUTTON, 'size-10')}>
               <X className="size-5" aria-hidden />
             </Dialog.Close>

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { TOP_INSET_MEMORY_KEY } from '@/shared/lib'
 import { readStylesheet } from '@/shared/test/stylesheet'
 import { MOTION_MIRROR_KEY, THEME_MIRROR_KEY } from './boot-paint'
 
@@ -34,11 +35,17 @@ describe('the status bar before first paint', () => {
     expect(html).toContain(`'${light}'`)
   })
 
+  it('lets the page paint under the clock on iOS', () => {
+    expect(html).toContain(
+      '<meta content="black-translucent" name="apple-mobile-web-app-status-bar-style" />',
+    )
+  })
+
   it('has exactly one status-bar meta, so nothing else can win', () => {
     expect(html.match(/<meta[^>]*name="theme-color"/g)).toHaveLength(1)
   })
 
-  it('paints the canvas from the same token, for a platform that samples instead of reading it', () => {
+  it('paints the canvas from the same token, behind anything the shell does not reach', () => {
     expect(readStylesheet('theme.css')).toContain('background: var(--status-bar)')
   })
 
@@ -66,6 +73,13 @@ describe('the mirrors the boot script reads', () => {
   it('sets both attributes the stylesheet and shared readers key on', () => {
     expect(html).toContain('document.documentElement.dataset.theme')
     expect(html).toContain('document.documentElement.dataset.reducedMotion')
+  })
+
+  it('paints the first frame with the top inset this shape last reported', () => {
+    expect(html).toContain(`localStorage.getItem('${TOP_INSET_MEMORY_KEY}')`)
+    // The shape is spelled as `topInsetShape` spells it.
+    expect(html).toContain("(installed ? 'app' : 'tab') + ':' + window.innerWidth")
+    expect(html).toContain("setProperty('--safe-top-held'")
   })
 
   it('damps motion when the OS asks, whatever the mirror holds', () => {

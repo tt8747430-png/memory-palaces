@@ -171,6 +171,34 @@ describe('syncNow', () => {
     )
   })
 
+  it('finds a deck it already held, moved into a folder it deleted, with everything inside it', async () => {
+    // The learner's `1 Corinteni`: one device filed the deck into a folder, another deleted the
+    // folder while it still looked empty there. The deck was never unseen here — only moved.
+    const { deps, cloud } = syncFixture()
+    await deps.folderStore.getState().save(folder('f1'))
+    await deps.deckStore.getState().save(deck('book'))
+    await deps.deckStore.getState().save(deck('chapter', { parentId: 'book' }))
+    await deps.cardStore.getState().save(card('verse', 'chapter'))
+    await expect(syncNow(deps)).resolves.toEqual({ kind: 'clean' })
+
+    cloud.write('decks', deck('book', { folderId: 'f1' }))
+    await deps.folderStore.getState().remove('f1')
+
+    const outcome = await syncNow(deps)
+
+    expect(outcome.kind).toBe('needs-review')
+    const [item] = outcome.kind === 'needs-review' ? outcome.items : []
+    expect(item?.id).toBe('f1')
+    expect(item?.descendants).toEqual(
+      expect.arrayContaining([
+        { collection: 'decks', id: 'book' },
+        { collection: 'decks', id: 'chapter' },
+        { collection: 'cards', id: 'verse' },
+      ]),
+    )
+    expect(cloud.cycles).toBe(1)
+  })
+
   it('asks about a question under a deleted deck that another device edited', async () => {
     const { deps, cloud } = syncFixture()
     await deps.questionStore.getState().save(question('q1', 'd1'))

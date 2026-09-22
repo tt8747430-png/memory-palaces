@@ -2,8 +2,16 @@ import { useEffect, useReducer } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Brain, Check, SkipForward, SlidersHorizontal } from 'lucide-react'
-import { cn, SCREEN_SCROLL } from '@/shared/lib'
-import { Button, Card, Chip, IconButton, StudySessionHeader, StudySessionScreen } from '@/shared/ui'
+import { cn, SCREEN_SCROLL, useColorScheme } from '@/shared/lib'
+import {
+  Button,
+  Card,
+  Chip,
+  IconButton,
+  StatusBarScrim,
+  StudySessionHeader,
+  StudySessionScreen,
+} from '@/shared/ui'
 import { initQuiz, quizAccuracy, type QuizQuestion, quizReducer } from '@/features/quiz'
 import type { QuizResult } from '../model/types'
 import { QuizComplete } from './QuizComplete'
@@ -34,6 +42,8 @@ export function QuizPanel({
   onOpenOptions,
 }: QuizPanelProps) {
   const { t } = useTranslation()
+  // The quiz's daylight runs under the clock, which reads white on it by day (ADR 0006).
+  const scheme = useColorScheme()
   const [state, dispatch] = useReducer(quizReducer, questions.length, initQuiz)
 
   const answered = state.status === 'answering' && state.answered
@@ -77,8 +87,10 @@ export function QuizPanel({
 
   return (
     <StudySessionScreen>
+      <StatusBarScrim tone={scheme} />
       <StudySessionHeader
         title={title}
+        progress={{ done: reached, total: state.total }}
         backLabel={t('quiz.goBack')}
         onBack={onBack}
         action={
@@ -102,23 +114,7 @@ export function QuizPanel({
             </IconButton>
           </div>
         }
-      >
-        <div className="mt-3 flex items-center gap-3">
-          <div className="h-2 flex-1 overflow-hidden rounded-full bg-secondary/30">
-            <motion.div
-              className="h-full w-full origin-left rounded-full bg-linear-to-r from-primary to-accent"
-              animate={{ scaleX: reached / state.total }}
-              transition={{ duration: 0.3 }}
-            />
-          </div>
-          <span className="shrink-0 text-label font-semibold tabular-nums text-heading">
-            {t('quiz.questionCount', {
-              current: state.status === 'answering' ? state.index + 1 : state.total,
-              total: state.total,
-            })}
-          </span>
-        </div>
-      </StudySessionHeader>
+      />
 
       {answering ? (
         <div className={cn(SCREEN_SCROLL, 'flex-1 space-y-4 px-5 py-5')}>

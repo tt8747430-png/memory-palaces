@@ -19,6 +19,7 @@ export function StyleFullscreen({ open, onOpenChange, style, front, back }: Styl
     <FullscreenDialog open={open} onOpenChange={onOpenChange}>
       <CardScene
         style={style}
+        underStatusBar
         className="flex h-full w-full flex-col gap-4 px-5 pb-(--app-bottom-inset) pt-safe"
       >
         <Dialog.Title className="sr-only">{t('cardStyle.fullscreen')}</Dialog.Title>

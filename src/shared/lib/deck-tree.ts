@@ -18,11 +18,12 @@ export interface TreeCard {
 /** What a deck counts as waiting depends on how it is studied; the caller resolves the settings. */
 export type DeckAlgorithm = 'fast' | 'spaced'
 
-const byOrder = (a: TreeDeck, b: TreeDeck): number =>
+/** The order a drag wrote, ties by id — the order peers stand in before any arrangement. */
+export const compareTreeOrder = (a: TreeDeck, b: TreeDeck): number =>
   (a.order ?? 0) - (b.order ?? 0) || a.id.localeCompare(b.id)
 
 export function childDecks<T extends TreeDeck>(decks: readonly T[], parentId: string): T[] {
-  return decks.filter((d) => d.parentId === parentId).sort(byOrder)
+  return decks.filter((d) => d.parentId === parentId).sort(compareTreeOrder)
 }
 
 export function siblingDecks<T extends TreeDeck>(
@@ -37,7 +38,7 @@ export function siblingDecks<T extends TreeDeck>(
         d.parentId === parentId &&
         (parentId !== null || (d.folderId ?? null) === folderId),
     )
-    .sort(byOrder)
+    .sort(compareTreeOrder)
 }
 
 export function orderSiblings<T extends TreeDeck>(
@@ -54,12 +55,41 @@ export function orderSiblings<T extends TreeDeck>(
   )
 }
 
-export function rootDecks<T extends TreeDeck>(decks: readonly T[]): T[] {
-  return decks.filter((d) => d.parentId === null && (d.folderId ?? null) === null).sort(byOrder)
-}
+/**
+ * Every live deck on a list the Library can reach. The tree is read from the top down, so a deck
+ * whose place is gone — its folder deleted, its parent deleted or archived, its parents a loop —
+ * was on no list at all, while its cards still counted as held. Replication makes that state
+ * reachable: one device deletes a folder it saw empty while another files a deck into it.
+ *
+ * Such a deck stands at the top of the Library until something places it again. This is read,
+ * never written: a pull can land a deck before its folder, and a repair that wrote would unfile
+ * it for good. The decks that already stand somewhere are handed back as they are.
+ */
+export function reachableDecks<T extends TreeDeck>(
+  decks: readonly T[],
+  folderIds: ReadonlySet<string>,
+): T[] {
+  const byId = new Map(decks.map((deck) => [deck.id, deck]))
+  const parentOf = (deck: T) => (deck.parentId === null ? undefined : byId.get(deck.parentId))
 
-export function decksInFolder<T extends TreeDeck>(decks: readonly T[], folderId: string): T[] {
-  return decks.filter((d) => d.parentId === null && d.folderId === folderId).sort(byOrder)
+  // Only the deck whose own link is broken moves: its subdecks come with it, still under it.
+  const onLoop = (deck: T): boolean => {
+    const seen = new Set([deck.id])
+    for (let up = parentOf(deck); up; up = parentOf(up)) {
+      if (up.id === deck.id) return true
+      if (seen.has(up.id)) return false
+      seen.add(up.id)
+    }
+    return false
+  }
+  const stranded = (deck: T): boolean => {
+    if (deck.archived) return false
+    if (deck.parentId === null) return deck.folderId != null && !folderIds.has(deck.folderId)
+    const parent = parentOf(deck)
+    return parent === undefined || Boolean(parent.archived) || onLoop(deck)
+  }
+
+  return decks.map((deck) => (stranded(deck) ? { ...deck, parentId: null, folderId: null } : deck))
 }
 
 export function subtreeDeckIds(decks: readonly TreeDeck[], rootId: string): string[] {
@@ -76,7 +106,8 @@ export function subtreeDeckIds(decks: readonly TreeDeck[], rootId: string): stri
     if (seen.has(id)) return
     seen.add(id)
     ids.push(id)
-    for (const child of (childrenByParent.get(id) ?? []).slice().sort(byOrder)) walk(child.id)
+    for (const child of (childrenByParent.get(id) ?? []).slice().sort(compareTreeOrder))
+      walk(child.id)
   }
   walk(rootId)
   return ids

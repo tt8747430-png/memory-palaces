@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
-import { cn, SCREEN_SCROLL, useKeyboardReveal } from '@/shared/lib'
+import { cn, SCREEN_SCROLL, useColorScheme, useKeyboardReveal } from '@/shared/lib'
+import { StatusBarScrim } from './StatusBarScrim'
 
 const AURA_BG =
   'radial-gradient(circle at center, oklch(var(--p-tint-sky) / 0.22), transparent 60%)'
@@ -63,6 +64,8 @@ function AuthAtmosphere() {
 
 export function AuthScreen({ children, className }: { children: ReactNode; className?: string }) {
   const revealScroll = useKeyboardReveal()
+  // Daylight is pale by day, and the page runs under the clock (ADR 0006).
+  const scheme = useColorScheme()
   return (
     <main className="relative h-full overflow-hidden bg-daylight">
       <AuthAtmosphere />
@@ -76,6 +79,8 @@ export function AuthScreen({ children, className }: { children: ReactNode; class
           {children}
         </div>
       </div>
+      {/* Over the scroll body, so the clock stays legible as the form scrolls under it. */}
+      <StatusBarScrim tone={scheme} />
     </main>
   )
 }

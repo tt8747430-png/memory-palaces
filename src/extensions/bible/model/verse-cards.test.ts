@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addableCards, buildVerseCards, canSplit, findDuplicates } from './verse-cards'
+import { addableCards, buildVerseCards, canSplit, findDuplicates, heldRefs } from './verse-cards'
 
 const ref = { book: 'GEN' as const, chapter: 1, from: 1, to: 2 }
 
@@ -71,6 +71,16 @@ describe('splitting', () => {
     expect(canSplit('1) In the beginning. 2) The earth.')).toBe(true)
     expect(canSplit('(1:1) In the beginning.')).toBe(true)
     expect(canSplit('In the beginning, plainly.')).toBe(false)
+  })
+})
+
+describe('heldRefs', () => {
+  it('holds the cards whose deck is there, and none whose deck is gone', () => {
+    const cards = [
+      { front: 'Geneza 1:1', deckId: 'kept' },
+      { front: 'Geneza 1:2', deckId: 'gone' },
+    ]
+    expect(heldRefs(cards, new Set(['kept']))).toEqual([{ front: 'Geneza 1:1', deckId: 'kept' }])
   })
 })
 

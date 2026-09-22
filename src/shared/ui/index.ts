@@ -8,6 +8,8 @@ export type { BottomSlotProps } from './BottomSlot'
 export { DockPill } from './DockPill'
 export type { DockPillProps } from './DockPill'
 export { CardScene } from './CardScene'
+export { StatusBarScrim } from './StatusBarScrim'
+export type { StatusBarScrimProps } from './StatusBarScrim'
 export type { CardSceneProps } from './CardScene'
 export type { ScreenGutter } from './AppScreen'
 export { Curtain } from './Curtain'
@@ -75,7 +77,6 @@ export type {
   HeaderBackProps,
   HeaderChromeProps,
   HeaderContextValue,
-  HeaderLayout,
   HeaderProgress,
   HeaderProps,
   HeaderSubject,

@@ -3,9 +3,9 @@ import { cn, useHeaderElevation } from '@/shared/lib'
 import { Header, type HeaderProps } from './Header'
 
 /**
- * The bar is the status bar, continued. `.chrome` paints it in the colour the platform paints above
- * it — so the seam that used to run under the clock is gone — and redeclares the ink for everything
- * inside, which is why no child here names a colour of its own (`theme.css`).
+ * The bar is the status bar, continued: the page runs under the translucent bar (ADR 0006), and
+ * `pt-safe` carries `.chrome` up under the clock, so the two are one block with no seam. `.chrome`
+ * redeclares the ink for everything inside, which is why no child here names a colour of its own.
  */
 const CHROME = 'relative z-(--z-header) shrink-0 chrome'
 

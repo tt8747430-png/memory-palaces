@@ -141,12 +141,15 @@ All four on every async surface — a missing state reads as a crash.
 
 ## 12. Install & manifest
 
-- **Manifest:** `standalone`, `portrait`, `theme_color #091A7A`, `background_color #ADC8FF`, 192/512 + a **maskable**
-  512 (required for Android).
+- **Manifest:** `standalone`, `portrait`, `theme_color #091A7A` (the splash's top, `--p-navy-900`, so Android's launch
+  bar meets the splash), `background_color #ADC8FF`, 192/512 + a **maskable** 512 (required for Android).
 - **iOS:** `apple-mobile-web-app-*` meta + `apple-touch-icon`. No `beforeinstallprompt` (manual Add to Home Screen);
-  status-bar style limited to `default`/`black`/`black-translucent`, and the app is on **`black`** — under
-  `black-translucent` the web view runs behind the status bar and iOS reports `env(safe-area-inset-top)` late and
-  inconsistently, so the top edge moved under the clock. Test standalone separately.
+  status-bar style limited to `default`/`black`/`black-translucent`, and the app is on **`black-translucent`**
+  ([ADR 0006](adr/0006-the-page-paints-the-status-bar.md)): the page paints under the clock — the header's chrome,
+  the splash, a backdrop, a study scene. Under `black` iOS painted the bar once, from the `theme-color` it read at load,
+  and nothing later reached it. Every top is padded by **`--safe-top`** (`.pt-safe`), never raw
+  `env(safe-area-inset-top)`: iOS reports that late and drops it on a keyboard dismiss, so `top-inset.ts` anchors it.
+  The clock is always white, so a light surface under it draws `StatusBarScrim`. Test standalone separately.
 
 ## 13. Service-worker updates
 

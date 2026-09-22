@@ -29,8 +29,7 @@ function PromptSheetDemo() {
         onOpenChange={setOpen}
         title="New deck"
         fieldLabel="Deck name"
-        placeholder="Deck name"
-        initialValue="New Deck"
+        suggestion="New Deck"
         confirmLabel="Create"
         onSubmit={() => {}}
       />
@@ -41,7 +40,7 @@ function PromptSheetDemo() {
 function FolderSheetDemo() {
   const [open, setOpen] = useState(false)
   const nameRef = useRef<HTMLInputElement>(null)
-  const [name, setName] = useState('New Folder')
+  const [name, setName] = useState('')
   const [color, setColor] = useState(FIRST_COLOR)
   const [icon, setIcon] = useState('📁')
   return (
@@ -76,7 +75,7 @@ function FolderSheetDemo() {
             onColorChange={setColor}
             onIconChange={setIcon}
             nameRef={nameRef}
-            autoFocusName
+            suggestion="New Folder"
           />
         </form>
       </Sheet>

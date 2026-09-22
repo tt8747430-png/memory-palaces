@@ -129,7 +129,8 @@ export function useBibleImport(
   const chapterName = book && chapter ? chapterDeckName(book, chapter) : ''
 
   const box = useVerseText(ref, index)
-  const made = useVerseCards({ ref, text: box.text, split, keepDuplicates, cards })
+  const deckIds = useMemo(() => new Set(decks.map((deck) => deck.id)), [decks])
+  const made = useVerseCards({ ref, text: box.text, split, keepDuplicates, cards, deckIds })
   const placement = useVersePlacement(deckId, auto, chapterName, decks)
 
   const add = () => {

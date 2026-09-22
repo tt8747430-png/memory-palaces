@@ -10,6 +10,7 @@ export interface FolderSheetProps {
   onOpenChange: (open: boolean) => void
   folder?: Folder | null
   defaultColor: string
+  /** What a new folder is called if its name is left empty. */
   defaultName?: string
   onSubmit: (changes: { name: string; color: string; icon: string }) => void
 }
@@ -31,16 +32,18 @@ export function FolderSheet({
 
   useEffect(() => {
     if (!open) return
-    setName(folder?.name ?? defaultName)
+    setName(folder?.name ?? '')
     setColor(folder?.color || defaultColor)
     setIcon(folder?.icon || DEFAULT_FOLDER_ICON)
-  }, [open, folder, defaultColor, defaultName])
+  }, [open, folder, defaultColor])
 
-  const valid = name.trim().length > 0
+  // A new folder answers with its suggested name when the field is left empty; an edited one needs
+  // a name of its own.
+  const answer = name.trim() || (isEdit ? '' : defaultName.trim())
   const submit = (event?: SyntheticEvent) => {
     event?.preventDefault()
-    if (!valid) return
-    onSubmit({ name: name.trim(), color, icon })
+    if (!answer) return
+    onSubmit({ name: answer, color, icon })
   }
 
   return (
@@ -50,7 +53,7 @@ export function FolderSheet({
       title={isEdit ? t('folder.settingsTitle') : t('folder.newTitle')}
       initialFocus={isEdit ? undefined : nameRef}
       footer={
-        <Button size="lg" className="w-full" disabled={!valid} onClick={() => submit()}>
+        <Button size="lg" className="w-full" disabled={!answer} onClick={() => submit()}>
           {isEdit ? (
             <Check className="size-4.5" aria-hidden />
           ) : (
@@ -70,7 +73,7 @@ export function FolderSheet({
           onColorChange={setColor}
           onIconChange={setIcon}
           nameRef={nameRef}
-          autoFocusName={!isEdit}
+          suggestion={isEdit ? undefined : defaultName}
         />
       </form>
     </Sheet>

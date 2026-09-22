@@ -7,6 +7,7 @@ import {
   canSplit,
   findDuplicates,
   type HeldRef,
+  heldRefs,
 } from './verse-cards'
 
 export interface VerseCardsInput {
@@ -14,8 +15,10 @@ export interface VerseCardsInput {
   text: string
   split: boolean
   keepDuplicates: boolean
-  /** Every card the learner holds — what a new card could duplicate. */
+  /** Every card the learner holds — what a new card could duplicate, if its deck is there. */
   cards: readonly { front: string; deckId: string }[]
+  /** The decks that exist — archived ones too: the Archive is a place in the library. */
+  deckIds: ReadonlySet<string>
 }
 
 export interface VerseCards {
@@ -42,11 +45,9 @@ export function useVerseCards({
   split,
   keepDuplicates,
   cards,
+  deckIds,
 }: VerseCardsInput): VerseCards {
-  const held = useMemo(
-    () => cards.map((card) => ({ front: card.front, deckId: card.deckId })),
-    [cards],
-  )
+  const held = useMemo(() => heldRefs(cards, deckIds), [cards, deckIds])
   const built = useMemo(() => buildVerseCards(ref, text, { split }), [ref, text, split])
   const duplicates = useMemo(() => findDuplicates(built, held), [built, held])
   const addable = useMemo(

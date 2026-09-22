@@ -56,7 +56,7 @@ export function useLibrary(folderId: string | null, onFolderGone: () => void): L
   const [scopeId, setScopeId] = useState<string | null>(null)
   const prefStore = usePreferencesStoreApi()
   const filter = usePreferencesStore(selectDeckFilter)
-  const data = useLibraryData({ folderId, scopeId, filter })
+  const data = useLibraryData({ folderId, scopeId })
   const view = data.view
   const pending = usePendingAct<PendingAct>()
 

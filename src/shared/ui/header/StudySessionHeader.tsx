@@ -20,9 +20,14 @@ export interface StudySessionHeaderProps {
   backIcon?: ReactNode
   progress?: HeaderProgress
   action?: ReactNode
-  children?: ReactNode
 }
 
+/**
+ * A study session's bar. It paints nothing: the Card style's scene runs under it — and on up
+ * under the clock (ADR 0006) — as it already runs under the footer, so the session is one surface
+ * from the top of the screen to the bottom. It is the same height as every other bar; the progress
+ * track floats on its bottom edge rather than adding a row.
+ */
 export function StudySessionHeader({
   title,
   subtitle,
@@ -31,23 +36,22 @@ export function StudySessionHeader({
   backIcon,
   progress,
   action,
-  children,
 }: StudySessionHeaderProps) {
   return (
     <Header
-      // `chrome`, like every other bar: a study session's header meets the status bar too
-      // (`theme.css`). Opaque now, so its last row needs padding inside the block.
-      className="chrome px-5 pb-3"
+      className="relative shrink-0"
       title={title}
       subtitle={subtitle}
       progress={progress}
       onBack={onBack}
       backLabel={backLabel}
     >
-      <HeaderBar layout="study">
+      <HeaderBar>
         <HeaderBack>{backIcon ?? <X className="size-5" aria-hidden />}</HeaderBack>
         {progress ? (
           <div className="flex min-w-0 flex-1 justify-center">
+            {/* The count takes the bar, but the screen keeps its name for whoever cannot see it. */}
+            <HeaderTitle className="sr-only" />
             <HeaderCount />
           </div>
         ) : (
@@ -58,8 +62,7 @@ export function StudySessionHeader({
         )}
         {action ?? <HeaderSpacer />}
       </HeaderBar>
-      {progress ? <HeaderTrack className="mt-2" /> : null}
-      {children}
+      {progress ? <HeaderTrack className="absolute inset-x-4 bottom-0" /> : null}
     </Header>
   )
 }

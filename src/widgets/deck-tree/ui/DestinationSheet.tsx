@@ -1,11 +1,12 @@
-import { type ReactNode, useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Archive, Check, FolderPlus, Home, Minus, Plus } from 'lucide-react'
-import { type Deck, DEFAULT_DECK_COLOR, DEFAULT_DECK_ICON } from '@/entities/deck'
-import { DEFAULT_FOLDER_ICON, type Folder } from '@/entities/folder'
-import { childDecks, cn, decksInFolder, findEntity, rootDecks, toggleInSet } from '@/shared/lib'
-import { Button, DeckCover, FolderGlyph, Sheet } from '@/shared/ui'
+import { FolderPlus } from 'lucide-react'
+import type { Deck } from '@/entities/deck'
+import type { Folder } from '@/entities/folder'
+import { findEntity } from '@/shared/lib'
+import { Button, Sheet } from '@/shared/ui'
 import type { Destination } from '../model/destination'
+import { DestinationTree } from './DestinationTree'
 
 export type DestinationTargets = 'any' | 'deck'
 
@@ -13,11 +14,6 @@ function destKey(d: Destination): string {
   if (d.kind === 'folder') return `folder:${d.folderId}`
   if (d.kind === 'deck') return `deck:${d.deckId}`
   return d.kind
-}
-
-interface DeckNode {
-  deck: Deck
-  children: DeckNode[]
 }
 
 export interface DestinationSheetProps {
@@ -45,8 +41,6 @@ export interface DestinationAction {
   confirm: (name: string) => string
 }
 
-const INDENT = 20
-
 /** One frozen empty set, so a sheet that excludes nothing does not rebuild one every render. */
 const EXCLUDE_NOTHING: ReadonlySet<string> = new Set()
 
@@ -70,44 +64,11 @@ export function DestinationSheet({
     confirm: (name: string) => t('move.moveTo', { name }),
   }
 
-  const buildDeckNode = (deck: Deck): DeckNode => ({
-    deck,
-    children: childDecks(decks, deck.id)
-      .filter((d) => !d.archived)
-      .map(buildDeckNode),
-  })
-  const folderNodes = folders.map((folder) => ({
-    folder,
-    children: decksInFolder(decks, folder.id)
-      .filter((d) => !d.archived)
-      .map(buildDeckNode),
-  }))
-  const homeDeckNodes = rootDecks(decks)
-    .filter((d) => !d.archived)
-    .map(buildDeckNode)
-
-  const allExpandable = useMemo(() => {
-    const ids = new Set<string>()
-    for (const f of folders) ids.add(`folder:${f.id}`)
-    for (const d of decks) {
-      if (decks.some((c) => c.parentId === d.id && !c.archived)) ids.add(`deck:${d.id}`)
-    }
-    return ids
-  }, [folders, decks])
-
-  const [expanded, setExpanded] = useState<Set<string>>(() => new Set(allExpandable))
   const [selected, setSelected] = useState<Destination | null>(null)
-
   useEffect(() => {
-    if (open) {
-      setExpanded(new Set(allExpandable))
-      setSelected(null)
-    }
-  }, [open, allExpandable])
+    if (open) setSelected(null)
+  }, [open])
 
-  const toggle = (key: string) => setExpanded((prev) => toggleInSet(prev, key))
-
-  const selectedKey = selected ? destKey(selected) : null
   const selectedName =
     selected == null
       ? ''
@@ -118,36 +79,6 @@ export function DestinationSheet({
           : selected.kind === 'folder'
             ? (findEntity(folders, selected.folderId)?.name ?? '')
             : (findEntity(decks, selected.deckId)?.name ?? '')
-
-  const renderDeck = (node: DeckNode, depth: number): ReactNode => {
-    const key = `deck:${node.deck.id}`
-    const disabled = excludeIds.has(node.deck.id)
-    const hasChildren = node.children.length > 0
-    const isOpen = expanded.has(key)
-    return (
-      <div key={key}>
-        <Row
-          depth={depth}
-          hasChildren={hasChildren}
-          isOpen={isOpen}
-          onToggle={() => toggle(key)}
-          glyph={
-            <DeckCover
-              icon={node.deck.icon || DEFAULT_DECK_ICON}
-              color={node.deck.color || DEFAULT_DECK_COLOR}
-              className="size-8 rounded-control ring-1 ring-border"
-              iconClassName="text-glyph-sm leading-none"
-            />
-          }
-          label={node.deck.name}
-          selected={selectedKey === key}
-          disabled={disabled}
-          onSelect={() => setSelected({ kind: 'deck', deckId: node.deck.id })}
-        />
-        {hasChildren && isOpen ? node.children.map((child) => renderDeck(child, depth + 1)) : null}
-      </div>
-    )
-  }
 
   return (
     <Sheet
@@ -166,65 +97,14 @@ export function DestinationSheet({
         </Button>
       }
     >
-      <div className="-mx-1 flex flex-col">
-        {decksOnly ? null : (
-          <>
-            <Row
-              depth={0}
-              glyph={
-                <span className="grid size-8 shrink-0 place-items-center rounded-control bg-secondary/40 text-muted-foreground">
-                  <Archive className="size-4.5" aria-hidden />
-                </span>
-              }
-              label={t('move.archive')}
-              selected={selectedKey === 'archive'}
-              onSelect={() => setSelected({ kind: 'archive' })}
-            />
-            <Row
-              depth={0}
-              glyph={
-                <span className="grid size-8 shrink-0 place-items-center rounded-control bg-primary/10 text-primary">
-                  <Home className="size-4.5" aria-hidden />
-                </span>
-              }
-              label={t('move.home')}
-              selected={selectedKey === 'home'}
-              onSelect={() => setSelected({ kind: 'home' })}
-            />
-          </>
-        )}
-
-        {folderNodes.map(({ folder, children }) => {
-          const key = `folder:${folder.id}`
-          const hasChildren = children.length > 0
-          const isOpen = expanded.has(key)
-          return (
-            <div key={key}>
-              <Row
-                depth={1}
-                hasChildren={hasChildren}
-                isOpen={isOpen}
-                onToggle={() => toggle(key)}
-                glyph={
-                  <FolderGlyph
-                    color={folder.color}
-                    icon={folder.icon || DEFAULT_FOLDER_ICON}
-                    className="size-8"
-                    iconClassName="text-glyph-sm leading-none"
-                  />
-                }
-                label={folder.name}
-                selected={selectedKey === key}
-                selectable={!decksOnly}
-                onSelect={() => setSelected({ kind: 'folder', folderId: folder.id })}
-              />
-              {hasChildren && isOpen ? children.map((child) => renderDeck(child, 2)) : null}
-            </div>
-          )
-        })}
-
-        {homeDeckNodes.map((node) => renderDeck(node, 1))}
-      </div>
+      <DestinationTree
+        decks={decks}
+        folders={folders}
+        excludeIds={excludeIds}
+        decksOnly={decksOnly}
+        selectedKey={selected ? destKey(selected) : null}
+        onSelect={setSelected}
+      />
 
       {onNewFolder && !decksOnly ? (
         <button
@@ -239,82 +119,5 @@ export function DestinationSheet({
         </button>
       ) : null}
     </Sheet>
-  )
-}
-
-function Row({
-  depth,
-  hasChildren = false,
-  isOpen = false,
-  onToggle,
-  glyph,
-  label,
-  selected,
-  selectable = true,
-  disabled = false,
-  onSelect,
-}: {
-  depth: number
-  hasChildren?: boolean
-  isOpen?: boolean
-  onToggle?: () => void
-  glyph: ReactNode
-  label: string
-  selected: boolean
-  selectable?: boolean
-  disabled?: boolean
-  onSelect: () => void
-}) {
-  const inert = !selectable && !hasChildren
-  return (
-    <div
-      // The gap keeps the selected row's tint clear of the expand toggle beside it.
-      className="relative flex items-center gap-1.5 border-b border-border/50"
-      style={{ paddingLeft: depth * INDENT }}
-    >
-      {hasChildren ? (
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-label={isOpen ? 'Collapse' : 'Expand'}
-          aria-expanded={isOpen}
-          className="relative z-10 ml-1 grid size-6 shrink-0 place-items-center rounded-full bg-secondary/30 text-primary transition-colors active:bg-secondary/50"
-        >
-          {isOpen ? (
-            <Minus className="size-3.5" aria-hidden />
-          ) : (
-            <Plus className="size-3.5" aria-hidden />
-          )}
-        </button>
-      ) : (
-        <span className="ml-1 size-6 shrink-0" aria-hidden />
-      )}
-
-      <button
-        type="button"
-        onClick={selectable ? onSelect : onToggle}
-        disabled={disabled || inert}
-        aria-pressed={selectable ? selected : undefined}
-        className={cn(
-          'flex min-w-0 flex-1 items-center gap-2.5 rounded-control py-2.5 pl-2 pr-2 text-left transition-colors',
-          disabled ? 'opacity-40' : 'active:bg-primary/4',
-          selectable && selected && 'bg-primary/6',
-        )}
-      >
-        {glyph}
-        <span
-          className={cn(
-            'min-w-0 flex-1 truncate text-body font-semibold',
-            selectable && selected ? 'text-primary' : 'text-heading',
-            !selectable && 'text-muted-foreground',
-          )}
-        >
-          {label}
-        </span>
-        {selectable && selected ? (
-          <Check className="size-5 shrink-0 text-accent" strokeWidth={2.5} aria-hidden />
-        ) : null}
-      </button>
-    </div>
   )
 }

@@ -11,9 +11,9 @@ function resolve(theme: Theme): 'light' | 'dark' {
 }
 
 /**
- * The attribute first: `--status-bar` answers per scheme, so the colour handed to the platform is
- * read after the document is wearing the theme it belongs to. A platform that ignores the meta
- * samples the page instead, which is why `body` is painted the same colour — see `tokens.css`.
+ * The attribute first: `--status-bar` answers per scheme, so the colour handed to Android is read
+ * after the document is wearing the theme it belongs to. iOS does not read the meta — the page
+ * paints under its translucent bar (ADR 0006).
  */
 function paint(resolved: 'light' | 'dark') {
   document.documentElement.dataset.theme = resolved

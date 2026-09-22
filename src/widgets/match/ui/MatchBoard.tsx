@@ -2,7 +2,7 @@ import { useEffect, useReducer, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Check, Puzzle, RotateCcw, Timer, Zap } from 'lucide-react'
-import { cn, EASE_EXPO, SCREEN_SCROLL, success } from '@/shared/lib'
+import { cn, EASE_EXPO, SCREEN_SCROLL, success, useColorScheme } from '@/shared/lib'
 import {
   Button,
   Chip,
@@ -10,6 +10,7 @@ import {
   IconButton,
   ResultScreen,
   StudySessionHeader,
+  StatusBarScrim,
   StudySessionScreen,
 } from '@/shared/ui'
 import {
@@ -38,6 +39,8 @@ function formatTime(seconds: number): string {
 export function MatchBoard({ cards, subtitle, onBack, onComplete }: MatchBoardProps) {
   const { t } = useTranslation()
   const reduce = useReducedMotion()
+  // The board's daylight runs under the clock, which reads white on it by day (ADR 0006).
+  const scheme = useColorScheme()
   const [state, dispatch] = useReducer(matchReducer, cards, (init) => initMatch(buildTiles(init)))
   const [elapsed, setElapsed] = useState(0)
 
@@ -82,6 +85,7 @@ export function MatchBoard({ cards, subtitle, onBack, onComplete }: MatchBoardPr
 
   return (
     <StudySessionScreen>
+      <StatusBarScrim tone={scheme} />
       <StudySessionHeader
         title={t('match.title')}
         subtitle={subtitle}
@@ -92,15 +96,16 @@ export function MatchBoard({ cards, subtitle, onBack, onComplete }: MatchBoardPr
             <RotateCcw className="size-5" aria-hidden />
           </IconButton>
         }
-      >
-        <div className="mt-4 flex items-center justify-center gap-2">
-          <Chip icon={<Timer className="size-3.5" aria-hidden />}>{formatTime(elapsed)}</Chip>
-          <Chip icon={<Zap className="size-3.5" aria-hidden />}>
-            {t('match.moves', { count: state.moves })}
-          </Chip>
-          <Chip>{t('match.pairsLeft', { count: remainingPairs(state) })}</Chip>
-        </div>
-      </StudySessionHeader>
+      />
+
+      {/* The score sits under the bar, not in it: every bar is one height (CODE_STYLE §4a). */}
+      <div className="flex items-center justify-center gap-2 px-5 pt-2">
+        <Chip icon={<Timer className="size-3.5" aria-hidden />}>{formatTime(elapsed)}</Chip>
+        <Chip icon={<Zap className="size-3.5" aria-hidden />}>
+          {t('match.moves', { count: state.moves })}
+        </Chip>
+        <Chip>{t('match.pairsLeft', { count: remainingPairs(state) })}</Chip>
+      </div>
 
       <p className="px-5 pb-2 pt-3 text-center text-label font-medium text-muted-foreground">
         {t('match.instruction')}

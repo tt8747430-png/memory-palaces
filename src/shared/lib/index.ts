@@ -9,6 +9,7 @@ export {
   CARD_STYLE_SURFACE,
   CARD_STYLE_TEXT,
   cardSceneChrome,
+  sceneTone,
   CHROME_TOKENS,
   clampCardTextSize,
   coerceCardStyle,
@@ -95,10 +96,16 @@ export {
   type RegistrationLike,
   type WorkerLike,
 } from './sw-update'
-export { useAutoSelect } from './use-auto-select'
 export { useProbeOverlay, setProbeOverlay } from './probe-overlay'
 export { visibleBottom, keyboardIsMeasured, REVEAL_GAP } from './keyboard-viewport'
 export { useKeyboardInset } from './use-keyboard-inset'
+export {
+  readTopInset,
+  startTopInset,
+  TOP_INSET_MEMORY_KEY,
+  topInsetShape,
+  type TopInsetReading,
+} from './top-inset'
 export { claimBottomInset } from './bottom-dock'
 export { useBottomChrome } from './use-bottom-chrome'
 export {
@@ -120,7 +127,6 @@ export {
   readStatusBarPaint,
   statusBarColor,
   statusBarIsDeclared,
-  statusBarIsPainted,
   type StatusBarPaint,
 } from './status-bar'
 export { SCREEN_SCROLL, ScreenScrollContext, useScreenScroll } from './screen-scroll'
@@ -370,13 +376,25 @@ export {
   type SortableBlockDrop,
   type SortableBlockOptions,
 } from './use-sortable-block'
-export { flattenDecks, type ArrangeRow, type FlatDeck } from './tree-flatten'
+export {
+  arrangeLibrary,
+  filterDecks,
+  needsDueCounts,
+  type ArrangeableDeck,
+  type ArrangeableFolder,
+  type ArrangeLibraryInput,
+  type FlatDeck,
+  type LibraryArrangement,
+  type LibraryOrderPreferences,
+  type Shelf,
+  type ShelfPlace,
+} from './library-arrangement'
 export {
   childDecks,
+  compareTreeOrder,
   siblingDecks,
   orderSiblings,
-  rootDecks,
-  decksInFolder,
+  reachableDecks,
   subtreeDeckIds,
   subtreeDecks,
   deckPath,

@@ -71,6 +71,20 @@ export interface HeldRef {
 }
 
 /**
+ * The cards a new one could duplicate: every card whose deck is still there. A card whose deck is
+ * gone is on no list the learner can open — "already in your Bible library" with nothing to show
+ * for it is the report this answers.
+ */
+export function heldRefs(
+  cards: readonly { front: string; deckId: string }[],
+  deckIds: ReadonlySet<string>,
+): HeldRef[] {
+  return cards.flatMap((card) =>
+    deckIds.has(card.deckId) ? [{ front: card.front, deckId: card.deckId }] : [],
+  )
+}
+
+/**
  * Checked across the whole library, not just the target deck: decks are shaped
  * book -> chapter -> verse, so the passage being added may already live somewhere else.
  */

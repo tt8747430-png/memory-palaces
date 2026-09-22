@@ -8,18 +8,20 @@
       content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-visual"
       name="viewport"
     />
-    <!-- One bar, repainted by ThemeProvider (and by the script below, before first paint) from
-       `--status-bar`, the token that also paints the canvas. A media-matched pair would follow the
-       OS instead of the theme the learner chose. -->
+    <!-- Android's bar: repainted by ThemeProvider (and by the script below, before first paint)
+       from `--status-bar`, the token the header's chrome is painted with. iOS does not read it —
+       see the style below. A media-matched pair would follow the OS instead of the theme the
+       learner chose. -->
     <meta content="#2850b0" name="theme-color" />
     <meta content="yes" name="mobile-web-app-capable" />
-    <!-- Still the only spelling iOS honours. `black`, not `black-translucent`: translucent runs
-       the web view under the status bar, and iOS then reports env(safe-area-inset-top) late and
-       inconsistently — 0 on first paint, and again on rotate and on keyboard dismiss — so the
-       shell's top edge moved under the clock. Under `black` the web view starts below the status
-       bar, the inset is 0 by construction, and iOS paints the bar itself. -->
+    <!-- Still the only spelling iOS honours. `black-translucent`: the web view runs under the
+       clock and the page paints what sits there — the header's chrome, the splash, a sheet's
+       backdrop, a study session's scene (ADR 0006). Under `black` iOS painted the bar itself from
+       the theme-color it read at load and never again, so nothing the app did reached it. The
+       top inset iOS reports late is anchored (`--safe-top`, `top-inset.ts`), and the script below
+       paints the first frame with the one remembered for this shape. -->
     <meta content="yes" name="apple-mobile-web-app-capable" />
-    <meta content="black" name="apple-mobile-web-app-status-bar-style" />
+    <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style" />
     <meta content="Mindscape" name="apple-mobile-web-app-title" />
     <meta
       content="Mindscape — Your Memory Palace. Train recall with the method of loci. Offline-first."
@@ -58,8 +60,9 @@
         } catch (_) {}
         document.documentElement.dataset.reducedMotion = damped ? 'reduce' : 'system'
 
+        var installed = false
         try {
-          var installed =
+          installed =
             window.matchMedia('(display-mode: standalone)').matches ||
             window.matchMedia('(display-mode: fullscreen)').matches ||
             window.navigator.standalone === true
@@ -67,6 +70,16 @@
             document.querySelector('meta[name=viewport]').content =
               'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no,' +
               ' viewport-fit=cover, interactive-widget=resizes-visual'
+          }
+        } catch (_) {}
+
+        // The status bar's height as this shape last reported it, so the first frame is not drawn
+        // under the clock while iOS has yet to report it. `top-inset.ts` keeps the same memory.
+        try {
+          var insets = JSON.parse(localStorage.getItem('mindscape:top-inset') || '{}')
+          var top = insets[(installed ? 'app' : 'tab') + ':' + window.innerWidth]
+          if (typeof top === 'number' && top > 0) {
+            document.documentElement.style.setProperty('--safe-top-held', top + 'px')
           }
         } catch (_) {}
       })()

@@ -62,21 +62,19 @@ export function Header({
 /** The bar's own row rhythm, shared with any part that lays a row inside it. */
 export const HEADER_ROW = 'flex items-center gap-1'
 
-const LAYOUT = {
-  bar: cn('relative h-16 shrink-0 px-2', HEADER_ROW),
-  study: 'relative flex shrink-0 items-center justify-between gap-2 pt-3',
-} as const
-
-export type HeaderLayout = keyof typeof LAYOUT
+/**
+ * Every bar in the app is this one height — a study session's too — so no screen's content starts
+ * lower than another's, and a list does not jump when a selection swaps the bar's contents.
+ */
+const BAR = cn('relative h-16 shrink-0 px-2', HEADER_ROW)
 
 export interface HeaderBarProps {
   children: ReactNode
-  layout?: HeaderLayout
   className?: string
 }
 
-export function HeaderBar({ children, layout = 'bar', className }: HeaderBarProps) {
-  return <div className={cn(LAYOUT[layout], className)}>{children}</div>
+export function HeaderBar({ children, className }: HeaderBarProps) {
+  return <div className={cn(BAR, className)}>{children}</div>
 }
 
 export interface HeaderBackButtonProps {

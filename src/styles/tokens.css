@@ -110,11 +110,11 @@
   --p-container-app: 430px;
 
   /*
-   * What the platform paints around the app: the status bar it tints from `theme-color`, the canvas
-   * behind `#root` wherever the viewport is taller than `--app-height`, and — since the header wears
-   * it too — the top of the app itself. One value, so the three can never disagree; `index.html`
-   * carries a copy for the paint before this file loads, and `boot-paint.test.ts` holds them
-   * together.
+   * The colour of the app's own chrome at the top of the screen: the header wears it, and under a
+   * translucent status bar the header runs up under the clock, so on iOS this is the status bar
+   * (ADR 0006). Android's bar is tinted from `theme-color`, which `ThemeProvider` writes from this
+   * token; the canvas behind `#root` takes it too. `index.html` carries a copy for the paint before
+   * this file loads, and `boot-paint.test.ts` holds them together.
    *
    * The literal is the sRGB form of `oklch(46% 0.16 264)`, written out because `index.html` cannot
    * evaluate `oklch()` — and there is no palette entry for it, because nothing else paints with it.
@@ -122,6 +122,18 @@
    * pulled the eye off the content. This one still carries the platform's white glyphs at 7.3:1.
    */
   --status-bar: #2850b0;
+
+  /*
+   * What keeps the status bar's clock legible over a light surface the page runs under it — a
+   * light card scene, the auth screen by day. iOS draws the glyphs white under a translucent bar
+   * and never anything else (ADR 0006), so a light surface gets this shade at the top edge.
+   */
+  --status-scrim: linear-gradient(
+    to bottom,
+    oklch(0% 0 0 / 0.3),
+    oklch(0% 0 0 / 0.12) 60%,
+    oklch(0% 0 0 / 0)
+  );
 
   /*
    * Chrome: the app's own dark block, which the status bar is already part of. `.chrome` paints a

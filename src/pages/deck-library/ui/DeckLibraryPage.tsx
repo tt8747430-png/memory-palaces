@@ -8,7 +8,7 @@ import { useFolderStoreApi } from '@/entities/folder'
 import { selectEffectivePreferences, usePreferencesStore } from '@/entities/preferences'
 import { createDeck, createSubdeck } from '@/features/deck'
 import { createFolder, editFolder } from '@/features/folder'
-import { DeckTree, DestinationSheet } from '@/widgets/deck-tree'
+import { DeckTree, DestinationSheet, FilteredNotice } from '@/widgets/deck-tree'
 import { HomeHeader } from '@/widgets/home-header'
 import { SyncBanner } from '@/widgets/sync'
 import { useImportFile } from '@/widgets/content-editor'
@@ -34,7 +34,6 @@ import { useLibrary } from '../model/use-library'
 import { FolderRow } from './FolderRow'
 import { FolderSheet } from './FolderSheet'
 import { LibraryDialogs } from './LibraryDialogs'
-import { FilteredNotice } from './FilteredNotice'
 import { LibraryEmpty } from './LibraryEmpty'
 import { LibrarySkeleton } from './LibrarySkeleton'
 import { LibrarySelectView } from './LibrarySelectView'
@@ -322,8 +321,7 @@ export function DeckLibraryPage({
             : undefined
         }
         fieldLabel={t('deck.nameLabel')}
-        placeholder={t('deck.namePlaceholder')}
-        initialValue={defaultCreateName}
+        suggestion={defaultCreateName}
         confirmLabel={t('deck.create')}
         onSubmit={submitCreate}
       />

@@ -4,13 +4,12 @@ import {
   cardsInSubtree,
   childDecks,
   deckPath,
-  decksInFolder,
   dueCountsPerDeck,
   idsWithoutDescendants,
   inheritSettings,
   isDescendantOrSelf,
   orderSiblings,
-  rootDecks,
+  reachableDecks,
   subtreeDeckIds,
   subtreeDecks,
   type TreeCard,
@@ -39,13 +38,50 @@ describe('childDecks', () => {
   })
 })
 
-describe('rootDecks / decksInFolder', () => {
-  it('rootDecks are top-level and unfiled', () => {
-    expect(rootDecks(forest).map((d) => d.id)).toEqual(['E'])
+describe('reachableDecks', () => {
+  const place = (decks: readonly TreeDeck[], id: string) => {
+    const found = decks.find((d) => d.id === id)
+    return found ? { parentId: found.parentId, folderId: found.folderId ?? null } : undefined
+  }
+
+  it('hands back every deck that already stands somewhere, as the same object', () => {
+    const reached = reachableDecks(forest, new Set(['f1']))
+    reached.forEach((each, at) => expect(each).toBe(forest[at]))
   })
-  it('decksInFolder are top-level decks with that folderId', () => {
-    expect(decksInFolder(forest, 'f1').map((d) => d.id)).toEqual(['A'])
-    expect(decksInFolder(forest, 'nope')).toEqual([])
+
+  it('stands a deck whose folder is gone at the top of the Library', () => {
+    // The learner's `1 Corinteni`: filed into a folder another device deleted, seeing it empty.
+    const reached = reachableDecks(forest, new Set())
+    expect(place(reached, 'A')).toEqual({ parentId: null, folderId: null })
+    // Its subdecks travel with it, still under it.
+    expect(place(reached, 'B')).toEqual({ parentId: 'A', folderId: null })
+  })
+
+  it('files a deck into its folder as soon as the folder arrives', () => {
+    // A pull can land the deck before its folder: nothing is written in between.
+    expect(place(reachableDecks(forest, new Set()), 'A')?.folderId).toBeNull()
+    expect(place(reachableDecks(forest, new Set(['f1'])), 'A')?.folderId).toBe('f1')
+  })
+
+  it('lifts a subdeck whose parent is gone or archived', () => {
+    const decks = [
+      deck('gone-child', 'missing'),
+      deck('P', null, { archived: true }),
+      deck('live-child', 'P'),
+    ]
+    const reached = reachableDecks(decks, new Set())
+    expect(place(reached, 'gone-child')).toEqual({ parentId: null, folderId: null })
+    expect(place(reached, 'live-child')).toEqual({ parentId: null, folderId: null })
+  })
+
+  it('breaks a loop of parents rather than walking it forever', () => {
+    const reached = reachableDecks([deck('X', 'Y'), deck('Y', 'X')], new Set())
+    expect(reached.map((d) => d.parentId)).toEqual([null, null])
+  })
+
+  it('leaves the Archive alone — archived decks have a place of their own', () => {
+    const archived = deck('R', 'missing', { archived: true })
+    expect(reachableDecks([archived], new Set())[0]).toBe(archived)
   })
 })
 

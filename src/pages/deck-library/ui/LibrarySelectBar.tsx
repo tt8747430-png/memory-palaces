@@ -17,7 +17,7 @@ import {
   useDeckSortOptions,
 } from '@/shared/ui'
 import type { ArrangeOptions } from '../model/use-arrange-options'
-import { FilteredNotice } from './FilteredNotice'
+import { FilteredNotice } from '@/widgets/deck-tree'
 
 export interface LibrarySelectBarProps {
   /** The deck whose subdecks are on the list, while one is; the whole Library otherwise. */

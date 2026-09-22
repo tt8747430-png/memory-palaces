@@ -49,3 +49,11 @@ export function cardSceneChrome(
 ): SceneChrome | undefined {
   return skinFor(input, scheme).chrome
 }
+
+/**
+ * Whether the scene is a light surface or a dark one — what the status bar's white clock sits on
+ * when a screen runs its scene under it. A preset made of tokens follows the scheme.
+ */
+export function sceneTone(input: CardStyleInput, scheme: ColorScheme): ColorScheme {
+  return skinFor(input, scheme).chrome ?? scheme
+}

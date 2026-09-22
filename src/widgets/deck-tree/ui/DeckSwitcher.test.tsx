@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { type Deck, makeDeck } from '@/entities/deck'
-import { renderWithProviders } from '@/shared/test/render-with-providers'
+import { renderInLibrary } from '../testing/render-in-library'
 import { DeckSwitcher } from './DeckSwitcher'
 
 afterEach(cleanup)
@@ -40,7 +40,7 @@ function props(overrides: Partial<Parameters<typeof DeckSwitcher>[0]> = {}) {
 describe('DeckSwitcher', () => {
   it('shows the deck it is in, and opens on the name', async () => {
     const user = userEvent.setup()
-    renderWithProviders(<DeckSwitcher {...props()} />)
+    renderInLibrary(<DeckSwitcher {...props()} />)
 
     const trigger = screen.getByRole('button', { name: 'Switch from Grammar' })
     expect(trigger).toHaveTextContent('Grammar')
@@ -50,7 +50,7 @@ describe('DeckSwitcher', () => {
 
   it('lists the subdecks it carries, and leaves archived ones out', async () => {
     const user = userEvent.setup()
-    renderWithProviders(<DeckSwitcher {...props()} />)
+    renderInLibrary(<DeckSwitcher {...props()} />)
 
     await user.click(screen.getByRole('button', { name: 'Switch from Grammar' }))
     expect(screen.getByText('Verbs')).toBeInTheDocument()
@@ -63,7 +63,7 @@ describe('DeckSwitcher', () => {
   it('switches to the subdeck that was picked', async () => {
     const user = userEvent.setup()
     const onSwitch = vi.fn()
-    renderWithProviders(<DeckSwitcher {...props({ onSwitch })} />)
+    renderInLibrary(<DeckSwitcher {...props({ onSwitch })} />)
 
     await user.click(screen.getByRole('button', { name: 'Switch from Grammar' }))
     await user.click(screen.getByText('Nouns'))
@@ -72,7 +72,7 @@ describe('DeckSwitcher', () => {
 
   it('offers More decks even from a deck that carries none', async () => {
     const user = userEvent.setup()
-    renderWithProviders(<DeckSwitcher {...props({ deck: science })} />)
+    renderInLibrary(<DeckSwitcher {...props({ deck: science })} />)
 
     await user.click(screen.getByRole('button', { name: 'Switch from Science' }))
     expect(screen.getByText('More decks…')).toBeInTheDocument()
@@ -83,7 +83,7 @@ describe('DeckSwitcher', () => {
 
   it('opens the drawer from More decks, asking to open rather than to move', async () => {
     const user = userEvent.setup()
-    renderWithProviders(<DeckSwitcher {...props()} />)
+    renderInLibrary(<DeckSwitcher {...props()} />)
 
     await user.click(screen.getByRole('button', { name: 'Switch from Grammar' }))
     await user.click(screen.getByText('More decks…'))

@@ -1,7 +1,7 @@
 import { type SyntheticEvent, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ACCOUNT_DELETION_GRACE_DAYS } from '@/shared/config/constants'
-import { daysFrom, longDate, useAutoSelect, useOnline } from '@/shared/lib'
+import { daysFrom, longDate, useOnline } from '@/shared/lib'
 import { Button, Input, OfflineNotice, Sheet, Skeleton } from '@/shared/ui'
 import type { DeleteAccount } from '../model/use-delete-account'
 
@@ -12,7 +12,6 @@ export function DeleteAccountSheet({ flow }: { flow: DeleteAccount }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const { stage } = flow
   const open = stage.kind !== 'closed'
-  const autoSelect = useAutoSelect<HTMLInputElement>(stage.kind === 'confirm')
 
   const word = t('account.delete.confirmWord')
   const matches = value.trim().toLowerCase() === word.toLowerCase()
@@ -92,7 +91,6 @@ export function DeleteAccountSheet({ flow }: { flow: DeleteAccount }) {
                 ref={inputRef}
                 value={value}
                 onChange={(event) => setValue(event.target.value)}
-                onFocus={autoSelect}
                 disabled={stage.kind === 'submitting'}
                 autoCapitalize="none"
                 autoCorrect="off"

@@ -17,12 +17,12 @@ import {
   classifyChange,
   descendantsOf,
   type Parented,
+  subtreeDeckIds,
   type SyncDocumentRef,
   type SyncReviewItem,
 } from '@/shared/lib'
 import type { PendingChange } from '@/entities/pending-change'
 import type { SyncState } from '@/entities/sync-state'
-import { localIds } from './content-collections'
 import type { SyncDeps } from './sync-deps'
 
 type Checkpoints = SyncState['checkpoints']
@@ -152,13 +152,14 @@ export async function findDestructive(
   )
   if (!containers.length) return [...items.values()]
 
-  const unseen = new Map(
+  // Every child the cloud moved that this device is not itself changing — held here or not. A
+  // held deck whose cloud copy now names a container this device deleted was put there by another
+  // device: the local delete never saw it inside, so it is a descendant like any unseen one.
+  const moved = new Map(
     CHILD_COLLECTIONS.map((collection) => {
-      const here = localIds(deps, collection)
       const ids = (peek.get(collection) ?? [])
         .filter((change) => !change.deleted)
         .filter((change) => !byKey.has(pendingKey(collection, change.id)))
-        .filter((change) => !here.has(change.id))
         .map((change) => change.id)
       return [collection, ids] as const
     }),
@@ -168,20 +169,40 @@ export async function findDestructive(
   for (const change of containers) {
     if (isContentCollection(change.table)) containerOf.set(change.entityId, change.table)
   }
-  const found = await cloudDescendants(deps, [...containerOf.keys()], unseen)
-  for (const descendant of found.values()) {
+  const found = await cloudDescendants(deps, [...containerOf.keys()], moved)
+  const inside = [...found.values()].flatMap((descendant) =>
+    descendant.collection === 'decks'
+      ? heldInside(deps, descendant.id).map((ref) => ({ ...ref, root: descendant.root }))
+      : [],
+  )
+  for (const descendant of [...found.values(), ...inside]) {
     const collection = containerOf.get(descendant.root)
     if (!collection) continue
     const key = pendingKey(collection, descendant.root)
     const item = items.get(key) ?? { collection, id: descendant.root }
-    items.set(key, {
-      ...item,
-      descendants: [
-        ...(item.descendants ?? []),
-        { collection: descendant.collection, id: descendant.id },
-      ],
-    })
+    const ref = { collection: descendant.collection, id: descendant.id }
+    const held = item.descendants ?? []
+    if (held.some((each) => each.collection === ref.collection && each.id === ref.id)) continue
+    items.set(key, { ...item, descendants: [...held, ref] })
   }
 
   return [...items.values()]
+}
+
+/**
+ * What this device holds inside a deck the cloud moved into a deleted container: its subdecks and
+ * every card and question under them. None of it changed, so none of it was peeked — but it goes
+ * where the deck goes, or a Delete would leave cards pointing at a deck that no longer exists.
+ */
+function heldInside(deps: SyncDeps, deckId: string): SyncDocumentRef[] {
+  const deckIds = new Set(subtreeDeckIds(deps.deckStore.getState().decks, deckId))
+  const refs: SyncDocumentRef[] = []
+  for (const id of deckIds) if (id !== deckId) refs.push({ collection: 'decks', id })
+  for (const card of deps.cardStore.getState().cards) {
+    if (deckIds.has(card.deckId)) refs.push({ collection: 'cards', id: card.id })
+  }
+  for (const question of deps.questionStore.getState().questions) {
+    if (deckIds.has(question.deckId)) refs.push({ collection: 'questions', id: question.id })
+  }
+  return refs
 }

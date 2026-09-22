@@ -83,12 +83,10 @@ describe('Header', () => {
         />,
       ),
     ).toBe('h-16')
-  })
-
-  it('gives a study session a row of its own height, and says so', () => {
+    // A study session's too: its content starts where every other screen's does.
     expect(
       barHeight(<StudySessionHeader title="Physics" backLabel="Back" onBack={() => {}} />),
-    ).toBeUndefined()
+    ).toBe('h-16')
   })
 
   it('answers to the selector the reveal band looks it up by', () => {
