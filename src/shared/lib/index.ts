@@ -114,6 +114,15 @@ export { FOCUS_RING_OVERSHOOT } from './focus-ring'
 export { syncFailure, type SyncFailure } from './sync-failure'
 export { syncFailureMessage } from './sync-failure-message'
 export { type ColorScheme, readColorScheme, useColorScheme } from './color-scheme'
+export { readReducedMotion } from './reduced-motion'
+export {
+  paintedBehind,
+  readStatusBarPaint,
+  statusBarColor,
+  statusBarIsDeclared,
+  statusBarIsPainted,
+  type StatusBarPaint,
+} from './status-bar'
 export { SCREEN_SCROLL } from './screen-scroll'
 export { useVirtualKeyboard, type VirtualKeyboard } from './use-virtual-keyboard'
 export { useSortableSensors } from './use-sortable-sensors'

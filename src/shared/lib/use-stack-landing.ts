@@ -1,5 +1,6 @@
 import { useCallback, useRef } from 'react'
 import { EASE_OUT_CSS } from './motion'
+import { readReducedMotion } from './reduced-motion'
 
 export interface StackOrigin {
   top: number
@@ -31,7 +32,7 @@ export function useStackLanding(): StackLanding {
   const land = useCallback((origin: StackOrigin | null | undefined, ids: readonly string[]) => {
     if (!origin || ids.length === 0) return
     if (typeof window === 'undefined') return
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    if (readReducedMotion()) return
 
     requestAnimationFrame(() => {
       ids.forEach((id, index) => {

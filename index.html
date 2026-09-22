@@ -8,9 +8,10 @@
       content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-visual"
       name="viewport"
     />
-    <!-- One bar, repainted by ThemeProvider (and by the script below, before first paint) from the
-       theme the learner chose. A media-matched pair would follow the OS instead. -->
-    <meta content="#091A7A" name="theme-color" />
+    <!-- One bar, repainted by ThemeProvider (and by the script below, before first paint) from
+       `--status-bar`, the token that also paints the canvas. A media-matched pair would follow the
+       OS instead of the theme the learner chose. -->
+    <meta content="#091a7a" name="theme-color" />
     <meta content="yes" name="mobile-web-app-capable" />
     <!-- Still the only spelling iOS honours. `black`, not `black-translucent`: translucent runs
        the web view under the status bar, and iOS then reports env(safe-area-inset-top) late and
@@ -27,6 +28,8 @@
     <title>Mindscape — Your Memory Palace</title>
     <script>
       ;(function () {
+        // The theme the learner chose, which is 'light', 'dark' or 'system' — only the first two
+        // answer for themselves; 'system', and a device that has never stored one, ask the OS.
         try {
           var stored = localStorage.getItem('mindscape:theme')
           var resolved =
@@ -37,10 +40,23 @@
                 : 'light'
           document.documentElement.dataset.theme = resolved
           var bar = document.querySelector('meta[name="theme-color"]')
-          if (bar) bar.setAttribute('content', resolved === 'dark' ? '#0B1533' : '#091A7A')
+          if (bar) bar.setAttribute('content', resolved === 'dark' ? '#0b1533' : '#091a7a')
         } catch (_) {
           document.documentElement.dataset.theme = 'light'
         }
+
+        // Damped motion, before the first transition can run. The OS answers, and so does the
+        // learner's own switch on a device that has mirrored it. The attribute is written outside
+        // both reads: the stylesheet damps on it alone, so an attribute that is merely absent is
+        // an app that animates through a reduced-motion setting.
+        var damped = false
+        try {
+          damped = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        } catch (_) {}
+        try {
+          damped = damped || localStorage.getItem('mindscape:reduced-motion') === 'on'
+        } catch (_) {}
+        document.documentElement.dataset.reducedMotion = damped ? 'reduce' : 'system'
 
         try {
           var installed =

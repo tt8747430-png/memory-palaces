@@ -35,6 +35,9 @@ export const SAMPLE_ROWS: [keyof ViewportSample, string][] = [
   ['focusedTop', 'focused top'],
   ['focusedBottom', 'focused bottom'],
   ['revealDelta', 'reveal delta'],
+  ['statusBarDeclared', '--status-bar'],
+  ['statusBarMeta', 'theme-color'],
+  ['statusBarPainted', 'painted under bar'],
 ]
 
 const MARK: Record<ProbeCheck['state'], string> = { ok: 'ok  ', bad: 'FAIL', idle: '--  ' }

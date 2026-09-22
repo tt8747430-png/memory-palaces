@@ -2,7 +2,10 @@ import {
   CHROME,
   isTextField,
   keyboardIsMeasured,
+  readStatusBarPaint,
   revealOffset,
+  statusBarIsDeclared,
+  statusBarIsPainted,
   visibleBottom,
   REVEAL_SCROLL_ATTR,
 } from '@/shared/lib'
@@ -38,6 +41,9 @@ export interface ViewportSample {
   fieldInScroller: boolean
   revealDelta: number
   stored: string
+  statusBarDeclared: string
+  statusBarMeta: string
+  statusBarPainted: string
   at: number
 }
 
@@ -78,6 +84,7 @@ export function readViewport(): ViewportSample {
     ),
   }
   const fieldInScroller = Boolean(isTextField(active) && scroller?.contains(active))
+  const statusBar = readStatusBarPaint()
 
   return {
     route: window.location.pathname,
@@ -114,6 +121,9 @@ export function readViewport(): ViewportSample {
     fieldInScroller,
     revealDelta: fieldInScroller && rect ? Math.round(revealOffset(band, rect)) : 0,
     stored: localStorage.getItem('mindscape.keyboard-height') ?? '(none)',
+    statusBarDeclared: statusBar.declared || '(unset)',
+    statusBarMeta: statusBar.meta || '(none)',
+    statusBarPainted: statusBar.painted || '(nothing painted)',
     at: Date.now(),
   }
 }
@@ -221,6 +231,12 @@ export function checkViewport(sample: ViewportSample): ProbeCheck[] {
         : `${sample.scroller}: no useKeyboardReveal on this scroll body`,
     },
     {
+      id: 'status-bar',
+      label: 'status bar',
+      state: statusBarState(sample),
+      detail: statusBarDetail(sample),
+    },
+    {
       id: 'zoom',
       label: 'unzoomed',
       state: sample.vvScale === 1 ? 'ok' : 'bad',
@@ -230,6 +246,40 @@ export function checkViewport(sample: ViewportSample): ProbeCheck[] {
           : `scale ${sample.vvScale}: measurement is frozen until the zoom is released`,
     },
   ]
+}
+
+/**
+ * The bar is the platform's to paint, from `theme-color` or — where that is not honoured — from
+ * whatever the page leaves under it. Both answers have to be the token's, or the theme breaks at
+ * the top of the screen with nothing in the app looking wrong.
+ */
+function statusBarPaint(sample: ViewportSample) {
+  return {
+    declared: sample.statusBarDeclared === '(unset)' ? '' : sample.statusBarDeclared,
+    meta: sample.statusBarMeta === '(none)' ? '' : sample.statusBarMeta,
+    painted: sample.statusBarPainted === '(nothing painted)' ? '' : sample.statusBarPainted,
+  }
+}
+
+function statusBarState(sample: ViewportSample): ProbeCheck['state'] {
+  const paint = statusBarPaint(sample)
+  if (!paint.declared) return 'idle'
+  return statusBarIsDeclared(paint) && statusBarIsPainted(paint) ? 'ok' : 'bad'
+}
+
+function statusBarDetail(sample: ViewportSample): string {
+  const paint = statusBarPaint(sample)
+  if (!paint.declared) return 'no --status-bar token on the document'
+  if (!statusBarIsDeclared(paint)) {
+    return `theme-color is ${paint.meta || 'missing'}, the token says ${paint.declared}`
+  }
+  if (!paint.painted) {
+    return `nothing opaque under the top edge: a platform that samples paints its own ${paint.declared} guess`
+  }
+  if (!statusBarIsPainted(paint)) {
+    return `${paint.painted} sits under the bar, not ${paint.declared} — a sampling platform follows the pixels`
+  }
+  return `${paint.declared}, told and painted`
 }
 
 export interface KeyboardEpisode {

@@ -40,6 +40,9 @@ const RESTING: ViewportSample = {
   fieldInScroller: false,
   revealDelta: 0,
   stored: '403',
+  statusBarDeclared: '#091a7a',
+  statusBarMeta: '#091a7a',
+  statusBarPainted: 'rgb(9, 26, 122)',
   at: 0,
 }
 
@@ -50,6 +53,38 @@ const verdict = (checks: ProbeCheck[], id: string) => {
   if (!check) throw new Error(`no check ${id}`)
   return check
 }
+
+describe('the status bar check', () => {
+  it('passes when the platform was told the token and the pixels under the bar agree', () => {
+    expect(verdict(checkViewport(RESTING), 'status-bar').state).toBe('ok')
+  })
+
+  it('fails when the meta is stale, whatever is painted', () => {
+    const stale = sample({ statusBarMeta: '#ffffff' })
+    const check = verdict(checkViewport(stale), 'status-bar')
+    expect(check.state).toBe('bad')
+    expect(check.detail).toContain('#ffffff')
+  })
+
+  it('fails when a white surface scrolled under the bar, though the meta is right', () => {
+    const white = sample({ statusBarPainted: 'rgb(255, 255, 255)' })
+    const check = verdict(checkViewport(white), 'status-bar')
+    expect(check.state).toBe('bad')
+    expect(check.detail).toContain('sits under the bar')
+  })
+
+  it('fails when nothing opaque is painted under the bar at all', () => {
+    const bare = sample({ statusBarPainted: '(nothing painted)' })
+    const check = verdict(checkViewport(bare), 'status-bar')
+    expect(check.state).toBe('bad')
+    expect(check.detail).toContain('nothing opaque')
+  })
+
+  it('judges nothing before the stylesheet has declared the token', () => {
+    const unset = sample({ statusBarDeclared: '(unset)' })
+    expect(verdict(checkViewport(unset), 'status-bar').state).toBe('idle')
+  })
+})
 
 describe('checkViewport', () => {
   it('passes a resting shell and judges nothing about a keyboard that is closed', () => {

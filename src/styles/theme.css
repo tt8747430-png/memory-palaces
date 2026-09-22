@@ -108,7 +108,12 @@
     margin: 0;
     height: 100%;
     overflow: hidden;
-    background: var(--surface);
+    /*
+     * The canvas, not a surface: this is what shows wherever `#root` does not reach and what a
+     * browser that tints its chrome from the page samples. `--surface` is white in the light theme,
+     * which is how a white bar appeared above a navy `theme-color`.
+     */
+    background: var(--status-bar);
     font-family: var(--p-font-sans), sans-serif;
     color: var(--text-primary);
     overscroll-behavior: none;

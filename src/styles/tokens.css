@@ -105,6 +105,15 @@
   --z-dev-probe: 900;
 
   --p-container-app: 430px;
+
+  /*
+   * What the platform paints around the app: the status bar it tints from `theme-color`, and the
+   * canvas behind `#root` wherever the viewport is taller than `--app-height`. One value, so the
+   * two can never disagree — `index.html` carries a copy for the paint before this file loads, and
+   * `boot-paint.test.ts` holds the copies together.
+   */
+  --status-bar: #091a7a;
+
   --bg: linear-gradient(
     to bottom right,
     oklch(83.2% 0.083 264.3) 0%,
@@ -170,6 +179,9 @@
   --warning-border: color-mix(in oklch, var(--warning-foreground) 22%, transparent);
   --danger-border: color-mix(in oklch, var(--danger-on-surface) 22%, transparent);
 
+  /* The edge on a milestone the learner had not seen when the screen opened. */
+  --notification-unseen-ring: color-mix(in oklch, var(--secondary) 55%, transparent);
+
   --sheet-max-h: calc(var(--app-height) * 0.88);
 
   --sw-rose: oklch(60% 0.196 14);
@@ -211,6 +223,8 @@
 
 [data-theme='dark'] {
   color-scheme: dark;
+
+  --status-bar: #0b1533;
 
   --bg: linear-gradient(
     to bottom right,
@@ -336,13 +350,17 @@
   --danger-on-surface: var(--p-red-700);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
+/*
+ * One switch for damped motion. `index.html` resolves it before first paint and
+ * `PreferencesProvider` keeps it, so the learner's own switch and the OS's answer arrive here as
+ * the same attribute — a media query would only ever hear the OS.
+ */
+[data-reduced-motion='reduce'],
+[data-reduced-motion='reduce'] *,
+[data-reduced-motion='reduce'] *::before,
+[data-reduced-motion='reduce'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
 }
