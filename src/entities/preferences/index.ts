@@ -36,6 +36,7 @@ export {
 } from './model/context'
 export {
   selectAutosync,
+  selectDailyGoal,
   selectDeckSort,
   selectDeckSortSubdecks,
   selectSubdeckSorts,

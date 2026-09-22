@@ -6,6 +6,9 @@ export const selectEffectivePreferences = (
   state: PreferencesState,
 ): Pick<Preferences, keyof typeof DEFAULT_PREFERENCES> => state.preferences ?? DEFAULT_PREFERENCES
 
+export const selectDailyGoal = (state: PreferencesState): number =>
+  selectEffectivePreferences(state).dailyGoal
+
 export const selectDevMode = (state: PreferencesState): boolean =>
   selectEffectivePreferences(state).devMode
 

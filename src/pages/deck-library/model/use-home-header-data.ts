@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { selectEffectiveProfile, useProfileStore } from '@/entities/profile'
 import { selectProgress, useProgressStore } from '@/entities/progress'
-import { selectEffectivePreferences, usePreferencesStore } from '@/entities/preferences'
+import { selectDailyGoal, usePreferencesStore } from '@/entities/preferences'
 import { selectUnreadCount, useNotificationStore } from '@/entities/notification'
 import { useSessionStore } from '@/entities/session'
 import { dayKey } from '@/shared/lib'
@@ -20,7 +20,7 @@ export function useHomeHeaderData(): HomeHeaderData {
   const session = useSessionStore((state) => state.session)
   const profile = useProfileStore(selectEffectiveProfile)
   const progress = useProgressStore(selectProgress)
-  const prefs = usePreferencesStore(selectEffectivePreferences)
+  const dailyGoal = usePreferencesStore(selectDailyGoal)
   const unreadCount = useNotificationStore(selectUnreadCount)
 
   const today = dayKey(Date.now())
@@ -32,7 +32,7 @@ export function useHomeHeaderData(): HomeHeaderData {
     streak: {
       count: progress?.streakCount ?? 0,
       dayCount: progress?.activeDayKey === today ? progress.activeDayCount : 0,
-      dailyGoal: prefs.dailyGoal,
+      dailyGoal,
     },
   }
 }
