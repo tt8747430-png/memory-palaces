@@ -1,5 +1,6 @@
 import { actions, boot, common, nav, select, selection, slots, swipe, update } from './core'
-import { archived, deck, folder, home, library, move, notifications } from './library'
+import { archived, deck, folder, home, library, move } from './library'
+import { notifications } from './notifications'
 import {
   algorithm,
   cardActions,

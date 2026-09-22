@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { I18nextProvider } from 'react-i18next'
@@ -34,8 +34,12 @@ function renderPage(store: NotificationStore) {
   )
 }
 
-const seeded = () =>
-  makeNotification({ id: 'a', createdAt: new Date(0).toISOString(), type: 'streak', count: 7 })
+const seeded = (id = 'a') =>
+  makeNotification({
+    id,
+    createdAt: new Date(0).toISOString(),
+    milestone: { type: 'streak', count: 7 },
+  })
 
 describe('NotificationsPage', () => {
   it('marks all notifications read on open', async () => {
@@ -46,6 +50,28 @@ describe('NotificationsPage', () => {
     await flush()
 
     expect(selectUnreadCount(store.getState())).toBe(0)
+  })
+
+  it('marks them read once, not once per notification still unread', async () => {
+    const repo = new InMemoryRepository<AppNotification>([seeded('a'), seeded('b'), seeded('c')])
+    const saves = vi.spyOn(repo, 'save')
+    const store = createNotificationStore(repo)
+    store.getState().start()
+
+    renderPage(store)
+    await flush()
+
+    // One write per unread notification. An effect watching the count would write six or more.
+    expect(saves).toHaveBeenCalledTimes(3)
+  })
+
+  it('keeps the rings on what was unread, though the list is now read', async () => {
+    const store = startedStore([seeded('a')])
+    renderPage(store)
+    await flush()
+
+    expect(selectUnreadCount(store.getState())).toBe(0)
+    expect(document.querySelector('.ring-\\(--notification-unseen-ring\\)')).not.toBeNull()
   })
 
   it('clears all notifications via the header overflow menu', async () => {

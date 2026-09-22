@@ -39,7 +39,7 @@ describe('NotificationBridge', () => {
 
     const list = selectNotifications(store.getState())
     expect(list).toHaveLength(1)
-    expect(list[0]).toMatchObject({ type: 'level-up', level: 4, read: false })
+    expect(list[0]).toMatchObject({ milestone: { type: 'level-up', level: 4 }, read: false })
   })
 
   it('persists streak and quiz events', async () => {
@@ -51,7 +51,7 @@ describe('NotificationBridge', () => {
       await flush()
     })
 
-    const types = selectNotifications(store.getState()).map((n) => n.type)
+    const types = selectNotifications(store.getState()).map((n) => n.milestone.type)
     expect(types).toContain('streak')
     expect(types).toContain('quiz')
   })

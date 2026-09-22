@@ -6,7 +6,7 @@ import { type AppNotification, makeNotification } from './types'
 
 const at = (ms: number) => new Date(ms).toISOString()
 const notif = (id: string, createdAt: string) =>
-  makeNotification({ id, createdAt, type: 'level-up', level: 2 })
+  makeNotification({ id, createdAt, milestone: { type: 'level-up', level: 2 } })
 
 describe('notification store — reactive, Dependency Injection', () => {
   it('start() hydrates from the injected repository and becomes ready', () => {
@@ -62,10 +62,17 @@ describe('notification store — reactive, Dependency Injection', () => {
 
     await store
       .getState()
-      .save(makeNotification({ id: 'a', createdAt: at(0), type: 'streak', count: 7 }))
-    await store
-      .getState()
-      .save(makeNotification({ id: 'b', createdAt: at(1), type: 'streak', count: 14, read: true }))
+      .save(
+        makeNotification({ id: 'a', createdAt: at(0), milestone: { type: 'streak', count: 7 } }),
+      )
+    await store.getState().save(
+      makeNotification({
+        id: 'b',
+        createdAt: at(1),
+        milestone: { type: 'streak', count: 14 },
+        read: true,
+      }),
+    )
 
     expect(selectUnreadCount(store.getState())).toBe(1)
   })

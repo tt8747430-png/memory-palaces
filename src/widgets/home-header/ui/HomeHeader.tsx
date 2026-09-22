@@ -79,7 +79,7 @@ export function HomeHeader({
           ) : null}
           <NotificationBell
             unreadCount={unreadCount}
-            label={t('notifications.openLabel')}
+            label={t('notifications.openLabel', { count: unreadCount })}
             onClick={onOpenNotifications}
           />
           {onOpenArchived ? (

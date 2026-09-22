@@ -1,9 +1,9 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CheckCheck, Trash2 } from 'lucide-react'
+import { Trash2 } from 'lucide-react'
 import {
   selectNotifications,
-  selectUnreadCount,
+  selectUnreadIds,
   useNotificationStore,
   useNotificationStoreApi,
 } from '@/entities/notification'
@@ -21,27 +21,28 @@ export interface NotificationsPageProps {
 }
 
 export function NotificationsPage({ onBack }: NotificationsPageProps = {}) {
+  const ready = useNotificationStore(selectIsReady)
+  // The list below opens on what it finds, so it may not mount until there is something to find.
+  if (!ready) return <ScreenLoading />
+  return <NotificationsView onBack={onBack} />
+}
+
+function NotificationsView({ onBack }: NotificationsPageProps) {
   const { t } = useTranslation()
   const store = useNotificationStoreApi()
-  const ready = useNotificationStore(selectIsReady)
   const notifications = useNotificationStore(selectNotifications)
-  const unreadCount = useNotificationStore(selectUnreadCount)
+  // Frozen on arrival: opening the screen is the acknowledgement, and the rings must outlive it.
+  const [unseen] = useState<ReadonlySet<string>>(() => new Set(selectUnreadIds(store.getState())))
   const count = notifications.length
 
   useEffect(() => {
-    if (unreadCount > 0) void markAllNotificationsRead(store)
-  }, [unreadCount, store])
+    void markAllNotificationsRead(store)
+  }, [store])
 
   const handleRemove = (id: string) => void removeNotification(store, id)
   const handleClearAll = () => void clearNotifications(store)
 
   const overflowActions: SheetAction[] = [
-    {
-      id: 'read',
-      label: t('notifications.markAllRead'),
-      icon: <CheckCheck className="size-5" aria-hidden />,
-      onSelect: () => void markAllNotificationsRead(store),
-    },
     {
       id: 'clear',
       label: t('notifications.clearAll'),
@@ -51,23 +52,17 @@ export function NotificationsPage({ onBack }: NotificationsPageProps = {}) {
     },
   ]
 
-  if (!ready) return <ScreenLoading />
-
   return (
     <AppScreen
       gutter="end"
       header={
         <ScreenHeader
           title={t('notifications.title')}
-          subtitle={
-            count > 0
-              ? t(count === 1 ? 'notifications.countOne' : 'notifications.countOther', { count })
-              : undefined
-          }
+          subtitle={count > 0 ? t('notifications.count', { count }) : undefined}
           onBack={onBack}
           backLabel={t('notifications.back')}
           action={
-            notifications.length > 0 ? (
+            count > 0 ? (
               <FlyoutMenu
                 variant="glass"
                 size="md"
@@ -80,7 +75,7 @@ export function NotificationsPage({ onBack }: NotificationsPageProps = {}) {
       }
     >
       <div className="mt-2">
-        <NotificationsPanel notifications={notifications} onRemove={handleRemove} />
+        <NotificationsPanel notifications={notifications} unseen={unseen} onRemove={handleRemove} />
       </div>
     </AppScreen>
   )

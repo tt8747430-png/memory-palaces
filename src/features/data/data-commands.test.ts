@@ -85,7 +85,12 @@ describe('resetEverything', () => {
     progressStore.getState().start()
     const notificationStore = createNotificationStore(
       new InMemoryRepository<AppNotification>([
-        makeNotification({ id: 'n1', createdAt: at(0), type: 'quiz', read: true }),
+        makeNotification({
+          id: 'n1',
+          createdAt: at(0),
+          milestone: { type: 'quiz', accuracy: 90, xpGain: 10 },
+          read: true,
+        }),
       ]),
     )
     notificationStore.getState().start()

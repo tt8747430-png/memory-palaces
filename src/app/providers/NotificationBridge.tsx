@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useEventBus } from '@/shared/lib'
-import { useNotificationStoreApi } from '@/entities/notification'
+import { type Milestone, useNotificationStoreApi } from '@/entities/notification'
 import { recordNotification } from '@/features/notification'
 
 export function NotificationBridge() {
@@ -8,16 +8,15 @@ export function NotificationBridge() {
   const store = useNotificationStoreApi()
 
   useEffect(() => {
+    const record = (milestone: Milestone) => {
+      recordNotification(store, milestone).catch((error: unknown) =>
+        console.error('A milestone could not be written down', error),
+      )
+    }
     const offs = [
-      bus.on('level-up', ({ level }) => {
-        void recordNotification(store, { type: 'level-up', level })
-      }),
-      bus.on('streak', ({ count }) => {
-        void recordNotification(store, { type: 'streak', count })
-      }),
-      bus.on('quiz', ({ accuracy, xp }) => {
-        void recordNotification(store, { type: 'quiz', accuracy, xpGain: xp })
-      }),
+      bus.on('level-up', ({ level }) => record({ type: 'level-up', level })),
+      bus.on('streak', ({ count }) => record({ type: 'streak', count })),
+      bus.on('quiz', ({ accuracy, xp }) => record({ type: 'quiz', accuracy, xpGain: xp })),
     ]
     return () => {
       for (const off of offs) off()

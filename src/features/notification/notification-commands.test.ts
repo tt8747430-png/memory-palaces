@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@/shared/api'
-import {
-  type AppNotification,
-  createNotificationStore,
-  NOTIFICATION_CAP,
-} from '@/entities/notification'
+import { type AppNotification, createNotificationStore } from '@/entities/notification'
 import {
   clearNotifications,
   markAllNotificationsRead,
@@ -21,7 +17,7 @@ function startedStore(seed: AppNotification[] = []) {
 describe('recordNotification', () => {
   it('persists a new unread notification with a generated id + timestamp', async () => {
     const store = startedStore()
-    const n = await recordNotification(store, { type: 'level-up', level: 3, xpGain: 50 }, 1000)
+    const n = await recordNotification(store, { type: 'level-up', level: 3 }, 1000)
 
     expect(n.id).toBeTruthy()
     expect(n.read).toBe(false)
@@ -29,16 +25,20 @@ describe('recordNotification', () => {
     expect(store.getState().notifications).toHaveLength(1)
   })
 
-  it('prunes the oldest entries beyond the cap', async () => {
+  it('writes the milestone whole, numbers and kind together', async () => {
     const store = startedStore()
-    for (let i = 0; i <= NOTIFICATION_CAP; i++) {
-      await recordNotification(store, { type: 'streak', count: i }, i + 1)
-    }
+    const n = await recordNotification(store, { type: 'quiz', accuracy: 90, xpGain: 60 }, 1000)
 
-    const counts = store.getState().notifications.map((n) => n.count)
-    expect(counts).toHaveLength(NOTIFICATION_CAP)
-    expect(counts).not.toContain(0)
-    expect(counts[0]).toBe(NOTIFICATION_CAP)
+    expect(n.milestone).toEqual({ type: 'quiz', accuracy: 90, xpGain: 60 })
+  })
+
+  it('refuses a milestone nobody reached, and writes nothing', async () => {
+    const store = startedStore()
+
+    await expect(recordNotification(store, { type: 'streak', count: 0 }, 1000)).rejects.toThrow(
+      /streak/i,
+    )
+    expect(store.getState().notifications).toEqual([])
   })
 })
 
@@ -52,19 +52,30 @@ describe('markAllNotificationsRead', () => {
 
     expect(store.getState().notifications.every((n) => n.read)).toBe(true)
   })
+
+  it('writes nothing when everything has already been seen', async () => {
+    const store = startedStore()
+    await recordNotification(store, { type: 'streak', count: 7 }, 1)
+    await markAllNotificationsRead(store, 99)
+    const before = store.getState().notifications
+
+    await markAllNotificationsRead(store, 100)
+
+    expect(store.getState().notifications).toEqual(before)
+  })
 })
 
 describe('removeNotification / clearNotifications', () => {
   it('removes a single notification by id', async () => {
     const store = startedStore()
-    const n = await recordNotification(store, { type: 'quiz', accuracy: 90 }, 1)
+    const n = await recordNotification(store, { type: 'quiz', accuracy: 90, xpGain: 10 }, 1)
 
     await removeNotification(store, n.id)
 
     expect(store.getState().notifications).toHaveLength(0)
   })
 
-  it('clears the whole history', async () => {
+  it('clears every notification at once', async () => {
     const store = startedStore()
     await recordNotification(store, { type: 'streak', count: 7 }, 1)
     await recordNotification(store, { type: 'streak', count: 14 }, 2)

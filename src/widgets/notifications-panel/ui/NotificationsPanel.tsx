@@ -5,7 +5,12 @@ import type { TFunction } from 'i18next'
 import { BellOff, Flame, type LucideIcon, Star, Trash2, Trophy, X, Zap } from 'lucide-react'
 import { cn } from '@/shared/lib'
 import { cardSurface, Chip, IconButton, SwipeRow } from '@/shared/ui'
-import type { AppNotification, NotificationType } from '@/entities/notification'
+import {
+  type AppNotification,
+  type Milestone,
+  milestoneXp,
+  type MilestoneType,
+} from '@/entities/notification'
 import { bucketOf, type DayBucket, relativeTime, type RelativeTime } from '../lib/group'
 
 interface Visual {
@@ -14,7 +19,8 @@ interface Visual {
   tint: string
 }
 
-const VISUALS: Record<NotificationType, Visual> = {
+/** How a milestone looks. Its words live in `copyOf`: a repaint is not a rewording. */
+const VISUALS: Record<MilestoneType, Visual> = {
   'level-up': {
     icon: Trophy,
     fg: 'var(--rating-edge)',
@@ -36,17 +42,25 @@ const BUCKET_ORDER: DayBucket[] = ['today', 'yesterday', 'earlier']
 
 export interface NotificationsPanelProps {
   notifications: AppNotification[]
+  /**
+   * The ids that were still unread when the screen opened. The screen marks everything read on the
+   * way in, so the ring cannot follow `read` without vanishing under the learner's eyes.
+   */
+  unseen: ReadonlySet<string>
   onRemove: (id: string) => void
   now?: number
 }
 
 export function NotificationsPanel({
   notifications,
+  unseen,
   onRemove,
-  now = Date.now(),
+  now,
 }: NotificationsPanelProps) {
   const { t } = useTranslation()
-  const sections = useMemo(() => groupByBucket(notifications, now), [notifications, now])
+  // Read once, not per render: a fresh `Date.now()` in the default would void every memo below it.
+  const at = useMemo(() => now ?? Date.now(), [now])
+  const sections = useMemo(() => groupByBucket(notifications, at), [notifications, at])
 
   if (notifications.length === 0) {
     return (
@@ -95,7 +109,12 @@ export function NotificationsPanel({
                         },
                       ]}
                     >
-                      <NotificationRow notification={notification} now={now} onRemove={onRemove} />
+                      <NotificationRow
+                        notification={notification}
+                        unseen={unseen.has(notification.id)}
+                        now={at}
+                        onRemove={onRemove}
+                      />
                     </SwipeRow>
                   </motion.li>
                 ))}
@@ -110,26 +129,31 @@ export function NotificationsPanel({
 
 function NotificationRow({
   notification,
+  unseen,
   now,
   onRemove,
 }: {
   notification: AppNotification
+  unseen: boolean
   now: number
   onRemove: (id: string) => void
 }) {
   const { t } = useTranslation()
-  const { icon: Icon, fg, tint } = VISUALS[notification.type]
+  const { milestone } = notification
+  const { icon: Icon, fg, tint } = VISUALS[milestone.type]
   const badgeStyle: CSSProperties = { color: fg, backgroundColor: tint }
+  const copy = copyOf(t, milestone)
+  const xp = milestoneXp(milestone)
 
   return (
     <div
       className={cn(
         cardSurface,
         'relative flex items-start gap-3 p-3.5',
-        !notification.read && 'ring-1 ring-[color-mix(in_oklch,var(--secondary)_55%,transparent)]',
+        unseen && 'ring-1 ring-(--notification-unseen-ring)',
       )}
     >
-      {!notification.read ? (
+      {unseen ? (
         <span
           className="absolute left-1 top-1/2 size-1.5 -translate-y-1/2 rounded-full bg-primary"
           aria-hidden
@@ -140,19 +164,17 @@ function NotificationRow({
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <p className="truncate text-label font-semibold text-heading">
-            {titleOf(t, notification)}
-          </p>
-          {notification.xpGain ? (
+          <p className="truncate text-label font-semibold text-heading">{copy.title}</p>
+          {xp !== undefined ? (
             <Chip
               className="shrink-0 px-1.5 py-0.5"
               icon={<Zap className="size-3" fill="currentColor" aria-hidden />}
             >
-              {`+${notification.xpGain}`}
+              {`+${xp}`}
             </Chip>
           ) : null}
         </div>
-        <p className="mt-0.5 text-label text-muted-foreground">{subtitleOf(t, notification)}</p>
+        <p className="mt-0.5 text-label text-muted-foreground">{copy.subtitle}</p>
         <p className="mt-1 text-tiny text-muted-foreground">
           {formatRelative(t, relativeTime(notification.createdAt, now))}
         </p>
@@ -181,25 +203,24 @@ function groupByBucket(
   return sections
 }
 
-function titleOf(t: TFunction, n: AppNotification): string {
-  switch (n.type) {
+/** One pass over the kind, for both lines of copy — the numbers come from the milestone itself. */
+function copyOf(t: TFunction, milestone: Milestone): { title: string; subtitle: string } {
+  switch (milestone.type) {
     case 'level-up':
-      return t('notifications.levelUpTitle', { level: n.level ?? 0 })
+      return {
+        title: t('notifications.levelUpTitle', { level: milestone.level }),
+        subtitle: t('notifications.levelUpBody'),
+      }
     case 'streak':
-      return t('notifications.streakTitle', { count: n.count ?? 0 })
+      return {
+        title: t('notifications.streakTitle', { count: milestone.count }),
+        subtitle: t('notifications.streakBody', { count: milestone.count }),
+      }
     case 'quiz':
-      return t('notifications.quizTitle')
-  }
-}
-
-function subtitleOf(t: TFunction, n: AppNotification): string {
-  switch (n.type) {
-    case 'level-up':
-      return t('notifications.levelUpBody')
-    case 'streak':
-      return t('notifications.streakBody', { count: n.count ?? 0 })
-    case 'quiz':
-      return t('notifications.quizBody', { accuracy: n.accuracy ?? 0 })
+      return {
+        title: t('notifications.quizTitle'),
+        subtitle: t('notifications.quizBody', { accuracy: milestone.accuracy }),
+      }
   }
 }
 

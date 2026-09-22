@@ -5,6 +5,6 @@ export async function removeNotification(store: NotificationStore, id: string): 
 }
 
 export async function clearNotifications(store: NotificationStore): Promise<void> {
-  const ids = store.getState().notifications.map((n) => n.id)
-  for (const id of ids) await store.getState().remove(id)
+  const { notifications, remove } = store.getState()
+  await Promise.all(notifications.map((n) => remove(n.id)))
 }

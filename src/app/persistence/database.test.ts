@@ -13,12 +13,14 @@ import {
   collectionByKey,
   createAppDatabase,
   deckMigrations,
+  notificationMigrations,
   preferencesMigrations,
   profileMigrations,
 } from './database'
 import {
   cardSchema,
   deckSchema,
+  notificationSchema,
   pendingChangeSchema,
   preferencesSchema,
   profileSchema,
@@ -200,8 +202,50 @@ describe('schema migrations', () => {
     expect(profileMigrations[2](v1 as never).avatar).toBe('u1/profile')
   })
 
+  it('folds a v0 notification’s loose numbers into the milestone they belonged to', () => {
+    const v0 = {
+      id: 'n1',
+      createdAt: AT,
+      updatedAt: AT,
+      read: false,
+      type: 'quiz',
+      accuracy: 90,
+      xpGain: 60,
+      level: 3,
+    }
+    expect(notificationMigrations[1](v0 as never)).toEqual({
+      id: 'n1',
+      createdAt: AT,
+      updatedAt: AT,
+      read: false,
+      // The level a quiz never had goes with it: a milestone carries only its own numbers now.
+      milestone: { type: 'quiz', accuracy: 90, xpGain: 60 },
+    })
+  })
+
+  it('gives a v0 notification the smallest number its copy can state when it carried none', () => {
+    const streak = { id: 'n2', createdAt: AT, updatedAt: AT, read: true, type: 'streak' }
+    expect(notificationMigrations[1](streak as never)?.milestone).toEqual({
+      type: 'streak',
+      count: 1,
+    })
+
+    const levelUp = { id: 'n3', createdAt: AT, updatedAt: AT, read: false, type: 'level-up' }
+    expect(notificationMigrations[1](levelUp as never)?.milestone).toEqual({
+      type: 'level-up',
+      level: 1,
+    })
+  })
+
+  it('drops a v0 notification of a kind this version cannot name, rather than carry it', () => {
+    const foreign = { id: 'n4', createdAt: AT, updatedAt: AT, read: false, type: 'comet' }
+    // null deletes the row: nothing downstream has copy or an icon for a kind it does not know.
+    expect(notificationMigrations[1](foreign as never)).toBeNull()
+  })
+
   it('versions the collections', () => {
     expect(deckSchema.version).toBe(4)
+    expect(notificationSchema.version).toBe(1)
     expect(cardSchema.version).toBe(1)
     expect(preferencesSchema.version).toBe(7)
     expect(profileSchema.version).toBe(2)

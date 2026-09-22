@@ -368,21 +368,18 @@ export const profileSchema: RxJsonSchema<Profile> = {
 }
 
 export const notificationSchema: RxJsonSchema<AppNotification> = {
-  version: 0,
+  version: 1,
   primaryKey: 'id',
   type: 'object',
   properties: {
     id: { type: 'string', maxLength: 100 },
     createdAt: { type: 'string' },
     updatedAt: { type: 'string' },
-    type: { type: 'string', enum: ['level-up', 'streak', 'quiz'] },
     read: { type: 'boolean' },
-    xpGain: { type: 'number' },
-    level: { type: 'number' },
-    count: { type: 'number' },
-    accuracy: { type: 'number' },
+    // One object per kind of milestone, each carrying only the numbers its copy reads.
+    milestone: { type: 'object' },
   },
-  required: ['id', 'createdAt', 'updatedAt', 'type', 'read'],
+  required: ['id', 'createdAt', 'updatedAt', 'read', 'milestone'],
 }
 
 export const historySchema: RxJsonSchema<HistoryEntry> = {

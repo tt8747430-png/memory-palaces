@@ -30,7 +30,7 @@ export function ProfileBar({
         <HeaderActions>
           <NotificationBell
             unreadCount={unreadCount}
-            label={t('notifications.openLabel')}
+            label={t('notifications.openLabel', { count: unreadCount })}
             onClick={onOpenNotifications}
           />
           <IconButton

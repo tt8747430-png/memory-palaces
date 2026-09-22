@@ -11,7 +11,7 @@ import { DEFAULT_PREFERENCES, type Preferences, resolveSubdeckSorts } from '@/en
 import { resolveDeckSort } from '@/shared/lib'
 import { normalizeFlashcardSwipe, resolveFlashcardInput } from '@/shared/config/flashcard-swipe'
 import type { Profile } from '@/entities/profile'
-import type { AppNotification } from '@/entities/notification'
+import type { AppNotification, Milestone } from '@/entities/notification'
 import type { HistoryEntry } from '@/entities/learning-history'
 import type { PendingChange } from '@/entities/pending-change'
 import type { ContentCollection } from '@/shared/config/sync-tables'
@@ -186,6 +186,55 @@ export const historyMigrations = {
   1: (doc: HistoryEntry) => doc,
 }
 
+type NotificationV0 = Omit<AppNotification, 'milestone'> & {
+  /** Not `MilestoneType`: what a stored row holds is whatever was written, not what compiles. */
+  type: string
+  level?: number
+  count?: number
+  accuracy?: number
+  xpGain?: number
+}
+
+/**
+ * A milestone was four loose numbers, any of which could be missing whatever the kind said. It is
+ * one object per kind now, so the kind and its numbers cannot disagree. A number a stored row never
+ * carried becomes the smallest one the copy can state — the row is a congratulation already given,
+ * not a measurement to recover.
+ */
+function foldMilestone({ type, level, count, accuracy, xpGain }: NotificationV0): Milestone | null {
+  const whole = (value: number | undefined) =>
+    value !== undefined && Number.isInteger(value) && value >= 1 ? value : 1
+  switch (type) {
+    case 'level-up':
+      return { type, level: whole(level) }
+    case 'streak':
+      return { type, count: whole(count) }
+    case 'quiz':
+      return { type, accuracy: accuracy ?? 0, xpGain: xpGain ?? 0 }
+    default:
+      return null
+  }
+}
+
+export const notificationMigrations = {
+  /**
+   * A kind this version cannot name is dropped rather than carried: `null` tells RxDB to delete the
+   * row. Nothing downstream can render a milestone it has no copy for, and a congratulation already
+   * given is not worth a crash in the list of the others.
+   */
+  1: (doc: NotificationV0): AppNotification | null => {
+    const milestone = foldMilestone(doc)
+    if (!milestone) return null
+    return {
+      id: doc.id,
+      createdAt: doc.createdAt,
+      updatedAt: doc.updatedAt,
+      read: doc.read,
+      milestone,
+    }
+  },
+}
+
 export const cardMigrations = {
   1: (doc: Card) => ({ ...doc, frozen: doc.frozen ?? false, reversed: doc.reversed ?? false }),
 }
@@ -233,7 +282,7 @@ export async function createAppDatabase<Internals, InstanceCreationOptions>(
       migrationStrategies: profileMigrations,
       conflictHandler: mergeAgainstBase<Profile>(),
     },
-    notifications: { schema: notificationSchema },
+    notifications: { schema: notificationSchema, migrationStrategies: notificationMigrations },
     history: {
       schema: historySchema,
       migrationStrategies: historyMigrations,

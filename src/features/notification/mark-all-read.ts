@@ -6,8 +6,7 @@ export async function markAllNotificationsRead(
   now: number = Date.now(),
 ): Promise<void> {
   const updatedAt = nowIso(now)
-  const unread = store.getState().notifications.filter((n) => !n.read)
-  for (const notification of unread) {
-    await store.getState().save({ ...notification, read: true, updatedAt })
-  }
+  const { notifications, save } = store.getState()
+  const unread = notifications.filter((n) => !n.read)
+  await Promise.all(unread.map((n) => save({ ...n, read: true, updatedAt })))
 }

@@ -16,7 +16,13 @@ function renderPanel(props: Partial<Parameters<typeof NotificationsPanel>[0]> = 
   const handlers = { onRemove: vi.fn() }
   render(
     <I18nextProvider i18n={i18n}>
-      <NotificationsPanel notifications={[]} now={NOW} {...handlers} {...props} />
+      <NotificationsPanel
+        notifications={[]}
+        unseen={new Set()}
+        now={NOW}
+        {...handlers}
+        {...props}
+      />
     </I18nextProvider>,
   )
   return handlers
@@ -30,14 +36,20 @@ describe('NotificationsPanel', () => {
 
   it('renders milestone copy and the XP chip per type', () => {
     const list: AppNotification[] = [
-      makeNotification({ id: 'a', createdAt: iso(NOW - 1000), type: 'level-up', level: 3 }),
-      makeNotification({ id: 'b', createdAt: iso(NOW - 2000), type: 'streak', count: 7 }),
+      makeNotification({
+        id: 'a',
+        createdAt: iso(NOW - 1000),
+        milestone: { type: 'level-up', level: 3 },
+      }),
+      makeNotification({
+        id: 'b',
+        createdAt: iso(NOW - 2000),
+        milestone: { type: 'streak', count: 7 },
+      }),
       makeNotification({
         id: 'c',
         createdAt: iso(NOW - 3000),
-        type: 'quiz',
-        accuracy: 90,
-        xpGain: 60,
+        milestone: { type: 'quiz', accuracy: 90, xpGain: 60 },
       }),
     ]
     renderPanel({ notifications: list })
@@ -50,8 +62,16 @@ describe('NotificationsPanel', () => {
 
   it('groups notifications under day sections', () => {
     const list: AppNotification[] = [
-      makeNotification({ id: 'a', createdAt: iso(NOW - 1000), type: 'level-up', level: 2 }),
-      makeNotification({ id: 'b', createdAt: iso(NOW - DAY), type: 'streak', count: 7 }),
+      makeNotification({
+        id: 'a',
+        createdAt: iso(NOW - 1000),
+        milestone: { type: 'level-up', level: 2 },
+      }),
+      makeNotification({
+        id: 'b',
+        createdAt: iso(NOW - DAY),
+        milestone: { type: 'streak', count: 7 },
+      }),
     ]
     renderPanel({ notifications: list })
 
@@ -59,10 +79,36 @@ describe('NotificationsPanel', () => {
     expect(screen.getByText('Yesterday')).toBeInTheDocument()
   })
 
+  it('rings only what the learner had not seen when the screen opened', () => {
+    const list: AppNotification[] = [
+      makeNotification({
+        id: 'a',
+        createdAt: iso(NOW - 1000),
+        milestone: { type: 'streak', count: 7 },
+        read: true,
+      }),
+      makeNotification({
+        id: 'b',
+        createdAt: iso(NOW - 2000),
+        milestone: { type: 'level-up', level: 3 },
+        read: true,
+      }),
+    ]
+    renderPanel({ notifications: list, unseen: new Set(['b']) })
+
+    const rings = document.querySelectorAll('.ring-\\(--notification-unseen-ring\\)')
+    expect(rings).toHaveLength(1)
+    expect(rings[0]?.textContent).toContain('Level 3 reached')
+  })
+
   it('removes a single notification', async () => {
     const user = userEvent.setup()
     const list: AppNotification[] = [
-      makeNotification({ id: 'a', createdAt: iso(NOW - 1000), type: 'streak', count: 7 }),
+      makeNotification({
+        id: 'a',
+        createdAt: iso(NOW - 1000),
+        milestone: { type: 'streak', count: 7 },
+      }),
     ]
     const handlers = renderPanel({ notifications: list })
 

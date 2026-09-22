@@ -1,5 +1,10 @@
-export type { AppNotification, NotificationType, MakeNotificationInput } from './model/types'
-export { makeNotification, NOTIFICATION_CAP } from './model/types'
+export type {
+  AppNotification,
+  MakeNotificationInput,
+  Milestone,
+  MilestoneType,
+} from './model/types'
+export { makeNotification, milestoneXp, NOTIFICATION_CAP, validateMilestone } from './model/types'
 export { createNotificationStore } from './model/store'
 export type { NotificationState, NotificationStore } from './model/store'
 export {
@@ -7,5 +12,5 @@ export {
   useNotificationStore,
   useNotificationStoreApi,
 } from './model/context'
-export { selectNotifications, selectUnreadCount } from './model/selectors'
+export { selectNotifications, selectUnreadCount, selectUnreadIds } from './model/selectors'
 export type { NotificationRepository } from './api/notification-repository'
