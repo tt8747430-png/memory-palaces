@@ -237,14 +237,22 @@ export function useLibraryActions({
   }
 
   const noDecks = deckIds.length === 0
+  // The toolbar's slots are fixed by what the *screen* can do, and dimmed by what this selection
+  // can do. Emptying a tick-box must not resize the bar under the learner's thumb, so nothing here
+  // is omitted for an empty selection — only Unfile, which needs a folder to exist at all.
   const selectHandlers: SelectActionHandlers = {
     move: { onAction: onRequestBulkMove, disabled: noDecks },
     favorite: { ...bulkAction(selection, bulkFavorite), disabled: noDecks },
     duplicate: { ...bulkAction(selection, bulkDuplicate), disabled: noDecks },
     archive: { ...bulkAction(selection, bulkArchive), disabled: noDecks },
-    unfile: { ...bulkAction(selection, bulkUnfile), disabled: filedIds.length === 0 },
     style: { onAction: onRequestBulkStyle, disabled: noDecks },
     delete: { onAction: onRequestBulkDelete, disabled: selection.count === 0 },
+  }
+  if (folders.length > 0) {
+    selectHandlers.unfile = {
+      ...bulkAction(selection, bulkUnfile),
+      disabled: filedIds.length === 0,
+    }
   }
 
   return {

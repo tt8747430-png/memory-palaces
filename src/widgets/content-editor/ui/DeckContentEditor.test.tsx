@@ -20,6 +20,7 @@ import {
   createHistoryStore,
   type HistoryEntry,
   HistoryStoreContext,
+  makeHistoryEntry,
 } from '@/entities/learning-history'
 import { DeckContentEditor } from './DeckContentEditor'
 
@@ -47,8 +48,14 @@ function Editor({ onAddCard }: { onAddCard: () => void }) {
 function renderEditor({
   cards = [] as Card[],
   questions = [] as Question[],
+  history = [] as HistoryEntry[],
   onAddCard = vi.fn(),
-}: { cards?: Card[]; questions?: Question[]; onAddCard?: () => void } = {}) {
+}: {
+  cards?: Card[]
+  questions?: Question[]
+  history?: HistoryEntry[]
+  onAddCard?: () => void
+} = {}) {
   const decks = [makeDeck({ id: 'd1', createdAt: at(0), name: 'Garden' })]
   render(
     <I18nextProvider i18n={i18n}>
@@ -67,7 +74,9 @@ function renderEditor({
                   value={started(createQuestionStore(new InMemoryRepository<Question>(questions)))}
                 >
                   <HistoryStoreContext
-                    value={started(createHistoryStore(new InMemoryRepository<HistoryEntry>()))}
+                    value={started(
+                      createHistoryStore(new InMemoryRepository<HistoryEntry>(history)),
+                    )}
                   >
                     <Editor onAddCard={onAddCard} />
                   </HistoryStoreContext>
@@ -134,6 +143,33 @@ describe('DeckContentEditor', () => {
       ['the card browser menu', openBrowserMenu],
     ])('opens the learning history sheet from %s', async (_name, open) => {
       const user = userEvent.setup()
+      // Learning history is only offered for a card that has some — so the card has one.
+      renderEditor({
+        cards: [
+          makeCard({ id: 'c1', createdAt: at(1), deckId: 'd1', front: 'seed', back: 'root' }),
+        ],
+        history: [
+          makeHistoryEntry({
+            id: 'h1',
+            createdAt: at(2),
+            cardId: 'c1',
+            deckId: 'd1',
+            kind: 'graded',
+            grade: 'good',
+          }),
+        ],
+      })
+      await screen.findByText('seed')
+
+      await user.click(await open(user))
+
+      expect(
+        await screen.findByRole('heading', { name: 'Learning history' }),
+      ).toBeInTheDocument()
+    })
+
+    it('is not offered at all for a card nothing has been recorded against', async () => {
+      const user = userEvent.setup()
       renderEditor({
         cards: [
           makeCard({ id: 'c1', createdAt: at(1), deckId: 'd1', front: 'seed', back: 'root' }),
@@ -141,9 +177,9 @@ describe('DeckContentEditor', () => {
       })
       await screen.findByText('seed')
 
-      await user.click(await open(user))
-
-      expect(await screen.findByText('No history yet')).toBeInTheDocument()
+      await user.click(await screen.findByRole('button', { name: 'Card actions' }))
+      await screen.findByRole('button', { name: 'Edit' })
+      expect(screen.queryByRole('button', { name: 'Learning history' })).toBeNull()
     })
   })
 })

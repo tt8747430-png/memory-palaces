@@ -3,7 +3,7 @@ import { Flag, SlidersHorizontal } from 'lucide-react'
 import { cn } from '@/shared/lib'
 import { Button, Sheet, Switch } from '@/shared/ui'
 import type { CardFilterControl } from '../model/use-card-filter'
-import type { MaturityKey } from '../model/card-list'
+import type { CardListOptions, MaturityKey } from '../model/card-list'
 
 const MATURITY: { key: MaturityKey; labelKey: string; dot: string }[] = [
   { key: 'new', labelKey: 'cards.filter.new', dot: 'bg-faint' },
@@ -43,10 +43,21 @@ export function FilterButton({ count, onClick }: FilterButtonProps) {
 export interface CardFilterSheetProps {
   filter: CardFilterControl
   counts: Record<MaturityKey, number>
+  /** What this deck's cards can be narrowed by. Anything else is left off the sheet. */
+  options: CardListOptions
 }
 
-export function CardFilterSheet({ filter, counts }: CardFilterSheetProps) {
+/**
+ * Only what would change the list. A bucket holding every card, or a flag nobody has set, narrows
+ * nothing and is not drawn — but a control the learner has already turned on stays, so a filter
+ * can always be seen and undone.
+ */
+export function CardFilterSheet({ filter, counts, options }: CardFilterSheetProps) {
   const { t } = useTranslation()
+  const buckets = MATURITY.filter(
+    ({ key }) => options.maturity.has(key) || filter.draft.maturity.has(key),
+  )
+  const showFlagged = options.flagged || filter.draft.flaggedOnly
   return (
     <Sheet
       open={filter.sheetOpen}
@@ -69,45 +80,49 @@ export function CardFilterSheet({ filter, counts }: CardFilterSheetProps) {
       }
     >
       <div className="flex flex-col gap-5 pb-2">
-        <section>
-          <p className="mb-2 px-1 text-label font-bold uppercase tracking-wide text-muted-foreground">
-            {t('cards.filter.maturity')}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {MATURITY.map(({ key, labelKey, dot }) => (
-              <MaturityChip
-                key={key}
-                label={t(labelKey as never)}
-                dot={dot}
-                count={counts[key]}
-                on={filter.draft.maturity.has(key)}
-                onToggle={() => filter.toggleMaturity(key)}
-              />
-            ))}
-          </div>
-        </section>
+        {buckets.length > 0 ? (
+          <section>
+            <p className="mb-2 px-1 text-label font-bold uppercase tracking-wide text-muted-foreground">
+              {t('cards.filter.maturity')}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {buckets.map(({ key, labelKey, dot }) => (
+                <MaturityChip
+                  key={key}
+                  label={t(labelKey as never)}
+                  dot={dot}
+                  count={counts[key]}
+                  on={filter.draft.maturity.has(key)}
+                  onToggle={() => filter.toggleMaturity(key)}
+                />
+              ))}
+            </div>
+          </section>
+        ) : null}
 
-        <section>
-          <p className="mb-2 px-1 text-label font-bold uppercase tracking-wide text-muted-foreground">
-            {t('cards.filter.status')}
-          </p>
-          <label className="flex items-center justify-between gap-3 rounded-card bg-secondary/40 px-3.5 py-3">
-            <span className="inline-flex items-center gap-2.5 text-body font-semibold text-heading">
-              <span
-                aria-hidden
-                className="grid size-8 shrink-0 place-items-center rounded-full bg-(--warning-surface)"
-              >
-                <Flag className="size-4 text-(--warning-foreground)" aria-hidden />
+        {showFlagged ? (
+          <section>
+            <p className="mb-2 px-1 text-label font-bold uppercase tracking-wide text-muted-foreground">
+              {t('cards.filter.status')}
+            </p>
+            <label className="flex items-center justify-between gap-3 rounded-card bg-secondary/40 px-3.5 py-3">
+              <span className="inline-flex items-center gap-2.5 text-body font-semibold text-heading">
+                <span
+                  aria-hidden
+                  className="grid size-8 shrink-0 place-items-center rounded-full bg-(--warning-surface)"
+                >
+                  <Flag className="size-4 text-(--warning-foreground)" aria-hidden />
+                </span>
+                {t('cards.filter.flagged')}
               </span>
-              {t('cards.filter.flagged')}
-            </span>
-            <Switch
-              label={t('cards.filter.flagged')}
-              checked={filter.draft.flaggedOnly}
-              onCheckedChange={filter.setFlagged}
-            />
-          </label>
-        </section>
+              <Switch
+                label={t('cards.filter.flagged')}
+                checked={filter.draft.flaggedOnly}
+                onCheckedChange={filter.setFlagged}
+              />
+            </label>
+          </section>
+        ) : null}
       </div>
     </Sheet>
   )

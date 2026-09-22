@@ -45,6 +45,8 @@ export interface LibraryView {
   folderDeckCounts: Map<string, number>
   sectionFolders: Folder[]
   sectionDecks: Deck[]
+  /** The rows at this level before the filter narrows them — what the arrange bar reasons about. */
+  levelDecks: Deck[]
   /** How many decks the filter is keeping off the list. */
   hidden: number
   /** The heading to print over a row, by the row's id, when the order shelves the rows. */
@@ -186,6 +188,7 @@ export function useLibraryData({ folderId, scopeId, filter }: LibraryDataArgs): 
       folderDeckCounts,
       sectionFolders: inFolder || scope ? [] : folders,
       sectionDecks,
+      levelDecks: unfiltered,
       hidden: unfiltered.length - sectionDecks.length,
       headings,
       rows,

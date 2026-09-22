@@ -4,9 +4,20 @@ import userEvent from '@testing-library/user-event'
 import { BookMarked } from 'lucide-react'
 import { ExtensionPointsContext } from '@/shared/lib'
 import { renderWithProviders } from '@/shared/test/render-with-providers'
+import type { ArrangeOptions } from '../model/use-arrange-options'
 import { LibrarySelectBar, type LibrarySelectBarProps } from './LibrarySelectBar'
 
 afterEach(cleanup)
+
+/** A Library where everything is on offer, so a test names only what it is about. */
+const everything = (over: Partial<ArrangeOptions> = {}): ArrangeOptions => ({
+  sorts: new Set(['manual', 'name', 'recent', 'due']),
+  filters: new Set(['all', 'favorites', 'due', 'bible:law']),
+  canSort: true,
+  canFilter: true,
+  canAllSubdecks: true,
+  ...over,
+})
 
 const baseProps = (over: Partial<LibrarySelectBarProps> = {}): LibrarySelectBarProps => ({
   scopeName: null,
@@ -18,6 +29,7 @@ const baseProps = (over: Partial<LibrarySelectBarProps> = {}): LibrarySelectBarP
   onAllSubdecksChange: vi.fn(),
   shown: 3,
   hidden: 0,
+  options: everything(),
   ...over,
 })
 
@@ -83,5 +95,70 @@ describe('LibrarySelectBar', () => {
 
     render(baseProps())
     expect(screen.queryByText(/Subdecks of/)).toBeNull()
+  })
+})
+
+describe('LibrarySelectBar offers only what applies', () => {
+  const bookFilter = {
+    id: 'bible:law',
+    labelKey: 'library.select.decks',
+    icon: <BookMarked aria-hidden />,
+    keep: () => true,
+  }
+
+  it('leaves the Sort control out where there is nothing to arrange', () => {
+    render(baseProps({ options: everything({ canSort: false }) }))
+    expect(screen.queryByRole('button', { name: 'Sort decks' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Show' })).toBeInTheDocument()
+  })
+
+  it('leaves the Show control out where nothing but All is on offer', () => {
+    render(baseProps({ options: everything({ canFilter: false }) }))
+    expect(screen.queryByRole('button', { name: 'Show' })).toBeNull()
+  })
+
+  it('leaves the All-subdecks switch out where no deck has a subdeck', () => {
+    render(baseProps({ options: everything({ canAllSubdecks: false }) }))
+    expect(screen.queryByRole('switch', { name: 'All subdecks' })).toBeNull()
+  })
+
+  it('withholds a contributed filter that matches no deck here', async () => {
+    const user = userEvent.setup()
+    render(
+      baseProps({ options: everything({ filters: new Set(['all', 'favorites', 'due']) }) }),
+      [bookFilter],
+    )
+    await user.click(screen.getByRole('button', { name: 'Show' }))
+    await screen.findByRole('menuitemradio', { name: 'All decks' })
+    expect(screen.queryByRole('menuitemradio', { name: 'Decks' })).toBeNull()
+  })
+
+  it('keeps the applied filter listed once it has run out of rows, so it can be undone', async () => {
+    const user = userEvent.setup()
+    render(
+      baseProps({
+        filter: 'bible:law',
+        shown: 0,
+        hidden: 8,
+        options: everything({ filters: new Set(['all']) }),
+      }),
+      [bookFilter],
+    )
+    await user.click(screen.getByRole('button', { name: 'Show' }))
+    expect(await screen.findByRole('menuitemradio', { name: 'Decks' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    )
+  })
+
+  it('draws no control row at all when none of the three applies', () => {
+    render(
+      baseProps({
+        options: everything({ canSort: false, canFilter: false, canAllSubdecks: false }),
+      }),
+    )
+    expect(screen.queryByRole('button', { name: 'Sort decks' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Show' })).toBeNull()
+    expect(screen.queryByRole('switch')).toBeNull()
   })
 })

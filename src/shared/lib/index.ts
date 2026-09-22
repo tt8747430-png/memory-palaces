@@ -147,9 +147,11 @@ export { CONTENT_SORTS, sortContent, type ContentSort, type SortableContent } fr
 export {
   CORE_DECK_SORTS,
   DEFAULT_DECK_SORT,
+  filtersThatKeep,
   FOLDER_SORTS,
   headingsFor,
   orderForChildren,
+  ordersThatPlace,
   resolveDeckOrder,
   resolveDeckSort,
   sortDecks,

@@ -15,6 +15,10 @@ interface SortMeta {
   icon: typeof Clock
 }
 
+/** The two runs a `SortControl` separates: what the app knows, then what an extension added. */
+const CORE = 'core'
+const CONTRIBUTED = 'contributed'
+
 /** One `SortControl` option list for any set of orders, given how each is named and drawn. */
 function useSortOptions<T extends string>(
   sorts: readonly T[],
@@ -23,7 +27,7 @@ function useSortOptions<T extends string>(
   const { t } = useTranslation()
   return sorts.map((value) => {
     const { labelKey, icon: Icon } = meta[value]
-    return { value, label: t(labelKey as never), icon: <Icon className="size-4" /> }
+    return { value, label: t(labelKey as never), icon: <Icon className="size-4" />, group: CORE }
   })
 }
 
@@ -48,18 +52,31 @@ const DECK_META: Record<CoreDeckSort, SortMeta> = {
   due: { labelKey: 'deck.sort.due', icon: Sparkles },
 }
 
-/** The app's own orders, then — after a divider — the ones the enabled extensions contribute. */
+/** The app's own orders, then — after a separator — the ones the enabled extensions contribute. */
 export function useDeckSortOptions(): SortControlOption<DeckSort>[] {
   const core = useSortOptions(CORE_DECK_SORTS, DECK_META)
   const contributed = useContributedT()
   const orders = useExtensionPoint('deckSorts')
   return [
     ...core,
-    ...orders.map((order, at) => ({
+    ...orders.map((order) => ({
       value: order.id,
       label: contributed(order.labelKey),
       icon: order.icon,
-      dividerBefore: at === 0,
+      group: CONTRIBUTED,
     })),
   ]
+}
+
+/**
+ * What a control actually offers: every option that can change the list, plus whichever one is
+ * applied. An applied option stays listed even once it keeps nothing — a learner has to be able to
+ * see the choice they made and undo it, and the empty notice beneath says why the list is bare.
+ */
+export function offeredOptions<T extends string>(
+  options: readonly SortControlOption<T>[],
+  available: ReadonlySet<string>,
+  applied: T,
+): SortControlOption<T>[] {
+  return options.filter((option) => option.value === applied || available.has(option.value))
 }

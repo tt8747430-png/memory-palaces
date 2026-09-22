@@ -4,6 +4,7 @@ import { setPreferences } from '@/features/preferences'
 import { type DeckSort, usePendingAct } from '@/shared/lib'
 import type { SelectActionHandlers } from '@/shared/ui'
 import type { Destination } from '@/widgets/deck-tree'
+import { type ArrangeOptions, useArrangeOptions } from './use-arrange-options'
 import type { LibraryFilter } from './library-filter'
 import type { PendingAct } from './pending-act'
 import { type LibraryActions, moveExclusions, useLibraryActions } from './use-library-actions'
@@ -34,6 +35,8 @@ export interface Library extends LibraryView {
 
   filter: LibraryFilter
   setFilter: (filter: LibraryFilter) => void
+  /** Which orders and filters can change the list right now — the arrange bar offers only these. */
+  arrange: ArrangeOptions
 }
 
 function moveTargets(pending: PendingAct | null, selectedDeckIds: string[]): string[] {
@@ -109,6 +112,13 @@ export function useLibrary(folderId: string | null, onFolderGone: () => void): L
     [held],
   )
 
+  const arrange = useArrangeOptions({
+    levelDecks: view.levelDecks,
+    decks: view.decks,
+    cards: view.cards,
+    enabled: selection.active,
+  })
+
   const { selectHandlers, ...act } = useLibraryActions({
     decks: view.decks,
     folders: view.folders,
@@ -165,5 +175,6 @@ export function useLibrary(folderId: string | null, onFolderGone: () => void): L
     sortSubdecks,
     filter,
     setFilter,
+    arrange,
   }
 }

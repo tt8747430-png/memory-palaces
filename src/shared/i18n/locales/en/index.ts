@@ -1,4 +1,4 @@
-import { actions, boot, common, nav, select, selection, swipe, update } from './core'
+import { actions, boot, common, nav, select, selection, slots, swipe, update } from './core'
 import { archived, deck, folder, home, library, move, notifications } from './library'
 import {
   algorithm,
@@ -66,6 +66,7 @@ export const en = {
   progress,
   settings,
   actions,
+  slots,
   swipe,
   select,
   notifications,

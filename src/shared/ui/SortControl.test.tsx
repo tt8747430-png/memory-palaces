@@ -35,3 +35,33 @@ describe('SortControl', () => {
     expect(onChange).toHaveBeenCalledWith('recent')
   })
 })
+
+describe('SortControl separators', () => {
+  const grouped: SortControlOption<string>[] = [
+    { value: 'name', label: 'Name', icon: <ArrowDownAZ aria-hidden />, group: 'core' },
+    { value: 'recent', label: 'Recent', icon: <Clock aria-hidden />, group: 'core' },
+    { value: 'canon', label: 'Canon', icon: <Clock aria-hidden />, group: 'contributed' },
+  ]
+
+  const separators = () => document.querySelectorAll('[role="separator"]')
+
+  it('draws one separator where the run of options changes, never before the first', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(
+      <SortControl label="Sort" value="name" options={grouped} onChange={() => {}} />,
+    )
+    await user.click(screen.getByRole('button', { name: 'Sort' }))
+    await screen.findByRole('menuitemradio', { name: 'Canon' })
+    expect(separators()).toHaveLength(1)
+  })
+
+  it('draws none once the contributed run is filtered out — no orphan rule to trip over', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(
+      <SortControl label="Sort" value="name" options={grouped.slice(0, 2)} onChange={() => {}} />,
+    )
+    await user.click(screen.getByRole('button', { name: 'Sort' }))
+    await screen.findByRole('menuitemradio', { name: 'Recent' })
+    expect(separators()).toHaveLength(0)
+  })
+})

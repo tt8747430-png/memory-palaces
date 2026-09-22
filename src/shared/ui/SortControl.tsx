@@ -15,8 +15,12 @@ export interface SortControlOption<T extends string> {
   value: T
   label: string
   icon: ReactNode
-  /** Opens a new run of options — the ones an extension added, after the app's own. */
-  dividerBefore?: boolean
+  /**
+   * Which run of options this one belongs to — the app's own, or an extension's. A separator is
+   * drawn wherever the group changes, so an option dropped from the list because nothing here
+   * matches it can neither orphan a separator nor take one with it.
+   */
+  group?: string
 }
 
 export interface SortControlProps<T extends string> {
@@ -59,9 +63,9 @@ export function SortControl<T extends string>({
       />
       <DropdownMenuContent side="bottom" align="end">
         <DropdownMenuRadioGroup value={value} onValueChange={(next) => onChange(next as T)}>
-          {options.map((option) => (
+          {options.map((option, at) => (
             <Fragment key={option.value}>
-              {option.dividerBefore ? <DropdownMenuSeparator /> : null}
+              {at > 0 && option.group !== options[at - 1]?.group ? <DropdownMenuSeparator /> : null}
               <DropdownMenuRadioItem value={option.value}>
                 <DropdownMenuItemIcon>{option.icon}</DropdownMenuItemIcon>
                 <span className="truncate">{option.label}</span>

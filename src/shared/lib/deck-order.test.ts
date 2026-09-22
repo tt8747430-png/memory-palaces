@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_DECK_SORT,
   type DeckOrder,
+  filtersThatKeep,
   headingsFor,
   orderForChildren,
+  ordersThatPlace,
   resolveDeckSort,
   sortDecks,
 } from './deck-order'
@@ -153,5 +155,38 @@ describe('natural name order', () => {
       due: 0,
     }))
     expect(names(sortDecks(chapters, 'name'))).toEqual(['Geneza 1', 'Geneza 2', 'Geneza 10'])
+  })
+})
+
+describe('ordersThatPlace', () => {
+  const canon: DeckOrder = { id: 'bible:canon', rank: (d) => (d.name === 'Geneza' ? 1 : null) }
+  const everything: DeckOrder = { id: 'x:all', rank: () => 0 }
+
+  it('offers an order that places at least one row', () => {
+    const rows = [{ id: 'g', name: 'Geneza', createdAt: '' }]
+    expect([...ordersThatPlace(rows, [canon, everything])]).toEqual(['bible:canon', 'x:all'])
+  })
+
+  it('withholds an order that recognises nothing on the list', () => {
+    const rows = [{ id: 'v', name: 'Verbs', createdAt: '' }]
+    expect(ordersThatPlace(rows, [canon]).has('bible:canon')).toBe(false)
+  })
+
+  it('withholds every order when there are no rows at all', () => {
+    expect(ordersThatPlace([], [canon, everything]).size).toBe(0)
+  })
+})
+
+describe('filtersThatKeep', () => {
+  const law = { id: 'bible:law', keep: (d: { name: string }) => d.name === 'Geneza' }
+
+  it('offers a filter that keeps something', () => {
+    const rows = [{ id: 'g', name: 'Geneza', createdAt: '' }]
+    expect(filtersThatKeep(rows, [law]).has('bible:law')).toBe(true)
+  })
+
+  it('withholds a filter that would empty the list', () => {
+    const rows = [{ id: 'v', name: 'Verbs', createdAt: '' }]
+    expect(filtersThatKeep(rows, [law]).has('bible:law')).toBe(false)
   })
 })

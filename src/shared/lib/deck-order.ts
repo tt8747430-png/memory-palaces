@@ -81,6 +81,36 @@ export function resolveDeckOrder(
   return contributed.find((order) => order.id === sort) ?? 'manual'
 }
 
+/**
+ * The contributed orders that place at least one of these decks, by id. An order that recognises
+ * nothing on the list cannot change it, so the Library does not offer it — which is how the Bible's
+ * two orders leave the menu on a device with no Bible decks, without the extension saying a word
+ * about availability. `rank` is the whole test: it already returns null for a deck the order does
+ * not know.
+ */
+export function ordersThatPlace<T extends SortableDeck>(
+  decks: readonly T[],
+  contributed: readonly DeckOrder[],
+): ReadonlySet<string> {
+  const ids = new Set<string>()
+  for (const order of contributed) {
+    if (decks.some((deck) => order.rank(deck) !== null)) ids.add(order.id)
+  }
+  return ids
+}
+
+/** The same test for the contributed filters: one that keeps nothing here is not offered. */
+export function filtersThatKeep<T extends SortableDeck>(
+  decks: readonly T[],
+  contributed: readonly DeckFilter[],
+): ReadonlySet<string> {
+  const ids = new Set<string>()
+  for (const filter of contributed) {
+    if (decks.some((deck) => filter.keep(deck))) ids.add(filter.id)
+  }
+  return ids
+}
+
 export interface SubdeckOrderPreferences {
   deckSort: DeckSort
   /** The Library order reaches every level, not only the top. */

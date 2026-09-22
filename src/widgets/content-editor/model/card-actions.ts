@@ -31,21 +31,36 @@ export const BROWSER_CARD_ACTIONS: readonly ActionId[] = CARD_ACTIONS.filter(
   (id) => !BROWSER_OMITS.has(id),
 )
 
+/** What the screen around a card knows about it that the card itself does not carry. */
+export interface CardActionContext {
+  /** Reviews are recorded for this card, so there is a history to open. */
+  hasHistory: boolean
+  /** Some other deck exists to move it into. */
+  canMove: boolean
+}
+
 /**
  * Describes each card action once. Every surface — the row menu, the swipe
  * rails, the card browser — renders from this map, so an action behaves and
  * reads the same wherever the learner reaches it.
  *
- * An intent left out drops the action from every surface — that is how the
- * browser sheds Select, and how a screen that cannot start a session sheds
- * Study. Every other action is offered on every deck: Grade means "set the
- * schedule" on a spaced deck and "set the last outcome" on a fast one, so a
- * rail the learner configured never comes up empty.
+ * An action is offered when it can change something about this card. An intent
+ * left out drops it from every surface — that is how the browser sheds Select,
+ * and how a screen that cannot start a session sheds Study — and so does a
+ * `context` that says the action has nothing to work on: no history to open, no
+ * other deck to move into, no schedule to forget.
+ *
+ * The toggles stay on every card, because each has a second reading rather than
+ * an inert one: Flag unflags, Freeze thaws, Reverse turns back. So does Grade,
+ * which means "set the schedule" on a spaced deck and "set the last outcome" on
+ * a Fast one. So does Mark known, which re-masters and re-schedules a card that
+ * already reads as known rather than doing nothing.
  */
 export function cardActionHandlers(
   card: Card,
   intents: CardActionIntents,
   t: TFunction,
+  context: CardActionContext,
 ): ActionHandlers {
   const handlers: ActionHandlers = {
     edit: { onAction: intents.onEdit },
@@ -54,7 +69,6 @@ export function cardActionHandlers(
       label: card.flagged ? t('cards.row.unflag') : undefined,
     },
     known: { onAction: intents.onMarkKnown },
-    reset: { onAction: intents.onResetSrs },
     freeze: {
       onAction: intents.onToggleFreeze,
       label: card.frozen ? t('actions.unfreeze') : undefined,
@@ -63,12 +77,17 @@ export function cardActionHandlers(
       onAction: intents.onToggleReverse,
       label: card.reversed ? t('actions.unreverse') : undefined,
     },
-    move: { onAction: intents.onMove },
     duplicate: { onAction: intents.onDuplicate },
-    history: { onAction: intents.onHistory },
     grade: { onAction: intents.onGrade },
     delete: { onAction: intents.onDelete },
   }
+  // Reset clears the schedule, the Fast outcome and the reviews behind them at once, so it is
+  // offered while any of the three is there to clear.
+  if (card.srs !== undefined || card.fastReview !== undefined || context.hasHistory) {
+    handlers.reset = { onAction: intents.onResetSrs }
+  }
+  if (context.hasHistory) handlers.history = { onAction: intents.onHistory }
+  if (context.canMove) handlers.move = { onAction: intents.onMove }
   if (intents.onSelect) handlers.select = { onAction: intents.onSelect }
   if (intents.onStudyFrom) handlers.studyFrom = { onAction: intents.onStudyFrom }
   return handlers

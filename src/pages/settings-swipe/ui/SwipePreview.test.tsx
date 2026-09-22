@@ -1,26 +1,26 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { renderWithProviders } from '@/shared/test/render-with-providers'
 import { SwipePreview } from './SwipePreview'
 
 afterEach(cleanup)
 
 describe('SwipePreview', () => {
-  it('removes an action from its side from the badge on its corner', async () => {
-    const user = userEvent.setup()
-    const onChange = vi.fn()
+  it('shows the row with both its swipes open, and offers no control of its own', () => {
     renderWithProviders(
-      <SwipePreview
-        type="deck"
-        config={{ leading: ['favorite', 'move'], trailing: ['delete'] }}
-        onChange={onChange}
-      />,
+      <SwipePreview type="deck" config={{ leading: ['favorite', 'move'], trailing: ['delete'] }} />,
     )
 
-    await user.click(screen.getByRole('button', { name: 'Remove Move from this swipe' }))
+    expect(screen.getByText('Deck name')).toBeInTheDocument()
+    // Arranging happens on the strips below. A picture that could also be edited would put two
+    // ways of doing one thing on one screen.
+    expect(screen.queryByRole('button')).toBeNull()
+  })
 
-    expect(onChange).toHaveBeenCalledWith({ leading: ['favorite'], trailing: ['delete'] })
-    expect(screen.queryByRole('button', { name: 'Reorder Move' })).toBeNull()
+  it('stands a dashed slot in for a side with nothing on it', () => {
+    const { container } = renderWithProviders(
+      <SwipePreview type="card" config={{ leading: [], trailing: ['flag'] }} />,
+    )
+    expect(container.querySelectorAll('.border-dashed')).toHaveLength(1)
   })
 })

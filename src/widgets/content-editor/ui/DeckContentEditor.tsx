@@ -23,6 +23,7 @@ import {
   CardMaturityOverview,
   ConfirmDialog,
   ImportSheet,
+  offeredOptions,
   SelectToolbar,
   BottomSlot,
   SortControl,
@@ -30,7 +31,7 @@ import {
   useContentSortOptions,
 } from '@/shared/ui'
 import { type Destination, DestinationSheet } from '@/widgets/deck-tree'
-import { filterCards, sortCards } from '../model/card-list'
+import { cardListOptions, filterCards, sortCards } from '../model/card-list'
 import { useCardActions } from '../model/use-card-actions'
 import { useCardCommands } from '../model/use-card-commands'
 import { useImportFile } from '../model/use-import-file'
@@ -102,7 +103,8 @@ export function DeckContentEditor({
   >(null)
 
   const pending = usePendingAct<PendingCardAct>()
-  const sortOptions = useContentSortOptions(CONTENT_SORTS)
+  const listOptions = useMemo(() => cardListOptions(cards, algorithm), [cards, algorithm])
+  const sortOptions = offeredOptions(useContentSortOptions(CONTENT_SORTS), listOptions.sorts, sort)
   const filter = useCardFilter()
   const commands = useCardCommands(
     cards,
@@ -126,6 +128,10 @@ export function DeckContentEditor({
 
   const total = cards.length
   const reorderable = selectMode && !needle
+  // Each control has to be able to change the list to earn its place: one order is no choice, and
+  // a deck whose cards are all alike has nothing to filter by. An applied filter keeps its button.
+  const showSort = total > 1 && sortOptions.length > 1
+  const showFilter = listOptions.any || filter.appliedCount > 0
   const reorder = (ids: string[]) => {
     void reorderCards(cardStore, ids)
     if (sort !== 'manual') onSortChange('manual')
@@ -152,6 +158,7 @@ export function DeckContentEditor({
     },
     onEditCard,
     onStudyFrom,
+    canMove: decks.length > 1,
   })
 
   const renderCard = (card: Card, dragHandle?: RowDragHandle, dragging = false) => (
@@ -182,9 +189,9 @@ export function DeckContentEditor({
         </div>
       ) : null}
 
-      {!selectMode && !searching && total > 0 ? (
+      {!selectMode && !searching && total > 0 && (showSort || showFilter) ? (
         <div className="mb-3 flex items-center justify-between gap-2">
-          {total > 1 ? (
+          {showSort ? (
             <SortControl
               label={t('cards.sortLabel')}
               value={sort}
@@ -194,7 +201,7 @@ export function DeckContentEditor({
           ) : (
             <span aria-hidden />
           )}
-          <FilterButton count={filter.appliedCount} onClick={filter.open} />
+          {showFilter ? <FilterButton count={filter.appliedCount} onClick={filter.open} /> : null}
         </div>
       ) : null}
 
@@ -237,7 +244,7 @@ export function DeckContentEditor({
         onSelectExtra={(to) => onExtensionImport?.(to)}
       />
 
-      <CardFilterSheet filter={filter} counts={maturity} />
+      <CardFilterSheet filter={filter} counts={maturity} options={listOptions} />
 
       {sheetCard && cardSheet?.kind === 'actions' ? (
         <CardActionsSheet

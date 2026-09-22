@@ -52,7 +52,7 @@ function Harness({
     <CardActionsSheet
       open
       onOpenChange={onOpenChange}
-      handlers={cardActionHandlers(subject, actions, t)}
+      handlers={cardActionHandlers(subject, actions, t, { hasHistory: true, canMove: true })}
     />
   )
 }

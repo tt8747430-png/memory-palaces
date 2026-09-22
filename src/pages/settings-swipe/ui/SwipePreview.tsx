@@ -1,28 +1,9 @@
-import { useEffect, useState } from 'react'
-import { ACTION_META } from '@/shared/config/actions'
 import { useTranslation } from 'react-i18next'
-import {
-  closestCenter,
-  DndContext,
-  type DragEndEvent,
-  type DragOverEvent,
-  DragOverlay,
-  type DragStartEvent,
-  useDroppable,
-} from '@dnd-kit/core'
-import { restrictToHorizontalAxis } from '@dnd-kit/modifiers'
-import { arrayMove, horizontalListSortingStrategy, SortableContext } from '@dnd-kit/sortable'
 import { ChevronRight, Folder, Layers, WalletCards } from 'lucide-react'
-import {
-  SWIPE_SIDE_MAX,
-  type SwipeActionId,
-  type SwipeConfig,
-  type SwipeItemType,
-  withoutSwipeAction,
-} from '@/shared/config/swipe'
-import { cn, EASE_OUT_CSS, useSortableSensors } from '@/shared/lib'
-import { CLOSE_BADGE_ROW_GAP, CloseBadge, SortableRow, swipeActionIcon } from '@/shared/ui'
-import { accentOf } from './swipe-accent'
+import { accentStyleOf } from '@/shared/config/actions'
+import type { SwipeActionId, SwipeConfig, SwipeItemType } from '@/shared/config/swipe'
+import { cn } from '@/shared/lib'
+import { swipeActionIcon } from '@/shared/ui'
 
 const TYPE_ICON: Record<SwipeItemType, typeof Layers> = {
   deck: Layers,
@@ -30,185 +11,58 @@ const TYPE_ICON: Record<SwipeItemType, typeof Layers> = {
   card: WalletCards,
 }
 
-type CapSide = keyof SwipeConfig
-
-const sideOf = (items: SwipeConfig, action: SwipeActionId): CapSide | null =>
-  items.leading.includes(action) ? 'leading' : items.trailing.includes(action) ? 'trailing' : null
-
-const containerOf = (items: SwipeConfig, overId: string): CapSide | null =>
-  overId === 'leading' || overId === 'trailing' ? overId : sideOf(items, overId as SwipeActionId)
-
 export interface SwipePreviewProps {
   type: SwipeItemType
   config: SwipeConfig
-  onChange: (next: SwipeConfig) => void
 }
 
-export function SwipePreview({ type, config, onChange }: SwipePreviewProps) {
+/**
+ * A row of this kind with both its swipes open at once, at the size and in the colours the real
+ * rails wear. Inert on purpose: the strips below it are where a swipe is arranged, and a picture
+ * that could also be edited would put two ways of doing one thing on the same screen. Its job is
+ * to say which side is which — the right-swipe rail comes in from the left edge, which no label
+ * conveys as well as the picture does.
+ */
+export function SwipePreview({ type, config }: SwipePreviewProps) {
   const { t } = useTranslation()
   const TypeIcon = TYPE_ICON[type]
-  const sensors = useSortableSensors()
-  const [items, setItems] = useState<SwipeConfig>(config)
-  const [activeId, setActiveId] = useState<SwipeActionId | null>(null)
-  useEffect(() => setItems(config), [config])
-
-  const remove = (action: SwipeActionId) => {
-    const next = withoutSwipeAction(items, action)
-    setItems(next)
-    onChange(next)
-  }
-
-  const handleDragOver = ({ active, over }: DragOverEvent) => {
-    if (!over) return
-    const action = active.id as SwipeActionId
-    const overId = String(over.id)
-    setItems((prev) => {
-      const from = sideOf(prev, action)
-      const to = containerOf(prev, overId)
-      if (!from || !to || from === to) return prev
-      if (prev[to].includes(action)) return prev
-      if (prev[to].length >= SWIPE_SIDE_MAX[to]) return prev
-      const next = [...prev[to]]
-      const at = overId === to ? next.length : next.indexOf(overId as SwipeActionId)
-      next.splice(at < 0 ? next.length : at, 0, action)
-      return { ...prev, [from]: prev[from].filter((x) => x !== action), [to]: next }
-    })
-  }
-
-  const handleDragEnd = ({ active, over }: DragEndEvent) => {
-    setActiveId(null)
-    if (!over) {
-      setItems(config)
-      return
-    }
-    const action = active.id as SwipeActionId
-    const side = sideOf(items, action)
-    const overId = String(over.id)
-    let next = items
-    if (side && overId !== 'leading' && overId !== 'trailing') {
-      const list = items[side]
-      const from = list.indexOf(action)
-      const to = list.indexOf(overId as SwipeActionId)
-      if (from >= 0 && to >= 0 && from !== to)
-        next = { ...items, [side]: arrayMove(list, from, to) }
-    }
-    setItems(next)
-    onChange(next)
-  }
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      modifiers={[restrictToHorizontalAxis]}
-      onDragStart={(event: DragStartEvent) => setActiveId(event.active.id as SwipeActionId)}
-      onDragOver={handleDragOver}
-      onDragEnd={handleDragEnd}
-      onDragCancel={() => {
-        setActiveId(null)
-        setItems(config)
-      }}
-    >
-      <div className="flex items-center gap-1">
-        <PreviewCaps side="leading" ids={items.leading} onRemove={remove} />
-        <div
-          aria-hidden
-          className="flex min-w-0 flex-1 items-center gap-2.5 rounded-card bg-card px-3 py-2.5 shadow-rest"
-        >
-          <span className="grid size-8 shrink-0 place-items-center rounded-control bg-info-surface text-primary">
-            <TypeIcon className="size-4" />
-          </span>
-          <span className="min-w-0 flex-1 truncate text-body font-semibold text-heading">
-            {t(`swipe.sample.${type}` as never)}
-          </span>
-          <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-        </div>
-        <PreviewCaps side="trailing" ids={items.trailing} onRemove={remove} />
-      </div>
-
-      <DragOverlay dropAnimation={{ duration: 200, easing: EASE_OUT_CSS }}>
-        {activeId ? (
-          <span className="relative block">
-            <Cap action={activeId} floating />
-            <CloseBadge />
-          </span>
-        ) : null}
-      </DragOverlay>
-    </DndContext>
-  )
-}
-
-function PreviewCaps({
-  side,
-  ids,
-  onRemove,
-}: {
-  side: CapSide
-  ids: SwipeActionId[]
-  onRemove: (action: SwipeActionId) => void
-}) {
-  const { setNodeRef, isOver } = useDroppable({ id: side })
-  return (
-    <SortableContext items={ids} strategy={horizontalListSortingStrategy}>
-      <div
-        ref={setNodeRef}
-        className={cn(
-          'flex min-h-9 shrink-0 items-center rounded-card transition-colors',
-          CLOSE_BADGE_ROW_GAP,
-          ids.length === 0 && 'w-9 justify-center',
-          isOver && 'bg-primary/6',
-        )}
-      >
-        {ids.length === 0 ? (
-          <span
-            aria-hidden
-            className="size-8 rounded-tile-slot border-2 border-dashed border-border"
-          />
-        ) : (
-          ids.map((id) => <SortableCap key={id} action={id} onRemove={onRemove} />)
-        )}
-      </div>
-    </SortableContext>
-  )
-}
-
-function SortableCap({
-  action,
-  onRemove,
-}: {
-  action: SwipeActionId
-  onRemove: (action: SwipeActionId) => void
-}) {
-  const { t } = useTranslation()
-  const name = t(ACTION_META[action].labelKey as never)
-  return (
-    <SortableRow id={action} className="shrink-0">
-      {({ handleRef, handleProps, isDragging }) => (
-        <span className={cn('relative block', isDragging && 'opacity-0')}>
-          <button
-            ref={handleRef}
-            type="button"
-            {...handleProps}
-            aria-label={t('swipe.reorderLabel', { name })}
-            className="block shrink-0 cursor-grab touch-none rounded-tile active:cursor-grabbing"
-          >
-            <Cap action={action} />
-          </button>
-          <CloseBadge label={t('swipe.removeLabel', { name })} onClick={() => onRemove(action)} />
+    <div aria-hidden className="flex items-center gap-1">
+      <Caps ids={config.leading} />
+      <div className="flex min-w-0 flex-1 items-center gap-2.5 rounded-card bg-card px-3 py-2.5 shadow-rest">
+        <span className="grid size-8 shrink-0 place-items-center rounded-control bg-info-surface text-primary">
+          <TypeIcon className="size-4" />
         </span>
-      )}
-    </SortableRow>
+        <span className="min-w-0 flex-1 truncate text-body font-semibold text-heading">
+          {t(`swipe.sample.${type}` as never)}
+        </span>
+        <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+      </div>
+      <Caps ids={config.trailing} />
+    </div>
   )
 }
 
-function Cap({ action, floating = false }: { action: SwipeActionId; floating?: boolean }) {
-  const accent = accentOf(action)
+function Caps({ ids }: { ids: readonly SwipeActionId[] }) {
+  return (
+    <div className="flex min-h-9 shrink-0 items-center gap-1">
+      {ids.length === 0 ? (
+        <span className="size-8 rounded-tile-slot border-2 border-dashed border-border" />
+      ) : (
+        ids.map((id) => <Cap key={id} action={id} />)
+      )}
+    </div>
+  )
+}
+
+function Cap({ action }: { action: SwipeActionId }) {
+  const accent = accentStyleOf(action)
   return (
     <span
       style={{ backgroundColor: accent.fill }}
       className={cn(
         'grid size-9 place-items-center rounded-tile [&_svg]:size-4',
-        floating && 'shadow-elevated',
         accent.ink === 'dark' ? 'text-(--p-navy-900)' : 'text-white',
       )}
     >

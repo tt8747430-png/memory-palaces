@@ -70,19 +70,23 @@ export const actions = {
   delete: 'Delete',
 } as const
 
+/** The strip of action slots both settings screens arrange, and the sheet its `+` opens. */
+export const slots = {
+  count: '{{count}} / {{max}}',
+  add: 'Add an action to {{strip}}',
+  pick: 'Add to {{strip}}',
+  reorder: 'Reorder {{name}}',
+  remove: 'Remove {{name}}',
+  empty: 'Empty — tap + to put an action here.',
+  allInUse: 'Every action is already in use.',
+} as const
+
 export const swipe = {
   title: 'Swipe actions',
   subtitle: 'Pick what a left or right swipe does on each kind of list row.',
   leading: 'Swipe right',
   trailing: 'Swipe left',
-  sideCount: '{{count}} / {{max}}',
-  addTo: 'Add to',
-  paletteHint:
-    'Tap an action to add it to the chosen swipe; tap it again to take it off. Drag the caps above to reorder.',
-  sideFull: '{{side}} is full. Take an action off it to add another.',
   reset: 'Reset to defaults',
-  reorderLabel: 'Reorder {{name}}',
-  removeLabel: 'Remove {{name}} from this swipe',
   types: {
     deck: 'Decks',
     folder: 'Folders',
@@ -100,14 +104,7 @@ export const select = {
   subtitle:
     'Choose the actions the toolbar offers while you have decks, cards or questions selected.',
   inBar: 'In the toolbar',
-  available: 'Available actions',
-  slots: '{{count}} / {{max}}',
-  full: 'The toolbar is full — remove an action to add another.',
-  allInUse: 'Every action is in the toolbar.',
   reset: 'Reset to defaults',
-  addLabel: 'Add {{name}} to the toolbar',
-  removeLabel: 'Remove {{name}} from the toolbar',
-  reorderLabel: 'Reorder {{name}}',
   surfaces: {
     library: 'Decks',
     card: 'Cards',

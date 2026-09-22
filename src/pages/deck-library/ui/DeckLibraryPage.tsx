@@ -153,12 +153,18 @@ export function DeckLibraryPage({
       onReviewDeck?.(deck.id)
     })
 
+  // Somewhere for a deck to go: another live deck to sit under, or a folder — which also covers
+  // the deck already in one, whose way out is the Library itself.
+  const canMoveDecks = folders.length > 0 || decks.filter((d) => !d.archived).length > 1
+
   const deckSwipeHandlers = (deck: Deck): ActionHandlers => ({
     favorite: {
       onAction: () => act.toggleFavorite(deck),
       label: deck.favorite ? t('deck.unfavorite') : t('deck.favorite'),
     },
-    move: { onAction: () => library.request({ kind: 'move-deck', deck }) },
+    ...(canMoveDecks
+      ? { move: { onAction: () => library.request({ kind: 'move-deck', deck }) } }
+      : {}),
     settings: { onAction: () => onOpenDeckSettings?.(deck.id) },
     addSubdeck: {
       onAction: () =>
@@ -253,6 +259,7 @@ export function DeckLibraryPage({
             onAllSubdecksChange={library.setAllSubdecks}
             shown={library.sectionDecks.length}
             hidden={library.hidden}
+            options={library.arrange}
           />
           <LibrarySelectList
             folders={library.sectionFolders}

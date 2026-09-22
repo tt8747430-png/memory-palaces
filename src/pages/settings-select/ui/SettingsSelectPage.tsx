@@ -1,13 +1,12 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CheckSquare, Layers, ListChecks, Plus, RotateCcw, WalletCards } from 'lucide-react'
+import { CheckSquare, Layers, ListChecks, RotateCcw, WalletCards } from 'lucide-react'
 import {
   selectEffectivePreferences,
   usePreferencesStore,
   usePreferencesStoreApi,
 } from '@/entities/preferences'
 import { setPreferences } from '@/features/preferences'
-import { accentStyleOf, ACTION_META } from '@/shared/config/actions'
 import {
   DEFAULT_SELECT_TOOLBAR,
   normalizeSelectToolbar,
@@ -20,17 +19,17 @@ import {
 } from '@/shared/config/select-toolbar'
 import { cn, selectIsReady } from '@/shared/lib'
 import {
-  ActionPill,
+  ActionSlots,
   AppScreen,
   Button,
   cardSurface,
+  DockPill,
   ScreenHeader,
   ScreenLoading,
   SegmentedControl,
-  selectActionIcon,
-  SlotCount,
+  SelectToolbarRow,
+  SelectToolbarSlot,
 } from '@/shared/ui'
-import { ToolbarEditor } from './ToolbarEditor'
 
 const SURFACE_ICON: Record<SelectSurface, typeof Layers> = {
   library: Layers,
@@ -42,6 +41,11 @@ export interface SettingsSelectPageProps {
   onBack?: () => void
 }
 
+/**
+ * The actions the toolbar offers while things are selected. One surface at a time, arranged on the
+ * same slot strip as the swipe rails — and shown above it as the dock's own pill, so what is
+ * arranged here is what appears at the bottom of the screen, tile for tile.
+ */
 export function SettingsSelectPage({ onBack }: SettingsSelectPageProps) {
   const { t } = useTranslation()
   const store = usePreferencesStoreApi()
@@ -50,8 +54,7 @@ export function SettingsSelectPage({ onBack }: SettingsSelectPageProps) {
   const [surface, setSurface] = useState<SelectSurface>('library')
 
   const config = prefs.selectToolbar[surface]
-  const palette = SELECT_ACTIONS[surface].filter((id) => !config.includes(id))
-  const full = config.length >= SELECT_TOOLBAR_MAX
+  const spare = SELECT_ACTIONS[surface].filter((id) => !config.includes(id))
 
   const save = (next: SelectToolbarConfig) =>
     void setPreferences(store, {
@@ -61,14 +64,6 @@ export function SettingsSelectPage({ onBack }: SettingsSelectPageProps) {
       },
     })
 
-  const add = (id: SelectActionId) => {
-    if (full) return
-    save([...config, id])
-  }
-  const remove = (id: SelectActionId) => {
-    if (config.length <= 1) return
-    save(config.filter((x) => x !== id))
-  }
   const resetAll = () => void setPreferences(store, { selectToolbar: DEFAULT_SELECT_TOOLBAR })
 
   if (!ready) return <ScreenLoading />
@@ -107,47 +102,30 @@ export function SettingsSelectPage({ onBack }: SettingsSelectPageProps) {
           })}
         />
 
-        <ToolbarEditor
-          actions={config}
-          canRemove={config.length > 1}
-          onReorder={save}
-          onRemove={remove}
-        />
+        {/* The bar itself, at the dock's size — inert, like the swipe preview above its strips. */}
+        <div aria-hidden className="mx-auto h-16 w-64">
+          <DockPill>
+            <SelectToolbarRow>
+              {config.map((id) => (
+                <SelectToolbarSlot key={id} action={id} inert />
+              ))}
+            </SelectToolbarRow>
+          </DockPill>
+        </div>
 
-        <section className={cn(cardSurface, 'p-3.5')}>
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-label font-bold text-heading">{t('select.available')}</span>
-            <SlotCount full={full}>
-              {t('select.slots', { count: config.length, max: SELECT_TOOLBAR_MAX })}
-            </SlotCount>
-          </div>
-
-          {palette.length === 0 ? (
-            <p className="mt-2.5 text-label text-muted-foreground">{t('select.allInUse')}</p>
-          ) : (
-            <div className="mt-2.5 flex flex-wrap gap-1.5">
-              {palette.map((id) => {
-                const label = t(ACTION_META[id].labelKey as never)
-                return (
-                  <ActionPill
-                    key={id}
-                    label={label}
-                    icon={selectActionIcon(id)}
-                    accent={accentStyleOf(id).fill}
-                    disabled={full}
-                    onClick={() => add(id)}
-                    aria-label={t('select.addLabel', { name: label })}
-                    trailing={<Plus className="size-3.5" aria-hidden />}
-                  />
-                )
-              })}
-            </div>
-          )}
-
-          {full ? (
-            <p className="mt-2.5 text-tiny text-muted-foreground">{t('select.full')}</p>
-          ) : null}
-        </section>
+        <div className={cn(cardSurface, 'p-3.5')}>
+          <ActionSlots
+            ids={config}
+            max={SELECT_TOOLBAR_MAX}
+            options={spare}
+            label={t('select.inBar')}
+            icon={<CheckSquare aria-hidden />}
+            min={1}
+            onReorder={save}
+            onAdd={(id) => save([...config, id as SelectActionId])}
+            onRemove={(id) => save(config.filter((each) => each !== id))}
+          />
+        </div>
 
         <Button variant="ghost" onClick={resetAll} className="self-start">
           <RotateCcw className="size-4.5" aria-hidden />

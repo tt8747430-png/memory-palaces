@@ -1,5 +1,7 @@
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Card } from '@/entities/card'
+import { selectHistory, useHistoryStore } from '@/entities/learning-history'
 import type { ActionHandlers } from '@/shared/ui'
 import type { MultiSelect } from '@/shared/lib'
 import { cardActionHandlers } from './card-actions'
@@ -19,6 +21,8 @@ interface Args {
   surfaces: CardSurfaces
   onEditCard: (cardId: string) => void
   onStudyFrom?: (cardId: string) => void
+  /** Some other deck exists to move a card into, so Move has a destination to offer. */
+  canMove: boolean
 }
 
 /**
@@ -32,8 +36,13 @@ export function useCardActions({
   surfaces,
   onEditCard,
   onStudyFrom,
+  canMove,
 }: Args): (card: Card, close?: () => void) => ActionHandlers {
   const { t } = useTranslation()
+  const entries = useHistoryStore(selectHistory)
+  // Which cards have a review behind them, asked once for the whole list rather than per row:
+  // every visible row builds its own catalogue, and a scan each would be quadratic.
+  const reviewed = useMemo(() => new Set(entries.map((entry) => entry.cardId)), [entries])
 
   return (card, close = () => {}) =>
     cardActionHandlers(
@@ -74,5 +83,6 @@ export function useCardActions({
         },
       },
       t,
+      { hasHistory: reviewed.has(card.id), canMove },
     )
 }
