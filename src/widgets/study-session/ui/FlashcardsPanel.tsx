@@ -30,7 +30,7 @@ import { ModeSheet } from './ModeSheet'
 import { StudySessionSettingsSheet } from './StudySessionSettingsSheet'
 import { QuickActionsSheet } from './QuickActionsSheet'
 import type { QuickActionsModel } from './QuickActionRows'
-import { CompletionOverlay } from './CompletionOverlay'
+import { StudySessionResult } from './StudySessionResult'
 import type {
   CardChanges,
   DeckStudyPrefs,
@@ -414,7 +414,7 @@ export function FlashcardsPanel({
       ) : null}
 
       <AnimatePresence>
-        {completed ? <CompletionOverlay summary={summaryNow} onDone={handoff} /> : null}
+        {completed ? <StudySessionResult summary={summaryNow} onDone={handoff} /> : null}
       </AnimatePresence>
     </>
   )

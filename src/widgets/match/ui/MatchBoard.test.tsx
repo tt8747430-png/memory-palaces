@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MotionConfig } from 'motion/react'
 import { I18nextProvider } from 'react-i18next'
@@ -37,8 +37,28 @@ describe('MatchBoard', () => {
     await user.click(screen.getByRole('button', { name: 'second letter' }))
 
     expect(await screen.findByText('All matched')).toBeInTheDocument()
+    // Its numbers as tiles, a figure under each label.
+    expect(screen.getByText('Pairs').previousElementSibling).toHaveTextContent('2')
+    expect(screen.getByText('Moves').previousElementSibling).toHaveTextContent('2')
+    expect(screen.getByText('Time')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /done/i }))
     expect(onComplete).toHaveBeenCalledTimes(1)
+  })
+
+  it('deals a fresh board from the result, without finishing', async () => {
+    const user = userEvent.setup()
+    const { onComplete } = renderBoard()
+    await user.click(screen.getByRole('button', { name: 'Alpha' }))
+    await user.click(screen.getByRole('button', { name: 'first letter' }))
+    await user.click(screen.getByRole('button', { name: 'Beta' }))
+    await user.click(screen.getByRole('button', { name: 'second letter' }))
+    await screen.findByText('All matched')
+
+    await user.click(screen.getByRole('button', { name: 'Play again' }))
+
+    await waitFor(() => expect(screen.queryByText('All matched')).toBeNull())
+    expect(screen.getByRole('button', { name: 'Alpha' })).toBeEnabled()
+    expect(onComplete).not.toHaveBeenCalled()
   })
 
   it('leaves a mismatched pair on the board', async () => {

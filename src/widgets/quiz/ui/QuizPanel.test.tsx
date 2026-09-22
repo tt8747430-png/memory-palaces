@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MotionConfig } from 'motion/react'
 import { I18nextProvider } from 'react-i18next'
@@ -64,10 +64,27 @@ describe('QuizPanel', () => {
 
     expect(await screen.findByText(/quiz complete/i)).toBeInTheDocument()
     expect(screen.getByText('2 / 2 correct')).toBeInTheDocument()
-    expect(screen.getByText('100% accuracy')).toBeInTheDocument()
+    expect(screen.getByText('Accuracy').previousElementSibling).toHaveTextContent('100%')
+
+    expect(screen.getByText('Questions').previousElementSibling).toHaveTextContent('2')
 
     await user.click(screen.getByRole('button', { name: /^done$/i }))
     expect(onComplete).toHaveBeenCalledWith({ score: 2, total: 2, accuracy: 100 })
+  })
+
+  it('starts the quiz over from the result, without finishing', async () => {
+    const user = userEvent.setup()
+    const { onComplete } = renderQuiz([QUESTIONS[0]!])
+    await user.click(screen.getByRole('button', { name: /paris/i }))
+    await user.click(screen.getByRole('button', { name: /submit answer/i }))
+    await user.click(screen.getByRole('button', { name: /see results/i }))
+    await screen.findByText(/quiz complete/i)
+
+    await user.click(screen.getByRole('button', { name: 'Retry' }))
+
+    await waitFor(() => expect(screen.queryByText(/quiz complete/i)).toBeNull())
+    expect(screen.getByText('Capital of France?')).toBeInTheDocument()
+    expect(onComplete).not.toHaveBeenCalled()
   })
 
   it('reveals the right answer and breaks no streak on a wrong choice', async () => {

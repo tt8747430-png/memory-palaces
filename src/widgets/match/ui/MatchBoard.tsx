@@ -8,6 +8,7 @@ import {
   Chip,
   Empty,
   IconButton,
+  ResultScreen,
   StudySessionHeader,
   StudySessionScreen,
 } from '@/shared/ui'
@@ -149,34 +150,37 @@ export function MatchBoard({ cards, subtitle, onBack, onComplete }: MatchBoardPr
 
       <AnimatePresence>
         {won ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-2 bg-card-glass px-8 text-center"
-          >
-            <motion.div
-              initial={reduce ? { opacity: 0 } : { scale: 0.6, opacity: 0 }}
-              animate={reduce ? { opacity: 1 } : { scale: 1, opacity: 1 }}
-              transition={{ type: 'spring', stiffness: 320, damping: 20 }}
-              className="mb-3 grid size-20 place-items-center rounded-full bg-linear-to-br from-primary to-accent shadow-interactive"
-            >
-              <Check className="size-10 text-primary-foreground" strokeWidth={3} aria-hidden />
-            </motion.div>
-            <h2 className="text-headline font-bold text-heading">{t('match.complete')}</h2>
-            <p className="text-body text-muted-foreground">
-              {formatTime(elapsed)} · {t('match.summary', { moves: state.moves })}
-            </p>
-            <div className="mt-5 flex w-full max-w-xs flex-col gap-3">
-              <Button size="lg" className="w-full" onClick={restart}>
-                <RotateCcw className="size-5" aria-hidden />
-                {t('match.playAgain')}
-              </Button>
-              <Button variant="secondary" size="lg" className="w-full" onClick={onComplete}>
-                {t('match.done')}
-              </Button>
-            </div>
-          </motion.div>
+          <ResultScreen
+            icon={<Check className="size-12" strokeWidth={3} aria-hidden />}
+            title={t('match.complete')}
+            message={t('match.summary', { moves: state.moves })}
+            stats={[
+              {
+                id: 'time',
+                icon: <Timer aria-hidden />,
+                value: formatTime(elapsed),
+                label: t('match.timeLabel'),
+              },
+              {
+                id: 'moves',
+                icon: <Zap aria-hidden />,
+                value: String(state.moves),
+                label: t('match.movesLabel'),
+              },
+              {
+                id: 'pairs',
+                icon: <Puzzle aria-hidden />,
+                value: String(cards.length),
+                label: t('match.pairsLabel'),
+              },
+            ]}
+            action={{ label: t('match.done'), onClick: onComplete }}
+            secondaryAction={{
+              label: t('match.playAgain'),
+              onClick: restart,
+              icon: <RotateCcw aria-hidden />,
+            }}
+          />
         ) : null}
       </AnimatePresence>
     </StudySessionScreen>

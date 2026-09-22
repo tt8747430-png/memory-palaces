@@ -10,7 +10,7 @@ const sources = import.meta.glob('/src/**/*.{ts,tsx}', {
 }) as Record<string, string>
 
 const OUTSIDE_THE_SCENE =
-  /\.test\.tsx?$|Sheet(Section)?\.tsx$|Drawer|Dialog|CompletionOverlay|QuickActionRows|FinishStudySessionButton|StudyFilterChips/
+  /\.test\.tsx?$|Sheet(Section)?\.tsx$|Drawer|Dialog|StudySessionResult|QuickActionRows|FinishStudySessionButton|StudyFilterChips/
 
 const INSIDE_THE_SCENE = [
   '/src/widgets/study-session/',
