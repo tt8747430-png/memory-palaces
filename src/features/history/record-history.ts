@@ -1,16 +1,14 @@
 import {
-  HISTORY_CAP,
   type HistoryEntry,
   type HistoryStore,
-  historyOverCap,
   makeHistoryEntry,
   type MakeHistoryEntryInput,
-  selectHistory,
 } from '@/entities/learning-history'
 import { newId, nowIso } from '@/shared/lib'
 
 export type HistoryDraft = Omit<MakeHistoryEntryInput, 'id' | 'createdAt'>
 
+/** Writing does not trim: the cap has to see every entry at once, so `keepCapped` owns it. */
 export async function recordHistory(
   store: HistoryStore,
   draft: HistoryDraft,
@@ -18,7 +16,6 @@ export async function recordHistory(
 ): Promise<HistoryEntry> {
   const entry = makeHistoryEntry({ ...draft, id: newId(), createdAt: nowIso(now) })
   await store.getState().save(entry)
-  await trimToCapacity(store)
   return entry
 }
 
@@ -31,11 +28,5 @@ export async function recordHistoryBatch(
     makeHistoryEntry({ ...draft, id: newId(), createdAt: nowIso(now) }),
   )
   await Promise.all(entries.map((entry) => store.getState().save(entry)))
-  await trimToCapacity(store)
   return entries
-}
-
-async function trimToCapacity(store: HistoryStore): Promise<void> {
-  const stale = historyOverCap(selectHistory(store.getState()), HISTORY_CAP)
-  await Promise.all(stale.map((entry) => store.getState().remove(entry.id)))
 }

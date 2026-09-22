@@ -6,7 +6,3 @@ export const selectHistory = (state: HistoryState): HistoryEntry[] => state.hist
 export function historyForCard(entries: readonly HistoryEntry[], cardId: string): HistoryEntry[] {
   return entries.filter((entry) => entry.cardId === cardId)
 }
-
-export function historyOverCap(entries: readonly HistoryEntry[], cap: number): HistoryEntry[] {
-  return entries.slice(cap)
-}

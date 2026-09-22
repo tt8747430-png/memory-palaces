@@ -27,7 +27,8 @@ Non-trivial plan → suggest a grill first (user runs it): `/grill-me`, `/grill-
 (`app/persistence/schemas.ts`), never orphan stored decks/cards/reviews. A migration only repairs _this_ device —
 replication writes pulled rows unmigrated — so pair it with a read-side twin in the entity (`completeDeck`,
 `coerceCardStyle`). A repair one document can't decide alone (it must see others) is a keeper in `app/persistence/` the
-composition root starts — `keep-archive-detached.ts`, `keep-history-capped.ts`.
+composition root starts — `keep-archive-detached.ts`, `keep-capped.ts` (one engine, called per capped
+collection).
 
 **Staged is deliberate — never restore it.** Anything in the git index was put there on purpose. A staged deletion is a
 decision, not damage: don't `git checkout`/`git restore` it, don't re-add the content, don't "fix" it as an

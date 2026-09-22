@@ -3,11 +3,9 @@ import { InMemoryRepository } from '@/shared/api'
 import { type Card, createCardStore, makeCard, priorAnswer } from '@/entities/card'
 import {
   createHistoryStore,
-  HISTORY_CAP,
   type HistoryEntry,
   type HistoryStore,
 } from '@/entities/learning-history'
-import { recordHistory } from '@/features/history'
 import { started } from '@/shared/test/started'
 import { isDue, schedule } from '@/shared/lib'
 import { answerCard } from './answer-card'
@@ -131,21 +129,6 @@ describe('answerCard', () => {
     expect(entry.grade).toBeUndefined()
     expect(entry.intervalAfter).toBeUndefined()
   })
-})
-
-describe('recordHistory', () => {
-  it('holds the history at its cap, dropping the oldest answers', async () => {
-    const history = historyStore()
-    for (let i = 0; i <= HISTORY_CAP; i++) {
-      await recordHistory(
-        history,
-        { cardId: 'l1', deckId: 'd1', kind: 'answered', outcome: 'gotIt' },
-        i,
-      )
-    }
-    expect(entries(history)).toHaveLength(HISTORY_CAP)
-    expect(entries(history)[0]?.createdAt).toBe(new Date(HISTORY_CAP).toISOString())
-  }, 20_000)
 })
 
 describe('restoreAnswer', () => {

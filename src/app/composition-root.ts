@@ -24,12 +24,16 @@ import { createProfileStore, type Profile, type ProfileStore } from '@/entities/
 import {
   type AppNotification,
   createNotificationStore,
+  NOTIFICATION_CAP,
   type NotificationStore,
+  selectNotifications,
 } from '@/entities/notification'
 import {
   createHistoryStore,
+  HISTORY_CAP,
   type HistoryEntry,
   type HistoryStore,
+  selectHistory,
 } from '@/entities/learning-history'
 import {
   createPendingChangeStore,
@@ -46,7 +50,7 @@ import { EXTENSIONS } from './extensions/registry'
 import { resetLocalDatabase } from './persistence/reset-local-database'
 import { adoptDeviceSettings } from './persistence/adopt-device-settings'
 import { keepArchiveDetached } from './persistence/keep-archive-detached'
-import { keepHistoryCapped } from './persistence/keep-history-capped'
+import { keepCapped } from './persistence/keep-capped'
 import { keepSubdeckOrdersOwned } from './persistence/keep-subdeck-orders-owned'
 
 export interface Services {
@@ -185,7 +189,8 @@ export async function createServices(): Promise<Services> {
   }
 
   keepArchiveDetached(services.deckStore)
-  keepHistoryCapped(services.historyStore)
+  keepCapped(services.historyStore, selectHistory, HISTORY_CAP)
+  keepCapped(services.notificationStore, selectNotifications, NOTIFICATION_CAP)
   keepSubdeckOrdersOwned({
     deckStore: services.deckStore,
     preferencesStore: services.preferencesStore,

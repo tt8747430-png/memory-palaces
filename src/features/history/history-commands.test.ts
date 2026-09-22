@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import { InMemoryRepository } from '@/shared/api'
 import {
   createHistoryStore,
-  HISTORY_CAP,
   type HistoryEntry,
   type HistoryStore,
 } from '@/entities/learning-history'
@@ -37,13 +36,6 @@ describe('recordHistoryBatch', () => {
       new Set([new Date(7000).toISOString()]),
     )
   })
-
-  it('trims past the cap even when the batch crosses it in one go', async () => {
-    const store = historyStore()
-    const drafts = Array.from({ length: HISTORY_CAP + 5 }, () => answered('c1'))
-    await recordHistoryBatch(store, drafts, 1000)
-    expect(entries(store)).toHaveLength(HISTORY_CAP)
-  }, 20_000)
 
   it('writes nothing for an empty batch', async () => {
     const store = historyStore()
