@@ -29,6 +29,7 @@ export const sync = {
     token: 'Your sign-in has expired on this device. Sign in again to synchronise.',
     clock:
       "This device's date and time are wrong, so the server refuses its sign-in. Correct them, then synchronise.",
+    network: 'The connection dropped or timed out. The next Sync will try again.',
   },
   review: {
     title: 'Deleted here, changed elsewhere',

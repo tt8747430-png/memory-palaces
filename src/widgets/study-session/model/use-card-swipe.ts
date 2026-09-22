@@ -8,6 +8,7 @@ import {
   isModeAction,
   type ModeSwipeAction,
   type SwipeDirection,
+  type TapZone,
 } from '@/shared/config/flashcard-swipe'
 import {
   dragFrame,
@@ -18,7 +19,7 @@ import {
   tick,
   useGestureHold,
 } from '@/shared/lib'
-import { zoneFor } from './tap-zones'
+import { resolveTap, zoneFor } from './tap-zones'
 
 const LONG_PRESS_MS = 450
 const LONG_PRESS_SLOP = 12
@@ -39,11 +40,24 @@ interface Args {
   swipeConfig: FlashcardSwipeConfig
   /** Whether an answer is thrown or tapped. It changes how an action is given, never which ones. */
   input: FlashcardInput
+  /** The answer is showing, so the middle of the card is the learner's to set. */
+  showBack: boolean
   reduce: boolean
   onFlip: () => void
   onLongPress?: () => void
-  onCommit: (direction: SwipeDirection) => void
+  onCommit: (zone: TapZone) => void
   onMechanic: (action: ModeSwipeAction) => void
+}
+
+/**
+ * Where a card answered from its middle flies off to: the edge that carries the same answer, so
+ * Good always leaves the way Good leaves, or to the right when no edge does.
+ */
+function flingFor(zone: TapZone, config: FlashcardSwipeConfig): SwipeDirection {
+  if (zone !== 'centre') return zone
+  const action = config.centre
+  const edges: readonly SwipeDirection[] = ['right', 'left', 'up', 'down']
+  return edges.find((dir) => config[dir] === action) ?? 'right'
 }
 
 function controlOf(target: EventTarget | null): HTMLElement | null {
@@ -67,6 +81,7 @@ const swipeAllowed = (target: EventTarget | null) => {
 export function useCardSwipe({
   swipeConfig,
   input,
+  showBack,
   reduce,
   onFlip,
   onLongPress,
@@ -124,10 +139,11 @@ export function useCardSwipe({
     [holdSurface],
   )
 
-  const commit = async (dir: SwipeDirection) => {
+  const commit = async (zone: TapZone) => {
     if (locked) return drop()
-    const action = swipeConfig[dir]
-    if (action === 'none') {
+    const action = swipeConfig[zone]
+    // The centre never reaches here set to flip — `resolveTap` turns that into a flip first.
+    if (action === 'none' || action === 'flip') {
       snapBack()
       return drop()
     }
@@ -138,13 +154,14 @@ export function useCardSwipe({
       return drop()
     }
     if (!isAdvancingAction(action)) {
-      onCommit(dir)
+      onCommit(zone)
       tick()
       snapBack()
       return drop()
     }
     setLocked(true)
     impact()
+    const dir = flingFor(zone, swipeConfig)
     const tx = dir === 'right' ? FLING_DISTANCE : dir === 'left' ? -FLING_DISTANCE : 0
     const ty = dir === 'down' ? FLING_DISTANCE : dir === 'up' ? -FLING_DISTANCE : 0
     const duration = reduce ? 0 : 0.24
@@ -152,7 +169,7 @@ export function useCardSwipe({
       tx ? animate(x, tx, { duration, ease: [0.4, 0, 1, 1] }).finished : Promise.resolve(),
       ty ? animate(y, ty, { duration, ease: [0.4, 0, 1, 1] }).finished : Promise.resolve(),
     ])
-    onCommit(dir)
+    onCommit(zone)
     x.jump(0)
     y.jump(0)
     setLocked(false)
@@ -210,8 +227,9 @@ export function useCardSwipe({
               { left: box.left, top: box.top, width: box.width, height: box.height },
             )
           : 'centre'
-        if (zone === 'centre') onFlip()
-        else void commit(zone)
+        const resolved = resolveTap(zone, { showBack, config: swipeConfig })
+        if (resolved?.kind === 'flip') onFlip()
+        else if (resolved) void commit(resolved.zone)
         return
       }
       if (!armedRef.current) {

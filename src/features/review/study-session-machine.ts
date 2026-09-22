@@ -15,12 +15,16 @@ export interface Buckets {
   gotIt: string[]
 }
 
+/**
+ * What an undo restores. The face is not part of it: a card stepped back to is opened prompt side
+ * up, like any other card the queue puts in front of the learner, so the answer is not handed over
+ * before it has been recalled again.
+ */
 export interface Snapshot {
   queue: string[]
   graded: number
   piles: Piles
   buckets: Buckets
-  flipped: boolean
 }
 
 export interface ReviewState {
@@ -105,7 +109,6 @@ function snapshot(state: ReviewState): Snapshot {
     graded: state.graded,
     piles: state.piles,
     buckets: state.buckets,
-    flipped: state.flipped,
   }
 }
 
@@ -186,7 +189,7 @@ export function studySessionReducer(
         graded: last.graded,
         piles: last.piles,
         buckets: last.buckets,
-        flipped: last.flipped,
+        flipped: false,
         history: state.history.slice(0, -1),
       }
     }

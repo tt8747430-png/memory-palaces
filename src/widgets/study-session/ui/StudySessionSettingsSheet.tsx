@@ -80,6 +80,7 @@ export function StudySessionSettingsSheet({
         </PickerRow>
 
         <ToggleRow
+          surface="tint"
           icon={<Shuffle className="size-4.5" aria-hidden />}
           label={t('study.shuffle')}
           description={locked.has('shuffle') ? lockedHint : t('study.shuffleHint')}
@@ -88,6 +89,7 @@ export function StudySessionSettingsSheet({
           disabled={locked.has('shuffle')}
         />
         <ToggleRow
+          surface="tint"
           icon={<Volume2 className="size-4.5" aria-hidden />}
           label={t('study.textToSpeech')}
           description={
@@ -103,6 +105,7 @@ export function StudySessionSettingsSheet({
         />
         {motionSupported() ? (
           <ToggleRow
+            surface="tint"
             icon={<Smartphone className="size-4.5" aria-hidden />}
             label={t('study.shakeToUndo')}
             description={t('study.shakeToUndoHint')}

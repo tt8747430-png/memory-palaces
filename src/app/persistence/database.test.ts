@@ -203,7 +203,7 @@ describe('schema migrations', () => {
   it('versions the collections', () => {
     expect(deckSchema.version).toBe(4)
     expect(cardSchema.version).toBe(1)
-    expect(preferencesSchema.version).toBe(6)
+    expect(preferencesSchema.version).toBe(7)
     expect(profileSchema.version).toBe(2)
     expect(pendingChangeSchema.version).toBe(2)
     expect(syncStateSchema.version).toBe(3)
@@ -250,6 +250,16 @@ describe('schema migrations', () => {
 
     expect(migrated.flashcardInput).toBe('tap')
     expect(migrated.deckSort).toBe('name')
+  })
+
+  it('gives a v6 preferences document no subdeck order of its own yet, keeping the rest', () => {
+    const v6 = { id: 'preferences', deckSort: 'due', deckSortSubdecks: false } as never
+
+    const migrated = preferencesMigrations[7](v6)
+
+    expect(migrated.subdeckSorts).toEqual({})
+    expect(migrated.deckSort).toBe('due')
+    expect(migrated.deckSortSubdecks).toBe(false)
   })
 
   it('moves Autosync out of sync-state, handing a switched-off choice over', async () => {

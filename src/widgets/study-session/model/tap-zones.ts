@@ -1,6 +1,4 @@
-import type { SwipeDirection } from '@/shared/config/flashcard-swipe'
-
-export type TapZone = SwipeDirection | 'centre'
+import type { FlashcardSwipeConfig, SwipeDirection, TapZone } from '@/shared/config/flashcard-swipe'
 
 export interface ZoneRect {
   left: number
@@ -49,4 +47,20 @@ export function zoneFor(point: ZonePoint, rect: ZoneRect, strip = stripWidth(rec
     if (edge.distance < nearest.distance) nearest = edge
   }
   return nearest.distance <= strip ? nearest.zone : 'centre'
+}
+
+export type TapResolution = { kind: 'flip' } | { kind: 'act'; zone: TapZone }
+
+/**
+ * What a tap that reached the card's background should do. An edge is always the action it
+ * carries. The middle turns a prompt over — that is how the answer is reached, whatever the
+ * learner set — and on the revealed side does what the learner set it to, which may be nothing.
+ */
+export function resolveTap(
+  zone: TapZone,
+  { showBack, config }: { showBack: boolean; config: FlashcardSwipeConfig },
+): TapResolution | null {
+  if (zone !== 'centre') return { kind: 'act', zone }
+  if (!showBack || config.centre === 'flip') return { kind: 'flip' }
+  return config.centre === 'none' ? null : { kind: 'act', zone }
 }

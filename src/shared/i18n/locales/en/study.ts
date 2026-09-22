@@ -339,7 +339,7 @@ export const study = {
   turnCard: 'Turn the card over',
   tapToAnswer: 'Answer by tapping',
   tapToAnswerHint:
-    'Tap an edge of the card instead of throwing it. The middle still turns the card over.',
+    'Tap an edge of the card instead of throwing it. The middle turns the card over; once the answer is showing, it does what you set below.',
   tapActionsHint: {
     spaced:
       'Choose what tapping each edge does in a Spaced repetition session. Set a direction to Off to disable it.',
@@ -349,7 +349,10 @@ export const study = {
   tapDown: 'Tap the bottom',
   tapLeft: 'Tap the left',
   tapRight: 'Tap the right',
+  tapCentre: 'Tap the middle',
+  tapCentreHint: 'Once the answer is showing',
   swipeActions: {
+    flip: 'Turn the card over',
     again: 'Again',
     hard: 'Hard',
     good: 'Good',

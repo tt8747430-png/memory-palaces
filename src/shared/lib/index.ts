@@ -76,7 +76,12 @@ export {
 export { useLongPress, type LongPressHandlers, type LongPressOptions } from './use-long-press'
 export { toggleInSet } from './set'
 export { useMultiSelect, type MultiSelect } from './use-multi-select'
-export { useHideAppNav, useAppNavHidden } from './app-nav'
+export {
+  useBottomSlotStore,
+  useBottomSlotTarget,
+  useBottomSlotWanted,
+  useWantBottomSlot,
+} from './bottom-slot'
 export {
   selectSplashShown,
   selectSplashWaitingOnSync,
@@ -106,14 +111,22 @@ export {
 export { CHROME } from './use-keyboard-reveal'
 export { keepFieldFocused, TEXT_ENTRY } from './keep-field-focused'
 export { FOCUS_RING_OVERSHOOT } from './focus-ring'
-export { authFailure, type AuthFailure } from './auth-failure'
+export { syncFailure, type SyncFailure } from './sync-failure'
 export { syncFailureMessage } from './sync-failure-message'
 export { type ColorScheme, readColorScheme, useColorScheme } from './color-scheme'
 export { SCREEN_SCROLL } from './screen-scroll'
 export { useVirtualKeyboard, type VirtualKeyboard } from './use-virtual-keyboard'
 export { useSortableSensors } from './use-sortable-sensors'
 export { shuffle } from './shuffle'
-export { nextOrder, reorderById, byOrderThenCreated, byNewestFirst, byOldestFirst } from './order'
+export {
+  compareNatural,
+  mergeVisibleOrder,
+  nextOrder,
+  reorderById,
+  byOrderThenCreated,
+  byNewestFirst,
+  byOldestFirst,
+} from './order'
 export { classifyChange, descendantsOf, parentIdsOf } from './sync-divergence'
 export type { Divergence, Parented, PendingLike } from './sync-divergence'
 export { errorMessage } from './error-message'
@@ -132,13 +145,21 @@ export type {
 } from './sync-runner'
 export { CONTENT_SORTS, sortContent, type ContentSort, type SortableContent } from './content-order'
 export {
-  DECK_SORTS,
+  CORE_DECK_SORTS,
   DEFAULT_DECK_SORT,
   FOLDER_SORTS,
+  headingsFor,
+  orderForChildren,
+  resolveDeckOrder,
   resolveDeckSort,
   sortDecks,
+  type CoreDeckSort,
+  type DeckFilter,
+  type DeckGroup,
+  type DeckOrder,
   type DeckSort,
   type SortableDeck,
+  type SubdeckOrderPreferences,
 } from './deck-order'
 export {
   ContentImportError,
@@ -220,6 +241,8 @@ export type {
   ExtensionPoint,
   ExtensionRoute,
   ExtensionRuntimeModule,
+  DeckFilterContribution,
+  DeckSortContribution,
   ImportOptionContribution,
 } from './extension-manifest'
 export { extensionRoute } from './extension-manifest'

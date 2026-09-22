@@ -109,7 +109,6 @@ describe('grade', () => {
           graded: 0,
           piles: { learning: 0, known: 0 },
           buckets: NO_BUCKETS,
-          flipped: true,
         },
       ],
     })
@@ -143,7 +142,6 @@ describe('grade', () => {
           graded: 0,
           piles: { learning: 0, known: 0 },
           buckets: NO_BUCKETS,
-          flipped: false,
         },
       ],
     })
@@ -177,7 +175,7 @@ describe('undo', () => {
     expect(canUndo(start)).toBe(false)
   })
 
-  it('steps back a graded card, restoring its position, tallies, and revealed face', () => {
+  it('steps back a graded card, restoring its position and tallies, prompt side up', () => {
     const graded = studySessionReducer(
       { ...review(['a', 'b']), flipped: true },
       { type: 'grade', grade: 'good' },
@@ -192,7 +190,7 @@ describe('undo', () => {
       graded: 0,
       piles: { learning: 0, known: 0 },
       buckets: NO_BUCKETS,
-      flipped: true,
+      flipped: false,
       history: [],
     })
   })

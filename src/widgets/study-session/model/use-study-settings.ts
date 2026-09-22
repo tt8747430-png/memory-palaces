@@ -1,5 +1,6 @@
 import type { LearningAlgorithm } from '@/shared/config/algorithms'
 import type {
+  CentreTapAction,
   FlashcardInput,
   FlashcardSwipeAction,
   FlashcardSwipeConfig,
@@ -26,7 +27,11 @@ export interface StudySettingsControl {
   locked: ReadonlySet<EditableDeckPref>
   filterCounts: StudyFilterCounts
   set: <K extends keyof StudySettings>(key: K, next: StudySettings[K]) => void
-  setSwipe: (direction: SwipeDirection, action: FlashcardSwipeAction) => void
+  /** Sets one zone: an edge to an action, or the centre to an action or to turning the card over. */
+  setSwipe: {
+    (direction: SwipeDirection, action: FlashcardSwipeAction): void
+    (zone: 'centre', action: CentreTapAction): void
+  }
 }
 
 interface Args {
@@ -106,6 +111,7 @@ export function useStudySettings({
     locked,
     filterCounts,
     set,
-    setSwipe: (direction, action) => set('swipe', { ...value.swipe, [direction]: action }),
+    setSwipe: (zone: SwipeDirection | 'centre', action: CentreTapAction) =>
+      set('swipe', { ...value.swipe, [zone]: action }),
   }
 }

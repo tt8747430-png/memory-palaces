@@ -3,7 +3,7 @@ import { cleanup, screen, waitForElementToBeRemoved } from '@testing-library/rea
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders } from '@/shared/test/render-with-providers'
 import { ROUTES } from '@/shared/config/routes'
-import { useHideAppNav } from '@/shared/lib'
+import { BottomSlot } from '@/shared/ui'
 import { AppNav } from './AppNav'
 
 const { navigate, nav } = vi.hoisted(() => ({
@@ -52,26 +52,56 @@ describe('AppNav', () => {
     expect(container).toBeEmptyDOMElement()
   })
 
-  it('holds the slot open until it has actually gone, then gives it back', async () => {
+  it('hands its box to an occupant and takes it back, never letting the slot collapse', async () => {
     const inset = () => document.documentElement.style.getPropertyValue('--app-bottom-inset')
     function Selecting({ on }: { on: boolean }) {
-      useHideAppNav(on)
-      return <AppNav />
+      return (
+        <>
+          <AppNav />
+          <BottomSlot open={on}>
+            <div data-testid="toolbar">toolbar</div>
+          </BottomSlot>
+        </>
+      )
     }
 
     nav.path = ROUTES.home
     const { rerender } = renderWithProviders(<Selecting on={false} />)
     expect(screen.getByRole('navigation', { name: 'Primary' })).toBeInTheDocument()
+    expect(screen.queryByTestId('toolbar')).toBeNull()
 
     rerender(<Selecting on />)
-    // Still fading: the toolbar arriving in the same box must not find the slot collapsed.
+    // The occupant is in the dock at once, and the box beneath both never lets go of the slot.
+    expect(screen.getByTestId('toolbar')).toBeInTheDocument()
     expect(inset()).toContain('4rem')
     await waitForElementToBeRemoved(() => screen.queryByRole('navigation', { name: 'Primary' }))
-    expect(inset()).toBe('')
+    expect(inset()).toContain('4rem')
 
     rerender(<Selecting on={false} />)
     expect(screen.getByRole('navigation', { name: 'Primary' })).toBeInTheDocument()
+    await waitForElementToBeRemoved(() => screen.queryByTestId('toolbar'))
     expect(inset()).toContain('4rem')
+  })
+
+  it('opens the box for an occupant on a route without a tab, and closes it after', async () => {
+    nav.path = '/decks/abc123/questions'
+    function Selecting({ on }: { on: boolean }) {
+      return (
+        <>
+          <AppNav />
+          <BottomSlot open={on}>
+            <div data-testid="toolbar">toolbar</div>
+          </BottomSlot>
+        </>
+      )
+    }
+    const { rerender } = renderWithProviders(<Selecting on />)
+    expect(screen.getByTestId('toolbar')).toBeInTheDocument()
+    expect(screen.queryByRole('navigation', { name: 'Primary' })).toBeNull()
+
+    rerender(<Selecting on={false} />)
+    await waitForElementToBeRemoved(() => screen.queryByTestId('toolbar'))
+    expect(screen.queryByRole('navigation', { name: 'Primary' })).toBeNull()
   })
 
   it('raises the app bottom inset only while it is mounted', () => {

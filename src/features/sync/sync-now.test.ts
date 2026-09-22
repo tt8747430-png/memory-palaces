@@ -287,15 +287,28 @@ describe('syncNow', () => {
   it('does not refresh for a failure that has nothing to do with the token', async () => {
     const { deps, cloud } = syncFixture()
     await deps.deckStore.getState().save(deck('d1'))
-    cloud.failNextCycle('Failed to fetch')
+    cloud.failNextCycle('duplicate key value violates unique constraint')
     let refreshed = 0
     deps.refreshAuth = async () => {
       refreshed += 1
       return true
     }
 
-    await expect(syncNow(deps)).resolves.toEqual({ kind: 'failed', reason: 'Failed to fetch' })
+    await expect(syncNow(deps)).resolves.toEqual({
+      kind: 'failed',
+      reason: 'duplicate key value violates unique constraint',
+    })
     expect(refreshed).toBe(0)
+  })
+
+  it('names a request the browser cut short as the network, not as the browser worded it', async () => {
+    const { deps, cloud } = syncFixture()
+    await deps.deckStore.getState().save(deck('d1'))
+    cloud.failNextCycle('AbortError: Fetch is aborted')
+    deps.refreshAuth = async () => true
+
+    expect(await syncNow(deps)).toEqual({ kind: 'failed', reason: 'network' })
+    expect(selectSyncState(deps.syncStateStore.getState()).log[0]?.reason).toBe('network')
   })
 
   it('names a device clock the learner can fix instead of repeating the server', async () => {

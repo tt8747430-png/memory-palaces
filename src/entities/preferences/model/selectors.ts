@@ -21,6 +21,10 @@ export const selectDeckSort = (state: PreferencesState): DeckSort =>
 export const selectDeckSortSubdecks = (state: PreferencesState): boolean =>
   selectEffectivePreferences(state).deckSortSubdecks
 
+/** The stored map, not a copy — a subscriber can compare it by identity. */
+export const selectSubdeckSorts = (state: PreferencesState): Readonly<Record<string, DeckSort>> =>
+  selectEffectivePreferences(state).subdeckSorts
+
 export const selectFlashcardInput = (state: PreferencesState): FlashcardInput =>
   selectEffectivePreferences(state).flashcardInput
 

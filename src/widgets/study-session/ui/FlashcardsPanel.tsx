@@ -17,7 +17,7 @@ import {
   studyFilterCounts as computeFilterCounts,
   upcomingIds,
 } from '@/features/review'
-import { isFastAction, isGradeAction, type SwipeDirection } from '@/shared/config/flashcard-swipe'
+import { isFastAction, isGradeAction, type TapZone } from '@/shared/config/flashcard-swipe'
 import { CardScene, IconButton, StudySessionHeader } from '@/shared/ui'
 import { CardDraftSheet } from '@/widgets/content-editor'
 import { studyFaces } from '../model/study-faces'
@@ -253,8 +253,8 @@ export function FlashcardsPanel({
    * A swipe means what the Deck's algorithm can honour. The config is keyed by that algorithm, so
    * a Grade cannot reach a Fast review session, nor a Fast review answer a Spaced repetition one.
    */
-  const handleCommit = (dir: SwipeDirection) => {
-    const action = activeSwipe[dir]
+  const handleCommit = (zone: TapZone) => {
+    const action = activeSwipe[zone]
     if (action === 'flag') handleFlag()
     else if (action === 'skip') applySkip()
     else if (isGradeAction(action)) applyGrade(action)

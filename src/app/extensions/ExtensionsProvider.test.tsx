@@ -24,6 +24,17 @@ function Host() {
   )
 }
 
+function Orders() {
+  const orders = useExtensionPoint('deckSorts')
+  const filters = useExtensionPoint('deckFilters')
+  return (
+    <>
+      <span>{orders.length === 0 ? 'no orders' : orders.map((order) => order.id).join(',')}</span>
+      <span>{filters.length === 0 ? 'no filters' : filters.map((f) => f.id).join(',')}</span>
+    </>
+  )
+}
+
 function Services() {
   const services = useExtensionServices<{ activation: number }>('fake')
   return <span>activation {services.activation}</span>
@@ -126,6 +137,27 @@ describe('ExtensionsProvider', () => {
   it('offers a row whose feature nobody has ever touched', () => {
     renderWith(['fake'], <Host />, withFeature())
     expect(screen.getByText('fake:label')).toBeInTheDocument()
+  })
+
+  it('publishes the orders an active extension contributes, withdrawn with their feature', async () => {
+    const manifest = withFeature()
+    manifest.contributions.deckSorts = [
+      { id: 'fake:az', labelKey: 'fake:az', icon: <span />, rank: () => null },
+      { id: 'fake:rows', labelKey: 'fake:rows', icon: <span />, rank: () => null, feature: 'rows' },
+    ]
+    manifest.contributions.deckFilters = [
+      { id: 'fake:odd', labelKey: 'fake:odd', icon: <span />, keep: () => true, feature: 'rows' },
+    ]
+    const preferences = renderWith(['fake'], <Orders />, manifest)
+    expect(screen.getByText('fake:az,fake:rows')).toBeInTheDocument()
+    expect(screen.getByText('fake:odd')).toBeInTheDocument()
+
+    await act(() => setExtensionFeature(preferences, 'fake', 'rows', false))
+    expect(screen.getByText('fake:az')).toBeInTheDocument()
+    expect(screen.getByText('no filters')).toBeInTheDocument()
+
+    await act(() => setExtensionEnabled(preferences, 'fake', false))
+    expect(screen.getByText('no orders')).toBeInTheDocument()
   })
 
   it('leaves a row that belongs to no feature alone', async () => {

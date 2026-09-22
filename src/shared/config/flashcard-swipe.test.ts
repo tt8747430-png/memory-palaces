@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   actionsFor,
+  centreActionsFor,
   DEFAULT_FLASHCARD_SWIPE,
   isAdvancingAction,
   isFastAction,
@@ -31,6 +32,17 @@ describe('actionsFor', () => {
   })
 })
 
+describe('centreActionsFor', () => {
+  it('offers everything an edge does, and turning the card over besides', () => {
+    const actions = centreActionsFor('spaced', 'blur')
+    expect(actions).toEqual([...actionsFor('spaced', 'blur'), 'flip'])
+  })
+
+  it('never offers turning the card over to an edge', () => {
+    expect(actionsFor('spaced', 'blur')).not.toContain('flip')
+  })
+})
+
 describe('isAdvancingAction', () => {
   it('sends the card away for a Grade, a Fast review answer and a skip', () => {
     for (const action of ['again', 'hard', 'good', 'easy', 'gotIt', 'notQuite', 'skip'] as const) {
@@ -54,6 +66,11 @@ describe('isAdvancingAction', () => {
 })
 
 describe('defaults', () => {
+  it('leaves the centre of a revealed card doing nothing until the learner says otherwise', () => {
+    expect(DEFAULT_FLASHCARD_SWIPE.spaced.centre).toBe('none')
+    expect(DEFAULT_FLASHCARD_SWIPE.fast.centre).toBe('none')
+  })
+
   it('sends a fling each way to the answer its algorithm can honour', () => {
     expect(DEFAULT_FLASHCARD_SWIPE.spaced.right).toBe('good')
     expect(DEFAULT_FLASHCARD_SWIPE.fast.right).toBe('gotIt')
@@ -95,7 +112,13 @@ describe('normalizeFlashcardSwipe', () => {
 
   it('reads the oldest flat map into every Spaced repetition mode', () => {
     const read = normalizeFlashcardSwipe({ up: 'skip', down: 'flag', left: 'hard', right: 'easy' })
-    expect(read.spaced.blur).toEqual({ up: 'skip', down: 'flag', left: 'hard', right: 'easy' })
+    expect(read.spaced.blur).toEqual({
+      up: 'skip',
+      down: 'flag',
+      left: 'hard',
+      right: 'easy',
+      centre: 'none',
+    })
     expect(read.spaced.type.right).toBe('easy')
     expect(read.fast.type).toEqual(DEFAULT_FLASHCARD_SWIPE.fast)
   })
@@ -113,6 +136,19 @@ describe('normalizeFlashcardSwipe', () => {
       spaced: { blur: { up: 'nextWord', down: 'skip', left: 'again', right: 'good' } },
     })
     expect(read.spaced.blur.up).toBe(DEFAULT_FLASHCARD_SWIPE.spaced.up)
+  })
+
+  it('reads a centre the learner set, and refuses one an edge could not take either', () => {
+    const read = normalizeFlashcardSwipe({
+      spaced: {
+        blur: { ...DEFAULT_FLASHCARD_SWIPE.spaced, centre: 'flip' },
+        words: { ...DEFAULT_FLASHCARD_SWIPE.spaced, centre: 'good' },
+        type: { ...DEFAULT_FLASHCARD_SWIPE.spaced, centre: 'gotIt' },
+      },
+    })
+    expect(read.spaced.blur.centre).toBe('flip')
+    expect(read.spaced.words.centre).toBe('good')
+    expect(read.spaced.type.centre).toBe('none')
   })
 
   it('shrugs off anything that is not a map at all', () => {

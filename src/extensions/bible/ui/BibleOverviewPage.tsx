@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { BookOpen, Layers, Library, Power, WifiOff, Wrench } from 'lucide-react'
+import { BookOpen, Power, WifiOff, Wrench } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   isExtensionFeatureOn,
@@ -13,15 +13,13 @@ import { cn, useContributedT } from '@/shared/lib'
 import {
   AppScreen,
   cardSurface,
-  ConfirmDialog,
   ScreenHeader,
   ScreenLoading,
   SettingsRow,
   SettingsSection,
 } from '@/shared/ui'
-import { DestinationSheet } from '@/widgets/deck-tree'
 import { useBibleT } from '../i18n/use-bible-t'
-import { BIBLE_FEATURES, BIBLE_ID } from '../ids'
+import { BIBLE_ID } from '../ids'
 import { bibleManifest } from '../manifest'
 import { useBibleLibrary } from '../model/use-bible-library'
 
@@ -34,8 +32,10 @@ export interface BibleOverviewPageProps {
 }
 
 /**
- * The extension's front door: what it is, what it provides, which parts are switched on, and what
- * its library holds. Every switch here is a local write, so the screen works offline and says so.
+ * The extension's front door: what it is, what it provides, and which parts are switched on. Every
+ * switch here is a local write, so the screen works offline and says so. The library itself —
+ * what it holds, and filling it — is a corpus every account reads, so it lives behind Developer
+ * mode rather than here.
  */
 export function BibleOverviewPage({
   onBack,
@@ -52,7 +52,6 @@ export function BibleOverviewPage({
   const page = useBibleLibrary()
 
   const featureOn = (id: string) => isExtensionFeatureOn({ disabledFeatures }, BIBLE_ID, id)
-  const libraryOn = featureOn(BIBLE_FEATURES.library)
 
   const toggleFeature = (id: string, on: boolean) => {
     void setExtensionFeature(store, BIBLE_ID, id, on).catch(() => toast.error(t('featureFailed')))
@@ -103,42 +102,6 @@ export function BibleOverviewPage({
           ))}
         </SettingsSection>
 
-        <SettingsSection title={t('libraryTitle')}>
-          <SettingsRow
-            kind="value"
-            icon={<Library />}
-            label={t('overviewHolding')}
-            value={
-              page.empty
-                ? t('overviewHoldingNone')
-                : t('overviewHoldingCount', {
-                    books: page.totals.books,
-                    count: page.totals.verses,
-                  })
-            }
-          />
-          {libraryOn ? (
-            <>
-              <SettingsRow
-                kind="action"
-                icon={<Library />}
-                label={t('addFromCards')}
-                description={t('addFromCardsHint')}
-                onClick={page.addFromAllCards}
-              />
-              <SettingsRow
-                kind="action"
-                icon={<Layers />}
-                label={t('addFromDeck')}
-                description={t('addFromDeckHint')}
-                onClick={page.requestDeckPick}
-              />
-            </>
-          ) : (
-            <SettingsRow kind="info" icon={<Library />} label={t('libraryOff')} />
-          )}
-        </SettingsSection>
-
         <SettingsSection title={t('overviewManage')}>
           {devMode ? (
             <SettingsRow
@@ -163,41 +126,6 @@ export function BibleOverviewPage({
           />
         </SettingsSection>
       </div>
-
-      <DestinationSheet
-        open={page.pending?.kind === 'pick-deck'}
-        onOpenChange={(open) => {
-          if (!open) page.dismiss()
-        }}
-        title={t('addFromDeck')}
-        subtitle={t('addFromDeckHint')}
-        action={{ prompt: t('pickDeckPrompt'), confirm: (name) => t('addDeck', { name }) }}
-        targets="deck"
-        decks={page.decks}
-        folders={page.folders}
-        onPick={(dest) => {
-          if (dest.kind === 'deck') page.addFromDeck(dest.deckId)
-        }}
-      />
-
-      {page.pending?.kind === 'add' ? (
-        <ConfirmDialog
-          open
-          onOpenChange={(open) => {
-            if (!open) page.dismiss()
-          }}
-          icon={<Library className="size-6" aria-hidden />}
-          title={t('addFromCards')}
-          description={t('addPreview', {
-            fresh: page.pending.text.fresh.length,
-            cards: page.pending.text.cards,
-            held: page.pending.text.held,
-          })}
-          confirmLabel={t('addVerses', { count: page.pending.text.fresh.length })}
-          cancelLabel={core('common.cancel')}
-          onConfirm={page.confirm}
-        />
-      ) : null}
     </AppScreen>
   )
 }

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import {
   Archive,
+  ArrowDownUp,
   ArrowLeftRight,
   CheckSquare,
   Copy,
@@ -44,6 +45,7 @@ const ACTION_ICON: Record<ActionId, LucideIcon> = {
   reverse: ArrowLeftRight,
   history: History,
   style: Palette,
+  sortSubdecks: ArrowDownUp,
   delete: Trash2,
 }
 

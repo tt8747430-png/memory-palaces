@@ -7,7 +7,7 @@ import { type CardStylePreset, completeDeck, type Deck } from '@/entities/deck'
 import type { Card } from '@/entities/card'
 import type { Question } from '@/entities/question'
 import type { Progress } from '@/entities/progress'
-import { DEFAULT_PREFERENCES, type Preferences } from '@/entities/preferences'
+import { DEFAULT_PREFERENCES, type Preferences, resolveSubdeckSorts } from '@/entities/preferences'
 import { resolveDeckSort } from '@/shared/lib'
 import { normalizeFlashcardSwipe, resolveFlashcardInput } from '@/shared/config/flashcard-swipe'
 import type { Profile } from '@/entities/profile'
@@ -122,6 +122,15 @@ export const preferencesMigrations = {
     flashcardInput: resolveFlashcardInput(doc.flashcardInput),
     deckSort: resolveDeckSort(doc.deckSort),
     deckSortSubdecks: doc.deckSortSubdecks ?? DEFAULT_PREFERENCES.deckSortSubdecks,
+  }),
+  /**
+   * One deck's subdecks can be put in an order of their own, and an extension can contribute an
+   * order under its own id — so the sort is any name now, not one of four. Nobody has chosen a
+   * subdeck order yet. `resolveSubdeckSorts` is the read-side twin.
+   */
+  7: (doc: Preferences): Preferences => ({
+    ...doc,
+    subdeckSorts: resolveSubdeckSorts(doc.subdeckSorts),
   }),
 }
 

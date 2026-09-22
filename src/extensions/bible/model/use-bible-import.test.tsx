@@ -123,73 +123,19 @@ describe('useBibleImport — splitting', () => {
   })
 })
 
-describe('useBibleImport — saving to the Bible library', () => {
-  it('offers to save only the verses the library lacks', async () => {
-    const { result, pick } = render(undefined, { verses: genesisOne })
-    await pick(1, 1, 3)
-    act(() => result.current.setText('1) First.\n2) Second.\n3) Third.'))
-    expect(result.current.saveCount).toBe(1)
-    expect(result.current.save).toBe(true)
-  })
-
-  it('offers nothing when the library holds the whole passage', async () => {
-    const { result, pick } = render(undefined, { verses: genesis })
-    await pick(1, 1, 3)
-    expect(result.current.saveCount).toBe(0)
-  })
-
-  it('saves the missing verses with the cards — every verse, even with splitting off', async () => {
+describe('useBibleImport — the Bible library is read, never written', () => {
+  it('adds the cards and leaves the library exactly as it was', async () => {
     const { result, pick, verseStore, onReview } = render(undefined, { verses: genesisOne })
     await pick(1, 1, 3)
     act(() => result.current.setText('1) Pasted over.\n2) Second.\n3) Third.'))
-    act(() => result.current.set('split', false))
 
     act(() => result.current.add())
 
     await waitFor(() => expect(onReview).toHaveBeenCalledTimes(1))
-    await waitFor(() => expect(verseStore.getState().verses).toHaveLength(3))
-    const texts = verseStore.getState().verses.map((held) => [held.verse, held.text])
-    // Verse 1 was held already and keeps its text; only verse 2 was new.
-    expect(texts).toEqual([
+    expect(verseStore.getState().verses.map((held) => [held.verse, held.text])).toEqual([
       [1, 'First.'],
-      [2, 'Second.'],
       [3, 'Third.'],
     ])
-  })
-
-  it('has the verses in the library before it hands the cards to review', async () => {
-    const { result, pick, verseStore, onReview } = render(undefined, { verses: genesisOne })
-    // A library slower to write than the deck: review must still wait for it.
-    const save = verseStore.getState().save
-    verseStore.setState({
-      save: async (held) => {
-        await new Promise((resolve) => setTimeout(resolve, 20))
-        return save(held)
-      },
-    })
-    let heldAtReview: number | null = null
-    onReview.mockImplementation(() => {
-      heldAtReview = verseStore.getState().verses.length
-    })
-    await pick(1, 1, 3)
-    act(() => result.current.setText('1) First.\n2) Second.\n3) Third.'))
-
-    act(() => result.current.add())
-
-    await waitFor(() => expect(onReview).toHaveBeenCalledTimes(1))
-    expect(heldAtReview).toBe(3)
-  })
-
-  it('saves nothing when the learner switches saving off', async () => {
-    const { result, pick, verseStore, onReview } = render()
-    await pick(1, 1, 1)
-    act(() => result.current.setText('1) First.'))
-    act(() => result.current.set('save', false))
-
-    act(() => result.current.add())
-
-    await waitFor(() => expect(onReview).toHaveBeenCalledTimes(1))
-    expect(verseStore.getState().verses).toEqual([])
   })
 })
 

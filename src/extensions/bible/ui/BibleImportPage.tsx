@@ -102,15 +102,6 @@ export function BibleImportPage({ deckId, onBack, onReview, onShowDeck }: BibleI
               />
             ) : null}
 
-            {page.saveCount > 0 ? (
-              <ToggleRow
-                label={t('saveToLibrary', { count: page.saveCount })}
-                description={t('saveToLibraryHint')}
-                checked={page.save}
-                onChange={(on) => page.set('save', on)}
-              />
-            ) : null}
-
             <DuplicatesBanner
               duplicates={page.duplicates}
               keep={page.keepDuplicates}

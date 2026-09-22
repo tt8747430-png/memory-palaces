@@ -8,6 +8,10 @@ const DropdownMenu = Menu.Root
 const DropdownMenuTrigger = Menu.Trigger
 const DropdownMenuGroup = Menu.Group
 
+function DropdownMenuSeparator({ className }: { className?: string }) {
+  return <Menu.Separator className={cn('mx-2 my-1 h-px bg-border/60', className)} />
+}
+
 type Side = 'top' | 'bottom' | 'left' | 'right'
 type Align = 'start' | 'center' | 'end'
 
@@ -143,5 +147,6 @@ export {
   DropdownMenuItemIcon,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   menuItemVariants,
 }

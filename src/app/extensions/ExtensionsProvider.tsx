@@ -4,6 +4,7 @@ import {
   type ActiveExtensions,
   type ExtensionContributions,
   type ExtensionManifest,
+  type ExtensionPoint,
   ExtensionPointsContext,
   ExtensionServicesContext,
   isExtensionActive,
@@ -30,14 +31,15 @@ function mergeContributions(
 ): ExtensionContributions {
   const offered = (manifest: ExtensionManifest, feature: string | undefined) =>
     feature === undefined || isExtensionFeatureOn(switches, manifest.id, feature)
+  const live = manifests.filter((manifest) => isExtensionActive(active, manifest.id))
+  const gather = <Point extends ExtensionPoint>(point: Point) =>
+    live.flatMap((manifest) =>
+      (manifest.contributions[point] ?? []).filter((item) => offered(manifest, item.feature)),
+    ) as NonNullable<ExtensionContributions[Point]>
   return {
-    importOptions: manifests
-      .filter((manifest) => isExtensionActive(active, manifest.id))
-      .flatMap((manifest) =>
-        (manifest.contributions.importOptions ?? []).filter((option) =>
-          offered(manifest, option.feature),
-        ),
-      ),
+    importOptions: gather('importOptions'),
+    deckSorts: gather('deckSorts'),
+    deckFilters: gather('deckFilters'),
   }
 }
 

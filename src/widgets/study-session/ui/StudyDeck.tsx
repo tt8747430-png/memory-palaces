@@ -7,12 +7,12 @@ import type {
   FlashcardInput,
   FlashcardSwipeConfig,
   SwipeDirection,
+  TapZone,
 } from '@/shared/config/flashcard-swipe'
 import { BackFace, type FaceProps, FrontFace, type MechanicHandlers } from './faces'
 import { DEPTH_POSE, PROMOTION } from './deck-poses'
 import { DirectionChip } from './DirectionChip'
 import { QueuedCard } from './QueuedCard'
-import { ZoneHints } from './ZoneHints'
 import { useCardSwipe } from '../model/use-card-swipe'
 import { studyFaces } from '../model/study-faces'
 import type { StudyCard, StudyDirection } from '../model/types'
@@ -42,7 +42,7 @@ export interface StudyDeckProps {
   onFlip: () => void
   onReveal: () => void
   onUnflip: () => void
-  onCommit: (direction: SwipeDirection) => void
+  onCommit: (zone: TapZone) => void
   onSpeak: (text: string) => void
   onChangeMode: () => void
   onOpenGear: () => void
@@ -91,6 +91,7 @@ export function StudyDeck({
   const swipe = useCardSwipe({
     swipeConfig,
     input,
+    showBack,
     reduce: Boolean(reduce),
     onFlip: handleFlip,
     onLongPress,
@@ -142,20 +143,18 @@ export function StudyDeck({
         />
       ))}
 
-      {input === 'tap' ? (
-        <ZoneHints config={swipeConfig} />
-      ) : (
-        CHIPS.map(({ dir, className }) => (
-          <DirectionChip
-            key={dir}
-            action={swipeConfig[dir]}
-            x={swipe.x}
-            y={swipe.y}
-            dir={dir}
-            className={className}
-          />
-        ))
-      )}
+      {input === 'swipe'
+        ? CHIPS.map(({ dir, className }) => (
+            <DirectionChip
+              key={dir}
+              action={swipeConfig[dir]}
+              x={swipe.x}
+              y={swipe.y}
+              dir={dir}
+              className={className}
+            />
+          ))
+        : null}
 
       <motion.div
         {...(swipe.bind() as unknown as HTMLMotionProps<'div'>)}

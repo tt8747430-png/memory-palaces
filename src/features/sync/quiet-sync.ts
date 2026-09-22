@@ -1,8 +1,9 @@
-import { errorMessage, type SyncOutcome } from '@/shared/lib'
+import type { SyncOutcome } from '@/shared/lib'
 import { pendingIn, selectPendingChanges } from '@/entities/pending-change'
 import { selectSyncState } from '@/entities/sync-state'
 import { advance, peekAll, peekedCount, scopedCheckpoints, stepOverOwnEcho } from './divergence'
 import { clearConfirmed } from './clear-confirmed'
+import { failed } from './failed'
 import type { SyncDeps } from './sync-deps'
 
 /**
@@ -45,6 +46,6 @@ export async function quietSync(deps: SyncDeps): Promise<SyncOutcome> {
 
     return { kind: peekedCount(peeked) ? 'merged' : 'clean' }
   } catch (error) {
-    return { kind: 'failed', reason: errorMessage(error) }
+    return failed(error)
   }
 }

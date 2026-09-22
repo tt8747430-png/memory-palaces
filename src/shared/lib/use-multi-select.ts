@@ -8,6 +8,8 @@ export interface MultiSelect {
   allSelected: boolean
   has: (id: string) => boolean
   begin: (id: string) => void
+  /** Opens the mode with nothing selected yet. */
+  enter: () => void
   toggle: (id: string) => void
   toggleAll: () => void
   exit: () => void
@@ -45,6 +47,8 @@ export function useMultiSelect({ expand = itself }: MultiSelectOptions = {}): Mu
     },
     [expand],
   )
+
+  const enter = useCallback(() => setActive(true), [])
 
   const toggle = useCallback(
     (id: string) => {
@@ -86,11 +90,12 @@ export function useMultiSelect({ expand = itself }: MultiSelectOptions = {}): Mu
       allSelected,
       has,
       begin,
+      enter,
       toggle,
       toggleAll,
       exit,
       setVisibleIds,
     }),
-    [active, ids, allSelected, has, begin, toggle, toggleAll, exit, setVisibleIds],
+    [active, ids, allSelected, has, begin, enter, toggle, toggleAll, exit, setVisibleIds],
   )
 }

@@ -123,19 +123,16 @@ describe('StudyDeck reversed cards', () => {
 })
 
 describe('StudyDeck answering by tap', () => {
-  it('names what each edge does — the swipe chips cannot, the card never moves', () => {
+  it('prints nothing on the card about what the edges do — the face is the learner’s to read', () => {
     renderWithProviders(<StudyDeck {...baseProps({ input: 'tap' })} />)
-    // The spaced defaults: left Again, right Good, up Flag, down Skip.
     for (const label of ['Again', 'Good', 'Flag', 'Skip']) {
-      expect(screen.getByText(label)).toBeInTheDocument()
+      expect(screen.queryByText(label)).toBeNull()
     }
   })
 
-  it('leaves the edges unnamed while answers are thrown — the chips light on the drag', () => {
+  it('keeps the drag-lit chips while answers are thrown', () => {
     renderWithProviders(<StudyDeck {...baseProps({ input: 'swipe' })} />)
-    // The chips exist, but as drag-lit labels rather than the static edge hints.
     expect(screen.getAllByText('Again').length).toBe(1)
-    expect(document.querySelector('[class*="writing-mode"]')).toBeNull()
   })
 
   it('offers turning the card over from the card itself, in both input modes', () => {

@@ -2,8 +2,15 @@ import { type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Eye, Lock, MapPin, Share2, TrendingUp } from 'lucide-react'
 import { type PrivacySettings, usePreferencesStore } from '@/entities/preferences'
-import { selectIsReady } from '@/shared/lib'
-import { AppScreen, ScreenHeader, ScreenLoading, SettingsRow, SettingsSection } from '@/shared/ui'
+import { cn, selectIsReady } from '@/shared/lib'
+import {
+  AppScreen,
+  noteSurface,
+  ScreenHeader,
+  ScreenLoading,
+  SettingsRow,
+  SettingsSection,
+} from '@/shared/ui'
 
 export interface SettingsPrivacyPageProps {
   onBack?: () => void
@@ -61,11 +68,11 @@ export function SettingsPrivacyPage({ onBack }: SettingsPrivacyPageProps) {
       }
     >
       <div className="mt-4 flex flex-col gap-5">
-        <div className="rounded-card bg-info-surface p-4">
-          <p className="text-body font-semibold text-info-foreground">
+        <div className={cn(noteSurface, 'p-4')}>
+          <p className="text-body font-semibold text-heading">
             {t('settings.privacyScreen.bannerTitle')}
           </p>
-          <p className="mt-1 text-label leading-snug text-info-foreground/80">
+          <p className="mt-1 text-label leading-snug text-muted-foreground">
             {t('settings.privacyScreen.bannerBody')}
           </p>
         </div>

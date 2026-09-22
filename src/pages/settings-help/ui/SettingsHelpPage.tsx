@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { BookOpen, ChevronDown, Mail } from 'lucide-react'
-import { AppScreen, ScreenHeader, SettingsSection } from '@/shared/ui'
+import { cn } from '@/shared/lib'
+import { AppScreen, noteSurface, ScreenHeader, SettingsSection } from '@/shared/ui'
 
 const CATEGORIES = [
   { key: 'gettingStarted', items: ['1', '2', '3'] },
@@ -50,10 +51,8 @@ export function SettingsHelpPage({ onBack }: { onBack?: () => void }) {
           </SettingsSection>
         ))}
 
-        <div className="rounded-card bg-info-surface p-4">
-          <p className="text-body font-semibold text-info-foreground">
-            {t('settings.help.contactTitle')}
-          </p>
+        <div className={cn(noteSurface, 'p-4')}>
+          <p className="text-body font-semibold text-heading">{t('settings.help.contactTitle')}</p>
           <div className="mt-2 flex flex-col gap-2.5">
             <a
               href={`mailto:${t('settings.help.email')}`}

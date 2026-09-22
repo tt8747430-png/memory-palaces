@@ -240,7 +240,7 @@ export const progressSchema: RxJsonSchema<Progress> = {
 }
 
 export const preferencesSchema: RxJsonSchema<Preferences> = {
-  version: 6,
+  version: 7,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -279,8 +279,10 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
       additionalProperties: false,
     },
     flashcardInput: { type: 'string', enum: ['swipe', 'tap'] },
-    deckSort: { type: 'string', enum: ['manual', 'name', 'recent', 'due'] },
+    // Open, not an enum: an extension contributes orders under its own ids.
+    deckSort: { type: 'string' },
     deckSortSubdecks: { type: 'boolean' },
+    subdeckSorts: { type: 'object' },
     disabledFeatures: { type: 'object' },
     selectToolbar: {
       type: 'object',
@@ -337,6 +339,7 @@ export const preferencesSchema: RxJsonSchema<Preferences> = {
     'selectToolbar',
     'deckSort',
     'deckSortSubdecks',
+    'subdeckSorts',
     'privacy',
     'extensions',
     'disabledFeatures',

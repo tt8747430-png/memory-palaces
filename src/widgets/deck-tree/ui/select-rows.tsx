@@ -69,6 +69,8 @@ interface SelectRowProps {
   selected: boolean
   onToggleSelect: (id: string) => void
   landingRef: (node: HTMLElement | null) => void
+  /** The row cannot be dragged: its list is in an order a drag is not allowed to write. */
+  fixed?: boolean
 }
 
 function SelectRow({
@@ -79,6 +81,7 @@ function SelectRow({
   selected,
   onToggleSelect,
   landingRef,
+  fixed = false,
   children,
 }: SelectRowProps & {
   id: string
@@ -89,7 +92,7 @@ function SelectRow({
 }) {
   const { t } = useTranslation()
   return (
-    <SortableRow as="li" id={id} landingRef={landingRef}>
+    <SortableRow as="li" id={id} landingRef={landingRef} disabled={fixed}>
       {({ frameRef, handleRef, handleProps, isDragging }) => (
         <div
           ref={frameRef}

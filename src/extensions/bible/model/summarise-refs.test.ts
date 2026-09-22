@@ -20,6 +20,12 @@ describe('summariseRefs', () => {
     expect(summariseRefs(['Efeseni 3:6', 'Efeseni 4:1']).text).toBe('Efeseni 3:6, Efeseni 4:1')
   })
 
+  it('orders a numbered book before its sequel, and its chapters by number', () => {
+    expect(summariseRefs(['2 Corinteni 1:1', '1 Corinteni 10:1', '1 Corinteni 1:1']).text).toBe(
+      '1 Corinteni 1:1, 1 Corinteni 10:1, 2 Corinteni 1:1',
+    )
+  })
+
   it('sorts what arrives out of order', () => {
     expect(summariseRefs(['Efeseni 3:8', 'Efeseni 3:6', 'Efeseni 3:7']).text).toBe('Efeseni 3:6–8')
   })

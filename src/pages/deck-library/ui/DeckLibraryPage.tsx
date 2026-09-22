@@ -12,7 +12,7 @@ import { DeckTree, LibrarySelectList, DestinationSheet } from '@/widgets/deck-tr
 import { HomeHeader } from '@/widgets/home-header'
 import { SyncBanner } from '@/widgets/sync'
 import { useImportFile } from '@/widgets/content-editor'
-import { nextDefaultName, useExtensionPoint, useHideAppNav } from '@/shared/lib'
+import { nextDefaultName, useExtensionPoint } from '@/shared/lib'
 import {
   ActionSheet,
   AppScreen,
@@ -23,7 +23,7 @@ import {
   ScreenHeader,
   SelectHeader,
   SelectToolbar,
-  BottomDock,
+  BottomSlot,
   type SheetAction,
   type ActionHandlers,
 } from '@/shared/ui'
@@ -35,7 +35,7 @@ import { FolderSheet } from './FolderSheet'
 import { LibraryDialogs } from './LibraryDialogs'
 import { LibraryEmpty } from './LibraryEmpty'
 import { LibrarySkeleton } from './LibrarySkeleton'
-import { LibrarySortBar } from './LibrarySortBar'
+import { LibrarySelectBar } from './LibrarySelectBar'
 import { LibraryStyleSheet } from './LibraryStyleSheet'
 import { LibrarySpeedDial } from './LibrarySpeedDial'
 
@@ -103,8 +103,6 @@ export function DeckLibraryPage({
   const [folderSheetTarget, setFolderSheetTarget] = useState<Folder | null | undefined>(undefined)
   const [folderMenuOpen, setFolderMenuOpen] = useState(false)
 
-  useHideAppNav(selection.active)
-
   const defaultCreateName = useMemo(() => {
     if (!createPrompt) return ''
     if (createPrompt.kind === 'subdeck') {
@@ -168,6 +166,10 @@ export function DeckLibraryPage({
     },
     duplicate: { onAction: () => act.duplicate(deck) },
     archive: { onAction: () => act.archiveDeck(deck) },
+    // Only a deck with subdecks has any to sort; without them the rail leaves the slot out.
+    ...(decks.some((d) => d.parentId === deck.id && !d.archived)
+      ? { sortSubdecks: { onAction: () => library.sortSubdecks(deck.id) } }
+      : {}),
     delete: { onAction: () => library.request({ kind: 'delete-deck', deck }) },
   })
 
@@ -240,27 +242,36 @@ export function DeckLibraryPage({
           onImport={() => setImportOpen(true)}
         />
       ) : selection.active ? (
-        <LibrarySelectList
-          folders={library.sectionFolders}
-          decks={library.sectionDecks}
-          allDecks={decks}
-          cards={library.cards}
-          folderDeckCounts={library.folderDeckCounts}
-          selectedIds={selection.ids}
-          onToggleSelect={selection.toggle}
-          onReorderFolders={act.reorderFolderIds}
-          onReorderDecks={act.reorderDeckIds}
-          onFileDecks={act.fileDecksIntoFolder}
-        />
-      ) : (
-        <div className="flex flex-col gap-2 pt-2">
-          <LibrarySortBar
+        <div className="flex flex-col gap-1 pt-2">
+          <LibrarySelectBar
+            scopeName={library.scope?.name ?? null}
             sort={library.deckSort}
             onSortChange={library.setDeckSort}
-            subdecks={library.deckSortSubdecks}
-            onSubdecksChange={library.setDeckSortSubdecks}
+            filter={library.filter}
+            onFilterChange={library.setFilter}
+            allSubdecks={library.allSubdecks}
+            onAllSubdecksChange={library.setAllSubdecks}
+            shown={library.sectionDecks.length}
+            hidden={library.hidden}
           />
-
+          <LibrarySelectList
+            folders={library.sectionFolders}
+            decks={library.sectionDecks}
+            allDecks={decks}
+            cards={library.cards}
+            folderDeckCounts={library.folderDeckCounts}
+            selectedIds={selection.ids}
+            onToggleSelect={selection.toggle}
+            onReorderFolders={act.reorderFolderIds}
+            onReorderDecks={act.reorderDeckIds}
+            onFileDecks={act.fileDecksIntoFolder}
+            headings={library.headings}
+            canReorderDecks={library.canReorderDecks}
+            canReorderFolders={library.canReorderFolders}
+          />
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2 pt-2">
           {library.sectionFolders.map((folder) => (
             <FolderRow
               key={folder.id}
@@ -283,17 +294,18 @@ export function DeckLibraryPage({
             onRequestSelect={selection.begin}
             swipe={prefs.swipe.deck}
             swipeHandlers={deckSwipeHandlers}
+            headings={library.headings}
           />
         </div>
       )}
 
-      <BottomDock open={selection.active}>
+      <BottomSlot open={selection.active}>
         <SelectToolbar
           actions={prefs.selectToolbar.library}
           handlers={library.selectHandlers}
           selection={selection}
         />
-      </BottomDock>
+      </BottomSlot>
 
       {!library.isEmpty && !selection.active ? (
         <LibrarySpeedDial

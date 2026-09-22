@@ -12,8 +12,16 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { type Deck, resolveDeckSettings } from '@/entities/deck'
 import type { Folder } from '@/entities/folder'
 import type { Card } from '@/entities/card'
-import { dueCountsPerDeck, impact, useSortableBlock, useSortableSensors } from '@/shared/lib'
-import { StackedDragPreview } from '@/shared/ui'
+import { Fragment } from 'react'
+import {
+  type DeckGroup,
+  dueCountsPerDeck,
+  impact,
+  useContributedT,
+  useSortableBlock,
+  useSortableSensors,
+} from '@/shared/lib'
+import { GroupHeading, StackedDragPreview } from '@/shared/ui'
 import { Section, SelectDeckRow, SelectFolderRow, StackLayer } from './select-rows'
 
 export interface LibrarySelectListProps {
@@ -27,8 +35,15 @@ export interface LibrarySelectListProps {
   onReorderFolders: (ids: string[]) => void
   onReorderDecks: (ids: string[]) => void
   onFileDecks: (deckIds: string[], folderId: string) => void
+  /** The heading to print over a deck row, by id, when the order shelves the rows. */
+  headings?: ReadonlyMap<string, DeckGroup>
+  /** Whether a drag may reorder the rows — only where they are in the manual order. */
+  canReorderDecks?: boolean
+  canReorderFolders?: boolean
   now?: number
 }
+
+const NO_HEADINGS: ReadonlyMap<string, DeckGroup> = new Map()
 
 export function LibrarySelectList({
   folders,
@@ -41,9 +56,13 @@ export function LibrarySelectList({
   onReorderFolders,
   onReorderDecks,
   onFileDecks,
+  headings = NO_HEADINGS,
+  canReorderDecks = true,
+  canReorderFolders = true,
   now = Date.now(),
 }: LibrarySelectListProps) {
   const { t } = useTranslation()
+  const contributed = useContributedT()
   const headingId = useId()
   const sensors = useSortableSensors()
 
@@ -141,6 +160,7 @@ export function LibrarySelectList({
                   isDropTarget={fileIntoId === folder.id}
                   onToggleSelect={onToggleSelect}
                   landingRef={drag.landingRef(folder.id)}
+                  fixed={!canReorderFolders}
                 />
               ))}
             </SortableContext>
@@ -156,16 +176,22 @@ export function LibrarySelectList({
               items={visibleDecks.map((d) => d.id)}
               strategy={verticalListSortingStrategy}
             >
-              {visibleDecks.map((deck) => (
-                <SelectDeckRow
-                  key={deck.id}
-                  deck={deck}
-                  due={dueCounts.get(deck.id) ?? 0}
-                  selected={selectedIds.has(deck.id)}
-                  onToggleSelect={onToggleSelect}
-                  landingRef={drag.landingRef(deck.id)}
-                />
-              ))}
+              {visibleDecks.map((deck) => {
+                const heading = headings.get(deck.id)
+                return (
+                  <Fragment key={deck.id}>
+                    {heading ? <GroupHeading>{contributed(heading.labelKey)}</GroupHeading> : null}
+                    <SelectDeckRow
+                      deck={deck}
+                      due={dueCounts.get(deck.id) ?? 0}
+                      selected={selectedIds.has(deck.id)}
+                      onToggleSelect={onToggleSelect}
+                      landingRef={drag.landingRef(deck.id)}
+                      fixed={!canReorderDecks}
+                    />
+                  </Fragment>
+                )
+              })}
             </SortableContext>
           </Section>
         ) : null}

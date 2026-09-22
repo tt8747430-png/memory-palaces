@@ -1,14 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import {
-  ArrowLeft,
-  ArrowLeftRight,
-  ArrowRight,
-  Folder,
-  Layers,
-  RotateCcw,
-  WalletCards,
-} from 'lucide-react'
+import { ArrowLeftRight, Folder, Layers, RotateCcw, WalletCards } from 'lucide-react'
 import {
   selectEffectivePreferences,
   usePreferencesStore,
@@ -19,21 +11,12 @@ import {
   DEFAULT_SWIPE,
   normalizeSwipeConfig,
   SWIPE_ITEM_TYPES,
-  type SwipeActionId,
   type SwipeConfig,
   type SwipeItemType,
-  withoutSwipeAction,
 } from '@/shared/config/swipe'
-import { cn, selectIsReady } from '@/shared/lib'
-import {
-  AppScreen,
-  Button,
-  cardSurface,
-  ScreenHeader,
-  ScreenLoading,
-  SegmentedControl,
-} from '@/shared/ui'
-import { SideGroup } from './SideGroup'
+import { selectIsReady } from '@/shared/lib'
+import { AppScreen, Button, ScreenHeader, ScreenLoading, SegmentedControl } from '@/shared/ui'
+import { ActionPalette } from './ActionPalette'
 import { SwipePreview } from './SwipePreview'
 
 const TYPE_ICON: Record<SwipeItemType, typeof Layers> = {
@@ -57,12 +40,6 @@ export function SettingsSwipePage({ onBack }: SettingsSwipePageProps) {
     void setPreferences(store, {
       swipe: { ...prefs.swipe, [type]: normalizeSwipeConfig(type, next) },
     })
-
-  const toggle = (side: keyof SwipeConfig, id: SwipeActionId) => {
-    const current = prefs.swipe[type]
-    const without = withoutSwipeAction(current, id)
-    save(current[side].includes(id) ? without : { ...without, [side]: [...without[side], id] })
-  }
 
   const config = prefs.swipe[type]
 
@@ -104,24 +81,7 @@ export function SettingsSwipePage({ onBack }: SettingsSwipePageProps) {
 
         <SwipePreview type={type} config={config} onChange={save} />
 
-        <section className={cn(cardSurface, 'divide-y divide-border/60 p-0')}>
-          <SideGroup
-            icon={<ArrowRight className="size-3.5" aria-hidden />}
-            label={t('swipe.leading')}
-            side="leading"
-            type={type}
-            selected={config.leading}
-            onToggle={(id) => toggle('leading', id)}
-          />
-          <SideGroup
-            icon={<ArrowLeft className="size-3.5" aria-hidden />}
-            label={t('swipe.trailing')}
-            side="trailing"
-            type={type}
-            selected={config.trailing}
-            onToggle={(id) => toggle('trailing', id)}
-          />
-        </section>
+        <ActionPalette type={type} config={config} onChange={save} />
 
         <Button
           variant="ghost"

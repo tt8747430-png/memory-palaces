@@ -266,20 +266,17 @@ describe('BibleImportPage text and target', () => {
     expect(screen.getByRole('button', { name: /^Add/ })).toBeDisabled()
   })
 
-  it('saves pasted text for a passage the Bible library lacks, and says it will', async () => {
+  it('offers no way to publish pasted text — the corpus is filled from the developer tools', async () => {
     const user = userEvent.setup()
-    const { verseStore } = renderImportPage(<BibleImportPage />)
+    const onReview = vi.fn()
+    const { verseStore } = renderImportPage(<BibleImportPage onReview={onReview} />)
     await pickGenesis11(user)
     await user.click(screen.getByLabelText('Verse text'))
     await user.paste('In the beginning.')
-    const save = screen.getByRole('switch', { name: 'Save 1 verse to your Bible library' })
-    expect(save).toBeChecked()
+    expect(screen.queryByRole('switch', { name: /Bible library/ })).toBeNull()
     await user.click(screen.getByRole('button', { name: 'Add 1 card' }))
-    await waitFor(() => expect(verseStore.getState().verses).toHaveLength(1))
-    expect(verseStore.getState().verses[0]).toMatchObject({
-      book: 'GEN',
-      text: 'In the beginning.',
-    })
+    await waitFor(() => expect(onReview).toHaveBeenCalledTimes(1))
+    expect(verseStore.getState().verses).toEqual([])
   })
 
   it('names the verses a partly held passage still needs', async () => {

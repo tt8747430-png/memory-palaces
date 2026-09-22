@@ -24,6 +24,7 @@ export function QuizOptionsSheet({
     <Sheet open={open} onOpenChange={(next) => !next && onClose()} title={t('quiz.options.title')}>
       <div className="flex flex-col gap-2.5 pb-2">
         <ToggleRow
+          surface="tint"
           icon={<Timer className="size-4.5" aria-hidden />}
           label={t('quiz.options.autoAdvance')}
           description={t('quiz.options.autoAdvanceHint')}
@@ -31,6 +32,7 @@ export function QuizOptionsSheet({
           onChange={onQuizTimer}
         />
         <ToggleRow
+          surface="tint"
           icon={<Shuffle className="size-4.5" aria-hidden />}
           label={t('quiz.options.shuffle')}
           description={t('quiz.options.shuffleHint')}

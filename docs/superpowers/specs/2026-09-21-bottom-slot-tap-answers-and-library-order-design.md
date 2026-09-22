@@ -41,8 +41,8 @@ decks are a **held** table, so a bulk style write is reported as waiting until S
 | Is a flipped card sticky?                         | It already was. `study-session-machine` resets `flipped` only on advance. Nothing to add.                                             |
 | What does the deck header list?                   | The subdecks of the deck you are in, then **More decks…**, which is the move drawer with different words.                             |
 | Does switching decks stack history?               | No. `replace: true`, so Back still means "out of the deck".                                                                           |
-| How do decks sort?                                | One order — Manual, Name, Recent, Due — plus an **Include subdecks** toggle, on by default.                                           |
-| What does a drag do while a sort is on?           | The same as it does for cards: it drops the order back to Manual. A drag still only reorders (ADR 0001).                              |
+| How do decks sort?                                | One order — Manual, Name, Recent, Due, plus any an extension contributes (`deckSorts`) — chosen in select mode. **All subdecks** on by default; "Sort subdecks" on a deck gives that deck's subdecks an order of their own (amended 2026-09-22). |
+| What does a drag do while a sort is on?           | Nothing: a drag is offered only where the rows are in the manual order (amended 2026-09-22). A drag still only reorders (ADR 0001). |
 | How does a style reach many decks?                | It is **copied** onto each. No inheritance, no new fallback, no schema change to `DeckSettings`.                                      |
 | Where is it reached from?                         | Both: an **Apply to…** scope picker on the card style page, and a `style` action in the select toolbar.                               |
 | What stops a bulk apply flooding the pending log? | Decks whose style already matches are skipped.                                                                                       |
@@ -85,6 +85,12 @@ cannot animate out. They change from `{active ? <Dock>…</Dock> : null}` to `<B
 `DockPill` is the shared surface — glow, glass, rounding — and lives in its own file.
 
 Both animations are 0.2 s; under `prefers-reduced-motion` both are 0.
+
+**Amended 2026-09-22.** Two docks cross-fading was two translucent glass pills at half strength: the bar dipped
+to see-through for a frame. There is now **one** `BottomDock`, mounted by the nav, whose pill never fades; a page
+borrows it with `BottomSlot` (a portal into the dock's content layer, `shared/lib/bottom-slot.ts`), and only the
+*contents* cross-fade. The refcounted inset went with the second dock. The toolbar's slots are the action's own
+accent tile over its name — the swipe rails' colours — and the settings preview renders the same pill and slots.
 
 ## 4. Answering by tap
 

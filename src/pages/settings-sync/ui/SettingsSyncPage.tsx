@@ -1,8 +1,10 @@
 import { useTranslation } from 'react-i18next'
 import { CloudUpload, ListChecks, RefreshCcwDot, Trash2 } from 'lucide-react'
+import { cn } from '@/shared/lib'
 import {
   AppScreen,
   ConfirmDialog,
+  noteSurface,
   ScreenHeader,
   ScreenLoading,
   SettingsRow,
@@ -32,8 +34,8 @@ export function SettingsSyncPage({ onBack }: SettingsSyncPageProps) {
   if (!page.runner) {
     return (
       <AppScreen gutter="end" fill header={header}>
-        <div className="mt-4 rounded-card bg-info-surface p-4">
-          <p className="text-label leading-snug text-info-foreground">
+        <div className={cn(noteSurface, 'mt-4 p-4')}>
+          <p className="text-label leading-snug text-muted-foreground">
             {t(page.guest ? 'sync.settings.guest' : 'sync.settings.unavailable')}
           </p>
         </div>

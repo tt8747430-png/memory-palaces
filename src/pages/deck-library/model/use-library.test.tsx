@@ -259,15 +259,119 @@ describe('useLibrary ordering', () => {
     expect(topOnly.result.current.rows.map((r) => r.id)).toEqual(['root', 'v', 'a'])
   })
 
-  it('drops back to the manual order when a row is dragged — the drag wrote one', async () => {
+  it('only lets a drag reorder rows that are in the manual order', async () => {
+    const decks = [
+      named('root', 'Root', 0),
+      { ...named('v', 'Verbs', 0), parentId: 'root' },
+      { ...named('a', 'Adjectives', 1), parentId: 'root' },
+    ]
+    const manual = renderLibrary({ decks })
+    await waitFor(() => expect(manual.result.current.ready).toBe(true))
+    expect(manual.result.current.canReorderDecks).toBe(true)
+    manual.unmount()
+
+    const byName = renderLibrary({ decks, prefs: { deckSort: 'name' } })
+    await waitFor(() => expect(byName.result.current.ready).toBe(true))
+    expect(byName.result.current.canReorderDecks).toBe(false)
+  })
+
+  it('sorts one deck’s subdecks on their own, which takes the Library order off every subdeck', async () => {
+    const decks = [
+      named('root', 'Root', 0),
+      { ...named('v', 'Verbs', 0), parentId: 'root' },
+      { ...named('a', 'Adjectives', 1), parentId: 'root' },
+    ]
+    const { result } = renderLibrary({ decks, prefs: { deckSort: 'manual' } })
+    await waitFor(() => expect(result.current.ready).toBe(true))
+    expect(result.current.allSubdecks).toBe(true)
+
+    act(() => result.current.sortSubdecks('root'))
+    expect(result.current.selection.active).toBe(true)
+    expect(result.current.scope?.name).toBe('Root')
+    expect(result.current.sectionDecks.map((d) => d.id)).toEqual(['v', 'a'])
+    expect(result.current.deckSort).toBe('manual')
+
+    act(() => result.current.setDeckSort('name'))
+    await waitFor(() => expect(result.current.sectionDecks.map((d) => d.id)).toEqual(['a', 'v']))
+    expect(result.current.deckSort).toBe('name')
+    expect(result.current.allSubdecks).toBe(false)
+    expect(result.current.canReorderDecks).toBe(false)
+
+    // Leaving the selection leaves the scope: the Library is whole again, still manual at the top.
+    act(() => result.current.selection.exit())
+    expect(result.current.scope).toBeNull()
+    expect(result.current.sectionDecks.map((d) => d.id)).toEqual(['root'])
+    expect(result.current.deckSort).toBe('manual')
+  })
+
+  it('asking for the Library order on all subdecks forgets every order chosen for one deck', async () => {
+    const decks = [
+      named('root', 'Root', 0),
+      { ...named('v', 'Verbs', 0), parentId: 'root' },
+      { ...named('a', 'Adjectives', 1), parentId: 'root' },
+    ]
     const { result } = renderLibrary({
-      decks: [named('v', 'Verbs', 0), named('a', 'Adjectives', 1)],
-      prefs: { deckSort: 'name' },
+      decks,
+      prefs: { deckSort: 'manual', deckSortSubdecks: false, subdeckSorts: { root: 'name' } },
     })
     await waitFor(() => expect(result.current.ready).toBe(true))
-    expect(result.current.deckSort).toBe('name')
+    act(() => result.current.toggleExpanded('root'))
+    expect(result.current.rows.map((r) => r.id)).toEqual(['root', 'a', 'v'])
 
-    act(() => result.current.act.reorderDeckIds(['a', 'v']))
-    await waitFor(() => expect(result.current.deckSort).toBe('manual'))
+    act(() => result.current.setAllSubdecks(true))
+    await waitFor(() => expect(result.current.rows.map((r) => r.id)).toEqual(['root', 'v', 'a']))
+    expect(result.current.allSubdecks).toBe(true)
+  })
+
+  it('shows only the favourites when asked, and says how many it is hiding', async () => {
+    const decks = [
+      named('v', 'Verbs', 0),
+      { ...named('a', 'Adjectives', 1), favorite: true },
+      named('n', 'Nouns', 2),
+    ]
+    const { result } = renderLibrary({ decks })
+    await waitFor(() => expect(result.current.ready).toBe(true))
+    expect(result.current.filter).toBe('all')
+    expect(result.current.hidden).toBe(0)
+
+    act(() => result.current.setFilter('favorites'))
+    expect(result.current.sectionDecks.map((d) => d.id)).toEqual(['a'])
+    expect(result.current.hidden).toBe(2)
+
+    // Select all reaches only what is shown.
+    act(() => result.current.selection.enter())
+    act(() => result.current.selection.toggleAll())
+    expect([...result.current.selection.ids]).toEqual(['a'])
+  })
+
+  it('writes a drag over the whole level, so a row the filter hid keeps its slot', async () => {
+    const decks = [
+      named('v', 'Verbs', 0),
+      { ...named('a', 'Adjectives', 1), favorite: true },
+      named('n', 'Nouns', 2),
+      { ...named('z', 'Zebra', 3), favorite: true },
+    ]
+    const { result } = renderLibrary({ decks })
+    await waitFor(() => expect(result.current.ready).toBe(true))
+    act(() => result.current.setFilter('favorites'))
+    expect(result.current.sectionDecks.map((d) => d.id)).toEqual(['a', 'z'])
+
+    // Dragged among what was on screen: Zebra above Adjectives. Verbs and Nouns were hidden.
+    act(() => result.current.act.reorderDeckIds(['z', 'a']))
+
+    act(() => result.current.setFilter('all'))
+    await waitFor(() =>
+      expect(result.current.sectionDecks.map((d) => d.id)).toEqual(['v', 'z', 'n', 'a']),
+    )
+  })
+
+  it('falls back to the manual order for a contributed order nobody is offering', async () => {
+    const { result } = renderLibrary({
+      decks: [named('v', 'Verbs', 0), named('a', 'Adjectives', 1)],
+      prefs: { deckSort: 'bible:canon' },
+    })
+    await waitFor(() => expect(result.current.ready).toBe(true))
+    expect(result.current.sectionDecks.map((d) => d.name)).toEqual(['Verbs', 'Adjectives'])
+    expect(result.current.deckSort).toBe('manual')
   })
 })

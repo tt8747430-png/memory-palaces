@@ -21,6 +21,13 @@ describe('useMultiSelect', () => {
     expect(result.current.has('a')).toBe(true)
   })
 
+  it('opens the mode with nothing selected, for a screen that starts from the whole list', () => {
+    const { result } = renderHook(() => useMultiSelect())
+    act(() => result.current.enter())
+    expect(result.current.active).toBe(true)
+    expect(result.current.count).toBe(0)
+  })
+
   it('adds and removes rows one at a time', () => {
     const { result } = renderHook(() => useMultiSelect())
     act(() => result.current.begin('a'))

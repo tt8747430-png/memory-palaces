@@ -1,6 +1,7 @@
-import { BookOpen, FolderTree, Library } from 'lucide-react'
+import { BookMarked, BookOpen, FolderTree, Library, LibraryBig } from 'lucide-react'
 import { type ExtensionManifest, extensionRoute } from '@/shared/lib'
 import { BIBLE_FEATURES, BIBLE_ID, BIBLE_PATHS } from './ids'
+import { BOOK_FILTERS, BY_GENRE, CANON_ORDER } from './model/deck-orders'
 import { validateBibleImportSearch } from './model/import-search'
 
 export const bibleManifest: ExtensionManifest = {
@@ -41,6 +42,22 @@ export const bibleManifest: ExtensionManifest = {
         feature: BIBLE_FEATURES.import,
       },
     ],
+    deckSorts: [
+      {
+        ...CANON_ORDER,
+        labelKey: 'bible:sort.canon',
+        icon: <BookMarked className="size-4" aria-hidden />,
+      },
+      {
+        ...BY_GENRE,
+        labelKey: 'bible:sort.genre',
+        icon: <LibraryBig className="size-4" aria-hidden />,
+      },
+    ],
+    deckFilters: BOOK_FILTERS.map((filter) => ({
+      ...filter,
+      icon: <BookMarked className="size-4" aria-hidden />,
+    })),
   },
   features: [
     {

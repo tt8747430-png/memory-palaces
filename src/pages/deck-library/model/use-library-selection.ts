@@ -11,6 +11,8 @@ export interface LibrarySelection {
   deckIds: string[]
   decks: Deck[]
   begin: (id: string) => void
+  /** Opens the mode with nothing selected — the way "sort subdecks" arrives. */
+  enter: () => void
   toggle: (id: string) => void
   toggleAll: () => void
   exit: () => void
@@ -22,6 +24,8 @@ interface Args {
   sectionFolders: Folder[]
   sectionDecks: Deck[]
   folderId: string | null
+  /** The rows are one deck's subdecks, so a row stands for its own subtree, not its root's. */
+  scoped: boolean
 }
 
 export function useLibrarySelection({
@@ -30,6 +34,7 @@ export function useLibrarySelection({
   sectionFolders,
   sectionDecks,
   folderId,
+  scoped,
 }: Args): LibrarySelection {
   const decksById = useMemo(() => new Map(decks.map((d) => [d.id, d])), [decks])
   const subtree = useCallback(
@@ -39,8 +44,8 @@ export function useLibrarySelection({
 
   const expand = useCallback(
     (id: string): readonly string[] =>
-      folderIds.has(id) ? [id] : subtree(deckPath(decks, id)[0]?.id ?? id),
-    [folderIds, subtree, decks],
+      folderIds.has(id) ? [id] : subtree(scoped ? id : (deckPath(decks, id)[0]?.id ?? id)),
+    [folderIds, subtree, decks, scoped],
   )
 
   const selection = useMultiSelect({ expand })
@@ -74,6 +79,7 @@ export function useLibrarySelection({
     deckIds,
     decks: selectedDecks,
     begin: selection.begin,
+    enter: selection.enter,
     toggle: selection.toggle,
     toggleAll: selection.toggleAll,
     exit: selection.exit,

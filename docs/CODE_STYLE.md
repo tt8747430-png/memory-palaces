@@ -212,8 +212,20 @@ v4, two-layer tokens: primitives (`--p-navy-900`…) → semantic roles (`--prim
   merely rendered: the commit-swipe path fires the same handler and passes either way
   (`SwipeRow.test.tsx`).
 - **A surface on the page gradient needs an edge.** `--bg` runs from lavender to white; a tinted surface
-  (`--success-surface` is L 97.9%) has nowhere to stand at the white end. A card gets `border-border`, a status
-  banner its tone's border token — never a fill alone. The sync banner's right half vanished this way.
+  (`--success-surface` is L 97.9%, `--info-surface` is the page's own sky) has nowhere to stand at the white end
+  and nothing to stand out from at the other. A card gets `border-border` or a shadow, a status banner its tone's
+  border token — never a fill alone. The sync banner's right half vanished this way; then the Help page's
+  "Still stuck?" note, the Privacy intro and the Bible import's toggle rows did the same, each a bare
+  `bg-info-surface` straight on the page.
+  - **Two names, and only two, for a panel of its own on the page.** `cardSurface` (`bg-card shadow-rest`) for
+    anything a learner acts on — a toggle row, a form block, a list; `noteSurface` (frosted `bg-card-glass`,
+    `border-border`, `shadow-rest`) for a note they read. Both live in `shared/ui/primitives/card.tsx`. Neither
+    is a tint: a tinted fill on the page is a **status banner**, and only with its tone's border token
+    (`--info-border`, `--danger-border`, …). A `bg-info-surface` anywhere else is a **nested** tint — a row inside
+    a sheet, a chip inside a card, a hover — and must have a `bg-card` ancestor to read against. `ToggleRow` says
+    which it is by name: `surface="card"` on a page, `"tint"` inside a sheet, `"plain"` in someone else's list.
+  - **Check it at the white end of the gradient**, the bottom of a long page — the top is where a tint still
+    reads; the bottom is where the Help page's note was found.
 - **A printed card face is opaque.** The study stack draws cards _behind_ the front one; alpha in a preset's
   `bg` shows them through. `card-style.test.ts` refuses a translucent face. A frosted look comes from the
   border and the highlight, not from seeing through.

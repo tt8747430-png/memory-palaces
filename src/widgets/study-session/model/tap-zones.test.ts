@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { stripWidth, zoneFor, type ZoneRect } from './tap-zones'
+import { DEFAULT_FLASHCARD_SWIPE } from '@/shared/config/flashcard-swipe'
+import { resolveTap, stripWidth, zoneFor, type ZoneRect } from './tap-zones'
 
 /** A phone-sized card: 18% of 360 is 64.8, comfortably over the fingertip floor. */
 const card: ZoneRect = { left: 0, top: 0, width: 360, height: 640 }
@@ -55,5 +56,35 @@ describe('zoneFor', () => {
     const offset: ZoneRect = { left: 100, top: 200, width: 360, height: 640 }
     expect(zoneFor({ x: 110, y: 520 }, offset)).toBe('left')
     expect(zoneFor({ x: 280, y: 520 }, offset)).toBe('centre')
+  })
+})
+
+describe('resolveTap', () => {
+  const config = { ...DEFAULT_FLASHCARD_SWIPE.spaced, centre: 'good' as const }
+
+  it('turns a card over from the middle while its prompt is up, whatever the centre is set to', () => {
+    expect(resolveTap('centre', { showBack: false, config })).toEqual({ kind: 'flip' })
+  })
+
+  it('gives the middle of a revealed card to the action the learner set it to', () => {
+    expect(resolveTap('centre', { showBack: true, config })).toEqual({
+      kind: 'act',
+      zone: 'centre',
+    })
+  })
+
+  it('turns a revealed card back over when the centre is set to flip', () => {
+    const flip = { ...config, centre: 'flip' as const }
+    expect(resolveTap('centre', { showBack: true, config: flip })).toEqual({ kind: 'flip' })
+  })
+
+  it('does nothing from the middle of a revealed card left at Off', () => {
+    const off = { ...config, centre: 'none' as const }
+    expect(resolveTap('centre', { showBack: true, config: off })).toBeNull()
+  })
+
+  it('hands an edge over on either face', () => {
+    expect(resolveTap('left', { showBack: false, config })).toEqual({ kind: 'act', zone: 'left' })
+    expect(resolveTap('left', { showBack: true, config })).toEqual({ kind: 'act', zone: 'left' })
   })
 })

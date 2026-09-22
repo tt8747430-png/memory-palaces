@@ -1,6 +1,13 @@
 import { useTranslation } from 'react-i18next'
 import { ArrowDownAZ, Clock, Flag, GripVertical, Sparkles } from 'lucide-react'
-import { type ContentSort, DECK_SORTS, type DeckSort } from '@/shared/lib'
+import {
+  type ContentSort,
+  CORE_DECK_SORTS,
+  type CoreDeckSort,
+  type DeckSort,
+  useContributedT,
+  useExtensionPoint,
+} from '@/shared/lib'
 import type { SortControlOption } from './SortControl'
 
 interface SortMeta {
@@ -34,13 +41,25 @@ export function useContentSortOptions<T extends ContentSort>(
   return useSortOptions(sorts, CONTENT_META)
 }
 
-const DECK_META: Record<DeckSort, SortMeta> = {
+const DECK_META: Record<CoreDeckSort, SortMeta> = {
   manual: { labelKey: 'deck.sort.manual', icon: GripVertical },
   name: { labelKey: 'deck.sort.name', icon: ArrowDownAZ },
   recent: { labelKey: 'deck.sort.recent', icon: Clock },
   due: { labelKey: 'deck.sort.due', icon: Sparkles },
 }
 
+/** The app's own orders, then — after a divider — the ones the enabled extensions contribute. */
 export function useDeckSortOptions(): SortControlOption<DeckSort>[] {
-  return useSortOptions(DECK_SORTS, DECK_META)
+  const core = useSortOptions(CORE_DECK_SORTS, DECK_META)
+  const contributed = useContributedT()
+  const orders = useExtensionPoint('deckSorts')
+  return [
+    ...core,
+    ...orders.map((order, at) => ({
+      value: order.id,
+      label: contributed(order.labelKey),
+      icon: order.icon,
+      dividerBefore: at === 0,
+    })),
+  ]
 }

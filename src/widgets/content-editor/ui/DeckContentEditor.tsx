@@ -24,7 +24,7 @@ import {
   ConfirmDialog,
   ImportSheet,
   SelectToolbar,
-  BottomDock,
+  BottomSlot,
   SortControl,
   SpeedDial,
   useContentSortOptions,
@@ -218,13 +218,13 @@ export function DeckContentEditor({
         )}
       </div>
 
-      <BottomDock open={selectMode}>
+      <BottomSlot open={selectMode}>
         <SelectToolbar
           actions={prefs.selectToolbar.card}
           handlers={commands.selectHandlers}
           selection={selection}
         />
-      </BottomDock>
+      </BottomSlot>
 
       <ImportSheet
         open={importOpen}

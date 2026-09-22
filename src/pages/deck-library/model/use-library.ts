@@ -1,13 +1,13 @@
-import { useCallback, useEffect } from 'react'
-import { usePreferencesStoreApi } from '@/entities/preferences'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { selectSubdeckSorts, usePreferencesStoreApi } from '@/entities/preferences'
 import { setPreferences } from '@/features/preferences'
 import { type DeckSort, usePendingAct } from '@/shared/lib'
 import type { SelectActionHandlers } from '@/shared/ui'
 import type { Destination } from '@/widgets/deck-tree'
+import type { LibraryFilter } from './library-filter'
 import type { PendingAct } from './pending-act'
 import { type LibraryActions, moveExclusions, useLibraryActions } from './use-library-actions'
 import { type LibraryView, useLibraryData } from './use-library-data'
-
 import { type LibrarySelection, useLibrarySelection } from './use-library-selection'
 
 export interface Library extends LibraryView {
@@ -21,11 +21,19 @@ export interface Library extends LibraryView {
   confirm: (dest?: Destination) => void
   moveExcludeIds: ReadonlySet<string>
 
-  /** The order the rows are in, and the two ways of changing it. */
+  /** The order of the rows being looked at, and how to change it. */
   deckSort: DeckSort
   setDeckSort: (sort: DeckSort) => void
-  deckSortSubdecks: boolean
-  setDeckSortSubdecks: (on: boolean) => void
+  /** The Library order reaches every subdeck; off while any deck's subdecks have their own. */
+  allSubdecks: boolean
+  setAllSubdecks: (on: boolean) => void
+  canReorderDecks: boolean
+  canReorderFolders: boolean
+  /** Opens a selection over one deck's subdecks, so they can be ordered on their own. */
+  sortSubdecks: (deckId: string) => void
+
+  filter: LibraryFilter
+  setFilter: (filter: LibraryFilter) => void
 }
 
 function moveTargets(pending: PendingAct | null, selectedDeckIds: string[]): string[] {
@@ -35,31 +43,71 @@ function moveTargets(pending: PendingAct | null, selectedDeckIds: string[]): str
 }
 
 export function useLibrary(folderId: string | null, onFolderGone: () => void): Library {
-  const data = useLibraryData(folderId)
+  const [scopeId, setScopeId] = useState<string | null>(null)
+  const [filter, setFilter] = useState<LibraryFilter>('all')
+  const data = useLibraryData({ folderId, scopeId, filter })
   const view = data.view
   const pending = usePendingAct<PendingAct>()
   const prefStore = usePreferencesStoreApi()
 
+  // The top level takes the Library order. One deck's subdecks take an order of their own — and
+  // the moment they do, the Library order no longer reaches every subdeck, and the switch says so.
   const setDeckSort = useCallback(
-    (sort: DeckSort) => void setPreferences(prefStore, { deckSort: sort }),
+    (sort: DeckSort) => {
+      if (scopeId === null) {
+        void setPreferences(prefStore, { deckSort: sort })
+        return
+      }
+      const held = selectSubdeckSorts(prefStore.getState())
+      void setPreferences(prefStore, {
+        subdeckSorts: { ...held, [scopeId]: sort },
+        deckSortSubdecks: false,
+      })
+    },
+    [prefStore, scopeId],
+  )
+  const setAllSubdecks = useCallback(
+    (on: boolean) =>
+      void setPreferences(
+        prefStore,
+        on ? { deckSortSubdecks: true, subdeckSorts: {} } : { deckSortSubdecks: false },
+      ),
     [prefStore],
   )
-  const onManualOrder = useCallback(() => {
-    if (data.deckSort !== 'manual') setDeckSort('manual')
-  }, [data.deckSort, setDeckSort])
 
   const missing = folderId !== null && data.foldersReady && !view.openFolder
   useEffect(() => {
     if (missing) onFolderGone()
   }, [missing, onFolderGone])
 
-  const selection = useLibrarySelection({
+  const held = useLibrarySelection({
     decks: view.decks,
     folderIds: data.folderIds,
     sectionFolders: view.sectionFolders,
     sectionDecks: view.sectionDecks,
     folderId,
+    scoped: scopeId !== null,
   })
+  // Leaving the selection leaves the scope and the filter with it: both were ways of looking at
+  // the rows while choosing among them.
+  const selection = useMemo<LibrarySelection>(
+    () => ({
+      ...held,
+      exit: () => {
+        held.exit()
+        setScopeId(null)
+        setFilter('all')
+      },
+    }),
+    [held],
+  )
+  const sortSubdecks = useCallback(
+    (deckId: string) => {
+      setScopeId(deckId)
+      held.enter()
+    },
+    [held],
+  )
 
   const { selectHandlers, ...act } = useLibraryActions({
     decks: view.decks,
@@ -69,7 +117,6 @@ export function useLibrary(folderId: string | null, onFolderGone: () => void): L
     patchDecks: data.patchDecks,
     patchFolders: data.patchFolders,
     onFolderGone,
-    onManualOrder,
     onRequestBulkStyle: () => pending.request({ kind: 'style-selection' }),
     onRequestBulkMove: () => pending.request({ kind: 'move-selection' }),
     onRequestBulkDelete: () => pending.request({ kind: 'delete-selection' }),
@@ -111,7 +158,12 @@ export function useLibrary(folderId: string | null, onFolderGone: () => void): L
     moveExcludeIds: moveExclusions(view.decks, moveTargets(pending.act, selection.deckIds)),
     deckSort: data.deckSort,
     setDeckSort,
-    deckSortSubdecks: data.deckSortSubdecks,
-    setDeckSortSubdecks: (on: boolean) => void setPreferences(prefStore, { deckSortSubdecks: on }),
+    allSubdecks: data.allSubdecks,
+    setAllSubdecks,
+    canReorderDecks: data.canReorderDecks,
+    canReorderFolders: data.canReorderFolders,
+    sortSubdecks,
+    filter,
+    setFilter,
   }
 }

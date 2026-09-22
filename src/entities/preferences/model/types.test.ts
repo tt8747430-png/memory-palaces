@@ -186,3 +186,32 @@ describe('settings that used to live on the device', () => {
     expect(completed.libraryExpanded).toEqual(['deck-1'])
   })
 })
+
+describe('orders chosen for one deck’s subdecks', () => {
+  it('starts with none, and completes a row an older build pushed without the map', () => {
+    expect(makePreferences({ id: 'preferences', createdAt: at(0) }).subdeckSorts).toEqual({})
+    const older: Record<string, unknown> = {
+      ...makePreferences({ id: 'preferences', createdAt: at(0) }),
+    }
+    delete older.subdeckSorts
+    expect(completePreferences(older as never).subdeckSorts).toEqual({})
+  })
+
+  it('keeps every id it is handed, including one contributed by an extension it does not know', () => {
+    const prefs = makePreferences({
+      id: 'preferences',
+      createdAt: at(0),
+      subdeckSorts: { 'deck-1': 'name', 'deck-2': 'bible:canon' },
+    })
+    expect(prefs.subdeckSorts).toEqual({ 'deck-1': 'name', 'deck-2': 'bible:canon' })
+  })
+
+  it('drops an entry that is not an order at all', () => {
+    const prefs = makePreferences({
+      id: 'preferences',
+      createdAt: at(0),
+      subdeckSorts: { 'deck-1': '', 'deck-2': 7 } as never,
+    })
+    expect(prefs.subdeckSorts).toEqual({})
+  })
+})

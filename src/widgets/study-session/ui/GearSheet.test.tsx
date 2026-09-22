@@ -84,6 +84,20 @@ describe('GearSheet', () => {
     expect(props.settings.set).toHaveBeenCalledWith('wordSpaces', true)
   })
 
+  it('offers the centre only once answers are tapped, and lets it turn the card over', async () => {
+    const user = userEvent.setup()
+    setup()
+    expect(screen.queryByRole('button', { name: 'Tap the middle' })).toBeNull()
+    cleanup()
+
+    const control = settingsControl()
+    control.value.flashcardInput = 'tap'
+    const props = setup({ settings: control })
+    await user.click(await screen.findByRole('button', { name: 'Tap the middle' }))
+    await user.click(await screen.findByRole('menuitem', { name: 'Turn the card over' }))
+    expect(props.settings.setSwipe).toHaveBeenCalledWith('centre', 'flip')
+  })
+
   it('sets a swipe action through the shared setter', async () => {
     const user = userEvent.setup()
     const props = setup()

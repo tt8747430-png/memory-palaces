@@ -42,6 +42,7 @@ export const nav = {
 export const actions = {
   favorite: 'Favorite',
   style: 'Style',
+  sortSubdecks: 'Sort subdecks',
   move: 'Move',
   archive: 'Archive',
   unfile: 'Unfile',
@@ -75,6 +76,10 @@ export const swipe = {
   leading: 'Swipe right',
   trailing: 'Swipe left',
   sideCount: '{{count}} / {{max}}',
+  addTo: 'Add to',
+  paletteHint:
+    'Tap an action to add it to the chosen swipe; tap it again to take it off. Drag the caps above to reorder.',
+  sideFull: '{{side}} is full. Take an action off it to add another.',
   reset: 'Reset to defaults',
   reorderLabel: 'Reorder {{name}}',
   removeLabel: 'Remove {{name}} from this swipe',

@@ -9,7 +9,16 @@ export const SWIPE_ITEM_TYPES: readonly SwipeItemType[] = ['deck', 'folder', 'ca
 export type SwipeActionId = ActionId
 
 export const SWIPE_ACTIONS: Record<SwipeItemType, readonly SwipeActionId[]> = {
-  deck: ['favorite', 'move', 'settings', 'addSubdeck', 'duplicate', 'archive', 'delete'],
+  deck: [
+    'favorite',
+    'move',
+    'settings',
+    'addSubdeck',
+    'sortSubdecks',
+    'duplicate',
+    'archive',
+    'delete',
+  ],
   folder: ['edit', 'addDeck', 'delete'],
   card: CARD_ACTIONS,
 }

@@ -18,6 +18,7 @@ export type ActionId =
   | 'reverse'
   | 'history'
   | 'style'
+  | 'sortSubdecks'
   | 'delete'
 
 export type ActionAccent =
@@ -104,6 +105,7 @@ export const ACTION_META: Record<ActionId, ActionMeta> = {
     accent: 'slate',
   },
   style: { id: 'style', labelKey: 'actions.style', accent: 'plum' },
+  sortSubdecks: { id: 'sortSubdecks', labelKey: 'actions.sortSubdecks', accent: 'cyan' },
   delete: { id: 'delete', labelKey: 'actions.delete', accent: 'red', destructive: true },
 }
 

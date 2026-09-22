@@ -5,8 +5,16 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { type Deck, resolveDeckSettings } from '@/entities/deck'
 import type { Card } from '@/entities/card'
 import type { SwipeConfig } from '@/shared/config/swipe'
-import { cn, dueCountsPerDeck, EASE_OUT, type FlatDeck, useLongPress } from '@/shared/lib'
-import { buildSwipeActions, type ActionHandlers, SwipeRow } from '@/shared/ui'
+import {
+  cn,
+  type DeckGroup,
+  dueCountsPerDeck,
+  EASE_OUT,
+  type FlatDeck,
+  useContributedT,
+  useLongPress,
+} from '@/shared/lib'
+import { buildSwipeActions, type ActionHandlers, GroupHeading, SwipeRow } from '@/shared/ui'
 import { DeckRowBody } from './deck-row'
 import { DECK_ROW_FRAME, TOGGLE_BASE, toggleFrame, toggleSurface } from './row-style'
 
@@ -22,8 +30,12 @@ export interface DeckTreeProps {
   onRequestSelect: (deckId: string) => void
   swipe?: SwipeConfig
   swipeHandlers?: (deck: Deck) => ActionHandlers
+  /** The heading to print over a top-level row, by id, when the order shelves the rows. */
+  headings?: ReadonlyMap<string, DeckGroup>
   now?: number
 }
+
+const NO_HEADINGS: ReadonlyMap<string, DeckGroup> = new Map()
 
 export function DeckTree({
   rows,
@@ -35,8 +47,10 @@ export function DeckTree({
   onRequestSelect,
   swipe,
   swipeHandlers,
+  headings = NO_HEADINGS,
   now = Date.now(),
 }: DeckTreeProps) {
+  const contributed = useContributedT()
   // A deck's own settings decide what it counts as waiting; a subdeck follows its main deck.
   const algorithmOf = useCallback(
     (deckId: string) => resolveDeckSettings(decks, deckId).algorithm,
@@ -51,10 +65,16 @@ export function DeckTree({
   return (
     <ul className="relative flex flex-col gap-2">
       <AnimatePresence initial={false}>
-        {rows.map((row) => {
+        {rows.flatMap((row) => {
           const deck = byId.get(row.id)
-          if (!deck) return null
-          return (
+          if (!deck) return []
+          const heading = headings.get(row.id)
+          // A flat list, not fragments: AnimatePresence reads its children by key, and a heading
+          // is a child of its own that comes and goes with the order.
+          return [
+            heading ? (
+              <GroupHeading key={`heading:${row.id}`}>{contributed(heading.labelKey)}</GroupHeading>
+            ) : null,
             <DeckTreeRow
               key={row.id}
               row={row}
@@ -66,8 +86,8 @@ export function DeckTree({
               onRequestSelect={onRequestSelect}
               swipe={swipe}
               swipeHandlers={swipeHandlers}
-            />
-          )
+            />,
+          ]
         })}
       </AnimatePresence>
     </ul>

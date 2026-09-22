@@ -47,6 +47,7 @@ import { resetLocalDatabase } from './persistence/reset-local-database'
 import { adoptDeviceSettings } from './persistence/adopt-device-settings'
 import { keepArchiveDetached } from './persistence/keep-archive-detached'
 import { keepHistoryCapped } from './persistence/keep-history-capped'
+import { keepSubdeckOrdersOwned } from './persistence/keep-subdeck-orders-owned'
 
 export interface Services {
   authGateway: AuthGateway
@@ -185,6 +186,10 @@ export async function createServices(): Promise<Services> {
 
   keepArchiveDetached(services.deckStore)
   keepHistoryCapped(services.historyStore)
+  keepSubdeckOrdersOwned({
+    deckStore: services.deckStore,
+    preferencesStore: services.preferencesStore,
+  })
   // A failed write leaves the old keys for the next launch; it never fails boot.
   await adoptDeviceSettings(services.preferencesStore).catch((error: unknown) =>
     console.error('Device settings could not be adopted into preferences', error),

@@ -14,9 +14,10 @@ import { type SelectActionId, type SelectToolbarConfig } from '@/shared/config/s
 import { cn, EASE_OUT_CSS, useSortableSensors } from '@/shared/lib'
 import {
   cardSurface,
-  CLOSE_BADGE_ROW_GAP,
   CloseBadge,
-  selectActionIcon,
+  DockPill,
+  SelectToolbarRow,
+  SelectToolbarSlot,
   SortableRow,
 } from '@/shared/ui'
 
@@ -59,22 +60,27 @@ export function ToolbarEditor({ actions, canRemove, onReorder, onRemove }: Toolb
         onDragCancel={() => setActiveId(null)}
       >
         <SortableContext items={items} strategy={horizontalListSortingStrategy}>
-          <div
-            className={cn(
-              'mt-2.5 flex items-stretch rounded-card-featured bg-card/95 p-2 shadow-elevated',
-              CLOSE_BADGE_ROW_GAP,
-            )}
-          >
-            {items.map((id) => (
-              <SortableTile key={id} action={id} canRemove={canRemove} onRemove={onRemove} />
-            ))}
+          {/* The bar itself — the dock's pill at the dock's size — so what is arranged here is
+              what appears at the bottom of the screen, tile for tile. */}
+          <div className="mx-auto mt-4 h-16 w-64">
+            <DockPill>
+              <SelectToolbarRow>
+                {items.map((id) => (
+                  <SortableTile key={id} action={id} canRemove={canRemove} onRemove={onRemove} />
+                ))}
+              </SelectToolbarRow>
+            </DockPill>
           </div>
         </SortableContext>
 
         <DragOverlay dropAnimation={{ duration: 200, easing: EASE_OUT_CSS }}>
           {activeId ? (
-            <div className="relative size-full">
-              <Tile action={activeId} floating />
+            <div className="relative h-16 w-full">
+              <SelectToolbarSlot
+                action={activeId}
+                inert
+                className="rounded-control bg-(--nav-pill)"
+              />
               {canRemove ? <CloseBadge /> : null}
             </div>
           ) : null}
@@ -97,17 +103,17 @@ function SortableTile({
   const label = t(ACTION_META[action].labelKey as never)
 
   return (
-    <SortableRow id={action} className="min-w-0 flex-1">
+    <SortableRow id={action} className="relative h-full min-w-0 flex-1">
       {({ handleRef, handleProps, isDragging }) => (
-        <div className={cn('relative', isDragging && 'opacity-0')}>
+        <div className={cn('relative h-full', isDragging && 'opacity-0')}>
           <button
             type="button"
             ref={handleRef}
             {...handleProps}
             aria-label={t('select.reorderLabel', { name: label })}
-            className="w-full cursor-grab touch-none active:cursor-grabbing"
+            className="h-full w-full cursor-grab touch-none rounded-control active:cursor-grabbing"
           >
-            <Tile action={action} />
+            <SelectToolbarSlot action={action} inert />
           </button>
 
           {canRemove ? (
@@ -119,27 +125,5 @@ function SortableTile({
         </div>
       )}
     </SortableRow>
-  )
-}
-
-function Tile({ action, floating = false }: { action: SelectActionId; floating?: boolean }) {
-  const { t } = useTranslation()
-  const meta = ACTION_META[action]
-
-  return (
-    <span
-      className={cn(
-        'flex size-full min-w-0 flex-col items-center justify-center gap-1 rounded-control px-1 py-2',
-        meta.destructive
-          ? 'bg-(--danger-surface) text-(--danger-on-surface)'
-          : 'bg-info-surface text-heading',
-        floating && 'shadow-elevated ring-1 ring-accent/40',
-      )}
-    >
-      <span className="[&_svg]:size-4.5">{selectActionIcon(action)}</span>
-      <span className="w-full truncate text-center text-tiny font-semibold">
-        {t(meta.labelKey as never)}
-      </span>
-    </span>
   )
 }

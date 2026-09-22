@@ -72,6 +72,43 @@ describe('LibrarySelectList', () => {
     expect(onToggleSelect).toHaveBeenCalledWith('b')
   })
 
+  it('prints the shelf a run of rows opens, in the host’s words', () => {
+    const decks = [deck('g', 'Geneza', 0), deck('m', 'Matei', 1)]
+    renderWithProviders(
+      <LibrarySelectList
+        {...baseProps({
+          decks,
+          headings: new Map([
+            ['g', { id: 'old', labelKey: 'library.select.folders' }],
+            ['m', { id: 'new', labelKey: 'library.select.decks' }],
+          ]),
+        })}
+      />,
+    )
+    const text = screen.getByRole('list').textContent ?? ''
+    expect(text.indexOf('Folders')).toBeLessThan(text.indexOf('Geneza'))
+    expect(text.indexOf('Decks')).toBeLessThan(text.indexOf('Matei'))
+    expect(text.indexOf('Geneza')).toBeLessThan(text.indexOf('Decks'))
+  })
+
+  it('takes the drag handle off a row whose order a drag may not write', () => {
+    const decks = [deck('a', 'First', 0)]
+    const { unmount } = renderWithProviders(
+      <LibrarySelectList {...baseProps({ decks, canReorderDecks: true })} />,
+    )
+    expect(screen.getByRole('button', { name: 'Select First' })).toHaveAttribute(
+      'aria-roledescription',
+      'sortable',
+    )
+    unmount()
+
+    renderWithProviders(<LibrarySelectList {...baseProps({ decks, canReorderDecks: false })} />)
+    expect(screen.getByRole('button', { name: 'Select First' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    )
+  })
+
   it('names the two sections only when both are on screen', () => {
     const folders = [
       makeFolder({

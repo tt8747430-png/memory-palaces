@@ -83,6 +83,12 @@ export interface Preferences extends Entity {
   deckSort: DeckSort
   /** Whether that order reaches the rows nested under a deck, or only the level being looked at. */
   deckSortSubdecks: boolean
+  /**
+   * Orders chosen for one deck's subdecks in particular, by that deck's id — what "sort subdecks"
+   * on a deck writes. Overrides the Library order for those rows; cleared as one when the learner
+   * asks the Library order to reach every subdeck again.
+   */
+  subdeckSorts: Record<string, DeckSort>
   privacy: PrivacySettings
   extensions: ExtensionId[]
   /**
@@ -119,6 +125,7 @@ export const DEFAULT_PREFERENCES = {
   selectToolbar: DEFAULT_SELECT_TOOLBAR,
   deckSort: DEFAULT_DECK_SORT,
   deckSortSubdecks: true,
+  subdeckSorts: {} as Record<string, DeckSort>,
   privacy: DEFAULT_PRIVACY,
   extensions: [] as ExtensionId[],
   disabledFeatures: {} as Record<ExtensionId, string[]>,
@@ -154,6 +161,7 @@ export interface MakePreferencesInput {
   selectToolbar?: SelectToolbarPreferences
   deckSort?: DeckSort
   deckSortSubdecks?: boolean
+  subdeckSorts?: Record<string, DeckSort>
   privacy?: PrivacySettings
   extensions?: ExtensionId[]
   disabledFeatures?: Record<ExtensionId, string[]>
@@ -166,6 +174,20 @@ function resolveSwipe(input?: SwipePreferences): SwipePreferences {
   const out = {} as SwipePreferences
   for (const type of SWIPE_ITEM_TYPES) {
     out[type] = normalizeSwipeConfig(type, input?.[type] ?? DEFAULT_SWIPE[type])
+  }
+  return out
+}
+
+/**
+ * The read-side twin of the schema step that added the map: a row from a device that never had it
+ * arrives without it, and an entry that is not an order's name is dropped. The names themselves
+ * are kept whatever they say — an extension's order is resolved when the Library reads it.
+ */
+export function resolveSubdeckSorts(input?: unknown): Record<string, DeckSort> {
+  if (typeof input !== 'object' || input === null) return {}
+  const out: Record<string, DeckSort> = {}
+  for (const [deckId, sort] of Object.entries(input as Record<string, unknown>)) {
+    if (typeof sort === 'string' && sort) out[deckId] = sort
   }
   return out
 }
@@ -207,6 +229,7 @@ export function makePreferences(input: MakePreferencesInput): Preferences {
     selectToolbar: resolveSelectToolbar(input.selectToolbar),
     deckSort: resolveDeckSort(input.deckSort),
     deckSortSubdecks: input.deckSortSubdecks ?? DEFAULT_PREFERENCES.deckSortSubdecks,
+    subdeckSorts: resolveSubdeckSorts(input.subdeckSorts),
     privacy: input.privacy ?? { ...DEFAULT_PRIVACY },
     extensions: [...(input.extensions ?? [])],
     disabledFeatures: normalizeDisabledFeatures(input.disabledFeatures),
@@ -291,6 +314,7 @@ export type PreferencesChanges = Partial<
     | 'selectToolbar'
     | 'deckSort'
     | 'deckSortSubdecks'
+    | 'subdeckSorts'
     | 'privacy'
     | 'devMode'
     | 'autosync'

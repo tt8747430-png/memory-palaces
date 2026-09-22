@@ -2,6 +2,7 @@ import type { ReactElement } from 'react'
 import type { RxCollectionCreator } from 'rxdb'
 import type { Identifiable, Repository } from '@/shared/api'
 import type { SyncCadence } from '@/shared/config/sync-tables'
+import type { DeckFilter, DeckOrder } from './deck-order'
 import type { PendingChangePort } from './entity-store'
 import type { TransferOption } from '@/shared/ui'
 
@@ -27,9 +28,30 @@ export type ImportOptionContribution = Omit<TransferOption, 'onSelect' | 'title'
   feature?: string
 }
 
+/**
+ * An order an extension adds to the Library's sort menu, under its own id (`bible:canon`). The
+ * order itself is pure (`DeckOrder`); this carries how the menu names and draws it.
+ */
+export type DeckSortContribution = DeckOrder & {
+  /** A key inside the extension's own namespace, like every contribution's copy. */
+  labelKey: string
+  icon: ReactElement
+  /** The extension feature this order belongs to; switched off, the order is withdrawn. */
+  feature?: string
+}
+
+/** A filter an extension adds to the Library's Show menu, under its own id (`bible:law`). */
+export type DeckFilterContribution = DeckFilter & {
+  labelKey: string
+  icon: ReactElement
+  feature?: string
+}
+
 /** Everything the enabled extensions are currently offering, merged. */
 export interface ExtensionContributions {
   importOptions?: ImportOptionContribution[]
+  deckSorts?: DeckSortContribution[]
+  deckFilters?: DeckFilterContribution[]
 }
 
 export type ExtensionPoint = keyof ExtensionContributions

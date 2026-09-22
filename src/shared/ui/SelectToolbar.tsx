@@ -1,8 +1,8 @@
+import type { CSSProperties, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ACTION_META } from '@/shared/config/actions'
-import type { SelectToolbarConfig } from '@/shared/config/select-toolbar'
+import { accentStyleOf, ACTION_META } from '@/shared/config/actions'
+import type { SelectActionId, SelectToolbarConfig } from '@/shared/config/select-toolbar'
 import { cn, type MultiSelect } from '@/shared/lib'
-import { DockPill } from './DockPill'
 import { CloseBadge } from './CloseBadge'
 import { type SelectActionHandlers, selectActionIcon } from './select-actions'
 
@@ -14,51 +14,31 @@ export interface SelectToolbarProps {
 }
 
 /**
- * The bottom slot, while a selection is on. It is the nav's box and the nav's material: four slots
- * of 51px inside the 16rem pill, each an icon over a label, exactly as a tab is. Swapping one for
- * the other is then a change of contents, not of furniture.
+ * The bottom slot's contents while a selection is on: up to four slots inside the nav's box, each
+ * an action's own colour under its name, exactly as the swipe rails and the menus draw it. The
+ * pill beneath is the dock's; this is only what sits on it. Swapping the nav for this is then a
+ * change of contents, not of furniture.
  */
 export function SelectToolbar({ actions, handlers, selection, className }: SelectToolbarProps) {
   const { t } = useTranslation()
   const shown = actions.filter((id) => handlers[id] != null)
 
   return (
-    <div className="relative h-full w-full">
-      <DockPill className={cn('justify-around gap-1.5 px-4', className)}>
+    <div className={cn('relative h-full w-full', className)}>
+      <SelectToolbarRow>
         {shown.map((id) => {
-          const meta = ACTION_META[id]
           const handler = handlers[id]!
           return (
-            <button
+            <SelectToolbarSlot
               key={id}
-              type="button"
-              onClick={handler.onAction}
+              action={id}
               disabled={handler.disabled}
-              className={cn(
-                'relative z-10 flex h-full min-w-0 flex-1 flex-col items-center justify-center gap-1',
-                'rounded-control px-0.5',
-                'transition-transform active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40',
-                'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/40',
-                meta.destructive ? 'text-(--danger-on-surface)' : 'text-(--nav-ink)',
-              )}
-            >
-              <span
-                className={cn(
-                  'grid size-7 shrink-0 place-items-center rounded-squircle',
-                  meta.destructive ? 'bg-(--danger-surface)' : null,
-                )}
-              >
-                {selectActionIcon(id)}
-              </span>
-              <span className="w-full truncate text-center text-tiny font-semibold">
-                {t(meta.labelKey as never)}
-              </span>
-            </button>
+              onClick={handler.onAction}
+            />
           )
         })}
-      </DockPill>
-      {/* Outside the pill, which clips to its corners — the badge hangs off one. Last in the
-          tree so it paints over the slot beneath it. */}
+      </SelectToolbarRow>
+      {/* Last in the tree so the badge paints over the slot beneath it. */}
       <CloseBadge
         size="md"
         corner="start"
@@ -66,5 +46,75 @@ export function SelectToolbar({ actions, handlers, selection, className }: Selec
         onClick={selection.exit}
       />
     </div>
+  )
+}
+
+export interface SelectToolbarSlotProps {
+  action: SelectActionId
+  disabled?: boolean
+  onClick?: () => void
+  /** Drawn but inert — the settings preview shows the bar without running anything. */
+  inert?: boolean
+  className?: string
+}
+
+/**
+ * One slot of the toolbar: a tile in the action's accent, its icon in the accent's ink, its name
+ * beneath in the pill's ink. Drawn the same way in the bar and in the settings preview of it,
+ * so what the learner arranges is what the learner gets.
+ */
+export function SelectToolbarSlot({
+  action,
+  disabled,
+  onClick,
+  inert = false,
+  className,
+}: SelectToolbarSlotProps) {
+  const { t } = useTranslation()
+  const meta = ACTION_META[action]
+  const accent = accentStyleOf(action)
+  const label = t(meta.labelKey as never)
+  const body = (
+    <>
+      <span
+        aria-hidden
+        style={{ '--sw': accent.fill } as CSSProperties}
+        className={cn(
+          'grid size-8 shrink-0 place-items-center rounded-squircle bg-(--sw) shadow-[inset_0_1px_0_rgba(255,255,255,0.25)]',
+          accent.ink === 'light' ? 'text-white' : 'text-(--p-navy-900)',
+        )}
+      >
+        {selectActionIcon(action)}
+      </span>
+      <span className="w-full truncate text-center text-tiny font-semibold text-(--nav-ink)">
+        {label}
+      </span>
+    </>
+  )
+  const layout =
+    'relative z-10 flex h-full min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-control px-0.5'
+
+  if (inert) return <span className={cn(layout, className)}>{body}</span>
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        layout,
+        'transition-transform active:scale-[0.94] disabled:pointer-events-none disabled:opacity-40',
+        'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/40',
+        className,
+      )}
+    >
+      {body}
+    </button>
+  )
+}
+
+/** Slot layout shared with the settings preview: the pill's inner row. */
+export function SelectToolbarRow({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex h-full w-full items-center justify-around gap-1.5 px-4">{children}</div>
   )
 }

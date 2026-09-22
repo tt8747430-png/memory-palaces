@@ -1,3 +1,4 @@
+import { compareNatural } from '@/shared/lib'
 import { bookName } from './book-names'
 import { parseRef, type VerseRef } from './reference'
 
@@ -53,7 +54,7 @@ export function summariseVerseRefs(
   const sorted = named
     .toSorted(
       (a, b) =>
-        a.name.localeCompare(b.name) ||
+        compareNatural(a.name, b.name) ||
         a.ref.chapter - b.ref.chapter ||
         a.ref.from - b.ref.from ||
         a.ref.to - b.ref.to,

@@ -25,7 +25,9 @@ import {
   canReparent,
   findEntity,
   idsWithoutDescendants,
+  mergeVisibleOrder,
   orderPatch,
+  siblingDecks,
   subtreeDeckIds,
 } from '@/shared/lib'
 import { bulkAction, type SelectActionHandlers } from '@/shared/ui'
@@ -42,8 +44,6 @@ interface Args {
   patchDecks: Patch<Deck>
   patchFolders: Patch<Folder>
   onFolderGone: () => void
-  /** Puts the Library back into the manual order, because a drag has just written one. */
-  onManualOrder: () => void
   /** Opens the style sheet over the selection; the page owns that sheet. */
   onRequestBulkStyle: () => void
   onRequestBulkMove: () => void
@@ -73,7 +73,6 @@ export function useLibraryActions({
   patchDecks,
   patchFolders,
   onFolderGone,
-  onManualOrder,
   onRequestBulkStyle,
   onRequestBulkMove,
   onRequestBulkDelete,
@@ -165,18 +164,31 @@ export function useLibraryActions({
     if (folderId === id) onFolderGone()
   }
 
-  // A drag writes the manual order, so it is the manual order the Library must then be in —
-  // otherwise the row springs back under the finger. The same rule the content editor uses.
+  // A drag writes the manual order, and is only offered where the rows are in it — so nothing
+  // springs back under the finger, and nothing the learner chose is silently undone.
+  //
+  // What the finger touched may be a filtered view of the level, so the order is written over the
+  // *whole* level: numbering only the rows on screen would leave every hidden row on a number one
+  // of them has just taken.
   const reorderFolderIds = (ids: string[]) => {
-    onManualOrder()
-    patchFolders(orderPatch(ids))
-    void reorderFolders(folderStore, ids)
+    const whole = mergeVisibleOrder(
+      folders.map((folder) => folder.id),
+      ids,
+    )
+    patchFolders(orderPatch(whole))
+    void reorderFolders(folderStore, whole)
   }
 
   const reorderDeckIds = (ids: string[]) => {
-    onManualOrder()
-    patchDecks(orderPatch(ids))
-    void reorderDecks(deckStore, ids)
+    // Every row a drag reorders is a peer of the others (ADR 0001), so one parent answers for the level.
+    const parentId = findEntity(decks, ids[0])?.parentId ?? null
+    const peers = siblingDecks(decks, parentId, parentId === null ? folderId : null)
+    const whole = mergeVisibleOrder(
+      peers.map((deck) => deck.id),
+      ids,
+    )
+    patchDecks(orderPatch(whole))
+    void reorderDecks(deckStore, whole)
   }
 
   const fileDecksIntoFolder = (deckIds: string[], targetFolderId: string) =>

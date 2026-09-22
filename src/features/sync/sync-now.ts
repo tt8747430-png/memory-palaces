@@ -1,4 +1,5 @@
-import { authFailure, errorMessage, type SyncOutcome } from '@/shared/lib'
+import type { SyncOutcome } from '@/shared/lib'
+import { failed } from './failed'
 import type { SyncedTable } from '@/shared/config/sync-tables'
 import { pendingIn, selectPendingChanges } from '@/entities/pending-change'
 import { appendSyncLog, selectSyncState, type SyncLogEntry } from '@/entities/sync-state'
@@ -87,7 +88,7 @@ async function attemptSync(deps: SyncDeps, options: SyncNowOptions): Promise<Syn
 
     return { kind: outcome }
   } catch (error) {
-    return { kind: 'failed', reason: errorMessage(error) }
+    return failed(error)
   }
 }
 
@@ -99,13 +100,12 @@ export async function syncNow(deps: SyncDeps, options: SyncNowOptions = {}): Pro
     // A refused token is worth one more try behind a fresh one. A device clock the server reads
     // as being in the future is not: every token it is handed looks issued ahead of time, and
     // only the learner can put that right — so the Sync says so instead of trying again.
-    const failure = authFailure(outcome.reason)
-    if (failure === 'token' && (await deps.refreshAuth().catch(() => false))) {
+    if (outcome.reason === 'token' && (await deps.refreshAuth().catch(() => false))) {
       outcome = await attemptSync(deps, options)
     }
   }
   if (outcome.kind === 'failed') {
-    const reason = authFailure(outcome.reason) ?? outcome.reason
+    const { reason } = outcome
     await logSync(deps, { outcome: 'failed', pushed: 0, pulled: 0, reason })
     return { kind: 'failed', reason }
   }
@@ -125,7 +125,7 @@ export async function repairSync(deps: SyncDeps): Promise<SyncOutcome> {
     const fresh = selectSyncState(deps.syncStateStore.getState())
     await deps.syncStateStore.getState().save({ ...fresh, checkpoints: {} })
   } catch (error) {
-    return { kind: 'failed', reason: errorMessage(error) }
+    return failed(error)
   }
   // Everything means everything: the quiet tables are read again here, which is the one place a
   // learner asks for them by name.

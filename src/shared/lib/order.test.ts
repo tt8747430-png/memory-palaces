@@ -1,5 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
-import { byNewestFirst, byOldestFirst, byOrderThenCreated, nextOrder, reorderById } from './order'
+import {
+  byNewestFirst,
+  byOldestFirst,
+  byOrderThenCreated,
+  compareNatural,
+  mergeVisibleOrder,
+  nextOrder,
+  reorderById,
+} from './order'
 
 describe('collection orderings', () => {
   const rows = [
@@ -97,5 +105,44 @@ describe('reorderById', () => {
     await reorderById([a], ['ghost', 'a'], save)
 
     expect(save.mock.calls).toEqual([[a, 1]])
+  })
+})
+
+describe('compareNatural', () => {
+  it('orders embedded numbers by value, not by digit', () => {
+    const names = ['Geneza 10', 'Geneza 2', 'Geneza 1', 'Geneza 11']
+    expect(names.toSorted(compareNatural)).toEqual([
+      'Geneza 1',
+      'Geneza 2',
+      'Geneza 10',
+      'Geneza 11',
+    ])
+  })
+
+  it('ignores case and accents', () => {
+    expect(compareNatural('éclair', 'Eclair')).toBe(0)
+    expect(['b', 'A', 'a'].toSorted(compareNatural)).toEqual(['A', 'a', 'b'])
+  })
+})
+
+describe('mergeVisibleOrder', () => {
+  const all = ['a', 'b', 'c', 'd', 'e']
+
+  it('is the dragged order itself when every row was on screen', () => {
+    expect(mergeVisibleOrder(all, ['e', 'd', 'c', 'b', 'a'])).toEqual(['e', 'd', 'c', 'b', 'a'])
+  })
+
+  it('leaves a hidden row in the slot it already had, and fills the rest in the dragged order', () => {
+    // b and d are filtered out; the learner dragged e above a among what they could see.
+    expect(mergeVisibleOrder(all, ['e', 'c', 'a'])).toEqual(['e', 'b', 'c', 'd', 'a'])
+  })
+
+  it('keeps the full list whole when the drag moved nothing', () => {
+    expect(mergeVisibleOrder(all, ['a', 'c', 'e'])).toEqual(all)
+  })
+
+  it('ignores an id that is not in the list, and a list with nothing visible', () => {
+    expect(mergeVisibleOrder(all, ['c', 'gone', 'a'])).toEqual(['c', 'b', 'a', 'd', 'e'])
+    expect(mergeVisibleOrder(all, [])).toEqual(all)
   })
 })

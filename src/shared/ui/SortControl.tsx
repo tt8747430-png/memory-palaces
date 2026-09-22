@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { Fragment, type ReactNode } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { cn } from '@/shared/lib'
 import {
@@ -7,6 +7,7 @@ import {
   DropdownMenuItemIcon,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './primitives/dropdown-menu'
 
@@ -14,6 +15,8 @@ export interface SortControlOption<T extends string> {
   value: T
   label: string
   icon: ReactNode
+  /** Opens a new run of options — the ones an extension added, after the app's own. */
+  dividerBefore?: boolean
 }
 
 export interface SortControlProps<T extends string> {
@@ -57,10 +60,13 @@ export function SortControl<T extends string>({
       <DropdownMenuContent side="bottom" align="end">
         <DropdownMenuRadioGroup value={value} onValueChange={(next) => onChange(next as T)}>
           {options.map((option) => (
-            <DropdownMenuRadioItem key={option.value} value={option.value}>
-              <DropdownMenuItemIcon>{option.icon}</DropdownMenuItemIcon>
-              <span className="truncate">{option.label}</span>
-            </DropdownMenuRadioItem>
+            <Fragment key={option.value}>
+              {option.dividerBefore ? <DropdownMenuSeparator /> : null}
+              <DropdownMenuRadioItem value={option.value}>
+                <DropdownMenuItemIcon>{option.icon}</DropdownMenuItemIcon>
+                <span className="truncate">{option.label}</span>
+              </DropdownMenuRadioItem>
+            </Fragment>
           ))}
         </DropdownMenuRadioGroup>
       </DropdownMenuContent>

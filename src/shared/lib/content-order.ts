@@ -1,3 +1,5 @@
+import { compareNatural } from './order'
+
 export const CONTENT_SORTS = ['manual', 'recent', 'name', 'due', 'flagged'] as const
 
 export type ContentSort = (typeof CONTENT_SORTS)[number]
@@ -15,7 +17,7 @@ export function sortContent<T extends SortableContent>(
 ): T[] {
   switch (sort) {
     case 'name':
-      return [...items].sort((a, b) => title(a).localeCompare(title(b)))
+      return items.toSorted((a, b) => compareNatural(title(a), title(b)))
     case 'recent':
       return [...items].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     case 'due':

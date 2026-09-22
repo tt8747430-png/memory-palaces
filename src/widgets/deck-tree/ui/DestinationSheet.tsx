@@ -268,7 +268,8 @@ function Row({
   const inert = !selectable && !hasChildren
   return (
     <div
-      className="relative flex items-center border-b border-border/50"
+      // The gap keeps the selected row's tint clear of the expand toggle beside it.
+      className="relative flex items-center gap-1.5 border-b border-border/50"
       style={{ paddingLeft: depth * INDENT }}
     >
       {hasChildren ? (
@@ -295,7 +296,7 @@ function Row({
         disabled={disabled || inert}
         aria-pressed={selectable ? selected : undefined}
         className={cn(
-          'flex min-w-0 flex-1 items-center gap-2.5 rounded-control py-2.5 pl-1.5 pr-2 text-left transition-colors',
+          'flex min-w-0 flex-1 items-center gap-2.5 rounded-control py-2.5 pl-2 pr-2 text-left transition-colors',
           disabled ? 'opacity-40' : 'active:bg-primary/4',
           selectable && selected && 'bg-primary/6',
         )}
