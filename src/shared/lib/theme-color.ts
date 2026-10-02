@@ -2,8 +2,8 @@ import { STATUS_BAR } from '@/shared/config/status-bar'
 import type { ColorScheme } from './color-scheme'
 
 /**
- * What the app tells a platform about its status bar. iOS paints the installed app's bar from
- * `theme-color` and Android tints its own from it (ADR 0007). The build writes one meta per OS
+ * The `theme-color` metas: what the app tells a platform about its status bar. iOS paints the
+ * installed app's bar from them and Android tints its own (ADR 0007). The build writes one per OS
  * scheme; a theme the learner chose overrides both, so every meta carries the painted scheme's
  * colour, whatever its `media` says.
  */

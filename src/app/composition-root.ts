@@ -49,6 +49,7 @@ import { loadExtensions } from './extensions/load-extensions'
 import { EXTENSIONS } from './extensions/registry'
 import { resetLocalDatabase } from './persistence/reset-local-database'
 import { adoptDeviceSettings } from './persistence/adopt-device-settings'
+import { forgetRetiredDeviceKeys } from './persistence/forget-retired-device-keys'
 import { keepArchiveDetached } from './persistence/keep-archive-detached'
 import { keepCapped } from './persistence/keep-capped'
 import { keepSubdeckOrdersOwned } from './persistence/keep-subdeck-orders-owned'
@@ -195,6 +196,7 @@ export async function createServices(): Promise<Services> {
     deckStore: services.deckStore,
     preferencesStore: services.preferencesStore,
   })
+  forgetRetiredDeviceKeys()
   // A failed write leaves the old keys for the next launch; it never fails boot.
   await adoptDeviceSettings(services.preferencesStore).catch((error: unknown) =>
     console.error('Device settings could not be adopted into preferences', error),

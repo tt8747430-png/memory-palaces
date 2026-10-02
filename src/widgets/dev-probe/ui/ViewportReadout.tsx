@@ -1,6 +1,6 @@
 import { cn } from '@/shared/lib'
 import { checkViewport, type ProbeCheck, type ViewportSample } from '../model/viewport-sample'
-import { SAMPLE_ROWS } from '../model/viewport-text'
+import { formatSampleValue, SAMPLE_ROWS } from '../model/viewport-text'
 
 const STATE: Record<ProbeCheck['state'], string> = {
   ok: 'text-(--success-on-surface)',
@@ -39,7 +39,7 @@ export function ViewportReadout({
           {SAMPLE_ROWS.map(([key, label]) => (
             <div key={key} className="contents">
               <dt className="truncate text-muted-foreground">{label}</dt>
-              <dd className="truncate text-heading">{String(sample[key])}</dd>
+              <dd className="truncate text-heading">{formatSampleValue(sample[key])}</dd>
             </div>
           ))}
         </dl>

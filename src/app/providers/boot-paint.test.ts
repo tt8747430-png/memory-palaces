@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { STATUS_BAR } from '@/shared/config/status-bar'
+import { writeBuiltThemeColors } from '@/shared/test/theme-color'
 import { MOTION_MIRROR_KEY, THEME_MIRROR_KEY } from './boot-paint'
 
 const html = readFileSync(join(import.meta.dirname, '../../../index.html'), 'utf8')
@@ -13,18 +14,6 @@ function stubOs(matching: string[] = []) {
 }
 
 const OS_DARK = '(prefers-color-scheme: dark)'
-
-/** The pair the build writes ahead of the script (`vite.config.ts`), one per OS scheme. */
-function writeBuiltMetas(): HTMLMetaElement[] {
-  return (['light', 'dark'] as const).map((scheme) => {
-    const meta = document.createElement('meta')
-    meta.setAttribute('name', 'theme-color')
-    meta.setAttribute('media', `(prefers-color-scheme: ${scheme})`)
-    meta.setAttribute('content', STATUS_BAR[scheme])
-    document.head.append(meta)
-    return meta
-  })
-}
 
 /** Runs the boot script as the browser does: before the stylesheet and before any module. */
 function runBoot() {
@@ -55,7 +44,7 @@ describe('the boot script', () => {
   it('paints the theme the learner chose, not the one the OS is in', () => {
     stubOs([OS_DARK])
     localStorage.setItem(THEME_MIRROR_KEY, 'light')
-    const metas = writeBuiltMetas()
+    const metas = writeBuiltThemeColors()
 
     runBoot()
 
@@ -66,7 +55,7 @@ describe('the boot script', () => {
   it('hands every theme-color the chosen theme’s colour, whatever its media says', () => {
     stubOs()
     localStorage.setItem(THEME_MIRROR_KEY, 'dark')
-    const metas = writeBuiltMetas()
+    const metas = writeBuiltThemeColors()
 
     runBoot()
 
@@ -77,7 +66,7 @@ describe('the boot script', () => {
   it('asks the OS when the choice is system', () => {
     stubOs([OS_DARK])
     localStorage.setItem(THEME_MIRROR_KEY, 'system')
-    const metas = writeBuiltMetas()
+    const metas = writeBuiltThemeColors()
 
     runBoot()
 
@@ -88,6 +77,30 @@ describe('the boot script', () => {
   it('asks the OS on a device that has never stored a choice', () => {
     stubOs([OS_DARK])
     runBoot()
+    expect(document.documentElement.dataset.theme).toBe('dark')
+  })
+
+  it('asks the OS when the stored choice is not one it knows', () => {
+    stubOs([OS_DARK])
+    localStorage.setItem(THEME_MIRROR_KEY, 'banana')
+    const metas = writeBuiltThemeColors()
+
+    runBoot()
+
+    expect(document.documentElement.dataset.theme).toBe('dark')
+    expect(metas.map((meta) => meta.content)).toEqual([STATUS_BAR.dark, STATUS_BAR.dark])
+  })
+
+  it('asks the OS when storage cannot be read at all', () => {
+    stubOs([OS_DARK])
+    vi.stubGlobal('localStorage', {
+      getItem: () => {
+        throw new DOMException('The operation is insecure.', 'SecurityError')
+      },
+    })
+
+    runBoot()
+
     expect(document.documentElement.dataset.theme).toBe('dark')
   })
 

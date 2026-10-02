@@ -141,16 +141,17 @@ All four on every async surface — a missing state reads as a crash.
 
 ## 12. Install & manifest
 
-- **Manifest:** `standalone`, `portrait`, `theme_color #091A7A` (the splash's top, `--p-navy-900`, so Android's launch
-  bar meets the splash), `background_color #ADC8FF`, 192/512 + a **maskable** 512 (required for Android).
+- **Manifest:** `standalone`, `portrait`, `theme_color` = `STATUS_BAR.light` (Android's launch bar is the chrome
+  colour from the first frame, as every bar after it is), `background_color #ADC8FF`, 192/512 + a **maskable** 512
+  (required for Android).
 - **iOS:** `apple-mobile-web-app-*` meta + `apple-touch-icon`. No `beforeinstallprompt` (manual Add to Home Screen);
   status-bar style limited to `default`/`black`/`black-translucent`, and the app is on **`black`**
   ([ADR 0007](adr/0007-ios-paints-the-status-bar.md)): iOS paints the bar from `theme-color` and the web view runs
   from below it to the bottom edge. **Never `black-translucent`** — WebKit sizes an installed web view as if the bar
   were opaque and draws it under the bar, leaving a strip at the bottom no CSS reaches. The bar's colour is
   `STATUS_BAR` (`shared/config/status-bar.ts`), the header's chrome colour: the build writes one `theme-color` per OS
-  scheme, the boot script repaints both for the learner's theme before first paint, and `ThemeProvider` keeps them
-  once the preferences store is ready — never from its defaults. `.pt-safe` pads by `--safe-top`
+  scheme, the boot script repaints both for the learner's theme before first paint, and `useDeviceTheme` keeps them
+  once the preferences store is ready — `PreferencesProvider` mounts it only then, so never from its defaults. `.pt-safe` pads by `--safe-top`
   (`env(safe-area-inset-top)`, `0` installed). Test standalone separately.
 
 ## 13. Service-worker updates

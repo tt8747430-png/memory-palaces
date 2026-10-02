@@ -25,22 +25,25 @@
     <script id="boot-paint">
       ;(function () {
         // The theme the learner chose, which is 'light', 'dark' or 'system' — only the first two
-        // answer for themselves; 'system', and a device that has never stored one, ask the OS.
-        var theme = 'light'
+        // answer for themselves. 'system', a device that has never stored one, and storage that
+        // cannot be read ask the OS — each in its own guard, so one failing never skips the other.
+        var theme = null
         try {
           var stored = localStorage.getItem('mindscape:theme')
-          theme =
-            stored === 'light' || stored === 'dark'
-              ? stored
-              : window.matchMedia('(prefers-color-scheme: dark)').matches
-                ? 'dark'
-                : 'light'
+          if (stored === 'light' || stored === 'dark') theme = stored
         } catch (_) {}
+        if (!theme) {
+          try {
+            theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+          } catch (_) {
+            theme = 'light'
+          }
+        }
         document.documentElement.dataset.theme = theme
 
         // The status bar takes that theme's colour before first paint. Each theme-color meta names
         // one OS scheme; a theme the learner chose wins over the OS's, so every meta takes the
-        // colour of the one that names it. ThemeProvider keeps them once the app runs.
+        // colour of the one that names it. useDeviceTheme keeps them once the app runs.
         var bars = document.querySelectorAll('meta[name="theme-color"]')
         var painted = document.querySelector(
           'meta[name="theme-color"][media="(prefers-color-scheme: ' + theme + ')"]',

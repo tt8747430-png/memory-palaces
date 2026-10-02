@@ -45,7 +45,7 @@ export interface ViewportSample {
   statusStyle: string
   envTop: number
   statusBarColor: string
-  themeColors: string
+  themeColors: readonly string[]
   at: number
 }
 
@@ -97,7 +97,6 @@ export function readViewport(): ViewportSample {
     ),
   }
   const fieldInScroller = Boolean(isTextField(active) && scroller?.contains(active))
-  const themeColors = readThemeColors()
 
   return {
     route: window.location.pathname,
@@ -141,7 +140,7 @@ export function readViewport(): ViewportSample {
         ?.content.trim() ?? '(none)',
     envTop: reportedTopInset(),
     statusBarColor: STATUS_BAR[readColorScheme()],
-    themeColors: themeColors.length > 0 ? themeColors.join(' ') : '(none)',
+    themeColors: readThemeColors(),
     at: Date.now(),
   }
 }
@@ -294,21 +293,20 @@ function statusBarDetail(sample: ViewportSample): string {
   return 'black — iOS paints the bar, the web view starts below it'
 }
 
-const toldColors = (sample: ViewportSample) =>
-  sample.themeColors === '(none)' ? [] : sample.themeColors.toLowerCase().split(' ')
-
 /** Every `theme-color` carries the painted theme's colour: iOS and Android paint the bar from it. */
 function themeColorState(sample: ViewportSample): ProbeCheck['state'] {
-  const told = toldColors(sample)
   const bar = sample.statusBarColor.toLowerCase()
-  return told.length > 0 && told.every((color) => color === bar) ? 'ok' : 'bad'
+  return sample.themeColors.length > 0 &&
+    sample.themeColors.every((color) => color.toLowerCase() === bar)
+    ? 'ok'
+    : 'bad'
 }
 
 function themeColorDetail(sample: ViewportSample): string {
-  if (toldColors(sample).length === 0) return 'no theme-color meta: the platform picks the bar'
+  if (sample.themeColors.length === 0) return 'no theme-color meta: the platform picks the bar'
   return themeColorState(sample) === 'ok'
     ? `${sample.statusBarColor}, told`
-    : `theme-color is ${sample.themeColors}, the painted theme's bar is ${sample.statusBarColor}`
+    : `theme-color is ${sample.themeColors.join(' ')}, the painted theme's bar is ${sample.statusBarColor}`
 }
 
 export interface KeyboardEpisode {

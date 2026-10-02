@@ -158,7 +158,7 @@ v4, two-layer tokens: primitives (`--p-navy-900`…) → semantic roles (`--prim
       _same material_ dimmed and re-inked — chalk stays a blackboard, kraft stays kraft — never a different material,
       and it always lights its chrome from the dark block. `resolveCardStyle` / `resolveCardScene` / `cardSceneChrome`
       take the scheme; components read it from `useColorScheme()`, which watches `data-theme` on the document (the
-      attribute `index.html` sets before first paint and `ThemeProvider` keeps). `card-style.test.ts` walks every
+      attribute `index.html` sets before first paint and `useDeviceTheme` keeps). `card-style.test.ts` walks every
       preset in **both** schemes and fails a printed one that paints the same face by night as by day.
     - **Anything else that picks a colour by scheme reads the same attribute.** Not `prefers-color-scheme` — that is
       the OS's answer, and the learner's may differ: a media-matched `<meta name="theme-color">` and sonner's

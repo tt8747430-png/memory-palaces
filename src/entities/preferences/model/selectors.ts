@@ -1,10 +1,22 @@
-import type { DeckFilterId, DeckSort, FlashcardInput, Preferences } from './types'
+import type { DeckFilterId, DeckSort, FlashcardInput, Preferences, Theme } from './types'
 import { DEFAULT_PREFERENCES } from './types'
 import type { PreferencesState } from './store'
 
 export const selectEffectivePreferences = (
   state: PreferencesState,
 ): Pick<Preferences, keyof typeof DEFAULT_PREFERENCES> => state.preferences ?? DEFAULT_PREFERENCES
+
+export const selectTheme = (state: PreferencesState): Theme =>
+  selectEffectivePreferences(state).theme
+
+export const selectReducedMotion = (state: PreferencesState): boolean =>
+  selectEffectivePreferences(state).reducedMotion
+
+export const selectHaptics = (state: PreferencesState): boolean =>
+  selectEffectivePreferences(state).haptics
+
+export const selectLanguage = (state: PreferencesState): string =>
+  selectEffectivePreferences(state).language
 
 export const selectDailyGoal = (state: PreferencesState): number =>
   selectEffectivePreferences(state).dailyGoal

@@ -4,26 +4,18 @@ import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
-import { STATUS_BAR } from './src/shared/config/status-bar'
+import { STATUS_BAR, THEME_COLOR_METAS } from './src/shared/config/status-bar.ts'
 
 /**
  * The status bar's colour for each OS scheme, ahead of `index.html`'s boot script, which repaints
- * both for the learner's theme before first paint; `ThemeProvider` keeps them after (ADR 0007).
- * The HTML iOS parses is then right for the OS's theme before any script has run.
+ * both for the learner's theme before first paint; `useDeviceTheme` keeps them after (ADR 0007).
+ * `head-prepend` is what puts them ahead of the script.
  */
 function statusBarMeta(): Plugin {
   return {
     name: 'status-bar-meta',
     transformIndexHtml: () =>
-      (['light', 'dark'] as const).map((scheme) => ({
-        tag: 'meta',
-        attrs: {
-          name: 'theme-color',
-          media: `(prefers-color-scheme: ${scheme})`,
-          content: STATUS_BAR[scheme],
-        },
-        injectTo: 'head-prepend' as const,
-      })),
+      THEME_COLOR_METAS.map((attrs) => ({ tag: 'meta', attrs, injectTo: 'head-prepend' as const })),
   }
 }
 
@@ -59,7 +51,9 @@ export default defineConfig(({ mode }) => ({
         short_name: 'Mindscape',
         description: 'Train your memory with the method of loci. Offline-first.',
         lang: 'en',
-        theme_color: '#091A7A',
+        // Android's launch bar, before the page's own metas take over: the bar is the chrome colour
+        // from launch on (ADR 0007). A manifest names one colour, so it is the light scheme's.
+        theme_color: STATUS_BAR.light,
         background_color: '#ADC8FF',
         display: 'standalone',
         orientation: 'portrait',
@@ -89,9 +83,9 @@ export default defineConfig(({ mode }) => ({
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
   build: {
-    rollupOptions: {
+    rolldownOptions: {
       output: {
-        advancedChunks: {
+        codeSplitting: {
           groups: [
             { name: 'persistence', test: /node_modules\/(rxdb|dexie)\// },
             { name: 'supabase', test: /node_modules\/@supabase\// },

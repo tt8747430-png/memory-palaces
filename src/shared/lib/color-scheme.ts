@@ -4,7 +4,7 @@ export type ColorScheme = 'light' | 'dark'
 
 /**
  * The scheme the app is painted in, read off `data-theme` — the one the inline script in
- * `index.html` sets before first paint and `ThemeProvider` keeps. Reading the document rather
+ * `index.html` sets before first paint and `useDeviceTheme` keeps. Reading the document rather
  * than a provider keeps one source of truth, and works in a preview or a test with no app around
  * it.
  */

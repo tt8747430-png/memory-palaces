@@ -46,8 +46,16 @@ const MARK: Record<ProbeCheck['state'], string> = { ok: 'ok  ', bad: 'FAIL', idl
 
 const LABEL_WIDTH = Math.max(...SAMPLE_ROWS.map(([, label]) => label.length))
 
+/** A row's value as the probe prints it: a list space-separated, an empty one `(none)`. */
+export function formatSampleValue(value: ViewportSample[keyof ViewportSample]): string {
+  if (typeof value !== 'object') return String(value)
+  return value.length > 0 ? value.join(' ') : '(none)'
+}
+
 const rowLines = (sample: ViewportSample) =>
-  SAMPLE_ROWS.map(([key, label]) => `${label.padEnd(LABEL_WIDTH)}  ${String(sample[key])}`)
+  SAMPLE_ROWS.map(
+    ([key, label]) => `${label.padEnd(LABEL_WIDTH)}  ${formatSampleValue(sample[key])}`,
+  )
 
 const checkLines = (sample: ViewportSample) =>
   checkViewport(sample).map(
@@ -68,11 +76,13 @@ export function sampleToText(sample: ViewportSample): string {
 }
 
 function diffLines(before: ViewportSample, after: ViewportSample): string[] {
-  const changed = SAMPLE_ROWS.filter(([key]) => String(before[key]) !== String(after[key]))
+  const changed = SAMPLE_ROWS.filter(
+    ([key]) => formatSampleValue(before[key]) !== formatSampleValue(after[key]),
+  )
   if (changed.length === 0) return ['(nothing moved)']
   return changed.map(
     ([key, label]) =>
-      `${label.padEnd(LABEL_WIDTH)}  ${String(before[key])} → ${String(after[key])}`,
+      `${label.padEnd(LABEL_WIDTH)}  ${formatSampleValue(before[key])} → ${formatSampleValue(after[key])}`,
   )
 }
 

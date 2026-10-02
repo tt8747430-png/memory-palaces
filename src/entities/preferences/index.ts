@@ -46,6 +46,10 @@ export {
   selectExtensionFeature,
   selectEffectivePreferences,
   selectFlashcardInput,
+  selectHaptics,
+  selectLanguage,
   selectLibraryExpanded,
+  selectReducedMotion,
+  selectTheme,
 } from './model/selectors'
 export type { PreferencesRepository } from './api/preferences-repository'

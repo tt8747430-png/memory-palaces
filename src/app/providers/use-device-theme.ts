@@ -1,4 +1,4 @@
-import { type ReactNode, useLayoutEffect } from 'react'
+import { useLayoutEffect } from 'react'
 import { type ColorScheme, paintStatusBar } from '@/shared/lib'
 import type { Theme } from '@/entities/preferences'
 import { THEME_MIRROR_KEY } from './boot-paint'
@@ -28,20 +28,12 @@ function mirror(theme: Theme) {
 }
 
 /**
- * Keeps `data-theme` and the status bar on the learner's theme; on "system" it follows the OS.
- * `theme` is `undefined` until the stored choice is known, and nothing is painted or mirrored then:
- * `index.html`'s boot script already painted that choice, and a default painted in its place is
- * the colour iOS would be handed while the app loads (ADR 0007).
+ * Keeps `data-theme` and the status bar on the learner's theme, and on "system" follows the OS.
+ * Only ever handed the learner's own choice — `PreferencesProvider` mounts its caller once the store
+ * has loaded — so a default is never painted in place of the boot script's paint (ADR 0007).
  */
-export function ThemeProvider({
-  theme,
-  children,
-}: {
-  theme: Theme | undefined
-  children: ReactNode
-}) {
+export function useDeviceTheme(theme: Theme): void {
   useLayoutEffect(() => {
-    if (theme === undefined) return
     paint(resolve(theme))
     mirror(theme)
     if (theme !== 'system') return
@@ -51,6 +43,4 @@ export function ThemeProvider({
     media.addEventListener('change', onChange)
     return () => media.removeEventListener('change', onChange)
   }, [theme])
-
-  return children
 }

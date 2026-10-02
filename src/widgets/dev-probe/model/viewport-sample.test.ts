@@ -44,7 +44,7 @@ const RESTING: ViewportSample = {
   statusStyle: 'black',
   envTop: 0,
   statusBarColor: '#2850b0',
-  themeColors: '#2850b0 #2850b0',
+  themeColors: ['#2850b0', '#2850b0'],
   at: 0,
 }
 
@@ -87,19 +87,19 @@ describe('the theme-color check', () => {
   })
 
   it('compares colours regardless of case', () => {
-    const upper = sample({ themeColors: '#2850B0 #2850B0' })
+    const upper = sample({ themeColors: ['#2850B0', '#2850B0'] })
     expect(verdict(checkViewport(upper), 'theme-color').state).toBe('ok')
   })
 
   it('fails when one meta still names the other theme — the OS’s scheme would win there', () => {
-    const stale = sample({ themeColors: '#2850b0 #0b1533' })
+    const stale = sample({ themeColors: ['#2850b0', '#0b1533'] })
     const check = verdict(checkViewport(stale), 'theme-color')
     expect(check.state).toBe('bad')
     expect(check.detail).toContain('#0b1533')
   })
 
   it('fails when nothing tells the platform at all', () => {
-    const check = verdict(checkViewport(sample({ themeColors: '(none)' })), 'theme-color')
+    const check = verdict(checkViewport(sample({ themeColors: [] })), 'theme-color')
     expect(check.state).toBe('bad')
     expect(check.detail).toContain('no theme-color')
   })

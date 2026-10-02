@@ -4,7 +4,7 @@
 - **Supersedes:** [ADR 0006](0006-the-page-paints-the-status-bar.md) (`black-translucent`, 2026-09-23)
 
 The operational rules are [MOBILE_DESIGN §12](../MOBILE_DESIGN.md) and [CODE_STYLE §4a](../CODE_STYLE.md); the
-implementation is `index.html`, `vite.config.ts`, `shared/config/status-bar.ts` and `app/providers/ThemeProvider.tsx`.
+implementation is `index.html`, `vite.config.ts`, `shared/config/status-bar.ts` and `app/providers/PreferencesProvider.tsx` (`use-device-theme.ts`).
 
 ## Context
 
@@ -35,9 +35,11 @@ rewrite that followed:
   for the OS theme before any script runs. `index.html`'s boot script copies the chosen theme's meta onto every
   `theme-color` meta before first paint, so a theme picked in the app wins over the OS's from the first frame. The
   script carries no colour literals.
-- `ThemeProvider` paints nothing until the preferences store is ready. Until then the boot script's paint stands, and
-  no default is ever handed to the platform or written to the mirror. After that it writes every meta from
-  `STATUS_BAR` on each change, which is what Android follows too.
+- Nothing is painted until the preferences store is ready: `PreferencesProvider` mounts what hands preferences to
+  the device (`useDeviceTheme`, `useDeviceMotion`) only then. Until then the boot script's paint stands, and no
+  default is ever handed to the platform or written to a mirror. After that every meta is written from `STATUS_BAR`
+  on each change, which is what Android follows too. The manifest's `theme_color` is `STATUS_BAR.light`, so
+  Android's launch bar is the chrome colour as well.
 - The top inset is `env(safe-area-inset-top)` (`--safe-top`). It is `0` in an installed app under `black`. Nothing
   holds it, remembers it or compensates for it. `top-inset.ts`, `--safe-top-held` and the boot script's inset memory
   are deleted.
