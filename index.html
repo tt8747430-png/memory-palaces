@@ -8,43 +8,47 @@
       content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-visual"
       name="viewport"
     />
-    <!-- Android's bar: repainted by ThemeProvider (and by the script below, before first paint)
-       from `--status-bar`, the token the header's chrome is painted with. iOS does not read it —
-       see the style below. A media-matched pair would follow the OS instead of the theme the
-       learner chose. -->
-    <meta content="#2850b0" name="theme-color" />
     <meta content="yes" name="mobile-web-app-capable" />
-    <!-- Still the only spelling iOS honours. `black-translucent`: the web view runs under the
-       clock and the page paints what sits there — the header's chrome, the splash, a sheet's
-       backdrop, a study session's scene (ADR 0006). Under `black` iOS painted the bar itself from
-       the theme-color it read at load and never again, so nothing the app did reached it. The
-       top inset iOS reports late is anchored (`--safe-top`, `top-inset.ts`), and the script below
-       paints the first frame with the one remembered for this shape. -->
+    <!-- Still the only spelling iOS honours. `black`: iOS paints the status bar from `theme-color`
+       — the build writes one per OS scheme from `STATUS_BAR`, the header's chrome colour, and the
+       script below repaints both for the learner's theme — and the web view runs from below the
+       bar to the bottom of the screen. Under `black-translucent` WebKit sized that web view as if
+       the bar were opaque and drew it under the bar, leaving a strip at the bottom (ADR 0007). -->
     <meta content="yes" name="apple-mobile-web-app-capable" />
-    <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style" />
+    <meta content="black" name="apple-mobile-web-app-status-bar-style" />
     <meta content="Mindscape" name="apple-mobile-web-app-title" />
     <meta
       content="Mindscape — Your Memory Palace. Train recall with the method of loci. Offline-first."
       name="description"
     />
     <title>Mindscape — Your Memory Palace</title>
-    <script>
+    <script id="boot-paint">
       ;(function () {
         // The theme the learner chose, which is 'light', 'dark' or 'system' — only the first two
         // answer for themselves; 'system', and a device that has never stored one, ask the OS.
+        var theme = 'light'
         try {
           var stored = localStorage.getItem('mindscape:theme')
-          var resolved =
+          theme =
             stored === 'light' || stored === 'dark'
               ? stored
               : window.matchMedia('(prefers-color-scheme: dark)').matches
                 ? 'dark'
                 : 'light'
-          document.documentElement.dataset.theme = resolved
-          var bar = document.querySelector('meta[name="theme-color"]')
-          if (bar) bar.setAttribute('content', resolved === 'dark' ? '#0b1533' : '#2850b0')
-        } catch (_) {
-          document.documentElement.dataset.theme = 'light'
+        } catch (_) {}
+        document.documentElement.dataset.theme = theme
+
+        // The status bar takes that theme's colour before first paint. Each theme-color meta names
+        // one OS scheme; a theme the learner chose wins over the OS's, so every meta takes the
+        // colour of the one that names it. ThemeProvider keeps them once the app runs.
+        var bars = document.querySelectorAll('meta[name="theme-color"]')
+        var painted = document.querySelector(
+          'meta[name="theme-color"][media="(prefers-color-scheme: ' + theme + ')"]',
+        )
+        if (painted) {
+          for (var i = 0; i < bars.length; i++) {
+            bars[i].setAttribute('content', painted.getAttribute('content'))
+          }
         }
 
         // Damped motion, before the first transition can run. The OS answers, and so does the
@@ -60,9 +64,8 @@
         } catch (_) {}
         document.documentElement.dataset.reducedMotion = damped ? 'reduce' : 'system'
 
-        var installed = false
         try {
-          installed =
+          var installed =
             window.matchMedia('(display-mode: standalone)').matches ||
             window.matchMedia('(display-mode: fullscreen)').matches ||
             window.navigator.standalone === true
@@ -70,16 +73,6 @@
             document.querySelector('meta[name=viewport]').content =
               'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no,' +
               ' viewport-fit=cover, interactive-widget=resizes-visual'
-          }
-        } catch (_) {}
-
-        // The status bar's height as this shape last reported it, so the first frame is not drawn
-        // under the clock while iOS has yet to report it. `top-inset.ts` keeps the same memory.
-        try {
-          var insets = JSON.parse(localStorage.getItem('mindscape:top-inset') || '{}')
-          var top = insets[(installed ? 'app' : 'tab') + ':' + window.innerWidth]
-          if (typeof top === 'number' && top > 0) {
-            document.documentElement.style.setProperty('--safe-top-held', top + 'px')
           }
         } catch (_) {}
       })()

@@ -19,8 +19,6 @@ const SAME_ON_CHROME: Record<string, string> = {
   'bg-daylight': 'the page canvas; never drawn inside the block',
   'bg-threshold': 'the page canvas; never drawn inside the block',
   scrim: 'an overlay over everything, the block included',
-  'status-scrim':
-    'a shade under the clock, drawn over light surfaces only — never inside the block',
   'nav-surface': 'the dock pill, its own material',
   'nav-pill': 'the dock pill, its own material',
   'nav-ink': 'the dock pill, its own material',

@@ -1,115 +1,34 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import {
-  paintedBehind,
-  readStatusBarPaint,
-  statusBarColor,
-  statusBarIsDeclared,
-} from './status-bar'
+import { STATUS_BAR } from '@/shared/config/status-bar'
+import { paintStatusBar, readThemeColors } from './status-bar'
 
-function declare(color: string) {
-  const style = document.createElement('style')
-  style.id = 'status-bar-token'
-  style.textContent = `:root { --status-bar: ${color}; }`
-  document.head.append(style)
-}
-
-function tell(color: string) {
-  const meta = document.createElement('meta')
-  meta.name = 'theme-color'
-  meta.content = color
-  document.head.append(meta)
+/** The pair the build writes ahead of the boot script, one per OS scheme. */
+function writeBuiltMetas() {
+  for (const scheme of ['light', 'dark'] as const) {
+    const meta = document.createElement('meta')
+    meta.setAttribute('name', 'theme-color')
+    meta.setAttribute('media', `(prefers-color-scheme: ${scheme})`)
+    meta.setAttribute('content', STATUS_BAR[scheme])
+    document.head.append(meta)
+  }
 }
 
 afterEach(() => {
-  document.getElementById('status-bar-token')?.remove()
   document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => meta.remove())
 })
 
-describe('statusBarColor', () => {
-  it('reads the colour the stylesheet names', () => {
-    declare('#091a7a')
-    expect(statusBarColor()).toBe('#091a7a')
+describe('paintStatusBar', () => {
+  it('tells the platform the chosen scheme’s colour through every meta, whatever its media', () => {
+    writeBuiltMetas()
+    paintStatusBar('dark')
+    expect(readThemeColors()).toEqual([STATUS_BAR.dark, STATUS_BAR.dark])
+
+    paintStatusBar('light')
+    expect(readThemeColors()).toEqual([STATUS_BAR.light, STATUS_BAR.light])
   })
 
-  it('answers empty before a stylesheet has declared one', () => {
-    expect(statusBarColor()).toBe('')
-  })
-})
-
-describe('statusBarIsDeclared', () => {
-  it('holds when the platform was told the colour the stylesheet names', () => {
-    declare('#091a7a')
-    tell('#091a7a')
-    expect(statusBarIsDeclared(readStatusBarPaint())).toBe(true)
-  })
-
-  it('compares the colours, not how they were written', () => {
-    declare('#091a7a')
-    tell('rgb(9, 26, 122)')
-    expect(statusBarIsDeclared(readStatusBarPaint())).toBe(true)
-  })
-
-  it('fails on a stale meta — the bar would be painted the old theme’s colour', () => {
-    declare('#0b1533')
-    tell('#091a7a')
-    expect(statusBarIsDeclared(readStatusBarPaint())).toBe(false)
-  })
-
-  it('fails when nothing tells the platform at all', () => {
-    declare('#091a7a')
-    expect(statusBarIsDeclared(readStatusBarPaint())).toBe(false)
-  })
-})
-
-describe('paintedBehind', () => {
-  const mount = (html: string) => {
-    const host = document.createElement('div')
-    host.innerHTML = html
-    document.body.append(host)
-    return host
-  }
-
-  it('looks past a glass layer to the fill that actually stops the light', () => {
-    // The header tints what scrolled under it; the white card beneath is what a sampler reads.
-    const host = mount(
-      '<div style="background-color: rgb(255,255,255)">' +
-        '<div id="glass" style="background-color: rgba(0,0,0,0.3)"></div>' +
-        '</div>',
-    )
-
-    expect(paintedBehind(host.querySelector('#glass'))).toBe('rgb(255, 255, 255)')
-    host.remove()
-  })
-
-  it('takes the first fill that is opaque, not the first that is coloured', () => {
-    const host = mount(
-      '<div style="background-color: rgb(9,26,122)">' +
-        '<div style="background-color: rgba(255,255,255,0.9)">' +
-        '<span id="leaf"></span>' +
-        '</div></div>',
-    )
-
-    expect(paintedBehind(host.querySelector('#leaf'))).toBe('rgb(9, 26, 122)')
-    host.remove()
-  })
-
-  it('reads a colour that kept its space, alpha and all — a backdrop is not opaque', () => {
-    const host = mount(
-      '<div style="background-color: rgb(9,26,122)">' +
-        '<div id="backdrop" style="background-color: oklch(0.294 0.16 266.1 / 0.38)"></div>' +
-        '</div>',
-    )
-
-    expect(paintedBehind(host.querySelector('#backdrop'))).toBe('rgb(9, 26, 122)')
-    host.remove()
-  })
-
-  it('answers empty when nothing up the tree is opaque — the bar is the platform’s guess', () => {
-    const host = mount('<div id="bare"></div>')
-    document.body.style.backgroundColor = 'transparent'
-
-    expect(paintedBehind(host.querySelector('#bare'))).toBe('')
-    document.body.style.backgroundColor = ''
-    host.remove()
+  it('adds no meta of its own where the document carries none', () => {
+    paintStatusBar('dark')
+    expect(readThemeColors()).toEqual([])
   })
 })

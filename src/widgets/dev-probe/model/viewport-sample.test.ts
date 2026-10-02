@@ -14,6 +14,7 @@ const RESTING: ViewportSample = {
   mode: 'standalone',
   layoutHeight: 793,
   layoutWidth: 393,
+  screenHeight: 852,
   vvHeight: 793,
   vvOffsetTop: 0,
   vvScale: 1,
@@ -40,12 +41,10 @@ const RESTING: ViewportSample = {
   fieldInScroller: false,
   revealDelta: 0,
   stored: '403',
-  statusStyle: 'black-translucent',
-  safeTopHeld: 54,
-  safeTopReported: 54,
-  statusBarDeclared: '#091a7a',
-  statusBarMeta: '#091a7a',
-  statusBarPainted: 'rgb(9, 26, 122)',
+  statusStyle: 'black',
+  envTop: 0,
+  statusBarColor: '#2850b0',
+  themeColors: '#2850b0 #2850b0',
   at: 0,
 }
 
@@ -57,51 +56,52 @@ const verdict = (checks: ProbeCheck[], id: string) => {
   return check
 }
 
-describe('the top inset check', () => {
-  it('passes when the page paints under the clock and the header clears it', () => {
-    expect(verdict(checkViewport(RESTING), 'top-inset').state).toBe('ok')
+describe('the status bar check', () => {
+  it('passes an installed app under a bar iOS paints, with nothing drawn beneath it', () => {
+    expect(verdict(checkViewport(RESTING), 'status-bar').state).toBe('ok')
   })
 
-  it('holds through a moment where iOS reports no inset at all', () => {
-    const dropped = sample({ safeTopReported: 0 })
-    expect(verdict(checkViewport(dropped), 'top-inset').state).toBe('ok')
-  })
-
-  it('fails when the held inset is short of what iOS reports — the header is under the clock', () => {
-    const short = sample({ safeTopHeld: 0 })
-    const check = verdict(checkViewport(short), 'top-inset')
+  it('fails an installed app under a translucent bar — the web view ends short of the screen', () => {
+    const translucent = sample({ statusStyle: 'black-translucent', envTop: 59 })
+    const check = verdict(checkViewport(translucent), 'status-bar')
     expect(check.state).toBe('bad')
-    expect(check.detail).toContain('under the clock')
+    expect(check.detail).toContain('black-translucent')
+    expect(check.detail).toContain('short of the screen')
   })
 
-  it('fails an installed app whose style lets iOS paint the bar', () => {
-    const black = sample({ statusStyle: 'black' })
-    const check = verdict(checkViewport(black), 'top-inset')
+  it('fails when the page is drawn under the bar whatever the style says', () => {
+    const check = verdict(checkViewport(sample({ envTop: 59 })), 'status-bar')
     expect(check.state).toBe('bad')
-    expect(check.detail).toContain('black')
+    expect(check.detail).toContain('59px')
   })
 
   it('judges nothing in a tab, where Safari owns the top', () => {
-    const tab = sample({ mode: 'browser', safeTopHeld: 0, safeTopReported: 0 })
-    expect(verdict(checkViewport(tab), 'top-inset').state).toBe('idle')
+    const tab = sample({ mode: 'browser', statusStyle: 'black-translucent' })
+    expect(verdict(checkViewport(tab), 'status-bar').state).toBe('idle')
   })
 })
 
 describe('the theme-color check', () => {
-  it('passes when Android was told the token', () => {
+  it('passes when every meta carries the painted theme’s bar', () => {
     expect(verdict(checkViewport(RESTING), 'theme-color').state).toBe('ok')
   })
 
-  it('fails when the meta is stale', () => {
-    const stale = sample({ statusBarMeta: '#ffffff' })
-    const check = verdict(checkViewport(stale), 'theme-color')
-    expect(check.state).toBe('bad')
-    expect(check.detail).toContain('#ffffff')
+  it('compares colours regardless of case', () => {
+    const upper = sample({ themeColors: '#2850B0 #2850B0' })
+    expect(verdict(checkViewport(upper), 'theme-color').state).toBe('ok')
   })
 
-  it('judges nothing before the stylesheet has declared the token', () => {
-    const unset = sample({ statusBarDeclared: '(unset)' })
-    expect(verdict(checkViewport(unset), 'theme-color').state).toBe('idle')
+  it('fails when one meta still names the other theme — the OS’s scheme would win there', () => {
+    const stale = sample({ themeColors: '#2850b0 #0b1533' })
+    const check = verdict(checkViewport(stale), 'theme-color')
+    expect(check.state).toBe('bad')
+    expect(check.detail).toContain('#0b1533')
+  })
+
+  it('fails when nothing tells the platform at all', () => {
+    const check = verdict(checkViewport(sample({ themeColors: '(none)' })), 'theme-color')
+    expect(check.state).toBe('bad')
+    expect(check.detail).toContain('no theme-color')
   })
 })
 
@@ -348,6 +348,7 @@ describe('sampleToText', () => {
     expect(text).toContain('route')
     expect(text).toContain('/library')
     expect(text).toContain('remembered kb')
+    expect(text).toMatch(/screen h\s+852/)
     expect(text).toContain('FAIL')
     expect(text).toContain('iOS panned 223px')
   })

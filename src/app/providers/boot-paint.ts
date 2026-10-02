@@ -1,10 +1,9 @@
 /**
  * What `index.html` knows by hand. Its script runs before a line of this code and before the
- * stylesheet lands, so it carries these by itself — `boot-paint.test.ts` is the only thing keeping
- * its copies and the app's saying the same thing.
+ * stylesheet lands, so it carries these by itself — `boot-paint.test.ts` runs it against them.
  *
- * The status bar's colour is not here: it is `--status-bar` in `tokens.css`, because the same value
- * paints the canvas behind the app. `ThemeProvider` reads the token and tells the platform.
+ * The status bar's colour is not here: the build writes it into `index.html` from `STATUS_BAR`
+ * (`shared/config/status-bar.ts`), and the script reads it from there.
  */
 
 /**

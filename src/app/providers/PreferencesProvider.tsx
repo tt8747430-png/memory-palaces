@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect, useLayoutEffect } from 'react'
 import { MotionConfig } from 'motion/react'
-import { setHapticsEnabled } from '@/shared/lib'
+import { selectIsReady, setHapticsEnabled } from '@/shared/lib'
 import { i18n } from '@/shared/i18n'
 import { selectEffectivePreferences, usePreferencesStore } from '@/entities/preferences'
 import { MOTION_MIRROR_KEY } from './boot-paint'
@@ -10,6 +10,8 @@ const REDUCE_QUERY = '(prefers-reduced-motion: reduce)'
 
 export function PreferencesProvider({ children }: { children: ReactNode }) {
   const preferences = usePreferencesStore(selectEffectivePreferences)
+  // Until the store has loaded, `preferences` is the defaults, not what the learner chose.
+  const ready = usePreferencesStore(selectIsReady)
   const asked = preferences.reducedMotion
 
   useEffect(() => {
@@ -42,7 +44,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
   }, [asked])
 
   return (
-    <ThemeProvider theme={preferences.theme}>
+    <ThemeProvider theme={ready ? preferences.theme : undefined}>
       <MotionConfig reducedMotion={asked ? 'always' : 'user'}>{children}</MotionConfig>
     </ThemeProvider>
   )

@@ -23,10 +23,10 @@ export interface StudySessionHeaderProps {
 }
 
 /**
- * A study session's bar. It paints nothing: the Card style's scene runs under it — and on up
- * under the clock (ADR 0006) — as it already runs under the footer, so the session is one surface
- * from the top of the screen to the bottom. It is the same height as every other bar; the progress
- * track floats on its bottom edge rather than adding a row.
+ * A study session's bar. It paints nothing: the Card style's scene runs under it, as it already
+ * runs under the footer, so the session is one surface from under the status bar to the bottom of
+ * the screen. It is the same height as every other bar; the progress track floats on its bottom
+ * edge rather than adding a row.
  */
 export function StudySessionHeader({
   title,

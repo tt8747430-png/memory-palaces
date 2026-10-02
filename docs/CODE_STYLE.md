@@ -86,10 +86,11 @@ that frame; what differs is which parts a screen composes into it.
   dropping an open keyboard, and what the bar is _about_ — `title`, `subtitle`, `progress`, the back pair — published
   on context. It paints nothing and renders no controls.
 - [`AppHeader`](../src/shared/ui/header/AppHeader.tsx) is that frame wearing the app's own chrome: stacked over the
-  scroller, opaque `.chrome` (`theme.css`), lifting a hairline and a shadow as the body passes under it. The page runs
-  under a translucent status bar ([ADR 0006](adr/0006-the-page-paints-the-status-bar.md)), so the header's `pt-safe`
-  band **is** the status bar: one block, in either theme, by construction. `.chrome` redeclares every semantic role at
-  its on-chrome value, so parts inside name the page tokens they always did; nothing gets a chrome variant.
+  scroller, opaque `.chrome` (`theme.css`), lifting a hairline and a shadow as the body passes under it. iOS paints the
+  status bar above it from `theme-color`, which carries `STATUS_BAR`, the colour `.chrome` paints
+  ([ADR 0007](adr/0007-ios-paints-the-status-bar.md)) — `shared/config/status-bar.test.ts` holds it to `--status-bar`
+  — so the bar and the header are one block, in either theme, by construction. `.chrome` redeclares every semantic
+  role at its on-chrome value, so parts inside name the page tokens they always did; nothing gets a chrome variant.
 - **Parts** read the frame's context, never props: `HeaderBar`, `HeaderBack`, `HeaderHeading`, `HeaderTitle`,
   `HeaderSubtitle`, `HeaderCount`, `HeaderTrack`, `HeaderActions`, `HeaderSpacer`.
 - **Three compositions are named** — `ScreenHeader`, `SelectHeader`, `StudySessionHeader` — and three screens compose
@@ -103,10 +104,10 @@ that frame; what differs is which parts a screen composes into it.
   sits under the header in the body. Never override the height by `className`; a second layout is how "one height"
   quietly stopped being true before.
 - **A study session gets `StudySessionHeader` — the bare `Header`, painting nothing — never `AppHeader`.** The Card
-  style's scene runs under it and up under the clock, as it runs under the footer; a light scene shades the clock's
-  corner (`CardScene underStatusBar` → `StatusBarScrim`). Quiz and Match run their daylight there too and draw the
-  scrim themselves. Glass stays out of the modules `widgets/study-session/ui/scene-chrome.test.ts` walks (§5):
-  `bg-glass` resolves to `--surface-glass-sky`, which no printed scene repaints.
+  style's scene runs under it, as it runs under the footer; Quiz and Match run their daylight there too. The status
+  bar above stays the chrome colour iOS paints — nothing runs under the clock. Glass stays out of the modules
+  `widgets/study-session/ui/scene-chrome.test.ts` walks (§5): `bg-glass` resolves to `--surface-glass-sky`, which no
+  printed scene repaints.
 - **`data-slot="header"` is a contract.** `useKeyboardReveal` and the dev viewport probe find the top of the reveal
   band by it, through the shared `CHROME` selectors in `shared/lib`. Rename it and a focused field is revealed _under_
   the bar, silently — `Header.test.tsx` renders the real `AppScreen` shell and asserts the lookup still resolves, so a
@@ -375,10 +376,11 @@ dev-only **`/dev/kitchen-sink`**.
   is unimplemented in WebKit as of iOS 26, so the meta in `index.html` is inert there and this is handled in JS or not
   at all. **Verify against `/dev/kitchen-sink`'s viewport probe before theorising** — three fixes shipped on inference
   here, each wrong.
-- **The top is padded by `--safe-top`, never raw `env(safe-area-inset-top)`** ([ADR
-  0006](adr/0006-the-page-paints-the-status-bar.md)). The page runs under a translucent status bar, and iOS reports the
-  inset late on first paint and drops it for a moment on keyboard dismiss; `top-inset.ts` holds it (`--safe-top-held`,
-  remembered for the boot script) and `--safe-top` takes the larger of held and live. `.pt-safe` is the utility.
+- **The installed app runs below a `black` status bar iOS paints** ([ADR 0007](adr/0007-ios-paints-the-status-bar.md)).
+  `black-translucent` is banned: WebKit sizes the web view as if the bar were opaque and draws it under the bar, so a
+  strip of the native window shows at the bottom and the app reads as lifted — the probe's `screen h` against `layout
+  viewport h` shows it. The top pads by `--safe-top` (`.pt-safe`), plain `env(safe-area-inset-top)`, `0` installed;
+  nothing holds, remembers or compensates for it.
 - **Anchor the shell, and measure against the anchor.** `#root` is `height: var(--app-height)` — the layout viewport
   sampled while no field is focused, re-anchored only on rotation or growth. Every keyboard number is derived from it,
   never from live `clientHeight`, so a platform that _does_ resize can't collapse the measurement to zero.

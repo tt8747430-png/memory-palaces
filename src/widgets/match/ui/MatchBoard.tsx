@@ -2,7 +2,7 @@ import { useEffect, useReducer, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Check, Puzzle, RotateCcw, Timer, Zap } from 'lucide-react'
-import { cn, EASE_EXPO, SCREEN_SCROLL, success, useColorScheme } from '@/shared/lib'
+import { cn, EASE_EXPO, SCREEN_SCROLL, success } from '@/shared/lib'
 import {
   Button,
   Chip,
@@ -10,7 +10,6 @@ import {
   IconButton,
   ResultScreen,
   StudySessionHeader,
-  StatusBarScrim,
   StudySessionScreen,
 } from '@/shared/ui'
 import {
@@ -39,8 +38,6 @@ function formatTime(seconds: number): string {
 export function MatchBoard({ cards, subtitle, onBack, onComplete }: MatchBoardProps) {
   const { t } = useTranslation()
   const reduce = useReducedMotion()
-  // The board's daylight runs under the clock, which reads white on it by day (ADR 0006).
-  const scheme = useColorScheme()
   const [state, dispatch] = useReducer(matchReducer, cards, (init) => initMatch(buildTiles(init)))
   const [elapsed, setElapsed] = useState(0)
 
@@ -85,7 +82,6 @@ export function MatchBoard({ cards, subtitle, onBack, onComplete }: MatchBoardPr
 
   return (
     <StudySessionScreen>
-      <StatusBarScrim tone={scheme} />
       <StudySessionHeader
         title={t('match.title')}
         subtitle={subtitle}

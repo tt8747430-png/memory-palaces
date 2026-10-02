@@ -88,12 +88,11 @@
     --app-height: 100%;
 
     /*
-     * The status bar's height, which every screen's top is padded by: the page runs under the
-     * clock (ADR 0006). `--safe-top-held` is the anchored value `top-inset.ts` publishes — and the
-     * boot script remembers — so a late or dropped `env()` cannot move the top of the app.
+     * What a screen's top clears. The installed app runs below an opaque `black` status bar that
+     * iOS paints (ADR 0007), so this is 0 there and in a browser tab alike — it is non-zero only
+     * where a platform draws the page under a bar of its own.
      */
-    --safe-top-held: 0px;
-    --safe-top: max(var(--safe-top-held), env(safe-area-inset-top));
+    --safe-top: env(safe-area-inset-top);
 
     --app-bottom-inset: var(--p-safe-bottom);
 
@@ -118,8 +117,7 @@
     overflow: hidden;
     /*
      * The canvas, not a surface: this is what shows wherever `#root` does not reach and what a
-     * browser that tints its chrome from the page samples. `--surface` is white in the light theme,
-     * which is how a white bar appeared above a navy `theme-color`.
+     * browser that tints its chrome from the page samples, so it is the status bar's own colour.
      */
     background: var(--status-bar);
     font-family: var(--p-font-sans), sans-serif;
@@ -225,8 +223,8 @@
 
   /*
    * A box that is the app's own chrome: the header, and the screen a finished study session ends
-   * on. It paints `--chrome-surface`, and runs up under the translucent status bar, so the bar and
-   * the header are one block (ADR 0006) — then redeclares the ink beneath it.
+   * on. It paints `--chrome-surface`, the colour iOS paints the status bar with above it, so the bar
+   * and the header are one block (ADR 0007) — then redeclares the ink beneath it.
    *
    * The redeclaration is the whole mechanism. `@theme inline` compiles `text-heading` to
    * `var(--text-heading)` at the use site, so a child that already names a semantic token reads the

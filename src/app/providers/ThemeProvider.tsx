@@ -1,26 +1,19 @@
 import { type ReactNode, useLayoutEffect } from 'react'
-import { statusBarColor } from '@/shared/lib'
+import { type ColorScheme, paintStatusBar } from '@/shared/lib'
 import type { Theme } from '@/entities/preferences'
 import { THEME_MIRROR_KEY } from './boot-paint'
 
 const DARK_QUERY = '(prefers-color-scheme: dark)'
 
-function resolve(theme: Theme): 'light' | 'dark' {
+function resolve(theme: Theme): ColorScheme {
   if (theme !== 'system') return theme
   return window.matchMedia(DARK_QUERY).matches ? 'dark' : 'light'
 }
 
-/**
- * The attribute first: `--status-bar` answers per scheme, so the colour handed to Android is read
- * after the document is wearing the theme it belongs to. iOS does not read the meta — the page
- * paints under its translucent bar (ADR 0006).
- */
-function paint(resolved: 'light' | 'dark') {
-  document.documentElement.dataset.theme = resolved
-  const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
-  const color = statusBarColor()
-  // Empty only before the stylesheet lands, and `index.html` has already painted the bar by then.
-  if (meta && color) meta.content = color
+/** The document and the status bar together: iOS and Android paint the bar from `theme-color`. */
+function paint(scheme: ColorScheme) {
+  document.documentElement.dataset.theme = scheme
+  paintStatusBar(scheme)
 }
 
 /**
@@ -34,14 +27,21 @@ function mirror(theme: Theme) {
   } catch {}
 }
 
+/**
+ * Keeps `data-theme` and the status bar on the learner's theme; on "system" it follows the OS.
+ * `theme` is `undefined` until the stored choice is known, and nothing is painted or mirrored then:
+ * `index.html`'s boot script already painted that choice, and a default painted in its place is
+ * the colour iOS would be handed while the app loads (ADR 0007).
+ */
 export function ThemeProvider({
-  theme = 'system',
+  theme,
   children,
 }: {
-  theme?: Theme
+  theme: Theme | undefined
   children: ReactNode
 }) {
   useLayoutEffect(() => {
+    if (theme === undefined) return
     paint(resolve(theme))
     mirror(theme)
     if (theme !== 'system') return

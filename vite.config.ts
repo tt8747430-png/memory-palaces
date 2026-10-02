@@ -1,9 +1,31 @@
 import { fileURLToPath, URL } from 'node:url'
-import { loadEnv } from 'vite'
+import { loadEnv, type Plugin } from 'vite'
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import { STATUS_BAR } from './src/shared/config/status-bar'
+
+/**
+ * The status bar's colour for each OS scheme, ahead of `index.html`'s boot script, which repaints
+ * both for the learner's theme before first paint; `ThemeProvider` keeps them after (ADR 0007).
+ * The HTML iOS parses is then right for the OS's theme before any script has run.
+ */
+function statusBarMeta(): Plugin {
+  return {
+    name: 'status-bar-meta',
+    transformIndexHtml: () =>
+      (['light', 'dark'] as const).map((scheme) => ({
+        tag: 'meta',
+        attrs: {
+          name: 'theme-color',
+          media: `(prefers-color-scheme: ${scheme})`,
+          content: STATUS_BAR[scheme],
+        },
+        injectTo: 'head-prepend' as const,
+      })),
+  }
+}
 
 const escapeForRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
@@ -27,6 +49,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     tailwindcss(),
+    statusBarMeta(),
     VitePWA({
       registerType: 'prompt',
       injectRegister: 'auto',

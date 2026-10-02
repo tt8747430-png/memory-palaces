@@ -1,88 +1,129 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { TOP_INSET_MEMORY_KEY } from '@/shared/lib'
-import { readStylesheet } from '@/shared/test/stylesheet'
+import { STATUS_BAR } from '@/shared/config/status-bar'
 import { MOTION_MIRROR_KEY, THEME_MIRROR_KEY } from './boot-paint'
 
-/**
- * `index.html` paints before the stylesheet lands, so it carries the status bar's two colours and
- * both mirror keys by hand. Nothing but this test keeps its copies and the app's saying the same
- * thing.
- */
 const html = readFileSync(join(import.meta.dirname, '../../../index.html'), 'utf8')
+const boot = html.match(/<script id="boot-paint">([\s\S]*?)<\/script>/)?.[1]
 
-/** The token as `tokens.css` declares it: `:root` first, then the dark theme's override. */
-function statusBarTokens(): string[] {
-  return [...readStylesheet('tokens.css').matchAll(/--status-bar:\s*([^;]+);/g)].map(
-    ([, value]) => value?.trim() ?? '',
-  )
+/** Answers each media query from the given set — the OS the boot script asks. */
+function stubOs(matching: string[] = []) {
+  vi.stubGlobal('matchMedia', (query: string) => ({ matches: matching.includes(query) }))
 }
 
-describe('the status bar before first paint', () => {
-  it('declares the token once per scheme, and nowhere else', () => {
-    expect(statusBarTokens()).toHaveLength(2)
+const OS_DARK = '(prefers-color-scheme: dark)'
+
+/** The pair the build writes ahead of the script (`vite.config.ts`), one per OS scheme. */
+function writeBuiltMetas(): HTMLMetaElement[] {
+  return (['light', 'dark'] as const).map((scheme) => {
+    const meta = document.createElement('meta')
+    meta.setAttribute('name', 'theme-color')
+    meta.setAttribute('media', `(prefers-color-scheme: ${scheme})`)
+    meta.setAttribute('content', STATUS_BAR[scheme])
+    document.head.append(meta)
+    return meta
+  })
+}
+
+/** Runs the boot script as the browser does: before the stylesheet and before any module. */
+function runBoot() {
+  if (!boot) throw new Error('index.html has no <script id="boot-paint">')
+  new Function(boot)()
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+  localStorage.clear()
+  delete document.documentElement.dataset.theme
+  delete document.documentElement.dataset.reducedMotion
+  document.head.querySelectorAll('meta').forEach((meta) => meta.remove())
+})
+
+describe('the status bar in index.html', () => {
+  it('is painted by iOS, below which the web view reaches the bottom of the screen', () => {
+    expect(html.match(/name="apple-mobile-web-app-status-bar-style"/g)).toHaveLength(1)
+    expect(html).toContain('<meta content="black" name="apple-mobile-web-app-status-bar-style" />')
   })
 
-  it('starts on the light scheme’s token', () => {
-    const [light] = statusBarTokens()
-    expect(html).toContain(`<meta content="${light}" name="theme-color" />`)
-  })
-
-  it('names both of the token’s colours in the script that resolves the theme', () => {
-    const [light, dark] = statusBarTokens()
-    expect(html).toContain(`'${dark}'`)
-    expect(html).toContain(`'${light}'`)
-  })
-
-  it('lets the page paint under the clock on iOS', () => {
-    expect(html).toContain(
-      '<meta content="black-translucent" name="apple-mobile-web-app-status-bar-style" />',
-    )
-  })
-
-  it('has exactly one status-bar meta, so nothing else can win', () => {
-    expect(html.match(/<meta[^>]*name="theme-color"/g)).toHaveLength(1)
-  })
-
-  it('paints the canvas from the same token, behind anything the shell does not reach', () => {
-    expect(readStylesheet('theme.css')).toContain('background: var(--status-bar)')
-  })
-
-  it('paints the app’s own chrome from it too, so the bar and the header meet with no seam', () => {
-    const theme = readStylesheet('theme.css')
-    expect(theme).toContain('background: var(--chrome-surface)')
-    expect(readStylesheet('tokens.css')).toContain('--chrome-surface: var(--status-bar)')
+  it('carries no theme-color of its own — the build writes one per scheme from STATUS_BAR', () => {
+    expect(html).not.toMatch(/<meta[^>]*name="theme-color"/)
   })
 })
 
-describe('the mirrors the boot script reads', () => {
-  it('reads the theme from the key this module names', () => {
-    expect(html).toContain(`localStorage.getItem('${THEME_MIRROR_KEY}')`)
+describe('the boot script', () => {
+  it('paints the theme the learner chose, not the one the OS is in', () => {
+    stubOs([OS_DARK])
+    localStorage.setItem(THEME_MIRROR_KEY, 'light')
+    const metas = writeBuiltMetas()
+
+    runBoot()
+
+    expect(document.documentElement.dataset.theme).toBe('light')
+    expect(metas.map((meta) => meta.content)).toEqual([STATUS_BAR.light, STATUS_BAR.light])
   })
 
-  it('reads the motion switch from the key this module names', () => {
-    expect(html).toContain(`localStorage.getItem('${MOTION_MIRROR_KEY}')`)
+  it('hands every theme-color the chosen theme’s colour, whatever its media says', () => {
+    stubOs()
+    localStorage.setItem(THEME_MIRROR_KEY, 'dark')
+    const metas = writeBuiltMetas()
+
+    runBoot()
+
+    expect(document.documentElement.dataset.theme).toBe('dark')
+    expect(metas.map((meta) => meta.content)).toEqual([STATUS_BAR.dark, STATUS_BAR.dark])
   })
 
-  it('treats a stored theme other than light or dark as the OS’s to answer', () => {
-    expect(html).toContain("stored === 'light' || stored === 'dark'")
-    expect(html).toContain("window.matchMedia('(prefers-color-scheme: dark)')")
+  it('asks the OS when the choice is system', () => {
+    stubOs([OS_DARK])
+    localStorage.setItem(THEME_MIRROR_KEY, 'system')
+    const metas = writeBuiltMetas()
+
+    runBoot()
+
+    expect(document.documentElement.dataset.theme).toBe('dark')
+    expect(metas.map((meta) => meta.content)).toEqual([STATUS_BAR.dark, STATUS_BAR.dark])
   })
 
-  it('sets both attributes the stylesheet and shared readers key on', () => {
-    expect(html).toContain('document.documentElement.dataset.theme')
-    expect(html).toContain('document.documentElement.dataset.reducedMotion')
+  it('asks the OS on a device that has never stored a choice', () => {
+    stubOs([OS_DARK])
+    runBoot()
+    expect(document.documentElement.dataset.theme).toBe('dark')
   })
 
-  it('paints the first frame with the top inset this shape last reported', () => {
-    expect(html).toContain(`localStorage.getItem('${TOP_INSET_MEMORY_KEY}')`)
-    // The shape is spelled as `topInsetShape` spells it.
-    expect(html).toContain("(installed ? 'app' : 'tab') + ':' + window.innerWidth")
-    expect(html).toContain("setProperty('--safe-top-held'")
+  it('paints light when the OS cannot be asked', () => {
+    // jsdom has no matchMedia: the script's own guard is all that answers.
+    runBoot()
+    expect(document.documentElement.dataset.theme).toBe('light')
   })
 
-  it('damps motion when the OS asks, whatever the mirror holds', () => {
-    expect(html).toContain("window.matchMedia('(prefers-reduced-motion: reduce)')")
+  it('damps motion when the OS asks, or when the learner’s mirrored switch does', () => {
+    stubOs(['(prefers-reduced-motion: reduce)'])
+    runBoot()
+    expect(document.documentElement.dataset.reducedMotion).toBe('reduce')
+
+    stubOs()
+    localStorage.setItem(MOTION_MIRROR_KEY, 'on')
+    runBoot()
+    expect(document.documentElement.dataset.reducedMotion).toBe('reduce')
+
+    localStorage.setItem(MOTION_MIRROR_KEY, 'off')
+    runBoot()
+    expect(document.documentElement.dataset.reducedMotion).toBe('system')
+  })
+
+  it('locks zoom in an installed app, and leaves a tab zoomable', () => {
+    const viewport = document.createElement('meta')
+    viewport.name = 'viewport'
+    viewport.content = 'width=device-width, initial-scale=1.0, viewport-fit=cover'
+    document.head.append(viewport)
+
+    stubOs()
+    runBoot()
+    expect(viewport.content).not.toContain('user-scalable=no')
+
+    stubOs(['(display-mode: standalone)'])
+    runBoot()
+    expect(viewport.content).toContain('user-scalable=no')
   })
 })

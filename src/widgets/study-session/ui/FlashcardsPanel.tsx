@@ -300,11 +300,7 @@ export function FlashcardsPanel({
 
   return (
     <>
-      <CardScene
-        style={deckPrefs.cardStyle}
-        underStatusBar
-        className="flex min-h-0 flex-1 flex-col"
-      >
+      <CardScene style={deckPrefs.cardStyle} className="flex min-h-0 flex-1 flex-col">
         <StudySessionHeader
           title={title}
           subtitle={subtitle}

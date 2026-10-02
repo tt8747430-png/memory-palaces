@@ -9,7 +9,6 @@ export {
   CARD_STYLE_SURFACE,
   CARD_STYLE_TEXT,
   cardSceneChrome,
-  sceneTone,
   CHROME_TOKENS,
   clampCardTextSize,
   coerceCardStyle,
@@ -99,13 +98,6 @@ export {
 export { useProbeOverlay, setProbeOverlay } from './probe-overlay'
 export { visibleBottom, keyboardIsMeasured, REVEAL_GAP } from './keyboard-viewport'
 export { useKeyboardInset } from './use-keyboard-inset'
-export {
-  readTopInset,
-  startTopInset,
-  TOP_INSET_MEMORY_KEY,
-  topInsetShape,
-  type TopInsetReading,
-} from './top-inset'
 export { claimBottomInset } from './bottom-dock'
 export { useBottomChrome } from './use-bottom-chrome'
 export {
@@ -122,13 +114,7 @@ export { syncFailure, type SyncFailure } from './sync-failure'
 export { syncFailureMessage } from './sync-failure-message'
 export { type ColorScheme, readColorScheme, useColorScheme } from './color-scheme'
 export { readReducedMotion } from './reduced-motion'
-export {
-  paintedBehind,
-  readStatusBarPaint,
-  statusBarColor,
-  statusBarIsDeclared,
-  type StatusBarPaint,
-} from './status-bar'
+export { paintStatusBar, readThemeColors } from './status-bar'
 export { SCREEN_SCROLL, ScreenScrollContext, useScreenScroll } from './screen-scroll'
 export { useKeyboardOpen, useVirtualKeyboard, type VirtualKeyboard } from './use-virtual-keyboard'
 export { useSortableSensors } from './use-sortable-sensors'

@@ -148,9 +148,9 @@ ahead of the read. Account deletion: `features/account` (sync first, 30-day grac
   [ADR 0005](docs/adr/0005-merge-against-what-you-saw.md): a push carries its base, the server refuses unseen
   overwrites, handlers merge field by field against the base.
   Reads never touch the network: an image is `useImageSrc`, never a URL minted in render.
-- **Status bar, top inset, anything painted under the clock** → [ADR 0006](docs/adr/0006-the-page-paints-the-status-bar.md)
-  (`black-translucent`: the page paints the bar; pad by `--safe-top`, never raw `env()`; light tops draw
-  `StatusBarScrim`).
+- **Status bar, theme colour, top inset** → [ADR 0007](docs/adr/0007-ios-paints-the-status-bar.md) (`black`: iOS
+  paints the bar from `theme-color` = `STATUS_BAR`, the header's chrome colour; never `black-translucent` — WebKit
+  leaves a strip at the bottom; `ThemeProvider` paints nothing until preferences are ready).
 - **Naming anything** → [UBIQUITOUS_LANGUAGE](docs/UBIQUITOUS_LANGUAGE.md). "Session" = auth, never a study pass;
   "Sync" = one cycle, never a study pass or a login; `known` ≠ Memorized.
 

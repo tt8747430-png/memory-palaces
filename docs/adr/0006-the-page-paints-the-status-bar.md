@@ -1,6 +1,6 @@
 # ADR 0006 — The page paints the status bar
 
-- **Status:** accepted · **Date:** 2026-09-23
+- **Status:** superseded by [ADR 0007](0007-ios-paints-the-status-bar.md) (2026-10-02) · **Date:** 2026-09-23
 - **Supersedes:** `black` status-bar style (2026-09-06, `fix(pwa): paint the status bar black, not translucent`)
 
 The operational rules are [MOBILE_DESIGN §12](../MOBILE_DESIGN.md) and [CODE_STYLE §4a](../CODE_STYLE.md); the

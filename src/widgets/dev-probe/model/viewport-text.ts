@@ -10,6 +10,7 @@ export const SAMPLE_ROWS: [keyof ViewportSample, string][] = [
   ['mode', 'display mode'],
   ['layoutHeight', 'layout viewport h'],
   ['layoutWidth', 'layout viewport w'],
+  ['screenHeight', 'screen h'],
   ['vvHeight', 'visualViewport h'],
   ['vvOffsetTop', 'visualViewport top'],
   ['vvScale', 'visualViewport scale'],
@@ -36,11 +37,9 @@ export const SAMPLE_ROWS: [keyof ViewportSample, string][] = [
   ['focusedBottom', 'focused bottom'],
   ['revealDelta', 'reveal delta'],
   ['statusStyle', 'status style'],
-  ['safeTopHeld', '--safe-top held'],
-  ['safeTopReported', 'env top'],
-  ['statusBarDeclared', '--status-bar'],
-  ['statusBarMeta', 'theme-color'],
-  ['statusBarPainted', 'painted under bar'],
+  ['envTop', 'env top'],
+  ['statusBarColor', 'status bar colour'],
+  ['themeColors', 'theme-color'],
 ]
 
 const MARK: Record<ProbeCheck['state'], string> = { ok: 'ok  ', bad: 'FAIL', idle: '--  ' }
