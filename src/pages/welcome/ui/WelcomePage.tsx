@@ -43,7 +43,7 @@ export function WelcomePage({ onContinue }: WelcomePageProps) {
             />
           ))}
 
-      <Threshold className="relative z-10 size-48" />
+      <Threshold entrance="build" className="relative z-10 size-48" />
 
       <div className="relative z-10 flex flex-col gap-2">
         <WordReveal

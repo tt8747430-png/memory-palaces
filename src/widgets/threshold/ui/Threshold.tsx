@@ -1,66 +1,129 @@
-import { motion, useReducedMotion, type Variants } from 'motion/react'
-import { cn, EASE_EXPO } from '@/shared/lib'
+import { useId } from 'react'
+import { motion, type TargetAndTransition, useReducedMotion, type Variants } from 'motion/react'
+import {
+  archPath,
+  type Bar,
+  MARK,
+  MARK_BOX,
+  MARK_PAINT,
+  pedimentPath,
+  type RadialPaint,
+} from '@/shared/config/brand-mark'
+import { EASE_EXPO } from '@/shared/lib'
 
-const container: Variants = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.16, delayChildren: 0.1 } },
-}
-
-const draw: Variants = {
-  hidden: { pathLength: 0, opacity: 0 },
-  show: { pathLength: 1, opacity: 1, transition: { duration: 0.9, ease: EASE_EXPO } },
-}
-
-const spark: Variants = {
-  hidden: { r: 0, opacity: 0 },
-  show: { r: 7, opacity: 1, transition: { type: 'spring', stiffness: 220, damping: 16 } },
-}
-
-const stroke = {
-  stroke: 'currentColor',
-  strokeWidth: 3,
-  strokeLinecap: 'round' as const,
-  strokeLinejoin: 'round' as const,
-  fill: 'none',
-}
-
-const GLOW = 'drop-shadow(0 0 12px oklch(83.2% 0.083 264.3 / 0.55))'
+/**
+ * `build` raises the palace from the steps up and then lights the door — for a screen that opens on
+ * it. `none` draws it whole from the first frame, as the launch screen left it.
+ */
+export type ThresholdEntrance = 'build' | 'none'
 
 export interface ThresholdProps {
+  entrance: ThresholdEntrance
   className?: string
-  tone?: 'dark' | 'light'
-  animated?: boolean
 }
 
-export function Threshold({ className, tone = 'dark', animated = true }: ThresholdProps) {
+/** Each piece settles in its turn, from the ground up. */
+function settle(from: TargetAndTransition, turn: number, duration = 0.6): Variants {
+  return {
+    hidden: from,
+    shown: {
+      opacity: 1,
+      y: 0,
+      scaleY: 1,
+      transition: { delay: 0.1 + turn * 0.09, duration, ease: EASE_EXPO },
+    },
+  }
+}
+
+const STEP = settle({ opacity: 0, y: 8 }, 0)
+const COLUMN = settle({ opacity: 0, scaleY: 0 }, 1)
+const CAPITAL = settle({ opacity: 0, y: -6 }, 2)
+const BEAM = settle({ opacity: 0, y: -8 }, 3)
+const PEDIMENT = settle({ opacity: 0, y: -12 }, 4)
+const DOOR = settle({ opacity: 0 }, 6, 0.9)
+const GLOW = settle({ opacity: 0 }, 7, 1.1)
+
+/** After the door is lit, its warmth rises and falls — the palace is awake. */
+const BREATH: TargetAndTransition = { scale: [1, 1.14, 1], opacity: [1, 0.72, 1] }
+const BREATH_PACE = { duration: 3.6, repeat: Infinity, ease: 'easeInOut' } as const
+
+function Radial({ id, paint }: { id: string; paint: RadialPaint }) {
+  return (
+    <radialGradient id={id} cx={paint.cx} cy={paint.cy} r={paint.r} gradientUnits="userSpaceOnUse">
+      {paint.stops.map(([offset, color, opacity]) => (
+        <stop key={offset} offset={offset} stopColor={color} stopOpacity={opacity} />
+      ))}
+    </radialGradient>
+  )
+}
+
+function Stone({ bar, variants }: { bar: Bar; variants: Variants }) {
+  return (
+    <motion.rect
+      x={bar.x}
+      y={bar.y}
+      width={bar.width}
+      height={bar.height}
+      rx={bar.rx}
+      fill={MARK_PAINT.stone}
+      variants={variants}
+      style={{ transformBox: 'fill-box', transformOrigin: 'bottom' }}
+    />
+  )
+}
+
+/** The Mindscape mark, drawn from `MARK` — the same drawing the app icon and launch screens carry. */
+export function Threshold({ entrance, className }: ThresholdProps) {
   const reduce = useReducedMotion()
-  const isStatic = !animated || !!reduce
-  const isLight = tone === 'light'
+  const id = useId().replace(/[^\w-]/g, '')
+  const build = entrance === 'build' && !reduce
+  const { pediment, beam, capitals, columns, door, steps } = MARK
+  const { glow } = MARK_PAINT
+
   return (
     <motion.svg
-      viewBox="0 0 200 200"
-      className={cn(isLight ? 'text-primary' : 'text-secondary', className)}
-      style={isLight ? undefined : { filter: GLOW }}
+      viewBox={`0 0 ${MARK_BOX} ${MARK_BOX}`}
+      className={className}
       role="img"
       aria-label="Mindscape"
-      variants={container}
-      initial={isStatic ? 'show' : 'hidden'}
-      animate="show"
+      initial={build ? 'hidden' : 'shown'}
+      animate="shown"
     >
-      <motion.path variants={draw} d="M40 64 L100 24 L160 64" {...stroke} />
-      <motion.line variants={draw} x1="46" y1="64" x2="154" y2="64" {...stroke} />
-      <motion.line variants={draw} x1="64" y1="64" x2="64" y2="166" {...stroke} />
-      <motion.line variants={draw} x1="136" y1="64" x2="136" y2="166" {...stroke} />
-      <motion.path variants={draw} d="M86 166 L86 126 A14 14 0 0 1 114 126 L114 166" {...stroke} />
-      <motion.line variants={draw} x1="40" y1="166" x2="160" y2="166" {...stroke} />
-      <motion.line variants={draw} x1="28" y1="178" x2="172" y2="178" {...stroke} />
-      <motion.circle
-        variants={spark}
-        cx="100"
-        cy="138"
-        r="7"
-        fill={isLight ? 'currentColor' : 'white'}
+      <defs>
+        <Radial id={`${id}-glow`} paint={glow} />
+        <Radial id={`${id}-light`} paint={MARK_PAINT.light} />
+      </defs>
+
+      <motion.g variants={GLOW}>
+        <motion.circle
+          cx={glow.cx}
+          cy={glow.cy}
+          r={glow.r}
+          fill={`url(#${id}-glow)`}
+          style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
+          animate={reduce ? undefined : BREATH}
+          transition={{ ...BREATH_PACE, delay: build ? 1.4 : 0.4 }}
+        />
+      </motion.g>
+      <motion.path
+        d={pedimentPath(pediment)}
+        fill={MARK_PAINT.stone}
+        stroke={MARK_PAINT.stone}
+        strokeWidth={pediment.round}
+        strokeLinejoin="round"
+        variants={PEDIMENT}
       />
+      <Stone bar={beam} variants={BEAM} />
+      {capitals.map((capital) => (
+        <Stone key={capital.x} bar={capital} variants={CAPITAL} />
+      ))}
+      {columns.map((column) => (
+        <Stone key={column.x} bar={column} variants={COLUMN} />
+      ))}
+      <motion.path d={archPath(door)} fill={`url(#${id}-light)`} variants={DOOR} />
+      {steps.map((step) => (
+        <Stone key={step.y} bar={step} variants={STEP} />
+      ))}
     </motion.svg>
   )
 }

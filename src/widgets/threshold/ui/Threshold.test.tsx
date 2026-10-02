@@ -6,22 +6,25 @@ import { Threshold } from './Threshold'
 afterEach(cleanup)
 
 describe('Threshold', () => {
-  it('renders the brand mark image with its accessible name', () => {
-    renderWithProviders(<Threshold />)
-    expect(screen.getByRole('img', { name: 'Mindscape' })).toBeInTheDocument()
-  })
+  it.each(['build', 'none'] as const)(
+    'renders the brand mark image with its accessible name (%s)',
+    (entrance) => {
+      renderWithProviders(<Threshold entrance={entrance} />)
+      expect(screen.getByRole('img', { name: 'Mindscape' })).toBeInTheDocument()
+    },
+  )
 
-  it('uses the primary tint for the light tone', () => {
-    renderWithProviders(<Threshold tone="light" />)
-    expect(screen.getByRole('img', { name: 'Mindscape' }).getAttribute('class')).toContain(
-      'text-primary',
+  it('keeps its paint apart from another mark on the same page', () => {
+    renderWithProviders(
+      <>
+        <Threshold entrance="none" />
+        <Threshold entrance="none" />
+      </>,
     )
-  })
-
-  it('uses the secondary tint for the dark tone', () => {
-    renderWithProviders(<Threshold tone="dark" />)
-    expect(screen.getByRole('img', { name: 'Mindscape' }).getAttribute('class')).toContain(
-      'text-secondary',
-    )
+    const [first, second] = screen
+      .getAllByRole('img', { name: 'Mindscape' })
+      .map((mark) => mark.querySelector('radialGradient')?.id)
+    expect(first).toBeTruthy()
+    expect(first).not.toBe(second)
   })
 })

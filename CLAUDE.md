@@ -52,7 +52,7 @@ By kind:
 ## Commands
 
 `dev` · `build` (`tsc --noEmit && vite build`) · `check:entry-graph` (after `build`: RxDB/supabase off the entry
-preloads) · `typecheck` · `lint` (also FSD boundaries) · `test` / `test:watch` / `test:cov`. Supabase integration suites
+preloads) · `brand:assets` (icons + iOS launch screens from `shared/config/brand-mark.ts`; commit output) · `typecheck` · `lint` (also FSD boundaries) · `test` / `test:watch` / `test:cov`. Supabase integration suites
 skip unless `SUPABASE_TEST_URL`/`SUPABASE_TEST_KEY` are set (`SUPABASE_TEST_SECRET_KEY` for the purge).
 One file: `npx vitest run src/shared/lib/srs.test.ts` · one test: `npx vitest run -t "creates a new card"`.
 **Never `npm run format`** (whole repo) — `npx prettier --write <files you touched>`.

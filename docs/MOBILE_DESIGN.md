@@ -142,8 +142,14 @@ All four on every async surface — a missing state reads as a crash.
 ## 12. Install & manifest
 
 - **Manifest:** `standalone`, `portrait`, `theme_color` = `STATUS_BAR.light` (Android's launch bar is the chrome
-  colour from the first frame, as every bar after it is), `background_color #ADC8FF`, 192/512 + a **maskable** 512
-  (required for Android).
+  colour from the first frame, as every bar after it is), `background_color` = `STATUS_BAR.light` (Android's launch
+  screen is the icon on the chrome colour), 192/512 + a **maskable** 512 (required for Android).
+- **Brand assets come from one drawing:** `shared/config/brand-mark.ts`. `Threshold` draws it in the app;
+  `npm run brand:assets` (`scripts/brand/`) draws the favicon, the icons and the iOS launch screens from it — run it
+  after changing the mark, and commit the output. `launch-screens.test.ts` fails on a missing or stale image.
+- **The launch frame never jumps:** the iOS launch screen (`apple-touch-startup-image`, one per device and scheme,
+  kept out of the precache), the page painted before any script (`brandLaunch`, inside `#root`) and the splash's
+  first frame are one picture — the mark, `SPLASH_MARK_PX` square, centred below the status bar on `STATUS_BAR`.
 - **iOS:** `apple-mobile-web-app-*` meta + `apple-touch-icon`. No `beforeinstallprompt` (manual Add to Home Screen);
   status-bar style limited to `default`/`black`/`black-translucent`, and the app is on **`black`**
   ([ADR 0007](adr/0007-ios-paints-the-status-bar.md)): iOS paints the bar from `theme-color` and the web view runs

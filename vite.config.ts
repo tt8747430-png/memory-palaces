@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { STATUS_BAR, THEME_COLOR_METAS } from './src/shared/config/status-bar.ts'
+import { brandLaunch } from './scripts/brand/vite-plugin.ts'
 
 /**
  * The status bar's colour for each OS scheme, ahead of `index.html`'s boot script, which repaints
@@ -42,6 +43,7 @@ export default defineConfig(({ mode }) => ({
     react(),
     tailwindcss(),
     statusBarMeta(),
+    brandLaunch(),
     VitePWA({
       registerType: 'prompt',
       injectRegister: 'auto',
@@ -54,7 +56,8 @@ export default defineConfig(({ mode }) => ({
         // Android's launch bar, before the page's own metas take over: the bar is the chrome colour
         // from launch on (ADR 0007). A manifest names one colour, so it is the light scheme's.
         theme_color: STATUS_BAR.light,
-        background_color: '#ADC8FF',
+        // Android's launch screen: the icon on this colour, then the page paints the same frame.
+        background_color: STATUS_BAR.light,
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',
@@ -72,6 +75,8 @@ export default defineConfig(({ mode }) => ({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // One device ever reads one of these, and iOS fetches it itself.
+        globIgnores: ['splash/**'],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         runtimeCaching: supabasePushQueue(loadEnv(mode, process.cwd(), 'VITE_').VITE_SUPABASE_URL),
@@ -100,7 +105,7 @@ export default defineConfig(({ mode }) => ({
     globals: false,
     setupFiles: ['./src/shared/test/setup.ts'],
     css: false,
-    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    include: ['src/**/*.{test,spec}.{ts,tsx}', 'scripts/**/*.test.ts'],
     env: { VITE_SUPABASE_URL: '', VITE_SUPABASE_PUBLISHABLE_KEY: '' },
   },
 }))
