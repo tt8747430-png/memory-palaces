@@ -155,6 +155,14 @@ Newest first within each area. Symptom — cause — what holds it now.
 - The nav, the toolbar and focused fields showed over the splash (2026-07) — the app was live under it — the app is
   `inert` while the splash shows, `Bootstrap.test.tsx`.
 
+- Progress bars replayed their fill on every page change (2026-07) — `Progress` filled from zero on each mount —
+  the fill starts from zero only with `animateOnMount`, `progress.test.tsx`, [CODE_STYLE §9](CODE_STYLE.md#s9).
+- Shadows on folders, decks, swipe rails and the select toolbar didn't render (2026-07) — cause not recorded — the
+  semantic shadow tokens (`shadow-rest`, `-interactive`, `-elevated`), [CODE_STYLE §5](CODE_STYLE.md#s5).
+- The launch screen was unreliable on iOS (2026-07) — launch images missing or not matching the screen — a light and
+  a dark `apple-touch-startup-image` for every iPhone and iPad size, generated from the brand mark,
+  `launch-screens.test.ts`.
+
 ### Library
 
 - A Bible book deck missing from the Library while its verses counted as held (2026-09) — another device deleted the
@@ -192,6 +200,9 @@ Newest first within each area. Symptom — cause — what holds it now.
 - The Learning history and Delete actions missing from the card menu (2026-07) — the sheet's list had no scroll
   region, so the last actions fell outside the drawer — `ActionSheet.test.tsx`.
 
+- The practice tile said Test while the quiz it opened said Quiz (2026-10) — two names for one mode — Quiz
+  everywhere, [UBIQUITOUS_LANGUAGE](UBIQUITOUS_LANGUAGE.md), `PracticeModes.test.tsx`.
+
 ### Study
 
 - A study session closed midway paid no XP (2026-09) — XP was paid only on completion — `FlashcardsPanel.test.tsx`,
@@ -216,6 +227,8 @@ Newest first within each area. Symptom — cause — what holds it now.
 - Type mode cleared the typed text and its feedback once complete (2026-07) — cause not recorded — `TypeFace.test.tsx`.
 - Long card text pushed the grade bar off screen (2026-07) — the card grew with its text — the card holds its height
   and scrolls inside.
+
+- Blur and Show all were different widths (2026-07) — each button sized to its label — equal columns, `BlurFace.tsx`.
 
 ### Sync and account
 

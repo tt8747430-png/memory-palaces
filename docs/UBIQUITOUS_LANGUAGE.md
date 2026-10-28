@@ -38,8 +38,8 @@ Format: **Term** (code · UI): meaning. _Avoid:_ words.
 - **Card status** (`new` / `learning` / `known`): where a Card stands in the SRS. _Avoid:_ state, level.
 - **Mastered** (code `known`): a Card whose interval has reached 21 days, or that the learner marked so. _Avoid:_
   Known (in the UI), mature.
-- **Memorized** (`memorized`): a stored flag the learner sets by hand, separate from `known`. _Avoid:_ known,
-  mastered, done.
+- **Memorized** (`memorized`): a stored flag kept from a Mindscape import, separate from `known`; nothing in the app
+  sets or shows it yet. _Avoid:_ known, mastered, done.
 - **Flagged**: marked for later attention. _Avoid:_ starred, bookmarked.
 - **Frozen** (UI Freeze): held out of every queue until unfrozen. _Avoid:_ paused, suspended.
 - **Reversed** (UI Reverse): studied back to front, whatever the Deck says. _Avoid:_ flipped, inverted.
@@ -49,7 +49,7 @@ Format: **Term** (code · UI): meaning. _Avoid:_ words.
 - **Flashcards**: front to back, self-graded. _Avoid:_ study cards.
 - **Study mode** (`StudyMode` · UI Type, Initials, Blur, Rebuild): how a flashcard's answer is recalled; Rebuild is
   `words` in code. _Avoid:_ flashcard type.
-- **Quiz** (UI Test): Questions to answer. _Avoid:_ exam.
+- **Quiz**: Questions to answer. _Avoid:_ test, exam.
 - **Match**: pairing Cards against the clock. _Avoid:_ pairs.
 - **Study scope** (`StudyScope`, `MatchScope`): which Deck a Study session runs over. _Avoid:_ scope.
 - **Study filter** (`StudyFilter`): which of its Cards: all, due, new, learning or flagged. _Avoid:_ scope, selection.

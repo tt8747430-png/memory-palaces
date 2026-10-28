@@ -182,6 +182,7 @@ The owner's feedback from every session, condensed and grouped by area. Read the
 
 - **Reading mode:** a fifth study mode with less XP, back and next gestures, a carousel in the bottom bar and a header button that switches to grades. The card looks like the back, with the front small above it.
 - **Release:** hide admin and developer tools from normal users, versioned releases, automatic tags, conventional commits, a short README, and rollouts to user groups an admin manages.
+- **Updates:** a way to check whether a newer version of the app is out.
 - **More:** Romanian and German, bug reporting, onboarding, a customizable guest account, palace journeys and loci, goals and habits, an AI tutor that asks before each action (parked).
 
 ## Process
