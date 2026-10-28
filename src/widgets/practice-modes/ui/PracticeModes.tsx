@@ -8,16 +8,16 @@ export interface PracticeModesProps {
   cardCount: number
   questionCount: number
   onMatch?: () => void
-  onTest?: () => void
-  alwaysEnableTest?: boolean
+  onQuiz?: () => void
+  alwaysEnableQuiz?: boolean
 }
 
 export function PracticeModes({
   cardCount,
   questionCount,
   onMatch,
-  onTest,
-  alwaysEnableTest = false,
+  onQuiz,
+  alwaysEnableQuiz = false,
 }: PracticeModesProps) {
   const { t } = useTranslation()
   return (
@@ -31,18 +31,18 @@ export function PracticeModes({
       />
       <ModeTile
         icon={<Brain className="size-5" aria-hidden />}
-        label={t('practice.test')}
+        label={t('practice.quiz')}
         sublabel={
           questionCount > 0
-            ? t(questionCount === 1 ? 'practice.testSubOne' : 'practice.testSubOther', {
+            ? t(questionCount === 1 ? 'practice.quizSubOne' : 'practice.quizSubOther', {
                 count: questionCount,
               })
-            : alwaysEnableTest
-              ? t('practice.testManage')
-              : t('practice.testEmpty')
+            : alwaysEnableQuiz
+              ? t('practice.quizManage')
+              : t('practice.quizEmpty')
         }
-        onClick={onTest}
-        disabled={!alwaysEnableTest && questionCount === 0}
+        onClick={onQuiz}
+        disabled={!alwaysEnableQuiz && questionCount === 0}
       />
     </div>
   )

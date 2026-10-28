@@ -16,11 +16,11 @@ export const srs = {
 export const practice = {
   match: 'Match',
   matchSub: 'Pair terms against the clock',
-  test: 'Test',
-  testSubOne: 'Quiz · {{count}} question',
-  testSubOther: 'Quiz · {{count}} questions',
-  testEmpty: 'Add questions to test',
-  testManage: 'Write questions & start',
+  quiz: 'Quiz',
+  quizSubOne: '{{count}} question',
+  quizSubOther: '{{count}} questions',
+  quizEmpty: 'Add questions to start a quiz',
+  quizManage: 'Write questions & start',
 } as const
 
 export const cards = {

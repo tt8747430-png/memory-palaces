@@ -31,4 +31,16 @@ describe('Progress', () => {
     expect(screen.queryByRole('progressbar')).toBeNull()
     expect(container.querySelector('[data-slot="progress"]')).toHaveAttribute('aria-hidden', 'true')
   })
+
+  it('mounts at its value, so revisiting a page does not replay the fill', () => {
+    const { container } = renderWithProviders(<Progress value={60} />)
+    const fill = container.querySelector<HTMLElement>('[data-slot="progress-indicator"]')
+    expect(fill?.style.transform).toBe('scaleX(0.6)')
+  })
+
+  it('fills from zero only when asked to', () => {
+    const { container } = renderWithProviders(<Progress value={60} animateOnMount />)
+    const fill = container.querySelector<HTMLElement>('[data-slot="progress-indicator"]')
+    expect(fill?.style.transform).toBe('scaleX(0)')
+  })
 })

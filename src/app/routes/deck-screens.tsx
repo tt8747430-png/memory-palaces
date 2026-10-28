@@ -43,7 +43,7 @@ export function DeckDetailScreen() {
       onOpenSettings={() => navigate({ to: ROUTES.deckSettings, params: { deckId } })}
       onStudy={() => navigate({ to: ROUTES.deckStudy, params: { deckId } })}
       onMatch={() => navigate({ to: ROUTES.deckMatch, params: { deckId } })}
-      onTest={() => navigate({ to: ROUTES.deckQuestions, params: { deckId } })}
+      onQuiz={() => navigate({ to: ROUTES.deckQuestions, params: { deckId } })}
       onAddCard={() => navigate({ to: ROUTES.deckCardNew, params: { deckId } })}
       onEditCard={(cardId) => navigate({ to: ROUTES.deckCardEdit, params: { deckId, cardId } })}
       onStudyFrom={(cardId) =>

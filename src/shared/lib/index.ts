@@ -109,7 +109,6 @@ export {
 } from './use-keyboard-reveal'
 export { CHROME } from './use-keyboard-reveal'
 export { keepFieldFocused, TEXT_ENTRY } from './keep-field-focused'
-export { FOCUS_RING_OVERSHOOT } from './focus-ring'
 export { syncFailure, type SyncFailure } from './sync-failure'
 export { syncFailureMessage } from './sync-failure-message'
 export { type ColorScheme, readColorScheme, useColorScheme } from './color-scheme'

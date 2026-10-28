@@ -36,7 +36,7 @@ export interface DeckDetailPageProps {
   onOpenSettings?: () => void
   onStudy?: () => void
   onMatch?: () => void
-  onTest?: () => void
+  onQuiz?: () => void
   onAddCard: () => void
   onEditCard: (cardId: string) => void
   onStudyFrom?: (cardId: string) => void
@@ -54,7 +54,7 @@ export function DeckDetailPage({
   onOpenSettings,
   onStudy,
   onMatch,
-  onTest,
+  onQuiz,
   onAddCard,
   onEditCard,
   onStudyFrom,
@@ -206,8 +206,8 @@ export function DeckDetailPage({
             cardCount={subtreeCards.length}
             questionCount={questions.length}
             onMatch={onMatch}
-            onTest={onTest}
-            alwaysEnableTest
+            onQuiz={onQuiz}
+            alwaysEnableQuiz
           />
         ) : null}
 
