@@ -1,6 +1,6 @@
 # What the owner has asked for, by area
 
-The owner's feedback from every session, condensed and grouped by area. Read the section for an area before changing it. A point here was either built or is still open; check the code, CLAUDE.md, the ADRs and `docs/DECK_SETTINGS_UI_STATUS.md` before assuming which. Quotes are the owner's own words, typos fixed.
+The owner's feedback from every session, condensed and grouped by area. Read the section for an area before changing it. A point here was either built or is still open; check the code, the ADRs and `docs/HISTORY.md` before assuming which. Quotes are the owner's own words, typos fixed.
 
 ## Contents
 
