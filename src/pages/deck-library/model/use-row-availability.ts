@@ -17,7 +17,7 @@ export interface RowAvailabilityArgs {
 /**
  * Which row actions the Library can offer at all. The page owns the surfaces an action opens; this
  * owns the question of whether to offer it, because that is a fact about the library rather than
- * about the row under the thumb (CODE_STYLE §2, §3a).
+ * about the row under the thumb (CODE_STYLE §2, §3).
  *
  * The parent ids are gathered once into a Set. Asked per row instead — which is how this started
  * life in the page — it is a scan per row, so a library of a few hundred decks pays for a few tens

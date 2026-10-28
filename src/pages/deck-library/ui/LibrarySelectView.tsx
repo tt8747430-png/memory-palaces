@@ -8,7 +8,7 @@ export interface LibrarySelectViewProps {
 
 /**
  * The Library while a selection is on: the arrange bar over the flat, draggable list of rows
- * being chosen among. Everything it shows is read off the page's one model (CODE_STYLE §3a), so
+ * being chosen among. Everything it shows is read off the page's one model (CODE_STYLE §3), so
  * the page composes it with a single prop and keeps its own markup to the sheets it owns.
  */
 export function LibrarySelectView({ library }: LibrarySelectViewProps) {

@@ -15,7 +15,7 @@ export interface BookGridProps {
 
 /**
  * All sixty-six books on one screen: six abbreviation tiles to a row, each shelf tinted its own
- * colour. Every tile keeps a 44px target (MOBILE_DESIGN §3). No book is ever disabled — a book the
+ * colour. Every tile keeps a 44px target (CODE_STYLE §5). No book is ever disabled — a book the
  * Bible library holds nothing for is where pasting fills it — but the ones it does hold carry a dot.
  */
 export function BookGrid({ index, onPick }: BookGridProps) {

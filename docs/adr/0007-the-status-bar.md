@@ -2,7 +2,7 @@
 
 - **Status:** accepted · **Date:** 2026-10 · consolidated 2026-10
 
-The operational rules are [MOBILE_DESIGN §12](../MOBILE_DESIGN.md) and [CODE_STYLE §4a](../CODE_STYLE.md). The
+The operational rules are [CODE_STYLE §8](../CODE_STYLE.md#s8) and [§5](../CODE_STYLE.md#s5). The
 implementation is `index.html`, `vite.config.ts`, `shared/config/status-bar.ts`, `shared/lib/theme-color.ts` and
 `app/providers/use-device-theme.ts`, mounted by `PreferencesProvider`.
 

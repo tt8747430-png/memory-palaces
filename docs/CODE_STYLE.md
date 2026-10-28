@@ -168,7 +168,7 @@ alias across slices · never a dependency's `dist/`.
   id.
 - Manifest: `standalone`, `portrait`, colours `STATUS_BAR.light`, a maskable 512 icon.
 - **Status bar:** `black`, painted by iOS from `theme-color` = `STATUS_BAR` (`shared/config/status-bar.ts`); never
-  `black-translucent` ([ADR 0007](adr/0007-ios-paints-the-status-bar.md)). `useDeviceTheme` writes it only once
+  `black-translucent` ([ADR 0007](adr/0007-the-status-bar.md)). `useDeviceTheme` writes it only once
   preferences are ready.
 - **Brand assets come from `shared/config/brand-mark.ts`** via `npm run brand:assets`; commit the output. The launch
   screen, the pre-script paint and the splash's first frame are one picture (`SPLASH_MARK_PX`).
@@ -221,7 +221,7 @@ Why: [ADR 0001](adr/0001-drag-and-drop-and-card-stacks.md). This is the checklis
 ## 11. Layout, keyboard and safe areas
 
 None of this shows in jsdom or on a desktop. Check `/dev/kitchen-sink`'s viewport probe before theorising; verify on a
-phone. Why: [ADR 0002](adr/0002-keyboard-covers-the-app.md).
+phone. Why: [ADR 0002](adr/0002-the-shell-and-the-keyboard.md).
 
 **Layout.**
 

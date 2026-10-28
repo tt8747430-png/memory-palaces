@@ -135,7 +135,7 @@ Newest first within each area. Symptom — cause — what holds it now.
 - A seam between the status bar and the header (2026-09) — a translucent header under a flat bar — `.chrome`,
   `tokens.test.ts`.
 - The study header taller than every other (2026-09) — a separate `study` layout on `HeaderBar` — one height,
-  [CODE_STYLE §4a](CODE_STYLE.md).
+  [CODE_STYLE §5](CODE_STYLE.md#s5).
 - The whole app lifted when a selected word in a drawer field was tapped (2026-09) — fields opened with their text
   pre-selected (`useAutoSelect`), and iOS revealed the selection itself by panning — no pre-selected text; a
   suggestion is the placeholder (`PromptSheet.test.tsx`), [CODE_STYLE §11](CODE_STYLE.md).

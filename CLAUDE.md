@@ -18,7 +18,6 @@ workflow.
 - `impeccable` → visual design. `supabase` → anything server-side (`supabase/`, `shared/api/supabase`).
 - `tdd` → new logic, test first. `grilling` / `domain-modeling` → a non-trivial plan before code (ADRs, glossary).
 - `humanizer` / `writing-guidelines` → docs and any prose the app shows.
-- **Not applicable:** React Native, Next.js and Angular skills.
 
 ## Change rules
 
@@ -130,12 +129,13 @@ runner and Autosync; `widgets/sync` the banner and review dialog. Device-local b
   `/dev/kitchen-sink`'s viewport probe before theorising, then verify on a phone.
 - **Why it is this way** → `docs/adr/` (index: [README](docs/adr/README.md)). By area: drag, reorder, card stacks →
   [0001](docs/adr/0001-drag-and-drop-and-card-stacks.md); keyboard and anything bottom-pinned →
-  [0002](docs/adr/0002-keyboard-covers-the-app.md); archive, moving decks, subdeck settings →
-  [0003](docs/adr/0003-the-archive-is-a-place.md); network, sync, images, account deletion →
-  [0004](docs/adr/0004-what-needs-the-network.md); conflict handlers, `push_documents` →
-  [0005](docs/adr/0005-merge-against-what-you-saw.md); status bar and theme colour →
-  [0007](docs/adr/0007-ios-paints-the-status-bar.md). Deck settings, extensions: see the index. Contradicting an ADR →
-  say so, then amend it.
+  [0002](docs/adr/0002-the-shell-and-the-keyboard.md); Library order, filters, archive, moving decks →
+  [0003](docs/adr/0003-the-library.md); what needs the network →
+  [0004](docs/adr/0004-what-needs-the-network.md); Sync, first Sync, conflict handlers, `push_documents` →
+  [0005](docs/adr/0005-sync.md); status bar and theme colour →
+  [0007](docs/adr/0007-the-status-bar.md); deck settings, main-deck settings, card styles, stored-only controls →
+  [0008](docs/adr/0008-deck-settings.md); extensions, Bible → [0009](docs/adr/0009-extensions.md); large decks →
+  [0010](docs/adr/0010-large-decks.md). Contradicting an ADR → say so, then amend it.
 - **What exists and what broke before** → [HISTORY](docs/HISTORY.md).
 - **Naming anything** → [UBIQUITOUS_LANGUAGE](docs/UBIQUITOUS_LANGUAGE.md). "Session" = auth, never a study pass;
   "Sync" = one cycle; `known` (shown as Mastered) ≠ Memorized.

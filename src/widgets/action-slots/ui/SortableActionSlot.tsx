@@ -39,7 +39,7 @@ export function SortableActionSlot({
               'relative flex h-full w-full cursor-grab touch-none rounded-tile active:cursor-grabbing',
               'transition-opacity hover:opacity-85',
               'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/40',
-              // A 36px rail cap still takes a 44px press (MOBILE_DESIGN §3): the target is a
+              // A 36px rail cap still takes a 44px press (CODE_STYLE §5): the target is a
               // centred 44px box, which a larger face — the select bar's slot — already covers.
               'before:absolute before:left-1/2 before:top-1/2 before:size-11 before:-translate-1/2',
               isDragging && 'opacity-0',

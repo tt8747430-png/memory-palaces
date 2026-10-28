@@ -94,7 +94,7 @@ export function MatchBoard({ cards, subtitle, onBack, onComplete }: MatchBoardPr
         }
       />
 
-      {/* The score sits under the bar, not in it: every bar is one height (CODE_STYLE §4a). */}
+      {/* The score sits under the bar, not in it: every bar is one height (CODE_STYLE §5). */}
       <div className="flex items-center justify-center gap-2 px-5 pt-2">
         <Chip icon={<Timer className="size-3.5" aria-hidden />}>{formatTime(elapsed)}</Chip>
         <Chip icon={<Zap className="size-3.5" aria-hidden />}>

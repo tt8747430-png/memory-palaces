@@ -230,7 +230,7 @@
    * `var(--text-heading)` at the use site, so a child that already names a semantic token reads the
    * chrome value here and the page value everywhere else. Nothing inside needs a chrome variant, and
    * nothing can be half-converted: an override left behind would have to name a raw colour, which
-   * lint forbids (CODE_STYLE §5).
+   * CODE_STYLE §5 forbids; `tokens.test.ts` checks the block answers every role.
    *
    * Chrome is a dark context inside whatever theme is on, so every role takes its on-chrome value:
    * ink, neutral surfaces, status foregrounds, and brand fills too. On a saturated blue block the
