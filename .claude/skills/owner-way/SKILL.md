@@ -86,6 +86,17 @@ CLAUDE.md's answer style rules: extremely concise, answer first. A report holds:
 
 If agents are running and the owner asks, say so; never guess their results. If something takes long, say where the time goes and how to make it faster.
 
+## Reference material
+
+`memory_palaces_data/` holds the owner's reference material. The app never reads it; never import from it or ship it.
+
+- `App Screenshots/`: screens of the app they compare against, by area (flashcards, match, questions, onboarding,
+  completion screens, speed reader), and `bugs/` for bugs they photographed.
+- `Projects/`: the planned extensions: the Bible screens (add cards, reading, tracker, memorisation progress), an earlier
+  AI tutor screen and a palace-journey project. Read code there for behaviour only.
+
+Look at the screenshots for an area before building it, and describe the ones you use in an agent's brief.
+
 ## Docs to update each round
 
 - **ADRs:** amend the area's record (`docs/adr/README.md`): the decision as it stands now, one line in its History. A new record only for a new area.

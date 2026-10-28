@@ -14,3 +14,5 @@ built (ADR 0009). Mockups were in the owner's Downloads (`plugins/bible/bible_tr
 
 Each needs a contribution point that does not exist yet (a nav tab, a profile badge row). Reading needs the full text
 for every book; the corpus holds only what publishers added. Decide where the full text comes from first.
+
+Reference: the owner's screenshots in `memory_palaces_data/Projects/plugins/bible/bible_reading/`, `bible_tracker/` and `bible_memorization_progress/`.

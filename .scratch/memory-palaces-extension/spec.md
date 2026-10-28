@@ -14,3 +14,5 @@ And a gallery where a learner browses the extensions there are (today Settings â
 
 Nothing of this exists. To decide: whether a palace is an extension or core (the app is named for it), the data shape
 of a palace, a locus and a journey, and how loci relate to decks and cards.
+
+Reference: `memory_palaces_data/Projects/palace_journey/cranky-main/`, an earlier palace-journey project in Python (read for behaviour only).

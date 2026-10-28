@@ -15,3 +15,5 @@ action it takes.
 
 Done when "create a palace called X" runs end to end behind the gate. Never put core CRUD, scheduling or streaks on the
 REST path; the tutor calls commands.
+
+Reference: the owner's earlier screen, `memory_palaces_data/Projects/ai_tutor/AITutorScreen.tsx` (read for behaviour; it is not built into the app).
