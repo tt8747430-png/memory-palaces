@@ -25,3 +25,5 @@ npm-debug.log*
 
 # TS
 *.tsbuildinfo
+.claude/worktrees/
+.claude/skills/impeccable/scripts/.impeccable/
