@@ -1,107 +1,60 @@
-# ADR 0001 — Drag reorders, never re-parents; one drag engine; real cards in every stack
+# ADR 0001 — A drag only reorders; one drag engine; real cards in every stack
+
+- **Status:** accepted · **Date:** 2026-07 · consolidated 2026-10
+
+The checklist for drop flicker is [CODE_STYLE §10](../CODE_STYLE.md). The engine is `shared/lib/use-sortable-block.ts`.
+
+## Context
+
+A drop is a guess about where a finger was. Early drags in the Library also re-parented: a deck dropped onto another
+became its subdeck, with the depth read from the pointer's x (`projectDrop`). Rows that "made room" promised a reorder,
+yet half the rows under the finger in a tree were not peers. Each list then grew its own drag, and the copies drifted
+apart in collision, drop animation and row anatomy.
 
 ## Decision
 
-### 1. A drag only ever reorders
+- **A drag only reorders.** Moving a deck somewhere else is `DestinationSheet`. The one exception: a deck released over
+  a **folder row** files into it. That target is discrete and announces itself (the row lights, its glyph swells).
+- **Every reachable row is a peer of the row in hand.** Select mode in the Library is flat: Folders, then Decks, no
+  expand control, no subdecks on screen. Selecting a deck takes its subtree; long-pressing a subdeck selects its top
+  ancestor. `DeckTree` does not drag. Don't add a drag to a surface that draws a hierarchy; flatten it first.
+- **One engine.** `useSortableBlock()` owns behaviour: which rows a drag carries, the pile, where a drop lands, and
+  the two `DndContext` settings that must not vary (`pointerWithin` then `closestCenter`; `dropAnimation: null`).
+  `SortableRow` owns row anatomy and hands the frame back to the child, so `opacity-0` and the landing apply to the
+  row's own surface. Users: `LibrarySelectList` and `ReorderableList` (which draws only the rows in view, keeps every
+  id in `SortableContext`, and keeps the dragged row drawn wherever it scrolls, ADR 0010).
+- **`LibrarySelectList` is the reference.** Unifying means moving other lists towards it, never meeting in the middle.
+- **Settings editors are a small second engine.** The select toolbar and swipe editors are one horizontal strip with
+  no selection and no pile: `widgets/action-slots`' `useSortableList` (sensors, held order, one drop animation, a drop
+  that may be refused when a rail is full). A swipe's two rails are one list with the row standing between them
+  (`action-rails.ts`, `ROW`), so changing sides is an ordinary reorder. It shares only `useSortableSensors` and
+  `useHeldOrder` with the block engine.
+- **A stack is made of the real items.** `StackedDragPreview` takes the real rows as layers. `StudyDeck` and
+  `CardBrowser` draw the real next cards behind the current one, inert, posed by depth (`DEPTH_POSE`), so advancing
+  is a change of pose, not a cross-fade.
 
-Re-parenting is an explicit act with its own surface (`DestinationSheet`). A drop is a guess about where a finger was; a
-re-parent is too consequential to infer from one.
+How it behaves:
 
-**One exception:** a deck released over a **folder row** files into it — the target is discrete and self-announcing (the
-row lights up, its glyph swells) so drifting can't trigger it.
-
-### 2. Every reachable row must be a peer of the row in hand
-
-"Rows make room" is a _promise_ that the drop is a reorder. In a tree half the rows under the finger aren't peers, so
-the promise is a lie before the user releases.
-
-Rather than weaken the animation, the library changes what it shows. **Select mode is flat:** `Folders` then `Decks`, no
-expand control, subdecks never on screen. Selecting a deck takes its subtree; long-pressing a subdeck selects its
-top-level ancestor. `DeckTree` doesn't drag at all.
-
-> **Consequence:** don't add a drag to a surface rendering a hierarchy. Flatten it first.
-
-### 3. One engine, and the library is the reference
-
-`useSortableBlock()` is headless and owns all _behaviour_ — which rows a drag carries, the pile, where a drop lands, how
-rows get there, plus the two `DndContext` settings that must not vary (`collision`, `dropAnimation`). `SortableRow` owns
-row anatomy. Surfaces differ in what they render, never in how a drag behaves.
-
-| Surface                             | Renders                             | Engine             |
-| ----------------------------------- | ----------------------------------- | ------------------ |
-| `deck-tree/ui/LibrarySelectList`    | two sections + folder drop target   | `useSortableBlock` |
-| `content-editor/ui/ReorderableList` | windowed list, order held by props | `useSortableBlock` |
-| `settings-select`, `settings-swipe` | the live bar / the row's two rails  | `useSortableList`  |
-
-`ReorderableList` draws only the rows in view (`useListWindow`). `SortableContext` still holds every id; rows out of
-view are not droppables until the drag's auto-scroll brings them in, and the dragged row is kept drawn wherever it is
-scrolled (`keep`), so the engine never loses its node.
-
-Settings pages stay out deliberately: one horizontal strip, no multi-select, no piles. `widgets/action-slots`'
-`useSortableList` is their small engine — sensors, held order, the one `dropAnimation`, and a drop that may be refused
-(a rail is full). A swipe's two rails are **one** list with the row standing between them (`action-rails.ts`, `ROW`),
-so crossing sides is an ordinary reorder, never a cross-container drag. Sharing `useSortableSensors` and
-`useHeldOrder` with `useSortableBlock` is the whole overlap.
-
-> **`LibrarySelectList` is the reference. Unifying means moving other surfaces towards it, never it towards them.** Its
-> feel is the one tuned against real use; every other list is a copy that drifted. (Learned 2026-07-26: "unify these" was
-> read as meet-in-the-middle, the library got a drop animation it had deliberately gone without, and a working surface
-> regressed.)
-
-Four drifts, all resolved in the library's favour:
-
-|                | had been             | now                               |
-| -------------- | -------------------- | --------------------------------- |
-| collision      | `closestCenter`      | `pointerWithin` → `closestCenter` |
-| drop           | 220ms fly-to-slot    | `null`                            |
-| row anatomy    | inline `useSortable` | `SortableRow`                     |
-| mount entrance | `opacity 0→1, y 8`   | none while reorderable            |
-
-**Why `dropAnimation` is `null`:** the dropped state is already true on screen when the finger lifts (order held
-optimistically), so an overlay still travelling toward a row already in place is a duplicate, not a transition. A stack
-isn't shaped like any single row — nothing to fly _as_.
-
-**Why the entrance had to go:** a carried row remounts on landing, so a mount entrance animates `opacity` on the landing
-row (the fourth flicker cause) and fights `useStackLanding`.
-
-**Why `SortableRow` hands the frame back to the child:** a row's surface, ring and padding live on its own element, and
-that's what `opacity-0` and the landing must apply to. A wrapper silently changes what's hidden and what's animated.
-
-### 4. A stack is made of the real items
-
-`StackedDragPreview` takes the real rows as `layers`, clipped to the front row's frame. `StudyDeck`/`CardBrowser` render
-the real next cards behind the current one, inert, posed by depth. That's what buys the animation: a promoted card
-already _is_ the thing it becomes, so advancing is a change of pose — not a cross-fade with a placeholder.
-
-## How it behaves
-
-**Carrying a selection.** Grab any selected row, the whole selection travels; lands contiguously (`moveBlock()`), after
-the target from above and before it from below. Carried rows other than the tracked one leave the flow, so exactly one
-gap opens, at the block's edge.
-
-**The pile.** Top row = most recently selected, not the one the drag started from — the stack reads as what you just
-gathered. `selectedIds` is a `Set`, so the answer is its tail.
-
-**Putting it down.** The overlay is dismissed outright for every drag. A single row is already home (sortable has shown
-it in its landing slot all drag). A block travels — `useStackLanding()` FLIPs each row from the drag's translated rect
-through the Web Animations API, off the React render path, staggered. Without it they blink into place and the stack
-reads as a lie.
-
-**Card decks.** `DEPTH_POSE` constants: depth 0 in play, then stepped back and down. Advancing keys the front slot by
-card id — the outgoing card was already flung away, the arriving one enters from the pose it held a layer down.
-`CardBrowser` going _backwards_ has no deck to draw from, so the card returns from the edge.
-
-> **Queued list is nearest-first: `depth={i + 1}`.** Inverted (`length - i`) draws the furthest queued card in the
-> visible slot — peek at 15, swipe, 14 arrives. Invisible while the deck is still, which is why both stacks carry a
-> `z-index` test asserting the nearest layer holds the card the next swipe promotes. Shipped inverted once; don't
-> re-derive by eye.
-
-**Reduced motion.** `useStackLanding` does nothing — rows are already in place, only the travel drops. Card stacks skip
-entrance poses.
+- A selection travels whole and lands contiguously (`moveBlock()`): after the target from above, before it from
+  below. Only one gap opens.
+- The top of the pile is the most recently selected row (the tail of the `selectedIds` set).
+- The overlay is dismissed outright on drop. A single row is already in its slot. A block lands through
+  `useStackLanding()`, a staggered FLIP on the Web Animations API, off the React render path.
+- Queued cards are nearest-first: `depth={i + 1}`. Inverted, the furthest card sits in the visible slot. Both stacks
+  carry a `z-index` test for this.
+- Reduced motion: `useStackLanding` does nothing and card stacks skip entrance poses.
 
 ## Consequences
 
-- `projectDrop()` and pointer-X depth tracking are gone. Don't reintroduce a gesture whose meaning isn't visible.
-- Mixed selections can still be acted on together, but a drag reorders only within its own kind.
-- Drag _feel_ can't be verified in jsdom — every change needs a real-device pass.
-- The four flicker causes remain the operational checklist: [`CODE_STYLE.md` §10](../CODE_STYLE.md).
+- `dropAnimation` is `null` because the order is held optimistically: the dropped state is already on screen.
+- A reorderable row has no mount entrance. A carried row remounts on landing and the entrance would animate it.
+- Mixed selections can be acted on together, but a drag reorders only within its own kind.
+- Drag feel can't be checked in jsdom. Every change needs a pass on a device.
+
+## History
+
+- Drag re-parents: a deck dropped on a deck becomes its subdeck, depth from pointer x (2026-07). Replaced by
+  reorder-only and the move sheet.
+- "Unify the lists" read as meet-in-the-middle; the Library gained a drop animation and regressed (2026-07).
+- Settings editors as action strips beside an inert preview, then as two strips with a picker sheet (2026-09).
+  Replaced by the live bar with a palette.
