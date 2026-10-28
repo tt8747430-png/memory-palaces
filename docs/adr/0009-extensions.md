@@ -58,8 +58,8 @@ text }` with id `translation:BOOK:chapter:verse`, so republishing updates in pla
   account reads it; only an account in `private.corpus_publishers` may write it (`publishes_corpus()`), and a
   non-publisher's push is answered with nothing refused, so its pending log clears. The corpus has no tombstones:
   `push_documents` writes `deleted = false` for it, so one device forgetting a book can't blank it for everyone. A
-  purged publisher does not take the corpus with it. The publisher list is changed with the service key, never by
-  the app.
+  purged publisher does not take the corpus with it, and no account holds DELETE or TRUNCATE on it. The publisher
+  list is changed with the service key, never by the app.
 - **Publishing is a developer tool.** The import makes cards only. Adding text from cards or from one deck, and
   forgetting a book, are on the Bible developer tools screen, shown only in dev mode.
 - The verse table is held ([ADR 0005](0005-sync.md)). It raises no Realtime event; the corpus arrives with the next
@@ -81,3 +81,4 @@ text }` with id `translation:BOOK:chapter:verse`, so republishing updates in pla
 - One settings link per extension (replaced 2026-09 by the overview and features).
 - Bible verses per account, keyed `(user_id, id)` (replaced 2026-09 by the shared corpus).
 - Saving missing verses from the import, on by default (replaced 2026-09: publishing is a developer tool).
+- Accounts held every table grant on the corpus, TRUNCATE included (closed 2026-10, `20261028091741_harden_grants`).
