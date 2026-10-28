@@ -104,8 +104,8 @@ in `.scratch/`.
 - Private image buckets, bytes cached ahead of the read. [ADR 0004](adr/0004-what-needs-the-network.md)
 - Sign-in by email and password or Google, and a guest mode; offline, the auth screens say so.
   [ADR 0004](adr/0004-what-needs-the-network.md)
-- Account deletion with a 30-day grace, cancelled by signing in, purged by Edge Function.
-  [ADR 0004](adr/0004-what-needs-the-network.md)
+- Account deletion with a 30-day grace, cancelled by signing in, purged nightly by Edge Function (checked live on the
+  hosted project, 2026-10). [ADR 0004](adr/0004-what-needs-the-network.md)
 
 ### Extensions and Bible
 

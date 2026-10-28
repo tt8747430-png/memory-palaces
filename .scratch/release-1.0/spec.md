@@ -11,7 +11,7 @@ What has to be true before a first public version. Gathered from the owner's lis
 - The app has a version a learner can see, releases are tagged, and commit messages follow one convention.
 - An admin can see the accounts and roll an update out to a group before everyone.
 - Accessibility (WCAG AA) and Lighthouse PWA and performance pass; a bundle budget is enforced.
-- The server side is deployed and checked: migrations, both Edge Functions, `pg_cron` and `pg_net`, the Vault secrets.
+- The server side is hardened: deployment checked 2026-10; the advisor's two warnings fixed (issue 05).
 - A short README says what the app is and how to run it.
 
 ## Issues
